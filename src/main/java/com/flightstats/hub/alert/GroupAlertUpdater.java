@@ -1,12 +1,9 @@
 package com.flightstats.hub.alert;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.group.Group;
 import com.flightstats.hub.group.GroupStatus;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentPath;
-import com.flightstats.hub.rest.RestClient;
-import com.sun.jersey.api.client.Client;
 import org.joda.time.Minutes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,17 +11,14 @@ import org.slf4j.LoggerFactory;
 import java.util.LinkedList;
 import java.util.concurrent.Callable;
 
-public class GroupAlertUpdater implements Callable<AlertStatus> {
+class GroupAlertUpdater implements Callable<AlertStatus> {
 
     private final static Logger logger = LoggerFactory.getLogger(GroupAlertUpdater.class);
-
-    private static final Client client = RestClient.defaultClient();
-    private static final ObjectMapper mapper = new ObjectMapper();
 
     private final AlertConfig alertConfig;
     private final AlertStatus alertStatus;
 
-    public GroupAlertUpdater(AlertConfig alertConfig, AlertStatus alertStatus) {
+    GroupAlertUpdater(AlertConfig alertConfig, AlertStatus alertStatus) {
         this.alertConfig = alertConfig;
         if (alertStatus == null) {
             alertStatus = AlertStatus.builder()

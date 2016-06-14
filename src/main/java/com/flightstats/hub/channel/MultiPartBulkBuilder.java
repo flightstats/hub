@@ -7,7 +7,7 @@ import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.util.HubUtils;
+import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
 import org.slf4j.Logger;
@@ -23,7 +23,7 @@ import java.net.URI;
 import java.util.SortedSet;
 import java.util.function.Consumer;
 
-public class MultiPartBulkBuilder {
+class MultiPartBulkBuilder {
 
     private final static Logger logger = LoggerFactory.getLogger(MultiPartBulkBuilder.class);
 
@@ -47,9 +47,9 @@ public class MultiPartBulkBuilder {
         }, headerBuilder);
     }
 
-    public static Response buildTag(String tag, SortedSet<ChannelContentKey> keys,
-                                    ChannelService channelService, UriInfo uriInfo,
-                                    Consumer<Response.ResponseBuilder> headerBuilder) {
+    static Response buildTag(String tag, SortedSet<ChannelContentKey> keys,
+                             ChannelService channelService, UriInfo uriInfo,
+                             Consumer<Response.ResponseBuilder> headerBuilder) {
         Traces traces = ActiveTraces.getLocal();
         return write((BufferedOutputStream output) -> {
             ActiveTraces.setLocal(traces);
@@ -91,8 +91,8 @@ public class MultiPartBulkBuilder {
         writeContent(content, output, channelUri, name, true, false);
     }
 
-    public static void writeContent(Content content, OutputStream output, URI channelUri, String name,
-                                    boolean startBoundary, boolean endBoundary) {
+    private static void writeContent(Content content, OutputStream output, URI channelUri, String name,
+                                     boolean startBoundary, boolean endBoundary) {
         try {
             if (startBoundary) output.write(START_BOUNDARY);
             if (content.getContentType().isPresent()) {
@@ -105,7 +105,7 @@ public class MultiPartBulkBuilder {
             output.write(uri.toString().getBytes());
             output.write(CRLF);
             output.write(CREATION_DATE);
-            output.write(HubUtils.FORMATTER.print(content.getContentKey().get().getMillis()).getBytes());
+            output.write(TimeUtil.FORMATTER.print(content.getContentKey().get().getMillis()).getBytes());
             output.write(CRLF);
             output.write(CRLF);
             ByteStreams.copy(content.getStream(), output);

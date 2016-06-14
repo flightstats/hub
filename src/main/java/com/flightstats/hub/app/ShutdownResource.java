@@ -13,6 +13,7 @@ import java.util.concurrent.Executors;
 /**
  * ShutdownResource should only be called from the node's instance by the upstart prestop.sh script
  */
+@SuppressWarnings("WeakerAccess")
 @Path("/shutdown")
 public class ShutdownResource {
 

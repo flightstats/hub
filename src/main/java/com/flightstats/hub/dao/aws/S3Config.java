@@ -30,8 +30,8 @@ public class S3Config {
     private final AmazonS3 s3Client;
     private final CuratorLock curatorLock;
     private final ChannelConfigDao channelConfigDao;
-    private ChannelService channelService;
     private final String s3BucketName;
+    private ChannelService channelService;
 
     @Inject
     public S3Config(AmazonS3 s3Client, S3BucketName s3BucketName,
@@ -44,7 +44,7 @@ public class S3Config {
         HubServices.register(new S3ConfigInit());
     }
 
-    public void run() {
+    private void run() {
         try {
             doWork();
         } catch (Exception e) {
@@ -52,11 +52,21 @@ public class S3Config {
         }
     }
 
-    public void doWork() {
+    private void doWork() {
         logger.info("starting work");
         Iterable<ChannelConfig> channels = channelConfigDao.getChannels();
         S3ConfigLockable lockable = new S3ConfigLockable(channels);
         curatorLock.runWithLock(lockable, "/S3ConfigLock", 1, TimeUnit.MINUTES);
+    }
+
+    private BucketLifecycleConfiguration.Rule addRule(ChannelConfig config, String postfix) {
+        String id = config.getName() + postfix;
+        BucketLifecycleConfiguration.Rule configRule = new BucketLifecycleConfiguration.Rule()
+                .withPrefix(id + "/")
+                .withId(id)
+                .withExpirationInDays((int) config.getTtlDays())
+                .withStatus(BucketLifecycleConfiguration.ENABLED);
+        return configRule;
     }
 
     private class S3ConfigInit extends AbstractScheduledService {
@@ -154,16 +164,6 @@ public class S3Config {
             }
             ActiveTraces.end();
         }
-    }
-
-    private BucketLifecycleConfiguration.Rule addRule(ChannelConfig config, String postfix) {
-        String id = config.getName() + postfix;
-        BucketLifecycleConfiguration.Rule configRule = new BucketLifecycleConfiguration.Rule()
-                .withPrefix(id + "/")
-                .withId(id)
-                .withExpirationInDays((int) config.getTtlDays())
-                .withStatus(BucketLifecycleConfiguration.ENABLED);
-        return configRule;
     }
 
 }

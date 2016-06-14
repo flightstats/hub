@@ -1,7 +1,7 @@
 package com.flightstats.hub.group;
 
-public class ItemExpiredException extends RuntimeException {
-    public ItemExpiredException(String message) {
+class ItemExpiredException extends RuntimeException {
+    ItemExpiredException(String message) {
         super(message);
     }
 }

@@ -37,6 +37,7 @@ import static com.flightstats.hub.rest.Linked.linked;
 /**
  * This resource represents a single channel in the Hub.
  */
+@SuppressWarnings("WeakerAccess")
 @Path("/channel/{channel}")
 public class ChannelResource {
     private final static Logger logger = LoggerFactory.getLogger(ChannelResource.class);
@@ -217,9 +218,9 @@ public class ChannelResource {
         try {
             logger.info("starting events for {} at {}", channel, lastEventId);
             ContentKey contentKey = new ContentKey();
-            Optional<ContentKey> keyOptional = ContentKey.fromFullUrl(lastEventId);
-            if (keyOptional.isPresent()) {
-                contentKey = keyOptional.get();
+            ContentKey keyOptional = ContentKey.fromFullUrl(lastEventId);
+            if (keyOptional != null) {
+                contentKey = keyOptional;
             } else if (channelService.isReplicating(channel)) {
                 Optional<ContentKey> latest = channelService.getLatest(channel, true, false);
                 if (latest.isPresent()) {

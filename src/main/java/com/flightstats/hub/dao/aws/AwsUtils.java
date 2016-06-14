@@ -8,9 +8,9 @@ import org.apache.http.HttpStatus;
 
 import java.io.IOException;
 
-public class AwsUtils {
+class AwsUtils {
 
-    public static boolean isAwsError(AmazonClientException exception) {
+    static boolean isAwsError(AmazonClientException exception) {
         if (exception.getCause() instanceof IOException) return true;
 
         if (exception instanceof AmazonServiceException) {
@@ -37,7 +37,7 @@ public class AwsUtils {
         return false;
     }
 
-    public static boolean isAwsThrottling(AmazonClientException exception) {
+    static boolean isAwsThrottling(AmazonClientException exception) {
         if (exception instanceof AmazonServiceException) {
             AmazonServiceException ase = (AmazonServiceException) exception;
 

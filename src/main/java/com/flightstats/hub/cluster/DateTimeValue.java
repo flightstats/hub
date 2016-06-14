@@ -5,7 +5,7 @@ import org.apache.curator.framework.CuratorFramework;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
-public class DateTimeValue {
+class DateTimeValue {
     private final LongValue longValue;
 
     @Inject

@@ -17,9 +17,9 @@ import java.util.List;
 import java.util.TreeSet;
 
 @Singleton
-public class GroupError {
+class GroupError {
     private final static Logger logger = LoggerFactory.getLogger(GroupError.class);
-    public static final int MAX_SIZE = 10;
+    private static final int MAX_SIZE = 10;
 
     private final CuratorFramework curator;
 

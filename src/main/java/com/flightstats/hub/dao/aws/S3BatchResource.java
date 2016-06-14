@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+@SuppressWarnings("WeakerAccess")
 @Path("/internal/s3Batch/{channel}")
 public class S3BatchResource {
     private final static Logger logger = LoggerFactory.getLogger(S3BatchResource.class);
@@ -32,39 +33,6 @@ public class S3BatchResource {
     private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private ContentDao s3BatchContentDao = HubProvider.getInstance(ContentDao.class, ContentDao.BATCH_LONG_TERM);
     private ChannelService channelService = HubProvider.getInstance(ChannelService.class);
-
-    /**
-     * This gets called back for channels to support S3 batching.
-     */
-    @POST
-    public Response post(@PathParam("channel") String channel, String data) {
-        try {
-            logger.debug("processing {} {}", channel, data);
-            JsonNode node = mapper.readTree(data);
-            ArrayNode uris = (ArrayNode) node.get("uris");
-            if (uris.size() == 0) {
-                return Response.ok().build();
-            }
-            List<ContentKey> keys = new ArrayList<>();
-            for (JsonNode uri : uris) {
-                keys.add(ContentKey.fromFullUrl(uri.asText()).get());
-            }
-
-            String id = node.get("id").asText();
-            MinutePath path = MinutePath.fromUrl(id).get();
-            String batchUrl = node.get("batchUrl").asText();
-            if (dropSomeWrites && Math.random() > 0.50) {
-                logger.debug("dropping {} {}", channel, data);
-            } else if (!getAndWriteBatch(s3BatchContentDao, channel, path, keys, batchUrl)) {
-                return Response.status(400).build();
-            }
-            return Response.ok().build();
-
-        } catch (Exception e) {
-            logger.warn("unable to handle " + channel + " " + data, e);
-        }
-        return Response.status(400).build();
-    }
 
     public static boolean getAndWriteBatch(ContentDao contentDao, String channel, MinutePath path,
                                            Collection<ContentKey> keys, String batchUrl) {
@@ -82,5 +50,38 @@ public class S3BatchResource {
         contentDao.writeBatch(channel, path, keys, bytes);
         ActiveTraces.getLocal().add("S3BatchResource.getAndWriteBatch completed");
         return true;
+    }
+
+    /**
+     * This gets called back for channels to support S3 batching.
+     */
+    @POST
+    public Response post(@PathParam("channel") String channel, String data) {
+        try {
+            logger.debug("processing {} {}", channel, data);
+            JsonNode node = mapper.readTree(data);
+            ArrayNode uris = (ArrayNode) node.get("uris");
+            if (uris.size() == 0) {
+                return Response.ok().build();
+            }
+            List<ContentKey> keys = new ArrayList<>();
+            for (JsonNode uri : uris) {
+                keys.add(ContentKey.fromFullUrl(uri.asText()));
+            }
+
+            String id = node.get("id").asText();
+            MinutePath path = MinutePath.fromUrl(id).get();
+            String batchUrl = node.get("batchUrl").asText();
+            if (dropSomeWrites && Math.random() > 0.50) {
+                logger.debug("dropping {} {}", channel, data);
+            } else if (!getAndWriteBatch(s3BatchContentDao, channel, path, keys, batchUrl)) {
+                return Response.status(400).build();
+            }
+            return Response.ok().build();
+
+        } catch (Exception e) {
+            logger.warn("unable to handle " + channel + " " + data, e);
+        }
+        return Response.status(400).build();
     }
 }

@@ -42,7 +42,7 @@ public class ChannelEarliestResource {
         if (tag != null) {
             return tagEarliestResource.getEarliest(tag, stable, trace, uriInfo);
         }
-        DirectionQuery query = getDirectionQuery(channel, 1, stable, trace, channelService);
+        DirectionQuery query = getDirectionQuery(channel, 1, stable, channelService);
         Collection<ContentKey> keys = channelService.getKeys(query);
         if (keys.isEmpty()) {
             return Response.status(NOT_FOUND).build();
@@ -68,7 +68,7 @@ public class ChannelEarliestResource {
         if (tag != null) {
             return tagEarliestResource.getEarliestCount(tag, count, stable, bulk, batch, trace, accept, uriInfo);
         }
-        DirectionQuery query = getDirectionQuery(channel, count, stable, trace, channelService);
+        DirectionQuery query = getDirectionQuery(channel, count, stable, channelService);
         SortedSet<ContentKey> keys = channelService.getKeys(query);
         if (bulk || batch) {
             return BulkBuilder.build(keys, channel, channelService, uriInfo, accept);
@@ -77,12 +77,12 @@ public class ChannelEarliestResource {
         }
     }
 
-    public static DirectionQuery getDirectionQuery(String channel, int count, boolean stable, boolean trace, ChannelService channelService) {
+    public static DirectionQuery getDirectionQuery(String channel, int count, boolean stable, ChannelService channelService) {
         long ttlDays = channelService.getCachedChannelConfig(channel).getTtlDays();
         DateTime earliestTime = TimeUtil.getEarliestTime((int) ttlDays);
         ContentKey limitKey = new ContentKey(earliestTime, "0");
 
-        DirectionQuery query = DirectionQuery.builder()
+        return DirectionQuery.builder()
                 .channelName(channel)
                 .contentKey(limitKey)
                 .next(true)
@@ -90,7 +90,6 @@ public class ChannelEarliestResource {
                 .ttlDays(ttlDays)
                 .count(count)
                 .build();
-        return query;
     }
 
 

@@ -19,6 +19,7 @@ import java.net.URI;
 /**
  * This resource represents the collection of all channels in the Hub.
  */
+@SuppressWarnings("WeakerAccess")
 @Path("/channel")
 public class ChannelsResource {
 

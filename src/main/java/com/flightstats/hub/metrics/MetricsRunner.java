@@ -30,16 +30,7 @@ public class MetricsRunner {
         HubServices.register(new MetricsRunnerService());
     }
 
-    public void run() {
-        long openFiles = getOpenFiles();
-        if (openFiles >= 0) {
-            logger.info("open files {}", openFiles);
-            metricsSender.send("openFiles", openFiles);
-            newRelic(openFiles);
-        }
-    }
-
-    public static long getOpenFiles() {
+    static long getOpenFiles() {
         OperatingSystemMXBean os = ManagementFactory.getOperatingSystemMXBean();
         if (os instanceof UnixOperatingSystemMXBean) {
             return ((UnixOperatingSystemMXBean) os).getOpenFileDescriptorCount();
@@ -49,17 +40,7 @@ public class MetricsRunner {
         }
     }
 
-    @Trace(metricName = "MetricsRunner", dispatcher = true)
-    public void newRelic(long openFiles) {
-        NewRelic.addCustomParameter("openFileCount", openFiles);
-        NewRelic.recordResponseTimeMetric("Custom/OpenFileCount", openFiles);
-        if (openFiles >= 1000) {
-            NewRelic.noticeError("too many open files");
-            logger.info(logFilesInfo());
-        }
-    }
-
-    public static String logFilesInfo() {
+    static String logFilesInfo() {
         String info = "";
         logger.info("logFilesInfo starting");
         info += "lsof -b -cjava : \r\n";
@@ -76,6 +57,25 @@ public class MetricsRunner {
         }
         logger.info("logFilesInfo completed");
         return info;
+    }
+
+    private void run() {
+        long openFiles = getOpenFiles();
+        if (openFiles >= 0) {
+            logger.info("open files {}", openFiles);
+            metricsSender.send("openFiles", openFiles);
+            newRelic(openFiles);
+        }
+    }
+
+    @Trace(metricName = "MetricsRunner", dispatcher = true)
+    private void newRelic(long openFiles) {
+        NewRelic.addCustomParameter("openFileCount", openFiles);
+        NewRelic.recordResponseTimeMetric("Custom/OpenFileCount", openFiles);
+        if (openFiles >= 1000) {
+            NewRelic.noticeError("too many open files");
+            logger.info(logFilesInfo());
+        }
     }
 
     private class MetricsRunnerService extends AbstractScheduledService {

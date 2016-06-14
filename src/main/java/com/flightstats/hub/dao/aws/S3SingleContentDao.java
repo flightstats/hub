@@ -29,7 +29,7 @@ import java.util.*;
 public class S3SingleContentDao implements ContentDao {
 
     private final static Logger logger = LoggerFactory.getLogger(S3SingleContentDao.class);
-    public static final int MAX_ITEMS = 1000 * 1000;
+    private static final int MAX_ITEMS = 1000 * 1000;
 
     private final AmazonS3 s3Client;
     private final MetricsSender sender;

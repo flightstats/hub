@@ -13,6 +13,7 @@ import java.net.URI;
  * This is useful for supporting consistent uri's and to avoid checking for the
  * slashes everywhere
  */
+@SuppressWarnings("WeakerAccess")
 @Provider
 public class RemoveSlashFilter implements ContainerRequestFilter {
 

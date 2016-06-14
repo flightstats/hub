@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-public class S3Util {
+class S3Util {
 
     private final static Logger logger = LoggerFactory.getLogger(S3Util.class);
 
@@ -34,7 +34,7 @@ public class S3Util {
         throw new RuntimeException("unable to find bucket " + s3BucketName);
     }
 
-    public static SortedSet<ContentKey> queryPrevious(DirectionQuery query, ContentDao dao) {
+    static SortedSet<ContentKey> queryPrevious(DirectionQuery query, ContentDao dao) {
         DateTime endTime = query.getContentKey().getTime();
         DateTime queryTime = endTime;
         SortedSet<ContentKey> keys = new TreeSet<>();

@@ -15,14 +15,14 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-public class GroupState {
+class GroupState {
 
     private final static Logger logger = LoggerFactory.getLogger(GroupState.class);
 
     private final static Client client = RestClient.defaultClient();
     private final static ObjectMapper mapper = new ObjectMapper();
 
-    public static GroupStatus getGroupStatus(AlertConfig alertConfig) {
+    static GroupStatus getGroupStatus(AlertConfig alertConfig) {
         String url = alertConfig.getHubDomain() + "group/" + alertConfig.getSource();
         logger.debug("calling {}", url);
         ClientResponse response = client.resource(url).get(ClientResponse.class);
@@ -40,15 +40,12 @@ public class GroupState {
         return null;
     }
 
-    static GroupStatus parse(String config) throws IOException {
+    private static GroupStatus parse(String config) throws IOException {
         JsonNode jsonNode = mapper.readTree(config);
 
         GroupStatus.GroupStatusBuilder builder = GroupStatus.builder();
 
-        Optional<ContentKey> latestKey = ContentKey.fromFullUrl(jsonNode.get("channelLatest").asText());
-        if (latestKey.isPresent()) {
-            builder.channelLatest(latestKey.get());
-        }
+        builder.channelLatest(ContentKey.fromFullUrl(jsonNode.get("channelLatest").asText()));
         Optional<ContentPath> lastCompletedCallback = ContentPath.fromFullUrl(jsonNode.get("lastCompletedCallback").asText());
         if (lastCompletedCallback.isPresent()) {
             builder.lastCompleted(lastCompletedCallback.get());

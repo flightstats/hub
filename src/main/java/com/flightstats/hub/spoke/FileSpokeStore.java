@@ -25,9 +25,8 @@ import java.util.Collection;
 public class FileSpokeStore {
 
     private final static Logger logger = LoggerFactory.getLogger(FileSpokeStore.class);
-
-    private final String storagePath;
     private static final int ttlMinutes = HubProperties.getSpokeTtl();
+    private final String storagePath;
 
     @Inject
     public FileSpokeStore(@Named("spoke.path") String storagePath) {
@@ -124,7 +123,7 @@ public class FileSpokeStore {
         return path;
     }
 
-    void keysInBucket(String key, OutputStream output) {
+    private void keysInBucket(String key, OutputStream output) {
         String path = spokeFilePathPart(key).getAbsolutePath();
         logger.trace("path {}", path);
         String resolution = SpokePathUtil.smallestTimeResolution(key);

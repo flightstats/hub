@@ -6,6 +6,7 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.dao.ChannelConfigDao;
 import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.model.GlobalConfig;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
@@ -55,13 +56,19 @@ public class DynamoChannelConfigDao implements ChannelConfigDao {
         if (StringUtils.isNotEmpty(config.getStorage())) {
             item.put("storage", new AttributeValue(config.getStorage()));
         }
+        if (config.isGlobal()) {
+            GlobalConfig global = config.getGlobal();
+            item.put("master", new AttributeValue(global.getMaster()));
+            item.put("satellites", new AttributeValue().withSS(global.getSatellites()));
+            item.put("isMaster", new AttributeValue().withBOOL(global.isMaster()));
+        }
         PutItemRequest putItemRequest = new PutItemRequest()
                 .withTableName(getTableName())
                 .withItem(item);
         dbClient.putItem(putItemRequest);
     }
 
-    public void initialize() {
+    private void initialize() {
         createTable();
     }
 
@@ -134,6 +141,13 @@ public class DynamoChannelConfigDao implements ChannelConfigDao {
         if (item.containsKey("storage")) {
             builder.withStorage(item.get("storage").getS());
         }
+        if (item.containsKey("master")) {
+            GlobalConfig global = new GlobalConfig();
+            global.setMaster(item.get("master").getS());
+            global.addSatellites(item.get("satellites").getSS());
+            global.setIsMaster(item.get("isMaster").getBOOL());
+            builder.withGlobal(global);
+        }
         return builder.build();
     }
 
@@ -169,7 +183,7 @@ public class DynamoChannelConfigDao implements ChannelConfigDao {
         dbClient.deleteItem(new DeleteItemRequest(getTableName(), key));
     }
 
-    public String getTableName() {
+    private String getTableName() {
         return dynamoUtils.getTableName("channelMetaData");
     }
 

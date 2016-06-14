@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nullable;
 import java.util.concurrent.*;
 
-@SuppressWarnings("Convert2Lambda")
+@SuppressWarnings("WeakerAccess")
 @Singleton
 public class S3WriteQueue {
 
@@ -41,7 +41,7 @@ public class S3WriteQueue {
 
 
     @Inject
-    public S3WriteQueue() throws InterruptedException {
+    private S3WriteQueue() throws InterruptedException {
         for (int i = 0; i < THREADS; i++) {
             executorService.submit(() -> {
                 try {

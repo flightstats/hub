@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+@SuppressWarnings("WeakerAccess")
 @Path("/alert")
 public class AlertResource {
 
@@ -30,7 +31,7 @@ public class AlertResource {
     @Context
     private UriInfo uriInfo;
 
-    private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

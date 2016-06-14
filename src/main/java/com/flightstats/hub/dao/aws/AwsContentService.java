@@ -10,7 +10,7 @@ import com.flightstats.hub.exception.FailedWriteException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
-import com.flightstats.hub.replication.ChannelReplicator;
+import com.flightstats.hub.replication.Replicator;
 import com.flightstats.hub.replication.S3Batch;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
@@ -35,11 +35,17 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class AwsContentService implements ContentService {
 
     private final static Logger logger = LoggerFactory.getLogger(AwsContentService.class);
-
+    private static final String CHANNEL_LATEST_UPDATED = "/ChannelLatestUpdated/";
+    private final ExecutorService executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("AwsContentService-%d").build());
+    private final AtomicInteger inFlight = new AtomicInteger();
+    private final Integer shutdown_wait_seconds = HubProperties.getProperty("app.shutdown_wait_seconds", 5);
+    private final boolean dropSomeWrites = HubProperties.getProperty("s3.dropSomeWrites", false);
+    private final int spokeTtlMinutes = HubProperties.getSpokeTtl();
     @Inject
     @Named(ContentDao.CACHE)
     private ContentDao spokeContentDao;
@@ -58,20 +64,12 @@ public class AwsContentService implements ContentService {
     @Inject
     private HubUtils hubUtils;
 
-    private static final String CHANNEL_LATEST_UPDATED = "/ChannelLatestUpdated/";
-
-    private final ExecutorService executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("AwsContentService-%d").build());
-    private final AtomicInteger inFlight = new AtomicInteger();
-    private final Integer shutdown_wait_seconds = HubProperties.getProperty("app.shutdown_wait_seconds", 5);
-    private final boolean dropSomeWrites = HubProperties.getProperty("s3.dropSomeWrites", false);
-    private final int spokeTtlMinutes = HubProperties.getSpokeTtl();
-
     public AwsContentService() {
         HubServices.registerPreStop(new AwsContentServiceInit());
         HubServices.register(new ChannelLatestUpdatedService());
     }
 
-    void waitForInFlight() {
+    private void waitForInFlight() {
         logger.info("waiting for in-flight to complete " + inFlight.get());
         long start = System.currentTimeMillis();
         while (inFlight.get() > 0) {
@@ -91,7 +89,14 @@ public class AwsContentService implements ContentService {
             ContentKey key = spokeContentDao.write(channelName, content);
             ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
             if (channel.isSingle() || channel.isBoth()) {
-                s3SingleWrite(channelName, key);
+                //todo - gfm - 5/20/16 - is this the right place for this work?
+                Supplier<Void> local = () -> {
+                    s3SingleWrite(channelName, key);
+                    return null;
+                };
+                Supplier<Void> satellite = () -> null;
+                GlobalChannelService.handleGlobal(channel, local, satellite, local);
+
             }
             return key;
         } finally {
@@ -168,7 +173,7 @@ public class AwsContentService implements ContentService {
     private DateTime getSpokeTtlTime(String channelName, ChannelConfig channel) {
         DateTime startTime = TimeUtil.now();
         if (channel.isReplicating()) {
-            startTime = lastContentPath.get(channelName, MinutePath.NONE, ChannelReplicator.REPLICATED_LAST_UPDATED).getTime();
+            startTime = lastContentPath.get(channelName, MinutePath.NONE, Replicator.REPLICATED_LAST_UPDATED).getTime();
         }
         return startTime.minusMinutes(spokeTtlMinutes);
     }

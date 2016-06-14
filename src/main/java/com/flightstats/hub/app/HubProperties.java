@@ -19,6 +19,10 @@ public class HubProperties {
         return StringUtils.appendIfMissing(HubProperties.getProperty("app.url", ""), "/");
     }
 
+    public static String getAppDomain() {
+        return StringUtils.removeEnd(StringUtils.substringAfter(HubProperties.getProperty("app.url", ""), "://"), "/");
+    }
+
     public static int getSpokeTtl() {
         return getProperty("spoke.ttlMinutes", 60);
     }
@@ -27,13 +31,13 @@ public class HubProperties {
         return (getProperty("app.name", "hub") + "_" + getProperty("app.environment", "unknown")).replace("-", "_");
     }
 
-    public static void setProperties(Properties properties) {
-        logger.info("setting properties {}", properties);
-        HubProperties.properties = properties;
+    static Properties getProperties() {
+        return properties;
     }
 
-    public static Properties getProperties() {
-        return properties;
+    private static void setProperties(Properties properties) {
+        logger.info("setting properties {}", properties);
+        HubProperties.properties = properties;
     }
 
     public static boolean getProperty(String name, boolean defaultValue) {

@@ -23,7 +23,7 @@ public class GCRunner {
         }
     }
 
-    public void run() {
+    private void run() {
         logger.info("running GC");
         long start = System.currentTimeMillis();
         System.gc();

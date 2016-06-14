@@ -1,26 +1,44 @@
 # locust.py
 
-import httplib2
 import json
 import logging
-import random
 import socket
+import random
 import string
-import thread
 import threading
+
 import time
-import websocket
 from flask import request, jsonify
 from locust import HttpLocust, TaskSet, task, events, web
 
+import globalConfig
+
+# This test uses the http://locust.io/ framework.
+#
+# It performs a combination of verification and load testing.
+# Each channel (aka user) will perform all of the methods defined by @task(N)
+# where N is the relative weighting for frequency.
+#
+# The tests in 'global.py' focus on the verification of correct behavior of
+# global channels, and requires two separate hub clusters.
+#
+# Define globalConfig.py, which shuld contain :
+# globalConfig = {
+#     "master": "http://hub.master.dev/",
+#     "satellites": ["http://hub.satellite.dev/"]
+# }:
+# Set up a load balanced endpoint "http://hub.dev" which can go to either hub cluster
+#
 # Usage:
-# locust -f read-write-group.py -H http://localhost:9080
-# nohup locust -f read-write-group.py -H http://hub &
+#   locust -f global.py -H http://hub.dev
+# or in the background with:
+#   nohup locust -f global.py -H http://hub.dev &
+#
+# After starting the process, go to http://locust:8089/
 
 logger = logging.getLogger('hub-locust')
 logger.setLevel(logging.INFO)
-# fh = logging.FileHandler('./locust.log')
-fh = logging.FileHandler('/home/ubuntu/locust.log')
+fh = logging.FileHandler('./locust.log')
 fh.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 fh.setFormatter(formatter)
@@ -28,7 +46,8 @@ logger.addHandler(fh)
 
 groupCallbacks = {}
 groupConfig = {}
-websockets = {}
+
+print globalConfig.globalConfig
 
 
 class WebsiteTasks(TaskSet):
@@ -39,23 +58,35 @@ class WebsiteTasks(TaskSet):
         self.number = WebsiteTasks.channelNum
         self.payload = self.payload_generator()
         logger.info("payload size " + str(self.payload.__sizeof__()))
-        self.channel = "load_test_" + str(self.number)
+        self.channel = "global_test_" + str(self.number)
         self.count = 0
-        payload = {"name": self.channel, "ttlDays": "3", "tags": ["load", "test", "DDT"], "owner": "DDT"}
+        self.satellite = globalConfig.globalConfig["satellites"][0]
+        payload = {
+            "name": self.channel,
+            "ttlDays": "3",
+            "tags": ["load", "test", "DDT"],
+            "owner": "DDT",
+            "global": {
+                "master": (globalConfig.globalConfig["master"]),
+                "satellites": [self.satellite]
+            }
+        }
         self.client.put("/channel/" + self.channel,
-                         data=json.dumps(payload),
-                         headers={"Content-Type": "application/json"},
-                         name="channel")
-        self.start_websocket()
+                        data=json.dumps(payload),
+                        headers={"Content-Type": "application/json"},
+                        name="channel")
+        # we want to ensure the channel is created very quickly ...
+        self.client.put(self.satellite + "internal/global/satellite/" + self.channel,
+                        data=json.dumps(payload),
+                        headers={"Content-Type": "application/json"},
+                        name="channel")
         self.start_group_callback()
         time.sleep(5)
 
     def start_group_callback(self):
-        # First User - create channel - posts to channel, group callback on channel
-        # Second User - create channel - posts to channel, parallel group callback on channel
-        # Third User - create channel - posts to channel, replicate channel, group callback on replicated channel
-        # Fourth User - create channel - posts to channel, minute group callback on channel
-        group_channel = self.channel
+        # First User - create channel - posts to channel, group callback on Satellite channel
+        # Second User - create channel - posts to channel, parallel group callback on Satellite channel
+        # Third User - create channel - posts to channel, minute group callback on Satellite channel
         parallel = 1
         batch = "SINGLE"
         heartbeat = False
@@ -63,17 +94,11 @@ class WebsiteTasks(TaskSet):
             parallel = 2
             heartbeat = True
         if self.number == 3:
-            group_channel = self.channel + "_replicated"
-            self.client.put("/channel/" + group_channel,
-                            data=json.dumps({"name": group_channel, "ttlDays": "3",
-                                             "replicationSource": groupConfig['host'] + "/channel/" + self.channel}),
-                            headers={"Content-Type": "application/json"},
-                            name="replication")
-        if self.number == 4:
             batch = "MINUTE"
-        group_name = "/group/locust_" + group_channel
-        self.client.delete(group_name, name="group")
-        logger.info("group channel " + group_channel + " parallel:" + str(parallel))
+        satellite_group_url = self.satellite + "group/locust_" + self.channel
+
+        logger.info("group channel " + self.channel + " parallel:" + str(parallel) + " url " + satellite_group_url)
+        self.client.delete(satellite_group_url, name="group")
         groupCallbacks[self.channel] = {
             "data": [],
             "lock": threading.Lock(),
@@ -84,48 +109,19 @@ class WebsiteTasks(TaskSet):
         }
         group = {
             "callbackUrl": "http://" + groupConfig['ip'] + ":8089/callback/" + self.channel,
-            "channelUrl": groupConfig['host'] + "/channel/" + group_channel,
+            "channelUrl": self.satellite + "channel/" + self.channel,
             "parallelCalls": parallel,
             "batch": batch,
             "heartbeat": heartbeat
         }
-        self.client.put(group_name,
+        self.client.put(satellite_group_url,
                         data=json.dumps(group),
                         headers={"Content-Type": "application/json"},
                         name="group")
 
-    def start_websocket(self):
-        websockets[self.channel] = {
-            "data": [],
-            "lock": threading.Lock(),
-            "open": True
-        }
-        self._http = httplib2.Http()
-        meta = self._load_metadata()
-        self.ws_uri = meta['_links']['ws']['href']
-        print self.ws_uri
-        ws = websocket.WebSocketApp(self.ws_uri,
-                                    on_message=self.on_message,
-                                    on_close=self.on_close,
-                                    on_error=self.on_error)
-        thread.start_new_thread(ws.run_forever, ())
-
     @staticmethod
     def removeHostChannel(href):
         return href.split("/channel/", 1)[1]
-
-    def on_message(self, ws, message):
-        logger.debug("ws %s", message)
-        shortHref = WebsiteTasks.removeHostChannel(message)
-        WebsiteTasks.verify_ordered(self.channel, shortHref, websockets, "websocket")
-
-    def on_close(self, ws):
-        logger.info("closing ws %s", self.channel)
-        websockets[self.channel]["open"] = False
-
-    def on_error(self, ws, error):
-        logger.info("error ws %s", self.channel)
-        websockets[self.channel]["open"] = False
 
     def _load_metadata(self):
         print("Fetching channel metadata...")
@@ -135,9 +131,6 @@ class WebsiteTasks(TaskSet):
     def write(self):
         payload = {"name": self.payload, "count": self.count}
         postData = json.dumps(payload)
-        if random.random() >= 0.99:
-            postData = None
-
         with self.client.post("/channel/" + self.channel, data=postData,
                               headers={"Content-Type": "application/json"}, catch_response=True,
                               name="post_payload") as postResponse:
@@ -148,12 +141,11 @@ class WebsiteTasks(TaskSet):
         self.count += 1
         href = links['_links']['self']['href']
         self.append_href(href, groupCallbacks)
-        if websockets[self.channel]["open"]:
-            self.append_href(href, websockets)
+
         if groupCallbacks[self.channel]["heartbeat"]:
             id = href[-30:-14]
             if id not in groupCallbacks[self.channel]["heartbeats"]:
-                logger.info("adding heartbeat " + id)
+                logger.info("adding heartbeat " + id + " " + self.channel)
                 groupCallbacks[self.channel]["heartbeats"].append(id)
 
         return href
@@ -172,19 +164,6 @@ class WebsiteTasks(TaskSet):
             if postResponse.status_code != 200:
                 postResponse.failure("Got wrong response on get: " + str(postResponse.status_code) + " " + uri)
 
-    @task(10)
-    def change_parallel(self):
-        if self.number % 3 == 2:
-            group = {
-                "callbackUrl": "http://" + groupConfig['ip'] + ":8089/callback/" + self.channel,
-                "channelUrl": groupConfig['host'] + "/channel/" + self.channel,
-                "parallelCalls": random.randint(1, 5)
-            }
-            self.client.put("/group/locust_" + self.channel,
-                            data=json.dumps(group),
-                            headers={"Content-Type": "application/json"},
-                            name="group")
-
     @task(1000)
     def write_read(self):
         self.read(self.write())
@@ -197,12 +176,14 @@ class WebsiteTasks(TaskSet):
         items = 20
         for x in range(0, items):
             posted_items.append(self.write())
+        self.complete_replication()
         initial = (self.client.get(self.time_path("minute"), name="time_minute")).json()
-
+        # logger.info("found initial " + ", ".join(initial['_links']['uris']))
         if len(initial['_links']['uris']) < items:
             previous = (self.client.get(initial['_links']['previous']['href'], name="time_minute")).json()
             query_items.extend(previous['_links']['uris'])
         query_items.extend(initial['_links']['uris'])
+        # logger.info("found query_items " + ", ".join(query_items))
         query_slice = query_items[-items:]
         total_time = int((time.time() - start_time) * 1000)
         if cmp(query_slice, posted_items) == 0:
@@ -231,6 +212,7 @@ class WebsiteTasks(TaskSet):
 
     @task(10)
     def next_previous(self):
+        self.complete_replication()
         items = []
         url = self.time_path("minute") + "&trace=true"
         first = (self.client.get(url, name="time_minute")).json()
@@ -263,6 +245,11 @@ class WebsiteTasks(TaskSet):
             logger.info(" previous " + json.dumps(previous_json['trace']))
             events.request_failure.fire(request_type="previous", name="compare", response_time=1
                                         , exception=-1)
+
+    @staticmethod
+    def complete_replication():
+        # make sure that global replication should have completed
+        time.sleep(10)
 
     @task(10)
     def second_query(self):
@@ -301,8 +288,6 @@ class WebsiteTasks(TaskSet):
     @task(10)
     def verify_callback_length(self):
         self.verify_callback(groupCallbacks, "group")
-        if websockets[self.channel]["open"]:
-            self.verify_callback(websockets, "websocket")
         if groupCallbacks[self.channel]["heartbeat"]:
             heartbeats_ = groupCallbacks[self.channel]["heartbeats"]
             if len(heartbeats_) > 2:
@@ -339,36 +324,38 @@ class WebsiteTasks(TaskSet):
 
     @web.app.route("/callback/<channel>", methods=['GET', 'POST'])
     def callback(channel):
-        if request.method == 'POST':
+        if request.method == "POST":
             incoming_json = request.get_json()
-            for incoming_uri in incoming_json['uris']:
-                if "_replicated" in incoming_uri:
-                    incoming_uri = incoming_uri.replace("_replicated", "")
-                if channel not in groupCallbacks:
-                    logger.info("incoming uri before locust tests started " + str(incoming_uri))
-                    return "ok"
-                try:
-                    shortHref = WebsiteTasks.removeHostChannel(incoming_uri)
-                    groupCallbacks[channel]["lock"].acquire()
-                    if groupCallbacks[channel]["parallel"] == 1:
-                        WebsiteTasks.verify_ordered(channel, shortHref, groupCallbacks, "group")
-                    else:
-                        WebsiteTasks.verify_parallel(channel, shortHref)
-                finally:
-                    groupCallbacks[channel]["lock"].release()
+            # logger.info("incoming_json " + str(incoming_json))
+            if "item" in incoming_json['type']:
+                for incoming_uri in incoming_json["uris"]:
+                    if channel not in groupCallbacks:
+                        logger.info("incoming uri before locust tests started " + str(incoming_uri))
+                        return "ok"
+                    try:
+                        shortHref = WebsiteTasks.removeHostChannel(incoming_uri)
+                        groupCallbacks[channel]["lock"].acquire()
+                        if groupCallbacks[channel]["parallel"] == 1:
+                            WebsiteTasks.verify_ordered(channel, shortHref, groupCallbacks, "group")
+                        else:
+                            WebsiteTasks.verify_parallel(channel, shortHref)
+                    finally:
+                        groupCallbacks[channel]["lock"].release()
             if incoming_json['type'] == "heartbeat":
                 logger.info("heartbeat " + str(incoming_json))
                 # make sure the heart beat is before the first data item
-                # heartbeat {u'id': u'2015/10/07/01/14', u'type': u'heartbeat', u'name': u'locust_load_test_2', u'uris': []}
-                if incoming_json['id'] == groupCallbacks[channel]["heartbeats"][0]:
-                    (groupCallbacks[channel]["heartbeats"]).remove(incoming_json['id'])
-                    events.request_success.fire(request_type="heartbeats", name="order", response_time=1,
-                                                response_length=1)
+                if len(groupCallbacks[channel]["heartbeats"]) > 0:
+                    if incoming_json['id'] == groupCallbacks[channel]["heartbeats"][0]:
+                        (groupCallbacks[channel]["heartbeats"]).remove(incoming_json['id'])
+                        events.request_success.fire(request_type="heartbeats", name="order", response_time=1,
+                                                    response_length=1)
+                    else:
+                        logger.info("heartbeat order failure. id = " + incoming_json['id'] + " array=" + str(
+                            groupCallbacks[channel]["heartbeats"]))
+                        events.request_failure.fire(request_type="heartbeats", name="order", response_time=1,
+                                                    exception=-1)
                 else:
-                    logger.info("heartbeat order failure. id = " + incoming_json['id'] + " array=" + str(
-                        groupCallbacks[channel]["heartbeats"]))
-                    events.request_failure.fire(request_type="heartbeats", name="order", response_time=1,
-                                                exception=-1)
+                    logger.info("no heartbeat found. id = " + incoming_json['id'] + " " + channel)
             return "ok"
         else:
             return jsonify(items=groupCallbacks[channel]["data"])
@@ -376,15 +363,13 @@ class WebsiteTasks(TaskSet):
 
 class WebsiteUser(HttpLocust):
     task_set = WebsiteTasks
-    min_wait = 500
-    max_wait = 5000
+    min_wait = 2000
+    max_wait = 3000
 
     def __init__(self):
         super(WebsiteUser, self).__init__()
-        # groupConfig['host'] = 'http://localhost:8080'
-        # groupConfig['ip'] = '127.0.0.1'
         groupConfig['host'] = self.host
         groupConfig['ip'] = socket.gethostbyname(socket.getfqdn())
         logger.info('groupConfig %s', groupConfig)
+        # todo look at using --logfile from https://github.com/locustio/locust/blob/master/locust/main.py#L169
         print groupConfig
-

@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Objects;
 import java.util.SortedSet;
 
 @Builder
@@ -26,12 +27,12 @@ import java.util.SortedSet;
 @EqualsAndHashCode(exclude = {"startingKey"})
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class Group {
-    private final static Logger logger = LoggerFactory.getLogger(Group.class);
-
     public static final String SINGLE = "SINGLE";
     public static final String MINUTE = "MINUTE";
     public static final String SECOND = "SECOND";
-
+    private final static Logger logger = LoggerFactory.getLogger(Group.class);
+    private static final ObjectMapper mapper = new ObjectMapper();
+    private static final Gson gson = new GsonBuilder().create();
     private final String callbackUrl;
     private final String channelUrl;
     @Wither
@@ -49,35 +50,6 @@ public class Group {
     private final Integer ttlMinutes;
     @Wither
     private final Integer maxWaitMinutes;
-
-    private static final ObjectMapper mapper = new ObjectMapper();
-
-    @JsonIgnore
-    public ContentPath getStartingKey() {
-        return startingKey;
-    }
-
-    public boolean allowedToChange(Group other) {
-        return ChannelNameUtils.extractFromChannelUrl(channelUrl)
-                .equals(ChannelNameUtils.extractFromChannelUrl(other.channelUrl))
-                && name.equals(other.name);
-    }
-
-    public boolean isChanged(Group other) {
-        return parallelCalls != other.parallelCalls
-                || paused != other.paused
-                || !callbackUrl.equals(other.callbackUrl)
-                || !batch.equals(other.batch)
-                || !heartbeat == other.heartbeat
-                || !ttlMinutes.equals(other.ttlMinutes)
-                || !maxWaitMinutes.equals(other.maxWaitMinutes);
-    }
-
-    private static final Gson gson = new GsonBuilder().create();
-
-    public String toJson() {
-        return gson.toJson(this);
-    }
 
     public static Group fromJson(String json, Optional<Group> groupOptional) {
         GroupBuilder builder = Group.builder();
@@ -172,6 +144,38 @@ public class Group {
         return fromJson(json, Optional.absent());
     }
 
+    public static String getBatchType(boolean single) {
+        if (single) {
+            return SINGLE;
+        }
+        return MINUTE;
+    }
+
+    @JsonIgnore
+    ContentPath getStartingKey() {
+        return startingKey;
+    }
+
+    boolean allowedToChange(Group other) {
+        return ChannelNameUtils.extractFromChannelUrl(channelUrl)
+                .equals(ChannelNameUtils.extractFromChannelUrl(other.channelUrl))
+                && name.equals(other.name);
+    }
+
+    boolean isChanged(Group other) {
+        return !Objects.equals(parallelCalls, other.parallelCalls)
+                || paused != other.paused
+                || !callbackUrl.equals(other.callbackUrl)
+                || !batch.equals(other.batch)
+                || !heartbeat == other.heartbeat
+                || !ttlMinutes.equals(other.ttlMinutes)
+                || !maxWaitMinutes.equals(other.maxWaitMinutes);
+    }
+
+    public String toJson() {
+        return gson.toJson(this);
+    }
+
     /**
      * Returns a Group with all optional values set to the default.
      */
@@ -206,13 +210,6 @@ public class Group {
         return SECOND.equalsIgnoreCase(getBatch());
     }
 
-    public static String getBatchType(boolean single) {
-        if (single) {
-            return SINGLE;
-        }
-        return MINUTE;
-    }
-
     @JsonIgnore
     public boolean isNeverStop() {
         return getTtlMinutes() == 0;
@@ -225,7 +222,7 @@ public class Group {
 
     public Integer getTtlMinutes() {
         if (ttlMinutes == null) {
-            return new Integer(0);
+            return 0;
         }
         return ttlMinutes;
     }

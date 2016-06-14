@@ -8,13 +8,13 @@ import com.flightstats.hub.group.GroupService;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 
-public class CallbackStream {
+class CallbackStream {
 
-    private ContentOutput contentOutput;
     private final GroupService groupService = HubProvider.getInstance(GroupService.class);
     private final String random = RandomStringUtils.randomAlphanumeric(6);
+    private ContentOutput contentOutput;
 
-    public CallbackStream(ContentOutput contentOutput) {
+    CallbackStream(ContentOutput contentOutput) {
         this.contentOutput = contentOutput;
     }
 
@@ -30,7 +30,7 @@ public class CallbackStream {
         groupService.upsertGroup(group);
     }
 
-    public ContentOutput getContentOutput() {
+    ContentOutput getContentOutput() {
         return contentOutput;
     }
 

@@ -68,7 +68,7 @@ public class AwsBindings extends AbstractModule {
         return "batch".equals(role) || StringUtils.contains(HubHost.getLocalName(), "batch");
     }
 
-    public static String packages() {
+    static String packages() {
         if (isBatch()) {
             return "com.flightstats.hub.app," +
                     "com.flightstats.hub.health," +

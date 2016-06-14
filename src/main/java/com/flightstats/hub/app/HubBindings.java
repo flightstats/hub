@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.flightstats.hub.alert.AlertRunner;
 import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.cluster.*;
+import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.dao.GlobalChannelService;
 import com.flightstats.hub.group.GroupProcessor;
 import com.flightstats.hub.group.GroupProcessorImpl;
 import com.flightstats.hub.group.GroupValidator;
@@ -15,7 +17,7 @@ import com.flightstats.hub.metrics.HostedGraphiteSender;
 import com.flightstats.hub.metrics.MetricsRunner;
 import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.metrics.NoOpMetricsSender;
-import com.flightstats.hub.replication.ReplicatorManager;
+import com.flightstats.hub.replication.ReplicationGlobalManager;
 import com.flightstats.hub.rest.HalLinks;
 import com.flightstats.hub.rest.HalLinksSerializer;
 import com.flightstats.hub.rest.RetryClientFilter;
@@ -46,35 +48,6 @@ import java.util.concurrent.TimeUnit;
 
 public class HubBindings extends AbstractModule {
     private final static Logger logger = LoggerFactory.getLogger(HubBindings.class);
-
-    @Override
-    protected void configure() {
-        Names.bindProperties(binder(), HubProperties.getProperties());
-
-        bind(HubHealthCheck.class).asEagerSingleton();
-        bind(HubClusterRegister.class).asEagerSingleton();
-        bind(ZooKeeperState.class).asEagerSingleton();
-        bind(ReplicatorManager.class).asEagerSingleton();
-        bind(HubUtils.class).asEagerSingleton();
-        bind(CuratorLock.class).asEagerSingleton();
-        bind(GCRunner.class).asEagerSingleton();
-        bind(MetricsRunner.class).asEagerSingleton();
-        bind(ChannelValidator.class).asEagerSingleton();
-        bind(GroupValidator.class).asEagerSingleton();
-        bind(GroupProcessor.class).to(GroupProcessorImpl.class).asEagerSingleton();
-        bind(LastContentPath.class).asEagerSingleton();
-        bind(WatchManager.class).asEagerSingleton();
-
-        if (HubProperties.getProperty("hosted_graphite.enable", false)) {
-            bind(MetricsSender.class).to(HostedGraphiteSender.class).asEagerSingleton();
-        } else {
-            bind(MetricsSender.class).to(NoOpMetricsSender.class).asEagerSingleton();
-        }
-        bind(NtpMonitor.class).asEagerSingleton();
-        bind(LeaderRotator.class).asEagerSingleton();
-        bind(AlertRunner.class).asEagerSingleton();
-        bind(TimeService.class).asEagerSingleton();
-    }
 
     @Singleton
     @Provides
@@ -159,6 +132,36 @@ public class HubBindings extends AbstractModule {
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
         return mapper;
+    }
+
+    @Override
+    protected void configure() {
+        Names.bindProperties(binder(), HubProperties.getProperties());
+
+        bind(ChannelService.class).to(GlobalChannelService.class).asEagerSingleton();
+        bind(HubHealthCheck.class).asEagerSingleton();
+        bind(HubClusterRegister.class).asEagerSingleton();
+        bind(ZooKeeperState.class).asEagerSingleton();
+        bind(ReplicationGlobalManager.class).asEagerSingleton();
+        bind(HubUtils.class).asEagerSingleton();
+        bind(CuratorLock.class).asEagerSingleton();
+        bind(GCRunner.class).asEagerSingleton();
+        bind(MetricsRunner.class).asEagerSingleton();
+        bind(ChannelValidator.class).asEagerSingleton();
+        bind(GroupValidator.class).asEagerSingleton();
+        bind(GroupProcessor.class).to(GroupProcessorImpl.class).asEagerSingleton();
+        bind(LastContentPath.class).asEagerSingleton();
+        bind(WatchManager.class).asEagerSingleton();
+
+        if (HubProperties.getProperty("hosted_graphite.enable", false)) {
+            bind(MetricsSender.class).to(HostedGraphiteSender.class).asEagerSingleton();
+        } else {
+            bind(MetricsSender.class).to(NoOpMetricsSender.class).asEagerSingleton();
+        }
+        bind(NtpMonitor.class).asEagerSingleton();
+        bind(LeaderRotator.class).asEagerSingleton();
+        bind(AlertRunner.class).asEagerSingleton();
+        bind(TimeService.class).asEagerSingleton();
     }
 
 }

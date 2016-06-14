@@ -15,7 +15,7 @@ utils.configureFrisby();
  */
 describe(testName, function () {
 
-    utils.putChannel(channelName, false, {"name": channelName, "ttlDays": 1, "tags": ["bulk"]});
+    utils.putChannel(channelName, false, {"name": channelName, "ttlDays": 1, "tags": ["bulk"]}, testName);
 
     var multipart =
         'This is a message with multiple parts in MIME format.  This section is ignored.\r\n' +
@@ -40,7 +40,7 @@ describe(testName, function () {
     var items = [];
     var location = '';
 
-    it("batches items to " + channelResource, function (done) {
+    it("batches items to " + channelName, function (done) {
         request.post({
                 url: channelResource + '/bulk',
                 headers: {'Content-Type': "multipart/mixed; boundary=abcdefg"},
@@ -59,7 +59,7 @@ describe(testName, function () {
             });
     });
 
-    it("verifies location " + channelResource, function (done) {
+    it("verifies location " + channelName, function (done) {
         request.get({url: location, json: true},
             function (err, response, body) {
                 expect(err).toBeNull();
@@ -126,30 +126,30 @@ describe(testName, function () {
 
     var timeout = 60 * 1000 * 3;
 
-    it("gets latest bulk ", function (done) {
+    it("gets latest bulk " + channelName, function (done) {
         getAll(channelResource + '/latest/10', done);
     }, timeout);
 
-    it("gets earliest items ", function (done) {
+    it("gets earliest items " + channelName, function (done) {
         getAll(channelResource + '/earliest/10', done);
     });
 
-    it("gets day items ", function (done) {
+    it("gets day items " + channelName, function (done) {
         getAll(sliceFromEnd(26), done, timeVerify);
     });
 
-    it("gets hour items ", function (done) {
+    it("gets hour items " + channelName, function (done) {
         getAll(sliceFromEnd(23), done, timeVerify);
     });
 
-    it("gets minute items ", function (done) {
+    it("gets minute items " + channelName, function (done) {
         getAll(sliceFromEnd(20), done, timeVerify);
     });
 
-    it("gets second items ", function (done) {
+    it("gets second items " + channelName, function (done) {
         getAll(sliceFromEnd(17), done, timeVerify);
     });
-    it("gets next items ", function (done) {
+    it("gets next items " + channelName, function (done) {
         getAll(items[0] + '/next/10', done, function (response, param) {
             for (var i = 1; i < items.length; i++) {
                 expect(response.body.indexOf(items[i]) > 0).toBe(true);
@@ -160,8 +160,8 @@ describe(testName, function () {
             expect(linkHeader).toContain(items[3] + '/next/10?stable=false' + param);
         });
     });
-    
-    it("gets previous items ", function (done) {
+
+    it("gets previous items " + channelName, function (done) {
         getAll(items[3] + '/previous/10', done, function (response, param) {
             for (var i = 0; i < items.length - 1; i++) {
                 expect(response.body.indexOf(items[i]) > 0).toBe(true);

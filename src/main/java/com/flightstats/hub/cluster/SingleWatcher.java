@@ -1,7 +1,6 @@
 package com.flightstats.hub.cluster;
 
 import com.flightstats.hub.util.RuntimeInterruptedException;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.api.CuratorListener;
@@ -15,7 +14,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * SingleWatcher asynchronously calls the Watcher in a single thread.
  */
-public class SingleWatcher {
+class SingleWatcher {
     private final static Logger logger = LoggerFactory.getLogger(SingleWatcher.class);
 
     private final CuratorFramework curator;
@@ -29,8 +28,7 @@ public class SingleWatcher {
         executorService = Executors.newSingleThreadExecutor();
     }
 
-    @VisibleForTesting
-    void addCuratorListener() {
+    private void addCuratorListener() {
         listener = (client, event) -> {
             if (watcher.getPath().equals(event.getPath())) {
                 logger.debug("event path {}", event.getPath());

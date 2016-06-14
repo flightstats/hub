@@ -91,7 +91,7 @@ public class TagService {
         traces.add("TagService.getEarliest", tag);
         SortedSet<ChannelContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
         for (ChannelConfig channel : channels) {
-            DirectionQuery query = ChannelEarliestResource.getDirectionQuery(channel.getName(), count, stable, trace, channelService);
+            DirectionQuery query = ChannelEarliestResource.getDirectionQuery(channel.getName(), count, stable, channelService);
             Collection<ContentKey> contentKeys = channelService.getKeys(query);
             for (ContentKey contentKey : contentKeys) {
                 orderedKeys.add(new ChannelContentKey(channel.getName(), contentKey));

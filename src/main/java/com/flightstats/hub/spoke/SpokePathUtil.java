@@ -5,18 +5,18 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
-public class SpokePathUtil {
-    public static final Pattern yearPattern = Pattern.compile("/(20\\d\\d)");
-    public static final Pattern monthPattern = Pattern.compile("/20\\d\\d/(\\d\\d)");
-    public static final Pattern dayPattern = Pattern.compile("/20\\d\\d/\\d\\d/(\\d\\d)");
-    public static final Pattern hourPattern = Pattern.compile("/20\\d\\d/\\d\\d/\\d\\d/(\\d\\d)");
-    public static final Pattern minutePattern = Pattern.compile("/20\\d\\d/\\d\\d/\\d\\d/\\d\\d/(\\d\\d)");
-    public static final Pattern secondPattern = Pattern.compile("/20\\d\\d/\\d\\d/\\d\\d/\\d\\d/\\d\\d/(\\d\\d)");
+class SpokePathUtil {
+    private static final Pattern yearPattern = Pattern.compile("/(20\\d\\d)");
+    private static final Pattern monthPattern = Pattern.compile("/20\\d\\d/(\\d\\d)");
+    private static final Pattern dayPattern = Pattern.compile("/20\\d\\d/\\d\\d/(\\d\\d)");
+    private static final Pattern hourPattern = Pattern.compile("/20\\d\\d/\\d\\d/\\d\\d/(\\d\\d)");
+    private static final Pattern minutePattern = Pattern.compile("/20\\d\\d/\\d\\d/\\d\\d/\\d\\d/(\\d\\d)");
+    private static final Pattern secondPattern = Pattern.compile("/20\\d\\d/\\d\\d/\\d\\d/\\d\\d/\\d\\d/(\\d\\d)");
 
     //bc: all of these patterns are anchored off of having a yyyy that starts with 20.
     // this code will need to be updated in 85 years.
 
-    static public String timePart(String pathPart, Pattern pattern) {
+    private static String timePart(String pathPart, Pattern pattern) {
         Matcher m = pattern.matcher(pathPart);
         if (m.find()) {
             return m.group(1);
@@ -52,7 +52,7 @@ public class SpokePathUtil {
 //    }
 
 
-    static public String smallestTimeResolution(String pathPart) {
+    static String smallestTimeResolution(String pathPart) {
         if (second(pathPart) != null) return "second";
         if (minute(pathPart) != null) return "minute";
         if (hour(pathPart) != null) return "hour";
@@ -62,14 +62,14 @@ public class SpokePathUtil {
         return null;
     }
 
-    static public String secondPathPart(String p) {
+    static String secondPathPart(String p) {
         // return path up to and including the second part
         String secPath = hourPathPart(p) + "/" + SpokePathUtil.minute(p) + "/" + SpokePathUtil.second(p);
         int i = p.lastIndexOf(secPath);
         return p.substring(0, i + secPath.length());
     }
 
-    static public String hourPathPart(String p) {
+    private static String hourPathPart(String p) {
         // return path up to and including the hour part
         String hourPath = SpokePathUtil.year(p) + "/" + SpokePathUtil.month(p) + "/" + SpokePathUtil.day(p) + "/" +
                 SpokePathUtil.hour(p);

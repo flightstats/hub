@@ -18,10 +18,9 @@ import java.util.concurrent.Executors;
 
 public class CachedChannelConfigDao implements ChannelConfigDao {
 
-    private final static Logger logger = LoggerFactory.getLogger(CachedChannelConfigDao.class);
-
     public static final String DELEGATE = "CachedChannelMetadataDao.DELEGATE";
-    public static final String WATCHER_PATH = "/channels/cache";
+    private final static Logger logger = LoggerFactory.getLogger(CachedChannelConfigDao.class);
+    private static final String WATCHER_PATH = "/channels/cache";
     private final ChannelConfigDao delegate;
     private WatchManager watchManager;
     private ConcurrentMap<String, ChannelConfig> channelConfigMap;
@@ -94,11 +93,11 @@ public class CachedChannelConfigDao implements ChannelConfigDao {
         notifyWatchers();
     }
 
-    void notifyWatchers() {
+    private void notifyWatchers() {
         watchManager.notifyWatcher(WATCHER_PATH);
     }
 
-    void startWatcher() {
+    private void startWatcher() {
         CachedChannelConfigDao dao = this;
         watchManager.register(new Watcher() {
             @Override

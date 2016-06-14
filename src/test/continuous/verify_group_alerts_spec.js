@@ -6,10 +6,11 @@ var request = require('request');
 var moment = require('moment');
 var _ = require('lodash');
 var testName = __filename;
+var channelName = process.env.channelName || 'load_test_1';
 
 
 /**
- * This presumes a channel is constantly creating data, load_test_1
+ * This presumes a channel (channelName) is constantly creating data, load_test_1 is the default
  *
  * This should :
  *
@@ -19,7 +20,7 @@ var testName = __filename;
  * 2 - delete all rules whose names start with "verifyGroupAlert"
  *
  * 4 - create group callback
- * 5 - create a new rule for channel load_test_1, named verifyGroupAlert-{time}
+ * 5 - create a new rule for channelName, named verifyGroupAlert-{time}
  */
 
 //jasmine-node --forceexit --captureExceptions --config hubDomain hub-v2.svc.dev verify_group_alerts_spec.js
@@ -34,7 +35,7 @@ describe(testName, function () {
 
     utils.putGroup('verifyGroupAlert', {
         callbackUrl: 'http://none',
-        channelUrl: hubUrlBase + '/channel/load_test_1'
+        channelUrl: hubUrlBase + '/channel/' + channelName
     }, 200, testName);
 
     it('4 - create a new rule for group , named verifyGroupAlert-{time}', function (done) {

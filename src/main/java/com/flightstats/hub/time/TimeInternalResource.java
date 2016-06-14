@@ -15,6 +15,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+@SuppressWarnings("WeakerAccess")
 @Path("/internal/time")
 public class TimeInternalResource {
 

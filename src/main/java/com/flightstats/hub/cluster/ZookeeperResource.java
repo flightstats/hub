@@ -22,6 +22,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.util.List;
 
+@SuppressWarnings("WeakerAccess")
 @Path("/internal/zookeeper/")
 public class ZookeeperResource {
     private static final Logger logger = LoggerFactory.getLogger(ZookeeperResource.class);
@@ -30,7 +31,7 @@ public class ZookeeperResource {
     private CuratorFramework curator = HubProvider.getInstance(CuratorFramework.class);
 
     @Context
-    UriInfo uriInfo;
+    private UriInfo uriInfo;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

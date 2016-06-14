@@ -3,6 +3,7 @@ package com.flightstats.hub.model;
 import com.google.common.collect.Sets;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -31,6 +32,7 @@ public class ChannelConfigTest {
         assertTrue(config.getTags().isEmpty());
         assertEquals("", config.getReplicationSource());
         assertEquals("SINGLE", config.getStorage());
+        assertEquals(null, config.getGlobal());
     }
 
     @Test
@@ -114,6 +116,30 @@ public class ChannelConfigTest {
 
         ChannelConfig tags = getBuilder(hasCheez).withTags(Sets.newHashSet("one", "two")).build();
         assertTrue(tags.hasChanged(defaults));
+    }
+
+    @Test
+    public void testGlobalCopy() throws IOException {
+        GlobalConfig globalConfig = new GlobalConfig();
+        globalConfig.setMaster("master");
+        globalConfig.addSatellites(Arrays.asList("sat1", "sat2"));
+        ChannelConfig config = ChannelConfig.builder().withGlobal(globalConfig).build();
+        ChannelConfig copy = getBuilder(config).build();
+        assertEquals(globalConfig, copy.getGlobal());
+        assertFalse(config.hasChanged(copy));
+
+        ChannelConfig fromJson = ChannelConfig.fromJson(config.toJson());
+        assertEquals(globalConfig, fromJson.getGlobal());
+
+        GlobalConfig changedGlobal = new GlobalConfig();
+        changedGlobal.setMaster("sat1");
+        changedGlobal.addSatellites(Arrays.asList("master", "sat2", "sat3"));
+        ChannelConfig changedChannel = ChannelConfig.builder().withGlobal(changedGlobal).build();
+
+        ChannelConfig updated = ChannelConfig.builder()
+                .withChannelConfiguration(config)
+                .withUpdateJson(changedChannel.toJson()).build();
+        assertEquals(changedGlobal, updated.getGlobal());
     }
 
     private ChannelConfig.Builder getBuilder(ChannelConfig config) {

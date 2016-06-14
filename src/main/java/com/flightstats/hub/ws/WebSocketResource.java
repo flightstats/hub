@@ -13,13 +13,13 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 
+@SuppressWarnings("WeakerAccess")
 @Path("/internal/ws/{id}")
 public class WebSocketResource {
 
     private final static Logger logger = LoggerFactory.getLogger(WebSocketResource.class);
-
-    private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private static final WebSocketService webSocketService = WebSocketService.getInstance();
+    private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
 
     @POST
     public Response putPayload(@PathParam("id") String id, String data) {

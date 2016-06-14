@@ -85,7 +85,7 @@ public class LongValue {
         }
     }
 
-    LastUpdated getLastUpdated(String path) {
+    private LastUpdated getLastUpdated(String path) {
         try {
             Stat stat = new Stat();
             byte[] bytes = curator.getData().storingStatIn(stat).forPath(path);

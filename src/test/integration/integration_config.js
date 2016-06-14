@@ -3,6 +3,7 @@ utils = require('./utils.js');
 ip = require('ip');
 
 hubDomain = process.env.hubDomain;
+satelliteDomain = process.env.satelliteDomain;
 runEncrypted = process.env.runEncrypted || false;
 integrationTestPath = process.env.integrationTestPath || 'src/test/integration/';
 callbackPort = runEncrypted = process.env.callbackPort || 8888;
@@ -18,6 +19,7 @@ try {
 catch ( err ){}
 
 hubUrlBase = 'http://' + hubDomain;
+satelliteUrl = 'http://' + satelliteDomain;
 
 channelUrl = hubUrlBase + '/channel';
 groupUrl = hubUrlBase + '/group';
@@ -26,6 +28,7 @@ callbackDomain = 'http://' + ipAddress;
 stableOffset = 5;
 
 console.log("hubDomain " + hubDomain);
+console.log("satelliteDomain " + satelliteDomain);
 console.log("runEncrypted " + runEncrypted);
 console.log("callbackDomain " + callbackDomain);
 

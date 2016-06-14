@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.MediaType;
 
-public class AlertSender {
+class AlertSender {
 
     private final static Logger logger = LoggerFactory.getLogger(AlertSender.class);
     private static final ObjectMapper mapper = new ObjectMapper();
@@ -21,7 +21,7 @@ public class AlertSender {
                 .put("{\"ttlDays\":14, \"tags\":[\"alerts\"], \"description\":\"alerts to be sent and confirmations\"}");
     }
 
-    public static void sendAlert(AlertConfig alertConfig, AlertStatus alertStatus, int count) {
+    static void sendAlert(AlertConfig alertConfig, AlertStatus alertStatus, int count) {
         String url = alertConfig.getHubDomain() + "channel/" + alertChannelEscalate;
         ObjectNode alert = mapper.createObjectNode();
         alert.put("serviceName", alertConfig.getServiceName());

@@ -13,23 +13,10 @@ import com.google.inject.name.Names;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class NasBindings extends AbstractModule {
+class NasBindings extends AbstractModule {
     private final static Logger logger = LoggerFactory.getLogger(NasBindings.class);
 
-    @Override
-    protected void configure() {
-        bind(ChannelConfigDao.class).to(CachedChannelConfigDao.class).asEagerSingleton();
-        bind(ChannelConfigDao.class)
-                .annotatedWith(Names.named(CachedChannelConfigDao.DELEGATE))
-                .to(NasChannelConfigurationDao.class);
-
-        bind(ContentService.class).to(NasContentService.class).asEagerSingleton();
-        bind(GroupDao.class).to(NasGroupDao.class).asEagerSingleton();
-        bind(NasTtlEnforcer.class).asEagerSingleton();
-        bind(FinalCheck.class).to(PassFinalCheck.class).asEagerSingleton();
-    }
-
-    public static String packages() {
+    static String packages() {
         return "com.flightstats.hub.alert," +
                 "com.flightstats.hub.app," +
                 "com.flightstats.hub.channel," +
@@ -42,6 +29,19 @@ public class NasBindings extends AbstractModule {
                 "com.flightstats.hub.replication," +
                 "com.flightstats.hub.time," +
                 "com.flightstats.hub.ws";
+    }
+
+    @Override
+    protected void configure() {
+        bind(ChannelConfigDao.class).to(CachedChannelConfigDao.class).asEagerSingleton();
+        bind(ChannelConfigDao.class)
+                .annotatedWith(Names.named(CachedChannelConfigDao.DELEGATE))
+                .to(NasChannelConfigurationDao.class);
+
+        bind(ContentService.class).to(NasContentService.class).asEagerSingleton();
+        bind(GroupDao.class).to(NasGroupDao.class).asEagerSingleton();
+        bind(NasTtlEnforcer.class).asEagerSingleton();
+        bind(FinalCheck.class).to(PassFinalCheck.class).asEagerSingleton();
     }
 
 }

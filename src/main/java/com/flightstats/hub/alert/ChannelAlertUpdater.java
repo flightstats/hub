@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.concurrent.Callable;
 
-public class ChannelAlertUpdater implements Callable<AlertStatus> {
+class ChannelAlertUpdater implements Callable<AlertStatus> {
 
     private final static Logger logger = LoggerFactory.getLogger(ChannelAlertUpdater.class);
     private static final ScriptEngine jsEngine = createJsEngine();
@@ -25,7 +25,7 @@ public class ChannelAlertUpdater implements Callable<AlertStatus> {
     private final AlertConfig alertConfig;
     private final AlertStatus alertStatus;
 
-    public ChannelAlertUpdater(AlertConfig alertConfig, AlertStatus alertStatus) {
+    ChannelAlertUpdater(AlertConfig alertConfig, AlertStatus alertStatus) {
         this.alertConfig = alertConfig;
         if (alertStatus == null) {
             alertStatus = AlertStatus.builder()
@@ -37,6 +37,11 @@ public class ChannelAlertUpdater implements Callable<AlertStatus> {
         }
         this.alertStatus = alertStatus;
         alertStatus.setType(AlertConfig.AlertType.channel.name());
+    }
+
+    private static ScriptEngine createJsEngine() {
+        ScriptEngineManager engineManager = new ScriptEngineManager();
+        return engineManager.getEngineByName("nashorn");
     }
 
     @Override
@@ -83,7 +88,7 @@ public class ChannelAlertUpdater implements Callable<AlertStatus> {
         }
     }
 
-    boolean checkForAlert() throws ScriptException {
+    private boolean checkForAlert() throws ScriptException {
         int count = alertStatus.getHistory().stream()
                 .mapToInt(AlertStatusHistory::getItems)
                 .sum();
@@ -121,10 +126,5 @@ public class ChannelAlertUpdater implements Callable<AlertStatus> {
         }
 
         return builder.build();
-    }
-
-    private static ScriptEngine createJsEngine() {
-        ScriptEngineManager engineManager = new ScriptEngineManager();
-        return engineManager.getEngineByName("nashorn");
     }
 }

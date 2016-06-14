@@ -29,18 +29,7 @@ public class DynamoGroupDao implements GroupDao {
         HubServices.register(new DynamoGroupDaoInit());
     }
 
-    private class DynamoGroupDaoInit extends AbstractIdleService {
-        @Override
-        protected void startUp() throws Exception {
-            initialize();
-        }
-
-        @Override
-        protected void shutDown() throws Exception {
-        }
-    }
-
-    public void initialize() {
+    private void initialize() {
         CreateTableRequest request = new CreateTableRequest()
                 .withTableName(getTableName())
                 .withAttributeDefinitions(new AttributeDefinition("name", ScalarAttributeType.S))
@@ -136,7 +125,18 @@ public class DynamoGroupDao implements GroupDao {
         dbClient.deleteItem(new DeleteItemRequest(getTableName(), key));
     }
 
-    public String getTableName() {
+    private String getTableName() {
         return dynamoUtils.getTableName("GroupConfig");
+    }
+
+    private class DynamoGroupDaoInit extends AbstractIdleService {
+        @Override
+        protected void startUp() throws Exception {
+            initialize();
+        }
+
+        @Override
+        protected void shutDown() throws Exception {
+        }
     }
 }

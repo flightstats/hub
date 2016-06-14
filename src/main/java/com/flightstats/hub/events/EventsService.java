@@ -28,7 +28,7 @@ public class EventsService {
 
     private Map<String, CallbackStream> outputStreamMap = new ConcurrentHashMap<>();
 
-    public void getAndSendData(String uri, String id) {
+    void getAndSendData(String uri, String id) {
         logger.trace("got uri {} {}", uri, id);
         ChannelContentKey key = ChannelContentKey.fromUrl(uri);
         if (key != null) {
@@ -43,7 +43,7 @@ public class EventsService {
         }
     }
 
-    public void checkHealth(String id) {
+    void checkHealth(String id) {
         logger.trace("check health {}", id);
         sendData(id, Errors.rethrow().wrap(contentOutput -> {
             contentOutput.writeHeartbeat();
@@ -80,7 +80,7 @@ public class EventsService {
         callbackStream.start();
     }
 
-    public void unregister(String id) {
+    private void unregister(String id) {
         logger.info("unregistering events {}", id);
         CallbackStream remove = outputStreamMap.remove(id);
         if (null != remove) {

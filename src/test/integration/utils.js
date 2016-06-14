@@ -63,13 +63,13 @@ function createChannel(channelName, url, description) {
 
 }
 
-function putChannel(channelName, verify, body) {
+function putChannel(channelName, verify, body, description) {
     verify = verify || function () {};
     body = body || {"name" : channelName};
-
+    description = description || 'none';
     it("puts channel " + channelName + " at " + channelUrl, function (done) {
         var url = channelUrl + '/' + channelName;
-        console.log("putting channel at " + url);
+        console.log('creating channel ' + channelName + ' for ' + description);
         request.put({
                 url: url,
                 headers: {"Content-Type": "application/json"},
@@ -79,6 +79,27 @@ function putChannel(channelName, verify, body) {
                 expect(response.statusCode).toBe(201);
                 console.log("respinse " + body)
                 verify(response, body);
+                done();
+            });
+    });
+}
+
+function getChannel(channelName, verify, description, hubUrl) {
+    verify = verify || function () { };
+    description = description || 'none';
+    hubUrl = hubUrl || hubUrlBase;
+    it("gets channel " + channelName, function (done) {
+        var url = hubUrl + '/channel/' + channelName;
+        console.log('get channel ' + url + ' for ' + description);
+        request.get({
+                url: url,
+                headers: {"Content-Type": "application/json"}
+            },
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+                console.log("get response " + body)
+                verify(response, body, hubUrl);
                 done();
             });
     });
@@ -146,12 +167,25 @@ function putGroup(groupName, groupConfig, status, description) {
     return groupResource;
 }
 
-function getGroup(groupName, groupConfig, status) {
+function getGroup(groupName, groupConfig, status, verify) {
     var groupResource = groupUrl + "/" + groupName;
     status = status || 200;
-
-    itSleeps(1000);
-
+    verify = verify || function (parse) {
+            if (typeof groupConfig !== "undefined") {
+                expect(parse.callbackUrl).toBe(groupConfig.callbackUrl);
+                expect(parse.channelUrl).toBe(groupConfig.channelUrl);
+                expect(parse.transactional).toBe(groupConfig.transactional);
+                expect(parse.name).toBe(groupName);
+                expect(parse.batch).toBe(groupConfig.batch);
+                if (groupConfig.ttlMinutes) {
+                    expect(parse.ttlMinutes).toBe(groupConfig.ttlMinutes);
+                }
+                if (groupConfig.maxWaitMinutes) {
+                    expect(parse.maxWaitMinutes).toBe(groupConfig.maxWaitMinutes);
+                }
+            }
+        };
+    itSleeps(500);
     it('gets group ' + groupName, function (done) {
         request.get({url : groupResource,
                 headers : {"Content-Type" : "application/json"} },
@@ -161,19 +195,7 @@ function getGroup(groupName, groupConfig, status) {
                 if (response.statusCode < 400) {
                     var parse = utils.parseJson(response, groupName);
                     expect(parse._links.self.href).toBe(groupResource);
-                    if (typeof groupConfig !== "undefined") {
-                        expect(parse.callbackUrl).toBe(groupConfig.callbackUrl);
-                        expect(parse.channelUrl).toBe(groupConfig.channelUrl);
-                        expect(parse.transactional).toBe(groupConfig.transactional);
-                        expect(parse.name).toBe(groupName);
-                        expect(parse.batch).toBe(groupConfig.batch);
-                        if (groupConfig.ttlMinutes) {
-                            expect(parse.ttlMinutes).toBe(groupConfig.ttlMinutes);
-                        }
-                        if (groupConfig.maxWaitMinutes) {
-                            expect(parse.maxWaitMinutes).toBe(groupConfig.maxWaitMinutes);
-                        }
-                    }
+                    verify(parse);
                 }
                 done();
             });
@@ -339,6 +361,7 @@ exports.configureFrisby = configureFrisby;
 exports.runInTestChannelJson = runInTestChannelJson;
 exports.createChannel = createChannel;
 exports.putChannel = putChannel;
+exports.getChannel = getChannel;
 exports.addItem = addItem;
 exports.sleep = sleep;
 exports.itSleeps = itSleeps;

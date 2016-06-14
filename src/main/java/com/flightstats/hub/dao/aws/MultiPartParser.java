@@ -24,7 +24,7 @@ public class MultiPartParser {
     private BufferedInputStream stream;
     private Content.Builder builder;
     private final ByteArrayOutputStream baos;
-    public static final byte[] CRLF = "\r\n".getBytes();
+    private static final byte[] CRLF = "\r\n".getBytes();
 
     public MultiPartParser(BulkContent bulkContent) {
         this.bulkContent = bulkContent;
@@ -84,7 +84,7 @@ public class MultiPartParser {
                         builder.withContentType(type);
                     } else if (StringUtils.startsWithIgnoreCase(headerLine, "content-key:")) {
                         String key = StringUtils.trim(StringUtils.removeStartIgnoreCase(headerLine, "content-key:"));
-                        builder.withContentKey(ContentKey.fromFullUrl(key).get());
+                        builder.withContentKey(ContentKey.fromFullUrl(key));
                     }
                 }
             } else if (byteRing.compare(endBoundary)) {

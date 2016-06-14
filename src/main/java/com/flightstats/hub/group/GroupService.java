@@ -68,7 +68,7 @@ public class GroupService {
         return groupDao.getGroups();
     }
 
-    public GroupStatus getGroupStatus(Group group) {
+    GroupStatus getGroupStatus(Group group) {
         GroupStatus.GroupStatusBuilder builder = GroupStatus.builder().group(group);
         String channel = ChannelNameUtils.extractFromChannelUrl(group.getChannelUrl());
         try {

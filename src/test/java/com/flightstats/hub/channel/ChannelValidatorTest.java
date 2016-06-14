@@ -4,10 +4,12 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.model.GlobalConfig;
 import com.google.common.base.Strings;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -157,4 +159,64 @@ public class ChannelValidatorTest {
     public void testInvalidStorage() {
         validator.validate(ChannelConfig.builder().withName("storage").withStorage("stuff").build(), true);
     }
+
+    @Test
+    public void testGlobal() {
+        GlobalConfig globalConfig = new GlobalConfig();
+        globalConfig.setMaster("http://master");
+        globalConfig.addSatellite("http://satellite");
+        validator.validate(ChannelConfig.builder()
+                .withName("global")
+                .withGlobal(globalConfig).build(), true);
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void testNoSatellite() {
+        GlobalConfig globalConfig = new GlobalConfig();
+        globalConfig.setMaster("http://master");
+        validator.validate(ChannelConfig.builder()
+                .withName("global")
+                .withGlobal(globalConfig).build(), true);
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void testNoMaster() {
+        GlobalConfig globalConfig = new GlobalConfig();
+        globalConfig.addSatellite("http://master");
+        validator.validate(ChannelConfig.builder()
+                .withName("global")
+                .withGlobal(globalConfig).build(), true);
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void testSatelliteSame() {
+        GlobalConfig globalConfig = new GlobalConfig();
+        globalConfig.setMaster("http://master");
+        globalConfig.addSatellite("http://master/");
+        validator.validate(ChannelConfig.builder()
+                .withName("global")
+                .withGlobal(globalConfig).build(), true);
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void testMasterUrl() throws MalformedURLException {
+        GlobalConfig globalConfig = new GlobalConfig();
+        globalConfig.setMaster("http:/master");
+        globalConfig.addSatellite("http://satellite");
+        validator.validate(ChannelConfig.builder()
+                .withName("global")
+                .withGlobal(globalConfig).build(), true);
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void testSatelliteUrl() throws MalformedURLException {
+        GlobalConfig globalConfig = new GlobalConfig();
+        globalConfig.setMaster("http:/master");
+        globalConfig.addSatellite("http://satellite");
+        globalConfig.addSatellite("ftp://satellite2");
+        validator.validate(ChannelConfig.builder()
+                .withName("global")
+                .withGlobal(globalConfig).build(), true);
+    }
+
 }

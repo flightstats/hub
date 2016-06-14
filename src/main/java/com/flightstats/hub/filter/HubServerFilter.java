@@ -13,6 +13,7 @@ import java.io.IOException;
 /**
  * Add Hub Server header to all requests
  */
+@SuppressWarnings("WeakerAccess")
 @Provider
 public class HubServerFilter implements ContainerResponseFilter {
 

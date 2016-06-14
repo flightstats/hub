@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.exception.InvalidRequestException;
-import com.flightstats.hub.replication.ReplicatorManager;
+import com.flightstats.hub.replication.Replicator;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.EqualsAndHashCode;
@@ -20,6 +20,9 @@ import java.util.*;
 @EqualsAndHashCode(of = {"name"})
 public class ChannelConfig implements Serializable {
 
+    public static final String SINGLE = "SINGLE";
+    private static final String BATCH = "BATCH";
+    private static final String BOTH = "BOTH";
     private static final long serialVersionUID = 1L;
     private static final Gson gson = new GsonBuilder().registerTypeAdapter(Date.class, new HubDateTypeAdapter()).create();
     private final String name;
@@ -31,12 +34,9 @@ public class ChannelConfig implements Serializable {
     private final Set<String> tags = new TreeSet<>();
     private final String replicationSource;
     private final String storage;
+    private final GlobalConfig global;
 
-    public static final String SINGLE = "SINGLE";
-    public static final String BATCH = "BATCH";
-    public static final String BOTH = "BOTH";
-
-    public ChannelConfig(Builder builder) {
+    private ChannelConfig(Builder builder) {
         name = StringUtils.trim(builder.name);
         owner = StringUtils.trim(builder.owner);
         creationDate = builder.creationDate;
@@ -51,15 +51,25 @@ public class ChannelConfig implements Serializable {
         tags.addAll(builder.tags);
         if (StringUtils.isBlank(builder.replicationSource)) {
             replicationSource = "";
-            tags.remove(ReplicatorManager.REPLICATED);
+            tags.remove(Replicator.REPLICATED);
         } else {
             replicationSource = builder.replicationSource;
-            tags.add(ReplicatorManager.REPLICATED);
+            tags.add(Replicator.REPLICATED);
         }
         if (StringUtils.isBlank(builder.storage)) {
             storage = SINGLE;
         } else {
             storage = StringUtils.upperCase(builder.storage);
+        }
+        if (builder.global != null) {
+            global = builder.global.cleanup();
+        } else {
+            global = null;
+        }
+        if (isGlobal()) {
+            tags.add(Replicator.GLOBAL);
+        } else {
+            tags.remove(Replicator.GLOBAL);
         }
     }
 
@@ -79,12 +89,12 @@ public class ChannelConfig implements Serializable {
                 .build();
     }
 
-    public String toJson() {
-        return gson.toJson(this);
-    }
-
     public static Builder builder() {
         return new Builder();
+    }
+
+    public String toJson() {
+        return gson.toJson(this);
     }
 
     @JsonProperty("name")
@@ -132,9 +142,29 @@ public class ChannelConfig implements Serializable {
         return storage;
     }
 
+    @JsonProperty("global")
+    public GlobalConfig getGlobal() {
+        return global;
+    }
+
+    @JsonIgnore
+    public boolean isGlobal() {
+        return global != null;
+    }
+
+    @JsonIgnore
+    public boolean isGlobalMaster() {
+        return isGlobal() && global.isMaster();
+    }
+
+    @JsonIgnore
+    public boolean isGlobalSatellite() {
+        return isGlobal() && !global.isMaster();
+    }
+
     @JsonIgnore
     public boolean isReplicating() {
-        return StringUtils.isNotBlank(replicationSource);
+        return StringUtils.isNotBlank(replicationSource) || isGlobalSatellite();
     }
 
     @JsonIgnore
@@ -196,6 +226,7 @@ public class ChannelConfig implements Serializable {
         private String replicationSource = "";
         private long maxItems = 0;
         private String storage;
+        private GlobalConfig global;
 
         public Builder() {
         }
@@ -210,6 +241,7 @@ public class ChannelConfig implements Serializable {
             this.replicationSource = config.replicationSource;
             this.owner = config.owner;
             this.storage = config.storage;
+            this.global = config.global;
             return this;
         }
 
@@ -239,6 +271,9 @@ public class ChannelConfig implements Serializable {
             }
             if (rootNode.has("storage")) {
                 withStorage(rootNode.get("storage").asText());
+            }
+            if (rootNode.has("global")) {
+                global = GlobalConfig.parseJson(rootNode.get("global"));
             }
             return this;
         }
@@ -297,6 +332,11 @@ public class ChannelConfig implements Serializable {
 
         public Builder withStorage(String storage) {
             this.storage = storage;
+            return this;
+        }
+
+        public Builder withGlobal(GlobalConfig global) {
+            this.global = global;
             return this;
         }
     }

@@ -30,6 +30,7 @@ The Hub
 * [provider interface](#provider-interface)
 * [delete a channel](#delete-a-channel)
 * [replication](#replication)
+* [global channels](#global-channels)
 * [alerts](#alerts)
 * [health check](#health-check)
 * [storage](#storage)
@@ -125,6 +126,9 @@ A channel may have at most 20 tags.
 
 * `replicationSource` is the optional fully qualified path to channel in a another hub.  The data from the other channel
 will be duplicated into this channel.  Please see [replication](#replication) for more details.
+
+* `global` are optional settings for distributing data from a master hub cluster to other satellite hub clusters.
+Please see [global channels](#global-channels) for more details.
 
 * `storage` is the optional specification of how to store long term data.  The default is `SINGLE`.  
 High volume channels can see significant reductions in S3 costs by using `BATCH`.  
@@ -882,6 +886,32 @@ To stop replication, either delete the destination channel, or PUT the destinati
 Modifications to configuration takes effect immediately.
 
 Replication destination channels do not allow inserts.
+
+## global channels
+
+A Global channel is defined as a channel with the `global` object set.
+
+```
+    global : {
+        master : "http://hub.europe",
+        satellites : [ "http://hub.america", "http://hub.asia" ]
+    }
+
+```
+
+* `master` should be set to the load balanced url of the hub cluster which should receive writes.
+* `satellites` should be set to the load balanced url(s) of the hub cluster(s) which should receive data from the master.
+* The channel configuration will be the same on all configured hub clusters.
+* A global channel will automatically receive a tag of "global".
+
+### Comparison with Replication
+
+* Global channels should be at the same environment level - dev, staging, prod
+* Replication recreates all the data in a different S3 bucket, Global does not
+* Global can use multiple Hub clusters to answer questions, Replication does not
+* Global can support failover, and the use of a global hub domain
+
+For more details about [global channels](https://github.com/flightstats/hub/wiki/Global-Hub)
 
 ## alerts
 

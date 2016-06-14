@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
 
+@SuppressWarnings("WeakerAccess")
 public class ZookeeperMain {
     private final static Logger logger = LoggerFactory.getLogger(ZookeeperMain.class);
 

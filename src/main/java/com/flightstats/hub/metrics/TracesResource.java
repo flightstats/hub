@@ -15,6 +15,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+@SuppressWarnings("WeakerAccess")
 @Path("/internal/traces")
 public class TracesResource {
     private final static Logger logger = LoggerFactory.getLogger(TracesResource.class);
@@ -22,15 +23,7 @@ public class TracesResource {
     private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private static final CuratorCluster hubCuratorCluster = HubProvider.getInstance(CuratorCluster.class, "HubCuratorCluster");
 
-    @GET
-    @Produces({MediaType.APPLICATION_JSON})
-    public Response getTraces() {
-        ObjectNode root = serverAndServers("/internal/traces");
-        ActiveTraces.log(root);
-        return Response.ok(root).build();
-    }
-
-    public static ObjectNode serverAndServers(String path) {
+    private static ObjectNode serverAndServers(String path) {
         ObjectNode root = mapper.createObjectNode();
         root.put("server", HubHost.getLocalHttpNameUri() + path);
         ArrayNode servers = root.putArray("servers");
@@ -38,5 +31,13 @@ public class TracesResource {
             servers.add(HubHost.getScheme() + spokeServer + path);
         }
         return root;
+    }
+
+    @GET
+    @Produces({MediaType.APPLICATION_JSON})
+    public Response getTraces() {
+        ObjectNode root = serverAndServers("/internal/traces");
+        ActiveTraces.log(root);
+        return Response.ok(root).build();
     }
 }

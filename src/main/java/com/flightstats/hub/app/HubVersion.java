@@ -17,7 +17,7 @@ public class HubVersion {
 
     @Inject
     @Named("app.lib_path")
-    String libPath;
+    private String libPath;
 
     public synchronized String getVersion() {
         if (version != null) {
