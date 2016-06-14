@@ -2,10 +2,6 @@ package com.flightstats.hub.app;
 
 import com.flightstats.hub.filter.DataDogRequestFilter;
 import com.google.common.io.Files;
-import com.google.inject.Injector;
-import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Main entry point for the hub.  This is the runnable class for a stand-alone single hub server.
@@ -13,11 +9,8 @@ import org.slf4j.LoggerFactory;
  * The primary value to set here the system property 'storage.path', which is where all the local data files
  * are stored.
  */
-class SingleHubMain {
-
-    private static final Logger logger = LoggerFactory.getLogger(SingleHubMain.class);
-    private static final DateTime startTime = new DateTime();
-    private static Injector injector;
+@SuppressWarnings("WeakerAccess")
+public class SingleHubMain {
 
     public static void main(String[] args) throws Exception {
         System.out.println("starting up single Hub");
