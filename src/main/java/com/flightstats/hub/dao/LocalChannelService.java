@@ -184,13 +184,17 @@ public class LocalChannelService implements ChannelService {
 
     @Override
     public Iterable<ChannelConfig> getChannels() {
-        return channelConfigDao.getChannels();
+        return getChannels(false);
+    }
+
+    private Iterable<ChannelConfig> getChannels(boolean useCache) {
+        return channelConfigDao.getChannels(useCache);
     }
 
     @Override
     public Iterable<ChannelConfig> getChannels(String tag) {
         Collection<ChannelConfig> matchingChannels = new ArrayList<>();
-        Iterable<ChannelConfig> channels = getChannels();
+        Iterable<ChannelConfig> channels = getChannels(true);
         for (ChannelConfig channel : channels) {
             if (channel.getTags().contains(tag)) {
                 matchingChannels.add(channel);
