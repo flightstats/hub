@@ -12,7 +12,7 @@ describe(testName, function () {
     it("adds item to " + channelResource, function (done) {
         request.post({
                 url: channelResource,
-                body: Array(21 * 1024 * 1024).join("a")
+                body: Array(41 * 1024 * 1024).join("a")
             },
             function (err, response, body) {
                 expect(err).toBeNull();
