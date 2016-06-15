@@ -41,8 +41,10 @@ describe(testName, function () {
     var tagUrl = hubUrlBase + '/tag/' + tag;
 
     it('gets tag hour ' + tag, function (done) {
+        var url = tagUrl + '/time/hour?stable=false';
+        console.log('calling tag hour ', url)
         request.get({
-                url: tagUrl + '/time/hour?stable=false',
+                url: url,
                 headers: {"Content-Type": "application/json"}
             },
             function (err, response, body) {
@@ -50,6 +52,7 @@ describe(testName, function () {
                 expect(response.statusCode).toBe(200);
                 if (response.statusCode == 200) {
                     body = utils.parseJson(response, testName);
+                    console.log('parsed tag body', body);
                     if (body._links) {
                         uris = body._links.uris;
                         expect(uris.length).toBe(3);
