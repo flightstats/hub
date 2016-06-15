@@ -5,6 +5,7 @@ import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.exception.ForbiddenRequestException;
 import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.metrics.ActiveTraces;
+import com.flightstats.hub.metrics.DataDog;
 import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
@@ -13,6 +14,7 @@ import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.timgroup.statsd.StatsDClient;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +27,7 @@ import java.util.stream.Stream;
 @Singleton
 public class LocalChannelService implements ChannelService {
     private final static Logger logger = LoggerFactory.getLogger(LocalChannelService.class);
+    private final static StatsDClient statsd = DataDog.statsd;
     private static final int DIR_COUNT_LIMIT = HubProperties.getProperty("app.directionCountLimit", 10000);
     @Inject
     private ContentService contentService;
@@ -85,6 +88,13 @@ public class LocalChannelService implements ChannelService {
         long start = System.currentTimeMillis();
         ContentKey contentKey = contentService.insert(channelName, content);
         long time = System.currentTimeMillis() - start;
+        List<String> tags = DataDog.addTag(null, "channel", channel);
+        tags = DataDog.addTag(tags, "method", "post");
+        tags = DataDog.addTag(tags, "type", "bulk");
+        String[] tagStringArray = DataDog.tagsAsArray(tags);
+        statsd.time("channel", time, tagStringArray);
+        statsd.increment("channel.items", tagStringArray);
+        statsd.count("channel.bytes", content.getSize(), tagStringArray);
         sender.send("channel." + channelName + ".post", time);
         sender.send("channel." + channelName + ".items", 1);
         sender.send("channel." + channelName + ".post.bytes", content.getSize());
@@ -101,6 +111,13 @@ public class LocalChannelService implements ChannelService {
         long start = System.currentTimeMillis();
         Collection<ContentKey> contentKeys = contentService.insert(bulkContent);
         long time = System.currentTimeMillis() - start;
+        List<String> tags = DataDog.addTag(null, "channel", channel);
+        tags = DataDog.addTag(tags, "method", "post");
+        tags = DataDog.addTag(tags, "type", "bulk");
+        String[] tagStringArray = DataDog.tagsAsArray(tags);
+        statsd.time("channel", time, tagStringArray);
+        statsd.count("channel.items", bulkContent.getItems().size(), tagStringArray);
+        statsd.count("channel.bytes", bulkContent.getSize(), tagStringArray);
         sender.send("channel." + channel + ".batchPost", time);
         sender.send("channel." + channel + ".items", bulkContent.getItems().size());
         sender.send("channel." + channel + ".post", time);
