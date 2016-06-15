@@ -54,19 +54,18 @@ public class S3Config {
 
     private void doWork() {
         logger.info("starting work");
-        Iterable<ChannelConfig> channels = channelConfigDao.getChannels();
+        Iterable<ChannelConfig> channels = channelConfigDao.getChannels(false);
         S3ConfigLockable lockable = new S3ConfigLockable(channels);
         curatorLock.runWithLock(lockable, "/S3ConfigLock", 1, TimeUnit.MINUTES);
     }
 
     private BucketLifecycleConfiguration.Rule addRule(ChannelConfig config, String postfix) {
         String id = config.getName() + postfix;
-        BucketLifecycleConfiguration.Rule configRule = new BucketLifecycleConfiguration.Rule()
+        return new BucketLifecycleConfiguration.Rule()
                 .withPrefix(id + "/")
                 .withId(id)
                 .withExpirationInDays((int) config.getTtlDays())
                 .withStatus(BucketLifecycleConfiguration.ENABLED);
-        return configRule;
     }
 
     private class S3ConfigInit extends AbstractScheduledService {
@@ -125,7 +124,7 @@ public class S3Config {
         }
 
         private void updateMaxItems(ChannelConfig config, ContentKey latest) {
-            SortedSet<ContentKey> keys = new TreeSet();
+            SortedSet<ContentKey> keys = new TreeSet<>();
             keys.add(latest);
             DirectionQuery query = DirectionQuery.builder()
                     .channelName(config.getName())

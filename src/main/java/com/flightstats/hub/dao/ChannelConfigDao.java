@@ -13,7 +13,7 @@ public interface ChannelConfigDao {
 
     ChannelConfig getCachedChannelConfig(String name);
 
-    Iterable<ChannelConfig> getChannels();
+    Iterable<ChannelConfig> getChannels(boolean useCache);
 
     void delete(String name);
 }
