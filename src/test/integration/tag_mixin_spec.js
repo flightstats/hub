@@ -25,8 +25,8 @@ var channelBody = {
  */
 describe(testName, function () {
 
-    utils.putChannel(channelA, false, channelBody);
-    utils.putChannel(channelB, false, channelBody);
+    utils.putChannel(channelA, false, channelBody, testName);
+    utils.putChannel(channelB, false, channelBody, testName);
 
     utils.addItem(channelUrl + '/' + channelA, 201);
 
@@ -70,20 +70,23 @@ describe(testName, function () {
 
     function traverse(url, index, done) {
         url = url.trim();
+        console.log(url + ' ' + testName);
         request.get({
                 url: url
             },
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
-                body = utils.parseJson(response, testName);
-                parsedLinks = parse(response.headers.link);
-                var item = linkStripParams(uris[index]);
-                if (parsedLinks) {
-                    expect(parsedLinks.previous.url).toContain(item + '/previous?tag=' + tag)
-                    expect(parsedLinks.next.url).toContain(item + '/next?tag=' + tag)
-                } else {
-                    expect(parsedLinks).toBe(true);
+                if (response.statusCode == 200) {
+                    body = utils.parseJson(response, testName);
+                    parsedLinks = parse(response.headers.link);
+                    var item = linkStripParams(uris[index]);
+                    if (parsedLinks) {
+                        expect(parsedLinks.previous.url).toContain(item + '/previous?tag=' + tag)
+                        expect(parsedLinks.next.url).toContain(item + '/next?tag=' + tag)
+                    } else {
+                        expect(parsedLinks).toBe(true);
+                    }
                 }
                 done();
             });
