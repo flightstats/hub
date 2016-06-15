@@ -4,6 +4,7 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.util.ChannelNameUtils;
 import com.timgroup.statsd.NonBlockingStatsDClient;
 import com.timgroup.statsd.StatsDClient;
+import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.server.internal.routing.UriRoutingContext;
 import org.glassfish.jersey.uri.UriTemplate;
 import org.slf4j.Logger;
@@ -13,6 +14,7 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.Provider;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -45,7 +47,7 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
         if (isDataDogActive) {
             try {
                 List<String> tags = new ArrayList<>();
-                String channelName = ChannelNameUtils.parseChannelName(request.getUriInfo().getRequestUri().getPath());
+                String channelName = channelName(request);
                 if (channelName != null) addTag(tags, "channel", channelName);
                 addTag(tags, "method", request.getMethod());
                 String template = getRequestTemplate(request);
@@ -76,8 +78,26 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
         }
     }
 
-    private List<String> addTag(List<String> tags, String tagName, String value){
-        if(tags == null){ tags = new ArrayList<String>(); }
+    private String channelName(ContainerRequestContext request) {
+        String name;
+        try {
+            name = ChannelNameUtils.parseChannelName(request.getUriInfo().getRequestUri().getPath());
+
+            if (StringUtils.isBlank(name)) {
+                MultivaluedMap<String, String> headers = request.getHeaders();
+                List<String> results = headers != null ? headers.get("channelName") : null;
+                name = results != null ? results.get(0) : "";
+            }
+        } catch (Exception e) {
+            name = "";
+        }
+        return name;
+    }
+
+    private List<String> addTag(List<String> tags, String tagName, String value) {
+        if (tags == null) {
+            tags = new ArrayList<String>();
+        }
         tags.add(tagName + ":" + value);
         return tags;
     }
