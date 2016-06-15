@@ -28,6 +28,8 @@ describe(testName, function () {
     utils.putChannel(channelA, false, channelBody, testName);
     utils.putChannel(channelB, false, channelBody, testName);
 
+    utils.sleep(2000);
+
     utils.addItem(channelUrl + '/' + channelA, 201);
 
     utils.addItem(channelUrl + '/' + channelB, 201);
