@@ -11,7 +11,10 @@ import com.flightstats.hub.group.GroupProcessor;
 import com.flightstats.hub.group.GroupProcessorImpl;
 import com.flightstats.hub.group.GroupValidator;
 import com.flightstats.hub.health.HubHealthCheck;
-import com.flightstats.hub.metrics.*;
+import com.flightstats.hub.metrics.HostedGraphiteSender;
+import com.flightstats.hub.metrics.MetricsRunner;
+import com.flightstats.hub.metrics.MetricsSender;
+import com.flightstats.hub.metrics.NoOpMetricsSender;
 import com.flightstats.hub.replication.ReplicationGlobalManager;
 import com.flightstats.hub.rest.HalLinks;
 import com.flightstats.hub.rest.HalLinksSerializer;
@@ -146,7 +149,6 @@ public class HubBindings extends AbstractModule {
         bind(GroupProcessor.class).to(GroupProcessorImpl.class).asEagerSingleton();
         bind(LastContentPath.class).asEagerSingleton();
         bind(WatchManager.class).asEagerSingleton();
-        bind(DataDog.class).asEagerSingleton();
 
         if (HubProperties.getProperty("hosted_graphite.enable", false)) {
             bind(MetricsSender.class).to(HostedGraphiteSender.class).asEagerSingleton();
