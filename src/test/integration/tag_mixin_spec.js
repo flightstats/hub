@@ -41,7 +41,7 @@ describe(testName, function () {
     var tagUrl = hubUrlBase + '/tag/' + tag;
 
     it('gets tag hour ' + tag, function (done) {
-        var url = tagUrl + '/time/hour?stable=false';
+        var url = tagUrl + '/time/hour?stable=false&trace=true';
         console.log('calling tag hour ', url)
         request.get({
                 url: url,
@@ -61,7 +61,8 @@ describe(testName, function () {
                             expect(uris[1]).toContain(channelB);
                             expect(uris[2]).toContain(channelA);
                         } else {
-                            expect(uris).toBe(true);
+                            console.log('failing test, not enough uris');
+                            expect(false).toBe(true);
                         }
                     }
                 } else {
