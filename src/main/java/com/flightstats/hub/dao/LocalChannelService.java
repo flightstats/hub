@@ -88,7 +88,7 @@ public class LocalChannelService implements ChannelService {
         long start = System.currentTimeMillis();
         ContentKey contentKey = contentService.insert(channelName, content);
         long time = System.currentTimeMillis() - start;
-        List<String> tags = DataDog.addTag(null, "channel", channel);
+        List<String> tags = DataDog.addTag(null, "channel", channelName);
         tags = DataDog.addTag(tags, "method", "post");
         tags = DataDog.addTag(tags, "type", "bulk");
         String[] tagStringArray = DataDog.tagsAsArray(tags);
