@@ -1,8 +1,6 @@
 package com.flightstats.hub.app;
 
-import com.flightstats.hub.dao.CachedChannelConfigDao;
-import com.flightstats.hub.dao.ChannelConfigDao;
-import com.flightstats.hub.dao.ContentService;
+import com.flightstats.hub.dao.*;
 import com.flightstats.hub.dao.nas.NasChannelConfigurationDao;
 import com.flightstats.hub.dao.nas.NasContentService;
 import com.flightstats.hub.dao.nas.NasGroupDao;
@@ -33,6 +31,7 @@ class NasBindings extends AbstractModule {
 
     @Override
     protected void configure() {
+        bind(ChannelService.class).to(LocalChannelService.class).asEagerSingleton();
         bind(ChannelConfigDao.class).to(CachedChannelConfigDao.class).asEagerSingleton();
         bind(ChannelConfigDao.class)
                 .annotatedWith(Names.named(CachedChannelConfigDao.DELEGATE))
