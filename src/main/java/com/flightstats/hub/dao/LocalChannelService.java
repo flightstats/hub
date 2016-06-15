@@ -90,7 +90,7 @@ public class LocalChannelService implements ChannelService {
         long time = System.currentTimeMillis() - start;
         List<String> tags = DataDog.addTag(null, "channel", channelName);
         tags = DataDog.addTag(tags, "method", "post");
-        tags = DataDog.addTag(tags, "type", "bulk");
+        tags = DataDog.addTag(tags, "type", "single");
         String[] tagStringArray = DataDog.tagsAsArray(tags);
         statsd.time("channel", time, tagStringArray);
         statsd.increment("channel.items", tagStringArray);
