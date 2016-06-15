@@ -28,7 +28,7 @@ describe(testName, function () {
     utils.putChannel(channelA, false, channelBody, testName);
     utils.putChannel(channelB, false, channelBody, testName);
 
-    utils.sleep(2000);
+    utils.sleep(5000);
 
     utils.addItem(channelUrl + '/' + channelA, 201);
 
@@ -48,17 +48,21 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
-                body = utils.parseJson(response, testName);
-                if (body._links) {
-                    uris = body._links.uris;
-                    expect(uris.length).toBe(3);
-                    if (uris.length == 3) {
-                        expect(uris[0]).toContain(channelA);
-                        expect(uris[1]).toContain(channelB);
-                        expect(uris[2]).toContain(channelA);
-                    } else {
-                        expect(uris).toBe(true);
+                if (response.statusCode == 200) {
+                    body = utils.parseJson(response, testName);
+                    if (body._links) {
+                        uris = body._links.uris;
+                        expect(uris.length).toBe(3);
+                        if (uris.length == 3) {
+                            expect(uris[0]).toContain(channelA);
+                            expect(uris[1]).toContain(channelB);
+                            expect(uris[2]).toContain(channelA);
+                        } else {
+                            expect(uris).toBe(true);
+                        }
                     }
+                } else {
+                    console.log('failing test, can\'t get uris . status=' + response.statusCode);
                 }
                 done();
             });
@@ -72,7 +76,7 @@ describe(testName, function () {
 
     function traverse(url, index, done) {
         url = url.trim();
-        console.log(url + ' ' + testName);
+        console.log(' traverse' + url + ' ' + testName);
         request.get({
                 url: url
             },
