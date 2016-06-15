@@ -2,8 +2,8 @@
 
 import json
 import logging
-import socket
 import random
+import socket
 import string
 import threading
 
@@ -61,13 +61,14 @@ class WebsiteTasks(TaskSet):
         self.channel = "global_test_" + str(self.number)
         self.count = 0
         self.satellite = globalConfig.globalConfig["satellites"][0]
+        self.master = globalConfig.globalConfig["master"]
         payload = {
             "name": self.channel,
             "ttlDays": "3",
             "tags": ["load", "test", "DDT"],
             "owner": "DDT",
             "global": {
-                "master": (globalConfig.globalConfig["master"]),
+                "master": (self.master),
                 "satellites": [self.satellite]
             }
         }
@@ -120,18 +121,19 @@ class WebsiteTasks(TaskSet):
                         name="group")
 
     @staticmethod
-    def removeHostChannel(href):
+    def getUrlAfterChannel(href):
         return href.split("/channel/", 1)[1]
 
-    def _load_metadata(self):
-        print("Fetching channel metadata...")
-        r, c = self._http.request(self.client.base_url + "/channel/" + self.channel, 'GET')
-        return json.loads(c)
+    def get_server(self):
+        if random.random() > 0.5:
+            return self.master
+        else:
+            return self.satellite
 
     def write(self):
         payload = {"name": self.payload, "count": self.count}
         postData = json.dumps(payload)
-        with self.client.post("/channel/" + self.channel, data=postData,
+        with self.client.post(self.get_server() + "channel/" + self.channel, data=postData,
                               headers={"Content-Type": "application/json"}, catch_response=True,
                               name="post_payload") as postResponse:
             if postResponse.status_code != 201:
@@ -151,7 +153,7 @@ class WebsiteTasks(TaskSet):
         return href
 
     def append_href(self, href, obj):
-        shortHref = WebsiteTasks.removeHostChannel(href)
+        shortHref = WebsiteTasks.getUrlAfterChannel(href)
         try:
             obj[self.channel]["lock"].acquire()
             obj[self.channel]["data"].append(shortHref)
@@ -168,6 +170,11 @@ class WebsiteTasks(TaskSet):
     def write_read(self):
         self.read(self.write())
 
+    @staticmethod
+    def add_short_hrefs(uris, items):
+        for uri in uris:
+            items.append(WebsiteTasks.getUrlAfterChannel(uri))
+
     @task(100)
     def sequential(self):
         start_time = time.time()
@@ -175,15 +182,13 @@ class WebsiteTasks(TaskSet):
         query_items = []
         items = 20
         for x in range(0, items):
-            posted_items.append(self.write())
-        self.complete_replication()
+            posted_items.append(WebsiteTasks.getUrlAfterChannel(self.write()))
+        self.wait_for_replication()
         initial = (self.client.get(self.time_path("minute"), name="time_minute")).json()
-        # logger.info("found initial " + ", ".join(initial['_links']['uris']))
         if len(initial['_links']['uris']) < items:
             previous = (self.client.get(initial['_links']['previous']['href'], name="time_minute")).json()
-            query_items.extend(previous['_links']['uris'])
-        query_items.extend(initial['_links']['uris'])
-        # logger.info("found query_items " + ", ".join(query_items))
+            WebsiteTasks.add_short_hrefs(previous['_links']['uris'], query_items)
+        WebsiteTasks.add_short_hrefs(initial['_links']['uris'], query_items)
         query_slice = query_items[-items:]
         total_time = int((time.time() - start_time) * 1000)
         if cmp(query_slice, posted_items) == 0:
@@ -212,7 +217,7 @@ class WebsiteTasks(TaskSet):
 
     @task(10)
     def next_previous(self):
-        self.complete_replication()
+        self.wait_for_replication()
         items = []
         url = self.time_path("minute") + "&trace=true"
         first = (self.client.get(url, name="time_minute")).json()
@@ -247,7 +252,7 @@ class WebsiteTasks(TaskSet):
                                         , exception=-1)
 
     @staticmethod
-    def complete_replication():
+    def wait_for_replication():
         # make sure that global replication should have completed
         time.sleep(10)
 
@@ -259,7 +264,7 @@ class WebsiteTasks(TaskSet):
             results = self.client.get(results['_links']['previous']['href'], name="time_second").json()
 
     def time_path(self, unit="second"):
-        return "/channel/" + self.channel + "/time/" + unit + "?stable=false"
+        return self.get_server() + "channel/" + self.channel + "/time/" + unit + "?stable=false"
 
     def next(self, time_unit):
         path = self.time_path(time_unit)
@@ -333,7 +338,7 @@ class WebsiteTasks(TaskSet):
                         logger.info("incoming uri before locust tests started " + str(incoming_uri))
                         return "ok"
                     try:
-                        shortHref = WebsiteTasks.removeHostChannel(incoming_uri)
+                        shortHref = WebsiteTasks.getUrlAfterChannel(incoming_uri)
                         groupCallbacks[channel]["lock"].acquire()
                         if groupCallbacks[channel]["parallel"] == 1:
                             WebsiteTasks.verify_ordered(channel, shortHref, groupCallbacks, "group")

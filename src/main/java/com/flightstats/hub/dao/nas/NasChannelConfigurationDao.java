@@ -46,7 +46,7 @@ public class NasChannelConfigurationDao implements ChannelConfigDao {
     }
 
     @Override
-    public Iterable<ChannelConfig> getChannels() {
+    public Iterable<ChannelConfig> getChannels(boolean useCache) {
         return NasUtil.getIterable(channelPath, ChannelConfig::fromJson);
     }
 

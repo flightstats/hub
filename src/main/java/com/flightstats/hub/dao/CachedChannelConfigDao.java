@@ -6,20 +6,19 @@ import com.flightstats.hub.cluster.Watcher;
 import com.flightstats.hub.model.ChannelConfig;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import org.apache.curator.framework.api.CuratorEvent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+@Singleton
 public class CachedChannelConfigDao implements ChannelConfigDao {
 
     public static final String DELEGATE = "CachedChannelMetadataDao.DELEGATE";
-    private final static Logger logger = LoggerFactory.getLogger(CachedChannelConfigDao.class);
     private static final String WATCHER_PATH = "/channels/cache";
     private final ChannelConfigDao delegate;
     private WatchManager watchManager;
@@ -73,12 +72,15 @@ public class CachedChannelConfigDao implements ChannelConfigDao {
     }
 
     @Override
-    public Iterable<ChannelConfig> getChannels() {
-        return delegate.getChannels();
+    public Iterable<ChannelConfig> getChannels(boolean useCache) {
+        if (useCache) {
+            return channelConfigMap.values();
+        }
+        return delegate.getChannels(false);
     }
 
     private void updateMap() {
-        Iterable<ChannelConfig> channels = delegate.getChannels();
+        Iterable<ChannelConfig> channels = delegate.getChannels(false);
         ConcurrentMap<String, ChannelConfig> newMap = new ConcurrentHashMap<>();
         for (ChannelConfig channel : channels) {
             newMap.put(channel.getName(), channel);
