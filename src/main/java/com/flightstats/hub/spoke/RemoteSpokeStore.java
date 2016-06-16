@@ -6,6 +6,7 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.cluster.CuratorCluster;
 import com.flightstats.hub.dao.QueryResult;
 import com.flightstats.hub.metrics.ActiveTraces;
+import com.flightstats.hub.metrics.DataDog;
 import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.Content;
@@ -19,6 +20,7 @@ import com.google.inject.name.Named;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
+import com.timgroup.statsd.StatsDClient;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,6 +49,7 @@ public class RemoteSpokeStore {
     private final MetricsSender sender;
     private final ExecutorService executorService;
     private final int stableSeconds = HubProperties.getProperty("app.stable_seconds", 5);
+    private final static StatsDClient statsd = DataDog.statsd;
 
     @Inject
     public RemoteSpokeStore(@Named("SpokeCuratorCluster") CuratorCluster cluster, MetricsSender sender) {
@@ -138,7 +141,9 @@ public class RemoteSpokeStore {
                         traces.add(server, response.getEntity(String.class));
                         if (response.getStatus() == 201) {
                             if (reported.compareAndSet(false, true)) {
-                                sender.send("heisenberg", complete - traces.getStart());
+                                long time = complete - traces.getStart();
+                                statsd.time("heisenberg", time);
+                                sender.send("heisenberg", time);
                             }
                             quorumLatch.countDown();
                             logger.trace("server {} path {} response {}", server, path, response);
@@ -157,7 +162,9 @@ public class RemoteSpokeStore {
             });
         }
         quorumLatch.await(stableSeconds, TimeUnit.SECONDS);
-        sender.send("consistent", System.currentTimeMillis() - traces.getStart());
+        long time = System.currentTimeMillis() - traces.getStart();
+        statsd.time("consistent", time);
+        sender.send("consistent", time);
         return quorumLatch.getCount() != quorum;
     }
 

@@ -3,12 +3,14 @@ package com.flightstats.hub.time;
 
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
+import com.flightstats.hub.metrics.DataDog;
 import com.flightstats.hub.metrics.MetricsSender;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.newrelic.api.agent.NewRelic;
 import com.newrelic.api.agent.Trace;
+import com.timgroup.statsd.StatsDClient;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -20,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class NtpMonitor {
+    private final static StatsDClient statsd = DataDog.statsd;
 
     private final static Logger logger = LoggerFactory.getLogger(NtpMonitor.class);
     private final int minPostTimeMillis = HubProperties.getProperty("app.minPostTimeMillis", 5);
@@ -76,9 +79,11 @@ public class NtpMonitor {
             Process process = new ProcessBuilder("ntpq", "-p").start();
             List<String> lines = IOUtils.readLines(process.getInputStream());
             delta = parseClusterRange(lines);
+            statsd.gauge("ntp", delta, "ntpType:clusterTimeDelta");
             sender.send("clusterTimeDelta", delta);
             double primary = parsePrimary(lines);
             primaryOffset = Math.abs(primary);
+            statsd.gauge("ntp", primaryOffset, "ntpType:primaryTimeDelta");
             sender.send("primaryTimeDelta", primaryOffset);
             logger.info("ntp cluster {} primary {}", delta, primary);
             newRelic(delta);
