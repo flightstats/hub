@@ -40,16 +40,16 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
         try {
             List<String> tags = new ArrayList<>();
             String channelName = channelName(request);
-            if (channelName != null) DataDog.addTag(tags, "channel", channelName);
-            DataDog.addTag(tags, "method", request.getMethod());
+            String method = request.getMethod();
             String template = getRequestTemplate(request);
-            DataDog.addTag(tags, "endpoint", template);
             long time = System.currentTimeMillis() - threadStartTime.get();
             if (template.isEmpty()) {
                 logger.trace("DataDog no-template {}, path: {}", template, request.getUriInfo().getPath());
             } else {
-                statsd.recordExecutionTime("hub.request", time, DataDog.tagsAsArray(tags));
-                statsd.incrementCounter("hub.request", DataDog.tagsAsArray(tags));
+                statsd.recordExecutionTime("hub.request", time, "channel:" + channelName, "method:" + method,
+                        "endpoint:" + template);
+                statsd.incrementCounter("hub.request", "channel:" + channelName, "method:" + method,
+                        "endpoint:" + template);
             }
             logger.trace("DataDog hub.request {}, time: {}, tags: {}", template, time, String.join(",", tags));
         } catch (Exception e) {
