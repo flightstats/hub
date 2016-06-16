@@ -16,6 +16,8 @@ public interface ChannelService {
 
     ContentKey insert(String channelName, Content content) throws Exception;
 
+    boolean historicalInsert(String channelName, Content content) throws Exception;
+
     Collection<ContentKey> insert(BulkContent bulkContent) throws Exception;
 
     boolean isReplicating(String channelName);

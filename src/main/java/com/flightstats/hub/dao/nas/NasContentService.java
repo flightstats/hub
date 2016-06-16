@@ -66,6 +66,11 @@ public class NasContentService implements ContentService {
         return keys;
     }
 
+    @Override
+    public boolean historicalInsert(String channelName, Content content) {
+        return false;
+    }
+
     private String getPath(String channelName, ContentKey key) {
         return channelName + "/" + key.toUrl();
     }

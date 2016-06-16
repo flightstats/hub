@@ -8,11 +8,14 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Request;
 import com.flightstats.hub.events.ContentOutput;
 import com.flightstats.hub.events.EventsService;
+import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.metrics.NewRelicIgnoreTransaction;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.rest.Headers;
+import com.flightstats.hub.rest.Linked;
+import com.flightstats.hub.util.Sleeper;
 import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
 import com.sun.jersey.core.header.MediaTypes;
@@ -26,9 +29,11 @@ import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
+import java.io.InputStream;
 import java.net.URI;
 import java.util.*;
 
+import static com.flightstats.hub.rest.Linked.linked;
 import static com.flightstats.hub.util.TimeUtil.*;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -364,4 +369,70 @@ public class ChannelContentResource {
         }
     }
 
+    @Path("/{h}/{m}/{s}/{ms}")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response insertValue(@PathParam("channel") final String channelName,
+                                @PathParam("Y") int year,
+                                @PathParam("M") int month,
+                                @PathParam("D") int day,
+                                @PathParam("h") int hour,
+                                @PathParam("m") int minute,
+                                @PathParam("s") int second,
+                                @PathParam("ms") int millis,
+                                @HeaderParam("Content-Type") final String contentType,
+                                @HeaderParam("Content-Language") final String contentLanguage,
+                                final InputStream data) throws Exception {
+        if (!channelService.channelExists(channelName)) {
+            throw new WebApplicationException(Response.Status.NOT_FOUND);
+        }
+        ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis);
+        Content content = Content.builder()
+                .withContentKey(key)
+                .withContentLanguage(contentLanguage)
+                .withContentType(contentType)
+                .withStream(data)
+                .build();
+        try {
+            boolean success = channelService.historicalInsert(channelName, content);
+            if (!success) {
+                return Response.status(400).entity("unable to insert historical item").build();
+            }
+
+            logger.trace("posted {}", key);
+            InsertedContentKey insertionResult = new InsertedContentKey(key);
+            URI payloadUri = LinkBuilder.buildItemUri(key, uriInfo.getRequestUri());
+            Linked<InsertedContentKey> linkedResult = linked(insertionResult)
+                    .withLink("channel", LinkBuilder.buildChannelUri(channelName, uriInfo))
+                    .withLink("self", payloadUri)
+                    .build();
+
+            Response.ResponseBuilder builder = Response.status(Response.Status.CREATED);
+            builder.entity(linkedResult);
+            builder.location(payloadUri);
+            return builder.build();
+        } catch (ContentTooLargeException e) {
+            return Response.status(413).entity(e.getMessage()).build();
+        } catch (Exception e) {
+            logger.warn("unable to POST to " + channelName + " key " + key, e);
+            throw e;
+        }
+    }
+
+    @Path("/{h}/{m}/{s}/{ms}")
+    @GET
+    public Response getMillis(@PathParam("channel") String channel,
+                              @PathParam("Y") String year,
+                              @PathParam("M") String month,
+                              @PathParam("D") String day,
+                              @PathParam("h") String hour,
+                              @PathParam("m") String minute,
+                              @PathParam("s") String second,
+                              @PathParam("ms") String millis) {
+        URI redirect = UriBuilder.fromUri(uriInfo.getRequestUri().getAuthority())
+                .path(channel)
+                .path(year).path(month).path(day)
+                .path(hour).path(minute).path(second).build();
+        return Response.seeOther(redirect).build();
+    }
 }

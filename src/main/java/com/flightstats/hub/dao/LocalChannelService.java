@@ -103,6 +103,11 @@ public class LocalChannelService implements ChannelService {
     }
 
     @Override
+    public boolean historicalInsert(String channelName, Content content) throws Exception {
+        return contentService.historicalInsert(channelName, content);
+    }
+
+    @Override
     public Collection<ContentKey> insert(BulkContent bulkContent) throws Exception {
         String channel = bulkContent.getChannel();
         if (bulkContent.isNew() && isReplicating(channel)) {

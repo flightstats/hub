@@ -7,6 +7,7 @@ import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.replication.Replicator;
 import com.flightstats.hub.util.HubUtils;
+import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -14,9 +15,12 @@ import com.google.inject.name.Named;
 import org.joda.time.DateTime;
 
 import java.util.Collection;
+import java.util.Objects;
 import java.util.SortedSet;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+
+import static java.util.Objects.isNull;
 
 /**
  * The GlobalChannelService is a pass through for standard channels
@@ -92,6 +96,22 @@ public class GlobalChannelService implements ChannelService {
                     return localChannelService.insert(channelName, content);
                 }),
                 () -> hubUtils.insert(getMasterChannelUrl(channelName), content));
+    }
+
+    @Override
+    public boolean historicalInsert(String channelName, Content content) {
+        return primaryAndSatellite(channelName,
+                Errors.rethrow().wrap(() -> {
+                    return localChannelService.historicalInsert(channelName, content);
+                }),
+                () -> {
+                    ContentKey key = hubUtils.insert(getHistoricalInsertUrl(getMasterChannelUrl(channelName), content), content);
+                    return !isNull(key);
+                });
+    }
+
+    private String getHistoricalInsertUrl(String masterChannelUrl, Content content) {
+        return masterChannelUrl + "/" + TimeUtil.millis(content.getContentKey().get().getTime());
     }
 
     @Override

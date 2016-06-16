@@ -17,7 +17,7 @@ var channelBody = {
  * Create ChannelA with tag TagA
  * Create ChannelB with tag TagA
  *
- * Add data to channelA
+ * Add data to channel
  * Add data to channelB
  *
  * verify that tag time query can get data back out

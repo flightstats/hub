@@ -128,6 +128,16 @@ public class AwsContentService implements ContentService {
         }
     }
 
+    @Override
+    public boolean historicalInsert(String channelName, Content content) throws Exception {
+        ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
+        if (channel.isSingle()) {
+            s3SingleContentDao.write(channelName, content);
+            return true;
+        }
+        return false;
+    }
+
     private Collection<ContentKey> newBulkWrite(BulkContent bulkContent) throws Exception {
         String channelName = bulkContent.getChannel();
         try {
