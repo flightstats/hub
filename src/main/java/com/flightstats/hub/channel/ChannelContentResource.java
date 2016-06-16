@@ -15,7 +15,6 @@ import com.flightstats.hub.metrics.NewRelicIgnoreTransaction;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.rest.Headers;
 import com.flightstats.hub.rest.Linked;
-import com.flightstats.hub.util.Sleeper;
 import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
 import com.sun.jersey.core.header.MediaTypes;
@@ -401,7 +400,7 @@ public class ChannelContentResource {
 
             logger.trace("posted {}", key);
             InsertedContentKey insertionResult = new InsertedContentKey(key);
-            URI payloadUri = LinkBuilder.buildItemUri(key, uriInfo.getRequestUri());
+            URI payloadUri = new URI(uriInfo.getRequestUri() + "/" + key.getHash());
             Linked<InsertedContentKey> linkedResult = linked(insertionResult)
                     .withLink("channel", LinkBuilder.buildChannelUri(channelName, uriInfo))
                     .withLink("self", payloadUri)
@@ -429,10 +428,16 @@ public class ChannelContentResource {
                               @PathParam("m") String minute,
                               @PathParam("s") String second,
                               @PathParam("ms") String millis) {
-        URI redirect = UriBuilder.fromUri(uriInfo.getRequestUri().getAuthority())
-                .path(channel)
-                .path(year).path(month).path(day)
-                .path(hour).path(minute).path(second).build();
-        return Response.seeOther(redirect).build();
+        try {
+            URI redirect = UriBuilder.fromUri(uriInfo.getBaseUri())
+                    .path("channel")
+                    .path(channel)
+                    .path(year).path(month).path(day)
+                    .path(hour).path(minute).path(second).build();
+            return Response.seeOther(redirect).build();
+        } catch (Exception e) {
+            logger.warn("what!?!", e);
+            return null;
+        }
     }
 }

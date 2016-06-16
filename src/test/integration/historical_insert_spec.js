@@ -9,7 +9,7 @@ var tag = Math.random().toString().replace(".", "");
 var testName = __filename;
 var channelBody = {
     tags: [tag, "test"],
-    ttlDays: 1
+    ttlDays: 365
 };
 
 /**
@@ -31,7 +31,7 @@ describe(testName, function () {
     it('verifies that channel is empty at: ' + pointInTime, function (done) {
         request.get({
             url: pointInTimeURL
-        }, function (error, response, body) {
+        }, function (err, response, body) {
             expect(err).toBeNull();
             expect(response.statusCode).toBe(200);
             if (response.statusCode == 200) {
@@ -48,11 +48,12 @@ describe(testName, function () {
     it('verifies that channel has historical data at: ' + pointInTime, function (done) {
         request.get({
             url: pointInTimeURL
-        }, function (error, response, body) {
+        }, function (err, response, body) {
             expect(err).toBeNull();
             expect(response.statusCode).toBe(200);
             if (response.statusCode == 200) {
                 body = utils.parseJson(response, testName);
+                console.log('body', body);
                 uris = body._links.uris;
                 expect(uris.length).toBe(1);
                 expect(uris[0]).toContain(pointInTime);
