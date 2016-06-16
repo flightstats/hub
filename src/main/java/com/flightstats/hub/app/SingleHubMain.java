@@ -1,6 +1,5 @@
 package com.flightstats.hub.app;
 
-import com.flightstats.hub.filter.DataDogRequestFilter;
 import com.google.common.io.Files;
 
 /**
@@ -30,7 +29,7 @@ public class SingleHubMain {
         setProperty("hub.allow.channel.deletion", "true");
         setProperty("app.runNtpMonitor", "false");
 
-        setProperty(DataDogRequestFilter.HUB_DATADOG_METRICS_FLAG, "true");
+        setProperty("data_dog.enable", "true");
 
         HubMain.start();
     }
