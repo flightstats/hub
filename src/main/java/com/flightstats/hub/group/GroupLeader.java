@@ -210,7 +210,9 @@ public class GroupLeader implements Leader {
 
     private void completeCall(ContentPath contentPath) {
         if (increaseLastUpdated(contentPath)) {
-            lastContentPath.updateIncrease(contentPath, group.getName(), GROUP_LAST_COMPLETED);
+            if (!deleteOnExit.get()) {
+                lastContentPath.updateIncrease(contentPath, group.getName(), GROUP_LAST_COMPLETED);
+            }
         }
         groupInProcess.remove(group.getName(), contentPath);
     }
