@@ -5,7 +5,6 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.Content;
-import com.flightstats.hub.rest.Headers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +31,6 @@ public class ProviderResource {
     @Produces(MediaType.TEXT_PLAIN)
     public Response insertValue(@HeaderParam("channelName") final String channelName,
                                 @HeaderParam("Content-Type") final String contentType,
-                                @HeaderParam(Headers.LANGUAGE) final String contentLanguage,
                                 final InputStream data) throws Exception {
         if (!channelService.channelExists(channelName)) {
             logger.info("creating new Provider channel " + channelName);
@@ -42,7 +40,7 @@ public class ProviderResource {
             channelService.createChannel(configuration);
         }
 
-        Content content = Content.builder().withContentLanguage(contentLanguage)
+        Content content = Content.builder()
                 .withContentType(contentType)
                 .withStream(data).build();
         try {

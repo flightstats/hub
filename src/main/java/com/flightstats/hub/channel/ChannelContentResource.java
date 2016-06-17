@@ -13,7 +13,6 @@ import com.flightstats.hub.metrics.DataDog;
 import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.metrics.NewRelicIgnoreTransaction;
 import com.flightstats.hub.model.*;
-import com.flightstats.hub.rest.Headers;
 import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
 import com.sun.jersey.core.header.MediaTypes;
@@ -38,6 +37,7 @@ import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 
 @Path("/channel/{channel}/{Y}/{M}/{D}/")
 public class ChannelContentResource {
+    static final String CREATION_DATE = "Creation-Date";
     private final static StatsDClient statsd = DataDog.statsd;
 
     private final static Logger logger = LoggerFactory.getLogger(ChannelContentResource.class);
@@ -242,9 +242,8 @@ public class ChannelContentResource {
         Response.ResponseBuilder builder = Response.ok((StreamingOutput) output -> ByteStreams.copy(content.getStream(), output));
 
         builder.type(actualContentType)
-                .header(Headers.CREATION_DATE, FORMATTER.print(new DateTime(key.getMillis())));
+                .header(CREATION_DATE, FORMATTER.print(new DateTime(key.getMillis())));
 
-        LinkBuilder.addOptionalHeader(Headers.LANGUAGE, content.getContentLanguage(), builder);
         builder.header("Link", "<" + uriInfo.getRequestUriBuilder().path("previous").build() + ">;rel=\"" + "previous" + "\"");
         builder.header("Link", "<" + uriInfo.getRequestUriBuilder().path("next").build() + ">;rel=\"" + "next" + "\"");
         long time = System.currentTimeMillis() - start;
