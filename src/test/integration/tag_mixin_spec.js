@@ -24,8 +24,7 @@ var channelBody = {
  *
  */
 describe(testName, function () {
-
-    utils.sleep(1000);
+    
     utils.putChannel(channelA, false, channelBody, testName);
     utils.sleep(1000);
     utils.putChannel(channelB, false, channelBody, testName);
