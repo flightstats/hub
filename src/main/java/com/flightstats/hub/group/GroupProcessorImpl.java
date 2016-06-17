@@ -122,6 +122,9 @@ public class GroupProcessorImpl implements GroupProcessor {
                 }
             }
             groupLeader.deleteAnyway();
+        } else {
+            groupLeader = leaderProvider.get();
+            groupLeader.delete(name);
         }
 
     }

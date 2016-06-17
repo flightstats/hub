@@ -124,7 +124,7 @@ public class GroupLeader implements Leader {
             hasLeadership.set(false);
             closeStrategy();
             if (deleteOnExit.get()) {
-                delete();
+                delete(group.getName());
             }
             stopExecutor();
             logger.info("stopped last completed at {} {}", groupStrategy.getLastCompleted(), group.getName());
@@ -289,12 +289,12 @@ public class GroupLeader implements Leader {
         return "/GroupLeader/" + group.getName();
     }
 
-    private void delete() {
-        logger.info("deleting " + group.getName());
-        groupInProcess.delete(group.getName());
-        lastContentPath.delete(group.getName(), GROUP_LAST_COMPLETED);
-        groupError.delete(group.getName());
-        logger.info("deleted " + group.getName());
+    void delete(String name) {
+        logger.info("deleting " + name);
+        groupInProcess.delete(name);
+        lastContentPath.delete(name, GROUP_LAST_COMPLETED);
+        groupError.delete(name);
+        logger.info("deleted " + name);
     }
 
     boolean deleteIfReady() {
@@ -312,7 +312,7 @@ public class GroupLeader implements Leader {
         } catch (Exception e) {
             logger.warn("unable to delete leader path " + group.getName(), e);
         }
-        delete();
+        delete(group.getName());
     }
 
     private void debugLeaderPath() {
