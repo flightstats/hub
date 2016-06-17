@@ -5,6 +5,7 @@ import com.amazonaws.services.s3.model.*;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.metrics.ActiveTraces;
+import com.flightstats.hub.metrics.DataDog;
 import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.Content;
@@ -15,6 +16,7 @@ import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
+import com.timgroup.statsd.StatsDClient;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -27,6 +29,7 @@ import java.net.SocketTimeoutException;
 import java.util.*;
 
 public class S3SingleContentDao implements ContentDao {
+    private final static StatsDClient statsd = DataDog.statsd;
 
     private final static Logger logger = LoggerFactory.getLogger(S3SingleContentDao.class);
     private static final int MAX_ITEMS = 1000 * 1000;
@@ -78,6 +81,9 @@ public class S3SingleContentDao implements ContentDao {
                 metadata.setSSEAlgorithm(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
             }
             PutObjectRequest request = new PutObjectRequest(s3BucketName, s3Key, stream, metadata);
+            statsd.increment("channel", "method:put", "type:s3Batch", "channel:" + channelName);
+            statsd.count("s3.bytes", content.getData().length, "method:put", "type:s3Batch", "channel:" + channelName);
+
             sender.send("channel." + channelName + ".s3.put", 1);
             sender.send("channel." + channelName + ".s3.bytes", content.getData().length);
             s3Client.putObject(request);
@@ -112,6 +118,7 @@ public class S3SingleContentDao implements ContentDao {
 
     private Content getS3Object(String channelName, ContentKey key) throws IOException {
         try (S3Object object = s3Client.getObject(s3BucketName, getS3ContentKey(channelName, key))) {
+            statsd.increment("channel", "type:s3Single", "method:get", "channel:" + channelName);
             sender.send("channel." + channelName + ".s3.get", 1);
             byte[] bytes = ByteStreams.toByteArray(object.getObjectContent());
             ObjectMetadata metadata = object.getObjectMetadata();
@@ -164,6 +171,9 @@ public class S3SingleContentDao implements ContentDao {
         if (count > 0 && limitKey != null) {
             keys = new ContentKeySet(count, limitKey);
         }
+        statsd.increment("channel", "type:s3List", "method:get", "channel:" + channelName);
+
+        sender.send("channel." + channelName + ".s3.get", 1);
         sender.send("channel." + channelName + ".s3.list", 1);
         logger.trace("list {} {} {}", channelName, request.getPrefix(), request.getMarker());
         traces.add("S3SingleContentDao.iterateListObjects prefix:", request.getPrefix(), request.getMarker());
@@ -171,6 +181,8 @@ public class S3SingleContentDao implements ContentDao {
         ContentKey marker = addKeys(channelName, listing, keys, endTime);
         while (shouldContinue(maxItems, endTime, keys, listing, marker)) {
             request.withMarker(channelName + "/" + marker.toUrl());
+            statsd.increment("channel", "type:s3List", "method:get", "channel:" + channelName);
+
             sender.send("channel." + channelName + ".s3.list", 1);
             logger.trace("list {} {}", channelName, request.getMarker());
             traces.add("S3SingleContentDao.iterateListObjects marker:", request.getMarker());
