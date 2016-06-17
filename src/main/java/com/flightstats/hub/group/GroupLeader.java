@@ -76,9 +76,13 @@ public class GroupLeader implements Leader {
         logger.info("keep leadership rate {}", keepLeadershipRate);
     }
 
+    void setGroup(Group group) {
+        this.group = group;
+    }
+
     boolean tryLeadership(Group group) {
         logger.debug("starting group: " + group);
-        this.group = group;
+        setGroup(group);
         curatorLeader = new CuratorLeader(getLeaderPath(), this);
         if (!group.isPaused()) {
             curatorLeader.start();
@@ -124,7 +128,7 @@ public class GroupLeader implements Leader {
             hasLeadership.set(false);
             closeStrategy();
             if (deleteOnExit.get()) {
-                delete(group.getName());
+                delete();
             }
             stopExecutor();
             logger.info("stopped last completed at {} {}", groupStrategy.getLastCompleted(), group.getName());
@@ -289,7 +293,8 @@ public class GroupLeader implements Leader {
         return "/GroupLeader/" + group.getName();
     }
 
-    void delete(String name) {
+    void delete() {
+        String name = group.getName();
         logger.info("deleting " + name);
         groupInProcess.delete(name);
         lastContentPath.delete(name, GROUP_LAST_COMPLETED);
@@ -312,7 +317,7 @@ public class GroupLeader implements Leader {
         } catch (Exception e) {
             logger.warn("unable to delete leader path " + group.getName(), e);
         }
-        delete(group.getName());
+        delete();
     }
 
     private void debugLeaderPath() {
