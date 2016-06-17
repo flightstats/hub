@@ -41,7 +41,6 @@ public class NasContentServiceTest {
                 .withContentType("application/json")
                 .withData(random.getBytes())
                 .withContentKey(new ContentKey())
-                .withContentLanguage("russian")
                 .build();
     }
 }

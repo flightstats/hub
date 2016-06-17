@@ -44,7 +44,6 @@ public class SpokeMarshallerTest {
                 .withContentType("application/json")
                 .withData(random.getBytes())
                 .withContentKey(new ContentKey())
-                .withContentLanguage("russian")
                 .build();
     }
 }

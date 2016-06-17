@@ -238,7 +238,6 @@ public class ContentDaoUtil {
     public static Content createContent(ContentKey key) {
         return Content.builder()
                 .withContentKey(key)
-                .withContentLanguage("lang")
                 .withContentType("stuff")
                 .withData(key.toString().getBytes())
                 .build();
@@ -250,7 +249,6 @@ public class ContentDaoUtil {
 
     private void compare(Content content, Content read, byte[] expected) {
         assertEquals(content.getContentKey().get(), read.getContentKey().get());
-        assertEquals(content.getContentLanguage(), read.getContentLanguage());
         assertEquals(content.getContentType(), read.getContentType());
         assertArrayEquals(expected, read.getData());
         assertEquals(content, read);

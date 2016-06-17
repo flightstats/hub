@@ -33,14 +33,12 @@ public class ZipBulkBuilderTest {
         logger.info("wrote bytes {}", bytes.length);
         ZipInputStream zipInputStream = new ZipInputStream(new ByteArrayInputStream(bytes));
         ZipEntry entry = zipInputStream.getNextEntry();
-        int count = 0;
         while (entry != null) {
-            count++;
             String name = entry.getName();
             String comment = new String(entry.getExtra());
             byte[] readBytes = ByteStreams.toByteArray(zipInputStream);
             assertEquals(key.toUrl(), name);
-            assertEquals("{\"contentLanguage\":\"lang\",\"contentType\":\"stuff\"}", comment);
+            assertEquals("{\"contentType\":\"stuff\"}", comment);
             assertEquals(key.toUrl(), new String(readBytes));
             entry = zipInputStream.getNextEntry();
         }
