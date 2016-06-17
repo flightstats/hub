@@ -51,7 +51,6 @@ public class S3BatchContentDaoTest {
             Content read = contentDao.read(channel, key);
             assertEquals(content.getContentKey(), read.getContentKey());
             assertArrayEquals(content.getData(), read.getData());
-            assertEquals(content.getContentLanguage().get(), read.getContentLanguage().get());
             assertEquals(content.getContentType().get(), read.getContentType().get());
         }
 

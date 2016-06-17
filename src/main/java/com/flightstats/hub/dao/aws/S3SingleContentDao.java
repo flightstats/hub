@@ -72,11 +72,6 @@ public class S3SingleContentDao implements ContentDao {
             } else {
                 metadata.addUserMetadata("type", "none");
             }
-            if (content.getContentLanguage().isPresent()) {
-                metadata.addUserMetadata("language", content.getContentLanguage().get());
-            } else {
-                metadata.addUserMetadata("language", "none");
-            }
             if (useEncrypted) {
                 metadata.setSSEAlgorithm(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
             }
@@ -127,10 +122,6 @@ public class S3SingleContentDao implements ContentDao {
             String type = userData.get("type");
             if (!type.equals("none")) {
                 builder.withContentType(type);
-            }
-            String language = userData.get("language");
-            if (!language.equals("none")) {
-                builder.withContentLanguage(language);
             }
             builder.withContentKey(key);
             builder.withData(bytes);
