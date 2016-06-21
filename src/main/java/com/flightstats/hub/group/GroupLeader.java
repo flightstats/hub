@@ -76,9 +76,13 @@ public class GroupLeader implements Leader {
         logger.info("keep leadership rate {}", keepLeadershipRate);
     }
 
+    void setGroup(Group group) {
+        this.group = group;
+    }
+
     boolean tryLeadership(Group group) {
         logger.debug("starting group: " + group);
-        this.group = group;
+        setGroup(group);
         curatorLeader = new CuratorLeader(getLeaderPath(), this);
         if (!group.isPaused()) {
             curatorLeader.start();
@@ -210,7 +214,9 @@ public class GroupLeader implements Leader {
 
     private void completeCall(ContentPath contentPath) {
         if (increaseLastUpdated(contentPath)) {
-            lastContentPath.updateIncrease(contentPath, group.getName(), GROUP_LAST_COMPLETED);
+            if (!deleteOnExit.get()) {
+                lastContentPath.updateIncrease(contentPath, group.getName(), GROUP_LAST_COMPLETED);
+            }
         }
         groupInProcess.remove(group.getName(), contentPath);
     }
@@ -240,10 +246,11 @@ public class GroupLeader implements Leader {
                 logger.debug("not leader {} {} {}", group.getCallbackUrl(), group.getName(), contentPath);
                 return null;
             }
-            logger.debug("calling {} {} {}", group.getCallbackUrl(), contentPath);
+            String entity = body.toString();
+            logger.debug("calling {} {} {}", group.getCallbackUrl(), contentPath, entity);
             ClientResponse clientResponse = client.resource(group.getCallbackUrl())
                     .type(MediaType.APPLICATION_JSON_TYPE)
-                    .post(ClientResponse.class, body.toString());
+                    .post(ClientResponse.class, entity);
             recurringTrace.update("GroupLeader.makeCall completed", clientResponse);
             return clientResponse;
         });
@@ -287,12 +294,13 @@ public class GroupLeader implements Leader {
         return "/GroupLeader/" + group.getName();
     }
 
-    private void delete() {
-        logger.info("deleting " + group.getName());
-        groupInProcess.delete(group.getName());
-        lastContentPath.delete(group.getName(), GROUP_LAST_COMPLETED);
-        groupError.delete(group.getName());
-        logger.info("deleted " + group.getName());
+    void delete() {
+        String name = group.getName();
+        logger.info("deleting " + name);
+        groupInProcess.delete(name);
+        lastContentPath.delete(name, GROUP_LAST_COMPLETED);
+        groupError.delete(name);
+        logger.info("deleted " + name);
     }
 
     boolean deleteIfReady() {

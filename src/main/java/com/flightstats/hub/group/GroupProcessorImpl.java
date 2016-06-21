@@ -109,6 +109,10 @@ public class GroupProcessorImpl implements GroupProcessor {
     @Override
     public void delete(String name) {
         GroupLeader groupLeader = activeGroups.get(name);
+        if (groupLeader == null) {
+            groupLeader = leaderProvider.get();
+            groupLeader.setGroup(Group.builder().name(name).build());
+        }
         notifyWatchers();
         if (groupLeader != null) {
             logger.info("deleting...{}", groupLeader);
@@ -123,7 +127,6 @@ public class GroupProcessorImpl implements GroupProcessor {
             }
             groupLeader.deleteAnyway();
         }
-
     }
 
     @Override
