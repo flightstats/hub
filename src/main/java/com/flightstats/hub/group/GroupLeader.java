@@ -246,10 +246,11 @@ public class GroupLeader implements Leader {
                 logger.debug("not leader {} {} {}", group.getCallbackUrl(), group.getName(), contentPath);
                 return null;
             }
-            logger.debug("calling {} {} {}", group.getCallbackUrl(), contentPath);
+            String entity = body.toString();
+            logger.debug("calling {} {} {}", group.getCallbackUrl(), contentPath, entity);
             ClientResponse clientResponse = client.resource(group.getCallbackUrl())
                     .type(MediaType.APPLICATION_JSON_TYPE)
-                    .post(ClientResponse.class, body.toString());
+                    .post(ClientResponse.class, entity);
             recurringTrace.update("GroupLeader.makeCall completed", clientResponse);
             return clientResponse;
         });
