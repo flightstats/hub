@@ -2,6 +2,9 @@ package com.flightstats.hub.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.app.HubHost;
+import com.flightstats.hub.cluster.CuratorCluster;
 import com.flightstats.hub.group.Group;
 import com.flightstats.hub.model.*;
 import com.google.common.base.Optional;
@@ -32,11 +35,14 @@ public class HubUtils {
     private final ObjectMapper mapper = new ObjectMapper();
     private final Client noRedirectsClient;
     private final Client followClient;
+    private final CuratorCluster hubCuratorCluster;
 
     @Inject
-    public HubUtils(@Named("NoRedirects") Client noRedirectsClient, Client followClient) {
+    public HubUtils(@Named("NoRedirects") Client noRedirectsClient, Client followClient,
+                    @Named("HubCuratorCluster") CuratorCluster hubCuratorCluster) {
         this.noRedirectsClient = noRedirectsClient;
         this.followClient = followClient;
+        this.hubCuratorCluster = hubCuratorCluster;
     }
 
     public Optional<String> getLatest(String channelUrl) {
@@ -196,5 +202,20 @@ public class HubUtils {
             logger.warn("unable to delete " + channelUrl, e);
         }
         return false;
+    }
+
+    public ObjectNode refreshAll() {
+        ObjectNode root = mapper.createObjectNode();
+        Set<String> servers = hubCuratorCluster.getServers();
+        for (String server : servers) {
+            String url = HubHost.getScheme() + server + "/internal/channel/refresh?all=false";
+            ClientResponse response = followClient.resource(url).get(ClientResponse.class);
+            if (response.getStatus() == 200) {
+                root.put(response.getEntity(String.class), "success");
+            } else {
+                root.put(response.getEntity(String.class), "failure");
+            }
+        }
+        return root;
     }
 }
