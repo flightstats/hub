@@ -81,7 +81,7 @@ describe(testName, function () {
 
     function traverse(url, index, done) {
         url = url.trim();
-        console.log(' traverse' + url + ' ' + testName);
+        console.log(' traverse ' + url + ' ' + testName);
         request.get({
                 url: url
             },
