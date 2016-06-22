@@ -24,7 +24,9 @@ public interface ChannelService {
 
     void deleteBefore(String name, ContentKey limitKey);
 
-    Optional<Content> getValue(Request request);
+    Optional<Content> get(Request request);
+
+    void get(String channel, SortedSet<ContentKey> keys, Consumer<Content> callback);
 
     ChannelConfig getChannelConfig(String channelName, boolean allowChannelCache);
 
@@ -39,8 +41,6 @@ public interface ChannelService {
     SortedSet<ContentKey> queryByTime(TimeQuery query);
 
     SortedSet<ContentKey> getKeys(DirectionQuery query);
-
-    void getValues(String channel, SortedSet<ContentKey> keys, Consumer<Content> callback);
 
     boolean delete(String channelName);
 }
