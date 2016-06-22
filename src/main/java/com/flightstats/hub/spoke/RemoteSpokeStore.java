@@ -192,7 +192,7 @@ public class RemoteSpokeStore {
         return (int) Math.max(1, Math.ceil(size / 2.0));
     }
 
-    public Content read(String path, ContentKey key) {
+    public Content get(String path, ContentKey key) {
         Collection<String> servers = cluster.getRandomServers();
         for (String server : servers) {
             ClientResponse response = null;

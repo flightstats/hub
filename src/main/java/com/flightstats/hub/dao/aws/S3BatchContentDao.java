@@ -63,7 +63,7 @@ public class S3BatchContentDao implements ContentDao {
     }
 
     @Override
-    public Content read(String channelName, ContentKey key) {
+    public Content get(String channelName, ContentKey key) {
         try {
             return getS3Object(channelName, key);
         } catch (SocketTimeoutException | SocketException e) {

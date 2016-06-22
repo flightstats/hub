@@ -30,7 +30,7 @@ public class ContentDaoUtil {
         Content content = createContent();
         ContentKey key = contentDao.insert(channel, content);
         assertEquals(content.getContentKey().get(), key);
-        Content read = contentDao.read(channel, key);
+        Content read = contentDao.get(channel, key);
         compare(content, read, key.toString().getBytes());
     }
 
@@ -43,7 +43,7 @@ public class ContentDaoUtil {
                 .build();
         ContentKey key = contentDao.insert(channel, content);
         assertEquals(content.getContentKey().get(), key);
-        Content read = contentDao.read(channel, key);
+        Content read = contentDao.get(channel, key);
         compare(content, read, data);
     }
 
@@ -278,7 +278,7 @@ public class ContentDaoUtil {
         List<Content> items = bulkContent.getItems();
         for (Content item : items) {
             ContentKey contentKey = item.getContentKey().get();
-            Content found = contentDao.read(channel, contentKey);
+            Content found = contentDao.get(channel, contentKey);
             compare(item, found, contentKey.toUrl().getBytes());
 
         }

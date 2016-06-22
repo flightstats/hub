@@ -30,7 +30,7 @@ public class NasContentServiceTest {
         Content content = getContent(10 * 1024);
         String channelName = "testReadWrite";
         ContentKey key = contentService.insert(channelName, content);
-        Optional<Content> value = contentService.getValue(channelName, key);
+        Optional<Content> value = contentService.get(channelName, key);
         assertTrue(value.isPresent());
         assertEquals(content, value.get());
     }

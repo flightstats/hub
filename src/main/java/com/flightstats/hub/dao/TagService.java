@@ -107,7 +107,7 @@ public class TagService {
     public Optional<Content> getValue(Request request) {
         Iterable<ChannelConfig> channels = getChannels(request.getTag());
         for (ChannelConfig channel : channels) {
-            Optional<Content> value = channelService.getValue(request.withChannel(channel.getName()));
+            Optional<Content> value = channelService.get(request.withChannel(channel.getName()));
             if (value.isPresent()) {
                 return value;
             }

@@ -91,7 +91,7 @@ public class S3SingleContentDao implements ContentDao {
         }
     }
 
-    public Content read(final String channelName, final ContentKey key) {
+    public Content get(final String channelName, final ContentKey key) {
         ActiveTraces.getLocal().add("S3SingleContentDao.read", key);
         try {
             return getS3Object(channelName, key);

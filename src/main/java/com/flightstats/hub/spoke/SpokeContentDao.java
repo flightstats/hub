@@ -109,12 +109,12 @@ public class SpokeContentDao implements ContentDao {
     }
 
     @Override
-    public Content read(String channelName, ContentKey key) {
+    public Content get(String channelName, ContentKey key) {
         String path = getPath(channelName, key);
         Traces traces = ActiveTraces.getLocal();
         traces.add("SpokeContentDao.read");
         try {
-            return spokeStore.read(path, key);
+            return spokeStore.get(path, key);
         } catch (Exception e) {
             logger.warn("unable to get data: " + path, e);
             return null;

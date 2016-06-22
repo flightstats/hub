@@ -20,7 +20,7 @@ public interface ContentDao {
         throw new UnsupportedOperationException("bulk writes are not supported");
     }
 
-    Content read(String channelName, ContentKey key);
+    Content get(String channelName, ContentKey key);
 
     SortedSet<ContentKey> queryByTime(TimeQuery timQuery);
 

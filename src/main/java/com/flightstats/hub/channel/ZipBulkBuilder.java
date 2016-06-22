@@ -31,7 +31,7 @@ public class ZipBulkBuilder {
         Traces traces = ActiveTraces.getLocal();
         return write((ZipOutputStream output) -> {
             ActiveTraces.setLocal(traces);
-            channelService.getValues(channel, keys, content -> createZipEntry(output, content));
+            channelService.get(channel, keys, content -> createZipEntry(output, content));
         }, headerBuilder);
     }
 
@@ -68,7 +68,7 @@ public class ZipBulkBuilder {
                 .channel(channel)
                 .key(key)
                 .build();
-        Optional<Content> contentOptional = channelService.getValue(request);
+        Optional<Content> contentOptional = channelService.get(request);
         if (contentOptional.isPresent()) {
             createZipEntry(output, contentOptional.get());
         } else {

@@ -148,11 +148,11 @@ public class GlobalChannelService implements ChannelService {
     }
 
     @Override
-    public Optional<Content> getValue(Request request) {
+    public Optional<Content> get(Request request) {
         return primaryAndSecondary(request.getChannel(),
-                () -> localChannelService.getValue(request),
+                () -> localChannelService.get(request),
                 () -> {
-                    Content read = spokeContentDao.read(request.getChannel(), request.getKey());
+                    Content read = spokeContentDao.get(request.getChannel(), request.getKey());
                     if (read != null) {
                         return Optional.of(read);
                     }
@@ -193,15 +193,15 @@ public class GlobalChannelService implements ChannelService {
     }
 
     @Override
-    public void getValues(String channel, SortedSet<ContentKey> keys, Consumer<Content> callback) {
+    public void get(String channel, SortedSet<ContentKey> keys, Consumer<Content> callback) {
         primaryAndSecondary(channel,
                 () -> {
-                    localChannelService.getValues(channel, keys, callback);
+                    localChannelService.get(channel, keys, callback);
                     return null;
                 },
                 () -> {
                     //todo - gfm - 6/3/16 - if this is outside of the spoke TTL window, call the master.
-                    localChannelService.getValues(channel, keys, callback);
+                    localChannelService.get(channel, keys, callback);
                     return null;
                 });
     }
