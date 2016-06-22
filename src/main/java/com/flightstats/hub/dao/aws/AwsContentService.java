@@ -86,7 +86,7 @@ public class AwsContentService implements ContentService {
     public ContentKey insert(String channelName, Content content) throws Exception {
         try {
             inFlight.incrementAndGet();
-            ContentKey key = spokeContentDao.write(channelName, content);
+            ContentKey key = spokeContentDao.insert(channelName, content);
             ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
             if (channel.isSingle() || channel.isBoth()) {
                 //todo - gfm - 5/20/16 - is this the right place for this work?
@@ -132,7 +132,7 @@ public class AwsContentService implements ContentService {
         String channelName = bulkContent.getChannel();
         try {
             inFlight.incrementAndGet();
-            SortedSet<ContentKey> keys = spokeContentDao.write(bulkContent);
+            SortedSet<ContentKey> keys = spokeContentDao.insert(bulkContent);
             ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
             if (channel.isSingle() || channel.isBoth()) {
                 for (ContentKey key : keys) {

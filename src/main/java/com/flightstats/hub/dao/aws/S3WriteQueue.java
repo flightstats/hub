@@ -80,7 +80,7 @@ public class S3WriteQueue {
                 if (content.getData() == null) {
                     throw new FailedReadException("unable to read " + key.toString());
                 }
-                s3SingleContentDao.write(key.getChannel(), content);
+                s3SingleContentDao.insert(key.getChannel(), content);
             } finally {
                 ActiveTraces.end();
             }

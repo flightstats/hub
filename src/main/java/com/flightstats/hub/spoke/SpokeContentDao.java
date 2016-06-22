@@ -40,7 +40,7 @@ public class SpokeContentDao implements ContentDao {
     private final int ttlMinutes = HubProperties.getSpokeTtl();
 
     @Override
-    public ContentKey write(String channelName, Content content) throws Exception {
+    public ContentKey insert(String channelName, Content content) throws Exception {
         Traces traces = ActiveTraces.getLocal();
         traces.add("SpokeContentDao.writeSingle");
         try {
@@ -49,7 +49,7 @@ public class SpokeContentDao implements ContentDao {
             ContentKey key = content.keyAndStart(timeService.getNow());
             String path = getPath(channelName, key);
             logger.trace("writing key {} to channel {}", key, channelName);
-            if (!spokeStore.write(path, payload, "payload")) {
+            if (!spokeStore.insert(path, payload, "payload")) {
                 throw new FailedWriteException("unable to write to spoke " + path);
             }
             traces.add("SpokeContentDao.writeSingle completed", key);
@@ -65,7 +65,7 @@ public class SpokeContentDao implements ContentDao {
     }
 
     @Override
-    public SortedSet<ContentKey> write(BulkContent bulkContent) throws Exception {
+    public SortedSet<ContentKey> insert(BulkContent bulkContent) throws Exception {
         Traces traces = ActiveTraces.getLocal();
         traces.add("SpokeContentDao.writeBulk");
         String channelName = bulkContent.getChannel();
@@ -89,7 +89,7 @@ public class SpokeContentDao implements ContentDao {
             traces.add("SpokeContentDao.writeBulk marshalled");
 
             logger.trace("writing items {} to channel {}", items.size(), channelName);
-            if (!spokeStore.write(channelName, baos.toByteArray(), "bulkKey")) {
+            if (!spokeStore.insert(channelName, baos.toByteArray(), "bulkKey")) {
                 throw new FailedWriteException("unable to write bulk to spoke " + channelName);
             }
             traces.add("SpokeContentDao.writeBulk completed", keys);

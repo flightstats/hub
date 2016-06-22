@@ -38,7 +38,7 @@ public class FileSpokeStoreTest {
     @Test
     public void testWriteRead() throws Exception {
         String path = "channelWR/" + new ContentKey().toUrl();
-        assertTrue(spokeStore.write(path, BYTES));
+        assertTrue(spokeStore.insert(path, BYTES));
         byte[] read = spokeStore.read(path);
         assertArrayEquals(BYTES, read);
     }
@@ -63,17 +63,17 @@ public class FileSpokeStoreTest {
         String path3 = "testAdjacentPaths/2014/11/18/00/57/24/015/3";
         String nextSecond = "testAdjacentPaths/2014/11/18/00/57/25/015/1";
 
-        spokeStore.write(path1, BYTES);
-        spokeStore.write(path2, BYTES);
-        spokeStore.write(path3, BYTES);
-        spokeStore.write(previousSecond, BYTES);
-        spokeStore.write(nextSecond, BYTES);
+        spokeStore.insert(path1, BYTES);
+        spokeStore.insert(path2, BYTES);
+        spokeStore.insert(path3, BYTES);
+        spokeStore.insert(previousSecond, BYTES);
+        spokeStore.insert(nextSecond, BYTES);
 
 
         String previousMillisecond = "testAdjacentPaths/2014/11/18/00/57/24/014/1";
-        spokeStore.write(previousMillisecond, BYTES);
+        spokeStore.insert(previousMillisecond, BYTES);
         String nextMillisecond = "testAdjacentPaths/2014/11/18/00/57/24/016/1";
-        spokeStore.write(nextMillisecond, BYTES);
+        spokeStore.insert(nextMillisecond, BYTES);
 
 
         // filesInBucket tests
@@ -111,11 +111,11 @@ public class FileSpokeStoreTest {
         DateTime time = new DateTime(2014, 12, 31, 23, 30, 1, 2, DateTimeZone.UTC);
         for (int i = 0; i < 30; i++) {
             time = time.plusMinutes(2);
-            spokeStore.write("testLastFile/" + new ContentKey(time, "A").toUrl(), BYTES);
+            spokeStore.insert("testLastFile/" + new ContentKey(time, "A").toUrl(), BYTES);
             time = time.plusSeconds(1);
-            spokeStore.write("testLastFile/" + new ContentKey(time, "B").toUrl(), BYTES);
+            spokeStore.insert("testLastFile/" + new ContentKey(time, "B").toUrl(), BYTES);
             time = time.plusMillis(1);
-            spokeStore.write("testLastFile/" + new ContentKey(time, "C").toUrl(), BYTES);
+            spokeStore.insert("testLastFile/" + new ContentKey(time, "C").toUrl(), BYTES);
         }
         ContentKey limitKey = new ContentKey(time.minusMinutes(1), "A");
         String found = spokeStore.getLatest("testLastFile", limitKey.toUrl());
@@ -134,9 +134,9 @@ public class FileSpokeStoreTest {
     public void testLatestBugNumber127() {
         String channel = "testBugNumber127";
 
-        spokeStore.write(channel + "/2015/03/17/17/31/13/686/2905180", BYTES);
-        spokeStore.write(channel + "/2015/03/17/17/31/43/691/2905200", BYTES);
-        spokeStore.write(channel + "/2015/03/17/17/31/59/600/2905220", BYTES);
+        spokeStore.insert(channel + "/2015/03/17/17/31/13/686/2905180", BYTES);
+        spokeStore.insert(channel + "/2015/03/17/17/31/43/691/2905200", BYTES);
+        spokeStore.insert(channel + "/2015/03/17/17/31/59/600/2905220", BYTES);
 
         DateTime start = new DateTime(2015, 03, 17, 17, 37, 0, 0, DateTimeZone.UTC);
         String hash = "ZZZZZ";
@@ -164,11 +164,11 @@ public class FileSpokeStoreTest {
         DateTime time = startTime;
         for (int i = 0; i < 30; i++) {
             time = time.plusMinutes(2);
-            spokeStore.write(name + "/" + new ContentKey(time, "A").toUrl(), BYTES);
+            spokeStore.insert(name + "/" + new ContentKey(time, "A").toUrl(), BYTES);
             time = time.plusSeconds(1);
-            spokeStore.write(name + "/" + new ContentKey(time, "B").toUrl(), BYTES);
+            spokeStore.insert(name + "/" + new ContentKey(time, "B").toUrl(), BYTES);
             time = time.plusMillis(1);
-            spokeStore.write(name + "/" + new ContentKey(time, "C").toUrl(), BYTES);
+            spokeStore.insert(name + "/" + new ContentKey(time, "C").toUrl(), BYTES);
         }
         ContentKey limitKey = new ContentKey(startTime, "A");
 
@@ -186,13 +186,13 @@ public class FileSpokeStoreTest {
 
         DateTime startTime = TimeUtil.now().withSecondOfMinute(10).minusMinutes(10);
         ContentKey contentKeyA = new ContentKey(startTime, "A");
-        spokeStore.write(name + "/" + contentKeyA.toUrl(), BYTES);
+        spokeStore.insert(name + "/" + contentKeyA.toUrl(), BYTES);
         ContentKey contentKeyB = new ContentKey(startTime.plusSeconds(1), "B");
-        spokeStore.write(name + "/" + contentKeyB.toUrl(), BYTES);
+        spokeStore.insert(name + "/" + contentKeyB.toUrl(), BYTES);
         ContentKey contentKeyC = new ContentKey(startTime.plusSeconds(2), "C");
-        spokeStore.write(name + "/" + contentKeyC.toUrl(), BYTES);
+        spokeStore.insert(name + "/" + contentKeyC.toUrl(), BYTES);
         ContentKey contentKeyD = new ContentKey(startTime.plusSeconds(3), "D");
-        spokeStore.write(name + "/" + contentKeyD.toUrl(), BYTES);
+        spokeStore.insert(name + "/" + contentKeyD.toUrl(), BYTES);
 
         ContentKey limitKey = new ContentKey(startTime, "B");
 
@@ -209,13 +209,13 @@ public class FileSpokeStoreTest {
 
         DateTime startTime = TimeUtil.now().minusMinutes(10);
         ContentKey contentKeyA = new ContentKey(startTime, "A");
-        spokeStore.write(name + "/" + contentKeyA.toUrl(), BYTES);
+        spokeStore.insert(name + "/" + contentKeyA.toUrl(), BYTES);
         ContentKey contentKeyB = new ContentKey(startTime.plusMinutes(1), "B");
-        spokeStore.write(name + "/" + contentKeyB.toUrl(), BYTES);
+        spokeStore.insert(name + "/" + contentKeyB.toUrl(), BYTES);
         ContentKey contentKeyC = new ContentKey(startTime.plusMinutes(2), "C");
-        spokeStore.write(name + "/" + contentKeyC.toUrl(), BYTES);
+        spokeStore.insert(name + "/" + contentKeyC.toUrl(), BYTES);
         ContentKey contentKeyD = new ContentKey(startTime.plusMinutes(3), "D");
-        spokeStore.write(name + "/" + contentKeyD.toUrl(), BYTES);
+        spokeStore.insert(name + "/" + contentKeyD.toUrl(), BYTES);
 
         ContentKey limitKey = new ContentKey(startTime, "B");
 
@@ -258,9 +258,9 @@ public class FileSpokeStoreTest {
         DateTime now = TimeUtil.now();
         DateTime afterTheHour = now.withMinuteOfHour(0).withSecondOfMinute(0).withMillisOfSecond(1);
         DateTime beforeTheHour = now.minusHours(1).withMinuteOfHour(59).withSecondOfMinute(59).withMillisOfSecond(999);
-        assertTrue(spokeStore.write("testLatestBug/" + new ContentKey(afterTheHour, "0").toUrl(), BYTES));
+        assertTrue(spokeStore.insert("testLatestBug/" + new ContentKey(afterTheHour, "0").toUrl(), BYTES));
         String beforeKey = new ContentKey(beforeTheHour, "0").toUrl();
-        assertTrue(spokeStore.write("testLatestBug/" + beforeKey, BYTES));
+        assertTrue(spokeStore.insert("testLatestBug/" + beforeKey, BYTES));
         DateTime limitTime = afterTheHour.withMillisOfSecond(0);
         String read = spokeStore.getLatest("testLatestBug", ContentKey.lastKey(limitTime).toUrl());
         assertNotNull(read);
@@ -273,7 +273,7 @@ public class FileSpokeStoreTest {
         String latest = spokeStore.getLatest("testLatestCycle", ContentKey.lastKey(now).toUrl());
         assertNull(latest);
         String key = new ContentKey(now, "0").toUrl();
-        assertTrue(spokeStore.write("testLatestCycle/" + key, BYTES));
+        assertTrue(spokeStore.insert("testLatestCycle/" + key, BYTES));
 
         latest = spokeStore.getLatest("testLatestCycle", key);
         assertNull(latest);
@@ -294,14 +294,14 @@ public class FileSpokeStoreTest {
 
         DateTime beforeTheHour = now.minusHours(1).withMinuteOfHour(59).withSecondOfMinute(59).withMillisOfSecond(999);
         String beforeKey = new ContentKey(beforeTheHour, "A").toUrl();
-        assertTrue(spokeStore.write("testLatestBugStable/" + beforeKey, BYTES));
+        assertTrue(spokeStore.insert("testLatestBugStable/" + beforeKey, BYTES));
 
         DateTime afterTheHour = now.withMinuteOfHour(0).withSecondOfMinute(0).withMillisOfSecond(1);
         String afterKey = new ContentKey(afterTheHour, "A").toUrl();
-        assertTrue(spokeStore.write("testLatestBugStable/" + afterKey, BYTES));
+        assertTrue(spokeStore.insert("testLatestBugStable/" + afterKey, BYTES));
 
         String nowKey = new ContentKey(now, "0").toUrl();
-        assertTrue(spokeStore.write("testLatestBugStable/" + nowKey, BYTES));
+        assertTrue(spokeStore.insert("testLatestBugStable/" + nowKey, BYTES));
 
         DateTime limitTime = now.minusSeconds(5);
 
@@ -317,8 +317,8 @@ public class FileSpokeStoreTest {
         logger.info("ttlMinutes {} ", ttlMinutes);
         DateTime ttlTime = time.minusMinutes(ttlMinutes);
         while (time.isAfter(ttlTime)) {
-            spokeStore.write("testLatestMore/" + new ContentKey(time, "A").toUrl(), BYTES);
-            spokeStore.write("testLatestMore/" + new ContentKey(time, "B").toUrl(), BYTES);
+            spokeStore.insert("testLatestMore/" + new ContentKey(time, "A").toUrl(), BYTES);
+            spokeStore.insert("testLatestMore/" + new ContentKey(time, "B").toUrl(), BYTES);
             time = time.minusMinutes(1);
         }
 
@@ -336,7 +336,7 @@ public class FileSpokeStoreTest {
         String startQuery = TimeUtil.hours(time);
         for (int i = 0; i < 30; i++) {
             time = time.plusMinutes(1);
-            spokeStore.write(channel + "/" + new ContentKey(time, "" + i).toUrl(), BYTES);
+            spokeStore.insert(channel + "/" + new ContentKey(time, "" + i).toUrl(), BYTES);
         }
         String endQuery = TimeUtil.hours(time);
         verify(channel + "/" + startQuery, 14);

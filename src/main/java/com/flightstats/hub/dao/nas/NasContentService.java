@@ -40,7 +40,7 @@ public class NasContentService implements ContentService {
             ContentKey key = content.keyAndStart(TimeUtil.now());
             String path = getPath(channelName, key);
             logger.trace("writing key {} to channel {}", key, channelName);
-            if (!fileSpokeStore.write(path, payload)) {
+            if (!fileSpokeStore.insert(path, payload)) {
                 logger.warn("failed to  for " + path);
             }
             traces.add("NasContentService.insert end", key);

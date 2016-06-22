@@ -58,7 +58,7 @@ public class S3BatchContentDao implements ContentDao {
     }
 
     @Override
-    public ContentKey write(String channelName, Content content) throws Exception {
+    public ContentKey insert(String channelName, Content content) throws Exception {
         throw new UnsupportedOperationException("single writes are not supported");
     }
 
