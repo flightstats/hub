@@ -50,6 +50,8 @@ groupConfig = {}
 print globalConfig.globalConfig
 
 
+# todo can we delete the groups on startup?
+
 class WebsiteTasks(TaskSet):
     channelNum = 0
 
@@ -100,6 +102,10 @@ class WebsiteTasks(TaskSet):
 
         logger.info("group channel " + self.channel + " parallel:" + str(parallel) + " url " + satellite_group_url)
         self.client.delete(satellite_group_url, name="group")
+        if self.number == 3:
+            time.sleep(61)
+            logger.info("slept on startup for channel 3, now creating callback")
+
         groupCallbacks[self.channel] = {
             "data": [],
             "lock": threading.Lock(),
@@ -334,6 +340,7 @@ class WebsiteTasks(TaskSet):
             # logger.info("incoming_json " + str(incoming_json))
             if "item" in incoming_json['type']:
                 for incoming_uri in incoming_json["uris"]:
+                    # this could also handle the initial items from the first minute of the test.
                     if channel not in groupCallbacks:
                         logger.info("incoming uri before locust tests started " + str(incoming_uri))
                         return "ok"
