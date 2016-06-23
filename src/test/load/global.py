@@ -110,7 +110,8 @@ class WebsiteTasks(TaskSet):
             "parallel": parallel,
             "batch": batch,
             "heartbeat": heartbeat,
-            "heartbeats": []
+            "heartbeats": [],
+            "firstTime": True
         }
         group = {
             "callbackUrl": "http://" + groupConfig['ip'] + ":8089/callback/" + self.channel,
@@ -353,17 +354,21 @@ class WebsiteTasks(TaskSet):
                         groupCallbacks[channel]["lock"].release()
             if incoming_json['type'] == "heartbeat":
                 logger.info("heartbeat " + str(incoming_json))
-                # make sure the heart beat is before the first data item
-                if len(groupCallbacks[channel]["heartbeats"]) > 0:
-                    if incoming_json['id'] == groupCallbacks[channel]["heartbeats"][0]:
-                        (groupCallbacks[channel]["heartbeats"]).remove(incoming_json['id'])
+                heartbeats = groupCallbacks[channel]["heartbeats"]
+                if len(heartbeats) > 0:
+                    if incoming_json['id'] == heartbeats[0]:
+                        groupCallbacks[channel]["firstTime"] = False
+                        (heartbeats).remove(incoming_json['id'])
                         events.request_success.fire(request_type="heartbeats", name="order", response_time=1,
                                                     response_length=1)
                     else:
-                        logger.info("heartbeat order failure. id = " + incoming_json['id'] + " array=" + str(
-                            groupCallbacks[channel]["heartbeats"]))
-                        events.request_failure.fire(request_type="heartbeats", name="order", response_time=1,
-                                                    exception=-1)
+                        if groupCallbacks[channel]["firstTime"]:
+                            groupCallbacks[channel]["firstTime"] = False
+                        else:
+                            logger.info("heartbeat order failure. id = " + incoming_json['id']
+                                        + " array=" + str(heartbeats))
+                            events.request_failure.fire(request_type="heartbeats", name="order", response_time=1,
+                                                        exception=-1)
                 else:
                     logger.info("no heartbeat found. id = " + incoming_json['id'] + " " + channel)
             return "ok"
