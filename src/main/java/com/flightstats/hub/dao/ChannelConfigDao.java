@@ -16,4 +16,8 @@ public interface ChannelConfigDao {
     Iterable<ChannelConfig> getChannels(boolean useCache);
 
     void delete(String name);
+
+    default boolean refresh() {
+        return false;
+    }
 }

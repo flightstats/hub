@@ -1,63 +1,59 @@
 require('./integration_config.js');
 
-var channelName = utils.randomChannelName();
-var tag = Math.random().toString().replace(".", "A");
-var jsonBody = JSON.stringify({ "name": channelName, "tags": [ tag]});
-var channelResource = channelUrl + "/" + channelName;
-var tagUrl = hubUrlBase + "/tag";
-var testName = 'get_tags_spec';
-var foundTagHref = "";
+var request = require('request');
+var _ = require('lodash');
+var http = require('http');
+var parse = require('parse-link-header');
+var channel = utils.randomChannelName();
+var tag = Math.random().toString().replace(".", "");
+var testName = __filename;
+var channelBody = {
+    tags: [tag, "test"],
+    ttlDays: 1
+};
 
-utils.configureFrisby();
+/**
+ * This should:
+ * Create Channel with tag Tag
+ *
+ * Get all the tags and expect Channel to be in the list
+ *
+ * Get tag and make sure channel is in the list.
+ *
+ */
+describe(testName, function () {
 
-frisby.create(testName + ' Test tag resources for new channel')
-    .post(channelUrl, null, { body: jsonBody})
-    .addHeader("Content-Type", "application/json")
-    .expectStatus(201)
-    .expectJSON({"tags": [tag]})
-    .afterJSON(function (result) {
-        frisby.create(testName + ': getting all tags')
-            .get(tagUrl)
-            .expectStatus(200)
-            .expectHeader('content-type', 'application/json')
-            .afterJSON(function (result) {
-                var selfLink = result['_links']['self']['href'];
-                expect(selfLink).toBe(tagUrl);
-                var tags = result['_links']['tags'];
-                for (var i = 0; i < tags.length; i++) {
-                    if (tags[i]['name'] == tag) {
-                        foundTagHref = tags[i]['href'];
-                    }
+    utils.putChannel(channel, false, channelBody, testName);
+
+    utils.itRefreshesChannels();
+
+    it('get all tags ' + tag, function (done) {
+        getAndMatch(hubUrlBase + '/tag', 'tags', tag, done);
+    }, 60001);
+
+    it('gets tag ' + tag, function (done) {
+        getAndMatch(hubUrlBase + '/tag/' + tag, 'channels', channel, done);
+    }, 60001);
+
+    function getAndMatch(url, nodeName, name, done) {
+        name = name || tag;
+        console.log('calling', url);
+        request.get(url,
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+                if (response.statusCode == 200) {
+                    body = utils.parseJson(response, testName);
+                    var tags = body._links[nodeName];
+                    var found = _.find(tags, {'name': name});
+                    console.log("found ", found);
+                    expect(found.name).toBe(name);
+                } else {
+                    expect(name).toBe(false);
                 }
-                expect(foundTagHref).toBe(tagUrl + "/" + tag);
-            })
-            .after(function () {
-                frisby.create(testName + ': getting specific tag resource ' + foundTagHref)
-                    .get(foundTagHref)
-                    .expectStatus(200)
-                    .expectHeader('content-type', 'application/json')
-                    .afterJSON(function (result) {
-                        var selfLink = result['_links']['self']['href'];
-                        expect(selfLink).toBe(foundTagHref);
-                        var channels = result['_links']['channels'];
-                        var channelHref = "";
-                        for (var i = 0; i < channels.length; i++) {
-                            if (channels[i]['name'] == channelName) {
-                                channelHref = channels[i]['href'];
-                            }
-                        }
-                        expect(channelHref).toBe(channelUrl + "/" + channelName);
-                    })
-                    .after(function () {
-                        frisby.create(testName + 'delete channel ' + channelResource)
-                            .delete(channelResource)
-                            .expectStatus(202)
-                            .toss()
-                    })
-                    .toss()
-            })
-            .toss()
-    })
-    .toss();
+                done();
+            });
+    }
 
+});
 

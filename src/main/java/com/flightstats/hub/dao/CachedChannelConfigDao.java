@@ -105,6 +105,12 @@ public class CachedChannelConfigDao implements ChannelConfigDao {
         watchManager.notifyWatcher(WATCHER_PATH);
     }
 
+    @Override
+    public boolean refresh() {
+        updateMap();
+        return true;
+    }
+
     private void startWatcher() {
         CachedChannelConfigDao dao = this;
         watchManager.register(new Watcher() {
