@@ -12,6 +12,7 @@ import org.apache.curator.framework.api.CuratorEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
@@ -76,7 +77,7 @@ public class CachedChannelConfigDao implements ChannelConfigDao {
     }
 
     @Override
-    public Iterable<ChannelConfig> getChannels(boolean useCache) {
+    public Collection<ChannelConfig> getChannels(boolean useCache) {
         if (useCache) {
             return channelConfigMap.values();
         }

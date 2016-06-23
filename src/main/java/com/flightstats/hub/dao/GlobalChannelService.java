@@ -49,12 +49,18 @@ public class GlobalChannelService implements ChannelService {
         }
     }
 
+    /**
+     * Handle the standard differently from global channels.
+     */
     private <X> X standardAndGlobal(ChannelConfig channel, Supplier<X> standard, Supplier<X> global) {
         return handleGlobal(channel, standard, global, global);
     }
 
-    private <X> X primaryAndSatellite(String channelName, Supplier<X> primary, Supplier<X> satellite) {
-        return handleGlobal(getCachedChannelConfig(channelName), primary, satellite, primary);
+    /**
+     * Handle the primary sources (standard and global master differently from the secondary source (satellite).
+     */
+    private <X> X primaryAndSecondary(String channelName, Supplier<X> primary, Supplier<X> secondary) {
+        return handleGlobal(getCachedChannelConfig(channelName), primary, secondary, primary);
     }
 
     @Override
@@ -87,7 +93,7 @@ public class GlobalChannelService implements ChannelService {
 
     @Override
     public ContentKey insert(String channelName, Content content) throws Exception {
-        return primaryAndSatellite(channelName,
+        return primaryAndSecondary(channelName,
                 Errors.rethrow().wrap(() -> {
                     return localChannelService.insert(channelName, content);
                 }),
@@ -96,7 +102,7 @@ public class GlobalChannelService implements ChannelService {
 
     @Override
     public Collection<ContentKey> insert(BulkContent bulk) throws Exception {
-        return primaryAndSatellite(bulk.getChannel(),
+        return primaryAndSecondary(bulk.getChannel(),
                 Errors.rethrow().wrap(() -> {
                     return localChannelService.insert(bulk);
                 }),
@@ -110,7 +116,7 @@ public class GlobalChannelService implements ChannelService {
 
     @Override
     public Optional<ContentKey> getLatest(String channelName, boolean stable, boolean trace) {
-        return primaryAndSatellite(channelName,
+        return primaryAndSecondary(channelName,
                 () -> localChannelService.getLatest(channelName, stable, trace),
                 () -> {
                     ContentKey limitKey = LocalChannelService.getLatestLimit(stable);
@@ -133,7 +139,7 @@ public class GlobalChannelService implements ChannelService {
 
     @Override
     public void deleteBefore(String name, ContentKey limitKey) {
-        primaryAndSatellite(name,
+        primaryAndSecondary(name,
                 () -> {
                     localChannelService.deleteBefore(name, limitKey);
                     return null;
@@ -142,11 +148,11 @@ public class GlobalChannelService implements ChannelService {
     }
 
     @Override
-    public Optional<Content> getValue(Request request) {
-        return primaryAndSatellite(request.getChannel(),
-                () -> localChannelService.getValue(request),
+    public Optional<Content> get(Request request) {
+        return primaryAndSecondary(request.getChannel(),
+                () -> localChannelService.get(request),
                 () -> {
-                    Content read = spokeContentDao.read(request.getChannel(), request.getKey());
+                    Content read = spokeContentDao.get(request.getChannel(), request.getKey());
                     if (read != null) {
                         return Optional.of(read);
                     }
@@ -161,14 +167,14 @@ public class GlobalChannelService implements ChannelService {
 
     @Override
     public SortedSet<ContentKey> queryByTime(TimeQuery query) {
-        return primaryAndSatellite(query.getChannelName(),
+        return primaryAndSecondary(query.getChannelName(),
                 () -> localChannelService.queryByTime(query),
                 () -> query(query, spokeContentDao.queryByTime(query)));
     }
 
     @Override
     public SortedSet<ContentKey> getKeys(DirectionQuery query) {
-        return primaryAndSatellite(query.getChannelName(),
+        return primaryAndSecondary(query.getChannelName(),
                 () -> localChannelService.getKeys(query),
                 () -> query(query, spokeContentDao.query(query)));
     }
@@ -187,15 +193,15 @@ public class GlobalChannelService implements ChannelService {
     }
 
     @Override
-    public void getValues(String channel, SortedSet<ContentKey> keys, Consumer<Content> callback) {
-        primaryAndSatellite(channel,
+    public void get(String channel, SortedSet<ContentKey> keys, Consumer<Content> callback) {
+        primaryAndSecondary(channel,
                 () -> {
-                    localChannelService.getValues(channel, keys, callback);
+                    localChannelService.get(channel, keys, callback);
                     return null;
                 },
                 () -> {
                     //todo - gfm - 6/3/16 - if this is outside of the spoke TTL window, call the master.
-                    localChannelService.getValues(channel, keys, callback);
+                    localChannelService.get(channel, keys, callback);
                     return null;
                 });
     }
@@ -216,12 +222,12 @@ public class GlobalChannelService implements ChannelService {
     }
 
     @Override
-    public Iterable<ChannelConfig> getChannels() {
+    public Collection<ChannelConfig> getChannels() {
         return localChannelService.getChannels();
     }
 
     @Override
-    public Iterable<ChannelConfig> getChannels(String tag) {
+    public Collection<ChannelConfig> getChannels(String tag) {
         return localChannelService.getChannels(tag);
     }
 

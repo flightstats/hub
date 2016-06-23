@@ -40,7 +40,7 @@ public class NasContentService implements ContentService {
             ContentKey key = content.keyAndStart(TimeUtil.now());
             String path = getPath(channelName, key);
             logger.trace("writing key {} to channel {}", key, channelName);
-            if (!fileSpokeStore.write(path, payload)) {
+            if (!fileSpokeStore.insert(path, payload)) {
                 logger.warn("failed to  for " + path);
             }
             traces.add("NasContentService.insert end", key);
@@ -71,7 +71,7 @@ public class NasContentService implements ContentService {
     }
 
     @Override
-    public Optional<Content> getValue(String channelName, ContentKey key) {
+    public Optional<Content> get(String channelName, ContentKey key) {
         String path = getPath(channelName, key);
         try {
             byte[] bytes = fileSpokeStore.read(path);
@@ -85,9 +85,9 @@ public class NasContentService implements ContentService {
     }
 
     @Override
-    public void getValues(String channel, SortedSet<ContentKey> keys, Consumer<Content> callback) {
+    public void get(String channel, SortedSet<ContentKey> keys, Consumer<Content> callback) {
         for (ContentKey key : keys) {
-            Optional<Content> contentOptional = getValue(channel, key);
+            Optional<Content> contentOptional = get(channel, key);
             if (contentOptional.isPresent()) {
                 callback.accept(contentOptional.get());
             }

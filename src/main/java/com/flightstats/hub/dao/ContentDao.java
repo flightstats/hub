@@ -14,13 +14,13 @@ public interface ContentDao {
     String SINGLE_LONG_TERM = "LongTerm";
     String BATCH_LONG_TERM = "BatchLongTerm";
 
-    ContentKey write(String channelName, Content content) throws Exception;
+    ContentKey insert(String channelName, Content content) throws Exception;
 
-    default SortedSet<ContentKey> write(BulkContent bulkContent) throws Exception {
+    default SortedSet<ContentKey> insert(BulkContent bulkContent) throws Exception {
         throw new UnsupportedOperationException("bulk writes are not supported");
     }
 
-    Content read(String channelName, ContentKey key);
+    Content get(String channelName, ContentKey key);
 
     SortedSet<ContentKey> queryByTime(TimeQuery timQuery);
 

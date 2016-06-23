@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 
@@ -50,14 +51,14 @@ class NasUtil {
         return null;
     }
 
-    static <T> Iterable<T> getIterable(String path, Function<String, T> fromJson) {
+    static <T> Collection<T> getIterable(String path, Function<String, T> fromJson) {
         List<T> list = new ArrayList<>();
         File[] files = new File(path).listFiles();
         if (files == null) {
             return list;
         }
-        for (int i = 0; i < files.length; i++) {
-            list.add(read(files[i], fromJson));
+        for (File file : files) {
+            list.add(read(file, fromJson));
         }
         return list;
     }

@@ -32,16 +32,16 @@ public class FileSpokeStore {
     public FileSpokeStore(@Named("spoke.path") String storagePath) {
         this.storagePath = StringUtils.appendIfMissing(storagePath, "/");
         logger.info("starting with storage path " + this.storagePath);
-        if (!write("hub-startup/" + new ContentKey().toUrl(), ("" + System.currentTimeMillis()).getBytes())) {
+        if (!insert("hub-startup/" + new ContentKey().toUrl(), ("" + System.currentTimeMillis()).getBytes())) {
             throw new RuntimeException("unable to create startup file");
         }
     }
 
-    public boolean write(String path, byte[] payload) {
-        return write(path, new ByteArrayInputStream(payload));
+    public boolean insert(String path, byte[] payload) {
+        return insert(path, new ByteArrayInputStream(payload));
     }
 
-    public boolean write(String path, InputStream input) {
+    public boolean insert(String path, InputStream input) {
         File file = spokeFilePathPart(path);
         logger.trace("writing {}", file);
         file.getParentFile().mkdirs();

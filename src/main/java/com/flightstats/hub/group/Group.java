@@ -26,7 +26,7 @@ import java.util.SortedSet;
 @ToString
 @EqualsAndHashCode(exclude = {"startingKey"})
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class Group {
+public class Group implements Comparable<Group> {
     public static final String SINGLE = "SINGLE";
     public static final String MINUTE = "MINUTE";
     public static final String SECOND = "SECOND";
@@ -225,5 +225,10 @@ public class Group {
             return 0;
         }
         return ttlMinutes;
+    }
+
+    @Override
+    public int compareTo(Group other) {
+        return getName().compareTo(other.getName());
     }
 }

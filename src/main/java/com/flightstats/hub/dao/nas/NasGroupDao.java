@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.Collection;
 
 public class NasGroupDao implements GroupDao {
 
@@ -31,7 +32,7 @@ public class NasGroupDao implements GroupDao {
     }
 
     @Override
-    public Iterable<Group> getGroups() {
+    public Collection<Group> getGroups() {
         return NasUtil.getIterable(groupPath, Group::fromJson);
     }
 

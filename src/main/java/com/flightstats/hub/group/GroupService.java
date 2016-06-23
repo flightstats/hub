@@ -12,6 +12,8 @@ import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
+
 import static com.flightstats.hub.group.GroupLeader.GROUP_LAST_COMPLETED;
 
 public class GroupService {
@@ -64,7 +66,7 @@ public class GroupService {
         return groupDao.getGroup(name);
     }
 
-    public Iterable<Group> getGroups() {
+    public Collection<Group> getGroups() {
         return groupDao.getGroups();
     }
 

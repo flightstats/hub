@@ -226,7 +226,7 @@ public class ChannelContentResource {
                 .key(key)
                 .uri(uriInfo.getRequestUri())
                 .build();
-        Optional<Content> optionalResult = channelService.getValue(request);
+        Optional<Content> optionalResult = channelService.get(request);
 
         if (!optionalResult.isPresent()) {
             logger.warn("404 content not found {} {}", channel, key);

@@ -58,12 +58,12 @@ public class S3BatchContentDao implements ContentDao {
     }
 
     @Override
-    public ContentKey write(String channelName, Content content) throws Exception {
+    public ContentKey insert(String channelName, Content content) throws Exception {
         throw new UnsupportedOperationException("single writes are not supported");
     }
 
     @Override
-    public Content read(String channelName, ContentKey key) {
+    public Content get(String channelName, ContentKey key) {
         try {
             return getS3Object(channelName, key);
         } catch (SocketTimeoutException | SocketException e) {
