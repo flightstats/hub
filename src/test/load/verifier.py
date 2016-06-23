@@ -1,13 +1,14 @@
 # locust.py
 
-import httplib2
 import json
 import logging
 import random
 import socket
 import string
-import thread
 import threading
+
+import httplib2
+import thread
 import time
 import websocket
 from flask import request, jsonify
@@ -64,7 +65,6 @@ class WebsiteTasks(TaskSet):
         # First User - create channel - posts to channel, group callback on channel
         # Second User - create channel - posts to channel, parallel group callback on channel
         # Third User - create channel - posts to channel, replicate channel, group callback on replicated channel
-        # Fourth User - create channel - posts to channel, minute group callback on channel
         group_channel = self.channel
         parallel = 1
         batch = "SINGLE"
@@ -79,8 +79,6 @@ class WebsiteTasks(TaskSet):
                                              "replicationSource": groupConfig['host'] + "/channel/" + self.channel}),
                             headers={"Content-Type": "application/json"},
                             name="replication")
-        if self.number == 4:
-            batch = "MINUTE"
         group_name = "/group/locust_" + group_channel
         self.client.delete(group_name, name="group")
         logger.info("group channel " + group_channel + " parallel:" + str(parallel))

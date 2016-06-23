@@ -75,6 +75,9 @@ class WebsiteTasks(TaskSet):
         group_name = "/group/locust_" + group_channel
         self.client.delete(group_name, name="group")
         logger.info("group channel " + group_channel + " parallel:" + str(parallel))
+        if self.number == 3:
+            time.sleep(61)
+            logger.info("slept on startup for channel 3, now creating callback")
         groupCallbacks[self.channel] = {
             "data": [],
             "lock": threading.Lock(),

@@ -50,8 +50,6 @@ groupConfig = {}
 print globalConfig.globalConfig
 
 
-# todo can we delete the groups on startup?
-
 class WebsiteTasks(TaskSet):
     channelNum = 0
 
