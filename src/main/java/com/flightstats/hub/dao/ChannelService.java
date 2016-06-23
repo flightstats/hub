@@ -32,9 +32,9 @@ public interface ChannelService {
 
     ChannelConfig getCachedChannelConfig(String channelName);
 
-    Iterable<ChannelConfig> getChannels();
+    Collection<ChannelConfig> getChannels();
 
-    Iterable<ChannelConfig> getChannels(String tag);
+    Collection<ChannelConfig> getChannels(String tag);
 
     Iterable<String> getTags();
 

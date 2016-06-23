@@ -54,7 +54,8 @@ public class HubBindings extends AbstractModule {
                                                 RetryPolicy retryPolicy, ZooKeeperState zooKeeperState) {
         logger.info("connecting to zookeeper(s) at " + zkConnection);
         FixedEnsembleProvider ensembleProvider = new FixedEnsembleProvider(zkConnection);
-        CuratorFramework curatorFramework = CuratorFrameworkFactory.builder().namespace(appName + "-" + environment)
+        CuratorFramework curatorFramework = CuratorFrameworkFactory.builder()
+                .namespace(appName + "-" + environment)
                 .ensembleProvider(ensembleProvider)
                 .retryPolicy(retryPolicy).build();
         curatorFramework.getConnectionStateListenable().addListener(zooKeeperState.getStateListener());

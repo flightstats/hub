@@ -222,12 +222,12 @@ public class GlobalChannelService implements ChannelService {
     }
 
     @Override
-    public Iterable<ChannelConfig> getChannels() {
+    public Collection<ChannelConfig> getChannels() {
         return localChannelService.getChannels();
     }
 
     @Override
-    public Iterable<ChannelConfig> getChannels(String tag) {
+    public Collection<ChannelConfig> getChannels(String tag) {
         return localChannelService.getChannels(tag);
     }
 

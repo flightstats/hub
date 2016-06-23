@@ -11,10 +11,7 @@ import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class DynamoGroupDao implements GroupDao {
     private final static Logger logger = LoggerFactory.getLogger(DynamoGroupDao.class);
@@ -97,7 +94,7 @@ public class DynamoGroupDao implements GroupDao {
     }
 
     @Override
-    public Iterable<Group> getGroups() {
+    public Collection<Group> getGroups() {
         List<Group> configurations = new ArrayList<>();
 
         ScanResult result = dbClient.scan(new ScanRequest(getTableName()).withConsistentRead(true));

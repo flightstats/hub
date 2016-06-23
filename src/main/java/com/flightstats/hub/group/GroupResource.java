@@ -18,6 +18,8 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.util.Collection;
+import java.util.TreeSet;
 
 /**
  * GroupResource represents all of the interactions for Group Management.
@@ -38,7 +40,7 @@ public class GroupResource {
         ObjectNode root = mapper.createObjectNode();
         ObjectNode links = addSelfLink(root);
         ArrayNode groupsNode = links.putArray("groups");
-        Iterable<Group> groups = groupService.getGroups();
+        Collection<Group> groups = new TreeSet<>(groupService.getGroups());
         for (Group group : groups) {
             ObjectNode groupObject = groupsNode.addObject();
             groupObject.put("name", group.getName());
