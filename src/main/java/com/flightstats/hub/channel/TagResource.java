@@ -12,8 +12,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * This resource represents operations on tags.
@@ -31,7 +31,7 @@ public class TagResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getChannels() {
         Iterable<String> tags = channelService.getTags();
-        Map<String, URI> tagUriMap = new HashMap<>();
+        Map<String, URI> tagUriMap = new TreeMap<>();
         for (String tag : tags) {
             tagUriMap.put(tag, URI.create(uriInfo.getBaseUri() + "tag/" + tag));
         }
