@@ -15,6 +15,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  * This resource represents the collection of all channels in the Hub.
@@ -33,8 +35,8 @@ public class ChannelsResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getChannels() {
-        Iterable<ChannelConfig> channels = channelService.getChannels();
-        Linked<?> result = LinkBuilder.build(channels, uriInfo);
+        SortedSet<ChannelConfig> sortedChannels = new TreeSet<>(channelService.getChannels());
+        Linked<?> result = LinkBuilder.build(sortedChannels, uriInfo);
         return Response.ok(result).build();
     }
 

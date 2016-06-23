@@ -58,7 +58,7 @@ public class S3SingleContentDao implements ContentDao {
         throw new UnsupportedOperationException("use query interface");
     }
 
-    public ContentKey write(String channelName, Content content) {
+    public ContentKey insert(String channelName, Content content) {
         ContentKey key = content.getContentKey().get();
         ActiveTraces.getLocal().add("S3SingleContentDao.write", key);
         try {
@@ -91,7 +91,7 @@ public class S3SingleContentDao implements ContentDao {
         }
     }
 
-    public Content read(final String channelName, final ContentKey key) {
+    public Content get(final String channelName, final ContentKey key) {
         ActiveTraces.getLocal().add("S3SingleContentDao.read", key);
         try {
             return getS3Object(channelName, key);

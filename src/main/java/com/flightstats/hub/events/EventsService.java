@@ -32,7 +32,7 @@ public class EventsService {
         logger.trace("got uri {} {}", uri, id);
         ChannelContentKey key = ChannelContentKey.fromUrl(uri);
         if (key != null) {
-            Optional<Content> optional = contentService.getValue(key.getChannel(), key.getContentKey());
+            Optional<Content> optional = contentService.get(key.getChannel(), key.getContentKey());
             if (optional.isPresent()) {
                 Content content = optional.get();
                 sendData(id, Errors.rethrow().wrap(contentOutput -> {

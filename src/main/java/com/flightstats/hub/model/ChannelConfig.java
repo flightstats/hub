@@ -18,7 +18,7 @@ import java.util.*;
 
 @ToString
 @EqualsAndHashCode(of = {"name"})
-public class ChannelConfig implements Serializable {
+public class ChannelConfig implements Serializable, Comparable<ChannelConfig> {
 
     public static final String SINGLE = "SINGLE";
     private static final String BATCH = "BATCH";
@@ -213,6 +213,11 @@ public class ChannelConfig implements Serializable {
             return true;
         }
         return false;
+    }
+
+    @Override
+    public int compareTo(ChannelConfig other) {
+        return getName().compareTo(other.getName());
     }
 
     public static class Builder {

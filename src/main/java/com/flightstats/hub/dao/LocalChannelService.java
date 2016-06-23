@@ -166,12 +166,12 @@ public class LocalChannelService implements ChannelService {
     }
 
     @Override
-    public Optional<Content> getValue(Request request) {
+    public Optional<Content> get(Request request) {
         DateTime ttlTime = getTtlTime(request.getChannel()).minusMinutes(15);
         if (request.getKey().getTime().isBefore(ttlTime)) {
             return Optional.absent();
         }
-        return contentService.getValue(request.getChannel(), request.getKey());
+        return contentService.get(request.getChannel(), request.getKey());
     }
 
     @Override
@@ -192,16 +192,16 @@ public class LocalChannelService implements ChannelService {
     }
 
     @Override
-    public Iterable<ChannelConfig> getChannels() {
+    public Collection<ChannelConfig> getChannels() {
         return getChannels(false);
     }
 
-    private Iterable<ChannelConfig> getChannels(boolean useCache) {
+    private Collection<ChannelConfig> getChannels(boolean useCache) {
         return channelConfigDao.getChannels(useCache);
     }
 
     @Override
-    public Iterable<ChannelConfig> getChannels(String tag) {
+    public Collection<ChannelConfig> getChannels(String tag) {
         Collection<ChannelConfig> matchingChannels = new ArrayList<>();
         Iterable<ChannelConfig> channels = getChannels(true);
         for (ChannelConfig channel : channels) {
@@ -259,8 +259,8 @@ public class LocalChannelService implements ChannelService {
     }
 
     @Override
-    public void getValues(String channel, SortedSet<ContentKey> keys, Consumer<Content> callback) {
-        contentService.getValues(channel, keys, callback);
+    public void get(String channel, SortedSet<ContentKey> keys, Consumer<Content> callback) {
+        contentService.get(channel, keys, callback);
     }
 
     private DateTime getTtlTime(String channelName) {

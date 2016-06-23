@@ -20,6 +20,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.util.Collections;
 import java.util.List;
 
 @SuppressWarnings("WeakerAccess")
@@ -89,7 +90,7 @@ public class ZookeeperResource {
 
     private void handleChildren(String path, ObjectNode root) throws Exception {
         List<String> children = curator.getChildren().forPath(path);
-
+        Collections.sort(children);
         ArrayNode ids = root.putArray("children");
         for (String child : children) {
             ids.add(uriInfo.getRequestUri().toString() + "/" + child);

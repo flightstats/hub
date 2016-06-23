@@ -152,7 +152,7 @@ public class DynamoChannelConfigDao implements ChannelConfigDao {
     }
 
     @Override
-    public Iterable<ChannelConfig> getChannels(boolean useCache) {
+    public Collection<ChannelConfig> getChannels(boolean useCache) {
         List<ChannelConfig> configurations = new ArrayList<>();
         ScanRequest scanRequest = new ScanRequest()
                 .withConsistentRead(true)
