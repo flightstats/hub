@@ -35,14 +35,14 @@ public class HubUtils {
     private final ObjectMapper mapper = new ObjectMapper();
     private final Client noRedirectsClient;
     private final Client followClient;
-    private final CuratorCluster hubCuratorCluster;
+    private final CuratorCluster spokeCuratorCluster;
 
     @Inject
     public HubUtils(@Named("NoRedirects") Client noRedirectsClient, Client followClient,
-                    @Named("HubCuratorCluster") CuratorCluster hubCuratorCluster) {
+                    @Named("SpokeCuratorCluster") CuratorCluster spokeCuratorCluster) {
         this.noRedirectsClient = noRedirectsClient;
         this.followClient = followClient;
-        this.hubCuratorCluster = hubCuratorCluster;
+        this.spokeCuratorCluster = spokeCuratorCluster;
     }
 
     public Optional<String> getLatest(String channelUrl) {
@@ -206,7 +206,7 @@ public class HubUtils {
 
     public ObjectNode refreshAll() {
         ObjectNode root = mapper.createObjectNode();
-        Set<String> servers = hubCuratorCluster.getServers();
+        Set<String> servers = spokeCuratorCluster.getServers();
         for (String server : servers) {
             String url = HubHost.getScheme() + server + "/internal/channel/refresh?all=false";
             ClientResponse response = followClient.resource(url).get(ClientResponse.class);

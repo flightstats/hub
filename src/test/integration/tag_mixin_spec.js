@@ -26,10 +26,10 @@ var channelBody = {
 describe(testName, function () {
     
     utils.putChannel(channelA, false, channelBody, testName);
-    utils.sleep(1000);
+
     utils.putChannel(channelB, false, channelBody, testName);
 
-    utils.sleep(5000);
+    utils.itRefreshesChannels();
 
     utils.addItem(channelUrl + '/' + channelA, 201);
 
