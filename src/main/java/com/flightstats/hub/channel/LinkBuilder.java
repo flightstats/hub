@@ -16,7 +16,10 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import static com.flightstats.hub.rest.Linked.linked;
@@ -60,15 +63,6 @@ public class LinkBuilder {
                 .withLink("time", URI.create(channelUri + "/time"))
                 .withLink("status", URI.create(channelUri + "/status"));
         return linked.build();
-    }
-
-    public static Linked<?> build(Iterable<ChannelConfig> channels, UriInfo uriInfo) {
-        Map<String, URI> mappedUris = new HashMap<>();
-        for (ChannelConfig channelConfig : channels) {
-            String channelName = channelConfig.getName();
-            mappedUris.put(channelName, buildChannelUri(channelName, uriInfo));
-        }
-        return buildLinks(uriInfo, mappedUris, "channels");
     }
 
     static Linked<?> buildLinks(UriInfo uriInfo, Map<String, URI> nameToUriMap, String name) {
