@@ -12,6 +12,8 @@ from datetime import datetime, timedelta
 from flask import request, jsonify
 from locust import HttpLocust, TaskSet, task, events, web
 
+import item
+
 # This test uses the http://locust.io/ framework.
 #
 # It performs a combination of verification and load testing.
@@ -46,7 +48,7 @@ class WebsiteTasks(TaskSet):
     def on_start(self):
         WebsiteTasks.channelNum += 1
         self.number = WebsiteTasks.channelNum
-        self.payload = self.payload_generator()
+        self.payload = item.item
         logger.info("payload size " + str(self.payload.__sizeof__()))
         self.channel = "batch_test_" + str(self.number)
         self.count = 0
@@ -102,7 +104,7 @@ class WebsiteTasks(TaskSet):
 
     def write(self):
         bulk = ""
-        for x in range(0, 50):
+        for x in range(0, 100):
             bulk += "--abcdefg\r\n"
             bulk += "Content-Type: application/json\r\n\r\n"
             bulk += '{"name":"' + self.payload + '", "count": ' + str(self.count) + '}\r\n'
@@ -222,8 +224,6 @@ class WebsiteUser(HttpLocust):
 
     def __init__(self):
         super(WebsiteUser, self).__init__()
-        # groupConfig['host'] = 'http://localhost:8080'
-        # groupConfig['ip'] = '127.0.0.1'
         groupConfig['host'] = self.host
         groupConfig['ip'] = socket.gethostbyname(socket.getfqdn())
         logger.info('groupConfig %s', groupConfig)
