@@ -2,15 +2,15 @@
 
 import json
 import logging
-import random
 import socket
-import string
 import threading
 
 import time
 from datetime import datetime, timedelta
 from flask import request, jsonify
 from locust import HttpLocust, TaskSet, task, events, web
+
+import singleItem
 
 # This test uses the http://locust.io/ framework.
 #
@@ -47,7 +47,7 @@ class WebsiteTasks(TaskSet):
     def on_start(self):
         WebsiteTasks.channelNum += 1
         self.number = WebsiteTasks.channelNum
-        self.payload = self.payload_generator()
+        self.payload = singleItem.item
         logger.info("payload size " + str(self.payload.__sizeof__()))
         self.channel = "single_test_" + str(self.number)
         self.count = 0
@@ -162,11 +162,6 @@ class WebsiteTasks(TaskSet):
         with self.client.get(path, catch_response=True, name="next_" + location) as postResponse:
             if postResponse.status_code != 200:
                 postResponse.failure("Got wrong response on next: " + str(postResponse.status_code))
-
-
-    def payload_generator(self, chars=string.ascii_uppercase + string.digits):
-        size = 3 * 1024
-        return ''.join(random.choice(chars) for x in range(size))
 
     def verify_callback(self, obj, name="group"):
         obj[self.channel]["lock"].acquire()
