@@ -1,5 +1,7 @@
 package com.flightstats.hub.filter;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flightstats.hub.app.HubBindings;
 import com.flightstats.hub.metrics.ActiveTraces;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -17,11 +19,24 @@ import java.net.URI;
 public class TracesFilter implements ContainerRequestFilter, ContainerResponseFilter {
 
     private final static Logger logger = LoggerFactory.getLogger(TracesFilter.class);
+    private static final ObjectMapper mapper = HubBindings.objectMapper();
 
     @Override
     public void filter(ContainerRequestContext request, ContainerResponseContext response) throws IOException {
         URI requestUri = request.getUriInfo().getRequestUri();
         logger.trace("response {} {} {}", request.getMethod(), requestUri, response.getStatus());
+        boolean trace = Boolean.valueOf(request.getUriInfo().getQueryParameters().getFirst("trace"));
+        if (trace) {
+            Object entity = response.getEntity();
+            if (entity == null) {
+                logger.info("trace == null");
+            } else {
+                if (mapper.canSerialize(entity.getClass())) {
+                    entity = mapper.writeValueAsString(entity);
+                }
+                logger.info("trace {} {}", entity.getClass(), entity);
+            }
+        }
         Thread thread = Thread.currentThread();
         if (!ActiveTraces.end()) {
             logger.debug("unable to end trace for {}", requestUri);

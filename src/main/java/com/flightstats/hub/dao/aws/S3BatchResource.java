@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubProvider;
-import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.ContentKey;
@@ -28,11 +27,9 @@ import java.util.List;
 public class S3BatchResource {
     private final static Logger logger = LoggerFactory.getLogger(S3BatchResource.class);
 
-    private final boolean dropSomeWrites = HubProperties.getProperty("s3.dropSomeWrites", false);
-
-    private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private ContentDao s3BatchContentDao = HubProvider.getInstance(ContentDao.class, ContentDao.BATCH_LONG_TERM);
-    private ChannelService channelService = HubProvider.getInstance(ChannelService.class);
+    private static final boolean dropSomeWrites = HubProperties.getProperty("s3.dropSomeWrites", false);
+    private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private static final ContentDao s3BatchContentDao = HubProvider.getInstance(ContentDao.class, ContentDao.BATCH_LONG_TERM);
 
     public static boolean getAndWriteBatch(ContentDao contentDao, String channel, MinutePath path,
                                            Collection<ContentKey> keys, String batchUrl) {

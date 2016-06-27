@@ -136,7 +136,7 @@ public class S3Verifier {
             MinutePath currentPath = range.startPath;
             String channelName = range.channel.getName();
             while ((currentPath.compareTo(range.endPath) <= 0)) {
-                logger.debug("batch minute {}", currentPath, channelName);
+                logger.debug("batch minute {} {}", currentPath, channelName);
                 SortedSet<ContentKey> cacheKeys = new TreeSet<>();
                 ActiveTraces.getLocal().add("S3Verifier.path", channelName, currentPath);
                 SortedSet<ContentKey> keysToAdd = getMissing(currentPath, null, channelName, s3BatchContentDao, cacheKeys);
