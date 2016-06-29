@@ -73,13 +73,13 @@ public class S3SingleContentDaoTest {
     @Test
     public void testWriteReadOld() throws Exception {
         String channel = "testWriteReadOld";
-        Content content = util.createContent();
+        Content content = ContentDaoUtil.createContent();
         ContentKey key = s3SingleContentDao.insertOld(channel, content);
         logger.info("key {}", key);
         assertEquals(content.getContentKey().get(), key);
         Content read = s3SingleContentDao.get(channel, key);
         logger.info("read {}", read.getContentKey());
-        util.compare(content, read, key.toString().getBytes());
+        ContentDaoUtil.compare(content, read, key.toString().getBytes());
     }
 
 }
