@@ -91,7 +91,7 @@ public class RemoteSpokeStore {
         }
     }
 
-    public boolean testAll() throws UnknownHostException {
+    boolean testAll() throws UnknownHostException {
         Collection<String> servers = cluster.getRandomServers();
         servers.addAll(CuratorCluster.getLocalServer());
         logger.info("*********************************************");
@@ -205,7 +205,10 @@ public class RemoteSpokeStore {
                 if (response.getStatus() == 200) {
                     byte[] entity = response.getEntity(byte[].class);
                     if (entity.length > 0) {
-                        return ContentMarshaller.toContent(entity, key);
+                        Content content = ContentMarshaller.toContent(entity, key);
+                        byte[] data = content.getData();
+                        logger.trace("found {} {}", path, data.length);
+                        return content;
                     }
                 }
             } catch (JsonMappingException e) {

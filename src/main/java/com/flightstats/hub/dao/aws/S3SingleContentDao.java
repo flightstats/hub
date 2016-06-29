@@ -83,6 +83,7 @@ public class S3SingleContentDao implements ContentDao {
             String s3Key = getS3ContentKey(channelName, key);
             ObjectMetadata metadata = new ObjectMetadata();
             byte[] bytes = handler.apply(metadata);
+            logger.trace("insert {} {} {} {}", channelName, key, content.getSize(), bytes.length);
             InputStream stream = new ByteArrayInputStream(bytes);
             metadata.setContentLength(bytes.length);
             if (content.getContentType().isPresent()) {
