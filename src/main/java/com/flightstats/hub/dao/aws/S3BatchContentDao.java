@@ -8,12 +8,12 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDao;
+import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.DataDog;
 import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
-import com.flightstats.hub.spoke.SpokeMarshaller;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
@@ -108,7 +108,7 @@ public class S3BatchContentDao implements ContentDao {
         byte[] bytes = ByteStreams.toByteArray(zipStream);
         logger.trace("returning content {} bytes {}", key, bytes.length);
         String comment = new String(nextEntry.getExtra());
-        SpokeMarshaller.setMetaData(comment, builder);
+        ContentMarshaller.setMetaData(comment, builder);
         builder.withData(bytes);
         return builder.build();
     }
