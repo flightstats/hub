@@ -22,7 +22,6 @@ public class S3VerifierTest {
     private S3Verifier s3Verifier;
     private DateTime now = TimeUtil.now();
     private DateTime offsetTime;
-    private MinutePath offsetPath;
     private LastContentPath lastContentPath;
     private int offsetMinutes = 15;
 
@@ -33,7 +32,6 @@ public class S3VerifierTest {
         lastContentPath = new LastContentPath(curator);
         s3Verifier.lastContentPath = lastContentPath;
         offsetTime = now.minusMinutes(offsetMinutes);
-        offsetPath = new MinutePath(offsetTime);
         HubProperties.setProperty("spoke.ttlMinutes", "60");
     }
 
