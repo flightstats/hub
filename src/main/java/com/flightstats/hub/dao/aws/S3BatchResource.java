@@ -43,7 +43,6 @@ public class S3BatchResource {
             return false;
         }
         ActiveTraces.getLocal().add("S3BatchResource.getAndWriteBatch got response");
-        //todo - gfm - 6/28/16 - can this use a stream instead?
         byte[] bytes = response.getEntity(byte[].class);
         contentDao.writeBatch(channel, path, keys, bytes);
         ActiveTraces.getLocal().add("S3BatchResource.getAndWriteBatch completed");
