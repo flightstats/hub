@@ -59,12 +59,9 @@ public class S3WriteQueue {
     private void write() throws InterruptedException {
         try {
             ChannelContentKey key = keys.poll(5, TimeUnit.SECONDS);
-            retryer.call(new Callable<Void>() {
-                @Override
-                public Void call() throws Exception {
-                    writeContent(key);
-                    return null;
-                }
+            retryer.call(() -> {
+                writeContent(key);
+                return null;
             });
         } catch (Exception e) {
             logger.warn("unable to call s3", e);

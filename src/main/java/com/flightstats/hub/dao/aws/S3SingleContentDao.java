@@ -86,6 +86,7 @@ public class S3SingleContentDao implements ContentDao {
             InputStream stream = new ByteArrayInputStream(bytes);
             metadata.setContentLength(bytes.length);
             if (content.getContentType().isPresent()) {
+                //todo - gfm - 6/29/16 - do we still want to write this?
                 metadata.setContentType(content.getContentType().get());
                 metadata.addUserMetadata("type", content.getContentType().get());
             } else {
