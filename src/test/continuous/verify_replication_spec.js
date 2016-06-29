@@ -147,7 +147,7 @@ describe(testName, function () {
             console.log('working on', channel);
             channels[channel].forEach(function (uri) {
                 var replicatedChannel = replicatedChannels[channel];
-                if (Math.random() > 0.99) {
+                if (Math.random() > 0.995) {
                     var contentKey = getContentKey(uri, channel);
                     itemsToVerify.push({name: channel, uri: uri, contentKey: contentKey});
                 }
