@@ -43,6 +43,7 @@ public class S3BatchResource {
             return false;
         }
         ActiveTraces.getLocal().add("S3BatchResource.getAndWriteBatch got response");
+        //todo - gfm - 6/28/16 - can this use a stream instead?
         byte[] bytes = response.getEntity(byte[].class);
         contentDao.writeBatch(channel, path, keys, bytes);
         ActiveTraces.getLocal().add("S3BatchResource.getAndWriteBatch completed");
@@ -69,8 +70,9 @@ public class S3BatchResource {
             String id = node.get("id").asText();
             MinutePath path = MinutePath.fromUrl(id).get();
             String batchUrl = node.get("batchUrl").asText();
-            if (dropSomeWrites && Math.random() > 0.50) {
-                logger.debug("dropping {} {}", channel, data);
+            if (dropSomeWrites && Math.random() > 0.90) {
+                logger.debug("ignoring {} {}", channel, data);
+                return Response.status(400).build();
             } else if (!getAndWriteBatch(s3BatchContentDao, channel, path, keys, batchUrl)) {
                 return Response.status(400).build();
             }
