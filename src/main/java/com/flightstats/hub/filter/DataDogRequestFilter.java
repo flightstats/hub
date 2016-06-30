@@ -57,7 +57,7 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
         }
         int returnCode = response.getStatus();
         if (returnCode > 400 && returnCode != 404) {
-            statsd.incrementCounter("errors", new String[]{"errorCode:" + returnCode});
+            statsd.incrementCounter("errors", "errorCode:" + returnCode);
         }
     }
 

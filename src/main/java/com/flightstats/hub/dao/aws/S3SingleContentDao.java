@@ -76,8 +76,8 @@ public class S3SingleContentDao implements ContentDao {
                 metadata.setSSEAlgorithm(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
             }
             PutObjectRequest request = new PutObjectRequest(s3BucketName, s3Key, stream, metadata);
-            statsd.increment("channel", "method:put", "type:s3Batch", "channel:" + channelName);
-            statsd.count("s3.bytes", content.getData().length, "method:put", "type:s3Batch", "channel:" + channelName);
+            statsd.increment("s3.put", "type:single", "channel:" + channelName);
+            statsd.count("s3.put.bytes", content.getData().length, "channel:" + channelName, "type:single");
 
             sender.send("channel." + channelName + ".s3.put", 1);
             sender.send("channel." + channelName + ".s3.bytes", content.getData().length);
@@ -113,7 +113,7 @@ public class S3SingleContentDao implements ContentDao {
 
     private Content getS3Object(String channelName, ContentKey key) throws IOException {
         try (S3Object object = s3Client.getObject(s3BucketName, getS3ContentKey(channelName, key))) {
-            statsd.increment("channel", "type:s3Single", "method:get", "channel:" + channelName);
+            statsd.increment("s3.get", "type:single", "channel:" + channelName);
             sender.send("channel." + channelName + ".s3.get", 1);
             byte[] bytes = ByteStreams.toByteArray(object.getObjectContent());
             ObjectMetadata metadata = object.getObjectMetadata();
@@ -162,7 +162,7 @@ public class S3SingleContentDao implements ContentDao {
         if (count > 0 && limitKey != null) {
             keys = new ContentKeySet(count, limitKey);
         }
-        statsd.increment("channel", "type:s3List", "method:get", "channel:" + channelName);
+        statsd.increment("s3.list", "type:single", "channel:" + channelName);
 
         sender.send("channel." + channelName + ".s3.get", 1);
         sender.send("channel." + channelName + ".s3.list", 1);
@@ -172,7 +172,7 @@ public class S3SingleContentDao implements ContentDao {
         ContentKey marker = addKeys(channelName, listing, keys, endTime);
         while (shouldContinue(maxItems, endTime, keys, listing, marker)) {
             request.withMarker(channelName + "/" + marker.toUrl());
-            statsd.increment("channel", "type:s3List", "method:get", "channel:" + channelName);
+            statsd.increment("s3.list", "type:single", "channel:" + channelName);
 
             sender.send("channel." + channelName + ".s3.list", 1);
             logger.trace("list {} {}", channelName, request.getMarker());
