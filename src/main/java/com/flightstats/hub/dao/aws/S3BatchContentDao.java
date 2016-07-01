@@ -83,12 +83,14 @@ public class S3BatchContentDao implements ContentDao {
     private Content getS3Object(String channel, ContentKey key) throws IOException {
         logger.trace("S3BatchContentDao.getS3Object {} {}", channel, key);
         MinutePath minutePath = new MinutePath(key.getTime());
+        Content content = null;
+        long start = System.currentTimeMillis();
         try (ZipInputStream zipStream = getZipInputStream(channel, minutePath)) {
             ZipEntry nextEntry = zipStream.getNextEntry();
             while (nextEntry != null) {
                 logger.trace("found zip entry {} in {}", nextEntry.getName(), minutePath);
                 if (nextEntry.getName().equals(key.toUrl())) {
-                    return getContent(key, zipStream, nextEntry);
+                    content = getContent(key, zipStream, nextEntry);
                 }
                 nextEntry = zipStream.getNextEntry();
             }
@@ -98,8 +100,11 @@ public class S3BatchContentDao implements ContentDao {
             }
         } finally {
             ActiveTraces.getLocal().add("S3BatchContentDao.getS3Object completed");
+            long time = System.currentTimeMillis() - start;
+            statsd.recordExecutionTime("s3.get", time, "channel:" + channel, "type:batch");
         }
-        return null;
+
+        return content;
     }
 
     private Content getContent(ContentKey key, ZipInputStream zipStream, ZipEntry nextEntry) throws IOException {
@@ -115,7 +120,7 @@ public class S3BatchContentDao implements ContentDao {
 
     private ZipInputStream getZipInputStream(String channel, ContentPathKeys minutePath) {
         ActiveTraces.getLocal().add("S3BatchContentDao.getZipInputStream");
-        statsd.increment("channel", "method:get", "type:s3Batch", "channel:" + channel);
+        statsd.increment("s3.get", "type:batch", "channel:" + channel);
         sender.send("channel." + channel + ".s3Batch.get", 1);
 
         S3Object object = s3Client.getObject(s3BucketName, getS3BatchItemsKey(channel, minutePath));
@@ -210,7 +215,7 @@ public class S3BatchContentDao implements ContentDao {
 
     private void getKeysForMinute(String channel, MinutePath minutePath, Traces traces, Consumer<JsonNode> itemNodeConsumer) {
         try (S3Object object = s3Client.getObject(s3BucketName, getS3BatchIndexKey(channel, minutePath))) {
-            statsd.increment("channel", "method:get", "type:s3Batch", "channel:" + channel);
+            statsd.increment("s3.get", "type:batchIndex", "channel:" + channel);
             sender.send("channel." + channel + ".s3Batch.get", 1);
             byte[] bytes = ByteStreams.toByteArray(object.getObjectContent());
             JsonNode root = mapper.readTree(bytes);
@@ -346,12 +351,11 @@ public class S3BatchContentDao implements ContentDao {
         try {
             logger.debug("writing {} batch {} keys {} bytes {}", channel, path, keys.size(), bytes.length);
             writeBatchItems(channel, path, bytes);
-            long size = writeBatchIndex(channel, path, keys);
-            statsd.increment("channel", "method:put", "type:s3Batch", "channel:" + channel);
-            statsd.count("channel", bytes.length + size, "method:get", "type:s3Batch", "channel:" + channel);
-
+            long indexSize = writeBatchIndex(channel, path, keys);
+            statsd.increment("s3.put", "type:batch", "channel:" + channel);
+            statsd.count("s3.put.bytes", bytes.length + indexSize, "channel:" + channel, "type:batch");
             sender.send("channel." + channel + ".s3Batch.put", 1);
-            sender.send("channel." + channel + ".s3Batch.bytes", bytes.length + size);
+            sender.send("channel." + channel + ".s3Batch.bytes", bytes.length + indexSize);
         } catch (Exception e) {
             logger.warn("unable to write batch to S3 " + channel + " " + path, e);
             throw e;

@@ -30,7 +30,7 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
 
     private static final Logger logger = LoggerFactory.getLogger(DataDogRequestFilter.class);
     private final static StatsDClient statsd = DataDog.statsd;
-    private static final ThreadLocal<Long> threadStartTime = new ThreadLocal();
+    private static final ThreadLocal<Long> threadStartTime = new ThreadLocal<>();
 
     public DataDogRequestFilter() {
     }
@@ -46,19 +46,18 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
             if (template.isEmpty()) {
                 logger.trace("DataDog no-template {}, path: {}", template, request.getUriInfo().getPath());
             } else {
-                statsd.recordExecutionTime("hub.request", time, "channel:" + channelName, "method:" + method,
+                statsd.recordExecutionTime("request", time, "channel:" + channelName, "method:" + method,
                         "endpoint:" + template);
-                statsd.incrementCounter("hub.request", "channel:" + channelName, "method:" + method,
+                statsd.incrementCounter("request", "channel:" + channelName, "method:" + method,
                         "endpoint:" + template);
             }
-            logger.trace("DataDog hub.request {}, time: {}, tags: {}", template, time, String.join(",", tags));
+            logger.trace("DataDog request {}, time: {}, tags: {}", template, time, String.join(",", tags));
         } catch (Exception e) {
             logger.error("DataDog request error: {}", e.getMessage());
         }
-        // report any errors
         int returnCode = response.getStatus();
         if (returnCode > 400 && returnCode != 404) {
-            statsd.incrementCounter("hub.errors", new String[]{"errorCode:" + returnCode});
+            statsd.incrementCounter("errors", "errorCode:" + returnCode);
         }
     }
 
