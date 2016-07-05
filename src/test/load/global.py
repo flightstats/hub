@@ -45,6 +45,7 @@ fh.setFormatter(formatter)
 logger.addHandler(fh)
 
 groupCallbacks = {}
+groupCallbackLocks = {}
 groupConfig = {}
 
 print globalConfig.globalConfig
@@ -106,12 +107,14 @@ class WebsiteTasks(TaskSet):
 
         groupCallbacks[self.channel] = {
             "data": [],
-            "lock": threading.Lock(),
             "parallel": parallel,
             "batch": batch,
             "heartbeat": heartbeat,
             "heartbeats": [],
             "firstTime": True
+        }
+        groupCallbackLocks[self.channel] = {
+            "lock": threading.Lock(),
         }
         group = {
             "callbackUrl": "http://" + groupConfig['ip'] + ":8089/callback/" + self.channel,
@@ -160,11 +163,11 @@ class WebsiteTasks(TaskSet):
     def append_href(self, href, obj):
         shortHref = WebsiteTasks.getUrlAfterChannel(href)
         try:
-            obj[self.channel]["lock"].acquire()
+            groupCallbackLocks[self.channel]["lock"].acquire()
             obj[self.channel]["data"].append(shortHref)
             logger.debug('wrote %s', shortHref)
         finally:
-            obj[self.channel]["lock"].release()
+            groupCallbackLocks[self.channel]["lock"].release()
 
     def read(self, uri):
         with self.client.get(uri, catch_response=True, name="get_payload") as postResponse:
@@ -287,13 +290,13 @@ class WebsiteTasks(TaskSet):
         return ''.join(random.choice(chars) for x in range(size))
 
     def verify_callback(self, obj, name="group"):
-        obj[self.channel]["lock"].acquire()
+        groupCallbackLocks[self.channel]["lock"].acquire()
         items = len(obj[self.channel]["data"])
         if items > 500:
             events.request_failure.fire(request_type=name, name="length", response_time=1,
                                         exception=-1)
             logger.info(name + " too many items in " + self.channel + " " + str(items))
-        obj[self.channel]["lock"].release()
+        groupCallbackLocks[self.channel]["lock"].release()
 
     @task(10)
     def verify_callback_length(self):
@@ -332,11 +335,14 @@ class WebsiteTasks(TaskSet):
             events.request_failure.fire(request_type="group", name="parallel", response_time=1,
                                         exception=-1)
 
+    @web.app.route("/callback", methods=['GET'])
+    def get_channels():
+        return jsonify(items=groupCallbacks)
+
     @web.app.route("/callback/<channel>", methods=['GET', 'POST'])
     def callback(channel):
-        if request.method == "POST":
+        if request.method == 'POST':
             incoming_json = request.get_json()
-            # logger.info("incoming_json " + str(incoming_json))
             if "item" in incoming_json['type']:
                 for incoming_uri in incoming_json["uris"]:
                     # this could also handle the initial items from the first minute of the test.
@@ -345,13 +351,13 @@ class WebsiteTasks(TaskSet):
                         return "ok"
                     try:
                         shortHref = WebsiteTasks.getUrlAfterChannel(incoming_uri)
-                        groupCallbacks[channel]["lock"].acquire()
+                        groupCallbackLocks[channel]["lock"].acquire()
                         if groupCallbacks[channel]["parallel"] == 1:
                             WebsiteTasks.verify_ordered(channel, shortHref, groupCallbacks, "group")
                         else:
                             WebsiteTasks.verify_parallel(channel, shortHref)
                     finally:
-                        groupCallbacks[channel]["lock"].release()
+                        groupCallbackLocks[channel]["lock"].release()
             if incoming_json['type'] == "heartbeat":
                 logger.info("heartbeat " + str(incoming_json))
                 heartbeats = groupCallbacks[channel]["heartbeats"]
@@ -364,6 +370,11 @@ class WebsiteTasks(TaskSet):
                     else:
                         if groupCallbacks[channel]["firstTime"]:
                             groupCallbacks[channel]["firstTime"] = False
+                        elif incoming_json['id'] != groupCallbacks[channel]["lastHeartbeat"]:
+                            logger.info("heartbeat order question. id = " + incoming_json['id'] + " array=" + str(
+                                groupCallbacks[channel]["heartbeats"]))
+                            events.request_success.fire(request_type="heartbeats", name="order", response_time=1,
+                                                        response_length=1)
                         else:
                             logger.info("heartbeat order failure. id = " + incoming_json['id']
                                         + " array=" + str(heartbeats))
@@ -371,6 +382,7 @@ class WebsiteTasks(TaskSet):
                                                         exception=-1)
                 else:
                     logger.info("no heartbeat found. id = " + incoming_json['id'] + " " + channel)
+                groupCallbacks[channel]["lastHeartbeat"] = incoming_json['id']
             return "ok"
         else:
             return jsonify(items=groupCallbacks[channel]["data"])
@@ -386,5 +398,4 @@ class WebsiteUser(HttpLocust):
         groupConfig['host'] = self.host
         groupConfig['ip'] = socket.gethostbyname(socket.getfqdn())
         logger.info('groupConfig %s', groupConfig)
-        # todo look at using --logfile from https://github.com/locustio/locust/blob/master/locust/main.py#L169
         print groupConfig

@@ -404,4 +404,3 @@ class WebsiteUser(HttpLocust):
         groupConfig['ip'] = socket.gethostbyname(socket.getfqdn())
         logger.info('groupConfig %s', groupConfig)
         print groupConfig
-
