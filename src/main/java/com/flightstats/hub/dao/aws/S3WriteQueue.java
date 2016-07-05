@@ -12,14 +12,12 @@ import com.github.rholder.retry.Retryer;
 import com.github.rholder.retry.RetryerBuilder;
 import com.github.rholder.retry.StopStrategies;
 import com.github.rholder.retry.WaitStrategies;
-import com.google.common.base.Predicate;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.util.concurrent.*;
 
 @SuppressWarnings("WeakerAccess")
@@ -107,14 +105,11 @@ public class S3WriteQueue {
 
     private Retryer<Void> buildRetryer() {
         return RetryerBuilder.<Void>newBuilder()
-                .retryIfException(new Predicate<Throwable>() {
-                    @Override
-                    public boolean apply(@Nullable Throwable throwable) {
-                        if (throwable != null) {
-                            logger.warn("unable to write to S3 " + throwable.getMessage());
-                        }
-                        return throwable != null;
+                .retryIfException(throwable -> {
+                    if (throwable != null) {
+                        logger.warn("unable to write to S3 " + throwable.getMessage());
                     }
+                    return throwable != null;
                 })
                 .withWaitStrategy(WaitStrategies.exponentialWait(1000, 1, TimeUnit.MINUTES))
                 .withStopStrategy(StopStrategies.stopAfterAttempt(3))

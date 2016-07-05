@@ -102,7 +102,7 @@ class WebsiteTasks(TaskSet):
 
     def write(self):
         bulk = ""
-        for x in range(0, 100):
+        for x in range(0, 50):
             bulk += "--abcdefg\r\n"
             bulk += "Content-Type: application/json\r\n\r\n"
             bulk += '{"name":"' + self.payload + '", "count": ' + str(self.count) + '}\r\n'
