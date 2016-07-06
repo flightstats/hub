@@ -15,7 +15,6 @@ import com.google.inject.name.Named;
 import org.joda.time.DateTime;
 
 import java.util.Collection;
-import java.util.Objects;
 import java.util.SortedSet;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -106,7 +105,7 @@ public class GlobalChannelService implements ChannelService {
 
     @Override
     public boolean historicalInsert(String channelName, Content content) {
-        return primaryAndSatellite(channelName,
+        return primaryAndSecondary(channelName,
                 Errors.rethrow().wrap(() -> {
                     return localChannelService.historicalInsert(channelName, content);
                 }),

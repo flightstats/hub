@@ -132,7 +132,7 @@ public class AwsContentService implements ContentService {
     public boolean historicalInsert(String channelName, Content content) throws Exception {
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
         if (channel.isSingle()) {
-            s3SingleContentDao.write(channelName, content);
+            s3SingleContentDao.insert(channelName, content);
             return true;
         }
         return false;
