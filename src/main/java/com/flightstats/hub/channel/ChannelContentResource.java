@@ -3,6 +3,7 @@ package com.flightstats.hub.channel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Request;
@@ -391,6 +392,11 @@ public class ChannelContentResource {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis);
+
+        DateTime cutOffTime = DateTime.now().minusMinutes(HubProperties.getSpokeTtl());
+        if (key.getTime().isAfter(cutOffTime))
+            return Response.status(400).entity("you cannot insert an item within the last " + HubProperties.getSpokeTtl() + " minutes").build();
+
         Content content = Content.builder()
                 .withContentKey(key)
                 .withContentType(contentType)

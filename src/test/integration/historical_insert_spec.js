@@ -4,6 +4,7 @@ var request = require('request');
 var http = require('http');
 var parse = require('parse-link-header');
 var channel = utils.randomChannelName();
+var moment = require('moment');
 
 var tag = Math.random().toString().replace(".", "");
 var testName = __filename;
@@ -15,22 +16,24 @@ var channelBody = {
 /**
  * This should:
  * Create a channel
- * Read from a specific time slice in that channel
- * Verify no items
- * Post an item within that time slice
- * Read from the channel at that time slice again
- * Verify our item is now there
- * Verify the payload is the same
+ * Verify no items are found in the past
+ * Insert an item into the past
+ * Verify our inserted item is found and the payload is the same
+ * Verify an error is thrown when inserting an item near 'now'
  */
 describe(testName, function () {
 
     utils.putChannel(channel, false, channelBody, testName);
-    var pointInTime = '2016/06/01/12/00/00/000';
-    var pointInTimeURL = hubUrlBase + '/channel/' + channel + '/' + pointInTime;
+    var channelURL = hubUrlBase + '/channel/' + channel;
+    var pointInThePast = '2016/06/01/12/00/00/000';
+    var pointInThePastURL = channelURL + '/' + pointInThePast;
+    var pointCloseToNow = moment.utc().format('YYYY/MM/DD/HH/mm/ss/SSS');
+    var pointCloseToNowURL = channelURL + '/' + pointCloseToNow;
+    var spokeTTLMinutes = 60;
 
-    it('verifies that channel is empty at: ' + pointInTime, function (done) {
+    it('verifies that channel is empty at: ' + pointInThePast, function (done) {
         request.get({
-            url: pointInTimeURL
+            url: pointInThePastURL
         }, function (err, response, body) {
             expect(err).toBeNull();
             expect(response.statusCode).toBe(200);
@@ -43,11 +46,11 @@ describe(testName, function () {
         });
     });
 
-    utils.addItem(pointInTimeURL);
+    utils.addItem(pointInThePastURL);
 
-    it('verifies that channel has historical data at: ' + pointInTime, function (done) {
+    it('verifies that channel has historical data at: ' + pointInThePast, function (done) {
         request.get({
-            url: pointInTimeURL
+            url: pointInThePastURL
         }, function (err, response, body) {
             expect(err).toBeNull();
             expect(response.statusCode).toBe(200);
@@ -56,10 +59,21 @@ describe(testName, function () {
                 console.log('body', body);
                 uris = body._links.uris;
                 expect(uris.length).toBe(1);
-                expect(uris[0]).toContain(pointInTime);
+                expect(uris[0]).toContain(pointInThePast);
             }
             done();
         });
+    });
+
+    it('verifies that historical inserts fail if within ' + spokeTTLMinutes + 'minutes of now.', function (done) {
+        request.post({
+            url: pointCloseToNowURL
+        }, function (err, response) {
+            expect(err).toBeNull();
+            expect(response.statusCode).toBe(400);
+            done();
+        })
+
     });
 
     /*it('gets tag hour ' + tag, function (done) {
