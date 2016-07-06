@@ -100,13 +100,18 @@ class WebsiteTasks(TaskSet):
 
         logger.info("group channel " + self.channel + " parallel:" + str(parallel) + " url " + satellite_group_url)
         self.client.delete(satellite_group_url, name="group")
+        if self.number == 3:
+            time.sleep(61)
+            logger.info("slept on startup for channel 3, now creating callback")
+
         groupCallbacks[self.channel] = {
             "data": [],
             "lock": threading.Lock(),
             "parallel": parallel,
             "batch": batch,
             "heartbeat": heartbeat,
-            "heartbeats": []
+            "heartbeats": [],
+            "firstTime": True
         }
         group = {
             "callbackUrl": "http://" + groupConfig['ip'] + ":8089/callback/" + self.channel,
@@ -334,6 +339,7 @@ class WebsiteTasks(TaskSet):
             # logger.info("incoming_json " + str(incoming_json))
             if "item" in incoming_json['type']:
                 for incoming_uri in incoming_json["uris"]:
+                    # this could also handle the initial items from the first minute of the test.
                     if channel not in groupCallbacks:
                         logger.info("incoming uri before locust tests started " + str(incoming_uri))
                         return "ok"
@@ -348,17 +354,21 @@ class WebsiteTasks(TaskSet):
                         groupCallbacks[channel]["lock"].release()
             if incoming_json['type'] == "heartbeat":
                 logger.info("heartbeat " + str(incoming_json))
-                # make sure the heart beat is before the first data item
-                if len(groupCallbacks[channel]["heartbeats"]) > 0:
-                    if incoming_json['id'] == groupCallbacks[channel]["heartbeats"][0]:
-                        (groupCallbacks[channel]["heartbeats"]).remove(incoming_json['id'])
+                heartbeats = groupCallbacks[channel]["heartbeats"]
+                if len(heartbeats) > 0:
+                    if incoming_json['id'] == heartbeats[0]:
+                        groupCallbacks[channel]["firstTime"] = False
+                        (heartbeats).remove(incoming_json['id'])
                         events.request_success.fire(request_type="heartbeats", name="order", response_time=1,
                                                     response_length=1)
                     else:
-                        logger.info("heartbeat order failure. id = " + incoming_json['id'] + " array=" + str(
-                            groupCallbacks[channel]["heartbeats"]))
-                        events.request_failure.fire(request_type="heartbeats", name="order", response_time=1,
-                                                    exception=-1)
+                        if groupCallbacks[channel]["firstTime"]:
+                            groupCallbacks[channel]["firstTime"] = False
+                        else:
+                            logger.info("heartbeat order failure. id = " + incoming_json['id']
+                                        + " array=" + str(heartbeats))
+                            events.request_failure.fire(request_type="heartbeats", name="order", response_time=1,
+                                                        exception=-1)
                 else:
                     logger.info("no heartbeat found. id = " + incoming_json['id'] + " " + channel)
             return "ok"

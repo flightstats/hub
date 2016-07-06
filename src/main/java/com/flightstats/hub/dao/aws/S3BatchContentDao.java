@@ -8,15 +8,17 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDao;
+import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.metrics.ActiveTraces;
+import com.flightstats.hub.metrics.DataDog;
 import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
-import com.flightstats.hub.spoke.SpokeMarshaller;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
+import com.timgroup.statsd.StatsDClient;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -46,6 +48,7 @@ public class S3BatchContentDao implements ContentDao {
     private final boolean useEncrypted = HubProperties.getProperty("app.encrypted", false);
     private final int s3MaxQueryItems = HubProperties.getProperty("s3.maxQueryItems", 1000);
     private final String s3BucketName;
+    private final static StatsDClient statsd = DataDog.statsd;
 
     @Inject
     public S3BatchContentDao(AmazonS3 s3Client, S3BucketName s3BucketName, MetricsSender sender) {
@@ -55,12 +58,12 @@ public class S3BatchContentDao implements ContentDao {
     }
 
     @Override
-    public ContentKey write(String channelName, Content content) throws Exception {
+    public ContentKey insert(String channelName, Content content) throws Exception {
         throw new UnsupportedOperationException("single writes are not supported");
     }
 
     @Override
-    public Content read(String channelName, ContentKey key) {
+    public Content get(String channelName, ContentKey key) {
         try {
             return getS3Object(channelName, key);
         } catch (SocketTimeoutException | SocketException e) {
@@ -80,12 +83,14 @@ public class S3BatchContentDao implements ContentDao {
     private Content getS3Object(String channel, ContentKey key) throws IOException {
         logger.trace("S3BatchContentDao.getS3Object {} {}", channel, key);
         MinutePath minutePath = new MinutePath(key.getTime());
+        Content content = null;
+        long start = System.currentTimeMillis();
         try (ZipInputStream zipStream = getZipInputStream(channel, minutePath)) {
             ZipEntry nextEntry = zipStream.getNextEntry();
             while (nextEntry != null) {
                 logger.trace("found zip entry {} in {}", nextEntry.getName(), minutePath);
                 if (nextEntry.getName().equals(key.toUrl())) {
-                    return getContent(key, zipStream, nextEntry);
+                    content = getContent(key, zipStream, nextEntry);
                 }
                 nextEntry = zipStream.getNextEntry();
             }
@@ -95,8 +100,11 @@ public class S3BatchContentDao implements ContentDao {
             }
         } finally {
             ActiveTraces.getLocal().add("S3BatchContentDao.getS3Object completed");
+            long time = System.currentTimeMillis() - start;
+            statsd.recordExecutionTime("s3.get", time, "channel:" + channel, "type:batch");
         }
-        return null;
+
+        return content;
     }
 
     private Content getContent(ContentKey key, ZipInputStream zipStream, ZipEntry nextEntry) throws IOException {
@@ -105,14 +113,16 @@ public class S3BatchContentDao implements ContentDao {
         byte[] bytes = ByteStreams.toByteArray(zipStream);
         logger.trace("returning content {} bytes {}", key, bytes.length);
         String comment = new String(nextEntry.getExtra());
-        SpokeMarshaller.setMetaData(comment, builder);
+        ContentMarshaller.setMetaData(comment, builder);
         builder.withData(bytes);
         return builder.build();
     }
 
     private ZipInputStream getZipInputStream(String channel, ContentPathKeys minutePath) {
         ActiveTraces.getLocal().add("S3BatchContentDao.getZipInputStream");
+        statsd.increment("s3.get", "type:batch", "channel:" + channel);
         sender.send("channel." + channel + ".s3Batch.get", 1);
+
         S3Object object = s3Client.getObject(s3BucketName, getS3BatchItemsKey(channel, minutePath));
         return new ZipInputStream(new BufferedInputStream(object.getObjectContent()));
     }
@@ -205,6 +215,7 @@ public class S3BatchContentDao implements ContentDao {
 
     private void getKeysForMinute(String channel, MinutePath minutePath, Traces traces, Consumer<JsonNode> itemNodeConsumer) {
         try (S3Object object = s3Client.getObject(s3BucketName, getS3BatchIndexKey(channel, minutePath))) {
+            statsd.increment("s3.get", "type:batchIndex", "channel:" + channel);
             sender.send("channel." + channel + ".s3Batch.get", 1);
             byte[] bytes = ByteStreams.toByteArray(object.getObjectContent());
             JsonNode root = mapper.readTree(bytes);
@@ -340,9 +351,11 @@ public class S3BatchContentDao implements ContentDao {
         try {
             logger.debug("writing {} batch {} keys {} bytes {}", channel, path, keys.size(), bytes.length);
             writeBatchItems(channel, path, bytes);
-            long size = writeBatchIndex(channel, path, keys);
-            sender.send("channel." + channel + ".s3Batch.put", 2);
-            sender.send("channel." + channel + ".s3Batch.bytes", bytes.length + size);
+            long indexSize = writeBatchIndex(channel, path, keys);
+            statsd.increment("s3.put", "type:batch", "channel:" + channel);
+            statsd.count("s3.put.bytes", bytes.length + indexSize, "channel:" + channel, "type:batch");
+            sender.send("channel." + channel + ".s3Batch.put", 1);
+            sender.send("channel." + channel + ".s3Batch.bytes", bytes.length + indexSize);
         } catch (Exception e) {
             logger.warn("unable to write batch to S3 " + channel + " " + path, e);
             throw e;

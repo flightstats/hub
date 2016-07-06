@@ -9,7 +9,10 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import org.apache.curator.framework.api.CuratorEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
@@ -17,6 +20,8 @@ import java.util.concurrent.Executors;
 
 @Singleton
 public class CachedChannelConfigDao implements ChannelConfigDao {
+
+    private final static Logger logger = LoggerFactory.getLogger(CachedChannelConfigDao.class);
 
     public static final String DELEGATE = "CachedChannelMetadataDao.DELEGATE";
     private static final String WATCHER_PATH = "/channels/cache";
@@ -72,7 +77,7 @@ public class CachedChannelConfigDao implements ChannelConfigDao {
     }
 
     @Override
-    public Iterable<ChannelConfig> getChannels(boolean useCache) {
+    public Collection<ChannelConfig> getChannels(boolean useCache) {
         if (useCache) {
             return channelConfigMap.values();
         }
@@ -80,12 +85,14 @@ public class CachedChannelConfigDao implements ChannelConfigDao {
     }
 
     private void updateMap() {
+        logger.info("updating map {}", channelConfigMap.keySet());
         Iterable<ChannelConfig> channels = delegate.getChannels(false);
         ConcurrentMap<String, ChannelConfig> newMap = new ConcurrentHashMap<>();
         for (ChannelConfig channel : channels) {
             newMap.put(channel.getName(), channel);
         }
         channelConfigMap = newMap;
+        logger.info("updated map {}", newMap.keySet());
     }
 
     @Override
@@ -97,6 +104,12 @@ public class CachedChannelConfigDao implements ChannelConfigDao {
 
     private void notifyWatchers() {
         watchManager.notifyWatcher(WATCHER_PATH);
+    }
+
+    @Override
+    public boolean refresh() {
+        updateMap();
+        return true;
     }
 
     private void startWatcher() {

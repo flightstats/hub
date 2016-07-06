@@ -4,8 +4,10 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.cluster.CuratorCluster;
+import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.dao.QueryResult;
 import com.flightstats.hub.metrics.ActiveTraces;
+import com.flightstats.hub.metrics.DataDog;
 import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.Content;
@@ -19,6 +21,7 @@ import com.google.inject.name.Named;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
+import com.timgroup.statsd.StatsDClient;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,6 +50,7 @@ public class RemoteSpokeStore {
     private final MetricsSender sender;
     private final ExecutorService executorService;
     private final int stableSeconds = HubProperties.getProperty("app.stable_seconds", 5);
+    private final static StatsDClient statsd = DataDog.statsd;
 
     @Inject
     public RemoteSpokeStore(@Named("SpokeCuratorCluster") CuratorCluster cluster, MetricsSender sender) {
@@ -67,7 +71,7 @@ public class RemoteSpokeStore {
                 public void run() {
                     try {
                         ContentKey key = new ContentKey();
-                        if (write(path + key.toUrl(), key.toUrl().getBytes(), server, traces, "payload")) {
+                        if (insert(path + key.toUrl(), key.toUrl().getBytes(), server, traces, "payload")) {
                             quorumLatch.countDown();
                         } else {
                             traces.log(logger);
@@ -87,7 +91,7 @@ public class RemoteSpokeStore {
         }
     }
 
-    public boolean testAll() throws UnknownHostException {
+    boolean testAll() throws UnknownHostException {
         Collection<String> servers = cluster.getRandomServers();
         servers.addAll(CuratorCluster.getLocalServer());
         logger.info("*********************************************");
@@ -116,11 +120,11 @@ public class RemoteSpokeStore {
         return true;
     }
 
-    public boolean write(String path, byte[] payload, String spokeApi) throws InterruptedException {
-        return write(path, payload, cluster.getServers(), ActiveTraces.getLocal(), spokeApi);
+    public boolean insert(String path, byte[] payload, String spokeApi) throws InterruptedException {
+        return insert(path, payload, cluster.getServers(), ActiveTraces.getLocal(), spokeApi);
     }
 
-    private boolean write(final String path, final byte[] payload, Collection<String> servers, final Traces traces, final String spokeApi) throws InterruptedException {
+    private boolean insert(final String path, final byte[] payload, Collection<String> servers, final Traces traces, final String spokeApi) throws InterruptedException {
         int quorum = getQuorum(servers.size());
         CountDownLatch quorumLatch = new CountDownLatch(quorum);
         AtomicBoolean reported = new AtomicBoolean();
@@ -138,7 +142,9 @@ public class RemoteSpokeStore {
                         traces.add(server, response.getEntity(String.class));
                         if (response.getStatus() == 201) {
                             if (reported.compareAndSet(false, true)) {
-                                sender.send("heisenberg", complete - traces.getStart());
+                                long time = complete - traces.getStart();
+                                statsd.time("heisenberg", time);
+                                sender.send("heisenberg", time);
                             }
                             quorumLatch.countDown();
                             logger.trace("server {} path {} response {}", server, path, response);
@@ -157,7 +163,9 @@ public class RemoteSpokeStore {
             });
         }
         quorumLatch.await(stableSeconds, TimeUnit.SECONDS);
-        sender.send("consistent", System.currentTimeMillis() - traces.getStart());
+        long time = System.currentTimeMillis() - traces.getStart();
+        statsd.time("consistent", time);
+        sender.send("consistent", time);
         return quorumLatch.getCount() != quorum;
     }
 
@@ -185,7 +193,7 @@ public class RemoteSpokeStore {
         return (int) Math.max(1, Math.ceil(size / 2.0));
     }
 
-    public Content read(String path, ContentKey key) {
+    public Content get(String path, ContentKey key) {
         Collection<String> servers = cluster.getRandomServers();
         for (String server : servers) {
             ClientResponse response = null;
@@ -197,7 +205,7 @@ public class RemoteSpokeStore {
                 if (response.getStatus() == 200) {
                     byte[] entity = response.getEntity(byte[].class);
                     if (entity.length > 0) {
-                        return SpokeMarshaller.toContent(entity, key);
+                        return ContentMarshaller.toContent(entity, key);
                     }
                 }
             } catch (JsonMappingException e) {

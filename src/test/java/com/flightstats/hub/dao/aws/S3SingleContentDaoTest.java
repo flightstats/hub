@@ -4,12 +4,21 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDaoUtil;
 import com.flightstats.hub.metrics.NoOpMetricsSender;
+import com.flightstats.hub.model.Content;
+import com.flightstats.hub.model.ContentKey;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import static org.junit.Assert.assertEquals;
 
 public class S3SingleContentDaoTest {
 
+    private final static Logger logger = LoggerFactory.getLogger(S3SingleContentDaoTest.class);
+
     private static ContentDaoUtil util;
+    private static S3SingleContentDao s3SingleContentDao;
 
     @BeforeClass
     public static void setUpClass() throws Exception {
@@ -17,7 +26,7 @@ public class S3SingleContentDaoTest {
         AwsConnectorFactory factory = new AwsConnectorFactory();
         AmazonS3 s3Client = factory.getS3Client();
         S3BucketName bucketName = new S3BucketName("local", "hub-v2");
-        S3SingleContentDao s3SingleContentDao = new S3SingleContentDao(s3Client, bucketName, new NoOpMetricsSender());
+        s3SingleContentDao = new S3SingleContentDao(s3Client, bucketName, new NoOpMetricsSender());
         util = new ContentDaoUtil(s3SingleContentDao);
     }
 
@@ -59,6 +68,18 @@ public class S3SingleContentDaoTest {
     @Test
     public void testDelete() throws Exception {
         util.testDeleteMaxItems();
+    }
+
+    @Test
+    public void testWriteReadOld() throws Exception {
+        String channel = "testWriteReadOld";
+        Content content = ContentDaoUtil.createContent();
+        ContentKey key = s3SingleContentDao.insertOld(channel, content);
+        logger.info("key {}", key);
+        assertEquals(content.getContentKey().get(), key);
+        Content read = s3SingleContentDao.get(channel, key);
+        logger.info("read {}", read.getContentKey());
+        ContentDaoUtil.compare(content, read, key.toString().getBytes());
     }
 
 }

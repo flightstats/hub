@@ -88,13 +88,9 @@ public class LocalChannelService implements ChannelService {
         long start = System.currentTimeMillis();
         ContentKey contentKey = contentService.insert(channelName, content);
         long time = System.currentTimeMillis() - start;
-        List<String> tags = DataDog.addTag(null, "channel", channelName);
-        tags = DataDog.addTag(tags, "method", "post");
-        tags = DataDog.addTag(tags, "type", "single");
-        String[] tagStringArray = DataDog.tagsAsArray(tags);
-        statsd.time("channel", time, tagStringArray);
-        statsd.increment("channel.items", tagStringArray);
-        statsd.count("channel.bytes", content.getSize(), tagStringArray);
+        statsd.time("channel", time, "method:post", "type:single", "channel:" + channelName);
+        statsd.increment("channel.items", "method:post", "type:single", "channel:" + channelName);
+        statsd.count("channel.bytes", content.getSize(), "method:post", "type:single", "channel:" + channelName);
         sender.send("channel." + channelName + ".post", time);
         sender.send("channel." + channelName + ".items", 1);
         sender.send("channel." + channelName + ".post.bytes", content.getSize());
@@ -116,13 +112,9 @@ public class LocalChannelService implements ChannelService {
         long start = System.currentTimeMillis();
         Collection<ContentKey> contentKeys = contentService.insert(bulkContent);
         long time = System.currentTimeMillis() - start;
-        List<String> tags = DataDog.addTag(null, "channel", channel);
-        tags = DataDog.addTag(tags, "method", "post");
-        tags = DataDog.addTag(tags, "type", "bulk");
-        String[] tagStringArray = DataDog.tagsAsArray(tags);
-        statsd.time("channel", time, tagStringArray);
-        statsd.count("channel.items", bulkContent.getItems().size(), tagStringArray);
-        statsd.count("channel.bytes", bulkContent.getSize(), tagStringArray);
+        statsd.time("channel", time, "method:post", "type:bulk", "channel:" + channel);
+        statsd.count("channel.items", bulkContent.getItems().size(), "method:post", "type:bulk", "channel:" + channel);
+        statsd.count("channel.bytes", bulkContent.getSize(), "method:post", "type:bulk", "channel:" + channel);
         sender.send("channel." + channel + ".batchPost", time);
         sender.send("channel." + channel + ".items", bulkContent.getItems().size());
         sender.send("channel." + channel + ".post", time);
@@ -179,12 +171,12 @@ public class LocalChannelService implements ChannelService {
     }
 
     @Override
-    public Optional<Content> getValue(Request request) {
+    public Optional<Content> get(Request request) {
         DateTime ttlTime = getTtlTime(request.getChannel()).minusMinutes(15);
         if (request.getKey().getTime().isBefore(ttlTime)) {
             return Optional.absent();
         }
-        return contentService.getValue(request.getChannel(), request.getKey());
+        return contentService.get(request.getChannel(), request.getKey());
     }
 
     @Override
@@ -205,16 +197,16 @@ public class LocalChannelService implements ChannelService {
     }
 
     @Override
-    public Iterable<ChannelConfig> getChannels() {
+    public Collection<ChannelConfig> getChannels() {
         return getChannels(false);
     }
 
-    private Iterable<ChannelConfig> getChannels(boolean useCache) {
+    private Collection<ChannelConfig> getChannels(boolean useCache) {
         return channelConfigDao.getChannels(useCache);
     }
 
     @Override
-    public Iterable<ChannelConfig> getChannels(String tag) {
+    public Collection<ChannelConfig> getChannels(String tag) {
         Collection<ChannelConfig> matchingChannels = new ArrayList<>();
         Iterable<ChannelConfig> channels = getChannels(true);
         for (ChannelConfig channel : channels) {
@@ -272,8 +264,8 @@ public class LocalChannelService implements ChannelService {
     }
 
     @Override
-    public void getValues(String channel, SortedSet<ContentKey> keys, Consumer<Content> callback) {
-        contentService.getValues(channel, keys, callback);
+    public void get(String channel, SortedSet<ContentKey> keys, Consumer<Content> callback) {
+        contentService.get(channel, keys, callback);
     }
 
     private DateTime getTtlTime(String channelName) {

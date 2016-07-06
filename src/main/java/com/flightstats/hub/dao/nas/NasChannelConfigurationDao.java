@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.Collection;
 
 public class NasChannelConfigurationDao implements ChannelConfigDao {
 
@@ -46,7 +47,7 @@ public class NasChannelConfigurationDao implements ChannelConfigDao {
     }
 
     @Override
-    public Iterable<ChannelConfig> getChannels(boolean useCache) {
+    public Collection<ChannelConfig> getChannels(boolean useCache) {
         return NasUtil.getIterable(channelPath, ChannelConfig::fromJson);
     }
 

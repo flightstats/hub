@@ -86,7 +86,7 @@ public class AwsContentService implements ContentService {
     public ContentKey insert(String channelName, Content content) throws Exception {
         try {
             inFlight.incrementAndGet();
-            ContentKey key = spokeContentDao.write(channelName, content);
+            ContentKey key = spokeContentDao.insert(channelName, content);
             ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
             if (channel.isSingle() || channel.isBoth()) {
                 //todo - gfm - 5/20/16 - is this the right place for this work?
@@ -142,7 +142,7 @@ public class AwsContentService implements ContentService {
         String channelName = bulkContent.getChannel();
         try {
             inFlight.incrementAndGet();
-            SortedSet<ContentKey> keys = spokeContentDao.write(bulkContent);
+            SortedSet<ContentKey> keys = spokeContentDao.insert(bulkContent);
             ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
             if (channel.isSingle() || channel.isBoth()) {
                 for (ContentKey key : keys) {
@@ -156,11 +156,11 @@ public class AwsContentService implements ContentService {
     }
 
     @Override
-    public Optional<Content> getValue(String channelName, ContentKey key) {
+    public Optional<Content> get(String channelName, ContentKey key) {
         logger.trace("fetching {} from channel {} ", key.toString(), channelName);
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
         if (key.getTime().isAfter(getSpokeTtlTime(channelName, channel))) {
-            Content content = spokeContentDao.read(channelName, key);
+            Content content = spokeContentDao.get(channelName, key);
             if (content != null) {
                 logger.trace("returning from spoke {} {}", key.toString(), channelName);
                 return Optional.of(content);
@@ -168,13 +168,13 @@ public class AwsContentService implements ContentService {
         }
         Content content = null;
         if (channel.isSingle()) {
-            content = s3SingleContentDao.read(channelName, key);
+            content = s3SingleContentDao.get(channelName, key);
         } else if (channel.isBatch()) {
-            content = s3BatchContentDao.read(channelName, key);
+            content = s3BatchContentDao.get(channelName, key);
         } else {
-            content = s3SingleContentDao.read(channelName, key);
+            content = s3SingleContentDao.get(channelName, key);
             if (content == null) {
-                content = s3BatchContentDao.read(channelName, key);
+                content = s3BatchContentDao.get(channelName, key);
             }
         }
         return Optional.fromNullable(content);
@@ -189,7 +189,7 @@ public class AwsContentService implements ContentService {
     }
 
     @Override
-    public void getValues(String channelName, SortedSet<ContentKey> keys, Consumer<Content> callback) {
+    public void get(String channelName, SortedSet<ContentKey> keys, Consumer<Content> callback) {
         //todo - gfm - 4/14/16 - this may come in as seconds...
         SortedSet<MinutePath> minutePaths = ContentKeyUtil.convert(keys);
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
@@ -208,7 +208,7 @@ public class AwsContentService implements ContentService {
 
     private void getValues(String channelName, Consumer<Content> callback, ContentPathKeys contentPathKeys) {
         for (ContentKey contentKey : contentPathKeys.getKeys()) {
-            Optional<Content> contentOptional = getValue(channelName, contentKey);
+            Optional<Content> contentOptional = get(channelName, contentKey);
             if (contentOptional.isPresent()) {
                 callback.accept(contentOptional.get());
             }
@@ -220,7 +220,7 @@ public class AwsContentService implements ContentService {
         Traces traces = ActiveTraces.getLocal();
         return () -> {
             ActiveTraces.setLocal(traces);
-            Content content = contentDao.read(channelName, key);
+            Content content = contentDao.get(channelName, key);
             if (content != null) {
                 queue.add(content);
                 latch.countDown();
@@ -352,7 +352,6 @@ public class AwsContentService implements ContentService {
         s3SingleContentDao.delete(channelName);
         s3BatchContentDao.delete(channelName);
         lastContentPath.delete(channelName, CHANNEL_LATEST_UPDATED);
-        lastContentPath.delete(channelName, S3Verifier.LAST_BATCH_VERIFIED);
         lastContentPath.delete(channelName, S3Verifier.LAST_SINGLE_VERIFIED);
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
         if (!channel.isSingle()) {

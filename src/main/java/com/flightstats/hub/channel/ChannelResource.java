@@ -113,15 +113,14 @@ public class ChannelResource {
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
-    public Response insertValue(@PathParam("channel") final String channelName, @HeaderParam("Content-Type") final String contentType,
-                                @HeaderParam("Content-Language") final String contentLanguage,
+    public Response insertValue(@PathParam("channel") final String channelName,
+                                @HeaderParam("Content-Type") final String contentType,
                                 final InputStream data) throws Exception {
         if (!channelService.channelExists(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
         long start = System.currentTimeMillis();
         Content content = Content.builder()
-                .withContentLanguage(contentLanguage)
                 .withContentType(contentType)
                 .withStream(data)
                 .build();

@@ -24,13 +24,12 @@ var channelBody = {
  *
  */
 describe(testName, function () {
-
-    utils.sleep(1000);
+    
     utils.putChannel(channelA, false, channelBody, testName);
-    utils.sleep(1000);
+
     utils.putChannel(channelB, false, channelBody, testName);
 
-    utils.sleep(5000);
+    utils.itRefreshesChannels();
 
     utils.addItem(channelUrl + '/' + channelA, 201);
 
@@ -82,7 +81,7 @@ describe(testName, function () {
 
     function traverse(url, index, done) {
         url = url.trim();
-        console.log(' traverse' + url + ' ' + testName);
+        console.log(' traverse ' + url + ' ' + testName);
         request.get({
                 url: url
             },

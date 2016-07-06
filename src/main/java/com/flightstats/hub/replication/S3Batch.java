@@ -27,6 +27,7 @@ public class S3Batch {
                 .callbackUrl(getCallbackUrl())
                 .channelUrl(getChannelUrl())
                 .heartbeat(true)
+                .parallelCalls(2)
                 .batch(Group.MINUTE);
         Group group = builder.build();
         hubUtils.startGroupCallback(group);

@@ -2,6 +2,8 @@ package com.flightstats.hub.dao;
 
 import com.flightstats.hub.model.ChannelConfig;
 
+import java.util.Collection;
+
 public interface ChannelConfigDao {
     ChannelConfig createChannel(ChannelConfig config);
 
@@ -13,7 +15,11 @@ public interface ChannelConfigDao {
 
     ChannelConfig getCachedChannelConfig(String name);
 
-    Iterable<ChannelConfig> getChannels(boolean useCache);
+    Collection<ChannelConfig> getChannels(boolean useCache);
 
     void delete(String name);
+
+    default boolean refresh() {
+        return false;
+    }
 }

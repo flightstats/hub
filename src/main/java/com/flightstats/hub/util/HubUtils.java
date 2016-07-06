@@ -2,6 +2,10 @@ package com.flightstats.hub.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.app.HubHost;
+import com.flightstats.hub.app.HubProvider;
+import com.flightstats.hub.cluster.CuratorCluster;
 import com.flightstats.hub.group.Group;
 import com.flightstats.hub.model.*;
 import com.google.common.base.Optional;
@@ -196,5 +200,21 @@ public class HubUtils {
             logger.warn("unable to delete " + channelUrl, e);
         }
         return false;
+    }
+
+    public ObjectNode refreshAll() {
+        CuratorCluster spokeCuratorCluster = HubProvider.getInstance(CuratorCluster.class, "SpokeCuratorCluster");
+        ObjectNode root = mapper.createObjectNode();
+        Set<String> servers = spokeCuratorCluster.getServers();
+        for (String server : servers) {
+            String url = HubHost.getScheme() + server + "/internal/channel/refresh?all=false";
+            ClientResponse response = followClient.resource(url).get(ClientResponse.class);
+            if (response.getStatus() == 200) {
+                root.put(response.getEntity(String.class), "success");
+            } else {
+                root.put(response.getEntity(String.class), "failure");
+            }
+        }
+        return root;
     }
 }

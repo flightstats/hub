@@ -12,14 +12,12 @@ import com.github.rholder.retry.Retryer;
 import com.github.rholder.retry.RetryerBuilder;
 import com.github.rholder.retry.StopStrategies;
 import com.github.rholder.retry.WaitStrategies;
-import com.google.common.base.Predicate;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.util.concurrent.*;
 
 @SuppressWarnings("WeakerAccess")
@@ -59,12 +57,9 @@ public class S3WriteQueue {
     private void write() throws InterruptedException {
         try {
             ChannelContentKey key = keys.poll(5, TimeUnit.SECONDS);
-            retryer.call(new Callable<Void>() {
-                @Override
-                public Void call() throws Exception {
-                    writeContent(key);
-                    return null;
-                }
+            retryer.call(() -> {
+                writeContent(key);
+                return null;
             });
         } catch (Exception e) {
             logger.warn("unable to call s3", e);
@@ -76,11 +71,11 @@ public class S3WriteQueue {
             ActiveTraces.start("S3WriteQueue.writeContent", key);
             try {
                 logger.trace("writing {}", key.getContentKey());
-                Content content = spokeContentDao.read(key.getChannel(), key.getContentKey());
+                Content content = spokeContentDao.get(key.getChannel(), key.getContentKey());
                 if (content.getData() == null) {
                     throw new FailedReadException("unable to read " + key.toString());
                 }
-                s3SingleContentDao.write(key.getChannel(), content);
+                s3SingleContentDao.insert(key.getChannel(), content);
             } finally {
                 ActiveTraces.end();
             }
@@ -110,14 +105,11 @@ public class S3WriteQueue {
 
     private Retryer<Void> buildRetryer() {
         return RetryerBuilder.<Void>newBuilder()
-                .retryIfException(new Predicate<Throwable>() {
-                    @Override
-                    public boolean apply(@Nullable Throwable throwable) {
-                        if (throwable != null) {
-                            logger.warn("unable to write to S3 " + throwable.getMessage());
-                        }
-                        return throwable != null;
+                .retryIfException(throwable -> {
+                    if (throwable != null) {
+                        logger.warn("unable to write to S3 " + throwable.getMessage());
                     }
+                    return throwable != null;
                 })
                 .withWaitStrategy(WaitStrategies.exponentialWait(1000, 1, TimeUnit.MINUTES))
                 .withStopStrategy(StopStrategies.stopAfterAttempt(3))

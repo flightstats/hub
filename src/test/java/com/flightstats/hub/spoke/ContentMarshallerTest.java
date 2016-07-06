@@ -1,5 +1,6 @@
 package com.flightstats.hub.spoke;
 
+import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -10,7 +11,7 @@ import java.io.IOException;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class SpokeMarshallerTest {
+public class ContentMarshallerTest {
 
     @Test
     public void testAllFieldsSmall() throws IOException {
@@ -33,7 +34,7 @@ public class SpokeMarshallerTest {
     }
 
     private void verify(Content content, int size) throws IOException {
-        Content cycled = SpokeMarshaller.toContent(SpokeMarshaller.toBytes(content), content.getContentKey().get());
+        Content cycled = ContentMarshaller.toContent(ContentMarshaller.toBytes(content), content.getContentKey().get());
         assertTrue(content.equals(cycled));
         assertEquals(size, cycled.getData().length);
     }
@@ -44,7 +45,6 @@ public class SpokeMarshallerTest {
                 .withContentType("application/json")
                 .withData(random.getBytes())
                 .withContentKey(new ContentKey())
-                .withContentLanguage("russian")
                 .build();
     }
 }

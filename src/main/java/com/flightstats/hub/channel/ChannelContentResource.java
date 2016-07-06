@@ -8,16 +8,15 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Request;
 import com.flightstats.hub.events.ContentOutput;
 import com.flightstats.hub.events.EventsService;
-import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.metrics.ActiveTraces;
+import com.flightstats.hub.metrics.DataDog;
 import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.metrics.NewRelicIgnoreTransaction;
 import com.flightstats.hub.model.*;
-import com.flightstats.hub.rest.Headers;
-import com.flightstats.hub.rest.Linked;
 import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
 import com.sun.jersey.core.header.MediaTypes;
+import com.timgroup.statsd.StatsDClient;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.media.sse.EventOutput;
 import org.glassfish.jersey.media.sse.SseFeature;
@@ -28,11 +27,9 @@ import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
-import java.io.InputStream;
 import java.net.URI;
 import java.util.*;
 
-import static com.flightstats.hub.rest.Linked.linked;
 import static com.flightstats.hub.util.TimeUtil.*;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -40,6 +37,8 @@ import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 
 @Path("/channel/{channel}/{Y}/{M}/{D}/")
 public class ChannelContentResource {
+    static final String CREATION_DATE = "Creation-Date";
+    private final static StatsDClient statsd = DataDog.statsd;
 
     private final static Logger logger = LoggerFactory.getLogger(ChannelContentResource.class);
 
@@ -227,7 +226,7 @@ public class ChannelContentResource {
                 .key(key)
                 .uri(uriInfo.getRequestUri())
                 .build();
-        Optional<Content> optionalResult = channelService.getValue(request);
+        Optional<Content> optionalResult = channelService.get(request);
 
         if (!optionalResult.isPresent()) {
             logger.warn("404 content not found {} {}", channel, key);
@@ -243,12 +242,14 @@ public class ChannelContentResource {
         Response.ResponseBuilder builder = Response.ok((StreamingOutput) output -> ByteStreams.copy(content.getStream(), output));
 
         builder.type(actualContentType)
-                .header(Headers.CREATION_DATE, FORMATTER.print(new DateTime(key.getMillis())));
+                .header(CREATION_DATE, FORMATTER.print(new DateTime(key.getMillis())));
 
-        LinkBuilder.addOptionalHeader(Headers.LANGUAGE, content.getContentLanguage(), builder);
         builder.header("Link", "<" + uriInfo.getRequestUriBuilder().path("previous").build() + ">;rel=\"" + "previous" + "\"");
         builder.header("Link", "<" + uriInfo.getRequestUriBuilder().path("next").build() + ">;rel=\"" + "next" + "\"");
-        sender.send("channel." + channel + ".get", System.currentTimeMillis() - start);
+        long time = System.currentTimeMillis() - start;
+        sender.send("channel." + channel + ".get", time);
+        statsd.time("channel", time, "channel:" + channel, "method:get");
+
         return builder.build();
     }
 

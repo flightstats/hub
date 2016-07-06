@@ -1,4 +1,4 @@
-package com.flightstats.hub.spoke;
+package com.flightstats.hub.dao;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -8,8 +8,6 @@ import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.google.common.io.ByteStreams;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -19,24 +17,15 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-public class SpokeMarshaller {
+public class ContentMarshaller {
 
-    private final static Logger logger = LoggerFactory.getLogger(SpokeMarshaller.class);
     private static final ObjectMapper mapper = new ObjectMapper();
     private static final int maxBytes = HubProperties.getProperty("app.maxPayloadSizeMB", 40) * 1024 * 1024;
 
     public static byte[] toBytes(Content content) throws IOException {
-        return toBytes(content, true);
-    }
-
-    public static byte[] toBytes(Content content, boolean compress) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ZipOutputStream zipOut = new ZipOutputStream(baos);
-        if (compress) {
-            zipOut.setLevel(Deflater.BEST_SPEED);
-        } else {
-            zipOut.setLevel(Deflater.NO_COMPRESSION);
-        }
+        zipOut.setLevel(Deflater.BEST_COMPRESSION);
         zipOut.putNextEntry(new ZipEntry("meta"));
         String meta = getMetaData(content);
         zipOut.write(meta.getBytes());
@@ -52,9 +41,6 @@ public class SpokeMarshaller {
 
     public static String getMetaData(Content content) {
         ObjectNode objectNode = mapper.createObjectNode();
-        if (content.getContentLanguage().isPresent()) {
-            objectNode.put("contentLanguage", content.getContentLanguage().get());
-        }
         if (content.getContentType().isPresent()) {
             objectNode.put("contentType", content.getContentType().get());
         }
@@ -73,9 +59,6 @@ public class SpokeMarshaller {
 
     public static void setMetaData(String metaData, Content.Builder builder) throws IOException {
         JsonNode jsonNode = mapper.readTree(metaData);
-        if (jsonNode.has("contentLanguage")) {
-            builder.withContentLanguage(jsonNode.get("contentLanguage").asText());
-        }
         if (jsonNode.has("contentType")) {
             builder.withContentType(jsonNode.get("contentType").asText());
         }

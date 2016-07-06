@@ -3,6 +3,7 @@ package com.flightstats.hub.spoke;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentKeyUtil;
+import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.dao.QueryResult;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.exception.FailedQueryException;
@@ -40,16 +41,16 @@ public class SpokeContentDao implements ContentDao {
     private final int ttlMinutes = HubProperties.getSpokeTtl();
 
     @Override
-    public ContentKey write(String channelName, Content content) throws Exception {
+    public ContentKey insert(String channelName, Content content) throws Exception {
         Traces traces = ActiveTraces.getLocal();
         traces.add("SpokeContentDao.writeSingle");
         try {
-            byte[] payload = SpokeMarshaller.toBytes(content);
+            byte[] payload = ContentMarshaller.toBytes(content);
             traces.add("SpokeContentDao.write marshalled");
             ContentKey key = content.keyAndStart(timeService.getNow());
             String path = getPath(channelName, key);
             logger.trace("writing key {} to channel {}", key, channelName);
-            if (!spokeStore.write(path, payload, "payload")) {
+            if (!spokeStore.insert(path, payload, "payload")) {
                 throw new FailedWriteException("unable to write to spoke " + path);
             }
             traces.add("SpokeContentDao.writeSingle completed", key);
@@ -65,7 +66,7 @@ public class SpokeContentDao implements ContentDao {
     }
 
     @Override
-    public SortedSet<ContentKey> write(BulkContent bulkContent) throws Exception {
+    public SortedSet<ContentKey> insert(BulkContent bulkContent) throws Exception {
         Traces traces = ActiveTraces.getLocal();
         traces.add("SpokeContentDao.writeBulk");
         String channelName = bulkContent.getChannel();
@@ -77,7 +78,7 @@ public class SpokeContentDao implements ContentDao {
             stream.writeInt(items.size());
             logger.debug("writing {} items to master {}", items.size(), bulkContent.getMasterKey());
             for (Content content : items) {
-                byte[] payload = SpokeMarshaller.toBytes(content);
+                byte[] payload = ContentMarshaller.toBytes(content);
                 String itemKey = content.getContentKey().get().toUrl();
                 stream.writeInt(itemKey.length());
                 stream.write(itemKey.getBytes());
@@ -89,7 +90,7 @@ public class SpokeContentDao implements ContentDao {
             traces.add("SpokeContentDao.writeBulk marshalled");
 
             logger.trace("writing items {} to channel {}", items.size(), channelName);
-            if (!spokeStore.write(channelName, baos.toByteArray(), "bulkKey")) {
+            if (!spokeStore.insert(channelName, baos.toByteArray(), "bulkKey")) {
                 throw new FailedWriteException("unable to write bulk to spoke " + channelName);
             }
             traces.add("SpokeContentDao.writeBulk completed", keys);
@@ -109,12 +110,12 @@ public class SpokeContentDao implements ContentDao {
     }
 
     @Override
-    public Content read(String channelName, ContentKey key) {
+    public Content get(String channelName, ContentKey key) {
         String path = getPath(channelName, key);
         Traces traces = ActiveTraces.getLocal();
         traces.add("SpokeContentDao.read");
         try {
-            return spokeStore.read(path, key);
+            return spokeStore.get(path, key);
         } catch (Exception e) {
             logger.warn("unable to get data: " + path, e);
             return null;

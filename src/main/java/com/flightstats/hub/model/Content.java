@@ -16,16 +16,15 @@ import java.io.InputStream;
 import java.io.Serializable;
 
 @Getter
-@EqualsAndHashCode(of = {"contentType", "contentLanguage"})
+@EqualsAndHashCode(of = {"contentType"})
 public class Content implements Serializable {
     private final static Logger logger = LoggerFactory.getLogger(Content.class);
 
     private static final long serialVersionUID = 1L;
 
     private final Optional<String> contentType;
-    private final Optional<String> contentLanguage;
     private final boolean isNew;
-    private final InputStream stream;
+    private InputStream stream;
     private byte[] data;
     private Optional<ContentKey> contentKey = Optional.absent();
     @Setter
@@ -34,7 +33,6 @@ public class Content implements Serializable {
     private Content(Builder builder) {
         contentKey = builder.contentKey;
         isNew = !getContentKey().isPresent();
-        contentLanguage = builder.contentLanguage;
         contentType = builder.contentType;
         stream = builder.stream;
     }
@@ -69,6 +67,7 @@ public class Content implements Serializable {
         if (data == null && stream != null) {
             try {
                 data = ByteStreams.toByteArray(stream);
+                stream = null;
             } catch (EOFException e) {
                 logger.info("file ended early {}", contentKey);
             } catch (Exception e) {
@@ -83,24 +82,18 @@ public class Content implements Serializable {
             if (data == null) {
                 throw new UnsupportedOperationException("convert stream to bytes first");
             }
-            size = new Long(data.length);
+            size = (long) data.length;
         }
         return size;
     }
 
     public static class Builder {
         private Optional<String> contentType = Optional.absent();
-        private Optional<String> contentLanguage = Optional.absent();
         public Optional<ContentKey> contentKey = Optional.absent();
         private InputStream stream;
 
         public Builder withContentType(String contentType) {
             this.contentType = Optional.fromNullable(contentType);
-            return this;
-        }
-
-        public Builder withContentLanguage(String contentLanguage) {
-            this.contentLanguage = Optional.fromNullable(contentLanguage);
             return this;
         }
 

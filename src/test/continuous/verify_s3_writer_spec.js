@@ -58,8 +58,8 @@ describe(testName, function () {
 
     function add(rootUrl, type) {
         channelTimes.push({
-            source: rootUrl + '?location=CACHE',
-            compare: rootUrl + '?location=LONG_TERM_' + type
+            source: rootUrl + '?location=CACHE&trace=true',
+            compare: rootUrl + '?location=LONG_TERM_' + type + '&trace=true'
         });
     }
 

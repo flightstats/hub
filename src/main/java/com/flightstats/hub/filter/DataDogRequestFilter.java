@@ -30,7 +30,7 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
 
     private static final Logger logger = LoggerFactory.getLogger(DataDogRequestFilter.class);
     private final static StatsDClient statsd = DataDog.statsd;
-    private static final ThreadLocal<Long> threadStartTime = new ThreadLocal();
+    private static final ThreadLocal<Long> threadStartTime = new ThreadLocal<>();
 
     public DataDogRequestFilter() {
     }
@@ -40,25 +40,24 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
         try {
             List<String> tags = new ArrayList<>();
             String channelName = channelName(request);
-            if (channelName != null) DataDog.addTag(tags, "channel", channelName);
-            DataDog.addTag(tags, "method", request.getMethod());
+            String method = request.getMethod();
             String template = getRequestTemplate(request);
-            DataDog.addTag(tags, "endpoint", template);
             long time = System.currentTimeMillis() - threadStartTime.get();
             if (template.isEmpty()) {
                 logger.trace("DataDog no-template {}, path: {}", template, request.getUriInfo().getPath());
             } else {
-                statsd.recordExecutionTime("hub.request", time, DataDog.tagsAsArray(tags));
-                statsd.incrementCounter("hub.request", DataDog.tagsAsArray(tags));
+                statsd.recordExecutionTime("request", time, "channel:" + channelName, "method:" + method,
+                        "endpoint:" + template);
+                statsd.incrementCounter("request", "channel:" + channelName, "method:" + method,
+                        "endpoint:" + template);
             }
-            logger.trace("DataDog hub.request {}, time: {}, tags: {}", template, time, String.join(",", tags));
+            logger.trace("DataDog request {}, time: {}, tags: {}", template, time, String.join(",", tags));
         } catch (Exception e) {
             logger.error("DataDog request error: {}", e.getMessage());
         }
-        // report any errors
         int returnCode = response.getStatus();
         if (returnCode > 400 && returnCode != 404) {
-            statsd.incrementCounter("hub.errors", new String[]{"errorCode:" + returnCode});
+            statsd.incrementCounter("errors", "errorCode:" + returnCode);
         }
     }
 

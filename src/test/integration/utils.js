@@ -215,6 +215,18 @@ function deleteGroup(groupName) {
     }, 60 * 1000);
 }
 
+function itRefreshesChannels() {
+    it('refreshes channels', function (done) {
+        request.get(hubUrlBase + '/internal/channel/refresh',
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+                console.log('refresh', body);
+                done();
+            });
+    });
+}
+
 function getQ(url, status, stable) {
     status = status || 200;
     stable = stable || false;
@@ -378,4 +390,5 @@ exports.closeServer = closeServer;
 exports.getQ = getQ;
 exports.getPort = getPort;
 exports.parseJson = parseJson;
+exports.itRefreshesChannels = itRefreshesChannels;
 
