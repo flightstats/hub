@@ -1,5 +1,6 @@
 package com.flightstats.hub.dao.nas;
 
+import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.dao.ContentService;
 import com.flightstats.hub.dao.aws.MultiPartParser;
 import com.flightstats.hub.exception.ContentTooLargeException;
@@ -7,7 +8,6 @@ import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.spoke.FileSpokeStore;
-import com.flightstats.hub.spoke.SpokeMarshaller;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import org.joda.time.DateTime;
@@ -35,7 +35,7 @@ public class NasContentService implements ContentService {
         Traces traces = ActiveTraces.getLocal();
         traces.add("NasContentService.insert");
         try {
-            byte[] payload = SpokeMarshaller.toBytes(content, false);
+            byte[] payload = ContentMarshaller.toBytes(content);
             traces.add("NasContentService.insert marshalled");
             ContentKey key = content.keyAndStart(TimeUtil.now());
             String path = getPath(channelName, key);
@@ -76,7 +76,7 @@ public class NasContentService implements ContentService {
         try {
             byte[] bytes = fileSpokeStore.read(path);
             if (null != bytes) {
-                return Optional.of(SpokeMarshaller.toContent(bytes, key));
+                return Optional.of(ContentMarshaller.toContent(bytes, key));
             }
         } catch (Exception e) {
             logger.warn("unable to get data: " + path, e);

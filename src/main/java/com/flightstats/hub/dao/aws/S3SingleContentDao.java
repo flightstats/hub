@@ -4,6 +4,7 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDao;
+import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.DataDog;
 import com.flightstats.hub.metrics.MetricsSender;
@@ -13,6 +14,7 @@ import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.TimeUtil;
+import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
@@ -59,14 +61,33 @@ public class S3SingleContentDao implements ContentDao {
     }
 
     public ContentKey insert(String channelName, Content content) {
+        return insert(channelName, content, (metadata) -> {
+            try {
+                metadata.addUserMetadata("compressed", "true");
+                return ContentMarshaller.toBytes(content);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    //this is only needed for testing the non-compressed retrieval from S3.
+    ContentKey insertOld(String channelName, Content content) {
+        return insert(channelName, content, (metadata) -> content.getData());
+    }
+
+    private ContentKey insert(String channelName, Content content, Function<ObjectMetadata, byte[]> handler) {
         ContentKey key = content.getContentKey().get();
         ActiveTraces.getLocal().add("S3SingleContentDao.write", key);
         try {
             String s3Key = getS3ContentKey(channelName, key);
-            InputStream stream = new ByteArrayInputStream(content.getData());
             ObjectMetadata metadata = new ObjectMetadata();
-            metadata.setContentLength(content.getData().length);
+            byte[] bytes = handler.apply(metadata);
+            logger.trace("insert {} {} {} {}", channelName, key, content.getSize(), bytes.length);
+            InputStream stream = new ByteArrayInputStream(bytes);
+            metadata.setContentLength(bytes.length);
             if (content.getContentType().isPresent()) {
+                //todo - gfm - 6/29/16 - do we still want to write this?
                 metadata.setContentType(content.getContentType().get());
                 metadata.addUserMetadata("type", content.getContentType().get());
             } else {
@@ -77,10 +98,10 @@ public class S3SingleContentDao implements ContentDao {
             }
             PutObjectRequest request = new PutObjectRequest(s3BucketName, s3Key, stream, metadata);
             statsd.increment("s3.put", "type:single", "channel:" + channelName);
-            statsd.count("s3.put.bytes", content.getData().length, "channel:" + channelName, "type:single");
+            statsd.count("s3.put.bytes", bytes.length, "channel:" + channelName, "type:single");
 
             sender.send("channel." + channelName + ".s3.put", 1);
-            sender.send("channel." + channelName + ".s3.bytes", content.getData().length);
+            sender.send("channel." + channelName + ".s3.bytes", bytes.length);
             s3Client.putObject(request);
             return key;
         } catch (Exception e) {
@@ -118,6 +139,9 @@ public class S3SingleContentDao implements ContentDao {
             byte[] bytes = ByteStreams.toByteArray(object.getObjectContent());
             ObjectMetadata metadata = object.getObjectMetadata();
             Map<String, String> userData = metadata.getUserMetadata();
+            if (userData.containsKey("compressed")) {
+                return ContentMarshaller.toContent(bytes, key);
+            }
             Content.Builder builder = Content.builder();
             String type = userData.get("type");
             if (!type.equals("none")) {

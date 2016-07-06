@@ -243,14 +243,15 @@ public class ContentDaoUtil {
                 .build();
     }
 
-    private Content createContent() {
+    public static Content createContent() {
         return createContent(new ContentKey());
     }
 
-    private void compare(Content content, Content read, byte[] expected) {
+    public static void compare(Content content, Content read, byte[] expected) {
         assertEquals(content.getContentKey().get(), read.getContentKey().get());
         assertEquals(content.getContentType(), read.getContentType());
-        assertArrayEquals(expected, read.getData());
+        byte[] data = read.getData();
+        assertArrayEquals(expected, data);
         assertEquals(content, read);
     }
 

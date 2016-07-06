@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.cluster.CuratorCluster;
+import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.dao.QueryResult;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.DataDog;
@@ -90,7 +91,7 @@ public class RemoteSpokeStore {
         }
     }
 
-    public boolean testAll() throws UnknownHostException {
+    boolean testAll() throws UnknownHostException {
         Collection<String> servers = cluster.getRandomServers();
         servers.addAll(CuratorCluster.getLocalServer());
         logger.info("*********************************************");
@@ -204,7 +205,7 @@ public class RemoteSpokeStore {
                 if (response.getStatus() == 200) {
                     byte[] entity = response.getEntity(byte[].class);
                     if (entity.length > 0) {
-                        return SpokeMarshaller.toContent(entity, key);
+                        return ContentMarshaller.toContent(entity, key);
                     }
                 }
             } catch (JsonMappingException e) {
