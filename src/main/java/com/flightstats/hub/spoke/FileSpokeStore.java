@@ -64,6 +64,9 @@ public class FileSpokeStore {
     public void read(String path, OutputStream output) {
         File file = spokeFilePathPart(path);
         logger.trace("reading {}", file);
+        if (!file.exists()) {
+            throw new NotFoundException("not found " + path);
+        }
         if (!file.canRead()) {
             logger.warn("cant read {}", path);
             throw new NotFoundException("cant read " + path);
