@@ -15,6 +15,7 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.NotFoundException;
 import java.io.*;
 import java.util.Arrays;
 import java.util.Collection;
@@ -43,11 +44,10 @@ public class FileSpokeStore {
 
     public boolean insert(String path, InputStream input) {
         File file = spokeFilePathPart(path);
-        logger.trace("writing {}", file);
-        file.getParentFile().mkdirs();
+        logger.trace("insert {} readable {} {}", file, file.setReadable(false), file.getParentFile().mkdirs());
         try (FileOutputStream output = new FileOutputStream(file)) {
             long copy = ByteStreams.copy(input, output);
-            logger.trace("copied {} {}", file, copy);
+            logger.trace("copied {} {} {}", file, copy, file.setReadable(true));
             return true;
         } catch (IOException e) {
             logger.info("unable to write to " + path, e);
@@ -64,6 +64,10 @@ public class FileSpokeStore {
     public void read(String path, OutputStream output) {
         File file = spokeFilePathPart(path);
         logger.trace("reading {}", file);
+        if (!file.canRead()) {
+            logger.warn("cant read {}", path);
+            throw new NotFoundException("cant read " + path);
+        }
         try (FileInputStream input = new FileInputStream(file)) {
             ByteStreams.copy(input, output);
         } catch (FileNotFoundException e) {
