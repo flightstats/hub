@@ -51,7 +51,8 @@ public class FileSpokeStore {
         logger.trace("insert {} {} {}", file, file.getParentFile().mkdirs(), file.canExecute());
         try (FileOutputStream output = new FileOutputStream(file)) {
             long copy = ByteStreams.copy(input, output);
-            logger.trace("copied {} {} {}", file, copy, file.setExecutable(true));
+            boolean setExecutable = file.setExecutable(true);
+            logger.trace("copied {} {} {}", file, copy, setExecutable);
             return true;
         } catch (IOException e) {
             logger.info("unable to write to " + path, e);
