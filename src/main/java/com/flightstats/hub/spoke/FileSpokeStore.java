@@ -72,10 +72,11 @@ public class FileSpokeStore {
         if (!file.exists()) {
             throw new NotFoundException("not found " + path);
         }
-        if (!file.canExecute()) {
+        //todo - gfm - 7/7/16 - this should be uncommented after a deploy of the file.setExecutable(true);
+        /*if (!file.canExecute()) {
             logger.warn("incomplete file {}", path);
             throw new NotFoundException("incomplete file " + path);
-        }
+        }*/
         try (FileInputStream input = new FileInputStream(file)) {
             ByteStreams.copy(input, output);
         } catch (FileNotFoundException e) {
