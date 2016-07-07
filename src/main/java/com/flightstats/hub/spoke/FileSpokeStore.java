@@ -36,6 +36,10 @@ public class FileSpokeStore {
         if (!insert("hub-startup/" + new ContentKey().toUrl(), ("" + System.currentTimeMillis()).getBytes())) {
             throw new RuntimeException("unable to create startup file");
         }
+        File file = spokeFilePathPart("hub-startup/" + new ContentKey().toUrl());
+        if (file.canExecute()) {
+            logger.warn("**** Spoke file permissions may allow incomplete reads ****");
+        }
     }
 
     public boolean insert(String path, byte[] payload) {
@@ -44,10 +48,10 @@ public class FileSpokeStore {
 
     public boolean insert(String path, InputStream input) {
         File file = spokeFilePathPart(path);
-        logger.trace("insert {} readable {} {}", file, file.setReadable(false), file.getParentFile().mkdirs());
+        logger.trace("insert {} {} {}", file, file.getParentFile().mkdirs(), file.canExecute());
         try (FileOutputStream output = new FileOutputStream(file)) {
             long copy = ByteStreams.copy(input, output);
-            logger.trace("copied {} {} {}", file, copy, file.setReadable(true));
+            logger.trace("copied {} {} {}", file, copy, file.setExecutable(true));
             return true;
         } catch (IOException e) {
             logger.info("unable to write to " + path, e);
@@ -67,9 +71,9 @@ public class FileSpokeStore {
         if (!file.exists()) {
             throw new NotFoundException("not found " + path);
         }
-        if (!file.canRead()) {
-            logger.warn("cant read {}", path);
-            throw new NotFoundException("cant read " + path);
+        if (!file.canExecute()) {
+            logger.warn("incomplete file {}", path);
+            throw new NotFoundException("incomplete file " + path);
         }
         try (FileInputStream input = new FileInputStream(file)) {
             ByteStreams.copy(input, output);
@@ -86,7 +90,7 @@ public class FileSpokeStore {
         return baos.toString();
     }
 
-    public void readKeysInBucket(String path, OutputStream output) {
+    void readKeysInBucket(String path, OutputStream output) {
         keysInBucket(path, output);
     }
 
