@@ -26,7 +26,7 @@ The Hub
 * [notifications](#notifications)
 * [websocket](#websocket)
 * [events](#events)
-* [group callback](#group-callback)
+* [webhook](#webhook)
 * [provider interface](#provider-interface)
 * [delete a channel](#delete-a-channel)
 * [replication](#replication)
@@ -56,7 +56,7 @@ The [encrypted-hub](#encrypted-hub) (EH) is a separate installation of the Hub w
 ## consistency
 
 * All times from the Hub are in UTC.
-* By default all iteration, queries, group callbacks and websockets return items with stable ordering.  Data is considered stable when iteration will provide consistent results.
+* By default all iteration, queries, webhooks and websockets return items with stable ordering.  Data is considered stable when iteration will provide consistent results.
 * All requests for a specific item by id will return that item if it exists.
 
 ## error handling
@@ -630,6 +630,7 @@ Content-Type is `application/json`
         "http://hub/channel/stumptown/2014/01/13/10/42/31/642/{hash3}" 
     ]
   }
+}
 ```
 
 If no items were submitted during that time, 'uris' is an empty array.
@@ -657,7 +658,7 @@ A [websocket](#websocket) returns the id of each new item.  A websocket is conne
 
 [events](#events) use http to return the id and payload of new items.  Events are connected to a single server, and *will* support reconecting on disconnect.
 
-[group callback](#group-callback) returns single or batch ids to an application's http endpoint.   Provides more flexibility than events or websockets.
+[webhook](#webhook) returns single or batch ids to an application's http endpoint.   Provides more flexibility than events or websockets.
 
 ## websocket
 
@@ -722,9 +723,9 @@ curl -i --header "Last-Event-ID: http://hub/channel/stumptown/2014/01/13/10/42/3
 ```
 
 
-## group callback
+## webhook
 
-A Group Callback is registered for a client's http endpoint and that endpoint recieves Http POSTs of json uris, and the Hub server keeps track of the Group's state.
+A Webhook is registered for a client's http endpoint and that endpoint recieves Http POSTs of json uris, and the Hub server keeps track of the Webhook's state.
 
 * `name` is used in the url for the callback.  Names are limited to 48 characters and may only contain `a-z`, `A-Z`, `0-9`, hyphen `-` and underscore `_`.
 
@@ -739,10 +740,10 @@ parallelCalls can be modified with a call to PUT
 * `startItem` is the optional location where the callback should start from.
   If startItem is a fully qualified item, that next item after it will be sent via the callback.
   If startItem is 'previous', the previous stable item on the channel will be sent as the first callback item.
-  startItem is *only* used when creating a group callback.  If you want to change the pointer of a callback, you will need to
+  startItem is *only* used when creating a webhook.  If you want to change the pointer of a callback, you will need to
 delete the callback first.
 
-* `paused` is optional and defaults to false.   When true, this will pause a group callback.
+* `paused` is optional and defaults to false.   When true, this will pause a webhook.
 
 * `batch` is optional and defaults to `SINGLE`, which will return each item by itself.
   Setting the value to `SECOND` will return each second's worth of data in the channel.
@@ -757,13 +758,13 @@ delete the callback first.
 
 * `ttlMinutes` is optional and defaults to 0.  If ttlMinutes is greater than 0, the hub will not attempt to send an item which is older than the ttl.
 
-To get a list of existing group callbacks:
+To get a list of existing webhooks:
 
-`GET http://hub/group`
+`GET http://hub/webhook`
  
-To create a new group callback:
+To create a new webhook:
 
-`PUT http://hub/group/{name}`
+`PUT http://hub/webhook/{name}`
 
 ``` json
 {
@@ -779,22 +780,22 @@ To create a new group callback:
 }
 ```
 
-Once a Group is created, the channelUrl can not change.  PUT may be safely called multiple times with the same
+Once a Webhook is created, the channel's name can not change.  PUT may be safely called multiple times with the same
  configuration.  Changes to `startItem` and `batch` will be ignored.
 
-To see the configuration and status of a group callback:
+To see the configuration and status of a webhook:
 
-`GET http://hub/group/{name}`
+`GET http://hub/webhook/{name}`
 
-To delete a group callback:
+To delete a webhook:
 
-`DELETE http://hub/group/{name}`
+`DELETE http://hub/webhook/{name}`
 
-DELETE will return a 202, and it may take up to a minute to properly stop a group from servicing the callback.
+DELETE will return a 202, and it may take up to a minute to properly stop a webhook from servicing the callback.
 
 #### Behavior
 
-The application listening at `callbackUrl` will get a payload POSTed to it for every new item in the channel, starting after `startItem` or at the time the group is created.
+The application listening at `callbackUrl` will get a payload POSTed to it for every new item in the channel, starting after `startItem` or at the time the webhook is created.
 A 2XX-level client response is considered successful.  Any other response is considered an error, and will cause the server to retry.   Redirects are allowed.
 Retries will use an exponential backoff up to one minute, and the server will continue to retry at one minute intervals indefinitely.
 
@@ -915,21 +916,21 @@ For more details about [global channels](https://github.com/flightstats/hub/wiki
 
 ## alerts
 
-The hub can send alerts based on the number of items in a channel, or how long a group callback is lagging a channel.
+The hub can send alerts based on the number of items in a channel, or how long a webhook is lagging a channel.
 
 For channels, an alert is created if inserts in `source` `operator` `threshold` within `timeWindowMinutes`
 eg: if inserts in stumptown <  100 within 20 minutes
 
-For group callbacks, an alert is created if the callback `source` lags behind it's channel by `timeWindowMinutes`
+For webhooks, an alert is created if the callback `source` lags behind it's channel by `timeWindowMinutes`
 eg: if the last completed callback to stumptownCallback is 10 minutes behind the last insert into it's channel
 
 * `name` _is case sensitive_, is limited to _48 characters_, and may only contain `a-z`, `A-Z`, `0-9` and underscore `_`.
 
-* `source` is the name of the channel or group to monitor
+* `source` is the name of the channel or webhook to monitor
 
 * `serviceName` is a user defined end point for the alert, which could be an email address, service name, etc
 
-* `type` can be `channel` or `group`
+* `type` can be `channel` or `webhook`
 
 * `timeWindowMinutes` the period of time to evaluate
 
@@ -966,7 +967,7 @@ On success:  `HTTP/1.1 201 OK`
     "timeWindowMinutes": 5,
     "type": "channel",
     "operator": "==",
-    "threshold": 0
+    "threshold": 0,
     "_links": {
         "self": {
             "href": "http://hub/alert/stumptownAlert"
@@ -1020,17 +1021,17 @@ Following the status link from _links.status.href shows the channel history for 
 }
 ```
 
-### group alert status
+### webhook alert status
 
-Following the status link from _links.status.href shows the latest item in a channel, and the last completed callback for that group.
+Following the status link from _links.status.href shows the latest item in a channel, and the last completed callback for that webhook.
 
-`GET http://hub/alert/stumptownGroup/status`
+`GET http://hub/alert/stumptownWebhook/status`
 
 ```
 {
-    "name": "stumptownGroup",
+    "name": "stumptownWebhook",
     "alert": false,
-    "type": "group",
+    "type": "webhook",
     "history": [
         {
         "href": "http://hub/channel/stumptown/2015/06/17/18/34/38/306/UqCNR4",
@@ -1043,7 +1044,7 @@ Following the status link from _links.status.href shows the latest item in a cha
     ],
     "_links": {
         "self": {
-            "href": "http://hub/alert/stumptownGroup/status"
+            "href": "http://hub/alert/stumptownWebhook/status"
         }
     }
 }

@@ -52,7 +52,7 @@ describe(testName, function () {
             channelUrl: channelResource,
             startItem: firstItem
         };
-        var groupResource = groupUrl + "/" + groupName;
+        var groupResource = utils.getGroupUrl() + "/" + groupName;
         console.log('creating group', groupName, groupConfig);
         request.put({
                 url: groupResource,
