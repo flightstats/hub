@@ -20,11 +20,11 @@ public class RootResource {
         Linked.Builder<?> links = Linked.justLinks();
         links.withLink("self", uriInfo.getRequestUri());
         links.withLink("documentation", "https://github.com/flightstats/hub");
-        links.withLink("channel", uriInfo.getRequestUri() + "channel");
-        links.withLink("group", uriInfo.getRequestUri() + "group");
-        links.withLink("tag", uriInfo.getRequestUri() + "tag");
         links.withLink("alert", uriInfo.getRequestUri() + "alert");
         links.withLink("health", uriInfo.getRequestUri() + "health");
+        links.withLink("channel", uriInfo.getRequestUri() + "channel");
+        links.withLink("tag", uriInfo.getRequestUri() + "tag");
+        links.withLink("webhook", uriInfo.getRequestUri() + "webhook");
         links.withLink("internal", uriInfo.getRequestUri() + "internal");
         return Response.ok(links.build()).build();
     }
