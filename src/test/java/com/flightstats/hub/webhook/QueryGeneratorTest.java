@@ -1,4 +1,4 @@
-package com.flightstats.hub.group;
+package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.TimeUtil;

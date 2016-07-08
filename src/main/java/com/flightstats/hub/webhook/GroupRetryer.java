@@ -1,4 +1,4 @@
-package com.flightstats.hub.group;
+package com.flightstats.hub.webhook;
 
 import com.github.rholder.retry.Retryer;
 import com.github.rholder.retry.RetryerBuilder;

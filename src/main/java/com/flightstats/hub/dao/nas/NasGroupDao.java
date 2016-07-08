@@ -1,7 +1,7 @@
 package com.flightstats.hub.dao.nas;
 
-import com.flightstats.hub.group.Group;
-import com.flightstats.hub.group.GroupDao;
+import com.flightstats.hub.webhook.Group;
+import com.flightstats.hub.webhook.GroupDao;
 import com.google.common.base.Optional;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;

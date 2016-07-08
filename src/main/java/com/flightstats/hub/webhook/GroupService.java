@@ -1,4 +1,4 @@
-package com.flightstats.hub.group;
+package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 
-import static com.flightstats.hub.group.GroupLeader.GROUP_LAST_COMPLETED;
+import static com.flightstats.hub.webhook.GroupLeader.GROUP_LAST_COMPLETED;
 
 public class GroupService {
     private final static Logger logger = LoggerFactory.getLogger(GroupService.class);

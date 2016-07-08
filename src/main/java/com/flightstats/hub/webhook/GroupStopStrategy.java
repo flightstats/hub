@@ -1,4 +1,4 @@
-package com.flightstats.hub.group;
+package com.flightstats.hub.webhook;
 
 import com.github.rholder.retry.Attempt;
 import com.github.rholder.retry.StopStrategy;

@@ -2,9 +2,9 @@ package com.flightstats.hub.replication;
 
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubProvider;
-import com.flightstats.hub.group.Group;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.HubUtils;
+import com.flightstats.hub.webhook.Group;
 
 class ChannelReplicator implements Replicator {
 

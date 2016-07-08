@@ -2,9 +2,9 @@ package com.flightstats.hub.events;
 
 import com.diffplug.common.base.Errors;
 import com.flightstats.hub.dao.ContentService;
-import com.flightstats.hub.group.GroupService;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.Content;
+import com.flightstats.hub.webhook.GroupService;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;

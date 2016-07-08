@@ -1,4 +1,4 @@
-package com.flightstats.hub.group;
+package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Inject;

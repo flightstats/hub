@@ -5,7 +5,7 @@ import com.flightstats.hub.dao.nas.NasChannelConfigurationDao;
 import com.flightstats.hub.dao.nas.NasContentService;
 import com.flightstats.hub.dao.nas.NasGroupDao;
 import com.flightstats.hub.dao.nas.NasTtlEnforcer;
-import com.flightstats.hub.group.GroupDao;
+import com.flightstats.hub.webhook.GroupDao;
 import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
 import org.slf4j.Logger;

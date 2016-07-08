@@ -1,4 +1,4 @@
-package com.flightstats.hub.group;
+package com.flightstats.hub.webhook;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.flightstats.hub.model.ContentKey;

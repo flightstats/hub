@@ -1,7 +1,7 @@
 package com.flightstats.hub.alert;
 
-import com.flightstats.hub.group.GroupStatus;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.webhook.GroupStatus;
 import org.apache.commons.io.IOUtils;
 import org.junit.AfterClass;
 import org.junit.Test;

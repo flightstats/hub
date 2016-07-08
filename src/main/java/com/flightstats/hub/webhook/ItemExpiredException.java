@@ -1,4 +1,4 @@
-package com.flightstats.hub.group;
+package com.flightstats.hub.webhook;
 
 class ItemExpiredException extends RuntimeException {
     ItemExpiredException(String message) {

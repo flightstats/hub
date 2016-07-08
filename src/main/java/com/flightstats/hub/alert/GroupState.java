@@ -2,11 +2,11 @@ package com.flightstats.hub.alert;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flightstats.hub.group.Group;
-import com.flightstats.hub.group.GroupStatus;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.rest.RestClient;
+import com.flightstats.hub.webhook.Group;
+import com.flightstats.hub.webhook.GroupStatus;
 import com.google.common.base.Optional;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;

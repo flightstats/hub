@@ -2,9 +2,9 @@ package com.flightstats.hub.ws;
 
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProvider;
-import com.flightstats.hub.group.Group;
-import com.flightstats.hub.group.GroupService;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.webhook.Group;
+import com.flightstats.hub.webhook.GroupService;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;

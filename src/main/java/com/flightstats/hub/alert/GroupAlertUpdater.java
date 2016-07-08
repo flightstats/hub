@@ -1,9 +1,9 @@
 package com.flightstats.hub.alert;
 
-import com.flightstats.hub.group.Group;
-import com.flightstats.hub.group.GroupStatus;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentPath;
+import com.flightstats.hub.webhook.Group;
+import com.flightstats.hub.webhook.GroupStatus;
 import org.joda.time.Minutes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

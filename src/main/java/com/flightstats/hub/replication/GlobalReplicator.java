@@ -1,10 +1,10 @@
 package com.flightstats.hub.replication;
 
 import com.flightstats.hub.app.HubProvider;
-import com.flightstats.hub.group.Group;
-import com.flightstats.hub.group.GroupService;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.HubUtils;
+import com.flightstats.hub.webhook.Group;
+import com.flightstats.hub.webhook.GroupService;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
