@@ -3,7 +3,7 @@ require('./integration_config.js');
 var request = require('request');
 var channelName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
-var gUrl = groupUrl + "/" + channelName;
+var gUrl = utils.getGroupUrl() + "/" + channelName;
 var testName = __filename;
 var groupConfig = {
     callbackUrl: 'http://nothing/callback',

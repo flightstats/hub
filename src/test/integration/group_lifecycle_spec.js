@@ -70,7 +70,7 @@ describe(testName, function () {
     });
 
     it('verifies lastCompleted', function (done) {
-        var groupResource = groupUrl + "/" + groupName;
+        var groupResource = utils.getGroupUrl() + "/" + groupName;
         request.get({url : groupResource,
                 headers : {"Content-Type" : "application/json"} },
             function (err, response, body) {

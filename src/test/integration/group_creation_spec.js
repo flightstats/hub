@@ -22,10 +22,10 @@ describe(testName, function () {
 
     utils.getGroup(groupName, groupConfig2);
 
-    /*utils.putGroup(groupName, groupConfig2, 200, testName);
+    utils.putGroup(groupName, groupConfig2, 200, testName);
 
     utils.deleteGroup(groupName);
 
-     utils.getGroup(groupName, groupConfig2, 404);*/
+    utils.getGroup(groupName, groupConfig2, 404);
 });
 
