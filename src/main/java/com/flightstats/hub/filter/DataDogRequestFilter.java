@@ -32,28 +32,24 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
     private final static StatsDClient statsd = DataDog.statsd;
     private static final ThreadLocal<Long> threadStartTime = new ThreadLocal<>();
 
-    public DataDogRequestFilter() {
-    }
-
     @Override
     public void filter(ContainerRequestContext request, ContainerResponseContext response) throws IOException {
         try {
-            List<String> tags = new ArrayList<>();
             String channelName = channelName(request);
             String method = request.getMethod();
-            String template = getRequestTemplate(request);
+            String endpoint = getRequestTemplate(request);
             long time = System.currentTimeMillis() - threadStartTime.get();
-            if (template.isEmpty()) {
-                logger.trace("DataDog no-template {}, path: {}", template, request.getUriInfo().getPath());
+            if (endpoint.isEmpty()) {
+                logger.trace("DataDog no endpoint, path: {}", request.getUriInfo().getPath());
+            } else if (endpoint.equals("/shutdown")) {
+                logger.info("call to shutdown, ignoring datadog time {}", time);
             } else {
-                statsd.recordExecutionTime("request", time, "channel:" + channelName, "method:" + method,
-                        "endpoint:" + template);
-                statsd.incrementCounter("request", "channel:" + channelName, "method:" + method,
-                        "endpoint:" + template);
+                statsd.recordExecutionTime("request", time, "channel:" + channelName, "method:" + method, "endpoint:" + endpoint);
+                statsd.incrementCounter("request", "channel:" + channelName, "method:" + method, "endpoint:" + endpoint);
             }
-            logger.trace("DataDog request {}, time: {}, tags: {}", template, time, String.join(",", tags));
+            logger.trace("DataDog request {}, time: {}", endpoint, time);
         } catch (Exception e) {
-            logger.error("DataDog request error: {}", e.getMessage());
+            logger.error("DataDog request error", e);
         }
         int returnCode = response.getStatus();
         if (returnCode > 400 && returnCode != 404) {

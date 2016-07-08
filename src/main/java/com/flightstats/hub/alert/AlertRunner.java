@@ -79,7 +79,7 @@ public class AlertRunner implements Leader {
             } else if (alertConfig.isChannelAlert()) {
                 futures.add(threadPool.submit(new ChannelAlertUpdater(alertConfig, alertStatus)));
             } else {
-                futures.add(threadPool.submit(new GroupAlertUpdater(alertConfig, alertStatus)));
+                futures.add(threadPool.submit(new WebhookAlertUpdater(alertConfig, alertStatus)));
             }
         }
         Map<String, AlertStatus> updatedAlertStatus = new HashMap<>();

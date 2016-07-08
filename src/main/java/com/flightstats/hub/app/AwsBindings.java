@@ -5,8 +5,8 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.flightstats.hub.cluster.CuratorCluster;
 import com.flightstats.hub.dao.*;
 import com.flightstats.hub.dao.aws.*;
-import com.flightstats.hub.group.GroupDao;
 import com.flightstats.hub.spoke.*;
+import com.flightstats.hub.webhook.WebhookDao;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
@@ -56,7 +56,7 @@ public class AwsBindings extends AbstractModule {
                 .annotatedWith(Names.named(ContentDao.BATCH_LONG_TERM))
                 .to(S3BatchContentDao.class).asEagerSingleton();
         bind(DynamoUtils.class).asEagerSingleton();
-        bind(GroupDao.class).to(DynamoGroupDao.class).asEagerSingleton();
+        bind(WebhookDao.class).to(DynamoWebhookDao.class).asEagerSingleton();
         bind(S3BatchManager.class).asEagerSingleton();
         bind(S3Verifier.class).asEagerSingleton();
     }

@@ -3,9 +3,9 @@ package com.flightstats.hub.app;
 import com.flightstats.hub.dao.*;
 import com.flightstats.hub.dao.nas.NasChannelConfigurationDao;
 import com.flightstats.hub.dao.nas.NasContentService;
-import com.flightstats.hub.dao.nas.NasGroupDao;
 import com.flightstats.hub.dao.nas.NasTtlEnforcer;
-import com.flightstats.hub.group.GroupDao;
+import com.flightstats.hub.dao.nas.NasWebhookDao;
+import com.flightstats.hub.webhook.WebhookDao;
 import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
 import org.slf4j.Logger;
@@ -38,7 +38,7 @@ class NasBindings extends AbstractModule {
                 .to(NasChannelConfigurationDao.class);
 
         bind(ContentService.class).to(NasContentService.class).asEagerSingleton();
-        bind(GroupDao.class).to(NasGroupDao.class).asEagerSingleton();
+        bind(WebhookDao.class).to(NasWebhookDao.class).asEagerSingleton();
         bind(NasTtlEnforcer.class).asEagerSingleton();
         bind(FinalCheck.class).to(PassFinalCheck.class).asEagerSingleton();
     }

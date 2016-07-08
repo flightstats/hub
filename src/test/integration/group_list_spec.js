@@ -4,7 +4,7 @@ var request = require('request');
 var http = require('http');
 var groupName1 = utils.randomChannelName();
 var groupName2 = utils.randomChannelName();
-var groupResource = groupUrl + "/" + groupName1;
+var groupUrl = utils.getGroupUrl();
 var testName = __filename;
 var groupConfig = {
     callbackUrl : 'http://nothing/callback',
@@ -20,8 +20,8 @@ var groupConfig = {
 describe(testName, function () {
 
     var groupHrefs = [
-        utils.putGroup(groupName1, groupConfig, 201, testName),
-        utils.putGroup(groupName2, groupConfig, 201, testName)
+        utils.putGroup(groupName1, groupConfig, 201, testName, groupUrl),
+        utils.putGroup(groupName2, groupConfig, 201, testName, groupUrl)
     ];
     var foundGroupHrefs = [];
 
@@ -33,7 +33,7 @@ describe(testName, function () {
                     expect(response.statusCode).toBe(200);
                     var parse = utils.parseJson(response, testName);
                     expect(parse._links.self.href).toBe(groupUrl);
-                    var groups = parse._links.groups;
+                    var groups = parse._links.groups || parse._links.webhooks;
                     groups.forEach(function (item) {
                         if (item.name === groupName1 || item.name === groupName2) {
                             foundGroupHrefs.push(item.href);
