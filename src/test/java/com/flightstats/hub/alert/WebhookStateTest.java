@@ -27,7 +27,7 @@ public class WebhookStateTest {
     public void testParse() throws IOException {
         URL resource = WebhookStateTest.class.getResource("/group.json");
         String configString = IOUtils.toString(resource);
-        get("/group/testParse", (req, res) -> configString);
+        get("/webhook/testParse", (req, res) -> configString);
         AlertConfig alertConfig = AlertConfig.builder()
                 .channel("testParse")
                 .hubDomain(hubAppUrl)
@@ -42,7 +42,7 @@ public class WebhookStateTest {
     public void testParseNoLatest() throws IOException {
         URL resource = WebhookStateTest.class.getResource("/group-no-latest.json");
         String configString = IOUtils.toString(resource);
-        get("/group/testParseNoLatest", (req, res) -> configString);
+        get("/webhook/testParseNoLatest", (req, res) -> configString);
         AlertConfig alertConfig = AlertConfig.builder()
                 .channel("testParseNoLatest")
                 .hubDomain(hubAppUrl)
@@ -55,7 +55,7 @@ public class WebhookStateTest {
 
     @Test
     public void testNoGroup() throws IOException {
-        get("/group/testParseNoLatest", (req, res) -> {
+        get("/webhook/testParseNoLatest", (req, res) -> {
             res.status(404);
             return "";
         });
