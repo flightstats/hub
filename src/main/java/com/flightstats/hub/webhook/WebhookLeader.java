@@ -37,57 +37,57 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class GroupLeader implements Leader {
-    private final static Logger logger = LoggerFactory.getLogger(GroupLeader.class);
-    static final String GROUP_LAST_COMPLETED = "/GroupLastCompleted/";
+class WebhookLeader implements Leader {
+    private final static Logger logger = LoggerFactory.getLogger(WebhookLeader.class);
+    static final String WEBHOOK_LAST_COMPLETED = "/GroupLastCompleted/";
 
     private static final Client client = RestClient.createClient(60, 120, true, false);
     private final AtomicBoolean deleteOnExit = new AtomicBoolean();
-    private final double keepLeadershipRate = HubProperties.getProperty("group.keepLeadershipRate", 0.75);
-    private final String appDomain = HubProperties.getAppDomain();
+    private final double keepLeadershipRate = HubProperties.getProperty("webhook.keepLeadershipRate",
+            HubProperties.getProperty("group.keepLeadershipRate", 0.75));
 
     @Inject
     private CuratorFramework curator;
     @Inject
     private ChannelService channelService;
     @Inject
-    private GroupService groupService;
+    private WebhookService webhookService;
     @Inject
     private MetricsTimer metricsTimer;
     @Inject
     private LastContentPath lastContentPath;
     @Inject
-    private GroupContentPathSet groupInProcess;
+    private WebhookContentPathSet webhookInProcess;
     @Inject
-    private GroupError groupError;
+    private WebhookError webhookError;
 
-    private Group group;
+    private Webhook webhook;
     private CuratorLeader curatorLeader;
     private ExecutorService executorService;
     private Semaphore semaphore;
     private AtomicBoolean hasLeadership;
     private Retryer<ClientResponse> retryer;
 
-    private GroupStrategy groupStrategy;
+    private WebhookStrategy webhookStrategy;
     private AtomicReference<ContentPath> lastUpdated = new AtomicReference<>();
 
     @Inject
-    public GroupLeader() {
+    public WebhookLeader() {
         logger.info("keep leadership rate {}", keepLeadershipRate);
     }
 
-    void setGroup(Group group) {
-        this.group = group;
+    void setWebhook(Webhook webhook) {
+        this.webhook = webhook;
     }
 
-    boolean tryLeadership(Group group) {
-        logger.debug("starting group: " + group);
-        setGroup(group);
+    boolean tryLeadership(Webhook webhook) {
+        logger.debug("starting webhook: " + webhook);
+        setWebhook(webhook);
         curatorLeader = new CuratorLeader(getLeaderPath(), this);
-        if (!group.isPaused()) {
+        if (!webhook.isPaused()) {
             curatorLeader.start();
         } else {
-            logger.info("not starting paused group " + group);
+            logger.info("not starting paused webhook " + webhook);
         }
         return true;
     }
@@ -95,44 +95,44 @@ public class GroupLeader implements Leader {
     @Override
     public void takeLeadership(AtomicBoolean hasLeadership) {
         this.hasLeadership = hasLeadership;
-        Optional<Group> foundGroup = groupService.getGroup(group.getName());
-        if (!foundGroup.isPresent()) {
+        Optional<Webhook> foundWebhook = webhookService.get(webhook.getName());
+        if (!foundWebhook.isPresent()) {
             Sleeper.sleep(1000);
-            logger.info("group is missing, exiting " + group.getName());
+            logger.info("webhook is missing, exiting " + webhook.getName());
             return;
         }
-        this.group = foundGroup.get();
-        logger.info("taking leadership " + group);
+        this.webhook = foundWebhook.get();
+        logger.info("taking leadership " + webhook);
         executorService = Executors.newCachedThreadPool();
-        semaphore = new Semaphore(group.getParallelCalls());
-        retryer = GroupRetryer.buildRetryer(group, groupError, hasLeadership);
-        groupStrategy = GroupStrategy.getStrategy(group, lastContentPath, channelService);
+        semaphore = new Semaphore(webhook.getParallelCalls());
+        retryer = WebhookRetryer.buildRetryer(webhook, webhookError, hasLeadership);
+        webhookStrategy = WebhookStrategy.getStrategy(webhook, lastContentPath, channelService);
         try {
-            ContentPath lastCompletedPath = groupStrategy.getStartingPath();
+            ContentPath lastCompletedPath = webhookStrategy.getStartingPath();
             lastUpdated.set(lastCompletedPath);
-            logger.info("last completed at {} {}", lastCompletedPath, group.getName());
+            logger.info("last completed at {} {}", lastCompletedPath, webhook.getName());
             if (hasLeadership.get()) {
                 sendInProcess(lastCompletedPath);
-                groupStrategy.start(group, lastCompletedPath);
+                webhookStrategy.start(webhook, lastCompletedPath);
                 while (hasLeadership.get()) {
-                    Optional<ContentPath> nextOptional = groupStrategy.next();
+                    Optional<ContentPath> nextOptional = webhookStrategy.next();
                     if (nextOptional.isPresent()) {
                         send(nextOptional.get());
                     }
                 }
             }
         } catch (RuntimeInterruptedException | InterruptedException e) {
-            logger.info("saw InterruptedException for " + group.getName());
+            logger.info("saw InterruptedException for " + webhook.getName());
         } finally {
-            logger.info("stopping last completed at {} {}", groupStrategy.getLastCompleted(), group.getName());
+            logger.info("stopping last completed at {} {}", webhookStrategy.getLastCompleted(), webhook.getName());
             hasLeadership.set(false);
             closeStrategy();
             if (deleteOnExit.get()) {
                 delete();
             }
             stopExecutor();
-            logger.info("stopped last completed at {} {}", groupStrategy.getLastCompleted(), group.getName());
-            groupStrategy = null;
+            logger.info("stopped last completed at {} {}", webhookStrategy.getLastCompleted(), webhook.getName());
+            webhookStrategy = null;
             executorService = null;
         }
     }
@@ -143,52 +143,52 @@ public class GroupLeader implements Leader {
     }
 
     private void sendInProcess(ContentPath lastCompletedPath) throws InterruptedException {
-        Set<ContentPath> inProcessSet = groupInProcess.getSet(group.getName(), lastCompletedPath);
-        logger.debug("sending in process {} to {}", inProcessSet, group.getName());
+        Set<ContentPath> inProcessSet = webhookInProcess.getSet(webhook.getName(), lastCompletedPath);
+        logger.debug("sending in process {} to {}", inProcessSet, webhook.getName());
         for (ContentPath toSend : inProcessSet) {
             if (toSend.compareTo(lastCompletedPath) < 0) {
-                ActiveTraces.start("GroupLeader inProcess", group);
+                ActiveTraces.start("WebhookLeader inProcess", webhook);
                 ContentPath contentPath;
                 try {
-                    contentPath = groupStrategy.inProcess(toSend);
+                    contentPath = webhookStrategy.inProcess(toSend);
                 } finally {
                     ActiveTraces.end();
                 }
                 send(contentPath);
             } else {
-                groupInProcess.remove(group.getName(), toSend);
+                webhookInProcess.remove(webhook.getName(), toSend);
             }
         }
     }
 
     private void send(ContentPath contentPath) throws InterruptedException {
         semaphore.acquire();
-        logger.trace("sending {} to {}", contentPath, group.getName());
+        logger.trace("sending {} to {}", contentPath, webhook.getName());
         String parentName = Thread.currentThread().getName();
         executorService.submit(new Callable<Object>() {
-            @Trace(metricName = "GroupCaller", dispatcher = true)
+            @Trace(metricName = "WebhookCaller", dispatcher = true)
             @Override
             public Object call() throws Exception {
                 String workerName = Thread.currentThread().getName();
                 Thread.currentThread().setName(workerName + "|" + parentName);
-                ActiveTraces.start("GroupLeader.send", group, contentPath);
-                groupInProcess.add(group.getName(), contentPath);
+                ActiveTraces.start("WebhookLeader.send", webhook, contentPath);
+                webhookInProcess.add(webhook.getName(), contentPath);
                 try {
                     long delta = System.currentTimeMillis() - contentPath.getTime().getMillis();
-                    metricsTimer.send("group." + group.getName() + ".delta", delta);
-                    makeTimedCall(contentPath, groupStrategy.createResponse(contentPath));
+                    metricsTimer.send("webhook." + webhook.getName() + ".delta", delta);
+                    makeTimedCall(contentPath, webhookStrategy.createResponse(contentPath));
                     completeCall(contentPath);
-                    logger.trace("completed {} call to {} ", contentPath, group.getName());
+                    logger.trace("completed {} call to {} ", contentPath, webhook.getName());
                 } catch (RetryException e) {
-                    logger.info("exception sending {} to {} {} ", contentPath, group.getName(), e.getMessage());
+                    logger.info("exception sending {} to {} {} ", contentPath, webhook.getName(), e.getMessage());
                 } catch (ExecutionException e) {
                     Throwable cause = e.getCause();
                     if (cause instanceof ItemExpiredException) {
-                        logger.info("stopped trying {} to {} {} ", contentPath, group.getName(), cause.getMessage());
+                        logger.info("stopped trying {} to {} {} ", contentPath, webhook.getName(), cause.getMessage());
                         completeCall(contentPath);
                     }
                 } catch (Exception e) {
-                    logger.warn("exception sending " + contentPath + " to " + group.getName(), e);
+                    logger.warn("exception sending " + contentPath + " to " + webhook.getName(), e);
                 } finally {
                     semaphore.release();
                     ActiveTraces.end();
@@ -215,14 +215,14 @@ public class GroupLeader implements Leader {
     private void completeCall(ContentPath contentPath) {
         if (increaseLastUpdated(contentPath)) {
             if (!deleteOnExit.get()) {
-                lastContentPath.updateIncrease(contentPath, group.getName(), GROUP_LAST_COMPLETED);
+                lastContentPath.updateIncrease(contentPath, webhook.getName(), WEBHOOK_LAST_COMPLETED);
             }
         }
-        groupInProcess.remove(group.getName(), contentPath);
+        webhookInProcess.remove(webhook.getName(), contentPath);
     }
 
     private void makeTimedCall(ContentPath contentPath, ObjectNode body) throws Exception {
-        metricsTimer.time("group." + group.getName() + ".post",
+        metricsTimer.time("webhook." + webhook.getName() + ".post",
                 () -> {
                     makeCall(contentPath, body);
                     return null;
@@ -231,34 +231,34 @@ public class GroupLeader implements Leader {
 
     private void makeCall(ContentPath contentPath, ObjectNode body) throws ExecutionException, RetryException {
         Traces traces = ActiveTraces.getLocal();
-        traces.add("GroupLeader.makeCall start");
-        RecurringTrace recurringTrace = new RecurringTrace("GroupLeader.makeCall start");
+        traces.add("WebhookLeader.makeCall start");
+        RecurringTrace recurringTrace = new RecurringTrace("WebhookLeader.makeCall start");
         traces.add(recurringTrace);
         retryer.call(() -> {
             ActiveTraces.setLocal(traces);
-            if (group.getTtlMinutes() > 0) {
-                DateTime ttlTime = TimeUtil.now().minusMinutes(group.getTtlMinutes());
+            if (webhook.getTtlMinutes() > 0) {
+                DateTime ttlTime = TimeUtil.now().minusMinutes(webhook.getTtlMinutes());
                 if (contentPath.getTime().isBefore(ttlTime)) {
                     throw new ItemExpiredException(contentPath.toUrl() + " is before " + ttlTime);
                 }
             }
             if (!hasLeadership.get()) {
-                logger.debug("not leader {} {} {}", group.getCallbackUrl(), group.getName(), contentPath);
+                logger.debug("not leader {} {} {}", webhook.getCallbackUrl(), webhook.getName(), contentPath);
                 return null;
             }
             String entity = body.toString();
-            logger.debug("calling {} {} {}", group.getCallbackUrl(), contentPath, entity);
-            ClientResponse clientResponse = client.resource(group.getCallbackUrl())
+            logger.debug("calling {} {} {}", webhook.getCallbackUrl(), contentPath, entity);
+            ClientResponse clientResponse = client.resource(webhook.getCallbackUrl())
                     .type(MediaType.APPLICATION_JSON_TYPE)
                     .post(ClientResponse.class, entity);
-            recurringTrace.update("GroupLeader.makeCall completed", clientResponse);
+            recurringTrace.update("WebhookLeader.makeCall completed", clientResponse);
             return clientResponse;
         });
     }
 
     void exit(boolean delete) {
-        String name = group.getName();
-        logger.info("exiting group " + name + " deleting " + delete);
+        String name = webhook.getName();
+        logger.info("exiting webhook " + name + " deleting " + delete);
         deleteOnExit.set(delete);
         curatorLeader.close();
         closeStrategy();
@@ -269,7 +269,7 @@ public class GroupLeader implements Leader {
         if (executorService == null) {
             return;
         }
-        String name = group.getName();
+        String name = webhook.getName();
         try {
             executorService.shutdown();
             logger.debug("awating termination " + name);
@@ -282,8 +282,8 @@ public class GroupLeader implements Leader {
 
     private void closeStrategy() {
         try {
-            if (groupStrategy != null) {
-                groupStrategy.close();
+            if (webhookStrategy != null) {
+                webhookStrategy.close();
             }
         } catch (Exception e) {
             logger.warn("unable to close callbackQueue", e);
@@ -291,15 +291,15 @@ public class GroupLeader implements Leader {
     }
 
     private String getLeaderPath() {
-        return "/GroupLeader/" + group.getName();
+        return "/GroupLeader/" + webhook.getName();
     }
 
     void delete() {
-        String name = group.getName();
+        String name = webhook.getName();
         logger.info("deleting " + name);
-        groupInProcess.delete(name);
-        lastContentPath.delete(name, GROUP_LAST_COMPLETED);
-        groupError.delete(name);
+        webhookInProcess.delete(name);
+        lastContentPath.delete(name, WEBHOOK_LAST_COMPLETED);
+        webhookError.delete(name);
         logger.info("deleted " + name);
     }
 
@@ -316,7 +316,7 @@ public class GroupLeader implements Leader {
             debugLeaderPath();
             curator.delete().deletingChildrenIfNeeded().forPath(getLeaderPath());
         } catch (Exception e) {
-            logger.warn("unable to delete leader path " + group.getName(), e);
+            logger.warn("unable to delete leader path " + webhook.getName(), e);
         }
         delete();
     }
@@ -333,7 +333,7 @@ public class GroupLeader implements Leader {
         } catch (KeeperException.NoNodeException ignore) {
             //do nothing
         } catch (Exception e) {
-            logger.info("unexpected exception " + group.getName(), e);
+            logger.info("unexpected exception " + webhook.getName(), e);
         }
     }
 
@@ -344,20 +344,20 @@ public class GroupLeader implements Leader {
         } catch (KeeperException.NoNodeException ignore) {
             return true;
         } catch (Exception e) {
-            logger.warn("unexpected exception " + group.getName(), e);
+            logger.warn("unexpected exception " + webhook.getName(), e);
             return true;
         }
     }
 
     public List<String> getErrors() {
-        return groupError.get(group.getName());
+        return webhookError.get(webhook.getName());
     }
 
-    List<ContentPath> getInFlight(Group group) {
-        return new ArrayList<>(new TreeSet<>(groupInProcess.getSet(this.group.getName(), GroupStrategy.createContentPath(group))));
+    List<ContentPath> getInFlight(Webhook webhook) {
+        return new ArrayList<>(new TreeSet<>(webhookInProcess.getSet(this.webhook.getName(), WebhookStrategy.createContentPath(webhook))));
     }
 
-    public Group getGroup() {
-        return group;
+    public Webhook getWebhook() {
+        return webhook;
     }
 }

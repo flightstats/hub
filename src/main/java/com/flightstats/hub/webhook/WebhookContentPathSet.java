@@ -11,18 +11,18 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class GroupContentPathSet {
-    private final static Logger logger = LoggerFactory.getLogger(GroupContentPathSet.class);
+class WebhookContentPathSet {
+    private final static Logger logger = LoggerFactory.getLogger(WebhookContentPathSet.class);
 
     private final CuratorFramework curator;
 
     @Inject
-    public GroupContentPathSet(CuratorFramework curator) {
+    public WebhookContentPathSet(CuratorFramework curator) {
         this.curator = curator;
     }
 
-    public void add(String groupName, ContentPath key) {
-        String path = getPath(groupName, key);
+    public void add(String webhookName, ContentPath key) {
+        String path = getPath(webhookName, key);
         try {
             curator.create().creatingParentsIfNeeded().forPath(path);
         } catch (KeeperException.NodeExistsException ignore) {
@@ -32,8 +32,8 @@ public class GroupContentPathSet {
         }
     }
 
-    public void remove(String groupName, ContentPath key) {
-        String path = getPath(groupName, key);
+    public void remove(String webhookName, ContentPath key) {
+        String path = getPath(webhookName, key);
         try {
             curator.delete().forPath(path);
         } catch (Exception e) {
@@ -41,8 +41,8 @@ public class GroupContentPathSet {
         }
     }
 
-    public Set<ContentPath> getSet(String groupName, ContentPath type) {
-        String path = getPath(groupName);
+    Set<ContentPath> getSet(String webhookName, ContentPath type) {
+        String path = getPath(webhookName);
         Set<ContentPath> keys = new HashSet<>();
         try {
             List<String> strings = curator.getChildren().forPath(path);
@@ -57,16 +57,16 @@ public class GroupContentPathSet {
         return keys;
     }
 
-    private String getPath(String groupName) {
-        return "/GroupInFlight/" + groupName;
+    private String getPath(String webhookName) {
+        return "/GroupInFlight/" + webhookName;
     }
 
-    private String getPath(String groupName, ContentPath key) {
-        return getPath(groupName) + "/" + key.toZk();
+    private String getPath(String webhookName, ContentPath key) {
+        return getPath(webhookName) + "/" + key.toZk();
     }
 
-    public void delete(String groupName) {
-        String path = getPath(groupName);
+    public void delete(String webhookName) {
+        String path = getPath(webhookName);
         try {
             curator.delete().deletingChildrenIfNeeded().forPath(path);
         } catch (Exception e) {

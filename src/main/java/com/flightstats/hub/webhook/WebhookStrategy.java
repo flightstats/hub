@@ -14,13 +14,13 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-interface GroupStrategy extends AutoCloseable {
+interface WebhookStrategy extends AutoCloseable {
 
     ContentPath getStartingPath();
 
     ContentPath getLastCompleted();
 
-    void start(Group group, ContentPath startingKey);
+    void start(Webhook webhook, ContentPath startingKey);
 
     Optional<ContentPath> next();
 
@@ -28,21 +28,21 @@ interface GroupStrategy extends AutoCloseable {
 
     ContentPath inProcess(ContentPath contentPath);
 
-    static ContentPath createContentPath(Group group) {
-        if (group.isSecond()) {
+    static ContentPath createContentPath(Webhook webhook) {
+        if (webhook.isSecond()) {
             return new SecondPath();
         }
-        if (group.isMinute()) {
+        if (webhook.isMinute()) {
             return new MinutePath();
         }
         return new ContentKey(TimeUtil.now(), "initial");
     }
 
-    static GroupStrategy getStrategy(Group group, LastContentPath lastContentPath, ChannelService channelService) {
-        if (group.isMinute() || group.isSecond()) {
-            return new TimedGroupStrategy(group, lastContentPath, channelService);
+    static WebhookStrategy getStrategy(Webhook webhook, LastContentPath lastContentPath, ChannelService channelService) {
+        if (webhook.isMinute() || webhook.isSecond()) {
+            return new TimedWebhookStrategy(webhook, lastContentPath, channelService);
         }
-        return new SingleGroupStrategy(group, lastContentPath, channelService);
+        return new SingleWebhookStrategy(webhook, lastContentPath, channelService);
     }
 
     static void close(AtomicBoolean shouldExit, ExecutorService executorService, BlockingQueue queue) {

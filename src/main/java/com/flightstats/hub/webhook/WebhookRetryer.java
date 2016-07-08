@@ -14,15 +14,15 @@ import javax.annotation.Nullable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-class GroupRetryer {
+class WebhookRetryer {
 
-    private final static Logger logger = LoggerFactory.getLogger(GroupRetryer.class);
+    private final static Logger logger = LoggerFactory.getLogger(WebhookRetryer.class);
 
-    static Retryer<ClientResponse> buildRetryer(Group group, GroupError groupError, AtomicBoolean hasLeadership) {
+    static Retryer<ClientResponse> buildRetryer(Webhook webhook, WebhookError webhookError, AtomicBoolean hasLeadership) {
         return RetryerBuilder.<ClientResponse>newBuilder()
                 .retryIfException(throwable -> {
                     if (throwable != null) {
-                        groupError.add(group.getName(), new DateTime() + " " + throwable.getMessage());
+                        webhookError.add(webhook.getName(), new DateTime() + " " + throwable.getMessage());
                         if (throwable.getClass().isAssignableFrom(ClientHandlerException.class)) {
                             logger.info("got ClientHandlerException trying to call client back " + throwable.getMessage());
                         } else {
@@ -41,7 +41,7 @@ class GroupRetryer {
                         try {
                             boolean failure = response.getStatus() >= 400;
                             if (failure) {
-                                groupError.add(group.getName(), new DateTime() + " " + response.toString());
+                                webhookError.add(webhook.getName(), new DateTime() + " " + response.toString());
                                 logger.info("unable to send to " + response);
                             }
                             return failure;
@@ -58,8 +58,8 @@ class GroupRetryer {
                         }
                     }
                 })
-                .withWaitStrategy(WaitStrategies.exponentialWait(1000, group.getMaxWaitMinutes(), TimeUnit.MINUTES))
-                .withStopStrategy(new GroupStopStrategy(hasLeadership))
+                .withWaitStrategy(WaitStrategies.exponentialWait(1000, webhook.getMaxWaitMinutes(), TimeUnit.MINUTES))
+                .withStopStrategy(new WebhookStopStrategy(hasLeadership))
                 .build();
     }
 }

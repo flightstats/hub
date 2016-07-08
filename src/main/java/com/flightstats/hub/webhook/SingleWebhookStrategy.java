@@ -27,11 +27,11 @@ import java.util.Collection;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-class SingleGroupStrategy implements GroupStrategy {
+class SingleWebhookStrategy implements WebhookStrategy {
 
-    private final static Logger logger = LoggerFactory.getLogger(SingleGroupStrategy.class);
+    private final static Logger logger = LoggerFactory.getLogger(SingleWebhookStrategy.class);
     private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private final Group group;
+    private final Webhook webhook;
     private final LastContentPath lastContentPath;
     private final ChannelService channelService;
     private AtomicBoolean shouldExit = new AtomicBoolean(false);
@@ -42,34 +42,34 @@ class SingleGroupStrategy implements GroupStrategy {
     private ExecutorService executorService;
 
 
-    SingleGroupStrategy(Group group, LastContentPath lastContentPath, ChannelService channelService) {
-        this.group = group;
+    SingleWebhookStrategy(Webhook webhook, LastContentPath lastContentPath, ChannelService channelService) {
+        this.webhook = webhook;
         this.lastContentPath = lastContentPath;
         this.channelService = channelService;
-        this.queue = new ArrayBlockingQueue<>(group.getParallelCalls() * 2);
+        this.queue = new ArrayBlockingQueue<>(webhook.getParallelCalls() * 2);
     }
 
     @Override
     public ContentPath getStartingPath() {
-        ContentPath startingKey = group.getStartingKey();
+        ContentPath startingKey = webhook.getStartingKey();
         if (null == startingKey) {
             startingKey = new ContentKey();
         }
-        return lastContentPath.get(group.getName(), startingKey, GroupLeader.GROUP_LAST_COMPLETED);
+        return lastContentPath.get(webhook.getName(), startingKey, WebhookLeader.WEBHOOK_LAST_COMPLETED);
     }
 
     @Override
     public ContentPath getLastCompleted() {
-        return lastContentPath.getOrNull(group.getName(), GroupLeader.GROUP_LAST_COMPLETED);
+        return lastContentPath.getOrNull(webhook.getName(), WebhookLeader.WEBHOOK_LAST_COMPLETED);
     }
 
     @Override
     public ObjectNode createResponse(ContentPath contentPath) {
         ObjectNode response = mapper.createObjectNode();
-        response.put("name", group.getName());
+        response.put("name", webhook.getName());
         if (contentPath instanceof ContentKey) {
             ArrayNode uris = response.putArray("uris");
-            uris.add(group.getChannelUrl() + "/" + contentPath.toUrl());
+            uris.add(webhook.getChannelUrl() + "/" + contentPath.toUrl());
             response.put("type", "item");
         } else {
             response.put("id", contentPath.toUrl());
@@ -94,11 +94,11 @@ class SingleGroupStrategy implements GroupStrategy {
         }
     }
 
-    public void start(Group group, ContentPath startingPath) {
+    public void start(Webhook webhook, ContentPath startingPath) {
         ContentPath startingKey = (ContentPath) startingPath;
-        channel = ChannelNameUtils.extractFromChannelUrl(group.getChannelUrl());
+        channel = ChannelNameUtils.extractFromChannelUrl(webhook.getChannelUrl());
         queryGenerator = new QueryGenerator(startingKey.getTime(), channel);
-        ThreadFactory factory = new ThreadFactoryBuilder().setNameFormat("single-group-" + group.getName() + "-%s").build();
+        ThreadFactory factory = new ThreadFactoryBuilder().setNameFormat("single-webhook-" + webhook.getName() + "-%s").build();
         executorService = Executors.newSingleThreadExecutor(factory);
         executorService.submit(new Runnable() {
 
@@ -125,7 +125,7 @@ class SingleGroupStrategy implements GroupStrategy {
             }
 
             private boolean doWork() throws InterruptedException {
-                ActiveTraces.start("SingleGroupStrategy", group);
+                ActiveTraces.start("SingleWebhookStrategy", webhook);
                 try {
                     DateTime latestStableInChannel = TimeUtil.stable();
                     if (channelService.isReplicating(channel)) {
@@ -135,7 +135,7 @@ class SingleGroupStrategy implements GroupStrategy {
                     TimeQuery timeQuery = queryGenerator.getQuery(latestStableInChannel);
                     if (timeQuery != null) {
                         addKeys(channelService.queryByTime(timeQuery));
-                        if (group.isHeartbeat() && queryGenerator.getLastQueryTime().getSecondOfMinute() == 0) {
+                        if (webhook.isHeartbeat() && queryGenerator.getLastQueryTime().getSecondOfMinute() == 0) {
                             MinutePath minutePath = new MinutePath(queryGenerator.getLastQueryTime().minusMinutes(1));
                             logger.debug("sending heartbeat {}", minutePath);
                             addKey(minutePath);
@@ -172,6 +172,6 @@ class SingleGroupStrategy implements GroupStrategy {
 
     @Override
     public void close() {
-        GroupStrategy.close(shouldExit, executorService, queue);
+        WebhookStrategy.close(shouldExit, executorService, queue);
     }
 }

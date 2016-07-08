@@ -9,9 +9,9 @@ import org.joda.time.DateTime;
 
 import java.util.Collection;
 
-public class SecondTimedGroup implements TimedGroup {
+class SecondTimedWebhook implements TimedWebhook {
 
-    public static final SecondTimedGroup GROUP = new SecondTimedGroup();
+    static final SecondTimedWebhook WEBHOOK = new SecondTimedWebhook();
 
     @Override
     public int getOffsetSeconds() {

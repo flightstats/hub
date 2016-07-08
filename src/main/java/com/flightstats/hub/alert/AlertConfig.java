@@ -32,7 +32,8 @@ public class AlertConfig {
 
     enum AlertType {
         channel,
-        group
+        group,
+        webhook
     }
 
     public static AlertConfig fromJson(String name, String json) {
@@ -58,7 +59,7 @@ public class AlertConfig {
         return true;
     }
     @JsonIgnore
-    public boolean isChannelAlert() {
+    boolean isChannelAlert() {
         return type == AlertType.channel;
     }
 
@@ -74,7 +75,7 @@ public class AlertConfig {
         return source;
     }
 
-    public String getAlertDescription(int count) {
+    String getAlertDescription(int count) {
         if (isChannelAlert()) {
             return getName() + ": " + getHubDomain() + "channel/" + getSource() + " volume " +
                     count + " " + getOperator() + " " + getThreshold();
@@ -83,7 +84,7 @@ public class AlertConfig {
         }
     }
 
-    public void writeJson(ObjectNode node) {
+    void writeJson(ObjectNode node) {
         node.put("name", name);
         node.put("channel", getSource());
         node.put("source", getSource());

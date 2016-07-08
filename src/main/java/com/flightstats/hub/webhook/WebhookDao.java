@@ -4,12 +4,12 @@ import com.google.common.base.Optional;
 
 import java.util.Collection;
 
-public interface GroupDao {
-    Group upsertGroup(Group group);
+public interface WebhookDao {
+    Webhook upsert(Webhook webhook);
 
-    Optional<Group> getGroup(String name);
+    Optional<Webhook> get(String name);
 
-    Collection<Group> getGroups();
+    Collection<Webhook> getAll();
 
     void delete(String name);
 }

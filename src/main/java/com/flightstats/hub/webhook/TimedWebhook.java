@@ -8,7 +8,7 @@ import org.joda.time.DateTime;
 
 import java.util.Collection;
 
-public interface TimedGroup {
+interface TimedWebhook {
 
     int getOffsetSeconds();
 
@@ -20,15 +20,15 @@ public interface TimedGroup {
 
     ContentPath getNone();
 
-    static TimedGroup getTimedGroup(Group group) {
-        if (group.isSecond()) {
-            return SecondTimedGroup.GROUP;
+    static TimedWebhook getTimedWebhook(Webhook webhook) {
+        if (webhook.isSecond()) {
+            return SecondTimedWebhook.WEBHOOK;
         }
-        if (group.isMinute()) {
-            return MinuteTimedGroup.GROUP;
+        if (webhook.isMinute()) {
+            return MinuteTimedWebhook.WEBHOOK;
         }
 
-        throw new UnsupportedOperationException("invalid incoming group " + group);
+        throw new UnsupportedOperationException("invalid incoming webhook " + webhook);
     }
 
     DateTime getReplicatingStable(ContentPath contentPath);

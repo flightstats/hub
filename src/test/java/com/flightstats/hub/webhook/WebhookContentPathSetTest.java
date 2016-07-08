@@ -11,10 +11,10 @@ import java.util.Set;
 
 import static org.junit.Assert.*;
 
-public class GroupContentPathSetTest {
+public class WebhookContentPathSetTest {
 
     private CuratorFramework curator;
-    private GroupContentPathSet groupSet;
+    private WebhookContentPathSet groupSet;
     private String groupName;
 
     @Before
@@ -24,7 +24,7 @@ public class GroupContentPathSetTest {
 
     @Test
     public void testLifecycle() throws Exception {
-        groupSet = new GroupContentPathSet(curator);
+        groupSet = new WebhookContentPathSet(curator);
         ContentKey first = new ContentKey();
         ContentKey second = new ContentKey();
         ContentKey third = new ContentKey();
@@ -53,7 +53,7 @@ public class GroupContentPathSetTest {
 
     @Test
     public void testDelete() throws Exception {
-        groupSet = new GroupContentPathSet(curator);
+        groupSet = new WebhookContentPathSet(curator);
         groupName = "testDelete";
         ContentKey contentKey = new ContentKey();
         addAndCompare(contentKey, 1);

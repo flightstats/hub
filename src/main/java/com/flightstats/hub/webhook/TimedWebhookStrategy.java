@@ -28,13 +28,13 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-public class TimedGroupStrategy implements GroupStrategy {
+class TimedWebhookStrategy implements WebhookStrategy {
 
-    private final static Logger logger = LoggerFactory.getLogger(TimedGroupStrategy.class);
+    private final static Logger logger = LoggerFactory.getLogger(TimedWebhookStrategy.class);
 
     private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private final Group group;
-    private final TimedGroup timedGroup;
+    private final Webhook webhook;
+    private final TimedWebhook timedWebhook;
     private final LastContentPath lastContentPath;
     private final ChannelService channelService;
     private AtomicBoolean shouldExit = new AtomicBoolean(false);
@@ -43,38 +43,38 @@ public class TimedGroupStrategy implements GroupStrategy {
     private String channel;
     private ScheduledExecutorService executorService;
 
-    TimedGroupStrategy(Group group, LastContentPath lastContentPath, ChannelService channelService) {
-        this.group = group;
-        this.timedGroup = TimedGroup.getTimedGroup(group);
-        channel = ChannelNameUtils.extractFromChannelUrl(group.getChannelUrl());
+    TimedWebhookStrategy(Webhook webhook, LastContentPath lastContentPath, ChannelService channelService) {
+        this.webhook = webhook;
+        this.timedWebhook = TimedWebhook.getTimedWebhook(webhook);
+        channel = ChannelNameUtils.extractFromChannelUrl(webhook.getChannelUrl());
         this.lastContentPath = lastContentPath;
         this.channelService = channelService;
-        this.queue = new ArrayBlockingQueue<>(group.getParallelCalls() * 2);
+        this.queue = new ArrayBlockingQueue<>(webhook.getParallelCalls() * 2);
     }
 
-    public static String getBulkUrl(String channelUrl, ContentPath path, String parameter) {
+    private static String getBulkUrl(String channelUrl, ContentPath path, String parameter) {
         return channelUrl + "/" + path.toUrl() + "?" + parameter + "=true";
     }
 
     @Override
     public ContentPath getStartingPath() {
-        ContentPath startingKey = group.getStartingKey();
+        ContentPath startingKey = webhook.getStartingKey();
         if (null == startingKey) {
-            startingKey = GroupStrategy.createContentPath(group);
+            startingKey = WebhookStrategy.createContentPath(webhook);
         }
-        return lastContentPath.get(group.getName(), startingKey, GroupLeader.GROUP_LAST_COMPLETED);
+        return lastContentPath.get(webhook.getName(), startingKey, WebhookLeader.WEBHOOK_LAST_COMPLETED);
     }
 
     @Override
     public ContentPath getLastCompleted() {
-        return lastContentPath.getOrNull(group.getName(), GroupLeader.GROUP_LAST_COMPLETED);
+        return lastContentPath.getOrNull(webhook.getName(), WebhookLeader.WEBHOOK_LAST_COMPLETED);
     }
 
     @Override
-    public void start(Group group, ContentPath startingPath) {
-        ThreadFactory factory = new ThreadFactoryBuilder().setNameFormat(group.getBatch() + "-group-" + group.getName() + "-%s").build();
+    public void start(Webhook webhook, ContentPath startingPath) {
+        ThreadFactory factory = new ThreadFactoryBuilder().setNameFormat(webhook.getBatch() + "-webhook-" + webhook.getName() + "-%s").build();
         executorService = Executors.newSingleThreadScheduledExecutor(factory);
-        logger.info("starting {} with offset {}", group, timedGroup.getOffsetSeconds());
+        logger.info("starting {} with offset {}", webhook, timedWebhook.getOffsetSeconds());
         executorService.scheduleAtFixedRate(new Runnable() {
 
             ContentPath lastAdded = startingPath;
@@ -95,15 +95,15 @@ public class TimedGroupStrategy implements GroupStrategy {
             }
 
             private void doWork() throws InterruptedException {
-                Duration duration = timedGroup.getUnit().getDuration();
+                Duration duration = timedWebhook.getUnit().getDuration();
                 DateTime nextTime = lastAdded.getTime().plus(duration);
                 if (lastAdded instanceof ContentKey) {
                     nextTime = lastAdded.getTime();
                 }
                 DateTime stable = TimeUtil.stable().minus(duration);
                 if (channelService.isReplicating(channel)) {
-                    ContentPath contentPath = lastContentPath.get(channel, timedGroup.getNone(), Replicator.REPLICATED_LAST_UPDATED);
-                    DateTime replicatedStable = timedGroup.getReplicatingStable(contentPath);
+                    ContentPath contentPath = lastContentPath.get(channel, timedWebhook.getNone(), Replicator.REPLICATED_LAST_UPDATED);
+                    DateTime replicatedStable = timedWebhook.getReplicatingStable(contentPath);
                     if (replicatedStable.isBefore(stable)) {
                         logger.trace("replicated fuuutuuure {} {}", stable, replicatedStable);
                         stable = replicatedStable;
@@ -113,13 +113,13 @@ public class TimedGroupStrategy implements GroupStrategy {
                 logger.debug("lastAdded {} nextTime {} stable {}", lastAdded, nextTime, stable);
                 while (nextTime.isBefore(stable) || nextTime.isEqual(stable)) {
                     try {
-                        ActiveTraces.start("TimedGroupStrategy.doWork", group);
+                        ActiveTraces.start("TimedWebhookStrategy.doWork", webhook);
                         Collection<ContentKey> keys = queryKeys(nextTime)
                                 .stream()
                                 .filter(key -> key.compareTo(lastAdded) > 0)
                                 .collect(Collectors.toCollection(ArrayList::new));
 
-                        ContentPathKeys nextPath = timedGroup.newTime(nextTime, keys);
+                        ContentPathKeys nextPath = timedWebhook.newTime(nextTime, keys);
                         logger.trace("results {} {} {}", channel, nextPath, nextPath.getKeys());
                         queue.put(nextPath);
                         lastAdded = nextPath;
@@ -130,14 +130,14 @@ public class TimedGroupStrategy implements GroupStrategy {
                 }
             }
 
-        }, timedGroup.getOffsetSeconds(), timedGroup.getPeriodSeconds(), TimeUnit.SECONDS);
+        }, timedWebhook.getOffsetSeconds(), timedWebhook.getPeriodSeconds(), TimeUnit.SECONDS);
     }
 
     private Collection<ContentKey> queryKeys(DateTime time) {
         TimeQuery timeQuery = TimeQuery.builder()
                 .channelName(channel)
                 .startTime(time)
-                .unit(timedGroup.getUnit())
+                .unit(timedWebhook.getUnit())
                 .stable(true)
                 .build();
         return channelService.queryByTime(timeQuery);
@@ -158,10 +158,10 @@ public class TimedGroupStrategy implements GroupStrategy {
     @Override
     public ObjectNode createResponse(ContentPath contentPath) {
         ObjectNode response = mapper.createObjectNode();
-        response.put("name", group.getName());
+        response.put("name", webhook.getName());
         String url = contentPath.toUrl();
         response.put("id", url);
-        String channelUrl = group.getChannelUrl();
+        String channelUrl = webhook.getChannelUrl();
         response.put("url", channelUrl + "/" + url);
         response.put("batchUrl", getBulkUrl(channelUrl, contentPath, "batch"));
         response.put("bulkUrl", getBulkUrl(channelUrl, contentPath, "bulk"));
@@ -180,11 +180,11 @@ public class TimedGroupStrategy implements GroupStrategy {
 
     @Override
     public ContentPath inProcess(ContentPath contentPath) {
-        return timedGroup.newTime(contentPath.getTime(), queryKeys(contentPath.getTime()));
+        return timedWebhook.newTime(contentPath.getTime(), queryKeys(contentPath.getTime()));
     }
 
     @Override
     public void close() throws Exception {
-        GroupStrategy.close(shouldExit, executorService, queue);
+        WebhookStrategy.close(shouldExit, executorService, queue);
     }
 }

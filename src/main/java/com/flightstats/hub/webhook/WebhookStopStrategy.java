@@ -5,18 +5,15 @@ import com.github.rholder.retry.StopStrategy;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-class GroupStopStrategy implements StopStrategy {
+class WebhookStopStrategy implements StopStrategy {
     private final AtomicBoolean hasLeadership;
 
-    GroupStopStrategy(AtomicBoolean hasLeadership) {
+    WebhookStopStrategy(AtomicBoolean hasLeadership) {
         this.hasLeadership = hasLeadership;
     }
 
     @Override
     public boolean shouldStop(Attempt failedAttempt) {
-        if (!hasLeadership.get()) {
-            return true;
-        }
-        return false;
+        return !hasLeadership.get();
     }
 }

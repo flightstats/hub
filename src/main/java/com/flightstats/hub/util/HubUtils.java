@@ -7,7 +7,7 @@ import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.cluster.CuratorCluster;
 import com.flightstats.hub.model.*;
-import com.flightstats.hub.webhook.Group;
+import com.flightstats.hub.webhook.Webhook;
 import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
@@ -62,9 +62,9 @@ public class HubUtils {
         return channelUrl;
     }
 
-    public ClientResponse startGroupCallback(Group group) {
-        String groupUrl = getSourceUrl(group.getChannelUrl()) + "/group/" + group.getName();
-        String json = group.toJson();
+    public ClientResponse startWebhook(Webhook webhook) {
+        String groupUrl = getSourceUrl(webhook.getChannelUrl()) + "/group/" + webhook.getName();
+        String json = webhook.toJson();
         logger.info("starting {} with {}", groupUrl, json);
         ClientResponse response = followClient.resource(groupUrl)
                 .accept(MediaType.APPLICATION_JSON)

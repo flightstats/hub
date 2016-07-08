@@ -17,29 +17,29 @@ import java.util.List;
 import java.util.TreeSet;
 
 @Singleton
-class GroupError {
-    private final static Logger logger = LoggerFactory.getLogger(GroupError.class);
+class WebhookError {
+    private final static Logger logger = LoggerFactory.getLogger(WebhookError.class);
     private static final int MAX_SIZE = 10;
 
     private final CuratorFramework curator;
 
     @Inject
-    public GroupError(CuratorFramework curator) {
+    public WebhookError(CuratorFramework curator) {
         this.curator = curator;
     }
 
-    public void add(String group, String error) {
-        String path = getErrorRoot(group) + "/" + TimeUtil.now().getMillis() + RandomStringUtils.randomAlphanumeric(6);
+    public void add(String webhook, String error) {
+        String path = getErrorRoot(webhook) + "/" + TimeUtil.now().getMillis() + RandomStringUtils.randomAlphanumeric(6);
         try {
             curator.create().creatingParentsIfNeeded().forPath(path, error.getBytes());
         } catch (Exception e) {
             logger.warn("unable to create " + path, e);
         }
-        limitChildren(group);
+        limitChildren(webhook);
     }
 
-    private void limitChildren(String group) {
-        String errorRoot = getErrorRoot(group);
+    private void limitChildren(String webhook) {
+        String errorRoot = getErrorRoot(webhook);
         try {
             List<String> children = curator.getChildren().forPath(errorRoot);
             children.sort(String.CASE_INSENSITIVE_ORDER);
@@ -63,8 +63,8 @@ class GroupError {
         }
     }
 
-    public void delete(String group) {
-        String errorRoot = getErrorRoot(group);
+    public void delete(String webhook) {
+        String errorRoot = getErrorRoot(webhook);
         logger.info("deleting " + errorRoot);
         try {
             curator.delete().deletingChildrenIfNeeded().forPath(errorRoot);
@@ -75,16 +75,16 @@ class GroupError {
         }
     }
 
-    private String getErrorRoot(String group) {
-        return "/GroupError/" + group;
+    private String getErrorRoot(String webhook) {
+        return "/GroupError/" + webhook;
     }
 
     private String getChildPath(String errorRoot, String child) {
         return errorRoot + "/" + child;
     }
 
-    public List<String> get(String group) {
-        String errorRoot = getErrorRoot(group);
+    public List<String> get(String webhook) {
+        String errorRoot = getErrorRoot(webhook);
         List<String> errors = new ArrayList<>();
         try {
             Collection<String> children = new TreeSet<>(curator.getChildren().forPath(errorRoot));

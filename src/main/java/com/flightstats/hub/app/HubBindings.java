@@ -21,9 +21,8 @@ import com.flightstats.hub.spoke.GCRunner;
 import com.flightstats.hub.time.NtpMonitor;
 import com.flightstats.hub.time.TimeService;
 import com.flightstats.hub.util.HubUtils;
-import com.flightstats.hub.webhook.GroupProcessor;
-import com.flightstats.hub.webhook.GroupProcessorImpl;
-import com.flightstats.hub.webhook.GroupValidator;
+import com.flightstats.hub.webhook.WebhookProcessor;
+import com.flightstats.hub.webhook.WebhookValidator;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
@@ -146,8 +145,8 @@ public class HubBindings extends AbstractModule {
         bind(GCRunner.class).asEagerSingleton();
         bind(MetricsRunner.class).asEagerSingleton();
         bind(ChannelValidator.class).asEagerSingleton();
-        bind(GroupValidator.class).asEagerSingleton();
-        bind(GroupProcessor.class).to(GroupProcessorImpl.class).asEagerSingleton();
+        bind(WebhookValidator.class).asEagerSingleton();
+        bind(WebhookProcessor.class).asEagerSingleton();
         bind(LastContentPath.class).asEagerSingleton();
         bind(WatchManager.class).asEagerSingleton();
 

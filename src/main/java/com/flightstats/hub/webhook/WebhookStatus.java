@@ -10,20 +10,20 @@ import java.util.List;
 
 @Getter
 @Builder
-public class GroupStatus {
+public class WebhookStatus {
     private ContentPath lastCompleted;
     private ContentKey channelLatest;
-    private Group group;
+    private Webhook webhook;
     private List<String> errors;
     private List<ContentPath> inFlight;
 
     @JsonIgnore
-    public Group getGroup() {
-        return group;
+    public Webhook getWebhook() {
+        return webhook;
     }
 
     public String getName() {
-        return group.getName();
+        return webhook.getName();
     }
 
 }

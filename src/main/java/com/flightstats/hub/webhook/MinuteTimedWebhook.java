@@ -6,9 +6,9 @@ import org.joda.time.DateTime;
 
 import java.util.Collection;
 
-public class MinuteTimedGroup implements TimedGroup {
+class MinuteTimedWebhook implements TimedWebhook {
 
-    public static final MinuteTimedGroup GROUP = new MinuteTimedGroup();
+    static final MinuteTimedWebhook WEBHOOK = new MinuteTimedWebhook();
 
     @Override
     public int getOffsetSeconds() {

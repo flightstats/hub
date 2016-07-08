@@ -9,23 +9,23 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
-public class GroupErrorTest {
+public class WebhookErrorTest {
 
     private static CuratorFramework curator;
-    private static GroupError groupError;
+    private static WebhookError webhookError;
 
     @BeforeClass
     public static void setUpClass() throws Exception {
         curator = Integration.startZooKeeper();
-        groupError = new GroupError(curator);
+        webhookError = new WebhookError(curator);
     }
 
     @Test
     public void testErrors() {
         for (int i = 0; i < 20; i++) {
-            groupError.add("testErrors", "stuff" + i);
+            webhookError.add("testErrors", "stuff" + i);
         }
-        List<String> errors = groupError.get("testErrors");
+        List<String> errors = webhookError.get("testErrors");
         assertEquals(10, errors.size());
 
         for (int i = 0; i < 10; i++) {

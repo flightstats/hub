@@ -8,9 +8,9 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-public class MinuteTimedGroupTest {
+public class MinuteTimedWebhookTest {
 
-    private final MinuteTimedGroup minuteTimedGroup = MinuteTimedGroup.GROUP;
+    private final MinuteTimedWebhook minuteTimedGroup = MinuteTimedWebhook.WEBHOOK;
 
     @Test
     public void testRoundingSecondPath() {

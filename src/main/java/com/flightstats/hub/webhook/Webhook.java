@@ -26,11 +26,11 @@ import java.util.SortedSet;
 @ToString
 @EqualsAndHashCode(exclude = {"startingKey"})
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class Group implements Comparable<Group> {
+public class Webhook implements Comparable<Webhook> {
     public static final String SINGLE = "SINGLE";
     public static final String MINUTE = "MINUTE";
     public static final String SECOND = "SECOND";
-    private final static Logger logger = LoggerFactory.getLogger(Group.class);
+    private final static Logger logger = LoggerFactory.getLogger(Webhook.class);
     private static final ObjectMapper mapper = new ObjectMapper();
     private static final Gson gson = new GsonBuilder().create();
     private final String callbackUrl;
@@ -51,10 +51,10 @@ public class Group implements Comparable<Group> {
     @Wither
     private final Integer maxWaitMinutes;
 
-    public static Group fromJson(String json, Optional<Group> groupOptional) {
-        GroupBuilder builder = Group.builder();
-        if (groupOptional.isPresent()) {
-            Group existing = groupOptional.get();
+    public static Webhook fromJson(String json, Optional<Webhook> webhookOptional) {
+        WebhookBuilder builder = Webhook.builder();
+        if (webhookOptional.isPresent()) {
+            Webhook existing = webhookOptional.get();
             builder.parallelCalls(existing.parallelCalls)
                     .paused(existing.paused)
                     .callbackUrl(existing.callbackUrl)
@@ -140,15 +140,8 @@ public class Group implements Comparable<Group> {
         return keyOptional;
     }
 
-    public static Group fromJson(String json) {
+    public static Webhook fromJson(String json) {
         return fromJson(json, Optional.absent());
-    }
-
-    public static String getBatchType(boolean single) {
-        if (single) {
-            return SINGLE;
-        }
-        return MINUTE;
     }
 
     @JsonIgnore
@@ -156,13 +149,13 @@ public class Group implements Comparable<Group> {
         return startingKey;
     }
 
-    boolean allowedToChange(Group other) {
+    boolean allowedToChange(Webhook other) {
         return ChannelNameUtils.extractFromChannelUrl(channelUrl)
                 .equals(ChannelNameUtils.extractFromChannelUrl(other.channelUrl))
                 && name.equals(other.name);
     }
 
-    boolean isChanged(Group other) {
+    boolean isChanged(Webhook other) {
         return !Objects.equals(parallelCalls, other.parallelCalls)
                 || paused != other.paused
                 || !callbackUrl.equals(other.callbackUrl)
@@ -177,29 +170,29 @@ public class Group implements Comparable<Group> {
     }
 
     /**
-     * Returns a Group with all optional values set to the default.
+     * Returns a Webhook with all optional values set to the default.
      */
-    public Group withDefaults(boolean createKey) {
-        Group group = this;
+    public Webhook withDefaults(boolean createKey) {
+        Webhook webhook = this;
         if (parallelCalls == null) {
-            group = group.withParallelCalls(1);
+            webhook = webhook.withParallelCalls(1);
         }
         if (batch == null) {
-            group = group.withBatch("SINGLE");
+            webhook = webhook.withBatch("SINGLE");
         }
-        if (group.isMinute() || group.isSecond()) {
-            group = group.withHeartbeat(true);
+        if (webhook.isMinute() || webhook.isSecond()) {
+            webhook = webhook.withHeartbeat(true);
         }
         if (createKey && getStartingKey() == null) {
-            group = group.withStartingKey(GroupStrategy.createContentPath(group));
+            webhook = webhook.withStartingKey(WebhookStrategy.createContentPath(webhook));
         }
         if (ttlMinutes == null) {
-            group = group.withTtlMinutes(0);
+            webhook = webhook.withTtlMinutes(0);
         }
         if (maxWaitMinutes == null) {
-            group = group.withMaxWaitMinutes(1);
+            webhook = webhook.withMaxWaitMinutes(1);
         }
-        return group;
+        return webhook;
     }
 
     public boolean isMinute() {
@@ -210,16 +203,6 @@ public class Group implements Comparable<Group> {
         return SECOND.equalsIgnoreCase(getBatch());
     }
 
-    @JsonIgnore
-    public boolean isNeverStop() {
-        return getTtlMinutes() == 0;
-    }
-
-    @JsonIgnore
-    public boolean isTTL() {
-        return getTtlMinutes() > 0;
-    }
-
     public Integer getTtlMinutes() {
         if (ttlMinutes == null) {
             return 0;
@@ -228,7 +211,7 @@ public class Group implements Comparable<Group> {
     }
 
     @Override
-    public int compareTo(Group other) {
+    public int compareTo(Webhook other) {
         return getName().compareTo(other.getName());
     }
 }

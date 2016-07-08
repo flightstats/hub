@@ -8,38 +8,38 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-public class GroupTest {
+public class WebhookTest {
 
-    private Group group;
+    private Webhook webhook;
 
     @Before
     public void setUp() throws Exception {
-        group = Group.builder()
+        webhook = Webhook.builder()
                 .channelUrl("url").callbackUrl("end").build();
     }
 
     @Test
     public void testSimple() throws Exception {
-        Group group = Group.fromJson(this.group.toJson());
-        assertEquals("end", group.getCallbackUrl());
-        assertEquals("url", group.getChannelUrl());
-        Assert.assertNull(group.getName());
+        Webhook webhook = Webhook.fromJson(this.webhook.toJson());
+        assertEquals("end", webhook.getCallbackUrl());
+        assertEquals("url", webhook.getChannelUrl());
+        Assert.assertNull(webhook.getName());
     }
 
     @Test
     public void testWithName() throws Exception {
-        Group group = this.group.withName("wither");
-        group = Group.fromJson(group.toJson());
-        assertEquals("end", group.getCallbackUrl());
-        assertEquals("url", group.getChannelUrl());
-        assertEquals("wither", group.getName());
+        Webhook webhook = this.webhook.withName("wither");
+        webhook = Webhook.fromJson(webhook.toJson());
+        assertEquals("end", webhook.getCallbackUrl());
+        assertEquals("url", webhook.getChannelUrl());
+        assertEquals("wither", webhook.getName());
     }
 
     @Test
     public void testFromJson() {
-        System.out.println(group.toJson());
-        Group cycled = Group.fromJson(group.toJson());
-        assertEquals(group, cycled);
+        System.out.println(webhook.toJson());
+        Webhook cycled = Webhook.fromJson(webhook.toJson());
+        assertEquals(webhook, cycled);
     }
 
     @Test
@@ -48,8 +48,8 @@ public class GroupTest {
         String json = "{\"callbackUrl\":\"end\",\"channelUrl\":\"url\",\"startItem\":\"" +
                 "http://hub/channel/stuff/" + key.toUrl() +
                 "\"}";
-        Group cycled = Group.fromJson(json);
-        assertEquals(group, cycled);
+        Webhook cycled = Webhook.fromJson(json);
+        assertEquals(webhook, cycled);
         assertEquals(key, cycled.getStartingKey());
         String toJson = cycled.toJson();
         assertNotNull(toJson);
@@ -61,8 +61,8 @@ public class GroupTest {
         String json = "{\"callbackUrl\":\"end\",\"channelUrl\":\"url\"," +
                 "\"startItem\":\"http://hub/channel/stuff/" + key.toUrl() +
                 "\"}";
-        Group cycled = Group.fromJson(json);
-        assertEquals(group, cycled);
+        Webhook cycled = Webhook.fromJson(json);
+        assertEquals(webhook, cycled);
         assertEquals(key, cycled.getStartingKey());
         String toJson = cycled.toJson();
         assertNotNull(toJson);
@@ -70,19 +70,19 @@ public class GroupTest {
 
     @Test
     public void testWithDefaults() {
-        assertNull(group.getParallelCalls());
-        assertNull(group.getBatch());
-        group = group.withDefaults(true);
-        assertEquals(1L, (long) group.getParallelCalls());
-        assertEquals("SINGLE", group.getBatch());
+        assertNull(webhook.getParallelCalls());
+        assertNull(webhook.getBatch());
+        webhook = webhook.withDefaults(true);
+        assertEquals(1L, (long) webhook.getParallelCalls());
+        assertEquals("SINGLE", webhook.getBatch());
     }
 
     @Test
     public void testAllowedToChange() {
-        Group hubA = Group.builder().name("name")
+        Webhook hubA = Webhook.builder().name("name")
                 .channelUrl("http://hubA/channel/name")
                 .callbackUrl("url").build().withDefaults(false);
-        Group hubB = Group.builder().name("name")
+        Webhook hubB = Webhook.builder().name("name")
                 .channelUrl("http://hubB/channel/name")
                 .callbackUrl("url").build().withDefaults(false);
 
@@ -94,11 +94,11 @@ public class GroupTest {
 
     @Test
     public void testNotChanged() {
-        Group hubA = Group.builder().name("name")
+        Webhook hubA = Webhook.builder().name("name")
                 .channelUrl("http://hubA/channel/name")
                 .callbackUrl("url").build().withDefaults(false);
 
-        Group hubC = Group.builder().name("name")
+        Webhook hubC = Webhook.builder().name("name")
                 .channelUrl("http://hubC/channel/nameC")
                 .callbackUrl("url").build().withDefaults(false);
 

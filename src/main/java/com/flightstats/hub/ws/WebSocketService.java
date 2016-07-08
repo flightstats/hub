@@ -3,8 +3,8 @@ package com.flightstats.hub.ws;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.webhook.Group;
-import com.flightstats.hub.webhook.GroupService;
+import com.flightstats.hub.webhook.Webhook;
+import com.flightstats.hub.webhook.WebhookService;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -21,11 +21,11 @@ class WebSocketService {
 
     private final static Logger logger = LoggerFactory.getLogger(WebSocketService.class);
     private static WebSocketService instance;
-    private final GroupService groupService;
+    private final WebhookService webhookService;
     private final Map<String, Session> sessionMap = new HashMap<>();
 
     private WebSocketService() {
-        groupService = HubProvider.getInstance(GroupService.class);
+        webhookService = HubProvider.getInstance(WebhookService.class);
     }
 
     public static synchronized WebSocketService getInstance() {
@@ -41,14 +41,14 @@ class WebSocketService {
         URI uri = session.getRequestURI();
         logger.info("creating callback {} {} {}", channel, id, uri);
         sessionMap.put(id, session);
-        Group group = Group.builder()
+        Webhook webhook = Webhook.builder()
                 .channelUrl(getChannelUrl(uri))
                 .callbackUrl(getCallbackUrl(id))
                 .parallelCalls(1)
                 .name(id)
                 .startingKey(contentKey)
                 .build();
-        groupService.upsertGroup(group);
+        webhookService.upsert(webhook);
     }
 
     private String getChannelUrl(URI uri) {
@@ -97,7 +97,7 @@ class WebSocketService {
     private void close(String id) {
         try {
             logger.info("deleting ws group {}", id);
-            groupService.delete(id);
+            webhookService.delete(id);
             sessionMap.remove(id);
         } catch (Exception e) {
             logger.info("unable to close ws group " + id, e);
