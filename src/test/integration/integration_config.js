@@ -22,7 +22,6 @@ hubUrlBase = 'http://' + hubDomain;
 satelliteUrl = 'http://' + satelliteDomain;
 
 channelUrl = hubUrlBase + '/channel';
-groupUrl = hubUrlBase + '/group';
 alertUrl = hubUrlBase + '/alert';
 callbackDomain = 'http://' + ipAddress;
 stableOffset = 5;

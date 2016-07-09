@@ -140,9 +140,17 @@ function postItemQ(url) {
     return deferred.promise;
 }
 
-function putGroup(groupName, groupConfig, status, description) {
+function getGroupUrl() {
+    if (Math.random() > 0.5) {
+        return hubUrlBase + '/webhook';
+    }
+    return hubUrlBase + '/group';
+}
+
+function putGroup(groupName, groupConfig, status, description, groupUrl) {
     description = description || 'none';
     status = status || 201;
+    groupUrl = groupUrl || getGroupUrl();
     var groupResource = groupUrl + "/" + groupName;
     it('creates group ' + groupName, function (done) {
         console.log('creating group ' + groupName + ' for ' + description);
@@ -168,7 +176,7 @@ function putGroup(groupName, groupConfig, status, description) {
 }
 
 function getGroup(groupName, groupConfig, status, verify) {
-    var groupResource = groupUrl + "/" + groupName;
+    var groupResource = getGroupUrl() + "/" + groupName;
     status = status || 200;
     verify = verify || function (parse) {
             if (typeof groupConfig !== "undefined") {
@@ -204,7 +212,7 @@ function getGroup(groupName, groupConfig, status, verify) {
 }
 
 function deleteGroup(groupName) {
-    var groupResource = groupUrl + "/" + groupName;
+    var groupResource = getGroupUrl() + "/" + groupName;
     it('deletes the group ' + groupName, function (done) {
         request.del({url: groupResource },
             function (err, response, body) {
@@ -379,6 +387,7 @@ exports.sleep = sleep;
 exports.itSleeps = itSleeps;
 exports.sleepQ = sleepQ;
 exports.timeout = timeout;
+exports.getGroupUrl = getGroupUrl;
 exports.putGroup = putGroup;
 exports.getGroup = getGroup;
 exports.deleteGroup = deleteGroup;

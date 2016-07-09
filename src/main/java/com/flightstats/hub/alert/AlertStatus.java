@@ -29,9 +29,8 @@ public class AlertStatus {
     public static Map<String, AlertStatus> fromJson(String json) {
         Type mapType = new TypeToken<Map<String, AlertStatus>>() {
         }.getType();
-        Map<String, AlertStatus> map = gson.fromJson(json, mapType);
 
-        return map;
+        return gson.fromJson(json, mapType);
     }
 
     public static String toJson(Map<String, AlertStatus> map) {
