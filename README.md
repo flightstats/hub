@@ -793,7 +793,7 @@ To delete a webhook:
 
 DELETE will return a 202, and it may take up to a minute to properly stop a webhook from servicing the callback.
 
-#### Behavior
+#### webhook behavior
 
 The application listening at `callbackUrl` will get a payload POSTed to it for every new item in the channel, starting after `startItem` or at the time the webhook is created.
 A 2XX-level client response is considered successful.  Any other response is considered an error, and will cause the server to retry.   Redirects are allowed.
