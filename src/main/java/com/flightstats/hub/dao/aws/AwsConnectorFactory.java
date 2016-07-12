@@ -25,7 +25,7 @@ public class AwsConnectorFactory {
     private final String protocol = HubProperties.getProperty("aws.protocol", "HTTP");
 
     public AmazonS3 getS3Client() throws IOException {
-        AmazonS3Client amazonS3Client = null;
+        AmazonS3Client amazonS3Client;
         ClientConfiguration configuration = getClientConfiguration("s3");
         try {
             InstanceProfileCredentialsProvider credentialsProvider = new InstanceProfileCredentialsProvider();
@@ -41,7 +41,7 @@ public class AwsConnectorFactory {
 
     public AmazonDynamoDBClient getDynamoClient() throws IOException {
         logger.info("creating for  " + protocol + " " + dynamoEndpoint);
-        AmazonDynamoDBClient client = null;
+        AmazonDynamoDBClient client;
         ClientConfiguration configuration = getClientConfiguration("dynamo");
         try {
             InstanceProfileCredentialsProvider credentialsProvider = new InstanceProfileCredentialsProvider();
@@ -77,6 +77,7 @@ public class AwsConnectorFactory {
         ClientConfiguration configuration = new ClientConfiguration()
                 .withMaxConnections(HubProperties.getProperty(name + ".maxConnections", 50))
                 .withRetryPolicy(retryPolicy)
+                .withGzip(true)
                 .withProtocol(Protocol.valueOf(protocol))
                 .withConnectionTimeout(HubProperties.getProperty(name + ".connectionTimeout", 10 * 1000))
                 .withSocketTimeout(HubProperties.getProperty(name + ".socketTimeout", 30 * 1000));
