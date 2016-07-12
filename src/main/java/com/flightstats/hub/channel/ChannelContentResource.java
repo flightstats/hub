@@ -253,7 +253,7 @@ public class ChannelContentResource {
         return builder.build();
     }
 
-    @Path("/{h}/{m}/{s}/{ms}/{hash}/{direction : [n|p].*}")
+    @Path("/{h}/{m}/{s}/{ms}/{hash}/{direction:[n|p].*}")
     @GET
     public Response getDirection(@PathParam("channel") String channel,
                                  @PathParam("Y") int year,
@@ -320,7 +320,7 @@ public class ChannelContentResource {
         }
     }
 
-    @Path("/{h}/{m}/{s}/{ms}/{hash}/{direction : [n|p].*}/{count}")
+    @Path("/{h}/{m}/{s}/{ms}/{hash}/{direction:[n|p].*}/{count}")
     @GET
     @Produces({MediaType.APPLICATION_JSON, "multipart/*", "application/zip"})
     public Response getDirectionCount(@PathParam("channel") String channel,
