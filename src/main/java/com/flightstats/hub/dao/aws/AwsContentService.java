@@ -27,7 +27,10 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.SortedSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -164,7 +167,7 @@ public class AwsContentService implements ContentService {
                 return Optional.of(content);
             }
         }
-        Content content = null;
+        Content content;
         if (channel.isSingle()) {
             content = s3SingleContentDao.get(channelName, key);
         } else if (channel.isBatch()) {
@@ -207,20 +210,6 @@ public class AwsContentService implements ContentService {
                 callback.accept(contentOptional.get());
             }
         }
-    }
-
-    private Runnable readRunner(ContentDao contentDao, String channelName, ContentKey key,
-                                Queue<Content> queue, CountDownLatch latch) {
-        Traces traces = ActiveTraces.getLocal();
-        return () -> {
-            ActiveTraces.setLocal(traces);
-            Content content = contentDao.get(channelName, key);
-            if (content != null) {
-                queue.add(content);
-                latch.countDown();
-            }
-            latch.countDown();
-        };
     }
 
     @Override
