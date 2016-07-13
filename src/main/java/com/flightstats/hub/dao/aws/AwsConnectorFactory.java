@@ -25,8 +25,8 @@ public class AwsConnectorFactory {
     private final String protocol = HubProperties.getProperty("aws.protocol", "HTTP");
 
     public AmazonS3 getS3Client() throws IOException {
-        AmazonS3Client amazonS3Client = null;
-        ClientConfiguration configuration = getClientConfiguration("s3");
+        AmazonS3Client amazonS3Client;
+        ClientConfiguration configuration = getClientConfiguration("s3", true);
         try {
             InstanceProfileCredentialsProvider credentialsProvider = new InstanceProfileCredentialsProvider();
             credentialsProvider.getCredentials();
@@ -41,8 +41,8 @@ public class AwsConnectorFactory {
 
     public AmazonDynamoDBClient getDynamoClient() throws IOException {
         logger.info("creating for  " + protocol + " " + dynamoEndpoint);
-        AmazonDynamoDBClient client = null;
-        ClientConfiguration configuration = getClientConfiguration("dynamo");
+        AmazonDynamoDBClient client;
+        ClientConfiguration configuration = getClientConfiguration("dynamo", false);
         try {
             InstanceProfileCredentialsProvider credentialsProvider = new InstanceProfileCredentialsProvider();
             credentialsProvider.getCredentials();
@@ -70,13 +70,14 @@ public class AwsConnectorFactory {
         }
     }
 
-    private ClientConfiguration getClientConfiguration(String name) {
+    private ClientConfiguration getClientConfiguration(String name, boolean compress) {
         RetryPolicy retryPolicy = new RetryPolicy(PredefinedRetryPolicies.DEFAULT_RETRY_CONDITION,
                 PredefinedRetryPolicies.DEFAULT_BACKOFF_STRATEGY,
                 6, true);
         ClientConfiguration configuration = new ClientConfiguration()
                 .withMaxConnections(HubProperties.getProperty(name + ".maxConnections", 50))
                 .withRetryPolicy(retryPolicy)
+                .withGzip(compress)
                 .withProtocol(Protocol.valueOf(protocol))
                 .withConnectionTimeout(HubProperties.getProperty(name + ".connectionTimeout", 10 * 1000))
                 .withSocketTimeout(HubProperties.getProperty(name + ".socketTimeout", 30 * 1000));
