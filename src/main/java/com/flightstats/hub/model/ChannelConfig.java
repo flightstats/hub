@@ -35,6 +35,7 @@ public class ChannelConfig implements Serializable {
     private final String replicationSource;
     private final String storage;
     private final GlobalConfig global;
+    private final boolean historical;
 
     private ChannelConfig(Builder builder) {
         name = StringUtils.trim(builder.name);
@@ -71,6 +72,7 @@ public class ChannelConfig implements Serializable {
         } else {
             tags.remove(Replicator.GLOBAL);
         }
+        historical = builder.historical;
     }
 
     public static ChannelConfig fromJson(String json) {
@@ -168,6 +170,15 @@ public class ChannelConfig implements Serializable {
     }
 
     @JsonIgnore
+    public boolean isHistorical() {
+        return historical;
+    }
+
+    public boolean isLive() {
+        return !isHistorical() && !isReplicating();
+    }
+
+    @JsonIgnore
     public boolean isValidStorage() {
         return storage.equals(SINGLE) || storage.equals(BATCH) || storage.equals(BOTH);
     }
@@ -227,6 +238,7 @@ public class ChannelConfig implements Serializable {
         private long maxItems = 0;
         private String storage;
         private GlobalConfig global;
+        private boolean historical;
 
         public Builder() {
         }
@@ -242,6 +254,7 @@ public class ChannelConfig implements Serializable {
             this.owner = config.owner;
             this.storage = config.storage;
             this.global = config.global;
+            this.historical = config.historical;
             return this;
         }
 
@@ -274,6 +287,9 @@ public class ChannelConfig implements Serializable {
             }
             if (rootNode.has("global")) {
                 global = GlobalConfig.parseJson(rootNode.get("global"));
+            }
+            if (rootNode.has("historical")) {
+                withHistorical(rootNode.get("historical").asBoolean());
             }
             return this;
         }
@@ -337,6 +353,11 @@ public class ChannelConfig implements Serializable {
 
         public Builder withGlobal(GlobalConfig global) {
             this.global = global;
+            return this;
+        }
+
+        public Builder withHistorical(boolean historical) {
+            this.historical = historical;
             return this;
         }
     }

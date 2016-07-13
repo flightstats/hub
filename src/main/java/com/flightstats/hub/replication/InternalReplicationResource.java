@@ -88,7 +88,7 @@ public class InternalReplicationResource {
                     return Response.status(500).build();
                 }
             }
-            lastReplicated.updateIncrease(path, channel, Replicator.REPLICATED_LAST_UPDATED);
+            lastReplicated.updateIncrease(path, channel, LocalChannelService.REPLICATED_LAST_UPDATED);
             return Response.ok().build();
 
         } catch (Exception e) {

@@ -16,7 +16,7 @@ public interface ChannelService {
 
     ContentKey insert(String channelName, Content content) throws Exception;
 
-    boolean historicalInsert(String channelName, Content content) throws Exception;
+    boolean historicalInsert(String channelName, Content content, boolean minuteComplete) throws Exception;
 
     Collection<ContentKey> insert(BulkContent bulkContent) throws Exception;
 
@@ -45,4 +45,6 @@ public interface ChannelService {
     SortedSet<ContentKey> getKeys(DirectionQuery query);
 
     boolean delete(String channelName);
+
+    ContentPath getLastUpdated(String channelName, ContentPath defaultValue);
 }

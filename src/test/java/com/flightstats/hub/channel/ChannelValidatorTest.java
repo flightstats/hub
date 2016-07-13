@@ -32,54 +32,54 @@ public class ChannelValidatorTest {
 
     @Test
     public void testAllGood() throws Exception {
-        validator.validate(ChannelConfig.builder().withName(Strings.repeat("A", 48)).build(), true);
+        validator.validate(ChannelConfig.builder().withName(Strings.repeat("A", 48)).build(), true, null);
     }
 
     @Test(expected = InvalidRequestException.class)
     public void testTooLong() throws Exception {
-        validator.validate(ChannelConfig.builder().withName(Strings.repeat("A", 49)).build(), true);
+        validator.validate(ChannelConfig.builder().withName(Strings.repeat("A", 49)).build(), true, null);
     }
 
     @Test(expected = InvalidRequestException.class)
     public void testChannelNameNull() throws Exception {
-        validator.validate(ChannelConfig.builder().withName(null).build(), true);
+        validator.validate(ChannelConfig.builder().withName(null).build(), true, null);
     }
 
     @Test(expected = InvalidRequestException.class)
     public void testChannelNameEmpty() throws Exception {
-        validator.validate(ChannelConfig.builder().withName("").build(), true);
+        validator.validate(ChannelConfig.builder().withName("").build(), true, null);
     }
 
     @Test(expected = InvalidRequestException.class)
     public void testChannelNameBlank() throws Exception {
-        validator.validate(ChannelConfig.builder().withName("  ").build(), true);
+        validator.validate(ChannelConfig.builder().withName("  ").build(), true, null);
     }
 
     @Test(expected = ConflictException.class)
     public void testChannelExists() throws Exception {
         String channelName = "achannel";
         when(channelService.channelExists(channelName)).thenReturn(true);
-        validator.validate(ChannelConfig.builder().withName(channelName).build(), true);
+        validator.validate(ChannelConfig.builder().withName(channelName).build(), true, null);
     }
 
     @Test(expected = InvalidRequestException.class)
     public void testInvalidSpaceCharacter() throws Exception {
-        validator.validate(ChannelConfig.builder().withName("my chan").build(), true);
+        validator.validate(ChannelConfig.builder().withName("my chan").build(), true, null);
     }
 
     @Test
     public void testValidUnderscore() throws Exception {
-        validator.validate(ChannelConfig.builder().withName("my_chan").build(), true);
+        validator.validate(ChannelConfig.builder().withName("my_chan").build(), true, null);
     }
 
     @Test
     public void testValidHyphen() throws Exception {
-        validator.validate(ChannelConfig.builder().withName("my-chan").build(), true);
+        validator.validate(ChannelConfig.builder().withName("my-chan").build(), true, null);
     }
 
     @Test(expected = InvalidRequestException.class)
     public void testInvalidCharacter() throws Exception {
-        validator.validate(ChannelConfig.builder().withName("my#chan").build(), true);
+        validator.validate(ChannelConfig.builder().withName("my#chan").build(), true, null);
     }
 
     @Test(expected = InvalidRequestException.class)
@@ -87,39 +87,39 @@ public class ChannelValidatorTest {
         validator.validate(ChannelConfig.builder().withName("mychan")
                 .withTtlDays(10)
                 .withMaxItems(10)
-                .build(), true);
+                .build(), true, null);
     }
 
     @Test
     public void testDescription1024() throws Exception {
-        validator.validate(ChannelConfig.builder().withName("desc").withDescription(Strings.repeat("A", 1024)).build(), true);
+        validator.validate(ChannelConfig.builder().withName("desc").withDescription(Strings.repeat("A", 1024)).build(), true, null);
     }
 
     @Test(expected = InvalidRequestException.class)
     public void testDescriptionTooBig() throws Exception {
-        validator.validate(ChannelConfig.builder().withName("toobig").withDescription(Strings.repeat("A", 1025)).build(), true);
+        validator.validate(ChannelConfig.builder().withName("toobig").withDescription(Strings.repeat("A", 1025)).build(), true, null);
     }
 
     @Test(expected = InvalidRequestException.class)
     public void testTagSpace() throws Exception {
-        validator.validate(ChannelConfig.builder().withName("space").withTags(Arrays.asList("s p a c e")).build(), true);
+        validator.validate(ChannelConfig.builder().withName("space").withTags(Arrays.asList("s p a c e")).build(), true, null);
     }
 
     @Test(expected = InvalidRequestException.class)
     public void testTagUnderscore() throws Exception {
-        validator.validate(ChannelConfig.builder().withName("underscore").withTags(Arrays.asList("under_score")).build(), true);
+        validator.validate(ChannelConfig.builder().withName("underscore").withTags(Arrays.asList("under_score")).build(), true, null);
     }
 
     @Test
     public void testTagValid() throws Exception {
-        validator.validate(ChannelConfig.builder().withName("valid1").withTags(Arrays.asList("abcdefghijklmnopqrstuvwxyz")).build(), true);
-        validator.validate(ChannelConfig.builder().withName("valid2").withTags(Arrays.asList("ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789")).build(), true);
+        validator.validate(ChannelConfig.builder().withName("valid1").withTags(Arrays.asList("abcdefghijklmnopqrstuvwxyz")).build(), true, null);
+        validator.validate(ChannelConfig.builder().withName("valid2").withTags(Arrays.asList("ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789")).build(), true, null);
     }
 
     @Test(expected = InvalidRequestException.class)
     public void testTagTooLong() throws Exception {
         validator.validate(ChannelConfig.builder().withName("tooLongTag")
-                .withTags(Arrays.asList(Strings.repeat("A", 49))).build(), true);
+                .withTags(Arrays.asList(Strings.repeat("A", 49))).build(), true, null);
     }
 
     @Test(expected = InvalidRequestException.class)
@@ -129,35 +129,35 @@ public class ChannelValidatorTest {
             tags.add("" + i);
         }
         validator.validate(ChannelConfig.builder().withName("tooManyTags")
-                .withTags(tags).build(), true);
+                .withTags(tags).build(), true, null);
     }
 
     @Test
     public void testAllowColonAndDash() throws Exception {
-        validator.validate(ChannelConfig.builder().withName("colon").withTags(Arrays.asList("a:b")).build(), true);
-        validator.validate(ChannelConfig.builder().withName("dash").withTags(Arrays.asList("a-b")).build(), true);
-        validator.validate(ChannelConfig.builder().withName("colondash").withTags(Arrays.asList("a-b:c")).build(), true);
+        validator.validate(ChannelConfig.builder().withName("colon").withTags(Arrays.asList("a:b")).build(), true, null);
+        validator.validate(ChannelConfig.builder().withName("dash").withTags(Arrays.asList("a-b")).build(), true, null);
+        validator.validate(ChannelConfig.builder().withName("colondash").withTags(Arrays.asList("a-b:c")).build(), true, null);
     }
 
     public void testOwner() throws Exception {
-        validator.validate(ChannelConfig.builder().withName("A").withOwner(Strings.repeat("A", 48)).build(), true);
+        validator.validate(ChannelConfig.builder().withName("A").withOwner(Strings.repeat("A", 48)).build(), true, null);
     }
 
     @Test(expected = InvalidRequestException.class)
     public void testTooLongOwner() throws Exception {
-        validator.validate(ChannelConfig.builder().withName("A").withOwner(Strings.repeat("A", 49)).build(), true);
+        validator.validate(ChannelConfig.builder().withName("A").withOwner(Strings.repeat("A", 49)).build(), true, null);
     }
 
     @Test
     public void testValidStorage() {
-        validator.validate(ChannelConfig.builder().withName("storage").withStorage(ChannelConfig.SINGLE).build(), true);
-        validator.validate(ChannelConfig.builder().withName("storage").withStorage("batch").build(), true);
-        validator.validate(ChannelConfig.builder().withName("storage").withStorage("BoTh").build(), true);
+        validator.validate(ChannelConfig.builder().withName("storage").withStorage(ChannelConfig.SINGLE).build(), true, null);
+        validator.validate(ChannelConfig.builder().withName("storage").withStorage("batch").build(), true, null);
+        validator.validate(ChannelConfig.builder().withName("storage").withStorage("BoTh").build(), true, null);
     }
 
     @Test(expected = InvalidRequestException.class)
     public void testInvalidStorage() {
-        validator.validate(ChannelConfig.builder().withName("storage").withStorage("stuff").build(), true);
+        validator.validate(ChannelConfig.builder().withName("storage").withStorage("stuff").build(), true, null);
     }
 
     @Test
@@ -167,7 +167,7 @@ public class ChannelValidatorTest {
         globalConfig.addSatellite("http://satellite");
         validator.validate(ChannelConfig.builder()
                 .withName("global")
-                .withGlobal(globalConfig).build(), true);
+                .withGlobal(globalConfig).build(), true, null);
     }
 
     @Test(expected = InvalidRequestException.class)
@@ -176,7 +176,7 @@ public class ChannelValidatorTest {
         globalConfig.setMaster("http://master");
         validator.validate(ChannelConfig.builder()
                 .withName("global")
-                .withGlobal(globalConfig).build(), true);
+                .withGlobal(globalConfig).build(), true, null);
     }
 
     @Test(expected = InvalidRequestException.class)
@@ -185,7 +185,7 @@ public class ChannelValidatorTest {
         globalConfig.addSatellite("http://master");
         validator.validate(ChannelConfig.builder()
                 .withName("global")
-                .withGlobal(globalConfig).build(), true);
+                .withGlobal(globalConfig).build(), true, null);
     }
 
     @Test(expected = InvalidRequestException.class)
@@ -195,7 +195,7 @@ public class ChannelValidatorTest {
         globalConfig.addSatellite("http://master/");
         validator.validate(ChannelConfig.builder()
                 .withName("global")
-                .withGlobal(globalConfig).build(), true);
+                .withGlobal(globalConfig).build(), true, null);
     }
 
     @Test(expected = InvalidRequestException.class)
@@ -205,7 +205,7 @@ public class ChannelValidatorTest {
         globalConfig.addSatellite("http://satellite");
         validator.validate(ChannelConfig.builder()
                 .withName("global")
-                .withGlobal(globalConfig).build(), true);
+                .withGlobal(globalConfig).build(), true, null);
     }
 
     @Test(expected = InvalidRequestException.class)
@@ -216,7 +216,7 @@ public class ChannelValidatorTest {
         globalConfig.addSatellite("ftp://satellite2");
         validator.validate(ChannelConfig.builder()
                 .withName("global")
-                .withGlobal(globalConfig).build(), true);
+                .withGlobal(globalConfig).build(), true, null);
     }
 
 }

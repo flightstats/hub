@@ -3,13 +3,13 @@ package com.flightstats.hub.channel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Request;
 import com.flightstats.hub.events.ContentOutput;
 import com.flightstats.hub.events.EventsService;
 import com.flightstats.hub.exception.ContentTooLargeException;
+import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.DataDog;
 import com.flightstats.hub.metrics.MetricsSender;
@@ -377,33 +377,29 @@ public class ChannelContentResource {
     @Path("/{h}/{m}/{s}/{ms}")
     @POST
     @Produces(MediaType.APPLICATION_JSON)
-    public Response insertValue(@PathParam("channel") final String channelName,
-                                @PathParam("Y") int year,
-                                @PathParam("M") int month,
-                                @PathParam("D") int day,
-                                @PathParam("h") int hour,
-                                @PathParam("m") int minute,
-                                @PathParam("s") int second,
-                                @PathParam("ms") int millis,
-                                @HeaderParam("Content-Type") final String contentType,
-                                @HeaderParam("Content-Language") final String contentLanguage,
-                                final InputStream data) throws Exception {
+    public Response historicalInsert(@PathParam("channel") final String channelName,
+                                     @PathParam("Y") int year,
+                                     @PathParam("M") int month,
+                                     @PathParam("D") int day,
+                                     @PathParam("h") int hour,
+                                     @PathParam("m") int minute,
+                                     @PathParam("s") int second,
+                                     @PathParam("ms") int millis,
+                                     @HeaderParam("Content-Type") String contentType,
+                                     @HeaderParam("Content-Language") String contentLanguage,
+                                     @HeaderParam("minuteComplete") @DefaultValue("false") boolean minuteComplete,
+                                     final InputStream data) throws Exception {
         if (!channelService.channelExists(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis);
-
-        DateTime cutOffTime = DateTime.now().minusMinutes(HubProperties.getSpokeTtl());
-        if (key.getTime().isAfter(cutOffTime))
-            return Response.status(400).entity("you cannot insert an item within the last " + HubProperties.getSpokeTtl() + " minutes").build();
-
         Content content = Content.builder()
                 .withContentKey(key)
                 .withContentType(contentType)
                 .withStream(data)
                 .build();
         try {
-            boolean success = channelService.historicalInsert(channelName, content);
+            boolean success = channelService.historicalInsert(channelName, content, minuteComplete);
             if (!success) {
                 return Response.status(400).entity("unable to insert historical item").build();
             }
@@ -420,6 +416,8 @@ public class ChannelContentResource {
             builder.entity(linkedResult);
             builder.location(payloadUri);
             return builder.build();
+        } catch (InvalidRequestException e) {
+            return Response.status(400).entity(e.getMessage()).build();
         } catch (ContentTooLargeException e) {
             return Response.status(413).entity(e.getMessage()).build();
         } catch (Exception e) {

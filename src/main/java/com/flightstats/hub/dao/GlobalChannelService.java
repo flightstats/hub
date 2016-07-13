@@ -2,10 +2,8 @@ package com.flightstats.hub.dao;
 
 import com.diffplug.common.base.Errors;
 import com.flightstats.hub.app.HubProperties;
-import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.*;
-import com.flightstats.hub.replication.Replicator;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
@@ -35,8 +33,6 @@ public class GlobalChannelService implements ChannelService {
     @Inject
     @Named(ContentDao.CACHE)
     private ContentDao spokeContentDao;
-    @Inject
-    private LastContentPath lastReplicated;
 
     private final int spokeTtlMinutes = HubProperties.getSpokeTtl();
 
@@ -97,18 +93,14 @@ public class GlobalChannelService implements ChannelService {
     @Override
     public ContentKey insert(String channelName, Content content) throws Exception {
         return primaryAndSecondary(channelName,
-                Errors.rethrow().wrap(() -> {
-                    return localChannelService.insert(channelName, content);
-                }),
+                Errors.rethrow().wrap(() -> localChannelService.insert(channelName, content)),
                 () -> hubUtils.insert(getMasterChannelUrl(channelName), content));
     }
 
     @Override
-    public boolean historicalInsert(String channelName, Content content) {
+    public boolean historicalInsert(String channelName, Content content, boolean minuteComplete) {
         return primaryAndSecondary(channelName,
-                Errors.rethrow().wrap(() -> {
-                    return localChannelService.historicalInsert(channelName, content);
-                }),
+                Errors.rethrow().wrap(() -> localChannelService.historicalInsert(channelName, content, minuteComplete)),
                 () -> {
                     ContentKey key = hubUtils.insert(getHistoricalInsertUrl(getMasterChannelUrl(channelName), content), content);
                     return !isNull(key);
@@ -122,9 +114,7 @@ public class GlobalChannelService implements ChannelService {
     @Override
     public Collection<ContentKey> insert(BulkContent bulk) throws Exception {
         return primaryAndSecondary(bulk.getChannel(),
-                Errors.rethrow().wrap(() -> {
-                    return localChannelService.insert(bulk);
-                }),
+                Errors.rethrow().wrap(() -> localChannelService.insert(bulk)),
                 () -> hubUtils.insert(getMasterChannelUrl(bulk.getChannel()), bulk));
     }
 
@@ -206,9 +196,8 @@ public class GlobalChannelService implements ChannelService {
     }
 
     private DateTime getSpokeCacheTime(Query query) {
-        DateTime startTime = lastReplicated.get(query.getChannelName(), MinutePath.NONE, Replicator.REPLICATED_LAST_UPDATED).getTime();
-        startTime.minusMinutes(spokeTtlMinutes);
-        return startTime;
+        DateTime startTime = getLastUpdated(query.getChannelName(), MinutePath.NONE).getTime();
+        return startTime.minusMinutes(spokeTtlMinutes);
     }
 
     @Override
@@ -228,6 +217,11 @@ public class GlobalChannelService implements ChannelService {
     @Override
     public boolean delete(String channelName) {
         return localChannelService.delete(channelName);
+    }
+
+    @Override
+    public ContentPath getLastUpdated(String channelName, ContentPath defaultValue) {
+        return localChannelService.getLastUpdated(channelName, defaultValue);
     }
 
     @Override

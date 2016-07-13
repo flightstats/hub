@@ -76,39 +76,4 @@ describe(testName, function () {
 
     });
 
-    /*it('gets tag hour ' + tag, function (done) {
-        var url = tagUrl + '/time/hour?stable=false&trace=true';
-        console.log('calling tag hour ', url)
-        request.get({
-                url: url,
-                headers: {"Content-Type": "application/json"}
-            },
-            function (err, response, body) {
-                expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
-                if (response.statusCode == 200) {
-                    body = utils.parseJson(response, testName);
-                    console.log('parsed tag body', body);
-                    if (body._links) {
-                        uris = body._links.uris;
-                        expect(uris.length).toBe(3);
-                        if (uris.length == 3) {
-                            expect(uris[0]).toContain(channel);
-                            expect(uris[1]).toContain(channelB);
-                            expect(uris[2]).toContain(channel);
-                        } else {
-                            console.log('failing test, not enough uris');
-                            expect(false).toBe(true);
-                        }
-                    }
-                } else {
-                    console.log('failing test, can\'t get uris . status=' + response.statusCode);
-                }
-                done();
-            });
-    }, 2 * 60001);*/
-
-
-
-
 });

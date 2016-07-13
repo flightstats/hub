@@ -79,10 +79,6 @@ public class ContentKey implements ContentPath {
         }
     }
 
-    public static ContentKey fromBytes(byte[] bytes) {
-        return fromUrl(new String(bytes, Charsets.UTF_8)).get();
-    }
-
     private synchronized static String bulkHash(int number) {
         return format.format(number);
     }

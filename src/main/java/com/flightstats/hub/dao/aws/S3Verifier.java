@@ -12,7 +12,6 @@ import com.flightstats.hub.exception.FailedQueryException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
-import com.flightstats.hub.replication.Replicator;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
@@ -55,9 +54,6 @@ public class S3Verifier {
     @Inject
     @Named(ContentDao.SINGLE_LONG_TERM)
     private ContentDao s3SingleContentDao;
-    @Inject
-    @Named(ContentDao.BATCH_LONG_TERM)
-    private ContentDao s3BatchContentDao;
     @Inject
     private S3WriteQueue s3WriteQueue;
 
@@ -164,15 +160,12 @@ public class S3Verifier {
     VerifierRange getSingleVerifierRange(DateTime now, ChannelConfig channel) {
         VerifierRange range = new VerifierRange(channel);
         MinutePath spokeTtlTime = getSpokeTtlPath(now);
-        if (channel.isReplicating()) {
-            ContentPath contentPath = lastContentPath.get(channel.getName(), new MinutePath(now), Replicator.REPLICATED_LAST_UPDATED);
-            now = contentPath.getTime();
-        }
+        now = channelService.getLastUpdated(channel.getName(), new MinutePath(now)).getTime();
         DateTime start = now.minusMinutes(1);
         range.endPath = new MinutePath(start);
         MinutePath defaultStart = new MinutePath(start.minusMinutes(offsetMinutes));
         range.startPath = (MinutePath) lastContentPath.get(channel.getName(), defaultStart, LAST_SINGLE_VERIFIED);
-        if (!channel.isReplicating() && range.startPath.compareTo(spokeTtlTime) < 0) {
+        if (channel.isLive() && range.startPath.compareTo(spokeTtlTime) < 0) {
             range.startPath = spokeTtlTime;
         }
         return range;

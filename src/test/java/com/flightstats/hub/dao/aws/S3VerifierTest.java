@@ -2,9 +2,9 @@ package com.flightstats.hub.dao.aws;
 
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.cluster.LastContentPath;
+import com.flightstats.hub.dao.LocalChannelService;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.MinutePath;
-import com.flightstats.hub.replication.Replicator;
 import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.TimeUtil;
 import org.apache.curator.framework.CuratorFramework;
@@ -69,7 +69,7 @@ public class S3VerifierTest {
     @Test
     public void testSingleReplicated() {
         MinutePath lastReplicated = new MinutePath(now.minusMinutes(30));
-        lastContentPath.initialize("testSingleReplicated", lastReplicated, Replicator.REPLICATED_LAST_UPDATED);
+        lastContentPath.initialize("testSingleReplicated", lastReplicated, LocalChannelService.REPLICATED_LAST_UPDATED);
         ChannelConfig channel = getReplicatedChannel("testSingleReplicated");
         S3Verifier.VerifierRange range = s3Verifier.getSingleVerifierRange(now, channel);
         logger.info("testSingleReplicated {}", range);
@@ -91,7 +91,7 @@ public class S3VerifierTest {
     @Test
     public void testSingleReplicationLagging() {
         MinutePath lastReplicated = new MinutePath(now.minusMinutes(90));
-        lastContentPath.initialize("testSingleReplicationLagging", lastReplicated, Replicator.REPLICATED_LAST_UPDATED);
+        lastContentPath.initialize("testSingleReplicationLagging", lastReplicated, LocalChannelService.REPLICATED_LAST_UPDATED);
         MinutePath lastVerified = new MinutePath(now.minusMinutes(100));
         lastContentPath.initialize("testSingleReplicationLagging", lastVerified, S3Verifier.LAST_SINGLE_VERIFIED);
         ChannelConfig channel = getReplicatedChannel("testSingleReplicationLagging");
