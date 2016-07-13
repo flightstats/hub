@@ -1,5 +1,6 @@
 package com.flightstats.hub.app;
 
+import com.flightstats.hub.filter.DataDogRequestFilter;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.HandlerCollection;
@@ -36,6 +37,7 @@ class HttpAndWSHandler extends HandlerCollection {
                 wsHandler.handle(target, baseRequest, request, response);
             } else {
                 httpHandler.handle(target, baseRequest, request, response);
+                DataDogRequestFilter.finalStats();
             }
         }
     }
