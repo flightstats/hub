@@ -59,12 +59,9 @@ public class S3Verifier {
 
     public S3Verifier() {
         if (HubProperties.getProperty("s3Verifier.run", true)) {
-            registerService(new S3VerifierService("/S3VerifierSingleService", offsetMinutes, this::runSingle));
+            HubServices.register(new S3VerifierService("/S3VerifierSingleService", offsetMinutes, this::runSingle),
+                    HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
         }
-    }
-
-    private void registerService(S3VerifierService service) {
-        HubServices.register(service, HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
     }
 
     private SortedSet<ContentKey> getMissing(MinutePath startPath, MinutePath endPath, String channelName, ContentDao s3ContentDao,
