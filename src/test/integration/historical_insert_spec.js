@@ -9,6 +9,7 @@ var moment = require('moment');
 var tag = Math.random().toString().replace(".", "");
 var testName = __filename;
 var channelBody = {
+    historical: true,
     tags: [tag, "test"],
     ttlDays: 365
 };
@@ -75,5 +76,7 @@ describe(testName, function () {
         })
 
     });
+
+    utils.putChannel(channel, false, {historical: false}, testName, 400);
 
 });

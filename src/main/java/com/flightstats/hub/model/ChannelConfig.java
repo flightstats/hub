@@ -169,11 +169,11 @@ public class ChannelConfig implements Serializable {
         return StringUtils.isNotBlank(replicationSource) || isGlobalSatellite();
     }
 
-    @JsonIgnore
     public boolean isHistorical() {
         return historical;
     }
 
+    @JsonIgnore
     public boolean isLive() {
         return !isHistorical() && !isReplicating();
     }
@@ -221,6 +221,9 @@ public class ChannelConfig implements Serializable {
             return true;
         }
         if (!getTags().equals(otherConfig.getTags())) {
+            return true;
+        }
+        if (isHistorical() != otherConfig.isHistorical()) {
             return true;
         }
         return false;
