@@ -179,7 +179,7 @@ public class S3Verifier {
         MinutePath endPath;
         ChannelConfig channel;
 
-        public VerifierRange(ChannelConfig channel) {
+        VerifierRange(ChannelConfig channel) {
             this.channel = channel;
         }
     }
