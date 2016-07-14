@@ -222,7 +222,7 @@ class WebhookLeader implements Leader {
     }
 
     private void makeTimedCall(ContentPath contentPath, ObjectNode body) throws Exception {
-        metricsTimer.time("webhook." + webhook.getName() + ".post",
+        metricsTimer.time("webhook", webhook.getName(),
                 () -> {
                     makeCall(contentPath, body);
                     return null;
