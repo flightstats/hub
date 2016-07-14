@@ -79,7 +79,7 @@ public class S3VerifierTest {
         MinutePath lastReplicated = new MinutePath(now.minusMinutes(30));
         lastContentPath.initialize("testSingleReplicated", lastReplicated, REPLICATED_LAST_UPDATED);
         ChannelConfig channel = getReplicatedChannel("testSingleReplicated");
-        localChannelService.createChannel(channel);
+        localChannelService.updateChannel(channel, null);
         S3Verifier.VerifierRange range = s3Verifier.getSingleVerifierRange(now, channel);
         logger.info("testSingleReplicated {}", range);
         assertEquals(new MinutePath(lastReplicated.getTime().minusMinutes(1)), range.endPath);
@@ -105,7 +105,7 @@ public class S3VerifierTest {
         MinutePath lastVerified = new MinutePath(now.minusMinutes(100));
         lastContentPath.initialize("testSingleReplicationLagging", lastVerified, LAST_SINGLE_VERIFIED);
         ChannelConfig channel = getReplicatedChannel("testSingleReplicationLagging");
-        localChannelService.createChannel(channel);
+        localChannelService.updateChannel(channel, null);
         S3Verifier.VerifierRange range = s3Verifier.getSingleVerifierRange(now, channel);
         logger.info("testSingleReplicationLagging {}", range);
         assertEquals(new MinutePath(lastReplicated.getTime().minusMinutes(1)), range.endPath);
