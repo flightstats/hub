@@ -1,13 +1,18 @@
 package com.flightstats.hub.app;
 
+import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.dao.*;
 import com.flightstats.hub.dao.nas.NasChannelConfigurationDao;
 import com.flightstats.hub.dao.nas.NasContentService;
 import com.flightstats.hub.dao.nas.NasTtlEnforcer;
 import com.flightstats.hub.dao.nas.NasWebhookDao;
+import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.webhook.WebhookDao;
 import com.google.inject.AbstractModule;
-import com.google.inject.name.Names;
+import com.google.inject.Inject;
+import com.google.inject.Provides;
+import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,15 +37,18 @@ class NasBindings extends AbstractModule {
     @Override
     protected void configure() {
         bind(ChannelService.class).to(LocalChannelService.class).asEagerSingleton();
-        bind(ChannelConfigDao.class).to(CachedChannelConfigDao.class).asEagerSingleton();
-        bind(ChannelConfigDao.class)
-                .annotatedWith(Names.named(CachedChannelConfigDao.DELEGATE))
-                .to(NasChannelConfigurationDao.class);
-
         bind(ContentService.class).to(NasContentService.class).asEagerSingleton();
         bind(WebhookDao.class).to(NasWebhookDao.class).asEagerSingleton();
         bind(NasTtlEnforcer.class).asEagerSingleton();
         bind(FinalCheck.class).to(PassFinalCheck.class).asEagerSingleton();
+    }
+
+    @Inject
+    @Singleton
+    @Provides
+    @Named("ChannelConfig")
+    public static Dao<ChannelConfig> buildChannelConfigDao(WatchManager watchManager, NasChannelConfigurationDao dao) {
+        return new CachedDao<>(dao, watchManager, "/channels/cache");
     }
 
 }

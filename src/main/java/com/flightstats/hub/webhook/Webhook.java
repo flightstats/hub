@@ -8,6 +8,7 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.NamedType;
 import com.flightstats.hub.util.ChannelNameUtils;
 import com.google.common.base.Optional;
 import com.google.gson.Gson;
@@ -26,7 +27,7 @@ import java.util.SortedSet;
 @ToString
 @EqualsAndHashCode(exclude = {"startingKey"})
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class Webhook implements Comparable<Webhook> {
+public class Webhook implements Comparable<Webhook>, NamedType {
     public static final String SINGLE = "SINGLE";
     public static final String MINUTE = "MINUTE";
     public static final String SECOND = "SECOND";

@@ -5,8 +5,8 @@ import com.amazonaws.services.s3.model.BucketLifecycleConfiguration;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.CuratorLock;
 import com.flightstats.hub.cluster.Lockable;
-import com.flightstats.hub.dao.ChannelConfigDao;
 import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ContentKey;
@@ -15,6 +15,7 @@ import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,13 +30,13 @@ public class S3Config {
 
     private final AmazonS3 s3Client;
     private final CuratorLock curatorLock;
-    private final ChannelConfigDao channelConfigDao;
+    private final Dao<ChannelConfig> channelConfigDao;
     private final String s3BucketName;
     private ChannelService channelService;
 
     @Inject
-    public S3Config(AmazonS3 s3Client, S3BucketName s3BucketName,
-                    CuratorLock curatorLock, ChannelConfigDao channelConfigDao, ChannelService channelService) {
+    public S3Config(AmazonS3 s3Client, S3BucketName s3BucketName, CuratorLock curatorLock,
+                    @Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao, ChannelService channelService) {
         this.s3Client = s3Client;
         this.curatorLock = curatorLock;
         this.channelConfigDao = channelConfigDao;
@@ -54,7 +55,7 @@ public class S3Config {
 
     private void doWork() {
         logger.info("starting work");
-        Iterable<ChannelConfig> channels = channelConfigDao.getChannels(false);
+        Iterable<ChannelConfig> channels = channelConfigDao.getAll(false);
         S3ConfigLockable lockable = new S3ConfigLockable(channels);
         curatorLock.runWithLock(lockable, "/S3ConfigLock", 1, TimeUnit.MINUTES);
     }
