@@ -18,7 +18,7 @@ import java.util.*;
 
 @ToString
 @EqualsAndHashCode(of = {"name"})
-public class ChannelConfig implements Serializable {
+public class ChannelConfig implements Serializable, NamedType {
 
     public static final String SINGLE = "SINGLE";
     private static final String BATCH = "BATCH";

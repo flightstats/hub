@@ -15,6 +15,7 @@ import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import com.timgroup.statsd.StatsDClient;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -38,7 +39,8 @@ public class LocalChannelService implements ChannelService {
     @Inject
     private ContentService contentService;
     @Inject
-    private ChannelConfigDao channelConfigDao;
+    @Named("ChannelConfig")
+    private Dao<ChannelConfig> channelConfigDao;
     @Inject
     private ChannelValidator channelValidator;
     @Inject
@@ -50,7 +52,7 @@ public class LocalChannelService implements ChannelService {
 
     @Override
     public boolean channelExists(String channelName) {
-        return channelConfigDao.channelExists(channelName);
+        return channelConfigDao.exists(channelName);
     }
 
     @Override
@@ -58,9 +60,9 @@ public class LocalChannelService implements ChannelService {
         logger.info("create channel {}", configuration);
         channelValidator.validate(configuration, true, null);
         configuration = ChannelConfig.builder().withChannelConfiguration(configuration).build();
-        ChannelConfig created = channelConfigDao.createChannel(configuration);
-        notify(created, null);
-        return created;
+        channelConfigDao.upsert(configuration);
+        notify(configuration, null);
+        return configuration;
     }
 
     private void notify(ChannelConfig newConfig, ChannelConfig oldConfig) {
@@ -83,7 +85,7 @@ public class LocalChannelService implements ChannelService {
             if (isNull(oldConfig) && configuration.isHistorical()) {
                 lastContentPath.initialize(configuration.getName(), ContentKey.NONE, HISTORICAL_LAST_UPDATED);
             }
-            channelConfigDao.updateChannel(configuration);
+            channelConfigDao.upsert(configuration);
             notify(configuration, oldConfig);
         } else {
             logger.info("update with no changes {}", configuration);
@@ -216,12 +218,12 @@ public class LocalChannelService implements ChannelService {
         if (allowChannelCache) {
             return getCachedChannelConfig(channelName);
         }
-        return channelConfigDao.getChannelConfig(channelName);
+        return channelConfigDao.get(channelName);
     }
 
     @Override
     public ChannelConfig getCachedChannelConfig(String channelName) {
-        ChannelConfig channelConfig = channelConfigDao.getCachedChannelConfig(channelName);
+        ChannelConfig channelConfig = channelConfigDao.getCached(channelName);
         if (null == channelConfig) {
             throw new NoSuchChannelException(channelName);
         }
@@ -234,7 +236,7 @@ public class LocalChannelService implements ChannelService {
     }
 
     private Collection<ChannelConfig> getChannels(boolean useCache) {
-        return channelConfigDao.getChannels(useCache);
+        return channelConfigDao.getAll(useCache);
     }
 
     @Override
@@ -310,7 +312,7 @@ public class LocalChannelService implements ChannelService {
 
     @Override
     public boolean delete(String channelName) {
-        if (!channelConfigDao.channelExists(channelName)) {
+        if (!channelConfigDao.exists(channelName)) {
             return false;
         }
         boolean replicating = isReplicating(channelName);

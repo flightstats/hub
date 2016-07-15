@@ -10,6 +10,11 @@ import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.ChannelNameUtils;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.ContentPath;
+import com.flightstats.hub.model.MinutePath;
+import com.flightstats.hub.model.TimeQuery;
+import com.flightstats.hub.replication.Replicator;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
@@ -91,7 +96,7 @@ class SingleWebhookStrategy implements WebhookStrategy {
     }
 
     public void start(Webhook webhook, ContentPath startingPath) {
-        channel = ChannelNameUtils.extractFromChannelUrl(webhook.getChannelUrl());
+        channel = webhook.getChannelName();
         queryGenerator = new QueryGenerator(startingPath.getTime(), channel);
         ThreadFactory factory = new ThreadFactoryBuilder().setNameFormat("single-webhook-" + webhook.getName() + "-%s").build();
         executorService = Executors.newSingleThreadExecutor(factory);

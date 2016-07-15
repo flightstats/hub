@@ -51,18 +51,20 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
             String channel = channelName(request);
             String method = request.getMethod();
             long time = System.currentTimeMillis() - dataDogState.getStart();
+            String callTag = "call:" + method + endpoint;
             if (StringUtils.isEmpty(endpoint)) {
                 logger.trace("DataDog no endpoint, path: {}", request.getUriInfo().getPath());
             } else if (endpoint.equals("/shutdown")) {
                 logger.info("call to shutdown, ignoring datadog time {}", time);
             } else {
-                statsd.recordExecutionTime("request", time, "channel:" + channel, "method:" + method, "endpoint:" + endpoint);
-                statsd.incrementCounter("request", "channel:" + channel, "method:" + method, "endpoint:" + endpoint);
+                String[] tags = {"channel:" + channel, "method:" + method, "endpoint:" + endpoint, callTag};
+                statsd.recordExecutionTime("request", time, tags);
+                statsd.incrementCounter("request", tags);
             }
             logger.trace("DataDog request {}, time: {}", endpoint, time);
             int returnCode = dataDogState.getResponse().getStatus();
             if (returnCode > 400 && returnCode != 404) {
-                statsd.incrementCounter("errors", "errorCode:" + returnCode);
+                statsd.incrementCounter("errors", "errorCode:" + returnCode, callTag);
             }
         } catch (Exception e) {
             logger.error("DataDog request error", e);

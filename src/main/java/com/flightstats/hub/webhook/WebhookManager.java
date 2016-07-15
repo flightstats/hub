@@ -4,11 +4,13 @@ import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.Watcher;
+import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import com.google.inject.name.Named;
 import org.apache.curator.framework.api.CuratorEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,21 +23,21 @@ import java.util.concurrent.TimeUnit;
 
 import static com.flightstats.hub.app.HubServices.register;
 
-public class WebhookProcessor {
+public class WebhookManager {
 
-    private final static Logger logger = LoggerFactory.getLogger(WebhookProcessor.class);
+    private final static Logger logger = LoggerFactory.getLogger(WebhookManager.class);
 
     private static final String WATCHER_PATH = "/groupCallback/watcher";
 
     private final WatchManager watchManager;
-    private final WebhookDao webhookDao;
+    private final Dao<Webhook> webhookDao;
     private final Provider<WebhookLeader> leaderProvider;
     private LastContentPath lastContentPath;
     private final Map<String, WebhookLeader> activeWebhooks = new HashMap<>();
 
     @Inject
-    public WebhookProcessor(WatchManager watchManager, WebhookDao webhookDao,
-                            Provider<WebhookLeader> leaderProvider, LastContentPath lastContentPath) {
+    public WebhookManager(WatchManager watchManager, @Named("Webhook") Dao<Webhook> webhookDao,
+                          Provider<WebhookLeader> leaderProvider, LastContentPath lastContentPath) {
         this.watchManager = watchManager;
         this.webhookDao = webhookDao;
         this.leaderProvider = leaderProvider;
@@ -62,7 +64,7 @@ public class WebhookProcessor {
 
     private synchronized void manageWebhooks() {
         Set<String> webhooksToStop = new HashSet<>(activeWebhooks.keySet());
-        Iterable<Webhook> webhooks = webhookDao.getAll();
+        Iterable<Webhook> webhooks = webhookDao.getAll(false);
         for (Webhook webhook : webhooks) {
             webhooksToStop.remove(webhook.getName());
             WebhookLeader activeLeader = activeWebhooks.get(webhook.getName());
