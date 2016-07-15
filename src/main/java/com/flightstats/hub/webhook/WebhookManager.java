@@ -23,9 +23,9 @@ import java.util.concurrent.TimeUnit;
 
 import static com.flightstats.hub.app.HubServices.register;
 
-public class WebhookProcessor {
+public class WebhookManager {
 
-    private final static Logger logger = LoggerFactory.getLogger(WebhookProcessor.class);
+    private final static Logger logger = LoggerFactory.getLogger(WebhookManager.class);
 
     private static final String WATCHER_PATH = "/groupCallback/watcher";
 
@@ -36,8 +36,8 @@ public class WebhookProcessor {
     private final Map<String, WebhookLeader> activeWebhooks = new HashMap<>();
 
     @Inject
-    public WebhookProcessor(WatchManager watchManager, @Named("Webhook") Dao<Webhook> webhookDao,
-                            Provider<WebhookLeader> leaderProvider, LastContentPath lastContentPath) {
+    public WebhookManager(WatchManager watchManager, @Named("Webhook") Dao<Webhook> webhookDao,
+                          Provider<WebhookLeader> leaderProvider, LastContentPath lastContentPath) {
         this.watchManager = watchManager;
         this.webhookDao = webhookDao;
         this.leaderProvider = leaderProvider;
@@ -64,7 +64,7 @@ public class WebhookProcessor {
 
     private synchronized void manageWebhooks() {
         Set<String> webhooksToStop = new HashSet<>(activeWebhooks.keySet());
-        Iterable<Webhook> webhooks = webhookDao.getAll(true);
+        Iterable<Webhook> webhooks = webhookDao.getAll(false);
         for (Webhook webhook : webhooks) {
             webhooksToStop.remove(webhook.getName());
             WebhookLeader activeLeader = activeWebhooks.get(webhook.getName());
