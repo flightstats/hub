@@ -10,6 +10,7 @@ import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.util.ChannelNameUtils;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +28,7 @@ public class WebhookService {
     private ChannelService channelService;
 
     @Inject
-    public WebhookService(Dao<Webhook> webhookDao, WebhookValidator webhookValidator,
+    public WebhookService(@Named("Webhook") Dao<Webhook> webhookDao, WebhookValidator webhookValidator,
                           WebhookProcessor webhookProcessor, LastContentPath lastContentPath, ChannelService channelService) {
         this.webhookDao = webhookDao;
         this.webhookValidator = webhookValidator;

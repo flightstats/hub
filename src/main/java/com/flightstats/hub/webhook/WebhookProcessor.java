@@ -10,6 +10,7 @@ import com.flightstats.hub.util.Sleeper;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import com.google.inject.name.Named;
 import org.apache.curator.framework.api.CuratorEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +36,7 @@ public class WebhookProcessor {
     private final Map<String, WebhookLeader> activeWebhooks = new HashMap<>();
 
     @Inject
-    public WebhookProcessor(WatchManager watchManager, Dao<Webhook> webhookDao,
+    public WebhookProcessor(WatchManager watchManager, @Named("Webhook") Dao<Webhook> webhookDao,
                             Provider<WebhookLeader> leaderProvider, LastContentPath lastContentPath) {
         this.watchManager = watchManager;
         this.webhookDao = webhookDao;
