@@ -7,7 +7,7 @@ import com.flightstats.hub.dao.nas.NasContentService;
 import com.flightstats.hub.dao.nas.NasTtlEnforcer;
 import com.flightstats.hub.dao.nas.NasWebhookDao;
 import com.flightstats.hub.model.ChannelConfig;
-import com.flightstats.hub.webhook.WebhookDao;
+import com.flightstats.hub.webhook.Webhook;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
@@ -38,7 +38,6 @@ class NasBindings extends AbstractModule {
     protected void configure() {
         bind(ChannelService.class).to(LocalChannelService.class).asEagerSingleton();
         bind(ContentService.class).to(NasContentService.class).asEagerSingleton();
-        bind(WebhookDao.class).to(NasWebhookDao.class).asEagerSingleton();
         bind(NasTtlEnforcer.class).asEagerSingleton();
         bind(FinalCheck.class).to(PassFinalCheck.class).asEagerSingleton();
     }
@@ -51,4 +50,11 @@ class NasBindings extends AbstractModule {
         return new CachedDao<>(dao, watchManager, "/channels/cache");
     }
 
+    @Inject
+    @Singleton
+    @Provides
+    @Named("Webhook")
+    public static Dao<Webhook> buildWebhookDao(WatchManager watchManager, NasWebhookDao dao) {
+        return new CachedDao<>(dao, watchManager, "/webhooks/cache");
+    }
 }

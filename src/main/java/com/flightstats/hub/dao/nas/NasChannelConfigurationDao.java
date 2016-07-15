@@ -26,11 +26,6 @@ public class NasChannelConfigurationDao implements Dao<ChannelConfig> {
     }
 
     @Override
-    public boolean exists(String channelName) {
-        return getCached(channelName) != null;
-    }
-
-    @Override
     public ChannelConfig getCached(String name) {
         return get(name);
     }

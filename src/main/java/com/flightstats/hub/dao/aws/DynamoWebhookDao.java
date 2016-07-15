@@ -3,9 +3,8 @@ package com.flightstats.hub.dao.aws;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.flightstats.hub.app.HubServices;
+import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.webhook.Webhook;
-import com.flightstats.hub.webhook.WebhookDao;
-import com.google.common.base.Optional;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -13,7 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
-public class DynamoWebhookDao implements WebhookDao {
+public class DynamoWebhookDao implements Dao<Webhook> {
     private final static Logger logger = LoggerFactory.getLogger(DynamoWebhookDao.class);
 
     private final AmazonDynamoDBClient dbClient;
@@ -36,7 +35,7 @@ public class DynamoWebhookDao implements WebhookDao {
     }
 
     @Override
-    public Webhook upsert(Webhook webhook) {
+    public void upsert(Webhook webhook) {
         Map<String, AttributeValue> item = new HashMap<>();
         item.put("name", new AttributeValue(webhook.getName()));
         item.put("callbackUrl", new AttributeValue(webhook.getCallbackUrl()));
@@ -48,23 +47,27 @@ public class DynamoWebhookDao implements WebhookDao {
         item.put("ttlMinutes", new AttributeValue().withN(String.valueOf(webhook.getTtlMinutes())));
         item.put("maxWaitMinutes", new AttributeValue().withN(String.valueOf(webhook.getMaxWaitMinutes())));
         dbClient.putItem(getTableName(), item);
-        return webhook;
     }
 
     @Override
-    public Optional<Webhook> get(String name) {
+    public Webhook get(String name) {
         HashMap<String, AttributeValue> keyMap = new HashMap<>();
         keyMap.put("name", new AttributeValue(name));
         try {
             GetItemResult result = dbClient.getItem(getTableName(), keyMap, true);
             if (result.getItem() == null) {
-                return Optional.absent();
+                return null;
             }
-            return Optional.of(mapItem(result.getItem()));
+            return mapItem(result.getItem());
         } catch (ResourceNotFoundException e) {
             logger.info("group not found " + name + " " + e.getMessage());
-            return Optional.absent();
+            return null;
         }
+    }
+
+    @Override
+    public Webhook getCached(String name) {
+        return get(name);
     }
 
     private Webhook mapItem(Map<String, AttributeValue> item) {
@@ -94,7 +97,7 @@ public class DynamoWebhookDao implements WebhookDao {
     }
 
     @Override
-    public Collection<Webhook> getAll() {
+    public Collection<Webhook> getAll(boolean useCache) {
         List<Webhook> configurations = new ArrayList<>();
 
         ScanResult result = dbClient.scan(new ScanRequest(getTableName()).withConsistentRead(true));

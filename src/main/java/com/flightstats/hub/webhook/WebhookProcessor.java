@@ -4,6 +4,7 @@ import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.Watcher;
+import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -28,13 +29,13 @@ public class WebhookProcessor {
     private static final String WATCHER_PATH = "/groupCallback/watcher";
 
     private final WatchManager watchManager;
-    private final WebhookDao webhookDao;
+    private final Dao<Webhook> webhookDao;
     private final Provider<WebhookLeader> leaderProvider;
     private LastContentPath lastContentPath;
     private final Map<String, WebhookLeader> activeWebhooks = new HashMap<>();
 
     @Inject
-    public WebhookProcessor(WatchManager watchManager, WebhookDao webhookDao,
+    public WebhookProcessor(WatchManager watchManager, Dao<Webhook> webhookDao,
                             Provider<WebhookLeader> leaderProvider, LastContentPath lastContentPath) {
         this.watchManager = watchManager;
         this.webhookDao = webhookDao;
@@ -62,7 +63,7 @@ public class WebhookProcessor {
 
     private synchronized void manageWebhooks() {
         Set<String> webhooksToStop = new HashSet<>(activeWebhooks.keySet());
-        Iterable<Webhook> webhooks = webhookDao.getAll();
+        Iterable<Webhook> webhooks = webhookDao.getAll(false);
         for (Webhook webhook : webhooks) {
             webhooksToStop.remove(webhook.getName());
             WebhookLeader activeLeader = activeWebhooks.get(webhook.getName());

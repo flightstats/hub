@@ -2,6 +2,7 @@ package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.model.ContentKey;
@@ -19,14 +20,14 @@ import static com.flightstats.hub.webhook.WebhookLeader.WEBHOOK_LAST_COMPLETED;
 public class WebhookService {
     private final static Logger logger = LoggerFactory.getLogger(WebhookService.class);
 
-    private final WebhookDao webhookDao;
+    private final Dao<Webhook> webhookDao;
     private final WebhookValidator webhookValidator;
     private final WebhookProcessor webhookProcessor;
     private final LastContentPath lastContentPath;
     private ChannelService channelService;
 
     @Inject
-    public WebhookService(WebhookDao webhookDao, WebhookValidator webhookValidator,
+    public WebhookService(Dao<Webhook> webhookDao, WebhookValidator webhookValidator,
                           WebhookProcessor webhookProcessor, LastContentPath lastContentPath, ChannelService channelService) {
         this.webhookDao = webhookDao;
         this.webhookValidator = webhookValidator;
@@ -62,11 +63,11 @@ public class WebhookService {
     }
 
     public Optional<Webhook> get(String name) {
-        return webhookDao.get(name);
+        return Optional.fromNullable(webhookDao.get(name));
     }
 
     public Collection<Webhook> getAll() {
-        return webhookDao.getAll();
+        return webhookDao.getAll(false);
     }
 
     WebhookStatus getStatus(Webhook webhook) {

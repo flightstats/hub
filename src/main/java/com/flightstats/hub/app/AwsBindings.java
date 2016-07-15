@@ -8,7 +8,7 @@ import com.flightstats.hub.dao.*;
 import com.flightstats.hub.dao.aws.*;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.spoke.*;
-import com.flightstats.hub.webhook.WebhookDao;
+import com.flightstats.hub.webhook.Webhook;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
@@ -54,7 +54,6 @@ public class AwsBindings extends AbstractModule {
                 .annotatedWith(Names.named(ContentDao.BATCH_LONG_TERM))
                 .to(S3BatchContentDao.class).asEagerSingleton();
         bind(DynamoUtils.class).asEagerSingleton();
-        bind(WebhookDao.class).to(DynamoWebhookDao.class).asEagerSingleton();
         bind(S3BatchManager.class).asEagerSingleton();
         bind(S3Verifier.class).asEagerSingleton();
     }
@@ -82,6 +81,14 @@ public class AwsBindings extends AbstractModule {
     @Named("ChannelConfig")
     public static Dao<ChannelConfig> buildChannelConfigDao(WatchManager watchManager, DynamoChannelConfigDao dao) {
         return new CachedDao<>(dao, watchManager, "/channels/cache");
+    }
+
+    @Inject
+    @Singleton
+    @Provides
+    @Named("Webhook")
+    public static Dao<Webhook> buildWebhookDao(WatchManager watchManager, DynamoWebhookDao dao) {
+        return new CachedDao<>(dao, watchManager, "/webhooks/cache");
     }
 
     @Named("SpokeCuratorCluster")

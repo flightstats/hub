@@ -8,7 +8,9 @@ public interface Dao<T extends NamedType> {
 
     void upsert(T t);
 
-    boolean exists(String name);
+    default boolean exists(String name) {
+        return getCached(name) != null;
+    }
 
     T get(String name);
 

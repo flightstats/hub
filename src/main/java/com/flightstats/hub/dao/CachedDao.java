@@ -40,11 +40,6 @@ public class CachedDao<T extends NamedType> implements Dao<T> {
     }
 
     @Override
-    public boolean exists(String name) {
-        return getCached(name) != null;
-    }
-
-    @Override
     public T get(String name) {
         T t = delegate.get(name);
         if (null != t) {
