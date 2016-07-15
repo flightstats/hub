@@ -7,7 +7,6 @@ import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentPath;
-import com.flightstats.hub.util.ChannelNameUtils;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -77,7 +76,7 @@ public class WebhookService {
 
     WebhookStatus getStatus(Webhook webhook) {
         WebhookStatus.WebhookStatusBuilder builder = WebhookStatus.builder().webhook(webhook);
-        String channel = ChannelNameUtils.extractFromChannelUrl(webhook.getChannelUrl());
+        String channel = webhook.getChannelName();
         try {
             Optional<ContentKey> lastKey = channelService.getLatest(channel, true, false);
             if (lastKey.isPresent()) {

@@ -151,8 +151,7 @@ public class Webhook implements Comparable<Webhook>, NamedType {
     }
 
     boolean allowedToChange(Webhook other) {
-        return ChannelNameUtils.extractFromChannelUrl(channelUrl)
-                .equals(ChannelNameUtils.extractFromChannelUrl(other.channelUrl))
+        return getChannelName().equals(other.getChannelName())
                 && name.equals(other.name);
     }
 
@@ -214,5 +213,9 @@ public class Webhook implements Comparable<Webhook>, NamedType {
     @Override
     public int compareTo(Webhook other) {
         return getName().compareTo(other.getName());
+    }
+
+    public String getChannelName() {
+        return ChannelNameUtils.extractFromChannelUrl(getChannelUrl());
     }
 }
