@@ -3,10 +3,12 @@ package com.flightstats.hub.app;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
 import com.flightstats.hub.cluster.CuratorCluster;
+import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.dao.*;
 import com.flightstats.hub.dao.aws.*;
+import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.spoke.*;
-import com.flightstats.hub.webhook.WebhookDao;
+import com.flightstats.hub.webhook.Webhook;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
@@ -40,10 +42,6 @@ public class AwsBindings extends AbstractModule {
         bind(ChannelService.class).to(GlobalChannelService.class).asEagerSingleton();
         bind(AwsConnectorFactory.class).asEagerSingleton();
         bind(S3Config.class).asEagerSingleton();
-        bind(ChannelConfigDao.class).to(CachedChannelConfigDao.class).asEagerSingleton();
-        bind(ChannelConfigDao.class)
-                .annotatedWith(Names.named(CachedChannelConfigDao.DELEGATE))
-                .to(DynamoChannelConfigDao.class);
         bind(ContentService.class).to(AwsContentService.class).asEagerSingleton();
         bind(RemoteSpokeStore.class).asEagerSingleton();
         bind(ContentDao.class)
@@ -56,7 +54,6 @@ public class AwsBindings extends AbstractModule {
                 .annotatedWith(Names.named(ContentDao.BATCH_LONG_TERM))
                 .to(S3BatchContentDao.class).asEagerSingleton();
         bind(DynamoUtils.class).asEagerSingleton();
-        bind(WebhookDao.class).to(DynamoWebhookDao.class).asEagerSingleton();
         bind(S3BatchManager.class).asEagerSingleton();
         bind(S3Verifier.class).asEagerSingleton();
     }
@@ -76,6 +73,22 @@ public class AwsBindings extends AbstractModule {
         } else {
             return "com.flightstats.hub";
         }
+    }
+
+    @Inject
+    @Singleton
+    @Provides
+    @Named("ChannelConfig")
+    public static Dao<ChannelConfig> buildChannelConfigDao(WatchManager watchManager, DynamoChannelConfigDao dao) {
+        return new CachedDao<>(dao, watchManager, "/channels/cache");
+    }
+
+    @Inject
+    @Singleton
+    @Provides
+    @Named("Webhook")
+    public static Dao<Webhook> buildWebhookDao(WatchManager watchManager, DynamoWebhookDao dao) {
+        return new CachedDao<>(dao, watchManager, "/webhooks/cache");
     }
 
     @Named("SpokeCuratorCluster")
