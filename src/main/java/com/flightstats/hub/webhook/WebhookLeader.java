@@ -95,9 +95,9 @@ class WebhookLeader implements Leader {
     @Override
     public void takeLeadership(AtomicBoolean hasLeadership) {
         this.hasLeadership = hasLeadership;
-        Optional<Webhook> foundWebhook = webhookService.get(webhook.getName());
+        Optional<Webhook> foundWebhook = webhookService.getCached(webhook.getName());
         if (!foundWebhook.isPresent()) {
-            Sleeper.sleep(1000);
+            Sleeper.sleep(10 * 1000);
             logger.info("webhook is missing, exiting " + webhook.getName());
             return;
         }

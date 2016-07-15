@@ -23,16 +23,16 @@ public class WebhookService {
 
     private final Dao<Webhook> webhookDao;
     private final WebhookValidator webhookValidator;
-    private final WebhookProcessor webhookProcessor;
+    private final WebhookManager webhookManager;
     private final LastContentPath lastContentPath;
     private ChannelService channelService;
 
     @Inject
     public WebhookService(@Named("Webhook") Dao<Webhook> webhookDao, WebhookValidator webhookValidator,
-                          WebhookProcessor webhookProcessor, LastContentPath lastContentPath, ChannelService channelService) {
+                          WebhookManager webhookManager, LastContentPath lastContentPath, ChannelService channelService) {
         this.webhookDao = webhookDao;
         this.webhookValidator = webhookValidator;
-        this.webhookProcessor = webhookProcessor;
+        this.webhookManager = webhookManager;
         this.lastContentPath = lastContentPath;
         this.channelService = channelService;
     }
@@ -59,12 +59,16 @@ public class WebhookService {
             lastContentPath.initialize(name, webhook.getStartingKey(), WEBHOOK_LAST_COMPLETED);
         }
         webhookDao.upsert(webhook);
-        webhookProcessor.notifyWatchers();
+        webhookManager.notifyWatchers();
         return webhookOptional;
     }
 
     public Optional<Webhook> get(String name) {
         return Optional.fromNullable(webhookDao.get(name));
+    }
+
+    public Optional<Webhook> getCached(String name) {
+        return Optional.fromNullable(webhookDao.getCached(name));
     }
 
     public Collection<Webhook> getAll() {
@@ -82,14 +86,14 @@ public class WebhookService {
         } catch (NoSuchChannelException e) {
             logger.info("no channel found for " + channel);
         }
-        webhookProcessor.getStatus(webhook, builder);
+        webhookManager.getStatus(webhook, builder);
         return builder.build();
     }
 
     public void delete(String name) {
         logger.info("deleting webhook " + name);
         webhookDao.delete(name);
-        webhookProcessor.delete(name);
+        webhookManager.delete(name);
     }
 
 }
