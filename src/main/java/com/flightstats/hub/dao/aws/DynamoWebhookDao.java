@@ -65,11 +65,6 @@ public class DynamoWebhookDao implements Dao<Webhook> {
         }
     }
 
-    @Override
-    public Webhook getCached(String name) {
-        return get(name);
-    }
-
     private Webhook mapItem(Map<String, AttributeValue> item) {
         Webhook.WebhookBuilder builder = Webhook.builder()
                 .name(item.get("name").getS())

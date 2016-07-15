@@ -26,11 +26,6 @@ public class NasChannelConfigurationDao implements Dao<ChannelConfig> {
     }
 
     @Override
-    public ChannelConfig getCached(String name) {
-        return get(name);
-    }
-
-    @Override
     public ChannelConfig get(String name) {
         return NasUtil.readJson(channelPath, name, ChannelConfig::fromJson);
     }

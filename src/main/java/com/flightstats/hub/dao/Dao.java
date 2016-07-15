@@ -14,7 +14,9 @@ public interface Dao<T extends NamedType> {
 
     T get(String name);
 
-    T getCached(String name);
+    default T getCached(String name) {
+        return get(name);
+    }
 
     Collection<T> getAll(boolean useCache);
 

@@ -81,11 +81,6 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
     }
 
     @Override
-    public ChannelConfig getCached(String name) {
-        return get(name);
-    }
-
-    @Override
     public ChannelConfig get(String name) {
         HashMap<String, AttributeValue> keyMap = new HashMap<>();
         keyMap.put("key", new AttributeValue().withS(name));

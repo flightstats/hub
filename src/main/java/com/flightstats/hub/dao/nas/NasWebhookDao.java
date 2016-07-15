@@ -30,11 +30,6 @@ public class NasWebhookDao implements Dao<Webhook> {
     }
 
     @Override
-    public Webhook getCached(String name) {
-        return get(name);
-    }
-
-    @Override
     public Collection<Webhook> getAll(boolean useCache) {
         return NasUtil.getIterable(groupPath, Webhook::fromJson);
     }
