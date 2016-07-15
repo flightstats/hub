@@ -64,7 +64,7 @@ public class WebhookProcessor {
 
     private synchronized void manageWebhooks() {
         Set<String> webhooksToStop = new HashSet<>(activeWebhooks.keySet());
-        Iterable<Webhook> webhooks = webhookDao.getAll(false);
+        Iterable<Webhook> webhooks = webhookDao.getAll(true);
         for (Webhook webhook : webhooks) {
             webhooksToStop.remove(webhook.getName());
             WebhookLeader activeLeader = activeWebhooks.get(webhook.getName());

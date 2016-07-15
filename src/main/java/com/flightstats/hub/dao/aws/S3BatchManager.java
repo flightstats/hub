@@ -9,6 +9,7 @@ import com.flightstats.hub.webhook.Webhook;
 import com.flightstats.hub.webhook.WebhookService;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,6 +17,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Executors;
 
+@Singleton
 public class S3BatchManager {
 
     private final static Logger logger = LoggerFactory.getLogger(S3BatchManager.class);
@@ -42,7 +44,6 @@ public class S3BatchManager {
         @Override
         protected void shutDown() throws Exception {
         }
-
     }
 
     private void setupBatch() {
