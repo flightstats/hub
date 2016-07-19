@@ -19,3 +19,6 @@ class HubUser:
 
     def time_path(self, unit="second"):
         return "/time/" + unit + "?stable=false"
+
+    def start_webhook(self, config):
+        pass

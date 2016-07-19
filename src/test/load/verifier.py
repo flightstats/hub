@@ -1,4 +1,5 @@
 # locust.py
+import json
 
 from locust import HttpLocust, TaskSet, task, web
 
@@ -9,6 +10,22 @@ from hubUser import HubUser
 class VerifierUser(HubUser):
     def name(self):
         return "verifier_test_"
+
+    def start_webhook(self, config):
+        # First User - create channel - posts to channel, webhook on channel
+        # Second User - create channel - posts to channel, parallel webhook on channel
+        # Third User - create channel - posts to channel, replicate channel, webhook on replicated channel
+        if config['number'] == 2:
+            config['parallel'] = 2
+            config['heartbeat'] = True
+        if config['number'] == 3:
+            config['webhook_channel'] = config['channel'] + "_replicated"
+            config['client'].put("/channel/" + config['webhook_channel'],
+                                 data=json.dumps({"name": config['webhook_channel'], "ttlDays": "3",
+                                                  "replicationSource": config['host'] + "/channel/" + config[
+                                                      'channel']}),
+                                 headers={"Content-Type": "application/json"},
+                                 name="replication")
 
 
 class VerifierTasks(TaskSet):

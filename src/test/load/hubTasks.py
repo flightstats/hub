@@ -65,31 +65,26 @@ class HubTasks:
         time.sleep(5)
 
     def start_webhook(self):
-        # First User - create channel - posts to channel, webhook on channel
-        # Second User - create channel - posts to channel, parallel webhook on channel
-        # Third User - create channel - posts to channel, replicate channel, webhook on replicated channel
-        webhook_channel = self.channel
-        parallel = 1
-        batch = "SINGLE"
-        heartbeat = False
-        if self.number == 2:
-            parallel = 2
-            heartbeat = True
-        if self.number == 3:
-            webhook_channel = self.channel + "_replicated"
-            self.client.put("/channel/" + webhook_channel,
-                            data=json.dumps({"name": webhook_channel, "ttlDays": "3",
-                                             "replicationSource": groupConfig['host'] + "/channel/" + self.channel}),
-                            headers={"Content-Type": "application/json"},
-                            name="replication")
-        group_name = "/group/locust_" + webhook_channel
+        config = {
+            "number": self.number,
+            "channel": self.channel,
+            "webhook_channel": self.channel,
+            "parallel": 1,
+            "batch": "SINGLE",
+            "heartbeat": False,
+            "client": self.client,
+            "host": self.host
+        }
+
+        self.user.start_webhook(config)
+        group_name = "/group/locust_" + config['webhook_channel']
         self.client.delete(group_name, name="group")
-        logger.info("group channel " + webhook_channel + " parallel:" + str(parallel))
+        logger.info("group channel " + config['webhook_channel'] + " parallel:" + str(config['parallel']))
         groupCallbacks[self.channel] = {
             "data": [],
-            "parallel": parallel,
-            "batch": batch,
-            "heartbeat": heartbeat,
+            "parallel": config['parallel'],
+            "batch": config['batch'],
+            "heartbeat": config['heartbeat'],
             "heartbeats": []
         }
         groupCallbackLocks[self.channel] = {
@@ -97,10 +92,10 @@ class HubTasks:
         }
         group = {
             "callbackUrl": "http://" + groupConfig['ip'] + ":8089/callback/" + self.channel,
-            "channelUrl": groupConfig['host'] + "/channel/" + webhook_channel,
-            "parallelCalls": parallel,
-            "batch": batch,
-            "heartbeat": heartbeat
+            "channelUrl": groupConfig['host'] + "/channel/" + config['webhook_channel'],
+            "parallelCalls": config['parallel'],
+            "batch": config['batch'],
+            "heartbeat": config['heartbeat']
         }
         self.client.put(group_name,
                         data=json.dumps(group),
