@@ -246,7 +246,6 @@ class HubTasks:
         items.extend(first['_links']['uris'])
         numItems = str(len(items) - 1)
         nextUrl = items[0] + "/next/" + numItems + "?stable=false&trace=true"
-        logger.info('next url ' + nextUrl)
         next_json = (self.client.get(nextUrl, name="next")).json()
         next_uris = next_json['_links']['uris']
         if cmp(next_uris, items[1:]) == 0:

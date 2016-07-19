@@ -288,6 +288,7 @@ public class LocalChannelService implements ChannelService {
         if (query.getContentKey().getTime().isBefore(ttlTime)) {
             query = query.withContentKey(new ContentKey(ttlTime, "0"));
         }
+        query = query.withLiveChannel(getCachedChannelConfig(query.getChannelName()).isLive());
         query = query.withTtlDays(getTtlDays(query.getChannelName()));
         Traces traces = ActiveTraces.getLocal();
         traces.add(query);

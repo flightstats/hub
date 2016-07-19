@@ -66,9 +66,9 @@ class HistoricalTasks(TaskSet):
     def second_query(self):
         self.hubTasks.second_query()
 
-        # @task(10)
-        # def next_previous(self):
-        #     self.hubTasks.next_previous()
+    @task(10)
+    def next_previous(self):
+        self.hubTasks.next_previous()
 
         #
         # @task(10)
