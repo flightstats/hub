@@ -37,6 +37,10 @@ public class ContentKey implements ContentPath {
         this.hash = hash;
     }
 
+    public ContentKey(int year, int month, int day, int hour, int minute, int second, int millis) {
+        this(new DateTime(year, month, day, hour, minute, second, millis, DateTimeZone.UTC));
+    }
+
     public ContentKey(int year, int month, int day, int hour, int minute, int second, int millis, String hash) {
         this(new DateTime(year, month, day, hour, minute, second, millis, DateTimeZone.UTC), hash);
     }
@@ -73,10 +77,6 @@ public class ContentKey implements ContentPath {
             logger.trace("unable to parse {} {} ", key, e.getMessage());
             return Optional.absent();
         }
-    }
-
-    public static ContentKey fromBytes(byte[] bytes) {
-        return fromUrl(new String(bytes, Charsets.UTF_8)).get();
     }
 
     private synchronized static String bulkHash(int number) {

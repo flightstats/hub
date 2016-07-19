@@ -7,6 +7,8 @@ import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.metrics.ActiveTraces;
+import com.flightstats.hub.model.*;
+import com.flightstats.hub.util.ChannelNameUtils;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.model.ContentPathKeys;
@@ -77,6 +79,7 @@ class TimedWebhookStrategy implements WebhookStrategy {
         executorService.scheduleAtFixedRate(new Runnable() {
 
             ContentPath lastAdded = startingPath;
+            ChannelConfig channelConfig = channelService.getChannelConfig(channel, true);
 
             @Override
             public void run() {
@@ -100,11 +103,10 @@ class TimedWebhookStrategy implements WebhookStrategy {
                     nextTime = lastAdded.getTime();
                 }
                 DateTime stable = TimeUtil.stable().minus(duration);
-                if (channelService.isReplicating(channel)) {
-                    ContentPath contentPath = lastContentPath.get(channel, timedWebhook.getNone(), Replicator.REPLICATED_LAST_UPDATED);
+                if (!channelConfig.isLive()) {
+                    ContentPath contentPath = channelService.getLastUpdated(channel, timedWebhook.getNone());
                     DateTime replicatedStable = timedWebhook.getReplicatingStable(contentPath);
                     if (replicatedStable.isBefore(stable)) {
-                        logger.trace("replicated fuuutuuure {} {}", stable, replicatedStable);
                         stable = replicatedStable;
                     }
                     logger.debug("replicating {} stable {}", contentPath, stable);

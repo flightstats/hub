@@ -35,6 +35,7 @@ public class ChannelConfig implements Serializable, NamedType {
     private final String replicationSource;
     private final String storage;
     private final GlobalConfig global;
+    private final boolean historical;
 
     private ChannelConfig(Builder builder) {
         name = StringUtils.trim(builder.name);
@@ -71,6 +72,7 @@ public class ChannelConfig implements Serializable, NamedType {
         } else {
             tags.remove(Replicator.GLOBAL);
         }
+        historical = builder.historical;
     }
 
     public static ChannelConfig fromJson(String json) {
@@ -167,6 +169,15 @@ public class ChannelConfig implements Serializable, NamedType {
         return StringUtils.isNotBlank(replicationSource) || isGlobalSatellite();
     }
 
+    public boolean isHistorical() {
+        return historical;
+    }
+
+    @JsonIgnore
+    public boolean isLive() {
+        return !isHistorical() && !isReplicating();
+    }
+
     @JsonIgnore
     public boolean isValidStorage() {
         return storage.equals(SINGLE) || storage.equals(BATCH) || storage.equals(BOTH);
@@ -212,6 +223,9 @@ public class ChannelConfig implements Serializable, NamedType {
         if (!getTags().equals(otherConfig.getTags())) {
             return true;
         }
+        if (isHistorical() != otherConfig.isHistorical()) {
+            return true;
+        }
         return false;
     }
 
@@ -227,6 +241,7 @@ public class ChannelConfig implements Serializable, NamedType {
         private long maxItems = 0;
         private String storage;
         private GlobalConfig global;
+        private boolean historical;
 
         public Builder() {
         }
@@ -242,6 +257,7 @@ public class ChannelConfig implements Serializable, NamedType {
             this.owner = config.owner;
             this.storage = config.storage;
             this.global = config.global;
+            this.historical = config.historical;
             return this;
         }
 
@@ -274,6 +290,9 @@ public class ChannelConfig implements Serializable, NamedType {
             }
             if (rootNode.has("global")) {
                 global = GlobalConfig.parseJson(rootNode.get("global"));
+            }
+            if (rootNode.has("historical")) {
+                withHistorical(rootNode.get("historical").asBoolean());
             }
             return this;
         }
@@ -337,6 +356,11 @@ public class ChannelConfig implements Serializable, NamedType {
 
         public Builder withGlobal(GlobalConfig global) {
             this.global = global;
+            return this;
+        }
+
+        public Builder withHistorical(boolean historical) {
+            this.historical = historical;
             return this;
         }
     }
