@@ -12,9 +12,9 @@ class VerifierUser(HubUser):
         return "verifier_test_"
 
     def start_webhook(self, config):
-        # First User - create channel - posts to channel, webhook on channel
-        # Second User - create channel - posts to channel, parallel webhook on channel
-        # Third User - create channel - posts to channel, replicate channel, webhook on replicated channel
+        # First - posts to channel, webhook on channel
+        # Second - posts to channel, parallel webhook on channel
+        # Third - posts to channel, replicate channel, webhook on replicated channel
         if config['number'] == 2:
             config['parallel'] = 2
             config['heartbeat'] = True
