@@ -4,16 +4,19 @@ import time
 from locust import HttpLocust, TaskSet, task, web
 
 from hubTasks import HubTasks
+from hubUser import HubUser
 
 
-class VerifierUser(TaskSet):
-    hubTasks = None
-
+class VerifierUser(HubUser):
     def name(self):
         return "verifier_test_"
 
+
+class VerifierTasks(TaskSet):
+    hubTasks = None
+
     def on_start(self):
-        self.hubTasks = HubTasks(self)
+        self.hubTasks = HubTasks(VerifierUser(), self.client)
         self.hubTasks.on_start()
         self.hubTasks.start_websocket()
         self.hubTasks.start_group_callback()
@@ -69,7 +72,7 @@ class VerifierUser(TaskSet):
 
 
 class WebsiteUser(HttpLocust):
-    task_set = VerifierUser
+    task_set = VerifierTasks
     min_wait = 500
     max_wait = 5000
 

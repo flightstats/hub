@@ -27,17 +27,16 @@ websockets = {}
 
 
 # BasicTasks is meant to be used as a common class for running tests
-# The using class must define the 'user' and 'host' objects
+# The using class must define the 'host' value
 
 
 class HubTasks:
     host = None
-
     channelNum = 0
 
-    def __init__(self, user):
+    def __init__(self, user, client):
         self.user = user
-        self.client = user.client
+        self.client = client
 
     def on_start(self):
         groupConfig['host'] = HubTasks.host
@@ -53,6 +52,7 @@ class HubTasks:
         self.channel = self.user.name() + str(self.number)
         self.count = 0
         payload = {"name": self.channel, "ttlDays": "3", "tags": ["load", "test", "DDT"], "owner": "DDT"}
+        self.user.channel_payload(payload)
         self.client.put("/channel/" + self.channel,
                         data=json.dumps(payload),
                         headers={"Content-Type": "application/json"},
