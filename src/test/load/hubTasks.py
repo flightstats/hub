@@ -38,7 +38,7 @@ class HubTasks:
         self.user = user
         self.client = client
 
-    def on_start(self):
+    def start(self):
         groupConfig['host'] = HubTasks.host
         groupConfig['ip'] = socket.gethostbyname(socket.getfqdn())
         logger.info('groupConfig %s', groupConfig)
@@ -58,11 +58,17 @@ class HubTasks:
                         headers={"Content-Type": "application/json"},
                         name="channel")
 
-    def start_group_callback(self):
-        # First User - create channel - posts to channel, group callback on channel
-        # Second User - create channel - posts to channel, parallel group callback on channel
-        # Third User - create channel - posts to channel, replicate channel, group callback on replicated channel
-        group_channel = self.channel
+        if self.user.has_webhook():
+            self.start_webhook()
+        if self.user.has_websocket():
+            self.start_websocket()
+        time.sleep(5)
+
+    def start_webhook(self):
+        # First User - create channel - posts to channel, webhook on channel
+        # Second User - create channel - posts to channel, parallel webhook on channel
+        # Third User - create channel - posts to channel, replicate channel, webhook on replicated channel
+        webhook_channel = self.channel
         parallel = 1
         batch = "SINGLE"
         heartbeat = False
@@ -70,15 +76,15 @@ class HubTasks:
             parallel = 2
             heartbeat = True
         if self.number == 3:
-            group_channel = self.channel + "_replicated"
-            self.client.put("/channel/" + group_channel,
-                            data=json.dumps({"name": group_channel, "ttlDays": "3",
+            webhook_channel = self.channel + "_replicated"
+            self.client.put("/channel/" + webhook_channel,
+                            data=json.dumps({"name": webhook_channel, "ttlDays": "3",
                                              "replicationSource": groupConfig['host'] + "/channel/" + self.channel}),
                             headers={"Content-Type": "application/json"},
                             name="replication")
-        group_name = "/group/locust_" + group_channel
+        group_name = "/group/locust_" + webhook_channel
         self.client.delete(group_name, name="group")
-        logger.info("group channel " + group_channel + " parallel:" + str(parallel))
+        logger.info("group channel " + webhook_channel + " parallel:" + str(parallel))
         groupCallbacks[self.channel] = {
             "data": [],
             "parallel": parallel,
@@ -91,7 +97,7 @@ class HubTasks:
         }
         group = {
             "callbackUrl": "http://" + groupConfig['ip'] + ":8089/callback/" + self.channel,
-            "channelUrl": groupConfig['host'] + "/channel/" + group_channel,
+            "channelUrl": groupConfig['host'] + "/channel/" + webhook_channel,
             "parallelCalls": parallel,
             "batch": batch,
             "heartbeat": heartbeat
@@ -117,12 +123,12 @@ class HubTasks:
         thread.start_new_thread(ws.run_forever, ())
 
     @staticmethod
-    def removeHostChannel(href):
-        return href.split("/channel/", 1)[1]
+    def getShortPath(url):
+        return url.split("/channel/", 1)[1]
 
     def on_message(self, ws, message):
         logger.debug("ws %s", message)
-        shortHref = HubTasks.removeHostChannel(message)
+        shortHref = HubTasks.getShortPath(message)
         HubTasks.verify_ordered(self.channel, shortHref, websockets, "websocket")
 
     def on_close(self, ws):
@@ -144,8 +150,10 @@ class HubTasks:
         if random.random() >= 0.99:
             postData = None
 
-        with self.client.post("/channel/" + self.channel, data=postData,
-                              headers={"Content-Type": "application/json"}, catch_response=True,
+        with self.client.post(self.user.channel_post_url(self.channel),
+                              data=postData,
+                              headers={"Content-Type": "application/json"},
+                              catch_response=True,
                               name="post_payload") as postResponse:
             if postResponse.status_code != 201:
                 postResponse.failure("Got wrong response on post: " + str(postResponse.status_code))
@@ -153,19 +161,20 @@ class HubTasks:
         links = postResponse.json()
         self.count += 1
         href = links['_links']['self']['href']
-        self.append_href(href, groupCallbacks)
-        if websockets[self.channel]["open"]:
-            self.append_href(href, websockets)
-        if groupCallbacks[self.channel]["heartbeat"]:
-            id = href[-30:-14]
-            if id not in groupCallbacks[self.channel]["heartbeats"]:
-                logger.info("adding heartbeat " + id)
-                groupCallbacks[self.channel]["heartbeats"].append(id)
-
+        if self.user.has_webhook():
+            self.append_href(href, groupCallbacks)
+            if groupCallbacks[self.channel]["heartbeat"]:
+                id = href[-30:-14]
+                if id not in groupCallbacks[self.channel]["heartbeats"]:
+                    logger.info("adding heartbeat " + id)
+                    groupCallbacks[self.channel]["heartbeats"].append(id)
+        if self.user.has_websocket():
+            if websockets[self.channel]["open"]:
+                self.append_href(href, websockets)
         return href
 
     def append_href(self, href, obj):
-        shortHref = HubTasks.removeHostChannel(href)
+        shortHref = HubTasks.getShortPath(href)
         try:
             groupCallbackLocks[self.channel]["lock"].acquire()
             obj[self.channel]["data"].append(shortHref)
@@ -237,6 +246,7 @@ class HubTasks:
         items.extend(first['_links']['uris'])
         numItems = str(len(items) - 1)
         nextUrl = items[0] + "/next/" + numItems + "?stable=false&trace=true"
+        logger.info('next url ' + nextUrl)
         next_json = (self.client.get(nextUrl, name="next")).json()
         next_uris = next_json['_links']['uris']
         if cmp(next_uris, items[1:]) == 0:
@@ -269,7 +279,7 @@ class HubTasks:
             results = self.client.get(results['_links']['previous']['href'], name="time_second").json()
 
     def time_path(self, unit="second"):
-        return "/channel/" + self.channel + "/time/" + unit + "?stable=false"
+        return "/channel/" + self.channel + self.user.time_path(unit) + "?stable=false"
 
     def next(self, time_unit):
         path = self.time_path(time_unit)
@@ -358,7 +368,7 @@ class HubTasks:
                 logger.info("incoming uri before locust tests started " + str(incoming_uri))
                 return
             try:
-                shortHref = HubTasks.removeHostChannel(incoming_uri)
+                shortHref = HubTasks.getShortPath(incoming_uri)
                 groupCallbackLocks[channel]["lock"].acquire()
                 if groupCallbacks[channel]["parallel"] == 1:
                     HubTasks.verify_ordered(channel, shortHref, groupCallbacks, "group")

@@ -1,6 +1,5 @@
 # locust.py
 
-import time
 from locust import HttpLocust, TaskSet, task, web
 
 from hubTasks import HubTasks
@@ -17,10 +16,7 @@ class VerifierTasks(TaskSet):
 
     def on_start(self):
         self.hubTasks = HubTasks(VerifierUser(), self.client)
-        self.hubTasks.on_start()
-        self.hubTasks.start_websocket()
-        self.hubTasks.start_group_callback()
-        time.sleep(5)
+        self.hubTasks.start()
 
     @task(1000)
     def write_read(self):
