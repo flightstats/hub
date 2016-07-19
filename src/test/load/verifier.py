@@ -1,70 +1,71 @@
 # locust.py
 
+import time
 from locust import HttpLocust, TaskSet, task, web
 
-from hubTasks import BasicTasks
+from hubTasks import HubTasks
 
-
-# todo do we need this here instead?
-# basicTasks =
 
 class VerifierUser(TaskSet):
-    basicTasks = None
+    hubTasks = None
 
     def name(self):
         return "verifier_test_"
 
     def on_start(self):
-        self.basicTasks = BasicTasks(self)
-        self.basicTasks.on_start()
+        self.hubTasks = HubTasks(self)
+        self.hubTasks.on_start()
+        self.hubTasks.start_websocket()
+        self.hubTasks.start_group_callback()
+        time.sleep(5)
 
     @task(1000)
     def write_read(self):
-        self.basicTasks.write_read()
+        self.hubTasks.write_read()
 
     @task(10)
     def change_parallel(self):
-        self.basicTasks.change_parallel()
+        self.hubTasks.change_parallel()
 
     @task(100)
     def sequential(self):
-        self.basicTasks.sequential()
+        self.hubTasks.sequential()
 
     @task(1)
     def hour_query(self):
-        self.basicTasks.hour_query()
+        self.hubTasks.hour_query()
 
     @task(1)
     def hour_query_get_items(self):
-        self.basicTasks.hour_query_get_items()
+        self.hubTasks.hour_query_get_items()
 
     @task(1)
     def minute_query(self):
-        self.basicTasks.minute_query()
+        self.hubTasks.minute_query()
 
     @task(1)
     def minute_query_get_items(self):
-        self.basicTasks.minute_query_get_items()
+        self.hubTasks.minute_query_get_items()
 
     @task(10)
     def next_previous(self):
-        self.basicTasks.next_previous()
+        self.hubTasks.next_previous()
 
     @task(10)
     def second_query(self):
-        self.basicTasks.second_query()
+        self.hubTasks.second_query()
 
     @task(10)
     def verify_callback_length(self):
-        self.basicTasks.verify_callback_length()
+        self.hubTasks.verify_callback_length()
 
     @web.app.route("/callback", methods=['GET'])
     def get_channels():
-        return BasicTasks.get_channels()
+        return HubTasks.get_channels()
 
     @web.app.route("/callback/<channel>", methods=['GET', 'POST'])
     def callback(channel):
-        return BasicTasks.callback(channel)
+        return HubTasks.callback(channel)
 
 
 class WebsiteUser(HttpLocust):
@@ -74,4 +75,4 @@ class WebsiteUser(HttpLocust):
 
     def __init__(self):
         super(WebsiteUser, self).__init__()
-        BasicTasks.host = self.host
+        HubTasks.host = self.host

@@ -30,24 +30,23 @@ websockets = {}
 # The using class must define the 'user' and 'host' objects
 
 
-class BasicTasks:
+class HubTasks:
     host = None
+
     channelNum = 0
-    user = None
-    client = None
 
     def __init__(self, user):
         self.user = user
         self.client = user.client
 
     def on_start(self):
-        groupConfig['host'] = BasicTasks.host
+        groupConfig['host'] = HubTasks.host
         groupConfig['ip'] = socket.gethostbyname(socket.getfqdn())
         logger.info('groupConfig %s', groupConfig)
         print groupConfig
 
-        BasicTasks.channelNum += 1
-        self.number = BasicTasks.channelNum
+        HubTasks.channelNum += 1
+        self.number = HubTasks.channelNum
         self.payload = self.payload_generator()
         logger.info("payload size " + str(self.payload.__sizeof__()))
         logger.info("user name " + str(self.user.name()))
@@ -58,10 +57,6 @@ class BasicTasks:
                         data=json.dumps(payload),
                         headers={"Content-Type": "application/json"},
                         name="channel")
-        # todo check with user ...
-        self.start_websocket()
-        self.start_group_callback()
-        time.sleep(5)
 
     def start_group_callback(self):
         # First User - create channel - posts to channel, group callback on channel
@@ -127,8 +122,8 @@ class BasicTasks:
 
     def on_message(self, ws, message):
         logger.debug("ws %s", message)
-        shortHref = BasicTasks.removeHostChannel(message)
-        BasicTasks.verify_ordered(self.channel, shortHref, websockets, "websocket")
+        shortHref = HubTasks.removeHostChannel(message)
+        HubTasks.verify_ordered(self.channel, shortHref, websockets, "websocket")
 
     def on_close(self, ws):
         logger.info("closing ws %s", self.channel)
@@ -170,7 +165,7 @@ class BasicTasks:
         return href
 
     def append_href(self, href, obj):
-        shortHref = BasicTasks.removeHostChannel(href)
+        shortHref = HubTasks.removeHostChannel(href)
         try:
             groupCallbackLocks[self.channel]["lock"].acquire()
             obj[self.channel]["data"].append(shortHref)
@@ -347,38 +342,42 @@ class BasicTasks:
         if request.method == 'POST':
             incoming_json = request.get_json()
             if incoming_json['type'] == "item":
-                for incoming_uri in incoming_json['uris']:
-                    if "_replicated" in incoming_uri:
-                        incoming_uri = incoming_uri.replace("_replicated", "")
-                    if channel not in groupCallbacks:
-                        logger.info("incoming uri before locust tests started " + str(incoming_uri))
-                        return "ok"
-                    try:
-                        shortHref = BasicTasks.removeHostChannel(incoming_uri)
-                        groupCallbackLocks[channel]["lock"].acquire()
-                        if groupCallbacks[channel]["parallel"] == 1:
-                            BasicTasks.verify_ordered(channel, shortHref, groupCallbacks, "group")
-                        else:
-                            BasicTasks.verify_parallel(channel, shortHref)
-                    finally:
-                        groupCallbackLocks[channel]["lock"].release()
+                HubTasks.item(channel, incoming_json)
             if incoming_json['type'] == "heartbeat":
-                logger.info("heartbeat " + str(incoming_json))
-                if incoming_json['id'] == groupCallbacks[channel]["heartbeats"][0]:
-                    (groupCallbacks[channel]["heartbeats"]).remove(incoming_json['id'])
-                    events.request_success.fire(request_type="heartbeats", name="order", response_time=1,
-                                                response_length=1)
-                elif incoming_json['id'] != groupCallbacks[channel]["lastHeartbeat"]:
-                    logger.info("heartbeat order question. id = " + incoming_json['id'] + " array=" + str(
-                        groupCallbacks[channel]["heartbeats"]))
-                    events.request_success.fire(request_type="heartbeats", name="order", response_time=1,
-                                                response_length=1)
-                else:
-                    logger.info("heartbeat order failure. id = " + incoming_json['id'] + " array=" + str(
-                        groupCallbacks[channel]["heartbeats"]))
-                    events.request_failure.fire(request_type="heartbeats", name="order", response_time=1,
-                                                exception=-1)
-                groupCallbacks[channel]["lastHeartbeat"] = incoming_json['id']
+                HubTasks.heartbeat(channel, incoming_json)
             return "ok"
         else:
             return jsonify(items=groupCallbacks[channel]["data"])
+
+    @staticmethod
+    def item(channel, incoming_json):
+        for incoming_uri in incoming_json['uris']:
+            if "_replicated" in incoming_uri:
+                incoming_uri = incoming_uri.replace("_replicated", "")
+            if channel not in groupCallbacks:
+                logger.info("incoming uri before locust tests started " + str(incoming_uri))
+                return
+            try:
+                shortHref = HubTasks.removeHostChannel(incoming_uri)
+                groupCallbackLocks[channel]["lock"].acquire()
+                if groupCallbacks[channel]["parallel"] == 1:
+                    HubTasks.verify_ordered(channel, shortHref, groupCallbacks, "group")
+                else:
+                    HubTasks.verify_parallel(channel, shortHref)
+            finally:
+                groupCallbackLocks[channel]["lock"].release()
+
+    @staticmethod
+    def heartbeat(channel, incoming_json):
+        logger.info("heartbeat " + str(incoming_json))
+        heartbeats_ = groupCallbacks[channel]["heartbeats"]
+        if incoming_json['id'] == heartbeats_[0]:
+            heartbeats_.remove(incoming_json['id'])
+            events.request_success.fire(request_type="heartbeats", name="order", response_time=1, response_length=1)
+        elif incoming_json['id'] != groupCallbacks[channel]["lastHeartbeat"]:
+            logger.info("heartbeat order question. id = " + incoming_json['id'] + " array=" + str(heartbeats_))
+            events.request_success.fire(request_type="heartbeats", name="order", response_time=1, response_length=1)
+        else:
+            logger.info("heartbeat order failure. id = " + incoming_json['id'] + " array=" + str(heartbeats_))
+            events.request_failure.fire(request_type="heartbeats", name="order", response_time=1, exception=-1)
+        groupCallbacks[channel]["lastHeartbeat"] = incoming_json['id']
