@@ -37,7 +37,10 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
     @Override
     public void filter(ContainerRequestContext request, ContainerResponseContext response) {
         try {
-            threadLocal.get().setResponse(response);
+            DataDogState dataDogState = threadLocal.get();
+            if (null != dataDogState) {
+                dataDogState.setResponse(response);
+            }
         } catch (Exception e) {
             logger.error("DataDog request error", e);
         }
@@ -46,6 +49,9 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
     public static void finalStats() {
         try {
             DataDogState dataDogState = threadLocal.get();
+            if (null == dataDogState) {
+                return;
+            }
             ContainerRequestContext request = dataDogState.getRequest();
             String endpoint = getRequestTemplate(request);
             String channel = channelName(request);
