@@ -2,6 +2,7 @@ package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.BucketLifecycleConfiguration;
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.CuratorLock;
 import com.flightstats.hub.cluster.Lockable;
@@ -16,10 +17,11 @@ import com.google.common.base.Optional;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -146,18 +148,11 @@ public class S3Config {
         private void updateTtlDays() {
             logger.info("updateTtlDays");
             ActiveTraces.start("S3Config.updateTtlDays");
-            ArrayList<BucketLifecycleConfiguration.Rule> rules = new ArrayList<>();
-            for (ChannelConfig config : configurations) {
-                if (config.getTtlDays() > 0) {
-                    if (config.isSingle() || config.isBoth()) {
-                        rules.add(addRule(config, ""));
-                    }
-                    if (config.isBatch() || config.isBoth()) {
-                        rules.add(addRule(config, "Batch"));
-                    }
-                }
-            }
-            logger.info("updating " + rules.size() + " rules with ttl life cycle ");
+            int maxRules = HubProperties.getProperty("s3.maxRules", 1000);
+            List<BucketLifecycleConfiguration.Rule> rules = S3ConfigStrategy.apportion(configurations, new DateTime(), maxRules);
+            logger.info("updating {} rules with ttl life cycle ", rules.size());
+            logger.trace("updating {} ", rules);
+
             if (!rules.isEmpty()) {
                 BucketLifecycleConfiguration lifecycleConfig = new BucketLifecycleConfiguration(rules);
                 s3Client.setBucketLifecycleConfiguration(s3BucketName, lifecycleConfig);
