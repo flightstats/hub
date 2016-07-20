@@ -175,7 +175,7 @@ public class LocalChannelService implements ChannelService {
             return Optional.absent();
         }
         Traces traces = ActiveTraces.getLocal();
-        ContentKey limitKey = getLatestLimit(stable);
+        ContentKey limitKey = getLatestLimit(channel, stable);
 
         Optional<ContentKey> latest = contentService.getLatest(channel, limitKey, traces, stable);
         if (latest.isPresent()) {
@@ -190,11 +190,11 @@ public class LocalChannelService implements ChannelService {
         return latest;
     }
 
-    static ContentKey getLatestLimit(boolean stable) {
-        DateTime time = TimeUtil.stable();
-        if (!stable) {
-            //if not stable, we don't want to miss any results.
-            time = TimeUtil.now().plusMinutes(1);
+    ContentKey getLatestLimit(String channelName, boolean stable) {
+        ChannelConfig channel = getCachedChannelConfig(channelName);
+        DateTime time = TimeUtil.now().plusMinutes(1);
+        if (stable || !channel.isLive()) {
+            time = getLastUpdated(channelName, new ContentKey(TimeUtil.stable())).getTime();
         }
         return ContentKey.lastKey(time);
     }

@@ -301,7 +301,7 @@ class HubTasks:
 
     def verify_callback_length(self):
         self.verify_callback(groupCallbacks, "group")
-        if self.user.has_websocket:
+        if self.user.has_websocket():
             if websockets[self.channel]["open"]:
                 self.verify_callback(websockets, "websocket")
         if groupCallbacks[self.channel]["heartbeat"]:
