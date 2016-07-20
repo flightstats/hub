@@ -31,9 +31,11 @@ public class SpokeInternalResource {
     public Response getPayload(@PathParam("path") String path) {
         try {
             Response.ResponseBuilder builder = Response.ok((StreamingOutput) os -> {
-                BufferedOutputStream output = new BufferedOutputStream(os);
-                spokeStore.read(path, output);
-                output.flush();
+                try (OutputStream output = new BufferedOutputStream(os)) {
+                    spokeStore.read(path, output);
+                } catch (NotFoundException e) {
+                    logger.debug("not found {}", e.getMessage());
+                }
             });
             return builder.build();
         } catch (Exception e) {
