@@ -1,6 +1,6 @@
 # locust.py
 from datetime import datetime, timedelta
-from locust import HttpLocust, TaskSet, task, web
+from locust import HttpLocust, TaskSet, task
 
 from hubTasks import HubTasks
 from hubUser import HubUser
@@ -16,6 +16,9 @@ class HistoricalUser(HubUser):
     def channel_post_url(self, channel):
         return "/channel/" + channel + "/" + self.historical_time("%Y/%m/%d/%H/%M/%S/") + "001"
 
+    def has_webhook(self):
+        return False
+
     def has_websocket(self):
         return False
 
@@ -30,12 +33,12 @@ class HistoricalUser(HubUser):
     def historical_time(self, time_format):
         return (datetime.utcnow() - timedelta(days=1)).strftime(time_format)
 
-    def start_webhook(self, config):
-        # First & Third - posts to channel, webhook on channel
-        # Second  - posts to channel, parallel webhook on channel
-        if config['number'] == 2:
-            config['parallel'] = 2
-            config['heartbeat'] = True
+        # def start_webhook(self, config):
+        #     # First & Third - posts to channel, webhook on channel
+        #     # Second  - posts to channel, parallel webhook on channel
+        #     if config['number'] == 2:
+        #         config['parallel'] = 2
+        #         config['heartbeat'] = True
 
 
 class HistoricalTasks(TaskSet):
@@ -78,17 +81,17 @@ class HistoricalTasks(TaskSet):
     def next_previous(self):
         self.hubTasks.next_previous()
 
-    @task(10)
-    def verify_callback_length(self):
-        self.hubTasks.verify_callback_length()
-
-    @web.app.route("/callback", methods=['GET'])
-    def get_channels():
-        return HubTasks.get_channels()
-
-    @web.app.route("/callback/<channel>", methods=['GET', 'POST'])
-    def callback(channel):
-        return HubTasks.callback(channel)
+        # @task(10)
+        # def verify_callback_length(self):
+        #     self.hubTasks.verify_callback_length()
+        #
+        # @web.app.route("/callback", methods=['GET'])
+        # def get_channels():
+        #     return HubTasks.get_channels()
+        #
+        # @web.app.route("/callback/<channel>", methods=['GET', 'POST'])
+        # def callback(channel):
+        #     return HubTasks.callback(channel)
 
 
 class WebsiteUser(HttpLocust):
