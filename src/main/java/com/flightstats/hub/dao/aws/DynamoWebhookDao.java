@@ -2,7 +2,6 @@ package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.*;
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.webhook.Webhook;
@@ -27,14 +26,7 @@ public class DynamoWebhookDao implements Dao<Webhook> {
     }
 
     private void initialize() {
-        long readThroughput = HubProperties.getProperty("dynamo.throughput.webhook.read", 100);
-        long writeThroughput = HubProperties.getProperty("dynamo.throughput.webhook.write", 10);
-        CreateTableRequest request = new CreateTableRequest()
-                .withTableName(getTableName())
-                .withAttributeDefinitions(new AttributeDefinition("name", ScalarAttributeType.S))
-                .withKeySchema(new KeySchemaElement("name", KeyType.HASH))
-                .withProvisionedThroughput(new ProvisionedThroughput(readThroughput, writeThroughput));
-        dynamoUtils.createTable(request);
+        dynamoUtils.createAndUpdate(getTableName(), "webhook", "name");
     }
 
     @Override
