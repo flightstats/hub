@@ -2,6 +2,7 @@ package com.flightstats.hub.app;
 
 import com.google.inject.Injector;
 import com.google.inject.Key;
+import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
 
 public class HubProvider {
@@ -17,6 +18,10 @@ public class HubProvider {
     }
 
     public static <T> T getInstance(Class<T> type, String name) {
+        return injector.getInstance(Key.get(type, Names.named(name)));
+    }
+
+    public static <T> T getInstance(TypeLiteral<T> type, String name) {
         return injector.getInstance(Key.get(type, Names.named(name)));
     }
 

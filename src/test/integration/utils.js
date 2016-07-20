@@ -63,7 +63,8 @@ function createChannel(channelName, url, description) {
 
 }
 
-function putChannel(channelName, verify, body, description) {
+function putChannel(channelName, verify, body, description, expectedStatus) {
+    expectedStatus = expectedStatus || 201;
     verify = verify || function () {};
     body = body || {"name" : channelName};
     description = description || 'none';
@@ -76,7 +77,7 @@ function putChannel(channelName, verify, body, description) {
                 body: JSON.stringify(body)},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(201);
+                expect(response.statusCode).toBe(expectedStatus);
                 console.log("respinse " + body)
                 verify(response, body);
                 done();

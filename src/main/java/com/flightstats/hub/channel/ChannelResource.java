@@ -237,11 +237,19 @@ public class ChannelResource {
 
     @DELETE
     public Response delete(@PathParam("channel") final String channelName) throws Exception {
-        boolean allowDeletion = HubProperties.getProperty("hub.allow.channel.deletion", false);
-        if (!allowDeletion) {
+        if (HubProperties.getProperty("hub.allow.channel.deletion", false)) {
+            return deletion(channelName);
+        }
+        if (uriInfo.getBaseUri().toString().contains("localhost")) {
+            return deletion(channelName);
+        } else {
             logger.info("deletions are not allowed");
             return Response.status(405).build();
-        } else if (channelService.delete(channelName)) {
+        }
+    }
+
+    private Response deletion(@PathParam("channel") String channelName) {
+        if (channelService.delete(channelName)) {
             return Response.status(Response.Status.ACCEPTED).build();
         } else {
             return Response.status(Response.Status.NOT_FOUND).entity("channel " + channelName + " not found").build();

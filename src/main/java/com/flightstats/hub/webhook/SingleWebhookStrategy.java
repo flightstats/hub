@@ -8,12 +8,13 @@ import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.metrics.ActiveTraces;
+import com.flightstats.hub.model.*;
+import com.flightstats.hub.util.ChannelNameUtils;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.model.MinutePath;
 import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.replication.Replicator;
-import com.flightstats.hub.util.ChannelNameUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
@@ -95,14 +96,14 @@ class SingleWebhookStrategy implements WebhookStrategy {
     }
 
     public void start(Webhook webhook, ContentPath startingPath) {
-        ContentPath startingKey = (ContentPath) startingPath;
-        channel = ChannelNameUtils.extractFromChannelUrl(webhook.getChannelUrl());
-        queryGenerator = new QueryGenerator(startingKey.getTime(), channel);
+        channel = webhook.getChannelName();
+        queryGenerator = new QueryGenerator(startingPath.getTime(), channel);
         ThreadFactory factory = new ThreadFactoryBuilder().setNameFormat("single-webhook-" + webhook.getName() + "-%s").build();
         executorService = Executors.newSingleThreadExecutor(factory);
         executorService.submit(new Runnable() {
 
-            ContentPath lastAdded = startingKey;
+            ContentPath lastAdded = startingPath;
+            ChannelConfig channelConfig = channelService.getChannelConfig(channel, true);
 
             @Override
             public void run() {
@@ -128,9 +129,8 @@ class SingleWebhookStrategy implements WebhookStrategy {
                 ActiveTraces.start("SingleWebhookStrategy", webhook);
                 try {
                     DateTime latestStableInChannel = TimeUtil.stable();
-                    if (channelService.isReplicating(channel)) {
-                        ContentPath contentPath = lastContentPath.get(channel, MinutePath.NONE, Replicator.REPLICATED_LAST_UPDATED);
-                        latestStableInChannel = contentPath.getTime();
+                    if (!channelConfig.isLive()) {
+                        latestStableInChannel = channelService.getLastUpdated(channel, MinutePath.NONE).getTime();
                     }
                     TimeQuery timeQuery = queryGenerator.getQuery(latestStableInChannel);
                     if (timeQuery != null) {

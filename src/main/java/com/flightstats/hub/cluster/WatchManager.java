@@ -52,7 +52,11 @@ public class WatchManager {
             final Watcher watcher = watcherMap.get(event.getPath());
             if (watcher != null) {
                 addWatch(watcher.getPath());
-                executorService.submit(() -> watcher.callback(event));
+                if (executorService.isShutdown()) {
+                    logger.warn("service is shutdown, skipping event {}", event);
+                } else {
+                    executorService.submit(() -> watcher.callback(event));
+                }
             }
         });
     }

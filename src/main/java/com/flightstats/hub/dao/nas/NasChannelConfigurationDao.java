@@ -1,6 +1,6 @@
 package com.flightstats.hub.dao.nas;
 
-import com.flightstats.hub.dao.ChannelConfigDao;
+import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.util.Collection;
 
-public class NasChannelConfigurationDao implements ChannelConfigDao {
+public class NasChannelConfigurationDao implements Dao<ChannelConfig> {
 
     private final static Logger logger = LoggerFactory.getLogger(NasChannelConfigurationDao.class);
 
@@ -21,33 +21,17 @@ public class NasChannelConfigurationDao implements ChannelConfigDao {
     }
 
     @Override
-    public ChannelConfig createChannel(ChannelConfig config) {
-        updateChannel(config);
-        return config;
-    }
-
-    @Override
-    public void updateChannel(ChannelConfig config) {
+    public void upsert(ChannelConfig config) {
         NasUtil.writeJson(config.toJson(), config.getName(), channelPath);
     }
 
     @Override
-    public boolean channelExists(String channelName) {
-        return getCachedChannelConfig(channelName) != null;
-    }
-
-    @Override
-    public ChannelConfig getCachedChannelConfig(String name) {
-        return getChannelConfig(name);
-    }
-
-    @Override
-    public ChannelConfig getChannelConfig(String name) {
+    public ChannelConfig get(String name) {
         return NasUtil.readJson(channelPath, name, ChannelConfig::fromJson);
     }
 
     @Override
-    public Collection<ChannelConfig> getChannels(boolean useCache) {
+    public Collection<ChannelConfig> getAll(boolean useCache) {
         return NasUtil.getIterable(channelPath, ChannelConfig::fromJson);
     }
 
