@@ -183,6 +183,7 @@ public class GlobalChannelService implements ChannelService {
 
     @Override
     public SortedSet<ContentKey> getKeys(DirectionQuery query) {
+        query.withLiveChannel(getCachedChannelConfig(query.getChannelName()).isLive());
         return primaryAndSecondary(query.getChannelName(),
                 () -> localChannelService.getKeys(query),
                 () -> query(query, spokeContentDao.query(query)));
