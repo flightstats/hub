@@ -1,5 +1,15 @@
 # locust.py
 import json
+import logging
+import random
+import socket
+import string
+import threading
+
+import httplib2
+import thread
+import time
+import websocket
 
 from locust import HttpLocust, TaskSet, task, web
 
