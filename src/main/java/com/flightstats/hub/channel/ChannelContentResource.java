@@ -8,6 +8,7 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Request;
 import com.flightstats.hub.events.ContentOutput;
 import com.flightstats.hub.events.EventsService;
+import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.metrics.ActiveTraces;
@@ -418,6 +419,8 @@ public class ChannelContentResource {
             return builder.build();
         } catch (InvalidRequestException e) {
             return Response.status(400).entity(e.getMessage()).build();
+        } catch (ConflictException e) {
+            return Response.status(409).entity(e.getMessage()).build();
         } catch (ContentTooLargeException e) {
             return Response.status(413).entity(e.getMessage()).build();
         } catch (Exception e) {

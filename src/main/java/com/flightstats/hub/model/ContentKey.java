@@ -106,6 +106,9 @@ public class ContentKey implements ContentPath {
 
     @Override
     public int compareTo(ContentPath other) {
+        if (other == null) {
+            return 1;
+        }
         if (other instanceof ContentKey) {
             ContentKey key = (ContentKey) other;
             int diff = time.compareTo(key.getTime());

@@ -1,8 +1,11 @@
 package com.flightstats.hub.dao;
 
+import com.diffplug.common.base.Errors;
+import com.diffplug.common.base.Throwing;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.cluster.LastContentPath;
+import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.exception.ForbiddenRequestException;
 import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.metrics.ActiveTraces;
@@ -119,16 +122,21 @@ public class LocalChannelService implements ChannelService {
         if (!isHistorical(channelName)) {
             throw new ForbiddenRequestException("historical inserts are only supported for historical channels.");
         }
-        //todo - gfm - 7/9/16 - does this need to enforce chronological order??
-        boolean insert = contentService.historicalInsert(channelName, content);
-        if (insert) {
-            ContentPath nextPath = content.getContentKey().get();
-            if (minuteComplete) {
-                nextPath = new MinutePath(nextPath.getTime());
+        Throwing.Function<ContentPath, ContentPath> inserter = existing -> {
+            if (content.getContentKey().get().compareTo(existing) <= 0) {
+                throw new ConflictException("inserted item is not newer than existing item: " + existing);
             }
-            lastContentPath.updateIncrease(nextPath, channelName, HISTORICAL_LAST_UPDATED);
-        }
-        return insert;
+            //todo - gfm - 7/21/16 - check if existing is NONE.  if it is, set historical_first
+            if (contentService.historicalInsert(channelName, content)) {
+                ContentPath nextPath = content.getContentKey().get();
+                if (minuteComplete) {
+                    nextPath = new MinutePath(nextPath.getTime());
+                }
+                return nextPath;
+            }
+            return existing;
+        };
+        return lastContentPath.updateIncrease(channelName, HISTORICAL_LAST_UPDATED, Errors.rethrow().wrap(inserter));
     }
 
     @Override
