@@ -387,3 +387,5 @@ class HubTasks:
             logger.info("heartbeat order failure. id = " + incoming_json['id'] + " array=" + str(heartbeats_))
             events.request_failure.fire(request_type="heartbeats", name="order", response_time=1, exception=-1)
         groupCallbacks[channel]["lastHeartbeat"] = incoming_json['id']
+
+        # test
