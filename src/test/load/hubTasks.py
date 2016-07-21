@@ -380,6 +380,7 @@ class HubTasks:
             heartbeats_.remove(incoming_json['id'])
             events.request_success.fire(request_type="heartbeats", name="order", response_time=1, response_length=1)
         elif incoming_json['id'] != groupCallbacks[channel]["lastHeartbeat"]:
+            heartbeats_.remove(incoming_json['id'])
             logger.info("heartbeat order question. id = " + incoming_json['id'] + " array=" + str(heartbeats_))
             events.request_success.fire(request_type="heartbeats", name="order", response_time=1, response_length=1)
         else:
