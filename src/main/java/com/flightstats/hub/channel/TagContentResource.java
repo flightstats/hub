@@ -224,19 +224,36 @@ public class TagContentResource {
         return builder.build();
     }
 
-    @Path("/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}/{direction:[n|p].*}")
+    @Path("/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}/{direction:p.*}")
     @GET
-    public Response getDirection(@PathParam("tag") String tag,
-                                 @PathParam("Y") int year,
-                                 @PathParam("M") int month,
-                                 @PathParam("D") int day,
-                                 @PathParam("h") int hour,
-                                 @PathParam("m") int minute,
-                                 @PathParam("s") int second,
-                                 @PathParam("ms") int millis,
-                                 @PathParam("hash") String hash,
-                                 @PathParam("direction") String direction,
-                                 @QueryParam("stable") @DefaultValue("true") boolean stable) {
+    public Response getPrevious(@PathParam("tag") String tag,
+                                @PathParam("Y") int year,
+                                @PathParam("M") int month,
+                                @PathParam("D") int day,
+                                @PathParam("h") int hour,
+                                @PathParam("m") int minute,
+                                @PathParam("s") int second,
+                                @PathParam("ms") int millis,
+                                @PathParam("hash") String hash,
+                                @PathParam("direction") String direction,
+                                @QueryParam("stable") @DefaultValue("true") boolean stable) {
+        ContentKey contentKey = new ContentKey(year, month, day, hour, minute, second, millis, hash);
+        return adjacent(tag, contentKey, stable, direction.startsWith("n"), uriInfo);
+    }
+
+    @Path("/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}/{direction:n.*}")
+    @GET
+    public Response getNext(@PathParam("tag") String tag,
+                            @PathParam("Y") int year,
+                            @PathParam("M") int month,
+                            @PathParam("D") int day,
+                            @PathParam("h") int hour,
+                            @PathParam("m") int minute,
+                            @PathParam("s") int second,
+                            @PathParam("ms") int millis,
+                            @PathParam("hash") String hash,
+                            @PathParam("direction") String direction,
+                            @QueryParam("stable") @DefaultValue("true") boolean stable) {
         ContentKey contentKey = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         return adjacent(tag, contentKey, stable, direction.startsWith("n"), uriInfo);
     }
@@ -266,26 +283,50 @@ public class TagContentResource {
         return builder.build();
     }
 
-    @Path("/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}/{direction:[n|p].*}/{count}")
+    @Path("/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}/{direction:p.*}/{count}")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getDirectionCount(@PathParam("tag") String tag,
-                                      @PathParam("Y") int year,
-                                      @PathParam("M") int month,
-                                      @PathParam("D") int day,
-                                      @PathParam("h") int hour,
-                                      @PathParam("m") int minute,
-                                      @PathParam("s") int second,
-                                      @PathParam("ms") int millis,
-                                      @PathParam("hash") String hash,
-                                      @PathParam("direction") String direction,
-                                      @PathParam("count") int count,
-                                      @QueryParam("stable") @DefaultValue("true") boolean stable,
-                                      @QueryParam("trace") @DefaultValue("false") boolean trace,
-                                      @QueryParam("batch") @DefaultValue("false") boolean batch,
-                                      @QueryParam("bulk") @DefaultValue("false") boolean bulk,
-                                      @QueryParam("location") @DefaultValue("ALL") String location,
-                                      @HeaderParam("Accept") String accept) {
+    public Response getPreviousCount(@PathParam("tag") String tag,
+                                     @PathParam("Y") int year,
+                                     @PathParam("M") int month,
+                                     @PathParam("D") int day,
+                                     @PathParam("h") int hour,
+                                     @PathParam("m") int minute,
+                                     @PathParam("s") int second,
+                                     @PathParam("ms") int millis,
+                                     @PathParam("hash") String hash,
+                                     @PathParam("direction") String direction,
+                                     @PathParam("count") int count,
+                                     @QueryParam("stable") @DefaultValue("true") boolean stable,
+                                     @QueryParam("trace") @DefaultValue("false") boolean trace,
+                                     @QueryParam("batch") @DefaultValue("false") boolean batch,
+                                     @QueryParam("bulk") @DefaultValue("false") boolean bulk,
+                                     @QueryParam("location") @DefaultValue("ALL") String location,
+                                     @HeaderParam("Accept") String accept) {
+        ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
+        return adjacentCount(tag, count, stable, trace, location, direction.startsWith("n"), key, bulk || batch, accept, uriInfo);
+    }
+
+    @Path("/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}/{direction:n.*}/{count}")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getNextCount(@PathParam("tag") String tag,
+                                 @PathParam("Y") int year,
+                                 @PathParam("M") int month,
+                                 @PathParam("D") int day,
+                                 @PathParam("h") int hour,
+                                 @PathParam("m") int minute,
+                                 @PathParam("s") int second,
+                                 @PathParam("ms") int millis,
+                                 @PathParam("hash") String hash,
+                                 @PathParam("direction") String direction,
+                                 @PathParam("count") int count,
+                                 @QueryParam("stable") @DefaultValue("true") boolean stable,
+                                 @QueryParam("trace") @DefaultValue("false") boolean trace,
+                                 @QueryParam("batch") @DefaultValue("false") boolean batch,
+                                 @QueryParam("bulk") @DefaultValue("false") boolean bulk,
+                                 @QueryParam("location") @DefaultValue("ALL") String location,
+                                 @HeaderParam("Accept") String accept) {
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         return adjacentCount(tag, count, stable, trace, location, direction.startsWith("n"), key, bulk || batch, accept, uriInfo);
     }

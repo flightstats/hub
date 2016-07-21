@@ -33,7 +33,6 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
     private static final Logger logger = LoggerFactory.getLogger(DataDogRequestFilter.class);
     private final static StatsDClient statsd = DataDog.statsd;
     private static final ThreadLocal<DataDogState> threadLocal = new ThreadLocal<>();
-    private static final String INVALID_CHARACTERS = "[\\[\\]\\|]";
 
     @Override
     public void filter(ContainerRequestContext request, ContainerResponseContext response) {
@@ -102,7 +101,6 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
         return templateList
                 .stream()
                 .map(UriTemplate::getTemplate)
-                .map(template -> template.replaceAll(INVALID_CHARACTERS, "_"))
                 .collect(Collectors.joining());
     }
 
