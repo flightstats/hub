@@ -27,18 +27,31 @@ public class DynamoUtils {
         this.environment = environment;
         this.appName = appName;
         this.tableCreationWaitMinutes = HubProperties.getProperty("dynamo.table_creation_wait_minutes", 10);
-        ;
     }
 
-    public String getTableName(String baseTableName) {
+    String getTableName(String baseTableName) {
         return appName + "-" + environment + "-" + baseTableName;
+    }
+
+    void createAndUpdate(String tableName, String type, String keyName) {
+        long readThroughput = HubProperties.getProperty("dynamo.throughput." + type + ".read", 100);
+        long writeThroughput = HubProperties.getProperty("dynamo.throughput." + type + ".write", 10);
+        logger.info("creating table {} with read {} and write {}", tableName, readThroughput, writeThroughput);
+        ProvisionedThroughput throughput = new ProvisionedThroughput(readThroughput, writeThroughput);
+        CreateTableRequest request = new CreateTableRequest()
+                .withTableName(tableName)
+                .withAttributeDefinitions(new AttributeDefinition(keyName, ScalarAttributeType.S))
+                .withKeySchema(new KeySchemaElement(keyName, KeyType.HASH))
+                .withProvisionedThroughput(throughput);
+        createTable(request);
+        updateTable(tableName, throughput);
     }
 
     /**
      * If a table does not already exist, create it.
      * Waits for the table to become ready for use.
      */
-    public void createTable(CreateTableRequest request) {
+    private void createTable(CreateTableRequest request) {
         String tableName = request.getTableName();
         try {
             waitForTableStatus(tableName, TableStatus.ACTIVE);
@@ -49,7 +62,7 @@ public class DynamoUtils {
         }
     }
 
-    public void updateTable(String tableName, ProvisionedThroughput throughput) {
+    private void updateTable(String tableName, ProvisionedThroughput throughput) {
         try {
             TableDescription tableDescription = waitForTableStatus(tableName, TableStatus.ACTIVE);
             ProvisionedThroughputDescription provisionedThroughput = tableDescription.getProvisionedThroughput();
@@ -64,16 +77,6 @@ public class DynamoUtils {
         } catch (ResourceNotFoundException e) {
             logger.warn("update presumes the table exists " + tableName, e);
             throw new RuntimeException("unable to update table " + tableName);
-        }
-    }
-
-    public void deleteChannel(String channelName) {
-        String tableName = getTableName(channelName);
-        try {
-            DescribeTableResult describeTableResult = dbClient.describeTable(tableName);
-            dbClient.deleteTable(tableName);
-        } catch (ResourceNotFoundException e) {
-            //do nothing
         }
     }
 
