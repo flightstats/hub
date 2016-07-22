@@ -18,7 +18,11 @@ public class QueryGenerator {
         this.channel = channel;
     }
 
-    public TimeQuery getQuery(DateTime latestStableInChannel) {
+    TimeQuery getQuery(DateTime latestStableInChannel) {
+        return getQuery(latestStableInChannel, false);
+    }
+
+    TimeQuery getQuery(DateTime latestStableInChannel, boolean isHistorical) {
         logger.trace("iterating {} last={} stable={} ", channel, lastQueryTime, latestStableInChannel);
         if (lastQueryTime.isBefore(latestStableInChannel)) {
             TimeUtil.Unit unit = getStepUnit(latestStableInChannel);
@@ -29,7 +33,6 @@ public class QueryGenerator {
             } else if (unit.equals(TimeUtil.Unit.DAYS)) {
                 logger.info("long term query {} unit={} lastQueryTime={}", channel, unit, lastQueryTime);
             }
-            //todo - gfm - 11/11/15 - can this make use of endTime?
             TimeQuery query = TimeQuery.builder()
                     .channelName(channel)
                     .startTime(lastQueryTime)
@@ -37,6 +40,9 @@ public class QueryGenerator {
                     .location(location)
                     .build();
             lastQueryTime = unit.round(lastQueryTime.plus(unit.getDuration()));
+            if (isHistorical) {
+                lastQueryTime = latestStableInChannel;
+            }
             return query;
         } else {
             return null;
@@ -55,7 +61,7 @@ public class QueryGenerator {
         return TimeUtil.Unit.SECONDS;
     }
 
-    public DateTime getLastQueryTime() {
+    DateTime getLastQueryTime() {
         return lastQueryTime;
     }
 }

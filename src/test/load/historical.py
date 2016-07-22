@@ -52,7 +52,7 @@ class HistoricalTasks(TaskSet):
         self.hubTasks = HubTasks(self.user, self.client)
         self.hubTasks.start()
 
-    @task(100)
+    @task(1000)
     def write_read(self):
         self.hubTasks.write_read()
 
@@ -99,8 +99,8 @@ class HistoricalTasks(TaskSet):
 
 class WebsiteUser(HttpLocust):
     task_set = HistoricalTasks
-    min_wait = 500
-    max_wait = 5000
+    min_wait = 50
+    max_wait = 6000
 
     def __init__(self):
         super(WebsiteUser, self).__init__()
