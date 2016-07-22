@@ -52,7 +52,7 @@ class HubTasks:
         self.channel = self.user.name() + str(self.number)
         self.count = 0
         payload = {"name": self.channel, "ttlDays": "3", "tags": ["load", "test", "DDT"], "owner": "DDT"}
-        self.user.channel_payload(payload)
+        self.user.start_channel(payload, self)
         self.client.put("/channel/" + self.channel,
                         data=json.dumps(payload),
                         headers={"Content-Type": "application/json"},
@@ -346,7 +346,7 @@ class HubTasks:
     def callback(channel):
         if request.method == 'POST':
             incoming_json = request.get_json()
-            if incoming_json['type'] == "item":
+            if incoming_json['type'] == "item" or incoming_json['type'] == "items":
                 HubTasks.item(channel, incoming_json)
             if incoming_json['type'] == "heartbeat":
                 HubTasks.heartbeat(channel, incoming_json)

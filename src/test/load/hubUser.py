@@ -5,7 +5,7 @@ class HubUser:
     def name(self):
         raise NotImplementedError("HubUser.name must be implemented")
 
-    def channel_payload(self, payload):
+    def start_channel(self, payload, tasks):
         pass
 
     def channel_post_url(self, channel):

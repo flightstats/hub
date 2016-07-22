@@ -10,8 +10,11 @@ class HistoricalUser(HubUser):
     def name(self):
         return "historical_test_"
 
-    def channel_payload(self, payload):
+    def start_channel(self, payload, tasks):
         payload["historical"] = "true"
+        tasks.client.delete("/channel/" + payload['name'], name="channelDelete")
+        if tasks.number == 3:
+            payload["storage"] = "BATCH"
 
     def channel_post_url(self, channel):
         return "/channel/" + channel + "/" + self.historical_time("%Y/%m/%d/%H/%M/%S/%f")
@@ -34,10 +37,10 @@ class HistoricalUser(HubUser):
         return (datetime.utcnow() - timedelta(days=1)).strftime(time_format)[:-3]
 
     def start_webhook(self, config):
-        # First & Third - posts to channel, webhook on channel
-        # Second  - posts to channel, parallel webhook on channel
+        # First & Third - posts to channel, single webhook on channel
+        # Second  - posts to channel, MINUTE webhook on channel
         if config['number'] == 2:
-            config['parallel'] = 2
+            config['batch'] = "MINUTE"
             config['heartbeat'] = True
 
 
