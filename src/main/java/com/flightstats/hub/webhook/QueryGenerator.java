@@ -23,15 +23,14 @@ public class QueryGenerator {
     }
 
     TimeQuery getQuery(DateTime latestStableInChannel, boolean isHistorical) {
-        logger.trace("iterating {} last={} stable={} ", channel, lastQueryTime, latestStableInChannel);
+        logger.trace("iterating last {} stable {} ", lastQueryTime, latestStableInChannel);
         if (lastQueryTime.isBefore(latestStableInChannel)) {
             TimeUtil.Unit unit = getStepUnit(latestStableInChannel);
-            logger.trace("query {} unit={} lastQueryTime={}", channel, unit, lastQueryTime);
             Location location = Location.ALL;
             if (unit.equals(TimeUtil.Unit.SECONDS)) {
                 location = Location.CACHE;
             } else if (unit.equals(TimeUtil.Unit.DAYS)) {
-                logger.info("long term query {} unit={} lastQueryTime={}", channel, unit, lastQueryTime);
+                logger.info("long term query unit={} lastQueryTime={}", unit, lastQueryTime);
             }
             TimeQuery query = TimeQuery.builder()
                     .channelName(channel)

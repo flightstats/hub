@@ -348,7 +348,7 @@ class HubTasks:
             incoming_json = request.get_json()
             if incoming_json['type'] == "item" or incoming_json['type'] == "items":
                 HubTasks.item(channel, incoming_json)
-            if incoming_json['type'] == "heartbeat":
+            if incoming_json['type'] == "heartbeat" or incoming_json['type'] == "items":
                 HubTasks.heartbeat(channel, incoming_json)
             return "ok"
         else:
@@ -374,7 +374,6 @@ class HubTasks:
 
     @staticmethod
     def heartbeat(channel, incoming_json):
-        logger.info("heartbeat " + str(incoming_json))
         heartbeats_ = groupCallbacks[channel]["heartbeats"]
         if incoming_json['id'] == heartbeats_[0]:
             heartbeats_.remove(incoming_json['id'])
