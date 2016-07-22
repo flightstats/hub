@@ -37,10 +37,14 @@ class HistoricalUser(HubUser):
         return (datetime.utcnow() - timedelta(days=1)).strftime(time_format)[:-3]
 
     def start_webhook(self, config):
-        # First & Third - posts to channel, single webhook on channel
+        # First - posts to channel, single webhook on channel
         # Second  - posts to channel, MINUTE webhook on channel
+        # Third  - posts to channel, SECOND webhook on channel
         if config['number'] == 2:
             config['batch'] = "MINUTE"
+            config['heartbeat'] = True
+        if config['number'] == 3:
+            config['batch'] = "SECOND"
             config['heartbeat'] = True
 
 
