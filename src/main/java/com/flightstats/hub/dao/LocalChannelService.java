@@ -331,6 +331,7 @@ public class LocalChannelService implements ChannelService {
             replicationGlobalManager.notifyWatchers();
         }
         lastContentPath.delete(channelName, HISTORICAL_LAST_UPDATED);
+        lastContentPath.delete(channelName, REPLICATED_LAST_UPDATED);
         return true;
     }
 
