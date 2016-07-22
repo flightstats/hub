@@ -5,6 +5,7 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.exception.NoSuchChannelException;
+import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentPath;
 import com.google.common.base.Optional;
@@ -15,6 +16,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 
+import static com.flightstats.hub.dao.LocalChannelService.HISTORICAL_FIRST_UPDATED;
+import static com.flightstats.hub.dao.LocalChannelService.HISTORICAL_LAST_UPDATED;
 import static com.flightstats.hub.webhook.WebhookLeader.WEBHOOK_LAST_COMPLETED;
 
 public class WebhookService {
@@ -36,8 +39,21 @@ public class WebhookService {
         this.channelService = channelService;
     }
 
+    public void unPauseHistorical(ChannelConfig channel) {
+        if (!channel.isHistorical()) {
+            return;
+        }
+        logger.info("looking to unpause webhooks for historical {}", channel);
+        Collection<Webhook> webhooks = getAll();
+        for (Webhook webhook : webhooks) {
+            if (webhook.getChannelName().equals(channel.getName())) {
+                webhook = webhook.withPaused(false);
+                upsert(webhook);
+            }
+        }
+    }
+
     public Optional<Webhook> upsert(Webhook webhook) {
-        ContentPath requestKey = webhook.getStartingKey();
         webhook = webhook.withDefaults(true);
         logger.info("upsert webhook with defaults " + webhook);
         webhookValidator.validate(webhook);
@@ -52,8 +68,26 @@ public class WebhookService {
             }
         }
         ContentPath existing = lastContentPath.getOrNull(name, WEBHOOK_LAST_COMPLETED);
-        logger.info("webhook {} existing {} requestKey {}", name, existing, requestKey);
-        if (existing == null || requestKey != null) {
+        logger.info("webhook {} existing {} requestKey {}", name, existing, webhook.getStartingKey());
+        ChannelConfig channel = channelService.getCachedChannelConfig(webhook.getChannelName());
+        if (channel.isHistorical()) {
+            ContentPath first = lastContentPath.get(channel.getName(), ContentKey.NONE, HISTORICAL_FIRST_UPDATED);
+            if (first.equals(ContentKey.NONE)) {
+                webhook = webhook.withPaused(true);
+                webhook = webhook.withStartingKey(ContentKey.NONE);
+                logger.info("pausing historical webhook {}", webhook);
+            } else {
+                ContentPath lastUpdated = lastContentPath.get(channel.getName(), ContentKey.NONE, HISTORICAL_LAST_UPDATED);
+                if (lastUpdated.equals(ContentKey.NONE)) {
+                    webhook = webhook.withStartingKey(new ContentKey(first.getTime().minusMillis(1)));
+                } else if (webhook.getStartingKey() == null || webhook.getStartingKey().compareTo(lastUpdated) > 0) {
+                    webhook = webhook.withStartingKey(lastUpdated);
+                }
+                logger.info("historical webhook with data {}", webhook);
+                lastContentPath.update(webhook.getStartingKey(), name, WEBHOOK_LAST_COMPLETED);
+            }
+        }
+        if (existing == null || webhook.getStartingKey() != null) {
             logger.info("initializing {} {}", name, webhook.getStartingKey());
             lastContentPath.initialize(name, webhook.getStartingKey(), WEBHOOK_LAST_COMPLETED);
         }
@@ -66,7 +100,7 @@ public class WebhookService {
         return Optional.fromNullable(webhookDao.get(name));
     }
 
-    public Optional<Webhook> getCached(String name) {
+    Optional<Webhook> getCached(String name) {
         return Optional.fromNullable(webhookDao.getCached(name));
     }
 

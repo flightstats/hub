@@ -15,6 +15,7 @@ import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.replication.ReplicationGlobalManager;
 import com.flightstats.hub.util.TimeUtil;
+import com.flightstats.hub.webhook.WebhookService;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -34,7 +35,8 @@ import static java.util.Objects.isNull;
 @Singleton
 public class LocalChannelService implements ChannelService {
     public static final String REPLICATED_LAST_UPDATED = "/ReplicatedLastUpdated/";
-    private static final String HISTORICAL_LAST_UPDATED = "/HistoricalLastUpdated/";
+    public static final String HISTORICAL_LAST_UPDATED = "/HistoricalLastUpdated/";
+    public static final String HISTORICAL_FIRST_UPDATED = "/HistoricalFirstUpdated/";
 
     private final static Logger logger = LoggerFactory.getLogger(LocalChannelService.class);
     private final static StatsDClient statsd = DataDog.statsd;
@@ -52,6 +54,8 @@ public class LocalChannelService implements ChannelService {
     private MetricsSender sender;
     @Inject
     private LastContentPath lastContentPath;
+    @Inject
+    private WebhookService webhookService;
 
     @Override
     public boolean channelExists(String channelName) {
@@ -87,6 +91,7 @@ public class LocalChannelService implements ChannelService {
             channelValidator.validate(configuration, false, oldConfig);
             if (isNull(oldConfig) && configuration.isHistorical()) {
                 lastContentPath.initialize(configuration.getName(), ContentKey.NONE, HISTORICAL_LAST_UPDATED);
+                lastContentPath.initialize(configuration.getName(), ContentKey.NONE, HISTORICAL_FIRST_UPDATED);
             }
             channelConfigDao.upsert(configuration);
             notify(configuration, oldConfig);
@@ -123,12 +128,16 @@ public class LocalChannelService implements ChannelService {
             throw new ForbiddenRequestException("historical inserts are only supported for historical channels.");
         }
         Throwing.Function<ContentPath, ContentPath> inserter = existing -> {
-            if (content.getContentKey().get().compareTo(existing) <= 0) {
+            ContentKey insertKey = content.getContentKey().get();
+            if (insertKey.compareTo(existing) <= 0) {
                 throw new ConflictException("inserted item is not newer than existing item: " + existing);
             }
-            //todo - gfm - 7/21/16 - check if existing is NONE.  if it is, set historical_first
             if (contentService.historicalInsert(channelName, content)) {
-                ContentPath nextPath = content.getContentKey().get();
+                if (existing.equals(ContentKey.NONE)) {
+                    lastContentPath.updateIncrease(insertKey, channelName, HISTORICAL_FIRST_UPDATED);
+                    webhookService.unPauseHistorical(getCachedChannelConfig(channelName));
+                }
+                ContentPath nextPath = insertKey;
                 if (minuteComplete) {
                     nextPath = new MinutePath(nextPath.getTime());
                 }
@@ -324,14 +333,17 @@ public class LocalChannelService implements ChannelService {
         if (!channelConfigDao.exists(channelName)) {
             return false;
         }
-        boolean replicating = isReplicating(channelName);
+        ChannelConfig channelConfig = getCachedChannelConfig(channelName);
         contentService.delete(channelName);
         channelConfigDao.delete(channelName);
-        if (replicating) {
+        if (channelConfig.isReplicating()) {
             replicationGlobalManager.notifyWatchers();
+            lastContentPath.delete(channelName, REPLICATED_LAST_UPDATED);
         }
-        lastContentPath.delete(channelName, HISTORICAL_LAST_UPDATED);
-        lastContentPath.delete(channelName, REPLICATED_LAST_UPDATED);
+        if (channelConfig.isHistorical()) {
+            lastContentPath.delete(channelName, HISTORICAL_LAST_UPDATED);
+            lastContentPath.delete(channelName, HISTORICAL_FIRST_UPDATED);
+        }
         return true;
     }
 
