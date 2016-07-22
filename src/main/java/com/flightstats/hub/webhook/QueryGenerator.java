@@ -40,7 +40,7 @@ public class QueryGenerator {
                     .location(location)
                     .build();
             lastQueryTime = unit.round(lastQueryTime.plus(unit.getDuration()));
-            if (isHistorical) {
+            if (isHistorical && lastQueryTime.isAfter(latestStableInChannel)) {
                 lastQueryTime = latestStableInChannel;
             }
             return query;
