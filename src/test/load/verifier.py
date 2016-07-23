@@ -27,7 +27,6 @@ class VerifierUser(HubUser):
         # Third - posts to channel, replicate channel, webhook on replicated channel
         if config['number'] == 2:
             config['parallel'] = 2
-            config['heartbeat'] = True
         if config['number'] == 3:
             config['webhook_channel'] = config['channel'] + "_replicated"
             config['client'].put("/channel/" + config['webhook_channel'],
