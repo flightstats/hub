@@ -85,7 +85,8 @@ class HubTasks:
             "parallel": config['parallel'],
             "batch": config['batch'],
             "heartbeat": config['heartbeat'],
-            "heartbeats": []
+            "heartbeats": [],
+            "lastHeartbeat": ''
         }
         groupCallbackLocks[self.channel] = {
             "lock": threading.Lock(),
@@ -159,7 +160,10 @@ class HubTasks:
         if self.user.has_webhook():
             self.append_href(href, groupCallbacks)
             if groupCallbacks[self.channel]["heartbeat"]:
-                id = href[-30:-14]
+                if groupCallbacks[self.channel]["batch"] == "MINUTE":
+                    id = href[-30:-14]
+                else:
+                    id = href[-30:-11]
                 if id not in groupCallbacks[self.channel]["heartbeats"]:
                     logger.info("adding heartbeat " + id)
                     groupCallbacks[self.channel]["heartbeats"].append(id)
@@ -375,14 +379,15 @@ class HubTasks:
     @staticmethod
     def heartbeat(channel, incoming_json):
         heartbeats_ = groupCallbacks[channel]["heartbeats"]
-        if incoming_json['id'] == heartbeats_[0]:
-            heartbeats_.remove(incoming_json['id'])
+        id_ = incoming_json['id']
+        if id_ == heartbeats_[0]:
+            heartbeats_.remove(id_)
             events.request_success.fire(request_type="heartbeats", name="order", response_time=1, response_length=1)
-        elif incoming_json['id'] != groupCallbacks[channel]["lastHeartbeat"]:
-            heartbeats_.remove(incoming_json['id'])
-            logger.info("heartbeat order question. id = " + incoming_json['id'] + " array=" + str(heartbeats_))
+        elif id_ != groupCallbacks[channel]["lastHeartbeat"]:
+            if id_ in heartbeats_:
+                heartbeats_.remove(id_)
             events.request_success.fire(request_type="heartbeats", name="order", response_time=1, response_length=1)
         else:
-            logger.info("heartbeat order failure. id = " + incoming_json['id'] + " array=" + str(heartbeats_))
+            logger.info("heartbeat order failure. id = " + id_ + " array=" + str(heartbeats_))
             events.request_failure.fire(request_type="heartbeats", name="order", response_time=1, exception=-1)
-        groupCallbacks[channel]["lastHeartbeat"] = incoming_json['id']
+        groupCallbacks[channel]["lastHeartbeat"] = id_

@@ -39,14 +39,9 @@ class HistoricalUser(HubUser):
     def start_webhook(self, config):
         # First - posts to channel, single webhook on channel
         # Second  - posts to channel, MINUTE webhook on channel
-        # Third  - posts to channel, SECOND webhook on channel
         if config['number'] == 2:
             config['batch'] = "MINUTE"
             config['heartbeat'] = True
-        if config['number'] == 3:
-            config['batch'] = "SECOND"
-            config['heartbeat'] = True
-
 
 class HistoricalTasks(TaskSet):
     hubTasks = None
