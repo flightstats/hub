@@ -6,6 +6,7 @@ var locustUrl = process.env.locustUrl;
 locustUrl = 'http://' + locustUrl + '/stats/';
 console.log(locustUrl);
 
+var timeout = 60 * 1000;
 /**
  * This should get the results from a running locust install and logs results to the console
  * http://locustUrl/stats/requests
@@ -32,7 +33,7 @@ describe(testName, function () {
                 });
                 done();
             })
-    });
+    }, timeout);
 
     it('resets stats', function (done) {
         var url = locustUrl + 'reset';
@@ -45,6 +46,6 @@ describe(testName, function () {
                 expect(res.status).toBe(200);
                 done();
             })
-    });
+    }, timeout);
 
 });
