@@ -128,7 +128,7 @@ public class GlobalChannelService implements ChannelService {
         return primaryAndSecondary(channelName,
                 () -> localChannelService.getLatest(channelName, stable, trace),
                 () -> {
-                    ContentKey limitKey = LocalChannelService.getLatestLimit(stable);
+                    ContentKey limitKey = localChannelService.getLatestLimit(channelName, stable);
                     Optional<ContentKey> latest = spokeContentDao.getLatest(channelName, limitKey, ActiveTraces.getLocal());
                     if (latest.isPresent()) {
                         return latest;
@@ -183,6 +183,7 @@ public class GlobalChannelService implements ChannelService {
 
     @Override
     public SortedSet<ContentKey> getKeys(DirectionQuery query) {
+        query.withLiveChannel(getCachedChannelConfig(query.getChannelName()).isLive());
         return primaryAndSecondary(query.getChannelName(),
                 () -> localChannelService.getKeys(query),
                 () -> query(query, spokeContentDao.query(query)));

@@ -8,6 +8,7 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Request;
 import com.flightstats.hub.events.ContentOutput;
 import com.flightstats.hub.events.EventsService;
+import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.metrics.ActiveTraces;
@@ -258,22 +259,43 @@ public class ChannelContentResource {
         return builder.build();
     }
 
-    @Path("/{h}/{m}/{s}/{ms}/{hash}/{direction:[n|p].*}")
+    @Path("/{h}/{m}/{s}/{ms}/{hash}/{direction:p.*}")
     @GET
-    public Response getDirection(@PathParam("channel") String channel,
-                                 @PathParam("Y") int year,
-                                 @PathParam("M") int month,
-                                 @PathParam("D") int day,
-                                 @PathParam("h") int hour,
-                                 @PathParam("m") int minute,
-                                 @PathParam("s") int second,
-                                 @PathParam("ms") int millis,
-                                 @PathParam("hash") String hash,
-                                 @PathParam("direction") String direction,
-                                 @QueryParam("stable") @DefaultValue("true") boolean stable,
-                                 @QueryParam("tag") String tag) {
+    public Response getPrevious(@PathParam("channel") String channel,
+                                @PathParam("Y") int year,
+                                @PathParam("M") int month,
+                                @PathParam("D") int day,
+                                @PathParam("h") int hour,
+                                @PathParam("m") int minute,
+                                @PathParam("s") int second,
+                                @PathParam("ms") int millis,
+                                @PathParam("hash") String hash,
+                                @PathParam("direction") String direction,
+                                @QueryParam("stable") @DefaultValue("true") boolean stable,
+                                @QueryParam("tag") String tag) {
         ContentKey contentKey = new ContentKey(year, month, day, hour, minute, second, millis, hash);
-        boolean next = direction.startsWith("n");
+        return adjacent(channel, stable, tag, contentKey, direction.startsWith("n"));
+    }
+
+    @Path("/{h}/{m}/{s}/{ms}/{hash}/{direction:n.*}")
+    @GET
+    public Response getNext(@PathParam("channel") String channel,
+                            @PathParam("Y") int year,
+                            @PathParam("M") int month,
+                            @PathParam("D") int day,
+                            @PathParam("h") int hour,
+                            @PathParam("m") int minute,
+                            @PathParam("s") int second,
+                            @PathParam("ms") int millis,
+                            @PathParam("hash") String hash,
+                            @PathParam("direction") String direction,
+                            @QueryParam("stable") @DefaultValue("true") boolean stable,
+                            @QueryParam("tag") String tag) {
+        ContentKey contentKey = new ContentKey(year, month, day, hour, minute, second, millis, hash);
+        return adjacent(channel, stable, tag, contentKey, direction.startsWith("n"));
+    }
+
+    private Response adjacent(String channel, boolean stable, String tag, ContentKey contentKey, boolean next) {
         if (null != tag) {
             return tagContentResource.adjacent(tag, contentKey, stable, next, uriInfo);
         }
@@ -325,29 +347,57 @@ public class ChannelContentResource {
         }
     }
 
-    @Path("/{h}/{m}/{s}/{ms}/{hash}/{direction:[n|p].*}/{count}")
+    @Path("/{h}/{m}/{s}/{ms}/{hash}/{direction:p.*}/{count}")
     @GET
     @Produces({MediaType.APPLICATION_JSON, "multipart/*", "application/zip"})
-    public Response getDirectionCount(@PathParam("channel") String channel,
-                                      @PathParam("Y") int year,
-                                      @PathParam("M") int month,
-                                      @PathParam("D") int day,
-                                      @PathParam("h") int hour,
-                                      @PathParam("m") int minute,
-                                      @PathParam("s") int second,
-                                      @PathParam("ms") int millis,
-                                      @PathParam("hash") String hash,
-                                      @PathParam("direction") String direction,
-                                      @PathParam("count") int count,
-                                      @QueryParam("stable") @DefaultValue("true") boolean stable,
-                                      @QueryParam("trace") @DefaultValue("false") boolean trace,
-                                      @QueryParam("location") @DefaultValue("ALL") String location,
-                                      @QueryParam("batch") @DefaultValue("false") boolean batch,
-                                      @QueryParam("bulk") @DefaultValue("false") boolean bulk,
-                                      @QueryParam("tag") String tag,
-                                      @HeaderParam("Accept") String accept) {
+    public Response getPreviousCount(@PathParam("channel") String channel,
+                                     @PathParam("Y") int year,
+                                     @PathParam("M") int month,
+                                     @PathParam("D") int day,
+                                     @PathParam("h") int hour,
+                                     @PathParam("m") int minute,
+                                     @PathParam("s") int second,
+                                     @PathParam("ms") int millis,
+                                     @PathParam("hash") String hash,
+                                     @PathParam("direction") String direction,
+                                     @PathParam("count") int count,
+                                     @QueryParam("stable") @DefaultValue("true") boolean stable,
+                                     @QueryParam("trace") @DefaultValue("false") boolean trace,
+                                     @QueryParam("location") @DefaultValue("ALL") String location,
+                                     @QueryParam("batch") @DefaultValue("false") boolean batch,
+                                     @QueryParam("bulk") @DefaultValue("false") boolean bulk,
+                                     @QueryParam("tag") String tag,
+                                     @HeaderParam("Accept") String accept) {
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
-        boolean next = direction.startsWith("n");
+        return adjacentCount(channel, count, stable, trace, location, batch, bulk, tag, accept, key, direction.startsWith("n"));
+    }
+
+    @Path("/{h}/{m}/{s}/{ms}/{hash}/{direction:n.*}/{count}")
+    @GET
+    @Produces({MediaType.APPLICATION_JSON, "multipart/*", "application/zip"})
+    public Response getNextCount(@PathParam("channel") String channel,
+                                 @PathParam("Y") int year,
+                                 @PathParam("M") int month,
+                                 @PathParam("D") int day,
+                                 @PathParam("h") int hour,
+                                 @PathParam("m") int minute,
+                                 @PathParam("s") int second,
+                                 @PathParam("ms") int millis,
+                                 @PathParam("hash") String hash,
+                                 @PathParam("direction") String direction,
+                                 @PathParam("count") int count,
+                                 @QueryParam("stable") @DefaultValue("true") boolean stable,
+                                 @QueryParam("trace") @DefaultValue("false") boolean trace,
+                                 @QueryParam("location") @DefaultValue("ALL") String location,
+                                 @QueryParam("batch") @DefaultValue("false") boolean batch,
+                                 @QueryParam("bulk") @DefaultValue("false") boolean bulk,
+                                 @QueryParam("tag") String tag,
+                                 @HeaderParam("Accept") String accept) {
+        ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
+        return adjacentCount(channel, count, stable, trace, location, batch, bulk, tag, accept, key, direction.startsWith("n"));
+    }
+
+    private Response adjacentCount(String channel, int count, boolean stable, boolean trace, String location, boolean batch, boolean bulk, String tag, String accept, ContentKey key, boolean next) {
         if (null != tag) {
             return tagContentResource.adjacentCount(tag, count, stable, trace, location, next, key, bulk || batch, accept, uriInfo);
         }
@@ -418,6 +468,8 @@ public class ChannelContentResource {
             return builder.build();
         } catch (InvalidRequestException e) {
             return Response.status(400).entity(e.getMessage()).build();
+        } catch (ConflictException e) {
+            return Response.status(409).entity(e.getMessage()).build();
         } catch (ContentTooLargeException e) {
             return Response.status(413).entity(e.getMessage()).build();
         } catch (Exception e) {

@@ -178,7 +178,6 @@ public class FileSpokeStore {
     }
 
     public String getLatest(String channel, String limitPath) {
-        logger.trace("ttlTime = {}", ttlMinutes);
         logger.trace("latest {} {}", channel, limitPath);
         ContentKey limitKey = ContentKey.fromUrl(limitPath).get();
         return getLatest(channel, limitPath, limitKey.getTime());

@@ -21,10 +21,7 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.Random;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public class S3Config {
@@ -149,7 +146,15 @@ public class S3Config {
             logger.info("updateTtlDays");
             ActiveTraces.start("S3Config.updateTtlDays");
             int maxRules = HubProperties.getProperty("s3.maxRules", 1000);
-            List<BucketLifecycleConfiguration.Rule> rules = S3ConfigStrategy.apportion(configurations, new DateTime(), maxRules);
+            List<BucketLifecycleConfiguration.Rule> rules = new ArrayList<>();
+            if (maxRules == 0) {
+                rules.add(new BucketLifecycleConfiguration.Rule()
+                        .withId("OneDay")
+                        .withExpirationInDays(1)
+                        .withStatus(BucketLifecycleConfiguration.ENABLED));
+            } else {
+                rules = S3ConfigStrategy.apportion(configurations, new DateTime(), maxRules);
+            }
             logger.info("updating {} rules with ttl life cycle ", rules.size());
             logger.trace("updating {} ", rules);
 

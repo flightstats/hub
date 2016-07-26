@@ -217,9 +217,9 @@ public class ChannelResource {
         try {
             logger.info("starting events for {} at {}", channel, lastEventId);
             ContentKey contentKey = new ContentKey();
-            ContentKey keyOptional = ContentKey.fromFullUrl(lastEventId);
-            if (keyOptional != null) {
-                contentKey = keyOptional;
+            ContentKey fromUrl = ContentKey.fromFullUrl(lastEventId);
+            if (fromUrl != null) {
+                contentKey = fromUrl;
             } else if (channelService.isReplicating(channel)) {
                 Optional<ContentKey> latest = channelService.getLatest(channel, true, false);
                 if (latest.isPresent()) {
