@@ -1,6 +1,16 @@
 # locust.py
+import json
+import logging
+import random
+import socket
+import string
+import threading
 
+import httplib2
+import thread
 import time
+import websocket
+
 from locust import HttpLocust, TaskSet, task, web
 
 from hubTasks import HubTasks
@@ -11,16 +21,28 @@ class VerifierUser(HubUser):
     def name(self):
         return "verifier_test_"
 
+    def start_webhook(self, config):
+        # First - posts to channel, webhook on channel
+        # Second - posts to channel, parallel webhook on channel
+        # Third - posts to channel, replicate channel, webhook on replicated channel
+        if config['number'] == 2:
+            config['parallel'] = 2
+        if config['number'] == 3:
+            config['webhook_channel'] = config['channel'] + "_replicated"
+            config['client'].put("/channel/" + config['webhook_channel'],
+                                 data=json.dumps({"name": config['webhook_channel'], "ttlDays": "3",
+                                                  "replicationSource": config['host'] + "/channel/" + config[
+                                                      'channel']}),
+                                 headers={"Content-Type": "application/json"},
+                                 name="replication")
+
 
 class VerifierTasks(TaskSet):
     hubTasks = None
 
     def on_start(self):
         self.hubTasks = HubTasks(VerifierUser(), self.client)
-        self.hubTasks.on_start()
-        self.hubTasks.start_websocket()
-        self.hubTasks.start_group_callback()
-        time.sleep(5)
+        self.hubTasks.start()
 
     @task(1000)
     def write_read(self):

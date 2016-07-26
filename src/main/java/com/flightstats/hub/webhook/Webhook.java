@@ -46,6 +46,7 @@ public class Webhook implements Comparable<Webhook>, NamedType {
     private final String batch;
     @Wither
     private final boolean heartbeat;
+    @Wither
     private final boolean paused;
     @Wither
     private final Integer ttlMinutes;

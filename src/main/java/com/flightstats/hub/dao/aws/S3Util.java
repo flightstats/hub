@@ -38,24 +38,18 @@ class S3Util {
         DateTime endTime = query.getContentKey().getTime();
         DateTime queryTime = endTime;
         SortedSet<ContentKey> keys = new TreeSet<>();
-        int count = 0;
         DateTime earliestTime = TimeUtil.getEarliestTime((int) query.getTtlDays()).minusDays(1);
         while (keys.size() < query.getCount() && queryTime.isAfter(earliestTime)) {
-            //todo - gfm - 2/26/16 - this could be more sophisticated
             TimeUtil.Unit unit = TimeUtil.Unit.HOURS;
             Duration duration = new Duration(queryTime, endTime);
-            if (duration.getStandardDays() >= 7) {
+            if (duration.getStandardDays() >= 2) {
                 unit = TimeUtil.Unit.DAYS;
-            }
-            if (duration.getStandardDays() == 30) {
-                unit = TimeUtil.Unit.MONTH;
             }
             if (duration.getStandardDays() >= 31) {
                 unit = TimeUtil.Unit.MONTHS;
             }
             keys = getContentKeys(query, dao.queryByTime(query.convert(queryTime, unit)), keys, earliestTime);
             queryTime = queryTime.minus(unit.getDuration());
-            count++;
         }
 
         ActiveTraces.getLocal().add("queryPrevious returning", keys);
@@ -63,10 +57,8 @@ class S3Util {
     }
 
     private static SortedSet<ContentKey> getContentKeys(DirectionQuery query, SortedSet<ContentKey> contentKeys, SortedSet<ContentKey> keys, DateTime earliestTime) {
-        SortedSet<ContentKey> queryByTime = contentKeys;
-        queryByTime.addAll(keys);
-        keys = ContentKeyUtil.filter(queryByTime, query.getContentKey(), earliestTime, query.getCount(), false, query.isStable());
-        return keys;
+        contentKeys.addAll(keys);
+        return ContentKeyUtil.filter(contentKeys, query.getContentKey(), earliestTime, query.getCount(), false, query.isStable());
     }
 
     public static void delete(String channelPath, ContentKey limitKey, String s3BucketName, AmazonS3 s3Client) {

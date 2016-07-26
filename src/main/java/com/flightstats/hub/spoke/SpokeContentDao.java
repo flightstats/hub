@@ -188,11 +188,15 @@ public class SpokeContentDao implements ContentDao {
 
     @Override
     public SortedSet<ContentKey> query(DirectionQuery query) {
-        ActiveTraces.getLocal().add("SpokeContentDao.query", query);
-        DateTime ttlTime = TimeUtil.now().minusMinutes(ttlMinutes);
-        if (query.getContentKey().getTime().isBefore(ttlTime)) {
-            query = query.withContentKey(new ContentKey(ttlTime, "0"));
+        DateTime spokeTtlTime = TimeUtil.now().minusMinutes(ttlMinutes);
+        if (query.isLiveChannel()) {
+            if (query.getContentKey().getTime().isBefore(spokeTtlTime)) {
+                query = query.withContentKey(new ContentKey(spokeTtlTime, "0"));
+            }
+        } else {
+            spokeTtlTime = TimeUtil.getEarliestTime(query.getTtlDays());
         }
+        ActiveTraces.getLocal().add("SpokeContentDao.query ", query, spokeTtlTime);
         SortedSet<ContentKey> contentKeys = Collections.emptySortedSet();
         if (query.isNext()) {
             try {
@@ -206,9 +210,9 @@ public class SpokeContentDao implements ContentDao {
             DateTime endTime = TimeUtil.time(query.isStable());
             contentKeys = new TreeSet<>();
             while (contentKeys.size() < query.getCount()
-                    && startTime.isAfter(ttlTime.minusHours(1))
+                    && startTime.isAfter(spokeTtlTime.minusHours(1))
                     && startTime.isBefore(endTime.plusHours(1))) {
-                query(query, contentKeys, startKey, startTime, ttlTime, TimeUtil.Unit.HOURS);
+                query(query, contentKeys, startTime, spokeTtlTime, TimeUtil.Unit.HOURS);
                 startTime = startTime.minusHours(1);
             }
         }
@@ -216,7 +220,7 @@ public class SpokeContentDao implements ContentDao {
         return contentKeys;
     }
 
-    private void query(DirectionQuery query, SortedSet<ContentKey> orderedKeys, ContentKey startKey, DateTime startTime, DateTime ttlTime, TimeUtil.Unit unit) {
+    private void query(DirectionQuery query, SortedSet<ContentKey> orderedKeys, DateTime startTime, DateTime ttlTime, TimeUtil.Unit unit) {
         SortedSet<ContentKey> queryByTime = queryByTime(query.convert(startTime, unit));
         queryByTime.addAll(orderedKeys);
         Set<ContentKey> filtered = ContentKeyUtil.filter(queryByTime, query.getContentKey(), ttlTime, query.getCount(), query.isNext(), query.isStable());

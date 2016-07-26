@@ -8,12 +8,6 @@ import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.*;
-import com.flightstats.hub.util.ChannelNameUtils;
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.ContentPath;
-import com.flightstats.hub.model.ContentPathKeys;
-import com.flightstats.hub.model.TimeQuery;
-import com.flightstats.hub.replication.Replicator;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
@@ -75,7 +69,7 @@ class TimedWebhookStrategy implements WebhookStrategy {
     public void start(Webhook webhook, ContentPath startingPath) {
         ThreadFactory factory = new ThreadFactoryBuilder().setNameFormat(webhook.getBatch() + "-webhook-" + webhook.getName() + "-%s").build();
         executorService = Executors.newSingleThreadScheduledExecutor(factory);
-        logger.info("starting {} with offset {}", webhook, timedWebhook.getOffsetSeconds());
+        logger.info("starting {} with starting path {}", webhook, startingPath);
         executorService.scheduleAtFixedRate(new Runnable() {
 
             ContentPath lastAdded = startingPath;

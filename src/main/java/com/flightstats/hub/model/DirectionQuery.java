@@ -23,6 +23,8 @@ public class DirectionQuery implements Query {
     private final boolean stable;
     @Wither
     private final long ttlDays;
+    @Wither
+    private final boolean liveChannel;
 
     public Location getLocation() {
         if (location == null) {

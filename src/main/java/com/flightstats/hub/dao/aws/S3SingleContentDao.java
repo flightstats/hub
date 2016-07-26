@@ -237,7 +237,7 @@ public class S3SingleContentDao implements ContentDao {
         logger.trace("query {}", query);
         Traces traces = ActiveTraces.getLocal();
         traces.add("S3SingleContentDao.query", query);
-        SortedSet<ContentKey> contentKeys = Collections.emptySortedSet();
+        SortedSet<ContentKey> contentKeys;
         if (query.isNext()) {
             contentKeys = next(query);
         } else {
