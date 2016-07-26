@@ -45,6 +45,7 @@ public class S3Verifier {
     private final ExecutorService queryThreadPool = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("S3QueryThread-%d").build());
     private final ExecutorService channelThreadPool = Executors.newFixedThreadPool(10, new ThreadFactoryBuilder().setNameFormat("S3ChannelThread-%d").build());
     @Inject
+    private
     LastContentPath lastContentPath;
     @Inject
     private ChannelService channelService;

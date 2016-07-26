@@ -18,18 +18,20 @@ public class QueryGenerator {
         this.channel = channel;
     }
 
-    public TimeQuery getQuery(DateTime latestStableInChannel) {
-        logger.trace("iterating {} last={} stable={} ", channel, lastQueryTime, latestStableInChannel);
+    TimeQuery getQuery(DateTime latestStableInChannel) {
+        return getQuery(latestStableInChannel, false);
+    }
+
+    TimeQuery getQuery(DateTime latestStableInChannel, boolean isHistorical) {
+        logger.trace("iterating last {} stable {} ", lastQueryTime, latestStableInChannel);
         if (lastQueryTime.isBefore(latestStableInChannel)) {
             TimeUtil.Unit unit = getStepUnit(latestStableInChannel);
-            logger.trace("query {} unit={} lastQueryTime={}", channel, unit, lastQueryTime);
             Location location = Location.ALL;
             if (unit.equals(TimeUtil.Unit.SECONDS)) {
                 location = Location.CACHE;
             } else if (unit.equals(TimeUtil.Unit.DAYS)) {
-                logger.info("long term query {} unit={} lastQueryTime={}", channel, unit, lastQueryTime);
+                logger.info("long term query unit={} lastQueryTime={}", unit, lastQueryTime);
             }
-            //todo - gfm - 11/11/15 - can this make use of endTime?
             TimeQuery query = TimeQuery.builder()
                     .channelName(channel)
                     .startTime(lastQueryTime)
@@ -37,6 +39,9 @@ public class QueryGenerator {
                     .location(location)
                     .build();
             lastQueryTime = unit.round(lastQueryTime.plus(unit.getDuration()));
+            if (isHistorical && lastQueryTime.isAfter(latestStableInChannel)) {
+                lastQueryTime = latestStableInChannel;
+            }
             return query;
         } else {
             return null;
@@ -55,7 +60,7 @@ public class QueryGenerator {
         return TimeUtil.Unit.SECONDS;
     }
 
-    public DateTime getLastQueryTime() {
+    DateTime getLastQueryTime() {
         return lastQueryTime;
     }
 }

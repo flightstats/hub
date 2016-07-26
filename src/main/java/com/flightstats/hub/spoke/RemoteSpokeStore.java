@@ -226,11 +226,11 @@ public class RemoteSpokeStore {
         return null;
     }
 
-    public QueryResult readTimeBucket(String channel, String timePath) throws InterruptedException {
+    QueryResult readTimeBucket(String channel, String timePath) throws InterruptedException {
         return getKeys("/internal/spoke/time/" + channel + "/" + timePath);
     }
 
-    public SortedSet<ContentKey> getNext(String channel, int count, String startKey) throws InterruptedException {
+    SortedSet<ContentKey> getNext(String channel, int count, String startKey) throws InterruptedException {
         return getKeys("/internal/spoke/next/" + channel + "/" + count + "/" + startKey).getContentKeys();
     }
 

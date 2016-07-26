@@ -228,6 +228,7 @@ public class ContentDaoUtil {
                 .next(next)
                 .contentKey(new ContentKey(queryTime, "0"))
                 .ttlDays(120)
+                .liveChannel(true)
                 .build();
         Collection<ContentKey> found = contentDao.query(query);
         logger.info("query {} {}", queryTime, found);

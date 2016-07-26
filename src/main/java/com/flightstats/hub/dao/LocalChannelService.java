@@ -1,8 +1,11 @@
 package com.flightstats.hub.dao;
 
+import com.diffplug.common.base.Errors;
+import com.diffplug.common.base.Throwing;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.cluster.LastContentPath;
+import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.exception.ForbiddenRequestException;
 import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.metrics.ActiveTraces;
@@ -12,6 +15,7 @@ import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.replication.ReplicationGlobalManager;
 import com.flightstats.hub.util.TimeUtil;
+import com.flightstats.hub.webhook.WebhookService;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -31,7 +35,8 @@ import static java.util.Objects.isNull;
 @Singleton
 public class LocalChannelService implements ChannelService {
     public static final String REPLICATED_LAST_UPDATED = "/ReplicatedLastUpdated/";
-    private static final String HISTORICAL_LAST_UPDATED = "/HistoricalLastUpdated/";
+    public static final String HISTORICAL_LAST_UPDATED = "/HistoricalLastUpdated/";
+    public static final String HISTORICAL_FIRST_UPDATED = "/HistoricalFirstUpdated/";
 
     private final static Logger logger = LoggerFactory.getLogger(LocalChannelService.class);
     private final static StatsDClient statsd = DataDog.statsd;
@@ -49,6 +54,8 @@ public class LocalChannelService implements ChannelService {
     private MetricsSender sender;
     @Inject
     private LastContentPath lastContentPath;
+    @Inject
+    private WebhookService webhookService;
 
     @Override
     public boolean channelExists(String channelName) {
@@ -84,6 +91,7 @@ public class LocalChannelService implements ChannelService {
             channelValidator.validate(configuration, false, oldConfig);
             if (isNull(oldConfig) && configuration.isHistorical()) {
                 lastContentPath.initialize(configuration.getName(), ContentKey.NONE, HISTORICAL_LAST_UPDATED);
+                lastContentPath.initialize(configuration.getName(), ContentKey.NONE, HISTORICAL_FIRST_UPDATED);
             }
             channelConfigDao.upsert(configuration);
             notify(configuration, oldConfig);
@@ -119,16 +127,25 @@ public class LocalChannelService implements ChannelService {
         if (!isHistorical(channelName)) {
             throw new ForbiddenRequestException("historical inserts are only supported for historical channels.");
         }
-        //todo - gfm - 7/9/16 - does this need to enforce chronological order??
-        boolean insert = contentService.historicalInsert(channelName, content);
-        if (insert) {
-            ContentPath nextPath = content.getContentKey().get();
-            if (minuteComplete) {
-                nextPath = new MinutePath(nextPath.getTime());
+        Throwing.Function<ContentPath, ContentPath> inserter = existing -> {
+            ContentKey insertKey = content.getContentKey().get();
+            if (insertKey.compareTo(existing) <= 0) {
+                throw new ConflictException("inserted item is not newer than existing item: " + existing);
             }
-            lastContentPath.updateIncrease(nextPath, channelName, HISTORICAL_LAST_UPDATED);
-        }
-        return insert;
+            if (contentService.historicalInsert(channelName, content)) {
+                if (existing.equals(ContentKey.NONE)) {
+                    lastContentPath.updateIncrease(insertKey, channelName, HISTORICAL_FIRST_UPDATED);
+                    webhookService.unPauseHistorical(getCachedChannelConfig(channelName));
+                }
+                ContentPath nextPath = insertKey;
+                if (minuteComplete) {
+                    nextPath = new MinutePath(nextPath.getTime());
+                }
+                return nextPath;
+            }
+            return existing;
+        };
+        return lastContentPath.updateIncrease(channelName, HISTORICAL_LAST_UPDATED, Errors.rethrow().wrap(inserter));
     }
 
     @Override
@@ -175,7 +192,7 @@ public class LocalChannelService implements ChannelService {
             return Optional.absent();
         }
         Traces traces = ActiveTraces.getLocal();
-        ContentKey limitKey = getLatestLimit(stable);
+        ContentKey limitKey = getLatestLimit(channel, stable);
 
         Optional<ContentKey> latest = contentService.getLatest(channel, limitKey, traces, stable);
         if (latest.isPresent()) {
@@ -190,11 +207,11 @@ public class LocalChannelService implements ChannelService {
         return latest;
     }
 
-    static ContentKey getLatestLimit(boolean stable) {
-        DateTime time = TimeUtil.stable();
-        if (!stable) {
-            //if not stable, we don't want to miss any results.
-            time = TimeUtil.now().plusMinutes(1);
+    ContentKey getLatestLimit(String channelName, boolean stable) {
+        ChannelConfig channel = getCachedChannelConfig(channelName);
+        DateTime time = TimeUtil.now().plusMinutes(1);
+        if (stable || !channel.isLive()) {
+            time = getLastUpdated(channelName, new ContentKey(TimeUtil.stable())).getTime();
         }
         return ContentKey.lastKey(time);
     }
@@ -288,6 +305,7 @@ public class LocalChannelService implements ChannelService {
         if (query.getContentKey().getTime().isBefore(ttlTime)) {
             query = query.withContentKey(new ContentKey(ttlTime, "0"));
         }
+        query = query.withLiveChannel(getCachedChannelConfig(query.getChannelName()).isLive());
         query = query.withTtlDays(getTtlDays(query.getChannelName()));
         Traces traces = ActiveTraces.getLocal();
         traces.add(query);
@@ -315,13 +333,17 @@ public class LocalChannelService implements ChannelService {
         if (!channelConfigDao.exists(channelName)) {
             return false;
         }
-        boolean replicating = isReplicating(channelName);
+        ChannelConfig channelConfig = getCachedChannelConfig(channelName);
         contentService.delete(channelName);
         channelConfigDao.delete(channelName);
-        if (replicating) {
+        if (channelConfig.isReplicating()) {
             replicationGlobalManager.notifyWatchers();
+            lastContentPath.delete(channelName, REPLICATED_LAST_UPDATED);
         }
-        lastContentPath.delete(channelName, HISTORICAL_LAST_UPDATED);
+        if (channelConfig.isHistorical()) {
+            lastContentPath.delete(channelName, HISTORICAL_LAST_UPDATED);
+            lastContentPath.delete(channelName, HISTORICAL_FIRST_UPDATED);
+        }
         return true;
     }
 

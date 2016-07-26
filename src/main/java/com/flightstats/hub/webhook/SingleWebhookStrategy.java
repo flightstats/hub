@@ -9,12 +9,6 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.*;
-import com.flightstats.hub.util.ChannelNameUtils;
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.ContentPath;
-import com.flightstats.hub.model.MinutePath;
-import com.flightstats.hub.model.TimeQuery;
-import com.flightstats.hub.replication.Replicator;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
@@ -132,7 +126,7 @@ class SingleWebhookStrategy implements WebhookStrategy {
                     if (!channelConfig.isLive()) {
                         latestStableInChannel = channelService.getLastUpdated(channel, MinutePath.NONE).getTime();
                     }
-                    TimeQuery timeQuery = queryGenerator.getQuery(latestStableInChannel);
+                    TimeQuery timeQuery = queryGenerator.getQuery(latestStableInChannel, channelConfig.isHistorical());
                     if (timeQuery != null) {
                         addKeys(channelService.queryByTime(timeQuery));
                         if (webhook.isHeartbeat() && queryGenerator.getLastQueryTime().getSecondOfMinute() == 0) {
