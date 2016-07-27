@@ -48,6 +48,37 @@ describe(testName, function () {
                     .end(function (res) {
                         expect(res.error).toBe(false);
                         channel.storage = res.body.storage;
+                        channel.start = moment.utc();
+                        if (res.body.historical) {
+                            channel.history = true;
+                        }
+                        callback();
+                    })
+            }, function (err) {
+                done(err);
+            });
+
+    }, timeout);
+
+    it('loads historical channel data', function (done) {
+        async.eachLimit(channels, 10,
+            function (channel, callback) {
+                if (!channel.history) {
+                    callback();
+                    return
+                }
+                console.log('history check ', channel);
+                agent
+                    .get(channel.href + '/latest')
+                    .redirects(0)
+                    .set('Accept', 'application/json')
+                    .end(function (res) {
+                        expect(res.error).toBe(false);
+                        var location = res.header['location'];
+                        var lastSlash = location.lastIndexOf(channel.name);
+                        var substring = location.substring(lastSlash + channel.name.length + 1).substring(0, 20);
+                        console.log('history', substring)
+                        channel.start = moment(substring, "YYYY/MM/DD/HH/mm/ss");
                         callback();
                     })
             }, function (err) {
@@ -71,10 +102,9 @@ describe(testName, function () {
         console.log('startOffset', startOffset);
         console.log('endOffset', endOffset);
         for (var i = startOffset; i <= endOffset; i++) {
-            var start = moment.utc().subtract(i, 'minutes');
-            var formatted = start.format(minute_format);
-            console.log('checking', formatted, i);
             channels.forEach(function (channel) {
+                var start = channel.start.subtract(i, 'minutes');
+                var formatted = start.format(minute_format);
                 if (_.startsWith(channel.name, 'test')
                     || _.startsWith(channel.name, 'verifyMaxItems')
                     || Math.random() * 100 > testPercent) {
