@@ -69,7 +69,7 @@ public class WebhookService {
         }
         ContentPath existing = lastContentPath.getOrNull(name, WEBHOOK_LAST_COMPLETED);
         logger.info("webhook {} existing {} requestKey {}", name, existing, webhook.getStartingKey());
-        if (existing == null) {
+        if (existing == null || existing.equals(ContentKey.NONE)) {
             webhook = upsertHistorical(webhook, name);
         }
         if (existing == null || webhook.getStartingKey() != null) {
