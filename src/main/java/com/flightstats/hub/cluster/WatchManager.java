@@ -55,7 +55,10 @@ public class WatchManager {
                 if (executorService.isShutdown()) {
                     logger.warn("service is shutdown, skipping event {}", event);
                 } else {
-                    executorService.submit(() -> watcher.callback(event));
+                    executorService.submit(() -> {
+                        Thread.currentThread().setName("wm-event-" + event.getPath());
+                        watcher.callback(event);
+                    });
                 }
             }
         });
