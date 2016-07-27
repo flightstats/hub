@@ -5,12 +5,9 @@ import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.webhook.Webhook;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class S3Batch {
 
-    private final static Logger logger = LoggerFactory.getLogger(S3Batch.class);
     private static final String S3_BATCH = "S3Batch_";
 
     private ChannelConfig channel;

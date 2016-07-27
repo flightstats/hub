@@ -297,7 +297,7 @@ class HubTasks:
     def verify_callback(self, obj, name="group"):
         groupCallbackLocks[self.channel]["lock"].acquire()
         items = len(obj[self.channel]["data"])
-        if items > 500:
+        if items > 2000:
             events.request_failure.fire(request_type=name, name="length", response_time=1,
                                         exception=-1)
             logger.info(name + " too many items in " + self.channel + " " + str(items))
