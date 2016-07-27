@@ -73,12 +73,13 @@ describe(testName, function () {
                     .redirects(0)
                     .set('Accept', 'application/json')
                     .end(function (res) {
-                        expect(res.error).toBe(false);
                         var location = res.header['location'];
-                        var lastSlash = location.lastIndexOf(channel.name);
-                        var substring = location.substring(lastSlash + channel.name.length + 1).substring(0, 20);
-                        console.log('history', substring)
-                        channel.start = moment(substring, "YYYY/MM/DD/HH/mm/ss");
+                        if (location) {
+                            var lastSlash = location.lastIndexOf(channel.name);
+                            var substring = location.substring(lastSlash + channel.name.length + 1).substring(0, 20);
+                            console.log('history', substring)
+                            channel.start = moment(substring, "YYYY/MM/DD/HH/mm/ss");
+                        }
                         callback();
                     })
             }, function (err) {
