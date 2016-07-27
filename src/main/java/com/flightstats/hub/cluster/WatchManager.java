@@ -5,6 +5,7 @@ import com.flightstats.hub.app.HubServices;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
@@ -26,7 +27,8 @@ public class WatchManager {
     @Inject
     public WatchManager(CuratorFramework curator) {
         this.curator = curator;
-        executorService = Executors.newFixedThreadPool(HubProperties.getProperty("watchManager.threads", 10));
+        executorService = Executors.newFixedThreadPool(HubProperties.getProperty("watchManager.threads", 10),
+                new ThreadFactoryBuilder().setNameFormat("watch-manager-%d").build());
         HubServices.register(new WatchManagerService());
     }
 
@@ -56,8 +58,11 @@ public class WatchManager {
                     logger.warn("service is shutdown, skipping event {}", event);
                 } else {
                     executorService.submit(() -> {
-                        Thread.currentThread().setName("wm-event-" + event.getPath());
+                        Thread thread = Thread.currentThread();
+                        String name = thread.getName();
+                        thread.setName("wm-event-" + event.getPath());
                         watcher.callback(event);
+                        thread.setName(name);
                     });
                 }
             }
