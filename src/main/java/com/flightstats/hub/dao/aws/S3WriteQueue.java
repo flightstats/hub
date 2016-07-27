@@ -12,6 +12,7 @@ import com.github.rholder.retry.Retryer;
 import com.github.rholder.retry.RetryerBuilder;
 import com.github.rholder.retry.StopStrategies;
 import com.github.rholder.retry.WaitStrategies;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -29,7 +30,8 @@ public class S3WriteQueue {
     private static final int THREADS = HubProperties.getProperty("s3.writeQueueThreads", 20);
     private Retryer<Void> retryer = buildRetryer();
     private BlockingQueue<ChannelContentKey> keys = new LinkedBlockingQueue<>(HubProperties.getProperty("s3.writeQueueSize", 40000));
-    private ExecutorService executorService = Executors.newFixedThreadPool(THREADS);
+    private ExecutorService executorService = Executors.newFixedThreadPool(THREADS,
+            new ThreadFactoryBuilder().setNameFormat("S3WriteQueue-%d").build());
     @Inject
     @Named(ContentDao.CACHE)
     private ContentDao spokeContentDao;
