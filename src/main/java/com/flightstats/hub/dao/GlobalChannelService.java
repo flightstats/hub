@@ -178,15 +178,14 @@ public class GlobalChannelService implements ChannelService {
     public SortedSet<ContentKey> queryByTime(TimeQuery query) {
         return primaryAndSecondary(query.getChannelName(),
                 () -> localChannelService.queryByTime(query),
-                () -> query(query, spokeContentDao.queryByTime(query)));
+                () -> query(query, localChannelService.queryByTime(query.withLocation(Location.CACHE))));
     }
 
     @Override
     public SortedSet<ContentKey> getKeys(DirectionQuery query) {
-        query.withLiveChannel(getCachedChannelConfig(query.getChannelName()).isLive());
         return primaryAndSecondary(query.getChannelName(),
                 () -> localChannelService.getKeys(query),
-                () -> query(query, spokeContentDao.query(query)));
+                () -> query(query, localChannelService.getKeys(query.withLocation(Location.CACHE))));
     }
 
     private SortedSet<ContentKey> query(Query query, SortedSet<ContentKey> contentKeys) {
