@@ -19,12 +19,15 @@ public class DirectionQuery implements Query {
     @Wither
     private final int count;
     private final boolean next;
+    @Wither
     private final Location location;
     private final boolean stable;
     @Wither
     private final long ttlDays;
     @Wither
     private final boolean liveChannel;
+    @Wither
+    private final DateTime channelStable;
 
     public Location getLocation() {
         if (location == null) {

@@ -188,13 +188,13 @@ public class SpokeContentDao implements ContentDao {
 
     @Override
     public SortedSet<ContentKey> query(DirectionQuery query) {
-        DateTime spokeTtlTime = TimeUtil.now().minusMinutes(ttlMinutes);
+        DateTime spokeTtlTime = query.getChannelStable().minusMinutes(ttlMinutes);
         if (query.isLiveChannel()) {
             if (query.getContentKey().getTime().isBefore(spokeTtlTime)) {
                 query = query.withContentKey(new ContentKey(spokeTtlTime, "0"));
             }
         } else {
-            spokeTtlTime = TimeUtil.getEarliestTime(query.getTtlDays());
+            spokeTtlTime = query.getChannelStable().minusMinutes(ttlMinutes * 2);
         }
         ActiveTraces.getLocal().add("SpokeContentDao.query ", query, spokeTtlTime);
         SortedSet<ContentKey> contentKeys = Collections.emptySortedSet();
@@ -207,11 +207,10 @@ public class SpokeContentDao implements ContentDao {
         } else {
             ContentKey startKey = query.getContentKey();
             DateTime startTime = startKey.getTime();
-            DateTime endTime = TimeUtil.time(query.isStable());
             contentKeys = new TreeSet<>();
             while (contentKeys.size() < query.getCount()
                     && startTime.isAfter(spokeTtlTime.minusHours(1))
-                    && startTime.isBefore(endTime.plusHours(1))) {
+                    && startTime.isBefore(query.getChannelStable().plusHours(1))) {
                 query(query, contentKeys, startTime, spokeTtlTime, TimeUtil.Unit.HOURS);
                 startTime = startTime.minusHours(1);
             }

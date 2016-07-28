@@ -18,6 +18,7 @@ public class TimeQuery implements Query {
     private final DateTime startTime;
     private final DateTime endTime;
     private final TimeUtil.Unit unit;
+    @Wither
     private final Location location;
     private final boolean stable;
     private final int count;
