@@ -1,4 +1,0 @@
-### Locust script pip requirements file.
-websocket
-httplib2
-
