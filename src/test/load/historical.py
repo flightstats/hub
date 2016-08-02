@@ -56,10 +56,6 @@ class HistoricalTasks(TaskSet):
         self.hubTasks.write_read()
 
     @task(1)
-    def change_parallel(self):
-        self.hubTasks.change_parallel()
-
-    @task(1)
     def hour_query(self):
         self.hubTasks.hour_query()
 
