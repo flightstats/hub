@@ -9,9 +9,9 @@ console.log(hubUrl);
 
 var timeout = 5 * 60 * 1000;
 var minute_format = '/YYYY/MM/DD/HH/mm';
-var startOffset = parseInt(process.env.startOffset) || 19;
-var endOffset = parseInt(process.env.endOffset) || 30;
-var testPercent = parseInt(process.env.testPercent) || 50;
+var startOffset = parseInt(process.env.startOffset) || 29;
+var endOffset = parseInt(process.env.endOffset) || 40;
+var testPercent = parseInt(process.env.testPercent) || 10;
 
 /**
  * This should load all the channels in the hub.
