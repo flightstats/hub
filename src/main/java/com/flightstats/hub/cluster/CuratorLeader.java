@@ -75,7 +75,7 @@ public class CuratorLeader {
                 logger.warn("exception thrown from ElectedLeader " + leaderPath, e);
             } finally {
                 logger.info("lost leadership " + leaderPath);
-                Thread.currentThread().setName("curator-leader-empty");
+                Thread.currentThread().setName("leader-empty");
             }
         }
 
