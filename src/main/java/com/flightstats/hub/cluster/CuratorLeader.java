@@ -42,8 +42,10 @@ public class CuratorLeader {
             leaderSelector = new LeaderSelector(curator, leaderPath, new CuratorLeaderSelectionListener());
             leaderSelector.autoRequeue();
             leaderSelector.start();
+            logger.trace("start {}", leaderPath);
         } else {
             leaderSelector.requeue();
+            logger.trace("requeue {}", leaderPath);
         }
         LeaderRotator.add(this);
     }
@@ -53,15 +55,16 @@ public class CuratorLeader {
         if (leaderSelector != null) {
             leaderSelector.close();
         }
+        logger.trace("close {}", leaderPath);
         LeaderRotator.remove(this);
     }
 
     private class CuratorLeaderSelectionListener implements LeaderSelectorListener {
 
         public void takeLeadership(final CuratorFramework client) throws Exception {
-            logger.info("have leadership for " + leaderPath);
+            logger.info("takeLeadership " + leaderPath);
             try {
-                Thread.currentThread().setName("curator-leader-" + leaderPath);
+                Thread.currentThread().setName("leader-" + leaderPath);
                 hasLeadership.set(true);
                 leader.takeLeadership(hasLeadership);
             } catch (RuntimeInterruptedException e) {
@@ -82,6 +85,7 @@ public class CuratorLeader {
         @Override
         public void stateChanged(CuratorFramework client, ConnectionState newState) {
             if ((newState == ConnectionState.SUSPENDED) || (newState == ConnectionState.LOST)) {
+                logger.info("stateChanged {}", newState);
                 hasLeadership.set(false);
                 throw new CancelLeadershipException();
             }
