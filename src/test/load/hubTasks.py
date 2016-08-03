@@ -367,6 +367,7 @@ class HubTasks:
             if channel not in groupCallbacks:
                 logger.info("incoming uri before locust tests started " + str(incoming_uri))
                 return
+            logger.info("processing " + str(incoming_uri))
             try:
                 shortHref = HubTasks.getShortPath(incoming_uri)
                 groupCallbackLocks[channel]["lock"].acquire()
