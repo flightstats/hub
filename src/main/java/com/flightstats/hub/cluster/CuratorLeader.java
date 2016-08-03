@@ -98,5 +98,9 @@ public class CuratorLeader {
     double keepLeadershipRate() {
         return leader.keepLeadershipRate();
     }
+
+    String getLeaderPath() {
+        return leaderPath;
+    }
 }
 

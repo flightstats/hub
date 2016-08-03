@@ -6,7 +6,10 @@ import org.eclipse.jetty.util.ConcurrentHashSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 import static com.flightstats.hub.app.HubServices.TYPE;
@@ -56,5 +59,13 @@ public class LeaderRotator {
             return Scheduler.newFixedDelaySchedule(1, 1, TimeUnit.MINUTES);
         }
 
+    }
+
+    static Collection<CuratorLeader> getLeaders() {
+        Map<String, CuratorLeader> leaderMap = new TreeMap<>();
+        for (CuratorLeader leader : leaders) {
+            leaderMap.put(leader.getLeaderPath(), leader);
+        }
+        return leaderMap.values();
     }
 }
