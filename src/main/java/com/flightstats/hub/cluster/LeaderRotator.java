@@ -1,7 +1,9 @@
 package com.flightstats.hub.cluster;
 
 import com.google.common.util.concurrent.AbstractScheduledService;
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import org.eclipse.jetty.util.ConcurrentHashSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +28,10 @@ public class LeaderRotator {
     private final static Logger logger = LoggerFactory.getLogger(LeaderRotator.class);
     private static final Set<CuratorLeader> leaders = new ConcurrentHashSet<>();
 
+    @Inject
+    @Named("HubCuratorCluster")
+    private CuratorCluster hubCuratorCluster;
+
     public LeaderRotator() {
         register(new LeaderRotatorService(), TYPE.PRE_STOP, TYPE.AFTER_HEALTHY_START);
     }
@@ -47,6 +53,8 @@ public class LeaderRotator {
                 for (CuratorLeader leader : leaders) {
                     if (Math.random() > leader.keepLeadershipRate()) {
                         leader.abdicate();
+                    } else {
+                        leader.limitChildren(hubCuratorCluster.getServers().size());
                     }
                 }
             } catch (Exception e) {

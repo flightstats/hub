@@ -50,13 +50,13 @@ public class HubBindings extends AbstractModule {
     @Provides
     public static CuratorFramework buildCurator(@Named("app.name") String appName, @Named("app.environment") String environment,
                                                 @Named("zookeeper.connection") String zkConnection,
-                                                RetryPolicy retryPolicy, ZooKeeperState zooKeeperState) {
+                                                ZooKeeperState zooKeeperState) {
         logger.info("connecting to zookeeper(s) at " + zkConnection);
         FixedEnsembleProvider ensembleProvider = new FixedEnsembleProvider(zkConnection);
         CuratorFramework curatorFramework = CuratorFrameworkFactory.builder()
                 .namespace(appName + "-" + environment)
                 .ensembleProvider(ensembleProvider)
-                .retryPolicy(retryPolicy).build();
+                .retryPolicy(buildRetryPolicy()).build();
         curatorFramework.getConnectionStateListenable().addListener(zooKeeperState.getStateListener());
         curatorFramework.start();
 
@@ -69,9 +69,7 @@ public class HubBindings extends AbstractModule {
         return curatorFramework;
     }
 
-    @Singleton
-    @Provides
-    public static RetryPolicy buildRetryPolicy() {
+    private static RetryPolicy buildRetryPolicy() {
         return new BoundedExponentialBackoffRetry(
                 HubProperties.getProperty("zookeeper.baseSleepTimeMs", 10),
                 HubProperties.getProperty("zookeeper.maxSleepTimeMs", 10000),

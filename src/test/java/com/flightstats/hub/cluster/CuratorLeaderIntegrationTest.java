@@ -1,12 +1,15 @@
 package com.flightstats.hub.cluster;
 
+import com.flightstats.hub.app.HubBindings;
 import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.Sleeper;
+import org.apache.curator.framework.CuratorFramework;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -88,6 +91,25 @@ public class CuratorLeaderIntegrationTest {
         assertTrue(countDownLatch.await(2000, TimeUnit.MILLISECONDS));
     }
 
+    @Test
+    public void testLimitChildren() throws Exception {
+        CuratorFramework curator = HubBindings.buildCurator("hub-v2", "local", "localhost:2181", new ZooKeeperState());
+        String leaderPath = "/testLimitChildren";
+        CuratorLeader leader = new CuratorLeader(leaderPath, new MockLeader());
+        curator.create().creatingParentsIfNeeded().forPath(leaderPath);
+        curator.create().forPath(leaderPath + "/OneA", "1.1.1.1".getBytes());
+        curator.create().forPath(leaderPath + "/TwoA", "2.2.2.2".getBytes());
+        Sleeper.sleep(10);
+        curator.create().forPath(leaderPath + "/OneB", "1.1.1.1".getBytes());
+        curator.create().forPath(leaderPath + "/TwoB", "2.2.2.2".getBytes());
+        leader.limitChildren(2);
+        List<String> children = curator.getChildren().forPath(leaderPath);
+        assertEquals(2, children.size());
+        assertTrue(children.contains("OneB"));
+        assertTrue(children.contains("TwoB"));
+
+    }
+
     private class MockLeader implements Leader {
 
         @Override
@@ -103,7 +125,7 @@ public class CuratorLeaderIntegrationTest {
 
         private final CountDownLatch startLatch;
 
-        public CloseLeader(CountDownLatch startLatch) {
+        CloseLeader(CountDownLatch startLatch) {
 
             this.startLatch = startLatch;
         }

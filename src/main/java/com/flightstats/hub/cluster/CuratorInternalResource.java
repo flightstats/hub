@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.rest.Linked;
 import com.flightstats.hub.util.TimeUtil;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.data.Stat;
 import org.joda.time.DateTime;
@@ -31,6 +33,10 @@ public class CuratorInternalResource {
     @Context
     private UriInfo uriInfo;
 
+    @Inject
+    @Named("HubCuratorCluster")
+    private static CuratorCluster hubCuratorCluster;
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getRoot() {
@@ -45,6 +51,8 @@ public class CuratorInternalResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getLeaders() throws Exception {
         ObjectNode root = mapper.createObjectNode();
+        ArrayNode serversArray = root.withArray("servers");
+        hubCuratorCluster.getServers().forEach(serversArray::add);
         ArrayNode leadersArray = root.withArray("leaders");
         Collection<InternalLeader> leaders = getLeadersData();
 
@@ -85,7 +93,6 @@ public class CuratorInternalResource {
             }
             internalLeader.oldest = oldest;
             internalLeaders.add(internalLeader);
-
         }
         return internalLeaders;
     }

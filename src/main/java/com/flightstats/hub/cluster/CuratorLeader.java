@@ -3,14 +3,24 @@ package com.flightstats.hub.cluster;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.util.RuntimeInterruptedException;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ListMultimap;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.leader.CancelLeadershipException;
 import org.apache.curator.framework.recipes.leader.LeaderSelector;
 import org.apache.curator.framework.recipes.leader.LeaderSelectorListener;
 import org.apache.curator.framework.state.ConnectionState;
+import org.apache.zookeeper.data.Stat;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -22,7 +32,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class CuratorLeader {
 
     private final static Logger logger = LoggerFactory.getLogger(CuratorLeader.class);
-    private final CuratorFramework curator = HubProvider.getInstance(CuratorFramework.class);
+    private final static CuratorFramework curator = HubProvider.getInstance(CuratorFramework.class);
     private String leaderPath;
     private Leader leader;
     private LeaderSelector leaderSelector;
@@ -105,6 +115,51 @@ public class CuratorLeader {
 
     String getLeaderPath() {
         return leaderPath;
+    }
+
+    void limitChildren(int maxChildren) {
+        try {
+            List<String> childNames = curator.getChildren().forPath(getLeaderPath());
+            if (childNames.size() > maxChildren) {
+                logger.info("found more than max {}", getLeaderPath());
+                limit(childNames);
+            }
+        } catch (Exception e) {
+            logger.info("unable to limit children " + getLeaderPath(), e);
+        }
+    }
+
+    private void limit(List<String> childNames) throws Exception {
+        ListMultimap<String, PathDate> childData = ArrayListMultimap.create();
+        for (String child : childNames) {
+            Stat stat = new Stat();
+            byte[] bytes = curator.getData().storingStatIn(stat).forPath(getLeaderPath() + "/" + child);
+            String server = new String(bytes);
+            PathDate pathDate = new PathDate(new DateTime(stat.getCtime()), child);
+            logger.debug("server {} {} {}", server, pathDate, getLeaderPath());
+            childData.put(server, pathDate);
+        }
+        for (String server : childData.keySet()) {
+            SortedSet<PathDate> pathDates = new TreeSet<>(childData.get(server));
+            if (pathDates.size() > 1) {
+                PathDate pathDate = pathDates.first();
+                logger.debug("deleting {} {} {}", server, pathDate, getLeaderPath());
+                curator.delete().forPath(getLeaderPath() + "/" + pathDate.child);
+            }
+        }
+    }
+
+    @EqualsAndHashCode
+    @AllArgsConstructor
+    @ToString
+    private class PathDate implements Comparable<PathDate> {
+        DateTime dateTime;
+        String child;
+
+        @Override
+        public int compareTo(PathDate other) {
+            return dateTime.compareTo(other.dateTime);
+        }
     }
 }
 
