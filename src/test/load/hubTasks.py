@@ -187,7 +187,7 @@ class HubTasks:
                 postResponse.failure("Got wrong response on get: " + str(postResponse.status_code) + " " + uri)
 
     def change_parallel(self):
-        for key in groupCallbacks.iteritems():
+        for key in groupCallbacks:
             if groupCallbacks[key]["parallel"] > 1:
                 group = {
                     "callbackUrl": "http://" + groupConfig['ip'] + ":8089/callback/" + self.channel,
@@ -367,7 +367,6 @@ class HubTasks:
             if channel not in groupCallbacks:
                 logger.info("incoming uri before locust tests started " + str(incoming_uri))
                 return
-            logger.info("processing " + str(incoming_uri))
             try:
                 shortHref = HubTasks.getShortPath(incoming_uri)
                 groupCallbackLocks[channel]["lock"].acquire()
