@@ -6,8 +6,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.rest.Linked;
 import com.flightstats.hub.util.TimeUtil;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.data.Stat;
 import org.joda.time.DateTime;
@@ -29,13 +27,10 @@ public class CuratorInternalResource {
 
     private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private static final CuratorFramework curator = HubProvider.getInstance(CuratorFramework.class);
+    private static final CuratorCluster hubCuratorCluster = HubProvider.getInstance(CuratorCluster.class, "HubCuratorCluster");
 
     @Context
     private UriInfo uriInfo;
-
-    @Inject
-    @Named("HubCuratorCluster")
-    private static CuratorCluster hubCuratorCluster;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
