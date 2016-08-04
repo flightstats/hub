@@ -1,7 +1,6 @@
 package com.flightstats.hub.cluster;
 
 import com.google.inject.Inject;
-import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.state.ConnectionState;
 import org.apache.curator.framework.state.ConnectionStateListener;
 import org.slf4j.Logger;
@@ -17,15 +16,12 @@ public class ZooKeeperState {
 
     @Inject
     public ZooKeeperState() {
-        connectionStateListener = new ConnectionStateListener() {
-            @Override
-            public void stateChanged(CuratorFramework client, ConnectionState newState) {
-                ConnectionState oldState = connectionState;
-                connectionState = newState;
-                boolean healthy = isHealthy();
-                stopWorking.set(!healthy);
-                logger.info("state change from " + oldState + " to " + newState + " healthy " + healthy);
-            }
+        connectionStateListener = (client, newState) -> {
+            ConnectionState oldState = connectionState;
+            connectionState = newState;
+            boolean healthy = isHealthy();
+            stopWorking.set(!healthy);
+            logger.info("state change from " + oldState + " to " + newState + " healthy " + healthy);
         };
     }
 
