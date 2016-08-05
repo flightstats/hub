@@ -52,21 +52,22 @@ public class CuratorLeader {
             leaderSelector = new LeaderSelector(curator, leaderPath, new CuratorLeaderSelectionListener());
             leaderSelector.autoRequeue();
             leaderSelector.start();
-            logger.trace("start {}", leaderPath);
+            logger.info("start {}", leaderPath);
         } else {
             leaderSelector.requeue();
-            logger.trace("requeue {}", leaderPath);
+            logger.info("requeue {}", leaderPath);
         }
         LeaderRotator.add(this);
     }
 
     public void close() {
+        logger.info("closing leader {}", leaderPath);
         hasLeadership.set(false);
         if (leaderSelector != null) {
             leaderSelector.close();
         }
-        logger.trace("close {}", leaderPath);
         LeaderRotator.remove(this);
+        logger.info("closed {}", leaderPath);
     }
 
     private class CuratorLeaderSelectionListener implements LeaderSelectorListener {
@@ -74,7 +75,7 @@ public class CuratorLeader {
         public void takeLeadership(final CuratorFramework client) throws Exception {
             logger.info("takeLeadership " + leaderPath);
             try {
-                Thread.currentThread().setName("leader-" + leaderPath);
+                Thread.currentThread().setName("leader-" + leaderPath + leader.getId());
                 hasLeadership.set(true);
                 leader.takeLeadership(hasLeadership);
             } catch (RuntimeInterruptedException e) {
@@ -144,7 +145,7 @@ public class CuratorLeader {
             if (pathDates.size() > 1) {
                 PathDate pathDate = pathDates.first();
                 logger.info("deleting {} {} {}", server, pathDate, getLeaderPath());
-                //curator.delete().forPath(getLeaderPath() + "/" + pathDate.child);
+                curator.delete().forPath(getLeaderPath() + "/" + pathDate.child);
             }
         }
     }

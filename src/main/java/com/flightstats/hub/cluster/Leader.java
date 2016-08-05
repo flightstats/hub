@@ -23,4 +23,8 @@ public interface Leader {
     default double keepLeadershipRate() {
         return 0.75;
     }
+
+    default String getId() {
+        return "";
+    }
 }
