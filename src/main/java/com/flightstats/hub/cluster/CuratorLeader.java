@@ -121,7 +121,7 @@ public class CuratorLeader {
         try {
             List<String> childNames = curator.getChildren().forPath(getLeaderPath());
             if (childNames.size() > maxChildren) {
-                logger.info("found more than max {}", getLeaderPath());
+                logger.info("found more than max {} {}", getLeaderPath(), childNames.size());
                 limit(childNames);
             }
         } catch (Exception e) {
@@ -136,14 +136,14 @@ public class CuratorLeader {
             byte[] bytes = curator.getData().storingStatIn(stat).forPath(getLeaderPath() + "/" + child);
             String server = new String(bytes);
             PathDate pathDate = new PathDate(new DateTime(stat.getCtime()), child);
-            logger.debug("server {} {} {}", server, pathDate, getLeaderPath());
+            logger.info("server {} {} {}", server, pathDate, getLeaderPath());
             childData.put(server, pathDate);
         }
         for (String server : childData.keySet()) {
             SortedSet<PathDate> pathDates = new TreeSet<>(childData.get(server));
             if (pathDates.size() > 1) {
                 PathDate pathDate = pathDates.first();
-                logger.debug("deleting {} {} {}", server, pathDate, getLeaderPath());
+                logger.info("deleting {} {} {}", server, pathDate, getLeaderPath());
                 curator.delete().forPath(getLeaderPath() + "/" + pathDate.child);
             }
         }
