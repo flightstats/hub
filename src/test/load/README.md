@@ -27,6 +27,6 @@ This creates a docker image with python, locustio, and the scripts in this dir a
 Run it by using something like the following:
 
 ```
-docker run --name locust-verifier locust:latest /usr/bin/locust -f single.py --host http://hub-endpoint:8080/
+docker run -p 8089:8089 -p 5557:5557 -p 5558:5558 locust:latest /usr/bin/locust -f single.py --host http://hub-endpoint:8080/
 ```
 
