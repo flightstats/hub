@@ -12,7 +12,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 @SuppressWarnings("WeakerAccess")
-@Path("/channel/{channel: .*}/time")
+@Path("/channel/{channel}/time")
 public class ChannelTimeResource {
 
     private final static Logger logger = LoggerFactory.getLogger(ChannelTimeResource.class);

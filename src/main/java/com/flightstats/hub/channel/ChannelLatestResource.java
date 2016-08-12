@@ -18,7 +18,7 @@ import java.util.SortedSet;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 
-@Path("/channel/{channel: .*}/latest")
+@Path("/channel/{channel}/latest")
 public class ChannelLatestResource {
 
     @Context

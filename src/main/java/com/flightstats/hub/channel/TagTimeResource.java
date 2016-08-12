@@ -12,7 +12,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 @SuppressWarnings("WeakerAccess")
-@Path("/tag/{tag: .*}/time")
+@Path("/tag/{tag}/time")
 public class TagTimeResource {
 
     private final static Logger logger = LoggerFactory.getLogger(TagTimeResource.class);
