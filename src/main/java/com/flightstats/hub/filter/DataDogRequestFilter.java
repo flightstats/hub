@@ -34,7 +34,7 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
     private static final Logger logger = LoggerFactory.getLogger(DataDogRequestFilter.class);
     private final static StatsDClient statsd = DataDog.statsd;
     private static final ThreadLocal<DataDogState> threadLocal = new ThreadLocal<>();
-    private static final String CHARACTERS_TO_REMOVE = "[\\[\\]|.*]";
+    private static final String CHARACTERS_TO_REMOVE = "[\\[\\]|.*+]";
     private static final String CHARACTERS_TO_REPLACE = "[:\\{\\}]";
 
     @Override
