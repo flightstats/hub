@@ -2,6 +2,7 @@ package com.flightstats.hub.filter;
 
 import com.flightstats.hub.metrics.DataDog;
 import com.flightstats.hub.util.ChannelNameUtils;
+import com.google.common.annotations.VisibleForTesting;
 import com.timgroup.statsd.StatsDClient;
 import lombok.Getter;
 import lombok.Setter;
@@ -33,6 +34,8 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
     private static final Logger logger = LoggerFactory.getLogger(DataDogRequestFilter.class);
     private final static StatsDClient statsd = DataDog.statsd;
     private static final ThreadLocal<DataDogState> threadLocal = new ThreadLocal<>();
+    private static final String CHARACTERS_TO_REMOVE = "[\\[\\]|.*+]";
+    private static final String CHARACTERS_TO_REPLACE = "[:\\{\\}]";
 
     @Override
     public void filter(ContainerRequestContext request, ContainerResponseContext response) {
@@ -100,13 +103,16 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
         return name;
     }
 
-    private static String getRequestTemplate(ContainerRequestContext request) {
+    @VisibleForTesting
+    static String getRequestTemplate(ContainerRequestContext request) {
         UriRoutingContext uriInfo = (UriRoutingContext) request.getUriInfo();
         ArrayList<UriTemplate> templateList = new ArrayList<>(uriInfo.getMatchedTemplates());
         Collections.reverse(templateList);
         return templateList
                 .stream()
                 .map(UriTemplate::getTemplate)
+                .map(template -> template.replaceAll(CHARACTERS_TO_REMOVE, ""))
+                .map(template -> template.replaceAll(CHARACTERS_TO_REPLACE, "_"))
                 .collect(Collectors.joining(""));
     }
 
