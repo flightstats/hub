@@ -224,7 +224,7 @@ public class TagContentResource {
         return builder.build();
     }
 
-    @Path("/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}/{direction : [n|p].*}")
+    @Path("/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}/{direction:[n|p].*}")
     @GET
     public Response getDirection(@PathParam("tag") String tag,
                                  @PathParam("Y") int year,
@@ -266,7 +266,7 @@ public class TagContentResource {
         return builder.build();
     }
 
-    @Path("/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}/{direction : [n|p].*}/{count}")
+    @Path("/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}/{direction:[n|p].*}/{count}")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getDirectionCount(@PathParam("tag") String tag,
