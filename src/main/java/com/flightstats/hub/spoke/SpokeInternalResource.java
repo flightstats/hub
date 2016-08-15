@@ -26,7 +26,7 @@ public class SpokeInternalResource {
     @Context
     private UriInfo uriInfo;
 
-    @Path("/payload/{path:.+}")
+    @Path("/payload/{path}")
     @GET
     public Response getPayload(@PathParam("path") String path) {
         try {
@@ -44,7 +44,7 @@ public class SpokeInternalResource {
         }
     }
 
-    @Path("/payload/{path:.+}")
+    @Path("/payload/{path}")
     @PUT
     public Response putPayload(@PathParam("path") String path, InputStream input) {
         try {
@@ -156,7 +156,7 @@ public class SpokeInternalResource {
         return getResponse(C + "/" + Y + "/" + M + "/" + D + "/" + h + "/" + m + "/" + second);
     }
 
-    @Path("/payload/{path:.+}")
+    @Path("/payload/{path}")
     @DELETE
     public Response delete(@PathParam("path") String path) {
         try {
@@ -183,7 +183,7 @@ public class SpokeInternalResource {
         return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
     }
 
-    @Path("/next/{channel}/{count}/{startKey:.+}")
+    @Path("/next/{channel}/{count}/{startKey}")
     @GET
     public Response getNext(@PathParam("channel") String channel, @PathParam("count") int count,
                             @PathParam("startKey") String startKey) {
