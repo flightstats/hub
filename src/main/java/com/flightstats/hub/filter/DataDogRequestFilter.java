@@ -2,6 +2,7 @@ package com.flightstats.hub.filter;
 
 import com.flightstats.hub.metrics.DataDog;
 import com.flightstats.hub.util.ChannelNameUtils;
+import com.google.common.annotations.VisibleForTesting;
 import com.timgroup.statsd.StatsDClient;
 import lombok.Getter;
 import lombok.Setter;
@@ -102,7 +103,8 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
         return name;
     }
 
-    private static String getRequestTemplate(ContainerRequestContext request) {
+    @VisibleForTesting
+    static String getRequestTemplate(ContainerRequestContext request) {
         UriRoutingContext uriInfo = (UriRoutingContext) request.getUriInfo();
         ArrayList<UriTemplate> templateList = new ArrayList<>(uriInfo.getMatchedTemplates());
         Collections.reverse(templateList);
