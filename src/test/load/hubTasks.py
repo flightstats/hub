@@ -187,16 +187,17 @@ class HubTasks:
                 postResponse.failure("Got wrong response on get: " + str(postResponse.status_code) + " " + uri)
 
     def change_parallel(self):
-        if self.number % 3 == 2:
-            group = {
-                "callbackUrl": "http://" + groupConfig['ip'] + ":8089/callback/" + self.channel,
-                "channelUrl": groupConfig['host'] + "/channel/" + self.channel,
-                "parallelCalls": random.randint(1, 5)
-            }
-            self.client.put("/group/locust_" + self.channel,
-                            data=json.dumps(group),
-                            headers={"Content-Type": "application/json"},
-                            name="group")
+        for key in groupCallbacks.iteritems():
+            if groupCallbacks[key]["parallel"] > 1:
+                group = {
+                    "callbackUrl": "http://" + groupConfig['ip'] + ":8089/callback/" + self.channel,
+                    "channelUrl": groupConfig['host'] + "/channel/" + self.channel,
+                    "parallelCalls": random.randint(1, 5)
+                }
+                self.client.put("/group/locust_" + self.channel,
+                                data=json.dumps(group),
+                                headers={"Content-Type": "application/json"},
+                                name="group")
 
     def write_read(self):
         self.read(self.write())
@@ -297,7 +298,7 @@ class HubTasks:
     def verify_callback(self, obj, name="group"):
         groupCallbackLocks[self.channel]["lock"].acquire()
         items = len(obj[self.channel]["data"])
-        if items > 500:
+        if items > 2000:
             events.request_failure.fire(request_type=name, name="length", response_time=1,
                                         exception=-1)
             logger.info(name + " too many items in " + self.channel + " " + str(items))

@@ -5,6 +5,7 @@ import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.Watcher;
 import com.flightstats.hub.model.NamedType;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.curator.framework.api.CuratorEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +24,8 @@ public class CachedDao<T extends NamedType> implements Dao<T> {
     private final String path;
     private final WatchManager watchManager;
     private ConcurrentMap<String, T> cacheMap = new ConcurrentHashMap<>();
-    private ExecutorService executor = Executors.newSingleThreadExecutor();
+    private ExecutorService executor = Executors.newSingleThreadExecutor(
+            new ThreadFactoryBuilder().setNameFormat("cachedDao-%d").build());
 
     public CachedDao(Dao<T> delegate, WatchManager watchManager, String path) {
         this.delegate = delegate;

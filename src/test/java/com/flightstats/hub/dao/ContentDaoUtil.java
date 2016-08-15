@@ -1,5 +1,6 @@
 package com.flightstats.hub.dao;
 
+import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.TimeUtil;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -221,6 +222,7 @@ public class ContentDaoUtil {
 
     private void query(String channel, List<ContentKey> keys,
                        int count, int expected, boolean next, DateTime queryTime) {
+        ActiveTraces.start("query ", channel, count, queryTime);
         DirectionQuery query = DirectionQuery.builder()
                 .stable(false)
                 .channelName(channel)
@@ -229,9 +231,11 @@ public class ContentDaoUtil {
                 .contentKey(new ContentKey(queryTime, "0"))
                 .ttlDays(120)
                 .liveChannel(true)
+                .channelStable(TimeUtil.now())
                 .build();
         Collection<ContentKey> found = contentDao.query(query);
         logger.info("query {} {}", queryTime, found);
+        ActiveTraces.getLocal().log(logger);
         assertEquals(expected, found.size());
         assertTrue(keys.containsAll(found));
     }
@@ -284,6 +288,15 @@ public class ContentDaoUtil {
             compare(item, found, contentKey.toUrl().getBytes());
 
         }
+
+    }
+
+    public void testEmptyQuery() throws Exception {
+        String channel = "testEmptyQuery" + RandomStringUtils.randomAlphanumeric(20);
+        List<ContentKey> keys = new ArrayList<>();
+        DateTime start = TimeUtil.now().minusHours(10);
+        query(channel, keys, 1, 0, false, start);
+
 
     }
 }
