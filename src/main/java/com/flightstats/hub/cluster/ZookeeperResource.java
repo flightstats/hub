@@ -41,7 +41,7 @@ public class ZookeeperResource {
     }
 
     @GET
-    @Path("/{path}")
+    @Path("/{path:.+}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getPath(@PathParam("path") String path) {
         return returnData(path);
