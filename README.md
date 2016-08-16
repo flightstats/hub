@@ -31,6 +31,7 @@ The Hub
 * [delete a channel](#delete-a-channel)
 * [replication](#replication)
 * [global channels](#global-channels)
+* [historical channels](#historical-channels)
 * [alerts](#alerts)
 * [health check](#health-check)
 * [storage](#storage)
@@ -904,6 +905,24 @@ A Global channel is defined as a channel with the `global` object set.
 * `satellites` should be set to the load balanced url(s) of the hub cluster(s) which should receive data from the master.
 * The channel configuration will be the same on all configured hub clusters.
 * A global channel will automatically receive a tag of "global".
+
+## historical channels
+
+A historical channel is defined as a channel with the `historical` flag set to true (defaults to ```false```).
+
+`historical: true`
+
+This type of channel operates like a normal channel with data being added going forward in time. The exception being
+you can control the exact time of each payload.
+
+To insert data into a historical channel you specify the instant as part of the URI.
+
+`POST http://hub/channel/stumptown/2016/5/14/12/00/00/000`
+
+In order for the temporal features of the Hub to work (e.g. [webhooks](#webhook), [replication](#replication)) you must provide an additional
+header when finalizing data for a given minute.
+
+`minuteComplete: true` (defaults to `false`)
 
 ### Comparison with Replication
 
