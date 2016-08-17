@@ -19,10 +19,6 @@ public class HubProperties {
         return StringUtils.appendIfMissing(HubProperties.getProperty("app.url", ""), "/");
     }
 
-    public static String getAppDomain() {
-        return StringUtils.removeEnd(StringUtils.substringAfter(HubProperties.getProperty("app.url", ""), "://"), "/");
-    }
-
     public static int getSpokeTtl() {
         return getProperty("spoke.ttlMinutes", 60);
     }
@@ -102,7 +98,7 @@ public class HubProperties {
             properties.put("app.shutdown_delay_seconds", "2");
             properties.put("app.url", "http://localhost:9080/");
             properties.put("spoke.path", "/tmp/spoke/test");
-            properties.put("spoke.ttlMinutes", "10");
+            properties.put("spoke.ttlMinutes", "240");
             properties.put("http.bind_port", "9080");
             properties.put("hosted_graphite.enable", "false");
             properties.put("zookeeper.connection", "localhost:2181");
