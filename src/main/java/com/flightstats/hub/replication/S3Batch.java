@@ -1,16 +1,13 @@
 package com.flightstats.hub.replication;
 
 import com.flightstats.hub.app.HubProperties;
-import com.flightstats.hub.group.Group;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.HubUtils;
+import com.flightstats.hub.webhook.Webhook;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class S3Batch {
 
-    private final static Logger logger = LoggerFactory.getLogger(S3Batch.class);
     private static final String S3_BATCH = "S3Batch_";
 
     private ChannelConfig channel;
@@ -22,14 +19,15 @@ public class S3Batch {
     }
 
     public void start() {
-        Group.GroupBuilder builder = Group.builder()
+        Webhook.WebhookBuilder builder = Webhook.builder()
                 .name(getGroupName())
                 .callbackUrl(getCallbackUrl())
                 .channelUrl(getChannelUrl())
                 .heartbeat(true)
-                .batch(Group.MINUTE);
-        Group group = builder.build();
-        hubUtils.startGroupCallback(group);
+                .parallelCalls(2)
+                .batch(Webhook.MINUTE);
+        Webhook webhook = builder.build();
+        hubUtils.startWebhook(webhook);
     }
 
     private String getChannelUrl() {

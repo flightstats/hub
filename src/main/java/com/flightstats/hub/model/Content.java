@@ -24,7 +24,7 @@ public class Content implements Serializable {
 
     private final Optional<String> contentType;
     private final boolean isNew;
-    private final InputStream stream;
+    private InputStream stream;
     private byte[] data;
     private Optional<ContentKey> contentKey = Optional.absent();
     @Setter
@@ -67,6 +67,7 @@ public class Content implements Serializable {
         if (data == null && stream != null) {
             try {
                 data = ByteStreams.toByteArray(stream);
+                stream = null;
             } catch (EOFException e) {
                 logger.info("file ended early {}", contentKey);
             } catch (Exception e) {

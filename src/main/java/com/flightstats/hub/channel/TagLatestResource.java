@@ -19,7 +19,7 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 
 @SuppressWarnings("WeakerAccess")
-@Path("/tag/{tag: .*}/latest")
+@Path("/tag/{tag}/latest")
 public class TagLatestResource {
 
     private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);

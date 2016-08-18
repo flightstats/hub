@@ -3,7 +3,7 @@ require('./integration_config.js');
 var request = require('request');
 var http = require('http');
 var groupName = utils.randomChannelName();
-var groupResource = groupUrl + "/" + groupName;
+var groupResource = utils.getGroupUrl() + "/" + groupName;
 var testName = __filename;
 
 describe(testName, function () {

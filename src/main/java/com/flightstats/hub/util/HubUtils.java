@@ -4,9 +4,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubHost;
+import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.cluster.CuratorCluster;
-import com.flightstats.hub.group.Group;
 import com.flightstats.hub.model.*;
+import com.flightstats.hub.webhook.Webhook;
 import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
@@ -35,14 +36,11 @@ public class HubUtils {
     private final ObjectMapper mapper = new ObjectMapper();
     private final Client noRedirectsClient;
     private final Client followClient;
-    private final CuratorCluster spokeCuratorCluster;
 
     @Inject
-    public HubUtils(@Named("NoRedirects") Client noRedirectsClient, Client followClient,
-                    @Named("SpokeCuratorCluster") CuratorCluster spokeCuratorCluster) {
+    public HubUtils(@Named("NoRedirects") Client noRedirectsClient, Client followClient) {
         this.noRedirectsClient = noRedirectsClient;
         this.followClient = followClient;
-        this.spokeCuratorCluster = spokeCuratorCluster;
     }
 
     public Optional<String> getLatest(String channelUrl) {
@@ -64,9 +62,9 @@ public class HubUtils {
         return channelUrl;
     }
 
-    public ClientResponse startGroupCallback(Group group) {
-        String groupUrl = getSourceUrl(group.getChannelUrl()) + "/group/" + group.getName();
-        String json = group.toJson();
+    public ClientResponse startWebhook(Webhook webhook) {
+        String groupUrl = getSourceUrl(webhook.getChannelUrl()) + "/group/" + webhook.getName();
+        String json = webhook.toJson();
         logger.info("starting {} with {}", groupUrl, json);
         ClientResponse response = followClient.resource(groupUrl)
                 .accept(MediaType.APPLICATION_JSON)
@@ -205,6 +203,7 @@ public class HubUtils {
     }
 
     public ObjectNode refreshAll() {
+        CuratorCluster spokeCuratorCluster = HubProvider.getInstance(CuratorCluster.class, "SpokeCuratorCluster");
         ObjectNode root = mapper.createObjectNode();
         Set<String> servers = spokeCuratorCluster.getServers();
         for (String server : servers) {

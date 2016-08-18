@@ -18,7 +18,7 @@ public class ChannelValidator {
         this.channelService = channelService;
     }
 
-    public void validate(ChannelConfig config, boolean isCreation) throws InvalidRequestException, ConflictException {
+    public void validate(ChannelConfig config, boolean isCreation, ChannelConfig oldConfig) throws InvalidRequestException, ConflictException {
         Optional<String> channelNameOptional = Optional.absent();
         if (config != null) {
             channelNameOptional = Optional.fromNullable(config.getName());
@@ -38,7 +38,15 @@ public class ChannelValidator {
         validateTags(config);
         validateStorage(config);
         validateGlobal(config);
+        if (oldConfig != null) {
+            validateHistorical(config, oldConfig);
+        }
+    }
 
+    private void validateHistorical(ChannelConfig config, ChannelConfig oldConfig) {
+        if (oldConfig.isHistorical() != config.isHistorical()) {
+            throw new InvalidRequestException("the historical state of a channel can not change.");
+        }
     }
 
     private void validateGlobal(ChannelConfig config) {

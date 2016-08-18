@@ -79,4 +79,16 @@ public class SpokeContentDaoTest {
     public void testBulkWrite() throws Exception {
         util.testBulkWrite();
     }
+
+    @Test
+    public void testEmptyQuery() throws Exception {
+        util.testEmptyQuery();
+
+    }
+
+    @Test
+    public void testEmptyQueryReplicated() throws Exception {
+        util.testEmptyQuery();
+
+    }
 }

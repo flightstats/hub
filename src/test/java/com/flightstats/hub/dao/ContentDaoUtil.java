@@ -1,5 +1,6 @@
 package com.flightstats.hub.dao;
 
+import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.TimeUtil;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -28,9 +29,9 @@ public class ContentDaoUtil {
     public void testWriteRead() throws Exception {
         String channel = "testWriteRead";
         Content content = createContent();
-        ContentKey key = contentDao.write(channel, content);
+        ContentKey key = contentDao.insert(channel, content);
         assertEquals(content.getContentKey().get(), key);
-        Content read = contentDao.read(channel, key);
+        Content read = contentDao.get(channel, key);
         compare(content, read, key.toString().getBytes());
     }
 
@@ -41,9 +42,9 @@ public class ContentDaoUtil {
                 .withContentKey(new ContentKey())
                 .withData(data)
                 .build();
-        ContentKey key = contentDao.write(channel, content);
+        ContentKey key = contentDao.insert(channel, content);
         assertEquals(content.getContentKey().get(), key);
-        Content read = contentDao.read(channel, key);
+        Content read = contentDao.get(channel, key);
         compare(content, read, data);
     }
 
@@ -55,7 +56,7 @@ public class ContentDaoUtil {
             ContentKey key = new ContentKey(start.plusHours(i), "A" + i);
             keys.add(key);
             Content content = createContent(key);
-            contentDao.write(channel, content);
+            contentDao.insert(channel, content);
         }
         TimeQuery timeQuery = TimeQuery.builder().channelName(channel)
                 .startTime(start)
@@ -74,7 +75,7 @@ public class ContentDaoUtil {
             ContentKey key = new ContentKey(start.plusMinutes(i), "A" + i);
             keys.add(key);
             Content content = createContent(key);
-            contentDao.write(channel, content);
+            contentDao.insert(channel, content);
         }
         TimeQuery timeQuery = TimeQuery.builder().channelName(channel)
                 .startTime(start)
@@ -93,7 +94,7 @@ public class ContentDaoUtil {
             ContentKey key = new ContentKey(start.plusSeconds(i), "A" + i);
             keys.add(key);
             Content content = createContent(key);
-            contentDao.write(channel, content);
+            contentDao.insert(channel, content);
         }
         TimeQuery timeQuery = TimeQuery.builder().channelName(channel)
                 .startTime(start)
@@ -122,7 +123,7 @@ public class ContentDaoUtil {
             ContentKey key = new ContentKey(start.plusMinutes(i), "A" + i);
             keys.add(key);
             Content content = createContent(key);
-            contentDao.write(channel, content);
+            contentDao.insert(channel, content);
         }
         timeQuery = TimeQuery.builder().channelName(channel)
                 .startTime(start)
@@ -150,7 +151,7 @@ public class ContentDaoUtil {
             ContentKey key = new ContentKey(start.minusHours(i), "A" + i);
             keys.add(key);
             logger.info("writing " + key);
-            contentDao.write(channel, createContent(key));
+            contentDao.insert(channel, createContent(key));
         }
         logger.info("wrote {} {}", keys.size(), keys);
         query(channel, keys, 20, 3, true, start.minusHours(2));
@@ -168,13 +169,13 @@ public class ContentDaoUtil {
             ContentKey key = new ContentKey(start.minusHours(i), "A" + i);
             keys.add(key);
             logger.info("writing " + key);
-            contentDao.write(channel, createContent(key));
+            contentDao.insert(channel, createContent(key));
         }
         for (int i = 0; i < 7; i++) {
             ContentKey key = new ContentKey(start.minusDays(i), "B" + i);
             keys.add(key);
             logger.info("writing " + key);
-            contentDao.write(channel, createContent(key));
+            contentDao.insert(channel, createContent(key));
         }
         logger.info("wrote {} {}", keys.size(), keys);
         query(channel, keys, 20, 4, true, start.minusHours(2));
@@ -193,7 +194,7 @@ public class ContentDaoUtil {
             ContentKey key = new ContentKey(start.minusMinutes(i), "A" + i);
             keys.add(key);
             logger.info("writing " + key);
-            contentDao.write(channel, createContent(key));
+            contentDao.insert(channel, createContent(key));
         }
         logger.info("wrote {} {}", keys.size(), keys);
         query(channel, keys, 60, 60, true, start.minusHours(1));
@@ -209,7 +210,7 @@ public class ContentDaoUtil {
             ContentKey key = new ContentKey(start.minusHours(i), "A" + i);
             keys.add(key);
             logger.info("writing " + key);
-            contentDao.write(channel, createContent(key));
+            contentDao.insert(channel, createContent(key));
         }
         logger.info("wrote {} {}", keys.size(), keys);
         query(channel, keys, 5, 5, true, start.minusDays(1));
@@ -221,6 +222,7 @@ public class ContentDaoUtil {
 
     private void query(String channel, List<ContentKey> keys,
                        int count, int expected, boolean next, DateTime queryTime) {
+        ActiveTraces.start("query ", channel, count, queryTime);
         DirectionQuery query = DirectionQuery.builder()
                 .stable(false)
                 .channelName(channel)
@@ -228,9 +230,12 @@ public class ContentDaoUtil {
                 .next(next)
                 .contentKey(new ContentKey(queryTime, "0"))
                 .ttlDays(120)
+                .liveChannel(true)
+                .channelStable(TimeUtil.now())
                 .build();
         Collection<ContentKey> found = contentDao.query(query);
         logger.info("query {} {}", queryTime, found);
+        ActiveTraces.getLocal().log(logger);
         assertEquals(expected, found.size());
         assertTrue(keys.containsAll(found));
     }
@@ -243,14 +248,15 @@ public class ContentDaoUtil {
                 .build();
     }
 
-    private Content createContent() {
+    public static Content createContent() {
         return createContent(new ContentKey());
     }
 
-    private void compare(Content content, Content read, byte[] expected) {
+    public static void compare(Content content, Content read, byte[] expected) {
         assertEquals(content.getContentKey().get(), read.getContentKey().get());
         assertEquals(content.getContentType(), read.getContentType());
-        assertArrayEquals(expected, read.getData());
+        byte[] data = read.getData();
+        assertArrayEquals(expected, data);
         assertEquals(content, read);
     }
 
@@ -272,16 +278,25 @@ public class ContentDaoUtil {
                     .build();
             bulkContent.getItems().add(content);
         }
-        SortedSet<ContentKey> contentKeys = contentDao.write(bulkContent);
+        SortedSet<ContentKey> contentKeys = contentDao.insert(bulkContent);
         assertEquals(10, contentKeys.size());
 
         List<Content> items = bulkContent.getItems();
         for (Content item : items) {
             ContentKey contentKey = item.getContentKey().get();
-            Content found = contentDao.read(channel, contentKey);
+            Content found = contentDao.get(channel, contentKey);
             compare(item, found, contentKey.toUrl().getBytes());
 
         }
+
+    }
+
+    public void testEmptyQuery() throws Exception {
+        String channel = "testEmptyQuery" + RandomStringUtils.randomAlphanumeric(20);
+        List<ContentKey> keys = new ArrayList<>();
+        DateTime start = TimeUtil.now().minusHours(10);
+        query(channel, keys, 1, 0, false, start);
+
 
     }
 }

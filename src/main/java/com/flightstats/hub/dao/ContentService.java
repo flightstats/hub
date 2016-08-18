@@ -14,9 +14,11 @@ public interface ContentService {
 
     Collection<ContentKey> insert(BulkContent bulkContent) throws Exception;
 
-    Optional<Content> getValue(String channelName, ContentKey key);
+    boolean historicalInsert(String channelName, Content content) throws Exception;
 
-    void getValues(String channel, SortedSet<ContentKey> keys, Consumer<Content> callback);
+    Optional<Content> get(String channelName, ContentKey key);
+
+    void get(String channel, SortedSet<ContentKey> keys, Consumer<Content> callback);
 
     Collection<ContentKey> queryByTime(TimeQuery timeQuery);
 

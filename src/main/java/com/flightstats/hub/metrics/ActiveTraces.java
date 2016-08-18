@@ -17,9 +17,9 @@ public class ActiveTraces {
     private final static Logger logger = LoggerFactory.getLogger(ActiveTraces.class);
 
     private static final Map<String, Traces> activeTraces = new ConcurrentHashMap<>();
-    private static final ObjectRing<Traces> recent = new ObjectRing(100);
+    private static final ObjectRing<Traces> recent = new ObjectRing<>(100);
     private static final TopSortedSet<Traces> slowest = new TopSortedSet<>(100, Traces::getTime, new DescendingTracesComparator());
-    private static final ThreadLocal<Traces> threadLocal = new ThreadLocal();
+    private static final ThreadLocal<Traces> threadLocal = new ThreadLocal<>();
     private static int logSlowTraces = HubProperties.getProperty("logSlowTracesSeconds", 10) * 1000;
 
     public static void start(Object... objects) {
@@ -58,8 +58,8 @@ public class ActiveTraces {
         if (traces == null) {
             traces = new Traces("error: missing initial context");
             StackTraceElement[] elements = new Exception().getStackTrace();
-            for (int i = 0; i < elements.length; i++) {
-                traces.add(elements[i].toString());
+            for (StackTraceElement element : elements) {
+                traces.add(element.toString());
             }
             start(traces);
         }

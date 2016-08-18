@@ -77,7 +77,7 @@ public class TimeUtil {
         return daysFormatter.parseDateTime(property);
     }
 
-    public static DateTime getEarliestTime(int ttlDays) {
+    public static DateTime getEarliestTime(long ttlDays) {
         DateTime birthDay = TimeUtil.getBirthDay();
         if (ttlDays == 0) {
             return birthDay;
@@ -95,7 +95,6 @@ public class TimeUtil {
         MINUTES(minutesFormatter, Duration.standardMinutes(1), "minute"),
         HOURS(hoursFormatter, Duration.standardHours(1), "hour"),
         DAYS(daysFormatter, Duration.standardDays(1), "day"),
-        MONTH(monthsFormatter, Duration.standardDays(1), "month"),
         MONTHS(monthsFormatter, Duration.standardDays(28), "months");
 
         private DateTimeFormatter formatter;

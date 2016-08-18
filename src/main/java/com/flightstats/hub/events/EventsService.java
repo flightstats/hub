@@ -2,9 +2,9 @@ package com.flightstats.hub.events;
 
 import com.diffplug.common.base.Errors;
 import com.flightstats.hub.dao.ContentService;
-import com.flightstats.hub.group.GroupService;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.Content;
+import com.flightstats.hub.webhook.WebhookService;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -24,7 +24,7 @@ public class EventsService {
     @Inject
     private ContentService contentService;
     @Inject
-    private GroupService groupService;
+    private WebhookService webhookService;
 
     private Map<String, CallbackStream> outputStreamMap = new ConcurrentHashMap<>();
 
@@ -32,7 +32,7 @@ public class EventsService {
         logger.trace("got uri {} {}", uri, id);
         ChannelContentKey key = ChannelContentKey.fromUrl(uri);
         if (key != null) {
-            Optional<Content> optional = contentService.getValue(key.getChannel(), key.getContentKey());
+            Optional<Content> optional = contentService.get(key.getChannel(), key.getContentKey());
             if (optional.isPresent()) {
                 Content content = optional.get();
                 sendData(id, Errors.rethrow().wrap(contentOutput -> {
@@ -86,7 +86,7 @@ public class EventsService {
         if (null != remove) {
             remove.stop();
         } else {
-            groupService.delete(id);
+            webhookService.delete(id);
         }
     }
 

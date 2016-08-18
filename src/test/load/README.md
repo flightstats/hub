@@ -1,7 +1,7 @@
 LocustWhale - locust.io in docker
 =====================================
 
-![Yeah I know, he's a mantis](http://i.imgur.com/NyDBaMn.png "Locustmantis has too many Ts")
+![I'm a Mantis!](http://i.imgur.com/NyDBaMn.png "I'm a Mantis!")
 
 Dockerfile: 
 

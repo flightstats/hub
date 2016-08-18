@@ -2,9 +2,11 @@ package com.flightstats.hub.channel;
 
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProvider;
-import com.flightstats.hub.dao.ChannelConfigDao;
+import com.flightstats.hub.dao.Dao;
+import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.rest.Linked;
 import com.flightstats.hub.util.HubUtils;
+import com.google.inject.TypeLiteral;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +21,9 @@ public class InternalChannelResource {
 
     private final static Logger logger = LoggerFactory.getLogger(InternalChannelResource.class);
 
-    private final static ChannelConfigDao channelConfigDao = HubProvider.getInstance(ChannelConfigDao.class);
+    private final static Dao<ChannelConfig> channelConfigDao = HubProvider.getInstance(
+            new TypeLiteral<Dao<ChannelConfig>>() {
+            }, "ChannelConfig");
     private final static HubUtils hubUtils = HubProvider.getInstance(HubUtils.class);
 
     @GET

@@ -1,5 +1,6 @@
 package com.flightstats.hub.cluster;
 
+import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.model.ContentPath;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -12,6 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 
 public class LastContentPath {
     private final static Logger logger = LoggerFactory.getLogger(LastContentPath.class);
@@ -69,23 +71,33 @@ public class LastContentPath {
     }
 
     public void updateIncrease(ContentPath nextPath, String name, String basePath) {
+        updateIncrease(name, basePath, (contentPath -> nextPath));
+    }
+
+    public boolean updateIncrease(String name, String basePath, Function<ContentPath, ContentPath> function) {
         String path = basePath + name;
         try {
             while (true) {
                 LastUpdated existing = getLastUpdated(path);
+                ContentPath nextPath = function.apply(existing.key);
                 if (nextPath.compareTo(existing.key) > 0) {
                     if (setValue(path, nextPath, existing)) {
-                        return;
+                        return true;
                     }
                 } else {
-                    return;
+                    return true;
                 }
             }
         } catch (KeeperException.NoNodeException e) {
             logger.info("values does not exist, creating {}", path);
+            ContentPath nextPath = function.apply(null);
             initialize(name, nextPath, basePath);
+            return true;
+        } catch (ConflictException e) {
+            throw e;
         } catch (Exception e) {
-            logger.warn("unable to set " + path + " lastUpdated to " + nextPath, e);
+            logger.warn("unable to set lastUpdated " + path, e);
+            return false;
         }
     }
 

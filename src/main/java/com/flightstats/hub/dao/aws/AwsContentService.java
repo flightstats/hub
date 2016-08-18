@@ -7,10 +7,10 @@ import com.flightstats.hub.dao.*;
 import com.flightstats.hub.dao.ContentKeyUtil;
 import com.flightstats.hub.exception.FailedQueryException;
 import com.flightstats.hub.exception.FailedWriteException;
+import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
-import com.flightstats.hub.replication.Replicator;
 import com.flightstats.hub.replication.S3Batch;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
@@ -27,7 +27,10 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.SortedSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -86,16 +89,14 @@ public class AwsContentService implements ContentService {
     public ContentKey insert(String channelName, Content content) throws Exception {
         try {
             inFlight.incrementAndGet();
-            ContentKey key = spokeContentDao.write(channelName, content);
+            ContentKey key = spokeContentDao.insert(channelName, content);
             ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
             if (channel.isSingle() || channel.isBoth()) {
-                //todo - gfm - 5/20/16 - is this the right place for this work?
                 Supplier<Void> local = () -> {
                     s3SingleWrite(channelName, key);
                     return null;
                 };
-                Supplier<Void> satellite = () -> null;
-                GlobalChannelService.handleGlobal(channel, local, satellite, local);
+                GlobalChannelService.handleGlobal(channel, local, () -> null, local);
 
             }
             return key;
@@ -128,11 +129,21 @@ public class AwsContentService implements ContentService {
         }
     }
 
+    @Override
+    public boolean historicalInsert(String channelName, Content content) throws Exception {
+        DateTime spokeTtlTime = TimeUtil.now().minusMinutes(spokeTtlMinutes);
+        if (content.getContentKey().get().getTime().isAfter(spokeTtlTime)) {
+            throw new InvalidRequestException("you cannot insert an item within the last " + spokeTtlMinutes + " minutes");
+        }
+        insert(channelName, content);
+        return true;
+    }
+
     private Collection<ContentKey> newBulkWrite(BulkContent bulkContent) throws Exception {
         String channelName = bulkContent.getChannel();
         try {
             inFlight.incrementAndGet();
-            SortedSet<ContentKey> keys = spokeContentDao.write(bulkContent);
+            SortedSet<ContentKey> keys = spokeContentDao.insert(bulkContent);
             ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
             if (channel.isSingle() || channel.isBoth()) {
                 for (ContentKey key : keys) {
@@ -146,44 +157,40 @@ public class AwsContentService implements ContentService {
     }
 
     @Override
-    public Optional<Content> getValue(String channelName, ContentKey key) {
+    public Optional<Content> get(String channelName, ContentKey key) {
         logger.trace("fetching {} from channel {} ", key.toString(), channelName);
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
-        if (key.getTime().isAfter(getSpokeTtlTime(channelName, channel))) {
-            Content content = spokeContentDao.read(channelName, key);
+        if (key.getTime().isAfter(getSpokeTtlTime(channelName))) {
+            Content content = spokeContentDao.get(channelName, key);
             if (content != null) {
                 logger.trace("returning from spoke {} {}", key.toString(), channelName);
                 return Optional.of(content);
             }
         }
-        Content content = null;
+        Content content;
         if (channel.isSingle()) {
-            content = s3SingleContentDao.read(channelName, key);
+            content = s3SingleContentDao.get(channelName, key);
         } else if (channel.isBatch()) {
-            content = s3BatchContentDao.read(channelName, key);
+            content = s3BatchContentDao.get(channelName, key);
         } else {
-            content = s3SingleContentDao.read(channelName, key);
+            content = s3SingleContentDao.get(channelName, key);
             if (content == null) {
-                content = s3BatchContentDao.read(channelName, key);
+                content = s3BatchContentDao.get(channelName, key);
             }
         }
         return Optional.fromNullable(content);
     }
 
-    private DateTime getSpokeTtlTime(String channelName, ChannelConfig channel) {
-        DateTime startTime = TimeUtil.now();
-        if (channel.isReplicating()) {
-            startTime = lastContentPath.get(channelName, MinutePath.NONE, Replicator.REPLICATED_LAST_UPDATED).getTime();
-        }
+    private DateTime getSpokeTtlTime(String channelName) {
+        DateTime startTime = channelService.getLastUpdated(channelName, new ContentKey(TimeUtil.now())).getTime();
         return startTime.minusMinutes(spokeTtlMinutes);
     }
 
     @Override
-    public void getValues(String channelName, SortedSet<ContentKey> keys, Consumer<Content> callback) {
-        //todo - gfm - 4/14/16 - this may come in as seconds...
+    public void get(String channelName, SortedSet<ContentKey> keys, Consumer<Content> callback) {
         SortedSet<MinutePath> minutePaths = ContentKeyUtil.convert(keys);
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
-        DateTime spokeTtlTime = getSpokeTtlTime(channelName, channel);
+        DateTime spokeTtlTime = getSpokeTtlTime(channelName);
         for (MinutePath minutePath : minutePaths) {
             if (minutePath.getTime().isAfter(spokeTtlTime)
                     || channel.isSingle()) {
@@ -198,25 +205,11 @@ public class AwsContentService implements ContentService {
 
     private void getValues(String channelName, Consumer<Content> callback, ContentPathKeys contentPathKeys) {
         for (ContentKey contentKey : contentPathKeys.getKeys()) {
-            Optional<Content> contentOptional = getValue(channelName, contentKey);
+            Optional<Content> contentOptional = get(channelName, contentKey);
             if (contentOptional.isPresent()) {
                 callback.accept(contentOptional.get());
             }
         }
-    }
-
-    private Runnable readRunner(ContentDao contentDao, String channelName, ContentKey key,
-                                Queue<Content> queue, CountDownLatch latch) {
-        Traces traces = ActiveTraces.getLocal();
-        return () -> {
-            ActiveTraces.setLocal(traces);
-            Content content = contentDao.read(channelName, key);
-            if (content != null) {
-                queue.add(content);
-                latch.countDown();
-            }
-            latch.countDown();
-        };
     }
 
     @Override
@@ -243,7 +236,7 @@ public class AwsContentService implements ContentService {
         } else {
             daos.add(spokeContentDao);
             ChannelConfig channel = channelService.getCachedChannelConfig(query.getChannelName());
-            if (query.outsideOfCache(getSpokeTtlTime(query.getChannelName(), channel))) {
+            if (query.outsideOfCache(getSpokeTtlTime(query.getChannelName()))) {
                 if (channel.isSingle()) {
                     daos.add(s3SingleContentDao);
                 } else if (channel.isBatch()) {
@@ -290,7 +283,7 @@ public class AwsContentService implements ContentService {
     @Override
     public Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces, boolean stable) {
         final ChannelConfig cachedChannelConfig = channelService.getCachedChannelConfig(channel);
-        DateTime cacheTtlTime = getSpokeTtlTime(channel, cachedChannelConfig);
+        DateTime cacheTtlTime = getSpokeTtlTime(channel);
         Optional<ContentKey> latest = spokeContentDao.getLatest(channel, limitKey, traces);
         if (latest.isPresent()) {
             logger.info("found latest {} {}", channel, latest);
@@ -342,7 +335,6 @@ public class AwsContentService implements ContentService {
         s3SingleContentDao.delete(channelName);
         s3BatchContentDao.delete(channelName);
         lastContentPath.delete(channelName, CHANNEL_LATEST_UPDATED);
-        lastContentPath.delete(channelName, S3Verifier.LAST_BATCH_VERIFIED);
         lastContentPath.delete(channelName, S3Verifier.LAST_SINGLE_VERIFIED);
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
         if (!channel.isSingle()) {

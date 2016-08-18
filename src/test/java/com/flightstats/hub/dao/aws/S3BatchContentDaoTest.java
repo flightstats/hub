@@ -48,7 +48,7 @@ public class S3BatchContentDaoTest {
 
         for (ContentKey key : keys) {
             Content content = ContentDaoUtil.createContent(key);
-            Content read = contentDao.read(channel, key);
+            Content read = contentDao.get(channel, key);
             assertEquals(content.getContentKey(), read.getContentKey());
             assertArrayEquals(content.getData(), read.getData());
             assertEquals(content.getContentType().get(), read.getContentType().get());
@@ -138,7 +138,7 @@ public class S3BatchContentDaoTest {
     @Test
     public void testMissing() {
         String channel = "testMissing";
-        Content content = contentDao.read(channel, new ContentKey());
+        Content content = contentDao.get(channel, new ContentKey());
         assertNull(content);
         TimeQuery timeQuery = TimeQuery.builder().channelName(channel)
                 .startTime(new MinutePath().getTime())

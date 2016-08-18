@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.cluster.CuratorCluster;
+import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.dao.QueryResult;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.DataDog;
@@ -70,7 +71,7 @@ public class RemoteSpokeStore {
                 public void run() {
                     try {
                         ContentKey key = new ContentKey();
-                        if (write(path + key.toUrl(), key.toUrl().getBytes(), server, traces, "payload")) {
+                        if (insert(path + key.toUrl(), key.toUrl().getBytes(), server, traces, "payload")) {
                             quorumLatch.countDown();
                         } else {
                             traces.log(logger);
@@ -90,7 +91,7 @@ public class RemoteSpokeStore {
         }
     }
 
-    public boolean testAll() throws UnknownHostException {
+    boolean testAll() throws UnknownHostException {
         Collection<String> servers = cluster.getRandomServers();
         servers.addAll(CuratorCluster.getLocalServer());
         logger.info("*********************************************");
@@ -119,11 +120,11 @@ public class RemoteSpokeStore {
         return true;
     }
 
-    public boolean write(String path, byte[] payload, String spokeApi) throws InterruptedException {
-        return write(path, payload, cluster.getServers(), ActiveTraces.getLocal(), spokeApi);
+    public boolean insert(String path, byte[] payload, String spokeApi) throws InterruptedException {
+        return insert(path, payload, cluster.getServers(), ActiveTraces.getLocal(), spokeApi);
     }
 
-    private boolean write(final String path, final byte[] payload, Collection<String> servers, final Traces traces, final String spokeApi) throws InterruptedException {
+    private boolean insert(final String path, final byte[] payload, Collection<String> servers, final Traces traces, final String spokeApi) throws InterruptedException {
         int quorum = getQuorum(servers.size());
         CountDownLatch quorumLatch = new CountDownLatch(quorum);
         AtomicBoolean reported = new AtomicBoolean();
@@ -192,7 +193,7 @@ public class RemoteSpokeStore {
         return (int) Math.max(1, Math.ceil(size / 2.0));
     }
 
-    public Content read(String path, ContentKey key) {
+    public Content get(String path, ContentKey key) {
         Collection<String> servers = cluster.getRandomServers();
         for (String server : servers) {
             ClientResponse response = null;
@@ -204,7 +205,7 @@ public class RemoteSpokeStore {
                 if (response.getStatus() == 200) {
                     byte[] entity = response.getEntity(byte[].class);
                     if (entity.length > 0) {
-                        return SpokeMarshaller.toContent(entity, key);
+                        return ContentMarshaller.toContent(entity, key);
                     }
                 }
             } catch (JsonMappingException e) {
@@ -213,7 +214,7 @@ public class RemoteSpokeStore {
                 if (e.getCause() != null && e.getCause() instanceof ConnectException) {
                     logger.warn("connection exception " + server);
                 } else {
-                    logger.warn("unable to get content " + path, e);
+                    logger.warn("unable to get content " + server + " " + path, e);
                 }
             } catch (Exception e) {
                 logger.warn("unable to get content " + path, e);
@@ -225,11 +226,11 @@ public class RemoteSpokeStore {
         return null;
     }
 
-    public QueryResult readTimeBucket(String channel, String timePath) throws InterruptedException {
+    QueryResult readTimeBucket(String channel, String timePath) throws InterruptedException {
         return getKeys("/internal/spoke/time/" + channel + "/" + timePath);
     }
 
-    public SortedSet<ContentKey> getNext(String channel, int count, String startKey) throws InterruptedException {
+    SortedSet<ContentKey> getNext(String channel, int count, String startKey) throws InterruptedException {
         return getKeys("/internal/spoke/next/" + channel + "/" + count + "/" + startKey).getContentKeys();
     }
 

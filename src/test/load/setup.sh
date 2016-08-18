@@ -10,6 +10,6 @@ sudo apt-get install python-dev
 wget https://bootstrap.pypa.io/get-pip.py
 sudo python get-pip.py
 sudo pip install locustio --upgrade
-sudo pip install websocket-client
+sudo pip install websocket-client --upgrade
 sudo pip install httplib2
 

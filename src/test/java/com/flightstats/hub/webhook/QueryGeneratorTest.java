@@ -1,0 +1,85 @@
+package com.flightstats.hub.webhook;
+
+import com.flightstats.hub.model.TimeQuery;
+import com.flightstats.hub.util.TimeUtil;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+
+public class QueryGeneratorTest {
+
+    @Test
+    public void testNormal() {
+        DateTime startTime = new DateTime(2015, 5, 7, 11, 5, 1, 2, DateTimeZone.UTC);
+        DateTime latestStableInChannel = new DateTime(2015, 5, 7, 11, 6, 1, 2, DateTimeZone.UTC);
+        QueryGenerator generator = new QueryGenerator(startTime, "test");
+
+        TimeQuery query = generator.getQuery(latestStableInChannel);
+        assertEquals(TimeUtil.Unit.SECONDS, query.getUnit());
+        assertEquals("2015/05/07/11/05/01/002/", TimeUtil.millis(query.getStartTime()));
+
+        query = generator.getQuery(latestStableInChannel);
+        assertEquals(TimeUtil.Unit.SECONDS, query.getUnit());
+        assertEquals("2015/05/07/11/05/02/000/", TimeUtil.millis(query.getStartTime()));
+
+        query = generator.getQuery(latestStableInChannel);
+        assertEquals(TimeUtil.Unit.SECONDS, query.getUnit());
+        assertEquals("2015/05/07/11/05/03/000/", TimeUtil.millis(query.getStartTime()));
+    }
+
+    @Test
+    public void testMinuteOffsetTransition() {
+        DateTime startTime = new DateTime(2015, 5, 7, 11, 30, 10, 55, DateTimeZone.UTC);
+        DateTime latestStableInChannel = new DateTime(2015, 5, 7, 11, 33, 10, 851, DateTimeZone.UTC);
+        QueryGenerator generator = new QueryGenerator(startTime, "test");
+
+        TimeQuery query = generator.getQuery(latestStableInChannel);
+        assertEquals(TimeUtil.Unit.MINUTES, query.getUnit());
+        assertEquals("2015/05/07/11/30/10/055/", TimeUtil.millis(query.getStartTime()));
+
+        query = generator.getQuery(latestStableInChannel);
+        assertEquals(TimeUtil.Unit.MINUTES, query.getUnit());
+        assertEquals("2015/05/07/11/31/00/000/", TimeUtil.millis(query.getStartTime()));
+
+        query = generator.getQuery(latestStableInChannel);
+        assertEquals(TimeUtil.Unit.SECONDS, query.getUnit());
+        assertEquals("2015/05/07/11/32/00/000/", TimeUtil.millis(query.getStartTime()));
+
+        query = generator.getQuery(latestStableInChannel);
+        assertEquals(TimeUtil.Unit.SECONDS, query.getUnit());
+        assertEquals("2015/05/07/11/32/01/000/", TimeUtil.millis(query.getStartTime()));
+
+        query = generator.getQuery(latestStableInChannel);
+        assertEquals(TimeUtil.Unit.SECONDS, query.getUnit());
+        assertEquals("2015/05/07/11/32/02/000/", TimeUtil.millis(query.getStartTime()));
+    }
+
+    @Test
+    public void testHourOffsetTransition() {
+        DateTime startTime = new DateTime(2015, 5, 7, 8, 30, 10, 55, DateTimeZone.UTC);
+        DateTime latestStableInChannel = new DateTime(2015, 5, 7, 11, 33, 10, 851, DateTimeZone.UTC);
+        QueryGenerator generator = new QueryGenerator(startTime, "test");
+
+        TimeQuery query = generator.getQuery(latestStableInChannel);
+        assertEquals(TimeUtil.Unit.HOURS, query.getUnit());
+        assertEquals("2015/05/07/08/30/10/055/", TimeUtil.millis(query.getStartTime()));
+
+        query = generator.getQuery(latestStableInChannel);
+        assertEquals(TimeUtil.Unit.HOURS, query.getUnit());
+        assertEquals("2015/05/07/09/00/00/000/", TimeUtil.millis(query.getStartTime()));
+
+        query = generator.getQuery(latestStableInChannel);
+        assertEquals(TimeUtil.Unit.MINUTES, query.getUnit());
+        assertEquals("2015/05/07/10/00/00/000/", TimeUtil.millis(query.getStartTime()));
+
+        query = generator.getQuery(latestStableInChannel);
+        assertEquals(TimeUtil.Unit.MINUTES, query.getUnit());
+        assertEquals("2015/05/07/10/01/00/000/", TimeUtil.millis(query.getStartTime()));
+
+        query = generator.getQuery(latestStableInChannel);
+        assertEquals(TimeUtil.Unit.MINUTES, query.getUnit());
+        assertEquals("2015/05/07/10/02/00/000/", TimeUtil.millis(query.getStartTime()));
+    }
+}

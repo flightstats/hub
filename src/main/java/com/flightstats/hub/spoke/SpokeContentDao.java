@@ -3,6 +3,7 @@ package com.flightstats.hub.spoke;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentKeyUtil;
+import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.dao.QueryResult;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.exception.FailedQueryException;
@@ -40,16 +41,16 @@ public class SpokeContentDao implements ContentDao {
     private final int ttlMinutes = HubProperties.getSpokeTtl();
 
     @Override
-    public ContentKey write(String channelName, Content content) throws Exception {
+    public ContentKey insert(String channelName, Content content) throws Exception {
         Traces traces = ActiveTraces.getLocal();
         traces.add("SpokeContentDao.writeSingle");
         try {
-            byte[] payload = SpokeMarshaller.toBytes(content);
+            byte[] payload = ContentMarshaller.toBytes(content);
             traces.add("SpokeContentDao.write marshalled");
             ContentKey key = content.keyAndStart(timeService.getNow());
             String path = getPath(channelName, key);
             logger.trace("writing key {} to channel {}", key, channelName);
-            if (!spokeStore.write(path, payload, "payload")) {
+            if (!spokeStore.insert(path, payload, "payload")) {
                 throw new FailedWriteException("unable to write to spoke " + path);
             }
             traces.add("SpokeContentDao.writeSingle completed", key);
@@ -65,7 +66,7 @@ public class SpokeContentDao implements ContentDao {
     }
 
     @Override
-    public SortedSet<ContentKey> write(BulkContent bulkContent) throws Exception {
+    public SortedSet<ContentKey> insert(BulkContent bulkContent) throws Exception {
         Traces traces = ActiveTraces.getLocal();
         traces.add("SpokeContentDao.writeBulk");
         String channelName = bulkContent.getChannel();
@@ -77,7 +78,7 @@ public class SpokeContentDao implements ContentDao {
             stream.writeInt(items.size());
             logger.debug("writing {} items to master {}", items.size(), bulkContent.getMasterKey());
             for (Content content : items) {
-                byte[] payload = SpokeMarshaller.toBytes(content);
+                byte[] payload = ContentMarshaller.toBytes(content);
                 String itemKey = content.getContentKey().get().toUrl();
                 stream.writeInt(itemKey.length());
                 stream.write(itemKey.getBytes());
@@ -89,7 +90,7 @@ public class SpokeContentDao implements ContentDao {
             traces.add("SpokeContentDao.writeBulk marshalled");
 
             logger.trace("writing items {} to channel {}", items.size(), channelName);
-            if (!spokeStore.write(channelName, baos.toByteArray(), "bulkKey")) {
+            if (!spokeStore.insert(channelName, baos.toByteArray(), "bulkKey")) {
                 throw new FailedWriteException("unable to write bulk to spoke " + channelName);
             }
             traces.add("SpokeContentDao.writeBulk completed", keys);
@@ -109,12 +110,12 @@ public class SpokeContentDao implements ContentDao {
     }
 
     @Override
-    public Content read(String channelName, ContentKey key) {
+    public Content get(String channelName, ContentKey key) {
         String path = getPath(channelName, key);
         Traces traces = ActiveTraces.getLocal();
         traces.add("SpokeContentDao.read");
         try {
-            return spokeStore.read(path, key);
+            return spokeStore.get(path, key);
         } catch (Exception e) {
             logger.warn("unable to get data: " + path, e);
             return null;
@@ -187,11 +188,15 @@ public class SpokeContentDao implements ContentDao {
 
     @Override
     public SortedSet<ContentKey> query(DirectionQuery query) {
-        ActiveTraces.getLocal().add("SpokeContentDao.query", query);
-        DateTime ttlTime = TimeUtil.now().minusMinutes(ttlMinutes);
-        if (query.getContentKey().getTime().isBefore(ttlTime)) {
-            query = query.withContentKey(new ContentKey(ttlTime, "0"));
+        DateTime spokeTtlTime = query.getChannelStable().minusMinutes(ttlMinutes);
+        if (query.isLiveChannel()) {
+            if (query.getContentKey().getTime().isBefore(spokeTtlTime)) {
+                query = query.withContentKey(new ContentKey(spokeTtlTime, "0"));
+            }
+        } else {
+            spokeTtlTime = query.getChannelStable().minusMinutes(ttlMinutes * 2);
         }
+        ActiveTraces.getLocal().add("SpokeContentDao.query ", query, spokeTtlTime);
         SortedSet<ContentKey> contentKeys = Collections.emptySortedSet();
         if (query.isNext()) {
             try {
@@ -202,12 +207,11 @@ public class SpokeContentDao implements ContentDao {
         } else {
             ContentKey startKey = query.getContentKey();
             DateTime startTime = startKey.getTime();
-            DateTime endTime = TimeUtil.time(query.isStable());
             contentKeys = new TreeSet<>();
             while (contentKeys.size() < query.getCount()
-                    && startTime.isAfter(ttlTime.minusHours(1))
-                    && startTime.isBefore(endTime.plusHours(1))) {
-                query(query, contentKeys, startKey, startTime, ttlTime, TimeUtil.Unit.HOURS);
+                    && startTime.isAfter(spokeTtlTime.minusHours(1))
+                    && startTime.isBefore(query.getChannelStable().plusHours(1))) {
+                query(query, contentKeys, startTime, spokeTtlTime, TimeUtil.Unit.HOURS);
                 startTime = startTime.minusHours(1);
             }
         }
@@ -215,7 +219,7 @@ public class SpokeContentDao implements ContentDao {
         return contentKeys;
     }
 
-    private void query(DirectionQuery query, SortedSet<ContentKey> orderedKeys, ContentKey startKey, DateTime startTime, DateTime ttlTime, TimeUtil.Unit unit) {
+    private void query(DirectionQuery query, SortedSet<ContentKey> orderedKeys, DateTime startTime, DateTime ttlTime, TimeUtil.Unit unit) {
         SortedSet<ContentKey> queryByTime = queryByTime(query.convert(startTime, unit));
         queryByTime.addAll(orderedKeys);
         Set<ContentKey> filtered = ContentKeyUtil.filter(queryByTime, query.getContentKey(), ttlTime, query.getCount(), query.isNext(), query.isStable());
