@@ -18,7 +18,7 @@ import javax.ws.rs.core.UriInfo;
 import java.util.SortedSet;
 
 @SuppressWarnings("WeakerAccess")
-@Path("/channel/{channel: .*}/status")
+@Path("/channel/{channel}/status")
 public class ChannelStatusResource {
 
     @Context

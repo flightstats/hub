@@ -1,11 +1,13 @@
 package com.flightstats.hub.webhook;
 
+import com.flightstats.hub.metrics.DataDog;
 import com.github.rholder.retry.Retryer;
 import com.github.rholder.retry.RetryerBuilder;
 import com.github.rholder.retry.WaitStrategies;
 import com.google.common.base.Predicate;
 import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
+import com.timgroup.statsd.StatsDClient;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 class WebhookRetryer {
 
     private final static Logger logger = LoggerFactory.getLogger(WebhookRetryer.class);
+    private final static StatsDClient statsd = DataDog.statsd;
 
     static Retryer<ClientResponse> buildRetryer(Webhook webhook, WebhookError webhookError, AtomicBoolean hasLeadership) {
         return RetryerBuilder.<ClientResponse>newBuilder()
@@ -32,6 +35,7 @@ class WebhookRetryer {
                             return false;
                         }
                     }
+                    emitErrorToDataDog(webhook.getName(), 500);
                     return throwable != null;
                 })
                 .retryIfResult(new Predicate<ClientResponse>() {
@@ -42,6 +46,7 @@ class WebhookRetryer {
                             boolean failure = response.getStatus() >= 400;
                             if (failure) {
                                 webhookError.add(webhook.getName(), new DateTime() + " " + response.toString());
+                                emitErrorToDataDog(webhook.getName(), response.getStatus());
                                 logger.info("unable to send to " + response);
                             }
                             return failure;
@@ -61,5 +66,10 @@ class WebhookRetryer {
                 .withWaitStrategy(WaitStrategies.exponentialWait(1000, webhook.getMaxWaitMinutes(), TimeUnit.MINUTES))
                 .withStopStrategy(new WebhookStopStrategy(hasLeadership))
                 .build();
+    }
+
+    private static void emitErrorToDataDog(String name, int status) {
+        String[] tags = {"name:" + name, "status:" + status,};
+        statsd.incrementCounter("webhook.errors", tags);
     }
 }

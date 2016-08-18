@@ -27,11 +27,11 @@ describe(testName, function () {
     var postedItem;
     var badConfig = {
         callbackUrl: 'http://localhost:8080/nothing',
-        channelUrl : channelResource
+        channelUrl: channelResource
     };
     var groupConfigB = {
-        callbackUrl : callbackDomain + ':' + portB + '/',
-        channelUrl : channelResource
+        callbackUrl: callbackDomain + ':' + portB + '/',
+        channelUrl: channelResource
     };
 
     utils.createChannel(channelName, false, testName);
