@@ -15,7 +15,6 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,18 +26,11 @@ public class AwsBindings extends AbstractModule {
 
     @Override
     protected void configure() {
-        if (isBatch()) {
-            logger.info("starting server {} as batch", HubHost.getLocalName());
-            HubProperties.setProperty("group.keepLeadershipRate", "0.999");
-            HubProperties.setProperty("s3Verifier.keepLeadershipRate", "0.999");
-            bind(FinalCheck.class).to(PassFinalCheck.class).asEagerSingleton();
-        } else {
-            logger.info("starting server {} as normal", HubHost.getLocalName());
-            bind(SpokeTtlEnforcer.class).asEagerSingleton();
-            bind(FileSpokeStore.class).asEagerSingleton();
-            bind(SpokeClusterRegister.class).asEagerSingleton();
-            bind(FinalCheck.class).to(SpokeFinalCheck.class).asEagerSingleton();
-        }
+        logger.info("starting server {} ", HubHost.getLocalName());
+        bind(SpokeTtlEnforcer.class).asEagerSingleton();
+        bind(FileSpokeStore.class).asEagerSingleton();
+        bind(SpokeClusterRegister.class).asEagerSingleton();
+        bind(FinalCheck.class).to(SpokeFinalCheck.class).asEagerSingleton();
         bind(ChannelService.class).to(GlobalChannelService.class).asEagerSingleton();
         bind(AwsConnectorFactory.class).asEagerSingleton();
         bind(S3Config.class).asEagerSingleton();
@@ -58,21 +50,8 @@ public class AwsBindings extends AbstractModule {
         bind(S3Verifier.class).asEagerSingleton();
     }
 
-    private static boolean isBatch() {
-        String role = HubProperties.getProperty("role." + HubHost.getLocalName(), "all");
-        return "batch".equals(role) || StringUtils.contains(HubHost.getLocalName(), "batch");
-    }
-
     static String packages() {
-        if (isBatch()) {
-            return "com.flightstats.hub.app," +
-                    "com.flightstats.hub.health," +
-                    "com.flightstats.hub.metrics," +
-                    "com.flightstats.hub.time," +
-                    "com.flightstats.hub.filter,";
-        } else {
-            return "com.flightstats.hub";
-        }
+        return "com.flightstats.hub";
     }
 
     @Inject
