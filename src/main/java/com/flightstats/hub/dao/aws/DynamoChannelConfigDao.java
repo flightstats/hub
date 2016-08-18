@@ -2,9 +2,8 @@ package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.*;
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.dao.ChannelConfigDao;
+import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.GlobalConfig;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -15,7 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
-public class DynamoChannelConfigDao implements ChannelConfigDao {
+public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
     private final static Logger logger = LoggerFactory.getLogger(DynamoChannelConfigDao.class);
 
     @Inject
@@ -29,17 +28,12 @@ public class DynamoChannelConfigDao implements ChannelConfigDao {
     }
 
     @Override
-    public ChannelConfig createChannel(ChannelConfig config) {
-        updateChannel(config);
-        return config;
-    }
-
-    @Override
-    public void updateChannel(ChannelConfig config) {
+    public void upsert(ChannelConfig config) {
         Map<String, AttributeValue> item = new HashMap<>();
         item.put("key", new AttributeValue(config.getName()));
         item.put("date", new AttributeValue().withN(String.valueOf(config.getCreationDate().getTime())));
         item.put("ttlDays", new AttributeValue().withN(String.valueOf(config.getTtlDays())));
+        item.put("historical", new AttributeValue().withBOOL(config.isHistorical()));
         if (!config.getTags().isEmpty()) {
             item.put("tags", new AttributeValue().withSS(config.getTags()));
         }
@@ -73,31 +67,11 @@ public class DynamoChannelConfigDao implements ChannelConfigDao {
     }
 
     private void createTable() {
-        long readThroughput = HubProperties.getProperty("dynamo.throughput.channel.read", 100);
-        long writeThroughput = HubProperties.getProperty("dynamo.throughput.channel.write", 10);
-        logger.info("creating table {} with read {} and write {}", getTableName(), readThroughput, writeThroughput);
-        ProvisionedThroughput throughput = new ProvisionedThroughput(readThroughput, writeThroughput);
-        CreateTableRequest request = new CreateTableRequest()
-                .withTableName(getTableName())
-                .withAttributeDefinitions(new AttributeDefinition("key", ScalarAttributeType.S))
-                .withKeySchema(new KeySchemaElement("key", KeyType.HASH))
-                .withProvisionedThroughput(throughput);
-        dynamoUtils.createTable(request);
-        dynamoUtils.updateTable(getTableName(), throughput);
+        dynamoUtils.createAndUpdate(getTableName(), "channel", "key");
     }
 
     @Override
-    public boolean channelExists(String name) {
-        return getCachedChannelConfig(name) != null;
-    }
-
-    @Override
-    public ChannelConfig getCachedChannelConfig(String name) {
-        return getChannelConfig(name);
-    }
-
-    @Override
-    public ChannelConfig getChannelConfig(String name) {
+    public ChannelConfig get(String name) {
         HashMap<String, AttributeValue> keyMap = new HashMap<>();
         keyMap.put("key", new AttributeValue().withS(name));
         GetItemRequest getItemRequest = new GetItemRequest()
@@ -126,6 +100,9 @@ public class DynamoChannelConfigDao implements ChannelConfigDao {
         if (item.containsKey("description")) {
             builder.withDescription(item.get("description").getS());
         }
+        if (item.containsKey("historical")) {
+            builder.withHistorical(item.get("historical").getBOOL());
+        }
         if (item.containsKey("tags")) {
             builder.withTags(item.get("tags").getSS());
         }
@@ -152,7 +129,7 @@ public class DynamoChannelConfigDao implements ChannelConfigDao {
     }
 
     @Override
-    public Iterable<ChannelConfig> getChannels(boolean useCache) {
+    public Collection<ChannelConfig> getAll(boolean useCache) {
         List<ChannelConfig> configurations = new ArrayList<>();
         ScanRequest scanRequest = new ScanRequest()
                 .withConsistentRead(true)

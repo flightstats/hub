@@ -1,13 +1,13 @@
 package com.flightstats.hub.channel;
 
 import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.dao.Request;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.spoke.SpokeMarshaller;
 import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
 import org.slf4j.Logger;
@@ -31,7 +31,7 @@ public class ZipBulkBuilder {
         Traces traces = ActiveTraces.getLocal();
         return write((ZipOutputStream output) -> {
             ActiveTraces.setLocal(traces);
-            channelService.getValues(channel, keys, content -> createZipEntry(output, content));
+            channelService.get(channel, keys, content -> createZipEntry(output, content));
         }, headerBuilder);
     }
 
@@ -68,7 +68,7 @@ public class ZipBulkBuilder {
                 .channel(channel)
                 .key(key)
                 .build();
-        Optional<Content> contentOptional = channelService.getValue(request);
+        Optional<Content> contentOptional = channelService.get(request);
         if (contentOptional.isPresent()) {
             createZipEntry(output, contentOptional.get());
         } else {
@@ -80,7 +80,7 @@ public class ZipBulkBuilder {
         try {
             String keyId = content.getContentKey().get().toUrl();
             ZipEntry zipEntry = new ZipEntry(keyId);
-            zipEntry.setExtra(SpokeMarshaller.getMetaData(content).getBytes());
+            zipEntry.setExtra(ContentMarshaller.getMetaData(content).getBytes());
             output.putNextEntry(zipEntry);
             long bytesCopied = ByteStreams.copy(content.getStream(), output);
             zipEntry.setSize(bytesCopied);

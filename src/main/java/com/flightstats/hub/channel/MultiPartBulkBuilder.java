@@ -42,7 +42,7 @@ class MultiPartBulkBuilder {
         Traces traces = ActiveTraces.getLocal();
         return write((BufferedOutputStream output) -> {
             ActiveTraces.setLocal(traces);
-            channelService.getValues(channel, keys, content -> writeContent(content, output,
+            channelService.get(channel, keys, content -> writeContent(content, output,
                     LinkBuilder.buildChannelUri(channel, uriInfo), channel));
         }, headerBuilder);
     }
@@ -80,7 +80,7 @@ class MultiPartBulkBuilder {
                 .channel(channel)
                 .key(key)
                 .build();
-        Optional<Content> content = channelService.getValue(request);
+        Optional<Content> content = channelService.get(request);
         if (content.isPresent()) {
             Content item = content.get();
             writeContent(item, output, LinkBuilder.buildChannelUri(channel, uriInfo), channel);

@@ -15,6 +15,7 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.NotFoundException;
 import java.io.*;
 import java.util.Arrays;
 import java.util.Collection;
@@ -32,22 +33,26 @@ public class FileSpokeStore {
     public FileSpokeStore(@Named("spoke.path") String storagePath) {
         this.storagePath = StringUtils.appendIfMissing(storagePath, "/");
         logger.info("starting with storage path " + this.storagePath);
-        if (!write("hub-startup/" + new ContentKey().toUrl(), ("" + System.currentTimeMillis()).getBytes())) {
+        if (!insert("hub-startup/" + new ContentKey().toUrl(), ("" + System.currentTimeMillis()).getBytes())) {
             throw new RuntimeException("unable to create startup file");
+        }
+        File file = spokeFilePathPart("hub-startup/" + new ContentKey().toUrl());
+        if (file.canExecute()) {
+            logger.warn("**** Spoke file permissions may allow incomplete reads ****");
         }
     }
 
-    public boolean write(String path, byte[] payload) {
-        return write(path, new ByteArrayInputStream(payload));
+    public boolean insert(String path, byte[] payload) {
+        return insert(path, new ByteArrayInputStream(payload));
     }
 
-    public boolean write(String path, InputStream input) {
+    public boolean insert(String path, InputStream input) {
         File file = spokeFilePathPart(path);
-        logger.trace("writing {}", file);
-        file.getParentFile().mkdirs();
+        logger.trace("insert {} {} {}", file, file.getParentFile().mkdirs(), file.canExecute());
         try (FileOutputStream output = new FileOutputStream(file)) {
             long copy = ByteStreams.copy(input, output);
-            logger.trace("copied {} {}", file, copy);
+            boolean setExecutable = file.setExecutable(true);
+            logger.trace("copied {} {} {}", file, copy, setExecutable);
             return true;
         } catch (IOException e) {
             logger.info("unable to write to " + path, e);
@@ -64,6 +69,13 @@ public class FileSpokeStore {
     public void read(String path, OutputStream output) {
         File file = spokeFilePathPart(path);
         logger.trace("reading {}", file);
+        if (!file.exists()) {
+            throw new NotFoundException("not found " + path);
+        }
+        if (!file.canExecute()) {
+            logger.warn("incomplete file {}", path);
+            throw new NotFoundException("incomplete file " + path);
+        }
         try (FileInputStream input = new FileInputStream(file)) {
             ByteStreams.copy(input, output);
         } catch (FileNotFoundException e) {
@@ -79,7 +91,7 @@ public class FileSpokeStore {
         return baos.toString();
     }
 
-    public void readKeysInBucket(String path, OutputStream output) {
+    void readKeysInBucket(String path, OutputStream output) {
         keysInBucket(path, output);
     }
 
@@ -166,7 +178,6 @@ public class FileSpokeStore {
     }
 
     public String getLatest(String channel, String limitPath) {
-        logger.trace("ttlTime = {}", ttlMinutes);
         logger.trace("latest {} {}", channel, limitPath);
         ContentKey limitKey = ContentKey.fromUrl(limitPath).get();
         return getLatest(channel, limitPath, limitKey.getTime());

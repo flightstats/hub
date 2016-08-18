@@ -8,11 +8,15 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Request;
 import com.flightstats.hub.events.ContentOutput;
 import com.flightstats.hub.events.EventsService;
+import com.flightstats.hub.exception.ConflictException;
+import com.flightstats.hub.exception.ContentTooLargeException;
+import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.DataDog;
 import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.metrics.NewRelicIgnoreTransaction;
 import com.flightstats.hub.model.*;
+import com.flightstats.hub.rest.Linked;
 import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
 import com.sun.jersey.core.header.MediaTypes;
@@ -27,9 +31,11 @@ import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
+import java.io.InputStream;
 import java.net.URI;
 import java.util.*;
 
+import static com.flightstats.hub.rest.Linked.linked;
 import static com.flightstats.hub.util.TimeUtil.*;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -226,7 +232,7 @@ public class ChannelContentResource {
                 .key(key)
                 .uri(uriInfo.getRequestUri())
                 .build();
-        Optional<Content> optionalResult = channelService.getValue(request);
+        Optional<Content> optionalResult = channelService.get(request);
 
         if (!optionalResult.isPresent()) {
             logger.warn("404 content not found {} {}", channel, key);
@@ -253,7 +259,7 @@ public class ChannelContentResource {
         return builder.build();
     }
 
-    @Path("/{h}/{m}/{s}/{ms}/{hash}/{direction : [n|p].*}")
+    @Path("/{h}/{m}/{s}/{ms}/{hash}/{direction:[n|p].*}")
     @GET
     public Response getDirection(@PathParam("channel") String channel,
                                  @PathParam("Y") int year,
@@ -320,7 +326,7 @@ public class ChannelContentResource {
         }
     }
 
-    @Path("/{h}/{m}/{s}/{ms}/{hash}/{direction : [n|p].*}/{count}")
+    @Path("/{h}/{m}/{s}/{ms}/{hash}/{direction:[n|p].*}/{count}")
     @GET
     @Produces({MediaType.APPLICATION_JSON, "multipart/*", "application/zip"})
     public Response getDirectionCount(@PathParam("channel") String channel,
@@ -369,4 +375,80 @@ public class ChannelContentResource {
         }
     }
 
+    @Path("/{h}/{m}/{s}/{ms}")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response historicalInsert(@PathParam("channel") final String channelName,
+                                     @PathParam("Y") int year,
+                                     @PathParam("M") int month,
+                                     @PathParam("D") int day,
+                                     @PathParam("h") int hour,
+                                     @PathParam("m") int minute,
+                                     @PathParam("s") int second,
+                                     @PathParam("ms") int millis,
+                                     @HeaderParam("Content-Type") String contentType,
+                                     @HeaderParam("Content-Language") String contentLanguage,
+                                     @HeaderParam("minuteComplete") @DefaultValue("false") boolean minuteComplete,
+                                     final InputStream data) throws Exception {
+        if (!channelService.channelExists(channelName)) {
+            throw new WebApplicationException(Response.Status.NOT_FOUND);
+        }
+        ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis);
+        Content content = Content.builder()
+                .withContentKey(key)
+                .withContentType(contentType)
+                .withStream(data)
+                .build();
+        try {
+            boolean success = channelService.historicalInsert(channelName, content, minuteComplete);
+            if (!success) {
+                return Response.status(400).entity("unable to insert historical item").build();
+            }
+
+            logger.trace("posted {}", key);
+            InsertedContentKey insertionResult = new InsertedContentKey(key);
+            URI payloadUri = new URI(uriInfo.getRequestUri() + "/" + key.getHash());
+            Linked<InsertedContentKey> linkedResult = linked(insertionResult)
+                    .withLink("channel", LinkBuilder.buildChannelUri(channelName, uriInfo))
+                    .withLink("self", payloadUri)
+                    .build();
+
+            Response.ResponseBuilder builder = Response.status(Response.Status.CREATED);
+            builder.entity(linkedResult);
+            builder.location(payloadUri);
+            return builder.build();
+        } catch (InvalidRequestException e) {
+            return Response.status(400).entity(e.getMessage()).build();
+        } catch (ConflictException e) {
+            return Response.status(409).entity(e.getMessage()).build();
+        } catch (ContentTooLargeException e) {
+            return Response.status(413).entity(e.getMessage()).build();
+        } catch (Exception e) {
+            logger.warn("unable to POST to " + channelName + " key " + key, e);
+            throw e;
+        }
+    }
+
+    @Path("/{h}/{m}/{s}/{ms}")
+    @GET
+    public Response getMillis(@PathParam("channel") String channel,
+                              @PathParam("Y") String year,
+                              @PathParam("M") String month,
+                              @PathParam("D") String day,
+                              @PathParam("h") String hour,
+                              @PathParam("m") String minute,
+                              @PathParam("s") String second,
+                              @PathParam("ms") String millis) {
+        try {
+            URI redirect = UriBuilder.fromUri(uriInfo.getBaseUri())
+                    .path("channel")
+                    .path(channel)
+                    .path(year).path(month).path(day)
+                    .path(hour).path(minute).path(second).build();
+            return Response.seeOther(redirect).build();
+        } catch (Exception e) {
+            logger.warn("what!?!", e);
+            return null;
+        }
+    }
 }

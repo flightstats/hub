@@ -37,6 +37,10 @@ public class ContentKey implements ContentPath {
         this.hash = hash;
     }
 
+    public ContentKey(int year, int month, int day, int hour, int minute, int second, int millis) {
+        this(new DateTime(year, month, day, hour, minute, second, millis, DateTimeZone.UTC));
+    }
+
     public ContentKey(int year, int month, int day, int hour, int minute, int second, int millis, String hash) {
         this(new DateTime(year, month, day, hour, minute, second, millis, DateTimeZone.UTC), hash);
     }
@@ -75,10 +79,6 @@ public class ContentKey implements ContentPath {
         }
     }
 
-    public static ContentKey fromBytes(byte[] bytes) {
-        return fromUrl(new String(bytes, Charsets.UTF_8)).get();
-    }
-
     private synchronized static String bulkHash(int number) {
         return format.format(number);
     }
@@ -106,6 +106,9 @@ public class ContentKey implements ContentPath {
 
     @Override
     public int compareTo(ContentPath other) {
+        if (other == null) {
+            return 1;
+        }
         if (other instanceof ContentKey) {
             ContentKey key = (ContentKey) other;
             int diff = time.compareTo(key.getTime());

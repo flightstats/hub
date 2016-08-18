@@ -5,6 +5,7 @@ import com.flightstats.hub.cluster.Watcher;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfig;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.curator.framework.api.CuratorEvent;
@@ -50,8 +51,10 @@ public class ReplicationGlobalManager {
     private final Map<String, Replicator> channelReplicatorMap = new HashMap<>();
     private final Map<String, Replicator> globalReplicatorMap = new HashMap<>();
     private final AtomicBoolean stopped = new AtomicBoolean();
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
-    private final ExecutorService executorPool = Executors.newFixedThreadPool(20);
+    private final ExecutorService executor = Executors.newSingleThreadExecutor(
+            new ThreadFactoryBuilder().setNameFormat("ReplicationGlobalManager").build());
+    private final ExecutorService executorPool = Executors.newFixedThreadPool(20,
+            new ThreadFactoryBuilder().setNameFormat("ReplicationGlobalManager-%d").build());
 
     @Inject
     public ReplicationGlobalManager(ChannelService channelService, WatchManager watchManager) {

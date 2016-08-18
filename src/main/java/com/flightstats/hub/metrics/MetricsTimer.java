@@ -14,13 +14,13 @@ public class MetricsTimer implements MetricsSender {
         this.sender = sender;
     }
 
-    public <T> T time(String name, Callable<T> callable) throws Exception {
+    public <T> T time(String type, String name, Callable<T> callable) throws Exception {
         long start = System.currentTimeMillis();
         try {
             return callable.call();
         } finally {
             long time = System.currentTimeMillis() - start;
-            statsd.time("timer", time, "name:" + name);
+            statsd.time(type, time, type + ":" + name);
             sender.send(name, time);
         }
     }

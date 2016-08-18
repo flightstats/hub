@@ -1,10 +1,10 @@
 package com.flightstats.hub.replication;
 
 import com.flightstats.hub.app.HubProvider;
-import com.flightstats.hub.group.Group;
-import com.flightstats.hub.group.GroupService;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.HubUtils;
+import com.flightstats.hub.webhook.Webhook;
+import com.flightstats.hub.webhook.WebhookService;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +14,7 @@ class GlobalReplicator implements Replicator {
     private final static Logger logger = LoggerFactory.getLogger(GlobalReplicator.class);
 
     private static final HubUtils hubUtils = HubProvider.getInstance(HubUtils.class);
-    private static final GroupService groupService = HubProvider.getInstance(GroupService.class);
+    private static final WebhookService webhookService = HubProvider.getInstance(WebhookService.class);
 
     private final String satellite;
     private final ChannelConfig channel;
@@ -31,15 +31,15 @@ class GlobalReplicator implements Replicator {
             hubUtils.putChannel(satellite + "internal/global/satellite/" + channelName, channel);
             String groupName = getGroupName();
             logger.info("put channel {} {}", channel, groupName);
-            Group group = Group.builder()
+            Webhook webhook = Webhook.builder()
                     .name(groupName)
                     .callbackUrl(satellite + "internal/global/repl/" + channelName)
                     .channelUrl(channel.getGlobal().getMaster() + "channel/" + channelName)
                     .heartbeat(true)
-                    .batch(Group.SECOND)
+                    .batch(Webhook.SECOND)
                     .build();
-            groupService.upsertGroup(group);
-            logger.info("upserted group {} {}", channel, group);
+            webhookService.upsert(webhook);
+            logger.info("upserted group {} {}", channel, webhook);
         } catch (Exception e) {
             logger.warn("unable to start " + channelName + " " + getGroupName(), e);
         }
@@ -54,7 +54,7 @@ class GlobalReplicator implements Replicator {
     }
 
     public void stop() {
-        groupService.delete(getGroupName());
+        webhookService.delete(getGroupName());
     }
 
     String getKey() {

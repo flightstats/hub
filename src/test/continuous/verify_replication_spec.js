@@ -124,6 +124,10 @@ describe(testName, function () {
             console.log('destination', destination);
             return;
         }
+        if (source.length + destination.length > 10000) {
+            console.log("too many items to compare ", source.length, destination.length);
+            return;
+        }
         var sourceItems = mapContentKey(source, source[0].split('/')[4]);
         var destinationItems = mapContentKey(destination, destination[0].split('/')[4]);
         console.log('missing from source:', _.difference(sourceItems, destinationItems));

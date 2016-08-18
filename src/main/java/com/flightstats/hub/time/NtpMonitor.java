@@ -8,8 +8,6 @@ import com.flightstats.hub.metrics.MetricsSender;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.newrelic.api.agent.NewRelic;
-import com.newrelic.api.agent.Trace;
 import com.timgroup.statsd.StatsDClient;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -29,7 +27,6 @@ public class NtpMonitor {
     private final int maxPostTimeMillis = HubProperties.getProperty("app.maxPostTimeMillis", 1000);
     @Inject
     private MetricsSender sender;
-    private double delta;
     private double primaryOffset;
 
     public NtpMonitor() {
@@ -73,12 +70,11 @@ public class NtpMonitor {
         return Double.parseDouble(split[split.length - 2]);
     }
 
-    @Trace(metricName = "NtpMonitor", dispatcher = true)
     private void run() {
         try {
             Process process = new ProcessBuilder("ntpq", "-p").start();
             List<String> lines = IOUtils.readLines(process.getInputStream());
-            delta = parseClusterRange(lines);
+            double delta = parseClusterRange(lines);
             statsd.gauge("ntp", delta, "ntpType:clusterTimeDelta");
             sender.send("clusterTimeDelta", delta);
             double primary = parsePrimary(lines);
@@ -86,7 +82,6 @@ public class NtpMonitor {
             statsd.gauge("ntp", primaryOffset, "ntpType:primaryTimeDelta");
             sender.send("primaryTimeDelta", primaryOffset);
             logger.info("ntp cluster {} primary {}", delta, primary);
-            newRelic(delta);
         } catch (Exception e) {
             logger.info("unable to exec", e);
         }
@@ -96,13 +91,6 @@ public class NtpMonitor {
         return Math.min(maxPostTimeMillis, (int) (minPostTimeMillis + primaryOffset));
     }
 
-    private void newRelic(double delta) {
-        NewRelic.addCustomParameter("clusterTimeDelta", delta);
-        NewRelic.recordResponseTimeMetric("Custom/ClusterTimeDeltaResponse", (long) delta);
-        if (delta >= 5.0) {
-            NewRelic.noticeError("cluster time delta too high");
-        }
-    }
 
     private class TimeMonitorService extends AbstractScheduledService {
         @Override

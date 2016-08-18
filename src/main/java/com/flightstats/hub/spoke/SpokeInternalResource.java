@@ -31,9 +31,11 @@ public class SpokeInternalResource {
     public Response getPayload(@PathParam("path") String path) {
         try {
             Response.ResponseBuilder builder = Response.ok((StreamingOutput) os -> {
-                BufferedOutputStream output = new BufferedOutputStream(os);
-                spokeStore.read(path, output);
-                output.flush();
+                try (OutputStream output = new BufferedOutputStream(os)) {
+                    spokeStore.read(path, output);
+                } catch (NotFoundException e) {
+                    logger.debug("not found {}", e.getMessage());
+                }
             });
             return builder.build();
         } catch (Exception e) {
@@ -47,7 +49,7 @@ public class SpokeInternalResource {
     public Response putPayload(@PathParam("path") String path, InputStream input) {
         try {
             long start = System.currentTimeMillis();
-            if (spokeStore.write(path, input)) {
+            if (spokeStore.insert(path, input)) {
                 long end = System.currentTimeMillis();
                 if ((end - start) > 4000) {
                     logger.info("slow write response {} {}", path, new DateTime(start));
@@ -78,7 +80,7 @@ public class SpokeInternalResource {
                 String keyPath = new String(readByesFully(stream));
                 byte[] data = readByesFully(stream);
                 String itemPath = channel + "/" + keyPath;
-                if (!spokeStore.write(itemPath, new ByteArrayInputStream(data))) {
+                if (!spokeStore.insert(itemPath, new ByteArrayInputStream(data))) {
                     logger.warn("what happened?!?! {}", channel);
                     return Response
                             .status(Response.Status.INTERNAL_SERVER_ERROR)

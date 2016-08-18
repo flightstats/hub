@@ -2,7 +2,10 @@ package com.flightstats.hub.filter;
 
 import com.flightstats.hub.metrics.DataDog;
 import com.flightstats.hub.util.ChannelNameUtils;
+import com.google.common.annotations.VisibleForTesting;
 import com.timgroup.statsd.StatsDClient;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.server.internal.routing.UriRoutingContext;
 import org.glassfish.jersey.uri.UriTemplate;
@@ -30,44 +33,61 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
 
     private static final Logger logger = LoggerFactory.getLogger(DataDogRequestFilter.class);
     private final static StatsDClient statsd = DataDog.statsd;
-    private static final ThreadLocal<Long> threadStartTime = new ThreadLocal();
-
-    public DataDogRequestFilter() {
-    }
+    private static final ThreadLocal<DataDogState> threadLocal = new ThreadLocal<>();
+    private static final String CHARACTERS_TO_REMOVE = "[\\[\\]|.*+]";
+    private static final String CHARACTERS_TO_REPLACE = "[:\\{\\}]";
 
     @Override
-    public void filter(ContainerRequestContext request, ContainerResponseContext response) throws IOException {
+    public void filter(ContainerRequestContext request, ContainerResponseContext response) {
         try {
-            List<String> tags = new ArrayList<>();
-            String channelName = channelName(request);
-            String method = request.getMethod();
-            String template = getRequestTemplate(request);
-            long time = System.currentTimeMillis() - threadStartTime.get();
-            if (template.isEmpty()) {
-                logger.trace("DataDog no-template {}, path: {}", template, request.getUriInfo().getPath());
-            } else {
-                statsd.recordExecutionTime("hub.request", time, "channel:" + channelName, "method:" + method,
-                        "endpoint:" + template);
-                statsd.incrementCounter("hub.request", "channel:" + channelName, "method:" + method,
-                        "endpoint:" + template);
+            DataDogState dataDogState = threadLocal.get();
+            if (null != dataDogState) {
+                dataDogState.setResponse(response);
             }
-            logger.trace("DataDog hub.request {}, time: {}, tags: {}", template, time, String.join(",", tags));
         } catch (Exception e) {
-            logger.error("DataDog request error: {}", e.getMessage());
+            logger.error("DataDog request error", e);
         }
-        // report any errors
-        int returnCode = response.getStatus();
-        if (returnCode > 400 && returnCode != 404) {
-            statsd.incrementCounter("hub.errors", new String[]{"errorCode:" + returnCode});
+    }
+
+    public static void finalStats() {
+        try {
+            DataDogState dataDogState = threadLocal.get();
+            if (null == dataDogState) {
+                return;
+            }
+            ContainerRequestContext request = dataDogState.getRequest();
+            String endpoint = getRequestTemplate(request);
+            String channel = channelName(request);
+            String method = request.getMethod();
+            long time = System.currentTimeMillis() - dataDogState.getStart();
+            String callTag = "call:" + method + endpoint;
+            if (StringUtils.isEmpty(endpoint)) {
+                logger.trace("DataDog no endpoint, path: {}", request.getUriInfo().getPath());
+            } else if (endpoint.equals("/shutdown")) {
+                logger.info("call to shutdown, ignoring datadog time {}", time);
+            } else {
+                String[] tags = {"channel:" + channel, "method:" + method, "endpoint:" + endpoint, callTag};
+                statsd.recordExecutionTime("request", time, tags);
+                statsd.incrementCounter("request", tags);
+            }
+            logger.trace("DataDog request {}, time: {}", endpoint, time);
+            int returnCode = dataDogState.getResponse().getStatus();
+            if (returnCode > 400 && returnCode != 404) {
+                statsd.incrementCounter("errors", "errorCode:" + returnCode, callTag);
+            }
+        } catch (Exception e) {
+            logger.error("DataDog request error", e);
+        } finally {
+            threadLocal.remove();
         }
     }
 
     @Override
     public void filter(ContainerRequestContext request) throws IOException {
-        threadStartTime.set(System.currentTimeMillis());
+        threadLocal.set(new DataDogState(request));
     }
 
-    private String channelName(ContainerRequestContext request) {
+    private static String channelName(ContainerRequestContext request) {
         String name;
         try {
             name = ChannelNameUtils.parseChannelName(request.getUriInfo().getRequestUri().getPath());
@@ -83,13 +103,29 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
         return name;
     }
 
-    private String getRequestTemplate(ContainerRequestContext request) {
+    @VisibleForTesting
+    static String getRequestTemplate(ContainerRequestContext request) {
         UriRoutingContext uriInfo = (UriRoutingContext) request.getUriInfo();
         ArrayList<UriTemplate> templateList = new ArrayList<>(uriInfo.getMatchedTemplates());
         Collections.reverse(templateList);
         return templateList
                 .stream()
                 .map(UriTemplate::getTemplate)
+                .map(template -> template.replaceAll(CHARACTERS_TO_REMOVE, ""))
+                .map(template -> template.replaceAll(CHARACTERS_TO_REPLACE, "_"))
                 .collect(Collectors.joining(""));
+    }
+
+    @Setter
+    @Getter
+    private class DataDogState {
+        private final long start = System.currentTimeMillis();
+        private final ContainerRequestContext request;
+        private ContainerResponseContext response;
+
+        DataDogState(ContainerRequestContext request) {
+            this.request = request;
+        }
+
     }
 }
