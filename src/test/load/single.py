@@ -57,7 +57,7 @@ class VerifierTasks(TaskSet):
 
     @task(10)
     def verify_callback_length(self):
-        self.hubTasks.verify_callback_length()
+        self.hubTasks.verify_callback_length(20000)
 
     @web.app.route("/callback", methods=['GET'])
     def get_channels():
@@ -70,8 +70,8 @@ class VerifierTasks(TaskSet):
 
 class WebsiteUser(HttpLocust):
     task_set = VerifierTasks
-    min_wait = 500
-    max_wait = 5000
+    min_wait = 1
+    max_wait = 3
 
     def __init__(self):
         super(WebsiteUser, self).__init__()

@@ -69,7 +69,7 @@ class VerifierTasks(TaskSet):
 
     @task(10)
     def verify_callback_length(self):
-        self.hubTasks.verify_callback_length(10000)
+        self.hubTasks.verify_callback_length(50000)
 
     @web.app.route("/callback", methods=['GET'])
     def get_channels():
