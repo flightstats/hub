@@ -305,17 +305,17 @@ class HubTasks:
         size = self.number * self.number * 300
         return ''.join(random.choice(chars) for x in range(size))
 
-    def verify_callback(self, obj, name="group"):
+    def verify_callback(self, obj, name="group", count=2000):
         groupCallbackLocks[self.channel]["lock"].acquire()
         items = len(obj[self.channel]["data"])
-        if items > 2000:
+        if items > count:
             events.request_failure.fire(request_type=name, name="length", response_time=1,
                                         exception=-1)
             logger.info(name + " too many items in " + self.channel + " " + str(items))
         groupCallbackLocks[self.channel]["lock"].release()
 
-    def verify_callback_length(self):
-        self.verify_callback(groupCallbacks, "group")
+    def verify_callback_length(self, count=2000):
+        self.verify_callback(groupCallbacks, "group", count)
         if self.user.has_websocket():
             if websockets[self.channel]["open"]:
                 self.verify_callback(websockets, "websocket")
