@@ -145,7 +145,7 @@ public class CuratorLeader {
             if (pathDates.size() > 1) {
                 PathDate pathDate = pathDates.first();
                 logger.info("deleting {} {} {}", server, pathDate, getLeaderPath());
-                curator.delete().forPath(getLeaderPath() + "/" + pathDate.child);
+                //curator.delete().forPath(getLeaderPath() + "/" + pathDate.child);
             }
         }
     }
