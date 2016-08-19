@@ -38,7 +38,7 @@ class VerifierTasks(TaskSet):
             bulk += "--abcdefg\r\n"
             bulk += "Content-Type: application/json\r\n\r\n"
             bulk += '{"name":"' + self.hubTasks.payload + '", "count": ' + str(self.hubTasks.count) + '}\r\n'
-            self.count += 1
+            self.hubTasks.count += 1
         bulk += "--abcdefg--\r\n"
 
         with self.client.post("/channel/" + self.hubTasks.channel + "/bulk", data=bulk,
