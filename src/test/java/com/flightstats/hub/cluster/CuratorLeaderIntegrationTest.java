@@ -1,15 +1,12 @@
 package com.flightstats.hub.cluster;
 
-import com.flightstats.hub.app.HubBindings;
 import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.Sleeper;
-import org.apache.curator.framework.CuratorFramework;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -91,7 +88,7 @@ public class CuratorLeaderIntegrationTest {
         assertTrue(countDownLatch.await(2000, TimeUnit.MILLISECONDS));
     }
 
-    @Test
+   /* @Test
     public void testLimitChildren() throws Exception {
         CuratorFramework curator = HubBindings.buildCurator("hub-v2", "local", "localhost:2181", new ZooKeeperState());
         String leaderPath = "/testLimitChildren";
@@ -108,7 +105,7 @@ public class CuratorLeaderIntegrationTest {
         assertTrue(children.contains("OneB"));
         assertTrue(children.contains("TwoB"));
 
-    }
+    }*/
 
     private class MockLeader implements Leader {
 
