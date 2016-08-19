@@ -37,11 +37,11 @@ class VerifierTasks(TaskSet):
         for x in range(0, 50):
             bulk += "--abcdefg\r\n"
             bulk += "Content-Type: application/json\r\n\r\n"
-            bulk += '{"name":"' + self.payload + '", "count": ' + str(self.count) + '}\r\n'
+            bulk += '{"name":"' + self.hubTasks.payload + '", "count": ' + str(self.count) + '}\r\n'
             self.count += 1
         bulk += "--abcdefg--\r\n"
 
-        with self.client.post("/channel/" + self.channel + "/bulk", data=bulk,
+        with self.client.post("/channel/" + self.hubTasks.channel + "/bulk", data=bulk,
                               headers={"Content-Type": "multipart/mixed; boundary=abcdefg"}, catch_response=True,
                               name="post_bulk") as postResponse:
             if postResponse.status_code != 201:
