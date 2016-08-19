@@ -1,12 +1,11 @@
+import httplib2
 import json
 import logging
 import random
 import socket
 import string
-import threading
-
-import httplib2
 import thread
+import threading
 import time
 import websocket
 from flask import request, jsonify
@@ -377,6 +376,8 @@ class HubTasks:
 
     @staticmethod
     def heartbeat(channel, incoming_json):
+        if not groupCallbacks[channel]["heartbeat"]:
+            return
         heartbeats_ = groupCallbacks[channel]["heartbeats"]
         id_ = incoming_json['id']
         if id_ == heartbeats_[0]:
