@@ -37,7 +37,7 @@ class VerifierTasks(TaskSet):
         for x in range(0, 50):
             bulk += "--abcdefg\r\n"
             bulk += "Content-Type: application/json\r\n\r\n"
-            bulk += '{"name":"' + self.hubTasks.payload + '", "count": ' + str(self.count) + '}\r\n'
+            bulk += '{"name":"' + self.hubTasks.payload + '", "count": ' + str(self.hubTasks.count) + '}\r\n'
             self.count += 1
         bulk += "--abcdefg--\r\n"
 
