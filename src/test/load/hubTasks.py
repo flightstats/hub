@@ -8,6 +8,7 @@ import thread
 import threading
 import time
 import websocket
+from datetime import datetime, timedelta
 from flask import request, jsonify
 from locust import events
 
@@ -171,7 +172,7 @@ class HubTasks:
                 self.append_href(href, websockets)
         return href
 
-    def append_href(self, href, obj):
+    def append_href(self, href, obj=groupCallbacks):
         shortHref = HubTasks.getShortPath(href)
         try:
             groupCallbackLocks[self.channel]["lock"].acquire()
@@ -287,6 +288,18 @@ class HubTasks:
         if len(uris) > 0:
             for uri in uris:
                 self.read(uri)
+
+    def next_10(self):
+        utcnow = datetime.utcnow()
+        self.doNext(utcnow + timedelta(minutes=-1))
+        self.doNext(utcnow + timedelta(hours=-1))
+        self.doNext(utcnow + timedelta(days=-1))
+
+    def doNext(self, time):
+        path = "/channel/" + self.channel + time.strftime("/%Y/%m/%d/%H/%M/%S/000") + "/A/next/10"
+        with self.client.get(path, catch_response=True, name="next") as postResponse:
+            if postResponse.status_code != 200:
+                postResponse.failure("Got wrong response on next: " + str(postResponse.status_code))
 
     def payload_generator(self, chars=string.ascii_uppercase + string.digits):
         size = self.number * self.number * 300
