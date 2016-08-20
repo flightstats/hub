@@ -371,6 +371,7 @@ class HubTasks:
 
     @staticmethod
     def item(channel, incoming_json):
+        # todo handle case of first partial minute
         for incoming_uri in incoming_json['uris']:
             if "_replicated" in incoming_uri:
                 incoming_uri = incoming_uri.replace("_replicated", "")
