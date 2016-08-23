@@ -69,7 +69,7 @@ public class ChannelLatestResource {
                 .contentKey(latest.get())
                 .next(false)
                 .stable(stable)
-                .ttlDays(channelService.getCachedChannelConfig(channel).getTtlDays())
+                .ttlTime(channelService.getCachedChannelConfig(channel).getTtlTime())
                 .count(count - 1)
                 .build();
         SortedSet<ContentKey> keys = channelService.getKeys(query);

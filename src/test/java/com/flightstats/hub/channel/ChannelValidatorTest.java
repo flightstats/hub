@@ -219,4 +219,16 @@ public class ChannelValidatorTest {
                 .withGlobal(globalConfig).build(), true, null);
     }
 
+    @Test(expected = InvalidRequestException.class)
+    public void testHistoricalSwitch() throws Exception {
+        ChannelConfig configA = ChannelConfig.builder().withName("A").withHistorical(false).build();
+        ChannelConfig configB = ChannelConfig.builder().withName("B").withHistorical(true).build();
+        validator.validate(configA, false, configB);
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void testHistoricalNotMax() throws Exception {
+        ChannelConfig configA = ChannelConfig.builder().withName("A").withHistorical(true).withMaxItems(10).build();
+        validator.validate(configA, true, null);
+    }
 }

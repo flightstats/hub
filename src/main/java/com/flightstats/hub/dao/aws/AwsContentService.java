@@ -292,7 +292,7 @@ public class AwsContentService implements ContentService {
         }
         ContentPath latestCache = lastContentPath.get(channel, null, CHANNEL_LATEST_UPDATED);
         if (latestCache != null) {
-            DateTime channelTtlTime = TimeUtil.getEarliestTime((int) cachedChannelConfig.getTtlDays());
+            DateTime channelTtlTime = cachedChannelConfig.getTtlTime();
             if(latestCache.getTime().isBefore(channelTtlTime)){
                 lastContentPath.update(ContentKey.NONE, channel, CHANNEL_LATEST_UPDATED);
             }

@@ -3,9 +3,9 @@ package com.flightstats.hub.channel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.DirectionQuery;
-import com.flightstats.hub.util.TimeUtil;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,16 +78,16 @@ public class ChannelEarliestResource {
     }
 
     public static DirectionQuery getDirectionQuery(String channel, int count, boolean stable, ChannelService channelService) {
-        long ttlDays = channelService.getCachedChannelConfig(channel).getTtlDays();
-        DateTime earliestTime = TimeUtil.getEarliestTime((int) ttlDays);
-        ContentKey limitKey = new ContentKey(earliestTime, "0");
+        ChannelConfig channelConfig = channelService.getCachedChannelConfig(channel);
+        DateTime ttlTime = channelConfig.getTtlTime();
+        ContentKey limitKey = new ContentKey(ttlTime, "0");
 
         return DirectionQuery.builder()
                 .channelName(channel)
                 .contentKey(limitKey)
                 .next(true)
                 .stable(stable)
-                .ttlDays(ttlDays)
+                .ttlTime(ttlTime)
                 .count(count)
                 .build();
     }

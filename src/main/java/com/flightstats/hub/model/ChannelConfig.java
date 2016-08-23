@@ -6,11 +6,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.replication.Replicator;
+import com.flightstats.hub.util.TimeUtil;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTime;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -112,6 +114,15 @@ public class ChannelConfig implements Serializable, NamedType {
     @JsonProperty("ttlDays")
     public long getTtlDays() {
         return ttlDays;
+    }
+
+    @JsonIgnore
+    public DateTime getTtlTime() {
+        if (historical) {
+            //todo gfm - this could use the first item in the channel
+            return TimeUtil.now().minusDays((int) ttlDays);
+        }
+        return TimeUtil.getEarliestTime(ttlDays);
     }
 
     @JsonProperty("description")
