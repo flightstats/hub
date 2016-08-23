@@ -19,8 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -122,7 +120,7 @@ public class CuratorLeader {
         try {
             List<String> childNames = curator.getChildren().forPath(getLeaderPath());
             if (childNames.size() > maxChildren) {
-                logger.info("found more than max {} {}", getLeaderPath(), childNames.size());
+                logger.info("found more than limit {} {}", getLeaderPath(), childNames.size());
                 limit(childNames);
             }
         } catch (Exception e) {
@@ -139,14 +137,6 @@ public class CuratorLeader {
             PathDate pathDate = new PathDate(new DateTime(stat.getCtime()), child);
             logger.info("server {} {} {}", server, pathDate, getLeaderPath());
             childData.put(server, pathDate);
-        }
-        for (String server : childData.keySet()) {
-            SortedSet<PathDate> pathDates = new TreeSet<>(childData.get(server));
-            if (pathDates.size() > 1) {
-                PathDate pathDate = pathDates.first();
-                logger.info("deleting {} {} {}", server, pathDate, getLeaderPath());
-                //curator.delete().forPath(getLeaderPath() + "/" + pathDate.child);
-            }
         }
     }
 
