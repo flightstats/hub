@@ -312,6 +312,9 @@ class HubTasks:
             events.request_failure.fire(request_type=name, name="length", response_time=1,
                                         exception=-1)
             logger.info(name + " too many items in " + self.channel + " " + str(items))
+        else:
+            events.request_success.fire(request_type=name, name="length", response_time=1,
+                                        response_length=1)
         groupCallbackLocks[self.channel]["lock"].release()
 
     def verify_callback_length(self, count=2000):
@@ -336,7 +339,7 @@ class HubTasks:
             events.request_failure.fire(request_type=name, name="ordered", response_time=1,
                                         exception=-1)
             if incoming_uri in obj[channel]["data"]:
-                logger.info(name + " item in the wrong order " + str(incoming_uri) + " data " + \
+                logger.info(name + " item in the wrong order " + str(incoming_uri) + " data " +
                             str(obj[channel]["data"]))
                 (obj[channel]["data"]).remove(incoming_uri)
             else:
