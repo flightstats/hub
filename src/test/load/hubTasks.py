@@ -181,10 +181,15 @@ class HubTasks:
         finally:
             groupCallbackLocks[self.channel]["lock"].release()
 
-    def read(self, uri):
+    def read(self, uri, verify=False):
+        checkCount = self.count - 1
         with self.client.get(uri, catch_response=True, name="get_payload") as postResponse:
             if postResponse.status_code != 200:
                 postResponse.failure("Got wrong response on get: " + str(postResponse.status_code) + " " + uri)
+            elif verify:
+                if str(checkCount) not in postResponse.content:
+                    logger.info("wrong response " + uri + " " + postResponse.content)
+                    postResponse.failure("Got wrong checkCount on get: " + str(postResponse.status_code) + " " + uri)
 
     def change_parallel(self, channel):
         group = {
@@ -198,7 +203,7 @@ class HubTasks:
                         name="group")
 
     def write_read(self):
-        self.read(self.write())
+        self.read(self.write(), True)
 
     def sequential(self):
         start_time = time.time()
