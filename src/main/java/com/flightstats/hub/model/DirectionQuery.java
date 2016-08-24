@@ -23,7 +23,7 @@ public class DirectionQuery implements Query {
     private final Location location;
     private final boolean stable;
     @Wither
-    private final DateTime ttlTime;
+    private DateTime ttlTime;
     @Wither
     private final boolean liveChannel;
     @Wither
