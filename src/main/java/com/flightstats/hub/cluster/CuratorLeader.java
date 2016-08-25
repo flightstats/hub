@@ -35,10 +35,12 @@ public class CuratorLeader {
     private Leader leader;
     private LeaderSelector leaderSelector;
     private AtomicBoolean hasLeadership = new AtomicBoolean(false);
+    private String id;
 
     public CuratorLeader(String leaderPath, Leader leader) {
         this.leaderPath = leaderPath;
         this.leader = leader;
+        id = leaderPath + "-" + leader.getId();
     }
 
     /**
@@ -48,32 +50,33 @@ public class CuratorLeader {
     public void start() {
         if (leaderSelector == null) {
             leaderSelector = new LeaderSelector(curator, leaderPath, new CuratorLeaderSelectionListener());
+            leaderSelector.setId(id);
             leaderSelector.autoRequeue();
             leaderSelector.start();
-            logger.info("start {}", leaderPath);
+            logger.info("start {}", id);
         } else {
             leaderSelector.requeue();
-            logger.info("requeue {}", leaderPath);
+            logger.info("requeue {}", id);
         }
         LeaderRotator.add(this);
     }
 
     public void close() {
-        logger.info("closing leader {}", leaderPath);
+        logger.info("closing leader {}", id);
         hasLeadership.set(false);
         if (leaderSelector != null) {
             leaderSelector.close();
         }
         LeaderRotator.remove(this);
-        logger.info("closed {}", leaderPath);
+        logger.info("closed {}", id);
     }
 
     private class CuratorLeaderSelectionListener implements LeaderSelectorListener {
 
         public void takeLeadership(final CuratorFramework client) throws Exception {
-            logger.info("takeLeadership " + leaderPath);
+            logger.info("takeLeadership " + id);
             try {
-                Thread.currentThread().setName("leader-" + leaderPath + leader.getId());
+                Thread.currentThread().setName("leader-" + id);
                 hasLeadership.set(true);
                 leader.takeLeadership(hasLeadership);
             } catch (RuntimeInterruptedException e) {
@@ -103,7 +106,7 @@ public class CuratorLeader {
 
     void abdicate() {
         if (hasLeadership.get()) {
-            logger.info("abdicating leadership for " + leaderPath);
+            logger.info("abdicating leadership for " + id);
             hasLeadership.set(false);
         }
     }
