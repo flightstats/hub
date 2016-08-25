@@ -103,7 +103,7 @@ public class CuratorLeaderIntegrationTest {
 
         private final CountDownLatch startLatch;
 
-        public CloseLeader(CountDownLatch startLatch) {
+        CloseLeader(CountDownLatch startLatch) {
 
             this.startLatch = startLatch;
         }

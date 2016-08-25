@@ -6,7 +6,6 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.cluster.ZooKeeperState;
 import com.google.inject.Injector;
-import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.test.TestingServer;
 import org.slf4j.Logger;
@@ -27,8 +26,7 @@ public class Integration {
         if (testingServer == null) {
             logger.info("starting zookeeper");
             testingServer = new TestingServer(2181);
-            RetryPolicy retryPolicy = HubBindings.buildRetryPolicy();
-            curator = HubBindings.buildCurator("hub", "test", "localhost:2181", retryPolicy, new ZooKeeperState());
+            curator = HubBindings.buildCurator("hub", "test", "localhost:2181", new ZooKeeperState());
         } else {
             logger.info("zookeeper already started");
         }

@@ -68,14 +68,14 @@ public class CachedDao<T extends NamedType> implements Dao<T> {
     }
 
     private void updateMap() {
-        logger.info("updating map {}", cacheMap.keySet());
+        logger.trace("updating map {}", cacheMap.keySet());
         ConcurrentMap<String, T> newMap = new ConcurrentHashMap<>();
         Iterable<T> items = delegate.getAll(false);
         for (T named : items) {
             newMap.put(named.getName(), named);
         }
         cacheMap = newMap;
-        logger.info("updated map {}", newMap.keySet());
+        logger.trace("updated map {}", newMap.keySet());
     }
 
     @Override

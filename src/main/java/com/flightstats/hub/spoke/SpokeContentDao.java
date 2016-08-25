@@ -49,7 +49,7 @@ public class SpokeContentDao implements ContentDao {
             traces.add("SpokeContentDao.write marshalled");
             ContentKey key = content.keyAndStart(timeService.getNow());
             String path = getPath(channelName, key);
-            logger.trace("writing key {} to channel {}", key, channelName);
+            logger.trace("writing key {} to channel {} bytes {}", key, channelName, content.getSize());
             if (!spokeStore.insert(path, payload, "payload")) {
                 throw new FailedWriteException("unable to write to spoke " + path);
             }

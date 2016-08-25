@@ -3,14 +3,22 @@ package com.flightstats.hub.cluster;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.util.RuntimeInterruptedException;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ListMultimap;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.leader.CancelLeadershipException;
 import org.apache.curator.framework.recipes.leader.LeaderSelector;
 import org.apache.curator.framework.recipes.leader.LeaderSelectorListener;
 import org.apache.curator.framework.state.ConnectionState;
+import org.apache.zookeeper.data.Stat;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -22,15 +30,17 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class CuratorLeader {
 
     private final static Logger logger = LoggerFactory.getLogger(CuratorLeader.class);
-    private final CuratorFramework curator = HubProvider.getInstance(CuratorFramework.class);
+    private final static CuratorFramework curator = HubProvider.getInstance(CuratorFramework.class);
     private String leaderPath;
     private Leader leader;
     private LeaderSelector leaderSelector;
     private AtomicBoolean hasLeadership = new AtomicBoolean(false);
+    private String id;
 
     public CuratorLeader(String leaderPath, Leader leader) {
         this.leaderPath = leaderPath;
         this.leader = leader;
+        id = leaderPath + "-" + leader.getId();
     }
 
     /**
@@ -40,28 +50,33 @@ public class CuratorLeader {
     public void start() {
         if (leaderSelector == null) {
             leaderSelector = new LeaderSelector(curator, leaderPath, new CuratorLeaderSelectionListener());
+            leaderSelector.setId(id);
             leaderSelector.autoRequeue();
             leaderSelector.start();
+            logger.info("start {}", id);
         } else {
             leaderSelector.requeue();
+            logger.info("requeue {}", id);
         }
         LeaderRotator.add(this);
     }
 
     public void close() {
+        logger.info("closing leader {}", id);
         hasLeadership.set(false);
         if (leaderSelector != null) {
             leaderSelector.close();
         }
         LeaderRotator.remove(this);
+        logger.info("closed {}", id);
     }
 
     private class CuratorLeaderSelectionListener implements LeaderSelectorListener {
 
         public void takeLeadership(final CuratorFramework client) throws Exception {
-            logger.info("have leadership for " + leaderPath);
+            logger.info("takeLeadership " + id);
             try {
-                Thread.currentThread().setName("curator-leader-" + leaderPath);
+                Thread.currentThread().setName("leader-" + id);
                 hasLeadership.set(true);
                 leader.takeLeadership(hasLeadership);
             } catch (RuntimeInterruptedException e) {
@@ -72,7 +87,7 @@ public class CuratorLeader {
                 logger.warn("exception thrown from ElectedLeader " + leaderPath, e);
             } finally {
                 logger.info("lost leadership " + leaderPath);
-                Thread.currentThread().setName("curator-leader-empty");
+                Thread.currentThread().setName("leader-empty");
             }
         }
 
@@ -82,6 +97,7 @@ public class CuratorLeader {
         @Override
         public void stateChanged(CuratorFramework client, ConnectionState newState) {
             if ((newState == ConnectionState.SUSPENDED) || (newState == ConnectionState.LOST)) {
+                logger.info("stateChanged {}", newState);
                 hasLeadership.set(false);
                 throw new CancelLeadershipException();
             }
@@ -90,13 +106,54 @@ public class CuratorLeader {
 
     void abdicate() {
         if (hasLeadership.get()) {
-            logger.info("abdicating leadership for " + leaderPath);
+            logger.info("abdicating leadership for " + id);
             hasLeadership.set(false);
         }
     }
 
     double keepLeadershipRate() {
         return leader.keepLeadershipRate();
+    }
+
+    String getLeaderPath() {
+        return leaderPath;
+    }
+
+    void limitChildren(int maxChildren) {
+        try {
+            List<String> childNames = curator.getChildren().forPath(getLeaderPath());
+            if (childNames.size() > maxChildren) {
+                logger.info("found more than limit {} {}", getLeaderPath(), childNames.size());
+                limit(childNames);
+            }
+        } catch (Exception e) {
+            logger.info("unable to limit children " + getLeaderPath(), e);
+        }
+    }
+
+    private void limit(List<String> childNames) throws Exception {
+        ListMultimap<String, PathDate> childData = ArrayListMultimap.create();
+        for (String child : childNames) {
+            Stat stat = new Stat();
+            byte[] bytes = curator.getData().storingStatIn(stat).forPath(getLeaderPath() + "/" + child);
+            String server = new String(bytes);
+            PathDate pathDate = new PathDate(new DateTime(stat.getCtime()), child);
+            logger.info("server {} {} {}", server, pathDate, getLeaderPath());
+            childData.put(server, pathDate);
+        }
+    }
+
+    @EqualsAndHashCode
+    @AllArgsConstructor
+    @ToString
+    private class PathDate implements Comparable<PathDate> {
+        DateTime dateTime;
+        String child;
+
+        @Override
+        public int compareTo(PathDate other) {
+            return dateTime.compareTo(other.dateTime);
+        }
     }
 }
 

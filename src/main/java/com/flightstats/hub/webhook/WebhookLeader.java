@@ -22,6 +22,7 @@ import com.google.inject.Inject;
 import com.newrelic.api.agent.Trace;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
 import org.joda.time.DateTime;
@@ -70,6 +71,7 @@ class WebhookLeader implements Leader {
 
     private WebhookStrategy webhookStrategy;
     private AtomicReference<ContentPath> lastUpdated = new AtomicReference<>();
+    private String id = RandomStringUtils.randomAlphanumeric(4);
 
     @Inject
     public WebhookLeader() {
@@ -140,6 +142,11 @@ class WebhookLeader implements Leader {
     @Override
     public double keepLeadershipRate() {
         return keepLeadershipRate;
+    }
+
+    @Override
+    public String getId() {
+        return id;
     }
 
     private void sendInProcess(ContentPath lastCompletedPath) throws InterruptedException {
@@ -286,7 +293,7 @@ class WebhookLeader implements Leader {
                 webhookStrategy.close();
             }
         } catch (Exception e) {
-            logger.warn("unable to close callbackQueue", e);
+            logger.warn("unable to close strategy", e);
         }
     }
 
@@ -294,7 +301,7 @@ class WebhookLeader implements Leader {
         return "/GroupLeader/" + webhook.getName();
     }
 
-    void delete() {
+    private void delete() {
         String name = webhook.getName();
         logger.info("deleting " + name);
         webhookInProcess.delete(name);

@@ -75,8 +75,8 @@ dependencies {
     compile 'org.slf4j:jcl-over-slf4j:1.7.13'
 
     compile 'com.amazonaws:aws-java-sdk:1.10.73'
-    compile 'org.apache.curator:curator-recipes:2.9.1'
-    testCompile 'org.apache.curator:curator-test:2.9.1'
+    compile 'org.apache.curator:curator-recipes:2.11.0'
+    testCompile 'org.apache.curator:curator-test:2.11.0'
     testCompile 'org.testng:testng:6.9.10'
 
     compile 'org.apache.commons:commons-lang3:3.4'

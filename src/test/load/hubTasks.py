@@ -1,14 +1,14 @@
+import httplib2
 import json
 import logging
 import random
 import socket
 import string
-import threading
-
-import httplib2
 import thread
+import threading
 import time
 import websocket
+from datetime import datetime, timedelta
 from flask import request, jsonify
 from locust import events
 
@@ -172,7 +172,7 @@ class HubTasks:
                 self.append_href(href, websockets)
         return href
 
-    def append_href(self, href, obj):
+    def append_href(self, href, obj=groupCallbacks):
         shortHref = HubTasks.getShortPath(href)
         try:
             groupCallbackLocks[self.channel]["lock"].acquire()
@@ -181,26 +181,29 @@ class HubTasks:
         finally:
             groupCallbackLocks[self.channel]["lock"].release()
 
-    def read(self, uri):
+    def read(self, uri, verify=False):
+        checkCount = self.count - 1
         with self.client.get(uri, catch_response=True, name="get_payload") as postResponse:
             if postResponse.status_code != 200:
                 postResponse.failure("Got wrong response on get: " + str(postResponse.status_code) + " " + uri)
+            elif verify:
+                if str(checkCount) not in postResponse.content:
+                    logger.info("wrong response " + uri + " " + postResponse.content)
+                    postResponse.failure("Got wrong checkCount on get: " + str(postResponse.status_code) + " " + uri)
 
-    def change_parallel(self):
-        for key in groupCallbacks.iteritems():
-            if groupCallbacks[key]["parallel"] > 1:
-                group = {
-                    "callbackUrl": "http://" + groupConfig['ip'] + ":8089/callback/" + self.channel,
-                    "channelUrl": groupConfig['host'] + "/channel/" + self.channel,
-                    "parallelCalls": random.randint(1, 5)
-                }
-                self.client.put("/group/locust_" + self.channel,
-                                data=json.dumps(group),
-                                headers={"Content-Type": "application/json"},
-                                name="group")
+    def change_parallel(self, channel):
+        group = {
+            "callbackUrl": "http://" + groupConfig['ip'] + ":8089/callback/" + channel,
+            "channelUrl": groupConfig['host'] + "/channel/" + channel,
+            "parallelCalls": random.randint(1, 5)
+        }
+        self.client.put("/group/locust_" + channel,
+                        data=json.dumps(group),
+                        headers={"Content-Type": "application/json"},
+                        name="group")
 
     def write_read(self):
-        self.read(self.write())
+        self.read(self.write(), True)
 
     def sequential(self):
         start_time = time.time()
@@ -291,21 +294,36 @@ class HubTasks:
             for uri in uris:
                 self.read(uri)
 
+    def next_10(self):
+        utcnow = datetime.utcnow()
+        self.doNext(utcnow + timedelta(minutes=-1))
+        self.doNext(utcnow + timedelta(hours=-1))
+        self.doNext(utcnow + timedelta(days=-1))
+
+    def doNext(self, time):
+        path = "/channel/" + self.channel + time.strftime("/%Y/%m/%d/%H/%M/%S/000") + "/A/next/10"
+        with self.client.get(path, catch_response=True, name="next") as postResponse:
+            if postResponse.status_code != 200:
+                postResponse.failure("Got wrong response on next: " + str(postResponse.status_code))
+
     def payload_generator(self, chars=string.ascii_uppercase + string.digits):
         size = self.number * self.number * 300
         return ''.join(random.choice(chars) for x in range(size))
 
-    def verify_callback(self, obj, name="group"):
+    def verify_callback(self, obj, name="group", count=2000):
         groupCallbackLocks[self.channel]["lock"].acquire()
         items = len(obj[self.channel]["data"])
-        if items > 2000:
+        if items > count:
             events.request_failure.fire(request_type=name, name="length", response_time=1,
                                         exception=-1)
             logger.info(name + " too many items in " + self.channel + " " + str(items))
+        else:
+            events.request_success.fire(request_type=name, name="length", response_time=1,
+                                        response_length=1)
         groupCallbackLocks[self.channel]["lock"].release()
 
-    def verify_callback_length(self):
-        self.verify_callback(groupCallbacks, "group")
+    def verify_callback_length(self, count=2000):
+        self.verify_callback(groupCallbacks, "group", count)
         if self.user.has_websocket():
             if websockets[self.channel]["open"]:
                 self.verify_callback(websockets, "websocket")
@@ -326,7 +344,7 @@ class HubTasks:
             events.request_failure.fire(request_type=name, name="ordered", response_time=1,
                                         exception=-1)
             if incoming_uri in obj[channel]["data"]:
-                logger.info(name + " item in the wrong order " + str(incoming_uri) + " data " + \
+                logger.info(name + " item in the wrong order " + str(incoming_uri) + " data " +
                             str(obj[channel]["data"]))
                 (obj[channel]["data"]).remove(incoming_uri)
             else:
@@ -361,6 +379,7 @@ class HubTasks:
 
     @staticmethod
     def item(channel, incoming_json):
+        # todo handle case of first partial minute
         for incoming_uri in incoming_json['uris']:
             if "_replicated" in incoming_uri:
                 incoming_uri = incoming_uri.replace("_replicated", "")
@@ -379,6 +398,8 @@ class HubTasks:
 
     @staticmethod
     def heartbeat(channel, incoming_json):
+        if not groupCallbacks[channel]["heartbeat"]:
+            return
         heartbeats_ = groupCallbacks[channel]["heartbeats"]
         id_ = incoming_json['id']
         if id_ == heartbeats_[0]:

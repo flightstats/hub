@@ -1,15 +1,5 @@
 # locust.py
 import json
-import logging
-import random
-import socket
-import string
-import threading
-
-import httplib2
-import thread
-import time
-import websocket
 
 from locust import HttpLocust, TaskSet, task, web
 
@@ -50,7 +40,7 @@ class VerifierTasks(TaskSet):
 
     @task(10)
     def change_parallel(self):
-        self.hubTasks.change_parallel()
+        self.hubTasks.change_parallel("verifier_test_2")
 
     @task(100)
     def sequential(self):
