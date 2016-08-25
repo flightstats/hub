@@ -142,12 +142,8 @@ class HubTasks:
 
     def write(self):
         payload = {"name": self.payload, "count": self.count}
-        postData = json.dumps(payload)
-        if random.random() >= 0.99:
-            postData = None
-
         with self.client.post(self.user.channel_post_url(self.channel),
-                              data=postData,
+                              data=(json.dumps(payload)),
                               headers={"Content-Type": "application/json"},
                               catch_response=True,
                               name="post_payload") as postResponse:
