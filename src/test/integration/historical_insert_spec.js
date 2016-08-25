@@ -11,7 +11,7 @@ var testName = __filename;
 var channelBody = {
     historical: true,
     tags: [tag, "test"],
-    ttlDays: 365
+    ttlDays: 3650
 };
 
 /**
@@ -26,7 +26,7 @@ describe(testName, function () {
 
     utils.putChannel(channel, false, channelBody, testName);
     var channelURL = hubUrlBase + '/channel/' + channel;
-    var pointInThePast = '2016/06/01/12/00/00/000';
+    var pointInThePast = '2014/06/01/12/00/00/000';
     var pointInThePastURL = channelURL + '/' + pointInThePast;
     var pointCloseToNow = moment.utc().format('YYYY/MM/DD/HH/mm/ss/SSS');
     var pointCloseToNowURL = channelURL + '/' + pointCloseToNow;

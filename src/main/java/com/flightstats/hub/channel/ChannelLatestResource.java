@@ -14,6 +14,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.SortedSet;
+import java.util.TreeSet;
 
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.SEE_OTHER;
@@ -69,10 +70,10 @@ public class ChannelLatestResource {
                 .contentKey(latest.get())
                 .next(false)
                 .stable(stable)
-                .ttlDays(channelService.getCachedChannelConfig(channel).getTtlDays())
+                .ttlTime(channelService.getCachedChannelConfig(channel).getTtlTime())
                 .count(count - 1)
                 .build();
-        SortedSet<ContentKey> keys = channelService.getKeys(query);
+        SortedSet<ContentKey> keys = new TreeSet<>(channelService.getKeys(query));
         keys.add(latest.get());
         if (bulk || batch) {
             return BulkBuilder.build(keys, channel, channelService, uriInfo, accept);

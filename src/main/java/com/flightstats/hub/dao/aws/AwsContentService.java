@@ -160,7 +160,7 @@ public class AwsContentService implements ContentService {
     public Optional<Content> get(String channelName, ContentKey key) {
         logger.trace("fetching {} from channel {} ", key.toString(), channelName);
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
-        if (key.getTime().isAfter(getSpokeTtlTime(channelName))) {
+        if (channel.isHistorical() || key.getTime().isAfter(getSpokeTtlTime(channelName))) {
             Content content = spokeContentDao.get(channelName, key);
             if (content != null) {
                 logger.trace("returning from spoke {} {}", key.toString(), channelName);
@@ -292,7 +292,7 @@ public class AwsContentService implements ContentService {
         }
         ContentPath latestCache = lastContentPath.get(channel, null, CHANNEL_LATEST_UPDATED);
         if (latestCache != null) {
-            DateTime channelTtlTime = TimeUtil.getEarliestTime((int) cachedChannelConfig.getTtlDays());
+            DateTime channelTtlTime = cachedChannelConfig.getTtlTime();
             if(latestCache.getTime().isBefore(channelTtlTime)){
                 lastContentPath.update(ContentKey.NONE, channel, CHANNEL_LATEST_UPDATED);
             }

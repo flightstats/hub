@@ -59,15 +59,6 @@ public class S3Config {
         curatorLock.runWithLock(lockable, "/S3ConfigLock", 1, TimeUnit.MINUTES);
     }
 
-    private BucketLifecycleConfiguration.Rule addRule(ChannelConfig config, String postfix) {
-        String id = config.getName() + postfix;
-        return new BucketLifecycleConfiguration.Rule()
-                .withPrefix(id + "/")
-                .withId(id)
-                .withExpirationInDays((int) config.getTtlDays())
-                .withStatus(BucketLifecycleConfiguration.ENABLED);
-    }
-
     private class S3ConfigInit extends AbstractScheduledService {
         @Override
         protected void runOneIteration() throws Exception {
@@ -131,7 +122,7 @@ public class S3Config {
                     .contentKey(latest)
                     .next(false)
                     .stable(false)
-                    .ttlDays(0)
+                    .ttlTime(config.getTtlTime())
                     .count((int) (config.getMaxItems() - 1))
                     .build();
             keys.addAll(channelService.getKeys(query));

@@ -306,7 +306,7 @@ public class LocalChannelService implements ChannelService {
             query = query.withContentKey(new ContentKey(ttlTime, "0"));
         }
         query = query.withLiveChannel(getCachedChannelConfig(query.getChannelName()).isLive());
-        query = query.withTtlDays(getTtlDays(query.getChannelName()));
+        query = query.withTtlTime(ttlTime);
         ContentPath lastUpdated = getLastUpdated(query.getChannelName(), new ContentKey(TimeUtil.time(query.isStable())));
         query = query.withChannelStable(lastUpdated.getTime());
         Traces traces = ActiveTraces.getLocal();
@@ -323,11 +323,7 @@ public class LocalChannelService implements ChannelService {
     }
 
     private DateTime getTtlTime(String channelName) {
-        return TimeUtil.getEarliestTime(getTtlDays(channelName));
-    }
-
-    private int getTtlDays(String channelName) {
-        return (int) getCachedChannelConfig(channelName).getTtlDays();
+        return getCachedChannelConfig(channelName).getTtlTime();
     }
 
     @Override

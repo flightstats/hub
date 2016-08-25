@@ -229,7 +229,7 @@ public class ContentDaoUtil {
                 .count(count)
                 .next(next)
                 .contentKey(new ContentKey(queryTime, "0"))
-                .ttlDays(120)
+                .ttlTime(TimeUtil.now().minusDays(120))
                 .liveChannel(true)
                 .channelStable(TimeUtil.now())
                 .build();

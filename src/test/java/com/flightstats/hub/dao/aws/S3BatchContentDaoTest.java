@@ -180,7 +180,7 @@ public class S3BatchContentDaoTest {
                         .contentKey(contentKey)
                         .next(next)
                         .count(count)
-                        .ttlDays(2)
+                        .ttlTime(TimeUtil.now().minusDays(2))
                         .build();
 
         ActiveTraces.start(query);

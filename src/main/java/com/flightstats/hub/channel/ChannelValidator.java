@@ -41,11 +41,20 @@ public class ChannelValidator {
         if (oldConfig != null) {
             validateHistorical(config, oldConfig);
         }
+        validateHistoricalMax(config);
     }
 
     private void validateHistorical(ChannelConfig config, ChannelConfig oldConfig) {
         if (oldConfig.isHistorical() != config.isHistorical()) {
             throw new InvalidRequestException("the historical state of a channel can not change.");
+        }
+    }
+
+    private void validateHistoricalMax(ChannelConfig config) {
+        if (config.isHistorical()) {
+            if (config.getMaxItems() > 0) {
+                throw new InvalidRequestException("a historical channel cannot include maxItems");
+            }
         }
     }
 
