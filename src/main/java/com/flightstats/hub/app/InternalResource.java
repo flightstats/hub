@@ -24,6 +24,7 @@ public class InternalResource {
         links.withLink("curator", uriInfo.getRequestUri() + "/curator");
         links.withLink("traces", uriInfo.getRequestUri() + "/traces");
         links.withLink("zookeeper", uriInfo.getRequestUri() + "/zookeeper");
+        links.withLink("stacktrace", uriInfo.getRequestUri() + "/stacktrace");
 
         return Response.ok(links.build()).build();
     }
