@@ -169,19 +169,19 @@ public class S3Verifier {
 
     VerifierRange getHistoricalVerifierRange(DateTime now, ChannelConfig channel) {
         ContentPath lastUpdated = channelService.getLastUpdated(channel.getName(), new MinutePath(now));
-        logger.info("last updated {} {}", channel.getName(), lastUpdated);
+        logger.debug("last updated {} {}", channel.getName(), lastUpdated);
         if (lastUpdated.equals(ContentKey.NONE)) {
-            logger.info("lastUpdated is none - ignore {}", channel.getName());
+            logger.debug("lastUpdated is none - ignore {}", channel.getName());
             return null;
         }
         VerifierRange range = new VerifierRange(channel);
         range.endPath = new MinutePath(lastUpdated.getTime());
         ContentPath firstUpdated = lastContentPath.get(channel.getName(), range.endPath, HISTORICAL_FIRST_UPDATED);
         if (lastUpdated.equals(firstUpdated)) {
-            logger.info("equals {} {}", lastUpdated, firstUpdated);
+            logger.debug("equals {} {}", lastUpdated, firstUpdated);
             range.startPath = range.endPath;
         } else {
-            logger.info("not equal {} {}", lastUpdated, firstUpdated);
+            logger.debug("not equal {} {}", lastUpdated, firstUpdated);
             ContentPath lastVerified = lastContentPath.getOrNull(channel.getName(), LAST_SINGLE_VERIFIED);
             if (lastVerified == null) {
                 range.startPath = new MinutePath(firstUpdated.getTime());
