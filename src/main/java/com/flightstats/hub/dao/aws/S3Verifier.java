@@ -62,7 +62,7 @@ public class S3Verifier {
 
     public S3Verifier() {
         if (HubProperties.getProperty("s3Verifier.run", true)) {
-            HubServices.register(new S3VerifierService("/S3VerifierSingleService", 1, this::runSingle),
+            HubServices.register(new S3VerifierService("/S3VerifierSingleService", offsetMinutes, this::runSingle),
                     HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
         }
     }
@@ -161,6 +161,7 @@ public class S3Verifier {
                     }
                 }
             }
+            logger.info("Completed Verifying Single S3 data at: {}", now);
         } catch (Exception e) {
             logger.error("Error: ", e);
         }
@@ -246,13 +247,16 @@ public class S3Verifier {
 
         @Override
         public void takeLeadership(AtomicBoolean hasLeadership) {
+            logger.info("taking leadership");
             while (hasLeadership.get()) {
                 long start = System.currentTimeMillis();
                 runnable.run();
                 long sleep = TimeUnit.MINUTES.toMillis(minutes) - (System.currentTimeMillis() - start);
+                logger.debug("sleeping for {} ms", sleep);
                 Sleeper.sleep(Math.max(0, sleep));
+                logger.debug("waking up after sleep");
             }
-
+            logger.info("lost leadership");
         }
     }
 }
