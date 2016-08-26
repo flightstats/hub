@@ -16,15 +16,15 @@ import java.util.Map;
 
 @SuppressWarnings("WeakerAccess")
 @Path("/internal/stacktrace")
-public class StacktraceResource {
-    private final static Logger logger = LoggerFactory.getLogger(StacktraceResource.class);
+public class InternalStacktraceResource {
+    private final static Logger logger = LoggerFactory.getLogger(InternalStacktraceResource.class);
 
     private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
 
     @GET
     @Produces({MediaType.APPLICATION_JSON})
     public Response getTraces() {
-        ObjectNode root = mapper.createObjectNode();
+        ObjectNode root = InternalTracesResource.serverAndServers("/internal/stacktrace");
         try {
             Map<Thread, StackTraceElement[]> threadMap = Thread.getAllStackTraces();
             for (Thread thread : threadMap.keySet()) {
@@ -51,7 +51,9 @@ public class StacktraceResource {
                         for (StackTraceElement element : elements) {
                             String string = element.toString();
                             stacktrace.add(string);
-                            if (string.startsWith("sun.reflect.NativeMethodAccessorImpl.invoke")) {
+                            if (string.startsWith("sun.reflect.NativeMethodAccessorImpl.invoke")
+                                    || string.startsWith("org.apache.curator.framework")
+                                    || string.startsWith("java.util.concurrent.FutureTask")) {
                                 stacktrace.add("...");
                                 break;
                             }
