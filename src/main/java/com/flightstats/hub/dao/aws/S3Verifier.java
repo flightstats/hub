@@ -34,6 +34,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.flightstats.hub.dao.LocalChannelService.HISTORICAL_FIRST_UPDATED;
+
 @Singleton
 public class S3Verifier {
 
@@ -60,7 +62,7 @@ public class S3Verifier {
 
     public S3Verifier() {
         if (HubProperties.getProperty("s3Verifier.run", true)) {
-            HubServices.register(new S3VerifierService("/S3VerifierSingleService", offsetMinutes, this::runSingle),
+            HubServices.register(new S3VerifierService("/S3VerifierSingleService", 1, this::runSingle),
                     HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
         }
     }
@@ -114,6 +116,7 @@ public class S3Verifier {
         submit(range, "single", () -> {
             String channelName = range.channel.getName();
             SortedSet<ContentKey> keysToAdd = getMissing(range.startPath, range.endPath, channelName, s3SingleContentDao, new TreeSet<>());
+            logger.debug("singleS3Verification.starting {}", range);
             for (ContentKey key : keysToAdd) {
                 logger.trace("found missing {} {}", channelName, key);
                 s3WriteQueue.add(new ChannelContentKey(channelName, key));
@@ -147,12 +150,45 @@ public class S3Verifier {
             Iterable<ChannelConfig> channels = channelService.getChannels();
             for (ChannelConfig channel : channels) {
                 if (channel.isSingle() || channel.isBoth()) {
-                    singleS3Verification(getSingleVerifierRange(now, channel));
+                    VerifierRange range;
+                    if (channel.isHistorical()) {
+                        range = getHistoricalVerifierRange(now, channel);
+                    } else {
+                        range = getSingleVerifierRange(now, channel);
+                    }
+                    if (range != null) {
+                        singleS3Verification(range);
+                    }
                 }
             }
         } catch (Exception e) {
             logger.error("Error: ", e);
         }
+    }
+
+    VerifierRange getHistoricalVerifierRange(DateTime now, ChannelConfig channel) {
+        ContentPath lastUpdated = channelService.getLastUpdated(channel.getName(), new MinutePath(now));
+        logger.info("last updated {} {}", channel.getName(), lastUpdated);
+        if (lastUpdated.equals(ContentKey.NONE)) {
+            logger.info("lastUpdated is none - ignore {}", channel.getName());
+            return null;
+        }
+        VerifierRange range = new VerifierRange(channel);
+        range.endPath = new MinutePath(lastUpdated.getTime());
+        ContentPath firstUpdated = lastContentPath.get(channel.getName(), range.endPath, HISTORICAL_FIRST_UPDATED);
+        if (lastUpdated.equals(firstUpdated)) {
+            logger.info("equals {} {}", lastUpdated, firstUpdated);
+            range.startPath = range.endPath;
+        } else {
+            logger.info("not equal {} {}", lastUpdated, firstUpdated);
+            ContentPath lastVerified = lastContentPath.getOrNull(channel.getName(), LAST_SINGLE_VERIFIED);
+            if (lastVerified == null) {
+                range.startPath = new MinutePath(firstUpdated.getTime());
+            } else {
+                range.startPath = (MinutePath) lastVerified;
+            }
+        }
+        return range;
     }
 
     VerifierRange getSingleVerifierRange(DateTime now, ChannelConfig channel) {
