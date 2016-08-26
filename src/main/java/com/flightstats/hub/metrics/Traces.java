@@ -8,9 +8,11 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 public class Traces {
 
+    private static final int LIMIT = 100;
     private long start = System.currentTimeMillis();
     private long end;
     private final String id = UUID.randomUUID().toString();
@@ -45,11 +47,6 @@ public class Traces {
         traces.add(new SingleTrace(objects));
     }
 
-    public ListIterator<Trace> getTracesListIterator() {
-        return traces.listIterator();
-    }
-
-
     public void add(String string, SortedSet sortedSet) {
         if (sortedSet.isEmpty()) {
             add(string, "empty set");
@@ -83,13 +80,9 @@ public class Traces {
 
     private String getOutput(Logger logger) {
         try {
-            String output = "\n\t";
-            synchronized (traces) {
-                for (Trace trace : traces) {
-                    output += trace.toString() + "\n\t";
-                }
-            }
-            return output;
+            StringBuilder builder = new StringBuilder("\n\t");
+            limitTraces((trace) -> builder.append(trace).append("\n\t"));
+            return builder.toString();
         } catch (Exception e) {
             logger.warn("unable to log {} traces {}", traces);
             return "unable to output";
@@ -102,9 +95,24 @@ public class Traces {
         root.put("start", new DateTime(this.start).toString());
         root.put("millis", getTime());
         ArrayNode traceRoot = root.putArray("trace");
+        limitTraces(traceRoot::add);
+    }
+
+    private void limitTraces(Consumer<String> consumer) {
         synchronized (traces) {
-            for (Trace trace : traces) {
-                traceRoot.add(trace.toString());
+            int size = traces.size();
+            if (size > LIMIT) {
+                for (int i = 0; i < LIMIT / 2; i++) {
+                    consumer.accept(traces.get(i).toString());
+                }
+                consumer.accept("...cut " + (size - LIMIT) + " lines...");
+                for (int i = size - LIMIT / 2; i < size; i++) {
+                    consumer.accept(traces.get(i).toString());
+                }
+            } else {
+                for (Trace trace : traces) {
+                    consumer.accept(trace.toString());
+                }
             }
         }
     }
