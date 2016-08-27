@@ -23,6 +23,7 @@ import com.google.inject.name.Named;
 import lombok.AllArgsConstructor;
 import lombok.ToString;
 import org.joda.time.DateTime;
+import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +35,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.flightstats.hub.dao.LocalChannelService.HISTORICAL_FIRST_UPDATED;
+
 @Singleton
 public class S3Verifier {
 
@@ -42,7 +45,7 @@ public class S3Verifier {
 
     private final int offsetMinutes = HubProperties.getProperty("s3Verifier.offsetMinutes", 15);
     private final double keepLeadershipRate = HubProperties.getProperty("s3Verifier.keepLeadershipRate", 0.75);
-    private final ExecutorService queryThreadPool = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("S3QueryThread-%d").build());
+    private final ExecutorService queryThreadPool = Executors.newFixedThreadPool(30, new ThreadFactoryBuilder().setNameFormat("S3QueryThread-%d").build());
     private final ExecutorService channelThreadPool = Executors.newFixedThreadPool(10, new ThreadFactoryBuilder().setNameFormat("S3ChannelThread-%d").build());
     @Inject
     private
@@ -73,7 +76,10 @@ public class S3Verifier {
                 .channelName(channelName)
                 .startTime(startPath.getTime())
                 .unit(TimeUtil.Unit.MINUTES);
+        long timeout = 1;
         if (endPath != null) {
+            Duration duration = new Duration(startPath.getTime(), endPath.getTime());
+            timeout += duration.getStandardDays();
             builder.endTime(endPath.getTime());
         }
         TimeQuery timeQuery = builder.build();
@@ -85,7 +91,7 @@ public class S3Verifier {
                 queryResult.addKeys(spokeKeys);
             });
             runInQueryPool(ActiveTraces.getLocal(), latch, () -> longTermKeys.addAll(s3ContentDao.queryByTime(timeQuery)));
-            latch.await(1, TimeUnit.MINUTES);
+            latch.await(timeout, TimeUnit.MINUTES);
             queryResult.getContentKeys().removeAll(longTermKeys);
             if (queryResult.getContentKeys().size() > 0) {
                 logger.info("missing items {} {}", channelName, queryResult.getContentKeys());
@@ -111,9 +117,10 @@ public class S3Verifier {
     }
 
     private void singleS3Verification(VerifierRange range) {
-        submit(range, "single", () -> {
+        runInChannelPool(range, "single", () -> {
             String channelName = range.channel.getName();
             SortedSet<ContentKey> keysToAdd = getMissing(range.startPath, range.endPath, channelName, s3SingleContentDao, new TreeSet<>());
+            logger.debug("singleS3Verification.starting {}", range);
             for (ContentKey key : keysToAdd) {
                 logger.trace("found missing {} {}", channelName, key);
                 s3WriteQueue.add(new ChannelContentKey(channelName, key));
@@ -123,7 +130,7 @@ public class S3Verifier {
         });
     }
 
-    private void submit(VerifierRange range, String typeName, Runnable runnable) {
+    private void runInChannelPool(VerifierRange range, String typeName, Runnable runnable) {
         channelThreadPool.submit(() -> {
             try {
                 MinutePath currentPath = range.startPath;
@@ -147,12 +154,46 @@ public class S3Verifier {
             Iterable<ChannelConfig> channels = channelService.getChannels();
             for (ChannelConfig channel : channels) {
                 if (channel.isSingle() || channel.isBoth()) {
-                    singleS3Verification(getSingleVerifierRange(now, channel));
+                    VerifierRange range;
+                    if (channel.isHistorical()) {
+                        range = getHistoricalVerifierRange(now, channel);
+                    } else {
+                        range = getSingleVerifierRange(now, channel);
+                    }
+                    if (range != null) {
+                        singleS3Verification(range);
+                    }
                 }
             }
+            logger.info("Completed Verifying Single S3 data at: {}", now);
         } catch (Exception e) {
             logger.error("Error: ", e);
         }
+    }
+
+    VerifierRange getHistoricalVerifierRange(DateTime now, ChannelConfig channel) {
+        ContentPath lastUpdated = channelService.getLastUpdated(channel.getName(), new MinutePath(now));
+        logger.debug("last updated {} {}", channel.getName(), lastUpdated);
+        if (lastUpdated.equals(ContentKey.NONE)) {
+            logger.debug("lastUpdated is none - ignore {}", channel.getName());
+            return null;
+        }
+        VerifierRange range = new VerifierRange(channel);
+        range.endPath = new MinutePath(lastUpdated.getTime());
+        ContentPath firstUpdated = lastContentPath.get(channel.getName(), range.endPath, HISTORICAL_FIRST_UPDATED);
+        if (lastUpdated.equals(firstUpdated)) {
+            logger.debug("equals {} {}", lastUpdated, firstUpdated);
+            range.startPath = range.endPath;
+        } else {
+            logger.debug("not equal {} {}", lastUpdated, firstUpdated);
+            ContentPath lastVerified = lastContentPath.getOrNull(channel.getName(), LAST_SINGLE_VERIFIED);
+            if (lastVerified == null) {
+                range.startPath = new MinutePath(firstUpdated.getTime());
+            } else {
+                range.startPath = (MinutePath) lastVerified;
+            }
+        }
+        return range;
     }
 
     VerifierRange getSingleVerifierRange(DateTime now, ChannelConfig channel) {
@@ -210,13 +251,16 @@ public class S3Verifier {
 
         @Override
         public void takeLeadership(AtomicBoolean hasLeadership) {
+            logger.info("taking leadership");
             while (hasLeadership.get()) {
                 long start = System.currentTimeMillis();
                 runnable.run();
                 long sleep = TimeUnit.MINUTES.toMillis(minutes) - (System.currentTimeMillis() - start);
+                logger.debug("sleeping for {} ms", sleep);
                 Sleeper.sleep(Math.max(0, sleep));
+                logger.debug("waking up after sleep");
             }
-
+            logger.info("lost leadership");
         }
     }
 }

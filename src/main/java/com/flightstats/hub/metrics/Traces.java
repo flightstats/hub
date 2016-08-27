@@ -4,17 +4,21 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.model.SingleTrace;
 import com.flightstats.hub.model.Trace;
+import com.flightstats.hub.util.ObjectRing;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 public class Traces {
 
+    private static final int LIMIT = 50;
     private long start = System.currentTimeMillis();
     private long end;
     private final String id = UUID.randomUUID().toString();
     private final List<Trace> traces = Collections.synchronizedList(new ArrayList<>());
+    private final ObjectRing<Trace> lastTraces = new ObjectRing<>(LIMIT);
 
     public Traces(Object... objects) {
         add(objects);
@@ -38,17 +42,16 @@ public class Traces {
     }
 
     public void add(Trace trace) {
-        traces.add(trace);
+        if (traces.size() > LIMIT) {
+            lastTraces.put(trace);
+        } else {
+            traces.add(trace);
+        }
     }
 
     public void add(Object... objects) {
-        traces.add(new SingleTrace(objects));
+        add(new SingleTrace(objects));
     }
-
-    public ListIterator<Trace> getTracesListIterator() {
-        return traces.listIterator();
-    }
-
 
     public void add(String string, SortedSet sortedSet) {
         if (sortedSet.isEmpty()) {
@@ -83,13 +86,9 @@ public class Traces {
 
     private String getOutput(Logger logger) {
         try {
-            String output = "\n\t";
-            synchronized (traces) {
-                for (Trace trace : traces) {
-                    output += trace.toString() + "\n\t";
-                }
-            }
-            return output;
+            StringBuilder builder = new StringBuilder("\n\t");
+            outputTraces((trace) -> builder.append(trace).append("\n\t"));
+            return builder.toString();
         } catch (Exception e) {
             logger.warn("unable to log {} traces {}", traces);
             return "unable to output";
@@ -102,9 +101,20 @@ public class Traces {
         root.put("start", new DateTime(this.start).toString());
         root.put("millis", getTime());
         ArrayNode traceRoot = root.putArray("trace");
+        outputTraces(traceRoot::add);
+    }
+
+    void outputTraces(Consumer<String> consumer) {
         synchronized (traces) {
             for (Trace trace : traces) {
-                traceRoot.add(trace.toString());
+                consumer.accept(trace.toString());
+            }
+            if (lastTraces.getTotalSize() > LIMIT) {
+                consumer.accept("   ...cut " + (lastTraces.getTotalSize() - LIMIT) + " lines...");
+            }
+            List<Trace> lastItems = lastTraces.getItems();
+            for (Trace trace : lastItems) {
+                consumer.accept(trace.toString());
             }
         }
     }

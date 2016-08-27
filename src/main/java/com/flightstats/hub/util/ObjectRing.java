@@ -7,6 +7,7 @@ public class ObjectRing<T> {
 
     private T[] items;
     private int position = 0;
+    private int totalSize = 0;
 
     public ObjectRing(int size) {
         items = (T[]) new Object[size];
@@ -18,6 +19,7 @@ public class ObjectRing<T> {
         }
         items[position] = item;
         position++;
+        totalSize++;
     }
 
     public List<T> getItems() {
@@ -34,5 +36,9 @@ public class ObjectRing<T> {
             }
         }
         return list;
+    }
+
+    public int getTotalSize() {
+        return totalSize;
     }
 }
