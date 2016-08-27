@@ -113,7 +113,7 @@ public class S3Verifier {
     }
 
     private void singleS3Verification(VerifierRange range) {
-        submit(range, "single", () -> {
+        runInChannelPool(range, "single", () -> {
             String channelName = range.channel.getName();
             SortedSet<ContentKey> keysToAdd = getMissing(range.startPath, range.endPath, channelName, s3SingleContentDao, new TreeSet<>());
             logger.debug("singleS3Verification.starting {}", range);
@@ -126,7 +126,7 @@ public class S3Verifier {
         });
     }
 
-    private void submit(VerifierRange range, String typeName, Runnable runnable) {
+    private void runInChannelPool(VerifierRange range, String typeName, Runnable runnable) {
         channelThreadPool.submit(() -> {
             try {
                 MinutePath currentPath = range.startPath;
