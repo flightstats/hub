@@ -23,6 +23,7 @@ import com.google.inject.name.Named;
 import lombok.AllArgsConstructor;
 import lombok.ToString;
 import org.joda.time.DateTime;
+import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,7 +76,10 @@ public class S3Verifier {
                 .channelName(channelName)
                 .startTime(startPath.getTime())
                 .unit(TimeUtil.Unit.MINUTES);
+        long timeout = 1;
         if (endPath != null) {
+            Duration duration = new Duration(startPath.getTime(), endPath.getTime());
+            timeout += duration.getStandardDays();
             builder.endTime(endPath.getTime());
         }
         TimeQuery timeQuery = builder.build();
@@ -87,7 +91,7 @@ public class S3Verifier {
                 queryResult.addKeys(spokeKeys);
             });
             runInQueryPool(ActiveTraces.getLocal(), latch, () -> longTermKeys.addAll(s3ContentDao.queryByTime(timeQuery)));
-            latch.await(1, TimeUnit.MINUTES);
+            latch.await(timeout, TimeUnit.MINUTES);
             queryResult.getContentKeys().removeAll(longTermKeys);
             if (queryResult.getContentKeys().size() > 0) {
                 logger.info("missing items {} {}", channelName, queryResult.getContentKeys());
