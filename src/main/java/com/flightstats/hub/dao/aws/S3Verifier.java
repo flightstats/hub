@@ -44,7 +44,7 @@ public class S3Verifier {
 
     private final int offsetMinutes = HubProperties.getProperty("s3Verifier.offsetMinutes", 15);
     private final double keepLeadershipRate = HubProperties.getProperty("s3Verifier.keepLeadershipRate", 0.75);
-    private final ExecutorService queryThreadPool = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("S3QueryThread-%d").build());
+    private final ExecutorService queryThreadPool = Executors.newFixedThreadPool(30, new ThreadFactoryBuilder().setNameFormat("S3QueryThread-%d").build());
     private final ExecutorService channelThreadPool = Executors.newFixedThreadPool(10, new ThreadFactoryBuilder().setNameFormat("S3ChannelThread-%d").build());
     @Inject
     private

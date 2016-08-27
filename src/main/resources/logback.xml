@@ -28,7 +28,7 @@
     <logger name="com.flightstats.hub" level="DEBUG"/>
     <logger name="com.flightstats.hub.webhook" level="TRACE"/>
     <logger name="com.flightstats.hub.spoke.SpokeContentDao" level="TRACE"/>
-    <logger name="com.flightstats.hub.dao.aws.S3Verifier" level="TRACE"/>
+    <logger name="com.flightstats.hub.dao.aws.S3Verifier" level="DEBUG"/>
     <logger name="com.flightstats.hub.filter.TracesFilter" level="TRACE"/>
 
 </configuration>
