@@ -50,7 +50,6 @@ public class CuratorLeader {
     public void start() {
         if (leaderSelector == null) {
             leaderSelector = new LeaderSelector(curator, leaderPath, new CuratorLeaderSelectionListener());
-            leaderSelector.setId(id);
             leaderSelector.autoRequeue();
             leaderSelector.start();
             logger.info("start {}", id);
@@ -141,6 +140,10 @@ public class CuratorLeader {
             logger.info("server {} {} {}", server, pathDate, getLeaderPath());
             childData.put(server, pathDate);
         }
+        /*
+         * if there are too many from this server, restarty
+          *
+         */
     }
 
     @EqualsAndHashCode
