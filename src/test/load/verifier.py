@@ -1,6 +1,5 @@
 # locust.py
 import json
-
 from locust import HttpLocust, TaskSet, task, web
 
 from hubTasks import HubTasks
@@ -38,7 +37,7 @@ class VerifierTasks(TaskSet):
     def write_read(self):
         self.hubTasks.write_read()
 
-    @task(10)
+    @task(50)
     def change_parallel(self):
         self.hubTasks.change_parallel("verifier_test_2")
 
