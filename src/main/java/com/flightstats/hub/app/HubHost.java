@@ -48,7 +48,7 @@ public class HubHost {
         return getScheme() + getLocalNamePort();
     }
 
-    static String getLocalAddress() {
+    public static String getLocalAddress() {
         try {
             return InetAddress.getLocalHost().getHostAddress();
         } catch (UnknownHostException e) {

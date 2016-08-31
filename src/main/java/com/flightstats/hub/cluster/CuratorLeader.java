@@ -1,6 +1,9 @@
 package com.flightstats.hub.cluster;
 
+import com.flightstats.hub.app.HubHost;
+import com.flightstats.hub.app.HubMain;
 import com.flightstats.hub.app.HubProvider;
+import com.flightstats.hub.app.ShutdownManager;
 import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.google.common.collect.ArrayListMultimap;
@@ -19,6 +22,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -31,6 +36,7 @@ public class CuratorLeader {
 
     private final static Logger logger = LoggerFactory.getLogger(CuratorLeader.class);
     private final static CuratorFramework curator = HubProvider.getInstance(CuratorFramework.class);
+    private final static ShutdownManager shutdownManager = HubProvider.getInstance(ShutdownManager.class);
     private String leaderPath;
     private Leader leader;
     private LeaderSelector leaderSelector;
@@ -140,10 +146,15 @@ public class CuratorLeader {
             logger.info("server {} {} {}", server, pathDate, getLeaderPath());
             childData.put(server, pathDate);
         }
-        /*
-         * if there are too many from this server, restarty
-          *
-         */
+        String localServer = HubHost.getLocalAddress();
+        SortedSet<PathDate> pathDates = new TreeSet<>(childData.get(localServer));
+        if (pathDates.size() >= 2) {
+            if (pathDates.first().dateTime.isAfter(HubMain.getStartTime())) {
+                logger.warn("found too many locks for this server {} {}", localServer, pathDates);
+                shutdownManager.shutdown();
+            }
+        }
+
     }
 
     @EqualsAndHashCode
