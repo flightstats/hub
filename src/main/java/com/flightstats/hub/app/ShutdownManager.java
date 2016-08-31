@@ -14,13 +14,12 @@ import java.util.concurrent.Executors;
 /**
  * ShutdownResource should only be called from the node's instance by the upstart prestop.sh script
  */
+@SuppressWarnings("WeakerAccess")
 @Singleton
-class ShutdownManager {
+public class ShutdownManager {
 
     private final static Logger logger = LoggerFactory.getLogger(ShutdownManager.class);
 
-    private static final HubHealthCheck healthCheck = HubProvider.getInstance(HubHealthCheck.class);
-    private final static CuratorFramework curator = HubProvider.getInstance(CuratorFramework.class);
     private static final String PATH = "/ShutdownManager";
 
     public ShutdownManager() {
@@ -31,6 +30,7 @@ class ShutdownManager {
 
         @Override
         protected void startUp() throws Exception {
+            CuratorFramework curator = HubProvider.getInstance(CuratorFramework.class);
             try {
                 byte[] bytes = curator.getData().forPath(PATH);
                 String foundIpAddress = new String(bytes);
@@ -51,6 +51,7 @@ class ShutdownManager {
     }
 
     public boolean shutdown() throws Exception {
+        HubHealthCheck healthCheck = HubProvider.getInstance(HubHealthCheck.class);
         if (healthCheck.isShuttingDown()) {
             return true;
         }
@@ -74,6 +75,7 @@ class ShutdownManager {
     }
 
     private void waitForLock() throws Exception {
+        CuratorFramework curator = HubProvider.getInstance(CuratorFramework.class);
         while (true) {
             try {
                 byte[] bytes = curator.getData().forPath(PATH);
