@@ -1,14 +1,8 @@
 package com.flightstats.hub.app;
 
-import com.flightstats.hub.health.HubHealthCheck;
-import com.flightstats.hub.util.Sleeper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
-import java.util.concurrent.Executors;
 
 /**
  * ShutdownResource should only be called from the node's instance by the upstart prestop.sh script
@@ -17,29 +11,9 @@ import java.util.concurrent.Executors;
 @Path("/shutdown")
 public class ShutdownResource {
 
-    private final static Logger logger = LoggerFactory.getLogger(ShutdownResource.class);
-
-    private HubHealthCheck healthCheck = HubProvider.getInstance(HubHealthCheck.class);
-
     @POST
-    public Response shutdown() {
-        if (healthCheck.isShuttingDown()) {
-            return Response.ok().build();
-        }
-        logger.warn("shutting down!");
-        //this call will get the node removed from the Load Balancer
-        healthCheck.shutdown();
-
-        HubServices.preStop();
-
-        //wait until it's likely the node is removed from the Load Balancer
-        int shutdown_delay_seconds = HubProperties.getProperty("app.shutdown_delay_seconds", 60);
-        logger.warn("sleeping for " + shutdown_delay_seconds);
-        Sleeper.sleep(shutdown_delay_seconds * 1000);
-
-        HubServices.stopAll();
-        logger.warn("completed shutdown tasks");
-        Executors.newSingleThreadExecutor().submit(() -> System.exit(0));
+    public Response shutdown() throws Exception {
+        HubProvider.getInstance(ShutdownManager.class).shutdown();
         return Response.ok().build();
     }
 }
