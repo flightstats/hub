@@ -20,11 +20,12 @@ public class InternalResource {
         Linked.Builder<?> links = Linked.linked("Internal APIs may change at any time, and are intended for debugging only.");
         links.withLink("self", uriInfo.getRequestUri());
 
-        links.withLink("channel", uriInfo.getRequestUri() + "/channel");
-        links.withLink("curator", uriInfo.getRequestUri() + "/curator");
-        links.withLink("traces", uriInfo.getRequestUri() + "/traces");
-        links.withLink("zookeeper", uriInfo.getRequestUri() + "/zookeeper");
-        links.withLink("stacktrace", uriInfo.getRequestUri() + "/stacktrace");
+        links.withRelativeLink("channel", uriInfo);
+        links.withRelativeLink("curator", uriInfo);
+        links.withRelativeLink("shutdown", uriInfo);
+        links.withRelativeLink("stacktrace", uriInfo);
+        links.withRelativeLink("traces", uriInfo);
+        links.withRelativeLink("zookeeper", uriInfo);
 
         return Response.ok(links.build()).build();
     }

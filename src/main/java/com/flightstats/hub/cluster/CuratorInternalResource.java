@@ -37,7 +37,7 @@ public class CuratorInternalResource {
     public Response getRoot() {
         Linked.Builder<?> links = Linked.linked("Internal APIs may change at any time, and are intended for debugging only.");
         links.withLink("self", uriInfo.getRequestUri());
-        links.withLink("leaders", uriInfo.getRequestUri() + "/leaders");
+        links.withRelativeLink("leaders", uriInfo);
         return Response.ok(links.build()).build();
     }
 

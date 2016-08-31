@@ -31,7 +31,7 @@ public class InternalChannelResource {
     public Response get(@Context UriInfo uriInfo) throws Exception {
         Linked.Builder<?> links = Linked.linked("");
         links.withLink("self", uriInfo.getRequestUri());
-        links.withLink("refresh", uriInfo.getRequestUri() + "/refresh");
+        links.withRelativeLink("refresh", uriInfo);
         return Response.ok(links.build()).build();
     }
 
