@@ -28,6 +28,10 @@ public class HubHost {
         }
     }
 
+    static String getLocalhostUri() {
+        return getScheme() + "localhost:" + getLocalPort();
+    }
+
     public static String getLocalHttpIpUri() {
         return getScheme() + getLocalAddressPort();
     }

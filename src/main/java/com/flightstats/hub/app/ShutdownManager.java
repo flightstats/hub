@@ -30,14 +30,12 @@ public class ShutdownManager {
 
         @Override
         protected void startUp() throws Exception {
-            CuratorFramework curator = HubProvider.getInstance(CuratorFramework.class);
             try {
-                byte[] bytes = curator.getData().forPath(PATH);
-                String foundIpAddress = new String(bytes);
+                String foundIpAddress = getLockData();
                 logger.info("found shutdown lock {} local {}", foundIpAddress, HubHost.getLocalAddress());
                 if (HubHost.getLocalAddress().equals(foundIpAddress)) {
                     logger.info("deleting shutdown lock {} local {}", foundIpAddress, HubHost.getLocalAddress());
-                    curator.delete().forPath(PATH);
+                    resetLock();
                 }
             } catch (KeeperException.NoNodeException e) {
                 logger.warn("node not found for ..." + PATH);
@@ -46,7 +44,7 @@ public class ShutdownManager {
 
         @Override
         protected void shutDown() throws Exception {
-            //todo gfm - do nothing, ShutdownManager should have already been shutdown.
+            //do nothing, ShutdownManager should have already been shutdown.
         }
     }
 
@@ -74,17 +72,36 @@ public class ShutdownManager {
         return true;
     }
 
+    public String getLockData() throws Exception {
+        byte[] bytes = getCurator().getData().forPath(PATH);
+        return new String(bytes);
+    }
+
+    public boolean resetLock() throws Exception {
+        try {
+            logger.info("resetting lock " + PATH);
+            getCurator().delete().forPath(PATH);
+            return true;
+        } catch (KeeperException.NoNodeException e) {
+            logger.info("node not found for ..." + PATH);
+            return false;
+        }
+    }
+
+    private CuratorFramework getCurator() {
+        return HubProvider.getInstance(CuratorFramework.class);
+    }
+
     private void waitForLock() throws Exception {
-        CuratorFramework curator = HubProvider.getInstance(CuratorFramework.class);
         while (true) {
             try {
-                byte[] bytes = curator.getData().forPath(PATH);
-                logger.info("waiting for shutdown lock {}", new String(bytes));
+                String lockData = getLockData();
+                logger.info("waiting for shutdown lock {}", lockData);
                 Sleeper.sleep(1000);
             } catch (KeeperException.NoNodeException e) {
                 logger.info("creating shutdown lock");
                 try {
-                    curator.create().forPath(PATH, HubHost.getLocalAddress().getBytes());
+                    getCurator().create().forPath(PATH, HubHost.getLocalAddress().getBytes());
                     return;
                 } catch (Exception e1) {
                     logger.info("why did this fail?", e1);

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubProvider;
+import com.flightstats.hub.app.LocalHostOnly;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.events.ContentOutput;
 import com.flightstats.hub.events.EventsService;
@@ -240,12 +241,7 @@ public class ChannelResource {
         if (HubProperties.getProperty("hub.allow.channel.deletion", false)) {
             return deletion(channelName);
         }
-        if (uriInfo.getBaseUri().toString().contains("localhost")) {
-            return deletion(channelName);
-        } else {
-            logger.info("deletions are not allowed");
-            return Response.status(405).build();
-        }
+        return LocalHostOnly.getResponse(uriInfo, () -> deletion(channelName));
     }
 
     private Response deletion(@PathParam("channel") String channelName) {
