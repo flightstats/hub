@@ -67,7 +67,7 @@ public class ShutdownManager {
         Sleeper.sleep(shutdown_delay_seconds * 1000);
 
         HubServices.stopAll();
-        logger.warn("completed shutdown tasks");
+        logger.warn("completed shutdown tasks, exiting JVM");
         Executors.newSingleThreadExecutor().submit(() -> System.exit(0));
         return true;
     }

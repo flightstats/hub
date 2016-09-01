@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -151,7 +152,7 @@ public class CuratorLeader {
         if (pathDates.size() >= 2) {
             if (pathDates.first().dateTime.isAfter(HubMain.getStartTime())) {
                 logger.warn("found too many locks for this server {} {}", localServer, pathDates);
-                shutdownManager.shutdown();
+                Executors.newSingleThreadExecutor().submit(shutdownManager::shutdown);
             }
         }
 

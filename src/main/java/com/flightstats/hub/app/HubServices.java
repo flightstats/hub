@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Services is the class to register for startup and shutdown hooks
@@ -74,7 +75,7 @@ public class HubServices {
 
     private static void await(Service service) {
         try {
-            service.awaitTerminated();
+            service.awaitTerminated(1, TimeUnit.MINUTES);
         } catch (Exception e) {
             logger.error("unable to stop service" + service.getClass().getName(), e);
         }
