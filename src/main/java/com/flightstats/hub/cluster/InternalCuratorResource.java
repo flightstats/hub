@@ -1,9 +1,9 @@
 package com.flightstats.hub.cluster;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProvider;
-import com.flightstats.hub.metrics.InternalTracesResource;
 import com.flightstats.hub.util.TimeUtil;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.data.Stat;
@@ -25,7 +25,8 @@ import java.util.TreeSet;
 public class InternalCuratorResource {
 
     private static final CuratorFramework curator = HubProvider.getInstance(CuratorFramework.class);
-    public static final String DESCRIPTION = "See Curator Leaders with links to other hubs in the cluster.";
+    private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    public static final String DESCRIPTION = "Get Curator Leaders.";
 
     @Context
     private UriInfo uriInfo;
@@ -33,7 +34,7 @@ public class InternalCuratorResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getLeaders() throws Exception {
-        ObjectNode root = InternalTracesResource.serverAndServers("/internal/curator");
+        ObjectNode root = mapper.createObjectNode();
         ArrayNode leadersArray = root.withArray("leaders");
         Collection<InternalLeader> leaders = getLeadersData();
 

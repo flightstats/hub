@@ -26,7 +26,7 @@ public class InternalChannelResource {
             }, "ChannelConfig");
     private final static HubUtils hubUtils = HubProvider.getInstance(HubUtils.class);
 
-    public static final String DESCRIPTION = "Request a refresh of the Channel Cache within the entire hub cluster.";
+    public static final String DESCRIPTION = "GET to refresh of the Channel Cache within the entire hub cluster.";
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
