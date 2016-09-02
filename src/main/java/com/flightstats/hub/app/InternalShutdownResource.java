@@ -19,14 +19,17 @@ import java.net.URI;
  */
 @SuppressWarnings("WeakerAccess")
 @Path("/internal/shutdown")
-public class ShutdownInternalResource {
+public class InternalShutdownResource {
     private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+
+    public static final String DESCRIPTION = "See if any server is being shutdown, shutdown a node, and reset the shutdown lock.";
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response get(@Context UriInfo uriInfo) throws Exception {
         URI requestUri = uriInfo.getRequestUri();
         ObjectNode root = mapper.createObjectNode();
+        root.put("description", DESCRIPTION);
         root.put("directions", "Make HTTP POSTs to links below to take the desired action");
         try {
             root.put("shutdownLock", getManager().getLockData());

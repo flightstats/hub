@@ -25,11 +25,12 @@ import java.util.List;
 
 @SuppressWarnings("WeakerAccess")
 @Path("/internal/zookeeper/")
-public class ZookeeperResource {
-    private static final Logger logger = LoggerFactory.getLogger(ZookeeperResource.class);
+public class InternalZookeeperResource {
+    private static final Logger logger = LoggerFactory.getLogger(InternalZookeeperResource.class);
 
-    private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private CuratorFramework curator = HubProvider.getInstance(CuratorFramework.class);
+    private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private static final CuratorFramework curator = HubProvider.getInstance(CuratorFramework.class);
+    public static final String DESCRIPTION = "Read-only interface into the ZooKeeper hierarchy.";
 
     @Context
     private UriInfo uriInfo;
@@ -58,6 +59,7 @@ public class ZookeeperResource {
             ObjectNode links = root.putObject("_links");
             ObjectNode self = links.putObject("self");
             self.put("href", uriInfo.getRequestUri().toString());
+            self.put("description", DESCRIPTION);
             handleData(path, root);
             handleChildren(path, root);
             return Response.ok(root).build();

@@ -26,10 +26,12 @@ public class InternalChannelResource {
             }, "ChannelConfig");
     private final static HubUtils hubUtils = HubProvider.getInstance(HubUtils.class);
 
+    public static final String DESCRIPTION = "Request a refresh of the Channel Cache within the entire hub cluster.";
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response get(@Context UriInfo uriInfo) throws Exception {
-        Linked.Builder<?> links = Linked.linked("");
+        Linked.Builder<?> links = Linked.linked(DESCRIPTION);
         links.withLink("self", uriInfo.getRequestUri());
         links.withRelativeLink("refresh", uriInfo);
         return Response.ok(links.build()).build();

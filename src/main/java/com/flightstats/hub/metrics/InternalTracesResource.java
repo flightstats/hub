@@ -19,6 +19,7 @@ public class InternalTracesResource {
 
     private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private static final CuratorCluster hubCuratorCluster = HubProvider.getInstance(CuratorCluster.class, "HubCuratorCluster");
+    public static final String DESCRIPTION = "Shows active requests, the slowest 100, and the latest 100 with links to other hubs in the cluster";
 
     public static ObjectNode serverAndServers(String path) {
         ObjectNode root = mapper.createObjectNode();

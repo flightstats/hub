@@ -1,6 +1,14 @@
 package com.flightstats.hub.app;
 
-import com.flightstats.hub.rest.Linked;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.channel.InternalChannelResource;
+import com.flightstats.hub.cluster.CuratorInternalResource;
+import com.flightstats.hub.cluster.InternalZookeeperResource;
+import com.flightstats.hub.health.InternalHealthResource;
+import com.flightstats.hub.metrics.InternalStacktraceResource;
+import com.flightstats.hub.metrics.InternalTracesResource;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -14,20 +22,39 @@ import javax.ws.rs.core.UriInfo;
 @Path("/internal")
 public class InternalResource {
 
+    private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+
+    private
+    @Context
+    UriInfo uriInfo;
+    private ObjectNode links;
+    private String requestUri;
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getChannels(@Context UriInfo uriInfo) {
-        Linked.Builder<?> links = Linked.linked("Internal APIs may change at any time, and are intended for debugging only.");
-        links.withLink("self", uriInfo.getRequestUri());
+    public Response getChannels() {
+        ObjectNode root = mapper.createObjectNode();
+        root.put("WARNING", "Internal APIs may change at any time. It is intended to be used interactively, and scripts might break at any time.");
+        links = root.with("_links");
 
-        links.withRelativeLink("channel", uriInfo);
-        links.withRelativeLink("curator", uriInfo);
-        links.withRelativeLink("health", uriInfo);
-        links.withRelativeLink("shutdown", uriInfo);
-        links.withRelativeLink("stacktrace", uriInfo);
-        links.withRelativeLink("traces", uriInfo);
-        links.withRelativeLink("zookeeper", uriInfo);
+        requestUri = StringUtils.appendIfMissing(uriInfo.getRequestUri().toString(), "/");
+        links.with("self").put("href", requestUri);
 
-        return Response.ok(links.build()).build();
+        addLink("channel", InternalChannelResource.DESCRIPTION);
+        addLink("curator", CuratorInternalResource.DESCRIPTION);
+        addLink("health", InternalHealthResource.DESCRIPTION);
+        addLink("shutdown", InternalShutdownResource.DESCRIPTION);
+        addLink("stacktrace", InternalStacktraceResource.DESCRIPTION);
+        addLink("traces", InternalTracesResource.DESCRIPTION);
+        addLink("zookeeper", InternalZookeeperResource.DESCRIPTION);
+        return Response.ok(root).build();
     }
+
+    private ObjectNode addLink(String name, String description) {
+        ObjectNode node = links.with(name);
+        node.put("description", description);
+        node.put("href", requestUri + name);
+        return node;
+    }
+
 }

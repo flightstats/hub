@@ -21,6 +21,7 @@ public class InternalStacktraceResource {
     private final static Logger logger = LoggerFactory.getLogger(InternalStacktraceResource.class);
 
     private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    public static final String DESCRIPTION = "Get a condensed stacktrace with links to other hubs in the cluster.";
 
     @GET
     @Produces({MediaType.APPLICATION_JSON})

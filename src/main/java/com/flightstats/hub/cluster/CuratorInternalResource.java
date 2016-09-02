@@ -1,10 +1,9 @@
 package com.flightstats.hub.cluster;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProvider;
-import com.flightstats.hub.rest.Linked;
+import com.flightstats.hub.metrics.InternalTracesResource;
 import com.flightstats.hub.util.TimeUtil;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.data.Stat;
@@ -22,32 +21,19 @@ import java.util.List;
 import java.util.TreeSet;
 
 @SuppressWarnings("WeakerAccess")
-@Path("/internal/curator/")
+@Path("/internal/curator")
 public class CuratorInternalResource {
 
-    private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private static final CuratorFramework curator = HubProvider.getInstance(CuratorFramework.class);
-    private static final CuratorCluster hubCuratorCluster = HubProvider.getInstance(CuratorCluster.class, "HubCuratorCluster");
+    public static final String DESCRIPTION = "See Curator Leaders with links to other hubs in the cluster.";
 
     @Context
     private UriInfo uriInfo;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getRoot() {
-        Linked.Builder<?> links = Linked.linked("Internal APIs may change at any time, and are intended for debugging only.");
-        links.withLink("self", uriInfo.getRequestUri());
-        links.withRelativeLink("leaders", uriInfo);
-        return Response.ok(links.build()).build();
-    }
-
-    @GET
-    @Path("leaders")
-    @Produces(MediaType.APPLICATION_JSON)
     public Response getLeaders() throws Exception {
-        ObjectNode root = mapper.createObjectNode();
-        ArrayNode serversArray = root.withArray("servers");
-        hubCuratorCluster.getServers().forEach(serversArray::add);
+        ObjectNode root = InternalTracesResource.serverAndServers("/internal/curator");
         ArrayNode leadersArray = root.withArray("leaders");
         Collection<InternalLeader> leaders = getLeadersData();
 

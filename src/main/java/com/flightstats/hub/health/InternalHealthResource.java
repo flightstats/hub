@@ -21,6 +21,7 @@ import java.io.IOException;
 @SuppressWarnings("WeakerAccess")
 @Path("/internal/health")
 public class InternalHealthResource {
+    public static final String DESCRIPTION = "See status of all hubs in a cluster.";
     private static final Client client = HubProvider.getInstance(Client.class);
     private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     @Context
