@@ -151,7 +151,7 @@ public class CuratorLeader {
         SortedSet<PathDate> pathDates = new TreeSet<>(childData.get(localServer));
         if (pathDates.size() >= 2) {
             if (pathDates.first().dateTime.isAfter(HubMain.getStartTime())) {
-                logger.warn("found too many locks for this server {} {}", localServer, pathDates);
+                logger.warn("found too many locks {} for this server {} {}", getLeaderPath(), localServer, pathDates);
                 Executors.newSingleThreadExecutor().submit(shutdownManager::shutdown);
             }
         }
