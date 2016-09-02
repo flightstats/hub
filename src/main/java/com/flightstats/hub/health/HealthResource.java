@@ -6,8 +6,9 @@ import com.flightstats.hub.app.HubMain;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.app.HubVersion;
 import com.flightstats.hub.channel.LinkBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.flightstats.hub.util.TimeUtil;
+import org.joda.time.DateTime;
+import org.joda.time.Duration;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -20,14 +21,12 @@ import javax.ws.rs.core.UriInfo;
 @SuppressWarnings("WeakerAccess")
 @Path("/health")
 public class HealthResource {
-    private final static Logger logger = LoggerFactory.getLogger(HealthResource.class);
-
     @Context
     private UriInfo uriInfo;
 
-    private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private HubHealthCheck healthCheck = HubProvider.getInstance(HubHealthCheck.class);
-    private HubVersion hubVersion = HubProvider.getInstance(HubVersion.class);
+    private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private static final HubHealthCheck healthCheck = HubProvider.getInstance(HubHealthCheck.class);
+    private static final HubVersion hubVersion = HubProvider.getInstance(HubVersion.class);
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -37,7 +36,9 @@ public class HealthResource {
         rootNode.put("healthy", healthStatus.isHealthy());
         rootNode.put("description", healthStatus.getDescription());
         rootNode.put("version", hubVersion.getVersion());
-        rootNode.put("startTime", HubMain.getStartTime().toString());
+        DateTime startTime = HubMain.getStartTime();
+        rootNode.put("startTime", startTime.toString());
+        rootNode.put("upTimeHours", new Duration(startTime, TimeUtil.now()).getStandardHours());
         LinkBuilder.addLink("metrics", uriInfo.getBaseUri() + "health/metrics", rootNode);
         if (healthStatus.isHealthy()) {
             return Response.ok(rootNode).build();

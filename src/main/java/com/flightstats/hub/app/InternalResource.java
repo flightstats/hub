@@ -22,6 +22,7 @@ public class InternalResource {
 
         links.withRelativeLink("channel", uriInfo);
         links.withRelativeLink("curator", uriInfo);
+        links.withRelativeLink("health", uriInfo);
         links.withRelativeLink("shutdown", uriInfo);
         links.withRelativeLink("stacktrace", uriInfo);
         links.withRelativeLink("traces", uriInfo);
