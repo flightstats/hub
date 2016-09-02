@@ -22,7 +22,7 @@ import java.util.TreeSet;
 
 @SuppressWarnings("WeakerAccess")
 @Path("/internal/curator")
-public class CuratorInternalResource {
+public class InternalCuratorResource {
 
     private static final CuratorFramework curator = HubProvider.getInstance(CuratorFramework.class);
     public static final String DESCRIPTION = "See Curator Leaders with links to other hubs in the cluster.";

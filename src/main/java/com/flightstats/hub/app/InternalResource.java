@@ -3,7 +3,7 @@ package com.flightstats.hub.app;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.channel.InternalChannelResource;
-import com.flightstats.hub.cluster.CuratorInternalResource;
+import com.flightstats.hub.cluster.InternalCuratorResource;
 import com.flightstats.hub.cluster.InternalZookeeperResource;
 import com.flightstats.hub.health.InternalHealthResource;
 import com.flightstats.hub.metrics.InternalStacktraceResource;
@@ -34,14 +34,14 @@ public class InternalResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getChannels() {
         ObjectNode root = mapper.createObjectNode();
-        root.put("WARNING", "Internal APIs may change at any time. It is intended to be used interactively, and scripts might break at any time.");
+        root.put("WARNING", "Internal APIs may change at any time. They are intended to be used interactively, and scripts might break at any time.");
         links = root.with("_links");
 
         requestUri = StringUtils.appendIfMissing(uriInfo.getRequestUri().toString(), "/");
         links.with("self").put("href", requestUri);
 
         addLink("channel", InternalChannelResource.DESCRIPTION);
-        addLink("curator", CuratorInternalResource.DESCRIPTION);
+        addLink("curator", InternalCuratorResource.DESCRIPTION);
         addLink("health", InternalHealthResource.DESCRIPTION);
         addLink("shutdown", InternalShutdownResource.DESCRIPTION);
         addLink("stacktrace", InternalStacktraceResource.DESCRIPTION);
