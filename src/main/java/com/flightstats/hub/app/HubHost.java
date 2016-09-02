@@ -19,7 +19,7 @@ public class HubHost {
         }
     }
 
-    static String getLocalName() {
+    public static String getLocalName() {
         try {
             return InetAddress.getLocalHost().getHostName();
         } catch (UnknownHostException e) {

@@ -1,9 +1,11 @@
 package com.flightstats.hub.app;
 
 import com.flightstats.hub.health.HubHealthCheck;
+import com.flightstats.hub.metrics.DataDog;
 import com.flightstats.hub.util.Sleeper;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Singleton;
+import com.timgroup.statsd.Event;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
@@ -54,7 +56,11 @@ public class ShutdownManager {
             return true;
         }
         waitForLock();
-
+        Event event = DataDog.getEventBuilder()
+                .withTitle("Hub Restart Shutdown")
+                .withText("shutting down")
+                .build();
+        DataDog.statsd.recordEvent(event, "restart", "shutdown");
         logger.warn("shutting down!");
         //this call will get the node removed from the Load Balancer
         healthCheck.shutdown();

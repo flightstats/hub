@@ -5,9 +5,11 @@ import com.flightstats.hub.app.HubMain;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.app.ShutdownManager;
 import com.flightstats.hub.exception.NoSuchChannelException;
+import com.flightstats.hub.metrics.DataDog;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
+import com.timgroup.statsd.Event;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -152,6 +154,11 @@ public class CuratorLeader {
         if (pathDates.size() >= 2) {
             if (pathDates.first().dateTime.isAfter(HubMain.getStartTime())) {
                 logger.warn("found too many locks {} for this server {} {}", getLeaderPath(), localServer, pathDates);
+                Event event = DataDog.getEventBuilder()
+                        .withTitle("Hub Leader Lock")
+                        .withText(getLeaderPath() + " " + pathDates.toString())
+                        .build();
+                DataDog.statsd.recordEvent(event, "restart", "leader", "shutdown");
                 Executors.newSingleThreadExecutor().submit(shutdownManager::shutdown);
             }
         }
