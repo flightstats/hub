@@ -54,6 +54,7 @@ public class WebhookService {
     }
 
     public Optional<Webhook> upsert(Webhook webhook) {
+        logger.info("incoming webhook {} ", webhook);
         webhook = webhook.withDefaults();
         webhookValidator.validate(webhook);
         Optional<Webhook> webhookOptional = get(webhook.getName());
@@ -65,7 +66,9 @@ public class WebhookService {
                 throw new ConflictException("{\"error\": \"channelUrl can not change. \"}");
             }
         } else {
-            webhook = webhook.withStartingKey(WebhookStrategy.createContentPath(webhook));
+            if (webhook.getStartingKey() == null) {
+                webhook = webhook.withStartingKey(WebhookStrategy.createContentPath(webhook));
+            }
         }
         logger.info("upsert webhook {} ", webhook);
         ContentPath existing = lastContentPath.getOrNull(webhook.getName(), WEBHOOK_LAST_COMPLETED);
