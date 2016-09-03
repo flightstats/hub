@@ -83,7 +83,7 @@ public class DynamoWebhookDao implements Dao<Webhook> {
         if (item.containsKey("maxWaitMinutes")) {
             builder.maxWaitMinutes(Integer.valueOf(item.get("maxWaitMinutes").getN()));
         }
-        return builder.build().withDefaults(false);
+        return builder.build().withDefaults();
     }
 
     @Override

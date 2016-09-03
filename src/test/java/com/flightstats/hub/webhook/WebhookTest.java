@@ -72,7 +72,7 @@ public class WebhookTest {
     public void testWithDefaults() {
         assertNull(webhook.getParallelCalls());
         assertNull(webhook.getBatch());
-        webhook = webhook.withDefaults(true);
+        webhook = webhook.withDefaults();
         assertEquals(1L, (long) webhook.getParallelCalls());
         assertEquals("SINGLE", webhook.getBatch());
     }
@@ -81,10 +81,10 @@ public class WebhookTest {
     public void testAllowedToChange() {
         Webhook hubA = Webhook.builder().name("name")
                 .channelUrl("http://hubA/channel/name")
-                .callbackUrl("url").build().withDefaults(false);
+                .callbackUrl("url").build().withDefaults();
         Webhook hubB = Webhook.builder().name("name")
                 .channelUrl("http://hubB/channel/name")
-                .callbackUrl("url").build().withDefaults(false);
+                .callbackUrl("url").build().withDefaults();
 
         assertTrue(hubA.allowedToChange(hubB));
 
@@ -96,11 +96,11 @@ public class WebhookTest {
     public void testNotChanged() {
         Webhook hubA = Webhook.builder().name("name")
                 .channelUrl("http://hubA/channel/name")
-                .callbackUrl("url").build().withDefaults(false);
+                .callbackUrl("url").build().withDefaults();
 
         Webhook hubC = Webhook.builder().name("name")
                 .channelUrl("http://hubC/channel/nameC")
-                .callbackUrl("url").build().withDefaults(false);
+                .callbackUrl("url").build().withDefaults();
 
         assertFalse(hubA.allowedToChange(hubC));
 
