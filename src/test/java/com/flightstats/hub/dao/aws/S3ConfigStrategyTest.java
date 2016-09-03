@@ -49,7 +49,7 @@ public class S3ConfigStrategyTest {
     }
 
     private void addRuleNames(DateTime timeForSharding) {
-        int max = 105;
+        int max = 100;
         List<BucketLifecycleConfiguration.Rule> rules = S3ConfigStrategy.apportion(channelConfigs, timeForSharding, max);
         assertEquals(max, rules.size());
         allRules.addAll(rules.stream().map(BucketLifecycleConfiguration.Rule::getId).collect(Collectors.toList()));
