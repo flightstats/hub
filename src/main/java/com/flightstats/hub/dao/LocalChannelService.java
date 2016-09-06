@@ -67,6 +67,7 @@ public class LocalChannelService implements ChannelService {
         logger.info("create channel {}", configuration);
         channelValidator.validate(configuration, true, null);
         configuration = ChannelConfig.builder().withChannelConfiguration(configuration).build();
+        initializeHistorical(configuration);
         channelConfigDao.upsert(configuration);
         notify(configuration, null);
         return configuration;
@@ -89,9 +90,8 @@ public class LocalChannelService implements ChannelService {
             logger.info("updating channel {} from {}", configuration, oldConfig);
             configuration = ChannelConfig.builder().withChannelConfiguration(configuration).build();
             channelValidator.validate(configuration, false, oldConfig);
-            if (isNull(oldConfig) && configuration.isHistorical()) {
-                lastContentPath.initialize(configuration.getName(), ContentKey.NONE, HISTORICAL_LAST_UPDATED);
-                lastContentPath.initialize(configuration.getName(), ContentKey.NONE, HISTORICAL_FIRST_UPDATED);
+            if (isNull(oldConfig)) {
+                initializeHistorical(configuration);
             }
             channelConfigDao.upsert(configuration);
             notify(configuration, oldConfig);
@@ -99,6 +99,13 @@ public class LocalChannelService implements ChannelService {
             logger.info("update with no changes {}", configuration);
         }
         return configuration;
+    }
+
+    private void initializeHistorical(ChannelConfig configuration) {
+        if (configuration.isHistorical()) {
+            lastContentPath.initialize(configuration.getName(), ContentKey.NONE, HISTORICAL_LAST_UPDATED);
+            lastContentPath.initialize(configuration.getName(), ContentKey.NONE, HISTORICAL_FIRST_UPDATED);
+        }
     }
 
     @Override
