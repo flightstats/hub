@@ -104,7 +104,8 @@ class WebhookLeader implements Leader {
             return;
         }
         this.webhook = foundWebhook.get();
-        logger.info("taking leadership " + webhook);
+        Sleeper.sleep(100);
+        logger.info("taking leadership {} {}", webhook, hasLeadership.get());
         executorService = Executors.newCachedThreadPool();
         semaphore = new Semaphore(webhook.getParallelCalls());
         retryer = WebhookRetryer.buildRetryer(webhook, webhookError, hasLeadership);

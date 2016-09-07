@@ -43,6 +43,7 @@ public class CuratorLeader {
     private String leaderPath;
     private Leader leader;
     private LeaderSelector leaderSelector;
+    private AtomicBoolean closed = new AtomicBoolean(false);
     private AtomicBoolean hasLeadership = new AtomicBoolean(false);
     private String id;
 
@@ -71,10 +72,12 @@ public class CuratorLeader {
 
     public void close() {
         logger.info("closing leader {}", id);
+        closed.set(true);
         hasLeadership.set(false);
         if (leaderSelector != null) {
             leaderSelector.close();
         }
+        hasLeadership.set(false);
         LeaderRotator.remove(this);
         logger.info("closed {}", id);
     }
@@ -86,7 +89,9 @@ public class CuratorLeader {
             try {
                 Thread.currentThread().setName("leader-" + id);
                 hasLeadership.set(true);
-                leader.takeLeadership(hasLeadership);
+                if (!closed.get()) {
+                    leader.takeLeadership(hasLeadership);
+                }
             } catch (RuntimeInterruptedException e) {
                 logger.info("interrupted " + leaderPath + e.getMessage());
             } catch (NoSuchChannelException e) {
