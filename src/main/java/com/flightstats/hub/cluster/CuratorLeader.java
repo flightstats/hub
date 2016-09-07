@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * CuratorLeader calls Leader when it gets leadership.
@@ -43,8 +42,8 @@ public class CuratorLeader {
     private String leaderPath;
     private Leader leader;
     private LeaderSelector leaderSelector;
-    private AtomicBoolean closed = new AtomicBoolean(false);
-    private AtomicBoolean hasLeadership = new AtomicBoolean(false);
+    private Leadership leadership = new Leadership();
+
     private String id;
 
     public CuratorLeader(String leaderPath, Leader leader) {
@@ -72,12 +71,10 @@ public class CuratorLeader {
 
     public void close() {
         logger.info("closing leader {}", id);
-        closed.set(true);
-        hasLeadership.set(false);
+        leadership.close();
         if (leaderSelector != null) {
             leaderSelector.close();
         }
-        hasLeadership.set(false);
         LeaderRotator.remove(this);
         logger.info("closed {}", id);
     }
@@ -88,10 +85,8 @@ public class CuratorLeader {
             logger.info("takeLeadership " + id);
             try {
                 Thread.currentThread().setName("leader-" + id);
-                hasLeadership.set(true);
-                if (!closed.get()) {
-                    leader.takeLeadership(hasLeadership);
-                }
+                leadership.setLeadership(true);
+                leader.takeLeadership(leadership);
             } catch (RuntimeInterruptedException e) {
                 logger.info("interrupted " + leaderPath + e.getMessage());
             } catch (NoSuchChannelException e) {
@@ -111,16 +106,16 @@ public class CuratorLeader {
         public void stateChanged(CuratorFramework client, ConnectionState newState) {
             if ((newState == ConnectionState.SUSPENDED) || (newState == ConnectionState.LOST)) {
                 logger.info("stateChanged {}", newState);
-                hasLeadership.set(false);
+                leadership.setLeadership(false);
                 throw new CancelLeadershipException();
             }
         }
     }
 
     void abdicate() {
-        if (hasLeadership.get()) {
+        if (leadership.hasLeadership()) {
             logger.info("abdicating leadership for " + id);
-            hasLeadership.set(false);
+            leadership.setLeadership(false);
         }
     }
 

@@ -5,6 +5,7 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.CuratorLeader;
 import com.flightstats.hub.cluster.Leader;
+import com.flightstats.hub.cluster.Leadership;
 import com.flightstats.hub.util.Sleeper;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -20,7 +21,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @Singleton
 public class AlertRunner implements Leader {
@@ -53,8 +53,8 @@ public class AlertRunner implements Leader {
     }
 
     @Override
-    public void takeLeadership(AtomicBoolean hasLeadership) {
-        while (hasLeadership.get()) {
+    public void takeLeadership(Leadership leadership) {
+        while (leadership.hasLeadership()) {
             try {
                 doWork();
             } catch (Exception e) {

@@ -1,5 +1,6 @@
 package com.flightstats.hub.webhook;
 
+import com.flightstats.hub.cluster.Leadership;
 import com.flightstats.hub.metrics.DataDog;
 import com.github.rholder.retry.Retryer;
 import com.github.rholder.retry.RetryerBuilder;
@@ -14,14 +15,13 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 class WebhookRetryer {
 
     private final static Logger logger = LoggerFactory.getLogger(WebhookRetryer.class);
     private final static StatsDClient statsd = DataDog.statsd;
 
-    static Retryer<ClientResponse> buildRetryer(Webhook webhook, WebhookError webhookError, AtomicBoolean hasLeadership) {
+    static Retryer<ClientResponse> buildRetryer(Webhook webhook, WebhookError webhookError, Leadership leadership) {
         return RetryerBuilder.<ClientResponse>newBuilder()
                 .retryIfException(throwable -> {
                     if (throwable != null) {
@@ -64,7 +64,7 @@ class WebhookRetryer {
                     }
                 })
                 .withWaitStrategy(WaitStrategies.exponentialWait(1000, webhook.getMaxWaitMinutes(), TimeUnit.MINUTES))
-                .withStopStrategy(new WebhookStopStrategy(hasLeadership))
+                .withStopStrategy(new WebhookStopStrategy(leadership))
                 .build();
     }
 

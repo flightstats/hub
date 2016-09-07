@@ -5,6 +5,7 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.cluster.CuratorLeader;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.cluster.Leader;
+import com.flightstats.hub.cluster.Leadership;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.MetricsTimer;
@@ -66,7 +67,7 @@ class WebhookLeader implements Leader {
     private CuratorLeader curatorLeader;
     private ExecutorService executorService;
     private Semaphore semaphore;
-    private AtomicBoolean hasLeadership;
+    private Leadership leadership;
     private Retryer<ClientResponse> retryer;
 
     private WebhookStrategy webhookStrategy;
@@ -95,8 +96,8 @@ class WebhookLeader implements Leader {
     }
 
     @Override
-    public void takeLeadership(AtomicBoolean hasLeadership) {
-        this.hasLeadership = hasLeadership;
+    public void takeLeadership(Leadership leadership) {
+        this.leadership = leadership;
         Optional<Webhook> foundWebhook = webhookService.getCached(webhook.getName());
         if (!foundWebhook.isPresent() || !channelService.channelExists(webhook.getChannelName())) {
             logger.info("webhook or channel is missing, exiting " + webhook.getName());
@@ -104,20 +105,19 @@ class WebhookLeader implements Leader {
             return;
         }
         this.webhook = foundWebhook.get();
-        Sleeper.sleep(100);
-        logger.info("taking leadership {} {}", webhook, hasLeadership.get());
+        logger.info("taking leadership {} {}", webhook, leadership.hasLeadership());
         executorService = Executors.newCachedThreadPool();
         semaphore = new Semaphore(webhook.getParallelCalls());
-        retryer = WebhookRetryer.buildRetryer(webhook, webhookError, hasLeadership);
+        retryer = WebhookRetryer.buildRetryer(webhook, webhookError, leadership);
         webhookStrategy = WebhookStrategy.getStrategy(webhook, lastContentPath, channelService);
         try {
             ContentPath lastCompletedPath = webhookStrategy.getStartingPath();
             lastUpdated.set(lastCompletedPath);
             logger.info("last completed at {} {}", lastCompletedPath, webhook.getName());
-            if (hasLeadership.get()) {
+            if (leadership.hasLeadership()) {
                 sendInProcess(lastCompletedPath);
                 webhookStrategy.start(webhook, lastCompletedPath);
-                while (hasLeadership.get()) {
+                while (leadership.hasLeadership()) {
                     Optional<ContentPath> nextOptional = webhookStrategy.next();
                     if (nextOptional.isPresent()) {
                         send(nextOptional.get());
@@ -128,7 +128,7 @@ class WebhookLeader implements Leader {
             logger.info("saw InterruptedException for " + webhook.getName());
         } finally {
             logger.info("stopping last completed at {} {}", webhookStrategy.getLastCompleted(), webhook.getName());
-            hasLeadership.set(false);
+            leadership.setLeadership(false);
             closeStrategy();
             if (deleteOnExit.get()) {
                 delete();
@@ -250,7 +250,7 @@ class WebhookLeader implements Leader {
                     throw new ItemExpiredException(contentPath.toUrl() + " is before " + ttlTime);
                 }
             }
-            if (!hasLeadership.get()) {
+            if (!leadership.hasLeadership()) {
                 logger.debug("not leader {} {} {}", webhook.getCallbackUrl(), webhook.getName(), contentPath);
                 return null;
             }
