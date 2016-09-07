@@ -62,6 +62,7 @@ public class LastContentPath {
     public ContentPath get(String name, ContentPath defaultPath, String basePath) {
         String path = basePath + name;
         try {
+            trace(path, "get calling");
             ContentPath contentPath = get(path);
             trace(name, "get default {} found {}", defaultPath, contentPath);
             return contentPath;
@@ -100,11 +101,11 @@ public class LastContentPath {
                 ContentPath nextPath = function.apply(existing.key);
                 if (nextPath.compareTo(existing.key) > 0) {
                     if (setValue(path, nextPath, existing)) {
-                        trace(name, "updateIncrease set {} next {} existing {}", name, nextPath, nextPath);
+                        trace(name, "updateIncrease set {} next {} existing {}", name, nextPath, existing);
                         return true;
                     }
                 } else {
-                    trace(name, "updateIncrease less {} next {} existing{}", name, nextPath, nextPath);
+                    trace(name, "updateIncrease less {} next {} existing{}", name, nextPath, existing);
                     return true;
                 }
             }
