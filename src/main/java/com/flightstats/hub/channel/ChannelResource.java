@@ -46,10 +46,10 @@ public class ChannelResource {
     @Context
     private UriInfo uriInfo;
 
-    private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private ChannelService channelService = HubProvider.getInstance(ChannelService.class);
-    private NtpMonitor ntpMonitor = HubProvider.getInstance(NtpMonitor.class);
-    private EventsService eventsService = HubProvider.getInstance(EventsService.class);
+    private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
+    private final static NtpMonitor ntpMonitor = HubProvider.getInstance(NtpMonitor.class);
+    private final static EventsService eventsService = HubProvider.getInstance(EventsService.class);
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

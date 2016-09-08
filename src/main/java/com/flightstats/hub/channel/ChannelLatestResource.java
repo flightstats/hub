@@ -25,9 +25,9 @@ public class ChannelLatestResource {
     @Context
     private UriInfo uriInfo;
 
-    private TagLatestResource tagLatestResource = HubProvider.getInstance(TagLatestResource.class);
-    private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private ChannelService channelService = HubProvider.getInstance(ChannelService.class);
+    private final static TagLatestResource tagLatestResource = HubProvider.getInstance(TagLatestResource.class);
+    private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
 
     @GET
     public Response getLatest(@PathParam("channel") String channel,

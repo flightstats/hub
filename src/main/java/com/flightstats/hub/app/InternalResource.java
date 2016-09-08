@@ -24,9 +24,8 @@ public class InternalResource {
 
     private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
 
-    private
     @Context
-    UriInfo uriInfo;
+    private UriInfo uriInfo;
     private ObjectNode links;
     private String requestUri;
 

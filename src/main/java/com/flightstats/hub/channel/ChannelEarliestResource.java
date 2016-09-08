@@ -30,9 +30,9 @@ public class ChannelEarliestResource {
     @Context
     private UriInfo uriInfo;
 
-    private TagEarliestResource tagEarliestResource = HubProvider.getInstance(TagEarliestResource.class);
-    private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private ChannelService channelService = HubProvider.getInstance(ChannelService.class);
+    private final static TagEarliestResource tagEarliestResource = HubProvider.getInstance(TagEarliestResource.class);
+    private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
 
     @GET
     public Response getEarliest(@PathParam("channel") String channel,

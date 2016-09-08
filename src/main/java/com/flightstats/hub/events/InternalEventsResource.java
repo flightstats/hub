@@ -19,8 +19,8 @@ public class InternalEventsResource {
 
     private final static Logger logger = LoggerFactory.getLogger(InternalEventsResource.class);
 
-    private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private EventsService eventsService = HubProvider.getInstance(EventsService.class);
+    private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private final static EventsService eventsService = HubProvider.getInstance(EventsService.class);
 
     @POST
     public Response putPayload(@PathParam("id") String id, String data) {

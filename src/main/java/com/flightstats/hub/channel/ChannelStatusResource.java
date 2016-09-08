@@ -24,10 +24,9 @@ public class ChannelStatusResource {
     @Context
     private UriInfo uriInfo;
 
-    private ChannelService channelService = HubProvider.getInstance(ChannelService.class);
-    private HubUtils hubUtils = HubProvider.getInstance(HubUtils.class);
-
-    private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
+    private final static HubUtils hubUtils = HubProvider.getInstance(HubUtils.class);
+    private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

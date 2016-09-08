@@ -51,11 +51,11 @@ public class ChannelContentResource {
     @Context
     private UriInfo uriInfo;
 
-    private TagContentResource tagContentResource = HubProvider.getInstance(TagContentResource.class);
-    private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private ChannelService channelService = HubProvider.getInstance(ChannelService.class);
-    private MetricsSender sender = HubProvider.getInstance(MetricsSender.class);
-    private EventsService eventsService = HubProvider.getInstance(EventsService.class);
+    private final static TagContentResource tagContentResource = HubProvider.getInstance(TagContentResource.class);
+    private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
+    private final static MetricsSender sender = HubProvider.getInstance(MetricsSender.class);
+    private final static EventsService eventsService = HubProvider.getInstance(EventsService.class);
 
     public static MediaType getContentType(Content content) {
         Optional<String> contentType = content.getContentType();
