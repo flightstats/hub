@@ -3,9 +3,9 @@ require('./integration_config.js');
 var request = require('request');
 var channelName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
-var gUrl = utils.getGroupUrl() + "/" + channelName;
+var gUrl = utils.getWebhookUrl() + "/" + channelName;
 var testName = __filename;
-var groupConfig = {
+var webhookConfig = {
     callbackUrl: 'http://nothing/callback',
     channelUrl: 'http://nothing/channel/' + channelName,
     batch: 'SINGLE',
@@ -15,9 +15,9 @@ var groupConfig = {
 
 describe(testName, function () {
     utils.createChannel(channelName, channelUrl, testName);
-    utils.putGroup(channelName, groupConfig, 201, testName);
+    utils.putWebhook(channelName, webhookConfig, 201, testName);
 
-    it('gets group ' + channelName, function (done) {
+    it('gets webhook ' + channelName, function (done) {
         utils.sleep(10000);
         request.get({
                 url: gUrl,
@@ -30,21 +30,21 @@ describe(testName, function () {
                 if (response.statusCode < 400) {
                     var parse = utils.parseJson(response, channelName);
                     expect(parse._links.self.href).toBe(gUrl);
-                    if (typeof groupConfig !== "undefined") {
-                        console.log("lastCompletedCallback: " + groupConfig.lastCompletedCallback);
+                    if (typeof webhookConfig !== "undefined") {
+                        console.log("lastCompletedCallback: " + webhookConfig.lastCompletedCallback);
                         var lastComp = JSON.parse(response.body).lastCompletedCallback;
                         console.log("lastComp: " + lastComp);
                         expect(lastComp.indexOf("initial") > -1, true);
-                        expect(parse.callbackUrl).toBe(groupConfig.callbackUrl);
-                        expect(parse.channelUrl).toBe(groupConfig.channelUrl);
-                        expect(parse.transactional).toBe(groupConfig.transactional);
+                        expect(parse.callbackUrl).toBe(webhookConfig.callbackUrl);
+                        expect(parse.channelUrl).toBe(webhookConfig.channelUrl);
+                        expect(parse.transactional).toBe(webhookConfig.transactional);
                         expect(parse.name).toBe(channelName);
-                        expect(parse.batch).toBe(groupConfig.batch);
-                        if (groupConfig.ttlMinutes) {
-                            expect(parse.ttlMinutes).toBe(groupConfig.ttlMinutes);
+                        expect(parse.batch).toBe(webhookConfig.batch);
+                        if (webhookConfig.ttlMinutes) {
+                            expect(parse.ttlMinutes).toBe(webhookConfig.ttlMinutes);
                         }
-                        if (groupConfig.maxWaitMinutes) {
-                            expect(parse.maxWaitMinutes).toBe(groupConfig.maxWaitMinutes);
+                        if (webhookConfig.maxWaitMinutes) {
+                            expect(parse.maxWaitMinutes).toBe(webhookConfig.maxWaitMinutes);
                         }
                     }
                 }

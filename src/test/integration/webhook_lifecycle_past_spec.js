@@ -3,7 +3,7 @@ require('./integration_config.js');
 var request = require('request');
 var http = require('http');
 var channelName = utils.randomChannelName();
-var groupName = utils.randomChannelName();
+var webhookName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
 var port = utils.getPort();
@@ -15,7 +15,7 @@ var callbackUrl = callbackDomain + ':' + port + '/';
  *
  * 1 - create a channel
  * 2 - add items to the channel
- * 2 - create a group on that channel
+ * 2 - create a webhook on that channel
  * 3 - start a server at the endpoint
  * 4 - post items into the channel
  * 5 - verify that the item are returned within delta time, excluding items posted in 2.
@@ -46,37 +46,37 @@ describe(testName, function () {
             });
     });
 
-    it('creates group ' + groupName, function (done) {
-        var groupConfig = {
+    it('creates webhook ' + webhookName, function (done) {
+        var webhookConfig = {
             callbackUrl: callbackUrl,
             channelUrl: channelResource,
             startItem: firstItem
         };
-        var groupResource = utils.getGroupUrl() + "/" + groupName;
-        console.log('creating group', groupName, groupConfig);
+        var webhookResource = utils.getWebhookUrl() + "/" + webhookName;
+        console.log('creating webhook', webhookName, webhookConfig);
         request.put({
-                url: groupResource,
+                url: webhookResource,
                 headers: {"Content-Type": "application/json"},
-                body: JSON.stringify(groupConfig)
+                body: JSON.stringify(webhookConfig)
             },
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(201);
-                expect(response.headers.location).toBe(groupResource);
+                expect(response.headers.location).toBe(webhookResource);
                 var parse = utils.parseJson(response, testName);
-                expect(parse.callbackUrl).toBe(groupConfig.callbackUrl);
-                expect(parse.channelUrl).toBe(groupConfig.channelUrl);
-                expect(parse.name).toBe(groupName);
+                expect(parse.callbackUrl).toBe(webhookConfig.callbackUrl);
+                expect(parse.channelUrl).toBe(webhookConfig.channelUrl);
+                expect(parse.name).toBe(webhookName);
                 done();
             });
     });
 
 
-    it('runs callback server group:' + groupName + ' channel:' + channelName, function () {
+    it('runs callback server webhook:' + webhookName + ' channel:' + channelName, function () {
         var callbackItems = [];
 
         utils.startServer(port, function (string) {
-            console.log('called group ' + groupName + ' ' + string);
+            console.log('called webhook ' + webhookName + ' ' + string);
             callbackItems.push(string);
         });
 
@@ -101,7 +101,7 @@ describe(testName, function () {
             for (var i = 0; i < callbackItems.length; i++) {
                 var parse = JSON.parse(callbackItems[i]);
                 expect(parse.uris[0]).toBe(postedItems[i]);
-                expect(parse.name).toBe(groupName);
+                expect(parse.name).toBe(webhookName);
             }
         }, testName);
 

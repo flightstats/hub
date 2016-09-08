@@ -2,14 +2,15 @@ require('./integration_config.js');
 
 var request = require('request');
 var http = require('http');
-var groupName = utils.randomChannelName();
-var groupResource = utils.getGroupUrl() + "/" + groupName;
+var webhookName = utils.randomChannelName();
+var webhookResource = utils.getWebhookUrl() + "/" + webhookName;
 var testName = __filename;
 
 describe(testName, function () {
 
-    it('gets missing group ' + groupName, function (done) {
-        request.get({url : groupResource,
+    it('gets missing webhook ' + webhookName, function (done) {
+        request.get({
+                url: webhookResource,
                 headers : {"Content-Type" : "application/json"} },
             function (err, response, body) {
                 expect(err).toBeNull();

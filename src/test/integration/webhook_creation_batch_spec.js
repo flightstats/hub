@@ -2,15 +2,15 @@ require('./integration_config.js');
 
 var request = require('request');
 var http = require('http');
-var groupName = utils.randomChannelName();
+var webhookName = utils.randomChannelName();
 var testName = __filename;
-var groupConfig = {
+var webhookConfig = {
     callbackUrl: 'http://nothing/callback',
     channelUrl: 'http://nothing/channel/notHere',
     batch: 'MINUTE'
 };
 
-var groupConfig2 = {
+var webhookConfig2 = {
     callbackUrl: 'http://nothing/callback',
     channelUrl: 'http://nothing/channel/notHere',
     batch: 'MINUTE',
@@ -19,14 +19,14 @@ var groupConfig2 = {
 
 describe(testName, function () {
 
-    utils.putGroup(groupName, groupConfig, 201, testName);
+    utils.putWebhook(webhookName, webhookConfig, 201, testName);
 
-    utils.getGroup(groupName, groupConfig2);
+    utils.getWebhook(webhookName, webhookConfig2);
 
-    utils.putGroup(groupName, groupConfig2, 200, testName);
+    utils.putWebhook(webhookName, webhookConfig2, 200, testName);
 
-    utils.deleteGroup(groupName);
+    utils.deleteWebhook(webhookName);
 
-    utils.getGroup(groupName, groupConfig2, 404);
+    utils.getWebhook(webhookName, webhookConfig2, 404);
 });
 

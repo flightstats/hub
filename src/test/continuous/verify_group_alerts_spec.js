@@ -33,7 +33,7 @@ describe(testName, function () {
 
     verify_utils.verifyEscalationAlerts(existingRules);
 
-    utils.putGroup('verifyGroupAlert', {
+    utils.putWebhook('verifyGroupAlert', {
         callbackUrl: 'http://none',
         channelUrl: hubUrlBase + '/channel/' + channelName
     }, 200, testName);
