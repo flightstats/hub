@@ -21,7 +21,8 @@ class WebhookRetryer {
     private final static Logger logger = LoggerFactory.getLogger(WebhookRetryer.class);
     private final static StatsDClient statsd = DataDog.statsd;
 
-    static Retryer<ClientResponse> buildRetryer(Webhook webhook, WebhookError webhookError, Leadership leadership) {
+    static Retryer<ClientResponse> buildRetryer(Webhook webhook, WebhookError webhookError, final Leadership leadership) {
+
         return RetryerBuilder.<ClientResponse>newBuilder()
                 .retryIfException(throwable -> {
                     if (throwable != null) {
@@ -64,7 +65,7 @@ class WebhookRetryer {
                     }
                 })
                 .withWaitStrategy(WaitStrategies.exponentialWait(1000, webhook.getMaxWaitMinutes(), TimeUnit.MINUTES))
-                .withStopStrategy(new WebhookStopStrategy(leadership))
+                .withStopStrategy(failedAttempt -> !leadership.hasLeadership())
                 .build();
     }
 
