@@ -62,7 +62,6 @@ public class LastContentPath {
     public ContentPath get(String name, ContentPath defaultPath, String basePath) {
         String path = basePath + name;
         try {
-            trace(path, "get calling");
             ContentPath contentPath = get(path);
             trace(name, "get default {} found {}", defaultPath, contentPath);
             return contentPath;
