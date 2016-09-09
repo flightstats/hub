@@ -19,7 +19,7 @@ import java.util.function.Function;
 public class LastContentPath {
     private final static Logger logger = LoggerFactory.getLogger(LastContentPath.class);
 
-    private static final String tracing = HubProperties.getProperty("LastContentPathTracing", "locust_verifier_test_2");
+    private static final String tracing = HubProperties.getProperty("LastContentPathTracing", "channelToTrace");
 
     private final CuratorFramework curator;
 
