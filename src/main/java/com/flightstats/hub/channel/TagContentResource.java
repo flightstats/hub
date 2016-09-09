@@ -7,7 +7,6 @@ import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.Request;
 import com.flightstats.hub.dao.TagService;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.rest.Linked;
 import com.flightstats.hub.util.TimeUtil;
@@ -39,9 +38,8 @@ public class TagContentResource {
     @Context
     private UriInfo uriInfo;
 
-    private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private TagService tagService = HubProvider.getInstance(TagService.class);
-    private MetricsSender sender = HubProvider.getInstance(MetricsSender.class);
+    private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private final static TagService tagService = HubProvider.getInstance(TagService.class);
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

@@ -2,9 +2,9 @@ require('./integration_config.js');
 
 var request = require('request');
 var http = require('http');
-var groupName = utils.randomChannelName();
+var webhookName = utils.randomChannelName();
 var testName = __filename;
-var groupConfigA = {
+var webhookConfigA = {
     callbackUrl: 'http://nothing/callback',
     channelUrl: 'http://nothing/channel/notHere',
     parallelCalls: 1,
@@ -12,7 +12,7 @@ var groupConfigA = {
 
 };
 
-var groupConfigB = {
+var webhookConfigB = {
     callbackUrl: 'http://nothing/callback',
     channelUrl: 'http://nothing/channel/notHere',
     parallelCalls: 2,
@@ -22,13 +22,13 @@ var groupConfigB = {
 
 describe(testName, function () {
 
-    utils.putGroup(groupName, groupConfigA, 201, testName);
+    utils.putWebhook(webhookName, webhookConfigA, 201, testName);
 
-    utils.getGroup(groupName, groupConfigA);
+    utils.getWebhook(webhookName, webhookConfigA);
 
-    utils.putGroup(groupName, groupConfigB, 200, testName);
+    utils.putWebhook(webhookName, webhookConfigB, 200, testName);
 
-    utils.getGroup(groupName, groupConfigB);
+    utils.getWebhook(webhookName, webhookConfigB);
 
 });
 

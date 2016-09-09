@@ -25,8 +25,8 @@ import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 @Path("/tag/{tag}/earliest")
 public class TagEarliestResource {
 
-    private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private TagService tagService = HubProvider.getInstance(TagService.class);
+    private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private final static TagService tagService = HubProvider.getInstance(TagService.class);
 
     @GET
     public Response getEarliest(@PathParam("tag") String tag,

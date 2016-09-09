@@ -3,12 +3,12 @@ require('../integration/integration_config.js');
 var request = require('request');
 var http = require('http');
 var channelName = utils.randomChannelName();
-var groupName = utils.randomChannelName();
+var webhookName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
 var port = utils.getPort();
 var callbackUrl = callbackDomain + ':' + port + '/';
-var groupConfig = {
+var webhookConfig = {
     callbackUrl : callbackUrl,
     channelUrl : channelResource
 };
@@ -17,11 +17,11 @@ var groupConfig = {
  * This should:
  *
  * 1 - create a channel
- * 2 - create a group on that channel
+ * 2 - create a webhook on that channel
  * 3 - start a server at the endpoint
  * 4 - post item into the channel
- * 5 - delete the group
- * 6 - recreate the group
+ * 5 - delete the webhook
+ * 6 - recreate the webhook
  * 7 - post item - should only see new item
  */
 describe(testName, function () {
@@ -30,7 +30,7 @@ describe(testName, function () {
 
     utils.createChannel(channelName, false, testName);
 
-    utils.putGroup(groupName, groupConfig, 201, testName);
+    utils.putWebhook(webhookName, webhookConfig, 201, testName);
 
     it('waits', function (done) {
         setTimeout(function () {
@@ -54,11 +54,11 @@ describe(testName, function () {
 
     });
 
-    utils.deleteGroup(groupName);
+    utils.deleteWebhook(webhookName);
 
     utils.addItem(channelResource);
 
-    utils.putGroup(groupName, groupConfig, 201, testName);
+    utils.putWebhook(webhookName, webhookConfig, 201, testName);
 
     it('waits', function (done) {
         setTimeout(function () {
@@ -66,7 +66,7 @@ describe(testName, function () {
         }, 500);
     });
 
-    it('waits for item group ' + groupName + ' channel ' + channelName, function () {
+    it('waits for item webhook ' + webhookName + ' channel ' + channelName, function () {
         utils.postItemQ(channelResource)
             .then(function (value) {
                 postedItems.push(value.body._links.self.href);

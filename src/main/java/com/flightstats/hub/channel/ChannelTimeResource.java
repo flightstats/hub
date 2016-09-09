@@ -20,7 +20,7 @@ public class ChannelTimeResource {
     @Context
     private UriInfo uriInfo;
 
-    private ChannelService channelService = HubProvider.getInstance(ChannelService.class);
+    private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

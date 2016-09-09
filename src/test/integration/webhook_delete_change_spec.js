@@ -3,7 +3,7 @@ require('../integration/integration_config.js');
 var request = require('request');
 var http = require('http');
 var channelName = utils.randomChannelName();
-var groupName = utils.randomChannelName();
+var webhookName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
 ;
@@ -13,11 +13,11 @@ var testName = __filename;
  * This should:
  *
  * 1 - create a channel
- * 2 - create group on that channel at endpointA
+ * 2 - create webhook on that channel at endpointA
  * 3 - start a server at endpointA
  * 4 - post item into the channel
- * 5 - delete the group
- * 6 - create the group with the same name and a different endpoint
+ * 5 - delete the webhook
+ * 6 - create the webhook with the same name and a different endpoint
  * 7 - start a server at endpointB
  * 8 - post item - should see item on endpointB
  */
@@ -31,18 +31,18 @@ describe(testName, function () {
     var callbackItemsB = [];
     var postedItemsA = [];
     var postedItemsB = [];
-    var groupConfigA = {
+    var webhookConfigA = {
         callbackUrl : callbackDomain + ':' + portA + '/',
         channelUrl : channelResource
     };
-    var groupConfigB = {
+    var webhookConfigB = {
         callbackUrl : callbackDomain + ':' + portB + '/',
         channelUrl : channelResource
     };
 
     utils.createChannel(channelName, false, testName);
 
-    utils.putGroup(groupName, groupConfigA, 201, testName);
+    utils.putWebhook(webhookName, webhookConfigA, 201, testName);
 
     it('runs callback server', function () {
         utils.startServer(portA, function (string) {
@@ -60,11 +60,11 @@ describe(testName, function () {
 
     });
 
-    utils.deleteGroup(groupName);
+    utils.deleteWebhook(webhookName);
 
     utils.itSleeps(5000);
-    
-    utils.putGroup(groupName, groupConfigB, 201, testName);
+
+    utils.putWebhook(webhookName, webhookConfigB, 201, testName);
 
     it('runs callback server', function () {
         utils.startServer(portB, function (string) {

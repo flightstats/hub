@@ -17,7 +17,7 @@ import javax.ws.rs.core.Response;
 public class MetricsResource {
     private final static Logger logger = LoggerFactory.getLogger(MetricsResource.class);
 
-    private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

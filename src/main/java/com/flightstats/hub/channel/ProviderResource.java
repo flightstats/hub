@@ -25,7 +25,7 @@ import java.io.InputStream;
 public class ProviderResource {
     private final static Logger logger = LoggerFactory.getLogger(ProviderResource.class);
 
-    private ChannelService channelService = HubProvider.getInstance(ChannelService.class);
+    private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
 
     @POST
     @Produces(MediaType.TEXT_PLAIN)

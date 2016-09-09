@@ -19,7 +19,7 @@ public class WebSocketResource {
 
     private final static Logger logger = LoggerFactory.getLogger(WebSocketResource.class);
     private static final WebSocketService webSocketService = WebSocketService.getInstance();
-    private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
 
     @POST
     public Response putPayload(@PathParam("id") String id, String data) {
