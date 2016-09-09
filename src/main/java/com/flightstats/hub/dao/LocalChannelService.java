@@ -300,7 +300,7 @@ public class LocalChannelService implements ChannelService {
         }
         DateTime ttlTime = getTtlTime(query.getChannelName());
         Stream<ContentKey> stream = contentService.queryByTime(query).stream()
-                .filter(key -> key.getTime().isAfter(ttlTime));
+                .filter(key -> !key.getTime().isBefore(ttlTime));
         if (query.isStable()) {
             DateTime stableTime = TimeUtil.stable();
             stream = stream.filter(key -> key.getTime().isBefore(stableTime));
