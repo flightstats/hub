@@ -18,6 +18,10 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.*;
 
+import static com.flightstats.hub.model.BuiltinTag.GLOBAL;
+import static com.flightstats.hub.model.BuiltinTag.HISTORICAL;
+import static com.flightstats.hub.model.BuiltinTag.REPLICATED;
+
 @ToString
 @EqualsAndHashCode(of = {"name"})
 public class ChannelConfig implements Serializable, NamedType {
@@ -43,6 +47,7 @@ public class ChannelConfig implements Serializable, NamedType {
         name = StringUtils.trim(builder.name);
         owner = StringUtils.trim(builder.owner);
         creationDate = builder.creationDate;
+        historical = builder.historical;
         if (builder.maxItems == 0 && builder.ttlDays == 0) {
             ttlDays = 120;
             maxItems = 0;
@@ -54,10 +59,10 @@ public class ChannelConfig implements Serializable, NamedType {
         tags.addAll(builder.tags);
         if (StringUtils.isBlank(builder.replicationSource)) {
             replicationSource = "";
-            tags.remove(Replicator.REPLICATED);
+            tags.remove(REPLICATED.name().toLowerCase());
         } else {
             replicationSource = builder.replicationSource;
-            tags.add(Replicator.REPLICATED);
+            tags.add(REPLICATED.name().toLowerCase());
         }
         if (StringUtils.isBlank(builder.storage)) {
             storage = SINGLE;
@@ -70,11 +75,15 @@ public class ChannelConfig implements Serializable, NamedType {
             global = null;
         }
         if (isGlobal()) {
-            tags.add(Replicator.GLOBAL);
+            tags.add(BuiltinTag.GLOBAL.toString());
         } else {
-            tags.remove(Replicator.GLOBAL);
+            tags.remove(BuiltinTag.GLOBAL.toString());
         }
-        historical = builder.historical;
+        if (isHistorical()) {
+            tags.add(BuiltinTag.HISTORICAL.toString());
+        } else {
+            tags.remove(BuiltinTag.HISTORICAL.toString());
+        }
     }
 
     public static ChannelConfig fromJson(String json) {

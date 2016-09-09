@@ -3,6 +3,7 @@ package com.flightstats.hub.replication;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.Watcher;
 import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.model.BuiltinTag;
 import com.flightstats.hub.model.ChannelConfig;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -94,7 +95,7 @@ public class ReplicationGlobalManager {
 
     private synchronized void replicateGlobal() {
         Set<String> replicators = new HashSet<>();
-        Iterable<ChannelConfig> globalChannels = channelService.getChannels(Replicator.GLOBAL);
+        Iterable<ChannelConfig> globalChannels = channelService.getChannels(BuiltinTag.GLOBAL.toString());
         logger.info("replicating global channels {}", globalChannels);
         for (ChannelConfig channel : globalChannels) {
             logger.info("replicating global channel {}", channel);
@@ -133,7 +134,7 @@ public class ReplicationGlobalManager {
 
     private synchronized void replicateChannels() {
         Set<String> replicators = new HashSet<>();
-        Iterable<ChannelConfig> replicatedChannels = channelService.getChannels(Replicator.REPLICATED);
+        Iterable<ChannelConfig> replicatedChannels = channelService.getChannels(BuiltinTag.REPLICATED.toString());
         logger.info("replicating channels {}", replicatedChannels);
         for (ChannelConfig channel : replicatedChannels) {
             logger.info("replicating channel {}", channel.getName());
