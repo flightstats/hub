@@ -338,7 +338,11 @@ public class LocalChannelService implements ChannelService {
     }
 
     private DateTime getTtlTime(String channelName) {
-        return getCachedChannelConfig(channelName).getTtlTime();
+        ChannelConfig channel = getCachedChannelConfig(channelName);
+        if (channel.isHistorical()) {
+            return lastContentPath.get(channelName, new ContentKey(), HISTORICAL_FIRST_UPDATED).getTime();
+        }
+        return channel.getTtlTime();
     }
 
     @Override
