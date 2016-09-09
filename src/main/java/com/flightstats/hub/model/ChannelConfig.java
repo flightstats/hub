@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.exception.InvalidRequestException;
-import com.flightstats.hub.replication.Replicator;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -43,6 +42,7 @@ public class ChannelConfig implements Serializable, NamedType {
         name = StringUtils.trim(builder.name);
         owner = StringUtils.trim(builder.owner);
         creationDate = builder.creationDate;
+        historical = builder.historical;
         if (builder.maxItems == 0 && builder.ttlDays == 0) {
             ttlDays = 120;
             maxItems = 0;
@@ -54,10 +54,10 @@ public class ChannelConfig implements Serializable, NamedType {
         tags.addAll(builder.tags);
         if (StringUtils.isBlank(builder.replicationSource)) {
             replicationSource = "";
-            tags.remove(Replicator.REPLICATED);
+            tags.remove(BuiltInTag.REPLICATED.toString());
         } else {
             replicationSource = builder.replicationSource;
-            tags.add(Replicator.REPLICATED);
+            tags.add(BuiltInTag.REPLICATED.toString());
         }
         if (StringUtils.isBlank(builder.storage)) {
             storage = SINGLE;
@@ -70,11 +70,15 @@ public class ChannelConfig implements Serializable, NamedType {
             global = null;
         }
         if (isGlobal()) {
-            tags.add(Replicator.GLOBAL);
+            tags.add(BuiltInTag.GLOBAL.toString());
         } else {
-            tags.remove(Replicator.GLOBAL);
+            tags.remove(BuiltInTag.GLOBAL.toString());
         }
-        historical = builder.historical;
+        if (isHistorical()) {
+            tags.add(BuiltInTag.HISTORICAL.toString());
+        } else {
+            tags.remove(BuiltInTag.HISTORICAL.toString());
+        }
     }
 
     public static ChannelConfig fromJson(String json) {

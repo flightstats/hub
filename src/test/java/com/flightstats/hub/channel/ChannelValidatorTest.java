@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -137,6 +138,24 @@ public class ChannelValidatorTest {
         validator.validate(ChannelConfig.builder().withName("colon").withTags(Arrays.asList("a:b")).build(), true, null);
         validator.validate(ChannelConfig.builder().withName("dash").withTags(Arrays.asList("a-b")).build(), true, null);
         validator.validate(ChannelConfig.builder().withName("colondash").withTags(Arrays.asList("a-b:c")).build(), true, null);
+    }
+
+    @Test
+    public void testReplicatedTag() {
+        ChannelConfig config = ChannelConfig.builder().withReplicationSource("http://nowhere").build();
+        assertTrue(config.getTags().contains("replicated"));
+    }
+
+    @Test
+    public void testGlobalTag() {
+        ChannelConfig config = ChannelConfig.builder().withGlobal(new GlobalConfig()).build();
+        assertTrue(config.getTags().contains("global"));
+    }
+
+    @Test
+    public void testHistoricalTag() {
+        ChannelConfig config = ChannelConfig.builder().withHistorical(true).build();
+        assertTrue(config.getTags().contains("historical"));
     }
 
     public void testOwner() throws Exception {
