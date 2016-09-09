@@ -54,10 +54,10 @@ public class ChannelConfig implements Serializable, NamedType {
         tags.addAll(builder.tags);
         if (StringUtils.isBlank(builder.replicationSource)) {
             replicationSource = "";
-            tags.remove(BuiltinTag.REPLICATED.toString());
+            tags.remove(BuiltInTag.REPLICATED.toString());
         } else {
             replicationSource = builder.replicationSource;
-            tags.add(BuiltinTag.REPLICATED.toString());
+            tags.add(BuiltInTag.REPLICATED.toString());
         }
         if (StringUtils.isBlank(builder.storage)) {
             storage = SINGLE;
@@ -70,14 +70,14 @@ public class ChannelConfig implements Serializable, NamedType {
             global = null;
         }
         if (isGlobal()) {
-            tags.add(BuiltinTag.GLOBAL.toString());
+            tags.add(BuiltInTag.GLOBAL.toString());
         } else {
-            tags.remove(BuiltinTag.GLOBAL.toString());
+            tags.remove(BuiltInTag.GLOBAL.toString());
         }
         if (isHistorical()) {
-            tags.add(BuiltinTag.HISTORICAL.toString());
+            tags.add(BuiltInTag.HISTORICAL.toString());
         } else {
-            tags.remove(BuiltinTag.HISTORICAL.toString());
+            tags.remove(BuiltInTag.HISTORICAL.toString());
         }
     }
 
