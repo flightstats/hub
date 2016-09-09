@@ -5,12 +5,11 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.CuratorLeader;
 import com.flightstats.hub.cluster.Leader;
+import com.flightstats.hub.cluster.Leadership;
 import com.flightstats.hub.util.Sleeper;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,7 +21,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @Singleton
 public class AlertRunner implements Leader {
@@ -34,11 +32,10 @@ public class AlertRunner implements Leader {
     private final ExecutorService threadPool;
     private CuratorLeader leader;
 
-    @Inject
     public AlertRunner() {
         ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("AlertRunner-%d").build();
         threadPool = Executors.newFixedThreadPool(20, threadFactory);
-        hubAppUrl = StringUtils.appendIfMissing(HubProperties.getProperty("app.url", ""), "/");
+        hubAppUrl = HubProperties.getAppUrl();
         sleepPeriod = HubProperties.getProperty("alert.sleep.millis", 60 * 1000);
 
         if (HubProperties.getProperty("alert.run", true)) {
@@ -56,8 +53,8 @@ public class AlertRunner implements Leader {
     }
 
     @Override
-    public void takeLeadership(AtomicBoolean hasLeadership) {
-        while (hasLeadership.get()) {
+    public void takeLeadership(Leadership leadership) {
+        while (leadership.hasLeadership()) {
             try {
                 doWork();
             } catch (Exception e) {

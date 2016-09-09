@@ -28,9 +28,9 @@ public class TimeInternalResource {
         ObjectNode root = mapper.createObjectNode();
         root.put("remote", timeService.isRemote());
         Linked.Builder<?> builder = Linked.linked(root);
-        builder.withLink("millis", uriInfo.getRequestUri() + "/millis");
-        builder.withLink("remote", uriInfo.getRequestUri() + "/remote");
-        builder.withLink("local", uriInfo.getRequestUri() + "/local");
+        builder.withRelativeLink("millis", uriInfo);
+        builder.withRelativeLink("remote", uriInfo);
+        builder.withRelativeLink("local", uriInfo);
         return Response.ok(builder.build()).build();
     }
 

@@ -44,7 +44,7 @@ public class AlertResource {
         }
         Linked<?> result = LinkBuilder.buildLinks(nameUriMap, "alerts", builder -> {
             builder.withLink("self", uriInfo.getRequestUri());
-            builder.withLink("health", uriInfo.getRequestUri() + "/health");
+            builder.withRelativeLink("health", uriInfo);
         });
         return Response.ok(result).build();
     }
@@ -64,7 +64,7 @@ public class AlertResource {
     private Response getResponse(AlertConfig alertConfig, int status) {
         Linked linked = Linked.justLinks()
                 .withLink("self", uriInfo.getRequestUri())
-                .withLink("status", uriInfo.getRequestUri() + "/status")
+                .withRelativeLink("status", uriInfo)
                 .build();
         ObjectNode node = mapper.createObjectNode();
         alertConfig.writeJson(node);

@@ -1,19 +1,18 @@
 package com.flightstats.hub.webhook;
 
+import com.flightstats.hub.cluster.Leadership;
 import com.github.rholder.retry.Attempt;
 import com.github.rholder.retry.StopStrategy;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
 class WebhookStopStrategy implements StopStrategy {
-    private final AtomicBoolean hasLeadership;
+    private final Leadership leadership;
 
-    WebhookStopStrategy(AtomicBoolean hasLeadership) {
-        this.hasLeadership = hasLeadership;
+    WebhookStopStrategy(Leadership leadership) {
+        this.leadership = leadership;
     }
 
     @Override
     public boolean shouldStop(Attempt failedAttempt) {
-        return !hasLeadership.get();
+        return !leadership.hasLeadership();
     }
 }

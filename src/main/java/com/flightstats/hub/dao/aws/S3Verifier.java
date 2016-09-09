@@ -5,6 +5,7 @@ import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.CuratorLeader;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.cluster.Leader;
+import com.flightstats.hub.cluster.Leadership;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.QueryResult;
@@ -33,7 +34,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.flightstats.hub.dao.LocalChannelService.HISTORICAL_FIRST_UPDATED;
 
@@ -250,9 +250,9 @@ public class S3Verifier {
         }
 
         @Override
-        public void takeLeadership(AtomicBoolean hasLeadership) {
+        public void takeLeadership(Leadership leadership) {
             logger.info("taking leadership");
-            while (hasLeadership.get()) {
+            while (leadership.hasLeadership()) {
                 long start = System.currentTimeMillis();
                 runnable.run();
                 long sleep = TimeUnit.MINUTES.toMillis(minutes) - (System.currentTimeMillis() - start);

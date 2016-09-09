@@ -6,8 +6,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.cluster.CuratorCluster;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -18,12 +16,12 @@ import javax.ws.rs.core.Response;
 @SuppressWarnings("WeakerAccess")
 @Path("/internal/traces")
 public class InternalTracesResource {
-    private final static Logger logger = LoggerFactory.getLogger(InternalTracesResource.class);
 
     private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private static final CuratorCluster hubCuratorCluster = HubProvider.getInstance(CuratorCluster.class, "HubCuratorCluster");
+    public static final String DESCRIPTION = "Shows active requests, the slowest 100, and the latest 100 with links to other hubs in the cluster";
 
-    static ObjectNode serverAndServers(String path) {
+    public static ObjectNode serverAndServers(String path) {
         ObjectNode root = mapper.createObjectNode();
         root.put("server", HubHost.getLocalHttpNameUri() + path);
         ArrayNode servers = root.putArray("servers");

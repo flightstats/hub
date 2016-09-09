@@ -1,10 +1,15 @@
 package com.flightstats.hub.cluster;
 
+import com.flightstats.hub.app.HubHost;
+import com.flightstats.hub.app.HubMain;
 import com.flightstats.hub.app.HubProvider;
+import com.flightstats.hub.app.ShutdownManager;
 import com.flightstats.hub.exception.NoSuchChannelException;
+import com.flightstats.hub.metrics.DataDog;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
+import com.timgroup.statsd.Event;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -19,7 +24,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.concurrent.Executors;
 
 /**
  * CuratorLeader calls Leader when it gets leadership.
@@ -31,10 +38,12 @@ public class CuratorLeader {
 
     private final static Logger logger = LoggerFactory.getLogger(CuratorLeader.class);
     private final static CuratorFramework curator = HubProvider.getInstance(CuratorFramework.class);
+    private final static ShutdownManager shutdownManager = HubProvider.getInstance(ShutdownManager.class);
     private String leaderPath;
     private Leader leader;
     private LeaderSelector leaderSelector;
-    private AtomicBoolean hasLeadership = new AtomicBoolean(false);
+    private Leadership leadership = new Leadership();
+
     private String id;
 
     public CuratorLeader(String leaderPath, Leader leader) {
@@ -50,7 +59,6 @@ public class CuratorLeader {
     public void start() {
         if (leaderSelector == null) {
             leaderSelector = new LeaderSelector(curator, leaderPath, new CuratorLeaderSelectionListener());
-            leaderSelector.setId(id);
             leaderSelector.autoRequeue();
             leaderSelector.start();
             logger.info("start {}", id);
@@ -63,7 +71,7 @@ public class CuratorLeader {
 
     public void close() {
         logger.info("closing leader {}", id);
-        hasLeadership.set(false);
+        leadership.close();
         if (leaderSelector != null) {
             leaderSelector.close();
         }
@@ -77,8 +85,8 @@ public class CuratorLeader {
             logger.info("takeLeadership " + id);
             try {
                 Thread.currentThread().setName("leader-" + id);
-                hasLeadership.set(true);
-                leader.takeLeadership(hasLeadership);
+                leadership.setLeadership(true);
+                leader.takeLeadership(leadership);
             } catch (RuntimeInterruptedException e) {
                 logger.info("interrupted " + leaderPath + e.getMessage());
             } catch (NoSuchChannelException e) {
@@ -98,16 +106,16 @@ public class CuratorLeader {
         public void stateChanged(CuratorFramework client, ConnectionState newState) {
             if ((newState == ConnectionState.SUSPENDED) || (newState == ConnectionState.LOST)) {
                 logger.info("stateChanged {}", newState);
-                hasLeadership.set(false);
+                leadership.setLeadership(false);
                 throw new CancelLeadershipException();
             }
         }
     }
 
     void abdicate() {
-        if (hasLeadership.get()) {
+        if (leadership.hasLeadership()) {
             logger.info("abdicating leadership for " + id);
-            hasLeadership.set(false);
+            leadership.setLeadership(false);
         }
     }
 
@@ -141,6 +149,20 @@ public class CuratorLeader {
             logger.info("server {} {} {}", server, pathDate, getLeaderPath());
             childData.put(server, pathDate);
         }
+        String localServer = HubHost.getLocalAddress();
+        SortedSet<PathDate> pathDates = new TreeSet<>(childData.get(localServer));
+        if (pathDates.size() >= 2) {
+            if (pathDates.first().dateTime.isAfter(HubMain.getStartTime())) {
+                logger.warn("found too many locks {} for this server {} {}", getLeaderPath(), localServer, pathDates);
+                Event event = DataDog.getEventBuilder()
+                        .withTitle("Hub Leader Lock")
+                        .withText(getLeaderPath() + " " + pathDates.toString())
+                        .build();
+                DataDog.statsd.recordEvent(event, "restart", "leader", "shutdown");
+                Executors.newSingleThreadExecutor().submit(shutdownManager::shutdown);
+            }
+        }
+
     }
 
     @EqualsAndHashCode

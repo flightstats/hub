@@ -157,6 +157,7 @@ public class HubBindings extends AbstractModule {
         bind(LeaderRotator.class).asEagerSingleton();
         bind(AlertRunner.class).asEagerSingleton();
         bind(TimeService.class).asEagerSingleton();
+        bind(ShutdownManager.class).asEagerSingleton();
     }
 
 }

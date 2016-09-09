@@ -5,7 +5,9 @@ import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
+import org.apache.commons.lang3.StringUtils;
 
+import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -63,8 +65,11 @@ public class Linked<T> {
         }
 
         public Builder<T> withLink(String name, String uri) {
-            links.add(new HalLink(name, URI.create(uri)));
-            return this;
+            return withLink(name, URI.create(uri));
+        }
+
+        public Builder<T> withRelativeLink(String name, UriInfo uriInfo) {
+            return withLink(name, StringUtils.appendIfMissing(uriInfo.getRequestUri().toString(), "/") + name);
         }
 
         public Builder<T> withLinks(String name, List<HalLink> links) {

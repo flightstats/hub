@@ -19,13 +19,17 @@ public class HubHost {
         }
     }
 
-    static String getLocalName() {
+    public static String getLocalName() {
         try {
             return InetAddress.getLocalHost().getHostName();
         } catch (UnknownHostException e) {
             logger.warn("unable to get local host...", e);
             throw new RuntimeException("unable to figure out local host :/", e);
         }
+    }
+
+    static String getLocalhostUri() {
+        return getScheme() + "localhost:" + getLocalPort();
     }
 
     public static String getLocalHttpIpUri() {
@@ -44,7 +48,7 @@ public class HubHost {
         return getScheme() + getLocalNamePort();
     }
 
-    private static String getLocalAddress() {
+    public static String getLocalAddress() {
         try {
             return InetAddress.getLocalHost().getHostAddress();
         } catch (UnknownHostException e) {

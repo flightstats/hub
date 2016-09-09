@@ -22,13 +22,13 @@ public class WebhookValidatorTest {
 
     @Test
     public void testName() throws Exception {
-        webhook = webhook.withDefaults(true);
+        webhook = webhook.withDefaults();
         webhookValidator.validate(webhook.withName("aA9_-"));
     }
 
     @Test
     public void testNameLarge() throws Exception {
-        webhook = webhook.withDefaults(true);
+        webhook = webhook.withDefaults();
         webhookValidator.validate(webhook.withName(Strings.repeat("B", 128)));
     }
 

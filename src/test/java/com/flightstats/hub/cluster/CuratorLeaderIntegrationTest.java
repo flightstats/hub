@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
@@ -91,7 +90,7 @@ public class CuratorLeaderIntegrationTest {
     private class MockLeader implements Leader {
 
         @Override
-        public void takeLeadership(AtomicBoolean hasLeadership) {
+        public void takeLeadership(Leadership leadership) {
             logger.info("do Work");
             Sleeper.sleep(5);
             count.incrementAndGet();
@@ -109,9 +108,9 @@ public class CuratorLeaderIntegrationTest {
         }
 
         @Override
-        public void takeLeadership(AtomicBoolean hasLeadership) {
+        public void takeLeadership(Leadership leadership) {
             startLatch.countDown();
-            while (hasLeadership.get()) {
+            while (leadership.hasLeadership()) {
                 Sleeper.sleepQuietly(5);
             }
             countDownLatch.countDown();

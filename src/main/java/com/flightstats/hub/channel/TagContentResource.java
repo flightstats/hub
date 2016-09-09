@@ -55,10 +55,9 @@ public class TagContentResource {
         Linked<?> result = LinkBuilder.buildLinks(mappedUris, "channels", builder -> {
             String uri = uriInfo.getRequestUri().toString();
             builder.withLink("self", uriInfo.getRequestUri())
-                    .withLink("latest", uri + "/latest")
-                    .withLink("earliest", uri + "/earliest")
-                            //.withLink("status", uri + "/status")
-                    .withLink("time", uri + "/time");
+                    .withRelativeLink("latest", uriInfo)
+                    .withRelativeLink("earliest", uriInfo)
+                    .withRelativeLink("time", uriInfo);
 
         });
         return Response.ok(result).build();

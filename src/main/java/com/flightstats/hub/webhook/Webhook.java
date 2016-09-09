@@ -173,7 +173,7 @@ public class Webhook implements Comparable<Webhook>, NamedType {
     /**
      * Returns a Webhook with all optional values set to the default.
      */
-    public Webhook withDefaults(boolean createKey) {
+    public Webhook withDefaults() {
         Webhook webhook = this;
         if (parallelCalls == null) {
             webhook = webhook.withParallelCalls(1);
@@ -183,9 +183,6 @@ public class Webhook implements Comparable<Webhook>, NamedType {
         }
         if (webhook.isMinute() || webhook.isSecond()) {
             webhook = webhook.withHeartbeat(true);
-        }
-        if (createKey && getStartingKey() == null) {
-            webhook = webhook.withStartingKey(WebhookStrategy.createContentPath(webhook));
         }
         if (ttlMinutes == null) {
             webhook = webhook.withTtlMinutes(0);

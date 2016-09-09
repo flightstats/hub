@@ -54,11 +54,10 @@ public class WebhookService {
     }
 
     public Optional<Webhook> upsert(Webhook webhook) {
-        webhook = webhook.withDefaults(true);
-        logger.info("upsert webhook with defaults " + webhook);
+        logger.info("incoming webhook {} ", webhook);
+        webhook = webhook.withDefaults();
         webhookValidator.validate(webhook);
-        String name = webhook.getName();
-        Optional<Webhook> webhookOptional = get(name);
+        Optional<Webhook> webhookOptional = get(webhook.getName());
         if (webhookOptional.isPresent()) {
             Webhook existing = webhookOptional.get();
             if (existing.equals(webhook)) {
@@ -66,15 +65,20 @@ public class WebhookService {
             } else if (!existing.allowedToChange(webhook)) {
                 throw new ConflictException("{\"error\": \"channelUrl can not change. \"}");
             }
+        } else {
+            if (webhook.getStartingKey() == null) {
+                webhook = webhook.withStartingKey(WebhookStrategy.createContentPath(webhook));
+            }
         }
-        ContentPath existing = lastContentPath.getOrNull(name, WEBHOOK_LAST_COMPLETED);
-        logger.info("webhook {} existing {} requestKey {}", name, existing, webhook.getStartingKey());
+        logger.info("upsert webhook {} ", webhook);
+        ContentPath existing = lastContentPath.getOrNull(webhook.getName(), WEBHOOK_LAST_COMPLETED);
+        logger.info("webhook {} existing {} startingKey {}", webhook.getName(), existing, webhook.getStartingKey());
         if (existing == null || existing.equals(ContentKey.NONE)) {
-            webhook = upsertHistorical(webhook, name);
+            webhook = upsertHistorical(webhook, webhook.getName());
         }
         if (existing == null || webhook.getStartingKey() != null) {
-            logger.info("initializing {} {}", name, webhook.getStartingKey());
-            lastContentPath.initialize(name, webhook.getStartingKey(), WEBHOOK_LAST_COMPLETED);
+            logger.info("initializing {} with startingKey {}", webhook.getName(), webhook.getStartingKey());
+            lastContentPath.initialize(webhook.getName(), webhook.getStartingKey(), WEBHOOK_LAST_COMPLETED);
         }
         webhookDao.upsert(webhook);
         webhookManager.notifyWatchers();

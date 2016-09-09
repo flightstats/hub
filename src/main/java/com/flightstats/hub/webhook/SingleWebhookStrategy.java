@@ -50,7 +50,9 @@ class SingleWebhookStrategy implements WebhookStrategy {
         if (null == startingKey) {
             startingKey = new ContentKey();
         }
-        return lastContentPath.get(webhook.getName(), startingKey, WebhookLeader.WEBHOOK_LAST_COMPLETED);
+        ContentPath contentPath = lastContentPath.get(webhook.getName(), startingKey, WebhookLeader.WEBHOOK_LAST_COMPLETED);
+        logger.info("getStartingPath startingKey {} contentPath {}", startingKey, contentPath);
+        return contentPath;
     }
 
     @Override
