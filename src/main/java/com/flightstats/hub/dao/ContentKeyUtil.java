@@ -24,7 +24,7 @@ public class ContentKeyUtil {
             Collection<ContentKey> contentKeys = new TreeSet<>(Collections.reverseOrder());
             contentKeys.addAll(keys);
             stream = contentKeys.stream()
-                    .filter(key -> key.compareTo(limitKey) <= 0);
+                    .filter(key -> key.compareTo(limitKey) < 0);
         }
         return stream
                 .filter(key -> !key.getTime().isBefore(ttlTime))
