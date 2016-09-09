@@ -192,8 +192,16 @@ public class LocalChannelService implements ChannelService {
             return Optional.absent();
         }
         Traces traces = ActiveTraces.getLocal();
+        if (channelConfig.isHistorical()) {
+            ContentPath lastUpdated = getLastUpdated(channel, ContentKey.NONE);
+            traces.add("found historical last updated", lastUpdated);
+            if (lastUpdated.equals(ContentKey.NONE)) {
+                return Optional.absent();
+            }
+            return Optional.of((ContentKey) lastUpdated);
+        }
         ContentKey limitKey = getLatestLimit(channel, stable);
-
+        traces.add("get latest limit", limitKey);
         Optional<ContentKey> latest = contentService.getLatest(channel, limitKey, traces, stable);
         if (latest.isPresent()) {
             DateTime ttlTime = getTtlTime(channel);
