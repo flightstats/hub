@@ -33,7 +33,7 @@ describe(testName, function () {
                     expect(response.statusCode).toBe(200);
                     var parse = utils.parseJson(response, testName);
                     expect(parse._links.self.href).toBe(webhookUrl);
-                    var webhooks = parse._links.webhooks || parse._links.webhooks;
+                    var webhooks = parse._links.groups || parse._links.webhooks;
                     webhooks.forEach(function (item) {
                         if (item.name === webhookName1 || item.name === webhookName2) {
                             foundWebhookHrefs.push(item.href);
