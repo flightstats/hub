@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.exception.InvalidRequestException;
-import com.flightstats.hub.replication.Replicator;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -17,10 +16,6 @@ import org.joda.time.DateTime;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.*;
-
-import static com.flightstats.hub.model.BuiltinTag.GLOBAL;
-import static com.flightstats.hub.model.BuiltinTag.HISTORICAL;
-import static com.flightstats.hub.model.BuiltinTag.REPLICATED;
 
 @ToString
 @EqualsAndHashCode(of = {"name"})
@@ -59,10 +54,10 @@ public class ChannelConfig implements Serializable, NamedType {
         tags.addAll(builder.tags);
         if (StringUtils.isBlank(builder.replicationSource)) {
             replicationSource = "";
-            tags.remove(REPLICATED.name().toLowerCase());
+            tags.remove(BuiltinTag.REPLICATED.toString());
         } else {
             replicationSource = builder.replicationSource;
-            tags.add(REPLICATED.name().toLowerCase());
+            tags.add(BuiltinTag.REPLICATED.toString());
         }
         if (StringUtils.isBlank(builder.storage)) {
             storage = SINGLE;
