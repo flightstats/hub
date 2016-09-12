@@ -2,6 +2,7 @@ package com.flightstats.hub.cluster;
 
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.exception.ConflictException;
+import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.model.ContentPath;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -116,6 +117,8 @@ public class LastContentPath {
             return true;
         } catch (ConflictException e) {
             trace(name, "ConflictException " + e.getMessage());
+            throw e;
+        } catch (ContentTooLargeException e) {
             throw e;
         } catch (Exception e) {
             logger.warn("unable to set lastUpdated " + path, e);

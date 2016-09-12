@@ -26,9 +26,6 @@
     <logger name="com.sun.jersey.server.wadl.generators" level="WARN"/>
     <logger name="org.apache.zookeeper.server.PrepRequestProcessor" level="WARN"/>
     <logger name="com.flightstats.hub" level="DEBUG"/>
-    <logger name="com.flightstats.hub.webhook" level="TRACE"/>
-    <logger name="com.flightstats.hub.spoke.SpokeContentDao" level="TRACE"/>
-    <logger name="com.flightstats.hub.dao.aws.S3Verifier" level="DEBUG"/>
     <logger name="com.flightstats.hub.filter.TracesFilter" level="TRACE"/>
 
 </configuration>
