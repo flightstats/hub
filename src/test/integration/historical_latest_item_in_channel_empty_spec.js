@@ -9,14 +9,10 @@ utils.configureFrisby();
 
 /**
  * create a channel
- * post 2 items
- * gets the item back out with latest
- * get both items back out with latest/10
+ * get latest returns 404
+ * get latest/10 returns 404
  */
 describe(testName, function () {
-
-    var historicalItem1 = channelResource + '/' + '2014/06/01/12/00/00/000';
-    var historicalItem2 = channelResource + '/' + '2014/06/01/12/01/00/000';
 
     utils.putChannel(channelName, function () {
     }, {"name": channelName, "ttlDays": 10000, historical: true});
