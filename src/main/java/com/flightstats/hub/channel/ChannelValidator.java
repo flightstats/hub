@@ -18,7 +18,7 @@ public class ChannelValidator {
         this.channelService = channelService;
     }
 
-    public void validate(ChannelConfig config, boolean isCreation, ChannelConfig oldConfig) throws InvalidRequestException, ConflictException {
+    public void validate(ChannelConfig config, ChannelConfig oldConfig) throws InvalidRequestException, ConflictException {
         Optional<String> channelNameOptional = Optional.absent();
         if (config != null) {
             channelNameOptional = Optional.fromNullable(config.getName());
@@ -30,7 +30,7 @@ public class ChannelValidator {
         ensureSize(channelName, "name");
         ensureSize(config.getOwner(), "owner");
         checkForInvalidCharacters(channelName);
-        if (isCreation) {
+        if (oldConfig != null) {
             validateChannelUniqueness(channelName);
         }
         validateTTL(config);
