@@ -199,8 +199,16 @@ public class LocalChannelService implements ChannelService {
             return Optional.absent();
         }
         Traces traces = ActiveTraces.getLocal();
+        if (channelConfig.isHistorical()) {
+            ContentPath lastUpdated = getLastUpdated(channel, ContentKey.NONE);
+            traces.add("found historical last updated", lastUpdated);
+            if (lastUpdated.equals(ContentKey.NONE)) {
+                return Optional.absent();
+            }
+            return Optional.of((ContentKey) lastUpdated);
+        }
         ContentKey limitKey = getLatestLimit(channel, stable);
-
+        traces.add("get latest limit", limitKey);
         Optional<ContentKey> latest = contentService.getLatest(channel, limitKey, traces, stable);
         if (latest.isPresent()) {
             DateTime ttlTime = getTtlTime(channel);
@@ -292,7 +300,7 @@ public class LocalChannelService implements ChannelService {
         }
         DateTime ttlTime = getTtlTime(query.getChannelName());
         Stream<ContentKey> stream = contentService.queryByTime(query).stream()
-                .filter(key -> key.getTime().isAfter(ttlTime));
+                .filter(key -> !key.getTime().isBefore(ttlTime));
         if (query.isStable()) {
             DateTime stableTime = TimeUtil.stable();
             stream = stream.filter(key -> key.getTime().isBefore(stableTime));
@@ -330,7 +338,11 @@ public class LocalChannelService implements ChannelService {
     }
 
     private DateTime getTtlTime(String channelName) {
-        return getCachedChannelConfig(channelName).getTtlTime();
+        ChannelConfig channel = getCachedChannelConfig(channelName);
+        if (channel.isHistorical()) {
+            return lastContentPath.get(channelName, new ContentKey(), HISTORICAL_FIRST_UPDATED).getTime();
+        }
+        return channel.getTtlTime();
     }
 
     @Override

@@ -236,7 +236,7 @@ public class AwsContentService implements ContentService {
         } else {
             daos.add(spokeContentDao);
             ChannelConfig channel = channelService.getCachedChannelConfig(query.getChannelName());
-            if (query.outsideOfCache(getSpokeTtlTime(query.getChannelName()))) {
+            if (query.outsideOfCache(getSpokeTtlTime(query.getChannelName())) || channel.isHistorical()) {
                 if (channel.isSingle()) {
                     daos.add(s3SingleContentDao);
                 } else if (channel.isBatch()) {

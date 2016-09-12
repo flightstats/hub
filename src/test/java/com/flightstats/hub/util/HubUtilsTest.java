@@ -3,6 +3,7 @@ package com.flightstats.hub.util;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.test.Integration;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -19,22 +20,21 @@ public class HubUtilsTest {
 
     private final static Logger logger = LoggerFactory.getLogger(HubUtilsTest.class);
 
-    private static final String HUT_TEST = "hut_test";
+    private static final String HUT_TEST = "test_0_HubUtilsTest" + RandomStringUtils.randomAlphanumeric(6);
     private static HubUtils hubUtils;
-    private static String hubUrl;
     private static String channelUrl;
 
     @BeforeClass
     public static void setUpClass() throws Exception {
         Integration.startAwsHub();
         hubUtils = HubProvider.getInstance(HubUtils.class);
-        hubUrl = "http://localhost:9080/";
         channelUrl = create();
     }
 
-    /*@BeforeClass
+    /*
+    Use this to test a remote hub instance.
+    @BeforeClass
     public static void setUpClass() throws Exception {
-        hubUrl = "http://hub.iad.dev.flightstats.io/";
         hubUtils = new HubUtils(null, HubBindings.buildJerseyClient());
         channelUrl = create();
     }*/
@@ -69,7 +69,7 @@ public class HubUtilsTest {
 
     private static String create() {
         ChannelConfig hut_test = ChannelConfig.builder().withName(HUT_TEST).build();
-        String channelUrl = hubUrl + "channel/" + HUT_TEST;
+        String channelUrl = "http://localhost:9080/channel/" + HUT_TEST;
         hubUtils.putChannel(channelUrl, hut_test);
         return channelUrl;
     }

@@ -38,11 +38,12 @@ class S3Util {
         DateTime endTime = query.getContentKey().getTime();
         DateTime queryTime = endTime;
         SortedSet<ContentKey> keys = new TreeSet<>();
-        DateTime earliestTime = query.getTtlTime().minusDays(1);
+        DateTime earliestTime = query.getTtlTime().minusHours(1);
         while (keys.size() < query.getCount() && queryTime.isAfter(earliestTime)) {
             TimeUtil.Unit unit = TimeUtil.Unit.HOURS;
             Duration duration = new Duration(queryTime, endTime);
             if (duration.getStandardDays() >= 2) {
+                earliestTime = query.getTtlTime().minusDays(1);
                 unit = TimeUtil.Unit.DAYS;
             }
             if (duration.getStandardDays() >= 31) {

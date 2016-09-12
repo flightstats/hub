@@ -27,7 +27,7 @@ public class ContentKeyUtil {
                     .filter(key -> key.compareTo(limitKey) < 0);
         }
         return stream
-                .filter(key -> key.getTime().isAfter(ttlTime))
+                .filter(key -> !key.getTime().isBefore(ttlTime))
                 .limit(count)
                 .collect(Collectors.toCollection(TreeSet::new));
     }
