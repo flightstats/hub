@@ -1102,7 +1102,7 @@ The Hub has two methods of access control to prevent unintentional loss of data.
 
 ### channel deletion
 
-If a hub installation sets `hub.allow.channel.deletion` to `false`, normal users of the system will not be able to 
+If a hub installation sets hub property `hub.allow.channel.deletion` to `false`, normal users of the system will not be able to 
 delete a channel through the normal API.  Instead, a user will need to make the command while logged into a hub server.
  
 ```
@@ -1111,8 +1111,8 @@ curl -i -X DELETE http://localhost:8080/channel/stumptown
 
 ### channel modification
 
-If a hub installation sets `hub.allow.channel.loss` to `true`, normal users of the system will not be able to change a 
-channel in a way that could cause data loss.
+If a hub installation sets hub property `hub.allow.channel.loss` to `false`, normal users of the system will not be able to change a 
+channel in a way that could cause data loss.   
 * `storage` can only be changed to `BOTH`
 * `tags` can not be removed.
 * `maxItems` and `ttlDays` can not decrease
