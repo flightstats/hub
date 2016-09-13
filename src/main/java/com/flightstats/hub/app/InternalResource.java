@@ -46,6 +46,7 @@ public class InternalResource {
         addLink("stacktrace", InternalStacktraceResource.DESCRIPTION);
         addLink("traces", InternalTracesResource.DESCRIPTION);
         addLink("zookeeper", InternalZookeeperResource.DESCRIPTION);
+        addLink("defunct", InternalDefunctResource.DESCRIPTION);
         return Response.ok(root).build();
     }
 
