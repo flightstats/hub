@@ -138,7 +138,7 @@ public class ChannelResource {
             Response.ResponseBuilder builder = Response.status(Response.Status.CREATED);
             builder.entity(linkedResult);
             builder.location(payloadUri);
-            ActiveTraces.getLocal().logSlow(1000, logger);
+            ActiveTraces.getLocal().log(1000, false, logger);
             long time = System.currentTimeMillis() - start;
             int postTimeBuffer = ntpMonitor.getPostTimeBuffer();
             if (time < postTimeBuffer) {

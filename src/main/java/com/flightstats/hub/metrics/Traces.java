@@ -73,10 +73,12 @@ public class Traces {
         return id;
     }
 
-    public void logSlow(long millis, Logger logger) {
+    public void log(long slowLogThresholdMillis, boolean trace, Logger logger) {
         long processingTime = System.currentTimeMillis() - start;
-        if (processingTime >= millis) {
+        if (processingTime >= slowLogThresholdMillis) {
             logger.info("slow processing of {} millis. trace: {}", processingTime, getOutput(logger));
+        } else if (trace) {
+            logger.info("requested trace: {}", getOutput(logger));
         }
     }
 
