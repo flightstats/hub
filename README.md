@@ -1122,7 +1122,7 @@ channel in a way that could cause data loss.
 Instead, a user will need to make the command(s) while logged into a hub server.
  
 ```
-curl -i -X DELETE http://localhost:8080/channel/stumptown
+curl -i -X PUT --header "Content-type: application/json"  --data '{"ttlDays" : 1}' http://localhost:8080/channel/stumptown
 ```
 
 ## encrypted-hub
