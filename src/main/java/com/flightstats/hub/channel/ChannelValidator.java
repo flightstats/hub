@@ -1,5 +1,6 @@
 package com.flightstats.hub.channel;
 
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.exception.InvalidRequestException;
@@ -8,6 +9,7 @@ import com.flightstats.hub.model.GlobalConfig;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
+import org.apache.commons.lang3.StringUtils;
 
 public class ChannelValidator {
     public static final String VALID_NAME = "^[a-zA-Z0-9_-]+$";
@@ -42,6 +44,33 @@ public class ChannelValidator {
             validateHistorical(config, oldConfig);
         }
         validateHistoricalMax(config);
+        preventDataLoss(config, oldConfig);
+    }
+
+    private void preventDataLoss(ChannelConfig config, ChannelConfig oldConfig) {
+        if (HubProperties.getProperty("hub.prevent.data.loss", true)) {
+            if (!config.getStorage().equals(oldConfig.getStorage())) {
+                //todo gfm - allow change to BOTH, but not from BOTH, or from SINGLE to BATCH
+                throw new InvalidRequestException("{\"error\": \"A channels storage is not allowed to change in this environment\"}");
+            }
+            if (!config.getTags().containsAll(oldConfig.getTags())) {
+                throw new InvalidRequestException("{\"error\": \"A channels tags are not allowed to be removed in this environment\"}");
+            }
+
+            if (config.getMaxItems() < oldConfig.getMaxItems()) {
+                throw new InvalidRequestException("{\"error\": \"A channels max items are not allowed to change in this environment\"}");
+            }
+            if (config.getTtlDays() < oldConfig.getTtlDays()) {
+                throw new InvalidRequestException("{\"error\": \"A channels ttlDays is not allowed to change in this environment\"}");
+            }
+            if (!StringUtils.isEmpty(oldConfig.getReplicationSource())
+                    && !config.getReplicationSource().equals(oldConfig.getReplicationSource())) {
+                throw new InvalidRequestException("{\"error\": \"A channels replication source items are not allowed to change in this environment\"}");
+            }
+            if (config.isGlobal()) {
+                //removing Satellite
+            }
+        }
     }
 
     private void validateHistorical(ChannelConfig config, ChannelConfig oldConfig) {

@@ -250,4 +250,8 @@ public class ChannelValidatorTest {
         ChannelConfig configA = ChannelConfig.builder().withName("A").withHistorical(true).withMaxItems(10).build();
         validator.validate(configA, null);
     }
+
+    //todo gfm - do some validation for 'hub.prevent.data.loss'
+
+
 }
