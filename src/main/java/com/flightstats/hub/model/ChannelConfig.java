@@ -22,8 +22,8 @@ import java.util.*;
 public class ChannelConfig implements Serializable, NamedType {
 
     public static final String SINGLE = "SINGLE";
-    private static final String BATCH = "BATCH";
-    private static final String BOTH = "BOTH";
+    public static final String BATCH = "BATCH";
+    public static final String BOTH = "BOTH";
     private static final long serialVersionUID = 1L;
     private static final Gson gson = new GsonBuilder().registerTypeAdapter(Date.class, new HubDateTypeAdapter()).create();
     private final String name;

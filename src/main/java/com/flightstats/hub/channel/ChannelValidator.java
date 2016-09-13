@@ -50,25 +50,39 @@ public class ChannelValidator {
     private void preventDataLoss(ChannelConfig config, ChannelConfig oldConfig) {
         if (HubProperties.getProperty("hub.prevent.data.loss", true)) {
             if (!config.getStorage().equals(oldConfig.getStorage())) {
-                //todo gfm - allow change to BOTH, but not from BOTH, or from SINGLE to BATCH
-                throw new InvalidRequestException("{\"error\": \"A channels storage is not allowed to change in this environment\"}");
+                if (!config.getStorage().equals(ChannelConfig.BOTH)) {
+                    throw new InvalidRequestException("{\"error\": \"A channels storage is not allowed to remove a storage source in this environment\"}");
+                }
             }
             if (!config.getTags().containsAll(oldConfig.getTags())) {
                 throw new InvalidRequestException("{\"error\": \"A channels tags are not allowed to be removed in this environment\"}");
             }
 
             if (config.getMaxItems() < oldConfig.getMaxItems()) {
-                throw new InvalidRequestException("{\"error\": \"A channels max items are not allowed to change in this environment\"}");
+                throw new InvalidRequestException("{\"error\": \"A channels max items are not allowed to decrease in this environment\"}");
             }
             if (config.getTtlDays() < oldConfig.getTtlDays()) {
-                throw new InvalidRequestException("{\"error\": \"A channels ttlDays is not allowed to change in this environment\"}");
+                throw new InvalidRequestException("{\"error\": \"A channels ttlDays is not allowed to decrease in this environment\"}");
             }
             if (!StringUtils.isEmpty(oldConfig.getReplicationSource())
                     && !config.getReplicationSource().equals(oldConfig.getReplicationSource())) {
-                throw new InvalidRequestException("{\"error\": \"A channels replication source items are not allowed to change in this environment\"}");
+                throw new InvalidRequestException("{\"error\": \"A channels replication source is not allowed to change in this environment\"}");
             }
             if (config.isGlobal()) {
-                //removing Satellite
+                if (oldConfig.isGlobal()) {
+                    GlobalConfig configGlobal = config.getGlobal();
+                    GlobalConfig oldConfigGlobal = oldConfig.getGlobal();
+                    if (!StringUtils.equals(configGlobal.getMaster(), oldConfigGlobal.getMaster())) {
+                        throw new InvalidRequestException("{\"error\": \"A channels global master is not allowed to change in this environment\"}");
+                    }
+                    if (!configGlobal.getSatellites().containsAll(oldConfigGlobal.getSatellites())) {
+                        throw new InvalidRequestException("{\"error\": \"A channels global satellites are not allowed to be removed in this environment\"}");
+                    }
+                }
+            } else {
+                if (oldConfig.isGlobal()) {
+                    throw new InvalidRequestException("{\"error\": \"A channels global configuration is not allowed to be removed in this environment\"}");
+                }
             }
         }
     }

@@ -1,5 +1,6 @@
 package com.flightstats.hub.channel;
 
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.exception.InvalidRequestException;
@@ -15,6 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -29,6 +31,7 @@ public class ChannelValidatorTest {
         channelService = mock(ChannelService.class);
         validator = new ChannelValidator(channelService);
         when(channelService.channelExists(any(String.class))).thenReturn(false);
+        HubProperties.setProperty("hub.prevent.data.loss", "false");
     }
 
     @Test
@@ -60,7 +63,8 @@ public class ChannelValidatorTest {
     public void testChannelExists() throws Exception {
         String channelName = "achannel";
         when(channelService.channelExists(channelName)).thenReturn(true);
-        validator.validate(ChannelConfig.builder().withName(channelName).build(), null);
+        ChannelConfig channelConfig = ChannelConfig.builder().withName(channelName).build();
+        validator.validate(channelConfig, channelConfig);
     }
 
     @Test(expected = InvalidRequestException.class)
@@ -181,9 +185,7 @@ public class ChannelValidatorTest {
 
     @Test
     public void testGlobal() {
-        GlobalConfig globalConfig = new GlobalConfig();
-        globalConfig.setMaster("http://master");
-        globalConfig.addSatellite("http://satellite");
+        GlobalConfig globalConfig = getGlobalConfig();
         validator.validate(ChannelConfig.builder()
                 .withName("global")
                 .withGlobal(globalConfig).build(), null);
@@ -251,7 +253,103 @@ public class ChannelValidatorTest {
         validator.validate(configA, null);
     }
 
-    //todo gfm - do some validation for 'hub.prevent.data.loss'
+    @Test
+    public void testChangeStorageLoss() throws Exception {
+        HubProperties.setProperty("hub.prevent.data.loss", "true");
+        ChannelConfig single = ChannelConfig.builder().withName("storage").withStorage(ChannelConfig.SINGLE).build();
+        ChannelConfig batch = ChannelConfig.builder().withName("storage").withStorage(ChannelConfig.BATCH).build();
+        ChannelConfig both = ChannelConfig.builder().withName("storage").withStorage(ChannelConfig.BOTH).build();
+        validator.validate(both, single);
+        validator.validate(both, batch);
+        validateError(single, both);
+        validateError(batch, both);
+        validateError(single, batch);
+        validateError(batch, single);
+    }
+
+    @Test
+    public void testRemoveTagsLoss() throws Exception {
+        HubProperties.setProperty("hub.prevent.data.loss", "true");
+        ChannelConfig oneTwo = ChannelConfig.builder().withName("testRemoveTags").withTags(Arrays.asList("one", "two")).build();
+        ChannelConfig oneThree = ChannelConfig.builder().withName("testRemoveTags").withTags(Arrays.asList("one", "three")).build();
+        ChannelConfig oneTwoThree = ChannelConfig.builder().withName("testRemoveTags").withTags(Arrays.asList("one", "two", "three")).build();
+        validator.validate(oneTwo, oneTwo);
+        validator.validate(oneTwoThree, oneTwo);
+        validateError(oneTwo, oneThree);
+    }
+
+    @Test
+    public void testTtlDaysLoss() throws Exception {
+        HubProperties.setProperty("hub.prevent.data.loss", "true");
+        ChannelConfig ten = ChannelConfig.builder().withName("testTtlDays").withTtlDays(10).build();
+        ChannelConfig eleven = ChannelConfig.builder().withName("testTtlDays").withTtlDays(11).build();
+        validator.validate(ten, ten);
+        validateError(ten, eleven);
+    }
+
+    @Test
+    public void testMaxItemsLoss() throws Exception {
+        HubProperties.setProperty("hub.prevent.data.loss", "true");
+        ChannelConfig ten = ChannelConfig.builder().withName("testMaxItems").withMaxItems(10).build();
+        ChannelConfig eleven = ChannelConfig.builder().withName("testMaxItems").withMaxItems(11).build();
+        validator.validate(ten, ten);
+        validateError(ten, eleven);
+    }
+
+    @Test
+    public void testReplicationLoss() throws Exception {
+        HubProperties.setProperty("hub.prevent.data.loss", "true");
+        ChannelConfig changed = ChannelConfig.builder().withName("testReplication").withReplicationSource("http://hub/channel/name1").build();
+        ChannelConfig replication = ChannelConfig.builder().withName("testReplication").withReplicationSource("http://hub/channel/name").build();
+        validator.validate(changed, changed);
+        validator.validate(replication, replication);
+        validateError(changed, replication);
+    }
+
+    @Test
+    public void testGlobalLossSatellite() throws Exception {
+        HubProperties.setProperty("hub.prevent.data.loss", "true");
+        GlobalConfig twoSatellites = getGlobalConfig();
+        twoSatellites.addSatellite("http://satellite2");
+        ChannelConfig two = ChannelConfig.builder().withName("testGlobalLoss").withGlobal(twoSatellites).build();
+        GlobalConfig globalConfigOld = getGlobalConfig();
+        ChannelConfig one = ChannelConfig.builder().withName("testGlobalLoss").withGlobal(globalConfigOld).build();
+        ChannelConfig none = ChannelConfig.builder().withName("testGlobalLoss").withGlobal(null).build();
+        validator.validate(two, one);
+        validateError(one, two);
+        validateError(none, one);
+    }
+
+    @Test
+    public void testGlobalLossMaster() throws Exception {
+        HubProperties.setProperty("hub.prevent.data.loss", "true");
+        GlobalConfig globalConfigOld = getGlobalConfig();
+        ChannelConfig master = ChannelConfig.builder().withName("testGlobalLoss").withGlobal(globalConfigOld).build();
+        ChannelConfig none = ChannelConfig.builder().withName("testGlobalLoss").withGlobal(null).build();
+        GlobalConfig globalConfig = getGlobalConfig();
+        globalConfig.setMaster("http://master2");
+        ChannelConfig other = ChannelConfig.builder().withName("testGlobalLoss").withGlobal(globalConfig).build();
+        validator.validate(master, none);
+        validateError(none, master);
+        validateError(other, master);
+    }
+
+    private GlobalConfig getGlobalConfig() {
+        GlobalConfig twoSatellites = new GlobalConfig();
+        twoSatellites.setMaster("http://master");
+        twoSatellites.addSatellite("http://satellite");
+        return twoSatellites;
+    }
+
+
+    private void validateError(ChannelConfig config, ChannelConfig oldConfig) {
+        try {
+            validator.validate(config, oldConfig);
+            fail("expected exception");
+        } catch (InvalidRequestException e) {
+            //this is expected
+        }
+    }
 
 
 }
