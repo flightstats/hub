@@ -48,7 +48,7 @@ public class ChannelValidator {
     }
 
     private void preventDataLoss(ChannelConfig config, ChannelConfig oldConfig) {
-        if (HubProperties.getProperty("hub.prevent.data.loss", true)) {
+        if (HubProperties.getProperty("hub.allow.channel.loss", false)) {
             if (!config.getStorage().equals(oldConfig.getStorage())) {
                 if (!config.getStorage().equals(ChannelConfig.BOTH)) {
                     throw new InvalidRequestException("{\"error\": \"A channels storage is not allowed to remove a storage source in this environment\"}");

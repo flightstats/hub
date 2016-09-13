@@ -1096,12 +1096,34 @@ For Hubs which use S3, the channel option `storage` can make a significant diffe
 High volume channels should prefer `BATCH` to reduce costs.
 
 
-
 ## access control
 
-Currently, all access to the Hub is uncontrolled, and does not require authentication.
-Over time, access control will be added to some of the API, starting with Channel Deletion and Replication Management.
-To request a change to a controlled API, or to request access, please use the [hub-discuss forum](https://groups.google.com/a/conducivetech.com/forum/#!forum/hub-discuss)
+The Hub has two methods of access control to prevent unintentional loss of data.
+
+### channel deletion
+
+If a hub installation sets `hub.allow.channel.deletion` to `false`, normal users of the system will not be able to 
+delete a channel through the normal API.  Instead, a user will need to make the command while logged into a hub server.
+ 
+```
+curl -i -X DELETE http://localhost:8080/channel/stumptown
+```
+
+### channel modification
+
+If a hub installation sets `hub.allow.channel.loss` to `true`, normal users of the system will not be able to change a 
+channel in a way that could cause data loss.
+* `storage` can only be changed to `BOTH`
+* tags can not be removed.
+* maxItems and ttlDays can not decrease
+* replicationSource can not change
+* global channels can only have satellites added.
+
+Instead, a user will need to make the command(s) while logged into a hub server.
+ 
+```
+curl -i -X DELETE http://localhost:8080/channel/stumptown
+```
 
 ## encrypted-hub
 
