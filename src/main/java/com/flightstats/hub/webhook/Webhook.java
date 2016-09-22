@@ -25,7 +25,7 @@ import java.util.SortedSet;
 @Builder
 @Getter
 @ToString
-@EqualsAndHashCode(exclude = {"startingKey"})
+@EqualsAndHashCode
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class Webhook implements Comparable<Webhook>, NamedType {
     public static final String SINGLE = "SINGLE";
