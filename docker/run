@@ -5,14 +5,17 @@
 set -e
 set -x
 
+# We use haproxy to reverse proxy 80 to 8080 so we can use it standalone, in compose or swarm
+# and it will behave more like it should.
+service haproxy start
+
 # Determine deploy dir and chdir to that directory,
 # then source the config to get user info
 #
-DEPLOYED_DIR=$(cd $(dirname $0) 1>/dev/null 2>&1 && pwd)
-cd $DEPLOYED_DIR
+DEPLOYED_DIR=/usr/bin/java
 
 
-JAVA_HOME=/opt/java
+JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
 MAX_HEAP=200m
 MIN_HEAP=200m
 MIN_NEW=10m
@@ -48,7 +51,7 @@ JAVA_OPTS="$JAVA_OPTS
 JAVA_OPTS="$JAVA_OPTS
  -Djava.awt.headless=true"
 
-#disable JVM's stupid DNS cache
+#disable JVM's DNS cache
 JAVA_OPTS="$JAVA_OPTS
  -Dsun.net.inetaddr.ttl=0"
 
