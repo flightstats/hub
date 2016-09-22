@@ -1,0 +1,92 @@
+#!/bin/bash
+
+# Exit on any error
+# Thanks MC!
+set -e
+set -x
+
+# Determine deploy dir and chdir to that directory,
+# then source the config to get user info
+#
+DEPLOYED_DIR=$(cd $(dirname $0) 1>/dev/null 2>&1 && pwd)
+cd $DEPLOYED_DIR
+
+
+JAVA_HOME=/opt/java
+MAX_HEAP=200m
+MIN_HEAP=200m
+MIN_NEW=10m
+DEBUG_PORT=3333
+JMXREMOTE_PORT=8888
+
+JAVA_OPTS="
+ $JAVA_OPTS
+ -d64
+ -server
+ -Xmx$MAX_HEAP
+ -Xms$MIN_HEAP
+ -XX:NewSize=$MIN_NEW
+ -Dsun.rmi.dgc.client.gcInterval=300000
+ -Dsun.rmi.dgc.server.gcInterval=300000
+ -agentlib:jdwp=transport=dt_socket,address=$DEBUG_PORT,server=y,suspend=n"
+
+#add this for jmxremote/jconsole access
+JAVA_OPTS="$JAVA_OPTS
+ -Djboss.platform.mbeanserver
+ -Dcom.sun.management.jmxremote
+ -Dcom.sun.management.jmxremote.port=$JMXREMOTE_PORT
+ -Dcom.sun.management.jmxremote.ssl=false
+ -Dcom.sun.management.jmxremote.authenticate=false"
+
+#add this for verbose gc
+JAVA_OPTS="$JAVA_OPTS
+ -XX:+PrintGCDetails
+ -XX:+PrintTenuringDistribution
+ -XX:+PrintGCDateStamps"
+
+#jfreechart and some other api's needs this
+JAVA_OPTS="$JAVA_OPTS
+ -Djava.awt.headless=true"
+
+#disable JVM's stupid DNS cache
+JAVA_OPTS="$JAVA_OPTS
+ -Dsun.net.inetaddr.ttl=0"
+
+#gc logging 
+JAVA_OPTS="$JAVA_OPTS
+ -Xloggc:../var/log/gc.log-$(date -u '+%Y-%m-%d-%H-%M-%S')"
+
+JAVA_OPTS="$JAVA_OPTS
+ -Dfile.encoding=UTF-8"
+
+#for path in . lib/*.jar conf ; do
+export CLASSPATH=$(for path in . lib/*.jar ; do echo -n ${path}: ; done)
+
+CHILDPID=""
+function shutdownChild()
+{
+        echo signal trap caught - taking stack trace and sleeping 5s before relaying signal
+
+        if [ -z "$CHILDPID" ]
+        then
+                echo no hub child PID to shutdown
+                return
+        fi
+
+        kill -QUIT $CHILDPID
+        sleep 1
+
+        kill -TERM $CHILDPID
+        echo signal sent, waiting ...
+        wait $CHILDPID
+        echo hub is down
+}
+trap "shutdownChild" SIGTERM SIGINT
+
+echo running hub in the background...
+exec $JAVA_HOME/bin/java $JAVA_OPTS com.flightstats.hub.app.SingleHubMain &
+CHILDPID=$!
+echo ... hub pid is $CHILDPID
+
+wait $CHILDPID
+exit $?
