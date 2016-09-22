@@ -38,8 +38,6 @@ public class SpokeContentDao implements ContentDao {
     @Inject
     private TimeService timeService;
 
-    private final int ttlMinutes = HubProperties.getSpokeTtl();
-
     @Override
     public ContentKey insert(String channelName, Content content) throws Exception {
         Traces traces = ActiveTraces.getLocal();
@@ -188,6 +186,7 @@ public class SpokeContentDao implements ContentDao {
 
     @Override
     public SortedSet<ContentKey> query(DirectionQuery query) {
+        int ttlMinutes = HubProperties.getSpokeTtl();
         DateTime spokeTtlTime = query.getChannelStable().minusMinutes(ttlMinutes);
         if (query.isLiveChannel()) {
             if (query.getContentKey().getTime().isBefore(spokeTtlTime)) {
