@@ -24,23 +24,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.flightstats.hub.app.HubServices.TYPE;
 import static com.flightstats.hub.app.HubServices.register;
 
-/**
- * Replication is moving from one Hub into another Hub
- * We will presume we are moving forward in time.
- * There are two flavors of replication:
- * A - setting replicationSource on a Channel, where replicationSource is the fully qualified channel name.
- * B - using a global channel with satellites.
- * <p>
- * Secnario A:
- * Producers are inserting Items into a Hub channel
- * HubA is setup to Replicate a channel from HubB
- * Replication starts at the item after now, and then stays up to date, with some minimal amount of lag.
- * Lag is a minimum of 'app.stable_seconds'.
- * <p>
- * Scenario B:
- * Producers are inserting Items into a Global Hub channel
- * The Global Master manages the replication to the Satellites.
- */
 @Singleton
 public class ReplicationGlobalManager {
     private final static Logger logger = LoggerFactory.getLogger(ReplicationGlobalManager.class);
@@ -95,7 +78,7 @@ public class ReplicationGlobalManager {
 
     private synchronized void replicateGlobal() {
         Set<String> replicators = new HashSet<>();
-        Iterable<ChannelConfig> globalChannels = channelService.getChannels(BuiltInTag.GLOBAL.toString());
+        Iterable<ChannelConfig> globalChannels = channelService.getChannels(BuiltInTag.GLOBAL.toString(), false);
         logger.info("replicating global channels {}", globalChannels);
         for (ChannelConfig channel : globalChannels) {
             logger.info("replicating global channel {}", channel);
@@ -134,7 +117,7 @@ public class ReplicationGlobalManager {
 
     private synchronized void replicateChannels() {
         Set<String> replicators = new HashSet<>();
-        Iterable<ChannelConfig> replicatedChannels = channelService.getChannels(BuiltInTag.REPLICATED.toString());
+        Iterable<ChannelConfig> replicatedChannels = channelService.getChannels(BuiltInTag.REPLICATED.toString(), false);
         logger.info("replicating channels {}", replicatedChannels);
         for (ChannelConfig channel : replicatedChannels) {
             logger.info("replicating channel {}", channel.getName());

@@ -272,9 +272,9 @@ public class LocalChannelService implements ChannelService {
     }
 
     @Override
-    public Collection<ChannelConfig> getChannels(String tag) {
+    public Collection<ChannelConfig> getChannels(String tag, boolean useCache) {
         Collection<ChannelConfig> matchingChannels = new ArrayList<>();
-        Iterable<ChannelConfig> channels = getChannels(true);
+        Iterable<ChannelConfig> channels = getChannels(useCache);
         for (ChannelConfig channel : channels) {
             if (channel.getTags().contains(tag)) {
                 matchingChannels.add(channel);
