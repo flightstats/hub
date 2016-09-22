@@ -12,12 +12,10 @@ ADD singlehub /opt/hub
 
 ADD run /opt/hub/bin/run
 
-RUN adduser --home /opt/hub --shell /bin/bash --disabled-password --gecos "Hub" hub && chown -R hub:hub /opt/hub && cmod +x /opt/hub/bin/*
+RUN adduser --home /opt/hub --shell /bin/bash --disabled-password --gecos "Hub" hub && chown -R hub:hub /opt/hub && chmod +x /opt/hub/bin/*
 
 EXPOSE 80
 
 USER hub
 
-RUN haproxy -f /etc/haproxy/haproxy.cfg
-
-CMD /opt/hub/bin/run
+ENTRYPOINT /opt/hub/bin/run
