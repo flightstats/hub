@@ -27,8 +27,8 @@ public class HubProperties {
         return (getProperty("app.name", "hub") + "_" + getProperty("app.environment", "unknown")).replace("-", "_");
     }
 
-    public static boolean allowDataLoss() {
-        return HubProperties.getProperty("hub.allow.data.loss", false);
+    public static boolean isProtected() {
+        return HubProperties.getProperty("hub.protect.channels", true);
     }
     static Properties getProperties() {
         return properties;

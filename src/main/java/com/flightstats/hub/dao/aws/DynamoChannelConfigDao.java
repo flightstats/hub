@@ -34,7 +34,7 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
         item.put("date", new AttributeValue().withN(String.valueOf(config.getCreationDate().getTime())));
         item.put("ttlDays", new AttributeValue().withN(String.valueOf(config.getTtlDays())));
         item.put("historical", new AttributeValue().withBOOL(config.isHistorical()));
-        item.put("allowDataLoss", new AttributeValue().withBOOL(config.isAllowDataLoss()));
+        item.put("protect", new AttributeValue().withBOOL(config.isProtect()));
         if (!config.getTags().isEmpty()) {
             item.put("tags", new AttributeValue().withSS(config.getTags()));
         }
@@ -126,8 +126,8 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
             global.setIsMaster(item.get("isMaster").getBOOL());
             builder.withGlobal(global);
         }
-        if (item.containsKey("allowDataLoss")) {
-            builder.withAllowDataLoss(item.get("allowDataLoss").getBOOL());
+        if (item.containsKey("protect")) {
+            builder.withProtect(item.get("protect").getBOOL());
         }
         return builder.build();
     }

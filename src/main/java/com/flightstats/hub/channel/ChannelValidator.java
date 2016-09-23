@@ -52,10 +52,10 @@ public class ChannelValidator {
         if (oldConfig == null) {
             return;
         }
-        if (!oldConfig.isAllowDataLoss() && config.isAllowDataLoss()) {
-            throw new InvalidRequestException("{\"error\": \"allowDataLoss can not be switched from false.\"}");
+        if (oldConfig.isProtect() && !config.isProtect()) {
+            throw new InvalidRequestException("{\"error\": \"protect can not be switched from true.\"}");
         }
-        if (!config.isAllowDataLoss()) {
+        if (config.isProtect()) {
             if (!config.getStorage().equals(oldConfig.getStorage())) {
                 if (!config.getStorage().equals(ChannelConfig.BOTH)) {
                     throw new InvalidRequestException("{\"error\": \"A channels storage is not allowed to remove a storage source in this environment\"}");

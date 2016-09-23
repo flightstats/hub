@@ -38,7 +38,7 @@ public class ChannelConfig implements Serializable, NamedType {
     private final String storage;
     private final GlobalConfig global;
     private final boolean historical;
-    private final boolean allowDataLoss;
+    private final boolean protect;
 
     private ChannelConfig(Builder builder) {
         name = StringUtils.trim(builder.name);
@@ -81,10 +81,10 @@ public class ChannelConfig implements Serializable, NamedType {
         } else {
             tags.remove(BuiltInTag.HISTORICAL.toString());
         }
-        if (HubProperties.allowDataLoss()) {
-            allowDataLoss = builder.allowDataLoss;
+        if (HubProperties.isProtected()) {
+            protect = true;
         } else {
-            allowDataLoss = false;
+            protect = builder.protect;
         }
     }
 
@@ -170,9 +170,9 @@ public class ChannelConfig implements Serializable, NamedType {
         return global;
     }
 
-    @JsonProperty("allowDataLoss")
-    public boolean isAllowDataLoss() {
-        return allowDataLoss;
+    @JsonProperty("protect")
+    public boolean isProtect() {
+        return protect;
     }
 
     @JsonIgnore
@@ -252,7 +252,7 @@ public class ChannelConfig implements Serializable, NamedType {
         if (isHistorical() != otherConfig.isHistorical()) {
             return true;
         }
-        if (allowDataLoss != otherConfig.allowDataLoss) {
+        if (protect != otherConfig.protect) {
             return true;
         }
         return false;
@@ -271,7 +271,7 @@ public class ChannelConfig implements Serializable, NamedType {
         private String storage;
         private GlobalConfig global;
         private boolean historical;
-        private boolean allowDataLoss = HubProperties.allowDataLoss();
+        private boolean protect = HubProperties.isProtected();
 
         public Builder() {
         }
@@ -288,7 +288,7 @@ public class ChannelConfig implements Serializable, NamedType {
             this.storage = config.storage;
             this.global = config.global;
             this.historical = config.historical;
-            this.allowDataLoss = config.allowDataLoss;
+            this.protect = config.protect;
             return this;
         }
 
@@ -325,8 +325,8 @@ public class ChannelConfig implements Serializable, NamedType {
             if (rootNode.has("historical")) {
                 withHistorical(rootNode.get("historical").asBoolean());
             }
-            if (rootNode.has("allowDataLoss")) {
-                allowDataLoss = rootNode.get("allowDataLoss").asBoolean();
+            if (rootNode.has("protect")) {
+                protect = rootNode.get("protect").asBoolean();
             }
             return this;
         }
@@ -398,8 +398,8 @@ public class ChannelConfig implements Serializable, NamedType {
             return this;
         }
 
-        public Builder withAllowDataLoss(boolean allowDataLoss) {
-            this.allowDataLoss = allowDataLoss;
+        public Builder withProtect(boolean protect) {
+            this.protect = protect;
             return this;
         }
     }
