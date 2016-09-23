@@ -19,7 +19,7 @@ public class ChannelValidator {
         this.channelService = channelService;
     }
 
-    public void validate(ChannelConfig config, ChannelConfig oldConfig) throws InvalidRequestException, ConflictException {
+    public void validate(ChannelConfig config, ChannelConfig oldConfig, boolean isLocalHost) throws InvalidRequestException, ConflictException {
         Optional<String> channelNameOptional = Optional.absent();
         if (config != null) {
             channelNameOptional = Optional.fromNullable(config.getName());
@@ -43,7 +43,9 @@ public class ChannelValidator {
             validateHistorical(config, oldConfig);
         }
         validateHistoricalMax(config);
-        preventDataLoss(config, oldConfig);
+        if (!isLocalHost) {
+            preventDataLoss(config, oldConfig);
+        }
     }
 
     private void preventDataLoss(ChannelConfig config, ChannelConfig oldConfig) {

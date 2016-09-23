@@ -82,7 +82,7 @@ public class ChannelResource {
                     .build();
         }
         logger.info("creating channel {} {}", channelConfig, channelConfig.getCreationDate().getTime());
-        channelConfig = channelService.updateChannel(channelConfig, oldConfig);
+        channelConfig = channelService.updateChannel(channelConfig, oldConfig, LocalHostOnly.isLocalhost(uriInfo));
         URI channelUri = LinkBuilder.buildChannelUri(channelConfig, uriInfo);
         return Response.created(channelUri).entity(
                 LinkBuilder.buildChannelLinks(channelConfig, channelUri))
@@ -105,7 +105,7 @@ public class ChannelResource {
                 .withUpdateJson(json)
                 .build();
 
-        newConfig = channelService.updateChannel(newConfig, oldConfig);
+        newConfig = channelService.updateChannel(newConfig, oldConfig, LocalHostOnly.isLocalhost(uriInfo));
 
         URI channelUri = LinkBuilder.buildChannelUri(newConfig, uriInfo);
         Linked<ChannelConfig> linked = LinkBuilder.buildChannelLinks(newConfig, channelUri);

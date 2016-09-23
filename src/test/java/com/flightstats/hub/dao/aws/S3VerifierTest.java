@@ -89,7 +89,7 @@ public class S3VerifierTest {
         MinutePath lastReplicated = new MinutePath(now.minusMinutes(30));
         lastContentPath.initialize(channelName, lastReplicated, REPLICATED_LAST_UPDATED);
         ChannelConfig channel = getReplicatedChannel(channelName);
-        localChannelService.updateChannel(channel, null);
+        localChannelService.updateChannel(channel, null, false);
         S3Verifier.VerifierRange range = s3Verifier.getSingleVerifierRange(now, channel);
         logger.info("{} {}", channelName, range);
         assertEquals(new MinutePath(lastReplicated.getTime().minusMinutes(1)), range.endPath);
@@ -115,7 +115,7 @@ public class S3VerifierTest {
         MinutePath lastVerified = new MinutePath(now.minusMinutes(100));
         lastContentPath.initialize(channelName, lastVerified, LAST_SINGLE_VERIFIED);
         ChannelConfig channel = getReplicatedChannel(channelName);
-        localChannelService.updateChannel(channel, null);
+        localChannelService.updateChannel(channel, null, false);
         S3Verifier.VerifierRange range = s3Verifier.getSingleVerifierRange(now, channel);
         logger.info("{} {}", channelName, range);
         assertEquals(new MinutePath(lastReplicated.getTime().minusMinutes(1)), range.endPath);
@@ -127,7 +127,7 @@ public class S3VerifierTest {
         lastContentPath.initialize(channelName, ContentKey.NONE, HISTORICAL_FIRST_UPDATED);
         lastContentPath.initialize(channelName, ContentKey.NONE, HISTORICAL_LAST_UPDATED);
         ChannelConfig channel = getHistoricalChannel(channelName);
-        localChannelService.updateChannel(channel, null);
+        localChannelService.updateChannel(channel, null, false);
         assertNull(s3Verifier.getHistoricalVerifierRange(now, channel));
     }
 
@@ -139,7 +139,7 @@ public class S3VerifierTest {
         lastContentPath.update(oneKey, channelName, HISTORICAL_FIRST_UPDATED);
         lastContentPath.update(oneKey, channelName, HISTORICAL_LAST_UPDATED);
         ChannelConfig channel = getHistoricalChannel(channelName);
-        localChannelService.updateChannel(channel, null);
+        localChannelService.updateChannel(channel, null, false);
         S3Verifier.VerifierRange range = s3Verifier.getHistoricalVerifierRange(now, channel);
         MinutePath expected = new MinutePath(historyTime);
         logger.info("{} {}", channelName, range);
@@ -165,7 +165,7 @@ public class S3VerifierTest {
         lastContentPath.update(lastKey, channelName, HISTORICAL_LAST_UPDATED);
 
         ChannelConfig channel = getHistoricalChannel(channelName);
-        localChannelService.updateChannel(channel, null);
+        localChannelService.updateChannel(channel, null, false);
         S3Verifier.VerifierRange range = s3Verifier.getHistoricalVerifierRange(now, channel);
 
 
