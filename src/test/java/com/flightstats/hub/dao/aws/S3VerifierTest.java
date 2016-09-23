@@ -33,8 +33,8 @@ public class S3VerifierTest {
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        HubProperties.setProperty("spoke.ttlMinutes", "60");
         Injector injector = Integration.startAwsHub();
+        HubProperties.setProperty("spoke.ttlMinutes", "60");
         s3Verifier = injector.getInstance(S3Verifier.class);
         lastContentPath = injector.getInstance(LastContentPath.class);
         localChannelService = injector.getInstance(LocalChannelService.class);

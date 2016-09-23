@@ -36,7 +36,7 @@ public interface ChannelService {
 
     Collection<ChannelConfig> getChannels();
 
-    Collection<ChannelConfig> getChannels(String tag);
+    Collection<ChannelConfig> getChannels(String tag, boolean useCache);
 
     Iterable<String> getTags();
 

@@ -240,8 +240,8 @@ public class GlobalChannelService implements ChannelService {
     }
 
     @Override
-    public Collection<ChannelConfig> getChannels(String tag) {
-        return localChannelService.getChannels(tag);
+    public Collection<ChannelConfig> getChannels(String tag, boolean useCache) {
+        return localChannelService.getChannels(tag, useCache);
     }
 
 }

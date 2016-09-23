@@ -26,7 +26,6 @@ import java.util.Collection;
 public class FileSpokeStore {
 
     private final static Logger logger = LoggerFactory.getLogger(FileSpokeStore.class);
-    private static final int ttlMinutes = HubProperties.getSpokeTtl();
     private final String storagePath;
 
     @Inject
@@ -205,6 +204,7 @@ public class FileSpokeStore {
                 }
             }
         }
+        int ttlMinutes = HubProperties.getSpokeTtl();
         DateTime ttlTime = TimeUtil.now().minusMinutes(ttlMinutes);
         DateTime previous = hourToSearch.minusHours(1).withMinuteOfHour(59).withSecondOfMinute(59).withMillisOfSecond(999);
         if (previous.isBefore(ttlTime)) {
