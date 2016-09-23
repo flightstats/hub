@@ -1116,11 +1116,15 @@ curl -i -X DELETE http://localhost:8080/channel/stumptown
 
 If a hub installation sets hub property `hub.allow.data.loss` to `false`, normal users of the system will not be able to change a 
 channel in a way that could cause data loss.   
+Otherwise, a user can set `allowDataLoss` on a channel.
+
+If `allowDataLoss` is false:
 * `storage` can only be changed to `BOTH`
-* `tags` can not be removed.
+* `tags` can not be removed
 * `maxItems` and `ttlDays` can not decrease
 * `replicationSource` can not change
-* `global` can only have satellites added.
+* `global` can only have satellites added
+* `allowDataLoss` can not be reset
 
 Instead, a user will need to make the command(s) while logged into a hub server.
  
