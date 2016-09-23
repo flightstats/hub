@@ -34,12 +34,12 @@ public class Integration {
     }
 
     public static synchronized Injector startAwsHub() throws Exception {
+        HubProperties.setProperty("spoke.ttlMinutes", "240");
         if (injector != null) {
             return injector;
         }
         startZooKeeper();
         HubProperties.setProperty("hub.type", "aws");
-        HubProperties.setProperty("spoke.ttlMinutes", "240");
         HubMain.startServer();
         injector = HubProvider.getInjector();
         return injector;
