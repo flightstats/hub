@@ -1109,19 +1109,6 @@ High volume channels should prefer `BATCH` to reduce costs.
 
 ## access control
 
-The Hub has two methods of access control to prevent unintentional loss of data.
-
-### channel deletion
-
-If a hub installation sets hub property `hub.allow.channel.deletion` to `false`, normal users of the system will not be able to 
-delete a channel through the normal API.  Instead, a user will need to make the command while logged into a hub server.
- 
-```
-curl -i -X DELETE http://localhost:8080/channel/stumptown
-```
-
-### channel modification
-
 If a hub installation sets hub property `hub.protect.channels` to `true`, normal users of the system will not be able to change a 
 channel in a way that could cause data loss.   
 Otherwise, a user can set `protect` to `true` on a channel.
@@ -1133,6 +1120,7 @@ If `allowDataLoss` is false:
 * `replicationSource` can not change
 * `global` can only have satellites added
 * `allowDataLoss` can not be reset
+* channel can not be deleted
 
 Instead, a user will need to make the command(s) while logged into a hub server.
  
