@@ -5,6 +5,7 @@ The Hub
 * [consistency](#consistency)
 * [clients](#clients)
 * [error handling](#error-handling)
+* [quick start](#quick-start)
 * [FAQ](#faq)
 * [hub resources](#hub-resources)
 * [list channels](#list-channels)
@@ -65,6 +66,13 @@ The [encrypted-hub](#encrypted-hub) (EH) is a separate installation of the Hub w
 Clients should consider handling transient server errors (500 level return codes) with retry logic.  This helps to ensure that transient issues (networking, etc)
   do not prevent the client from entering data. For Java clients, this framework provides many options - https://github.com/rholder/guava-retrying
 We also recommend clients use exponential backoff for retries.
+
+## quick start
+
+For testing and getting familiar with the hub, the quickest route is probably the "single" hub docker image
+at https://hub.docker.com/r/flightstats/hub/
+
+Try `docker run flightstats/hub:latest`
 
 ## FAQ
 
