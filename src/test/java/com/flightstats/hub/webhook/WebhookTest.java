@@ -108,5 +108,13 @@ public class WebhookTest {
 
     }
 
+    @Test
+    public void testStartingKey() throws Exception {
+        Webhook withDefaultsA = this.webhook.withDefaults();
+        Webhook withDefaultsB = this.webhook.withDefaults();
+        assertEquals(withDefaultsA, withDefaultsB);
+        Webhook withStartingKey = withDefaultsB.withStartingKey(new ContentKey());
+        assertEquals(withDefaultsA, withStartingKey);
+    }
 
 }

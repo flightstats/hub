@@ -20,7 +20,7 @@ public class ActiveTraces {
     private static final ObjectRing<Traces> recent = new ObjectRing<>(100);
     private static final TopSortedSet<Traces> slowest = new TopSortedSet<>(100, Traces::getTime, new DescendingTracesComparator());
     private static final ThreadLocal<Traces> threadLocal = new ThreadLocal<>();
-    private static int logSlowTraces = HubProperties.getProperty("logSlowTracesSeconds", 10) * 1000;
+    private static long logSlowTraces = HubProperties.getProperty("logSlowTracesSeconds", 10) * 1000;
 
     public static void start(Object... objects) {
         start(new Traces(objects));
@@ -33,6 +33,10 @@ public class ActiveTraces {
     }
 
     public static boolean end() {
+        return end(false);
+    }
+
+    public static boolean end(boolean trace) {
         Traces traces = threadLocal.get();
         if (null == traces) {
             logger.trace("no Traces found");
@@ -42,7 +46,7 @@ public class ActiveTraces {
             activeTraces.remove(traces.getId());
             threadLocal.remove();
             traces.end();
-            traces.logSlow(logSlowTraces, logger);
+            traces.log(logSlowTraces, trace, logger);
             recent.put(traces);
             slowest.add(traces);
             return true;

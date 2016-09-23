@@ -25,7 +25,7 @@ public class TagService {
     private ChannelService channelService;
 
     public Iterable<ChannelConfig> getChannels(String tag) {
-        return channelService.getChannels(tag);
+        return channelService.getChannels(tag, true);
     }
 
     public Iterable<String> getTags() {
