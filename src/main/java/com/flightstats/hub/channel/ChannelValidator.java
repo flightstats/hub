@@ -1,6 +1,5 @@
 package com.flightstats.hub.channel;
 
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.exception.InvalidRequestException;
@@ -32,7 +31,7 @@ public class ChannelValidator {
         ensureSize(channelName, "name");
         ensureSize(config.getOwner(), "owner");
         checkForInvalidCharacters(channelName);
-        if (oldConfig != null) {
+        if (oldConfig == null) {
             validateChannelUniqueness(channelName);
         }
         validateTTL(config);
@@ -48,7 +47,13 @@ public class ChannelValidator {
     }
 
     private void preventDataLoss(ChannelConfig config, ChannelConfig oldConfig) {
-        if (HubProperties.getProperty("hub.allow.channel.loss", false)) {
+        if (oldConfig == null) {
+            return;
+        }
+        if (!oldConfig.isAllowDataLoss() && config.isAllowDataLoss()) {
+            throw new InvalidRequestException("{\"error\": \"allowDataLoss can not be switched from false.\"}");
+        }
+        if (!config.isAllowDataLoss()) {
             if (!config.getStorage().equals(oldConfig.getStorage())) {
                 if (!config.getStorage().equals(ChannelConfig.BOTH)) {
                     throw new InvalidRequestException("{\"error\": \"A channels storage is not allowed to remove a storage source in this environment\"}");

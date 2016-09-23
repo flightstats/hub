@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.gson.Gson;
@@ -37,6 +38,7 @@ public class ChannelConfig implements Serializable, NamedType {
     private final String storage;
     private final GlobalConfig global;
     private final boolean historical;
+    private final boolean allowDataLoss;
 
     private ChannelConfig(Builder builder) {
         name = StringUtils.trim(builder.name);
@@ -78,6 +80,11 @@ public class ChannelConfig implements Serializable, NamedType {
             tags.add(BuiltInTag.HISTORICAL.toString());
         } else {
             tags.remove(BuiltInTag.HISTORICAL.toString());
+        }
+        if (HubProperties.allowDataLoss()) {
+            allowDataLoss = builder.allowDataLoss;
+        } else {
+            allowDataLoss = false;
         }
     }
 
@@ -123,7 +130,6 @@ public class ChannelConfig implements Serializable, NamedType {
     @JsonIgnore
     public DateTime getTtlTime() {
         if (historical) {
-            //todo gfm - this could use the first item in the channel
             return TimeUtil.now().minusDays((int) ttlDays);
         }
         return TimeUtil.getEarliestTime(ttlDays);
@@ -162,6 +168,11 @@ public class ChannelConfig implements Serializable, NamedType {
     @JsonProperty("global")
     public GlobalConfig getGlobal() {
         return global;
+    }
+
+    @JsonProperty("allowDataLoss")
+    public boolean isAllowDataLoss() {
+        return allowDataLoss;
     }
 
     @JsonIgnore
@@ -241,6 +252,9 @@ public class ChannelConfig implements Serializable, NamedType {
         if (isHistorical() != otherConfig.isHistorical()) {
             return true;
         }
+        if (allowDataLoss != otherConfig.allowDataLoss) {
+            return true;
+        }
         return false;
     }
 
@@ -257,6 +271,7 @@ public class ChannelConfig implements Serializable, NamedType {
         private String storage;
         private GlobalConfig global;
         private boolean historical;
+        private boolean allowDataLoss = HubProperties.allowDataLoss();
 
         public Builder() {
         }
@@ -273,6 +288,7 @@ public class ChannelConfig implements Serializable, NamedType {
             this.storage = config.storage;
             this.global = config.global;
             this.historical = config.historical;
+            this.allowDataLoss = config.allowDataLoss;
             return this;
         }
 
@@ -308,6 +324,9 @@ public class ChannelConfig implements Serializable, NamedType {
             }
             if (rootNode.has("historical")) {
                 withHistorical(rootNode.get("historical").asBoolean());
+            }
+            if (rootNode.has("allowDataLoss")) {
+                allowDataLoss = rootNode.get("allowDataLoss").asBoolean();
             }
             return this;
         }
@@ -376,6 +395,11 @@ public class ChannelConfig implements Serializable, NamedType {
 
         public Builder withHistorical(boolean historical) {
             this.historical = historical;
+            return this;
+        }
+
+        public Builder withAllowDataLoss(boolean allowDataLoss) {
+            this.allowDataLoss = allowDataLoss;
             return this;
         }
     }

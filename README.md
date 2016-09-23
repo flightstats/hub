@@ -135,6 +135,9 @@ Please see [global channels](#global-channels) for more details.
 High volume channels can see significant reductions in S3 costs by using `BATCH`.  
 `BOTH` is a way to transition between the two states, and perform comparisons.  More information in [storage](#storage)
 
+* `allowDataLoss` is the optional setting to allow changes which might cause some data loss.
+Please see [channel modification](#channel-modification) for more details.
+
 `PUT http://hub/channel/stumptown`
 
 * Content-type: application/json
@@ -1111,7 +1114,7 @@ curl -i -X DELETE http://localhost:8080/channel/stumptown
 
 ### channel modification
 
-If a hub installation sets hub property `hub.allow.channel.loss` to `false`, normal users of the system will not be able to change a 
+If a hub installation sets hub property `hub.allow.data.loss` to `false`, normal users of the system will not be able to change a 
 channel in a way that could cause data loss.   
 * `storage` can only be changed to `BOTH`
 * `tags` can not be removed.
