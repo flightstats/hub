@@ -19,6 +19,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.flightstats.hub.app.HubServices.TYPE;
@@ -32,8 +34,8 @@ public class ReplicationGlobalManager {
     private ChannelService channelService;
     private WatchManager watchManager;
 
-    private final Map<String, Replicator> channelReplicatorMap = new HashMap<>();
-    private final Map<String, Replicator> globalReplicatorMap = new HashMap<>();
+    private final Map<String, ChannelReplicator> channelReplicatorMap = new HashMap<>();
+    private final Map<String, GlobalReplicator> globalReplicatorMap = new HashMap<>();
     private final AtomicBoolean stopped = new AtomicBoolean();
     private final ExecutorService executor = Executors.newSingleThreadExecutor(
             new ThreadFactoryBuilder().setNameFormat("ReplicationGlobalManager").build());
@@ -53,7 +55,7 @@ public class ReplicationGlobalManager {
         watchManager.register(new Watcher() {
             @Override
             public void callback(CuratorEvent event) {
-                executor.submit(manager::replicateAndGlobal);
+                executor.submit(manager::globalAndChannels);
             }
 
             @Override
@@ -61,11 +63,12 @@ public class ReplicationGlobalManager {
                 return REPLICATOR_WATCHER_PATH;
             }
         });
-
-        executor.submit(manager::replicateAndGlobal);
+        ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(
+                new ThreadFactoryBuilder().setNameFormat("ReplicationGlobalManager-hourly").build());
+        scheduledExecutorService.scheduleAtFixedRate(manager::globalAndChannels, 0, 1, TimeUnit.HOURS);
     }
 
-    private void replicateAndGlobal() {
+    private void globalAndChannels() {
         if (stopped.get()) {
             logger.info("replication stopped");
             return;
@@ -100,7 +103,9 @@ public class ReplicationGlobalManager {
             GlobalReplicator replicator = new GlobalReplicator(channel, satellite);
             String replicatorKey = replicator.getKey();
             replicators.add(replicatorKey);
-            if (!globalReplicatorMap.containsKey(replicatorKey)) {
+            if (globalReplicatorMap.containsKey(replicatorKey)) {
+                globalReplicatorMap.get(replicatorKey).start();
+            } else {
                 executorPool.submit(() -> {
                     try {
                         globalReplicatorMap.put(replicatorKey, replicator);
@@ -110,7 +115,6 @@ public class ReplicationGlobalManager {
                         logger.warn("unexpected global issue " + replicatorKey + " " + channel, e);
                     }
                 });
-
             }
         }
     }
@@ -134,24 +138,25 @@ public class ReplicationGlobalManager {
     private void processChannel(Set<String> replicators, ChannelConfig channel) {
         replicators.add(channel.getName());
         if (channelReplicatorMap.containsKey(channel.getName())) {
-            ChannelReplicator replicator = (ChannelReplicator) channelReplicatorMap.get(channel.getName());
+            ChannelReplicator replicator = channelReplicatorMap.get(channel.getName());
             if (!replicator.getChannel().getReplicationSource().equals(channel.getReplicationSource())) {
                 logger.info("changing replication source from {} to {}",
                         replicator.getChannel().getReplicationSource(), channel.getReplicationSource());
                 replicator.stop();
                 startReplication(channel);
+            } else {
+                replicator.start();
             }
         } else {
             startReplication(channel);
         }
     }
 
-    private void stopAndRemove(Set<String> replicators, Map<String, Replicator> replicatorMap) {
+    private void stopAndRemove(Set<String> replicators, Map<String, ? extends Replicator> replicatorMap) {
         Set<String> toStop = new HashSet<>(replicatorMap.keySet());
         toStop.removeAll(replicators);
         logger.info("stopping replicators {}", toStop);
         for (String nameToStop : toStop) {
-
             logger.info("stopping {}", nameToStop);
             Replicator replicator = replicatorMap.remove(nameToStop);
             replicator.stop();
