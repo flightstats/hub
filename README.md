@@ -1111,9 +1111,9 @@ High volume channels should prefer `BATCH` to reduce costs.
 
 If a hub installation sets hub property `hub.protect.channels` to `true`, normal users of the system will not be able to change a 
 channel in a way that could cause data loss.   
-Otherwise, a user can set `protect` to `true` on a channel.
+If `hub.protect.channels` is `false`, users can optionally set `protect` on a channel.
 
-If `allowDataLoss` is false:
+If `protect` is true:
 * `storage` can only be changed to `BOTH`
 * `tags` can not be removed
 * `maxItems` and `ttlDays` can not decrease
