@@ -72,7 +72,7 @@ We also recommend clients use exponential backoff for retries.
 For testing and getting familiar with the hub, the quickest route is probably the "single" hub docker image
 at https://hub.docker.com/r/flightstats/hub/
 
-Try `docker run flightstats/hub:latest`
+Try `docker run -p 80:80 flightstats/hub:latest`
 
 ## FAQ
 
