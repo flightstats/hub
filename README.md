@@ -1119,7 +1119,7 @@ If `protect` is true:
 * `maxItems` and `ttlDays` can not decrease
 * `replicationSource` can not change
 * `global` can only have satellites added
-* `allowDataLoss` can not be reset
+* `protect` can not be reset from `true`
 * channel can not be deleted
 
 Instead, a user will need to make the command(s) while logged into a hub server.

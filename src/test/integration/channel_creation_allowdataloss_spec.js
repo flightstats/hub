@@ -6,9 +6,9 @@ var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
 
 /**
- * create a channel via put with allowDataLoss == false
+ * create a channel via put with protect == true
  * verify that we can not change some settings (storage to BATCH)
- * should not be able to change allowDataLoss to true
+ * should not be able to change protect to false
  *
  */
 describe(testName, function () {
@@ -23,17 +23,17 @@ describe(testName, function () {
         expect(parse.description).toEqual('');
         expect(parse.tags.length).toEqual(2);
         expect(parse.storage).toEqual('SINGLE');
-        expect(parse.allowDataLoss).toEqual(true);
+        expect(parse.protect).toEqual(false);
     }, {tags: ['one', 'two']});
 
     utils.putChannel(channelName, function (response, body) {
         var parse = utils.parseJson(response, testName);
         expect(parse._links.self.href).toEqual(channelResource);
-        expect(parse.allowDataLoss).toEqual(false);
+        expect(parse.protect).toEqual(true);
 
-    }, {allowDataLoss: false});
+    }, {protect: true});
 
-    utils.putChannel(channelName, false, {allowDataLoss: true}, 'allowDataLoss', 400);
+    utils.putChannel(channelName, false, {protect: false}, 'protect', 400);
 
     utils.putChannel(channelName, false, {storage: 'BATCH'}, 'storage Batch', 400);
     utils.putChannel(channelName, false, {tags: ['one']}, 'tag removal', 400);
