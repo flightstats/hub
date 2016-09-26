@@ -3,9 +3,9 @@ The Hub
 
 * [overview](#overview)
 * [consistency](#consistency)
+* [quick start](#quick-start)
 * [clients](#clients)
 * [error handling](#error-handling)
-* [quick start](#quick-start)
 * [FAQ](#faq)
 * [hub resources](#hub-resources)
 * [list channels](#list-channels)
@@ -44,16 +44,26 @@ The Hub
 * [deployments](#deployments)
 * [Requirements Notes](#Requirements-Notes)
 
-
-
 ## overview
 
-The Hub is designed to be a fault tolerant, highly available service for data storage and distribution.  All features are available via a REST API.
+The Hub is a fault tolerant, highly available service for data storage and distribution.  All features are available via a REST API.
 
 It supports channels of data ordered by time.
-Channels represent uniquely addressable items that are iterable and query-able by time.  Each item may be up to to 20 MB.
+Channels represent uniquely addressable items that are iterable and query-able by time.  Each item may be up to to 40 MB.
 
-The [encrypted-hub](#encrypted-hub) (EH) is a separate installation of the Hub which ensures that all communication is encrypted.
+You can read more about what the hub in the wiki   
+* [What is the Hub?](https://github.com/flightstats/hub/wiki/What-is-the-Hub)
+* [Goals](https://github.com/flightstats/hub/wiki/Goals)
+* [and more](https://github.com/flightstats/hub/wiki)
+
+
+## quick start
+
+Install Docker and use the hub docker image at https://hub.docker.com/r/flightstats/hub/
+
+```
+docker run -p 80:80 flightstats/hub:latest
+```
 
 ## consistency
 
@@ -66,13 +76,6 @@ The [encrypted-hub](#encrypted-hub) (EH) is a separate installation of the Hub w
 Clients should consider handling transient server errors (500 level return codes) with retry logic.  This helps to ensure that transient issues (networking, etc)
   do not prevent the client from entering data. For Java clients, this framework provides many options - https://github.com/rholder/guava-retrying
 We also recommend clients use exponential backoff for retries.
-
-## quick start
-
-For testing and getting familiar with the hub, the quickest route is probably the "single" hub docker image
-at https://hub.docker.com/r/flightstats/hub/
-
-Try `docker run -p 80:80 flightstats/hub:latest`
 
 ## FAQ
 
@@ -90,7 +93,7 @@ To explore the Resources available in the Hub, go to http://hub/
 
 **Note**
 For the purposes of this document, the Hub is at http://hub/.
-On your local machine it is at: http://localhost:9080/
+On your local machine it is at: http://localhost/ (docker) or http://localhost:9080/ (native)
 
 ## list channels
 
