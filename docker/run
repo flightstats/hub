@@ -5,10 +5,6 @@
 set -e
 set -x
 
-# We use haproxy to reverse proxy 80 to 8080 so we can use it standalone, in compose or swarm
-# and it will behave more like it should.
-haproxy -f /etc/haproxy/haproxy.cfg -D
-
 # Determine deploy dir and chdir to that directory,
 # then source the config to get user info
 #
