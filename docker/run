@@ -87,7 +87,7 @@ function shutdownChild()
 trap "shutdownChild" SIGTERM SIGINT
 
 echo running hub in the background...
-exec $JAVA_HOME/bin/java -cp $(${APP_HOME}/lib/${APP}-*):${APP_HOME}/lib/* $JAVA_OPTS $MAIN_CLASS &
+exec $JAVA_HOME/bin/java -cp $(ls ${APP_HOME}/lib/${APP}-*):${APP_HOME}/lib/* $JAVA_OPTS $MAIN_CLASS &
 CHILDPID=$!
 echo "... hub pid is $CHILDPID"
 
