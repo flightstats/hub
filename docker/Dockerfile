@@ -1,6 +1,6 @@
 FROM java:8-alpine
 
-RUN apk update && apk add bash openntpd curl haproxy
+RUN apk update && apk add bash openntpd curl
 
 ADD haproxy.cfg /etc/haproxy/haproxy.cfg
 
