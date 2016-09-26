@@ -5,16 +5,11 @@
 set -e
 set -x
 
-# We use haproxy to reverse proxy 80 to 8080 so we can use it standalone, in compose or swarm
-# and it will behave more like it should.
-service haproxy start
-
 # Determine deploy dir and chdir to that directory,
 # then source the config to get user info
 #
 APP=hub
 APP_HOME=/opt/$APP
-JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
 MAX_HEAP=200m
 MIN_HEAP=200m
 MIN_NEW=10m
@@ -61,9 +56,12 @@ JAVA_OPTS="$JAVA_OPTS
 JAVA_OPTS="$JAVA_OPTS
  -Dfile.encoding=UTF-8"
 
+# OPTIONS THAT ARE SPECIFIC TO DOCKER - ESCHEW HAPROXY, MONITORING APPS
+JAVA_OPTS="$JAVA_OPTS
+ -Dapp.url=http://localhost:80/
+ -Dhttp.bind_port=80
+ -Ddata_dog.enable=false"
 MAIN_CLASS="com.flightstats.hub.app.SingleHubMain"
-#for path in . lib/*.jar conf ; do
-export CLASSPATH=$(for path in . lib/*.jar ; do echo -n ${path}: ; done)
 
 CHILDPID=""
 function shutdownChild()
@@ -87,7 +85,7 @@ function shutdownChild()
 trap "shutdownChild" SIGTERM SIGINT
 
 echo running hub in the background...
-exec $JAVA_HOME/bin/java -cp $(ls ${APP_HOME}/lib/${APP}-*):${APP_HOME}/lib/* $JAVA_OPTS $MAIN_CLASS &
+exec java -cp $(ls ${APP_HOME}/lib/${APP}-*):${APP_HOME}/lib/* $JAVA_OPTS $MAIN_CLASS &
 CHILDPID=$!
 echo "... hub pid is $CHILDPID"
 

@@ -11,3 +11,4 @@ __init__.py
 **/.venv/
 **/node_modules/
 **/*.pyc
+docker/singlehub/
