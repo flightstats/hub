@@ -56,7 +56,6 @@ You can read more about what the hub in the wiki
 * [Goals](https://github.com/flightstats/hub/wiki/Goals)
 * [and more](https://github.com/flightstats/hub/wiki)
 
-
 ## quick start
 
 Install Docker and use the hub docker image at https://hub.docker.com/r/flightstats/hub/
