@@ -42,6 +42,7 @@ public class InternalResource {
         addLink("channel", InternalChannelResource.DESCRIPTION);
         addLink("curator", InternalCuratorResource.DESCRIPTION);
         addLink("health", InternalHealthResource.DESCRIPTION);
+        addLink("properties", InternalPropertiesResource.DESCRIPTION);
         addLink("shutdown", InternalShutdownResource.DESCRIPTION);
         addLink("stacktrace", InternalStacktraceResource.DESCRIPTION);
         addLink("traces", InternalTracesResource.DESCRIPTION);
