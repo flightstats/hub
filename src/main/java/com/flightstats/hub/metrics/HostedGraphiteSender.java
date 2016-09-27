@@ -54,7 +54,6 @@ public class HostedGraphiteSender implements MetricsSender {
             if (callableSender == null) {
                 return;
             }
-            callableSender.connect();
             Executors.newSingleThreadExecutor().submit(callableSender);
         }
 
@@ -63,7 +62,7 @@ public class HostedGraphiteSender implements MetricsSender {
         }
     }
 
-    class CallableSender implements Callable<Object> {
+    private class CallableSender implements Callable<Object> {
         private DataOutputStream stream;
 
         void connect() {
@@ -84,6 +83,7 @@ public class HostedGraphiteSender implements MetricsSender {
 
         @Override
         public Object call() throws Exception {
+            connect();
             while (true) {
                 try {
                     String value = queue.poll(10, TimeUnit.SECONDS);
