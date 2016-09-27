@@ -1,7 +1,10 @@
 package com.flightstats.hub.channel;
 
 import com.flightstats.hub.app.HubHost;
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubProvider;
+import com.flightstats.hub.app.LocalHostOnly;
+import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.rest.Linked;
@@ -21,10 +24,13 @@ public class InternalChannelResource {
 
     private final static Logger logger = LoggerFactory.getLogger(InternalChannelResource.class);
 
+    @Context
+    private UriInfo uriInfo;
     private final static Dao<ChannelConfig> channelConfigDao = HubProvider.getInstance(
             new TypeLiteral<Dao<ChannelConfig>>() {
             }, "ChannelConfig");
     private final static HubUtils hubUtils = HubProvider.getInstance(HubUtils.class);
+    private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
 
     public static final String DESCRIPTION = "GET to refresh of the Channel Cache within the entire hub cluster.";
 
@@ -51,6 +57,21 @@ public class InternalChannelResource {
                 return Response.status(400).entity(HubHost.getLocalNamePort()).build();
             }
         }
+    }
+
+    @Path("{channel}")
+    @DELETE
+    public Response delete(@PathParam("channel") final String channelName) throws Exception {
+        ChannelConfig channelConfig = channelService.getChannelConfig(channelName, false);
+        if (channelConfig == null) {
+            return ChannelResource.notFound(channelName);
+        }
+        if (HubProperties.isProtected()) {
+            logger.info("using internal localhost only to delete {}", channelName);
+            return LocalHostOnly.getResponse(uriInfo, () -> ChannelResource.deletion(channelName));
+        }
+        logger.info("using internal delete {}", channelName);
+        return ChannelResource.deletion(channelName);
     }
 
 }

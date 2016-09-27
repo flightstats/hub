@@ -237,15 +237,10 @@ public class ChannelResource {
     }
 
     @DELETE
-    public Response delete(@PathParam("channel") final String channelName,
-                           @QueryParam("override") @DefaultValue("false") boolean override) throws Exception {
+    public Response delete(@PathParam("channel") final String channelName) throws Exception {
         ChannelConfig channelConfig = channelService.getChannelConfig(channelName, false);
         if (channelConfig == null) {
             return notFound(channelName);
-        }
-        if (!HubProperties.isProtected() && override) {
-            logger.info("using override to delete {}", channelName);
-            return deletion(channelName);
         }
         if (HubProperties.isProtected() || channelConfig.isProtect()) {
             logger.info("using localhost only to delete {}", channelName);
@@ -255,7 +250,7 @@ public class ChannelResource {
         return deletion(channelName);
     }
 
-    private Response deletion(@PathParam("channel") String channelName) {
+    public static Response deletion(@PathParam("channel") String channelName) {
         if (channelService.delete(channelName)) {
             return Response.status(Response.Status.ACCEPTED).build();
         } else {
@@ -263,7 +258,7 @@ public class ChannelResource {
         }
     }
 
-    private Response notFound(@PathParam("channel") String channelName) {
+    public static Response notFound(@PathParam("channel") String channelName) {
         return Response.status(Response.Status.NOT_FOUND).entity("channel " + channelName + " not found").build();
     }
 
