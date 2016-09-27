@@ -237,14 +237,21 @@ public class ChannelResource {
     }
 
     @DELETE
-    public Response delete(@PathParam("channel") final String channelName) throws Exception {
+    public Response delete(@PathParam("channel") final String channelName,
+                           @QueryParam("override") @DefaultValue("false") boolean override) throws Exception {
         ChannelConfig channelConfig = channelService.getChannelConfig(channelName, false);
         if (channelConfig == null) {
             return notFound(channelName);
         }
+        if (!HubProperties.isProtected() && override) {
+            logger.info("using override to delete {}", channelName);
+            return deletion(channelName);
+        }
         if (HubProperties.isProtected() || channelConfig.isProtect()) {
+            logger.info("using localhost only to delete {}", channelName);
             return LocalHostOnly.getResponse(uriInfo, () -> deletion(channelName));
         }
+        logger.info("using normal delete {}", channelName);
         return deletion(channelName);
     }
 
