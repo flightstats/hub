@@ -1,5 +1,7 @@
 package com.flightstats.hub.channel;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubProvider;
@@ -31,13 +33,19 @@ public class InternalChannelResource {
             }, "ChannelConfig");
     private final static HubUtils hubUtils = HubProvider.getInstance(HubUtils.class);
     private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
+    private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
 
-    public static final String DESCRIPTION = "GET to refresh of the Channel Cache within the entire hub cluster.";
+    public static final String DESCRIPTION = "Delete channels, and refresh of the Channel Cache within the hub cluster.";
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response get(@Context UriInfo uriInfo) throws Exception {
-        Linked.Builder<?> links = Linked.linked(DESCRIPTION);
+        ObjectNode root = mapper.createObjectNode();
+        root.put("description", DESCRIPTION);
+        root.put("directions1", "HTTP DELETE to /internal/channel/{name} to override channel protection in an unprotected cluster.");
+        root.put("directions2", "HTTP GET to /internal/channel/refresh to refresh Channel Cache within the hub cluster");
+
+        Linked.Builder<?> links = Linked.linked(root);
         links.withLink("self", uriInfo.getRequestUri());
         links.withRelativeLink("refresh", uriInfo);
         return Response.ok(links.build()).build();
