@@ -238,7 +238,7 @@ public class ChannelResource {
 
     @DELETE
     public Response delete(@PathParam("channel") final String channelName) throws Exception {
-        if (HubProperties.isProtected()) {
+        if (!HubProperties.isProtected()) {
             return deletion(channelName);
         }
         return LocalHostOnly.getResponse(uriInfo, () -> deletion(channelName));
