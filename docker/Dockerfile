@@ -1,8 +1,6 @@
-FROM java:8
+FROM java:8-alpine
 
-RUN apt-get update && apt-get -y install ntp curl haproxy
-
-ADD haproxy.cfg /etc/haproxy/haproxy.cfg
+RUN apk update && apk add bash openntpd curl
 
 ADD run /opt/hub/bin/run
 
@@ -12,4 +10,4 @@ RUN chmod +x /opt/hub/bin/*
 
 EXPOSE 80
 
-ENTRYPOINT /opt/hub/bin/run
+ENTRYPOINT /bin/bash /opt/hub/bin/run
