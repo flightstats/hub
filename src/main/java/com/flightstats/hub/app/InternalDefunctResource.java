@@ -10,12 +10,13 @@ import org.joda.time.DateTime;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.concurrent.TimeUnit;
 
-@Path("/internal/defunct/")
+@Path("/internal/defunct")
 public class InternalDefunctResource {
 
     public static final String DESCRIPTION = "Get a list of entities deemed defunct.";
@@ -27,12 +28,23 @@ public class InternalDefunctResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response get() {
+        return getResponseForAge(DEFUNCT_MINUTES.intValue());
+    }
+
+    @GET
+    @Path("/{age}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response get(@PathParam("age") int age) {
+        return getResponseForAge(age);
+    }
+
+    private Response getResponseForAge(int age) {
         ObjectNode root = mapper.createObjectNode();
         root.put("description", DESCRIPTION);
-        root.put("defunct minutes", DEFUNCT_MINUTES);
+        root.put("defunct minutes", age);
 
         ArrayNode channels = root.putArray("channels");
-        DateTime defunctCutoff = DateTime.now().minusMinutes(DEFUNCT_MINUTES.intValue());
+        DateTime defunctCutoff = DateTime.now().minusMinutes(age);
         channelService.getChannels().forEach(channelConfig -> {
             Optional<ContentKey> optionalContentKey = channelService.getLatest(channelConfig.getName(), false, false);
             if (!optionalContentKey.isPresent()) return;
