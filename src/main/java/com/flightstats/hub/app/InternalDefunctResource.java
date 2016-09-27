@@ -5,6 +5,9 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.ContentPath;
+import com.flightstats.hub.webhook.WebhookService;
+import com.flightstats.hub.webhook.WebhookStatus;
 import com.google.common.base.Optional;
 import org.joda.time.DateTime;
 
@@ -24,6 +27,7 @@ public class InternalDefunctResource {
 
     private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
+    private final static WebhookService webhookService = HubProvider.getInstance(WebhookService.class);
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -39,12 +43,19 @@ public class InternalDefunctResource {
     }
 
     private Response getResponseForAge(int age) {
+        DateTime defunctCutoff = DateTime.now().minusMinutes(age);
+
         ObjectNode root = mapper.createObjectNode();
         root.put("description", DESCRIPTION);
         root.put("defunct minutes", age);
+        addDefunctChannels(root, defunctCutoff);
+        addDefunctWebhooks(root, defunctCutoff);
 
+        return Response.ok(root).build();
+    }
+
+    private void addDefunctChannels(ObjectNode root, DateTime defunctCutoff) {
         ArrayNode channels = root.putArray("channels");
-        DateTime defunctCutoff = DateTime.now().minusMinutes(age);
         channelService.getChannels().forEach(channelConfig -> {
             Optional<ContentKey> optionalContentKey = channelService.getLatest(channelConfig.getName(), false, false);
             if (!optionalContentKey.isPresent()) return;
@@ -53,7 +64,16 @@ public class InternalDefunctResource {
             if (contentKey.getTime().isAfter(defunctCutoff)) return;
             channels.add(channelConfig.getName());
         });
+    }
 
-        return Response.ok(root).build();
+    private void addDefunctWebhooks(ObjectNode root, DateTime defunctCutoff) {
+        ArrayNode webhooks = root.putArray("webhooks");
+        webhookService.getAll().forEach(webhook -> {
+            WebhookStatus status = webhookService.getStatus(webhook);
+            ContentPath contentPath = status.getLastCompleted();
+
+            if (contentPath.getTime().isAfter(defunctCutoff)) return;
+            webhooks.add(webhook.getName());
+        });
     }
 }
