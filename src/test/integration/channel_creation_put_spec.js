@@ -4,8 +4,6 @@ var request = require('request');
 var channelName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
-utils.configureFrisby();
-
 
 /**
  * create a channel via put

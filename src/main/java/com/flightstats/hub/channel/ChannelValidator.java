@@ -8,6 +8,7 @@ import com.flightstats.hub.model.GlobalConfig;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
+import org.apache.commons.lang3.StringUtils;
 
 public class ChannelValidator {
     public static final String VALID_NAME = "^[a-zA-Z0-9_-]+$";
@@ -18,7 +19,7 @@ public class ChannelValidator {
         this.channelService = channelService;
     }
 
-    public void validate(ChannelConfig config, boolean isCreation, ChannelConfig oldConfig) throws InvalidRequestException, ConflictException {
+    public void validate(ChannelConfig config, ChannelConfig oldConfig, boolean isLocalHost) throws InvalidRequestException, ConflictException {
         Optional<String> channelNameOptional = Optional.absent();
         if (config != null) {
             channelNameOptional = Optional.fromNullable(config.getName());
@@ -30,7 +31,7 @@ public class ChannelValidator {
         ensureSize(channelName, "name");
         ensureSize(config.getOwner(), "owner");
         checkForInvalidCharacters(channelName);
-        if (isCreation) {
+        if (oldConfig == null) {
             validateChannelUniqueness(channelName);
         }
         validateTTL(config);
@@ -42,6 +43,55 @@ public class ChannelValidator {
             validateHistorical(config, oldConfig);
         }
         validateHistoricalMax(config);
+        if (!isLocalHost) {
+            preventDataLoss(config, oldConfig);
+        }
+    }
+
+    private void preventDataLoss(ChannelConfig config, ChannelConfig oldConfig) {
+        if (oldConfig == null) {
+            return;
+        }
+        if (oldConfig.isProtect() && !config.isProtect()) {
+            throw new InvalidRequestException("{\"error\": \"protect can not be switched from true.\"}");
+        }
+        if (config.isProtect()) {
+            if (!config.getStorage().equals(oldConfig.getStorage())) {
+                if (!config.getStorage().equals(ChannelConfig.BOTH)) {
+                    throw new InvalidRequestException("{\"error\": \"A channels storage is not allowed to remove a storage source in this environment\"}");
+                }
+            }
+            if (!config.getTags().containsAll(oldConfig.getTags())) {
+                throw new InvalidRequestException("{\"error\": \"A channels tags are not allowed to be removed in this environment\"}");
+            }
+
+            if (config.getMaxItems() < oldConfig.getMaxItems()) {
+                throw new InvalidRequestException("{\"error\": \"A channels max items are not allowed to decrease in this environment\"}");
+            }
+            if (config.getTtlDays() < oldConfig.getTtlDays()) {
+                throw new InvalidRequestException("{\"error\": \"A channels ttlDays is not allowed to decrease in this environment\"}");
+            }
+            if (!StringUtils.isEmpty(oldConfig.getReplicationSource())
+                    && !config.getReplicationSource().equals(oldConfig.getReplicationSource())) {
+                throw new InvalidRequestException("{\"error\": \"A channels replication source is not allowed to change in this environment\"}");
+            }
+            if (config.isGlobal()) {
+                if (oldConfig.isGlobal()) {
+                    GlobalConfig configGlobal = config.getGlobal();
+                    GlobalConfig oldConfigGlobal = oldConfig.getGlobal();
+                    if (!StringUtils.equals(configGlobal.getMaster(), oldConfigGlobal.getMaster())) {
+                        throw new InvalidRequestException("{\"error\": \"A channels global master is not allowed to change in this environment\"}");
+                    }
+                    if (!configGlobal.getSatellites().containsAll(oldConfigGlobal.getSatellites())) {
+                        throw new InvalidRequestException("{\"error\": \"A channels global satellites are not allowed to be removed in this environment\"}");
+                    }
+                }
+            } else {
+                if (oldConfig.isGlobal()) {
+                    throw new InvalidRequestException("{\"error\": \"A channels global configuration is not allowed to be removed in this environment\"}");
+                }
+            }
+        }
     }
 
     private void validateHistorical(ChannelConfig config, ChannelConfig oldConfig) {

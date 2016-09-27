@@ -68,7 +68,7 @@ function putChannel(channelName, verify, body, description, expectedStatus) {
     verify = verify || function () {};
     body = body || {"name" : channelName};
     description = description || 'none';
-    it("puts channel " + channelName + " at " + channelUrl, function (done) {
+    it("puts channel " + channelName + " at " + channelUrl + ' ' + description, function (done) {
         var url = channelUrl + '/' + channelName;
         console.log('creating channel ' + channelName + ' for ' + description);
         request.put({

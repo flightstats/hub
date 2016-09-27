@@ -145,6 +145,9 @@ Please see [global channels](#global-channels) for more details.
 High volume channels can see significant reductions in S3 costs by using `BATCH`.  
 `BOTH` is a way to transition between the two states, and perform comparisons.  More information in [storage](#storage)
 
+* `protect` is the optional setting to prevent changes which might cause some data loss.
+Please see [channel modification](#channel-modification) for more details.
+
 `PUT http://hub/channel/stumptown`
 
 * Content-type: application/json
@@ -1106,12 +1109,26 @@ For Hubs which use S3, the channel option `storage` can make a significant diffe
 High volume channels should prefer `BATCH` to reduce costs.
 
 
-
 ## access control
 
-Currently, all access to the Hub is uncontrolled, and does not require authentication.
-Over time, access control will be added to some of the API, starting with Channel Deletion and Replication Management.
-To request a change to a controlled API, or to request access, please use the [hub-discuss forum](https://groups.google.com/a/conducivetech.com/forum/#!forum/hub-discuss)
+If admins set hub property `hub.protect.channels` to `true`, normal users of the system will not be able to change a 
+channel in a way that could cause data loss.   
+If `hub.protect.channels` is `false`, end users can optionally set `protect` on specific channels.
+
+If `protect` is true:
+* `storage` can only be changed to `BOTH`
+* `tags` can not be removed
+* `maxItems` and `ttlDays` can not decrease
+* `replicationSource` can not change
+* `global` can only have satellites added
+* `protect` can not be reset from `true`
+* channel can not be deleted
+
+Instead, a user will need to make the command(s) while logged into a hub server.
+ 
+```
+curl -i -X PUT --header "Content-type: application/json"  --data '{"ttlDays" : 1}' http://localhost:8080/channel/stumptown
+```
 
 ## encrypted-hub
 
