@@ -238,18 +238,26 @@ public class ChannelResource {
 
     @DELETE
     public Response delete(@PathParam("channel") final String channelName) throws Exception {
-        if (!HubProperties.isProtected()) {
-            return deletion(channelName);
+        ChannelConfig channelConfig = channelService.getChannelConfig(channelName, false);
+        if (channelConfig == null) {
+            return notFound(channelName);
         }
-        return LocalHostOnly.getResponse(uriInfo, () -> deletion(channelName));
+        if (HubProperties.isProtected() || channelConfig.isProtect()) {
+            return LocalHostOnly.getResponse(uriInfo, () -> deletion(channelName));
+        }
+        return deletion(channelName);
     }
 
     private Response deletion(@PathParam("channel") String channelName) {
         if (channelService.delete(channelName)) {
             return Response.status(Response.Status.ACCEPTED).build();
         } else {
-            return Response.status(Response.Status.NOT_FOUND).entity("channel " + channelName + " not found").build();
+            return notFound(channelName);
         }
+    }
+
+    private Response notFound(@PathParam("channel") String channelName) {
+        return Response.status(Response.Status.NOT_FOUND).entity("channel " + channelName + " not found").build();
     }
 
 }
