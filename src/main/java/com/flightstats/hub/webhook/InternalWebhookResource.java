@@ -43,6 +43,7 @@ public class InternalWebhookResource {
         addLink(links, "stale", uriInfo.getRequestUri().toString() + "/stale/" + DEFAULT_STALE_AGE.intValue());
 
         addStaleWebhooks(root, DEFAULT_STALE_AGE.intValue());
+        addErroringWebhooks(root);
 
         return Response.ok(root).build();
     }
@@ -77,6 +78,17 @@ public class InternalWebhookResource {
 
             if (contentPath.getTime().isAfter(staleCutoff)) return;
             webhooks.add(webhook.getName());
+        });
+    }
+
+    private void addErroringWebhooks(ObjectNode root) {
+        ObjectNode errors = root.putObject("errors");
+        ArrayNode webhooks = errors.putArray("webhooks");
+        webhookService.getAll().forEach(webhook -> {
+            WebhookStatus status = webhookService.getStatus(webhook);
+            if (status.getErrors().size() > 0) {
+                webhooks.add(webhook.getName());
+            }
         });
     }
 }
