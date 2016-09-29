@@ -20,7 +20,7 @@ public class LocalHostOnly {
         } else {
             String msg = "only calls from localhost are allowed";
             logger.warn(msg);
-            return Response.status(405).entity(msg).build();
+            return Response.status(Response.Status.FORBIDDEN).entity(msg).build();
         }
     }
 
