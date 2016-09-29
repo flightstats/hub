@@ -47,18 +47,17 @@ public class InternalChannelResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response get(@Context UriInfo uriInfo) throws Exception {
         ObjectNode root = mapper.createObjectNode();
-
-        ObjectNode links = root.putObject("_links");
-        addLink(links, "self", uriInfo.getRequestUri().toString());
-        addLink(links, "refresh", uriInfo.getRequestUri().toString() + "/refresh");
-
         root.put("description", DESCRIPTION);
 
         ObjectNode directions = root.putObject("directions");
         directions.put("delete", "HTTP DELETE to /internal/channel/{name} to override channel protection in an unprotected cluster.");
-        directions.put("refresh", "HTTP GET to /internal/channel/refresh to refresh Channel Cache within the hub cluster");
+        directions.put("refresh", "HTTP GET to /internal/channel/refresh to refresh Channel Cache within the hub cluster.");
+        directions.put("stale", "HTTP GET to /internal/channel/stale/{age} to list channels with no inserts for {age} minutes.");
 
-        addStaleChannels(root, DEFAULT_STALE_AGE.intValue());
+        ObjectNode links = root.putObject("_links");
+        addLink(links, "self", uriInfo.getRequestUri().toString());
+        addLink(links, "refresh", uriInfo.getRequestUri().toString() + "/refresh");
+        addLink(links, "stale", uriInfo.getRequestUri().toString() + "/stale/" + DEFAULT_STALE_AGE.intValue());
 
         return Response.ok(root).build();
     }
@@ -92,6 +91,17 @@ public class InternalChannelResource {
         }
         logger.info("using internal delete {}", channelName);
         return ChannelResource.deletion(channelName);
+    }
+
+    @GET
+    @Path("/stale/{age}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response stale(@PathParam("age") int age) {
+        ObjectNode root = mapper.createObjectNode();
+        ObjectNode links = root.putObject("_links");
+        addLink(links, "self", uriInfo.getRequestUri().toString());
+        addStaleChannels(root, age);
+        return Response.ok(root).build();
     }
 
     private void addLink(ObjectNode node, String key, String value) {

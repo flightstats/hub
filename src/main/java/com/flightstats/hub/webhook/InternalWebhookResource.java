@@ -9,6 +9,7 @@ import org.joda.time.DateTime;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -32,13 +33,26 @@ public class InternalWebhookResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response get() {
         ObjectNode root = mapper.createObjectNode();
+        root.put("description", DESCRIPTION);
+
+        ObjectNode directions = root.putObject("directions");
+        directions.put("stale", "HTTP GET to /internal/webhook/stale/{age} to list webhooks that are more than {age} minutes behind.");
 
         ObjectNode links = root.putObject("_links");
         addLink(links, "self", uriInfo.getRequestUri().toString());
+        addLink(links, "stale", uriInfo.getRequestUri().toString() + "/stale/" + DEFAULT_STALE_AGE.intValue());
 
-        root.put("description", DESCRIPTION);
+        return Response.ok(root).build();
+    }
 
-        addStaleWebhooks(root, DEFAULT_STALE_AGE.intValue());
+    @GET
+    @Path("/stale/{age}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response stale(@PathParam("age") int age) {
+        ObjectNode root = mapper.createObjectNode();
+        ObjectNode links = root.putObject("_links");
+        addLink(links, "self", uriInfo.getRequestUri().toString());
+        addStaleWebhooks(root, age);
         return Response.ok(root).build();
     }
 
