@@ -59,6 +59,8 @@ public class InternalChannelResource {
         addLink(links, "refresh", uriInfo.getRequestUri().toString() + "/refresh");
         addLink(links, "stale", uriInfo.getRequestUri().toString() + "/stale/" + DEFAULT_STALE_AGE.intValue());
 
+        addStaleChannels(root, DEFAULT_STALE_AGE.intValue());
+
         return Response.ok(root).build();
     }
 
