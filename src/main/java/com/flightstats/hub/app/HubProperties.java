@@ -27,6 +27,9 @@ public class HubProperties {
         return (getProperty("app.name", "hub") + "_" + getProperty("app.environment", "unknown")).replace("-", "_");
     }
 
+    public static boolean isProtected() {
+        return HubProperties.getProperty("hub.protect.channels", true);
+    }
     static Properties getProperties() {
         return properties;
     }
@@ -103,7 +106,7 @@ public class HubProperties {
             properties.put("hosted_graphite.enable", "false");
             properties.put("zookeeper.connection", "localhost:2181");
             properties.put("runSingleZookeeperInternally", "singleNode");
-            properties.put("hub.allow.channel.deletion", "true");
+            properties.put("hub.protect.channels", "false");
             properties.put("data_dog.enable", "false");
             properties.put("s3Verifier.run", "false");
             properties.put("aws.credentials", "config/credentials/hub_test_credentials.properties");

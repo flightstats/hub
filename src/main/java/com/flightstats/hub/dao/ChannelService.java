@@ -12,7 +12,7 @@ public interface ChannelService {
 
     ChannelConfig createChannel(ChannelConfig configuration);
 
-    ChannelConfig updateChannel(ChannelConfig configuration, ChannelConfig oldConfig);
+    ChannelConfig updateChannel(ChannelConfig configuration, ChannelConfig oldConfig, boolean isLocalHost);
 
     ContentKey insert(String channelName, Content content) throws Exception;
 
@@ -36,7 +36,7 @@ public interface ChannelService {
 
     Collection<ChannelConfig> getChannels();
 
-    Collection<ChannelConfig> getChannels(String tag);
+    Collection<ChannelConfig> getChannels(String tag, boolean useCache);
 
     Iterable<String> getTags();
 

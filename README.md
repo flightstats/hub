@@ -3,6 +3,7 @@ The Hub
 
 * [overview](#overview)
 * [consistency](#consistency)
+* [quick start](#quick-start)
 * [clients](#clients)
 * [error handling](#error-handling)
 * [FAQ](#faq)
@@ -43,16 +44,25 @@ The Hub
 * [deployments](#deployments)
 * [Requirements Notes](#Requirements-Notes)
 
-
-
 ## overview
 
-The Hub is designed to be a fault tolerant, highly available service for data storage and distribution.  All features are available via a REST API.
+The Hub is a fault tolerant, highly available service for data storage and distribution.  All features are available via a REST API.
 
 It supports channels of data ordered by time.
-Channels represent uniquely addressable items that are iterable and query-able by time.  Each item may be up to to 20 MB.
+Channels represent uniquely addressable items that are iterable and query-able by time.  Each item may be up to to 40 MB.
 
-The [encrypted-hub](#encrypted-hub) (EH) is a separate installation of the Hub which ensures that all communication is encrypted.
+You can read more about what the hub in the wiki   
+* [What is the Hub?](https://github.com/flightstats/hub/wiki/What-is-the-Hub)
+* [Goals](https://github.com/flightstats/hub/wiki/Goals)
+* [and more](https://github.com/flightstats/hub/wiki)
+
+## quick start
+
+Install Docker and use the hub docker image at https://hub.docker.com/r/flightstats/hub/
+
+```
+docker run -p 80:80 flightstats/hub:latest
+```
 
 ## consistency
 
@@ -82,7 +92,7 @@ To explore the Resources available in the Hub, go to http://hub/
 
 **Note**
 For the purposes of this document, the Hub is at http://hub/.
-On your local machine it is at: http://localhost:9080/
+On your local machine it is at: http://localhost/ (docker) or http://localhost:9080/ (native)
 
 ## list channels
 
@@ -134,6 +144,9 @@ Please see [global channels](#global-channels) for more details.
 * `storage` is the optional specification of how to store long term data.  The default is `SINGLE`.  
 High volume channels can see significant reductions in S3 costs by using `BATCH`.  
 `BOTH` is a way to transition between the two states, and perform comparisons.  More information in [storage](#storage)
+
+* `protect` is the optional setting to prevent changes which might cause some data loss.
+Please see [channel modification](#channel-modification) for more details.
 
 `PUT http://hub/channel/stumptown`
 
@@ -1096,12 +1109,26 @@ For Hubs which use S3, the channel option `storage` can make a significant diffe
 High volume channels should prefer `BATCH` to reduce costs.
 
 
-
 ## access control
 
-Currently, all access to the Hub is uncontrolled, and does not require authentication.
-Over time, access control will be added to some of the API, starting with Channel Deletion and Replication Management.
-To request a change to a controlled API, or to request access, please use the [hub-discuss forum](https://groups.google.com/a/conducivetech.com/forum/#!forum/hub-discuss)
+If admins set hub property `hub.protect.channels` to `true`, normal users of the system will not be able to change a 
+channel in a way that could cause data loss.   
+If `hub.protect.channels` is `false`, end users can optionally set `protect` on specific channels.
+
+If `protect` is true:
+* `storage` can only be changed to `BOTH`
+* `tags` can not be removed
+* `maxItems` and `ttlDays` can not decrease
+* `replicationSource` can not change
+* `global` can only have satellites added
+* `protect` can not be reset from `true`
+* channel can not be deleted
+
+Instead, a user will need to make the command(s) while logged into a hub server.
+ 
+```
+curl -i -X PUT --header "Content-type: application/json"  --data '{"ttlDays" : 1}' http://localhost:8080/channel/stumptown
+```
 
 ## encrypted-hub
 

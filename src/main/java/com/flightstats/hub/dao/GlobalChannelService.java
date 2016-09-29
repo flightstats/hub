@@ -75,9 +75,9 @@ public class GlobalChannelService implements ChannelService {
     }
 
     @Override
-    public ChannelConfig updateChannel(ChannelConfig channel, ChannelConfig oldConfig) {
+    public ChannelConfig updateChannel(ChannelConfig channel, ChannelConfig oldConfig, boolean isLocalHost) {
         return standardAndGlobal(channel,
-                () -> localChannelService.updateChannel(channel, oldConfig),
+                () -> localChannelService.updateChannel(channel, oldConfig, isLocalHost),
                 createGlobalMaster(channel));
     }
 
@@ -240,8 +240,8 @@ public class GlobalChannelService implements ChannelService {
     }
 
     @Override
-    public Collection<ChannelConfig> getChannels(String tag) {
-        return localChannelService.getChannels(tag);
+    public Collection<ChannelConfig> getChannels(String tag, boolean useCache) {
+        return localChannelService.getChannels(tag, useCache);
     }
 
 }
