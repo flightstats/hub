@@ -1,6 +1,7 @@
 package com.flightstats.hub.channel;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProperties;
@@ -9,9 +10,12 @@ import com.flightstats.hub.app.LocalHostOnly;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
-import com.flightstats.hub.rest.Linked;
+import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.HubUtils;
+import com.google.common.base.Optional;
 import com.google.inject.TypeLiteral;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +24,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.util.concurrent.TimeUnit;
 
 @Path("/internal/channel")
 public class InternalChannelResource {
@@ -35,20 +40,27 @@ public class InternalChannelResource {
     private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
     private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
 
-    public static final String DESCRIPTION = "Delete channels, and refresh of the Channel Cache within the hub cluster.";
+    public static final String DESCRIPTION = "Delete, refresh, and check the staleness of channels.";
+    private static final Long DEFAULT_STALE_AGE = TimeUnit.DAYS.toMinutes(1);
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response get(@Context UriInfo uriInfo) throws Exception {
         ObjectNode root = mapper.createObjectNode();
-        root.put("description", DESCRIPTION);
-        root.put("directions1", "HTTP DELETE to /internal/channel/{name} to override channel protection in an unprotected cluster.");
-        root.put("directions2", "HTTP GET to /internal/channel/refresh to refresh Channel Cache within the hub cluster");
 
-        Linked.Builder<?> links = Linked.linked(root);
-        links.withLink("self", uriInfo.getRequestUri());
-        links.withRelativeLink("refresh", uriInfo);
-        return Response.ok(links.build()).build();
+        ObjectNode links = root.putObject("_links");
+        addLink(links, "self", uriInfo.getRequestUri().toString());
+        addLink(links, "refresh", uriInfo.getRequestUri().toString() + "/refresh");
+
+        root.put("description", DESCRIPTION);
+
+        ObjectNode directions = root.putObject("directions");
+        directions.put("delete", "HTTP DELETE to /internal/channel/{name} to override channel protection in an unprotected cluster.");
+        directions.put("refresh", "HTTP GET to /internal/channel/refresh to refresh Channel Cache within the hub cluster");
+
+        addStaleChannels(root, DEFAULT_STALE_AGE.intValue());
+
+        return Response.ok(root).build();
     }
 
     @GET
@@ -82,4 +94,26 @@ public class InternalChannelResource {
         return ChannelResource.deletion(channelName);
     }
 
+    private void addLink(ObjectNode node, String key, String value) {
+        ObjectNode link = node.putObject(key);
+        link.put("href", value);
+    }
+
+    private void addStaleChannels(ObjectNode root, int age) {
+        DateTime staleCutoff = DateTime.now().minusMinutes(age);
+
+        ObjectNode stale = root.putObject("stale");
+        stale.put("stale minutes", age);
+        stale.put("stale cutoff", staleCutoff.toString());
+
+        ArrayNode channels = stale.putArray("channels");
+        channelService.getChannels().forEach(channelConfig -> {
+            Optional<ContentKey> optionalContentKey = channelService.getLatest(channelConfig.getName(), false, false);
+            if (!optionalContentKey.isPresent()) return;
+            ContentKey contentKey = optionalContentKey.get();
+
+            if (contentKey.getTime().isAfter(staleCutoff)) return;
+            channels.add(channelConfig.getName());
+        });
+    }
 }

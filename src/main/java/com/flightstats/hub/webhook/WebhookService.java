@@ -123,7 +123,7 @@ public class WebhookService {
         return webhookDao.getAll(false);
     }
 
-    public WebhookStatus getStatus(Webhook webhook) {
+    WebhookStatus getStatus(Webhook webhook) {
         WebhookStatus.WebhookStatusBuilder builder = WebhookStatus.builder().webhook(webhook);
         String channel = webhook.getChannelName();
         try {
