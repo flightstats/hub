@@ -15,11 +15,16 @@ import com.flightstats.hub.util.HubUtils;
 import com.google.common.base.Optional;
 import com.google.inject.TypeLiteral;
 import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.*;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -29,19 +34,17 @@ import java.util.concurrent.TimeUnit;
 @Path("/internal/channel")
 public class InternalChannelResource {
 
+    public static final String DESCRIPTION = "Delete, refresh, and check the staleness of channels.";
     private final static Logger logger = LoggerFactory.getLogger(InternalChannelResource.class);
-
-    @Context
-    private UriInfo uriInfo;
     private final static Dao<ChannelConfig> channelConfigDao = HubProvider.getInstance(
             new TypeLiteral<Dao<ChannelConfig>>() {
             }, "ChannelConfig");
     private final static HubUtils hubUtils = HubProvider.getInstance(HubUtils.class);
     private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
     private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-
-    public static final String DESCRIPTION = "Delete, refresh, and check the staleness of channels.";
     private static final Long DEFAULT_STALE_AGE = TimeUnit.DAYS.toMinutes(1);
+    @Context
+    private UriInfo uriInfo;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
