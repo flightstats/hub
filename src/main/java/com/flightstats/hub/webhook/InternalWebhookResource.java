@@ -71,23 +71,23 @@ public class InternalWebhookResource {
         stale.put("stale minutes", age);
         stale.put("stale cutoff", staleCutoff.toString());
 
-        ArrayNode webhooks = stale.putArray("webhooks");
+        ArrayNode uris = stale.putArray("uris");
         webhookService.getAll().forEach(webhook -> {
             WebhookStatus status = webhookService.getStatus(webhook);
             ContentPath contentPath = status.getLastCompleted();
 
             if (contentPath.getTime().isAfter(staleCutoff)) return;
-            webhooks.add(webhook.getName());
+            uris.add(uriInfo.getBaseUri().toString() + "/webhook/" + webhook.getName());
         });
     }
 
     private void addErroringWebhooks(ObjectNode root) {
         ObjectNode errors = root.putObject("errors");
-        ArrayNode webhooks = errors.putArray("webhooks");
+        ArrayNode uris = errors.putArray("uris");
         webhookService.getAll().forEach(webhook -> {
             WebhookStatus status = webhookService.getStatus(webhook);
             if (status.getErrors().size() > 0) {
-                webhooks.add(webhook.getName());
+                uris.add(uriInfo.getBaseUri().toString() + "/webhook/" + webhook.getName());
             }
         });
     }
