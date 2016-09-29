@@ -104,17 +104,18 @@ public class InternalZookeeperResource {
         Collections.sort(children);
         ArrayNode childNodes = root.putArray("children");
         for (String child : children) {
-            ObjectNode childNode = childNodes.addObject();
             if (olderThanDays > 0) {
                 Stat stat = new Stat();
                 curator.getData().storingStatIn(stat).forPath(getPath(path, child));
                 if (olderThanTime.isAfter(stat.getMtime())) {
+                    ObjectNode childNode = childNodes.addObject();
                     String link = getPath(uriInfo.getAbsolutePath().toString(), child);
                     childNode.put("href", link);
                     childNode.put("modified", new DateTime(stat.getMtime()).toString());
                 }
             } else {
                 String link = getPath(uriInfo.getAbsolutePath().toString(), child) + "?depth=" + depth;
+                ObjectNode childNode = childNodes.addObject();
                 childNode.put("href", link);
                 if (depth >= 1) {
                     List<String> depthOne = curator.getChildren().forPath(getPath(path, child));
