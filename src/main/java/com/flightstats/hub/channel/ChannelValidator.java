@@ -2,6 +2,7 @@ package com.flightstats.hub.channel;
 
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.ConflictException;
+import com.flightstats.hub.exception.ForbiddenRequestException;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.GlobalConfig;
@@ -53,42 +54,42 @@ public class ChannelValidator {
             return;
         }
         if (oldConfig.isProtect() && !config.isProtect()) {
-            throw new InvalidRequestException("{\"error\": \"protect can not be switched from true.\"}");
+            throw new ForbiddenRequestException("{\"error\": \"protect can not be switched from true.\"}");
         }
         if (config.isProtect()) {
             if (!config.getStorage().equals(oldConfig.getStorage())) {
                 if (!config.getStorage().equals(ChannelConfig.BOTH)) {
-                    throw new InvalidRequestException("{\"error\": \"A channels storage is not allowed to remove a storage source in this environment\"}");
+                    throw new ForbiddenRequestException("{\"error\": \"A channels storage is not allowed to remove a storage source in this environment\"}");
                 }
             }
             if (!config.getTags().containsAll(oldConfig.getTags())) {
-                throw new InvalidRequestException("{\"error\": \"A channels tags are not allowed to be removed in this environment\"}");
+                throw new ForbiddenRequestException("{\"error\": \"A channels tags are not allowed to be removed in this environment\"}");
             }
 
             if (config.getMaxItems() < oldConfig.getMaxItems()) {
-                throw new InvalidRequestException("{\"error\": \"A channels max items are not allowed to decrease in this environment\"}");
+                throw new ForbiddenRequestException("{\"error\": \"A channels max items are not allowed to decrease in this environment\"}");
             }
             if (config.getTtlDays() < oldConfig.getTtlDays()) {
-                throw new InvalidRequestException("{\"error\": \"A channels ttlDays is not allowed to decrease in this environment\"}");
+                throw new ForbiddenRequestException("{\"error\": \"A channels ttlDays is not allowed to decrease in this environment\"}");
             }
             if (!StringUtils.isEmpty(oldConfig.getReplicationSource())
                     && !config.getReplicationSource().equals(oldConfig.getReplicationSource())) {
-                throw new InvalidRequestException("{\"error\": \"A channels replication source is not allowed to change in this environment\"}");
+                throw new ForbiddenRequestException("{\"error\": \"A channels replication source is not allowed to change in this environment\"}");
             }
             if (config.isGlobal()) {
                 if (oldConfig.isGlobal()) {
                     GlobalConfig configGlobal = config.getGlobal();
                     GlobalConfig oldConfigGlobal = oldConfig.getGlobal();
                     if (!StringUtils.equals(configGlobal.getMaster(), oldConfigGlobal.getMaster())) {
-                        throw new InvalidRequestException("{\"error\": \"A channels global master is not allowed to change in this environment\"}");
+                        throw new ForbiddenRequestException("{\"error\": \"A channels global master is not allowed to change in this environment\"}");
                     }
                     if (!configGlobal.getSatellites().containsAll(oldConfigGlobal.getSatellites())) {
-                        throw new InvalidRequestException("{\"error\": \"A channels global satellites are not allowed to be removed in this environment\"}");
+                        throw new ForbiddenRequestException("{\"error\": \"A channels global satellites are not allowed to be removed in this environment\"}");
                     }
                 }
             } else {
                 if (oldConfig.isGlobal()) {
-                    throw new InvalidRequestException("{\"error\": \"A channels global configuration is not allowed to be removed in this environment\"}");
+                    throw new ForbiddenRequestException("{\"error\": \"A channels global configuration is not allowed to be removed in this environment\"}");
                 }
             }
         }

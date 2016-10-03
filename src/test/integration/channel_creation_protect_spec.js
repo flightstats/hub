@@ -33,11 +33,11 @@ describe(testName, function () {
 
     }, {protect: true});
 
-    utils.putChannel(channelName, false, {protect: false}, 'protect', 400);
+    utils.putChannel(channelName, false, {protect: false}, 'protect', 403);
 
-    utils.putChannel(channelName, false, {storage: 'BATCH'}, 'storage Batch', 400);
-    utils.putChannel(channelName, false, {tags: ['one']}, 'tag removal', 400);
-    utils.putChannel(channelName, false, {ttlDays: 119}, 'ttlDays', 400);
+    utils.putChannel(channelName, false, {storage: 'BATCH'}, 'storage Batch', 403);
+    utils.putChannel(channelName, false, {tags: ['one']}, 'tag removal', 403);
+    utils.putChannel(channelName, false, {ttlDays: 119}, 'ttlDays', 403);
 
     utils.putChannel(channelName, function (response, body) {
         var parse = utils.parseJson(response, testName);
@@ -51,7 +51,7 @@ describe(testName, function () {
         request.del({url: channelResource},
             function (err, response, body) {
                 console.log('body', body)
-                expect(response.statusCode).toBe(405);
+                expect(response.statusCode).toBe(403);
                 done();
             });
     });

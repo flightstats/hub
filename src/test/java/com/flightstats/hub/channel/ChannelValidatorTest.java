@@ -3,6 +3,7 @@ package com.flightstats.hub.channel;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.ConflictException;
+import com.flightstats.hub.exception.ForbiddenRequestException;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.GlobalConfig;
@@ -357,7 +358,7 @@ public class ChannelValidatorTest {
         try {
             validator.validate(config, oldConfig, false);
             fail("expected exception");
-        } catch (InvalidRequestException e) {
+        } catch (ForbiddenRequestException e) {
             //this is expected
         }
     }
