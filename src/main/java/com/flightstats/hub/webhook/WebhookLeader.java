@@ -45,8 +45,7 @@ class WebhookLeader implements Leader {
 
     private static final Client client = RestClient.createClient(60, 120, true, false);
     private final AtomicBoolean deleteOnExit = new AtomicBoolean();
-    private final double keepLeadershipRate = HubProperties.getProperty("webhook.keepLeadershipRate",
-            HubProperties.getProperty("group.keepLeadershipRate", 0.75));
+    private final double keepLeadershipRate = HubProperties.getProperty("webhook.keepLeadershipRate", 0.99);
 
     @Inject
     private CuratorFramework curator;
