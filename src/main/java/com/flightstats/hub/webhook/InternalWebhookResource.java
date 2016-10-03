@@ -14,6 +14,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.util.concurrent.TimeUnit;
 
@@ -77,7 +78,7 @@ public class InternalWebhookResource {
             ContentPath contentPath = status.getLastCompleted();
 
             if (contentPath.getTime().isAfter(staleCutoff)) return;
-            uris.add(uriInfo.getBaseUri().toString() + "/webhook/" + webhook.getName());
+            uris.add(constructWebhookURI(webhook));
         });
     }
 
@@ -87,8 +88,12 @@ public class InternalWebhookResource {
         webhookService.getAll().forEach(webhook -> {
             WebhookStatus status = webhookService.getStatus(webhook);
             if (status.getErrors().size() > 0) {
-                uris.add(uriInfo.getBaseUri().toString() + "/webhook/" + webhook.getName());
+                uris.add(constructWebhookURI(webhook));
             }
         });
+    }
+
+    private String constructWebhookURI(Webhook webhook) {
+        return UriBuilder.fromUri(uriInfo.getBaseUri()).path("webhook").path(webhook.getName()).toString();
     }
 }

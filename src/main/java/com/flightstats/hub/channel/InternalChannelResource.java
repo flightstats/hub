@@ -28,6 +28,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.util.concurrent.TimeUnit;
 
@@ -128,7 +129,11 @@ public class InternalChannelResource {
             ContentKey contentKey = optionalContentKey.get();
 
             if (contentKey.getTime().isAfter(staleCutoff)) return;
-            uris.add(uriInfo.getBaseUri().toString() + "/channel/" + channelConfig.getName());
+            uris.add(constructChannelURI(channelConfig));
         });
+    }
+
+    private String constructChannelURI(ChannelConfig channelConfig) {
+        return UriBuilder.fromUri(uriInfo.getBaseUri()).path("channel").path(channelConfig.getName()).toString();
     }
 }
