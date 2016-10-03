@@ -8,6 +8,7 @@ import com.flightstats.hub.cluster.InternalZookeeperResource;
 import com.flightstats.hub.health.InternalHealthResource;
 import com.flightstats.hub.metrics.InternalStacktraceResource;
 import com.flightstats.hub.metrics.InternalTracesResource;
+import com.flightstats.hub.webhook.InternalWebhookResource;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.ws.rs.GET;
@@ -47,6 +48,7 @@ public class InternalResource {
         addLink("stacktrace", InternalStacktraceResource.DESCRIPTION);
         addLink("traces", InternalTracesResource.DESCRIPTION);
         addLink("zookeeper", InternalZookeeperResource.DESCRIPTION);
+        addLink("defunct", InternalWebhookResource.DESCRIPTION);
         return Response.ok(root).build();
     }
 
