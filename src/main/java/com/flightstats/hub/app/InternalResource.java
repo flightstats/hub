@@ -48,7 +48,7 @@ public class InternalResource {
         addLink("stacktrace", InternalStacktraceResource.DESCRIPTION);
         addLink("traces", InternalTracesResource.DESCRIPTION);
         addLink("zookeeper", InternalZookeeperResource.DESCRIPTION);
-        addLink("defunct", InternalWebhookResource.DESCRIPTION);
+        addLink("webhook", InternalWebhookResource.DESCRIPTION);
         return Response.ok(root).build();
     }
 
