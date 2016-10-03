@@ -46,10 +46,11 @@ The Hub
 
 ## overview
 
-The Hub is a fault tolerant, highly available service for data storage and distribution.  All features are available via a REST API.
+The Hub is a fault tolerant, highly available REST API for data distribution and storage.  
 
-It supports channels of data ordered by time.
-Channels represent uniquely addressable items that are iterable and query-able by time.  Each item may be up to to 40 MB.
+Data
+Channels contain uniquely addressable items that are iterable and query-able by time.  Each item may be up to to 40 MB.   
+We use the Hub for sharing real time data between teams.  
 
 You can read more about what the hub in the wiki   
 * [What is the Hub?](https://github.com/flightstats/hub/wiki/What-is-the-Hub)
