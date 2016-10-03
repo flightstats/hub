@@ -1,4 +1,4 @@
-package com.flightstats.hub.dao.nas;
+package com.flightstats.hub.dao.file;
 
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;

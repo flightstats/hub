@@ -34,7 +34,7 @@ public class AwsBindings extends AbstractModule {
         bind(ChannelService.class).to(GlobalChannelService.class).asEagerSingleton();
         bind(AwsConnectorFactory.class).asEagerSingleton();
         bind(S3Config.class).asEagerSingleton();
-        bind(ContentService.class).to(AwsContentService.class).asEagerSingleton();
+        bind(ContentService.class).to(SpokeS3ContentService.class).asEagerSingleton();
         bind(RemoteSpokeStore.class).asEagerSingleton();
         bind(ContentDao.class)
                 .annotatedWith(Names.named(ContentDao.CACHE))

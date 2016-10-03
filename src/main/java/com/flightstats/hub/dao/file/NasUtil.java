@@ -1,4 +1,4 @@
-package com.flightstats.hub.dao.nas;
+package com.flightstats.hub.dao.file;
 
 import com.flightstats.hub.app.HubProperties;
 import org.apache.commons.io.FileUtils;
@@ -19,7 +19,7 @@ class NasUtil {
     private final static Logger logger = LoggerFactory.getLogger(NasUtil.class);
 
     static String getStoragePath() {
-        return StringUtils.appendIfMissing(HubProperties.getProperty("storage.path", "/nas"), "/");
+        return StringUtils.appendIfMissing(HubProperties.getProperty("storage.path", "/file"), "/");
     }
 
     public static String getContentPath() {

@@ -2,10 +2,10 @@ package com.flightstats.hub.app;
 
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.dao.*;
-import com.flightstats.hub.dao.nas.NasChannelConfigurationDao;
-import com.flightstats.hub.dao.nas.NasContentService;
-import com.flightstats.hub.dao.nas.NasTtlEnforcer;
-import com.flightstats.hub.dao.nas.NasWebhookDao;
+import com.flightstats.hub.dao.file.FileContentService;
+import com.flightstats.hub.dao.file.NasChannelConfigurationDao;
+import com.flightstats.hub.dao.file.NasTtlEnforcer;
+import com.flightstats.hub.dao.file.NasWebhookDao;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.webhook.Webhook;
 import com.google.inject.AbstractModule;
@@ -13,11 +13,8 @@ import com.google.inject.Inject;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-class NasBindings extends AbstractModule {
-    private final static Logger logger = LoggerFactory.getLogger(NasBindings.class);
+class FileBindings extends AbstractModule {
 
     static String packages() {
         return "com.flightstats.hub.alert," +
@@ -37,7 +34,7 @@ class NasBindings extends AbstractModule {
     @Override
     protected void configure() {
         bind(ChannelService.class).to(LocalChannelService.class).asEagerSingleton();
-        bind(ContentService.class).to(NasContentService.class).asEagerSingleton();
+        bind(ContentService.class).to(FileContentService.class).asEagerSingleton();
         bind(NasTtlEnforcer.class).asEagerSingleton();
         bind(FinalCheck.class).to(PassFinalCheck.class).asEagerSingleton();
     }

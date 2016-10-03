@@ -1,4 +1,4 @@
-package com.flightstats.hub.dao.nas;
+package com.flightstats.hub.dao.file;
 
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.model.Content;
@@ -14,15 +14,15 @@ import java.io.File;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class NasContentServiceTest {
+public class FileContentServiceTest {
 
-    private static NasContentService contentService;
+    private static FileContentService contentService;
 
     @BeforeClass
     public static void setUpClass() throws Exception {
         File tempDir = Files.createTempDir();
         HubProperties.setProperty("storage.path", tempDir.toString());
-        contentService = new NasContentService();
+        contentService = new FileContentService();
     }
 
     @Test

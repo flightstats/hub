@@ -67,8 +67,8 @@ public class HubMain {
                 break;
             case "nas":
             case "test":
-                modules.add(new NasBindings());
-                resourceConfig.packages(NasBindings.packages());
+                modules.add(new FileBindings());
+                resourceConfig.packages(FileBindings.packages());
                 break;
             default:
                 throw new RuntimeException("unsupported hub.type " + hubType);

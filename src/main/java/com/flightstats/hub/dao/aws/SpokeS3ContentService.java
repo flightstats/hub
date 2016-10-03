@@ -40,11 +40,11 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class AwsContentService implements ContentService {
+public class SpokeS3ContentService implements ContentService {
 
-    private final static Logger logger = LoggerFactory.getLogger(AwsContentService.class);
+    private final static Logger logger = LoggerFactory.getLogger(SpokeS3ContentService.class);
     private static final String CHANNEL_LATEST_UPDATED = "/ChannelLatestUpdated/";
-    private final ExecutorService executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("AwsContentService-%d").build());
+    private final ExecutorService executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("SpokeS3ContentService-%d").build());
     private final AtomicInteger inFlight = new AtomicInteger();
     private final Integer shutdown_wait_seconds = HubProperties.getProperty("app.shutdown_wait_seconds", 5);
     private final boolean dropSomeWrites = HubProperties.getProperty("s3.dropSomeWrites", false);
@@ -67,11 +67,12 @@ public class AwsContentService implements ContentService {
     @Inject
     private HubUtils hubUtils;
 
-    public AwsContentService() {
-        HubServices.registerPreStop(new AwsContentServiceInit());
+    public SpokeS3ContentService() {
+        HubServices.registerPreStop(new SpokeS3ContentServiceInit());
         HubServices.register(new ChannelLatestUpdatedService());
     }
 
+    //todo gfm - factor this out for all hubs
     private void waitForInFlight() {
         logger.info("waiting for in-flight to complete " + inFlight.get());
         long start = System.currentTimeMillis();
@@ -362,7 +363,7 @@ public class AwsContentService implements ContentService {
         }
     }
 
-    private class AwsContentServiceInit extends AbstractIdleService {
+    private class SpokeS3ContentServiceInit extends AbstractIdleService {
         @Override
         protected void startUp() throws Exception {
             spokeContentDao.initialize();

@@ -1,4 +1,4 @@
-package com.flightstats.hub.dao.nas;
+package com.flightstats.hub.dao.file;
 
 import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.dao.ContentService;
@@ -19,12 +19,12 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
 
-public class NasContentService implements ContentService {
-    private final static Logger logger = LoggerFactory.getLogger(NasContentService.class);
+public class FileContentService implements ContentService {
+    private final static Logger logger = LoggerFactory.getLogger(FileContentService.class);
 
     private final FileSpokeStore fileSpokeStore;
 
-    public NasContentService() {
+    public FileContentService() {
         String contentPath = NasUtil.getContentPath();
         logger.info("using {}", contentPath);
         fileSpokeStore = new FileSpokeStore(contentPath);
@@ -33,23 +33,23 @@ public class NasContentService implements ContentService {
     @Override
     public ContentKey insert(String channelName, Content content) throws Exception {
         Traces traces = ActiveTraces.getLocal();
-        traces.add("NasContentService.insert");
+        traces.add("FileContentService.insert");
         try {
             byte[] payload = ContentMarshaller.toBytes(content);
-            traces.add("NasContentService.insert marshalled");
+            traces.add("FileContentService.insert marshalled");
             ContentKey key = content.keyAndStart(TimeUtil.now());
             String path = getPath(channelName, key);
             logger.trace("writing key {} to channel {}", key, channelName);
             if (!fileSpokeStore.insert(path, payload)) {
                 logger.warn("failed to  for " + path);
             }
-            traces.add("NasContentService.insert end", key);
+            traces.add("FileContentService.insert end", key);
             return key;
         } catch (ContentTooLargeException e) {
             logger.info("content too large for channel " + channelName);
             throw e;
         } catch (Exception e) {
-            traces.add("NasContentService.insert", "error", e.getMessage());
+            traces.add("FileContentService.insert", "error", e.getMessage());
             logger.warn("insertion error " + channelName, e);
             throw e;
         }
