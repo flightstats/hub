@@ -16,7 +16,13 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
+import java.net.URI;
+import java.util.Collections;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
+
+import static com.flightstats.hub.util.StaleUtil.addStaleEntities;
 
 @Path("/internal/webhook")
 public class InternalWebhookResource {
@@ -43,7 +49,6 @@ public class InternalWebhookResource {
         addLink(links, "self", uriInfo.getRequestUri().toString());
         addLink(links, "stale", uriInfo.getRequestUri().toString() + "/stale/" + DEFAULT_STALE_AGE.intValue());
 
-        addStaleWebhooks(root, DEFAULT_STALE_AGE.intValue());
         addErroringWebhooks(root);
 
         return Response.ok(root).build();
@@ -56,7 +61,18 @@ public class InternalWebhookResource {
         ObjectNode root = mapper.createObjectNode();
         ObjectNode links = root.putObject("_links");
         addLink(links, "self", uriInfo.getRequestUri().toString());
-        addStaleWebhooks(root, age);
+        addStaleEntities(root, age, (staleCutoff) -> {
+            Map<DateTime, URI> staleWebhooks = new TreeMap<>(Collections.reverseOrder());
+            webhookService.getAll().forEach(webhook -> {
+                WebhookStatus status = webhookService.getStatus(webhook);
+                ContentPath contentPath = status.getLastCompleted();
+                if (contentPath.getTime().isAfter(staleCutoff)) return;
+
+                URI webhookURI = constructWebhookURI(webhook);
+                staleWebhooks.put(contentPath.getTime(), webhookURI);
+            });
+            return staleWebhooks;
+        });
         return Response.ok(root).build();
     }
 
@@ -65,35 +81,18 @@ public class InternalWebhookResource {
         link.put("href", value);
     }
 
-    private void addStaleWebhooks(ObjectNode root, int age) {
-        DateTime staleCutoff = DateTime.now().minusMinutes(age);
-
-        ObjectNode stale = root.putObject("stale");
-        stale.put("stale minutes", age);
-        stale.put("stale cutoff", staleCutoff.toString());
-
-        ArrayNode uris = stale.putArray("uris");
-        webhookService.getAll().forEach(webhook -> {
-            WebhookStatus status = webhookService.getStatus(webhook);
-            ContentPath contentPath = status.getLastCompleted();
-
-            if (contentPath.getTime().isAfter(staleCutoff)) return;
-            uris.add(constructWebhookURI(webhook));
-        });
-    }
-
     private void addErroringWebhooks(ObjectNode root) {
         ObjectNode errors = root.putObject("errors");
         ArrayNode uris = errors.putArray("uris");
         webhookService.getAll().forEach(webhook -> {
             WebhookStatus status = webhookService.getStatus(webhook);
             if (status.getErrors().size() > 0) {
-                uris.add(constructWebhookURI(webhook));
+                uris.add(constructWebhookURI(webhook).toString());
             }
         });
     }
 
-    private String constructWebhookURI(Webhook webhook) {
-        return UriBuilder.fromUri(uriInfo.getBaseUri()).path("webhook").path(webhook.getName()).toString();
+    private URI constructWebhookURI(Webhook webhook) {
+        return UriBuilder.fromUri(uriInfo.getBaseUri()).path("webhook").path(webhook.getName()).build();
     }
 }

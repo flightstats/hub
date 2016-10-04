@@ -302,19 +302,17 @@ public class SpokeS3ContentService implements ContentService {
         @Override
         protected synchronized void runOneIteration() throws Exception {
             logger.debug("running...");
-            List<String> names = lastContentPath.getNames(StringUtils.removeEnd(CHANNEL_LATEST_UPDATED, "/"));
-            for (String name : names) {
+            channelService.getChannels().forEach(channelConfig -> {
                 try {
                     DateTime time = TimeUtil.stable().plusMinutes(1);
-                    Traces traces = new Traces(name, time);
-                    Optional<ContentKey> latest = getLatest(name, ContentKey.lastKey(time), traces, false);
-                    logger.debug("latest updated {} {}", name, latest);
+                    Traces traces = new Traces(channelConfig.getName(), time);
+                    Optional<ContentKey> latest = getLatest(channelConfig.getName(), ContentKey.lastKey(time), traces, false);
+                    logger.debug("latest updated {} {}", channelConfig.getName(), latest);
                     traces.log(logger);
                 } catch (Exception e) {
-                    logger.warn("unexpected ChannelLatestUpdatedService issue " + name, e);
+                    logger.warn("unexpected ChannelLatestUpdatedService issue " + channelConfig.getName(), e);
                 }
-            }
-
+            });
         }
 
         @Override
