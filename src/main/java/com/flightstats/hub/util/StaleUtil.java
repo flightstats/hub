@@ -23,9 +23,9 @@ public class StaleUtil {
         stale.put("stale cutoff", staleCutoff.toDateTime(DateTimeZone.UTC).toString());
 
         ArrayNode uris = stale.putArray("uris");
-        entitySupplier.apply(staleCutoff).forEach((channelTime, channelURI) -> {
+        entitySupplier.apply(staleCutoff).forEach((channelLastUpdate, channelURI) -> {
             ObjectNode node = mapper.createObjectNode();
-            node.put("age", channelTime.toDateTime(DateTimeZone.UTC).toString());
+            node.put("last update", channelLastUpdate.toDateTime(DateTimeZone.UTC).toString());
             node.put("uri", channelURI.toString());
             uris.add(node);
         });
