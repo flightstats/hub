@@ -65,6 +65,12 @@ Install Docker and use the hub docker image at https://hub.docker.com/r/flightst
 docker run -p 80:80 flightstats/hub:latest
 ```
 
+To update your existing hub docker image:
+
+```
+docker pull flightstats/hub
+```
+
 ## consistency
 
 * All times from the Hub are in UTC.
