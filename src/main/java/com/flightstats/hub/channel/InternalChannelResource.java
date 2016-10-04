@@ -15,6 +15,7 @@ import com.flightstats.hub.util.HubUtils;
 import com.google.common.base.Optional;
 import com.google.inject.TypeLiteral;
 import org.joda.time.DateTime;
+import org.joda.time.Minutes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +31,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
+import java.net.URI;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 @Path("/internal/channel")
@@ -122,18 +126,34 @@ public class InternalChannelResource {
         stale.put("stale minutes", age);
         stale.put("stale cutoff", staleCutoff.toString());
 
-        ArrayNode uris = stale.putArray("uris");
+        Map<Minutes, URI> staleChannels = new TreeMap<>();
         channelService.getChannels().forEach(channelConfig -> {
             Optional<ContentKey> optionalContentKey = channelService.getLatest(channelConfig.getName(), false, false);
             if (!optionalContentKey.isPresent()) return;
-            ContentKey contentKey = optionalContentKey.get();
 
+            ContentKey contentKey = optionalContentKey.get();
             if (contentKey.getTime().isAfter(staleCutoff)) return;
-            uris.add(constructChannelURI(channelConfig));
+
+            Minutes channelAge = Minutes.minutesBetween(contentKey.getTime(), DateTime.now());
+            URI channelURI = constructChannelURI(channelConfig);
+            staleChannels.put(channelAge, channelURI);
+        });
+
+        ArrayNode uris = stale.putArray("uris");
+        staleChannels.forEach((channelAge, channelURI) -> {
+            ObjectNode node = createURINode(channelURI, channelAge);
+            uris.add(node);
         });
     }
 
-    private String constructChannelURI(ChannelConfig channelConfig) {
-        return UriBuilder.fromUri(uriInfo.getBaseUri()).path("channel").path(channelConfig.getName()).toString();
+    private ObjectNode createURINode(URI uri, Minutes age) {
+        ObjectNode node = mapper.createObjectNode();
+        node.put("age", age.getMinutes());
+        node.put("uri", uri.toString());
+        return node;
+    }
+
+    private URI constructChannelURI(ChannelConfig channelConfig) {
+        return UriBuilder.fromUri(uriInfo.getBaseUri()).path("channel").path(channelConfig.getName()).build();
     }
 }
