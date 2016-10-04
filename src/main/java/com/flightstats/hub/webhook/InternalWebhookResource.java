@@ -6,8 +6,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.model.ContentPath;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.Minutes;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -23,6 +21,8 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
+
+import static com.flightstats.hub.util.StaleUtil.addStaleEntities;
 
 @Path("/internal/webhook")
 public class InternalWebhookResource {
@@ -61,37 +61,24 @@ public class InternalWebhookResource {
         ObjectNode root = mapper.createObjectNode();
         ObjectNode links = root.putObject("_links");
         addLink(links, "self", uriInfo.getRequestUri().toString());
-        addStaleWebhooks(root, age);
+        addStaleEntities(root, age, (staleCutoff) -> {
+            Map<DateTime, URI> staleWebhooks = new TreeMap<>(Collections.reverseOrder());
+            webhookService.getAll().forEach(webhook -> {
+                WebhookStatus status = webhookService.getStatus(webhook);
+                ContentPath contentPath = status.getLastCompleted();
+                if (contentPath.getTime().isAfter(staleCutoff)) return;
+
+                URI webhookURI = constructWebhookURI(webhook);
+                staleWebhooks.put(contentPath.getTime(), webhookURI);
+            });
+            return staleWebhooks;
+        });
         return Response.ok(root).build();
     }
 
     private void addLink(ObjectNode node, String key, String value) {
         ObjectNode link = node.putObject(key);
         link.put("href", value);
-    }
-
-    private void addStaleWebhooks(ObjectNode root, int age) {
-        DateTime staleCutoff = DateTime.now().minusMinutes(age);
-
-        ObjectNode stale = root.putObject("stale");
-        stale.put("stale minutes", age);
-        stale.put("stale cutoff", staleCutoff.toDateTime(DateTimeZone.UTC).toString());
-
-        Map<DateTime, URI> staleWebhooks = new TreeMap<>(Collections.reverseOrder());
-        webhookService.getAll().forEach(webhook -> {
-            WebhookStatus status = webhookService.getStatus(webhook);
-            ContentPath contentPath = status.getLastCompleted();
-            if (contentPath.getTime().isAfter(staleCutoff)) return;
-
-            URI webhookURI = constructWebhookURI(webhook);
-            staleWebhooks.put(contentPath.getTime(), webhookURI);
-        });
-
-        ArrayNode uris = stale.putArray("uris");
-        staleWebhooks.forEach((webhookTime, webhookURI) -> {
-            ObjectNode node = createURINode(webhookURI, webhookTime);
-            uris.add(node);
-        });
     }
 
     private void addErroringWebhooks(ObjectNode root) {
@@ -103,13 +90,6 @@ public class InternalWebhookResource {
                 uris.add(constructWebhookURI(webhook).toString());
             }
         });
-    }
-
-    private ObjectNode createURINode(URI uri, DateTime timestamp) {
-        ObjectNode node = mapper.createObjectNode();
-        node.put("age", timestamp.toDateTime(DateTimeZone.UTC).toString());
-        node.put("uri", uri.toString());
-        return node;
     }
 
     private URI constructWebhookURI(Webhook webhook) {
