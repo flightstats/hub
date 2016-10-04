@@ -32,6 +32,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
@@ -126,7 +127,7 @@ public class InternalChannelResource {
         stale.put("stale minutes", age);
         stale.put("stale cutoff", staleCutoff.toString());
 
-        Map<Minutes, URI> staleChannels = new TreeMap<>();
+        Map<Minutes, URI> staleChannels = new TreeMap<>(Collections.reverseOrder());
         channelService.getChannels().forEach(channelConfig -> {
             Optional<ContentKey> optionalContentKey = channelService.getLatest(channelConfig.getName(), false, false);
             if (!optionalContentKey.isPresent()) return;

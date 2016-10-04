@@ -18,6 +18,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
@@ -76,7 +77,7 @@ public class InternalWebhookResource {
         stale.put("stale minutes", age);
         stale.put("stale cutoff", staleCutoff.toString());
 
-        Map<Minutes, URI> staleWebhooks = new TreeMap<>();
+        Map<Minutes, URI> staleWebhooks = new TreeMap<>(Collections.reverseOrder());
         webhookService.getAll().forEach(webhook -> {
             WebhookStatus status = webhookService.getStatus(webhook);
             ContentPath contentPath = status.getLastCompleted();
