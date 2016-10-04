@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.model.ContentPath;
 import org.joda.time.DateTime;
+import org.joda.time.Minutes;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -16,6 +17,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
+import java.net.URI;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 @Path("/internal/webhook")
@@ -72,13 +76,21 @@ public class InternalWebhookResource {
         stale.put("stale minutes", age);
         stale.put("stale cutoff", staleCutoff.toString());
 
-        ArrayNode uris = stale.putArray("uris");
+        Map<Minutes, URI> staleWebhooks = new TreeMap<>();
         webhookService.getAll().forEach(webhook -> {
             WebhookStatus status = webhookService.getStatus(webhook);
             ContentPath contentPath = status.getLastCompleted();
 
             if (contentPath.getTime().isAfter(staleCutoff)) return;
-            uris.add(constructWebhookURI(webhook));
+            Minutes webhookAge = Minutes.minutesBetween(contentPath.getTime(), DateTime.now());
+            URI webhookURI = constructWebhookURI(webhook);
+            staleWebhooks.put(webhookAge, webhookURI);
+        });
+
+        ArrayNode uris = stale.putArray("uris");
+        staleWebhooks.forEach((webhookAge, webhookURI) -> {
+            ObjectNode node = createURINode(webhookURI, webhookAge);
+            uris.add(node);
         });
     }
 
@@ -88,12 +100,19 @@ public class InternalWebhookResource {
         webhookService.getAll().forEach(webhook -> {
             WebhookStatus status = webhookService.getStatus(webhook);
             if (status.getErrors().size() > 0) {
-                uris.add(constructWebhookURI(webhook));
+                uris.add(constructWebhookURI(webhook).toString());
             }
         });
     }
 
-    private String constructWebhookURI(Webhook webhook) {
-        return UriBuilder.fromUri(uriInfo.getBaseUri()).path("webhook").path(webhook.getName()).toString();
+    private ObjectNode createURINode(URI uri, Minutes age) {
+        ObjectNode node = mapper.createObjectNode();
+        node.put("age", age.getMinutes());
+        node.put("uri", uri.toString());
+        return node;
+    }
+
+    private URI constructWebhookURI(Webhook webhook) {
+        return UriBuilder.fromUri(uriInfo.getBaseUri()).path("webhook").path(webhook.getName()).build();
     }
 }
