@@ -13,13 +13,15 @@ public interface Leader {
     /**
      * This value should be between 0 and 1.
      * If the value is less than 1 (one), the current leader will keep leadership that percentage of the time.
-     * For example, the default rate of 0.75 means that leadership will stay 75% of the time, and the leader
-     * will abdicate 25% of the time.
+     * For example, the default rate of 0.99 means that leadership will stay 99% of the time, and the leader
+     * will abdicate 1% of the time.
+     * If leadership is not rotated, the oldest running server will have all of the locks, and a disproportionate
+     * amount of cluster's load.
      *
      * @return
      */
     default double keepLeadershipRate() {
-        return 0.75;
+        return 0.98;
     }
 
     default String getId() {
