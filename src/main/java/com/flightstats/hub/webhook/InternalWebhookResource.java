@@ -48,7 +48,6 @@ public class InternalWebhookResource {
         addLink(links, "self", uriInfo.getRequestUri().toString());
         addLink(links, "stale", uriInfo.getRequestUri().toString() + "/stale/" + DEFAULT_STALE_AGE.intValue());
 
-        addStaleWebhooks(root, DEFAULT_STALE_AGE.intValue());
         addErroringWebhooks(root);
 
         return Response.ok(root).build();
