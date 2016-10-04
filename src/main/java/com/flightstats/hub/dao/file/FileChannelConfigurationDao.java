@@ -9,30 +9,30 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.util.Collection;
 
-public class NasChannelConfigurationDao implements Dao<ChannelConfig> {
+public class FileChannelConfigurationDao implements Dao<ChannelConfig> {
 
-    private final static Logger logger = LoggerFactory.getLogger(NasChannelConfigurationDao.class);
+    private final static Logger logger = LoggerFactory.getLogger(FileChannelConfigurationDao.class);
 
     private final String channelPath;
 
-    public NasChannelConfigurationDao() {
-        channelPath = NasUtil.getStoragePath() + "channel/";
+    public FileChannelConfigurationDao() {
+        channelPath = FileUtil.getStoragePath() + "channel/";
         logger.info("using channel path {}", channelPath);
     }
 
     @Override
     public void upsert(ChannelConfig config) {
-        NasUtil.writeJson(config.toJson(), config.getName(), channelPath);
+        FileUtil.writeJson(config.toJson(), config.getName(), channelPath);
     }
 
     @Override
     public ChannelConfig get(String name) {
-        return NasUtil.readJson(channelPath, name, ChannelConfig::fromJson);
+        return FileUtil.readJson(channelPath, name, ChannelConfig::fromJson);
     }
 
     @Override
     public Collection<ChannelConfig> getAll(boolean useCache) {
-        return NasUtil.getIterable(channelPath, ChannelConfig::fromJson);
+        return FileUtil.getIterable(channelPath, ChannelConfig::fromJson);
     }
 
     @Override

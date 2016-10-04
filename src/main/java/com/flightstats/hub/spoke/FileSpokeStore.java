@@ -6,8 +6,6 @@ import com.flightstats.hub.model.MinutePath;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.ByteStreams;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.commons.lang3.StringUtils;
@@ -28,8 +26,8 @@ public class FileSpokeStore {
     private final static Logger logger = LoggerFactory.getLogger(FileSpokeStore.class);
     private final String storagePath;
 
-    @Inject
-    public FileSpokeStore(@Named("spoke.path") String storagePath) {
+    public FileSpokeStore() {
+        String storagePath = HubProperties.getProperty("spoke.path", "/spoke");
         this.storagePath = StringUtils.appendIfMissing(storagePath, "/");
         logger.info("starting with storage path " + this.storagePath);
         if (!insert("hub-startup/" + new ContentKey().toUrl(), ("" + System.currentTimeMillis()).getBytes())) {

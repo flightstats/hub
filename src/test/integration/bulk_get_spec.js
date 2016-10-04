@@ -79,6 +79,7 @@ describe(testName, function () {
             },
             function (err, response, body) {
                 expect(err).toBeNull();
+                console.log("url " + url + param + " status=" + response.statusCode);
                 expect(response.statusCode).toBe(200);
                 verifyFunction(response, param);
                 deferred.resolve({response: response, body: body});
@@ -127,6 +128,7 @@ describe(testName, function () {
     var timeout = 60 * 1000 * 3;
 
     it("gets latest bulk " + channelName, function (done) {
+        console.log("step 1 " + channelResource)
         getAll(channelResource + '/latest/10', done);
     }, timeout);
 
@@ -135,14 +137,17 @@ describe(testName, function () {
     });
 
     it("gets day items " + channelName, function (done) {
+        console.log("step 3 " + sliceFromEnd(26))
         getAll(sliceFromEnd(26), done, timeVerify);
     });
 
     it("gets hour items " + channelName, function (done) {
+        console.log("step 4")
         getAll(sliceFromEnd(23), done, timeVerify);
     });
 
     it("gets minute items " + channelName, function (done) {
+        console.log("step 5")
         getAll(sliceFromEnd(20), done, timeVerify);
     });
 
