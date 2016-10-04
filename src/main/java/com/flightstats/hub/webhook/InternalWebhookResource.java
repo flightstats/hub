@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.model.ContentPath;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.joda.time.Minutes;
 
 import javax.ws.rs.GET;
@@ -76,20 +77,19 @@ public class InternalWebhookResource {
         stale.put("stale minutes", age);
         stale.put("stale cutoff", staleCutoff.toString());
 
-        Map<Minutes, URI> staleWebhooks = new TreeMap<>(Collections.reverseOrder());
+        Map<DateTime, URI> staleWebhooks = new TreeMap<>(Collections.reverseOrder());
         webhookService.getAll().forEach(webhook -> {
             WebhookStatus status = webhookService.getStatus(webhook);
             ContentPath contentPath = status.getLastCompleted();
-
             if (contentPath.getTime().isAfter(staleCutoff)) return;
-            Minutes webhookAge = Minutes.minutesBetween(contentPath.getTime(), DateTime.now());
+
             URI webhookURI = constructWebhookURI(webhook);
-            staleWebhooks.put(webhookAge, webhookURI);
+            staleWebhooks.put(contentPath.getTime(), webhookURI);
         });
 
         ArrayNode uris = stale.putArray("uris");
-        staleWebhooks.forEach((webhookAge, webhookURI) -> {
-            ObjectNode node = createURINode(webhookURI, webhookAge);
+        staleWebhooks.forEach((webhookTime, webhookURI) -> {
+            ObjectNode node = createURINode(webhookURI, webhookTime);
             uris.add(node);
         });
     }
@@ -105,9 +105,9 @@ public class InternalWebhookResource {
         });
     }
 
-    private ObjectNode createURINode(URI uri, Minutes age) {
+    private ObjectNode createURINode(URI uri, DateTime timestamp) {
         ObjectNode node = mapper.createObjectNode();
-        node.put("age", age.getMinutes());
+        node.put("age", timestamp.toDateTime(DateTimeZone.UTC).toString());
         node.put("uri", uri.toString());
         return node;
     }

@@ -15,6 +15,7 @@ import com.flightstats.hub.util.HubUtils;
 import com.google.common.base.Optional;
 import com.google.inject.TypeLiteral;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.joda.time.Minutes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -125,7 +126,7 @@ public class InternalChannelResource {
         stale.put("stale minutes", age);
         stale.put("stale cutoff", staleCutoff.toString());
 
-        Map<Minutes, URI> staleChannels = new TreeMap<>(Collections.reverseOrder());
+        Map<DateTime, URI> staleChannels = new TreeMap<>(Collections.reverseOrder());
         channelService.getChannels().forEach(channelConfig -> {
             Optional<ContentKey> optionalContentKey = channelService.getLatest(channelConfig.getName(), false, false);
             if (!optionalContentKey.isPresent()) return;
@@ -133,21 +134,20 @@ public class InternalChannelResource {
             ContentKey contentKey = optionalContentKey.get();
             if (contentKey.getTime().isAfter(staleCutoff)) return;
 
-            Minutes channelAge = Minutes.minutesBetween(contentKey.getTime(), DateTime.now());
             URI channelURI = constructChannelURI(channelConfig);
-            staleChannels.put(channelAge, channelURI);
+            staleChannels.put(contentKey.getTime(), channelURI);
         });
 
         ArrayNode uris = stale.putArray("uris");
-        staleChannels.forEach((channelAge, channelURI) -> {
-            ObjectNode node = createURINode(channelURI, channelAge);
+        staleChannels.forEach((channelTime, channelURI) -> {
+            ObjectNode node = createURINode(channelURI, channelTime);
             uris.add(node);
         });
     }
 
-    private ObjectNode createURINode(URI uri, Minutes age) {
+    private ObjectNode createURINode(URI uri, DateTime timestamp) {
         ObjectNode node = mapper.createObjectNode();
-        node.put("age", age.getMinutes());
+        node.put("age", timestamp.toDateTime(DateTimeZone.UTC).toString());
         node.put("uri", uri.toString());
         return node;
     }
