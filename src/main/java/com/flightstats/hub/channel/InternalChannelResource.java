@@ -1,7 +1,6 @@
 package com.flightstats.hub.channel;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProperties;
@@ -30,7 +29,13 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
+import java.net.URI;
+import java.util.Collections;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
+
+import static com.flightstats.hub.util.StaleUtil.addStaleEntities;
 
 @Path("/internal/channel")
 public class InternalChannelResource {
@@ -62,8 +67,6 @@ public class InternalChannelResource {
         addLink(links, "self", uriInfo.getRequestUri().toString());
         addLink(links, "refresh", uriInfo.getRequestUri().toString() + "/refresh");
         addLink(links, "stale", uriInfo.getRequestUri().toString() + "/stale/" + DEFAULT_STALE_AGE.intValue());
-
-        addStaleChannels(root, DEFAULT_STALE_AGE.intValue());
 
         return Response.ok(root).build();
     }
@@ -106,7 +109,20 @@ public class InternalChannelResource {
         ObjectNode root = mapper.createObjectNode();
         ObjectNode links = root.putObject("_links");
         addLink(links, "self", uriInfo.getRequestUri().toString());
-        addStaleChannels(root, age);
+        addStaleEntities(root, age, (staleCutoff) -> {
+            Map<DateTime, URI> staleChannels = new TreeMap<>(Collections.reverseOrder());
+            channelService.getChannels().forEach(channelConfig -> {
+                Optional<ContentKey> optionalContentKey = channelService.getLatest(channelConfig.getName(), false, false);
+                if (!optionalContentKey.isPresent()) return;
+
+                ContentKey contentKey = optionalContentKey.get();
+                if (contentKey.getTime().isAfter(staleCutoff)) return;
+
+                URI channelURI = constructChannelURI(channelConfig);
+                staleChannels.put(contentKey.getTime(), channelURI);
+            });
+            return staleChannels;
+        });
         return Response.ok(root).build();
     }
 
@@ -115,25 +131,7 @@ public class InternalChannelResource {
         link.put("href", value);
     }
 
-    private void addStaleChannels(ObjectNode root, int age) {
-        DateTime staleCutoff = DateTime.now().minusMinutes(age);
-
-        ObjectNode stale = root.putObject("stale");
-        stale.put("stale minutes", age);
-        stale.put("stale cutoff", staleCutoff.toString());
-
-        ArrayNode uris = stale.putArray("uris");
-        channelService.getChannels().forEach(channelConfig -> {
-            Optional<ContentKey> optionalContentKey = channelService.getLatest(channelConfig.getName(), false, false);
-            if (!optionalContentKey.isPresent()) return;
-            ContentKey contentKey = optionalContentKey.get();
-
-            if (contentKey.getTime().isAfter(staleCutoff)) return;
-            uris.add(constructChannelURI(channelConfig));
-        });
-    }
-
-    private String constructChannelURI(ChannelConfig channelConfig) {
-        return UriBuilder.fromUri(uriInfo.getBaseUri()).path("channel").path(channelConfig.getName()).toString();
+    private URI constructChannelURI(ChannelConfig channelConfig) {
+        return UriBuilder.fromUri(uriInfo.getBaseUri()).path("channel").path(channelConfig.getName()).build();
     }
 }
