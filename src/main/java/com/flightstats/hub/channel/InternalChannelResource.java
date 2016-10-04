@@ -124,7 +124,7 @@ public class InternalChannelResource {
 
         ObjectNode stale = root.putObject("stale");
         stale.put("stale minutes", age);
-        stale.put("stale cutoff", staleCutoff.toString());
+        stale.put("stale cutoff", staleCutoff.toDateTime(DateTimeZone.UTC).toString());
 
         Map<DateTime, URI> staleChannels = new TreeMap<>(Collections.reverseOrder());
         channelService.getChannels().forEach(channelConfig -> {

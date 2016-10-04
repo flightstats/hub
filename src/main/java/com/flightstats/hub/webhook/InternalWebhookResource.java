@@ -75,7 +75,7 @@ public class InternalWebhookResource {
 
         ObjectNode stale = root.putObject("stale");
         stale.put("stale minutes", age);
-        stale.put("stale cutoff", staleCutoff.toString());
+        stale.put("stale cutoff", staleCutoff.toDateTime(DateTimeZone.UTC).toString());
 
         Map<DateTime, URI> staleWebhooks = new TreeMap<>(Collections.reverseOrder());
         webhookService.getAll().forEach(webhook -> {
