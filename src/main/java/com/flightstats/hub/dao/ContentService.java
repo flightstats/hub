@@ -10,6 +10,9 @@ import java.util.function.Consumer;
 
 public interface ContentService {
 
+    //todo gfm - this is temporary
+    String IMPL = "IMPL";
+
     ContentKey insert(String channelName, Content content) throws Exception;
 
     Collection<ContentKey> insert(BulkContent bulkContent) throws Exception;
@@ -28,7 +31,9 @@ public interface ContentService {
 
     Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces, boolean stable);
 
-    void deleteBefore(String name, ContentKey limitKey);
+    default void deleteBefore(String name, ContentKey limitKey) {
+        //do nothing
+    }
 
     default void notify(ChannelConfig newConfig, ChannelConfig oldConfig) {
         //do nothing

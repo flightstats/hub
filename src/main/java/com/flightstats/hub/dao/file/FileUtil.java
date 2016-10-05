@@ -1,4 +1,4 @@
-package com.flightstats.hub.dao.nas;
+package com.flightstats.hub.dao.file;
 
 import com.flightstats.hub.app.HubProperties;
 import org.apache.commons.io.FileUtils;
@@ -14,16 +14,16 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 
-class NasUtil {
+class FileUtil {
 
-    private final static Logger logger = LoggerFactory.getLogger(NasUtil.class);
+    private final static Logger logger = LoggerFactory.getLogger(FileUtil.class);
 
     static String getStoragePath() {
-        return StringUtils.appendIfMissing(HubProperties.getProperty("storage.path", "/nas"), "/");
+        return StringUtils.appendIfMissing(HubProperties.getProperty("storage.path", "/file"), "/");
     }
 
     public static String getContentPath() {
-        return NasUtil.getStoragePath() + "content/";
+        return FileUtil.getStoragePath() + "content/";
     }
 
     static void writeJson(String json, String name, String path) {

@@ -60,15 +60,14 @@ public class HubMain {
         modules.add(new HubBindings());
         String hubType = HubProperties.getProperty("hub.type", "aws");
         logger.info("starting with hub.type {}", hubType);
+        resourceConfig.packages("com.flightstats.hub");
         switch (hubType) {
             case "aws":
                 modules.add(new AwsBindings());
-                resourceConfig.packages(AwsBindings.packages());
                 break;
             case "nas":
             case "test":
-                modules.add(new NasBindings());
-                resourceConfig.packages(NasBindings.packages());
+                modules.add(new FileBindings());
                 break;
             default:
                 throw new RuntimeException("unsupported hub.type " + hubType);
