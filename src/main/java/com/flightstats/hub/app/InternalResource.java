@@ -8,6 +8,7 @@ import com.flightstats.hub.cluster.InternalZookeeperResource;
 import com.flightstats.hub.health.InternalHealthResource;
 import com.flightstats.hub.metrics.InternalStacktraceResource;
 import com.flightstats.hub.metrics.InternalTracesResource;
+import com.flightstats.hub.time.InternalTimeResource;
 import com.flightstats.hub.webhook.InternalWebhookResource;
 import org.apache.commons.lang3.StringUtils;
 
@@ -46,9 +47,10 @@ public class InternalResource {
         addLink("properties", InternalPropertiesResource.DESCRIPTION);
         addLink("shutdown", InternalShutdownResource.DESCRIPTION);
         addLink("stacktrace", InternalStacktraceResource.DESCRIPTION);
+        addLink("time", InternalTimeResource.DESCRIPTION);
         addLink("traces", InternalTracesResource.DESCRIPTION);
-        addLink("zookeeper", InternalZookeeperResource.DESCRIPTION);
         addLink("webhook", InternalWebhookResource.DESCRIPTION);
+        addLink("zookeeper", InternalZookeeperResource.DESCRIPTION);
         return Response.ok(root).build();
     }
 
