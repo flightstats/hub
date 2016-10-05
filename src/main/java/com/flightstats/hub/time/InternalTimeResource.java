@@ -1,6 +1,5 @@
 package com.flightstats.hub.time;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.app.LocalHostOnly;
@@ -22,7 +21,6 @@ public class InternalTimeResource {
 
     public static final String DESCRIPTION = "Links for managing time in a hub cluster.";
     private final static TimeService timeService = HubProvider.getInstance(TimeService.class);
-    private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     @Context
     private UriInfo uriInfo;
 
