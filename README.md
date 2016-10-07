@@ -46,7 +46,7 @@ The Hub
 
 ## overview
 
-The Hub is a fault tolerant, highly available REST API for data distribution and storage.  
+The Hub is a fault tolerant, highly available HTTP API for data distribution and storage.  
 
 Data
 Channels contain uniquely addressable items that are iterable and query-able by time.  Each item may be up to to 40 MB.   
