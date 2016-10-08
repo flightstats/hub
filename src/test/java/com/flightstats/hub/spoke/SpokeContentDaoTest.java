@@ -1,6 +1,6 @@
 package com.flightstats.hub.spoke;
 
-import com.flightstats.hub.app.AwsBindings;
+import com.flightstats.hub.app.HubBindings;
 import com.flightstats.hub.cluster.CuratorCluster;
 import com.flightstats.hub.dao.ContentDaoUtil;
 import com.flightstats.hub.test.Integration;
@@ -22,7 +22,7 @@ public class SpokeContentDaoTest {
         Injector injector = Integration.startAwsHub();
         util = new ContentDaoUtil(injector.getInstance(SpokeContentDao.class));
         CuratorFramework curator = injector.getInstance(CuratorFramework.class);
-        CuratorCluster cluster = AwsBindings.buildSpokeCuratorCluster(curator);
+        CuratorCluster cluster = HubBindings.buildSpokeCuratorCluster(curator);
         for (int i = 0; i < 10; i++) {
             if (cluster.getServers().size() == 0) {
                 logger.info("no servers yet...");

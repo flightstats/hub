@@ -5,24 +5,17 @@ import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.*;
 import com.flightstats.hub.dao.ContentKeyUtil;
-import com.flightstats.hub.exception.FailedQueryException;
-import com.flightstats.hub.exception.FailedWriteException;
 import com.flightstats.hub.exception.InvalidRequestException;
-import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.replication.S3Batch;
 import com.flightstats.hub.util.HubUtils;
-import com.flightstats.hub.util.RuntimeInterruptedException;
-import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.AbstractScheduledService;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,22 +24,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.SortedSet;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class AwsContentService implements ContentService {
+public class SpokeS3ContentService implements ContentService {
 
-    private final static Logger logger = LoggerFactory.getLogger(AwsContentService.class);
+    private final static Logger logger = LoggerFactory.getLogger(SpokeS3ContentService.class);
     private static final String CHANNEL_LATEST_UPDATED = "/ChannelLatestUpdated/";
-    private final ExecutorService executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("AwsContentService-%d").build());
-    private final AtomicInteger inFlight = new AtomicInteger();
-    private final Integer shutdown_wait_seconds = HubProperties.getProperty("app.shutdown_wait_seconds", 5);
     private final boolean dropSomeWrites = HubProperties.getProperty("s3.dropSomeWrites", false);
     private final int spokeTtlMinutes = HubProperties.getSpokeTtl();
     @Inject
@@ -67,42 +53,23 @@ public class AwsContentService implements ContentService {
     @Inject
     private HubUtils hubUtils;
 
-    public AwsContentService() {
-        HubServices.registerPreStop(new AwsContentServiceInit());
+    public SpokeS3ContentService() {
+        HubServices.registerPreStop(new SpokeS3ContentServiceInit());
         HubServices.register(new ChannelLatestUpdatedService());
-    }
-
-    private void waitForInFlight() {
-        logger.info("waiting for in-flight to complete " + inFlight.get());
-        long start = System.currentTimeMillis();
-        while (inFlight.get() > 0) {
-            logger.info("still waiting for in-flight to complete " + inFlight.get());
-            Sleeper.sleep(1000);
-            if (System.currentTimeMillis() > (start + shutdown_wait_seconds * 1000)) {
-                break;
-            }
-        }
-        logger.info("completed waiting for in-flight to complete " + inFlight.get());
     }
 
     @Override
     public ContentKey insert(String channelName, Content content) throws Exception {
-        try {
-            inFlight.incrementAndGet();
-            ContentKey key = spokeContentDao.insert(channelName, content);
-            ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
-            if (channel.isSingle() || channel.isBoth()) {
-                Supplier<Void> local = () -> {
-                    s3SingleWrite(channelName, key);
-                    return null;
-                };
-                GlobalChannelService.handleGlobal(channel, local, () -> null, local);
-
-            }
-            return key;
-        } finally {
-            inFlight.decrementAndGet();
+        ContentKey key = spokeContentDao.insert(channelName, content);
+        ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
+        if (channel.isSingle() || channel.isBoth()) {
+            Supplier<Void> local = () -> {
+                s3SingleWrite(channelName, key);
+                return null;
+            };
+            GlobalChannelService.handleGlobal(channel, local, () -> null, local);
         }
+        return key;
     }
 
     private void s3SingleWrite(String channelName, ContentKey key) {
@@ -115,18 +82,15 @@ public class AwsContentService implements ContentService {
 
     @Override
     public Collection<ContentKey> insert(BulkContent bulkContent) throws Exception {
-        MultiPartParser multiPartParser = new MultiPartParser(bulkContent);
-        multiPartParser.parse();
-        try {
-            return newBulkWrite(bulkContent);
-        } catch (FailedWriteException e) {
-            logger.info("failed bulk write, fall back");
-            Collection<ContentKey> keys = new ArrayList<>();
-            for (Content content : bulkContent.getItems()) {
-                keys.add(insert(bulkContent.getChannel(), content));
+        String channelName = bulkContent.getChannel();
+        SortedSet<ContentKey> keys = spokeContentDao.insert(bulkContent);
+        ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
+        if (channel.isSingle() || channel.isBoth()) {
+            for (ContentKey key : keys) {
+                s3SingleWrite(channelName, key);
             }
-            return keys;
         }
+        return keys;
     }
 
     @Override
@@ -137,23 +101,6 @@ public class AwsContentService implements ContentService {
         }
         insert(channelName, content);
         return true;
-    }
-
-    private Collection<ContentKey> newBulkWrite(BulkContent bulkContent) throws Exception {
-        String channelName = bulkContent.getChannel();
-        try {
-            inFlight.incrementAndGet();
-            SortedSet<ContentKey> keys = spokeContentDao.insert(bulkContent);
-            ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
-            if (channel.isSingle() || channel.isBoth()) {
-                for (ContentKey key : keys) {
-                    s3SingleWrite(channelName, key);
-                }
-            }
-            return keys;
-        } finally {
-            inFlight.decrementAndGet();
-        }
     }
 
     @Override
@@ -248,37 +195,10 @@ public class AwsContentService implements ContentService {
             }
         }
 
-        return query(daoQuery, daos);
+        return CommonContentService.query(daoQuery, daos);
     }
 
-    private SortedSet<ContentKey> query(Function<ContentDao, SortedSet<ContentKey>> daoQuery, List<ContentDao> contentDaos) {
-        try {
-            QueryResult queryResult = new QueryResult(contentDaos.size());
-            CountDownLatch latch = new CountDownLatch(contentDaos.size());
-            Traces traces = ActiveTraces.getLocal();
-            String threadName = Thread.currentThread().getName();
-            for (ContentDao contentDao : contentDaos) {
-                executorService.submit(() -> {
-                    Thread.currentThread().setName(contentDao.getClass().getSimpleName() + "|" + threadName);
-                    ActiveTraces.setLocal(traces);
-                    try {
-                        queryResult.addKeys(daoQuery.apply(contentDao));
-                    } finally {
-                        latch.countDown();
-                    }
-                });
-            }
-            latch.await(118, TimeUnit.SECONDS);
-            if (queryResult.hadSuccess()) {
-                return queryResult.getContentKeys();
-            } else {
-                traces.add("unable to complete query ", queryResult);
-                throw new FailedQueryException("unable to complete query " + queryResult + " " + threadName);
-            }
-        } catch (InterruptedException e) {
-            throw new RuntimeInterruptedException(e);
-        }
-    }
+
 
     @Override
     public Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces, boolean stable) {
@@ -362,7 +282,7 @@ public class AwsContentService implements ContentService {
         }
     }
 
-    private class AwsContentServiceInit extends AbstractIdleService {
+    private class SpokeS3ContentServiceInit extends AbstractIdleService {
         @Override
         protected void startUp() throws Exception {
             spokeContentDao.initialize();
@@ -372,7 +292,7 @@ public class AwsContentService implements ContentService {
 
         @Override
         protected void shutDown() throws Exception {
-            waitForInFlight();
+            //do nothing
         }
     }
 

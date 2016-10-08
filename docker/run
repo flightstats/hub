@@ -58,8 +58,10 @@ JAVA_OPTS="$JAVA_OPTS
 
 # OPTIONS THAT ARE SPECIFIC TO DOCKER - ESCHEW HAPROXY, MONITORING APPS
 JAVA_OPTS="$JAVA_OPTS
- -Dapp.url=http://localhost:80/
+ -Dapp.url=http://localhost/
  -Dhttp.bind_port=80
+ -Dalert.run=true
+ -Dapp.stable_seconds=2
  -Ddata_dog.enable=false"
 MAIN_CLASS="com.flightstats.hub.app.SingleHubMain"
 

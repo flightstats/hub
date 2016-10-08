@@ -17,7 +17,7 @@ import com.flightstats.hub.rest.HalLinks;
 import com.flightstats.hub.rest.HalLinksSerializer;
 import com.flightstats.hub.rest.RetryClientFilter;
 import com.flightstats.hub.rest.Rfc3339DateSerializer;
-import com.flightstats.hub.spoke.GCRunner;
+import com.flightstats.hub.spoke.*;
 import com.flightstats.hub.time.NtpMonitor;
 import com.flightstats.hub.time.TimeService;
 import com.flightstats.hub.util.HubUtils;
@@ -109,6 +109,13 @@ public class HubBindings extends AbstractModule {
         return new CuratorCluster(curator, "/HubCluster", true);
     }
 
+    @Named("SpokeCuratorCluster")
+    @Singleton
+    @Provides
+    public static CuratorCluster buildSpokeCuratorCluster(CuratorFramework curator) throws Exception {
+        return new CuratorCluster(curator, "/SpokeCluster", false);
+    }
+
     @Singleton
     @Provides
     public static WebSocketContainer buildWebSocketContainer() throws Exception {
@@ -158,6 +165,10 @@ public class HubBindings extends AbstractModule {
         bind(AlertRunner.class).asEagerSingleton();
         bind(TimeService.class).asEagerSingleton();
         bind(ShutdownManager.class).asEagerSingleton();
+        bind(SpokeTtlEnforcer.class).asEagerSingleton();
+        bind(FileSpokeStore.class).asEagerSingleton();
+        bind(SpokeClusterRegister.class).asEagerSingleton();
+        bind(FinalCheck.class).to(SpokeFinalCheck.class).asEagerSingleton();
     }
 
 }

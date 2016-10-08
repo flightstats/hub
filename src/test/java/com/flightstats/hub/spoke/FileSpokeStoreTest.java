@@ -32,7 +32,8 @@ public class FileSpokeStoreTest {
     @Before
     public void setUp() throws Exception {
         tempDir = Files.createTempDir().getPath();
-        spokeStore = new FileSpokeStore(tempDir);
+        HubProperties.setProperty("spoke.path", tempDir);
+        spokeStore = new FileSpokeStore();
     }
 
     @Test
