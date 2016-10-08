@@ -1,5 +1,6 @@
 package com.flightstats.hub.channel;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.LocalChannelService;
@@ -15,6 +16,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URI;
+
+import static com.flightstats.hub.channel.LinkBuilder.buildChannelConfigResponse;
 
 @Path("/internal/global")
 public class InternalGlobalResource {
@@ -62,10 +65,8 @@ public class InternalGlobalResource {
         }
         newConfig.getGlobal().setIsMaster(isMaster);
         newConfig = channelService.updateChannel(newConfig, oldConfig, true);
-        URI channelUri = LinkBuilder.buildChannelUri(newConfig, uriInfo);
-        return Response.created(channelUri).entity(
-                LinkBuilder.buildChannelLinks(newConfig, channelUri))
-                .build();
+        URI channelUri = LinkBuilder.buildChannelUri(newConfig.getName(), uriInfo);
+        ObjectNode output = buildChannelConfigResponse(newConfig, uriInfo);
+        return Response.created(channelUri).entity(output).build();
     }
-
 }

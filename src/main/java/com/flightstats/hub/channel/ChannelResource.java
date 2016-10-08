@@ -33,6 +33,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
 
+import static com.flightstats.hub.channel.LinkBuilder.buildChannelConfigResponse;
 import static com.flightstats.hub.rest.Linked.linked;
 
 /**
@@ -61,10 +62,9 @@ public class ChannelResource {
             logger.info("unable to get channel " + channelName);
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
-        URI channelUri = LinkBuilder.buildChannelUri(config, uriInfo);
-        Linked<ChannelConfig> linked = LinkBuilder.buildChannelLinks(config, channelUri);
 
-        return Response.ok(channelUri).entity(linked).build();
+        ObjectNode output = buildChannelConfigResponse(config, uriInfo);
+        return Response.ok(output).build();
     }
 
     @PUT
@@ -83,10 +83,10 @@ public class ChannelResource {
         }
         logger.info("creating channel {} {}", channelConfig, channelConfig.getCreationDate().getTime());
         channelConfig = channelService.updateChannel(channelConfig, oldConfig, LocalHostOnly.isLocalhost(uriInfo));
-        URI channelUri = LinkBuilder.buildChannelUri(channelConfig, uriInfo);
-        return Response.created(channelUri).entity(
-                LinkBuilder.buildChannelLinks(channelConfig, channelUri))
-                .build();
+
+        URI channelUri = uriInfo.getBaseUriBuilder().path("channel").path(channelConfig.getName()).build();
+        ObjectNode output = buildChannelConfigResponse(channelConfig, uriInfo);
+        return Response.created(channelUri).entity(output).build();
     }
 
     @PATCH
@@ -107,9 +107,9 @@ public class ChannelResource {
 
         newConfig = channelService.updateChannel(newConfig, oldConfig, LocalHostOnly.isLocalhost(uriInfo));
 
-        URI channelUri = LinkBuilder.buildChannelUri(newConfig, uriInfo);
-        Linked<ChannelConfig> linked = LinkBuilder.buildChannelLinks(newConfig, channelUri);
-        return Response.ok(channelUri).entity(linked).build();
+        URI channelUri = uriInfo.getBaseUriBuilder().path("channel").path(newConfig.getName()).build();
+        ObjectNode output = buildChannelConfigResponse(newConfig, uriInfo);
+        return Response.ok(channelUri).entity(output).build();
     }
 
     @POST
@@ -261,5 +261,4 @@ public class ChannelResource {
     public static Response notFound(@PathParam("channel") String channelName) {
         return Response.status(Response.Status.NOT_FOUND).entity("channel " + channelName + " not found").build();
     }
-
 }

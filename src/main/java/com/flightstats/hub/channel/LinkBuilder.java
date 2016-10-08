@@ -3,6 +3,7 @@ package com.flightstats.hub.channel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ChannelContentKey;
@@ -10,7 +11,8 @@ import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.rest.HalLink;
 import com.flightstats.hub.rest.Linked;
-import com.google.common.base.Optional;
+import com.flightstats.hub.util.TimeUtil;
+import org.joda.time.DateTime;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
@@ -20,16 +22,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Consumer;
-
-import static com.flightstats.hub.rest.Linked.linked;
 
 public class LinkBuilder {
 
-    private static URI buildWsLinkFor(URI channelUri) {
-        String requestUri = channelUri.toString().replaceFirst("^http", "ws");
-        return URI.create(requestUri + "/ws");
-    }
+    private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
 
     static void addOptionalHeader(String headerName, Optional<String> headerValue, Response.ResponseBuilder builder) {
         if (headerValue.isPresent()) {
@@ -53,16 +51,33 @@ public class LinkBuilder {
         return URI.create(channelUri.toString() + "/" + key);
     }
 
-    static Linked<ChannelConfig> buildChannelLinks(ChannelConfig config, URI channelUri) {
-        Linked.Builder<ChannelConfig> linked = linked(config).withLink("self", channelUri);
-        linked.withLink("latest", URI.create(channelUri + "/latest"))
-                .withLink("earliest", URI.create(channelUri + "/earliest"))
-                .withLink("bulk", URI.create(channelUri + "/bulk"))
-                .withLink("ws", buildWsLinkFor(channelUri))
-                .withLink("events", URI.create(channelUri + "/events"))
-                .withLink("time", URI.create(channelUri + "/time"))
-                .withLink("status", URI.create(channelUri + "/status"));
-        return linked.build();
+    public static ObjectNode buildChannelConfigResponse(ChannelConfig config, UriInfo uriInfo) {
+        ObjectNode root = mapper.createObjectNode();
+
+        root.put("name", config.getName());
+        root.put("creationDate", TimeUtil.FORMATTER.print(new DateTime(config.getCreationDate())));
+        root.put("description", config.getDescription());
+        root.put("historical", config.isHistorical());
+        root.put("maxItems", config.getMaxItems());
+        root.put("owner", config.getOwner());
+        root.put("protect", config.isProtect());
+        root.put("replicationSource", config.getReplicationSource());
+        root.put("storage", config.getStorage());
+        ArrayNode tags = root.putArray("tags");
+        config.getTags().forEach(tags::add);
+        root.put("ttlDays", config.getTtlDays());
+
+        ObjectNode links = root.putObject("_links");
+        addSelfLink(links, uriInfo);
+        addLink(links, "latest",    uriInfo.getBaseUriBuilder().path("channel").path(config.getName()).path("latest").build());
+        addLink(links, "earliest",  uriInfo.getBaseUriBuilder().path("channel").path(config.getName()).path("earliest").build());
+        addLink(links, "bulk",      uriInfo.getBaseUriBuilder().path("channel").path(config.getName()).path("bulk").build());
+        addLink(links, "ws",        uriInfo.getBaseUriBuilder().path("channel").path(config.getName()).path("ws").scheme("ws").build());
+        addLink(links, "events",    uriInfo.getBaseUriBuilder().path("channel").path(config.getName()).path("events").build());
+        addLink(links, "time",      uriInfo.getBaseUriBuilder().path("channel").path(config.getName()).path("time").build());
+        addLink(links, "status",    uriInfo.getBaseUriBuilder().path("channel").path(config.getName()).path("status").build());
+
+        return root;
     }
 
     static Linked<?> buildLinks(UriInfo uriInfo, Map<String, URI> nameToUriMap, String name) {
@@ -170,13 +185,13 @@ public class LinkBuilder {
         return Response.ok(root).build();
     }
 
-    public static void addLink(String name, String href, ObjectNode node) {
-        ObjectNode links = (ObjectNode) node.get("_links");
-        if (links == null) {
-            links = node.putObject("_links");
-        }
-        ObjectNode self = links.putObject(name);
-        self.put("href", href);
+    public static ObjectNode addLink(ObjectNode parent, String name, URI link) {
+        ObjectNode node = parent.putObject(name);
+        node.put("href", link.toString());
+        return node;
     }
 
+    public static ObjectNode addSelfLink(ObjectNode parent, UriInfo uriInfo) {
+        return addLink(parent, "self", uriInfo.getRequestUri());
+    }
 }
