@@ -35,12 +35,8 @@ public class LinkBuilder {
         }
     }
 
-    static URI buildChannelUri(ChannelConfig channelConfig, UriInfo uriInfo) {
-        return buildChannelUri(channelConfig.getName(), uriInfo);
-    }
-
     static URI buildChannelUri(String channelName, UriInfo uriInfo) {
-        return URI.create(uriInfo.getBaseUri() + "channel/" + channelName);
+        return uriInfo.getBaseUriBuilder().path("channel").path(channelName).build();
     }
 
     public static URI buildItemUri(ContentKey key, URI channelUri) {
