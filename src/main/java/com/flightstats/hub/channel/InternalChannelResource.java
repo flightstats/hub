@@ -110,7 +110,7 @@ public class InternalChannelResource {
         ObjectNode links = root.putObject("_links");
         addLink(links, "self", uriInfo.getRequestUri().toString());
         addStaleEntities(root, age, (staleCutoff) -> {
-            Map<DateTime, URI> staleChannels = new TreeMap<>(Collections.reverseOrder());
+            Map<DateTime, URI> staleChannels = new TreeMap<>();
             channelService.getChannels().forEach(channelConfig -> {
                 Optional<ContentKey> optionalContentKey = channelService.getLatest(channelConfig.getName(), false, false);
                 if (!optionalContentKey.isPresent()) return;
