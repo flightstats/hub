@@ -33,6 +33,8 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
 
+import static com.flightstats.hub.channel.LinkBuilder.buildChannelConfigResponse;
+import static com.flightstats.hub.channel.LinkBuilder.buildChannelUri;
 import static com.flightstats.hub.rest.Linked.linked;
 
 /**
@@ -61,10 +63,9 @@ public class ChannelResource {
             logger.info("unable to get channel " + channelName);
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
-        URI channelUri = LinkBuilder.buildChannelUri(config, uriInfo);
-        Linked<ChannelConfig> linked = LinkBuilder.buildChannelLinks(config, channelUri);
 
-        return Response.ok(channelUri).entity(linked).build();
+        ObjectNode output = buildChannelConfigResponse(config, uriInfo);
+        return Response.ok(output).build();
     }
 
     @PUT
@@ -83,10 +84,10 @@ public class ChannelResource {
         }
         logger.info("creating channel {} {}", channelConfig, channelConfig.getCreationDate().getTime());
         channelConfig = channelService.updateChannel(channelConfig, oldConfig, LocalHostOnly.isLocalhost(uriInfo));
-        URI channelUri = LinkBuilder.buildChannelUri(channelConfig, uriInfo);
-        return Response.created(channelUri).entity(
-                LinkBuilder.buildChannelLinks(channelConfig, channelUri))
-                .build();
+
+        URI channelUri = buildChannelUri(channelConfig.getName(), uriInfo);
+        ObjectNode output = buildChannelConfigResponse(channelConfig, uriInfo);
+        return Response.created(channelUri).entity(output).build();
     }
 
     @PATCH
@@ -107,9 +108,9 @@ public class ChannelResource {
 
         newConfig = channelService.updateChannel(newConfig, oldConfig, LocalHostOnly.isLocalhost(uriInfo));
 
-        URI channelUri = LinkBuilder.buildChannelUri(newConfig, uriInfo);
-        Linked<ChannelConfig> linked = LinkBuilder.buildChannelLinks(newConfig, channelUri);
-        return Response.ok(channelUri).entity(linked).build();
+        URI channelUri = buildChannelUri(newConfig.getName(), uriInfo);
+        ObjectNode output = buildChannelConfigResponse(newConfig, uriInfo);
+        return Response.ok(channelUri).entity(output).build();
     }
 
     @POST
@@ -131,7 +132,7 @@ public class ChannelResource {
             InsertedContentKey insertionResult = new InsertedContentKey(contentKey);
             URI payloadUri = LinkBuilder.buildItemUri(contentKey, uriInfo.getRequestUri());
             Linked<InsertedContentKey> linkedResult = linked(insertionResult)
-                    .withLink("channel", LinkBuilder.buildChannelUri(channelName, uriInfo))
+                    .withLink("channel", buildChannelUri(channelName, uriInfo))
                     .withLink("self", payloadUri)
                     .build();
 
@@ -192,10 +193,10 @@ public class ChannelResource {
                 ContentKey first = keys.iterator().next();
                 ContentKey trimmedKey = new ContentKey(first.getTime(), first.getHash().substring(0, 6)
                         + "/next/" + keys.size() + "?stable=false");
-                URI payloadUri = LinkBuilder.buildItemUri(trimmedKey, LinkBuilder.buildChannelUri(channelName, uriInfo));
+                URI payloadUri = LinkBuilder.buildItemUri(trimmedKey, buildChannelUri(channelName, uriInfo));
                 self.put("href", payloadUri.toString());
                 ArrayNode uris = links.putArray("uris");
-                URI channelUri = LinkBuilder.buildChannelUri(channelName, uriInfo);
+                URI channelUri = buildChannelUri(channelName, uriInfo);
                 for (ContentKey key : keys) {
                     URI uri = LinkBuilder.buildItemUri(key, channelUri);
                     uris.add(uri.toString());
@@ -261,5 +262,4 @@ public class ChannelResource {
     public static Response notFound(@PathParam("channel") String channelName) {
         return Response.status(Response.Status.NOT_FOUND).entity("channel " + channelName + " not found").build();
     }
-
 }
