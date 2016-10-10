@@ -62,7 +62,7 @@ public class InternalWebhookResource {
         ObjectNode links = root.putObject("_links");
         addLink(links, "self", uriInfo.getRequestUri().toString());
         addStaleEntities(root, age, (staleCutoff) -> {
-            Map<DateTime, URI> staleWebhooks = new TreeMap<>(Collections.reverseOrder());
+            Map<DateTime, URI> staleWebhooks = new TreeMap<>();
             webhookService.getAll().forEach(webhook -> {
                 WebhookStatus status = webhookService.getStatus(webhook);
                 ContentPath contentPath = status.getLastCompleted();
