@@ -70,7 +70,7 @@ public class LinkBuilder {
         root.put("ttlDays", config.getTtlDays());
 
         ObjectNode links = root.putObject("_links");
-        addSelfLink(links, uriInfo);
+        addLink(links, "self",      uriInfo.getBaseUriBuilder().path("channel").path(config.getName()).build());
         addLink(links, "latest",    uriInfo.getBaseUriBuilder().path("channel").path(config.getName()).path("latest").build());
         addLink(links, "earliest",  uriInfo.getBaseUriBuilder().path("channel").path(config.getName()).path("earliest").build());
         addLink(links, "bulk",      uriInfo.getBaseUriBuilder().path("channel").path(config.getName()).path("bulk").build());
@@ -191,9 +191,5 @@ public class LinkBuilder {
         ObjectNode node = parent.putObject(name);
         node.put("href", link.toString());
         return node;
-    }
-
-    public static ObjectNode addSelfLink(ObjectNode parent, UriInfo uriInfo) {
-        return addLink(parent, "self", uriInfo.getRequestUri());
     }
 }
