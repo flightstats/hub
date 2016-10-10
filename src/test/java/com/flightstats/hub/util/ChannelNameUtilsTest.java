@@ -64,5 +64,6 @@ public class ChannelNameUtilsTest {
         assertEquals("mic_key", ChannelNameUtils.parseChannelName("http://stuff:8080/channel/mic_key/morestuff/"));
         assertEquals("mic-key", ChannelNameUtils.parseChannelName("http://stuff:8080/channel/mic-key/morestuff/"));
         assertEquals("mickey", ChannelNameUtils.parseChannelName("http://stuff:8080/channel/mickey/"));
+        assertEquals("donald", ChannelNameUtils.parseChannelName("http://stuff:8080/internal/s3Batch/donald"));
     }
 }

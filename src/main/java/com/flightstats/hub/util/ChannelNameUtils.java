@@ -10,7 +10,8 @@ import java.util.regex.Pattern;
 public class ChannelNameUtils {
 
     private static final String WEBSOCKET_URL_REGEX = "^/channel/(\\w+)/ws$";
-    private static final Pattern channelNamePattern = Pattern.compile("/channel/([^\\/]*)/?.*$");
+    private static final Pattern DEFAULT_NAME_PATTERN = Pattern.compile("/channel/([^\\/]*)/?.*$");
+    private static final Pattern S3BATCH_NAME_PATTERN = Pattern.compile("/internal/s3Batch/(\\w+)");
 
     public String extractFromWS(URI requestURI) {
         String path = requestURI.getPath();
@@ -27,8 +28,17 @@ public class ChannelNameUtils {
     }
 
     public static String parseChannelName(String path) {
-        Matcher m = channelNamePattern.matcher(path);
-        return m.find() ? m.group(1) : null;
+        String name = checkPattern(path, DEFAULT_NAME_PATTERN);
+        if (name.isEmpty()) {
+            name = checkPattern(path, S3BATCH_NAME_PATTERN);
+        }
+
+        return name.isEmpty() ? null : name;
+    }
+
+    private static String checkPattern(String path, Pattern pattern) {
+        Matcher m = pattern.matcher(path);
+        return m.find() ? m.group(1) : "";
     }
 
     public static boolean isValidChannelUrl(String url) {
