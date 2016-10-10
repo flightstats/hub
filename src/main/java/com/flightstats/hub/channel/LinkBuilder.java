@@ -58,6 +58,12 @@ public class LinkBuilder {
         root.put("creationDate", TimeUtil.FORMATTER.print(new DateTime(config.getCreationDate())));
         root.put("description", config.getDescription());
         root.put("historical", config.isHistorical());
+        if (config.isGlobal()) {
+            ObjectNode global = root.putObject("global");
+            global.put("master", config.getGlobal().getMaster());
+            ArrayNode satellites = global.putArray("satellites");
+            config.getGlobal().getSatellites().forEach(satellites::add);
+        }
         root.put("maxItems", config.getMaxItems());
         root.put("owner", config.getOwner());
         root.put("protect", config.isProtect());
