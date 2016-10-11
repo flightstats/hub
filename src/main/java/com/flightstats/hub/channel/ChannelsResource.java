@@ -1,5 +1,6 @@
 package com.flightstats.hub.channel;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.ConflictException;
@@ -17,6 +18,8 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.Map;
 import java.util.TreeMap;
+
+import static com.flightstats.hub.channel.LinkBuilder.buildChannelConfigResponse;
 
 /**
  * This resource represents the collection of all channels in the Hub.
@@ -51,9 +54,8 @@ public class ChannelsResource {
         logger.debug("post channel {}", json);
         ChannelConfig channelConfig = ChannelConfig.fromJson(json);
         channelConfig = channelService.createChannel(channelConfig);
-        URI channelUri = LinkBuilder.buildChannelUri(channelConfig, uriInfo);
-        return Response.created(channelUri).entity(
-                LinkBuilder.buildChannelLinks(channelConfig, channelUri))
-                .build();
+        URI channelUri = LinkBuilder.buildChannelUri(channelConfig.getName(), uriInfo);
+        ObjectNode output = buildChannelConfigResponse(channelConfig, uriInfo);
+        return Response.created(channelUri).entity(output).build();
     }
 }

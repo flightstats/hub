@@ -39,7 +39,8 @@ public class HealthResource {
         DateTime startTime = HubMain.getStartTime();
         rootNode.put("startTime", startTime.toString());
         rootNode.put("upTimeHours", new Duration(startTime, TimeUtil.now()).getStandardHours());
-        LinkBuilder.addLink("metrics", uriInfo.getBaseUri() + "health/metrics", rootNode);
+        ObjectNode links = rootNode.putObject("_links");
+        LinkBuilder.addLink(links, "metrics", uriInfo.getBaseUriBuilder().path("health").path("metrics").build());
         if (healthStatus.isHealthy()) {
             return Response.ok(rootNode).build();
         } else if (healthCheck.isShuttingDown()) {
