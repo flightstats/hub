@@ -66,7 +66,7 @@ public class CuratorLeader {
             leaderSelector.requeue();
             logger.info("requeue {}", id);
         }
-        LeaderRotator.add(this);
+        Leaders.add(this);
     }
 
     public void close() {
@@ -75,7 +75,7 @@ public class CuratorLeader {
         if (leaderSelector != null) {
             leaderSelector.close();
         }
-        LeaderRotator.remove(this);
+        Leaders.remove(this);
         logger.info("closed {}", id);
     }
 
@@ -110,17 +110,6 @@ public class CuratorLeader {
                 throw new CancelLeadershipException();
             }
         }
-    }
-
-    void abdicate() {
-        if (leadership.hasLeadership()) {
-            logger.info("abdicating leadership for " + id);
-            leadership.setLeadership(false);
-        }
-    }
-
-    double keepLeadershipRate() {
-        return leader.keepLeadershipRate();
     }
 
     String getLeaderPath() {

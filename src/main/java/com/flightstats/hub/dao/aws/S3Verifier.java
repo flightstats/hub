@@ -245,11 +245,6 @@ public class S3Verifier {
         }
 
         @Override
-        public double keepLeadershipRate() {
-            return keepLeadershipRate;
-        }
-
-        @Override
         public void takeLeadership(Leadership leadership) {
             logger.info("taking leadership");
             while (leadership.hasLeadership()) {
