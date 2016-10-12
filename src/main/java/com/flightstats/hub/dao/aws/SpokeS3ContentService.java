@@ -6,6 +6,7 @@ import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.*;
 import com.flightstats.hub.dao.ContentKeyUtil;
 import com.flightstats.hub.exception.InvalidRequestException;
+import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.replication.S3Batch;
@@ -301,6 +302,7 @@ public class SpokeS3ContentService implements ContentService {
         @Override
         protected synchronized void runOneIteration() throws Exception {
             logger.debug("running...");
+            ActiveTraces.start("ChannelLatestUpdatedService");
             channelService.getChannels().forEach(channelConfig -> {
                 try {
                     DateTime time = TimeUtil.stable().plusMinutes(1);
@@ -312,6 +314,7 @@ public class SpokeS3ContentService implements ContentService {
                     logger.warn("unexpected ChannelLatestUpdatedService issue " + channelConfig.getName(), e);
                 }
             });
+            ActiveTraces.end();
         }
 
         @Override
