@@ -21,6 +21,8 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
+import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientResponse;
 import lombok.AllArgsConstructor;
 import lombok.ToString;
 import org.joda.time.DateTime;
@@ -47,8 +49,7 @@ public class S3Verifier {
     private final ExecutorService queryThreadPool = Executors.newFixedThreadPool(30, new ThreadFactoryBuilder().setNameFormat("S3QueryThread-%d").build());
     private final ExecutorService channelThreadPool = Executors.newFixedThreadPool(10, new ThreadFactoryBuilder().setNameFormat("S3ChannelThread-%d").build());
     @Inject
-    private
-    LastContentPath lastContentPath;
+    private LastContentPath lastContentPath;
     @Inject
     private ChannelService channelService;
     @Inject
@@ -59,12 +60,73 @@ public class S3Verifier {
     private ContentDao s3SingleContentDao;
     @Inject
     private S3WriteQueue s3WriteQueue;
+    @Inject
+    private Client followClient;
 
     public S3Verifier() {
         if (HubProperties.getProperty("s3Verifier.run", true)) {
-            HubServices.register(new S3VerifierService("/S3VerifierSingleService", offsetMinutes, this::runSingle),
+            HubServices.register(new S3VerifierService("/S3VerifierSingleService", offsetMinutes, this::verifySingleChannels),
                     HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
         }
+    }
+
+    private void verifySingleChannels() {
+        try {
+            logger.info("Verifying Single S3 data");
+            Iterable<ChannelConfig> channels = channelService.getChannels();
+            for (ChannelConfig channel : channels) {
+                if (channel.isSingle() || channel.isBoth()) {
+                    channelThreadPool.submit(() -> {
+                        String url = HubProperties.getAppUrl() + "internal/s3Verifier/" + channel.getName();
+                        ClientResponse post = followClient.resource(url).post(ClientResponse.class);
+                        logger.debug("response from post {}", post);
+                    });
+                }
+            }
+            logger.info("Completed Verifying Single S3 data");
+        } catch (Exception e) {
+            logger.error("Error: ", e);
+        }
+    }
+
+    void verifyChannel(String channelName) {
+        DateTime now = TimeUtil.now();
+        ChannelConfig channel = channelService.getChannelConfig(channelName, false);
+        VerifierRange range;
+        if (channel.isHistorical()) {
+            range = getHistoricalVerifierRange(now, channel);
+        } else {
+            range = getSingleVerifierRange(now, channel);
+        }
+        if (range != null) {
+            verifyChannel(range);
+        }
+    }
+
+    VerifierRange getSingleVerifierRange(DateTime now, ChannelConfig channel) {
+        VerifierRange range = new VerifierRange(channel);
+        MinutePath spokeTtlTime = getSpokeTtlPath(now);
+        now = channelService.getLastUpdated(channel.getName(), new MinutePath(now)).getTime();
+        DateTime start = now.minusMinutes(1);
+        range.endPath = new MinutePath(start);
+        MinutePath defaultStart = new MinutePath(start.minusMinutes(offsetMinutes));
+        range.startPath = (MinutePath) lastContentPath.get(channel.getName(), defaultStart, LAST_SINGLE_VERIFIED);
+        if (channel.isLive() && range.startPath.compareTo(spokeTtlTime) < 0) {
+            range.startPath = spokeTtlTime;
+        }
+        return range;
+    }
+
+    private void verifyChannel(VerifierRange range) {
+        String channelName = range.channel.getName();
+        SortedSet<ContentKey> keysToAdd = getMissing(range.startPath, range.endPath, channelName, s3SingleContentDao, new TreeSet<>());
+        logger.debug("verifyChannel.starting {}", range);
+        for (ContentKey key : keysToAdd) {
+            logger.trace("found missing {} {}", channelName, key);
+            s3WriteQueue.add(new ChannelContentKey(channelName, key));
+        }
+        logger.debug("verifyChannel.completed {}", range);
+        lastContentPath.updateIncrease(range.endPath, range.channel.getName(), LAST_SINGLE_VERIFIED);
     }
 
     private SortedSet<ContentKey> getMissing(MinutePath startPath, MinutePath endPath, String channelName, ContentDao s3ContentDao,
@@ -115,61 +177,7 @@ public class S3Verifier {
         });
     }
 
-    private void singleS3Verification(VerifierRange range) {
-        runInChannelPool(range, "single", () -> {
-            String channelName = range.channel.getName();
-            SortedSet<ContentKey> keysToAdd = getMissing(range.startPath, range.endPath, channelName, s3SingleContentDao, new TreeSet<>());
-            logger.debug("singleS3Verification.starting {}", range);
-            for (ContentKey key : keysToAdd) {
-                logger.trace("found missing {} {}", channelName, key);
-                s3WriteQueue.add(new ChannelContentKey(channelName, key));
-            }
-            logger.debug("singleS3Verification.completed {}", range);
-            lastContentPath.updateIncrease(range.endPath, range.channel.getName(), LAST_SINGLE_VERIFIED);
-        });
-    }
-
-    private void runInChannelPool(VerifierRange range, String typeName, Runnable runnable) {
-        channelThreadPool.submit(() -> {
-            try {
-                MinutePath currentPath = range.startPath;
-                String channelName = range.channel.getName();
-                Thread.currentThread().setName("s3-" + typeName + "-" + channelName + "-" + currentPath.toUrl());
-                ActiveTraces.start("S3Verifier", typeName, range);
-                logger.debug("S3Verification {} {}", typeName, range);
-                runnable.run();
-            } catch (Exception e) {
-                logger.error("S3Verifier Error" + typeName + ": " + range, e);
-            } finally {
-                ActiveTraces.end();
-            }
-        });
-    }
-
-    private void runSingle() {
-        try {
-            DateTime now = TimeUtil.now();
-            logger.info("Verifying Single S3 data at: {}", now);
-            Iterable<ChannelConfig> channels = channelService.getChannels();
-            for (ChannelConfig channel : channels) {
-                if (channel.isSingle() || channel.isBoth()) {
-                    VerifierRange range;
-                    if (channel.isHistorical()) {
-                        range = getHistoricalVerifierRange(now, channel);
-                    } else {
-                        range = getSingleVerifierRange(now, channel);
-                    }
-                    if (range != null) {
-                        singleS3Verification(range);
-                    }
-                }
-            }
-            logger.info("Completed Verifying Single S3 data at: {}", now);
-        } catch (Exception e) {
-            logger.error("Error: ", e);
-        }
-    }
-
+    //todo gfm - this will go away with the historical re-write
     VerifierRange getHistoricalVerifierRange(DateTime now, ChannelConfig channel) {
         ContentPath lastUpdated = channelService.getLastUpdated(channel.getName(), new MinutePath(now));
         logger.debug("last updated {} {}", channel.getName(), lastUpdated);
@@ -191,20 +199,6 @@ public class S3Verifier {
             } else {
                 range.startPath = (MinutePath) lastVerified;
             }
-        }
-        return range;
-    }
-
-    VerifierRange getSingleVerifierRange(DateTime now, ChannelConfig channel) {
-        VerifierRange range = new VerifierRange(channel);
-        MinutePath spokeTtlTime = getSpokeTtlPath(now);
-        now = channelService.getLastUpdated(channel.getName(), new MinutePath(now)).getTime();
-        DateTime start = now.minusMinutes(1);
-        range.endPath = new MinutePath(start);
-        MinutePath defaultStart = new MinutePath(start.minusMinutes(offsetMinutes));
-        range.startPath = (MinutePath) lastContentPath.get(channel.getName(), defaultStart, LAST_SINGLE_VERIFIED);
-        if (channel.isLive() && range.startPath.compareTo(spokeTtlTime) < 0) {
-            range.startPath = spokeTtlTime;
         }
         return range;
     }
