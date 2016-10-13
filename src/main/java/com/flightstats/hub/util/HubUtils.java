@@ -43,16 +43,30 @@ public class HubUtils {
         this.followClient = followClient;
     }
 
-    public Optional<String> getLatest(String channelUrl) {
-        channelUrl = appendSlash(channelUrl);
-        ClientResponse response = noRedirectsClient.resource(channelUrl + "latest")
-                .accept(MediaType.WILDCARD_TYPE)
-                .head();
-        if (response.getStatus() != Response.Status.SEE_OTHER.getStatusCode()) {
-            logger.info("latest not found for " + channelUrl + " " + response);
-            return Optional.absent();
+    public static void close(ClientResponse response) {
+        if (response != null) {
+            try {
+                response.close();
+            } catch (Exception e) {
+                logger.warn("unable to close " + e);
+            }
         }
-        return Optional.of(response.getLocation().toString());
+    }
+
+    public Optional<String> getLatest(String channelUrl) {
+        ClientResponse response = null;
+        try {
+            response = noRedirectsClient.resource(appendSlash(channelUrl) + "latest")
+                    .accept(MediaType.WILDCARD_TYPE)
+                    .head();
+            if (response.getStatus() != Response.Status.SEE_OTHER.getStatusCode()) {
+                logger.info("latest not found for " + channelUrl + " " + response);
+                return Optional.absent();
+            }
+            return Optional.of(response.getLocation().toString());
+        } finally {
+            HubUtils.close(response);
+        }
     }
 
     private String appendSlash(String channelUrl) {
@@ -66,21 +80,31 @@ public class HubUtils {
         String groupUrl = getSourceUrl(webhook.getChannelUrl()) + "/group/" + webhook.getName();
         String json = webhook.toJson();
         logger.info("starting {} with {}", groupUrl, json);
-        ClientResponse response = followClient.resource(groupUrl)
-                .accept(MediaType.APPLICATION_JSON)
-                .type(MediaType.APPLICATION_JSON)
-                .put(ClientResponse.class, json);
-        logger.info("start group response {}", response);
-        return response;
+        ClientResponse response = null;
+        try {
+            response = followClient.resource(groupUrl)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .type(MediaType.APPLICATION_JSON)
+                    .put(ClientResponse.class, json);
+            logger.info("start group response {}", response);
+            return response;
+        } finally {
+            HubUtils.close(response);
+        }
     }
 
     public void stopGroupCallback(String groupName, String sourceChannel) {
         String groupUrl = getSourceUrl(sourceChannel) + "/group/" + groupName;
         logger.info("stopping {} ", groupUrl);
-        ClientResponse response = followClient.resource(groupUrl)
-                .accept(MediaType.APPLICATION_JSON)
-                .type(MediaType.APPLICATION_JSON)
-                .delete(ClientResponse.class);
+        ClientResponse response = null;
+        try {
+            response = followClient.resource(groupUrl)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .type(MediaType.APPLICATION_JSON)
+                    .delete(ClientResponse.class);
+        } finally {
+            HubUtils.close(response);
+        }
         logger.debug("stop group response {}", response);
 
     }
@@ -91,25 +115,35 @@ public class HubUtils {
 
     public boolean putChannel(String channelUrl, ChannelConfig channelConfig) {
         logger.debug("putting {} {}", channelUrl, channelConfig);
-        ClientResponse response = followClient.resource(channelUrl)
-                .accept(MediaType.APPLICATION_JSON)
-                .type(MediaType.APPLICATION_JSON)
-                .put(ClientResponse.class, channelConfig.toJson());
-        logger.info("put channel response {} {}", channelConfig, response);
-        return response.getStatus() < 400;
+        ClientResponse response = null;
+        try {
+            response = followClient.resource(channelUrl)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .type(MediaType.APPLICATION_JSON)
+                    .put(ClientResponse.class, channelConfig.toJson());
+            logger.info("put channel response {} {}", channelConfig, response);
+            return response.getStatus() < 400;
+        } finally {
+            HubUtils.close(response);
+        }
     }
 
     public ChannelConfig getChannel(String channelUrl) {
         logger.debug("getting {} {}", channelUrl);
-        ClientResponse response = followClient.resource(channelUrl)
-                .accept(MediaType.APPLICATION_JSON)
-                .type(MediaType.APPLICATION_JSON)
-                .get(ClientResponse.class);
-        logger.debug("get channel response {} {}", response);
-        if (response.getStatus() >= 400) {
-            return null;
-        } else {
-            return ChannelConfig.fromJson(response.getEntity(String.class));
+        ClientResponse response = null;
+        try {
+            response = followClient.resource(channelUrl)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .type(MediaType.APPLICATION_JSON)
+                    .get(ClientResponse.class);
+            logger.debug("get channel response {} {}", response);
+            if (response.getStatus() >= 400) {
+                return null;
+            } else {
+                return ChannelConfig.fromJson(response.getEntity(String.class));
+            }
+        } finally {
+            HubUtils.close(response);
         }
     }
 
@@ -118,36 +152,47 @@ public class HubUtils {
         if (content.getContentType().isPresent()) {
             resource = resource.type(content.getContentType().get());
         }
-        ClientResponse response = resource.post(ClientResponse.class, content.getData());
-        logger.trace("got repsonse {}", response);
-        if (response.getStatus() == 201) {
-            return ContentKey.fromFullUrl(response.getLocation().toString());
-        } else {
-            return null;
+        ClientResponse response = null;
+        try {
+            response = resource.post(ClientResponse.class, content.getData());
+            logger.trace("got repsonse {}", response);
+            if (response.getStatus() == 201) {
+                return ContentKey.fromFullUrl(response.getLocation().toString());
+            } else {
+                return null;
+            }
+        } finally {
+            HubUtils.close(response);
         }
     }
 
     public Content get(String channelUrl, ContentKey contentKey) {
-        ClientResponse response = followClient.resource(channelUrl + "/" + contentKey.toUrl())
-                .get(ClientResponse.class);
-        if (response.getStatus() == 200) {
-            Content.Builder builder = Content.builder()
-                    .withStream(response.getEntityInputStream())
-                    .withContentKey(contentKey);
-            MultivaluedMap<String, String> headers = response.getHeaders();
-            if (headers.containsKey("Content-Type")) {
-                builder.withContentType(headers.getFirst("Content-Type"));
+        ClientResponse response = null;
+        try {
+            response = followClient.resource(channelUrl + "/" + contentKey.toUrl())
+                    .get(ClientResponse.class);
+            if (response.getStatus() == 200) {
+                Content.Builder builder = Content.builder()
+                        .withStream(response.getEntityInputStream())
+                        .withContentKey(contentKey);
+                MultivaluedMap<String, String> headers = response.getHeaders();
+                if (headers.containsKey("Content-Type")) {
+                    builder.withContentType(headers.getFirst("Content-Type"));
+                }
+                return builder.build();
+            } else {
+                logger.info("unable to get {} {} {}", channelUrl, contentKey, response);
+                return null;
             }
-            return builder.build();
-        } else {
-            logger.info("unable to get {} {} {}", channelUrl, contentKey, response);
-            return null;
+        } finally {
+            HubUtils.close(response);
         }
     }
 
     public Collection<ContentKey> insert(String channelUrl, BulkContent content) {
+        ClientResponse response = null;
         try {
-            ClientResponse response = followClient.resource(channelUrl + "/bulk")
+            response = followClient.resource(channelUrl + "/bulk")
                     .type(content.getContentType())
                     .post(ClientResponse.class, ByteStreams.toByteArray(content.getStream()));
             logger.trace("got response {}", response);
@@ -156,6 +201,8 @@ public class HubUtils {
             }
         } catch (IOException e) {
             logger.warn("unable to insert bulk " + channelUrl, e);
+        } finally {
+            HubUtils.close(response);
         }
         return Collections.emptyList();
     }
@@ -189,15 +236,18 @@ public class HubUtils {
     }
 
     public boolean delete(String channelUrl) {
+        ClientResponse response = null;
         try {
             logger.info("deleting {}", channelUrl);
-            ClientResponse response = followClient.resource(channelUrl).delete(ClientResponse.class);
+            response = followClient.resource(channelUrl).delete(ClientResponse.class);
             logger.trace("got response {}", response);
             if (response.getStatus() == 202) {
                 return true;
             }
         } catch (Exception e) {
             logger.warn("unable to delete " + channelUrl, e);
+        } finally {
+            HubUtils.close(response);
         }
         return false;
     }

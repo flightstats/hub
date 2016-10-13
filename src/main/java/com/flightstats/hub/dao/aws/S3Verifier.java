@@ -13,6 +13,7 @@ import com.flightstats.hub.exception.FailedQueryException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
+import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
@@ -78,8 +79,13 @@ public class S3Verifier {
                 if (channel.isSingle() || channel.isBoth()) {
                     channelThreadPool.submit(() -> {
                         String url = HubProperties.getAppUrl() + "internal/s3Verifier/" + channel.getName();
-                        ClientResponse post = followClient.resource(url).post(ClientResponse.class);
-                        logger.debug("response from post {}", post);
+                        ClientResponse post = null;
+                        try {
+                            post = followClient.resource(url).post(ClientResponse.class);
+                            logger.debug("response from post {}", post);
+                        } finally {
+                            HubUtils.close(post);
+                        }
                     });
                 }
             }
