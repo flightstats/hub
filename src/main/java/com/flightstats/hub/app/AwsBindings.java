@@ -47,6 +47,7 @@ class AwsBindings extends AbstractModule {
         bind(DynamoUtils.class).asEagerSingleton();
         bind(S3BatchManager.class).asEagerSingleton();
         bind(S3Verifier.class).asEagerSingleton();
+        bind(AppUrlCheck.class).asEagerSingleton();
     }
 
     @Inject
