@@ -5,7 +5,7 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.CuratorCluster;
 import com.flightstats.hub.rest.RestClient;
-import com.flightstats.hub.spoke.RemoteSpokeStore;
+import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -64,7 +64,7 @@ public class TimeService {
         return TimeUtil.now();
     }
 
-    public DateTime getRemoteNow() {
+    DateTime getRemoteNow() {
         for (String server : cluster.getRandomRemoteServers()) {
             ClientResponse response = null;
             try {
@@ -84,7 +84,7 @@ public class TimeService {
             } catch (Exception e) {
                 logger.warn("unable to get time " + server, e);
             } finally {
-                RemoteSpokeStore.close(response);
+                HubUtils.close(response);
             }
         }
         return null;
