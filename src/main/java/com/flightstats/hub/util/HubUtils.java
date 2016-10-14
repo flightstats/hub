@@ -179,7 +179,9 @@ public class HubUtils {
                 if (headers.containsKey("Content-Type")) {
                     builder.withContentType(headers.getFirst("Content-Type"));
                 }
-                return builder.build();
+                Content content = builder.build();
+                content.getData();
+                return content;
             } else {
                 logger.info("unable to get {} {} {}", channelUrl, contentKey, response);
                 return null;
