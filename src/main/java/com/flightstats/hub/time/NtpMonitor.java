@@ -31,7 +31,7 @@ public class NtpMonitor {
 
     public NtpMonitor() {
         if (HubProperties.getProperty("app.runNtpMonitor", true)) {
-            HubServices.register(new TimeMonitorService(), HubServices.TYPE.PRE_START);
+            HubServices.register(new TimeMonitorService());
         } else {
             logger.info("not running NtpMonitor");
         }
