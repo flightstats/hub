@@ -24,11 +24,11 @@ public class HubServices {
     }
 
     public static void registerPreStop(Service service) {
-        register(service, TYPE.PRE_STOP, TYPE.PRE_START);
+        register(service, TYPE.DEFAULT_PRE_START, TYPE.PRE_STOP);
     }
 
     public static void register(Service service) {
-        register(service, TYPE.PRE_START);
+        register(service, TYPE.DEFAULT_PRE_START);
     }
 
     public static void register(Service service, TYPE... types) {
@@ -52,13 +52,15 @@ public class HubServices {
         }
     }
 
-    public static void stopAll() {
+    static void stopAll() {
+        List<Service> allServices = new ArrayList<>();
         for (TYPE type : TYPE.values()) {
-            stop(serviceMap.get(type));
+            allServices.addAll(serviceMap.get(type));
         }
+        stop(allServices);
     }
 
-    public static void preStop() {
+    static void preStop() {
         stop(serviceMap.get(TYPE.PRE_STOP));
     }
 
@@ -82,7 +84,7 @@ public class HubServices {
     }
 
     public enum TYPE {
-        PRE_START,
+        DEFAULT_PRE_START,
         SET_HEALTHY,
         AFTER_HEALTHY_START,
         PRE_STOP,
