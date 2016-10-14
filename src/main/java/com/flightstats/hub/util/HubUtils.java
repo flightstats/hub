@@ -180,6 +180,7 @@ public class HubUtils {
                     builder.withContentType(headers.getFirst("Content-Type"));
                 }
                 Content content = builder.build();
+                //load the data into the Content before closing response
                 content.getData();
                 return content;
             } else {
