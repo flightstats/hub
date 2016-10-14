@@ -1,6 +1,6 @@
-FROM java:8-alpine
+FROM java:8
 
-RUN apk update && apk add bash openntpd curl
+RUN apt-get update && apt-get install -y bash ntp curl
 
 ADD run /opt/hub/bin/run
 
