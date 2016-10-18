@@ -1,4 +1,5 @@
 #!/bin/bash
+## Run this from the root dir of repo, e.g. $ bash docker/attackHubCodeWithGradle.sh
 set -e
 
 # Clean up any old code
