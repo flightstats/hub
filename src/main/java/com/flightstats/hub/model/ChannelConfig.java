@@ -7,69 +7,74 @@ import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @ToString
 @EqualsAndHashCode(of = {"name"})
 @Getter
+@Builder(toBuilder = true)
 public class ChannelConfig implements Serializable, NamedType {
 
     public static final String SINGLE = "SINGLE";
     public static final String BATCH = "BATCH";
     public static final String BOTH = "BOTH";
+
     private static final long serialVersionUID = 1L;
     private static final Gson gson = new GsonBuilder().registerTypeAdapter(Date.class, new HubDateTypeAdapter()).create();
+    private static final ObjectMapper mapper = new ObjectMapper();
+
     private final String name;
     private final String owner;
     private final Date creationDate;
     private final long ttlDays;
     private final long maxItems;
     private final String description;
-    private final Set<String> tags = new TreeSet<>();
+    private final Set<String> tags;
     private final String replicationSource;
     private final String storage;
     private final GlobalConfig global;
     private final boolean historical;
     private final boolean protect;
 
-    private ChannelConfig(Builder builder) {
-        name = StringUtils.trim(builder.name);
-        owner = StringUtils.trim(builder.owner);
-        creationDate = builder.creationDate;
-        historical = builder.historical;
-        if (builder.maxItems == 0 && builder.ttlDays == 0) {
-            ttlDays = 120;
-            maxItems = 0;
+    private ChannelConfig(String name, String owner, Date creationDate, long ttlDays, long maxItems, String description, Set<String> tags, String replicationSource, String storage, GlobalConfig global, boolean historical, boolean protect) {
+        this.name = StringUtils.trim(name);
+        this.owner = StringUtils.trim(owner);
+        this.creationDate = creationDate;
+        this.historical = historical;
+        if (maxItems == 0 && ttlDays == 0) {
+            this.ttlDays = 120;
+            this.maxItems = 0;
         } else {
-            ttlDays = builder.ttlDays;
-            maxItems = builder.maxItems;
+            this.ttlDays = ttlDays;
+            this.maxItems = maxItems;
         }
-        description = StringUtils.defaultString(builder.description, "");
-        tags.addAll(builder.tags);
-        if (StringUtils.isBlank(builder.replicationSource)) {
-            replicationSource = "";
+        this.description = description;
+        this.tags = tags;
+        this.replicationSource = replicationSource;
+        if (StringUtils.isBlank(replicationSource)) {
             tags.remove(BuiltInTag.REPLICATED.toString());
         } else {
-            replicationSource = builder.replicationSource;
             tags.add(BuiltInTag.REPLICATED.toString());
         }
-        if (StringUtils.isBlank(builder.storage)) {
-            storage = SINGLE;
+        if (StringUtils.isBlank(storage)) {
+            this.storage = SINGLE;
         } else {
-            storage = StringUtils.upperCase(builder.storage);
+            this.storage = StringUtils.upperCase(storage);
         }
-        if (builder.global != null) {
-            global = builder.global.cleanup();
+        if (global != null) {
+            this.global = global.cleanup();
         } else {
-            global = null;
+            this.global = null;
         }
         if (isGlobal()) {
             tags.add(BuiltInTag.GLOBAL.toString());
@@ -82,30 +87,60 @@ public class ChannelConfig implements Serializable, NamedType {
             tags.remove(BuiltInTag.HISTORICAL.toString());
         }
         if (HubProperties.isProtected()) {
-            protect = true;
+            this.protect = true;
         } else {
-            protect = builder.protect;
+            this.protect = protect;
         }
     }
 
-    public static ChannelConfig fromJson(String json) {
+    public static ChannelConfig createFromJson(String json) {
         if (StringUtils.isEmpty(json)) {
             throw new InvalidRequestException("this method requires at least a json name");
+        } else {
+            return gson.fromJson(json, ChannelConfig.ChannelConfigBuilder.class).build();
         }
-        return gson.fromJson(json, ChannelConfig.Builder.class).build();
     }
 
-    public static ChannelConfig fromJsonName(String json, String name) {
+    public static ChannelConfig createFromJsonWithName(String json, String name) {
         if (StringUtils.isEmpty(json)) {
-            return builder().withName(name).build();
+            return builder().name(name).build();
+        } else {
+            return gson.fromJson(json, ChannelConfig.ChannelConfigBuilder.class).name(name).build();
         }
-        return gson.fromJson(json, ChannelConfig.Builder.class)
-                .withName(name)
-                .build();
     }
 
-    public static Builder builder() {
-        return new Builder();
+    public static ChannelConfig updateFromJson(ChannelConfig config, String json) {
+        ChannelConfigBuilder builder = config.toBuilder();
+        JsonNode rootNode = readJSON(json);
+
+        if (rootNode.has("owner")) builder.owner(getValue(rootNode.get("owner")));
+        if (rootNode.has("description")) builder.description(getValue(rootNode.get("description")));
+        if (rootNode.has("ttlDays")) builder.ttlDays(rootNode.get("ttlDays").asLong());
+        if (rootNode.has("maxItems")) builder.maxItems(rootNode.get("maxItems").asLong());
+        if (rootNode.has("tags")) builder.tags(rootNode.findValuesAsText("tags"));
+        if (rootNode.has("replicationSource")) builder.replicationSource(getValue(rootNode.get("replicationSource")));
+        if (rootNode.has("storage")) builder.storage(getValue(rootNode.get("storage")));
+        if (rootNode.has("global")) builder.global(GlobalConfig.parseJson(rootNode.get("global")));
+        if (rootNode.has("historical")) builder.historical(rootNode.get("historical").asBoolean());
+        if (rootNode.has("protect")) builder.protect(rootNode.get("protect").asBoolean());
+
+        return builder.build();
+    }
+
+    private static JsonNode readJSON(String json) {
+        try {
+            return mapper.readTree(json);
+        } catch (Exception e) {
+            throw new RuntimeException("couldn't read json: " + json);
+        }
+    }
+
+    private static String getValue(JsonNode jsonNode) {
+        String value = jsonNode.asText();
+        if (value.equals("null")) {
+            value = "";
+        }
+        return value;
     }
 
     public String toJson() {
@@ -189,148 +224,23 @@ public class ChannelConfig implements Serializable, NamedType {
         return false;
     }
 
-    public static class Builder {
-        private static final ObjectMapper mapper = new ObjectMapper();
-        private String name;
+    public static class ChannelConfigBuilder {
         private String owner = "";
-        private Date creationDate = new Date();
-        private long ttlDays = 0;
         private String description = "";
         private Set<String> tags = new HashSet<>();
         private String replicationSource = "";
-        private long maxItems = 0;
-        private String storage;
-        private GlobalConfig global;
-        private boolean historical;
+        private String storage = "";
         private boolean protect = HubProperties.isProtected();
 
-        public Builder() {
-        }
-
-        public Builder withChannelConfiguration(ChannelConfig config) {
-            this.name = config.name;
-            this.creationDate = config.creationDate;
-            this.ttlDays = config.ttlDays;
-            this.maxItems = config.maxItems;
-            this.description = config.description;
-            this.tags.addAll(config.getTags());
-            this.replicationSource = config.replicationSource;
-            this.owner = config.owner;
-            this.storage = config.storage;
-            this.global = config.global;
-            this.historical = config.historical;
-            this.protect = config.protect;
+        public ChannelConfigBuilder tags(List<String> tagList) {
+            this.tags.clear();
+            this.tags.addAll(tagList.stream().map(Function.identity()).collect(Collectors.toSet()));
             return this;
         }
 
-        public Builder withUpdateJson(String json) throws IOException {
-            JsonNode rootNode = mapper.readTree(json);
-            if (rootNode.has("owner")) {
-                withOwner(getValue(rootNode.get("owner")));
-            }
-            if (rootNode.has("description")) {
-                withDescription(getValue(rootNode.get("description")));
-            }
-            if (rootNode.has("ttlDays")) {
-                withTtlDays(rootNode.get("ttlDays").asLong());
-            }
-            if (rootNode.has("maxItems")) {
-                withMaxItems(rootNode.get("maxItems").asLong());
-            }
-            if (rootNode.has("tags")) {
-                tags.clear();
-                JsonNode tagsNode = rootNode.get("tags");
-                for (JsonNode tagNode : tagsNode) {
-                    tags.add(tagNode.asText());
-                }
-            }
-            if (rootNode.has("replicationSource")) {
-                withReplicationSource(rootNode.get("replicationSource").asText());
-            }
-            if (rootNode.has("storage")) {
-                withStorage(rootNode.get("storage").asText());
-            }
-            if (rootNode.has("global")) {
-                global = GlobalConfig.parseJson(rootNode.get("global"));
-            }
-            if (rootNode.has("historical")) {
-                withHistorical(rootNode.get("historical").asBoolean());
-            }
-            if (rootNode.has("protect")) {
-                protect = rootNode.get("protect").asBoolean();
-            }
-            return this;
-        }
-
-        private String getValue(JsonNode jsonNode) {
-            String value = jsonNode.asText();
-            if (value.equals("null")) {
-                value = "";
-            }
-            return value;
-        }
-
-        public Builder withName(String name) {
-            this.name = name;
-            return this;
-        }
-
-        public Builder withTtlDays(long ttlDays) {
-            this.ttlDays = ttlDays;
-            return this;
-        }
-
-        public Builder withMaxItems(long maxItems) {
-            this.maxItems = maxItems;
-            return this;
-        }
-
-        public Builder withCreationDate(Date date) {
-            this.creationDate = date;
-            return this;
-        }
-
-        public Builder withTags(Collection<String> tags) {
-            this.tags.addAll(tags);
-            return this;
-        }
-
-        public ChannelConfig build() {
-            return new ChannelConfig(this);
-        }
-
-        public Builder withDescription(String description) {
-            this.description = description;
-            return this;
-        }
-
-        public Builder withReplicationSource(String replicationSource) {
-            this.replicationSource = replicationSource;
-            return this;
-        }
-
-        public Builder withOwner(String owner) {
-            this.owner = owner;
-            return this;
-        }
-
-        public Builder withStorage(String storage) {
-            this.storage = storage;
-            return this;
-        }
-
-        public Builder withGlobal(GlobalConfig global) {
-            this.global = global;
-            return this;
-        }
-
-        public Builder withHistorical(boolean historical) {
-            this.historical = historical;
-            return this;
-        }
-
-        public Builder withProtect(boolean protect) {
-            this.protect = protect;
+        public ChannelConfigBuilder tags(Set<String> tagSet) {
+            this.tags.clear();
+            this.tags.addAll(tagSet);
             return this;
         }
     }

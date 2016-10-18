@@ -27,12 +27,12 @@ public class FileChannelConfigurationDao implements Dao<ChannelConfig> {
 
     @Override
     public ChannelConfig get(String name) {
-        return FileUtil.readJson(channelPath, name, ChannelConfig::fromJson);
+        return FileUtil.readJson(channelPath, name, ChannelConfig::createFromJson);
     }
 
     @Override
     public Collection<ChannelConfig> getAll(boolean useCache) {
-        return FileUtil.getIterable(channelPath, ChannelConfig::fromJson);
+        return FileUtil.getIterable(channelPath, ChannelConfig::createFromJson);
     }
 
     @Override
