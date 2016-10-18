@@ -1,7 +1,5 @@
 package com.flightstats.hub.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.app.HubProperties;
@@ -10,6 +8,7 @@ import com.flightstats.hub.util.TimeUtil;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.ToString;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
@@ -20,6 +19,7 @@ import java.util.*;
 
 @ToString
 @EqualsAndHashCode(of = {"name"})
+@Getter
 public class ChannelConfig implements Serializable, NamedType {
 
     public static final String SINGLE = "SINGLE";
@@ -112,22 +112,6 @@ public class ChannelConfig implements Serializable, NamedType {
         return gson.toJson(this);
     }
 
-    @JsonProperty("name")
-    public String getName() {
-        return name;
-    }
-
-    @JsonProperty("creationDate")
-    public Date getCreationDate() {
-        return creationDate;
-    }
-
-    @JsonProperty("ttlDays")
-    public long getTtlDays() {
-        return ttlDays;
-    }
-
-    @JsonIgnore
     public DateTime getTtlTime() {
         if (historical) {
             return TimeUtil.now().minusDays((int) ttlDays);
@@ -135,91 +119,38 @@ public class ChannelConfig implements Serializable, NamedType {
         return TimeUtil.getEarliestTime(ttlDays);
     }
 
-    @JsonProperty("description")
-    public String getDescription() {
-        return description;
-    }
-
-    @JsonProperty("tags")
-    public Set<String> getTags() {
-        return tags;
-    }
-
-    @JsonProperty("replicationSource")
-    public String getReplicationSource() {
-        return replicationSource;
-    }
-
-    @JsonProperty("maxItems")
-    public long getMaxItems() {
-        return maxItems;
-    }
-
-    @JsonProperty("owner")
-    public String getOwner() {
-        return owner;
-    }
-
-    @JsonProperty("storage")
-    public String getStorage() {
-        return storage;
-    }
-
-    @JsonProperty("global")
-    public GlobalConfig getGlobal() {
-        return global;
-    }
-
-    @JsonProperty("protect")
-    public boolean isProtect() {
-        return protect;
-    }
-
-    @JsonIgnore
     public boolean isGlobal() {
         return global != null;
     }
 
-    @JsonIgnore
     public boolean isGlobalMaster() {
         return isGlobal() && global.isMaster();
     }
 
-    @JsonIgnore
     public boolean isGlobalSatellite() {
         return isGlobal() && !global.isMaster();
     }
 
-    @JsonIgnore
     public boolean isReplicating() {
         return StringUtils.isNotBlank(replicationSource) || isGlobalSatellite();
     }
 
-    public boolean isHistorical() {
-        return historical;
-    }
-
-    @JsonIgnore
     public boolean isLive() {
         return !isHistorical() && !isReplicating();
     }
 
-    @JsonIgnore
     public boolean isValidStorage() {
         return storage.equals(SINGLE) || storage.equals(BATCH) || storage.equals(BOTH);
     }
 
-    @JsonIgnore
     public boolean isSingle() {
         return storage.equals(SINGLE);
     }
 
-    @JsonIgnore
     public boolean isBatch() {
         return storage.equals(BATCH);
     }
 
-    @JsonIgnore
     public boolean isBoth() {
         return storage.equals(BOTH);
     }
