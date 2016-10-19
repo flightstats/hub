@@ -226,6 +226,7 @@ public class ChannelConfig implements Serializable, NamedType {
 
     public static class ChannelConfigBuilder {
         private String owner = "";
+        private Date creationDate = new Date();
         private String description = "";
         private Set<String> tags = new HashSet<>();
         private String replicationSource = "";
