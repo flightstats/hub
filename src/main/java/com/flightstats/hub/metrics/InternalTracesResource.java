@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubHost;
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.cluster.CuratorCluster;
 
@@ -20,15 +19,12 @@ public class InternalTracesResource {
 
     private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     public static final String DESCRIPTION = "Shows active requests, the slowest 100, and the latest 100 with links to other hubs in the cluster";
+    private static final CuratorCluster curatorCluster = HubProvider.getInstance(CuratorCluster.class, "HubCuratorCluster");
 
     public static ObjectNode serverAndServers(String path) {
         ObjectNode root = mapper.createObjectNode();
         root.put("server", HubHost.getLocalHttpNameUri() + path);
         ArrayNode servers = root.putArray("servers");
-        CuratorCluster curatorCluster = HubProvider.getInstance(CuratorCluster.class, "HubCuratorCluster");
-        if (HubProperties.isAppEncrypted()) {
-            curatorCluster = HubProvider.getInstance(CuratorCluster.class, "SpokeCuratorCluster");
-        }
         for (String spokeServer : curatorCluster.getServers()) {
             servers.add(HubHost.getScheme() + spokeServer + path);
         }
