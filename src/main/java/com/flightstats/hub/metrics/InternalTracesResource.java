@@ -18,14 +18,14 @@ import javax.ws.rs.core.Response;
 public class InternalTracesResource {
 
     private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private static final CuratorCluster hubCuratorCluster = HubProvider.getInstance(CuratorCluster.class, "HubCuratorCluster");
     public static final String DESCRIPTION = "Shows active requests, the slowest 100, and the latest 100 with links to other hubs in the cluster";
+    private static final CuratorCluster curatorCluster = HubProvider.getInstance(CuratorCluster.class, "HubCuratorCluster");
 
     public static ObjectNode serverAndServers(String path) {
         ObjectNode root = mapper.createObjectNode();
         root.put("server", HubHost.getLocalHttpNameUri() + path);
         ArrayNode servers = root.putArray("servers");
-        for (String spokeServer : hubCuratorCluster.getServers()) {
+        for (String spokeServer : curatorCluster.getServers()) {
             servers.add(HubHost.getScheme() + spokeServer + path);
         }
         return root;
