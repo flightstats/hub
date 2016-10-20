@@ -64,7 +64,7 @@ JAVA_OPTS="$JAVA_OPTS
 
 #gc logging 
 JAVA_OPTS="$JAVA_OPTS
- -Xloggc:/var/log/gc.log-$(date -u '+%Y-%m-%d-%H-%M-%S')"
+ -Xloggc:/mnt/log/gc.log-$(date -u '+%Y-%m-%d-%H-%M-%S')"
 
 JAVA_OPTS="$JAVA_OPTS
  -Dfile.encoding=UTF-8"
@@ -90,7 +90,7 @@ function shutdownChild()
         fi
 
         kill -QUIT $CHILDPID
-        sleep 1
+        sleep 5
 
         kill -TERM $CHILDPID
         echo signal sent, waiting ...
