@@ -5,7 +5,7 @@ import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.TtlEnforcer;
 import com.flightstats.hub.model.ChannelConfig;
-import com.flightstats.hub.util.FileUtil;
+import com.flightstats.hub.util.Commander;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
@@ -20,7 +20,7 @@ import java.util.function.Consumer;
 @Singleton
 public class ChannelTtlEnforcer {
     private final static Logger logger = LoggerFactory.getLogger(ChannelTtlEnforcer.class);
-    private final String storagePath = HubProperties.getProperty("spoke.path", "/spoke");
+    private final String storagePath = HubProperties.getSpokePath();
     @Inject
     private ChannelService channelService;
 
@@ -36,7 +36,7 @@ public class ChannelTtlEnforcer {
             String channelPath = storagePath + "/" + channel.getName();
             DateTime channelTTL = TimeUtil.stable().minusDays((int) channel.getTtlDays());
             for (int i = 0; i < 3; i++) {
-                FileUtil.runCommand(new String[]{"rm", "-rf", channelPath + "/" + TimeUtil.days(channelTTL.minusDays(i))}, 1);
+                Commander.run(new String[]{"rm", "-rf", channelPath + "/" + TimeUtil.days(channelTTL.minusDays(i))}, 1);
             }
         };
     }

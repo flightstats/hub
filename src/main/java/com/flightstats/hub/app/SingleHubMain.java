@@ -12,7 +12,9 @@ import com.google.common.io.Files;
 public class SingleHubMain {
 
     public static void main(String[] args) throws Exception {
+        System.out.println("***************************");
         System.out.println("starting up single Hub");
+        System.out.println("***************************");
         HubProperties.setProperty("hub.type", "test");
         HubProperties.setProperty("app.name", "hub");
         HubProperties.setProperty("app.environment", "single");

@@ -1,19 +1,45 @@
 package com.flightstats.hub.util;
 
 import com.amazonaws.util.StringUtils;
+import com.google.common.base.Function;
 import com.google.common.io.ByteStreams;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class FileUtil {
-    private final static Logger logger = LoggerFactory.getLogger(FileUtil.class);
+public class Commander {
+    private final static Logger logger = LoggerFactory.getLogger(Commander.class);
 
-    public static String runCommand(String[] command, int waitTimeSeconds) {
-        String output = "";
+    public static String run(String[] command, int waitTimeSeconds) {
+        return process(command, waitTimeSeconds,
+                (input -> {
+                    try {
+                        return new String(ByteStreams.toByteArray(input));
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }));
+    }
+
+    public static List<String> runLines(String[] command, int waitTimeSeconds) {
+        return process(command, waitTimeSeconds,
+                (input -> {
+                    try {
+                        return IOUtils.readLines(input);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }));
+    }
+
+    private static <T> T process(String[] command, int waitTimeSeconds, Function<InputStream, T> processor) {
+        T output = null;
         try {
             logger.trace("running " + StringUtils.join(" ", command));
             long start = System.currentTimeMillis();
@@ -22,7 +48,7 @@ public class FileUtil {
                     .start();
             boolean waited = process.waitFor(waitTimeSeconds, TimeUnit.SECONDS);
             InputStream inputStream = new BufferedInputStream(process.getInputStream());
-            output = new String(ByteStreams.toByteArray(inputStream));
+            output = processor.apply(inputStream);
             long time = System.currentTimeMillis() - start;
             if (waited) {
                 logger.trace("waited " + waited + " for " + time);

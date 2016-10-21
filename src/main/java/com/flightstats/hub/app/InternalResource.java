@@ -47,6 +47,7 @@ public class InternalResource {
         addLink("properties", InternalPropertiesResource.DESCRIPTION);
         addLink("shutdown", InternalShutdownResource.DESCRIPTION);
         addLink("stacktrace", InternalStacktraceResource.DESCRIPTION);
+        addLink("system", InternalStacktraceResource.DESCRIPTION);
         addLink("time", InternalTimeResource.DESCRIPTION);
         addLink("traces", InternalTracesResource.DESCRIPTION);
         addLink("webhook", InternalWebhookResource.DESCRIPTION);

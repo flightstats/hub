@@ -5,7 +5,7 @@ import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.TtlEnforcer;
 import com.flightstats.hub.model.ChannelConfig;
-import com.flightstats.hub.util.FileUtil;
+import com.flightstats.hub.util.Commander;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.AbstractScheduledService;
@@ -21,7 +21,7 @@ import java.util.function.Consumer;
 @Singleton
 public class SpokeTtlEnforcer {
     private final static Logger logger = LoggerFactory.getLogger(SpokeTtlEnforcer.class);
-    private final String storagePath = HubProperties.getProperty("spoke.path", "/spoke");
+    private final String storagePath = HubProperties.getSpokePath();
     private final int ttlMinutes = HubProperties.getSpokeTtl() + 1;
     @Inject
     private ChannelService channelService;
@@ -40,11 +40,11 @@ public class SpokeTtlEnforcer {
             if (channel.isLive()) {
                 DateTime ttlDateTime = TimeUtil.stable().minusMinutes(ttlMinutes + 1);
                 for (int i = 0; i < 3; i++) {
-                    FileUtil.runCommand(new String[]{"rm", "-rf", channelPath + "/" + TimeUtil.minutes(ttlDateTime.minusMinutes(i))}, 1);
-                    FileUtil.runCommand(new String[]{"rm", "-rf", channelPath + "/" + TimeUtil.hours(ttlDateTime.minusHours(i + 1))}, 5);
+                    Commander.run(new String[]{"rm", "-rf", channelPath + "/" + TimeUtil.minutes(ttlDateTime.minusMinutes(i))}, 1);
+                    Commander.run(new String[]{"rm", "-rf", channelPath + "/" + TimeUtil.hours(ttlDateTime.minusHours(i + 1))}, 5);
                 }
             } else {
-                FileUtil.runCommand(new String[]{"find", channelPath, "-mmin", "+" + ttlMinutes, "-delete"}, 1);
+                Commander.run(new String[]{"find", channelPath, "-mmin", "+" + ttlMinutes, "-delete"}, 1);
             }
         };
     }
@@ -73,7 +73,7 @@ public class SpokeTtlEnforcer {
         @Override
         protected void startUp() throws Exception {
             logger.info("performing Spoke cleanup");
-            FileUtil.runCommand(new String[]{"find", storagePath, "-mmin", "+" + ttlMinutes, "-delete"}, 10 * 60);
+            Commander.run(new String[]{"find", storagePath, "-mmin", "+" + ttlMinutes, "-delete"}, 10 * 60);
             logger.info("completed Spoke cleanup");
         }
 
