@@ -8,6 +8,7 @@ import com.flightstats.hub.dao.aws.*;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.spoke.RemoteSpokeStore;
 import com.flightstats.hub.spoke.SpokeContentDao;
+import com.flightstats.hub.spoke.SpokeTtlEnforcer;
 import com.flightstats.hub.webhook.Webhook;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
@@ -48,6 +49,7 @@ class AwsBindings extends AbstractModule {
         bind(S3BatchManager.class).asEagerSingleton();
         bind(S3Verifier.class).asEagerSingleton();
         bind(AppUrlCheck.class).asEagerSingleton();
+        bind(SpokeTtlEnforcer.class).asEagerSingleton();
     }
 
     @Inject
