@@ -6,6 +6,10 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 
+/**
+ * The HubCuratorCluster uses the fully qualifed domain name of each host.
+ * A Hub instance is added to this cluster after a healthy start.
+ */
 @Singleton
 public class HubClusterRegister {
 

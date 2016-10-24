@@ -5,8 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.metrics.InternalTracesResource;
+import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.HubUtils;
-import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 
 import javax.ws.rs.GET;
@@ -22,7 +22,6 @@ import java.io.IOException;
 @Path("/internal/health")
 public class InternalHealthResource {
     public static final String DESCRIPTION = "See status of all hubs in a cluster.";
-    private static final Client client = HubProvider.getInstance(Client.class);
     private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     @Context
     private UriInfo uriInfo;
@@ -42,7 +41,7 @@ public class InternalHealthResource {
     private void callHealth(ObjectNode root, String link) {
         ClientResponse response = null;
         try {
-            response = client.resource(link).get(ClientResponse.class);
+            response = RestClient.defaultClient().resource(link).get(ClientResponse.class);
             String string = response.getEntity(String.class);
             JsonNode jsonNode = mapper.readTree(string);
             root.set(link, jsonNode);

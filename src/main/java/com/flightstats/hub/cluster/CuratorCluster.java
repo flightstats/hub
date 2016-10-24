@@ -1,7 +1,6 @@
 package com.flightstats.hub.cluster;
 
 import com.flightstats.hub.app.HubHost;
-import com.flightstats.hub.app.HubProperties;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -66,7 +65,7 @@ public class CuratorCluster {
     }
 
     private static String getHost(boolean useName) {
-        if (HubProperties.getProperty("app.encrypted", false) || useName) {
+        if (useName) {
             return HubHost.getLocalNamePort();
         } else {
             return HubHost.getLocalAddressPort();

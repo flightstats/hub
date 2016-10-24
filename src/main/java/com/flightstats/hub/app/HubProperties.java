@@ -19,6 +19,10 @@ public class HubProperties {
         return StringUtils.appendIfMissing(HubProperties.getProperty("app.url", ""), "/");
     }
 
+    public static boolean isAppEncrypted() {
+        return HubProperties.getProperty("app.encrypted", false);
+    }
+
     public static int getSpokeTtl() {
         return getProperty("spoke.ttlMinutes", 60);
     }

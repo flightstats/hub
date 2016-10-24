@@ -6,6 +6,10 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
+/**
+ * The SpokeClusterRegister uses ip addresses of each instance in the cluster.
+ * It is created before the node is added to the load balancer.
+ */
 public class SpokeClusterRegister {
 
     @Inject
