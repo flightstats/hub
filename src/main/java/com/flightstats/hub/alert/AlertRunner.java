@@ -48,11 +48,6 @@ public class AlertRunner implements Leader {
     }
 
     @Override
-    public double keepLeadershipRate() {
-        return 0.99;
-    }
-
-    @Override
     public void takeLeadership(Leadership leadership) {
         while (leadership.hasLeadership()) {
             try {

@@ -1,7 +1,6 @@
 package com.flightstats.hub.webhook;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.cluster.CuratorLeader;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.cluster.Leader;
@@ -45,7 +44,6 @@ class WebhookLeader implements Leader {
 
     private static final Client client = RestClient.createClient(60, 120, true, false);
     private final AtomicBoolean deleteOnExit = new AtomicBoolean();
-    private final double keepLeadershipRate = HubProperties.getProperty("webhook.keepLeadershipRate", 0.98);
 
     @Inject
     private CuratorFramework curator;
@@ -72,11 +70,6 @@ class WebhookLeader implements Leader {
     private WebhookStrategy webhookStrategy;
     private AtomicReference<ContentPath> lastUpdated = new AtomicReference<>();
     private String id = RandomStringUtils.randomAlphanumeric(4);
-
-    @Inject
-    public WebhookLeader() {
-        logger.info("keep leadership rate {}", keepLeadershipRate);
-    }
 
     void setWebhook(Webhook webhook) {
         this.webhook = webhook;
@@ -137,11 +130,6 @@ class WebhookLeader implements Leader {
             webhookStrategy = null;
             executorService = null;
         }
-    }
-
-    @Override
-    public double keepLeadershipRate() {
-        return keepLeadershipRate;
     }
 
     @Override

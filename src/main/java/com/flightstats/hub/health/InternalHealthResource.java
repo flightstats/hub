@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.metrics.InternalTracesResource;
-import com.flightstats.hub.spoke.RemoteSpokeStore;
+import com.flightstats.hub.util.HubUtils;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 
@@ -49,7 +49,7 @@ public class InternalHealthResource {
         } catch (IOException e) {
             root.put(link, "unable to get response " + e.getMessage());
         } finally {
-            RemoteSpokeStore.close(response);
+            HubUtils.close(response);
         }
     }
 

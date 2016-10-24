@@ -27,7 +27,7 @@ import static com.flightstats.hub.util.StaleUtil.addStaleEntities;
 @Path("/internal/webhook")
 public class InternalWebhookResource {
 
-    public static final String DESCRIPTION = "Check the staleness of webhooks.";
+    public static final String DESCRIPTION = "Get a list of stale or erroring webhooks.";
     private static final Long DEFAULT_STALE_AGE = TimeUnit.HOURS.toMinutes(1);
 
     private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
