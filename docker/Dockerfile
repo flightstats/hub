@@ -6,6 +6,8 @@ ADD run /opt/hub/bin/run
 
 ADD hub /opt/hub
 
+ADD logback.xml /etc/hub/logback.xml
+
 RUN chmod +x /opt/hub/bin/*
 
 # singleHubMain uses 80, hubMain uses 8080 and is assumed to be behind a load-balancer

@@ -21,7 +21,7 @@ JMXREMOTE_PORT=8888
 MAIN_CLASS=${2}
 MIN_HEAP=${3:-256m}
 MAX_HEAP=${4:-512m}
-MIN_NEW=${5-10m}
+MIN_NEW=${5:-10m}
 
 if [[ $MAIN_CLASS == "com.flightstats.hub.app.HubMain" ]]; then
   CONFIG="${CONF_DIR}/${APP}.properties"
