@@ -20,6 +20,11 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import static com.flightstats.hub.model.BuiltInTag.GLOBAL;
+import static com.flightstats.hub.model.BuiltInTag.HISTORICAL;
+import static com.flightstats.hub.model.BuiltInTag.REPLICATED;
+import static org.apache.commons.lang3.StringUtils.isBlank;
+
 @ToString
 @EqualsAndHashCode(of = {"name"})
 @Getter
@@ -52,6 +57,10 @@ public class ChannelConfig implements Serializable, NamedType {
         this.owner = StringUtils.trim(owner);
         this.creationDate = creationDate;
         this.historical = historical;
+        this.description = description;
+        this.tags = tags;
+        this.replicationSource = replicationSource;
+
         if (maxItems == 0 && ttlDays == 0) {
             this.ttlDays = 120;
             this.maxItems = 0;
@@ -59,38 +68,35 @@ public class ChannelConfig implements Serializable, NamedType {
             this.ttlDays = ttlDays;
             this.maxItems = maxItems;
         }
-        this.description = description;
-        this.tags = tags;
-        this.replicationSource = replicationSource;
-        if (StringUtils.isBlank(replicationSource)) {
-            tags.remove(BuiltInTag.REPLICATED.toString());
-        } else {
-            tags.add(BuiltInTag.REPLICATED.toString());
-        }
-        if (StringUtils.isBlank(storage)) {
+
+        if (isBlank(storage)) {
             this.storage = SINGLE;
         } else {
             this.storage = StringUtils.upperCase(storage);
         }
+
         if (global != null) {
             this.global = global.cleanup();
         } else {
             this.global = null;
         }
-        if (isGlobal()) {
-            tags.add(BuiltInTag.GLOBAL.toString());
-        } else {
-            tags.remove(BuiltInTag.GLOBAL.toString());
-        }
-        if (isHistorical()) {
-            tags.add(BuiltInTag.HISTORICAL.toString());
-        } else {
-            tags.remove(BuiltInTag.HISTORICAL.toString());
-        }
+
+        addTagIf(!isBlank(replicationSource), REPLICATED);
+        addTagIf(isGlobal(), GLOBAL);
+        addTagIf(isHistorical(), HISTORICAL);
+
         if (HubProperties.isProtected()) {
             this.protect = true;
         } else {
             this.protect = protect;
+        }
+    }
+
+    private void addTagIf(boolean shouldBeTagged, BuiltInTag tag) {
+        if (shouldBeTagged) {
+            tags.add(tag.toString());
+        } else {
+            tags.remove(tag.toString());
         }
     }
 
