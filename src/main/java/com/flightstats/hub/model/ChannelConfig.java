@@ -236,7 +236,7 @@ public class ChannelConfig implements Serializable, NamedType {
         private String owner = "";
         private Date creationDate = new Date();
         private String description = "";
-        private Set<String> tags = new HashSet<>();
+        private TreeSet<String> tags = new TreeSet<>();
         private String replicationSource = "";
         private String storage = "";
         private boolean protect = HubProperties.isProtected();
