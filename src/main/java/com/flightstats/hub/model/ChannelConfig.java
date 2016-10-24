@@ -132,7 +132,7 @@ public class ChannelConfig implements Serializable, NamedType {
         try {
             return mapper.readTree(json);
         } catch (Exception e) {
-            throw new RuntimeException("couldn't read json: " + json);
+            throw new InvalidRequestException("couldn't read json: " + json);
         }
     }
 
@@ -145,7 +145,7 @@ public class ChannelConfig implements Serializable, NamedType {
     }
 
     private static Set<String> getSet(JsonNode node) {
-        if (!node.isArray()) throw new RuntimeException("node is not an array: " + node.toString());
+        if (!node.isArray()) throw new InvalidRequestException("json node is not an array: " + node.toString());
         return StreamSupport.stream(node.spliterator(), false)
                 .map(JsonNode::asText)
                 .collect(Collectors.toSet());
