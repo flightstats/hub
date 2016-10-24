@@ -6,27 +6,33 @@ LocustWhale - locust.io in docker
 Dockerfile: 
 
 ```
-FROM alpine:3.2
+FROM ubuntu:xenial
 
-RUN apk -U add ca-certificates python python-dev py-pip build-base && \
-    pip install locustio pyzmq websocket httplib2 && \
-    apk del python-dev && \
-    rm -r /var/cache/apk/* && \
+RUN apt-get update && \
+    apt-get install -y build-essential libreadline-gplv2-dev libncursesw5-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev \
+    python2.7 python-dev python-pip libevent-dev
+
+RUN pip install locustio pyzmq websocket-client httplib2 && \
     mkdir /locust
 
 WORKDIR /locust
 
+#RUN test -f requirements.txt && pip install -r requirements.txt
 
 ADD . /locust
 
 EXPOSE 8089 5557 5558
+
+ENTRYPOINT ["/usr/local/bin/locust", "-f"]
 ```
 
-This creates a docker image with python, locustio, and the scripts in this dir at /locust.
+This creates a docker image with python, locustio, and the scripts in this dir at /locust
+which is also the working dir for the container. 
 
-Run it by using something like the following:
+Run it by using something like the following, supplying the filename of the .py test
+to run, and the host to run it against :
 
 ```
-docker run -p 8089:8089 -p 5557:5557 -p 5558:5558 locust:latest /usr/bin/locust -f single.py --host http://hub-endpoint:8080/
+docker run -p 8089:8089 -p 5557:5557 -p 5558:5558 locust:latest single.py --host http://dev.hub-endpoint.org/
 ```
 
