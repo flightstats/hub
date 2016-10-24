@@ -18,6 +18,7 @@ import java.io.Serializable;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @ToString
 @EqualsAndHashCode(of = {"name"})
@@ -113,13 +114,13 @@ public class ChannelConfig implements Serializable, NamedType {
         ChannelConfigBuilder builder = config.toBuilder();
         JsonNode rootNode = readJSON(json);
 
-        if (rootNode.has("owner")) builder.owner(getValue(rootNode.get("owner")));
-        if (rootNode.has("description")) builder.description(getValue(rootNode.get("description")));
+        if (rootNode.has("owner")) builder.owner(getString(rootNode.get("owner")));
+        if (rootNode.has("description")) builder.description(getString(rootNode.get("description")));
         if (rootNode.has("ttlDays")) builder.ttlDays(rootNode.get("ttlDays").asLong());
         if (rootNode.has("maxItems")) builder.maxItems(rootNode.get("maxItems").asLong());
-        if (rootNode.has("tags")) builder.tags(rootNode.findValuesAsText("tags"));
-        if (rootNode.has("replicationSource")) builder.replicationSource(getValue(rootNode.get("replicationSource")));
-        if (rootNode.has("storage")) builder.storage(getValue(rootNode.get("storage")));
+        if (rootNode.has("tags")) builder.tags(getSet(rootNode.get("tags")));
+        if (rootNode.has("replicationSource")) builder.replicationSource(getString(rootNode.get("replicationSource")));
+        if (rootNode.has("storage")) builder.storage(getString(rootNode.get("storage")));
         if (rootNode.has("global")) builder.global(GlobalConfig.parseJson(rootNode.get("global")));
         if (rootNode.has("historical")) builder.historical(rootNode.get("historical").asBoolean());
         if (rootNode.has("protect")) builder.protect(rootNode.get("protect").asBoolean());
@@ -135,12 +136,19 @@ public class ChannelConfig implements Serializable, NamedType {
         }
     }
 
-    private static String getValue(JsonNode jsonNode) {
-        String value = jsonNode.asText();
+    private static String getString(JsonNode node) {
+        String value = node.asText();
         if (value.equals("null")) {
             value = "";
         }
         return value;
+    }
+
+    private static Set<String> getSet(JsonNode node) {
+        if (!node.isArray()) throw new RuntimeException("node is not an array: " + node.toString());
+        return StreamSupport.stream(node.spliterator(), false)
+                .map(JsonNode::asText)
+                .collect(Collectors.toSet());
     }
 
     public String toJson() {
