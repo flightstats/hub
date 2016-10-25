@@ -66,8 +66,6 @@ public class LocalChannelService implements ChannelService {
     public ChannelConfig createChannel(ChannelConfig configuration) {
         logger.info("create channel {}", configuration);
         channelValidator.validate(configuration, null, false);
-        // TODO: what is the purpose of this? It doesn't appear to do anything.
-//        configuration = ChannelConfig.builder().withChannelConfiguration(configuration).build();
         initializeHistorical(configuration);
         channelConfigDao.upsert(configuration);
         notify(configuration, null);
@@ -89,8 +87,6 @@ public class LocalChannelService implements ChannelService {
     public ChannelConfig updateChannel(ChannelConfig configuration, ChannelConfig oldConfig, boolean isLocalHost) {
         if (configuration.hasChanged(oldConfig)) {
             logger.info("updating channel {} from {}", configuration, oldConfig);
-            // TODO: what is the purpose of this? It doesn't appear to do anything.
-//            configuration = ChannelConfig.builder().withChannelConfiguration(configuration).build();
             channelValidator.validate(configuration, oldConfig, isLocalHost);
             if (isNull(oldConfig)) {
                 initializeHistorical(configuration);
