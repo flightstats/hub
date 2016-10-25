@@ -57,7 +57,7 @@ public class InternalCuratorResource {
 
     private Collection<InternalLeader> getLeadersData() throws Exception {
         TreeSet<InternalLeader> internalLeaders = new TreeSet<>();
-        Collection<CuratorLeader> leaders = LeaderRotator.getLeaders();
+        Collection<CuratorLeader> leaders = Leaders.getLeaders();
         for (CuratorLeader leader : leaders) {
             InternalLeader internalLeader = new InternalLeader();
             internalLeader.name = leader.getLeaderPath();

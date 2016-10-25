@@ -13,10 +13,7 @@ import com.flightstats.hub.metrics.MetricsRunner;
 import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.metrics.NoOpMetricsSender;
 import com.flightstats.hub.replication.ReplicationGlobalManager;
-import com.flightstats.hub.rest.HalLinks;
-import com.flightstats.hub.rest.HalLinksSerializer;
-import com.flightstats.hub.rest.RetryClientFilter;
-import com.flightstats.hub.rest.Rfc3339DateSerializer;
+import com.flightstats.hub.rest.*;
 import com.flightstats.hub.spoke.*;
 import com.flightstats.hub.time.NtpMonitor;
 import com.flightstats.hub.time.TimeService;
@@ -92,13 +89,8 @@ public class HubBindings extends AbstractModule {
     private static Client create(boolean followRedirects) {
         int connectTimeoutMillis = (int) TimeUnit.SECONDS.toMillis(HubProperties.getProperty("http.connect.timeout.seconds", 30));
         int readTimeoutMillis = (int) TimeUnit.SECONDS.toMillis(HubProperties.getProperty("http.read.timeout.seconds", 120));
-
-        Client client = Client.create();
-        client.setConnectTimeout(connectTimeoutMillis);
-        client.setReadTimeout(readTimeoutMillis);
+        Client client = RestClient.createClient(connectTimeoutMillis, readTimeoutMillis, followRedirects, true);
         client.addFilter(new RetryClientFilter());
-        client.addFilter(new com.sun.jersey.api.client.filter.GZIPContentEncodingFilter());
-        client.setFollowRedirects(followRedirects);
         return client;
     }
 
@@ -161,7 +153,7 @@ public class HubBindings extends AbstractModule {
             bind(MetricsSender.class).to(NoOpMetricsSender.class).asEagerSingleton();
         }
         bind(NtpMonitor.class).asEagerSingleton();
-        bind(LeaderRotator.class).asEagerSingleton();
+        bind(Leaders.class).asEagerSingleton();
         bind(AlertRunner.class).asEagerSingleton();
         bind(TimeService.class).asEagerSingleton();
         bind(ShutdownManager.class).asEagerSingleton();

@@ -14,6 +14,7 @@ import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentKeyUtil;
 import com.flightstats.hub.rest.RestClient;
+import com.flightstats.hub.util.HubUtils;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
@@ -155,7 +156,7 @@ public class RemoteSpokeStore {
                         traces.add(server, e.getMessage());
                         logger.warn("write failed: " + server + " " + path, e);
                     } finally {
-                        close(response);
+                        HubUtils.close(response);
                         resetThread();
                     }
 
@@ -167,16 +168,6 @@ public class RemoteSpokeStore {
         statsd.time("consistent", time);
         sender.send("consistent", time);
         return quorumLatch.getCount() != quorum;
-    }
-
-    public static void close(ClientResponse response) {
-        if (response != null) {
-            try {
-                response.close();
-            } catch (Exception e) {
-                logger.warn("unable to close " + e);
-            }
-        }
     }
 
     private void setThread(String name) {
@@ -219,7 +210,7 @@ public class RemoteSpokeStore {
             } catch (Exception e) {
                 logger.warn("unable to get content " + path, e);
             } finally {
-                close(response);
+                HubUtils.close(response);
                 resetThread();
             }
         }
@@ -267,7 +258,7 @@ public class RemoteSpokeStore {
                         logger.warn("unable to handle " + server + " " + path, e);
                         traces.add("unable to handle ", server, path, e);
                     } finally {
-                        close(response);
+                        HubUtils.close(response);
                         resetThread();
                         countDownLatch.countDown();
                     }
@@ -311,7 +302,7 @@ public class RemoteSpokeStore {
                         logger.warn("unable to handle " + server + " " + channel, e);
                         traces.add("unable to handle ", server, channel, e);
                     } finally {
-                        close(response);
+                        HubUtils.close(response);
                         resetThread();
                         countDownLatch.countDown();
                     }
@@ -345,7 +336,7 @@ public class RemoteSpokeStore {
                     } catch (Exception e) {
                         logger.warn("unable to delete " + path, e);
                     } finally {
-                        close(response);
+                        HubUtils.close(response);
                         resetThread();
                     }
                 }
