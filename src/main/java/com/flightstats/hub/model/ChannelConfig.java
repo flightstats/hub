@@ -8,9 +8,7 @@ import com.flightstats.hub.util.TimeUtil;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.Builder;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.ToString;
+import lombok.Value;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 
@@ -25,9 +23,7 @@ import static com.flightstats.hub.model.BuiltInTag.HISTORICAL;
 import static com.flightstats.hub.model.BuiltInTag.REPLICATED;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
-@ToString
-@EqualsAndHashCode(of = {"name"})
-@Getter
+@Value
 @Builder(toBuilder = true)
 public class ChannelConfig implements Serializable, NamedType {
 
@@ -202,40 +198,6 @@ public class ChannelConfig implements Serializable, NamedType {
 
     public boolean isBoth() {
         return storage.equals(BOTH);
-    }
-
-    public boolean hasChanged(ChannelConfig otherConfig) {
-        if (otherConfig == null) {
-            return true;
-        }
-        if (!StringUtils.equals(getOwner(), otherConfig.getOwner())) {
-            return true;
-        }
-        if (!StringUtils.equals(getDescription(), otherConfig.getDescription())) {
-            return true;
-        }
-        if (!StringUtils.equals(getReplicationSource(), otherConfig.getReplicationSource())) {
-            return true;
-        }
-        if (!StringUtils.equals(getStorage(), otherConfig.getStorage())) {
-            return true;
-        }
-        if (getTtlDays() != otherConfig.getTtlDays()) {
-            return true;
-        }
-        if (getMaxItems() != otherConfig.getMaxItems()) {
-            return true;
-        }
-        if (!getTags().equals(otherConfig.getTags())) {
-            return true;
-        }
-        if (isHistorical() != otherConfig.isHistorical()) {
-            return true;
-        }
-        if (protect != otherConfig.protect) {
-            return true;
-        }
-        return false;
     }
 
     public static class ChannelConfigBuilder {

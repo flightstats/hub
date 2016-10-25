@@ -85,7 +85,7 @@ public class LocalChannelService implements ChannelService {
 
     @Override
     public ChannelConfig updateChannel(ChannelConfig configuration, ChannelConfig oldConfig, boolean isLocalHost) {
-        if (configuration.hasChanged(oldConfig)) {
+        if (!configuration.equals(oldConfig)) {
             logger.info("updating channel {} from {}", configuration, oldConfig);
             channelValidator.validate(configuration, oldConfig, isLocalHost);
             if (isNull(oldConfig)) {

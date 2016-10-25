@@ -18,7 +18,7 @@ public class ChannelConfigTest {
         // TODO: what is this copy attempting to test?
         ChannelConfig copy = config.toBuilder().build();
         assertDefaults(copy);
-        assertFalse(config.hasChanged(copy));
+        assertTrue(config.equals(copy));
     }
 
     @Test
@@ -48,7 +48,7 @@ public class ChannelConfigTest {
         // TODO: what is this copy attempting to test?
         ChannelConfig copy = config.toBuilder().build();
         assertEquals("some copy", copy.getDescription());
-        assertFalse(config.hasChanged(copy));
+        assertTrue(config.equals(copy));
     }
 
     @Test
@@ -66,7 +66,7 @@ public class ChannelConfigTest {
         // TODO: what is this copy attempting to test?
         ChannelConfig copy = config.toBuilder().build();
         assertTrue(copy.getTags().containsAll(config.getTags()));
-        assertFalse(config.hasChanged(copy));
+        assertTrue(config.equals(copy));
     }
 
     @Test
@@ -83,7 +83,7 @@ public class ChannelConfigTest {
         // TODO: what is this copy attempting to test?
         ChannelConfig copy = config.toBuilder().build();
         assertEquals(replicationSource, copy.getReplicationSource());
-        assertFalse(config.hasChanged(copy));
+        assertTrue(config.equals(copy));
     }
 
     @Test
@@ -92,35 +92,34 @@ public class ChannelConfigTest {
         // TODO: what is this copy attempting to test?
         ChannelConfig copy = config.toBuilder().build();
         assertEquals("BOTH", copy.getStorage());
-        assertFalse(config.hasChanged(copy));
+        assertTrue(config.equals(copy));
     }
 
     @Test
     public void testHasChanged() {
         ChannelConfig defaults = ChannelConfig.builder().name("defaults").build();
-        assertFalse(defaults.hasChanged(defaults));
         ChannelConfig hasCheez = ChannelConfig.builder().name("hasCheez").build();
-        assertFalse(defaults.hasChanged(hasCheez));
+
         ChannelConfig repl = hasCheez.toBuilder().replicationSource("R").build();
-        assertTrue(repl.hasChanged(defaults));
+        assertFalse(repl.equals(defaults));
 
         ChannelConfig desc = hasCheez.toBuilder().description("D").build();
-        assertTrue(desc.hasChanged(defaults));
+        assertFalse(desc.equals(defaults));
 
         ChannelConfig max = hasCheez.toBuilder().maxItems(1).build();
-        assertTrue(max.hasChanged(defaults));
+        assertFalse(max.equals(defaults));
 
         ChannelConfig owner = hasCheez.toBuilder().owner("O").build();
-        assertTrue(owner.hasChanged(defaults));
+        assertFalse(owner.equals(defaults));
 
         ChannelConfig storage = hasCheez.toBuilder().storage("S").build();
-        assertTrue(storage.hasChanged(defaults));
+        assertFalse(storage.equals(defaults));
 
         ChannelConfig ttl = hasCheez.toBuilder().ttlDays(5).build();
-        assertTrue(ttl.hasChanged(defaults));
+        assertFalse(ttl.equals(defaults));
 
         ChannelConfig tags = hasCheez.toBuilder().tags(Sets.newHashSet("one", "two")).build();
-        assertTrue(tags.hasChanged(defaults));
+        assertFalse(tags.equals(defaults));
     }
 
     @Test
@@ -131,7 +130,7 @@ public class ChannelConfigTest {
         ChannelConfig config = ChannelConfig.builder().global(globalConfig).build();
         ChannelConfig copy = config.toBuilder().build();
         assertEquals(globalConfig, copy.getGlobal());
-        assertFalse(config.hasChanged(copy));
+        assertTrue(config.equals(copy));
 
         ChannelConfig fromJson = ChannelConfig.createFromJson(config.toJson());
         assertEquals(globalConfig, fromJson.getGlobal());
