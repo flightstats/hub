@@ -13,14 +13,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import static com.flightstats.hub.model.BuiltInTag.GLOBAL;
-import static com.flightstats.hub.model.BuiltInTag.HISTORICAL;
-import static com.flightstats.hub.model.BuiltInTag.REPLICATED;
+import static com.flightstats.hub.model.BuiltInTag.*;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 @Value
@@ -200,6 +201,7 @@ public class ChannelConfig implements Serializable, NamedType {
         return storage.equals(BOTH);
     }
 
+    @SuppressWarnings("unused")
     public static class ChannelConfigBuilder {
         private String owner = "";
         private Date creationDate = new Date();
