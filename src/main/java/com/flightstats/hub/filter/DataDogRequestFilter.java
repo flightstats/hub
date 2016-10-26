@@ -16,12 +16,10 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
-import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.Provider;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -57,7 +55,7 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
             }
             ContainerRequestContext request = dataDogState.getRequest();
             String endpoint = getRequestTemplate(request);
-            String channel = channelName(request);
+            String channel = ChannelNameUtils.getChannelName(request);
             String method = request.getMethod();
             long time = System.currentTimeMillis() - dataDogState.getStart();
             String callTag = "call:" + method + endpoint;
@@ -85,22 +83,6 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
     @Override
     public void filter(ContainerRequestContext request) throws IOException {
         threadLocal.set(new DataDogState(request));
-    }
-
-    private static String channelName(ContainerRequestContext request) {
-        String name;
-        try {
-            name = ChannelNameUtils.parseChannelName(request.getUriInfo().getRequestUri().getPath());
-
-            if (StringUtils.isBlank(name)) {
-                MultivaluedMap<String, String> headers = request.getHeaders();
-                List<String> results = headers != null ? headers.get("channelName") : null;
-                name = results != null ? results.get(0) : "";
-            }
-        } catch (Exception e) {
-            name = "";
-        }
-        return name;
     }
 
     @VisibleForTesting

@@ -2,43 +2,22 @@ package com.flightstats.hub.util;
 
 import org.apache.commons.lang3.StringUtils;
 
+import javax.ws.rs.container.ContainerRequestContext;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class ChannelNameUtils {
 
-    private static final String WEBSOCKET_URL_REGEX = "^/channel/(\\w+)/ws$";
-    private static final Pattern DEFAULT_NAME_PATTERN = Pattern.compile("/channel/([^\\/]*)/?.*$");
-    private static final Pattern S3BATCH_NAME_PATTERN = Pattern.compile("/internal/s3Batch/(\\w+)");
-
-    public String extractFromWS(URI requestURI) {
-        String path = requestURI.getPath();
-        return path.replaceFirst(WEBSOCKET_URL_REGEX, "$1");
-    }
-
-    public static String extractFromChannelUrl(URI uri) {
-        return extractFromChannelUrl(uri.getPath());
-    }
-
-    public static String extractFromChannelUrl(String fullUrl) {
-        String after = StringUtils.substringAfter(fullUrl, "/channel/");
+    public static String getChannelName(String url) {
+        String after = StringUtils.substringAfter(url, "/channel/");
         return StringUtils.removeEnd(after, "/");
     }
 
-    public static String parseChannelName(String path) {
-        String name = checkPattern(path, DEFAULT_NAME_PATTERN);
-        if (name.isEmpty()) {
-            name = checkPattern(path, S3BATCH_NAME_PATTERN);
-        }
-
-        return name.isEmpty() ? null : name;
-    }
-
-    private static String checkPattern(String path, Pattern pattern) {
-        Matcher m = pattern.matcher(path);
-        return m.find() ? m.group(1) : "";
+    public static String getChannelName(ContainerRequestContext request) {
+        String name = request.getUriInfo().getPathParameters().getFirst("channel");
+        if (name == null) name = request.getHeaders().getFirst("channelName");
+        if (name == null) name = "";
+        return name;
     }
 
     public static boolean isValidChannelUrl(String url) {

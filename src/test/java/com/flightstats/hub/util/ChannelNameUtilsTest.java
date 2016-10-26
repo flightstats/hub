@@ -1,69 +1,67 @@
 package com.flightstats.hub.util;
 
-import org.junit.Before;
 import org.junit.Test;
 
-import java.net.URI;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.MultivaluedHashMap;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.UriInfo;
+import java.util.ArrayList;
+import java.util.List;
 
+import static com.flightstats.hub.util.ChannelNameUtils.getChannelName;
+import static com.flightstats.hub.util.ChannelNameUtils.isValidChannelUrl;
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class ChannelNameUtilsTest {
 
-    private ChannelNameUtils utils;
-
-    @Before
-    public void setUp() throws Exception {
-        utils = new ChannelNameUtils();
+    @Test
+    public void testGetChannelNameFromString() {
+        assertEquals("foobar", getChannelName("http://location:8080/channel/foobar"));
+        assertEquals("foobar", getChannelName("http://location:8080/channel/foobar/"));
+        assertEquals("foobar", getChannelName("http://hub.svc.prod/channel/foobar/"));
     }
 
     @Test
-    public void testExtractChannelName() throws Exception {
-        assertEquals("foobar", utils.extractFromWS(URI.create("/channel/foobar/ws")));
-    }
+    public void testGetChannelNameFromRequest() {
+        ContainerRequestContext fooPath = mockRequest(singletonList("foo"), new ArrayList<>());
+        assertEquals("foo", getChannelName(fooPath));
 
-    @Test
-    public void testWhenChannelDoesntMatch() throws Exception {
-        String uriString = "/shouldnt/find/me";
-        String result = utils.extractFromWS(URI.create(uriString));
-        assertEquals(uriString, result);
-    }
+        ContainerRequestContext nullPath = mockRequest(new ArrayList<>(), new ArrayList<>());
+        assertEquals("", getChannelName(nullPath));
 
-    @Test
-    public void testExtractChannelUri() throws Exception {
-        assertEquals("foobar", ChannelNameUtils.extractFromChannelUrl(URI.create("http://location:8080/channel/foobar/")));
-        assertEquals("foobar", ChannelNameUtils.extractFromChannelUrl(URI.create("http://location:8080/channel/foobar")));
-        assertEquals("foobar", ChannelNameUtils.extractFromChannelUrl(URI.create("http://hub.svc.prod/channel/foobar")));
-    }
+        ContainerRequestContext fooHeader = mockRequest(new ArrayList<>(), singletonList("foo"));
+        assertEquals("foo", getChannelName(fooHeader));
 
-    @Test
-    public void testExtractChannelString() throws Exception {
-        assertEquals("foobar", ChannelNameUtils.extractFromChannelUrl("http://location:8080/channel/foobar"));
-        assertEquals("foobar", ChannelNameUtils.extractFromChannelUrl("http://location:8080/channel/foobar/"));
-        assertEquals("foobar", ChannelNameUtils.extractFromChannelUrl("http://hub.svc.prod/channel/foobar/"));
-    }
+        ContainerRequestContext nullHeader = mockRequest(new ArrayList<>(), new ArrayList<>());
+        assertEquals("", getChannelName(nullHeader));
 
-    @Test
-    public void testValidChannelUrl() throws Exception {
-        assertTrue(ChannelNameUtils.isValidChannelUrl("http://location:8080/channel/foobar"));
-    }
-
-    @Test
-    public void testInvalidChannelUrl() throws Exception {
-        assertFalse(ChannelNameUtils.isValidChannelUrl("http://location:8080/chann/foobar"));
-    }
-
-    @Test
-    public void testNotChannelUrl() throws Exception {
-        assertFalse(ChannelNameUtils.isValidChannelUrl("not a url"));
+        ContainerRequestContext firstHeader = mockRequest(new ArrayList<>(), asList("foo", "bar"));
+        assertEquals("foo", getChannelName(firstHeader));
 
     }
 
+    private ContainerRequestContext mockRequest(List<String> pathParameters, List<String> requestHeaders) {
+        ContainerRequestContext request = mock(ContainerRequestContext.class);
+        UriInfo uriInfo = mock(UriInfo.class);
+        MultivaluedMap<String, String> parameters = new MultivaluedHashMap<>();
+        parameters.put("channel", pathParameters);
+        MultivaluedMap<String, String> headers = new MultivaluedHashMap<>();
+        headers.put("channelName", requestHeaders);
+        when(request.getUriInfo()).thenReturn(uriInfo);
+        when(uriInfo.getPathParameters()).thenReturn(parameters);
+        when(request.getHeaders()).thenReturn(headers);
+        return request;
+    }
+
     @Test
-    public void testParseChannelName(){
-        assertEquals("mickey", ChannelNameUtils.parseChannelName("http://stuff:8080/channel/mickey/morestuff/"));
-        assertEquals("mic_key", ChannelNameUtils.parseChannelName("http://stuff:8080/channel/mic_key/morestuff/"));
-        assertEquals("mic-key", ChannelNameUtils.parseChannelName("http://stuff:8080/channel/mic-key/morestuff/"));
-        assertEquals("mickey", ChannelNameUtils.parseChannelName("http://stuff:8080/channel/mickey/"));
-        assertEquals("donald", ChannelNameUtils.parseChannelName("http://stuff:8080/internal/s3Batch/donald"));
+    public void testIsValidChannelUrl() {
+        assertTrue(isValidChannelUrl("http://location:8080/channel/foobar"));
+        assertFalse(isValidChannelUrl("http://location:8080/chann/foobar"));
+        assertFalse(isValidChannelUrl("not a url"));
     }
 }
