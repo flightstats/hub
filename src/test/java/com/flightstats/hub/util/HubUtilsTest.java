@@ -68,7 +68,7 @@ public class HubUtilsTest {
     }
 
     private static String create() {
-        ChannelConfig hut_test = ChannelConfig.builder().withName(HUT_TEST).build();
+        ChannelConfig hut_test = ChannelConfig.builder().name(HUT_TEST).build();
         String channelUrl = "http://localhost:9080/channel/" + HUT_TEST;
         hubUtils.putChannel(channelUrl, hut_test);
         return channelUrl;

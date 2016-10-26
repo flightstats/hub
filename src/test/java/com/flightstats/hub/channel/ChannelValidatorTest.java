@@ -37,95 +37,96 @@ public class ChannelValidatorTest {
 
     @Test
     public void testAllGood() throws Exception {
-        validator.validate(ChannelConfig.builder().withName(Strings.repeat("A", 48)).build(), null, false);
+        validator.validate(ChannelConfig.builder().name(Strings.repeat("A", 48)).build(), null, false);
     }
 
     @Test(expected = InvalidRequestException.class)
     public void testTooLong() throws Exception {
-        validator.validate(ChannelConfig.builder().withName(Strings.repeat("A", 49)).build(), null, false);
+        validator.validate(ChannelConfig.builder().name(Strings.repeat("A", 49)).build(), null, false);
     }
 
     @Test(expected = InvalidRequestException.class)
     public void testChannelNameNull() throws Exception {
-        validator.validate(ChannelConfig.builder().withName(null).build(), null, false);
+        validator.validate(ChannelConfig.builder().name(null).build(), null, false);
     }
 
     @Test(expected = InvalidRequestException.class)
     public void testChannelNameEmpty() throws Exception {
-        validator.validate(ChannelConfig.builder().withName("").build(), null, false);
+        validator.validate(ChannelConfig.builder().name("").build(), null, false);
     }
 
     @Test(expected = InvalidRequestException.class)
     public void testChannelNameBlank() throws Exception {
-        validator.validate(ChannelConfig.builder().withName("  ").build(), null, false);
+        validator.validate(ChannelConfig.builder().name("  ").build(), null, false);
     }
 
     @Test(expected = ConflictException.class)
     public void testChannelExists() throws Exception {
         String channelName = "achannel";
         when(channelService.channelExists(channelName)).thenReturn(true);
-        ChannelConfig channelConfig = ChannelConfig.builder().withName(channelName).build();
+        ChannelConfig channelConfig = ChannelConfig.builder().name(channelName).build();
         validator.validate(channelConfig, null, false);
     }
 
     @Test(expected = InvalidRequestException.class)
     public void testInvalidSpaceCharacter() throws Exception {
-        validator.validate(ChannelConfig.builder().withName("my chan").build(), null, false);
+        validator.validate(ChannelConfig.builder().name("my chan").build(), null, false);
     }
 
     @Test
     public void testValidUnderscore() throws Exception {
-        validator.validate(ChannelConfig.builder().withName("my_chan").build(), null, false);
+        validator.validate(ChannelConfig.builder().name("my_chan").build(), null, false);
     }
 
     @Test
     public void testValidHyphen() throws Exception {
-        validator.validate(ChannelConfig.builder().withName("my-chan").build(), null, false);
+        validator.validate(ChannelConfig.builder().name("my-chan").build(), null, false);
     }
 
     @Test(expected = InvalidRequestException.class)
     public void testInvalidCharacter() throws Exception {
-        validator.validate(ChannelConfig.builder().withName("my#chan").build(), null, false);
+        validator.validate(ChannelConfig.builder().name("my#chan").build(), null, false);
     }
 
     @Test(expected = InvalidRequestException.class)
     public void testInvalidChannelTtl() throws Exception {
-        validator.validate(ChannelConfig.builder().withName("mychan")
-                .withTtlDays(10)
-                .withMaxItems(10)
+        validator.validate(ChannelConfig.builder()
+                .name("mychan")
+                .ttlDays(10)
+                .maxItems(10)
                 .build(), null, false);
     }
 
     @Test
     public void testDescription1024() throws Exception {
-        validator.validate(ChannelConfig.builder().withName("desc").withDescription(Strings.repeat("A", 1024)).build(), null, false);
+        validator.validate(ChannelConfig.builder().name("desc").description(Strings.repeat("A", 1024)).build(), null, false);
     }
 
     @Test(expected = InvalidRequestException.class)
     public void testDescriptionTooBig() throws Exception {
-        validator.validate(ChannelConfig.builder().withName("toobig").withDescription(Strings.repeat("A", 1025)).build(), null, false);
+        validator.validate(ChannelConfig.builder().name("toobig").description(Strings.repeat("A", 1025)).build(), null, false);
     }
 
     @Test(expected = InvalidRequestException.class)
     public void testTagSpace() throws Exception {
-        validator.validate(ChannelConfig.builder().withName("space").withTags(Arrays.asList("s p a c e")).build(), null, false);
+        validator.validate(ChannelConfig.builder().name("space").tags(Arrays.asList("s p a c e")).build(), null, false);
     }
 
     @Test(expected = InvalidRequestException.class)
     public void testTagUnderscore() throws Exception {
-        validator.validate(ChannelConfig.builder().withName("underscore").withTags(Arrays.asList("under_score")).build(), null, false);
+        validator.validate(ChannelConfig.builder().name("underscore").tags(Arrays.asList("under_score")).build(), null, false);
     }
 
     @Test
     public void testTagValid() throws Exception {
-        validator.validate(ChannelConfig.builder().withName("valid1").withTags(Arrays.asList("abcdefghijklmnopqrstuvwxyz")).build(), null, false);
-        validator.validate(ChannelConfig.builder().withName("valid2").withTags(Arrays.asList("ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789")).build(), null, false);
+        validator.validate(ChannelConfig.builder().name("valid1").tags(Arrays.asList("abcdefghijklmnopqrstuvwxyz")).build(), null, false);
+        validator.validate(ChannelConfig.builder().name("valid2").tags(Arrays.asList("ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789")).build(), null, false);
     }
 
     @Test(expected = InvalidRequestException.class)
     public void testTagTooLong() throws Exception {
-        validator.validate(ChannelConfig.builder().withName("tooLongTag")
-                .withTags(Arrays.asList(Strings.repeat("A", 49))).build(), null, false);
+        validator.validate(ChannelConfig.builder().name("tooLongTag")
+                .tags(Arrays.asList(Strings.repeat("A", 49))).build(), null, false);
     }
 
     @Test(expected = InvalidRequestException.class)
@@ -134,62 +135,62 @@ public class ChannelValidatorTest {
         for (int i = 0; i < 21; i++) {
             tags.add("" + i);
         }
-        validator.validate(ChannelConfig.builder().withName("tooManyTags")
-                .withTags(tags).build(), null, false);
+        validator.validate(ChannelConfig.builder().name("tooManyTags")
+                .tags(tags).build(), null, false);
     }
 
     @Test
     public void testAllowColonAndDash() throws Exception {
-        validator.validate(ChannelConfig.builder().withName("colon").withTags(Arrays.asList("a:b")).build(), null, false);
-        validator.validate(ChannelConfig.builder().withName("dash").withTags(Arrays.asList("a-b")).build(), null, false);
-        validator.validate(ChannelConfig.builder().withName("colondash").withTags(Arrays.asList("a-b:c")).build(), null, false);
+        validator.validate(ChannelConfig.builder().name("colon").tags(Arrays.asList("a:b")).build(), null, false);
+        validator.validate(ChannelConfig.builder().name("dash").tags(Arrays.asList("a-b")).build(), null, false);
+        validator.validate(ChannelConfig.builder().name("colondash").tags(Arrays.asList("a-b:c")).build(), null, false);
     }
 
     @Test
     public void testReplicatedTag() {
-        ChannelConfig config = ChannelConfig.builder().withReplicationSource("http://nowhere").build();
+        ChannelConfig config = ChannelConfig.builder().replicationSource("http://nowhere").build();
         assertTrue(config.getTags().contains("replicated"));
     }
 
     @Test
     public void testGlobalTag() {
-        ChannelConfig config = ChannelConfig.builder().withGlobal(new GlobalConfig()).build();
+        ChannelConfig config = ChannelConfig.builder().global(new GlobalConfig()).build();
         assertTrue(config.getTags().contains("global"));
     }
 
     @Test
     public void testHistoricalTag() {
-        ChannelConfig config = ChannelConfig.builder().withHistorical(true).build();
+        ChannelConfig config = ChannelConfig.builder().historical(true).build();
         assertTrue(config.getTags().contains("historical"));
     }
 
     public void testOwner() throws Exception {
-        validator.validate(ChannelConfig.builder().withName("A").withOwner(Strings.repeat("A", 48)).build(), null, false);
+        validator.validate(ChannelConfig.builder().name("A").owner(Strings.repeat("A", 48)).build(), null, false);
     }
 
     @Test(expected = InvalidRequestException.class)
     public void testTooLongOwner() throws Exception {
-        validator.validate(ChannelConfig.builder().withName("A").withOwner(Strings.repeat("A", 49)).build(), null, false);
+        validator.validate(ChannelConfig.builder().name("A").owner(Strings.repeat("A", 49)).build(), null, false);
     }
 
     @Test
     public void testValidStorage() {
-        validator.validate(ChannelConfig.builder().withName("storage").withStorage(ChannelConfig.SINGLE).build(), null, false);
-        validator.validate(ChannelConfig.builder().withName("storage").withStorage("batch").build(), null, false);
-        validator.validate(ChannelConfig.builder().withName("storage").withStorage("BoTh").build(), null, false);
+        validator.validate(ChannelConfig.builder().name("storage").storage(ChannelConfig.SINGLE).build(), null, false);
+        validator.validate(ChannelConfig.builder().name("storage").storage("batch").build(), null, false);
+        validator.validate(ChannelConfig.builder().name("storage").storage("BoTh").build(), null, false);
     }
 
     @Test(expected = InvalidRequestException.class)
     public void testInvalidStorage() {
-        validator.validate(ChannelConfig.builder().withName("storage").withStorage("stuff").build(), null, false);
+        validator.validate(ChannelConfig.builder().name("storage").storage("stuff").build(), null, false);
     }
 
     @Test
     public void testGlobal() {
         GlobalConfig globalConfig = getGlobalConfig();
         validator.validate(ChannelConfig.builder()
-                .withName("global")
-                .withGlobal(globalConfig).build(), null, false);
+                .name("global")
+                .global(globalConfig).build(), null, false);
     }
 
     @Test(expected = InvalidRequestException.class)
@@ -197,8 +198,8 @@ public class ChannelValidatorTest {
         GlobalConfig globalConfig = new GlobalConfig();
         globalConfig.setMaster("http://master");
         validator.validate(ChannelConfig.builder()
-                .withName("global")
-                .withGlobal(globalConfig).build(), null, false);
+                .name("global")
+                .global(globalConfig).build(), null, false);
     }
 
     @Test(expected = InvalidRequestException.class)
@@ -206,8 +207,8 @@ public class ChannelValidatorTest {
         GlobalConfig globalConfig = new GlobalConfig();
         globalConfig.addSatellite("http://master");
         validator.validate(ChannelConfig.builder()
-                .withName("global")
-                .withGlobal(globalConfig).build(), null, false);
+                .name("global")
+                .global(globalConfig).build(), null, false);
     }
 
     @Test(expected = InvalidRequestException.class)
@@ -216,8 +217,8 @@ public class ChannelValidatorTest {
         globalConfig.setMaster("http://master");
         globalConfig.addSatellite("http://master/");
         validator.validate(ChannelConfig.builder()
-                .withName("global")
-                .withGlobal(globalConfig).build(), null, false);
+                .name("global")
+                .global(globalConfig).build(), null, false);
     }
 
     @Test(expected = InvalidRequestException.class)
@@ -226,8 +227,8 @@ public class ChannelValidatorTest {
         globalConfig.setMaster("http:/master");
         globalConfig.addSatellite("http://satellite");
         validator.validate(ChannelConfig.builder()
-                .withName("global")
-                .withGlobal(globalConfig).build(), null, false);
+                .name("global")
+                .global(globalConfig).build(), null, false);
     }
 
     @Test(expected = InvalidRequestException.class)
@@ -237,29 +238,29 @@ public class ChannelValidatorTest {
         globalConfig.addSatellite("http://satellite");
         globalConfig.addSatellite("ftp://satellite2");
         validator.validate(ChannelConfig.builder()
-                .withName("global")
-                .withGlobal(globalConfig).build(), null, false);
+                .name("global")
+                .global(globalConfig).build(), null, false);
     }
 
     @Test(expected = InvalidRequestException.class)
     public void testHistoricalSwitch() throws Exception {
-        ChannelConfig configA = ChannelConfig.builder().withName("A").withHistorical(false).build();
-        ChannelConfig configB = ChannelConfig.builder().withName("B").withHistorical(true).build();
+        ChannelConfig configA = ChannelConfig.builder().name("A").historical(false).build();
+        ChannelConfig configB = ChannelConfig.builder().name("B").historical(true).build();
         validator.validate(configA, configB, false);
     }
 
     @Test(expected = InvalidRequestException.class)
     public void testHistoricalNotMax() throws Exception {
-        ChannelConfig configA = ChannelConfig.builder().withName("A").withHistorical(true).withMaxItems(10).build();
+        ChannelConfig configA = ChannelConfig.builder().name("A").historical(true).maxItems(10).build();
         validator.validate(configA, null, false);
     }
 
     @Test
     public void testChangeStorageLoss() throws Exception {
         HubProperties.setProperty("hub.protect.channels", "true");
-        ChannelConfig single = ChannelConfig.builder().withName("storage").withStorage(ChannelConfig.SINGLE).build();
-        ChannelConfig batch = ChannelConfig.builder().withName("storage").withStorage(ChannelConfig.BATCH).build();
-        ChannelConfig both = ChannelConfig.builder().withName("storage").withStorage(ChannelConfig.BOTH).build();
+        ChannelConfig single = ChannelConfig.builder().name("storage").storage(ChannelConfig.SINGLE).build();
+        ChannelConfig batch = ChannelConfig.builder().name("storage").storage(ChannelConfig.BATCH).build();
+        ChannelConfig both = ChannelConfig.builder().name("storage").storage(ChannelConfig.BOTH).build();
         validator.validate(both, single, false);
         validator.validate(both, batch, false);
         validateError(single, both);
@@ -271,9 +272,9 @@ public class ChannelValidatorTest {
     @Test
     public void testRemoveTagsLoss() throws Exception {
         HubProperties.setProperty("hub.protect.channels", "true");
-        ChannelConfig oneTwo = ChannelConfig.builder().withName("testRemoveTags").withTags(Arrays.asList("one", "two")).build();
-        ChannelConfig oneThree = ChannelConfig.builder().withName("testRemoveTags").withTags(Arrays.asList("one", "three")).build();
-        ChannelConfig oneTwoThree = ChannelConfig.builder().withName("testRemoveTags").withTags(Arrays.asList("one", "two", "three")).build();
+        ChannelConfig oneTwo = ChannelConfig.builder().name("testRemoveTags").tags(Arrays.asList("one", "two")).build();
+        ChannelConfig oneThree = ChannelConfig.builder().name("testRemoveTags").tags(Arrays.asList("one", "three")).build();
+        ChannelConfig oneTwoThree = ChannelConfig.builder().name("testRemoveTags").tags(Arrays.asList("one", "two", "three")).build();
         validator.validate(oneTwo, oneTwo, false);
         validator.validate(oneTwoThree, oneTwo, false);
         validateError(oneTwo, oneThree);
@@ -282,8 +283,8 @@ public class ChannelValidatorTest {
     @Test
     public void testTtlDaysLoss() throws Exception {
         HubProperties.setProperty("hub.protect.channels", "true");
-        ChannelConfig ten = ChannelConfig.builder().withName("testTtlDays").withTtlDays(10).build();
-        ChannelConfig eleven = ChannelConfig.builder().withName("testTtlDays").withTtlDays(11).build();
+        ChannelConfig ten = ChannelConfig.builder().name("testTtlDays").ttlDays(10).build();
+        ChannelConfig eleven = ChannelConfig.builder().name("testTtlDays").ttlDays(11).build();
         validator.validate(ten, ten, false);
         validateError(ten, eleven);
     }
@@ -291,8 +292,8 @@ public class ChannelValidatorTest {
     @Test
     public void testMaxItemsLoss() throws Exception {
         HubProperties.setProperty("hub.protect.channels", "true");
-        ChannelConfig ten = ChannelConfig.builder().withName("testMaxItems").withMaxItems(10).build();
-        ChannelConfig eleven = ChannelConfig.builder().withName("testMaxItems").withMaxItems(11).build();
+        ChannelConfig ten = ChannelConfig.builder().name("testMaxItems").maxItems(10).build();
+        ChannelConfig eleven = ChannelConfig.builder().name("testMaxItems").maxItems(11).build();
         validator.validate(ten, ten, false);
         validateError(ten, eleven);
     }
@@ -300,8 +301,8 @@ public class ChannelValidatorTest {
     @Test
     public void testReplicationLoss() throws Exception {
         HubProperties.setProperty("hub.protect.channels", "true");
-        ChannelConfig changed = ChannelConfig.builder().withName("testReplication").withReplicationSource("http://hub/channel/name1").build();
-        ChannelConfig replication = ChannelConfig.builder().withName("testReplication").withReplicationSource("http://hub/channel/name").build();
+        ChannelConfig changed = ChannelConfig.builder().name("testReplication").replicationSource("http://hub/channel/name1").build();
+        ChannelConfig replication = ChannelConfig.builder().name("testReplication").replicationSource("http://hub/channel/name").build();
         validator.validate(changed, changed, false);
         validator.validate(replication, replication, false);
         validateError(changed, replication);
@@ -312,10 +313,10 @@ public class ChannelValidatorTest {
         HubProperties.setProperty("hub.protect.channels", "true");
         GlobalConfig twoSatellites = getGlobalConfig();
         twoSatellites.addSatellite("http://satellite2");
-        ChannelConfig two = ChannelConfig.builder().withName("testGlobalLoss").withGlobal(twoSatellites).build();
+        ChannelConfig two = ChannelConfig.builder().name("testGlobalLoss").global(twoSatellites).build();
         GlobalConfig globalConfigOld = getGlobalConfig();
-        ChannelConfig one = ChannelConfig.builder().withName("testGlobalLoss").withGlobal(globalConfigOld).build();
-        ChannelConfig none = ChannelConfig.builder().withName("testGlobalLoss").withGlobal(null).build();
+        ChannelConfig one = ChannelConfig.builder().name("testGlobalLoss").global(globalConfigOld).build();
+        ChannelConfig none = ChannelConfig.builder().name("testGlobalLoss").global(null).build();
         validator.validate(two, one, false);
         validateError(one, two);
         validateError(none, one);
@@ -325,11 +326,11 @@ public class ChannelValidatorTest {
     public void testGlobalLossMaster() throws Exception {
         HubProperties.setProperty("hub.protect.channels", "true");
         GlobalConfig globalConfigOld = getGlobalConfig();
-        ChannelConfig master = ChannelConfig.builder().withName("testGlobalLoss").withGlobal(globalConfigOld).build();
-        ChannelConfig none = ChannelConfig.builder().withName("testGlobalLoss").withGlobal(null).build();
+        ChannelConfig master = ChannelConfig.builder().name("testGlobalLoss").global(globalConfigOld).build();
+        ChannelConfig none = ChannelConfig.builder().name("testGlobalLoss").global(null).build();
         GlobalConfig globalConfig = getGlobalConfig();
         globalConfig.setMaster("http://master2");
-        ChannelConfig other = ChannelConfig.builder().withName("testGlobalLoss").withGlobal(globalConfig).build();
+        ChannelConfig other = ChannelConfig.builder().name("testGlobalLoss").global(globalConfig).build();
         validator.validate(master, none, false);
         validateError(none, master);
         validateError(other, master);
@@ -338,8 +339,8 @@ public class ChannelValidatorTest {
     @Test
     public void testDataLossChange() throws Exception {
         HubProperties.setProperty("hub.protect.channels", "false");
-        ChannelConfig dataLoss = ChannelConfig.builder().withName("testDataLossChange").withProtect(false).build();
-        ChannelConfig noLoss = ChannelConfig.builder().withName("testDataLossChange").withProtect(true).build();
+        ChannelConfig dataLoss = ChannelConfig.builder().name("testDataLossChange").protect(false).build();
+        ChannelConfig noLoss = ChannelConfig.builder().name("testDataLossChange").protect(true).build();
 
         validateError(dataLoss, noLoss);
         validator.validate(noLoss, dataLoss, false);

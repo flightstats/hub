@@ -52,7 +52,7 @@ public class ChannelsResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createChannel(String json) throws InvalidRequestException, ConflictException {
         logger.debug("post channel {}", json);
-        ChannelConfig channelConfig = ChannelConfig.fromJson(json);
+        ChannelConfig channelConfig = ChannelConfig.createFromJson(json);
         channelConfig = channelService.createChannel(channelConfig);
         URI channelUri = LinkBuilder.buildChannelUri(channelConfig.getName(), uriInfo);
         ObjectNode output = buildChannelConfigResponse(channelConfig, uriInfo);

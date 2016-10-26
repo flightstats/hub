@@ -54,14 +54,11 @@ public class InternalGlobalResource {
     }
 
     private Response create(@PathParam("channel") String channelName, String json, boolean isMaster) throws IOException {
-        ChannelConfig newConfig = ChannelConfig.fromJsonName(json, channelName);
+        ChannelConfig newConfig = ChannelConfig.createFromJsonWithName(json, channelName);
         ChannelConfig oldConfig = channelService.getChannelConfig(channelName, false);
         if (oldConfig != null) {
             logger.info("using existing channel {} {}", oldConfig, newConfig);
-            newConfig = ChannelConfig.builder()
-                    .withChannelConfiguration(oldConfig)
-                    .withUpdateJson(StringUtils.defaultIfBlank(json, "{}"))
-                    .build();
+            newConfig = ChannelConfig.updateFromJson(oldConfig, StringUtils.defaultIfBlank(json, "{}"));
         }
         newConfig.getGlobal().setIsMaster(isMaster);
         newConfig = channelService.updateChannel(newConfig, oldConfig, true);
