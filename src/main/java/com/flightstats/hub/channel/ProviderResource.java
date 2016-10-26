@@ -35,7 +35,7 @@ public class ProviderResource {
         if (!channelService.channelExists(channelName)) {
             logger.info("creating new Provider channel " + channelName);
             ChannelConfig configuration = ChannelConfig.builder()
-                    .withName(channelName)
+                    .name(channelName)
                     .build();
             channelService.createChannel(configuration);
         }

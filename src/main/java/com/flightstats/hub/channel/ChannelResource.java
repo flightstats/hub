@@ -74,13 +74,10 @@ public class ChannelResource {
     public Response createChannel(@PathParam("channel") String channelName, String json) throws Exception {
         logger.debug("put channel {} {}", channelName, json);
         ChannelConfig oldConfig = channelService.getChannelConfig(channelName, false);
-        ChannelConfig channelConfig = ChannelConfig.fromJsonName(json, channelName);
+        ChannelConfig channelConfig = ChannelConfig.createFromJsonWithName(json, channelName);
         if (oldConfig != null) {
             logger.info("using old channel {} {}", oldConfig, oldConfig.getCreationDate().getTime());
-            channelConfig = ChannelConfig.builder()
-                    .withChannelConfiguration(oldConfig)
-                    .withUpdateJson(StringUtils.defaultIfBlank(json, "{}"))
-                    .build();
+            channelConfig = ChannelConfig.updateFromJson(oldConfig, StringUtils.defaultIfBlank(json, "{}"));
         }
         logger.info("creating channel {} {}", channelConfig, channelConfig.getCreationDate().getTime());
         channelConfig = channelService.updateChannel(channelConfig, oldConfig, LocalHostOnly.isLocalhost(uriInfo));
@@ -101,11 +98,7 @@ public class ChannelResource {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
 
-        ChannelConfig newConfig = ChannelConfig.builder()
-                .withChannelConfiguration(oldConfig)
-                .withUpdateJson(json)
-                .build();
-
+        ChannelConfig newConfig = ChannelConfig.updateFromJson(oldConfig, json);
         newConfig = channelService.updateChannel(newConfig, oldConfig, LocalHostOnly.isLocalhost(uriInfo));
 
         URI channelUri = buildChannelUri(newConfig.getName(), uriInfo);

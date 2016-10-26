@@ -55,7 +55,7 @@ public class S3VerifierTest {
 
     @Test
     public void testSingleNormalDefault() {
-        ChannelConfig channel = ChannelConfig.builder().withName(channelName).build();
+        ChannelConfig channel = ChannelConfig.builder().name(channelName).build();
         S3Verifier.VerifierRange range = s3Verifier.getSingleVerifierRange(now, channel);
         logger.info("{} {}", channelName, range);
         assertEquals(channel, range.channel);
@@ -68,7 +68,7 @@ public class S3VerifierTest {
     public void testSingleNormal() {
         MinutePath lastVerified = new MinutePath(offsetTime);
         lastContentPath.initialize(channelName, lastVerified, LAST_SINGLE_VERIFIED);
-        ChannelConfig channel = ChannelConfig.builder().withName(channelName).build();
+        ChannelConfig channel = ChannelConfig.builder().name(channelName).build();
         S3Verifier.VerifierRange range = s3Verifier.getSingleVerifierRange(now, channel);
         logger.info("{} {}", channelName, range);
         assertEquals(new MinutePath(now.minusMinutes(1)), range.endPath);
@@ -100,7 +100,7 @@ public class S3VerifierTest {
     public void testSingleNormalLagging() {
         MinutePath lastVerified = new MinutePath(now.minusMinutes(60));
         lastContentPath.initialize(channelName, lastVerified, LAST_SINGLE_VERIFIED);
-        ChannelConfig channel = ChannelConfig.builder().withName(channelName).build();
+        ChannelConfig channel = ChannelConfig.builder().name(channelName).build();
         S3Verifier.VerifierRange range = s3Verifier.getSingleVerifierRange(now, channel);
         logger.info("{} {}", channelName, range);
         assertEquals(new MinutePath(now.minusMinutes(1)), range.endPath);
@@ -194,16 +194,16 @@ public class S3VerifierTest {
 
     private ChannelConfig getHistoricalChannel(String name) {
         return ChannelConfig.builder()
-                .withName(name)
-                .withHistorical(true)
-                .withTtlDays(3650)
+                .name(name)
+                .historical(true)
+                .ttlDays(3650)
                 .build();
     }
 
     private ChannelConfig getReplicatedChannel(String name) {
         return ChannelConfig.builder()
-                .withName(name)
-                .withReplicationSource("replicating")
+                .name(name)
+                .replicationSource("replicating")
                 .build();
     }
 }
