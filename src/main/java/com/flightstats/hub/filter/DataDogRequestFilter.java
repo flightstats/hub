@@ -90,6 +90,7 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
             if (returnCode > 400 && returnCode != 404) {
                 tags.put("errorCode", String.valueOf(returnCode));
                 String[] tagArray = getTagArray(tags, "errorCode", "call", "channel");
+                logger.info("DataDog data sent: {}", Arrays.toString(tagArray));
                 statsd.incrementCounter("errors", tagArray);
             }
         } catch (Exception e) {
