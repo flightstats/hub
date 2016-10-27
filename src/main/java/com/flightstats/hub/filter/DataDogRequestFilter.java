@@ -1,12 +1,11 @@
 package com.flightstats.hub.filter;
 
 import com.flightstats.hub.metrics.DataDog;
-import com.flightstats.hub.util.ChannelNameUtils;
+import com.flightstats.hub.util.RequestUtils;
 import com.google.common.annotations.VisibleForTesting;
 import com.timgroup.statsd.StatsDClient;
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.server.internal.routing.UriRoutingContext;
 import org.glassfish.jersey.uri.UriTemplate;
 import org.slf4j.Logger;
@@ -65,15 +64,15 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
             tags.put("endpoint", getRequestTemplate(request));
             tags.put("call", tags.get("method") + tags.get("endpoint"));
 
-            String channel = ChannelNameUtils.getChannelName(request);
+            String channel = RequestUtils.getChannelName(request);
             if (!isBlank(channel)) {
                 tags.put("channel", channel);
             }
 
-//            String tag = ChannelNameUtils.getTag(request);
-//            if (!isBlank(tag)) {
-//                tags.put("tag", tag);
-//            }
+            String tag = RequestUtils.getTag(request);
+            if (!isBlank(tag)) {
+                tags.put("tag", tag);
+            }
 
             String[] tagArray = tags.entrySet().stream()
                     .map(entry -> entry.getKey() + ":" + entry.getValue())

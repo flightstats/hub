@@ -6,7 +6,7 @@ import javax.ws.rs.container.ContainerRequestContext;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-public class ChannelNameUtils {
+public class RequestUtils {
 
     public static String getChannelName(String url) {
         String after = StringUtils.substringAfter(url, "/channel/");
@@ -18,6 +18,12 @@ public class ChannelNameUtils {
         if (name == null) name = request.getHeaders().getFirst("channelName");
         if (name == null) name = "";
         return name;
+    }
+
+    public static String getTag(ContainerRequestContext request) {
+        String tag = request.getUriInfo().getPathParameters().getFirst("tag");
+        if (tag == null) tag = "";
+        return tag;
     }
 
     public static boolean isValidChannelUrl(String url) {

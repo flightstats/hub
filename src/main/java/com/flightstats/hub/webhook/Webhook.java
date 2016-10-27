@@ -9,7 +9,7 @@ import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.model.NamedType;
-import com.flightstats.hub.util.ChannelNameUtils;
+import com.flightstats.hub.util.RequestUtils;
 import com.google.common.base.Optional;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -123,7 +123,7 @@ public class Webhook implements Comparable<Webhook>, NamedType {
 
     private static Optional<ContentPath> getPrevious(Optional<ContentPath> keyOptional, String channelUrl) {
         ChannelService channelService = HubProvider.getInstance(ChannelService.class);
-        String channel = ChannelNameUtils.getChannelName(channelUrl);
+        String channel = RequestUtils.getChannelName(channelUrl);
         Optional<ContentKey> latest = channelService.getLatest(channel, true, false);
         if (latest.isPresent()) {
             DirectionQuery query = DirectionQuery.builder()
@@ -214,6 +214,6 @@ public class Webhook implements Comparable<Webhook>, NamedType {
     }
 
     public String getChannelName() {
-        return ChannelNameUtils.getChannelName(getChannelUrl());
+        return RequestUtils.getChannelName(getChannelUrl());
     }
 }

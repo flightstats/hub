@@ -9,15 +9,15 @@ import javax.ws.rs.core.UriInfo;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.flightstats.hub.util.ChannelNameUtils.getChannelName;
-import static com.flightstats.hub.util.ChannelNameUtils.isValidChannelUrl;
+import static com.flightstats.hub.util.RequestUtils.getChannelName;
+import static com.flightstats.hub.util.RequestUtils.isValidChannelUrl;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class ChannelNameUtilsTest {
+public class RequestUtilsTest {
 
     @Test
     public void testGetChannelNameFromString() {
