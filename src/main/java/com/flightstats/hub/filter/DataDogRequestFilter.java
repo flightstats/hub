@@ -74,15 +74,12 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
                 tags.put("tag", tag);
             }
 
-            String[] tagArray = tags.entrySet().stream()
-                    .map(entry -> entry.getKey() + ":" + entry.getValue())
-                    .toArray(String[]::new);
-
             if (tags.get("endpoint").isEmpty()) {
                 logger.trace("DataDog no endpoint, path: {}", request.getUriInfo().getPath());
             } else if (tags.get("endpoint").equals("/shutdown")) {
                 logger.info("call to shutdown, ignoring datadog time {}", time);
             } else {
+                String[] tagArray = getTagArray(tags);
                 logger.info("DataDog data sent: {}", Arrays.toString(tagArray));
                 statsd.recordExecutionTime("request", time, tagArray);
                 statsd.incrementCounter("request", tagArray);
@@ -91,7 +88,9 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
             logger.trace("DataDog request {}, time: {}", tags.get("endpoint"), time);
             int returnCode = dataDogState.getResponse().getStatus();
             if (returnCode > 400 && returnCode != 404) {
-                statsd.incrementCounter("errors", "errorCode:" + returnCode, tags.get("call"));
+                tags.put("errorCode", String.valueOf(returnCode));
+                String[] tagArray = getTagArray(tags, "errorCode", "call", "channel");
+                statsd.incrementCounter("errors", tagArray);
             }
         } catch (Exception e) {
             logger.error("DataDog request error", e);
@@ -103,6 +102,19 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
     @Override
     public void filter(ContainerRequestContext request) throws IOException {
         threadLocal.set(new DataDogState(request));
+    }
+
+    private static String[] getTagArray(Map<String, String> tags, String... tagsOnly) {
+        return tags.entrySet().stream()
+                .filter(entry -> {
+                    if (tagsOnly != null && tagsOnly.length > 0) {
+                        return Arrays.asList(tagsOnly).contains(entry.getKey());
+                    } else {
+                        return true;
+                    }
+                })
+                .map(entry -> entry.getKey() + ":" + entry.getValue())
+                .toArray(String[]::new);
     }
 
     @VisibleForTesting
