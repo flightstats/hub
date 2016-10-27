@@ -31,8 +31,8 @@ public class HubHistoryWriteRead {
          */
         hubUtils.delete(channelUrl);
         ChannelConfig config = ChannelConfig.builder()
-                .withHistorical(true)
-                .withTtlDays(3650)
+                .historical(true)
+                .ttlDays(3650)
                 .build();
         hubUtils.putChannel(channelUrl, config);
         DateTime time = new DateTime(2007, 8, 24, 2, 0, 0, 0);

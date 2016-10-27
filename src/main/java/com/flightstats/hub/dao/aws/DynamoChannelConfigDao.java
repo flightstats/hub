@@ -92,42 +92,42 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
     }
 
     private ChannelConfig mapItem(Map<String, AttributeValue> item) {
-        ChannelConfig.Builder builder = ChannelConfig.builder()
-                .withCreationDate(new Date(Long.parseLong(item.get("date").getN())))
-                .withName(item.get("key").getS());
+        ChannelConfig.ChannelConfigBuilder builder = ChannelConfig.builder()
+                .creationDate(new Date(Long.parseLong(item.get("date").getN())))
+                .name(item.get("key").getS());
         if (item.get("ttlDays") != null) {
-            builder.withTtlDays(Long.parseLong(item.get("ttlDays").getN()));
+            builder.ttlDays(Long.parseLong(item.get("ttlDays").getN()));
         }
         if (item.containsKey("description")) {
-            builder.withDescription(item.get("description").getS());
+            builder.description(item.get("description").getS());
         }
         if (item.containsKey("historical")) {
-            builder.withHistorical(item.get("historical").getBOOL());
+            builder.historical(item.get("historical").getBOOL());
         }
         if (item.containsKey("tags")) {
-            builder.withTags(item.get("tags").getSS());
+            builder.tags(item.get("tags").getSS());
         }
         if (item.containsKey("replicationSource")) {
-            builder.withReplicationSource(item.get("replicationSource").getS());
+            builder.replicationSource(item.get("replicationSource").getS());
         }
         if (item.get("maxItems") != null) {
-            builder.withMaxItems(Long.parseLong(item.get("maxItems").getN()));
+            builder.maxItems(Long.parseLong(item.get("maxItems").getN()));
         }
         if (item.containsKey("owner")) {
-            builder.withOwner(item.get("owner").getS());
+            builder.owner(item.get("owner").getS());
         }
         if (item.containsKey("storage")) {
-            builder.withStorage(item.get("storage").getS());
+            builder.storage(item.get("storage").getS());
         }
         if (item.containsKey("master")) {
             GlobalConfig global = new GlobalConfig();
             global.setMaster(item.get("master").getS());
             global.addSatellites(item.get("satellites").getSS());
             global.setIsMaster(item.get("isMaster").getBOOL());
-            builder.withGlobal(global);
+            builder.global(global);
         }
         if (item.containsKey("protect")) {
-            builder.withProtect(item.get("protect").getBOOL());
+            builder.protect(item.get("protect").getBOOL());
         }
         return builder.build();
     }

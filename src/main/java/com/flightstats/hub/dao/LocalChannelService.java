@@ -66,7 +66,6 @@ public class LocalChannelService implements ChannelService {
     public ChannelConfig createChannel(ChannelConfig configuration) {
         logger.info("create channel {}", configuration);
         channelValidator.validate(configuration, null, false);
-        configuration = ChannelConfig.builder().withChannelConfiguration(configuration).build();
         initializeHistorical(configuration);
         channelConfigDao.upsert(configuration);
         notify(configuration, null);
@@ -86,9 +85,8 @@ public class LocalChannelService implements ChannelService {
 
     @Override
     public ChannelConfig updateChannel(ChannelConfig configuration, ChannelConfig oldConfig, boolean isLocalHost) {
-        if (configuration.hasChanged(oldConfig)) {
+        if (!configuration.equals(oldConfig)) {
             logger.info("updating channel {} from {}", configuration, oldConfig);
-            configuration = ChannelConfig.builder().withChannelConfiguration(configuration).build();
             channelValidator.validate(configuration, oldConfig, isLocalHost);
             if (isNull(oldConfig)) {
                 initializeHistorical(configuration);
