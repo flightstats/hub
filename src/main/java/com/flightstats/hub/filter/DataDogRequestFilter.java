@@ -21,7 +21,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
+
+import static org.apache.commons.lang3.StringUtils.isBlank;
 
 /**
  * Filter class to handle intercepting requests and responses from the Hub and pipe statistics to
@@ -51,29 +55,44 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
     public static void finalStats() {
         try {
             DataDogState dataDogState = threadLocal.get();
-            if (null == dataDogState) {
-                return;
-            }
+            if (null == dataDogState) return;
+
             ContainerRequestContext request = dataDogState.getRequest();
-            String endpoint = getRequestTemplate(request);
-            String channel = ChannelNameUtils.getChannelName(request);
-            String method = request.getMethod();
             long time = System.currentTimeMillis() - dataDogState.getStart();
-            String callTag = "call:" + method + endpoint;
-            if (StringUtils.isEmpty(endpoint)) {
+
+            Map<String, String> tags = new HashMap<>();
+            tags.put("method", request.getMethod());
+            tags.put("endpoint", getRequestTemplate(request));
+            tags.put("call", tags.get("method") + tags.get("endpoint"));
+
+            String channel = ChannelNameUtils.getChannelName(request);
+            if (!isBlank(channel)) {
+                tags.put("channel", channel);
+            }
+
+//            String tag = ChannelNameUtils.getTag(request);
+//            if (!isBlank(tag)) {
+//                tags.put("tag", tag);
+//            }
+
+            String[] tagArray = tags.entrySet().stream()
+                    .map(entry -> entry.getKey() + ":" + entry.getValue())
+                    .toArray(String[]::new);
+
+            if (tags.get("endpoint").isEmpty()) {
                 logger.trace("DataDog no endpoint, path: {}", request.getUriInfo().getPath());
-            } else if (endpoint.equals("/shutdown")) {
+            } else if (tags.get("endpoint").equals("/shutdown")) {
                 logger.info("call to shutdown, ignoring datadog time {}", time);
             } else {
-                String[] tags = {"channel:" + channel, "method:" + method, "endpoint:" + endpoint, callTag};
-                logger.info("DataDog data sent: {}", Arrays.toString(tags));
-                statsd.recordExecutionTime("request", time, tags);
-                statsd.incrementCounter("request", tags);
+                logger.info("DataDog data sent: {}", Arrays.toString(tagArray));
+                statsd.recordExecutionTime("request", time, tagArray);
+                statsd.incrementCounter("request", tagArray);
             }
-            logger.trace("DataDog request {}, time: {}", endpoint, time);
+
+            logger.trace("DataDog request {}, time: {}", tags.get("endpoint"), time);
             int returnCode = dataDogState.getResponse().getStatus();
             if (returnCode > 400 && returnCode != 404) {
-                statsd.incrementCounter("errors", "errorCode:" + returnCode, callTag);
+                statsd.incrementCounter("errors", "errorCode:" + returnCode, tags.get("call"));
             }
         } catch (Exception e) {
             logger.error("DataDog request error", e);
