@@ -19,6 +19,7 @@ import javax.ws.rs.container.ContainerResponseFilter;
 import javax.ws.rs.ext.Provider;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.stream.Collectors;
 
@@ -65,6 +66,7 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
                 logger.info("call to shutdown, ignoring datadog time {}", time);
             } else {
                 String[] tags = {"channel:" + channel, "method:" + method, "endpoint:" + endpoint, callTag};
+                logger.trace("DataDog data sent: {}", Arrays.toString(tags));
                 statsd.recordExecutionTime("request", time, tags);
                 statsd.incrementCounter("request", tags);
             }
