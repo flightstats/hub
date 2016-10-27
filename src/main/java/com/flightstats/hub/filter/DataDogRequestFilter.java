@@ -66,7 +66,7 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
                 logger.info("call to shutdown, ignoring datadog time {}", time);
             } else {
                 String[] tags = {"channel:" + channel, "method:" + method, "endpoint:" + endpoint, callTag};
-                logger.debug("DataDog data sent: {}", Arrays.toString(tags));
+                logger.info("DataDog data sent: {}", Arrays.toString(tags));
                 statsd.recordExecutionTime("request", time, tags);
                 statsd.incrementCounter("request", tags);
             }
