@@ -54,15 +54,17 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
     public static void finalStats() {
         try {
             DataDogState dataDogState = threadLocal.get();
-            if (null == dataDogState) return;
+            if (null == dataDogState) {
+                return;
+            }
 
             ContainerRequestContext request = dataDogState.getRequest();
             long time = System.currentTimeMillis() - dataDogState.getStart();
+            String endpoint = getRequestTemplate(request);
 
             Map<String, String> tags = new HashMap<>();
             tags.put("method", request.getMethod());
-            tags.put("endpoint", getRequestTemplate(request));
-            tags.put("call", tags.get("method") + tags.get("endpoint"));
+            tags.put("call", tags.get("method") + endpoint);
 
             String channel = RequestUtils.getChannelName(request);
             if (!isBlank(channel)) {
@@ -74,9 +76,9 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
                 tags.put("tag", tag);
             }
 
-            if (tags.get("endpoint").isEmpty()) {
+            if (isBlank(endpoint)) {
                 logger.trace("DataDog no endpoint, path: {}", request.getUriInfo().getPath());
-            } else if (tags.get("endpoint").equals("/shutdown")) {
+            } else if (tags.get("call").endsWith("/shutdown")) {
                 logger.info("call to shutdown, ignoring datadog time {}", time);
             } else {
                 String[] tagArray = getTagArray(tags);
