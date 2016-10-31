@@ -61,7 +61,9 @@ public class InternalChannelResource {
         ObjectNode directions = root.putObject("directions");
         directions.put("delete", "HTTP DELETE to /internal/channel/{name} to override channel protection in an unprotected cluster.");
         directions.put("refresh", "HTTP GET to /internal/channel/refresh to refresh Channel Cache within the hub cluster.");
-        directions.put("stale", "HTTP GET to /internal/channel/stale/{age} to list channels with no inserts for {age} minutes.");
+        ObjectNode stale = directions.putObject("stale");
+        stale.put("by age", "HTTP GET to /internal/channel/stale/{age} to list channels with no inserts for {age} minutes.");
+        stale.put("by age, owner", "HTTP GET to /internal/channel/stale/{age}/{owner} to list channels with no inserts for {age} minutes, owned by {owner}.");
 
         ObjectNode links = root.putObject("_links");
         addLink(links, "self", uriInfo.getRequestUri().toString());
@@ -133,5 +135,32 @@ public class InternalChannelResource {
 
     private URI constructChannelURI(ChannelConfig channelConfig) {
         return UriBuilder.fromUri(uriInfo.getBaseUri()).path("channel").path(channelConfig.getName()).build();
+    }
+
+    @GET
+    @Path("/stale/{age}/{owner}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response staleForOwner(@PathParam("age") int age,
+                                  @PathParam("owner") String owner) {
+        ObjectNode root = mapper.createObjectNode();
+        ObjectNode links = root.putObject("_links");
+        addLink(links, "self", uriInfo.getRequestUri().toString());
+        addStaleEntities(root, age, (staleCutoff) -> {
+            Map<DateTime, URI> staleChannels = new TreeMap<>();
+            channelService.getChannels().forEach(channelConfig -> {
+                Optional<ContentKey> optionalContentKey = channelService.getLatest(channelConfig.getName(), false, false);
+                if (!optionalContentKey.isPresent()) return;
+
+                ContentKey contentKey = optionalContentKey.get();
+                if (contentKey.getTime().isAfter(staleCutoff)) return;
+
+                if (!channelConfig.getOwner().equals(owner)) return;
+
+                URI channelURI = constructChannelURI(channelConfig);
+                staleChannels.put(contentKey.getTime(), channelURI);
+            });
+            return staleChannels;
+        });
+        return Response.ok(root).build();
     }
 }
