@@ -10,6 +10,8 @@ ADD logback.xml /etc/hub/logback.xml
 
 RUN chmod +x /opt/hub/bin/*
 
+RUN mkdir -p /mnt/log
+
 # singleHubMain uses 80, hubMain uses 8080 and is assumed to be behind a load-balancer
 EXPOSE 80 8080
 
