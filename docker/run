@@ -55,8 +55,8 @@ JAVA_OPTS="
  -Dhttp.bind_port=80
  -Dalert.run=true
  -Dapp.stable_seconds=2
- -Ddata_dog.enable=false
- -Dlogback.configurationFile=/etc/${APP}/logback.xml"
+ -Ddata_dog.enable=false"
+# -Dlogback.configurationFile=/etc/${APP}/logback.xml"
 
 CHILDPID=""
 function shutdownChild()
