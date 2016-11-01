@@ -6,7 +6,8 @@ set -e
 rm -rf docker/hub/
 
 # Attack hub code with gradle. It's semi-effective.
-/usr/bin/gradle clean compileJava distTar
+echo "using Gradle at: $(which gradle)"
+gradle clean compileJava distTar
 
 # Thanks for tarring that, gradle, we'll take it from here
 tar -xvf build/distributions/hub-*.tgz -C .
