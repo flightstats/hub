@@ -1,3 +1,5 @@
+# These are example options for a hub node that is part of a cluster
+# Docker-compose and this file is not required for a single-hub installation.
 version: '2'
 services:
   hub:
