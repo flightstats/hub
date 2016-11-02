@@ -10,10 +10,11 @@ ADD logback.xml /etc/hub/logback.xml
 
 RUN chmod +x /opt/hub/bin/*
 
-RUN mkdir -p /mnt/log
+RUN mkdir -p /mnt/log && mkdir -p /mnt/spoke
 
 # singleHubMain uses 80, hubMain uses 8080 and is assumed to be behind a load-balancer
-EXPOSE 80 8080
+# 3333 is the debug port and 8888 is the jmx remote port.
+EXPOSE 80 8080 3333 8888
 
 ENTRYPOINT ["/bin/bash", "/opt/hub/bin/run"]
 
