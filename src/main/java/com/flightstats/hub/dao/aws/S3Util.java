@@ -52,7 +52,9 @@ class S3Util {
             if (duration.getStandardDays() >= 31) {
                 unit = TimeUtil.Unit.MONTHS;
             }
-            keys = getContentKeys(query, dao.queryByTime(query.convert(queryTime, unit)), keys, earliestTime);
+            SortedSet<ContentKey> queryByTime = dao.queryByTime(query.convert(queryTime, unit));
+            ActiveTraces.getLocal().add("queryPrevious queryByTime keys", queryByTime);
+            keys = getContentKeys(query, queryByTime, keys, earliestTime);
             queryTime = queryTime.minus(unit.getDuration());
         }
 

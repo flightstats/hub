@@ -182,7 +182,6 @@ public class S3BatchContentDao implements ContentDao {
                 .withMaxKeys(s3MaxQueryItems);
         SortedSet<MinutePath> minutePaths = listMinutePaths(channel, request, traces, true);
         for (MinutePath minutePath : minutePaths) {
-            //todo - gfm - 11/5/15 - this could be in parallel, needs to handle throttling by S3
             getKeysForMinute(channel, minutePath, keys, traces);
         }
         traces.add("S3BatchContentDao.queryHourPlus found keys", keys);
@@ -223,7 +222,8 @@ public class S3BatchContentDao implements ContentDao {
             for (JsonNode item : items) {
                 itemNodeConsumer.accept(item);
             }
-            traces.add("S3BatchContentDao.getKeysForMinute ", minutePath, items.size());
+            //todo gfm -
+            //traces.add("S3BatchContentDao.getKeysForMinute ", minutePath, items.size());
         } catch (AmazonS3Exception e) {
             if (e.getStatusCode() != 404) {
                 logger.warn("unable to get index " + channel, minutePath, e);

@@ -1,5 +1,6 @@
 package com.flightstats.hub.dao;
 
+import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.MinutePath;
 import com.flightstats.hub.util.TimeUtil;
@@ -13,6 +14,8 @@ public class ContentKeyUtil {
 
     public static SortedSet<ContentKey> filter(Collection<ContentKey> keys, ContentKey limitKey,
                                          DateTime ttlTime, int count, boolean next, boolean stable) {
+        ActiveTraces.getLocal().add("filter start keys", keys);
+        ActiveTraces.getLocal().add("filter limitKey", limitKey, ttlTime);
         Stream<ContentKey> stream = keys.stream();
         if (next) {
             stream = stream.filter(key -> key.compareTo(limitKey) > 0);
@@ -26,10 +29,12 @@ public class ContentKeyUtil {
             stream = contentKeys.stream()
                     .filter(key -> key.compareTo(limitKey) < 0);
         }
-        return stream
+        TreeSet<ContentKey> collect = stream
                 .filter(key -> !key.getTime().isBefore(ttlTime))
                 .limit(count)
                 .collect(Collectors.toCollection(TreeSet::new));
+        ActiveTraces.getLocal().add("filter end keys", collect);
+        return collect;
     }
 
     public static SortedSet<MinutePath> convert(SortedSet<ContentKey> keys) {
