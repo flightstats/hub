@@ -40,9 +40,6 @@ class S3Util {
         SortedSet<ContentKey> keys = new TreeSet<>();
         DateTime earliestTime = query.getTtlTime().minusHours(1);
         while (keys.size() < query.getCount() && queryTime.isAfter(earliestTime)) {
-            ActiveTraces.getLocal().add("queryPrevious while keys", keys);
-            ActiveTraces.getLocal().add("queryPrevious while query", query);
-            ActiveTraces.getLocal().add("queryPrevious while queryTime earliestTime ", queryTime, earliestTime);
             TimeUtil.Unit unit = TimeUtil.Unit.HOURS;
             Duration duration = new Duration(queryTime, endTime);
             if (duration.getStandardDays() >= 2) {
@@ -52,9 +49,7 @@ class S3Util {
             if (duration.getStandardDays() >= 31) {
                 unit = TimeUtil.Unit.MONTHS;
             }
-            SortedSet<ContentKey> queryByTime = dao.queryByTime(query.convert(queryTime, unit));
-            ActiveTraces.getLocal().add("queryPrevious queryByTime keys", queryByTime);
-            keys = getContentKeys(query, queryByTime, keys, earliestTime);
+            keys = getContentKeys(query, dao.queryByTime(query.convert(queryTime, unit)), keys, earliestTime);
             queryTime = queryTime.minus(unit.getDuration());
         }
 

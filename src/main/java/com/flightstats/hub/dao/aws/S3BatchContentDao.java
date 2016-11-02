@@ -222,8 +222,7 @@ public class S3BatchContentDao implements ContentDao {
             for (JsonNode item : items) {
                 itemNodeConsumer.accept(item);
             }
-            //todo gfm -
-            //traces.add("S3BatchContentDao.getKeysForMinute ", minutePath, items.size());
+            traces.add("S3BatchContentDao.getKeysForMinute ", minutePath, items.size());
         } catch (AmazonS3Exception e) {
             if (e.getStatusCode() != 404) {
                 logger.warn("unable to get index " + channel, minutePath, e);
