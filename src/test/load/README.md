@@ -33,6 +33,6 @@ Run it by using something like the following, supplying the filename of the .py 
 to run, and the host to run it against :
 
 ```
-docker run -p 8089:8089 -p 5557:5557 -p 5558:5558 locust:latest single.py --host http://dev.hub-endpoint.org/
+docker run -p 8089:8089 -p 5557:5557 -p 5558:5558 locust:latest -f single.py --host http://dev.hub-endpoint.org/
 ```
 
