@@ -51,6 +51,7 @@ public class ShutdownManager {
     }
 
     public boolean shutdown() throws Exception {
+        logger.warn("shutting down!");
         HubHealthCheck healthCheck = HubProvider.getInstance(HubHealthCheck.class);
         if (healthCheck.isShuttingDown()) {
             return true;
@@ -61,7 +62,6 @@ public class ShutdownManager {
                 .withText("shutting down")
                 .build();
         DataDog.statsd.recordEvent(event, "restart", "shutdown");
-        logger.warn("shutting down!");
         //this call will get the node removed from the Load Balancer
         healthCheck.shutdown();
 
