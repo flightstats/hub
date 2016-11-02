@@ -40,6 +40,9 @@ class S3Util {
         SortedSet<ContentKey> keys = new TreeSet<>();
         DateTime earliestTime = query.getTtlTime().minusHours(1);
         while (keys.size() < query.getCount() && queryTime.isAfter(earliestTime)) {
+            ActiveTraces.getLocal().add("queryPrevious while keys", keys);
+            ActiveTraces.getLocal().add("queryPrevious while query", query);
+            ActiveTraces.getLocal().add("queryPrevious while queryTime earliestTime ", queryTime, earliestTime);
             TimeUtil.Unit unit = TimeUtil.Unit.HOURS;
             Duration duration = new Duration(queryTime, endTime);
             if (duration.getStandardDays() >= 2) {
