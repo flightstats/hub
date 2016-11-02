@@ -14,7 +14,7 @@ public class HubHost {
 
     static {
         port = HubProperties.getProperty("http.bind_port", 8080);
-        if (HubProperties.getProperty("app.encrypted", false)) {
+        if (HubProperties.isAppEncrypted()) {
             scheme = "https://";
         }
     }

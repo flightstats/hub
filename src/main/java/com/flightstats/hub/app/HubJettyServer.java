@@ -69,7 +69,7 @@ public class HubJettyServer {
 
     private SslContextFactory getSslContextFactory() throws IOException {
         SslContextFactory sslContextFactory = null;
-        if (HubProperties.getProperty("app.encrypted", false)) {
+        if (HubProperties.isAppEncrypted()) {
             logger.info("starting hub with ssl!");
             sslContextFactory = new SslContextFactory();
             sslContextFactory.setKeyStorePath(getKeyStorePath());

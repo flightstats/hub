@@ -45,7 +45,7 @@ public class S3BatchContentDao implements ContentDao {
     private static final ObjectMapper mapper = new ObjectMapper();
     private final AmazonS3 s3Client;
     private final MetricsSender sender;
-    private final boolean useEncrypted = HubProperties.getProperty("app.encrypted", false);
+    private final boolean useEncrypted = HubProperties.isAppEncrypted();
     private final int s3MaxQueryItems = HubProperties.getProperty("s3.maxQueryItems", 1000);
     private final String s3BucketName;
     private final static StatsDClient statsd = DataDog.statsd;

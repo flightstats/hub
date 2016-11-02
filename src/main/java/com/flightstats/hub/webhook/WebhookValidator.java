@@ -2,7 +2,7 @@ package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.exception.InvalidRequestException;
-import com.flightstats.hub.util.ChannelNameUtils;
+import com.flightstats.hub.util.RequestUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.net.URI;
@@ -29,7 +29,7 @@ public class WebhookValidator {
         } catch (URISyntaxException e) {
             throw new InvalidRequestException("{\"error\": \"Invalid callbackUrl\"}");
         }
-        if (!ChannelNameUtils.isValidChannelUrl(webhook.getChannelUrl())) {
+        if (!RequestUtils.isValidChannelUrl(webhook.getChannelUrl())) {
             throw new InvalidRequestException("{\"error\": \"Invalid channelUrl\"}");
         }
         webhook = webhook.withBatch(StringUtils.upperCase(webhook.getBatch()));
