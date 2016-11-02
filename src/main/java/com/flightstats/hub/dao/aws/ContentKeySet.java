@@ -10,14 +10,14 @@ class ContentKeySet extends TreeSet<ContentKey> {
     private final int maxSize;
     private final ContentKey limitKey;
 
-    ContentKeySet(int maxSize, ContentKey contentKey) {
+    ContentKeySet(int maxSize, ContentKey limitKey) {
         this.maxSize = maxSize;
-        this.limitKey = contentKey;
+        this.limitKey = limitKey;
     }
 
     @Override
     public boolean add(ContentKey contentKey) {
-        if (contentKey.compareTo(limitKey) > 0) {
+        if (contentKey.compareTo(limitKey) >= 0) {
             return false;
         }
         boolean add = super.add(contentKey);
