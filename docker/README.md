@@ -9,7 +9,7 @@ Docker materials
 
 These are the files for building a docker-image version of the hub.
 Alone, it will run as a disk-based, self-contained version (com.flightstats.hub.app.singleHubMain), mostly useful
-for testing a quick mock-ups.
+for testing and quick mock-ups.
 
 ## Configuration
 
