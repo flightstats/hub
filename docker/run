@@ -5,16 +5,29 @@
 set -e
 set -x
 
+if [[ -z $1 || -z $2 ]]; then
+  echo "Must specify main java class e.g. com.flightstats.hub.app.SingleHubMain"
+  exit 2
+fi
+
 # Determine deploy dir and chdir to that directory,
 # then source the config to get user info
 #
-APP=hub
+APP=${1}
 APP_HOME=/opt/$APP
-MAX_HEAP=200m
-MIN_HEAP=200m
-MIN_NEW=10m
+CONF_DIR=/etc/$APP
 DEBUG_PORT=3333
 JMXREMOTE_PORT=8888
+MAIN_CLASS=${2}
+MIN_HEAP=${3:-256m}
+MAX_HEAP=${4:-512m}
+MIN_NEW=${5:-10m}
+
+if [[ $MAIN_CLASS == "com.flightstats.hub.app.HubMain" ]]; then
+  CONFIG="${CONF_DIR}/${APP}.properties"
+else
+  CONFIG=""
+fi
 
 JAVA_OPTS="
  $JAVA_OPTS
@@ -25,45 +38,25 @@ JAVA_OPTS="
  -XX:NewSize=$MIN_NEW
  -Dsun.rmi.dgc.client.gcInterval=300000
  -Dsun.rmi.dgc.server.gcInterval=300000
- -agentlib:jdwp=transport=dt_socket,address=$DEBUG_PORT,server=y,suspend=n"
-
-#add this for jmxremote/jconsole access
-JAVA_OPTS="$JAVA_OPTS
+ -agentlib:jdwp=transport=dt_socket,address=$DEBUG_PORT,server=y,suspend=n
  -Djboss.platform.mbeanserver
  -Dcom.sun.management.jmxremote
  -Dcom.sun.management.jmxremote.port=$JMXREMOTE_PORT
  -Dcom.sun.management.jmxremote.ssl=false
- -Dcom.sun.management.jmxremote.authenticate=false"
-
-#add this for verbose gc
-JAVA_OPTS="$JAVA_OPTS
+ -Dcom.sun.management.jmxremote.authenticate=false
  -XX:+PrintGCDetails
  -XX:+PrintTenuringDistribution
- -XX:+PrintGCDateStamps"
-
-#jfreechart and some other api's needs this
-JAVA_OPTS="$JAVA_OPTS
- -Djava.awt.headless=true"
-
-#disable JVM's DNS cache
-JAVA_OPTS="$JAVA_OPTS
- -Dsun.net.inetaddr.ttl=0"
-
-#gc logging 
-JAVA_OPTS="$JAVA_OPTS
- -Xloggc:/var/log/gc.log-$(date -u '+%Y-%m-%d-%H-%M-%S')"
-
-JAVA_OPTS="$JAVA_OPTS
- -Dfile.encoding=UTF-8"
-
-# OPTIONS THAT ARE SPECIFIC TO DOCKER - ESCHEW HAPROXY, MONITORING APPS
-JAVA_OPTS="$JAVA_OPTS
+ -XX:+PrintGCDateStamps
+ -Djava.awt.headless=true
+ -Dsun.net.inetaddr.ttl=0
+ -Xloggc:/mnt/log/gc.log-$(date -u '+%Y-%m-%d-%H-%M-%S')
+ -Dfile.encoding=UTF-8
  -Dapp.url=http://localhost/
  -Dhttp.bind_port=80
  -Dalert.run=true
  -Dapp.stable_seconds=2
- -Ddata_dog.enable=false"
-MAIN_CLASS="com.flightstats.hub.app.SingleHubMain"
+ -Ddata_dog.enable=false
+ -Dlogback.configurationFile=/etc/${APP}/logback.xml"
 
 CHILDPID=""
 function shutdownChild()
@@ -77,7 +70,7 @@ function shutdownChild()
         fi
 
         kill -QUIT $CHILDPID
-        sleep 1
+        sleep 5
 
         kill -TERM $CHILDPID
         echo signal sent, waiting ...
@@ -87,7 +80,7 @@ function shutdownChild()
 trap "shutdownChild" SIGTERM SIGINT
 
 echo running hub in the background...
-exec java -cp $(ls ${APP_HOME}/lib/${APP}-*):${APP_HOME}/lib/* $JAVA_OPTS $MAIN_CLASS &
+exec java -cp $(ls ${APP_HOME}/lib/${APP}-*):${APP_HOME}/lib/* $JAVA_OPTS $MAIN_CLASS $CONFIG &
 CHILDPID=$!
 echo "... hub pid is $CHILDPID"
 

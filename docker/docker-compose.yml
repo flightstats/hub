@@ -1,0 +1,12 @@
+# These are example options for a hub node that is part of a cluster
+# Docker-compose and this file is not required for a single-hub installation.
+version: '2'
+services:
+  hub:
+    build: .
+    command: hub com.flightstats.hub.app.HubMain 1g 2g 100m
+    volumes:
+      - /mnt/log:/mnt/log
+      - /mnt/spoke:/mnt/spoke
+      - /etc/hub:/etc/hub
+    network_mode: "host"
