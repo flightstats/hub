@@ -17,11 +17,7 @@ import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
 import javax.ws.rs.ext.Provider;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
@@ -92,7 +88,7 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
             if (returnCode > 400 && returnCode != 404) {
                 tags.put("errorCode", String.valueOf(returnCode));
                 String[] tagArray = getTagArray(tags, "errorCode", "call", "channel");
-                logger.info("DataDog data sent: {}", Arrays.toString(tagArray));
+                logger.trace("DataDog data sent: {}", Arrays.toString(tagArray));
                 statsd.incrementCounter("errors", tagArray);
             }
         } catch (Exception e) {
