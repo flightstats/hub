@@ -1,7 +1,7 @@
 package com.flightstats.hub.dao;
 
 import com.flightstats.hub.model.ChannelConfig;
-import com.flightstats.hub.util.FileUtil;
+import com.flightstats.hub.util.Commander;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +30,7 @@ public class TtlEnforcer {
             for (String dir : dirSet) {
                 String dirPath = path + "/" + dir;
                 logger.info("removing dir without channel {}", dirPath);
-                FileUtil.runCommand(new String[]{"rm", "-rf", dirPath}, 1);
+                Commander.run(new String[]{"rm", "-rf", dirPath}, 1);
             }
         } catch (Exception e) {
             logger.warn("unble to run " + path, e);

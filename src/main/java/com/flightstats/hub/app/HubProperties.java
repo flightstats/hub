@@ -34,6 +34,10 @@ public class HubProperties {
     public static boolean isProtected() {
         return HubProperties.getProperty("hub.protect.channels", true);
     }
+
+    public static String getSpokePath() {
+        return getProperty("spoke.path", "/spoke");
+    }
     static Properties getProperties() {
         return properties;
     }

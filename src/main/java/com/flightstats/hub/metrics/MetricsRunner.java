@@ -2,7 +2,7 @@ package com.flightstats.hub.metrics;
 
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.util.FileUtil;
+import com.flightstats.hub.util.Commander;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -44,7 +44,7 @@ public class MetricsRunner {
         String info = "";
         logger.info("logFilesInfo starting");
         info += "lsof -b -cjava : \r\n";
-        info += FileUtil.runCommand(new String[]{"lsof", "-b", "-cjava"}, 60);
+        info += Commander.run(new String[]{"lsof", "-b", "-cjava"}, 60);
         info += "thread dump \r\n";
         Map<Thread, StackTraceElement[]> allStackTraces = Thread.getAllStackTraces();
         for (Map.Entry<Thread, StackTraceElement[]> entry : allStackTraces.entrySet()) {
