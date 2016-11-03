@@ -15,4 +15,4 @@ ADD . /locust
 
 EXPOSE 8089 5557 5558
 
-ENTRYPOINT ["/usr/local/bin/locust", "-f"]
+ENTRYPOINT ["/usr/local/bin/locust"]

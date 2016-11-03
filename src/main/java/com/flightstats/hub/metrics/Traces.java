@@ -2,6 +2,7 @@ package com.flightstats.hub.metrics;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.model.SingleTrace;
 import com.flightstats.hub.model.Trace;
 import com.flightstats.hub.util.ObjectRing;
@@ -13,7 +14,7 @@ import java.util.function.Consumer;
 
 public class Traces {
 
-    private static final int LIMIT = 50;
+    private static final int LIMIT = HubProperties.getProperty("traces.limit", 50);
     private long start = System.currentTimeMillis();
     private long end;
     private final String id = UUID.randomUUID().toString();

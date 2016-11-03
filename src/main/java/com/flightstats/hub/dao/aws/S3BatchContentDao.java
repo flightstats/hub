@@ -182,7 +182,6 @@ public class S3BatchContentDao implements ContentDao {
                 .withMaxKeys(s3MaxQueryItems);
         SortedSet<MinutePath> minutePaths = listMinutePaths(channel, request, traces, true);
         for (MinutePath minutePath : minutePaths) {
-            //todo - gfm - 11/5/15 - this could be in parallel, needs to handle throttling by S3
             getKeysForMinute(channel, minutePath, keys, traces);
         }
         traces.add("S3BatchContentDao.queryHourPlus found keys", keys);

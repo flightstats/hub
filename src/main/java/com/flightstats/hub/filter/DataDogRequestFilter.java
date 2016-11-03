@@ -1,12 +1,11 @@
 package com.flightstats.hub.filter;
 
 import com.flightstats.hub.metrics.DataDog;
-import com.flightstats.hub.util.ChannelNameUtils;
+import com.flightstats.hub.util.RequestUtils;
 import com.google.common.annotations.VisibleForTesting;
 import com.timgroup.statsd.StatsDClient;
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.server.internal.routing.UriRoutingContext;
 import org.glassfish.jersey.uri.UriTemplate;
 import org.slf4j.Logger;
@@ -16,13 +15,16 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
-import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.Provider;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
+
+import static org.apache.commons.lang3.StringUtils.isBlank;
 
 /**
  * Filter class to handle intercepting requests and responses from the Hub and pipe statistics to
@@ -55,25 +57,43 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
             if (null == dataDogState) {
                 return;
             }
+
             ContainerRequestContext request = dataDogState.getRequest();
-            String endpoint = getRequestTemplate(request);
-            String channel = channelName(request);
-            String method = request.getMethod();
             long time = System.currentTimeMillis() - dataDogState.getStart();
-            String callTag = "call:" + method + endpoint;
-            if (StringUtils.isEmpty(endpoint)) {
+            String endpoint = getRequestTemplate(request);
+
+            Map<String, String> tags = new HashMap<>();
+            tags.put("method", request.getMethod());
+            tags.put("call", tags.get("method") + endpoint);
+
+            String channel = RequestUtils.getChannelName(request);
+            if (!isBlank(channel)) {
+                tags.put("channel", channel);
+            }
+
+            String tag = RequestUtils.getTag(request);
+            if (!isBlank(tag)) {
+                tags.put("tag", tag);
+            }
+
+            if (isBlank(endpoint)) {
                 logger.trace("DataDog no endpoint, path: {}", request.getUriInfo().getPath());
-            } else if (endpoint.equals("/shutdown")) {
+            } else if (tags.get("call").endsWith("/shutdown")) {
                 logger.info("call to shutdown, ignoring datadog time {}", time);
             } else {
-                String[] tags = {"channel:" + channel, "method:" + method, "endpoint:" + endpoint, callTag};
-                statsd.recordExecutionTime("request", time, tags);
-                statsd.incrementCounter("request", tags);
+                String[] tagArray = getTagArray(tags);
+                logger.info("DataDog data sent: {}", Arrays.toString(tagArray));
+                statsd.recordExecutionTime("request", time, tagArray);
+                statsd.incrementCounter("request", tagArray);
             }
-            logger.trace("DataDog request {}, time: {}", endpoint, time);
+
+            logger.trace("DataDog request {}, time: {}", tags.get("endpoint"), time);
             int returnCode = dataDogState.getResponse().getStatus();
             if (returnCode > 400 && returnCode != 404) {
-                statsd.incrementCounter("errors", "errorCode:" + returnCode, callTag);
+                tags.put("errorCode", String.valueOf(returnCode));
+                String[] tagArray = getTagArray(tags, "errorCode", "call", "channel");
+                logger.info("DataDog data sent: {}", Arrays.toString(tagArray));
+                statsd.incrementCounter("errors", tagArray);
             }
         } catch (Exception e) {
             logger.error("DataDog request error", e);
@@ -87,20 +107,17 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
         threadLocal.set(new DataDogState(request));
     }
 
-    private static String channelName(ContainerRequestContext request) {
-        String name;
-        try {
-            name = ChannelNameUtils.parseChannelName(request.getUriInfo().getRequestUri().getPath());
-
-            if (StringUtils.isBlank(name)) {
-                MultivaluedMap<String, String> headers = request.getHeaders();
-                List<String> results = headers != null ? headers.get("channelName") : null;
-                name = results != null ? results.get(0) : "";
-            }
-        } catch (Exception e) {
-            name = "";
-        }
-        return name;
+    private static String[] getTagArray(Map<String, String> tags, String... tagsOnly) {
+        return tags.entrySet().stream()
+                .filter(entry -> {
+                    if (tagsOnly != null && tagsOnly.length > 0) {
+                        return Arrays.asList(tagsOnly).contains(entry.getKey());
+                    } else {
+                        return true;
+                    }
+                })
+                .map(entry -> entry.getKey() + ":" + entry.getValue())
+                .toArray(String[]::new);
     }
 
     @VisibleForTesting

@@ -172,6 +172,18 @@ public class S3BatchContentDaoTest {
 
     }
 
+    @Test
+    public void testPreviousEdgeCase() throws Exception {
+        String channel = "testPreviousEdgeCase" + RandomStringUtils.randomAlphanumeric(20);
+        DateTime start = TimeUtil.now().minusHours(2);
+        List<ContentKey> contentKeys = writeBatchMinute(channel, new MinutePath(start), 4);
+        logger.info("wrote keys ", contentKeys);
+        SortedSet<ContentKey> foundKeys = queryDirection(channel, contentKeys.get(3), false, 2, 2);
+        logger.info("query found {}", foundKeys);
+        assertTrue(foundKeys.contains(contentKeys.get(1)));
+        assertTrue(foundKeys.contains(contentKeys.get(2)));
+    }
+
     private SortedSet<ContentKey> queryDirection(String channel, ContentKey contentKey, boolean next, int count, int expected) {
 
         DirectionQuery query =
