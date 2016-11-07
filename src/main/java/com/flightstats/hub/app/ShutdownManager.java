@@ -40,7 +40,7 @@ public class ShutdownManager {
                     resetLock();
                 }
             } catch (KeeperException.NoNodeException e) {
-                logger.warn("node not found for ..." + PATH);
+                logger.info("node not found for ..." + PATH);
             }
         }
 
@@ -71,6 +71,7 @@ public class ShutdownManager {
         int shutdown_delay_seconds = HubProperties.getProperty("app.shutdown_delay_seconds", 60);
         logger.warn("sleeping for " + shutdown_delay_seconds);
         Sleeper.sleep(shutdown_delay_seconds * 1000);
+        logger.warn("slept for " + shutdown_delay_seconds);
 
         HubServices.stopAll();
         logger.warn("completed shutdown tasks, exiting JVM");
