@@ -5,11 +5,11 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.metrics.DataDog;
 import com.flightstats.hub.metrics.MetricsSender;
+import com.flightstats.hub.util.Commander;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.timgroup.statsd.StatsDClient;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,8 +72,7 @@ public class NtpMonitor {
 
     private void run() {
         try {
-            Process process = new ProcessBuilder("ntpq", "-p").start();
-            List<String> lines = IOUtils.readLines(process.getInputStream());
+            List<String> lines = Commander.runLines(new String[]{"ntpq", "-p"}, 10);
             double delta = parseClusterRange(lines);
             statsd.gauge("ntp", delta, "ntpType:clusterTimeDelta");
             sender.send("clusterTimeDelta", delta);

@@ -5,6 +5,7 @@ import com.flightstats.hub.dao.*;
 import com.flightstats.hub.dao.file.FileChannelConfigurationDao;
 import com.flightstats.hub.dao.file.FileWebhookDao;
 import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.spoke.ChannelTtlEnforcer;
 import com.flightstats.hub.spoke.SpokeContentDao;
 import com.flightstats.hub.spoke.SpokeContentService;
 import com.flightstats.hub.webhook.Webhook;
@@ -27,6 +28,7 @@ class FileBindings extends AbstractModule {
         bind(ContentService.class)
                 .annotatedWith(Names.named(ContentService.IMPL))
                 .to(SpokeContentService.class).asEagerSingleton();
+        bind(ChannelTtlEnforcer.class).asEagerSingleton();
     }
 
     @Inject

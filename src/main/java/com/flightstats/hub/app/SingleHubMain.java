@@ -12,7 +12,9 @@ import com.google.common.io.Files;
 public class SingleHubMain {
 
     public static void main(String[] args) throws Exception {
+        System.out.println("***************************");
         System.out.println("starting up single Hub");
+        System.out.println("***************************");
         HubProperties.setProperty("hub.type", "test");
         HubProperties.setProperty("app.name", "hub");
         HubProperties.setProperty("app.environment", "single");
@@ -27,14 +29,13 @@ public class SingleHubMain {
         setProperty("storage.path", storagePath);
         String spokePath = Files.createTempDir().getAbsolutePath();
         setProperty("spoke.path", spokePath);
+        setProperty("spoke.enforceTTL", "false");
+        setProperty("channel.enforceTTL", "true");
         setProperty("app.stable_seconds", "2");
-        //todo gfm - do we need this?
         setProperty("app.remoteTimeFile", storagePath + "/remoteTime");
         setProperty("hub.protect.channels", "false");
         setProperty("app.runNtpMonitor", "false");
-
-        setProperty("data_dog.enable", "true");
-
+        setProperty("data_dog.enable", "false");
         HubMain.start();
     }
 

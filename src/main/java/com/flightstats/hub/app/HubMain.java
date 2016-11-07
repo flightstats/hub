@@ -45,7 +45,8 @@ public class HubMain {
             }
         });
         latch.await();
-        HubServices.stopAll();
+        logger.warn("calling shutdown");
+        HubProvider.getInstance(ShutdownManager.class).shutdown();
         server.halt();
         logger.info("Server shutdown complete.  Exiting application.");
     }
