@@ -33,6 +33,7 @@ public class SingleHubMain {
         setProperty("channel.enforceTTL", "true");
         setProperty("app.stable_seconds", "2");
         setProperty("app.remoteTimeFile", storagePath + "/remoteTime");
+        setProperty("app.shutdown_delay_seconds", "0");
         setProperty("hub.protect.channels", "false");
         setProperty("app.runNtpMonitor", "false");
         setProperty("data_dog.enable", "false");

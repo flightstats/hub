@@ -36,7 +36,7 @@ import java.util.function.Supplier;
 public class CommonContentService implements ContentService {
     private final static Logger logger = LoggerFactory.getLogger(CommonContentService.class);
 
-    private final Integer shutdown_wait_seconds = HubProperties.getProperty("app.shutdown_wait_seconds", 5);
+    private final Integer shutdown_wait_seconds = HubProperties.getProperty("app.shutdown_wait_seconds", 10);
     private final AtomicInteger inFlight = new AtomicInteger();
     private static final ExecutorService executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("ContentService-%d").build());
 
