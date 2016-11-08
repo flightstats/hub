@@ -7,6 +7,10 @@ ADD run /opt/hub/bin/run
 ADD hub /opt/hub
 
 ADD logback.xml /etc/hub/logback.xml
+ADD hub.properties /etc/hub/hub.properties
+
+RUN mkdir -p /tmp/storage
+RUN mkdir -p /tmp/spoke
 
 RUN chmod +x /opt/hub/bin/*
 
@@ -20,4 +24,4 @@ ENTRYPOINT ["/bin/bash", "/opt/hub/bin/run"]
 
 # In the runfile: App, Java Main Class, Min heap, Max heap, Min new size.
 # Loads singleHubMain by default, and we start with modest memory settings.
-CMD ["hub", "com.flightstats.hub.app.SingleHubMain", "256m", "512m", "10m"]
+CMD ["hub", "com.flightstats.hub.app.HubMain", "256m", "512m", "10m"]

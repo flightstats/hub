@@ -53,11 +53,6 @@ JAVA_OPTS="
  -Dsun.net.inetaddr.ttl=0
  -Xloggc:/mnt/log/gc.log-$(date -u '+%Y-%m-%d-%H-%M-%S')
  -Dfile.encoding=UTF-8
- -Dapp.url=http://localhost/
- -Dhttp.bind_port=80
- -Dalert.run=true
- -Dapp.stable_seconds=2
- -Ddata_dog.enable=false
  -Dlogback.configurationFile=/etc/${APP}/logback.xml"
 
 CHILDPID=""
