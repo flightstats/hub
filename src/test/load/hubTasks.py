@@ -238,13 +238,13 @@ class HubTasks:
 
     def next_previous(self):
         items = []
-        url = self.time_path("minute") + "&trace=true"
+        url = self.time_path("minute")
         first = (self.client.get(url, name="time_minute")).json()
-        second = (self.client.get(first['_links']['previous']['href'] + "&trace=true", name="time_minute")).json()
+        second = (self.client.get(first['_links']['previous']['href'], name="time_minute")).json()
         items.extend(second['_links']['uris'])
         items.extend(first['_links']['uris'])
         numItems = str(len(items) - 1)
-        nextUrl = items[0] + "/next/" + numItems + "?stable=false&trace=true"
+        nextUrl = items[0] + "/next/" + numItems + "?stable=false"
         next_json = (self.client.get(nextUrl, name="next")).json()
         next_uris = next_json['_links']['uris']
         if cmp(next_uris, items[1:]) == 0:
@@ -257,7 +257,7 @@ class HubTasks:
             events.request_failure.fire(request_type="next", name="compare", response_time=1
                                         , exception=-1)
 
-        previousUrl = items[-1] + "/previous/" + numItems + "?stable=false&trace=true"
+        previousUrl = items[-1] + "/previous/" + numItems + "?stable=false"
         previous_json = (self.client.get(previousUrl, name="previous")).json()
         previous_uris = previous_json['_links']['uris']
         if cmp(previous_uris, items[:-1]) == 0:

@@ -72,7 +72,7 @@ function shutdownChild()
         fi
 
         kill -QUIT $CHILDPID
-        sleep 5
+        curl -i -X POST http://localhost/shutdown
 
         kill -TERM $CHILDPID
         echo signal sent, waiting ...

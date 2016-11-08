@@ -56,7 +56,7 @@ public class ChannelTtlEnforcer {
 
         @Override
         protected Scheduler scheduler() {
-            return Scheduler.newFixedRateSchedule(1, 1, TimeUnit.MINUTES);
+            return Scheduler.newFixedRateSchedule(0, 1, TimeUnit.DAYS);
         }
 
     }
