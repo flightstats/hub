@@ -9,6 +9,7 @@ import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -46,6 +47,22 @@ public class ContentDaoUtil {
         assertEquals(content.getContentKey().get(), key);
         Content read = contentDao.get(channel, key);
         compare(content, read, data);
+    }
+
+    public void testWriteHistorical() throws Exception {
+        String data = RandomStringUtils.randomAlphanumeric(2048);
+        String channel = "testWriteHistorical";
+        ContentKey contentKey = new ContentKey();
+        Content content = Content.builder().withContentType("contentIsThis")
+                .withContentKey(contentKey)
+                .withStream(new ByteArrayInputStream(data.getBytes()))
+                .build();
+        ContentKey historical = contentDao.insertHistorical(channel, content);
+        assertEquals(contentKey, historical);
+        Content found = contentDao.get(channel, contentKey);
+        assertNotNull(found);
+        assertEquals(content.getContentType().get(), found.getContentType().get());
+        assertArrayEquals(data.getBytes(), found.getData());
     }
 
     public void testQueryRangeDay() throws Exception {

@@ -78,6 +78,7 @@ public class S3SingleContentDao implements ContentDao {
         ContentKey key = content.getContentKey().get();
         ActiveTraces.getLocal().add("S3SingleContentDao.write", key);
         try {
+            long start = System.currentTimeMillis();
             String s3Key = getS3ContentKey(channelName, key);
             ObjectMetadata metadata = new ObjectMetadata();
             byte[] bytes = handler.apply(metadata);
@@ -95,12 +96,12 @@ public class S3SingleContentDao implements ContentDao {
                 metadata.setSSEAlgorithm(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
             }
             PutObjectRequest request = new PutObjectRequest(s3BucketName, s3Key, stream, metadata);
-            statsd.increment("s3.put", "type:single", "channel:" + channelName);
             statsd.count("s3.put.bytes", bytes.length, "channel:" + channelName, "type:single");
-
             sender.send("channel." + channelName + ".s3.put", 1);
             sender.send("channel." + channelName + ".s3.bytes", bytes.length);
             s3Client.putObject(request);
+            long time = System.currentTimeMillis() - start;
+            statsd.time("s3.put", time, "type:single", "channel:" + channelName);
             return key;
         } catch (Exception e) {
             logger.warn("unable to write item to S3 " + channelName + " " + key, e);
@@ -266,6 +267,12 @@ public class S3SingleContentDao implements ContentDao {
         } catch (Exception e) {
             logger.warn("unable to delete " + channel + " in " + s3BucketName, e);
         }
+    }
+
+    @Override
+    public ContentKey insertHistorical(String channelName, Content content) throws Exception {
+        //todo gfm - stream directly into S3 using the new multipart api??
+        return insert(channelName, content);
     }
 
     public void delete(String channel) {

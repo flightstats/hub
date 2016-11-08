@@ -42,4 +42,8 @@ public interface ContentDao {
         throw new UnsupportedOperationException("streamMinute is not supported");
     }
 
+    default ContentKey insertHistorical(String channelName, Content content) throws Exception {
+        throw new UnsupportedOperationException("insertHistorical is not supported");
+    }
+
 }

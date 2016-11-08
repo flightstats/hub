@@ -82,4 +82,8 @@ public class S3SingleContentDaoTest {
         ContentDaoUtil.compare(content, read, key.toString().getBytes());
     }
 
+    @Test
+    public void testHistorical() throws Exception {
+        util.testWriteHistorical();
+    }
 }
