@@ -1,6 +1,8 @@
 package com.flightstats.hub.model;
 
+import com.flightstats.hub.util.TimeUtil;
 import com.google.common.collect.Sets;
+import org.joda.time.DateTime;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -34,6 +36,7 @@ public class ChannelConfigTest {
         assertEquals("", config.getReplicationSource());
         assertEquals("SINGLE", config.getStorage());
         assertEquals(null, config.getGlobal());
+        assertEquals(null, config.getMutableTime());
     }
 
     @Test
@@ -143,4 +146,21 @@ public class ChannelConfigTest {
         ChannelConfig updated = ChannelConfig.updateFromJson(config, changedChannel.toJson());
         assertEquals(changedGlobal, updated.getGlobal());
     }
+
+    @Test
+    public void testMutableTime() throws Exception {
+        ChannelConfig defaults = ChannelConfig.builder().name("defaults").build();
+        DateTime mutableTime = TimeUtil.now();
+        ChannelConfig channelConfig = defaults.toBuilder().mutableTime(mutableTime).build();
+        assertEquals(mutableTime, channelConfig.getMutableTime());
+
+        String json = channelConfig.toJson();
+        ChannelConfig updated = ChannelConfig.updateFromJson(defaults, json);
+        assertEquals(mutableTime, updated.getMutableTime());
+
+        ChannelConfig createdFromJson = ChannelConfig.createFromJson(updated.toJson());
+        assertEquals(updated, createdFromJson);
+
+    }
+
 }

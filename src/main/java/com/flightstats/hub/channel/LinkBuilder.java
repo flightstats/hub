@@ -18,18 +18,15 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 public class LinkBuilder {
 
     private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-
-    static void addOptionalHeader(String headerName, Optional<String> headerValue, Response.ResponseBuilder builder) {
-        if (headerValue.isPresent()) {
-            builder.header(headerName, headerValue.get());
-        }
-    }
 
     static URI buildChannelUri(String channelName, UriInfo uriInfo) {
         return uriInfo.getBaseUriBuilder().path("channel").path(channelName).build();
@@ -43,7 +40,7 @@ public class LinkBuilder {
         return URI.create(channelUri.toString() + "/" + key);
     }
 
-    public static ObjectNode buildChannelConfigResponse(ChannelConfig config, UriInfo uriInfo) {
+    static ObjectNode buildChannelConfigResponse(ChannelConfig config, UriInfo uriInfo) {
         ObjectNode root = mapper.createObjectNode();
 
         root.put("name", config.getName());
@@ -117,7 +114,6 @@ public class LinkBuilder {
         ObjectNode self = links.putObject("self");
         self.put("href", uriInfo.getRequestUri().toString());
         List<ContentKey> list = new ArrayList<>(keys);
-        String baseUri = uriInfo.getBaseUri() + "channel/" + channel + "/";
         if (list.isEmpty()) {
             ContentKey contentKey = query.getContentKey();
             if (query.isNext()) {

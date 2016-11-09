@@ -33,7 +33,11 @@ public class ChannelConfig implements Serializable, NamedType {
     public static final String BOTH = "BOTH";
 
     private static final long serialVersionUID = 1L;
-    private static final Gson gson = new GsonBuilder().registerTypeAdapter(Date.class, new HubDateTypeAdapter()).create();
+
+    private static final Gson gson = new GsonBuilder()
+            .registerTypeAdapter(Date.class, new HubDateTypeAdapter())
+            .registerTypeAdapter(DateTime.class, new HubDateTimeTypeAdapter())
+            .create();
     private static final ObjectMapper mapper = new ObjectMapper();
 
     private final String name;
@@ -47,14 +51,18 @@ public class ChannelConfig implements Serializable, NamedType {
     private final String storage;
     private final GlobalConfig global;
     private final boolean protect;
+    private final DateTime mutableTime;
 
-    private ChannelConfig(String name, String owner, Date creationDate, long ttlDays, long maxItems, String description, Set<String> tags, String replicationSource, String storage, GlobalConfig global, boolean protect) {
+    private ChannelConfig(String name, String owner, Date creationDate, long ttlDays, long maxItems, String description,
+                          Set<String> tags, String replicationSource, String storage, GlobalConfig global,
+                          boolean protect, DateTime mutableTime) {
         this.name = StringUtils.trim(name);
         this.owner = StringUtils.trim(owner);
         this.creationDate = creationDate;
         this.description = description;
         this.tags = tags;
         this.replicationSource = replicationSource;
+        this.mutableTime = mutableTime;
 
         if (maxItems == 0 && ttlDays == 0) {
             this.ttlDays = 120;
@@ -124,7 +132,9 @@ public class ChannelConfig implements Serializable, NamedType {
         if (rootNode.has("storage")) builder.storage(getString(rootNode.get("storage")));
         if (rootNode.has("global")) builder.global(GlobalConfig.parseJson(rootNode.get("global")));
         if (rootNode.has("protect")) builder.protect(rootNode.get("protect").asBoolean());
-
+        if (rootNode.has("mutableTime")) {
+            builder.mutableTime(HubDateTimeTypeAdapter.deserialize(rootNode.get("mutableTime").asText()));
+        }
         return builder.build();
     }
 
@@ -175,7 +185,6 @@ public class ChannelConfig implements Serializable, NamedType {
         return StringUtils.isNotBlank(replicationSource) || isGlobalSatellite();
     }
 
-    //todo gfm - do we need this?
     public boolean isLive() {
         return !isReplicating();
     }
@@ -197,8 +206,7 @@ public class ChannelConfig implements Serializable, NamedType {
     }
 
     public boolean isHistorical() {
-        //todo gfm - check mutableTime and storage time
-        return false;
+        return mutableTime != null;
     }
 
     @SuppressWarnings("unused")
