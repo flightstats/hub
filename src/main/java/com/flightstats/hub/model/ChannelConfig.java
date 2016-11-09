@@ -64,7 +64,7 @@ public class ChannelConfig implements Serializable, NamedType {
         this.replicationSource = replicationSource;
         this.mutableTime = mutableTime;
 
-        if (maxItems == 0 && ttlDays == 0) {
+        if (maxItems == 0 && ttlDays == 0 && mutableTime == null) {
             this.ttlDays = 120;
             this.maxItems = 0;
         } else {

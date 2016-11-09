@@ -53,6 +53,11 @@ public class LinkBuilder {
             config.getGlobal().getSatellites().forEach(satellites::add);
         }
         root.put("maxItems", config.getMaxItems());
+        if (config.getMutableTime() != null) {
+            root.put("mutableTime", TimeUtil.FORMATTER.print(config.getMutableTime()));
+        } else {
+            root.put("mutableTime", "");
+        }
         root.put("owner", config.getOwner());
         root.put("protect", config.isProtect());
         root.put("replicationSource", config.getReplicationSource());

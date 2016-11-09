@@ -8,6 +8,7 @@ import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.GlobalConfig;
 import com.google.common.base.Strings;
+import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -89,11 +90,47 @@ public class ChannelValidatorTest {
     }
 
     @Test(expected = InvalidRequestException.class)
-    public void testInvalidChannelTtl() throws Exception {
+    public void testInvalidChannelTtlMax() throws Exception {
         validator.validate(ChannelConfig.builder()
                 .name("mychan")
                 .ttlDays(10)
                 .maxItems(10)
+                .build(), null, false);
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void testInvalidChannelTtlMutable() throws Exception {
+        validator.validate(ChannelConfig.builder()
+                .name("mychan")
+                .ttlDays(10)
+                .mutableTime(new DateTime())
+                .build(), null, false);
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void testInvalidChannelMaxMutable() throws Exception {
+        validator.validate(ChannelConfig.builder()
+                .name("mychan")
+                .mutableTime(new DateTime())
+                .maxItems(10)
+                .build(), null, false);
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void testInvalidChannelMutableTime() throws Exception {
+        validator.validate(ChannelConfig.builder()
+                .name("mychan")
+                .mutableTime(new DateTime().plusMinutes(1))
+                .build(), null, false);
+    }
+
+    @Test
+    public void testMutableTime() throws Exception {
+        validator.validate(ChannelConfig.builder()
+                .name("mychan")
+                .mutableTime(new DateTime())
+                .ttlDays(0)
+                .maxItems(0)
                 .build(), null, false);
     }
 

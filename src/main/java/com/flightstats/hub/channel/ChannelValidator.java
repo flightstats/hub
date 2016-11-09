@@ -6,6 +6,7 @@ import com.flightstats.hub.exception.ForbiddenRequestException;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.GlobalConfig;
+import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
@@ -40,7 +41,6 @@ public class ChannelValidator {
         validateTags(config);
         validateStorage(config);
         validateGlobal(config);
-        //todo gfm - validate mutableTime
         if (!isLocalHost) {
             preventDataLoss(config, oldConfig);
         }
@@ -147,11 +147,19 @@ public class ChannelValidator {
     }
 
     private void validateTTL(ChannelConfig request) throws InvalidRequestException {
-        if (request.getTtlDays() == 0 && request.getMaxItems() == 0) {
-            throw new InvalidRequestException("{\"error\": \"ttlDays or maxItems must be greater than 0 (zero) \"}");
+        if (request.getTtlDays() == 0 && request.getMaxItems() == 0 && request.getMutableTime() == null) {
+            throw new InvalidRequestException("{\"error\": \"ttlDays, maxItems or mutableTime must be set \"}");
         }
-        if (request.getTtlDays() > 0 && request.getMaxItems() > 0) {
-            throw new InvalidRequestException("{\"error\": \"Only one of ttlDays and maxItems can be defined \"}");
+        if ((request.getTtlDays() > 0 && request.getMaxItems() > 0)
+                || (request.getTtlDays() > 0 && request.getMutableTime() != null)
+                || (request.getMaxItems() > 0 && request.getMutableTime() != null)
+                ) {
+            throw new InvalidRequestException("{\"error\": \"Only one of ttlDays, maxItems and mutableTime can be defined \"}");
+        }
+        if (request.getMutableTime() != null) {
+            if (request.getMutableTime().isAfter(TimeUtil.now())) {
+                throw new InvalidRequestException("{\"error\": \"mutableTime must be in the past. \"}");
+            }
         }
         if (request.getMaxItems() > 5000) {
             throw new InvalidRequestException("{\"error\": \"maxItems must be less than 5000 \"}");
