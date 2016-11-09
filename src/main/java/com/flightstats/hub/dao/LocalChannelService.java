@@ -1,11 +1,8 @@
 package com.flightstats.hub.dao;
 
-import com.diffplug.common.base.Errors;
-import com.diffplug.common.base.Throwing;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.cluster.LastContentPath;
-import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.exception.ForbiddenRequestException;
 import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.metrics.ActiveTraces;
@@ -30,13 +27,9 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static java.util.Objects.isNull;
-
 @Singleton
 public class LocalChannelService implements ChannelService {
     public static final String REPLICATED_LAST_UPDATED = "/ReplicatedLastUpdated/";
-    public static final String HISTORICAL_LAST_UPDATED = "/HistoricalLastUpdated/";
-    public static final String HISTORICAL_FIRST_UPDATED = "/HistoricalFirstUpdated/";
 
     private final static Logger logger = LoggerFactory.getLogger(LocalChannelService.class);
     private final static StatsDClient statsd = DataDog.statsd;
@@ -66,7 +59,6 @@ public class LocalChannelService implements ChannelService {
     public ChannelConfig createChannel(ChannelConfig configuration) {
         logger.info("create channel {}", configuration);
         channelValidator.validate(configuration, null, false);
-        initializeHistorical(configuration);
         channelConfigDao.upsert(configuration);
         notify(configuration, null);
         return configuration;
@@ -88,22 +80,12 @@ public class LocalChannelService implements ChannelService {
         if (!configuration.equals(oldConfig)) {
             logger.info("updating channel {} from {}", configuration, oldConfig);
             channelValidator.validate(configuration, oldConfig, isLocalHost);
-            if (isNull(oldConfig)) {
-                initializeHistorical(configuration);
-            }
             channelConfigDao.upsert(configuration);
             notify(configuration, oldConfig);
         } else {
             logger.info("update with no changes {}", configuration);
         }
         return configuration;
-    }
-
-    private void initializeHistorical(ChannelConfig configuration) {
-        if (configuration.isHistorical()) {
-            lastContentPath.initialize(configuration.getName(), ContentKey.NONE, HISTORICAL_LAST_UPDATED);
-            lastContentPath.initialize(configuration.getName(), ContentKey.NONE, HISTORICAL_FIRST_UPDATED);
-        }
     }
 
     @Override
@@ -128,29 +110,13 @@ public class LocalChannelService implements ChannelService {
     }
 
     @Override
-    public boolean historicalInsert(String channelName, Content content, boolean minuteComplete) throws Exception {
+    public boolean historicalInsert(String channelName, Content content) throws Exception {
         if (!isHistorical(channelName)) {
             throw new ForbiddenRequestException("historical inserts are only supported for historical channels.");
         }
-        Throwing.Function<ContentPath, ContentPath> inserter = existing -> {
-            ContentKey insertKey = content.getContentKey().get();
-            if (insertKey.compareTo(existing) <= 0) {
-                throw new ConflictException("inserted item is not newer than existing item: " + existing);
-            }
-            if (contentService.historicalInsert(channelName, content)) {
-                if (existing.equals(ContentKey.NONE)) {
-                    lastContentPath.updateIncrease(insertKey, channelName, HISTORICAL_FIRST_UPDATED);
-                    webhookService.unPauseHistorical(getCachedChannelConfig(channelName));
-                }
-                ContentPath nextPath = insertKey;
-                if (minuteComplete) {
-                    nextPath = new MinutePath(nextPath.getTime());
-                }
-                return nextPath;
-            }
-            return existing;
-        };
-        return lastContentPath.updateIncrease(channelName, HISTORICAL_LAST_UPDATED, Errors.rethrow().wrap(inserter));
+        boolean insert = contentService.historicalInsert(channelName, content);
+        //todo gfm - send stats
+        return insert;
     }
 
     @Override
@@ -197,14 +163,6 @@ public class LocalChannelService implements ChannelService {
             return Optional.absent();
         }
         Traces traces = ActiveTraces.getLocal();
-        if (channelConfig.isHistorical()) {
-            ContentPath lastUpdated = getLastUpdated(channel, ContentKey.NONE);
-            traces.add("found historical last updated", lastUpdated);
-            if (lastUpdated.equals(ContentKey.NONE)) {
-                return Optional.absent();
-            }
-            return Optional.of((ContentKey) lastUpdated);
-        }
         ContentKey limitKey = getLatestLimit(channel, stable);
         traces.add("get latest limit", limitKey);
         Optional<ContentKey> latest = contentService.getLatest(channel, limitKey, traces, stable);
@@ -336,11 +294,7 @@ public class LocalChannelService implements ChannelService {
     }
 
     private DateTime getTtlTime(String channelName) {
-        ChannelConfig channel = getCachedChannelConfig(channelName);
-        if (channel.isHistorical()) {
-            return lastContentPath.get(channelName, new ContentKey(), HISTORICAL_FIRST_UPDATED).getTime();
-        }
-        return channel.getTtlTime();
+        return getCachedChannelConfig(channelName).getTtlTime();
     }
 
     @Override
@@ -355,18 +309,12 @@ public class LocalChannelService implements ChannelService {
             replicationGlobalManager.notifyWatchers();
             lastContentPath.delete(channelName, REPLICATED_LAST_UPDATED);
         }
-        if (channelConfig.isHistorical()) {
-            lastContentPath.delete(channelName, HISTORICAL_LAST_UPDATED);
-            lastContentPath.delete(channelName, HISTORICAL_FIRST_UPDATED);
-        }
+
         return true;
     }
 
     @Override
     public ContentPath getLastUpdated(String channelName, ContentPath defaultValue) {
-        if (isHistorical(channelName)) {
-            return lastContentPath.get(channelName, defaultValue, HISTORICAL_LAST_UPDATED);
-        }
         if (isReplicating(channelName)) {
             return lastContentPath.get(channelName, defaultValue, REPLICATED_LAST_UPDATED);
         }

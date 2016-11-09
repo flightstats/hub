@@ -18,11 +18,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Consumer;
 
 public class LinkBuilder {
@@ -53,7 +49,6 @@ public class LinkBuilder {
         root.put("name", config.getName());
         root.put("creationDate", TimeUtil.FORMATTER.print(new DateTime(config.getCreationDate())));
         root.put("description", config.getDescription());
-        root.put("historical", config.isHistorical());
         if (config.isGlobal()) {
             ObjectNode global = root.putObject("global");
             global.put("master", config.getGlobal().getMaster());

@@ -388,11 +388,13 @@ public class ChannelContentResource {
                                      @PathParam("ms") int millis,
                                      @HeaderParam("Content-Type") String contentType,
                                      @HeaderParam("Content-Language") String contentLanguage,
-                                     @HeaderParam("minuteComplete") @DefaultValue("false") boolean minuteComplete,
                                      final InputStream data) throws Exception {
         if (!channelService.channelExists(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
+        //todo gfm - also handle Put
+        //todo gfm - also allow an optional /{hash} at the end
+
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis);
         Content content = Content.builder()
                 .withContentKey(key)
@@ -400,7 +402,7 @@ public class ChannelContentResource {
                 .withStream(data)
                 .build();
         try {
-            boolean success = channelService.historicalInsert(channelName, content, minuteComplete);
+            boolean success = channelService.historicalInsert(channelName, content);
             if (!success) {
                 return Response.status(400).entity("unable to insert historical item").build();
             }

@@ -40,10 +40,7 @@ public class ChannelValidator {
         validateTags(config);
         validateStorage(config);
         validateGlobal(config);
-        if (oldConfig != null) {
-            validateHistorical(config, oldConfig);
-        }
-        validateHistoricalMax(config);
+        //todo gfm - validate mutableTime
         if (!isLocalHost) {
             preventDataLoss(config, oldConfig);
         }
@@ -91,20 +88,6 @@ public class ChannelValidator {
                 if (oldConfig.isGlobal()) {
                     throw new ForbiddenRequestException("{\"error\": \"A channels global configuration is not allowed to be removed in this environment\"}");
                 }
-            }
-        }
-    }
-
-    private void validateHistorical(ChannelConfig config, ChannelConfig oldConfig) {
-        if (oldConfig.isHistorical() != config.isHistorical()) {
-            throw new InvalidRequestException("the historical state of a channel can not change.");
-        }
-    }
-
-    private void validateHistoricalMax(ChannelConfig config) {
-        if (config.isHistorical()) {
-            if (config.getMaxItems() > 0) {
-                throw new InvalidRequestException("a historical channel cannot include maxItems");
             }
         }
     }

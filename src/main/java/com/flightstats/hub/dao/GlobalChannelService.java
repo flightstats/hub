@@ -98,9 +98,9 @@ public class GlobalChannelService implements ChannelService {
     }
 
     @Override
-    public boolean historicalInsert(String channelName, Content content, boolean minuteComplete) {
+    public boolean historicalInsert(String channelName, Content content) {
         return primaryAndSecondary(channelName,
-                Errors.rethrow().wrap(() -> localChannelService.historicalInsert(channelName, content, minuteComplete)),
+                Errors.rethrow().wrap(() -> localChannelService.historicalInsert(channelName, content)),
                 () -> {
                     ContentKey key = hubUtils.insert(getHistoricalInsertUrl(getMasterChannelUrl(channelName), content), content);
                     return !isNull(key);

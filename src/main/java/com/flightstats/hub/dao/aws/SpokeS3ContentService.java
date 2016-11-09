@@ -5,7 +5,6 @@ import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.*;
 import com.flightstats.hub.dao.ContentKeyUtil;
-import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
@@ -96,11 +95,7 @@ public class SpokeS3ContentService implements ContentService {
 
     @Override
     public boolean historicalInsert(String channelName, Content content) throws Exception {
-        DateTime spokeTtlTime = TimeUtil.now().minusMinutes(spokeTtlMinutes);
-        if (content.getContentKey().get().getTime().isAfter(spokeTtlTime)) {
-            throw new InvalidRequestException("you cannot insert an item within the last " + spokeTtlMinutes + " minutes");
-        }
-        insert(channelName, content);
+        s3SingleContentDao.insertHistorical(channelName, content);
         return true;
     }
 
@@ -108,7 +103,7 @@ public class SpokeS3ContentService implements ContentService {
     public Optional<Content> get(String channelName, ContentKey key) {
         logger.trace("fetching {} from channel {} ", key.toString(), channelName);
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
-        if (channel.isHistorical() || key.getTime().isAfter(getSpokeTtlTime(channelName))) {
+        if (key.getTime().isAfter(getSpokeTtlTime(channelName))) {
             Content content = spokeContentDao.get(channelName, key);
             if (content != null) {
                 logger.trace("returning from spoke {} {}", key.toString(), channelName);
@@ -184,7 +179,7 @@ public class SpokeS3ContentService implements ContentService {
         } else {
             daos.add(spokeContentDao);
             ChannelConfig channel = channelService.getCachedChannelConfig(query.getChannelName());
-            if (query.outsideOfCache(getSpokeTtlTime(query.getChannelName())) || channel.isHistorical()) {
+            if (query.outsideOfCache(getSpokeTtlTime(query.getChannelName()))) {
                 if (channel.isSingle()) {
                     daos.add(s3SingleContentDao);
                 } else if (channel.isBatch()) {

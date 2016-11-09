@@ -4,7 +4,6 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.LocalChannelService;
 import com.flightstats.hub.model.ChannelConfig;
-import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.MinutePath;
 import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.TimeUtil;
@@ -19,10 +18,9 @@ import org.junit.rules.TestName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.flightstats.hub.dao.LocalChannelService.*;
+import static com.flightstats.hub.dao.LocalChannelService.REPLICATED_LAST_UPDATED;
 import static com.flightstats.hub.dao.aws.S3Verifier.LAST_SINGLE_VERIFIED;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
 public class S3VerifierTest {
     private final static Logger logger = LoggerFactory.getLogger(S3VerifierTest.class);
@@ -120,84 +118,6 @@ public class S3VerifierTest {
         logger.info("{} {}", channelName, range);
         assertEquals(new MinutePath(lastReplicated.getTime().minusMinutes(1)), range.endPath);
         assertEquals(lastVerified, range.startPath);
-    }
-
-    @Test
-    public void testHistoricalNone() {
-        lastContentPath.initialize(channelName, ContentKey.NONE, HISTORICAL_FIRST_UPDATED);
-        lastContentPath.initialize(channelName, ContentKey.NONE, HISTORICAL_LAST_UPDATED);
-        ChannelConfig channel = getHistoricalChannel(channelName);
-        localChannelService.updateChannel(channel, null, false);
-        assertNull(s3Verifier.getHistoricalVerifierRange(now, channel));
-    }
-
-    @Test
-    public void testHistoricalOneItem() {
-        DateTime historyTime = now.minusYears(1);
-        ContentKey oneKey = new ContentKey(historyTime);
-
-        lastContentPath.update(oneKey, channelName, HISTORICAL_FIRST_UPDATED);
-        lastContentPath.update(oneKey, channelName, HISTORICAL_LAST_UPDATED);
-        ChannelConfig channel = getHistoricalChannel(channelName);
-        localChannelService.updateChannel(channel, null, false);
-        S3Verifier.VerifierRange range = s3Verifier.getHistoricalVerifierRange(now, channel);
-        MinutePath expected = new MinutePath(historyTime);
-        logger.info("{} {}", channelName, range);
-        logger.info("{} expected {}", channelName, expected);
-
-        assertEquals(expected, range.endPath);
-        assertEquals(expected, range.startPath);
-
-        lastContentPath.update(range.endPath, channelName, LAST_SINGLE_VERIFIED);
-        range = s3Verifier.getHistoricalVerifierRange(now, channel);
-        logger.info("{} {}", channelName, range);
-        assertEquals(expected, range.endPath);
-        assertEquals(expected, range.startPath);
-    }
-
-    @Test
-    public void testHistoricalMultipleItems() {
-        DateTime historyStart = now.minusYears(1);
-        ContentKey firstKey = new ContentKey(historyStart);
-        ContentKey lastKey = new ContentKey(historyStart.plusDays(1));
-
-        lastContentPath.update(firstKey, channelName, HISTORICAL_FIRST_UPDATED);
-        lastContentPath.update(lastKey, channelName, HISTORICAL_LAST_UPDATED);
-
-        ChannelConfig channel = getHistoricalChannel(channelName);
-        localChannelService.updateChannel(channel, null, false);
-        S3Verifier.VerifierRange range = s3Verifier.getHistoricalVerifierRange(now, channel);
-
-
-        logger.info("{} {}", channelName, range);
-        logger.info("{} expected {}", channelName, new MinutePath(historyStart));
-
-        assertEquals(new MinutePath(lastKey.getTime()), range.endPath);
-        assertEquals(new MinutePath(firstKey.getTime()), range.startPath);
-
-        logger.info("setting LAST_SINGLE_VERIFIED to endPath {}", range.endPath);
-        lastContentPath.update(range.endPath, channelName, LAST_SINGLE_VERIFIED);
-        range = s3Verifier.getHistoricalVerifierRange(now, channel);
-        logger.info("range again {}", range);
-        assertEquals(new MinutePath(lastKey.getTime()), range.endPath);
-        assertEquals(new MinutePath(lastKey.getTime()), range.startPath);
-
-        ContentKey nextLastKey = new ContentKey(lastKey.getTime().plusDays(1));
-        lastContentPath.updateIncrease(nextLastKey, channelName, HISTORICAL_LAST_UPDATED);
-
-        logger.info("before verifier LAST_SINGLE_VERIFIED {}", lastContentPath.getOrNull(channelName, LAST_SINGLE_VERIFIED));
-        range = s3Verifier.getHistoricalVerifierRange(now, channel);
-        logger.info("x2 testHistoricalMultipleItems {}", range);
-        assertEquals(new MinutePath(nextLastKey.getTime()), range.endPath);
-        assertEquals(new MinutePath(lastKey.getTime()), range.startPath);
-    }
-
-    private ChannelConfig getHistoricalChannel(String name) {
-        return ChannelConfig.builder()
-                .name(name)
-                .historical(true)
-                .ttlDays(3650)
-                .build();
     }
 
     private ChannelConfig getReplicatedChannel(String name) {

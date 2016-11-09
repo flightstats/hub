@@ -19,10 +19,6 @@ public class QueryGenerator {
     }
 
     TimeQuery getQuery(DateTime latestStableInChannel) {
-        return getQuery(latestStableInChannel, false);
-    }
-
-    TimeQuery getQuery(DateTime latestStableInChannel, boolean isHistorical) {
         logger.trace("iterating last {} stable {} ", lastQueryTime, latestStableInChannel);
         if (lastQueryTime.isBefore(latestStableInChannel)) {
             TimeUtil.Unit unit = getStepUnit(latestStableInChannel);
@@ -39,9 +35,6 @@ public class QueryGenerator {
                     .location(location)
                     .build();
             lastQueryTime = unit.round(lastQueryTime.plus(unit.getDuration()));
-            if (isHistorical && lastQueryTime.isAfter(latestStableInChannel)) {
-                lastQueryTime = latestStableInChannel;
-            }
             return query;
         } else {
             return null;

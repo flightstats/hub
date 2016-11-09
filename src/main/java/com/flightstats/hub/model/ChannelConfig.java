@@ -46,14 +46,12 @@ public class ChannelConfig implements Serializable, NamedType {
     private final String replicationSource;
     private final String storage;
     private final GlobalConfig global;
-    private final boolean historical;
     private final boolean protect;
 
-    private ChannelConfig(String name, String owner, Date creationDate, long ttlDays, long maxItems, String description, Set<String> tags, String replicationSource, String storage, GlobalConfig global, boolean historical, boolean protect) {
+    private ChannelConfig(String name, String owner, Date creationDate, long ttlDays, long maxItems, String description, Set<String> tags, String replicationSource, String storage, GlobalConfig global, boolean protect) {
         this.name = StringUtils.trim(name);
         this.owner = StringUtils.trim(owner);
         this.creationDate = creationDate;
-        this.historical = historical;
         this.description = description;
         this.tags = tags;
         this.replicationSource = replicationSource;
@@ -125,7 +123,6 @@ public class ChannelConfig implements Serializable, NamedType {
         if (rootNode.has("replicationSource")) builder.replicationSource(getString(rootNode.get("replicationSource")));
         if (rootNode.has("storage")) builder.storage(getString(rootNode.get("storage")));
         if (rootNode.has("global")) builder.global(GlobalConfig.parseJson(rootNode.get("global")));
-        if (rootNode.has("historical")) builder.historical(rootNode.get("historical").asBoolean());
         if (rootNode.has("protect")) builder.protect(rootNode.get("protect").asBoolean());
 
         return builder.build();
@@ -159,9 +156,6 @@ public class ChannelConfig implements Serializable, NamedType {
     }
 
     public DateTime getTtlTime() {
-        if (historical) {
-            return TimeUtil.now().minusDays((int) ttlDays);
-        }
         return TimeUtil.getEarliestTime(ttlDays);
     }
 
@@ -181,8 +175,9 @@ public class ChannelConfig implements Serializable, NamedType {
         return StringUtils.isNotBlank(replicationSource) || isGlobalSatellite();
     }
 
+    //todo gfm - do we need this?
     public boolean isLive() {
-        return !isHistorical() && !isReplicating();
+        return !isReplicating();
     }
 
     public boolean isValidStorage() {
@@ -199,6 +194,11 @@ public class ChannelConfig implements Serializable, NamedType {
 
     public boolean isBoth() {
         return storage.equals(BOTH);
+    }
+
+    public boolean isHistorical() {
+        //todo gfm - check mutableTime and storage time
+        return false;
     }
 
     @SuppressWarnings("unused")

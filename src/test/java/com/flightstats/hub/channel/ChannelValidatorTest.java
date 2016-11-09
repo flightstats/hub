@@ -159,11 +159,6 @@ public class ChannelValidatorTest {
     }
 
     @Test
-    public void testHistoricalTag() {
-        ChannelConfig config = ChannelConfig.builder().historical(true).build();
-        assertTrue(config.getTags().contains("historical"));
-    }
-
     public void testOwner() throws Exception {
         validator.validate(ChannelConfig.builder().name("A").owner(Strings.repeat("A", 48)).build(), null, false);
     }
@@ -240,19 +235,6 @@ public class ChannelValidatorTest {
         validator.validate(ChannelConfig.builder()
                 .name("global")
                 .global(globalConfig).build(), null, false);
-    }
-
-    @Test(expected = InvalidRequestException.class)
-    public void testHistoricalSwitch() throws Exception {
-        ChannelConfig configA = ChannelConfig.builder().name("A").historical(false).build();
-        ChannelConfig configB = ChannelConfig.builder().name("B").historical(true).build();
-        validator.validate(configA, configB, false);
-    }
-
-    @Test(expected = InvalidRequestException.class)
-    public void testHistoricalNotMax() throws Exception {
-        ChannelConfig configA = ChannelConfig.builder().name("A").historical(true).maxItems(10).build();
-        validator.validate(configA, null, false);
     }
 
     @Test
