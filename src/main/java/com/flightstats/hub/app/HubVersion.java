@@ -31,6 +31,9 @@ public class HubVersion {
             if (files.length == 1) {
                 String name = files[0].getName();
                 version = StringUtils.removeEnd(StringUtils.removeStart(name, "hub-"), ".jar");
+                if (version.equals("null")) {
+                    throw new NullPointerException();
+                }
             } else if (files.length == 0) {
                 version = "no hub jar file found";
             } else {

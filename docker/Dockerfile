@@ -2,26 +2,28 @@ FROM java:8
 
 RUN apt-get update && apt-get install -y bash ntp curl
 
-ADD run /opt/hub/bin/run
+RUN mkdir -p /mnt/log
+RUN mkdir -p /mnt/spoke
+RUN mkdir -p /tmp/storage
 
 ADD hub /opt/hub
+ADD run /opt/hub/bin/run
+RUN chmod +x /opt/hub/bin/*
 
 ADD logback.xml /etc/hub/logback.xml
 ADD hub.properties /etc/hub/hub.properties
 
-RUN mkdir -p /tmp/storage
-RUN mkdir -p /tmp/spoke
+# application ports
+EXPOSE 80
+EXPOSE 8080
 
-RUN chmod +x /opt/hub/bin/*
+# remote debug port
+EXPOSE 3333
 
-RUN mkdir -p /mnt/log && mkdir -p /mnt/spoke
-
-# singleHubMain uses 80, hubMain uses 8080 and is assumed to be behind a load-balancer
-# 3333 is the debug port and 8888 is the jmx remote port.
-EXPOSE 80 8080 3333 8888
+# remote JMX port
+EXPOSE 8888
 
 ENTRYPOINT ["/bin/bash", "/opt/hub/bin/run"]
 
-# In the runfile: App, Java Main Class, Min heap, Max heap, Min new size.
-# Loads singleHubMain by default, and we start with modest memory settings.
-CMD ["hub", "com.flightstats.hub.app.HubMain", "256m", "512m", "10m"]
+# This image does accept some optional arguments
+#CMD [JVM_MIN_HEAP, JVM_MAX_HEAP, JVM_MIN_NEW]
