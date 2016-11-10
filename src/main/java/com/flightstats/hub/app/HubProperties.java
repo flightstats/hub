@@ -105,7 +105,6 @@ public class HubProperties {
             properties.put("s3.writeQueueSize", "2000");
             properties.put("dynamo.table_creation_wait_minutes", "10");
             properties.put("app.lib_path", "");
-            properties.put("app.shutdown_wait_seconds", "10");
             properties.put("app.shutdown_delay_seconds", "2");
             properties.put("app.url", "http://localhost:9080/");
             properties.put("spoke.path", "/tmp/spoke/test");

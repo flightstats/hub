@@ -44,10 +44,10 @@ This is also demonstrated in the example docker-compose.yml file in this dir.
 
 We use a runfile to set some JVM memory settings and determine what mode the hub will run in.
 The override-able CMD in the dockerfile
-is comprised of the following five variables: App Name, Java Class, Min Heap, Max Heap, and Min New Size.
+is comprised of the following four variables: Java Class, Min Heap, Max Heap, and Min New Size.
 
 ```
-"hub", "com.flightstats.hub.app.SingleHubMain", "256m", "512m", "10m"
+"com.flightstats.hub.app.SingleHubMain", "256m", "512m", "10m"
 ```
 
 "com.flightstats.hub.app.SingleHubMain" is the single, local version of the hub and "com.flightstats.hub.app.HubMain" is the

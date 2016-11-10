@@ -10,3 +10,8 @@ services:
       - /mnt/spoke:/mnt/spoke
       - /etc/hub:/etc/hub
     network_mode: "host"
+    logging:
+      driver: json-file
+      options:
+        max-size: "2g"
+        max-file: "2"
