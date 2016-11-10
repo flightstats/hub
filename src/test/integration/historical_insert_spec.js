@@ -8,75 +8,68 @@ var moment = require('moment');
 
 var tag = Math.random().toString().replace(".", "");
 var testName = __filename;
-var channelBody = {
-    historical: true,
-    tags: [tag, "test"],
-    ttlDays: 3650
-};
+
 
 /**
  * This should:
- * Create a channel
- * Verify no items are found in the past
- * Insert an item into the past
- * Verify our inserted item is found and the payload is the same
- * Verify an error is thrown when inserting an item near 'now'
+ * Create a channel with mutableTime
+ * insert an item before the mutableTime, verify item with get
+ * insert an item into now, verify item with get
+ *
+ * todo query items to find each separately, and both together
+ *
  */
 describe(testName, function () {
 
+    var mutableTime = moment.utc().subtract(1, 'minute');
+
+    var channelBody = {
+        mutableTime: mutableTime.format('YYYY-MM-DDTHH:mm:ss'),
+        tags: [tag, "test"]
+    };
+
     utils.putChannel(channel, false, channelBody, testName);
+
     var channelURL = hubUrlBase + '/channel/' + channel;
-    var pointInThePast = '2014/06/01/12/00/00/000';
-    var pointInThePastURL = channelURL + '/' + pointInThePast;
-    var pointCloseToNow = moment.utc().format('YYYY/MM/DD/HH/mm/ss/SSS');
-    var pointCloseToNowURL = channelURL + '/' + pointCloseToNow;
-    var spokeTTLMinutes = 60;
+    var pointInThePastURL = channelURL + '/' + mutableTime.format('YYYY/MM/DD/HH/mm/ss/SSS');
 
-    it('verifies that channel is empty at: ' + pointInThePast, function (done) {
-        request.get({
-            url: pointInThePastURL
-        }, function (err, response, body) {
-            expect(err).toBeNull();
-            expect(response.statusCode).toBe(200);
-            if (response.statusCode == 200) {
-                body = utils.parseJson(response, testName);
-                uris = body._links.uris;
-                expect(uris.length).toBe(0);
-            }
-            done();
-        });
+    var historicalLocation;
+
+    it('posts historical item to ' + channel, function (done) {
+        utils.postItemQ(pointInThePastURL)
+            .then(function (value) {
+                historicalLocation = value.response.headers.location;
+                done();
+            });
     });
 
-    utils.addItem(pointInThePastURL);
-
-    it('verifies that channel has historical data at: ' + pointInThePast, function (done) {
-        request.get({
-            url: pointInThePastURL
-        }, function (err, response, body) {
-            expect(err).toBeNull();
-            expect(response.statusCode).toBe(200);
-            if (response.statusCode == 200) {
-                body = utils.parseJson(response, testName);
-                console.log('body', body);
-                uris = body._links.uris;
-                expect(uris.length).toBe(1);
-                expect(uris[0]).toContain(pointInThePast);
-            }
-            done();
-        });
+    it('gets historical item from ' + historicalLocation, function (done) {
+        request.get({url: historicalLocation},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+                done();
+            });
     });
 
-    it('verifies that historical inserts fail if within ' + spokeTTLMinutes + 'minutes of now.', function (done) {
-        request.post({
-            url: pointCloseToNowURL
-        }, function (err, response) {
-            expect(err).toBeNull();
-            expect(response.statusCode).toBe(400);
-            done();
-        })
+    var liveLocation;
 
+    it('posts live item to ' + channel, function (done) {
+        utils.postItemQ(channelURL)
+            .then(function (value) {
+                liveLocation = value.response.headers.location;
+                done();
+            });
     });
 
-    utils.putChannel(channel, false, {historical: false}, testName, 400);
+    it('gets live item from ' + liveLocation, function (done) {
+        request.get({url: liveLocation},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+                done();
+            });
+    });
+
 
 });

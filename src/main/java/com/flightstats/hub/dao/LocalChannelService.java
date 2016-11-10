@@ -90,9 +90,6 @@ public class LocalChannelService implements ChannelService {
 
     @Override
     public ContentKey insert(String channelName, Content content) throws Exception {
-        if (isHistorical(channelName)) {
-            throw new ForbiddenRequestException("live inserts are not supported for historical channels.");
-        }
         if (content.isNew() && isReplicating(channelName)) {
             throw new ForbiddenRequestException(channelName + " cannot modified while replicating");
         }
@@ -112,8 +109,10 @@ public class LocalChannelService implements ChannelService {
     @Override
     public boolean historicalInsert(String channelName, Content content) throws Exception {
         if (!isHistorical(channelName)) {
+            logger.warn("historical inserts are only supported for historical channels. {}", channelName);
             throw new ForbiddenRequestException("historical inserts are only supported for historical channels.");
         }
+        //todo gfm - verify that insert is before= to mutableTime
         boolean insert = contentService.historicalInsert(channelName, content);
         //todo gfm - send stats
         return insert;
