@@ -24,7 +24,7 @@ describe(testName, function () {
     var mutableTime = moment.utc().subtract(1, 'minute');
 
     var channelBody = {
-        mutableTime: mutableTime.format('YYYY-MM-DDTHH:mm:ss'),
+        mutableTime: mutableTime.format('YYYY-MM-DDTHH:mm:ss.SSS'),
         tags: [tag, "test"]
     };
 
