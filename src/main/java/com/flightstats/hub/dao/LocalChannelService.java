@@ -4,6 +4,7 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.exception.ForbiddenRequestException;
+import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.DataDog;
@@ -109,10 +110,16 @@ public class LocalChannelService implements ChannelService {
     @Override
     public boolean historicalInsert(String channelName, Content content) throws Exception {
         if (!isHistorical(channelName)) {
-            logger.warn("historical inserts are only supported for historical channels. {}", channelName);
-            throw new ForbiddenRequestException("historical inserts are only supported for historical channels.");
+            logger.warn("historical inserts require a mutableTime on the channel. {}", channelName);
+            throw new ForbiddenRequestException("historical inserts require a mutableTime on the channel.");
         }
-        //todo gfm - verify that insert is before= to mutableTime
+        ChannelConfig channelConfig = getCachedChannelConfig(channelName);
+        ContentKey contentKey = content.getContentKey().get();
+        if (contentKey.getTime().isAfter(channelConfig.getMutableTime())) {
+            String msg = "historical inserts must not be after mutableTime" + channelName + " " + contentKey;
+            logger.warn(msg);
+            throw new InvalidRequestException(msg);
+        }
         boolean insert = contentService.historicalInsert(channelName, content);
         //todo gfm - send stats
         return insert;
