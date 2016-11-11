@@ -19,7 +19,6 @@ JMXREMOTE_PORT=8888
 for word in $(<${CONFIG_DIR}/hub.properties); do
     if [[ ${word} == http.bind_port* ]]; then
         APP_PORT=$(echo ${word} | cut -d '=' -f 2)
-        echo ${APP_PORT}
     fi
 done
 
