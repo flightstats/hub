@@ -3,6 +3,10 @@
 set -e
 set -x
 
+MIN_HEAP=${1:-256m}
+MAX_HEAP=${2:-512m}
+MIN_NEW=${3:-10m}
+
 APP_HOME=/opt/hub
 APP_JAR=$(ls ${APP_HOME}/lib/hub-*)
 CLASSPATH=$APP_JAR:${APP_HOME}/lib/*
@@ -10,9 +14,6 @@ CONFIG_DIR=/etc/hub
 LOG_DIR=/mnt/log
 DEBUG_PORT=3333
 JMXREMOTE_PORT=8888
-MIN_HEAP=${1:-256m}
-MAX_HEAP=${2:-512m}
-MIN_NEW=${3:-10m}
 
 JAVA_OPTS="
  -d64
