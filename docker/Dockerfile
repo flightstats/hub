@@ -14,6 +14,3 @@ ADD logback.xml /etc/hub/logback.xml
 ADD hub.properties /etc/hub/hub.properties
 
 ENTRYPOINT ["/bin/bash", "/opt/hub/bin/run"]
-
-# This image does accept some optional arguments
-#CMD [JVM_MIN_HEAP, JVM_MAX_HEAP, JVM_MIN_NEW]
