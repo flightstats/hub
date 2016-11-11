@@ -53,7 +53,7 @@ function shutdownChild()
         kill -QUIT $CHILDPID
 
         echo issuing shutdown curl command...
-        curl -is -X POST http://localhost:${HUB_PORT}/shutdown
+        curl -is -X POST http://localhost/shutdown
 
         kill -TERM $CHILDPID
         echo signal sent, waiting ...
