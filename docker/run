@@ -1,7 +1,7 @@
 #!/bin/bash
 
-set -e
-set -x
+#set -x
+set -eo pipefail
 
 MIN_HEAP=${1:-256m}
 MAX_HEAP=${2:-512m}
@@ -9,11 +9,19 @@ MIN_NEW=${3:-10m}
 
 APP_HOME=/opt/hub
 APP_JAR=$(ls ${APP_HOME}/lib/hub-*)
-CLASSPATH=$APP_JAR:${APP_HOME}/lib/*
+CLASSPATH=${APP_JAR}:${APP_HOME}/lib/*
 CONFIG_DIR=/etc/hub
 LOG_DIR=/mnt/log
 DEBUG_PORT=3333
 JMXREMOTE_PORT=8888
+
+# extract the port from hub.properties
+for word in $(<${CONFIG_DIR}/hub.properties); do
+    if [[ ${word} == http.bind_port* ]]; then
+        APP_PORT=$(echo ${word} | cut -d '=' -f 2)
+        echo ${APP_PORT}
+    fi
+done
 
 JAVA_OPTS="
  -d64
@@ -43,30 +51,30 @@ JAVA_OPTS="
 CHILDPID=""
 function shutdownChild()
 {
-        echo signal trap caught - taking stack trace and sleeping 5s before relaying signal
+    echo "signal trap caught - taking stack trace and sleeping 5s before relaying signal"
 
-        if [ -z "$CHILDPID" ]
-        then
-                echo no hub child PID to shutdown
-                return
-        fi
+    if [ -z "$CHILDPID" ]
+    then
+        echo "no hub child PID to shutdown"
+        return
+    fi
 
-        kill -QUIT $CHILDPID
+    kill -QUIT ${CHILDPID}
 
-        echo issuing shutdown curl command...
-        curl -is -X POST http://localhost/shutdown
+    echo "issuing shutdown curl command..."
+    curl -is -X POST http://localhost:${APP_PORT}/shutdown
 
-        kill -TERM $CHILDPID
-        echo signal sent, waiting ...
-        wait $CHILDPID
-        echo hub is down
+    kill -TERM ${CHILDPID}
+    echo "signal sent, waiting ..."
+    wait ${CHILDPID}
+    echo "hub is down"
 }
 trap "shutdownChild" SIGTERM SIGINT
 
-echo running hub in the background...
-exec java -cp $CLASSPATH $JAVA_OPTS com.flightstats.hub.app.HubMain $CONFIG_DIR/hub.properties &
+echo "running hub in the background..."
+exec java -cp ${CLASSPATH} ${JAVA_OPTS} com.flightstats.hub.app.HubMain ${CONFIG_DIR}/hub.properties &
 CHILDPID=$!
 echo "... hub pid is $CHILDPID"
 
-wait $CHILDPID
+wait ${CHILDPID}
 exit $?
