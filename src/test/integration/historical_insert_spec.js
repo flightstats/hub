@@ -15,8 +15,7 @@ var testName = __filename;
  * Create a channel with mutableTime
  * insert an item before the mutableTime, verify item with get
  * insert an item into now, verify item with get
- * Query items by time, verify exclusion
- * todo Query items by next/previous, verify exclusion
+ * insert an item with a user defined hash
  */
 describe(testName, function () {
 
@@ -70,11 +69,24 @@ describe(testName, function () {
             });
     });
 
-    //todo gfm - Put item
-    //todo gfm - Put item with Hash
-    //todo gfm - Post item with Hash
+    var hashItem;
 
+    it('posts historical item to ' + channel, function (done) {
+        utils.postItemQ(pointInThePastURL + '/abcdefg')
+            .then(function (value) {
+                hashItem = value.response.headers.location;
+                expect(hashItem).toContain('/abcdefg')
+                done();
+            });
+    });
 
-
+    it('gets historical item from ' + hashItem, function (done) {
+        request.get({url: hashItem},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+                done();
+            });
+    });
 
 });

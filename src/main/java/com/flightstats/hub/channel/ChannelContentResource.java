@@ -397,13 +397,33 @@ public class ChannelContentResource {
                                      @HeaderParam("Content-Type") String contentType,
                                      @HeaderParam("Content-Language") String contentLanguage,
                                      final InputStream data) throws Exception {
+        ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis);
+        return historicalResponse(channelName, key, contentType, data);
+    }
+
+    @Path("/{h}/{m}/{s}/{ms}/{hash}")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response historicalInsertHash(@PathParam("channel") final String channelName,
+                                         @PathParam("Y") int year,
+                                         @PathParam("M") int month,
+                                         @PathParam("D") int day,
+                                         @PathParam("h") int hour,
+                                         @PathParam("m") int minute,
+                                         @PathParam("s") int second,
+                                         @PathParam("ms") int millis,
+                                         @PathParam("hash") String hash,
+                                         @HeaderParam("Content-Type") String contentType,
+                                         @HeaderParam("Content-Language") String contentLanguage,
+                                         final InputStream data) throws Exception {
+        ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
+        return historicalResponse(channelName, key, contentType, data);
+    }
+
+    private Response historicalResponse(String channelName, ContentKey key, String contentType, InputStream data) throws Exception {
         if (!channelService.channelExists(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
-        //todo gfm - also handle Put
-        //todo gfm - also allow an optional /{hash} at the end
-
-        ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis);
         Content content = Content.builder()
                 .withContentKey(key)
                 .withContentType(contentType)
@@ -414,10 +434,13 @@ public class ChannelContentResource {
             if (!success) {
                 return Response.status(400).entity("unable to insert historical item").build();
             }
-
             logger.trace("posted {}", key);
             InsertedContentKey insertionResult = new InsertedContentKey(key);
-            URI payloadUri = new URI(uriInfo.getRequestUri() + "/" + key.getHash());
+            URI payloadUri = uriInfo.getBaseUriBuilder()
+                    .path("channel").path(channelName)
+                    .path(key.toUrl())
+                    .build();
+
             Linked<InsertedContentKey> linkedResult = linked(insertionResult)
                     .withLink("channel", LinkBuilder.buildChannelUri(channelName, uriInfo))
                     .withLink("self", payloadUri)
