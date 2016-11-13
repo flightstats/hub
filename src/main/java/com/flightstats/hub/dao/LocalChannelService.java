@@ -260,12 +260,19 @@ public class LocalChannelService implements ChannelService {
         if (query == null) {
             return Collections.emptySortedSet();
         }
-        DateTime ttlTime = getTtlTime(query.getChannelName());
-        Stream<ContentKey> stream = contentService.queryByTime(query).stream()
-                .filter(key -> !key.getTime().isBefore(ttlTime));
+        ActiveTraces.getLocal().add("LCS.qbt", query);
+        ChannelConfig channelConfig = getCachedChannelConfig(query.getChannelName());
+        Stream<ContentKey> stream = contentService.queryByTime(query).stream();
+        if (!channelConfig.isHistorical()) {
+            stream = stream.filter(key -> !key.getTime().isBefore(channelConfig.getTtlTime()));
+        } else if (query.getEpoch().equals(Epoch.IMMUTABLE)) {
+            stream = stream.filter(key -> key.getTime().isAfter(channelConfig.getMutableTime()));
+        } else if (query.getEpoch().equals(Epoch.MUTABLE)) {
+            stream = stream.filter(key -> !key.getTime().isAfter(channelConfig.getMutableTime()));
+        }
+        //do not filter for epoch.ALL
         if (query.isStable()) {
-            DateTime stableTime = TimeUtil.stable();
-            stream = stream.filter(key -> key.getTime().isBefore(stableTime));
+            stream = stream.filter(key -> key.getTime().isBefore(TimeUtil.stable()));
         }
         return stream.collect(Collectors.toCollection(TreeSet::new));
     }

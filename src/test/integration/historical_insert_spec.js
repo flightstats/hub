@@ -15,9 +15,8 @@ var testName = __filename;
  * Create a channel with mutableTime
  * insert an item before the mutableTime, verify item with get
  * insert an item into now, verify item with get
- *
- * todo query items to find each separately, and both together
- *
+ * Query items by time, verify exclusion
+ * todo Query items by next/previous, verify exclusion
  */
 describe(testName, function () {
 
@@ -71,5 +70,36 @@ describe(testName, function () {
             });
     });
 
+    function timeQuery(query, expected, done) {
+        request.get({url: channelURL + '/time/day?trace=true&stable=false' + query, json: true},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+                console.log('body ', body);
+                var uris = body._links.uris;
+                console.log('uris ', uris);
+                expect(uris.length).toBe(expected.length);
+                for (var i = 0; i < uris.length; i++) {
+                    expect(uris[i]).toBe(expected[i]);
+                }
+                done();
+            });
+    }
+
+    it('gets default items from channel by day', function (done) {
+        timeQuery('', [liveLocation], done);
+    });
+
+    it('gets immutable items from channel by day', function (done) {
+        timeQuery('&epoch=IMMUTABLE', [liveLocation], done);
+    });
+
+    it('gets mutable items from channel by day', function (done) {
+        timeQuery('&epoch=MUTABLE', [historicalLocation], done);
+    });
+
+    it('gets all items from channel by day', function (done) {
+        timeQuery('&epoch=ALL', [historicalLocation, liveLocation], done);
+    });
 
 });

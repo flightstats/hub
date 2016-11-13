@@ -93,7 +93,8 @@ public class ChannelContentResource {
                            @PathParam("Y") int year,
                            @PathParam("M") int month,
                            @PathParam("D") int day,
-                           @QueryParam("location") @DefaultValue("ALL") String location,
+                           @QueryParam("location") @DefaultValue(Location.DEFAULT) String location,
+                           @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
                            @QueryParam("trace") @DefaultValue("false") boolean trace,
                            @QueryParam("stable") @DefaultValue("true") boolean stable,
                            @QueryParam("batch") @DefaultValue("false") boolean batch,
@@ -101,7 +102,7 @@ public class ChannelContentResource {
                            @QueryParam("tag") String tag,
                            @HeaderParam("Accept") String accept) {
         DateTime startTime = new DateTime(year, month, day, 0, 0, 0, 0, DateTimeZone.UTC);
-        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.DAYS, tag, bulk || batch, accept);
+        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.DAYS, tag, bulk || batch, accept, epoch);
     }
 
     @Path("/{hour}")
@@ -112,7 +113,8 @@ public class ChannelContentResource {
                             @PathParam("M") int month,
                             @PathParam("D") int day,
                             @PathParam("hour") int hour,
-                            @QueryParam("location") @DefaultValue("ALL") String location,
+                            @QueryParam("location") @DefaultValue(Location.DEFAULT) String location,
+                            @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
                             @QueryParam("trace") @DefaultValue("false") boolean trace,
                             @QueryParam("stable") @DefaultValue("true") boolean stable,
                             @QueryParam("batch") @DefaultValue("false") boolean batch,
@@ -120,7 +122,7 @@ public class ChannelContentResource {
                             @QueryParam("tag") String tag,
                             @HeaderParam("Accept") String accept) {
         DateTime startTime = new DateTime(year, month, day, hour, 0, 0, 0, DateTimeZone.UTC);
-        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.HOURS, tag, bulk || batch, accept);
+        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.HOURS, tag, bulk || batch, accept, epoch);
     }
 
     @Path("/{h}/{minute}")
@@ -132,7 +134,8 @@ public class ChannelContentResource {
                               @PathParam("D") int day,
                               @PathParam("h") int hour,
                               @PathParam("minute") int minute,
-                              @QueryParam("location") @DefaultValue("ALL") String location,
+                              @QueryParam("location") @DefaultValue(Location.DEFAULT) String location,
+                              @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
                               @QueryParam("trace") @DefaultValue("false") boolean trace,
                               @QueryParam("stable") @DefaultValue("true") boolean stable,
                               @QueryParam("batch") @DefaultValue("false") boolean batch,
@@ -140,7 +143,7 @@ public class ChannelContentResource {
                               @QueryParam("tag") String tag,
                               @HeaderParam("Accept") String accept) {
         DateTime startTime = new DateTime(year, month, day, hour, minute, 0, 0, DateTimeZone.UTC);
-        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.MINUTES, tag, bulk || batch, accept);
+        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.MINUTES, tag, bulk || batch, accept, epoch);
     }
 
     @Path("/{h}/{m}/{second}")
@@ -153,7 +156,8 @@ public class ChannelContentResource {
                               @PathParam("h") int hour,
                               @PathParam("m") int minute,
                               @PathParam("second") int second,
-                              @QueryParam("location") @DefaultValue("ALL") String location,
+                              @QueryParam("location") @DefaultValue(Location.DEFAULT) String location,
+                              @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
                               @QueryParam("trace") @DefaultValue("false") boolean trace,
                               @QueryParam("stable") @DefaultValue("true") boolean stable,
                               @QueryParam("batch") @DefaultValue("false") boolean batch,
@@ -161,11 +165,11 @@ public class ChannelContentResource {
                               @QueryParam("tag") String tag,
                               @HeaderParam("Accept") String accept) {
         DateTime startTime = new DateTime(year, month, day, hour, minute, second, 0, DateTimeZone.UTC);
-        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.SECONDS, tag, bulk || batch, accept);
+        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.SECONDS, tag, bulk || batch, accept, epoch);
     }
 
     private Response getTimeQueryResponse(String channel, DateTime startTime, String location, boolean trace, boolean stable,
-                                          Unit unit, String tag, boolean bulk, String accept) {
+                                          Unit unit, String tag, boolean bulk, String accept, String epoch) {
         //todo - gfm - 12/15/15 - merge this with TagContentResource.getTimeQueryResponse
         if (tag != null) {
             return tagContentResource.getTimeQueryResponse(tag, startTime, location, trace, stable, unit, bulk, accept, uriInfo);
@@ -176,6 +180,7 @@ public class ChannelContentResource {
                 .stable(stable)
                 .unit(unit)
                 .location(Location.valueOf(location))
+                .epoch(Epoch.valueOf(epoch))
                 .build();
         SortedSet<ContentKey> keys = channelService.queryByTime(query);
         DateTime current = stable ? stable() : now();
@@ -273,6 +278,8 @@ public class ChannelContentResource {
                                  @PathParam("direction") String direction,
                                  @QueryParam("stable") @DefaultValue("true") boolean stable,
                                  @QueryParam("tag") String tag) {
+        //todo gfm - add location
+        //todo gfm - add epoch
         ContentKey contentKey = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         boolean next = direction.startsWith("n");
         if (null != tag) {
@@ -342,11 +349,12 @@ public class ChannelContentResource {
                                       @PathParam("count") int count,
                                       @QueryParam("stable") @DefaultValue("true") boolean stable,
                                       @QueryParam("trace") @DefaultValue("false") boolean trace,
-                                      @QueryParam("location") @DefaultValue("ALL") String location,
+                                      @QueryParam("location") @DefaultValue(Location.DEFAULT) String location,
                                       @QueryParam("batch") @DefaultValue("false") boolean batch,
                                       @QueryParam("bulk") @DefaultValue("false") boolean bulk,
                                       @QueryParam("tag") String tag,
                                       @HeaderParam("Accept") String accept) {
+        //todo gfm - add epoch
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         boolean next = direction.startsWith("n");
         if (null != tag) {
