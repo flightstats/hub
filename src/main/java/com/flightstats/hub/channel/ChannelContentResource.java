@@ -449,16 +449,12 @@ public class ChannelContentResource {
                               @PathParam("m") String minute,
                               @PathParam("s") String second,
                               @PathParam("ms") String millis) {
-        try {
-            URI redirect = UriBuilder.fromUri(uriInfo.getBaseUri())
-                    .path("channel")
-                    .path(channel)
-                    .path(year).path(month).path(day)
-                    .path(hour).path(minute).path(second).build();
-            return Response.seeOther(redirect).build();
-        } catch (Exception e) {
-            logger.warn("what!?!", e);
-            return null;
-        }
+        UriBuilder builder = UriBuilder.fromUri(uriInfo.getBaseUri())
+                .path("channel")
+                .path(channel)
+                .path(year).path(month).path(day)
+                .path(hour).path(minute).path(second);
+        TimeLinkUtil.addQueryParams(uriInfo, builder);
+        return Response.seeOther(builder.build()).build();
     }
 }

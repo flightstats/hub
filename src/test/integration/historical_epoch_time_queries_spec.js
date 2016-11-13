@@ -16,7 +16,6 @@ var testName = __filename;
  * insert an item before the mutableTime, verify item with get
  * insert an item into now, verify item with get
  * Query items by time, verify exclusion
- * todo Query items by next/previous, verify exclusion
  */
 describe(testName, function () {
 
@@ -52,11 +51,13 @@ describe(testName, function () {
     });
 
     var liveLocation;
+    var liveTime;
 
     it('posts live item to ' + channel, function (done) {
         utils.postItemQ(channelURL)
             .then(function (value) {
                 liveLocation = value.response.headers.location;
+                liveTime = moment(liveLocation.substring(channelURL.length), '/YYYY/MM/DD/HH/mm/ss/SSS');
                 done();
             });
     });
@@ -70,11 +71,61 @@ describe(testName, function () {
             });
     });
 
-    //todo gfm - Put item
-    //todo gfm - Put item with Hash
-    //todo gfm - Post item with Hash
+    function timeQuery(query, expected, done) {
+        var url = channelURL + query;
+        request.get({url: url, json: true},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+                console.log('body ', body);
+                console.log('url ', url);
+                var uris = body._links.uris;
+                console.log('uris ', uris);
+                expect(uris.length).toBe(expected.length);
+                for (var i = 0; i < uris.length; i++) {
+                    expect(uris[i]).toBe(expected[i]);
+                }
+                done();
+            });
+    }
 
+    function queryTimes(format, done) {
+        var liveQuery = liveTime.format(format);
+        var mutableQuery = mutableTime.format(format);
 
+        var queryAll = done;
+        if (liveQuery === mutableQuery) {
+            queryAll = function () {
+                timeQuery(mutableQuery + '?epoch=ALL&trace=true&stable=false', [historicalLocation, liveLocation], done);
+            };
+        }
+
+        var queryMutable = function () {
+            timeQuery(mutableQuery + '?epoch=MUTABLE&trace=true&stable=false', [historicalLocation], queryAll);
+        };
+        timeQuery(liveQuery + '?epoch=IMMUTABLE&trace=true&stable=false', [liveLocation], queryMutable);
+
+    }
+
+    it('mutable item by day', function (done) {
+        queryTimes('/YYYY/MM/DD', done);
+    });
+
+    it('mutable item by hour', function (done) {
+        queryTimes('/YYYY/MM/DD/HH', done);
+    });
+
+    it('mutable item by minute', function (done) {
+        queryTimes('/YYYY/MM/DD/HH/mm', done);
+    });
+
+    it('mutable item by second', function (done) {
+        queryTimes('/YYYY/MM/DD/HH/mm/ss', done);
+    });
+
+    it('mutable item by millis', function (done) {
+        queryTimes('/YYYY/MM/DD/HH/mm/ss/SSS', done);
+    });
 
 
 });
