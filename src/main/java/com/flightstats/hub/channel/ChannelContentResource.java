@@ -275,11 +275,11 @@ public class ChannelContentResource {
                                  @PathParam("s") int second,
                                  @PathParam("ms") int millis,
                                  @PathParam("hash") String hash,
+                                 @QueryParam("location") @DefaultValue(Location.DEFAULT) String location,
                                  @PathParam("direction") String direction,
+                                 @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
                                  @QueryParam("stable") @DefaultValue("true") boolean stable,
                                  @QueryParam("tag") String tag) {
-        //todo gfm - add location
-        //todo gfm - add epoch
         ContentKey contentKey = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         boolean next = direction.startsWith("n");
         if (null != tag) {
@@ -287,10 +287,13 @@ public class ChannelContentResource {
         }
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
-                .contentKey(contentKey)
+                .startKey(contentKey)
                 .next(next)
                 .stable(stable)
-                .count(1).build();
+                .location(Location.valueOf(location))
+                .epoch(Epoch.valueOf(epoch))
+                .count(1)
+                .build();
         Collection<ContentKey> keys = channelService.getKeys(query);
         if (keys.isEmpty()) {
             return Response.status(NOT_FOUND).build();
@@ -350,11 +353,11 @@ public class ChannelContentResource {
                                       @QueryParam("stable") @DefaultValue("true") boolean stable,
                                       @QueryParam("trace") @DefaultValue("false") boolean trace,
                                       @QueryParam("location") @DefaultValue(Location.DEFAULT) String location,
+                                      @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
                                       @QueryParam("batch") @DefaultValue("false") boolean batch,
                                       @QueryParam("bulk") @DefaultValue("false") boolean bulk,
                                       @QueryParam("tag") String tag,
                                       @HeaderParam("Accept") String accept) {
-        //todo gfm - add epoch
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         boolean next = direction.startsWith("n");
         if (null != tag) {
@@ -362,10 +365,11 @@ public class ChannelContentResource {
         }
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
-                .contentKey(key)
+                .startKey(key)
                 .next(next)
                 .stable(stable)
                 .location(Location.valueOf(location))
+                .epoch(Epoch.valueOf(epoch))
                 .count(count)
                 .build();
         SortedSet<ContentKey> keys = channelService.getKeys(query);

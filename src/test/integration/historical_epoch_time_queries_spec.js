@@ -77,10 +77,7 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
-                console.log('body ', body);
-                console.log('url ', url);
                 var uris = body._links.uris;
-                console.log('uris ', uris);
                 expect(uris.length).toBe(expected.length);
                 for (var i = 0; i < uris.length; i++) {
                     expect(uris[i]).toBe(expected[i]);

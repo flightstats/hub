@@ -84,10 +84,10 @@ public class ChannelEarliestResource {
 
         return DirectionQuery.builder()
                 .channelName(channel)
-                .contentKey(limitKey)
+                .startKey(limitKey)
                 .next(true)
                 .stable(stable)
-                .ttlTime(ttlTime)
+                .earliestTime(ttlTime)
                 .count(count)
                 .build();
     }

@@ -128,7 +128,7 @@ public class Webhook implements Comparable<Webhook>, NamedType {
         if (latest.isPresent()) {
             DirectionQuery query = DirectionQuery.builder()
                     .channelName(channel)
-                    .contentKey(latest.get())
+                    .startKey(latest.get())
                     .next(false)
                     .count(1)
                     .build();

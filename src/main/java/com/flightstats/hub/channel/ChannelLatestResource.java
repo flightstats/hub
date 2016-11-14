@@ -67,10 +67,10 @@ public class ChannelLatestResource {
         }
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
-                .contentKey(latest.get())
+                .startKey(latest.get())
                 .next(false)
                 .stable(stable)
-                .ttlTime(channelService.getCachedChannelConfig(channel).getTtlTime())
+                .earliestTime(channelService.getCachedChannelConfig(channel).getTtlTime())
                 .count(count - 1)
                 .build();
         SortedSet<ContentKey> keys = new TreeSet<>(channelService.getKeys(query));

@@ -56,7 +56,7 @@ public class TagLatestResource {
         }
         DirectionQuery query = DirectionQuery.builder()
                 .tagName(tag)
-                .contentKey(latest.get().getContentKey())
+                .startKey(latest.get().getContentKey())
                 .next(false)
                 .stable(stable)
                 .count(count - 1)

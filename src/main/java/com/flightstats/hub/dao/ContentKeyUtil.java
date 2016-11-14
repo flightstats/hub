@@ -1,7 +1,7 @@
 package com.flightstats.hub.dao;
 
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.MinutePath;
+import com.flightstats.hub.app.HubProvider;
+import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.TimeUtil;
 import org.joda.time.DateTime;
 
@@ -11,25 +11,38 @@ import java.util.stream.Stream;
 
 public class ContentKeyUtil {
 
-    public static SortedSet<ContentKey> filter(Collection<ContentKey> keys, ContentKey limitKey,
-                                         DateTime ttlTime, int count, boolean next, boolean stable) {
+    private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
+
+    public static SortedSet<ContentKey> filter(Collection<ContentKey> keys, DirectionQuery query) {
         Stream<ContentKey> stream = keys.stream();
-        if (next) {
-            stream = stream.filter(key -> key.compareTo(limitKey) > 0);
-            if (stable) {
-                DateTime stableTime = TimeUtil.stable();
-                stream = stream.filter(key -> key.getTime().isBefore(stableTime));
-            }
+        if (query.isNext()) {
+            stream = stream.filter(key -> key.compareTo(query.getStartKey()) > 0);
+
         } else {
             Collection<ContentKey> contentKeys = new TreeSet<>(Collections.reverseOrder());
             contentKeys.addAll(keys);
             stream = contentKeys.stream()
-                    .filter(key -> key.compareTo(limitKey) < 0);
+                    .filter(key -> key.compareTo(query.getStartKey()) < 0);
         }
+        stream = enforceLimits(query, stream);
         return stream
-                .filter(key -> !key.getTime().isBefore(ttlTime))
-                .limit(count)
+                .limit(query.getCount())
                 .collect(Collectors.toCollection(TreeSet::new));
+    }
+
+    static Stream<ContentKey> enforceLimits(Query query, Stream<ContentKey> stream) {
+        ChannelConfig channelConfig = channelService.getCachedChannelConfig(query.getChannelName());
+        if (!channelConfig.isHistorical()) {
+            return stream.filter(key -> !key.getTime().isBefore(channelConfig.getTtlTime()));
+        } else if (query.getEpoch().equals(Epoch.IMMUTABLE)) {
+            return stream.filter(key -> key.getTime().isAfter(channelConfig.getMutableTime()));
+        } else if (query.getEpoch().equals(Epoch.MUTABLE)) {
+            return stream.filter(key -> !key.getTime().isAfter(channelConfig.getMutableTime()));
+        }
+        if (query.isStable()) {
+            stream = stream.filter(key -> key.getTime().isBefore(TimeUtil.stable()));
+        }
+        return stream;
     }
 
     public static SortedSet<MinutePath> convert(SortedSet<ContentKey> keys) {

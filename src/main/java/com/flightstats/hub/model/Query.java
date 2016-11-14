@@ -6,9 +6,13 @@ public interface Query {
 
     Location getLocation();
 
+    Epoch getEpoch();
+
     String getChannelName();
 
     boolean outsideOfCache(DateTime cacheTime);
 
     String getUrlPath();
+
+    boolean isStable();
 }

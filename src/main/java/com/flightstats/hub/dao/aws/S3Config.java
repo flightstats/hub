@@ -119,10 +119,10 @@ public class S3Config {
             keys.add(latest);
             DirectionQuery query = DirectionQuery.builder()
                     .channelName(config.getName())
-                    .contentKey(latest)
+                    .startKey(latest)
                     .next(false)
                     .stable(false)
-                    .ttlTime(config.getTtlTime())
+                    .earliestTime(config.getTtlTime())
                     .count((int) (config.getMaxItems() - 1))
                     .build();
             keys.addAll(channelService.getKeys(query));

@@ -241,7 +241,7 @@ public class TagContentResource {
     public Response adjacent(String tag, ContentKey contentKey, boolean stable, boolean next, UriInfo uriInfo) {
         DirectionQuery query = DirectionQuery.builder()
                 .tagName(tag)
-                .contentKey(contentKey)
+                .startKey(contentKey)
                 .next(next)
                 .stable(stable)
                 .count(1).build();
@@ -291,7 +291,7 @@ public class TagContentResource {
                                   boolean next, ContentKey contentKey, boolean bulk, String accept, UriInfo uriInfo) {
         DirectionQuery query = DirectionQuery.builder()
                 .tagName(tag)
-                .contentKey(contentKey)
+                .startKey(contentKey)
                 .next(next)
                 .stable(stable)
                 .location(Location.valueOf(location))

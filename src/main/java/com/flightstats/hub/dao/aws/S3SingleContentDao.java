@@ -250,7 +250,7 @@ public class S3SingleContentDao implements ContentDao {
         ListObjectsRequest request = new ListObjectsRequest()
                 .withBucketName(s3BucketName)
                 .withPrefix(query.getChannelName() + "/")
-                .withMarker(query.getChannelName() + "/" + query.getContentKey().toUrl())
+                .withMarker(query.getChannelName() + "/" + query.getStartKey().toUrl())
                 .withMaxKeys(query.getCount());
         return iterateListObjects(query.getChannelName(), request, query.getCount(), TimeUtil.now(), query.getCount(), null);
     }

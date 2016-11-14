@@ -120,7 +120,7 @@ public class LinkBuilder {
         self.put("href", uriInfo.getRequestUri().toString());
         List<ContentKey> list = new ArrayList<>(keys);
         if (list.isEmpty()) {
-            ContentKey contentKey = query.getContentKey();
+            ContentKey contentKey = query.getStartKey();
             if (query.isNext()) {
                 ObjectNode previous = links.putObject("previous");
                 previous.put("href", LinkBuilder.getDirection("previous", channel, uriInfo, contentKey, count).toString());
@@ -160,10 +160,10 @@ public class LinkBuilder {
         if (list.isEmpty()) {
             if (query.isNext()) {
                 ObjectNode previous = links.putObject("previous");
-                previous.put("href", baseUri + query.getContentKey().toUrl() + "/previous/" + count);
+                previous.put("href", baseUri + query.getStartKey().toUrl() + "/previous/" + count);
             } else {
                 ObjectNode next = links.putObject("next");
-                next.put("href", baseUri + query.getContentKey().toUrl() + "/next/" + count);
+                next.put("href", baseUri + query.getStartKey().toUrl() + "/next/" + count);
             }
         } else {
             ObjectNode next = links.putObject("next");

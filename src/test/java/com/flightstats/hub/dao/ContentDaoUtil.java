@@ -245,8 +245,8 @@ public class ContentDaoUtil {
                 .channelName(channel)
                 .count(count)
                 .next(next)
-                .contentKey(new ContentKey(queryTime, "0"))
-                .ttlTime(TimeUtil.now().minusDays(120))
+                .startKey(new ContentKey(queryTime, "0"))
+                .earliestTime(TimeUtil.now().minusDays(120))
                 .liveChannel(true)
                 .channelStable(TimeUtil.now())
                 .build();

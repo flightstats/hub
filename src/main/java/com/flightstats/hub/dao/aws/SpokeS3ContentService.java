@@ -221,7 +221,7 @@ public class SpokeS3ContentService implements ContentService {
 
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
-                .contentKey(limitKey)
+                .startKey(limitKey)
                 .next(false)
                 .stable(stable)
                 .count(1)

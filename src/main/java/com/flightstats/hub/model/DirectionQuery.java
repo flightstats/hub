@@ -15,19 +15,29 @@ public class DirectionQuery implements Query {
     private final String channelName;
     private final String tagName;
     @Wither
-    private ContentKey contentKey;
+    private ContentKey startKey;
     @Wither
     private final int count;
     private final boolean next;
     @Wither
     private final Location location;
     private final boolean stable;
+
+    /**
+     * earliestTime is only relevant for previous queries.
+     */
     @Wither
-    private DateTime ttlTime;
+    private DateTime earliestTime;
     @Wither
     private final boolean liveChannel;
+    /**
+     * this is only used by Spoke.query(direction)
+     */
     @Wither
     private final DateTime channelStable;
+
+    @Wither
+    private final Epoch epoch;
 
     public Location getLocation() {
         if (location == null) {
@@ -36,23 +46,31 @@ public class DirectionQuery implements Query {
         return location;
     }
 
+    public Epoch getEpoch() {
+        if (epoch == null) {
+            return Epoch.IMMUTABLE;
+        }
+        return epoch;
+    }
+
     @Override
     public boolean outsideOfCache(DateTime cacheTime) {
-        return !next || contentKey.getTime().isBefore(cacheTime);
+        return !next || startKey.getTime().isBefore(cacheTime);
     }
 
     @Override
     public String getUrlPath() {
         String direction = next ? "/next/" : "/previous/";
-        return "/" + contentKey.toUrl() + direction + count + "?stable=" + stable;
+        return "/" + startKey.toUrl() + direction + count + "?stable=" + stable;
     }
 
     public TimeQuery convert(DateTime startTime, TimeUtil.Unit unit) {
         return TimeQuery.builder().channelName(getChannelName())
                 .startTime(startTime)
                 .unit(unit)
-                .limitKey(contentKey)
+                .limitKey(startKey)
                 .count(count)
+                .epoch(epoch)
                 .build();
     }
 
