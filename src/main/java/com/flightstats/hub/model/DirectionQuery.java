@@ -13,6 +13,8 @@ import org.joda.time.DateTime;
 public class DirectionQuery implements Query {
     @Wither
     private final String channelName;
+    @Wither
+    private final ChannelConfig channelConfig;
     private final String tagName;
     @Wither
     private ContentKey startKey;

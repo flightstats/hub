@@ -260,6 +260,7 @@ public class LocalChannelService implements ChannelService {
         if (query == null) {
             return Collections.emptySortedSet();
         }
+        query = query.withChannelConfig(getCachedChannelConfig(query.getChannelName()));
         Stream<ContentKey> stream = contentService.queryByTime(query).stream();
         stream = ContentKeyUtil.enforceLimits(query, stream);
         return stream.collect(Collectors.toCollection(TreeSet::new));
@@ -274,6 +275,7 @@ public class LocalChannelService implements ChannelService {
             query = query.withCount(DIR_COUNT_LIMIT);
         }
         ChannelConfig channelConfig = getCachedChannelConfig(query.getChannelName());
+        query = query.withChannelConfig(channelConfig);
         DateTime ttlTime = channelConfig.getTtlTime();
         if (!channelConfig.isHistorical() || query.getEpoch().equals(Epoch.IMMUTABLE)) {
             if (channelConfig.isHistorical()) {

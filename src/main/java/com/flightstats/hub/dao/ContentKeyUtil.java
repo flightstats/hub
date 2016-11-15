@@ -1,6 +1,5 @@
 package com.flightstats.hub.dao;
 
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.TimeUtil;
 import org.joda.time.DateTime;
@@ -11,13 +10,10 @@ import java.util.stream.Stream;
 
 public class ContentKeyUtil {
 
-    private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
-
     public static SortedSet<ContentKey> filter(Collection<ContentKey> keys, DirectionQuery query) {
         Stream<ContentKey> stream = keys.stream();
         if (query.isNext()) {
             stream = stream.filter(key -> key.compareTo(query.getStartKey()) > 0);
-
         } else {
             Collection<ContentKey> contentKeys = new TreeSet<>(Collections.reverseOrder());
             contentKeys.addAll(keys);
@@ -31,7 +27,7 @@ public class ContentKeyUtil {
     }
 
     static Stream<ContentKey> enforceLimits(Query query, Stream<ContentKey> stream) {
-        ChannelConfig channelConfig = channelService.getCachedChannelConfig(query.getChannelName());
+        ChannelConfig channelConfig = query.getChannelConfig();
         if (!channelConfig.isHistorical()) {
             return stream.filter(key -> !key.getTime().isBefore(channelConfig.getTtlTime()));
         } else if (query.getEpoch().equals(Epoch.IMMUTABLE)) {

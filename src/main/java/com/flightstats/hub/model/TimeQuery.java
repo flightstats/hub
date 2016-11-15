@@ -17,6 +17,8 @@ import org.joda.time.DateTime;
 public class TimeQuery implements Query {
     @Wither
     private final String channelName;
+    @Wither
+    private final ChannelConfig channelConfig;
     private final String tagName;
     @Wither
     private final DateTime startTime;

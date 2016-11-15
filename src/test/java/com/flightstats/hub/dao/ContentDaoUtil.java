@@ -240,13 +240,15 @@ public class ContentDaoUtil {
     private void query(String channel, List<ContentKey> keys,
                        int count, int expected, boolean next, DateTime queryTime) {
         ActiveTraces.start("query ", channel, count, queryTime);
+        ChannelConfig channelConfig = ChannelConfig.builder().name(channel).build();
         DirectionQuery query = DirectionQuery.builder()
                 .stable(false)
                 .channelName(channel)
+                .channelConfig(channelConfig)
                 .count(count)
                 .next(next)
                 .startKey(new ContentKey(queryTime, "0"))
-                .earliestTime(TimeUtil.now().minusDays(120))
+                .earliestTime(TimeUtil.now().minusDays((int) channelConfig.getTtlDays()))
                 .liveChannel(true)
                 .channelStable(TimeUtil.now())
                 .build();

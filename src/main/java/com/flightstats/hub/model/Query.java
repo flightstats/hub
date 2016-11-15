@@ -10,6 +10,8 @@ public interface Query {
 
     String getChannelName();
 
+    ChannelConfig getChannelConfig();
+
     boolean outsideOfCache(DateTime cacheTime);
 
     String getUrlPath();
