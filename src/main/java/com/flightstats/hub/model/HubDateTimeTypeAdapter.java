@@ -5,6 +5,7 @@ import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
@@ -25,6 +26,7 @@ final class HubDateTimeTypeAdapter extends TypeAdapter<DateTime> {
     }
 
     static DateTime deserialize(String json) {
+        if (StringUtils.isEmpty(json)) return null;
         DateTime parsed;
         try {
             parsed = dateTimeFormatter.parseDateTime(json);
