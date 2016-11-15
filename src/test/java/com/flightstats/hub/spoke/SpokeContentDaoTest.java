@@ -1,6 +1,7 @@
 package com.flightstats.hub.spoke;
 
 import com.flightstats.hub.app.HubBindings;
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.cluster.CuratorCluster;
 import com.flightstats.hub.dao.ContentDaoUtil;
 import com.flightstats.hub.test.Integration;
@@ -67,6 +68,7 @@ public class SpokeContentDaoTest {
 
     @Test
     public void testDirectionQuery() throws Exception {
+        HubProperties.setProperty("spoke.ttlMinutes", "240");
         util.testDirectionQueryTTL();
     }
 

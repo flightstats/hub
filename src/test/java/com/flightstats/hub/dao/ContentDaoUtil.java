@@ -88,12 +88,7 @@ public class ContentDaoUtil {
         String channel = "testQueryRangeHour" + RandomStringUtils.randomAlphanumeric(20);
         List<ContentKey> keys = new ArrayList<>();
         DateTime start = new DateTime(2014, 11, 14, 14, 0, DateTimeZone.UTC);
-        for (int i = 0; i < 60; i += 6) {
-            ContentKey key = new ContentKey(start.plusMinutes(i), "A" + i);
-            keys.add(key);
-            Content content = createContent(key);
-            contentDao.insert(channel, content);
-        }
+        create10ItemsBy6Minutes(channel, start, keys);
         TimeQuery timeQuery = TimeQuery.builder().channelName(channel)
                 .startTime(start)
                 .unit(TimeUtil.Unit.HOURS)
@@ -136,12 +131,7 @@ public class ContentDaoUtil {
 
         List<ContentKey> keys = new ArrayList<>();
 
-        for (int i = 0; i < 60; i += 6) {
-            ContentKey key = new ContentKey(start.plusMinutes(i), "A" + i);
-            keys.add(key);
-            Content content = createContent(key);
-            contentDao.insert(channel, content);
-        }
+        create10ItemsBy6Minutes(channel, start, keys);
         timeQuery = TimeQuery.builder().channelName(channel)
                 .startTime(start)
                 .endTime(start.plusMinutes(19))
@@ -160,34 +150,42 @@ public class ContentDaoUtil {
 
     }
 
+    private void create10ItemsBy6Minutes(String channel, DateTime start, List<ContentKey> keys) throws Exception {
+        for (int i = 0; i < 60; i += 6) {
+            ContentKey key = new ContentKey(start.plusMinutes(i), "A" + i);
+            keys.add(key);
+            Content content = createContent(key);
+            contentDao.insert(channel, content);
+        }
+    }
+
     public void testDirectionQueryTTL() throws Exception {
         String channel = "testDirectionQueryTTL" + RandomStringUtils.randomAlphanumeric(20);
         List<ContentKey> keys = new ArrayList<>();
         DateTime start = TimeUtil.now();
+        create7Items(channel, keys, start);
+        logger.info("wrote {} {}", keys.size(), keys);
+        query(channel, keys, 20, 3, true, start.minusHours(2));
+        query(channel, keys, 20, 4, true, start.minusHours(4));
+        query(channel, keys, 20, 4, true, start.minusHours(5));
+        query(channel, keys, 20, 6, false, start.plusMinutes(1));
+        query(channel, keys, 1, 1, true, start.minusDays(10));
+    }
+
+    private void create7Items(String channel, List<ContentKey> keys, DateTime start) throws Exception {
         for (int i = 0; i < 7; i++) {
             ContentKey key = new ContentKey(start.minusHours(i), "A" + i);
             keys.add(key);
             logger.info("writing " + key);
             contentDao.insert(channel, createContent(key));
         }
-        logger.info("wrote {} {}", keys.size(), keys);
-        query(channel, keys, 20, 3, true, start.minusHours(2));
-        query(channel, keys, 20, 4, true, start.minusHours(4));
-        query(channel, keys, 20, 4, true, start.minusHours(5));
-        query(channel, keys, 20, 4, false, start.plusMinutes(1));
-        query(channel, keys, 1, 1, true, start.minusDays(10));
     }
 
     public void testDirectionQuery() throws Exception {
         String channel = "testDirectionQuery" + RandomStringUtils.randomAlphanumeric(20);
         List<ContentKey> keys = new ArrayList<>();
         DateTime start = TimeUtil.now();
-        for (int i = 0; i < 7; i++) {
-            ContentKey key = new ContentKey(start.minusHours(i), "A" + i);
-            keys.add(key);
-            logger.info("writing " + key);
-            contentDao.insert(channel, createContent(key));
-        }
+        create7Items(channel, keys, start);
         for (int i = 0; i < 7; i++) {
             ContentKey key = new ContentKey(start.minusDays(i), "B" + i);
             keys.add(key);
@@ -253,7 +251,9 @@ public class ContentDaoUtil {
                 .channelStable(TimeUtil.now())
                 .build();
         Collection<ContentKey> found = contentDao.query(query);
-        logger.info("query {} {}", queryTime, found);
+        logger.info("query {}", queryTime);
+        logger.info("keys {}", keys);
+        logger.info("found {}", found);
         ActiveTraces.getLocal().log(logger);
         assertEquals(expected, found.size());
         assertTrue(keys.containsAll(found));
