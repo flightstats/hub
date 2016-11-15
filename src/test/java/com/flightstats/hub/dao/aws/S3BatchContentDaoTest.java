@@ -189,6 +189,7 @@ public class S3BatchContentDaoTest {
         DirectionQuery query =
                 DirectionQuery.builder()
                         .channelName(channel)
+                        .channelConfig(ChannelConfig.builder().name(channel).build())
                         .startKey(contentKey)
                         .next(next)
                         .count(count)
