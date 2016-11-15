@@ -5,7 +5,7 @@
 set -e
 set -x
 
-if [[ -z $1 || -z $2 ]]; then
+if [[ -z $1 ]]; then
   echo "Must specify main java class e.g. com.flightstats.hub.app.SingleHubMain"
   exit 2
 fi
@@ -13,18 +13,20 @@ fi
 # Determine deploy dir and chdir to that directory,
 # then source the config to get user info
 #
-APP=${1}
+APP=hub
 APP_HOME=/opt/$APP
 CONF_DIR=/etc/$APP
+HUB_PORT=80
 DEBUG_PORT=3333
 JMXREMOTE_PORT=8888
-MAIN_CLASS=${2}
-MIN_HEAP=${3:-256m}
-MAX_HEAP=${4:-512m}
-MIN_NEW=${5:-10m}
+MAIN_CLASS=${1}
+MIN_HEAP=${2:-256m}
+MAX_HEAP=${3:-512m}
+MIN_NEW=${4:-10m}
 
 if [[ $MAIN_CLASS == "com.flightstats.hub.app.HubMain" ]]; then
   CONFIG="${CONF_DIR}/${APP}.properties"
+  HUB_PORT=8080
 else
   CONFIG=""
 fi
@@ -54,7 +56,7 @@ JAVA_OPTS="
  -Xloggc:/mnt/log/gc.log-$(date -u '+%Y-%m-%d-%H-%M-%S')
  -Dfile.encoding=UTF-8
  -Dapp.url=http://localhost/
- -Dhttp.bind_port=80
+ -Dhttp.bind_port=${HUB_PORT}
  -Dalert.run=true
  -Dapp.stable_seconds=2
  -Ddata_dog.enable=false
@@ -72,7 +74,9 @@ function shutdownChild()
         fi
 
         kill -QUIT $CHILDPID
-        curl -i -X POST http://localhost/shutdown
+
+        echo issuing shutdown curl command...
+        curl -is -X POST http://localhost:${HUB_PORT}/shutdown
 
         kill -TERM $CHILDPID
         echo signal sent, waiting ...

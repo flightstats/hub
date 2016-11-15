@@ -752,7 +752,8 @@ A Webhook is registered for a client's http endpoint and that endpoint recieves 
 
 * `callbackUrl` is the fully qualified location to receive callbacks from the server.
 
-* `channelUrl` is the fully qualified channel location to monitor for new items.
+* `channelUrl` is the fully qualified channel location to monitor for new items.  This needs to be the url you use to access the hub.
+The url's scheme and host may be changed, but the name of the channel can't change.
 
 * `parallelCalls` is the optional number of callbacks to make in parallel.  The default value is `1`.
 If parallelCalls is higher than one, callback ordering is not guaranteed.
