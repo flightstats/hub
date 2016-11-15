@@ -11,6 +11,7 @@ import org.joda.time.format.ISODateTimeFormat;
 
 public class TimeUtil {
     public static final DateTimeFormatter FORMATTER = ISODateTimeFormat.dateTime().withZoneUTC();
+    public static final DateTime BIG_BANG = new DateTime(1, DateTimeZone.UTC);
 
     private static final DateTimeFormatter millisFormatter = DateTimeFormat.forPattern("yyyy/MM/dd/HH/mm/ss/SSS/").withZoneUTC();
     private static final DateTimeFormatter secondsFormatter = DateTimeFormat.forPattern("yyyy/MM/dd/HH/mm/ss").withZoneUTC();

@@ -186,7 +186,19 @@ public class SpokeContentDao implements ContentDao {
 
     @Override
     public SortedSet<ContentKey> query(DirectionQuery query) {
-        ActiveTraces.getLocal().add("SpokeContentDao.query ", query);
+        int ttlMinutes = HubProperties.getSpokeTtl();
+        DateTime spokeTtlTime = TimeUtil.BIG_BANG;
+        if (HubProperties.getProperty("spoke.enforceTTL", true)) {
+            spokeTtlTime = query.getChannelStable().minusMinutes(ttlMinutes);
+            if (query.isLiveChannel()) {
+                if (query.getStartKey().getTime().isBefore(spokeTtlTime)) {
+                    query = query.withStartKey(new ContentKey(spokeTtlTime, "0"));
+                }
+            } else {
+                spokeTtlTime = query.getChannelStable().minusMinutes(ttlMinutes * 2);
+            }
+        }
+        ActiveTraces.getLocal().add("SpokeContentDao.query ", query, spokeTtlTime);
         SortedSet<ContentKey> contentKeys = Collections.emptySortedSet();
         if (query.isNext()) {
             try {
@@ -195,17 +207,6 @@ public class SpokeContentDao implements ContentDao {
                 logger.warn("what happened? " + query, e);
             }
         } else {
-            //todo gfm - this limiting needs to be somewhere else
-            int ttlMinutes = HubProperties.getSpokeTtl();
-            DateTime spokeTtlTime = query.getChannelStable().minusMinutes(ttlMinutes);
-            if (query.isLiveChannel()) {
-                if (query.getStartKey().getTime().isBefore(spokeTtlTime)) {
-                    query = query.withStartKey(new ContentKey(spokeTtlTime, "0"));
-                }
-            } else {
-                spokeTtlTime = query.getChannelStable().minusMinutes(ttlMinutes * 2);
-            }
-
             ContentKey startKey = query.getStartKey();
             DateTime startTime = startKey.getTime();
             contentKeys = new TreeSet<>();

@@ -96,7 +96,7 @@ describe(testName, function () {
             });
     }
 
-    var next7 = earliestTime.subtract(1, 'month').format('/YYYY/MM/DD/HH/mm/ss/SSS') + "/a/next/7?trace=true&stable=false";
+    var next7 = earliestTime.subtract(1, 'month').format('/YYYY/MM/DD/HH/mm/ss/SSS') + "/0/next/7?trace=true&stable=false";
 
 
     it('queries next 7 All ' + next7, function (done) {

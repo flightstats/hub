@@ -179,7 +179,11 @@ public class SpokeS3ContentService implements ContentService {
         } else {
             daos.add(spokeContentDao);
             ChannelConfig channel = channelService.getCachedChannelConfig(query.getChannelName());
-            if (query.outsideOfCache(getSpokeTtlTime(query.getChannelName()))) {
+            DateTime spokeTtlTime = getSpokeTtlTime(query.getChannelName());
+            if (channel.isHistorical() && channel.getMutableTime().isAfter(spokeTtlTime)) {
+                spokeTtlTime = channel.getMutableTime();
+            }
+            if (query.outsideOfCache(spokeTtlTime)) {
                 if (channel.isSingle()) {
                     daos.add(s3SingleContentDao);
                 } else if (channel.isBatch()) {

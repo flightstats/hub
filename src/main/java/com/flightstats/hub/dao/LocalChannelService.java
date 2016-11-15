@@ -200,8 +200,8 @@ public class LocalChannelService implements ChannelService {
 
     @Override
     public Optional<Content> get(Request request) {
-        DateTime ttlTime = getTtlTime(request.getChannel()).minusMinutes(15);
-        if (request.getKey().getTime().isBefore(ttlTime)) {
+        DateTime limitTime = getChannelLimitTime(request.getChannel()).minusMinutes(15);
+        if (request.getKey().getTime().isBefore(limitTime)) {
             return Optional.absent();
         }
         return contentService.get(request.getChannel(), request.getKey());
@@ -300,7 +300,16 @@ public class LocalChannelService implements ChannelService {
         contentService.get(channel, keys, callback);
     }
 
+    private DateTime getChannelLimitTime(String channelName) {
+        ChannelConfig channelConfig = getCachedChannelConfig(channelName);
+        if (channelConfig.isHistorical()) {
+            return TimeUtil.BIG_BANG;
+        }
+        return channelConfig.getTtlTime();
+    }
+
     private DateTime getTtlTime(String channelName) {
+        //todo gfm - evaluate usage of this
         return getCachedChannelConfig(channelName).getTtlTime();
     }
 

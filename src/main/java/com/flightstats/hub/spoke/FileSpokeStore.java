@@ -82,7 +82,7 @@ public class FileSpokeStore {
         }
     }
 
-    public String readKeysInBucket(String path) {
+    String readKeysInBucket(String path) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         keysInBucket(path, baos);
         return baos.toString();
@@ -215,7 +215,7 @@ public class FileSpokeStore {
     /**
      * This may return more than the request count, as this does not do any sorting.
      */
-    public void getNext(String channel, String startKey, int count, OutputStream output) throws IOException {
+    void getNext(String channel, String startKey, int count, OutputStream output) throws IOException {
         DateTime now = TimeUtil.now();
         String channelPath = storagePath + channel + "/";
         logger.trace("next {} {} {}", channel, startKey, now);
@@ -224,6 +224,7 @@ public class FileSpokeStore {
         MinutePath minutePath = new MinutePath(start.getTime());
         boolean firstMinute = true;
         do {
+            //todo gfm - while this fast for short time ranges, it is quite slow over years
             String minuteUrl = minutePath.toUrl();
             String minute = channelPath + minuteUrl;
             logger.trace("minute {}", minute);
@@ -248,7 +249,7 @@ public class FileSpokeStore {
         } while (found < count && minutePath.getTime().isBefore(now));
     }
 
-    public void enforceTtl(String channel, DateTime dateTime) {
+    void enforceTtl(String channel, DateTime dateTime) {
         String limitPath = TimeUtil.minutes(dateTime);
         logger.debug("enforceTtl {} {}", channel, limitPath);
         String[] split = StringUtils.split(limitPath, "/");
@@ -279,9 +280,6 @@ public class FileSpokeStore {
                     FileUtils.deleteQuietly(new File(storagePath + "/" + current));
                 }
             }
-        }
-        if (count == 4) {
-            return;
         }
     }
 
