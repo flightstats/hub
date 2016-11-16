@@ -27,7 +27,7 @@ public class HubMain {
 
     public static void main(String[] args) throws Exception {
         if (args.length == 0) {
-            throw new UnsupportedOperationException("HubMain requires a property filename, or 'useDefault'");
+            throw new UnsupportedOperationException("HubMain requires a property filename, 'useDefault', or 'useEncryptedDefault'");
         }
         HubProperties.loadProperties(args[0]);
         start();

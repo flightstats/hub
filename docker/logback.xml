@@ -1,13 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configuration>
+<configuration debug="true">
+
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>%d{HH:mm:ss.SSS} %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
 
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>/mnt/log/hub.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>/mnt/log/hub_%d{yyyy-MM-dd-HH}.log.gz</fileNamePattern>
+            <maxHistory>14</maxHistory>
+        </rollingPolicy>
+
+        <encoder>
+            <pattern>%5p %d{ISO8601} [%t] %c [line %L] - %msg%n</pattern>
+        </encoder>
+    </appender>
+
     <root level="info">
+        <appender-ref ref="FILE"/>
         <appender-ref ref="STDOUT"/>
     </root>
+
+
+    <!--enable this logger to apply to the entire hub-->
+    <!--<logger name="com.flightstats.hub" level="DEBUG"/>-->
+
+    <!-- this logger records all http requests and responses -->
+    <!--<logger name="com.flightstats.hub.filter.TracesFilter" level="TRACE"/>-->
+
+    <!--these loggers turn off some noisy logs-->
+    <logger name="com.sun.jersey.server.wadl.generators" level="WARN"/>
+    <logger name="org.apache.zookeeper.server.PrepRequestProcessor" level="WARN"/>
+
 
 </configuration>
