@@ -21,8 +21,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-class AwsBindings extends AbstractModule {
-    private final static Logger logger = LoggerFactory.getLogger(AwsBindings.class);
+class ClusterHubBindings extends AbstractModule {
+    private final static Logger logger = LoggerFactory.getLogger(ClusterHubBindings.class);
 
     @Override
     protected void configure() {

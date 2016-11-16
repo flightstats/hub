@@ -40,7 +40,6 @@ public class CommonContentService implements ContentService {
     private final AtomicInteger inFlight = new AtomicInteger();
     private static final ExecutorService executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("ContentService-%d").build());
 
-    //todo gfm - this needs to be more sophisticated to handle multiple ContentService in a hub instance
     @Inject
     @Named(ContentService.IMPL)
     private ContentService contentService;

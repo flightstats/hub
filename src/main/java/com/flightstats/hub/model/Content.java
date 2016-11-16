@@ -23,7 +23,6 @@ public class Content implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private final Optional<String> contentType;
-    private final boolean isNew;
     private InputStream stream;
     private byte[] data;
     private Optional<ContentKey> contentKey = Optional.absent();
@@ -32,13 +31,16 @@ public class Content implements Serializable {
 
     private Content(Builder builder) {
         contentKey = builder.contentKey;
-        isNew = !getContentKey().isPresent();
         contentType = builder.contentType;
         stream = builder.stream;
     }
 
     public static Builder builder() {
         return new Builder();
+    }
+
+    public boolean isNew() {
+        return !contentKey.isPresent();
     }
 
     public ContentKey keyAndStart(DateTime effectiveNow) {
