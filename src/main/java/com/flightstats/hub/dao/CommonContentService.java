@@ -9,9 +9,9 @@ import com.flightstats.hub.exception.FailedQueryException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
+import com.flightstats.hub.time.TimeService;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
-import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -41,6 +41,9 @@ public class CommonContentService implements ContentService {
     private final Integer shutdown_wait_seconds = HubProperties.getProperty("app.shutdown_wait_seconds", 10);
     private final AtomicInteger inFlight = new AtomicInteger();
     private static final ExecutorService executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("ContentService-%d").build());
+
+    @Inject
+    private TimeService timeService;
 
     @Inject
     @Named(ContentService.IMPL)
@@ -99,7 +102,7 @@ public class CommonContentService implements ContentService {
         try {
             content.setData(ContentMarshaller.toBytes(content));
             traces.add("ContentService.insert marshalled");
-            ContentKey key = content.keyAndStart(TimeUtil.now());
+            ContentKey key = content.keyAndStart(timeService.getNow());
             logger.trace("writing key {} to channel {}", key, channelName);
             contentService.insert(channelName, content);
             traces.add("ContentService.insert end", key);
