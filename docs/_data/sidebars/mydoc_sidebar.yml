@@ -1,0 +1,146 @@
+# This is your sidebar TOC. The sidebar code loops through sections here and provides the appropriate formatting.
+
+entries:
+- title: sidebar
+  product: Flightstats/Hub
+  version: 
+  folders:
+
+  - title:
+    output: pdf
+    type: frontmatter
+    folderitems:
+    - title:
+      url: /titlepage
+      output: pdf
+      type: frontmatter
+    - title:
+      url: /tocpage
+      output: pdf
+      type: frontmatter
+
+  - title: Overview
+    output: web, pdf
+    folderitems:
+
+    - title: What is the Hub
+      url: /hub_overview_whatisthehub.html
+      output: web, pdf
+
+    - title: Design Goals
+      url: /hub_overview_goals.html
+      output: web, pdf
+
+    - title: Get started
+      url: /index.html
+      output: web, pdf
+      type: homepage
+
+    - title: API Reference
+      url: /hub_api_reference.html
+      output: web, pdf
+
+  - title: Installation
+    output: web, pdf
+    folderitems:
+
+    - title: Install Locally
+      url: /hub_install_locally.html
+      output: web, pdf
+
+    - title: Install Cluster
+      url: /hub_install_cluster.html
+      output: web, pdf
+
+
+  - title: Channels
+    output: web, pdf
+    folderitems:
+
+    - title: Channel Overview
+      url: /hub_channels_overview.html
+      output: web, pdf
+
+    - title: Creating channels
+      url: /hub_channels_creating.html
+      output: web, pdf
+
+    - title: Reading
+      url: /hub_channels_reading.html
+      output: web, pdf
+
+    - title: Time Interface
+      url: /hub_channels_time.html
+      output: web, pdf
+
+    - title: Writing to channels
+      url: /hub_channels_insert.html
+      output: web, pdf
+
+    - title: Deleting channels
+      url: /hub_channels_delete.html
+      output: web, pdf
+
+    - title: Tag Interface
+      url: /hub_channels_tag.html
+      output: web, pdf
+
+    - title: Replication
+      url: /hub_channels_replication.html
+      output: web, pdf
+
+    - title: Global Channels
+      url: /hub_channels_global.html
+      output: web, pdf
+
+    - title: Historical Channels
+      url: /hub_channels_historical.html
+      output: web, pdf
+
+  - title: Notifications
+    output: web, pdf
+    folderitems:
+
+    - title: Webhooks
+      url: /hub_notifications_webhooks.html
+      output: web, pdf
+
+    - title: Websockets
+      url: /hub_notifications_websocket.html
+      output: web, pdf
+
+    - title: Events
+      url: /hub_notifications_events.html
+      output: web, pdf
+
+    - title: Alerts
+      url: /hub_notifications_alerts.html
+      output: web, pdf
+
+  - title: Other topics
+    output: web, pdf
+    folderitems:
+
+    - title: Use Cases
+      url: /hub_other_use_cases.html
+      output: web, pdf
+
+    - title: FAQ
+      url: /hub_other_use_cases.html
+      output: web, pdf
+
+    - title: Channel Storage
+      url: /hub_other_channel_storage.html
+      output: web, pdf
+
+    - title: NTP
+      url: /hub_other_ntp.html
+      output: web, pdf
+
+    - title: Technical Details
+      url: /hub_other_technical.html
+      output: web, pdf
+
+    - title: Testing
+      url: /hub_other_testing.html
+      output: web, pdf
