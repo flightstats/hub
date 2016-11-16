@@ -66,14 +66,17 @@ public class DirectionQuery implements Query {
         return "/" + startKey.toUrl() + direction + count + "?stable=" + stable;
     }
 
-    public TimeQuery convert(DateTime startTime, TimeUtil.Unit unit) {
+    public TimeQuery.TimeQueryBuilder convert(TimeUtil.Unit unit) {
         return TimeQuery.builder().channelName(getChannelName())
-                .startTime(startTime)
+                .startTime(startKey.getTime())
                 .unit(unit)
                 .limitKey(startKey)
                 .count(count)
-                .epoch(epoch)
-                .build();
+                .epoch(epoch);
+    }
+
+    public TimeQuery convert(DateTime startTime, TimeUtil.Unit unit) {
+        return convert(unit).startTime(startTime).build();
     }
 
 }

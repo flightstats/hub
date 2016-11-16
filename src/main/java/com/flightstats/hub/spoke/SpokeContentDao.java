@@ -213,7 +213,14 @@ public class SpokeContentDao implements ContentDao {
             while (contentKeys.size() < query.getCount()
                     && startTime.isAfter(spokeTtlTime.minusHours(1))
                     && startTime.isBefore(query.getChannelStable().plusHours(1))) {
-                query(query, contentKeys, startTime, TimeUtil.Unit.HOURS);
+                TimeQuery timeQuery = query.convert(TimeUtil.Unit.HOURS)
+                        .startTime(startTime)
+                        .endTime(startTime)
+                        .build();
+                SortedSet<ContentKey> queryByTime = queryByTime(timeQuery);
+                queryByTime.addAll(contentKeys);
+                Set<ContentKey> filtered = ContentKeyUtil.filter(queryByTime, query);
+                contentKeys.addAll(filtered);
                 startTime = startTime.minusHours(1);
             }
         }
