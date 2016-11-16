@@ -3,7 +3,7 @@ package com.flightstats.hub.dao.file;
 import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.dao.ContentService;
 import com.flightstats.hub.dao.aws.MultiPartParser;
-import com.flightstats.hub.exception.ContentTooLargeException;
+import com.flightstats.hub.exception.FailedWriteException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
@@ -19,6 +19,10 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
 
+/**
+ * SingleContentService allows for the singleHub to have different characteristics than using Spoke in the clustered hub.
+ * Spoke is designed to hold a short period's cache, while the singleHub may hold data spanning much large periods of time.
+ */
 public class SingleContentService implements ContentService {
     private final static Logger logger = LoggerFactory.getLogger(SingleContentService.class);
 
@@ -32,27 +36,12 @@ public class SingleContentService implements ContentService {
 
     @Override
     public ContentKey insert(String channelName, Content content) throws Exception {
-        Traces traces = ActiveTraces.getLocal();
-        traces.add("SingleContentService.insert");
-        try {
-            byte[] payload = ContentMarshaller.toBytes(content);
-            traces.add("SingleContentService.insert marshalled");
-            ContentKey key = content.keyAndStart(TimeUtil.now());
-            String path = getPath(channelName, key);
-            logger.trace("writing key {} to channel {}", key, channelName);
-            if (!fileSpokeStore.insert(path, payload)) {
-                logger.warn("failed to  for " + path);
-            }
-            traces.add("SingleContentService.insert end", key);
-            return key;
-        } catch (ContentTooLargeException e) {
-            logger.info("content too large for channel " + channelName);
-            throw e;
-        } catch (Exception e) {
-            traces.add("SingleContentService.insert", "error", e.getMessage());
-            logger.warn("insertion error " + channelName, e);
-            throw e;
+        ContentKey key = content.getContentKey().get();
+        String path = getPath(channelName, content.getContentKey().get());
+        if (!fileSpokeStore.insert(path, content.getData())) {
+            throw new FailedWriteException("unable to write to file syste, " + path);
         }
+        return key;
     }
 
     @Override
@@ -63,6 +52,7 @@ public class SingleContentService implements ContentService {
         logger.info("inserting {}", bulkContent);
         for (Content content : bulkContent.getItems()) {
             logger.info("inserting item key {}", content.getContentKey().get());
+            content.setData(ContentMarshaller.toBytes(content));
             keys.add(insert(bulkContent.getChannel(), content));
         }
         return keys;
@@ -151,7 +141,6 @@ public class SingleContentService implements ContentService {
 
     private void addKeys(DirectionQuery query, TreeSet<ContentKey> keys, TimeUtil.Unit hours, DateTime time) {
         String path = query.getChannelName() + "/" + hours.format(time);
-        String readKeysInBucket = fileSpokeStore.readKeysInBucket(path);
         ContentKeyUtil.convertKeyStrings(fileSpokeStore.readKeysInBucket(path), keys);
     }
 

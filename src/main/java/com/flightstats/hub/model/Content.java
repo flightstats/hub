@@ -24,6 +24,7 @@ public class Content implements Serializable {
 
     private final Optional<String> contentType;
     private InputStream stream;
+    @Setter
     private byte[] data;
     private Optional<ContentKey> contentKey = Optional.absent();
     @Setter
