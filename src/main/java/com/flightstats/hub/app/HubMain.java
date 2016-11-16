@@ -64,11 +64,11 @@ public class HubMain {
         resourceConfig.packages("com.flightstats.hub");
         switch (hubType) {
             case "aws":
-                modules.add(new AwsBindings());
+                modules.add(new ClusterHubBindings());
                 break;
             case "nas":
             case "test":
-                modules.add(new FileBindings());
+                modules.add(new SingleHubBindings());
                 break;
             default:
                 throw new RuntimeException("unsupported hub.type " + hubType);

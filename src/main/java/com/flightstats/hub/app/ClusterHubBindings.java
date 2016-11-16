@@ -21,8 +21,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-class AwsBindings extends AbstractModule {
-    private final static Logger logger = LoggerFactory.getLogger(AwsBindings.class);
+class ClusterHubBindings extends AbstractModule {
+    private final static Logger logger = LoggerFactory.getLogger(ClusterHubBindings.class);
 
     @Override
     protected void configure() {
@@ -34,7 +34,7 @@ class AwsBindings extends AbstractModule {
         bind(ContentService.class).to(CommonContentService.class).asEagerSingleton();
         bind(ContentService.class)
                 .annotatedWith(Names.named(ContentService.IMPL))
-                .to(SpokeS3ContentService.class).asEagerSingleton();
+                .to(ClusterContentService.class).asEagerSingleton();
         bind(RemoteSpokeStore.class).asEagerSingleton();
         bind(ContentDao.class)
                 .annotatedWith(Names.named(ContentDao.CACHE))

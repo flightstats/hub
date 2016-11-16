@@ -4,10 +4,10 @@ import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.dao.*;
 import com.flightstats.hub.dao.file.FileChannelConfigurationDao;
 import com.flightstats.hub.dao.file.FileWebhookDao;
+import com.flightstats.hub.dao.file.SingleContentService;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.spoke.ChannelTtlEnforcer;
 import com.flightstats.hub.spoke.SpokeContentDao;
-import com.flightstats.hub.spoke.SpokeContentService;
 import com.flightstats.hub.webhook.Webhook;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
@@ -16,7 +16,7 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 
-class FileBindings extends AbstractModule {
+class SingleHubBindings extends AbstractModule {
 
     @Override
     protected void configure() {
@@ -27,7 +27,7 @@ class FileBindings extends AbstractModule {
         bind(ContentService.class).to(CommonContentService.class).asEagerSingleton();
         bind(ContentService.class)
                 .annotatedWith(Names.named(ContentService.IMPL))
-                .to(SpokeContentService.class).asEagerSingleton();
+                .to(SingleContentService.class).asEagerSingleton();
         bind(ChannelTtlEnforcer.class).asEagerSingleton();
     }
 

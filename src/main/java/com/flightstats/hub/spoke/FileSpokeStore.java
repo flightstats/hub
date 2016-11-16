@@ -27,7 +27,10 @@ public class FileSpokeStore {
     private final String storagePath;
 
     public FileSpokeStore() {
-        String storagePath = HubProperties.getSpokePath();
+        this(HubProperties.getSpokePath());
+    }
+
+    public FileSpokeStore(String storagePath) {
         this.storagePath = StringUtils.appendIfMissing(storagePath, "/");
         logger.info("starting with storage path " + this.storagePath);
         if (!insert("hub-startup/" + new ContentKey().toUrl(), ("" + System.currentTimeMillis()).getBytes())) {
