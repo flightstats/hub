@@ -20,7 +20,20 @@
     </appender>
 
     <root level="info">
+        <appender-ref ref="FILE"/>
         <appender-ref ref="STDOUT"/>
     </root>
+
+
+    <!--enable this logger to apply to the entire hub-->
+    <!--<logger name="com.flightstats.hub" level="DEBUG"/>-->
+
+    <!-- this logger records all http requests and responses -->
+    <!--<logger name="com.flightstats.hub.filter.TracesFilter" level="TRACE"/>-->
+
+    <!--these loggers turn off some noisy logs-->
+    <logger name="com.sun.jersey.server.wadl.generators" level="WARN"/>
+    <logger name="org.apache.zookeeper.server.PrepRequestProcessor" level="WARN"/>
+
 
 </configuration>
