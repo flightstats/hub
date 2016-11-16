@@ -2,7 +2,6 @@ package com.flightstats.hub.dao.file;
 
 import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.dao.ContentService;
-import com.flightstats.hub.dao.aws.MultiPartParser;
 import com.flightstats.hub.exception.FailedWriteException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
@@ -47,8 +46,6 @@ public class SingleContentService implements ContentService {
     @Override
     public Collection<ContentKey> insert(BulkContent bulkContent) throws Exception {
         Collection<ContentKey> keys = new ArrayList<>();
-        MultiPartParser multiPartParser = new MultiPartParser(bulkContent);
-        multiPartParser.parse();
         logger.info("inserting {}", bulkContent);
         for (Content content : bulkContent.getItems()) {
             logger.info("inserting item key {}", content.getContentKey().get());
