@@ -34,7 +34,7 @@ class ClusterHubBindings extends AbstractModule {
         bind(ContentService.class).to(CommonContentService.class).asEagerSingleton();
         bind(ContentService.class)
                 .annotatedWith(Names.named(ContentService.IMPL))
-                .to(SpokeS3ContentService.class).asEagerSingleton();
+                .to(ClusterContentService.class).asEagerSingleton();
         bind(RemoteSpokeStore.class).asEagerSingleton();
         bind(ContentDao.class)
                 .annotatedWith(Names.named(ContentDao.CACHE))

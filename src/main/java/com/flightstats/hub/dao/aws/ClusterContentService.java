@@ -30,9 +30,9 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class SpokeS3ContentService implements ContentService {
+public class ClusterContentService implements ContentService {
 
-    private final static Logger logger = LoggerFactory.getLogger(SpokeS3ContentService.class);
+    private final static Logger logger = LoggerFactory.getLogger(ClusterContentService.class);
     private static final String CHANNEL_LATEST_UPDATED = "/ChannelLatestUpdated/";
     private final boolean dropSomeWrites = HubProperties.getProperty("s3.dropSomeWrites", false);
     private final int spokeTtlMinutes = HubProperties.getSpokeTtl();
@@ -54,7 +54,7 @@ public class SpokeS3ContentService implements ContentService {
     @Inject
     private HubUtils hubUtils;
 
-    public SpokeS3ContentService() {
+    public ClusterContentService() {
         HubServices.registerPreStop(new SpokeS3ContentServiceInit());
         HubServices.register(new ChannelLatestUpdatedService());
     }
