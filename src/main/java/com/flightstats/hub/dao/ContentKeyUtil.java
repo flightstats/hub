@@ -29,11 +29,11 @@ public class ContentKeyUtil {
     static Stream<ContentKey> enforceLimits(Query query, Stream<ContentKey> stream) {
         ChannelConfig channelConfig = query.getChannelConfig();
         if (!channelConfig.isHistorical()) {
-            return stream.filter(key -> !key.getTime().isBefore(channelConfig.getTtlTime()));
+            stream = stream.filter(key -> !key.getTime().isBefore(channelConfig.getTtlTime()));
         } else if (query.getEpoch().equals(Epoch.IMMUTABLE)) {
-            return stream.filter(key -> key.getTime().isAfter(channelConfig.getMutableTime()));
+            stream = stream.filter(key -> key.getTime().isAfter(channelConfig.getMutableTime()));
         } else if (query.getEpoch().equals(Epoch.MUTABLE)) {
-            return stream.filter(key -> !key.getTime().isAfter(channelConfig.getMutableTime()));
+            stream = stream.filter(key -> !key.getTime().isAfter(channelConfig.getMutableTime()));
         }
         if (query.isStable()) {
             stream = stream.filter(key -> key.getTime().isBefore(TimeUtil.stable()));

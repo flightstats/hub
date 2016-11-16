@@ -293,7 +293,7 @@ public class LocalChannelService implements ChannelService {
         traces.add(query);
         List<ContentKey> keys = new ArrayList<>(contentService.queryDirection(query));
         SortedSet<ContentKey> contentKeys = ContentKeyUtil.filter(keys, query);
-        traces.add("ChannelServiceImpl.getKeys", contentKeys);
+        traces.add("ChannelService.getKeys", contentKeys);
         return contentKeys;
     }
 
