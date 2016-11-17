@@ -27,26 +27,12 @@ public class ContentDaoUtil {
         this.contentDao = contentDao;
     }
 
-    public void testWriteRead() throws Exception {
+    public void testWriteRead(Content content) throws Exception {
         String channel = "testWriteRead";
-        Content content = createContent();
         ContentKey key = contentDao.insert(channel, content);
         assertEquals(content.getContentKey().get(), key);
         Content read = contentDao.get(channel, key);
         compare(content, read, key.toString().getBytes());
-    }
-
-    public void testWriteReadNoOptionals() throws Exception {
-        String channel = "testWriteReadNoOptionals";
-        byte[] data = "testWriteReadNoOptionals data".getBytes();
-        Content content = Content.builder()
-                .withContentKey(new ContentKey())
-                .withData(data)
-                .build();
-        ContentKey key = contentDao.insert(channel, content);
-        assertEquals(content.getContentKey().get(), key);
-        Content read = contentDao.get(channel, key);
-        compare(content, read, data);
     }
 
     public void testWriteHistorical() throws Exception {

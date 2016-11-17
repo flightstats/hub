@@ -32,12 +32,7 @@ public class S3SingleContentDaoTest {
 
     @Test
     public void testWriteRead() throws Exception {
-        util.testWriteRead();
-    }
-
-    @Test
-    public void testWriteReadNoOptionals() throws Exception {
-        util.testWriteReadNoOptionals();
+        util.testWriteRead(ContentDaoUtil.createContent());
     }
 
     @Test
