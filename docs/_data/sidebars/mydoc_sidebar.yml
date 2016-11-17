@@ -48,10 +48,13 @@ entries:
       url: /hub_install_cluster.html
       output: web, pdf
 
-  - title: API Reference
+  - title: API
+    output: web, pdf
+    folderitems:
+
+    - title: API Quick Reference
       url: /hub_api_reference.html
       output: web, pdf
-      folderitems:
 
     - title: Channels
       output: web, pdf
