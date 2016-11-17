@@ -1,6 +1,7 @@
 package com.flightstats.hub.dao.aws;
 
 import com.flightstats.hub.dao.ContentDaoUtil;
+import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.model.BulkContent;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
@@ -42,6 +43,7 @@ public class SpokeS3SingleContentDaoTest {
                 .withContentType("stuff")
                 .withData(bytes)
                 .build();
+        firstContent.setData(ContentMarshaller.toBytes(firstContent));
         ContentKey key = spokeContentDao.insert(channel, firstContent);
         Content spokeContent = spokeContentDao.get(channel, key);
         logger.info("spoke {}", spokeContent);
