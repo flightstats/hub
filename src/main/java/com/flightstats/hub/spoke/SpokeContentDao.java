@@ -11,7 +11,6 @@ import com.flightstats.hub.exception.FailedWriteException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
-import com.flightstats.hub.time.TimeService;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -27,7 +26,7 @@ import java.util.*;
  * This is the entry point in the Hub's storage system, Spoke.
  * <p>
  * It is called in-process on the originating Hub server, and this class will
- * call the Spoke servers in the cluster.
+ * call the registered Spoke servers in the cluster.
  */
 public class SpokeContentDao implements ContentDao {
 
@@ -35,32 +34,15 @@ public class SpokeContentDao implements ContentDao {
 
     @Inject
     private RemoteSpokeStore spokeStore;
-    @Inject
-    private TimeService timeService;
 
     @Override
     public ContentKey insert(String channelName, Content content) throws Exception {
-        Traces traces = ActiveTraces.getLocal();
-        traces.add("SpokeContentDao.writeSingle");
-        try {
-            byte[] payload = ContentMarshaller.toBytes(content);
-            traces.add("SpokeContentDao.write marshalled");
-            ContentKey key = content.keyAndStart(timeService.getNow());
-            String path = getPath(channelName, key);
-            logger.trace("writing key {} to channel {} bytes {}", key, channelName, content.getSize());
-            if (!spokeStore.insert(path, payload, "payload")) {
-                throw new FailedWriteException("unable to write to spoke " + path);
-            }
-            traces.add("SpokeContentDao.writeSingle completed", key);
-            return key;
-        } catch (ContentTooLargeException e) {
-            logger.info("content too large for channel " + channelName);
-            throw e;
-        } catch (Exception e) {
-            traces.add("SpokeContentDao", "error", e.getMessage());
-            logger.error("unable to write " + channelName, e);
-            throw e;
+        ContentKey key = content.getContentKey().get();
+        String path = getPath(channelName, key);
+        if (!spokeStore.insert(path, content.getData(), "payload")) {
+            throw new FailedWriteException("unable to write to spoke " + path);
         }
+        return key;
     }
 
     @Override

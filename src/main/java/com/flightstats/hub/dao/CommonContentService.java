@@ -4,12 +4,14 @@ import com.diffplug.common.base.Errors;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.dao.aws.MultiPartParser;
+import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.exception.FailedQueryException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
+import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -88,7 +90,28 @@ public class CommonContentService implements ContentService {
 
     @Override
     public ContentKey insert(String channelName, Content content) throws Exception {
-        return inFlight(Errors.rethrow().wrap(() -> contentService.insert(channelName, content)));
+        return inFlight(Errors.rethrow().wrap(() -> doInsert(channelName, content)));
+    }
+
+    private ContentKey doInsert(String channelName, Content content) throws Exception {
+        Traces traces = ActiveTraces.getLocal();
+        traces.add("ContentService.insert");
+        try {
+            content.setData(ContentMarshaller.toBytes(content));
+            traces.add("ContentService.insert marshalled");
+            ContentKey key = content.keyAndStart(TimeUtil.now());
+            logger.trace("writing key {} to channel {}", key, channelName);
+            contentService.insert(channelName, content);
+            traces.add("ContentService.insert end", key);
+            return key;
+        } catch (ContentTooLargeException e) {
+            logger.info("content too large for channel " + channelName);
+            throw e;
+        } catch (Exception e) {
+            traces.add("ContentService.insert", "error", e.getMessage());
+            logger.warn("insertion error " + channelName, e);
+            throw e;
+        }
     }
 
     @Override
