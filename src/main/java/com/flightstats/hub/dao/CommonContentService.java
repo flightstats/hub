@@ -128,7 +128,10 @@ public class CommonContentService implements ContentService {
 
     @Override
     public boolean historicalInsert(String channelName, Content content) throws Exception {
-        return inFlight(Errors.rethrow().wrap(() -> contentService.historicalInsert(channelName, content)));
+        return inFlight(Errors.rethrow().wrap(() -> {
+            content.setData(ContentMarshaller.toBytes(content));
+            return contentService.historicalInsert(channelName, content);
+        }));
     }
 
     @Override

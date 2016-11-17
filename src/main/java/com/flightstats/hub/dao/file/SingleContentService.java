@@ -56,8 +56,9 @@ public class SingleContentService implements ContentService {
     }
 
     @Override
-    public boolean historicalInsert(String channelName, Content content) {
-        return false;
+    public boolean historicalInsert(String channelName, Content content) throws Exception {
+        insert(channelName, content);
+        return true;
     }
 
     private String getPath(String channelName, ContentKey key) {

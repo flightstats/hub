@@ -60,12 +60,8 @@ public class S3SingleContentDao implements ContentDao {
 
     public ContentKey insert(String channelName, Content content) {
         return insert(channelName, content, (metadata) -> {
-            try {
-                metadata.addUserMetadata("compressed", "true");
-                return ContentMarshaller.toBytes(content);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            metadata.addUserMetadata("compressed", "true");
+            return content.getData();
         });
     }
 
@@ -86,7 +82,6 @@ public class S3SingleContentDao implements ContentDao {
             InputStream stream = new ByteArrayInputStream(bytes);
             metadata.setContentLength(bytes.length);
             if (content.getContentType().isPresent()) {
-                //todo - gfm - 6/29/16 - do we still want to write this?
                 metadata.setContentType(content.getContentType().get());
                 metadata.addUserMetadata("type", content.getContentType().get());
             } else {
