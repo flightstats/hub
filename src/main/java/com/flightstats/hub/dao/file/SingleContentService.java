@@ -112,11 +112,11 @@ public class SingleContentService implements ContentService {
     public Collection<ContentKey> queryDirection(DirectionQuery query) {
         TreeSet<ContentKey> keys = new TreeSet<>();
         TimeUtil.Unit hours = TimeUtil.Unit.HOURS;
-        DateTime time = query.getContentKey().getTime();
+        DateTime time = query.getStartKey().getTime();
         if (query.isNext()) {
             handleNext(query, keys);
         } else {
-            DateTime limitTime = query.getTtlTime().minusDays(1);
+            DateTime limitTime = query.getEarliestTime().minusDays(1);
             while (keys.size() < query.getCount() && time.isAfter(limitTime)) {
                 addKeys(query, keys, hours, time);
                 time = time.minus(hours.getDuration());
@@ -128,7 +128,7 @@ public class SingleContentService implements ContentService {
     private void handleNext(DirectionQuery query, Set<ContentKey> keys) {
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            fileSpokeStore.getNext(query.getChannelName(), query.getContentKey().toUrl(), query.getCount(), baos);
+            fileSpokeStore.getNext(query.getChannelName(), query.getStartKey().toUrl(), query.getCount(), baos);
             String keyString = baos.toString();
             ContentKeyUtil.convertKeyStrings(keyString, keys);
         } catch (IOException e) {

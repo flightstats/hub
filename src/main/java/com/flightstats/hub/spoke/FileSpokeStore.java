@@ -85,7 +85,7 @@ public class FileSpokeStore {
         }
     }
 
-    String readKeysInBucket(String path) {
+    public String readKeysInBucket(String path) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         keysInBucket(path, baos);
         return baos.toString();
@@ -218,7 +218,7 @@ public class FileSpokeStore {
     /**
      * This may return more than the request count, as this does not do any sorting.
      */
-    void getNext(String channel, String startKey, int count, OutputStream output) throws IOException {
+    public void getNext(String channel, String startKey, int count, OutputStream output) throws IOException {
         DateTime now = TimeUtil.now();
         String channelPath = storagePath + channel + "/";
         logger.trace("next {} {} {}", channel, startKey, now);
