@@ -36,6 +36,10 @@ entries:
       output: web, pdf
       type: homepage
 
+    - title: API Reference
+      url: /hub_api_reference.html
+      output: web, pdf
+
   - title: Installation
     output: web, pdf
     folderitems:
@@ -48,77 +52,70 @@ entries:
       url: /hub_install_cluster.html
       output: web, pdf
 
-  - title: API
+
+  - title: Channels
     output: web, pdf
     folderitems:
 
-    - title: API Quick Reference
-      url: /hub_api_reference.html
+    - title: Channel Overview
+      url: /hub_channels_overview.html
       output: web, pdf
 
-    - title: Channels
+    - title: Creating channels
+      url: /hub_channels_creating.html
       output: web, pdf
-      folderitems:
 
-      - title: Channel Overview
-        url: /hub_channels_overview.html
-        output: web, pdf
-
-      - title: Creating channels
-        url: /hub_channels_creating.html
-        output: web, pdf
-
-      - title: Reading
-        url: /hub_channels_reading.html
-        output: web, pdf
-
-      - title: Time Interface
-        url: /hub_channels_time.html
-        output: web, pdf
-
-      - title: Writing to channels
-        url: /hub_channels_insert.html
-        output: web, pdf
-
-      - title: Deleting channels
-        url: /hub_channels_delete.html
-        output: web, pdf
-
-      - title: Tag Interface
-        url: /hub_channels_tag.html
-        output: web, pdf
-
-      - title: Replication
-        url: /hub_channels_replication.html
-        output: web, pdf
-
-      - title: Global Channels
-        url: /hub_channels_global.html
-        output: web, pdf
-
-      - title: Historical Channels
-        url: /hub_channels_historical.html
-        output: web, pdf
-
-    - title: Notifications
+    - title: Reading
+      url: /hub_channels_reading.html
       output: web, pdf
-      folderitems:
 
-      - title: Webhooks
-        url: /hub_notifications_webhooks.html
-        output: web, pdf
+    - title: Time Interface
+      url: /hub_channels_time.html
+      output: web, pdf
 
-      - title: Websockets
-        url: /hub_notifications_websocket.html
-        output: web, pdf
+    - title: Writing to channels
+      url: /hub_channels_insert.html
+      output: web, pdf
 
-      - title: Events
-        url: /hub_notifications_events.html
-        output: web, pdf
+    - title: Deleting channels
+      url: /hub_channels_delete.html
+      output: web, pdf
 
-      - title: Alerts
-        url: /hub_notifications_alerts.html
-        output: web, pdf
+    - title: Tag Interface
+      url: /hub_channels_tag.html
+      output: web, pdf
+
+    - title: Replication
+      url: /hub_channels_replication.html
+      output: web, pdf
+
+    - title: Global Channels
+      url: /hub_channels_global.html
+      output: web, pdf
+
+    - title: Historical Channels
+      url: /hub_channels_historical.html
+      output: web, pdf
+
+  - title: Notifications
+    output: web, pdf
+    folderitems:
+
+    - title: Webhooks
+      url: /hub_notifications_webhooks.html
+      output: web, pdf
+
+    - title: Websockets
+      url: /hub_notifications_websocket.html
+      output: web, pdf
+
+    - title: Events
+      url: /hub_notifications_events.html
+      output: web, pdf
+
+    - title: Alerts
+      url: /hub_notifications_alerts.html
+      output: web, pdf
 
   - title: Other topics
     output: web, pdf
