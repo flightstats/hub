@@ -47,8 +47,9 @@ public class S3Verifier {
     private final static Logger logger = LoggerFactory.getLogger(S3Verifier.class);
 
     private final int offsetMinutes = HubProperties.getProperty("s3Verifier.offsetMinutes", 15);
-    private final ExecutorService queryThreadPool = Executors.newFixedThreadPool(30, new ThreadFactoryBuilder().setNameFormat("S3QueryThread-%d").build());
-    private final ExecutorService channelThreadPool = Executors.newFixedThreadPool(10, new ThreadFactoryBuilder().setNameFormat("S3ChannelThread-%d").build());
+    private final int channelThreads = HubProperties.getProperty("s3Verifier.channelThreads", 3);
+    private final ExecutorService channelThreadPool = Executors.newFixedThreadPool(channelThreads, new ThreadFactoryBuilder().setNameFormat("S3ChannelThread-%d").build());
+    private final ExecutorService queryThreadPool = Executors.newFixedThreadPool(channelThreads * 2, new ThreadFactoryBuilder().setNameFormat("S3QueryThread-%d").build());
     @Inject
     private LastContentPath lastContentPath;
     @Inject
