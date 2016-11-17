@@ -3,14 +3,18 @@ require('./integration_config.js');
 var request = require('request');
 var http = require('http');
 var channel = utils.randomChannelName();
+var moment = require('moment');
 var channelResource = channelUrl + "/" + channel;
 var testName = __filename;
-var channelBody = {
-    historical: true,
-    ttlDays: 3650
-};
 
 describe(testName, function () {
+
+    var mutableTime = moment.utc().subtract(1, 'year');
+
+    var channelBody = {
+        mutableTime: mutableTime.format('YYYY-MM-DDTHH:mm:ss.SSS'),
+        tags: ["test"]
+    };
 
     utils.putChannel(channel, false, channelBody, testName);
 

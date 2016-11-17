@@ -19,6 +19,8 @@ describe(testName, function () {
     var channelUrl = hubUrlBase + '/channel/' + channel + '/';
     utils.addItem(channelUrl + '2016/06/01/12/00/00/000', 403);
     utils.addItem(channelUrl + moment.utc().format('YYYY/MM/DD/HH/mm/ss/SSS'), 403);
-    utils.putChannel(channel, false, {historical: true}, testName, 400);
+
+    var mutableTime = moment.utc().subtract(1, 'minute');
+    utils.putChannel(channel, false, {mutableTime: mutableTime.format('YYYY-MM-DDTHH:mm:ss.SSS')}, testName, 400);
 
 });

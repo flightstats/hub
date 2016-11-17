@@ -6,7 +6,6 @@ var parse = require('parse-link-header');
 var channel = utils.randomChannelName();
 var moment = require('moment');
 
-var tag = Math.random().toString().replace(".", "");
 var testName = __filename;
 
 
@@ -23,7 +22,7 @@ describe(testName, function () {
 
     var channelBody = {
         mutableTime: mutableTime.format('YYYY-MM-DDTHH:mm:ss.SSS'),
-        tags: [tag, "test"]
+        tags: ["test"]
     };
 
     utils.putChannel(channel, false, channelBody, testName);
