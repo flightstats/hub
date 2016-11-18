@@ -1,11 +1,10 @@
 require('./integration_config.js');
 
 var request = require('request');
-var channelName = utils.randomChannelName();
-var channelResource = channelUrl + "/" + channelName;
+var channel = utils.randomChannelName();
+var channelResource = channelUrl + "/" + channel;
 var testName = __filename;
-utils.configureFrisby();
-
+var moment = require('moment');
 
 /**
  * create a channel
@@ -14,8 +13,14 @@ utils.configureFrisby();
  */
 describe(testName, function () {
 
-    utils.putChannel(channelName, function () {
-    }, {"name": channelName, "ttlDays": 10000, historical: true});
+    var mutableTime = moment.utc().subtract(1, 'minute');
+
+    var channelBody = {
+        mutableTime: mutableTime.format('YYYY-MM-DDTHH:mm:ss.SSS'),
+        tags: ["test"]
+    };
+
+    utils.putChannel(channel, false, channelBody, testName);
 
     it("gets latest stable in channel ", function (done) {
         request.get({url: channelResource + '/latest', followRedirect: false},
