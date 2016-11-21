@@ -30,8 +30,7 @@ public class DirectionQuery implements Query {
      */
     @Wither
     private DateTime earliestTime;
-    @Wither
-    private final boolean liveChannel;
+
     /**
      * this is only used by Spoke.query(direction)
      */

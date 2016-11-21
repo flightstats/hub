@@ -172,7 +172,7 @@ public class SpokeContentDao implements ContentDao {
         DateTime spokeTtlTime = TimeUtil.BIG_BANG;
         if (HubProperties.getProperty("spoke.enforceTTL", true)) {
             spokeTtlTime = query.getChannelStable().minusMinutes(ttlMinutes);
-            if (query.isLiveChannel()) {
+            if (query.getChannelConfig().isLive()) {
                 if (query.getStartKey().getTime().isBefore(spokeTtlTime)) {
                     query = query.withStartKey(new ContentKey(spokeTtlTime, "0"));
                 }

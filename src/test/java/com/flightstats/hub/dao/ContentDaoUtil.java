@@ -233,7 +233,6 @@ public class ContentDaoUtil {
                 .next(next)
                 .startKey(new ContentKey(queryTime, "0"))
                 .earliestTime(TimeUtil.now().minusDays((int) channelConfig.getTtlDays()))
-                .liveChannel(true)
                 .channelStable(TimeUtil.now())
                 .build();
         Collection<ContentKey> found = contentDao.query(query);

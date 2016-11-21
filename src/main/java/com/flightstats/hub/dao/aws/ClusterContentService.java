@@ -4,7 +4,6 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.*;
-import com.flightstats.hub.dao.ContentKeyUtil;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
@@ -198,50 +197,72 @@ public class ClusterContentService implements ContentService {
         return CommonContentService.query(daoQuery, daos);
     }
 
-
-
     @Override
-    public Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces, boolean stable) {
+    public Optional<ContentKey> getLatest(DirectionQuery latestQuery) {
+        //todo gfm - this needs to work differently for Mutable/All
+        if (latestQuery.getEpoch().equals(Epoch.IMMUTABLE)) {
+            return getLatestImmutable(latestQuery);
+        } else if (latestQuery.getEpoch().equals(Epoch.MUTABLE)) {
+            return getLatestMutable(latestQuery);
+        } else {
+            Optional<ContentKey> latestImmutable = getLatestImmutable(latestQuery);
+            if (latestImmutable.isPresent()) {
+                return latestImmutable;
+            }
+            return getLatestMutable(latestQuery);
+        }
+    }
+
+    private Optional<ContentKey> getLatestMutable(DirectionQuery latestQuery) {
+        //todo gfm -
+        return null;
+    }
+
+    private Optional<ContentKey> getLatestImmutable(DirectionQuery latestQuery) {
+        String channel = latestQuery.getChannelName();
         final ChannelConfig cachedChannelConfig = channelService.getCachedChannelConfig(channel);
         DateTime cacheTtlTime = getSpokeTtlTime(channel);
-        Optional<ContentKey> latest = spokeContentDao.getLatest(channel, limitKey, traces);
+        Optional<ContentKey> latest = spokeContentDao.getLatest(channel, latestQuery.getStartKey(), ActiveTraces.getLocal());
         if (latest.isPresent()) {
-            logger.info("found latest {} {}", channel, latest);
+            ActiveTraces.getLocal().add("found spoke latest", channel, latest);
             lastContentPath.delete(channel, CHANNEL_LATEST_UPDATED);
             return latest;
         }
         ContentPath latestCache = lastContentPath.get(channel, null, CHANNEL_LATEST_UPDATED);
+        ActiveTraces.getLocal().add("found latestCache", channel, latestCache);
         if (latestCache != null) {
             DateTime channelTtlTime = cachedChannelConfig.getTtlTime();
             if(latestCache.getTime().isBefore(channelTtlTime)){
                 lastContentPath.update(ContentKey.NONE, channel, CHANNEL_LATEST_UPDATED);
             }
-            logger.info("found cached {} {}", channel, latestCache);
+            ActiveTraces.getLocal().add("found cached latest", channel, latest);
             if (latestCache.equals(ContentKey.NONE)) {
                 return Optional.absent();
             }
             return Optional.of((ContentKey) latestCache);
         }
-
+        //todo gfm - this could have a convenience method
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
-                .startKey(limitKey)
+                .startKey(latestQuery.getStartKey())
                 .next(false)
-                .stable(stable)
+                .stable(latestQuery.isStable())
+                .epoch(latestQuery.getEpoch())
+                .location(latestQuery.getLocation())
                 .count(1)
                 .build();
-        Collection<ContentKey> keys = channelService.getKeys(query);
+        Collection<ContentKey> keys = channelService.query(query);
         if (keys.isEmpty()) {
-            logger.debug("updating channel empty {}", channel);
+            ActiveTraces.getLocal().add("updating channel empty", channel);
             lastContentPath.updateIncrease(ContentKey.NONE, channel, CHANNEL_LATEST_UPDATED);
             return Optional.absent();
         } else {
             ContentKey latestKey = keys.iterator().next();
             if (latestKey.getTime().isAfter(cacheTtlTime)) {
-                logger.debug("latestKey within spoke window {} {}", channel, latestKey);
+                ActiveTraces.getLocal().add("latestKey within spoke window {} {}", channel, latestKey);
                 lastContentPath.delete(channel, CHANNEL_LATEST_UPDATED);
             } else {
-                logger.debug("updating cache with latestKey {} {}", channel, latestKey);
+                ActiveTraces.getLocal().add("updating cache with latestKey {} {}", channel, latestKey);
                 lastContentPath.update(latestKey, channel, CHANNEL_LATEST_UPDATED);
             }
             return Optional.of(latestKey);
@@ -306,7 +327,16 @@ public class ClusterContentService implements ContentService {
                 try {
                     DateTime time = TimeUtil.stable().plusMinutes(1);
                     Traces traces = new Traces(channelConfig.getName(), time);
-                    Optional<ContentKey> latest = getLatest(channelConfig.getName(), ContentKey.lastKey(time), traces, false);
+                    DirectionQuery latestQuery = DirectionQuery.builder()
+                            .channelName(channelConfig.getName())
+                            .next(false)
+                            .stable(false)
+                            .location(Location.ALL)
+                            .epoch(Epoch.IMMUTABLE)
+                            .startKey(ContentKey.lastKey(time))
+                            .count(1)
+                            .build();
+                    Optional<ContentKey> latest = getLatest(latestQuery);
                     logger.debug("latest updated {} {}", channelConfig.getName(), latest);
                     traces.log(logger);
                 } catch (Exception e) {

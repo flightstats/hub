@@ -132,7 +132,7 @@ public class Webhook implements Comparable<Webhook>, NamedType {
                     .next(false)
                     .count(1)
                     .build();
-            SortedSet<ContentKey> keys = channelService.getKeys(query);
+            SortedSet<ContentKey> keys = channelService.query(query);
             if (keys.isEmpty()) {
                 keyOptional = Optional.of(new ContentKey(latest.get().getTime().minusMillis(1), "A"));
             } else {

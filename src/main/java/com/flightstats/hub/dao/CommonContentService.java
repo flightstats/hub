@@ -160,8 +160,8 @@ public class CommonContentService implements ContentService {
     }
 
     @Override
-    public Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces, boolean stable) {
-        return contentService.getLatest(channel, limitKey, traces, stable);
+    public Optional<ContentKey> getLatest(DirectionQuery query) {
+        return contentService.getLatest(query);
     }
 
     @Override

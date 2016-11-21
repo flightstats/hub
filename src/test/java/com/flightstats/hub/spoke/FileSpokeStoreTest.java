@@ -1,8 +1,8 @@
 package com.flightstats.hub.spoke;
 
 import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.dao.ContentKeyUtil;
 import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.ContentKeyUtil;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.io.Files;
 import org.joda.time.DateTime;
@@ -349,8 +349,7 @@ public class FileSpokeStoreTest {
     }
 
     private void verify(String path, int expected) {
-        String keysInBucket = spokeStore.readKeysInBucket(path);
-        ArrayList<ContentKey> keys = new ArrayList();
+        ArrayList<ContentKey> keys = new ArrayList<>();
         ContentKeyUtil.convertKeyStrings(spokeStore.readKeysInBucket(path), keys);
         assertEquals(expected, keys.size());
     }

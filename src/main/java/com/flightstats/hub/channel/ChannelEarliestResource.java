@@ -6,7 +6,6 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.DirectionQuery;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +42,7 @@ public class ChannelEarliestResource {
             return tagEarliestResource.getEarliest(tag, stable, trace, uriInfo);
         }
         DirectionQuery query = getDirectionQuery(channel, 1, stable, channelService);
-        Collection<ContentKey> keys = channelService.getKeys(query);
+        Collection<ContentKey> keys = channelService.query(query);
         if (keys.isEmpty()) {
             return Response.status(NOT_FOUND).build();
 
@@ -69,7 +68,7 @@ public class ChannelEarliestResource {
             return tagEarliestResource.getEarliestCount(tag, count, stable, bulk, batch, trace, accept, uriInfo);
         }
         DirectionQuery query = getDirectionQuery(channel, count, stable, channelService);
-        SortedSet<ContentKey> keys = channelService.getKeys(query);
+        SortedSet<ContentKey> keys = channelService.query(query);
         if (bulk || batch) {
             return BulkBuilder.build(keys, channel, channelService, uriInfo, accept);
         } else {
@@ -79,15 +78,14 @@ public class ChannelEarliestResource {
 
     public static DirectionQuery getDirectionQuery(String channel, int count, boolean stable, ChannelService channelService) {
         ChannelConfig channelConfig = channelService.getCachedChannelConfig(channel);
-        DateTime ttlTime = channelConfig.getTtlTime();
-        ContentKey limitKey = new ContentKey(ttlTime, "0");
+        //todo gfm - this will need to change for historical epochs
+        ContentKey limitKey = new ContentKey(channelConfig.getTtlTime(), "0");
 
         return DirectionQuery.builder()
                 .channelName(channel)
                 .startKey(limitKey)
                 .next(true)
                 .stable(stable)
-                .earliestTime(ttlTime)
                 .count(count)
                 .build();
     }

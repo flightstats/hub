@@ -5,6 +5,8 @@ import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.Epoch;
+import com.flightstats.hub.model.Location;
 import com.google.common.base.Optional;
 
 import javax.ws.rs.*;
@@ -33,11 +35,22 @@ public class ChannelLatestResource {
     public Response getLatest(@PathParam("channel") String channel,
                               @QueryParam("stable") @DefaultValue("true") boolean stable,
                               @QueryParam("trace") @DefaultValue("false") boolean trace,
+                              @QueryParam("location") @DefaultValue(Location.DEFAULT) String location,
+                              @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
                               @QueryParam("tag") String tag) {
         if (tag != null) {
+            //todo gfm -
             return tagLatestResource.getLatest(tag, stable, trace, uriInfo);
         }
-        Optional<ContentKey> latest = channelService.getLatest(channel, stable, trace);
+        DirectionQuery query = DirectionQuery.builder()
+                .channelName(channel)
+                .next(false)
+                .stable(stable)
+                .location(Location.valueOf(location))
+                .epoch(Epoch.valueOf(epoch))
+                .count(1)
+                .build();
+        Optional<ContentKey> latest = channelService.getLatest(query);
         if (latest.isPresent()) {
             return Response.status(SEE_OTHER)
                     .location(URI.create(uriInfo.getBaseUri() + "channel/" + channel + "/" + latest.get().toUrl()))
@@ -56,12 +69,23 @@ public class ChannelLatestResource {
                                    @QueryParam("trace") @DefaultValue("false") boolean trace,
                                    @QueryParam("batch") @DefaultValue("false") boolean batch,
                                    @QueryParam("bulk") @DefaultValue("false") boolean bulk,
+                                   @QueryParam("location") @DefaultValue(Location.DEFAULT) String location,
+                                   @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
                                    @QueryParam("tag") String tag,
                                    @HeaderParam("Accept") String accept) {
         if (tag != null) {
+            //todo gfm -
             return tagLatestResource.getLatestCount(tag, count, stable, batch, bulk, trace, accept, uriInfo);
         }
-        Optional<ContentKey> latest = channelService.getLatest(channel, stable, trace);
+        DirectionQuery latestQuery = DirectionQuery.builder()
+                .channelName(channel)
+                .next(false)
+                .stable(stable)
+                .location(Location.valueOf(location))
+                .epoch(Epoch.valueOf(epoch))
+                .count(1)
+                .build();
+        Optional<ContentKey> latest = channelService.getLatest(latestQuery);
         if (!latest.isPresent()) {
             return Response.status(NOT_FOUND).build();
         }
@@ -70,10 +94,9 @@ public class ChannelLatestResource {
                 .startKey(latest.get())
                 .next(false)
                 .stable(stable)
-                .earliestTime(channelService.getCachedChannelConfig(channel).getTtlTime())
                 .count(count - 1)
                 .build();
-        SortedSet<ContentKey> keys = new TreeSet<>(channelService.getKeys(query));
+        SortedSet<ContentKey> keys = new TreeSet<>(channelService.query(query));
         keys.add(latest.get());
         if (bulk || batch) {
             return BulkBuilder.build(keys, channel, channelService, uriInfo, accept);

@@ -2,6 +2,7 @@ package com.flightstats.hub.dao;
 
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.TimeUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 
 import java.util.*;
@@ -53,5 +54,21 @@ public class ContentKeyUtil {
             minutePath.getKeys().add(key);
         }
         return new TreeSet<>(minutes.values());
+    }
+
+    public static void convertKeyStrings(String keysString, Collection<ContentKey> contentKeys) {
+        if (StringUtils.isNotEmpty(keysString)) {
+            String[] keys = keysString.split(",");
+            for (String key : keys) {
+                contentKeys.add(convertKey(key).get());
+            }
+        }
+    }
+
+    public static com.google.common.base.Optional<ContentKey> convertKey(String key) {
+        if (StringUtils.isNotEmpty(key)) {
+            return ContentKey.fromUrl(StringUtils.substringAfter(key, "/"));
+        }
+        return com.google.common.base.Optional.absent();
     }
 }

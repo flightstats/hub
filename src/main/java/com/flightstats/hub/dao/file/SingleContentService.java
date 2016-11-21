@@ -1,5 +1,6 @@
 package com.flightstats.hub.dao.file;
 
+import com.flightstats.hub.dao.ContentKeyUtil;
 import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.dao.ContentService;
 import com.flightstats.hub.exception.FailedWriteException;
@@ -143,8 +144,12 @@ public class SingleContentService implements ContentService {
     }
 
     @Override
-    public Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces, boolean stable) {
-        return ContentKeyUtil.convertKey(fileSpokeStore.getLatest(channel, limitKey.toUrl()));
+    public Optional<ContentKey> getLatest(DirectionQuery query) {
+        Collection<ContentKey> latest = queryDirection(query);
+        if (latest.isEmpty()) {
+            return Optional.absent();
+        }
+        return Optional.of(latest.iterator().next());
     }
 
     @Override

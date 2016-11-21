@@ -22,7 +22,22 @@ public interface ChannelService {
 
     boolean isReplicating(String channelName);
 
-    Optional<ContentKey> getLatest(String channel, boolean stable, boolean trace);
+    /**
+     * Latest exists as a separate path than query(DirectionQuery) to allow the underlying
+     * storage system to highly optimize this frequent and potentially expensive operation.
+     */
+    Optional<ContentKey> getLatest(DirectionQuery query);
+
+    @Deprecated
+    default Optional<ContentKey> getLatest(String channel, boolean stable, boolean trace) {
+        DirectionQuery query = DirectionQuery.builder()
+                .channelName(channel)
+                .next(false)
+                .stable(stable)
+                .count(1)
+                .build();
+        return getLatest(query);
+    }
 
     void deleteBefore(String name, ContentKey limitKey);
 
@@ -42,7 +57,7 @@ public interface ChannelService {
 
     SortedSet<ContentKey> queryByTime(TimeQuery query);
 
-    SortedSet<ContentKey> getKeys(DirectionQuery query);
+    SortedSet<ContentKey> query(DirectionQuery query);
 
     boolean delete(String channelName);
 

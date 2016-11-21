@@ -294,7 +294,7 @@ public class ChannelContentResource {
                 .epoch(Epoch.valueOf(epoch))
                 .count(1)
                 .build();
-        Collection<ContentKey> keys = channelService.getKeys(query);
+        Collection<ContentKey> keys = channelService.query(query);
         if (keys.isEmpty()) {
             return Response.status(NOT_FOUND).build();
         }
@@ -372,7 +372,7 @@ public class ChannelContentResource {
                 .epoch(Epoch.valueOf(epoch))
                 .count(count)
                 .build();
-        SortedSet<ContentKey> keys = channelService.getKeys(query);
+        SortedSet<ContentKey> keys = channelService.query(query);
         if (bulk || batch) {
             return BulkBuilder.build(keys, channel, channelService, uriInfo, accept, (builder) -> {
                 if (!keys.isEmpty()) {

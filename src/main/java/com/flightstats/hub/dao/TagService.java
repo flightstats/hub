@@ -50,7 +50,7 @@ public class TagService {
         Traces traces = ActiveTraces.getLocal();
         for (ChannelConfig channel : channels) {
             traces.add("query for channel", channel.getName());
-            Collection<ContentKey> contentKeys = channelService.getKeys(query.withChannelName(channel.getName()));
+            Collection<ContentKey> contentKeys = channelService.query(query.withChannelName(channel.getName()));
             traces.add("query size for channel", channel.getName(), contentKeys.size());
             for (ContentKey contentKey : contentKeys) {
                 orderedKeys.add(new ChannelContentKey(channel.getName(), contentKey));
@@ -92,7 +92,7 @@ public class TagService {
         SortedSet<ChannelContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
         for (ChannelConfig channel : channels) {
             DirectionQuery query = ChannelEarliestResource.getDirectionQuery(channel.getName(), count, stable, channelService);
-            Collection<ContentKey> contentKeys = channelService.getKeys(query);
+            Collection<ContentKey> contentKeys = channelService.query(query);
             for (ContentKey contentKey : contentKeys) {
                 orderedKeys.add(new ChannelContentKey(channel.getName(), contentKey));
             }

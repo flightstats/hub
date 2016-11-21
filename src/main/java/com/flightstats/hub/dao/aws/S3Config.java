@@ -125,7 +125,7 @@ public class S3Config {
                     .earliestTime(config.getTtlTime())
                     .count((int) (config.getMaxItems() - 1))
                     .build();
-            keys.addAll(channelService.getKeys(query));
+            keys.addAll(channelService.query(query));
             if (keys.size() == config.getMaxItems()) {
                 ContentKey limitKey = keys.first();
                 logger.info("deleting keys before {}", limitKey);

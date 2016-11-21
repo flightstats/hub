@@ -9,7 +9,6 @@ import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.DataDog;
 import com.flightstats.hub.metrics.MetricsSender;
-import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.replication.ReplicationGlobalManager;
 import com.flightstats.hub.util.TimeUtil;
@@ -163,23 +162,19 @@ public class LocalChannelService implements ChannelService {
     }
 
     @Override
-    public Optional<ContentKey> getLatest(String channel, boolean stable, boolean trace) {
-        ChannelConfig channelConfig = getCachedChannelConfig(channel);
-        if (null == channelConfig) {
+    public Optional<ContentKey> getLatest(DirectionQuery query) {
+        String channel = query.getChannelName();
+        if (!channelExists(channel)) {
             return Optional.absent();
         }
-        Traces traces = ActiveTraces.getLocal();
-        ContentKey limitKey = getLatestLimit(channel, stable);
-        traces.add("get latest limit", limitKey);
-        Optional<ContentKey> latest = contentService.getLatest(channel, limitKey, traces, stable);
+        query = query.withStartKey(ContentKey.lastKey(TimeUtil.now().plusMinutes(1)));
+        query = configureQuery(query);
+        Optional<ContentKey> latest = contentService.getLatest(query);
         if (latest.isPresent()) {
-            DateTime ttlTime = getTtlTime(channel);
-            if (latest.get().getTime().isBefore(ttlTime)) {
+            SortedSet<ContentKey> filtered = ContentKeyUtil.filter(latest.asSet(), query);
+            if (filtered.isEmpty()) {
                 return Optional.absent();
             }
-        }
-        if (trace) {
-            traces.log(logger);
         }
         return latest;
     }
@@ -267,34 +262,47 @@ public class LocalChannelService implements ChannelService {
     }
 
     @Override
-    public SortedSet<ContentKey> getKeys(DirectionQuery query) {
+    public SortedSet<ContentKey> query(DirectionQuery query) {
         if (query.getCount() <= 0) {
             return Collections.emptySortedSet();
         }
+        query = configureQuery(query);
+        List<ContentKey> keys = new ArrayList<>(contentService.queryDirection(query));
+        SortedSet<ContentKey> contentKeys = ContentKeyUtil.filter(keys, query);
+        ActiveTraces.getLocal().add("ChannelService.query", contentKeys);
+        return contentKeys;
+    }
+
+    private DirectionQuery configureQuery(DirectionQuery query) {
+        ActiveTraces.getLocal().add("configureQuery.start", query);
         if (query.getCount() > DIR_COUNT_LIMIT) {
             query = query.withCount(DIR_COUNT_LIMIT);
         }
         ChannelConfig channelConfig = getCachedChannelConfig(query.getChannelName());
         query = query.withChannelConfig(channelConfig);
-        DateTime ttlTime = channelConfig.getTtlTime();
-        if (!channelConfig.isHistorical() || query.getEpoch().equals(Epoch.IMMUTABLE)) {
-            if (channelConfig.isHistorical()) {
-                ttlTime = channelConfig.getMutableTime();
-            }
-            if (query.getStartKey().getTime().isBefore(ttlTime)) {
-                query = query.withStartKey(new ContentKey(ttlTime, "0"));
-            }
-            query = query.withEarliestTime(ttlTime);
+        DateTime ttlTime = getChannelTtl(channelConfig, query.getEpoch());
+        query = query.withEarliestTime(ttlTime);
+
+        if (query.getStartKey().getTime().isBefore(ttlTime)) {
+            query = query.withStartKey(new ContentKey(ttlTime, "0"));
         }
-        query = query.withLiveChannel(channelConfig.isLive());
         ContentPath lastUpdated = getLastUpdated(query.getChannelName(), new ContentKey(TimeUtil.time(query.isStable())));
         query = query.withChannelStable(lastUpdated.getTime());
-        Traces traces = ActiveTraces.getLocal();
-        traces.add(query);
-        List<ContentKey> keys = new ArrayList<>(contentService.queryDirection(query));
-        SortedSet<ContentKey> contentKeys = ContentKeyUtil.filter(keys, query);
-        traces.add("ChannelService.getKeys", contentKeys);
-        return contentKeys;
+        ActiveTraces.getLocal().add("configureQuery.end", query);
+        return query;
+    }
+
+    private DateTime getChannelTtl(ChannelConfig channelConfig, Epoch epoch) {
+        DateTime ttlTime = channelConfig.getTtlTime();
+        if (channelConfig.isHistorical()) {
+            if (epoch.equals(Epoch.IMMUTABLE)) {
+                ttlTime = channelConfig.getMutableTime();
+            } else {
+                //todo gfm - this may need to be more sophisticated
+                ttlTime = TimeUtil.BIG_BANG;
+            }
+        }
+        return ttlTime;
     }
 
     @Override
@@ -308,11 +316,6 @@ public class LocalChannelService implements ChannelService {
             return TimeUtil.BIG_BANG;
         }
         return channelConfig.getTtlTime();
-    }
-
-    private DateTime getTtlTime(String channelName) {
-        //todo gfm - evaluate usage of this
-        return getCachedChannelConfig(channelName).getTtlTime();
     }
 
     @Override
