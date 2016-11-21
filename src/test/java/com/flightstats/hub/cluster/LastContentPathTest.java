@@ -89,4 +89,30 @@ public class LastContentPathTest {
         assertEquals(nextPath, lastContentPath.get(name, new MinutePath(), BASE_PATH));
     }
 
+    @Test
+    public void testUpdateDecrease() throws Exception {
+        String name = "testUpdateDecrease";
+        DateTime start = new DateTime(2014, 12, 3, 20, 45, DateTimeZone.UTC);
+
+        ContentKey key1 = new ContentKey(start, "B");
+        lastContentPath.initialize(name, key1, BASE_PATH);
+        assertEquals(key1, lastContentPath.get(name, new ContentKey(), BASE_PATH));
+
+        ContentKey key2 = new ContentKey(start.minusMillis(1), "C");
+        lastContentPath.updateDecrease(key2, name, BASE_PATH);
+        assertEquals(key2, lastContentPath.get(name, new ContentKey(), BASE_PATH));
+
+        ContentKey key3 = new ContentKey(start.plusMillis(1), "A");
+        lastContentPath.updateDecrease(key3, name, BASE_PATH);
+        assertEquals(key2, lastContentPath.get(name, new ContentKey(), BASE_PATH));
+
+        ContentKey key4 = new ContentKey(start.minusMinutes(1), "D");
+        lastContentPath.updateDecrease(key4, name, BASE_PATH);
+        assertEquals(key4, lastContentPath.get(name, new ContentKey(), BASE_PATH));
+
+        lastContentPath.delete(name, BASE_PATH);
+        ContentKey contentKey = new ContentKey();
+        assertEquals(contentKey, lastContentPath.get(name, contentKey, BASE_PATH));
+    }
+
 }

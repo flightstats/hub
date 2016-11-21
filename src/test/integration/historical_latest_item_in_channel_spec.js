@@ -81,19 +81,32 @@ describe(testName, function () {
         checkLatest('/latest?epoch=MUTABLE', 303, historicalLatest, done);
     });
 
-    //todo gfm - test latest N which could go back to 1970...
+    it("gets latest N Mutable in channel ", function (done) {
+        request.get({url: channelResource + '/latest/10?trace=true&epoch=MUTABLE', followRedirect: false},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+                var parsed = utils.parseJson(response, testName);
+                if (parsed._links) {
+                    expect(parsed._links.uris.length).toBe(2);
+                    expect(parsed._links.uris[1]).toBe(historicalLatest);
+                }
+                done();
+            });
+    });
 
-    /*it("gets latest N stable in channel ", function (done) {
-     request.get({url: channelResource + '/latest/10?trace=true', followRedirect: false},
-     function (err, response, body) {
-     expect(err).toBeNull();
-     expect(response.statusCode).toBe(200);
-     var parsed = utils.parseJson(response, testName);
-     if (parsed._links) {
-     expect(parsed._links.uris.length).toBe(2);
-     expect(parsed._links.uris[1]).toBe(posted);
-     }
-     done();
-     });
-     });*/
+    it("gets latest N ALL in channel ", function (done) {
+        request.get({url: channelResource + '/latest/10?stable=false&epoch=ALL', followRedirect: false},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+                var parsed = utils.parseJson(response, testName);
+                if (parsed._links) {
+                    expect(parsed._links.uris.length).toBe(3);
+                    expect(parsed._links.uris[1]).toBe(historicalLatest);
+                    expect(parsed._links.uris[2]).toBe(latest);
+                }
+                done();
+            });
+    });
 });

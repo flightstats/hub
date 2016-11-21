@@ -12,7 +12,6 @@ import com.flightstats.hub.metrics.MetricsSender;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.replication.ReplicationGlobalManager;
 import com.flightstats.hub.util.TimeUtil;
-import com.flightstats.hub.webhook.WebhookService;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -30,6 +29,7 @@ import java.util.stream.Stream;
 @Singleton
 public class LocalChannelService implements ChannelService {
     public static final String REPLICATED_LAST_UPDATED = "/ReplicatedLastUpdated/";
+    public static final String HISTORICAL_EARLIEST = "/HistoricalEarliest/";
 
     private final static Logger logger = LoggerFactory.getLogger(LocalChannelService.class);
     private final static StatsDClient statsd = DataDog.statsd;
@@ -47,8 +47,6 @@ public class LocalChannelService implements ChannelService {
     private MetricsSender sender;
     @Inject
     private LastContentPath lastContentPath;
-    @Inject
-    private WebhookService webhookService;
 
     @Override
     public boolean channelExists(String channelName) {
@@ -71,6 +69,13 @@ public class LocalChannelService implements ChannelService {
             if (oldConfig.isReplicating() || oldConfig.isGlobalMaster()) {
                 replicationGlobalManager.notifyWatchers();
             }
+        }
+        if (newConfig.isHistorical()) {
+            if (oldConfig == null) {
+                ContentKey lastKey = ContentKey.lastKey(newConfig.getMutableTime());
+                lastContentPath.update(lastKey, newConfig.getName(), HISTORICAL_EARLIEST);
+            }
+            //todo gfm - handle case of changing a channel's mutableTime
         }
         contentService.notify(newConfig, oldConfig);
     }
@@ -120,6 +125,8 @@ public class LocalChannelService implements ChannelService {
             throw new InvalidRequestException(msg);
         }
         boolean insert = contentService.historicalInsert(channelName, content);
+        //todo gfm - when we add a mutableTime to a channel, set this to the mutableTime
+        lastContentPath.updateDecrease(contentKey, channelName, HISTORICAL_EARLIEST);
         //todo gfm - send stats
         return insert;
     }
@@ -306,8 +313,8 @@ public class LocalChannelService implements ChannelService {
             if (epoch.equals(Epoch.IMMUTABLE)) {
                 ttlTime = channelConfig.getMutableTime();
             } else {
-                //todo gfm - this may need to be more sophisticated
-                ttlTime = TimeUtil.BIG_BANG;
+                ContentKey lastKey = ContentKey.lastKey(channelConfig.getMutableTime());
+                return lastContentPath.get(channelConfig.getName(), lastKey, HISTORICAL_EARLIEST).getTime();
             }
         }
         return ttlTime;

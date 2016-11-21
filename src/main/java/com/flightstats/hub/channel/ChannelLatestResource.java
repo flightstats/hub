@@ -94,6 +94,8 @@ public class ChannelLatestResource {
                 .startKey(latest.get())
                 .next(false)
                 .stable(stable)
+                .location(Location.valueOf(location))
+                .epoch(Epoch.valueOf(epoch))
                 .count(count - 1)
                 .build();
         SortedSet<ContentKey> keys = new TreeSet<>(channelService.query(query));
