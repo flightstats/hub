@@ -198,24 +198,18 @@ public class ClusterContentService implements ContentService {
     }
 
     @Override
-    public Optional<ContentKey> getLatest(DirectionQuery latestQuery) {
-        //todo gfm - this needs to work differently for Mutable/All
-        if (latestQuery.getEpoch().equals(Epoch.IMMUTABLE)) {
-            return getLatestImmutable(latestQuery);
-        } else if (latestQuery.getEpoch().equals(Epoch.MUTABLE)) {
-            return getLatestMutable(latestQuery);
+    public Optional<ContentKey> getLatest(DirectionQuery query) {
+        if (query.getEpoch().equals(Epoch.IMMUTABLE)) {
+            return getLatestImmutable(query);
+        } else if (query.getEpoch().equals(Epoch.MUTABLE)) {
+            return ContentService.chooseLatest(queryDirection(query), query);
         } else {
-            Optional<ContentKey> latestImmutable = getLatestImmutable(latestQuery);
+            Optional<ContentKey> latestImmutable = getLatestImmutable(query);
             if (latestImmutable.isPresent()) {
                 return latestImmutable;
             }
-            return getLatestMutable(latestQuery);
+            return ContentService.chooseLatest(queryDirection(query), query);
         }
-    }
-
-    private Optional<ContentKey> getLatestMutable(DirectionQuery latestQuery) {
-        //todo gfm -
-        return null;
     }
 
     private Optional<ContentKey> getLatestImmutable(DirectionQuery latestQuery) {

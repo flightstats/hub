@@ -112,7 +112,7 @@ public class SingleContentService implements ContentService {
 
     @Override
     public Collection<ContentKey> queryDirection(DirectionQuery query) {
-        TreeSet<ContentKey> keys = new TreeSet<>();
+        SortedSet<ContentKey> keys = new TreeSet<>();
         TimeUtil.Unit hours = TimeUtil.Unit.HOURS;
         DateTime time = query.getStartKey().getTime();
         if (query.isNext()) {
@@ -121,6 +121,7 @@ public class SingleContentService implements ContentService {
             DateTime limitTime = query.getEarliestTime().minusDays(1);
             while (keys.size() < query.getCount() && time.isAfter(limitTime)) {
                 addKeys(query, keys, hours, time);
+                keys = ContentKeyUtil.filter(keys, query);
                 time = time.minus(hours.getDuration());
             }
         }
@@ -138,18 +139,14 @@ public class SingleContentService implements ContentService {
         }
     }
 
-    private void addKeys(DirectionQuery query, TreeSet<ContentKey> keys, TimeUtil.Unit hours, DateTime time) {
+    private void addKeys(DirectionQuery query, Collection<ContentKey> keys, TimeUtil.Unit hours, DateTime time) {
         String path = query.getChannelName() + "/" + hours.format(time);
         ContentKeyUtil.convertKeyStrings(fileSpokeStore.readKeysInBucket(path), keys);
     }
 
     @Override
     public Optional<ContentKey> getLatest(DirectionQuery query) {
-        Collection<ContentKey> latest = queryDirection(query);
-        if (latest.isEmpty()) {
-            return Optional.absent();
-        }
-        return Optional.of(latest.iterator().next());
+        return ContentService.chooseLatest(queryDirection(query), query);
     }
 
     @Override

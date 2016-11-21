@@ -286,6 +286,14 @@ public class LocalChannelService implements ChannelService {
         if (query.getStartKey().getTime().isBefore(ttlTime)) {
             query = query.withStartKey(new ContentKey(ttlTime, "0"));
         }
+        if (query.getEpoch().equals(Epoch.MUTABLE)) {
+            if (!query.isNext()) {
+                DateTime mutableTime = channelConfig.getMutableTime();
+                if (query.getStartKey().getTime().isAfter(mutableTime)) {
+                    query = query.withStartKey(ContentKey.lastKey(mutableTime));
+                }
+            }
+        }
         ContentPath lastUpdated = getLastUpdated(query.getChannelName(), new ContentKey(TimeUtil.time(query.isStable())));
         query = query.withChannelStable(lastUpdated.getTime());
         ActiveTraces.getLocal().add("configureQuery.end", query);

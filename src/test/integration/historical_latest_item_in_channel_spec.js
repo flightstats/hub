@@ -15,10 +15,10 @@ var moment = require('moment');
  */
 describe(testName, function () {
 
-    var historicalItem1 = channelResource + '/' + '2014/06/01/12/00/00/000';
-    var historicalItem2 = channelResource + '/' + '2014/06/01/12/01/00/000';
-
     var mutableTime = moment.utc().subtract(1, 'minute');
+
+    var historicalItem1 = channelResource + '/' + '2016/11/20/12/00/00/000';
+    var historicalItem2 = channelResource + '/' + '2016/11/20/12/01/00/000';
 
     var channelBody = {
         mutableTime: mutableTime.format('YYYY-MM-DDTHH:mm:ss.SSS'),
@@ -29,50 +29,78 @@ describe(testName, function () {
 
     utils.addItem(historicalItem1, 201);
 
-    var posted;
+    var historicalLatest;
 
     it('posts item', function (done) {
         utils.postItemQ(historicalItem2)
             .then(function (value) {
-                posted = value.response.headers.location;
+                historicalLatest = value.response.headers.location;
                 done();
             });
     });
 
-    /*    it("gets latest Immutable in channel ", function (done) {
-     request.get({url: channelResource + '/latest?trace=true', followRedirect: false},
+    it("gets latest Immutable in channel ", function (done) {
+        request.get({url: channelResource + '/latest?trace=true', followRedirect: false},
             function (err, response, body) {
                 expect(err).toBeNull();
-     expect(response.statusCode).toBe(404);
-     done();
-     });
-     });*/
+                expect(response.statusCode).toBe(404);
+                done();
+            });
+    });
 
     it("gets latest Mutable in channel ", function (done) {
         request.get({url: channelResource + '/latest?trace=true&epoch=MUTABLE', followRedirect: false},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(303);
-                expect(response.headers.location).toBe(posted);
+                expect(response.headers.location).toBe(historicalLatest);
                 done();
             });
     });
 
-    //todo gfm - also add a new item, check latest varieties
+    var latest;
+
+    it('posts item', function (done) {
+        utils.postItemQ(channelResource)
+            .then(function (value) {
+                latest = value.response.headers.location;
+                done();
+            });
+    });
+
+    it("gets latest Immutable in channel ", function (done) {
+        request.get({url: channelResource + '/latest?trace=true&stable=false', followRedirect: false},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(303);
+                expect(response.headers.location).toBe(latest);
+                done();
+            });
+    });
+
+    it("gets latest Mutable in channel ", function (done) {
+        request.get({url: channelResource + '/latest?trace=true&epoch=MUTABLE', followRedirect: false},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(303);
+                expect(response.headers.location).toBe(historicalLatest);
+                done();
+            });
+    });
 
     //todo gfm - test latest N which could go back to 1970...
 
     /*it("gets latest N stable in channel ", function (done) {
-        request.get({url: channelResource + '/latest/10?trace=true', followRedirect: false},
-            function (err, response, body) {
-                expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
-                var parsed = utils.parseJson(response, testName);
-                if (parsed._links) {
-                    expect(parsed._links.uris.length).toBe(2);
-                    expect(parsed._links.uris[1]).toBe(posted);
-                }
-                done();
-            });
+     request.get({url: channelResource + '/latest/10?trace=true', followRedirect: false},
+     function (err, response, body) {
+     expect(err).toBeNull();
+     expect(response.statusCode).toBe(200);
+     var parsed = utils.parseJson(response, testName);
+     if (parsed._links) {
+     expect(parsed._links.uris.length).toBe(2);
+     expect(parsed._links.uris[1]).toBe(posted);
+     }
+     done();
+     });
      });*/
 });

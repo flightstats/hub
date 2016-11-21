@@ -36,4 +36,11 @@ public interface ContentService {
     default void notify(ChannelConfig newConfig, ChannelConfig oldConfig) {
         //do nothing
     }
+
+    static Optional<ContentKey> chooseLatest(Collection<ContentKey> contentKeys, DirectionQuery query) {
+        if (contentKeys.isEmpty()) {
+            return Optional.absent();
+        }
+        return Optional.of(contentKeys.iterator().next());
+    }
 }
