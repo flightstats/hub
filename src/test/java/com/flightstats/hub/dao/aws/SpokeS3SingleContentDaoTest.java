@@ -44,9 +44,11 @@ public class SpokeS3SingleContentDaoTest {
                 .withData(bytes)
                 .build();
         firstContent.setData(ContentMarshaller.toBytes(firstContent));
+
         ContentKey key = spokeContentDao.insert(channel, firstContent);
         Content spokeContent = spokeContentDao.get(channel, key);
         logger.info("spoke {}", spokeContent);
+        spokeContent.setData(ContentMarshaller.toBytes(spokeContent));
         ContentKey s3Key = s3SingleContentDao.insert(channel, spokeContent);
         assertEquals(key, s3Key);
         Content s3Content = s3SingleContentDao.get(channel, key);
@@ -67,6 +69,7 @@ public class SpokeS3SingleContentDaoTest {
         Content firstContent = items.get(0);
         ContentKey firstKey = firstContent.getContentKey().get();
         Content spokeContent = spokeContentDao.get(channel, firstKey);
+        spokeContent.setData(ContentMarshaller.toBytes(spokeContent));
         ContentKey s3Key = s3SingleContentDao.insert(channel, spokeContent);
         assertEquals(firstKey, s3Key);
         Content s3Content = s3SingleContentDao.get(channel, firstKey);
