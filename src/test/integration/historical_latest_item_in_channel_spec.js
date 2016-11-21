@@ -39,23 +39,28 @@ describe(testName, function () {
             });
     });
 
-    it("gets latest Immutable in channel ", function (done) {
-        request.get({url: channelResource + '/latest?trace=true', followRedirect: false},
+    function checkLatest(query, status, expected, done) {
+        request.get({url: channelResource + query + '&trace=true', followRedirect: false},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(404);
+                expect(response.statusCode).toBe(status);
+                if (expected) {
+                    expect(response.headers.location).toBe(expected);
+                }
                 done();
             });
+    }
+
+    it("gets latest in default Epoch in channel ", function (done) {
+        checkLatest('/latest?trace=true', 404, false, done);
+    });
+
+    it("gets latest Immutable in channel ", function (done) {
+        checkLatest('/latest?epoch=IMMUTABLE', 404, false, done);
     });
 
     it("gets latest Mutable in channel ", function (done) {
-        request.get({url: channelResource + '/latest?trace=true&epoch=MUTABLE', followRedirect: false},
-            function (err, response, body) {
-                expect(err).toBeNull();
-                expect(response.statusCode).toBe(303);
-                expect(response.headers.location).toBe(historicalLatest);
-                done();
-            });
+        checkLatest('/latest?epoch=MUTABLE', 303, historicalLatest, done);
     });
 
     var latest;
@@ -68,24 +73,12 @@ describe(testName, function () {
             });
     });
 
-    it("gets latest Immutable in channel ", function (done) {
-        request.get({url: channelResource + '/latest?trace=true&stable=false', followRedirect: false},
-            function (err, response, body) {
-                expect(err).toBeNull();
-                expect(response.statusCode).toBe(303);
-                expect(response.headers.location).toBe(latest);
-                done();
-            });
+    it("gets latest in Immutable in channel ", function (done) {
+        checkLatest('/latest?stable=false', 303, latest, done);
     });
 
     it("gets latest Mutable in channel ", function (done) {
-        request.get({url: channelResource + '/latest?trace=true&epoch=MUTABLE', followRedirect: false},
-            function (err, response, body) {
-                expect(err).toBeNull();
-                expect(response.statusCode).toBe(303);
-                expect(response.headers.location).toBe(historicalLatest);
-                done();
-            });
+        checkLatest('/latest?epoch=MUTABLE', 303, historicalLatest, done);
     });
 
     //todo gfm - test latest N which could go back to 1970...
