@@ -4,7 +4,6 @@ import com.flightstats.hub.app.HubBindings;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.cluster.CuratorCluster;
 import com.flightstats.hub.dao.ContentDaoUtil;
-import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.Sleeper;
@@ -41,7 +40,6 @@ public class SpokeContentDaoTest {
     @Test
     public void testWriteRead() throws Exception {
         Content content = ContentDaoUtil.createContent();
-        content.setData(ContentMarshaller.toBytes(content));
         util.testWriteRead(content);
     }
 
