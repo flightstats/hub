@@ -24,7 +24,6 @@ describe(testName, function () {
 
     utils.putChannel(channel, false, channelBody, testName);
 
-    var historicalLatest;
     var items = [];
 
     it('posts two historical items', function (done) {
@@ -33,10 +32,9 @@ describe(testName, function () {
         utils.postItemQ(historicalItem1)
             .then(function (value) {
                 items.push(value.response.headers.location);
-                return utils.postItemQ(historicalItem1);
+                return utils.postItemQ(historicalItem2);
             })
             .then(function (value) {
-                historicalLatest = value.response.headers.location;
                 items.push(value.response.headers.location);
                 done();
             });
@@ -51,7 +49,7 @@ describe(testName, function () {
     });
 
     it("gets latest Mutable in channel ", function (done) {
-        utils.getLocation(channelResource + '/latest?epoch=MUTABLE', 303, items[0], done);
+        utils.getLocation(channelResource + '/latest?epoch=MUTABLE', 303, items[1], done);
     });
 
     var latest;
@@ -65,12 +63,12 @@ describe(testName, function () {
             });
     });
 
-    it("gets latest in Immutable in channel ", function (done) {
+    it("gets latest in Immutable in channel - after now item", function (done) {
         utils.getLocation(channelResource + '/latest?stable=false', 303, latest, done);
     });
 
-    it("gets latest Mutable in channel ", function (done) {
-        utils.getLocation(channelResource + '/latest?epoch=MUTABLE', 303, historicalLatest, done);
+    it("gets latest Mutable in channel - after now item ", function (done) {
+        utils.getLocation(channelResource + '/latest?epoch=MUTABLE&trace=true', 303, items[1], done);
     });
 
     it("gets latest N Mutable in channel ", function (done) {

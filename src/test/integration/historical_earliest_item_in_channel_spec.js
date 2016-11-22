@@ -33,7 +33,7 @@ describe(testName, function () {
         utils.postItemQ(historicalItem1)
             .then(function (value) {
                 items.push(value.response.headers.location);
-                return utils.postItemQ(historicalItem1);
+                return utils.postItemQ(historicalItem2);
             })
             .then(function (value) {
                 items.push(value.response.headers.location);
@@ -49,7 +49,7 @@ describe(testName, function () {
         utils.getLocation(channelResource + '/earliest?epoch=IMMUTABLE', 404, false, done);
     });
 
-    it("gets earliest Mutable in channel ", function (done) {
+    it("gets earliest Mutable in channel", function (done) {
         utils.getLocation(channelResource + '/earliest?epoch=MUTABLE', 303, items[0], done);
     });
 
@@ -61,11 +61,11 @@ describe(testName, function () {
             });
     });
 
-    it("gets earliest Immutable in channel ", function (done) {
+    it("gets earliest Immutable in channel - after now item", function (done) {
         utils.getLocation(channelResource + '/earliest?stable=false&trace=true', 303, items[2], done);
     });
 
-    it("gets earliest Mutable in channel ", function (done) {
+    it("gets earliest Mutable in channel - after now item", function (done) {
         utils.getLocation(channelResource + '/earliest?epoch=MUTABLE', 303, items[0], done);
     });
 

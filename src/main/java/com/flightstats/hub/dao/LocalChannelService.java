@@ -294,9 +294,7 @@ public class LocalChannelService implements ChannelService {
             query = query.withStartKey(new ContentKey(ttlTime, "0"));
         }
         if (query.getEpoch().equals(Epoch.MUTABLE)) {
-            if (query.isNext()) {
-                //todo gfm - get oldest mutable
-            } else {
+            if (!query.isNext()) {
                 DateTime mutableTime = channelConfig.getMutableTime();
                 if (query.getStartKey().getTime().isAfter(mutableTime)) {
                     query = query.withStartKey(ContentKey.lastKey(mutableTime));
