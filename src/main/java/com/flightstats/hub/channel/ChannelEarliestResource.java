@@ -3,9 +3,7 @@ package com.flightstats.hub.channel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.model.ChannelConfig;
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,11 +35,13 @@ public class ChannelEarliestResource {
     public Response getEarliest(@PathParam("channel") String channel,
                                 @QueryParam("stable") @DefaultValue("true") boolean stable,
                                 @QueryParam("trace") @DefaultValue("false") boolean trace,
+                                @QueryParam("location") @DefaultValue(Location.DEFAULT) String location,
+                                @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
                                 @QueryParam("tag") String tag) {
         if (tag != null) {
             return tagEarliestResource.getEarliest(tag, stable, trace, uriInfo);
         }
-        DirectionQuery query = getDirectionQuery(channel, 1, stable, channelService);
+        DirectionQuery query = getDirectionQuery(channel, 1, stable, location, epoch);
         Collection<ContentKey> keys = channelService.query(query);
         if (keys.isEmpty()) {
             return Response.status(NOT_FOUND).build();
@@ -62,12 +62,14 @@ public class ChannelEarliestResource {
                                      @QueryParam("trace") @DefaultValue("false") boolean trace,
                                      @QueryParam("batch") @DefaultValue("false") boolean batch,
                                      @QueryParam("bulk") @DefaultValue("false") boolean bulk,
+                                     @QueryParam("location") @DefaultValue(Location.DEFAULT) String location,
+                                     @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
                                      @QueryParam("tag") String tag,
                                      @HeaderParam("Accept") String accept) {
         if (tag != null) {
             return tagEarliestResource.getEarliestCount(tag, count, stable, bulk, batch, trace, accept, uriInfo);
         }
-        DirectionQuery query = getDirectionQuery(channel, count, stable, channelService);
+        DirectionQuery query = getDirectionQuery(channel, count, stable, location, epoch);
         SortedSet<ContentKey> keys = channelService.query(query);
         if (bulk || batch) {
             return BulkBuilder.build(keys, channel, channelService, uriInfo, accept);
@@ -76,17 +78,21 @@ public class ChannelEarliestResource {
         }
     }
 
-    public static DirectionQuery getDirectionQuery(String channel, int count, boolean stable, ChannelService channelService) {
-        ChannelConfig channelConfig = channelService.getCachedChannelConfig(channel);
-        //todo gfm - this will need to change for historical epochs
-        ContentKey limitKey = new ContentKey(channelConfig.getTtlTime(), "0");
+    public static DirectionQuery getDirectionQuery(String channel, int count, boolean stable) {
+        return getDirectionQuery(channel, count, stable, Location.DEFAULT, Epoch.DEFAULT);
+    }
 
+    public static DirectionQuery getDirectionQuery(String channel, int count, boolean stable, String location, String epoch) {
+        ChannelConfig channelConfig = channelService.getCachedChannelConfig(channel);
+        ContentKey startKey = new ContentKey(channelConfig.getTtlTime(), "0");
         return DirectionQuery.builder()
                 .channelName(channel)
-                .startKey(limitKey)
                 .next(true)
                 .stable(stable)
+                .startKey(startKey)
                 .count(count)
+                .location(Location.valueOf(location))
+                .epoch(Epoch.valueOf(epoch))
                 .build();
     }
 

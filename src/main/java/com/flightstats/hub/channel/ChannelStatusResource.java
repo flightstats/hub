@@ -46,7 +46,7 @@ public class ChannelStatusResource {
 
         addLink("latest", channelService.getLatest(channel, stable, trace), channel, links);
 
-        DirectionQuery directionQuery = ChannelEarliestResource.getDirectionQuery(channel, 1, stable, channelService);
+        DirectionQuery directionQuery = ChannelEarliestResource.getDirectionQuery(channel, 1, stable);
         SortedSet<ContentKey> earliest = channelService.query(directionQuery);
         if (earliest.isEmpty()) {
             addLink("earliest", Optional.absent(), channel, links);

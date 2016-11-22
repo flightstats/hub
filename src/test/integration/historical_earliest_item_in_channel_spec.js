@@ -9,9 +9,10 @@ var moment = require('moment');
 
 /**
  * create a channel
- * post 2 items
- * gets the item back out with latest
- * get both items back out with latest/10
+ * post 2 historical items
+ * gets the item back out with earliest
+ * post a current item
+ * get items back out with earliest/10
  */
 describe(testName, function () {
 
@@ -24,7 +25,6 @@ describe(testName, function () {
 
     utils.putChannel(channel, false, channelBody, testName);
 
-    var historicalLatest;
     var items = [];
 
     it('posts two historical items', function (done) {
@@ -36,48 +36,44 @@ describe(testName, function () {
                 return utils.postItemQ(historicalItem1);
             })
             .then(function (value) {
-                historicalLatest = value.response.headers.location;
                 items.push(value.response.headers.location);
                 done();
             });
     });
 
-    it("gets latest in default Epoch in channel ", function (done) {
-        utils.getLocation(channelResource + '/latest?trace=true', 404, false, done);
+    it("gets earliest in default Epoch in channel ", function (done) {
+        utils.getLocation(channelResource + '/earliest?trace=true', 404, false, done);
     });
 
-    it("gets latest Immutable in channel ", function (done) {
-        utils.getLocation(channelResource + '/latest?epoch=IMMUTABLE', 404, false, done);
+    it("gets earliest Immutable in channel missing ", function (done) {
+        utils.getLocation(channelResource + '/earliest?epoch=IMMUTABLE', 404, false, done);
     });
 
-    it("gets latest Mutable in channel ", function (done) {
-        utils.getLocation(channelResource + '/latest?epoch=MUTABLE', 303, items[0], done);
+    it("gets earliest Mutable in channel ", function (done) {
+        utils.getLocation(channelResource + '/earliest?epoch=MUTABLE', 303, items[0], done);
     });
-
-    var latest;
 
     it('posts item now', function (done) {
         utils.postItemQ(channelResource)
             .then(function (value) {
-                latest = value.response.headers.location;
                 items.push(value.response.headers.location);
                 done();
             });
     });
 
-    it("gets latest in Immutable in channel ", function (done) {
-        utils.getLocation(channelResource + '/latest?stable=false', 303, latest, done);
+    it("gets earliest Immutable in channel ", function (done) {
+        utils.getLocation(channelResource + '/earliest?stable=false&trace=true', 303, items[2], done);
     });
 
-    it("gets latest Mutable in channel ", function (done) {
-        utils.getLocation(channelResource + '/latest?epoch=MUTABLE', 303, historicalLatest, done);
+    it("gets earliest Mutable in channel ", function (done) {
+        utils.getLocation(channelResource + '/earliest?epoch=MUTABLE', 303, items[0], done);
     });
 
-    it("gets latest N Mutable in channel ", function (done) {
-        utils.getQuery(channelResource + '/latest/10?epoch=MUTABLE', 200, items.slice(0, 2), done);
+    it("gets earliest N Mutable in channel ", function (done) {
+        utils.getQuery(channelResource + '/earliest/10?epoch=MUTABLE', 200, items.slice(0, 2), done);
     });
 
-    it("gets latest N ALL in channel ", function (done) {
-        utils.getQuery(channelResource + '/latest/10?stable=false&epoch=ALL', 200, items, done);
+    it("gets earliest N ALL in channel ", function (done) {
+        utils.getQuery(channelResource + '/earliest/10?stable=false&epoch=ALL', 200, items, done);
     });
 });
