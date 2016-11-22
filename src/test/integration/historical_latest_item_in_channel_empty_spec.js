@@ -23,19 +23,22 @@ describe(testName, function () {
     utils.putChannel(channel, false, channelBody, testName);
 
     it("gets latest stable in channel ", function (done) {
-        request.get({url: channelResource + '/latest', followRedirect: false},
-            function (err, response, body) {
-                expect(response.statusCode).toBe(404);
-                done();
-            });
+        utils.getLocation(channelResource + '/latest', 404, false, done);
     });
 
-    it("gets latest N in channel ", function (done) {
-        request.get({url: channelResource + '/latest/10?trace=true', followRedirect: false},
-            function (err, response, body) {
-                expect(err).toBeNull();
-                expect(response.statusCode).toBe(404);
-                done();
-            });
+    it("gets latest stable Mutable in channel ", function (done) {
+        utils.getLocation(channelResource + '/latest?epoch=MUTABLE', 404, false, done);
+    });
+
+    it("gets earliest 10 in default Epoch in channel ", function (done) {
+        utils.getQuery(channelResource + '/latest/10?trace=true', 200, [], done);
+    });
+
+    it("gets earliest 10 Immutable in channel ", function (done) {
+        utils.getQuery(channelResource + '/latest/10?epoch=IMMUTABLE', 200, [], done);
+    });
+
+    it("gets earliest 10 Mutable in channel ", function (done) {
+        utils.getQuery(channelResource + '/latest/10?epoch=MUTABLE', 200, [], done);
     });
 });

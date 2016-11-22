@@ -72,7 +72,7 @@ public class ChannelEarliestResource {
         if (bulk || batch) {
             return BulkBuilder.build(keys, channel, channelService, uriInfo, accept);
         } else {
-            return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, false, trace);
+            return LinkBuilder.directionalResponse(keys, count, query, mapper, uriInfo, false, trace);
         }
     }
 

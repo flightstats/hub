@@ -7,6 +7,7 @@ import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.model.Epoch;
 import com.flightstats.hub.model.Location;
+import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 
 import javax.ws.rs.*;
@@ -81,13 +82,14 @@ public class ChannelLatestResource {
                 .channelName(channel)
                 .next(false)
                 .stable(stable)
+                .startKey(new ContentKey(TimeUtil.time(stable), "0"))
                 .location(Location.valueOf(location))
                 .epoch(Epoch.valueOf(epoch))
                 .count(1)
                 .build();
         Optional<ContentKey> latest = channelService.getLatest(latestQuery);
         if (!latest.isPresent()) {
-            return Response.status(NOT_FOUND).build();
+            return getResponse(channel, count, trace, batch, bulk, accept, latestQuery, new TreeSet<>());
         }
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
@@ -100,12 +102,16 @@ public class ChannelLatestResource {
                 .build();
         SortedSet<ContentKey> keys = new TreeSet<>(channelService.query(query));
         keys.add(latest.get());
+        return getResponse(channel, count, trace, batch, bulk, accept, query, keys);
+    }
+
+    private Response getResponse(String channel, int count, boolean trace, boolean batch, boolean bulk,
+                                 String accept, DirectionQuery query, SortedSet<ContentKey> keys) {
         if (bulk || batch) {
             return BulkBuilder.build(keys, channel, channelService, uriInfo, accept);
         } else {
-            return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, true, trace);
+            return LinkBuilder.directionalResponse(keys, count, query, mapper, uriInfo, true, trace);
         }
-
     }
 
 }

@@ -63,7 +63,7 @@ function createChannel(channelName, url, description) {
 
 }
 
-function putChannel(channelName, verify, body, description, expectedStatus) {
+exports.putChannel = function putChannel(channelName, verify, body, description, expectedStatus) {
     expectedStatus = expectedStatus || 201;
     verify = verify || function () {};
     body = body || {"name" : channelName};
@@ -375,13 +375,40 @@ function parseJson(response, description) {
     }
 }
 
+exports.getLocation = function getResponse(url, status, expectedLocation, done) {
+    request.get({url: url, followRedirect: false},
+        function (err, response, body) {
+            expect(err).toBeNull();
+            expect(response.statusCode).toBe(status);
+            if (expectedLocation) {
+                expect(response.headers.location).toBe(expectedLocation);
+            }
+            done();
+        });
+}
+
+exports.getQuery = function getResponse(url, status, expectedUris, done) {
+    request.get({url: url, followRedirect: true},
+        function (err, response, body) {
+            expect(err).toBeNull();
+            expect(response.statusCode).toBe(status);
+            if (expectedUris) {
+                var parsed = parseJson(response);
+                expect(parsed._links.uris.length).toBe(expectedUris.length);
+                for (var i = 0; i < expectedUris.length; i++) {
+                    expect(parsed._links.uris[i]).toBe(expectedUris[i]);
+                }
+            }
+            done();
+        });
+}
+
 exports.runInTestChannel = runInTestChannel;
 exports.download = download;
 exports.randomChannelName = randomChannelName;
 exports.configureFrisby = configureFrisby;
 exports.runInTestChannelJson = runInTestChannelJson;
 exports.createChannel = createChannel;
-exports.putChannel = putChannel;
 exports.getChannel = getChannel;
 exports.addItem = addItem;
 exports.sleep = sleep;

@@ -111,9 +111,10 @@ public class LinkBuilder {
                 .build();
     }
 
-    static Response directionalResponse(String channel, Collection<ContentKey> keys, int count,
+    static Response directionalResponse(Collection<ContentKey> keys, int count,
                                         DirectionQuery query, ObjectMapper mapper, UriInfo uriInfo,
                                         boolean includePrevious, boolean trace) {
+        String channel = query.getChannelName();
         ObjectNode root = mapper.createObjectNode();
         ObjectNode links = root.putObject("_links");
         ObjectNode self = links.putObject("self");
