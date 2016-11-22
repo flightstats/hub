@@ -35,15 +35,15 @@ describe(testName, function () {
     });
 
     it("gets earliest 10 in default Epoch in channel ", function (done) {
-        utils.getQuery(channelResource + '/earliest/10?trace=true', 200, [], done);
+        utils.getLocation(channelResource + '/earliest/10?trace=true', 404, false, done);
     });
 
     it("gets earliest 10 Immutable in channel ", function (done) {
-        utils.getQuery(channelResource + '/earliest/10?epoch=IMMUTABLE', 200, [], done);
+        utils.getLocation(channelResource + '/earliest/10?epoch=IMMUTABLE', 404, false, done);
     });
 
     it("gets earliest 10 Mutable in channel ", function (done) {
-        utils.getQuery(channelResource + '/earliest/10?epoch=MUTABLE', 200, [], done);
+        utils.getLocation(channelResource + '/earliest/10?epoch=MUTABLE', 404, false, done);
     });
 
 });

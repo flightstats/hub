@@ -45,7 +45,6 @@ public class ChannelEarliestResource {
         Collection<ContentKey> keys = channelService.query(query);
         if (keys.isEmpty()) {
             return Response.status(NOT_FOUND).build();
-
         } else {
             return Response.status(SEE_OTHER)
                     .location(URI.create(uriInfo.getBaseUri() + "channel/" + channel + "/" + keys.iterator().next().toUrl()))
@@ -71,6 +70,9 @@ public class ChannelEarliestResource {
         }
         DirectionQuery query = getDirectionQuery(channel, count, stable, location, epoch);
         SortedSet<ContentKey> keys = channelService.query(query);
+        if (keys.isEmpty()) {
+            return Response.status(NOT_FOUND).build();
+        }
         if (bulk || batch) {
             return BulkBuilder.build(keys, channel, channelService, uriInfo, accept);
         } else {
@@ -82,7 +84,7 @@ public class ChannelEarliestResource {
         return getDirectionQuery(channel, count, stable, Location.DEFAULT, Epoch.DEFAULT);
     }
 
-    public static DirectionQuery getDirectionQuery(String channel, int count, boolean stable, String location, String epoch) {
+    static DirectionQuery getDirectionQuery(String channel, int count, boolean stable, String location, String epoch) {
         ChannelConfig channelConfig = channelService.getCachedChannelConfig(channel);
         ContentKey startKey = new ContentKey(channelConfig.getTtlTime(), "0");
         return DirectionQuery.builder()

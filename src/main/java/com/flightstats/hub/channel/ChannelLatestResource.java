@@ -89,7 +89,7 @@ public class ChannelLatestResource {
                 .build();
         Optional<ContentKey> latest = channelService.getLatest(latestQuery);
         if (!latest.isPresent()) {
-            return getResponse(channel, count, trace, batch, bulk, accept, latestQuery, new TreeSet<>());
+            return Response.status(NOT_FOUND).build();
         }
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)

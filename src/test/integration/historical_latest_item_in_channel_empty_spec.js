@@ -30,15 +30,15 @@ describe(testName, function () {
         utils.getLocation(channelResource + '/latest?epoch=MUTABLE', 404, false, done);
     });
 
-    it("gets earliest 10 in default Epoch in channel ", function (done) {
-        utils.getQuery(channelResource + '/latest/10?trace=true', 200, [], done);
+    it("gets latest 10 in default Epoch in channel ", function (done) {
+        utils.getLocation(channelResource + '/latest/10?trace=true', 404, false, done);
     });
 
-    it("gets earliest 10 Immutable in channel ", function (done) {
-        utils.getQuery(channelResource + '/latest/10?epoch=IMMUTABLE', 200, [], done);
+    it("gets latest 10 Immutable in channel ", function (done) {
+        utils.getLocation(channelResource + '/latest/10?epoch=IMMUTABLE', 404, false, done);
     });
 
-    it("gets earliest 10 Mutable in channel ", function (done) {
-        utils.getQuery(channelResource + '/latest/10?epoch=MUTABLE', 200, [], done);
+    it("gets latest 10 Mutable in channel ", function (done) {
+        utils.getLocation(channelResource + '/latest/10?epoch=MUTABLE', 404, false, done);
     });
 });
