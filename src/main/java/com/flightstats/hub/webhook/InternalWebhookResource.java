@@ -76,6 +76,7 @@ public class InternalWebhookResource {
     @GET
     @Path("/configs")
     @Produces(MediaType.APPLICATION_JSON)
+    // provides all webhook configs for external webhook processor
     public Response configs(){
         ObjectNode root = mapper.createObjectNode();
         ArrayNode arrayNode = root.putArray("webhooks");
