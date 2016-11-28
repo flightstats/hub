@@ -3,6 +3,7 @@ package com.flightstats.hub.dao.aws;
 
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDao;
+import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.exception.FailedReadException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.ChannelContentKey;
@@ -77,6 +78,7 @@ public class S3WriteQueue {
                 if (content.getData() == null) {
                     throw new FailedReadException("unable to read " + key.toString());
                 }
+                content.setData(ContentMarshaller.toBytes(content));
                 s3SingleContentDao.insert(key.getChannel(), content);
             } finally {
                 ActiveTraces.end();
