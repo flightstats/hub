@@ -70,4 +70,14 @@ time -----------|-------------------->
        - + + -                       *
 ```
 
+## singleHub v clustered hub
+
+Historical inserts are supported in both singleHub and the clustered hub.
+
+The clustered hub writes real-time items to Spoke, then writes them asynchronously into S3.
+Historical items are handled differently, in that they are written directly into S3, bypassing Spoke.
+This should prevent large historical data volumes from impacting Spoke's performance.
+
+The singleHub only writes all items to the file system, and historical items are no different than real-time items.
+
 {% include links.html %}
