@@ -11,15 +11,12 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.core.*;
 import java.net.URI;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
 import static com.flightstats.hub.util.StaleUtil.addStaleEntities;
@@ -73,6 +70,28 @@ public class InternalWebhookResource {
             });
             return staleWebhooks;
         });
+        return Response.ok(root).build();
+    }
+
+    @GET
+    @Path("/configs")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response configs(){
+        ObjectNode root = mapper.createObjectNode();
+        ArrayNode arrayNode = root.putArray("webhooks");
+        Collection<Webhook> webhooks = new TreeSet<>(webhookService.getAll());
+        for (Webhook webhook : webhooks) {
+            ObjectNode objectNode = arrayNode.addObject();
+            objectNode.put("name", webhook.getName());
+            objectNode.put("callbackUrl", webhook.getCallbackUrl());
+            objectNode.put("channelUrl", webhook.getChannelUrl());
+            objectNode.put("parallelCalls", webhook.getParallelCalls());
+            objectNode.put("paused", webhook.isPaused());
+            objectNode.put("batch", webhook.getBatch());
+            objectNode.put("heartbeat", webhook.isHeartbeat());
+            objectNode.put("ttlMinutes", webhook.getTtlMinutes());
+            objectNode.put("maxWaitMinutes", webhook.getMaxWaitMinutes());
+        }
         return Response.ok(root).build();
     }
 
