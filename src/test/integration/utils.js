@@ -194,7 +194,7 @@ function getGroup(groupName, groupConfig, status, verify) {
                 }
             }
         };
-    itSleeps(500);
+    utils.itSleeps(500);
     it('gets group ' + groupName, function (done) {
         request.get({url : groupResource,
                 headers : {"Content-Type" : "application/json"} },
@@ -251,7 +251,7 @@ function getQ(url, status, stable) {
 
 exports.itSleeps = function itSleeps(millis) {
     it('sleeps', function () {
-        sleep(millis);
+        utils.sleep(millis);
     })
 }
 
