@@ -225,12 +225,10 @@ class HubTasks:
                                         , exception=-1)
 
     def latest(self):
-        latest_ = self.channel + '/latest'
-        logger.info("calling latest " + latest_)
-        self.client.get(latest_, name="latest")
+        self.client.get('/channel/' + self.channel + '/latest', name="latest")
 
     def earliest(self):
-        self.client.get(self.channel + '/earliest', name="earliest")
+        self.client.get('/channel/' + self.channel + '/earliest', name="earliest")
 
     def hour_query(self):
         self.client.get(self.time_path("hour"), name="time_hour")
