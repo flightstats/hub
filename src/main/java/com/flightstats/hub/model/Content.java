@@ -1,5 +1,6 @@
 package com.flightstats.hub.model;
 
+import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
@@ -10,10 +11,7 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
-import java.io.EOFException;
-import java.io.InputStream;
-import java.io.Serializable;
+import java.io.*;
 
 @Getter
 @EqualsAndHashCode(of = {"contentType"})
@@ -24,7 +22,6 @@ public class Content implements Serializable {
 
     private final Optional<String> contentType;
     private InputStream stream;
-    @Setter
     private byte[] data;
     private Optional<ContentKey> contentKey = Optional.absent();
     @Setter
@@ -66,8 +63,14 @@ public class Content implements Serializable {
         return stream;
     }
 
+    public void packageStream() throws IOException {
+        data = ContentMarshaller.toBytes(this);
+        stream = null;
+    }
+
     public byte[] getData() {
         if (data == null && stream != null) {
+            //todo gfm - can this go away?
             try {
                 data = ByteStreams.toByteArray(stream);
                 stream = null;

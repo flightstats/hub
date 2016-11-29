@@ -29,7 +29,7 @@ public class ContentDaoUtil {
 
     public void testWriteRead(Content content) throws Exception {
         String channel = "testWriteRead";
-        content.setData(ContentMarshaller.toBytes(content));
+        content.packageStream();
         ContentKey key = contentDao.insert(channel, content);
         assertEquals(content.getContentKey().get(), key);
         Content read = contentDao.get(channel, key);
@@ -44,7 +44,7 @@ public class ContentDaoUtil {
                 .withContentKey(contentKey)
                 .withStream(new ByteArrayInputStream(data.getBytes()))
                 .build();
-        content.setData(ContentMarshaller.toBytes(content));
+        content.packageStream();
         ContentKey historical = contentDao.insertHistorical(channel, content);
         assertEquals(contentKey, historical);
         Content found = contentDao.get(channel, contentKey);

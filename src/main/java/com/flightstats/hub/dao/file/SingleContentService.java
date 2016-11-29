@@ -50,7 +50,7 @@ public class SingleContentService implements ContentService {
         logger.info("inserting {}", bulkContent);
         for (Content content : bulkContent.getItems()) {
             logger.info("inserting item key {}", content.getContentKey().get());
-            content.setData(ContentMarshaller.toBytes(content));
+            content.packageStream();
             keys.add(insert(bulkContent.getChannel(), content));
         }
         return keys;

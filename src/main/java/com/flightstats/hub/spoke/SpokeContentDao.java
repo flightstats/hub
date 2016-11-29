@@ -3,7 +3,6 @@ package com.flightstats.hub.spoke;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentKeyUtil;
-import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.dao.QueryResult;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.exception.FailedQueryException;
@@ -58,12 +57,12 @@ public class SpokeContentDao implements ContentDao {
             stream.writeInt(items.size());
             logger.debug("writing {} items to master {}", items.size(), bulkContent.getMasterKey());
             for (Content content : items) {
-                byte[] payload = ContentMarshaller.toBytes(content);
+                content.packageStream();
                 String itemKey = content.getContentKey().get().toUrl();
                 stream.writeInt(itemKey.length());
                 stream.write(itemKey.getBytes());
-                stream.writeInt(payload.length);
-                stream.write(payload);
+                stream.writeInt(content.getData().length);
+                stream.write(content.getData());
                 keys.add(content.getContentKey().get());
             }
             stream.flush();

@@ -28,7 +28,7 @@ public class ContentOutput implements Closeable {
         channelUri = UriBuilder.fromUri(baseUri).path("channel/" + channel).build();
     }
 
-    public void writeHeartbeat() throws IOException {
+    void writeHeartbeat() throws IOException {
         eventOutput.write(new OutboundEvent.Builder().comment("").build());
     }
 
