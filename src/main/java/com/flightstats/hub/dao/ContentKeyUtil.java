@@ -37,7 +37,7 @@ public class ContentKeyUtil {
             stream = stream.filter(key -> !key.getTime().isAfter(channelConfig.getMutableTime()));
         }
         if (query.isStable()) {
-            stream = stream.filter(key -> key.getTime().isBefore(TimeUtil.stable()));
+            stream = stream.filter(key -> !key.getTime().isAfter(TimeUtil.stable()));
         }
         return stream;
     }
