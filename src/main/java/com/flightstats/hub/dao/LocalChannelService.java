@@ -29,7 +29,7 @@ import java.util.stream.Stream;
 @Singleton
 public class LocalChannelService implements ChannelService {
     public static final String REPLICATED_LAST_UPDATED = "/ReplicatedLastUpdated/";
-    public static final String HISTORICAL_EARLIEST = "/HistoricalEarliest/";
+    private static final String HISTORICAL_EARLIEST = "/HistoricalEarliest/";
 
     private final static Logger logger = LoggerFactory.getLogger(LocalChannelService.class);
     private final static StatsDClient statsd = DataDog.statsd;
@@ -174,9 +174,10 @@ public class LocalChannelService implements ChannelService {
         if (!channelExists(channel)) {
             return Optional.absent();
         }
-        query = query.withStartKey(ContentKey.lastKey(TimeUtil.now().plusMinutes(1)));
+        query = query.withStartKey(ContentKey.lastKey(TimeUtil.time(query.isStable())));
         query = configureQuery(query);
         Optional<ContentKey> latest = contentService.getLatest(query);
+        ActiveTraces.getLocal().add("before filter", channel, latest);
         if (latest.isPresent()) {
             SortedSet<ContentKey> filtered = ContentKeyUtil.filter(latest.asSet(), query);
             if (filtered.isEmpty()) {

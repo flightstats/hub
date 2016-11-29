@@ -249,14 +249,15 @@ function getQ(url, status, stable) {
     return deferred.promise;
 }
 
-function itSleeps(millis) {
+exports.itSleeps = function itSleeps(millis) {
     it('sleeps', function () {
         sleep(millis);
     })
 }
 
-function sleep(millis) {
+exports.sleep = function sleep(millis) {
     runs(function() {
+        console.log('sleeping for ' + millis);
         flag = false;
 
         setTimeout(function() {
@@ -269,7 +270,7 @@ function sleep(millis) {
     }, millis + 1000);
 }
 
-function sleepQ(millis) {
+exports.sleepQ = function sleepQ(millis) {
     var deferred = Q.defer();
     setTimeout(function () {
         deferred.resolve('slept');
@@ -411,9 +412,6 @@ exports.runInTestChannelJson = runInTestChannelJson;
 exports.createChannel = createChannel;
 exports.getChannel = getChannel;
 exports.addItem = addItem;
-exports.sleep = sleep;
-exports.itSleeps = itSleeps;
-exports.sleepQ = sleepQ;
 exports.timeout = timeout;
 exports.getWebhookUrl = getGroupUrl;
 exports.putWebhook = putGroup;

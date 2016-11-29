@@ -62,4 +62,17 @@ describe(testName, function () {
                 done();
             });
     });
+
+    utils.sleep(5000);
+    utils.addItem(channelResource, 201);
+
+    it("gets latest stable in channel ", function (done) {
+        request.get({url: channelResource + '/latest?stable=true&trace=true', followRedirect: false},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(303);
+                expect(response.headers.location).toBe(posted);
+                done();
+            });
+    });
 });
