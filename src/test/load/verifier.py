@@ -49,7 +49,7 @@ class VerifierTasks(TaskSet):
     def earliest(self):
         self.hubTasks.earliest()
 
-    @task(10)
+    @task(100)
     def latest(self):
         self.hubTasks.latest()
 

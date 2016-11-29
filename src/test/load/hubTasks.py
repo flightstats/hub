@@ -225,7 +225,9 @@ class HubTasks:
                                         , exception=-1)
 
     def latest(self):
-        self.client.get(self.channel + '/latest', name="latest")
+        latest_ = self.channel + '/latest'
+        logger.info("calling latest " + latest_)
+        self.client.get(latest_, name="latest")
 
     def earliest(self):
         self.client.get(self.channel + '/earliest', name="earliest")
