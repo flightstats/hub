@@ -46,6 +46,14 @@ class VerifierTasks(TaskSet):
         self.hubTasks.sequential()
 
     @task(1)
+    def earliest(self):
+        self.hubTasks.earliest()
+
+    @task(10)
+    def latest(self):
+        self.hubTasks.latest()
+
+    @task(1)
     def hour_query(self):
         self.hubTasks.hour_query()
 

@@ -224,6 +224,12 @@ class HubTasks:
             events.request_failure.fire(request_type="sequential", name="compare", response_time=total_time
                                         , exception=-1)
 
+    def latest(self):
+        self.client.get(self.channel + '/latest', name="latest")
+
+    def earliest(self):
+        self.client.get(self.channel + '/earliest', name="earliest")
+
     def hour_query(self):
         self.client.get(self.time_path("hour"), name="time_hour")
 
