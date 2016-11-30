@@ -72,7 +72,7 @@ public class LocalChannelService implements ChannelService {
             }
         }
         if (newConfig.isHistorical()) {
-            if (oldConfig == null) {
+            if (oldConfig == null || !oldConfig.isHistorical()) {
                 ContentKey lastKey = ContentKey.lastKey(newConfig.getMutableTime());
                 lastContentPath.update(lastKey, newConfig.getName(), HISTORICAL_EARLIEST);
             }
