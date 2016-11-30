@@ -376,7 +376,7 @@ function parseJson(response, description) {
     }
 }
 
-exports.getLocation = function getResponse(url, status, expectedLocation, done) {
+exports.getLocation = function getLocation(url, status, expectedLocation, done) {
     request.get({url: url, followRedirect: false},
         function (err, response, body) {
             expect(err).toBeNull();
@@ -388,7 +388,7 @@ exports.getLocation = function getResponse(url, status, expectedLocation, done) 
         });
 }
 
-exports.getQuery = function getResponse(url, status, expectedUris, done) {
+exports.getQuery = function getQuery(url, status, expectedUris, done) {
     request.get({url: url, followRedirect: true},
         function (err, response, body) {
             expect(err).toBeNull();

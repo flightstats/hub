@@ -76,7 +76,6 @@ public class LocalChannelService implements ChannelService {
                 ContentKey lastKey = ContentKey.lastKey(newConfig.getMutableTime());
                 lastContentPath.update(lastKey, newConfig.getName(), HISTORICAL_EARLIEST);
             }
-            //todo gfm - handle case of changing a channel's mutableTime
         }
         contentService.notify(newConfig, oldConfig);
     }
@@ -126,7 +125,6 @@ public class LocalChannelService implements ChannelService {
             throw new InvalidRequestException(msg);
         }
         boolean insert = contentService.historicalInsert(channelName, content);
-        //todo gfm - when we add a mutableTime to a channel, set this to the mutableTime
         lastContentPath.updateDecrease(contentKey, channelName, HISTORICAL_EARLIEST);
         //todo gfm - send stats
         return insert;
