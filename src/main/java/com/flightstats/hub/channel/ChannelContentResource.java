@@ -484,4 +484,22 @@ public class ChannelContentResource {
         TimeLinkUtil.addQueryParams(uriInfo, builder);
         return Response.seeOther(builder.build()).build();
     }
+
+    @Path("/{h}/{m}/{s}/{ms}/{hash}")
+    @DELETE
+    public Response delete(@PathParam("channel") String channel,
+                           @PathParam("Y") int year,
+                           @PathParam("M") int month,
+                           @PathParam("D") int day,
+                           @PathParam("h") int hour,
+                           @PathParam("m") int minute,
+                           @PathParam("s") int second,
+                           @PathParam("ms") int millis,
+                           @PathParam("hash") String hash
+    ) {
+
+        ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
+        channelService.delete(channel, key);
+        return Response.noContent().build();
+    }
 }

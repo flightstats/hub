@@ -155,6 +155,11 @@ public class CommonContentService implements ContentService {
     }
 
     @Override
+    public void delete(String channelName, ContentKey contentKey) {
+        contentService.delete(channelName, contentKey);
+    }
+
+    @Override
     public Collection<ContentKey> queryDirection(DirectionQuery query) {
         return contentService.queryDirection(query);
     }

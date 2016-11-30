@@ -106,6 +106,13 @@ public class S3SingleContentDao implements ContentDao {
         }
     }
 
+    @Override
+    public void delete(String channelName, ContentKey key) {
+        String s3ContentKey = getS3ContentKey(channelName, key);
+        s3Client.deleteObject(s3BucketName, s3ContentKey);
+        ActiveTraces.getLocal().add("S3SingleContentDao.deleted", s3ContentKey);
+    }
+
     public Content get(final String channelName, final ContentKey key) {
         ActiveTraces.getLocal().add("S3SingleContentDao.read", key);
         try {

@@ -25,6 +25,8 @@ public interface ContentService {
 
     void delete(String channelName);
 
+    void delete(String channelName, ContentKey contentKey);
+
     Collection<ContentKey> queryDirection(DirectionQuery query);
 
     Optional<ContentKey> getLatest(DirectionQuery query);

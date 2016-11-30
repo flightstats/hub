@@ -46,4 +46,7 @@ public interface ContentDao {
         throw new UnsupportedOperationException("insertHistorical is not supported");
     }
 
+    default void delete(String channelName, ContentKey key) {
+        throw new UnsupportedOperationException("delete key is not supported");
+    }
 }

@@ -221,6 +221,11 @@ public class GlobalChannelService implements ChannelService {
     }
 
     @Override
+    public boolean delete(String channelName, ContentKey contentKey) {
+        return localChannelService.delete(channelName, contentKey);
+    }
+
+    @Override
     public ContentPath getLastUpdated(String channelName, ContentPath defaultValue) {
         return localChannelService.getLastUpdated(channelName, defaultValue);
     }

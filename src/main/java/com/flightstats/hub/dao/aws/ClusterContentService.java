@@ -278,6 +278,11 @@ public class ClusterContentService implements ContentService {
     }
 
     @Override
+    public void delete(String channelName, ContentKey contentKey) {
+        s3SingleContentDao.delete(channelName, contentKey);
+    }
+
+    @Override
     public void deleteBefore(String name, ContentKey limitKey) {
         s3SingleContentDao.deleteBefore(name, limitKey);
         s3BatchContentDao.deleteBefore(name, limitKey);

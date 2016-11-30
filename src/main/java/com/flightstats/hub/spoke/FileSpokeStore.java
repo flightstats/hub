@@ -100,6 +100,10 @@ public class FileSpokeStore {
         return true;
     }
 
+    public boolean deleteFile(String path) throws Exception {
+        return FileUtils.deleteQuietly(spokeFilePathPart(path));
+    }
+
     // given a url containing a key, return the file format
     // example: "test_0_4274725520517677/2014/11/18/00/57/24/015/NV2cl5"
     @VisibleForTesting

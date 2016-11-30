@@ -61,5 +61,7 @@ public interface ChannelService {
 
     boolean delete(String channelName);
 
+    boolean delete(String channelName, ContentKey contentKey);
+
     ContentPath getLastUpdated(String channelName, ContentPath defaultValue);
 }

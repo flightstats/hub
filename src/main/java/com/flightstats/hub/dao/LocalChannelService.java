@@ -5,6 +5,7 @@ import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.exception.ForbiddenRequestException;
 import com.flightstats.hub.exception.InvalidRequestException;
+import com.flightstats.hub.exception.MethodNotAllowedException;
 import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.DataDog;
@@ -348,6 +349,20 @@ public class LocalChannelService implements ChannelService {
         }
 
         return true;
+    }
+
+    @Override
+    public boolean delete(String channelName, ContentKey contentKey) {
+        ChannelConfig channelConfig = getCachedChannelConfig(channelName);
+        if (channelConfig.isHistorical()) {
+            if (!contentKey.getTime().isAfter(channelConfig.getMutableTime())) {
+                contentService.delete(channelName, contentKey);
+                return true;
+            }
+        }
+        String message = "item is not within the channels mutableTime";
+        ActiveTraces.getLocal().add(message, channelName, contentKey);
+        throw new MethodNotAllowedException(message);
     }
 
     @Override

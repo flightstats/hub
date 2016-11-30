@@ -25,9 +25,9 @@ public class Traces {
         add(objects);
     }
 
-    public void end() {
+    public void end(int status) {
         end = System.currentTimeMillis();
-        add("end");
+        add("response", status);
     }
 
     public void setEnd(long end) {

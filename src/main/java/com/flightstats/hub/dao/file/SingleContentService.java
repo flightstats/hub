@@ -111,6 +111,17 @@ public class SingleContentService implements ContentService {
     }
 
     @Override
+    public void delete(String channelName, ContentKey key) {
+        try {
+            String path = getPath(channelName, key);
+            boolean delete = fileSpokeStore.deleteFile(path);
+            ActiveTraces.getLocal().add("SingleContentService.delete", delete, path);
+        } catch (Exception e) {
+            logger.warn("deletion error", e);
+        }
+    }
+
+    @Override
     public Collection<ContentKey> queryDirection(DirectionQuery query) {
         SortedSet<ContentKey> keys = new TreeSet<>();
         TimeUtil.Unit hours = TimeUtil.Unit.HOURS;
