@@ -160,7 +160,7 @@ public class ChannelValidator {
             if (request.getMutableTime().isAfter(TimeUtil.now())) {
                 throw new InvalidRequestException("{\"error\": \"mutableTime must be in the past. \"}");
             }
-            if (oldConfig != null) {
+            if (oldConfig != null && oldConfig.isHistorical()) {
                 if (oldConfig.getMutableTime().isBefore(request.getMutableTime())) {
                     throw new InvalidRequestException("{\"error\": \"mutableTime can not move forward. \"}");
                 }
