@@ -170,9 +170,8 @@ public class ChannelContentResource {
 
     private Response getTimeQueryResponse(String channel, DateTime startTime, String location, boolean trace, boolean stable,
                                           Unit unit, String tag, boolean bulk, String accept, String epoch) {
-        //todo - gfm - 12/15/15 - merge this with TagContentResource.getTimeQueryResponse
         if (tag != null) {
-            return tagContentResource.getTimeQueryResponse(tag, startTime, location, trace, stable, unit, bulk, accept, uriInfo);
+            return tagContentResource.getTimeQueryResponse(tag, startTime, location, trace, stable, unit, bulk, accept, uriInfo, epoch);
         }
         TimeQuery query = TimeQuery.builder()
                 .channelName(channel)
