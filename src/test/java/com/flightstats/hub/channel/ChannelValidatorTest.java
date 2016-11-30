@@ -129,8 +129,23 @@ public class ChannelValidatorTest {
         validator.validate(ChannelConfig.builder()
                 .name("mychan")
                 .mutableTime(new DateTime())
-                .ttlDays(0)
-                .maxItems(0)
+                .build(), null, false);
+    }
+
+    @Test
+    public void testMutableTimeForward() throws Exception {
+        ChannelConfig first = ChannelConfig.builder().name("mychan").mutableTime(new DateTime().minusDays(2)).build();
+        ChannelConfig second = first.toBuilder().mutableTime(new DateTime().minusDays(1)).build();
+        validator.validate(first, second, false);
+        validator.validate(first, first, false);
+        validateError(second, first);
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void testMutableTimeFuture() throws Exception {
+        validator.validate(ChannelConfig.builder()
+                .name("testMutableTimeFuture")
+                .mutableTime(new DateTime().plusMinutes(1))
                 .build(), null, false);
     }
 
@@ -366,6 +381,7 @@ public class ChannelValidatorTest {
         validator.validate(dataLoss, noLoss, true);
 
     }
+
     private GlobalConfig getGlobalConfig() {
         GlobalConfig twoSatellites = new GlobalConfig();
         twoSatellites.setMaster("http://master");
@@ -378,7 +394,7 @@ public class ChannelValidatorTest {
         try {
             validator.validate(config, oldConfig, false);
             fail("expected exception");
-        } catch (ForbiddenRequestException e) {
+        } catch (ForbiddenRequestException | InvalidRequestException e) {
             //this is expected
         }
     }

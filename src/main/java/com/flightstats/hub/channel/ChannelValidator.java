@@ -36,7 +36,7 @@ public class ChannelValidator {
         if (oldConfig == null) {
             validateChannelUniqueness(channelName);
         }
-        validateTTL(config);
+        validateTTL(config, oldConfig);
         validateDescription(config);
         validateTags(config);
         validateStorage(config);
@@ -146,7 +146,7 @@ public class ChannelValidator {
         }
     }
 
-    private void validateTTL(ChannelConfig request) throws InvalidRequestException {
+    private void validateTTL(ChannelConfig request, ChannelConfig oldConfig) throws InvalidRequestException {
         if (request.getTtlDays() == 0 && request.getMaxItems() == 0 && request.getMutableTime() == null) {
             throw new InvalidRequestException("{\"error\": \"ttlDays, maxItems or mutableTime must be set \"}");
         }
@@ -160,7 +160,11 @@ public class ChannelValidator {
             if (request.getMutableTime().isAfter(TimeUtil.now())) {
                 throw new InvalidRequestException("{\"error\": \"mutableTime must be in the past. \"}");
             }
-            //todo gfm - verify that mutable time can't move forward
+            if (oldConfig != null) {
+                if (oldConfig.getMutableTime().isBefore(request.getMutableTime())) {
+                    throw new InvalidRequestException("{\"error\": \"mutableTime can not move forward. \"}");
+                }
+            }
         }
         if (request.getMaxItems() > 5000) {
             throw new InvalidRequestException("{\"error\": \"maxItems must be less than 5000 \"}");
