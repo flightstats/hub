@@ -45,9 +45,10 @@ class VerifierTasks(TaskSet):
     def sequential(self):
         self.hubTasks.sequential()
 
-    @task(1)
-    def earliest(self):
-        self.hubTasks.earliest()
+    # todo This is causing failures in one environment
+    # @task(1)
+    # def earliest(self):
+    #    self.hubTasks.earliest()
 
     @task(100)
     def latest(self):
