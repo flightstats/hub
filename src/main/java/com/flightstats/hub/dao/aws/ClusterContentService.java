@@ -300,6 +300,38 @@ public class ClusterContentService implements ContentService {
         } else {
             new S3Batch(newConfig, hubUtils).start();
         }
+        if (newConfig.isHistorical() && oldConfig != null && oldConfig.isHistorical()) {
+            if (newConfig.getMutableTime().isBefore(oldConfig.getMutableTime())) {
+                handleMutableTimeChange(newConfig, oldConfig);
+            }
+        }
+    }
+
+    private void handleMutableTimeChange(ChannelConfig newConfig, ChannelConfig oldConfig) {
+        ContentPath latest = lastContentPath.get(newConfig.getName(), ContentKey.NONE, CHANNEL_LATEST_UPDATED);
+        logger.info("handleMutableTimeChange {}", latest);
+        if (latest.equals(ContentKey.NONE)) {
+            DirectionQuery query = DirectionQuery.builder()
+                    .startKey(ContentKey.lastKey(oldConfig.getMutableTime().plusSeconds(1)))
+                    .earliestTime(newConfig.getMutableTime())
+                    .channelName(newConfig.getName())
+                    .channelConfig(oldConfig)
+                    .next(false)
+                    .stable(true)
+                    .epoch(Epoch.MUTABLE)
+                    .location(Location.LONG_TERM_SINGLE)
+                    .count(1)
+                    .build();
+            Optional<ContentKey> mutableLatest = getLatest(query);
+            ActiveTraces.getLocal().log(logger);
+            if (mutableLatest.isPresent()) {
+                ContentKey mutableKey = mutableLatest.get();
+                if (mutableKey.getTime().isAfter(newConfig.getMutableTime())) {
+                    logger.info("handleMutableTimeChange.updateIncrease {}", mutableKey);
+                    lastContentPath.updateIncrease(mutableKey, newConfig.getName(), CHANNEL_LATEST_UPDATED);
+                }
+            }
+        }
     }
 
     private class SpokeS3ContentServiceInit extends AbstractIdleService {
