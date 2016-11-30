@@ -27,8 +27,8 @@ describe(testName, function () {
     var items = [];
 
     it('posts two historical items', function (done) {
-        var historicalItem1 = channelResource + '/' + '2016/11/20/12/00/00/000';
-        var historicalItem2 = channelResource + '/' + '2016/11/20/12/01/00/000';
+        var historicalItem1 = channelResource + moment(mutableTime).subtract(2, 'minute').format('/YYYY/MM/DD/HH/mm/ss/SSS');
+        var historicalItem2 = channelResource + mutableTime.format('/YYYY/MM/DD/HH/mm/ss/SSS');
         utils.postItemQ(historicalItem1)
             .then(function (value) {
                 items.push(value.response.headers.location);

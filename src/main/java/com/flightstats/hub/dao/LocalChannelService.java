@@ -297,7 +297,7 @@ public class LocalChannelService implements ChannelService {
             if (!query.isNext()) {
                 DateTime mutableTime = channelConfig.getMutableTime();
                 if (query.getStartKey().getTime().isAfter(mutableTime)) {
-                    query = query.withStartKey(ContentKey.lastKey(mutableTime));
+                    query = query.withStartKey(ContentKey.lastKey(mutableTime.plusMillis(1)));
                 }
             }
         }

@@ -312,7 +312,7 @@ public class ClusterContentService implements ContentService {
         logger.info("handleMutableTimeChange {}", latest);
         if (latest.equals(ContentKey.NONE)) {
             DirectionQuery query = DirectionQuery.builder()
-                    .startKey(ContentKey.lastKey(oldConfig.getMutableTime().plusSeconds(1)))
+                    .startKey(ContentKey.lastKey(oldConfig.getMutableTime().plusMillis(1)))
                     .earliestTime(newConfig.getMutableTime())
                     .channelName(newConfig.getName())
                     .channelConfig(oldConfig)
