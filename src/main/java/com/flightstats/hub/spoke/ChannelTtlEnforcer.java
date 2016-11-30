@@ -33,10 +33,12 @@ public class ChannelTtlEnforcer {
 
     private Consumer<ChannelConfig> handleCleanup() {
         return channel -> {
-            String channelPath = storagePath + "/" + channel.getName();
-            DateTime channelTTL = TimeUtil.stable().minusDays((int) channel.getTtlDays());
-            for (int i = 0; i < 3; i++) {
-                Commander.run(new String[]{"rm", "-rf", channelPath + "/" + TimeUtil.days(channelTTL.minusDays(i))}, 1);
+            if (channel.getTtlDays() > 0) {
+                String channelPath = storagePath + "/" + channel.getName();
+                DateTime channelTTL = TimeUtil.stable().minusDays((int) channel.getTtlDays());
+                for (int i = 0; i < 3; i++) {
+                    Commander.run(new String[]{"rm", "-rf", channelPath + "/" + TimeUtil.days(channelTTL.minusDays(i))}, 1);
+                }
             }
         };
     }
