@@ -160,6 +160,7 @@ public class ChannelValidator {
             if (request.getMutableTime().isAfter(TimeUtil.now())) {
                 throw new InvalidRequestException("{\"error\": \"mutableTime must be in the past. \"}");
             }
+            //todo gfm - verify that mutable time can't move forward
         }
         if (request.getMaxItems() > 5000) {
             throw new InvalidRequestException("{\"error\": \"maxItems must be less than 5000 \"}");

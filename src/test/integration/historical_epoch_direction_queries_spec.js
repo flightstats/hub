@@ -79,17 +79,16 @@ describe(testName, function () {
 
     var next7 = earliestTime.subtract(1, 'month').format('/YYYY/MM/DD/HH/mm/ss/SSS') + "/0/next/7?trace=true&stable=false";
 
-
     it('queries next 7 All ' + next7, function (done) {
         utils.getQuery(channelURL + next7 + '&epoch=ALL', 200, items, done);
     });
 
     it('queries next 7 Immutable ' + next7, function (done) {
-        utils.getQuery(next7 + '&epoch=IMMUTABLE', 200, items.slice(3), done);
+        utils.getQuery(channelURL + next7 + '&epoch=IMMUTABLE', 200, items.slice(3), done);
     });
 
     it('queries next 7 Mutable ' + next7, function (done) {
-        utils.getQuery(next7 + '&epoch=MUTABLE', 200, items.slice(0, 3), done);
+        utils.getQuery(channelURL + next7 + '&epoch=MUTABLE', 200, items.slice(0, 3), done);
     });
 
     var channelBodyChange = {
@@ -100,10 +99,10 @@ describe(testName, function () {
     utils.putChannel(channel, false, channelBodyChange, testName);
 
     it('queries next 7 Immutable after change ' + next7, function (done) {
-        utils.getQuery(next7 + '&epoch=IMMUTABLE', 200, items.slice(2), done);
+        utils.getQuery(channelURL + next7 + '&epoch=IMMUTABLE', 200, items.slice(2), done);
     });
 
     it('queries next 7 Mutable after change' + next7, function (done) {
-        utils.getQuery(next7 + '&epoch=MUTABLE', 200, items.slice(0, 2), done);
+        utils.getQuery(channelURL + next7 + '&epoch=MUTABLE', 200, items.slice(0, 2), done);
     });
 });
