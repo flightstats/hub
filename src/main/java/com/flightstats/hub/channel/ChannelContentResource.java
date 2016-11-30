@@ -282,7 +282,7 @@ public class ChannelContentResource {
         ContentKey contentKey = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         boolean next = direction.startsWith("n");
         if (null != tag) {
-            return tagContentResource.adjacent(tag, contentKey, stable, next, uriInfo);
+            return tagContentResource.adjacent(tag, contentKey, stable, next, uriInfo, location, epoch);
         }
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
@@ -360,7 +360,7 @@ public class ChannelContentResource {
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         boolean next = direction.startsWith("n");
         if (null != tag) {
-            return tagContentResource.adjacentCount(tag, count, stable, trace, location, next, key, bulk || batch, accept, uriInfo);
+            return tagContentResource.adjacentCount(tag, count, stable, trace, location, next, key, bulk || batch, accept, uriInfo, epoch);
         }
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
