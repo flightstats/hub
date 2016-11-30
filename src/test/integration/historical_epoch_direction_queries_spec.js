@@ -16,7 +16,10 @@ var testName = __filename;
  * add 3 historical items
  * add 3 live items
  *
- * Query items by deirection, verify exclusion
+ * Query items by direction, verify exclusion
+ *
+ * Change mutableTime to include one historical item
+ * Query items by direction, verify exclusion
  */
 describe(testName, function () {
 
@@ -68,6 +71,7 @@ describe(testName, function () {
             })
             .then(function (value) {
                 items.push(value.response.headers.location)
+                console.log('items', items);
                 done();
             })
         ;
@@ -111,5 +115,18 @@ describe(testName, function () {
         query(next7 + '&epoch=MUTABLE', items.slice(0, 3), done);
     });
 
+    var channelBodyChange = {
+        mutableTime: moment(earliestTime).add(1, 'years').format('YYYY-MM-DDTHH:mm:ss.SSS'),
+        tags: [tag, "test"]
+    };
 
+    utils.putChannel(channel, false, channelBodyChange, testName);
+
+    it('queries next 7 Immutable after change ' + next7, function (done) {
+        query(next7 + '&epoch=IMMUTABLE', items.slice(2), done);
+    });
+
+    it('queries next 7 Mutable after change' + next7, function (done) {
+        query(next7 + '&epoch=MUTABLE', items.slice(0, 2), done);
+    });
 });
