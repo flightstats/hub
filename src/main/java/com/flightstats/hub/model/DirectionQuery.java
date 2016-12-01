@@ -15,6 +15,7 @@ public class DirectionQuery implements Query {
     private final String channelName;
     @Wither
     private final ChannelConfig channelConfig;
+    @Wither
     private final String tagName;
     @Wither
     private ContentKey startKey;

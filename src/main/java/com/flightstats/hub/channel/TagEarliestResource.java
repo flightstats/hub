@@ -6,6 +6,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.TagService;
 import com.flightstats.hub.model.ChannelContentKey;
+import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.Epoch;
+import com.flightstats.hub.model.Location;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
@@ -31,8 +34,13 @@ public class TagEarliestResource {
     @GET
     public Response getEarliest(@PathParam("tag") String tag,
                                 @QueryParam("stable") @DefaultValue("true") boolean stable,
-                                @QueryParam("trace") @DefaultValue("false") boolean trace, @Context UriInfo uriInfo) {
-        Collection<ChannelContentKey> contentKeys = tagService.getEarliest(tag, 1, stable, trace);
+                                @QueryParam("trace") @DefaultValue("false") boolean trace,
+                                @QueryParam("location") @DefaultValue(Location.DEFAULT) String location,
+                                @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
+                                @Context UriInfo uriInfo) {
+        DirectionQuery query = ChannelEarliestResource.getDirectionQuery(tag, 1, stable, location, epoch)
+                .withTagName(tag);
+        Collection<ChannelContentKey> contentKeys = tagService.getEarliest(query);
         if (!contentKeys.isEmpty()) {
             URI uri = uriInfo.getBaseUriBuilder()
                     .path(contentKeys.iterator().next().toUrl())
@@ -52,9 +60,13 @@ public class TagEarliestResource {
                                      @QueryParam("batch") @DefaultValue("false") boolean batch,
                                      @QueryParam("bulk") @DefaultValue("false") boolean bulk,
                                      @QueryParam("trace") @DefaultValue("false") boolean trace,
+                                     @QueryParam("location") @DefaultValue(Location.DEFAULT) String location,
+                                     @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
                                      @HeaderParam("Accept") String accept,
                                      @Context UriInfo uriInfo) {
-        SortedSet<ChannelContentKey> keys = tagService.getEarliest(tag, count, stable, trace);
+        DirectionQuery query = ChannelEarliestResource.getDirectionQuery(tag, count, stable, location, epoch)
+                .withTagName(tag);
+        SortedSet<ChannelContentKey> keys = tagService.getEarliest(query);
         if (bulk || batch) {
             return BulkBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo, accept);
         }

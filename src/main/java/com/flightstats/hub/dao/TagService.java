@@ -1,6 +1,5 @@
 package com.flightstats.hub.dao;
 
-import com.flightstats.hub.channel.ChannelEarliestResource;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
@@ -85,20 +84,16 @@ public class TagService {
         }
     }
 
-    public SortedSet<ChannelContentKey> getEarliest(String tag, int count, boolean stable, boolean trace) {
-        Iterable<ChannelConfig> channels = getChannels(tag);
+    public SortedSet<ChannelContentKey> getEarliest(DirectionQuery tagQuery) {
+        Iterable<ChannelConfig> channels = getChannels(tagQuery.getTagName());
         Traces traces = ActiveTraces.getLocal();
-        traces.add("TagService.getEarliest", tag);
+        traces.add("TagService.getEarliest", tagQuery.getTagName());
         SortedSet<ChannelContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
         for (ChannelConfig channel : channels) {
-            DirectionQuery query = ChannelEarliestResource.getDirectionQuery(channel.getName(), count, stable);
-            Collection<ContentKey> contentKeys = channelService.query(query);
+            Collection<ContentKey> contentKeys = channelService.query(tagQuery.withChannelName(channel.getName()));
             for (ContentKey contentKey : contentKeys) {
                 orderedKeys.add(new ChannelContentKey(channel.getName(), contentKey));
             }
-        }
-        if (trace) {
-            traces.log(logger);
         }
         traces.add("TagService.getEarliest completed", orderedKeys);
         return orderedKeys;

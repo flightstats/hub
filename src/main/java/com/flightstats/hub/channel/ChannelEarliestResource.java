@@ -39,7 +39,7 @@ public class ChannelEarliestResource {
                                 @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
                                 @QueryParam("tag") String tag) {
         if (tag != null) {
-            return tagEarliestResource.getEarliest(tag, stable, trace, uriInfo);
+            return tagEarliestResource.getEarliest(tag, stable, trace, location, epoch, uriInfo);
         }
         DirectionQuery query = getDirectionQuery(channel, 1, stable, location, epoch);
         Collection<ContentKey> keys = channelService.query(query);
@@ -66,7 +66,7 @@ public class ChannelEarliestResource {
                                      @QueryParam("tag") String tag,
                                      @HeaderParam("Accept") String accept) {
         if (tag != null) {
-            return tagEarliestResource.getEarliestCount(tag, count, stable, bulk, batch, trace, accept, uriInfo);
+            return tagEarliestResource.getEarliestCount(tag, count, stable, bulk, batch, trace, location, epoch, accept, uriInfo);
         }
         DirectionQuery query = getDirectionQuery(channel, count, stable, location, epoch);
         SortedSet<ContentKey> keys = channelService.query(query);
