@@ -38,9 +38,7 @@ public class TagEarliestResource {
                                 @QueryParam("location") @DefaultValue(Location.DEFAULT) String location,
                                 @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
                                 @Context UriInfo uriInfo) {
-        DirectionQuery query = ChannelEarliestResource.getDirectionQuery(tag, 1, stable, location, epoch)
-                .withTagName(tag);
-        Collection<ChannelContentKey> contentKeys = tagService.getEarliest(query);
+        Collection<ChannelContentKey> contentKeys = tagService.getEarliest(getQuery(tag, 1, stable, location, epoch));
         if (!contentKeys.isEmpty()) {
             URI uri = uriInfo.getBaseUriBuilder()
                     .path(contentKeys.iterator().next().toUrl())
@@ -49,6 +47,17 @@ public class TagEarliestResource {
             return Response.status(SEE_OTHER).location(uri).build();
         }
         return Response.status(NOT_FOUND).build();
+    }
+
+    private DirectionQuery getQuery(String tag, int count, boolean stable, String location, String epoch) {
+        return DirectionQuery.builder()
+                .tagName(tag)
+                .next(true)
+                .stable(stable)
+                .count(count)
+                .location(Location.valueOf(location))
+                .epoch(Epoch.valueOf(epoch))
+                .build();
     }
 
     @GET
@@ -64,8 +73,7 @@ public class TagEarliestResource {
                                      @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
                                      @HeaderParam("Accept") String accept,
                                      @Context UriInfo uriInfo) {
-        DirectionQuery query = ChannelEarliestResource.getDirectionQuery(tag, count, stable, location, epoch)
-                .withTagName(tag);
+        DirectionQuery query = getQuery(tag, count, stable, location, epoch);
         SortedSet<ChannelContentKey> keys = tagService.getEarliest(query);
         if (bulk || batch) {
             return BulkBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo, accept);

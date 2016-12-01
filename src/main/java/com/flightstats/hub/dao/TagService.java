@@ -1,5 +1,6 @@
 package com.flightstats.hub.dao;
 
+import com.flightstats.hub.channel.ChannelEarliestResource;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
@@ -90,8 +91,9 @@ public class TagService {
         traces.add("TagService.getEarliest", tagQuery.getTagName());
         SortedSet<ChannelContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
         for (ChannelConfig channel : channels) {
-            Collection<ContentKey> contentKeys = channelService.query(tagQuery.withChannelName(channel.getName()));
-            for (ContentKey contentKey : contentKeys) {
+            DirectionQuery query = ChannelEarliestResource.getDirectionQuery(channel.getName(), tagQuery.getCount(),
+                    tagQuery.isStable(), tagQuery.getLocation().name(), tagQuery.getEpoch().name());
+            for (ContentKey contentKey : channelService.query(query)) {
                 orderedKeys.add(new ChannelContentKey(channel.getName(), contentKey));
             }
         }

@@ -84,7 +84,7 @@ public class ChannelEarliestResource {
         return getDirectionQuery(channel, count, stable, Location.DEFAULT, Epoch.DEFAULT);
     }
 
-    static DirectionQuery getDirectionQuery(String channel, int count, boolean stable, String location, String epoch) {
+    public static DirectionQuery getDirectionQuery(String channel, int count, boolean stable, String location, String epoch) {
         ChannelConfig channelConfig = channelService.getCachedChannelConfig(channel);
         ContentKey startKey = new ContentKey(channelConfig.getTtlTime(), "0");
         return DirectionQuery.builder()
