@@ -74,7 +74,7 @@ public class ChannelLatestResource {
                                    @QueryParam("tag") String tag,
                                    @HeaderParam("Accept") String accept) {
         if (tag != null) {
-            return tagLatestResource.getLatestCount(tag, count, stable, batch, bulk, trace, accept, location, epoch, uriInfo);
+            return tagLatestResource.getLatestCount(tag, count, stable, batch, bulk, trace, location, epoch, accept, uriInfo);
         }
         DirectionQuery latestQuery = DirectionQuery.builder()
                 .channelName(channel)
