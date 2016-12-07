@@ -16,7 +16,7 @@ folder: hub
 * Provide a way to unwind changes or delete historical data that isn't stable yet.
 * Provide a mechanism to verify historical data before it is made stable.
 
-## Proposed Change
+## Features
 * A channel can optionally have a `mutableTime` attribute, which is a valid time in the past.
     * Once mutableTime is set, items can be inserted into the channel before or equal to the mutableTime.
     * Channels with mutableTime can not have `ttlDays` and `maxItems`, as mutableTime channels are intended for long term storage. 
@@ -24,8 +24,8 @@ folder: hub
 * Items can be inserted or deleted in any order before the mutableTime, allowing for multithreading.
 * Once the changes are final you can move the mutableTime earlier in time, making all items after the new mutableTime "stable".
 * Mutable items can be queried using the `epoch` query parameter.
-* Existing channels can be converted to this type by someone with admin access.
-* This would replace the current notion of "Historical Channels" with the `historical` flag.
+* Existing channels can be converted to have a mutableTime, as long as the storage type is SINGLE.
+* This replaces the current notion of "Historical Channels" with the `historical` flag.
 
 ## How this all works
 
@@ -78,6 +78,6 @@ The clustered hub writes real-time items to Spoke, then writes them asynchronous
 Historical items are handled differently, in that they are written directly into S3, bypassing Spoke.
 This should prevent large historical data volumes from impacting Spoke's performance.
 
-The singleHub only writes all items to the file system, and historical items are no different than real-time items.
+The singleHub writes all items to the file system, and historical items are no different than real-time items.
 
 {% include links.html %}
