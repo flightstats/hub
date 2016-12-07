@@ -124,7 +124,7 @@ public class Webhook implements Comparable<Webhook>, NamedType {
     private static Optional<ContentPath> getPrevious(Optional<ContentPath> keyOptional, String channelUrl) {
         ChannelService channelService = HubProvider.getInstance(ChannelService.class);
         String channel = RequestUtils.getChannelName(channelUrl);
-        Optional<ContentKey> latest = channelService.getLatest(channel, true, false);
+        Optional<ContentKey> latest = channelService.getLatest(channel, true);
         if (latest.isPresent()) {
             DirectionQuery query = DirectionQuery.builder()
                     .channelName(channel)

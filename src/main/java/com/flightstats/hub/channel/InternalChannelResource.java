@@ -17,20 +17,9 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.DELETE;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.*;
+import javax.ws.rs.core.*;
 import java.net.URI;
-import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
@@ -114,7 +103,7 @@ public class InternalChannelResource {
         addStaleEntities(root, age, (staleCutoff) -> {
             Map<DateTime, URI> staleChannels = new TreeMap<>();
             channelService.getChannels().forEach(channelConfig -> {
-                Optional<ContentKey> optionalContentKey = channelService.getLatest(channelConfig.getName(), false, false);
+                Optional<ContentKey> optionalContentKey = channelService.getLatest(channelConfig.getName(), false);
                 if (!optionalContentKey.isPresent()) return;
 
                 ContentKey contentKey = optionalContentKey.get();
@@ -148,7 +137,7 @@ public class InternalChannelResource {
         addStaleEntities(root, age, (staleCutoff) -> {
             Map<DateTime, URI> staleChannels = new TreeMap<>();
             channelService.getChannels().forEach(channelConfig -> {
-                Optional<ContentKey> optionalContentKey = channelService.getLatest(channelConfig.getName(), false, false);
+                Optional<ContentKey> optionalContentKey = channelService.getLatest(channelConfig.getName(), false);
                 if (!optionalContentKey.isPresent()) return;
 
                 ContentKey contentKey = optionalContentKey.get();

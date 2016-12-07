@@ -28,8 +28,7 @@ public interface ChannelService {
      */
     Optional<ContentKey> getLatest(DirectionQuery query);
 
-    @Deprecated
-    default Optional<ContentKey> getLatest(String channel, boolean stable, boolean trace) {
+    default Optional<ContentKey> getLatest(String channel, boolean stable) {
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
                 .next(false)

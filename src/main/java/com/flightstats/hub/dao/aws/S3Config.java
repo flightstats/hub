@@ -102,7 +102,7 @@ public class S3Config {
         private void updateMaxItems(ChannelConfig config) {
             logger.info("updating max items for channel {}", config.getName());
             ActiveTraces.start("S3Config.updateMaxItems", config.getName());
-            Optional<ContentKey> optional = channelService.getLatest(config.getName(), false, false);
+            Optional<ContentKey> optional = channelService.getLatest(config.getName(), false);
             if (optional.isPresent()) {
                 ContentKey latest = optional.get();
                 if (latest.getTime().isAfter(TimeUtil.now().minusDays(1))) {

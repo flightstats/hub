@@ -81,7 +81,7 @@ public class WebhookService {
         WebhookStatus.WebhookStatusBuilder builder = WebhookStatus.builder().webhook(webhook);
         String channel = webhook.getChannelName();
         try {
-            Optional<ContentKey> lastKey = channelService.getLatest(channel, true, false);
+            Optional<ContentKey> lastKey = channelService.getLatest(channel, true);
             if (lastKey.isPresent()) {
                 builder.channelLatest(lastKey.get());
             }

@@ -216,7 +216,7 @@ public class ChannelResource {
             if (fromUrl != null) {
                 contentKey = fromUrl;
             } else if (channelService.isReplicating(channel)) {
-                Optional<ContentKey> latest = channelService.getLatest(channel, true, false);
+                Optional<ContentKey> latest = channelService.getLatest(channel, true);
                 if (latest.isPresent()) {
                     contentKey = latest.get();
                 }

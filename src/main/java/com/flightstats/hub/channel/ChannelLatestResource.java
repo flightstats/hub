@@ -40,8 +40,7 @@ public class ChannelLatestResource {
                               @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
                               @QueryParam("tag") String tag) {
         if (tag != null) {
-            //todo gfm -
-            return tagLatestResource.getLatest(tag, stable, trace, uriInfo);
+            return tagLatestResource.getLatest(tag, stable, trace, location, epoch, uriInfo);
         }
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
@@ -75,8 +74,7 @@ public class ChannelLatestResource {
                                    @QueryParam("tag") String tag,
                                    @HeaderParam("Accept") String accept) {
         if (tag != null) {
-            //todo gfm -
-            return tagLatestResource.getLatestCount(tag, count, stable, batch, bulk, trace, accept, uriInfo);
+            return tagLatestResource.getLatestCount(tag, count, stable, batch, bulk, trace, accept, location, epoch, uriInfo);
         }
         DirectionQuery latestQuery = DirectionQuery.builder()
                 .channelName(channel)

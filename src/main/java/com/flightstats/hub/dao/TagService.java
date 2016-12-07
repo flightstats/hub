@@ -69,11 +69,11 @@ public class TagService {
                 .collect(Collectors.toCollection(TreeSet::new));
     }
 
-    public Optional<ChannelContentKey> getLatest(String tag, boolean stable, boolean trace) {
-        Iterable<ChannelConfig> channels = getChannels(tag);
+    public Optional<ChannelContentKey> getLatest(DirectionQuery tagQuery) {
+        Iterable<ChannelConfig> channels = getChannels(tagQuery.getTagName());
         SortedSet<ChannelContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
         for (ChannelConfig channel : channels) {
-            Optional<ContentKey> contentKey = channelService.getLatest(channel.getName(), stable, trace);
+            Optional<ContentKey> contentKey = channelService.getLatest(tagQuery.withChannelName(channel.getName()));
             if (contentKey.isPresent()) {
                 orderedKeys.add(new ChannelContentKey(channel.getName(), contentKey.get()));
             }
