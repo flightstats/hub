@@ -126,7 +126,7 @@ entries:
       output: web, pdf
 
     - title: FAQ
-      url: /hub_other_use_cases.html
+      url: /hub_other_faq.html
       output: web, pdf
 
     - title: Channel Storage

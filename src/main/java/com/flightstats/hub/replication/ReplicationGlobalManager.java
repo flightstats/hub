@@ -39,7 +39,7 @@ public class ReplicationGlobalManager {
     private final AtomicBoolean stopped = new AtomicBoolean();
     private final ExecutorService executor = Executors.newSingleThreadExecutor(
             new ThreadFactoryBuilder().setNameFormat("ReplicationGlobalManager").build());
-    private final ExecutorService executorPool = Executors.newFixedThreadPool(20,
+    private final ExecutorService executorPool = Executors.newFixedThreadPool(40,
             new ThreadFactoryBuilder().setNameFormat("ReplicationGlobalManager-%d").build());
 
     @Inject
@@ -132,24 +132,28 @@ public class ReplicationGlobalManager {
             }
         }
         executorPool.submit(() -> stopAndRemove(replicators, channelReplicatorMap));
-
     }
 
     private void processChannel(Set<String> replicators, ChannelConfig channel) {
         replicators.add(channel.getName());
         if (channelReplicatorMap.containsKey(channel.getName())) {
-            ChannelReplicator replicator = channelReplicatorMap.get(channel.getName());
-            if (!replicator.getChannel().getReplicationSource().equals(channel.getReplicationSource())) {
-                logger.info("changing replication source from {} to {}",
-                        replicator.getChannel().getReplicationSource(), channel.getReplicationSource());
-                replicator.stop();
-                startReplication(channel);
+            ChannelReplicator existingReplicator = channelReplicatorMap.get(channel.getName());
+            if (!existingReplicator.getChannel().getReplicationSource().equals(channel.getReplicationSource())) {
+                ChannelReplicator newReplicator = createReplicator(channel);
+                executorPool.submit(() -> changeReplication(existingReplicator, newReplicator));
             } else {
-                replicator.start();
+                executorPool.submit(existingReplicator::start);
             }
         } else {
-            startReplication(channel);
+            ChannelReplicator channelReplicator = createReplicator(channel);
+            executorPool.submit(() -> startReplication(channelReplicator));
         }
+    }
+
+    private ChannelReplicator createReplicator(ChannelConfig channel) {
+        ChannelReplicator newReplicator = new ChannelReplicator(channel);
+        channelReplicatorMap.put(channel.getName(), newReplicator);
+        return newReplicator;
     }
 
     private void stopAndRemove(Set<String> replicators, Map<String, ? extends Replicator> replicatorMap) {
@@ -163,18 +167,21 @@ public class ReplicationGlobalManager {
         }
     }
 
-    private void startReplication(ChannelConfig channel) {
-        executorPool.submit(() -> {
-            try {
-                logger.debug("starting replication of " + channel);
-                ChannelReplicator channelReplicator = new ChannelReplicator(channel);
-                channelReplicatorMap.put(channel.getName(), channelReplicator);
-                channelReplicator.start();
-            } catch (Exception e) {
-                channelReplicatorMap.remove(channel.getName());
-                logger.warn("unexpected replication issue " + channel, e);
-            }
-        });
+    private void changeReplication(ChannelReplicator oldReplicator, ChannelReplicator newReplicator) {
+        logger.info("changing replication source from {} to {}",
+                oldReplicator.getChannel().getReplicationSource(), newReplicator.getChannel().getReplicationSource());
+        oldReplicator.stop();
+        startReplication(newReplicator);
+    }
+
+    private void startReplication(ChannelReplicator replicator) {
+        try {
+            logger.debug("starting replication of " + replicator.getChannel().getName());
+            replicator.start();
+        } catch (Exception e) {
+            channelReplicatorMap.remove(replicator.getChannel().getName());
+            logger.warn("unexpected replication issue " + replicator.getChannel().getName(), e);
+        }
     }
 
     public void notifyWatchers() {

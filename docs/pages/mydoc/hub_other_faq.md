@@ -5,7 +5,7 @@ last_updated: July 3, 2016
 tags: []
 summary: 
 sidebar: mydoc_sidebar
-permalink: hub_channels_delete.html
+permalink: hub_other_faq.html
 folder: hub
 ---
 
