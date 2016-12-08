@@ -117,6 +117,7 @@ public class LocalChannelService implements ChannelService {
             logger.warn("historical inserts require a mutableTime on the channel. {}", channelName);
             throw new ForbiddenRequestException("historical inserts require a mutableTime on the channel.");
         }
+        long start = System.currentTimeMillis();
         ChannelConfig channelConfig = getCachedChannelConfig(channelName);
         ContentKey contentKey = content.getContentKey().get();
         if (contentKey.getTime().isAfter(channelConfig.getMutableTime())) {
@@ -126,7 +127,9 @@ public class LocalChannelService implements ChannelService {
         }
         boolean insert = contentService.historicalInsert(channelName, content);
         lastContentPath.updateDecrease(contentKey, channelName, HISTORICAL_EARLIEST);
-        //todo gfm - send stats
+        long time = System.currentTimeMillis() - start;
+        statsd.time("channel.historical", time, "method:post", "type:single", "channel:" + channelName);
+        statsd.count("channel.historical.bytes", content.getSize(), "method:post", "type:single", "channel:" + channelName);
         return insert;
     }
 
