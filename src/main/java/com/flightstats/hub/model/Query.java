@@ -4,6 +4,8 @@ import org.joda.time.DateTime;
 
 public interface Query {
 
+    DateTime getChannelStable();
+
     Location getLocation();
 
     Epoch getEpoch();

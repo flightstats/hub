@@ -235,7 +235,6 @@ public class ClusterContentService implements ContentService {
             }
             return Optional.of((ContentKey) latestCache);
         }
-        //todo gfm - this could have a convenience method
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
                 .startKey(latestQuery.getStartKey())

@@ -31,6 +31,8 @@ public class TimeQuery implements Query {
     private final ContentKey limitKey;
     @Wither
     private final Epoch epoch;
+    @Wither
+    private final DateTime channelStable;
 
     public Location getLocation() {
         if (location == null) {

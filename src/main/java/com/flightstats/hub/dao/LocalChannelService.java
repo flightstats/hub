@@ -173,7 +173,7 @@ public class LocalChannelService implements ChannelService {
         if (!channelExists(channel)) {
             return Optional.absent();
         }
-        query = query.withStartKey(ContentKey.lastKey(TimeUtil.time(query.isStable())));
+        query = query.withStartKey(getLatestLimit(query.getChannelName(), query.isStable()));
         query = configureQuery(query);
         Optional<ContentKey> latest = contentService.getLatest(query);
         ActiveTraces.getLocal().add("before filter", channel, latest);
@@ -184,6 +184,11 @@ public class LocalChannelService implements ChannelService {
             }
         }
         return latest;
+    }
+
+    private DirectionQuery configureStable(DirectionQuery query) {
+        ContentPath lastUpdated = getLatestLimit(query.getChannelName(), query.isStable());
+        return query.withChannelStable(lastUpdated.getTime());
     }
 
     ContentKey getLatestLimit(String channelName, boolean stable) {
@@ -263,6 +268,8 @@ public class LocalChannelService implements ChannelService {
             return Collections.emptySortedSet();
         }
         query = query.withChannelConfig(getCachedChannelConfig(query.getChannelName()));
+        ContentPath lastUpdated = getLastUpdated(query.getChannelName(), new ContentKey(TimeUtil.time(query.isStable())));
+        query = query.withChannelStable(lastUpdated.getTime());
         Stream<ContentKey> stream = contentService.queryByTime(query).stream();
         stream = ContentKeyUtil.enforceLimits(query, stream);
         return stream.collect(Collectors.toCollection(TreeSet::new));
@@ -301,8 +308,7 @@ public class LocalChannelService implements ChannelService {
                 }
             }
         }
-        ContentPath lastUpdated = getLastUpdated(query.getChannelName(), new ContentKey(TimeUtil.time(query.isStable())));
-        query = query.withChannelStable(lastUpdated.getTime());
+        query = configureStable(query);
         ActiveTraces.getLocal().add("configureQuery.end", query);
         return query;
     }

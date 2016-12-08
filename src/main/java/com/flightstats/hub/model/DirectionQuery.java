@@ -21,9 +21,11 @@ public class DirectionQuery implements Query {
     private ContentKey startKey;
     @Wither
     private final int count;
+    @Wither
     private final boolean next;
     @Wither
     private final Location location;
+    @Wither
     private final boolean stable;
 
     /**
@@ -32,9 +34,6 @@ public class DirectionQuery implements Query {
     @Wither
     private DateTime earliestTime;
 
-    /**
-     * this is only used by Spoke.query(direction)
-     */
     @Wither
     private final DateTime channelStable;
 
