@@ -21,7 +21,7 @@ The hub is a long term data store.
 * Fault tolerant, easy to cluster
 * Requires a quorum for a successful write 
 
-### with some differences 
+###  with some differences 
 * Most KV stores allow mutations.  The hub does not.
 * The hub imposes that all item keys always move forward in time
 * The hub offers ordering guarantees to provide consistent answers to time based queries
