@@ -29,8 +29,8 @@ public class SingleHubMain {
         setProperty("storage.path", storagePath);
         String spokePath = Files.createTempDir().getAbsolutePath();
         setProperty("spoke.path", spokePath);
-        setProperty("spoke.enforceTTL", "false");
-        setProperty("channel.enforceTTL", "true");
+        setProperty("spoke.enforceTTL", "true");
+        setProperty("channel.enforceTTL", "false");
         setProperty("app.stable_seconds", "2");
         setProperty("app.remoteTimeFile", storagePath + "/remoteTime");
         setProperty("app.shutdown_delay_seconds", "0");

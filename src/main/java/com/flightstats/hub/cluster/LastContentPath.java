@@ -13,8 +13,6 @@ import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.function.Function;
 
 public class LastContentPath {
@@ -88,33 +86,34 @@ public class LastContentPath {
         return ContentPath.fromUrl(found).get();
     }
 
-    public void updateIncrease(ContentPath nextPath, String name, String basePath) {
-        updateIncrease(name, basePath, (contentPath -> nextPath));
+    public void updateDecrease(ContentPath nextPath, String name, String basePath) {
+        update(nextPath, name, basePath, (existing) -> nextPath.compareTo(existing.key) < 0);
     }
 
-    public boolean updateIncrease(String name, String basePath, Function<ContentPath, ContentPath> function) {
+    public void updateIncrease(ContentPath nextPath, String name, String basePath) {
+        update(nextPath, name, basePath, (existing) -> nextPath.compareTo(existing.key) > 0);
+    }
+
+    private void update(ContentPath nextPath, String name, String basePath, Function<LastUpdated, Boolean> compare) {
         String path = basePath + name;
         try {
             while (true) {
-                trace(name, "updateIncrease {}", name);
+                trace(name, "update {}", name);
                 LastUpdated existing = getLastUpdated(path);
-                ContentPath nextPath = function.apply(existing.key);
-                if (nextPath.compareTo(existing.key) > 0) {
+                if (compare.apply(existing)) {
                     if (setValue(path, nextPath, existing)) {
-                        trace(name, "updateIncrease set {} next {} existing {}", name, nextPath, existing);
-                        return true;
+                        trace(name, "update set {} next {} existing {}", name, nextPath, existing);
+                        return;
                     }
                 } else {
-                    trace(name, "updateIncrease less {} next {} existing{}", name, nextPath, existing);
-                    return true;
+                    trace(name, "update false {} next {} existing{}", name, nextPath, existing);
+                    return;
                 }
             }
         } catch (KeeperException.NoNodeException e) {
             logger.info("values does not exist, creating {}", path);
             trace(name, "updateIncrease NoNodeException {}", name);
-            ContentPath nextPath = function.apply(null);
             initialize(name, nextPath, basePath);
-            return true;
         } catch (ConflictException e) {
             trace(name, "ConflictException " + e.getMessage());
             throw e;
@@ -122,7 +121,6 @@ public class LastContentPath {
             throw e;
         } catch (Exception e) {
             logger.warn("unable to set lastUpdated " + path, e);
-            return false;
         }
     }
 
@@ -162,15 +160,6 @@ public class LastContentPath {
             logger.info("no node for {}", path);
         } catch (Exception e) {
             logger.warn("unable to delete {} {}", path, e.getMessage());
-        }
-    }
-
-    public List<String> getNames(String basePath) {
-        try {
-            return curator.getChildren().forPath(basePath);
-        } catch (Exception e) {
-            logger.warn("unexpected exception " + basePath, e);
-            return Collections.emptyList();
         }
     }
 

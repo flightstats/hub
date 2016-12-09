@@ -74,6 +74,7 @@ public class S3WriteQueue {
             try {
                 logger.trace("writing {}", key.getContentKey());
                 Content content = spokeContentDao.get(key.getChannel(), key.getContentKey());
+                content.packageStream();
                 if (content.getData() == null) {
                     throw new FailedReadException("unable to read " + key.toString());
                 }

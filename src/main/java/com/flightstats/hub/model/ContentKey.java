@@ -18,7 +18,7 @@ import java.text.DecimalFormat;
 @EqualsAndHashCode
 @Getter
 public class ContentKey implements ContentPath {
-    public static final ContentKey NONE = new ContentKey(new DateTime(1, DateTimeZone.UTC), "none");
+    public static final ContentKey NONE = new ContentKey(TimeUtil.BIG_BANG, "none");
     private final static Logger logger = LoggerFactory.getLogger(ContentKey.class);
     private static final DecimalFormat format = new DecimalFormat("000000");
     private final DateTime time;

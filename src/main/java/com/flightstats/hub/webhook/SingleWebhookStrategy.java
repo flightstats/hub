@@ -128,7 +128,7 @@ class SingleWebhookStrategy implements WebhookStrategy {
                     if (!channelConfig.isLive()) {
                         latestStableInChannel = channelService.getLastUpdated(channel, MinutePath.NONE).getTime();
                     }
-                    TimeQuery timeQuery = queryGenerator.getQuery(latestStableInChannel, channelConfig.isHistorical());
+                    TimeQuery timeQuery = queryGenerator.getQuery(latestStableInChannel);
                     if (timeQuery != null) {
                         addKeys(channelService.queryByTime(timeQuery));
                         if (webhook.isHeartbeat() && queryGenerator.getLastQueryTime().getSecondOfMinute() == 0) {

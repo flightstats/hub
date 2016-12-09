@@ -102,7 +102,7 @@ public class S3Config {
         private void updateMaxItems(ChannelConfig config) {
             logger.info("updating max items for channel {}", config.getName());
             ActiveTraces.start("S3Config.updateMaxItems", config.getName());
-            Optional<ContentKey> optional = channelService.getLatest(config.getName(), false, false);
+            Optional<ContentKey> optional = channelService.getLatest(config.getName(), false);
             if (optional.isPresent()) {
                 ContentKey latest = optional.get();
                 if (latest.getTime().isAfter(TimeUtil.now().minusDays(1))) {
@@ -119,13 +119,13 @@ public class S3Config {
             keys.add(latest);
             DirectionQuery query = DirectionQuery.builder()
                     .channelName(config.getName())
-                    .contentKey(latest)
+                    .startKey(latest)
                     .next(false)
                     .stable(false)
-                    .ttlTime(config.getTtlTime())
+                    .earliestTime(config.getTtlTime())
                     .count((int) (config.getMaxItems() - 1))
                     .build();
-            keys.addAll(channelService.getKeys(query));
+            keys.addAll(channelService.query(query));
             if (keys.size() == config.getMaxItems()) {
                 ContentKey limitKey = keys.first();
                 logger.info("deleting keys before {}", limitKey);

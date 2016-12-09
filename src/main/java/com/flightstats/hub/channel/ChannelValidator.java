@@ -6,6 +6,7 @@ import com.flightstats.hub.exception.ForbiddenRequestException;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.GlobalConfig;
+import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
@@ -35,15 +36,11 @@ public class ChannelValidator {
         if (oldConfig == null) {
             validateChannelUniqueness(channelName);
         }
-        validateTTL(config);
+        validateTTL(config, oldConfig);
         validateDescription(config);
         validateTags(config);
         validateStorage(config);
         validateGlobal(config);
-        if (oldConfig != null) {
-            validateHistorical(config, oldConfig);
-        }
-        validateHistoricalMax(config);
         if (!isLocalHost) {
             preventDataLoss(config, oldConfig);
         }
@@ -91,20 +88,6 @@ public class ChannelValidator {
                 if (oldConfig.isGlobal()) {
                     throw new ForbiddenRequestException("{\"error\": \"A channels global configuration is not allowed to be removed in this environment\"}");
                 }
-            }
-        }
-    }
-
-    private void validateHistorical(ChannelConfig config, ChannelConfig oldConfig) {
-        if (oldConfig.isHistorical() != config.isHistorical()) {
-            throw new InvalidRequestException("the historical state of a channel can not change.");
-        }
-    }
-
-    private void validateHistoricalMax(ChannelConfig config) {
-        if (config.isHistorical()) {
-            if (config.getMaxItems() > 0) {
-                throw new InvalidRequestException("a historical channel cannot include maxItems");
             }
         }
     }
@@ -163,12 +146,25 @@ public class ChannelValidator {
         }
     }
 
-    private void validateTTL(ChannelConfig request) throws InvalidRequestException {
-        if (request.getTtlDays() == 0 && request.getMaxItems() == 0) {
-            throw new InvalidRequestException("{\"error\": \"ttlDays or maxItems must be greater than 0 (zero) \"}");
+    private void validateTTL(ChannelConfig request, ChannelConfig oldConfig) throws InvalidRequestException {
+        if (request.getTtlDays() == 0 && request.getMaxItems() == 0 && request.getMutableTime() == null) {
+            throw new InvalidRequestException("{\"error\": \"ttlDays, maxItems or mutableTime must be set \"}");
         }
-        if (request.getTtlDays() > 0 && request.getMaxItems() > 0) {
-            throw new InvalidRequestException("{\"error\": \"Only one of ttlDays and maxItems can be defined \"}");
+        if ((request.getTtlDays() > 0 && request.getMaxItems() > 0)
+                || (request.getTtlDays() > 0 && request.getMutableTime() != null)
+                || (request.getMaxItems() > 0 && request.getMutableTime() != null)
+                ) {
+            throw new InvalidRequestException("{\"error\": \"Only one of ttlDays, maxItems and mutableTime can be defined \"}");
+        }
+        if (request.getMutableTime() != null) {
+            if (request.getMutableTime().isAfter(TimeUtil.now())) {
+                throw new InvalidRequestException("{\"error\": \"mutableTime must be in the past. \"}");
+            }
+            if (oldConfig != null && oldConfig.isHistorical()) {
+                if (oldConfig.getMutableTime().isBefore(request.getMutableTime())) {
+                    throw new InvalidRequestException("{\"error\": \"mutableTime can not move forward. \"}");
+                }
+            }
         }
         if (request.getMaxItems() > 5000) {
             throw new InvalidRequestException("{\"error\": \"maxItems must be less than 5000 \"}");

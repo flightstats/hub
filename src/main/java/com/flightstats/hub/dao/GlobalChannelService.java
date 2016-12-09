@@ -98,9 +98,9 @@ public class GlobalChannelService implements ChannelService {
     }
 
     @Override
-    public boolean historicalInsert(String channelName, Content content, boolean minuteComplete) {
+    public boolean historicalInsert(String channelName, Content content) {
         return primaryAndSecondary(channelName,
-                Errors.rethrow().wrap(() -> localChannelService.historicalInsert(channelName, content, minuteComplete)),
+                Errors.rethrow().wrap(() -> localChannelService.historicalInsert(channelName, content)),
                 () -> {
                     ContentKey key = hubUtils.insert(getHistoricalInsertUrl(getMasterChannelUrl(channelName), content), content);
                     return !isNull(key);
@@ -124,11 +124,12 @@ public class GlobalChannelService implements ChannelService {
     }
 
     @Override
-    public Optional<ContentKey> getLatest(String channelName, boolean stable, boolean trace) {
+    public Optional<ContentKey> getLatest(DirectionQuery query) {
+        String channelName = query.getChannelName();
         return primaryAndSecondary(channelName,
-                () -> localChannelService.getLatest(channelName, stable, trace),
+                () -> localChannelService.getLatest(query),
                 () -> {
-                    ContentKey limitKey = localChannelService.getLatestLimit(channelName, stable);
+                    ContentKey limitKey = localChannelService.getLatestLimit(channelName, query.isStable());
                     Optional<ContentKey> latest = spokeContentDao.getLatest(channelName, limitKey, ActiveTraces.getLocal());
                     if (latest.isPresent()) {
                         return latest;
@@ -182,10 +183,10 @@ public class GlobalChannelService implements ChannelService {
     }
 
     @Override
-    public SortedSet<ContentKey> getKeys(DirectionQuery query) {
+    public SortedSet<ContentKey> query(DirectionQuery query) {
         return primaryAndSecondary(query.getChannelName(),
-                () -> localChannelService.getKeys(query),
-                () -> query(query, localChannelService.getKeys(query.withLocation(Location.CACHE))));
+                () -> localChannelService.query(query),
+                () -> query(query, localChannelService.query(query.withLocation(Location.CACHE))));
     }
 
     private SortedSet<ContentKey> query(Query query, SortedSet<ContentKey> contentKeys) {
@@ -217,6 +218,11 @@ public class GlobalChannelService implements ChannelService {
     @Override
     public boolean delete(String channelName) {
         return localChannelService.delete(channelName);
+    }
+
+    @Override
+    public boolean delete(String channelName, ContentKey contentKey) {
+        return localChannelService.delete(channelName, contentKey);
     }
 
     @Override

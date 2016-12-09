@@ -9,6 +9,8 @@ import com.flightstats.hub.model.GlobalConfig;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +35,10 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
         item.put("key", new AttributeValue(config.getName()));
         item.put("date", new AttributeValue().withN(String.valueOf(config.getCreationDate().getTime())));
         item.put("ttlDays", new AttributeValue().withN(String.valueOf(config.getTtlDays())));
-        item.put("historical", new AttributeValue().withBOOL(config.isHistorical()));
+        item.put("maxItems", new AttributeValue().withN(String.valueOf(config.getMaxItems())));
+        if (config.getMutableTime() != null) {
+            item.put("mutableTime", new AttributeValue().withN(String.valueOf(config.getMutableTime().getMillis())));
+        }
         item.put("protect", new AttributeValue().withBOOL(config.isProtect()));
         if (!config.getTags().isEmpty()) {
             item.put("tags", new AttributeValue().withSS(config.getTags()));
@@ -44,7 +49,6 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
         if (StringUtils.isNotEmpty(config.getReplicationSource())) {
             item.put("replicationSource", new AttributeValue(config.getReplicationSource()));
         }
-        item.put("maxItems", new AttributeValue().withN(String.valueOf(config.getMaxItems())));
         if (StringUtils.isNotEmpty(config.getOwner())) {
             item.put("owner", new AttributeValue(config.getOwner()));
         }
@@ -101,9 +105,6 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
         if (item.containsKey("description")) {
             builder.description(item.get("description").getS());
         }
-        if (item.containsKey("historical")) {
-            builder.historical(item.get("historical").getBOOL());
-        }
         if (item.containsKey("tags")) {
             builder.tags(item.get("tags").getSS());
         }
@@ -128,6 +129,9 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
         }
         if (item.containsKey("protect")) {
             builder.protect(item.get("protect").getBOOL());
+        }
+        if (item.containsKey("mutableTime")) {
+            builder.mutableTime(new DateTime(Long.parseLong(item.get("mutableTime").getN()), DateTimeZone.UTC));
         }
         return builder.build();
     }

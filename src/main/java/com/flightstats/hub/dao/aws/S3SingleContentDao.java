@@ -60,12 +60,8 @@ public class S3SingleContentDao implements ContentDao {
 
     public ContentKey insert(String channelName, Content content) {
         return insert(channelName, content, (metadata) -> {
-            try {
-                metadata.addUserMetadata("compressed", "true");
-                return ContentMarshaller.toBytes(content);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            metadata.addUserMetadata("compressed", "true");
+            return content.getData();
         });
     }
 
@@ -78,6 +74,7 @@ public class S3SingleContentDao implements ContentDao {
         ContentKey key = content.getContentKey().get();
         ActiveTraces.getLocal().add("S3SingleContentDao.write", key);
         try {
+            long start = System.currentTimeMillis();
             String s3Key = getS3ContentKey(channelName, key);
             ObjectMetadata metadata = new ObjectMetadata();
             byte[] bytes = handler.apply(metadata);
@@ -85,7 +82,6 @@ public class S3SingleContentDao implements ContentDao {
             InputStream stream = new ByteArrayInputStream(bytes);
             metadata.setContentLength(bytes.length);
             if (content.getContentType().isPresent()) {
-                //todo - gfm - 6/29/16 - do we still want to write this?
                 metadata.setContentType(content.getContentType().get());
                 metadata.addUserMetadata("type", content.getContentType().get());
             } else {
@@ -95,12 +91,12 @@ public class S3SingleContentDao implements ContentDao {
                 metadata.setSSEAlgorithm(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
             }
             PutObjectRequest request = new PutObjectRequest(s3BucketName, s3Key, stream, metadata);
-            statsd.increment("s3.put", "type:single", "channel:" + channelName);
             statsd.count("s3.put.bytes", bytes.length, "channel:" + channelName, "type:single");
-
             sender.send("channel." + channelName + ".s3.put", 1);
             sender.send("channel." + channelName + ".s3.bytes", bytes.length);
             s3Client.putObject(request);
+            long time = System.currentTimeMillis() - start;
+            statsd.time("s3.put", time, "type:single", "channel:" + channelName);
             return key;
         } catch (Exception e) {
             logger.warn("unable to write item to S3 " + channelName + " " + key, e);
@@ -108,6 +104,13 @@ public class S3SingleContentDao implements ContentDao {
         } finally {
             ActiveTraces.getLocal().add("S3SingleContentDao.write completed");
         }
+    }
+
+    @Override
+    public void delete(String channelName, ContentKey key) {
+        String s3ContentKey = getS3ContentKey(channelName, key);
+        s3Client.deleteObject(s3BucketName, s3ContentKey);
+        ActiveTraces.getLocal().add("S3SingleContentDao.deleted", s3ContentKey);
     }
 
     public Content get(final String channelName, final ContentKey key) {
@@ -249,7 +252,7 @@ public class S3SingleContentDao implements ContentDao {
         ListObjectsRequest request = new ListObjectsRequest()
                 .withBucketName(s3BucketName)
                 .withPrefix(query.getChannelName() + "/")
-                .withMarker(query.getChannelName() + "/" + query.getContentKey().toUrl())
+                .withMarker(query.getChannelName() + "/" + query.getStartKey().toUrl())
                 .withMaxKeys(query.getCount());
         return iterateListObjects(query.getChannelName(), request, query.getCount(), TimeUtil.now(), query.getCount(), null);
     }
@@ -266,6 +269,12 @@ public class S3SingleContentDao implements ContentDao {
         } catch (Exception e) {
             logger.warn("unable to delete " + channel + " in " + s3BucketName, e);
         }
+    }
+
+    @Override
+    public ContentKey insertHistorical(String channelName, Content content) throws Exception {
+        //todo gfm - stream directly into S3 using the new multipart api??
+        return insert(channelName, content);
     }
 
     public void delete(String channel) {

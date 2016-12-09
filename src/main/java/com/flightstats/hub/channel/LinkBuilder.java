@@ -22,18 +22,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Consumer;
 
 public class LinkBuilder {
 
     private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-
-    static void addOptionalHeader(String headerName, Optional<String> headerValue, Response.ResponseBuilder builder) {
-        if (headerValue.isPresent()) {
-            builder.header(headerName, headerValue.get());
-        }
-    }
 
     static URI buildChannelUri(String channelName, UriInfo uriInfo) {
         return uriInfo.getBaseUriBuilder().path("channel").path(channelName).build();
@@ -47,13 +40,12 @@ public class LinkBuilder {
         return URI.create(channelUri.toString() + "/" + key);
     }
 
-    public static ObjectNode buildChannelConfigResponse(ChannelConfig config, UriInfo uriInfo) {
+    static ObjectNode buildChannelConfigResponse(ChannelConfig config, UriInfo uriInfo) {
         ObjectNode root = mapper.createObjectNode();
 
         root.put("name", config.getName());
         root.put("creationDate", TimeUtil.FORMATTER.print(new DateTime(config.getCreationDate())));
         root.put("description", config.getDescription());
-        root.put("historical", config.isHistorical());
         if (config.isGlobal()) {
             ObjectNode global = root.putObject("global");
             global.put("master", config.getGlobal().getMaster());
@@ -61,6 +53,11 @@ public class LinkBuilder {
             config.getGlobal().getSatellites().forEach(satellites::add);
         }
         root.put("maxItems", config.getMaxItems());
+        if (config.getMutableTime() != null) {
+            root.put("mutableTime", TimeUtil.FORMATTER.print(config.getMutableTime()));
+        } else {
+            root.put("mutableTime", "");
+        }
         root.put("owner", config.getOwner());
         root.put("protect", config.isProtect());
         root.put("replicationSource", config.getReplicationSource());
@@ -114,17 +111,17 @@ public class LinkBuilder {
                 .build();
     }
 
-    static Response directionalResponse(String channel, Collection<ContentKey> keys, int count,
+    static Response directionalResponse(Collection<ContentKey> keys, int count,
                                         DirectionQuery query, ObjectMapper mapper, UriInfo uriInfo,
                                         boolean includePrevious, boolean trace) {
+        String channel = query.getChannelName();
         ObjectNode root = mapper.createObjectNode();
         ObjectNode links = root.putObject("_links");
         ObjectNode self = links.putObject("self");
         self.put("href", uriInfo.getRequestUri().toString());
         List<ContentKey> list = new ArrayList<>(keys);
-        String baseUri = uriInfo.getBaseUri() + "channel/" + channel + "/";
         if (list.isEmpty()) {
-            ContentKey contentKey = query.getContentKey();
+            ContentKey contentKey = query.getStartKey();
             if (query.isNext()) {
                 ObjectNode previous = links.putObject("previous");
                 previous.put("href", LinkBuilder.getDirection("previous", channel, uriInfo, contentKey, count).toString());
@@ -164,10 +161,10 @@ public class LinkBuilder {
         if (list.isEmpty()) {
             if (query.isNext()) {
                 ObjectNode previous = links.putObject("previous");
-                previous.put("href", baseUri + query.getContentKey().toUrl() + "/previous/" + count);
+                previous.put("href", baseUri + query.getStartKey().toUrl() + "/previous/" + count);
             } else {
                 ObjectNode next = links.putObject("next");
-                next.put("href", baseUri + query.getContentKey().toUrl() + "/next/" + count);
+                next.put("href", baseUri + query.getStartKey().toUrl() + "/next/" + count);
             }
         } else {
             ObjectNode next = links.putObject("next");

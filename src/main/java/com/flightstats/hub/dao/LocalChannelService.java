@@ -1,21 +1,18 @@
 package com.flightstats.hub.dao;
 
-import com.diffplug.common.base.Errors;
-import com.diffplug.common.base.Throwing;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.cluster.LastContentPath;
-import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.exception.ForbiddenRequestException;
+import com.flightstats.hub.exception.InvalidRequestException;
+import com.flightstats.hub.exception.MethodNotAllowedException;
 import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.DataDog;
 import com.flightstats.hub.metrics.MetricsSender;
-import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.replication.ReplicationGlobalManager;
 import com.flightstats.hub.util.TimeUtil;
-import com.flightstats.hub.webhook.WebhookService;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -30,13 +27,10 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static java.util.Objects.isNull;
-
 @Singleton
 public class LocalChannelService implements ChannelService {
     public static final String REPLICATED_LAST_UPDATED = "/ReplicatedLastUpdated/";
-    public static final String HISTORICAL_LAST_UPDATED = "/HistoricalLastUpdated/";
-    public static final String HISTORICAL_FIRST_UPDATED = "/HistoricalFirstUpdated/";
+    private static final String HISTORICAL_EARLIEST = "/HistoricalEarliest/";
 
     private final static Logger logger = LoggerFactory.getLogger(LocalChannelService.class);
     private final static StatsDClient statsd = DataDog.statsd;
@@ -54,8 +48,6 @@ public class LocalChannelService implements ChannelService {
     private MetricsSender sender;
     @Inject
     private LastContentPath lastContentPath;
-    @Inject
-    private WebhookService webhookService;
 
     @Override
     public boolean channelExists(String channelName) {
@@ -66,7 +58,6 @@ public class LocalChannelService implements ChannelService {
     public ChannelConfig createChannel(ChannelConfig configuration) {
         logger.info("create channel {}", configuration);
         channelValidator.validate(configuration, null, false);
-        initializeHistorical(configuration);
         channelConfigDao.upsert(configuration);
         notify(configuration, null);
         return configuration;
@@ -80,6 +71,12 @@ public class LocalChannelService implements ChannelService {
                 replicationGlobalManager.notifyWatchers();
             }
         }
+        if (newConfig.isHistorical()) {
+            if (oldConfig == null || !oldConfig.isHistorical()) {
+                ContentKey lastKey = ContentKey.lastKey(newConfig.getMutableTime());
+                lastContentPath.update(lastKey, newConfig.getName(), HISTORICAL_EARLIEST);
+            }
+        }
         contentService.notify(newConfig, oldConfig);
     }
 
@@ -88,9 +85,6 @@ public class LocalChannelService implements ChannelService {
         if (!configuration.equals(oldConfig)) {
             logger.info("updating channel {} from {}", configuration, oldConfig);
             channelValidator.validate(configuration, oldConfig, isLocalHost);
-            if (isNull(oldConfig)) {
-                initializeHistorical(configuration);
-            }
             channelConfigDao.upsert(configuration);
             notify(configuration, oldConfig);
         } else {
@@ -99,18 +93,8 @@ public class LocalChannelService implements ChannelService {
         return configuration;
     }
 
-    private void initializeHistorical(ChannelConfig configuration) {
-        if (configuration.isHistorical()) {
-            lastContentPath.initialize(configuration.getName(), ContentKey.NONE, HISTORICAL_LAST_UPDATED);
-            lastContentPath.initialize(configuration.getName(), ContentKey.NONE, HISTORICAL_FIRST_UPDATED);
-        }
-    }
-
     @Override
     public ContentKey insert(String channelName, Content content) throws Exception {
-        if (isHistorical(channelName)) {
-            throw new ForbiddenRequestException("live inserts are not supported for historical channels.");
-        }
         if (content.isNew() && isReplicating(channelName)) {
             throw new ForbiddenRequestException(channelName + " cannot modified while replicating");
         }
@@ -128,29 +112,25 @@ public class LocalChannelService implements ChannelService {
     }
 
     @Override
-    public boolean historicalInsert(String channelName, Content content, boolean minuteComplete) throws Exception {
+    public boolean historicalInsert(String channelName, Content content) throws Exception {
         if (!isHistorical(channelName)) {
-            throw new ForbiddenRequestException("historical inserts are only supported for historical channels.");
+            logger.warn("historical inserts require a mutableTime on the channel. {}", channelName);
+            throw new ForbiddenRequestException("historical inserts require a mutableTime on the channel.");
         }
-        Throwing.Function<ContentPath, ContentPath> inserter = existing -> {
-            ContentKey insertKey = content.getContentKey().get();
-            if (insertKey.compareTo(existing) <= 0) {
-                throw new ConflictException("inserted item is not newer than existing item: " + existing);
-            }
-            if (contentService.historicalInsert(channelName, content)) {
-                if (existing.equals(ContentKey.NONE)) {
-                    lastContentPath.updateIncrease(insertKey, channelName, HISTORICAL_FIRST_UPDATED);
-                    webhookService.unPauseHistorical(getCachedChannelConfig(channelName));
-                }
-                ContentPath nextPath = insertKey;
-                if (minuteComplete) {
-                    nextPath = new MinutePath(nextPath.getTime());
-                }
-                return nextPath;
-            }
-            return existing;
-        };
-        return lastContentPath.updateIncrease(channelName, HISTORICAL_LAST_UPDATED, Errors.rethrow().wrap(inserter));
+        long start = System.currentTimeMillis();
+        ChannelConfig channelConfig = getCachedChannelConfig(channelName);
+        ContentKey contentKey = content.getContentKey().get();
+        if (contentKey.getTime().isAfter(channelConfig.getMutableTime())) {
+            String msg = "historical inserts must not be after mutableTime" + channelName + " " + contentKey;
+            logger.warn(msg);
+            throw new InvalidRequestException(msg);
+        }
+        boolean insert = contentService.historicalInsert(channelName, content);
+        lastContentPath.updateDecrease(contentKey, channelName, HISTORICAL_EARLIEST);
+        long time = System.currentTimeMillis() - start;
+        statsd.time("channel.historical", time, "method:post", "type:single", "channel:" + channelName);
+        statsd.count("channel.historical.bytes", content.getSize(), "method:post", "type:single", "channel:" + channelName);
+        return insert;
     }
 
     @Override
@@ -191,33 +171,27 @@ public class LocalChannelService implements ChannelService {
     }
 
     @Override
-    public Optional<ContentKey> getLatest(String channel, boolean stable, boolean trace) {
-        ChannelConfig channelConfig = getCachedChannelConfig(channel);
-        if (null == channelConfig) {
+    public Optional<ContentKey> getLatest(DirectionQuery query) {
+        String channel = query.getChannelName();
+        if (!channelExists(channel)) {
             return Optional.absent();
         }
-        Traces traces = ActiveTraces.getLocal();
-        if (channelConfig.isHistorical()) {
-            ContentPath lastUpdated = getLastUpdated(channel, ContentKey.NONE);
-            traces.add("found historical last updated", lastUpdated);
-            if (lastUpdated.equals(ContentKey.NONE)) {
-                return Optional.absent();
-            }
-            return Optional.of((ContentKey) lastUpdated);
-        }
-        ContentKey limitKey = getLatestLimit(channel, stable);
-        traces.add("get latest limit", limitKey);
-        Optional<ContentKey> latest = contentService.getLatest(channel, limitKey, traces, stable);
+        query = query.withStartKey(getLatestLimit(query.getChannelName(), query.isStable()));
+        query = configureQuery(query);
+        Optional<ContentKey> latest = contentService.getLatest(query);
+        ActiveTraces.getLocal().add("before filter", channel, latest);
         if (latest.isPresent()) {
-            DateTime ttlTime = getTtlTime(channel);
-            if (latest.get().getTime().isBefore(ttlTime)) {
+            SortedSet<ContentKey> filtered = ContentKeyUtil.filter(latest.asSet(), query);
+            if (filtered.isEmpty()) {
                 return Optional.absent();
             }
-        }
-        if (trace) {
-            traces.log(logger);
         }
         return latest;
+    }
+
+    private DirectionQuery configureStable(DirectionQuery query) {
+        ContentPath lastUpdated = getLatestLimit(query.getChannelName(), query.isStable());
+        return query.withChannelStable(lastUpdated.getTime());
     }
 
     ContentKey getLatestLimit(String channelName, boolean stable) {
@@ -236,8 +210,8 @@ public class LocalChannelService implements ChannelService {
 
     @Override
     public Optional<Content> get(Request request) {
-        DateTime ttlTime = getTtlTime(request.getChannel()).minusMinutes(15);
-        if (request.getKey().getTime().isBefore(ttlTime)) {
+        DateTime limitTime = getChannelLimitTime(request.getChannel()).minusMinutes(15);
+        if (request.getKey().getTime().isBefore(limitTime)) {
             return Optional.absent();
         }
         return contentService.get(request.getChannel(), request.getKey());
@@ -296,38 +270,63 @@ public class LocalChannelService implements ChannelService {
         if (query == null) {
             return Collections.emptySortedSet();
         }
-        DateTime ttlTime = getTtlTime(query.getChannelName());
-        Stream<ContentKey> stream = contentService.queryByTime(query).stream()
-                .filter(key -> !key.getTime().isBefore(ttlTime));
-        if (query.isStable()) {
-            DateTime stableTime = TimeUtil.stable();
-            stream = stream.filter(key -> key.getTime().isBefore(stableTime));
-        }
+        query = query.withChannelConfig(getCachedChannelConfig(query.getChannelName()));
+        ContentPath lastUpdated = getLastUpdated(query.getChannelName(), new ContentKey(TimeUtil.time(query.isStable())));
+        query = query.withChannelStable(lastUpdated.getTime());
+        Stream<ContentKey> stream = contentService.queryByTime(query).stream();
+        stream = ContentKeyUtil.enforceLimits(query, stream);
         return stream.collect(Collectors.toCollection(TreeSet::new));
     }
 
     @Override
-    public SortedSet<ContentKey> getKeys(DirectionQuery query) {
+    public SortedSet<ContentKey> query(DirectionQuery query) {
         if (query.getCount() <= 0) {
             return Collections.emptySortedSet();
         }
+        query = configureQuery(query);
+        List<ContentKey> keys = new ArrayList<>(contentService.queryDirection(query));
+        SortedSet<ContentKey> contentKeys = ContentKeyUtil.filter(keys, query);
+        ActiveTraces.getLocal().add("ChannelService.query", contentKeys);
+        return contentKeys;
+    }
+
+    private DirectionQuery configureQuery(DirectionQuery query) {
+        ActiveTraces.getLocal().add("configureQuery.start", query);
         if (query.getCount() > DIR_COUNT_LIMIT) {
             query = query.withCount(DIR_COUNT_LIMIT);
         }
-        DateTime ttlTime = getTtlTime(query.getChannelName());
-        if (query.getContentKey().getTime().isBefore(ttlTime)) {
-            query = query.withContentKey(new ContentKey(ttlTime, "0"));
+        ChannelConfig channelConfig = getCachedChannelConfig(query.getChannelName());
+        query = query.withChannelConfig(channelConfig);
+        DateTime ttlTime = getChannelTtl(channelConfig, query.getEpoch());
+        query = query.withEarliestTime(ttlTime);
+
+        if (query.getStartKey().getTime().isBefore(ttlTime)) {
+            query = query.withStartKey(new ContentKey(ttlTime, "0"));
         }
-        query = query.withLiveChannel(getCachedChannelConfig(query.getChannelName()).isLive());
-        query = query.withTtlTime(ttlTime);
-        ContentPath lastUpdated = getLastUpdated(query.getChannelName(), new ContentKey(TimeUtil.time(query.isStable())));
-        query = query.withChannelStable(lastUpdated.getTime());
-        Traces traces = ActiveTraces.getLocal();
-        traces.add(query);
-        List<ContentKey> keys = new ArrayList<>(contentService.queryDirection(query));
-        SortedSet<ContentKey> contentKeys = ContentKeyUtil.filter(keys, query.getContentKey(), ttlTime, query.getCount(), query.isNext(), query.isStable());
-        traces.add("ChannelServiceImpl.getKeys", contentKeys);
-        return contentKeys;
+        if (query.getEpoch().equals(Epoch.MUTABLE)) {
+            if (!query.isNext()) {
+                DateTime mutableTime = channelConfig.getMutableTime();
+                if (query.getStartKey().getTime().isAfter(mutableTime)) {
+                    query = query.withStartKey(ContentKey.lastKey(mutableTime.plusMillis(1)));
+                }
+            }
+        }
+        query = configureStable(query);
+        ActiveTraces.getLocal().add("configureQuery.end", query);
+        return query;
+    }
+
+    private DateTime getChannelTtl(ChannelConfig channelConfig, Epoch epoch) {
+        DateTime ttlTime = channelConfig.getTtlTime();
+        if (channelConfig.isHistorical()) {
+            if (epoch.equals(Epoch.IMMUTABLE)) {
+                ttlTime = channelConfig.getMutableTime();
+            } else {
+                ContentKey lastKey = ContentKey.lastKey(channelConfig.getMutableTime());
+                return lastContentPath.get(channelConfig.getName(), lastKey, HISTORICAL_EARLIEST).getTime();
+            }
+        }
+        return ttlTime;
     }
 
     @Override
@@ -335,12 +334,12 @@ public class LocalChannelService implements ChannelService {
         contentService.get(channel, keys, callback);
     }
 
-    private DateTime getTtlTime(String channelName) {
-        ChannelConfig channel = getCachedChannelConfig(channelName);
-        if (channel.isHistorical()) {
-            return lastContentPath.get(channelName, new ContentKey(), HISTORICAL_FIRST_UPDATED).getTime();
+    private DateTime getChannelLimitTime(String channelName) {
+        ChannelConfig channelConfig = getCachedChannelConfig(channelName);
+        if (channelConfig.isHistorical()) {
+            return TimeUtil.BIG_BANG;
         }
-        return channel.getTtlTime();
+        return channelConfig.getTtlTime();
     }
 
     @Override
@@ -355,18 +354,26 @@ public class LocalChannelService implements ChannelService {
             replicationGlobalManager.notifyWatchers();
             lastContentPath.delete(channelName, REPLICATED_LAST_UPDATED);
         }
-        if (channelConfig.isHistorical()) {
-            lastContentPath.delete(channelName, HISTORICAL_LAST_UPDATED);
-            lastContentPath.delete(channelName, HISTORICAL_FIRST_UPDATED);
-        }
+
         return true;
     }
 
     @Override
-    public ContentPath getLastUpdated(String channelName, ContentPath defaultValue) {
-        if (isHistorical(channelName)) {
-            return lastContentPath.get(channelName, defaultValue, HISTORICAL_LAST_UPDATED);
+    public boolean delete(String channelName, ContentKey contentKey) {
+        ChannelConfig channelConfig = getCachedChannelConfig(channelName);
+        if (channelConfig.isHistorical()) {
+            if (!contentKey.getTime().isAfter(channelConfig.getMutableTime())) {
+                contentService.delete(channelName, contentKey);
+                return true;
+            }
         }
+        String message = "item is not within the channels mutableTime";
+        ActiveTraces.getLocal().add(message, channelName, contentKey);
+        throw new MethodNotAllowedException(message);
+    }
+
+    @Override
+    public ContentPath getLastUpdated(String channelName, ContentPath defaultValue) {
         if (isReplicating(channelName)) {
             return lastContentPath.get(channelName, defaultValue, REPLICATED_LAST_UPDATED);
         }

@@ -14,7 +14,7 @@ public class DirectionQueryTest {
         DateTime start = TimeUtil.now();
         ContentKey contentKey = new ContentKey(start, "a");
         DirectionQuery query = DirectionQuery.builder()
-                .contentKey(contentKey)
+                .startKey(contentKey)
                 .next(false)
                 .build();
         assertTrue(query.outsideOfCache(start));
@@ -27,7 +27,7 @@ public class DirectionQueryTest {
         DateTime start = TimeUtil.now();
         ContentKey contentKey = new ContentKey(start, "a");
         DirectionQuery query = DirectionQuery.builder()
-                .contentKey(contentKey)
+                .startKey(contentKey)
                 .next(true)
                 .build();
         assertFalse(query.outsideOfCache(start));

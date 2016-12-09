@@ -5,6 +5,8 @@ import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.TagService;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.Epoch;
+import com.flightstats.hub.model.Location;
 import com.google.common.base.Optional;
 
 import javax.ws.rs.*;
@@ -28,8 +30,11 @@ public class TagLatestResource {
     @GET
     public Response getLatest(@PathParam("tag") String tag,
                               @QueryParam("stable") @DefaultValue("true") boolean stable,
-                              @QueryParam("trace") @DefaultValue("false") boolean trace, @Context UriInfo uriInfo) {
-        Optional<ChannelContentKey> latest = tagService.getLatest(tag, stable, trace);
+                              @QueryParam("trace") @DefaultValue("false") boolean trace,
+                              @QueryParam("location") @DefaultValue(Location.DEFAULT) String location,
+                              @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
+                              @Context UriInfo uriInfo) {
+        Optional<ChannelContentKey> latest = tagService.getLatest(getQuery(tag, stable, location, epoch));
         if (latest.isPresent()) {
             URI uri = uriInfo.getBaseUriBuilder()
                     .path(latest.get().toUrl())
@@ -38,6 +43,17 @@ public class TagLatestResource {
             return Response.status(SEE_OTHER).location(uri).build();
         }
         return Response.status(NOT_FOUND).build();
+    }
+
+    private DirectionQuery getQuery(String tag, boolean stable, String location, String epoch) {
+        return DirectionQuery.builder()
+                .tagName(tag)
+                .next(false)
+                .stable(stable)
+                .count(1)
+                .location(Location.valueOf(location))
+                .epoch(Epoch.valueOf(epoch))
+                .build();
     }
 
     @GET
@@ -49,16 +65,21 @@ public class TagLatestResource {
                                    @QueryParam("batch") @DefaultValue("false") boolean batch,
                                    @QueryParam("bulk") @DefaultValue("false") boolean bulk,
                                    @QueryParam("trace") @DefaultValue("false") boolean trace,
-                                   @HeaderParam("Accept") String accept, @Context UriInfo uriInfo) {
-        Optional<ChannelContentKey> latest = tagService.getLatest(tag, stable, trace);
+                                   @QueryParam("location") @DefaultValue(Location.DEFAULT) String location,
+                                   @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
+                                   @HeaderParam("Accept") String accept,
+                                   @Context UriInfo uriInfo) {
+        Optional<ChannelContentKey> latest = tagService.getLatest(getQuery(tag, stable, location, epoch));
         if (!latest.isPresent()) {
             return Response.status(NOT_FOUND).build();
         }
         DirectionQuery query = DirectionQuery.builder()
                 .tagName(tag)
-                .contentKey(latest.get().getContentKey())
+                .startKey(latest.get().getContentKey())
                 .next(false)
                 .stable(stable)
+                .location(Location.valueOf(location))
+                .epoch(Epoch.valueOf(epoch))
                 .count(count - 1)
                 .build();
         SortedSet<ChannelContentKey> keys = tagService.getKeys(query);

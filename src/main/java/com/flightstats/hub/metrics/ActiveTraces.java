@@ -33,10 +33,10 @@ public class ActiveTraces {
     }
 
     public static boolean end() {
-        return end(false);
+        return end(false, 0);
     }
 
-    public static boolean end(boolean trace) {
+    public static boolean end(boolean trace, int status) {
         Traces traces = threadLocal.get();
         if (null == traces) {
             logger.trace("no Traces found");
@@ -45,7 +45,7 @@ public class ActiveTraces {
             logger.trace("removing {}", traces.getId());
             activeTraces.remove(traces.getId());
             threadLocal.remove();
-            traces.end();
+            traces.end(status);
             traces.log(logSlowTraces, trace, logger);
             recent.put(traces);
             slowest.add(traces);

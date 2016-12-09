@@ -63,7 +63,7 @@ function createChannel(channelName, url, description) {
 
 }
 
-function putChannel(channelName, verify, body, description, expectedStatus) {
+exports.putChannel = function putChannel(channelName, verify, body, description, expectedStatus) {
     expectedStatus = expectedStatus || 201;
     verify = verify || function () {};
     body = body || {"name" : channelName};
@@ -194,7 +194,7 @@ function getGroup(groupName, groupConfig, status, verify) {
                 }
             }
         };
-    itSleeps(500);
+    utils.itSleeps(500);
     it('gets group ' + groupName, function (done) {
         request.get({url : groupResource,
                 headers : {"Content-Type" : "application/json"} },
@@ -249,14 +249,15 @@ function getQ(url, status, stable) {
     return deferred.promise;
 }
 
-function itSleeps(millis) {
+exports.itSleeps = function itSleeps(millis) {
     it('sleeps', function () {
-        sleep(millis);
+        utils.sleep(millis);
     })
 }
 
-function sleep(millis) {
+exports.sleep = function sleep(millis) {
     runs(function() {
+        console.log('sleeping for ' + millis);
         flag = false;
 
         setTimeout(function() {
@@ -269,7 +270,7 @@ function sleep(millis) {
     }, millis + 1000);
 }
 
-function sleepQ(millis) {
+exports.sleepQ = function sleepQ(millis) {
     var deferred = Q.defer();
     setTimeout(function () {
         deferred.resolve('slept');
@@ -375,18 +376,42 @@ function parseJson(response, description) {
     }
 }
 
+exports.getLocation = function getLocation(url, status, expectedLocation, done) {
+    request.get({url: url, followRedirect: false},
+        function (err, response, body) {
+            expect(err).toBeNull();
+            expect(response.statusCode).toBe(status);
+            if (expectedLocation) {
+                expect(response.headers.location).toBe(expectedLocation);
+            }
+            done();
+        });
+}
+
+exports.getQuery = function getQuery(url, status, expectedUris, done) {
+    request.get({url: url, followRedirect: true},
+        function (err, response, body) {
+            expect(err).toBeNull();
+            expect(response.statusCode).toBe(status);
+            if (expectedUris) {
+                var parsed = parseJson(response);
+                expect(parsed._links.uris.length).toBe(expectedUris.length);
+                for (var i = 0; i < expectedUris.length; i++) {
+                    expect(parsed._links.uris[i]).toBe(expectedUris[i]);
+                }
+            }
+            done();
+        });
+}
+
 exports.runInTestChannel = runInTestChannel;
 exports.download = download;
 exports.randomChannelName = randomChannelName;
 exports.configureFrisby = configureFrisby;
 exports.runInTestChannelJson = runInTestChannelJson;
 exports.createChannel = createChannel;
-exports.putChannel = putChannel;
 exports.getChannel = getChannel;
 exports.addItem = addItem;
-exports.sleep = sleep;
-exports.itSleeps = itSleeps;
-exports.sleepQ = sleepQ;
 exports.timeout = timeout;
 exports.getWebhookUrl = getGroupUrl;
 exports.putWebhook = putGroup;

@@ -100,6 +100,10 @@ public class FileSpokeStore {
         return true;
     }
 
+    public boolean deleteFile(String path) throws Exception {
+        return FileUtils.deleteQuietly(spokeFilePathPart(path));
+    }
+
     // given a url containing a key, return the file format
     // example: "test_0_4274725520517677/2014/11/18/00/57/24/015/NV2cl5"
     @VisibleForTesting
@@ -227,6 +231,7 @@ public class FileSpokeStore {
         MinutePath minutePath = new MinutePath(start.getTime());
         boolean firstMinute = true;
         do {
+            //todo gfm - while this fast for short time ranges, it is quite slow over years
             String minuteUrl = minutePath.toUrl();
             String minute = channelPath + minuteUrl;
             logger.trace("minute {}", minute);
@@ -251,7 +256,7 @@ public class FileSpokeStore {
         } while (found < count && minutePath.getTime().isBefore(now));
     }
 
-    public void enforceTtl(String channel, DateTime dateTime) {
+    void enforceTtl(String channel, DateTime dateTime) {
         String limitPath = TimeUtil.minutes(dateTime);
         logger.debug("enforceTtl {} {}", channel, limitPath);
         String[] split = StringUtils.split(limitPath, "/");
@@ -282,9 +287,6 @@ public class FileSpokeStore {
                     FileUtils.deleteQuietly(new File(storagePath + "/" + current));
                 }
             }
-        }
-        if (count == 4) {
-            return;
         }
     }
 

@@ -50,7 +50,7 @@ public class TagService {
         Traces traces = ActiveTraces.getLocal();
         for (ChannelConfig channel : channels) {
             traces.add("query for channel", channel.getName());
-            Collection<ContentKey> contentKeys = channelService.getKeys(query.withChannelName(channel.getName()));
+            Collection<ContentKey> contentKeys = channelService.query(query.withChannelName(channel.getName()));
             traces.add("query size for channel", channel.getName(), contentKeys.size());
             for (ContentKey contentKey : contentKeys) {
                 orderedKeys.add(new ChannelContentKey(channel.getName(), contentKey));
@@ -69,11 +69,11 @@ public class TagService {
                 .collect(Collectors.toCollection(TreeSet::new));
     }
 
-    public Optional<ChannelContentKey> getLatest(String tag, boolean stable, boolean trace) {
-        Iterable<ChannelConfig> channels = getChannels(tag);
+    public Optional<ChannelContentKey> getLatest(DirectionQuery tagQuery) {
+        Iterable<ChannelConfig> channels = getChannels(tagQuery.getTagName());
         SortedSet<ChannelContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
         for (ChannelConfig channel : channels) {
-            Optional<ContentKey> contentKey = channelService.getLatest(channel.getName(), stable, trace);
+            Optional<ContentKey> contentKey = channelService.getLatest(tagQuery.withChannelName(channel.getName()));
             if (contentKey.isPresent()) {
                 orderedKeys.add(new ChannelContentKey(channel.getName(), contentKey.get()));
             }
@@ -85,20 +85,17 @@ public class TagService {
         }
     }
 
-    public SortedSet<ChannelContentKey> getEarliest(String tag, int count, boolean stable, boolean trace) {
-        Iterable<ChannelConfig> channels = getChannels(tag);
+    public SortedSet<ChannelContentKey> getEarliest(DirectionQuery tagQuery) {
+        Iterable<ChannelConfig> channels = getChannels(tagQuery.getTagName());
         Traces traces = ActiveTraces.getLocal();
-        traces.add("TagService.getEarliest", tag);
+        traces.add("TagService.getEarliest", tagQuery.getTagName());
         SortedSet<ChannelContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
         for (ChannelConfig channel : channels) {
-            DirectionQuery query = ChannelEarliestResource.getDirectionQuery(channel.getName(), count, stable, channelService);
-            Collection<ContentKey> contentKeys = channelService.getKeys(query);
-            for (ContentKey contentKey : contentKeys) {
+            DirectionQuery query = ChannelEarliestResource.getDirectionQuery(channel.getName(), tagQuery.getCount(),
+                    tagQuery.isStable(), tagQuery.getLocation().name(), tagQuery.getEpoch().name());
+            for (ContentKey contentKey : channelService.query(query)) {
                 orderedKeys.add(new ChannelContentKey(channel.getName(), contentKey));
             }
-        }
-        if (trace) {
-            traces.log(logger);
         }
         traces.add("TagService.getEarliest completed", orderedKeys);
         return orderedKeys;

@@ -1,5 +1,6 @@
 package com.flightstats.hub.dao.file;
 
+import com.flightstats.hub.dao.ContentKeyUtil;
 import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.dao.ContentService;
 import com.flightstats.hub.exception.FailedWriteException;
@@ -49,15 +50,16 @@ public class SingleContentService implements ContentService {
         logger.info("inserting {}", bulkContent);
         for (Content content : bulkContent.getItems()) {
             logger.info("inserting item key {}", content.getContentKey().get());
-            content.setData(ContentMarshaller.toBytes(content));
+            content.packageStream();
             keys.add(insert(bulkContent.getChannel(), content));
         }
         return keys;
     }
 
     @Override
-    public boolean historicalInsert(String channelName, Content content) {
-        return false;
+    public boolean historicalInsert(String channelName, Content content) throws Exception {
+        insert(channelName, content);
+        return true;
     }
 
     private String getPath(String channelName, ContentKey key) {
@@ -109,16 +111,28 @@ public class SingleContentService implements ContentService {
     }
 
     @Override
+    public void delete(String channelName, ContentKey key) {
+        try {
+            String path = getPath(channelName, key);
+            boolean delete = fileSpokeStore.deleteFile(path);
+            ActiveTraces.getLocal().add("SingleContentService.delete", delete, path);
+        } catch (Exception e) {
+            logger.warn("deletion error", e);
+        }
+    }
+
+    @Override
     public Collection<ContentKey> queryDirection(DirectionQuery query) {
-        TreeSet<ContentKey> keys = new TreeSet<>();
+        SortedSet<ContentKey> keys = new TreeSet<>();
         TimeUtil.Unit hours = TimeUtil.Unit.HOURS;
-        DateTime time = query.getContentKey().getTime();
+        DateTime time = query.getStartKey().getTime();
         if (query.isNext()) {
             handleNext(query, keys);
         } else {
-            DateTime limitTime = query.getTtlTime().minusDays(1);
+            DateTime limitTime = query.getEarliestTime().minusDays(1);
             while (keys.size() < query.getCount() && time.isAfter(limitTime)) {
                 addKeys(query, keys, hours, time);
+                keys = ContentKeyUtil.filter(keys, query);
                 time = time.minus(hours.getDuration());
             }
         }
@@ -128,7 +142,7 @@ public class SingleContentService implements ContentService {
     private void handleNext(DirectionQuery query, Set<ContentKey> keys) {
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            fileSpokeStore.getNext(query.getChannelName(), query.getContentKey().toUrl(), query.getCount(), baos);
+            fileSpokeStore.getNext(query.getChannelName(), query.getStartKey().toUrl(), query.getCount(), baos);
             String keyString = baos.toString();
             ContentKeyUtil.convertKeyStrings(keyString, keys);
         } catch (IOException e) {
@@ -136,14 +150,14 @@ public class SingleContentService implements ContentService {
         }
     }
 
-    private void addKeys(DirectionQuery query, TreeSet<ContentKey> keys, TimeUtil.Unit hours, DateTime time) {
+    private void addKeys(DirectionQuery query, Collection<ContentKey> keys, TimeUtil.Unit hours, DateTime time) {
         String path = query.getChannelName() + "/" + hours.format(time);
         ContentKeyUtil.convertKeyStrings(fileSpokeStore.readKeysInBucket(path), keys);
     }
 
     @Override
-    public Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces, boolean stable) {
-        return ContentKeyUtil.convertKey(fileSpokeStore.getLatest(channel, limitKey.toUrl()));
+    public Optional<ContentKey> getLatest(DirectionQuery query) {
+        return ContentService.chooseLatest(queryDirection(query), query);
     }
 
     @Override

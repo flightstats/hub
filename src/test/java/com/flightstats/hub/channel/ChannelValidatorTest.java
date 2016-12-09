@@ -8,6 +8,7 @@ import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.GlobalConfig;
 import com.google.common.base.Strings;
+import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -89,11 +90,62 @@ public class ChannelValidatorTest {
     }
 
     @Test(expected = InvalidRequestException.class)
-    public void testInvalidChannelTtl() throws Exception {
+    public void testInvalidChannelTtlMax() throws Exception {
         validator.validate(ChannelConfig.builder()
                 .name("mychan")
                 .ttlDays(10)
                 .maxItems(10)
+                .build(), null, false);
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void testInvalidChannelTtlMutable() throws Exception {
+        validator.validate(ChannelConfig.builder()
+                .name("mychan")
+                .ttlDays(10)
+                .mutableTime(new DateTime())
+                .build(), null, false);
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void testInvalidChannelMaxMutable() throws Exception {
+        validator.validate(ChannelConfig.builder()
+                .name("mychan")
+                .mutableTime(new DateTime())
+                .maxItems(10)
+                .build(), null, false);
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void testInvalidChannelMutableTime() throws Exception {
+        validator.validate(ChannelConfig.builder()
+                .name("mychan")
+                .mutableTime(new DateTime().plusMinutes(1))
+                .build(), null, false);
+    }
+
+    @Test
+    public void testMutableTime() throws Exception {
+        validator.validate(ChannelConfig.builder()
+                .name("mychan")
+                .mutableTime(new DateTime())
+                .build(), null, false);
+    }
+
+    @Test
+    public void testMutableTimeForward() throws Exception {
+        ChannelConfig first = ChannelConfig.builder().name("mychan").mutableTime(new DateTime().minusDays(2)).build();
+        ChannelConfig second = first.toBuilder().mutableTime(new DateTime().minusDays(1)).build();
+        validator.validate(first, second, false);
+        validator.validate(first, first, false);
+        validateError(second, first);
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void testMutableTimeFuture() throws Exception {
+        validator.validate(ChannelConfig.builder()
+                .name("testMutableTimeFuture")
+                .mutableTime(new DateTime().plusMinutes(1))
                 .build(), null, false);
     }
 
@@ -159,11 +211,6 @@ public class ChannelValidatorTest {
     }
 
     @Test
-    public void testHistoricalTag() {
-        ChannelConfig config = ChannelConfig.builder().historical(true).build();
-        assertTrue(config.getTags().contains("historical"));
-    }
-
     public void testOwner() throws Exception {
         validator.validate(ChannelConfig.builder().name("A").owner(Strings.repeat("A", 48)).build(), null, false);
     }
@@ -240,19 +287,6 @@ public class ChannelValidatorTest {
         validator.validate(ChannelConfig.builder()
                 .name("global")
                 .global(globalConfig).build(), null, false);
-    }
-
-    @Test(expected = InvalidRequestException.class)
-    public void testHistoricalSwitch() throws Exception {
-        ChannelConfig configA = ChannelConfig.builder().name("A").historical(false).build();
-        ChannelConfig configB = ChannelConfig.builder().name("B").historical(true).build();
-        validator.validate(configA, configB, false);
-    }
-
-    @Test(expected = InvalidRequestException.class)
-    public void testHistoricalNotMax() throws Exception {
-        ChannelConfig configA = ChannelConfig.builder().name("A").historical(true).maxItems(10).build();
-        validator.validate(configA, null, false);
     }
 
     @Test
@@ -347,6 +381,7 @@ public class ChannelValidatorTest {
         validator.validate(dataLoss, noLoss, true);
 
     }
+
     private GlobalConfig getGlobalConfig() {
         GlobalConfig twoSatellites = new GlobalConfig();
         twoSatellites.setMaster("http://master");
@@ -359,7 +394,7 @@ public class ChannelValidatorTest {
         try {
             validator.validate(config, oldConfig, false);
             fail("expected exception");
-        } catch (ForbiddenRequestException e) {
+        } catch (ForbiddenRequestException | InvalidRequestException e) {
             //this is expected
         }
     }

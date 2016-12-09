@@ -3,10 +3,7 @@ package com.flightstats.hub.channel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.model.ChannelConfig;
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.DirectionQuery;
-import org.joda.time.DateTime;
+import com.flightstats.hub.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,15 +35,16 @@ public class ChannelEarliestResource {
     public Response getEarliest(@PathParam("channel") String channel,
                                 @QueryParam("stable") @DefaultValue("true") boolean stable,
                                 @QueryParam("trace") @DefaultValue("false") boolean trace,
+                                @QueryParam("location") @DefaultValue(Location.DEFAULT) String location,
+                                @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
                                 @QueryParam("tag") String tag) {
         if (tag != null) {
-            return tagEarliestResource.getEarliest(tag, stable, trace, uriInfo);
+            return tagEarliestResource.getEarliest(tag, stable, trace, location, epoch, uriInfo);
         }
-        DirectionQuery query = getDirectionQuery(channel, 1, stable, channelService);
-        Collection<ContentKey> keys = channelService.getKeys(query);
+        DirectionQuery query = getDirectionQuery(channel, 1, stable, location, epoch);
+        Collection<ContentKey> keys = channelService.query(query);
         if (keys.isEmpty()) {
             return Response.status(NOT_FOUND).build();
-
         } else {
             return Response.status(SEE_OTHER)
                     .location(URI.create(uriInfo.getBaseUri() + "channel/" + channel + "/" + keys.iterator().next().toUrl()))
@@ -63,32 +61,40 @@ public class ChannelEarliestResource {
                                      @QueryParam("trace") @DefaultValue("false") boolean trace,
                                      @QueryParam("batch") @DefaultValue("false") boolean batch,
                                      @QueryParam("bulk") @DefaultValue("false") boolean bulk,
+                                     @QueryParam("location") @DefaultValue(Location.DEFAULT) String location,
+                                     @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
                                      @QueryParam("tag") String tag,
                                      @HeaderParam("Accept") String accept) {
         if (tag != null) {
-            return tagEarliestResource.getEarliestCount(tag, count, stable, bulk, batch, trace, accept, uriInfo);
+            return tagEarliestResource.getEarliestCount(tag, count, stable, bulk, batch, trace, location, epoch, accept, uriInfo);
         }
-        DirectionQuery query = getDirectionQuery(channel, count, stable, channelService);
-        SortedSet<ContentKey> keys = channelService.getKeys(query);
+        DirectionQuery query = getDirectionQuery(channel, count, stable, location, epoch);
+        SortedSet<ContentKey> keys = channelService.query(query);
+        if (keys.isEmpty()) {
+            return Response.status(NOT_FOUND).build();
+        }
         if (bulk || batch) {
             return BulkBuilder.build(keys, channel, channelService, uriInfo, accept);
         } else {
-            return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, false, trace);
+            return LinkBuilder.directionalResponse(keys, count, query, mapper, uriInfo, false, trace);
         }
     }
 
-    public static DirectionQuery getDirectionQuery(String channel, int count, boolean stable, ChannelService channelService) {
-        ChannelConfig channelConfig = channelService.getCachedChannelConfig(channel);
-        DateTime ttlTime = channelConfig.getTtlTime();
-        ContentKey limitKey = new ContentKey(ttlTime, "0");
+    public static DirectionQuery getDirectionQuery(String channel, int count, boolean stable) {
+        return getDirectionQuery(channel, count, stable, Location.DEFAULT, Epoch.DEFAULT);
+    }
 
+    public static DirectionQuery getDirectionQuery(String channel, int count, boolean stable, String location, String epoch) {
+        ChannelConfig channelConfig = channelService.getCachedChannelConfig(channel);
+        ContentKey startKey = new ContentKey(channelConfig.getTtlTime(), "0");
         return DirectionQuery.builder()
                 .channelName(channel)
-                .contentKey(limitKey)
                 .next(true)
                 .stable(stable)
-                .ttlTime(ttlTime)
+                .startKey(startKey)
                 .count(count)
+                .location(Location.valueOf(location))
+                .epoch(Epoch.valueOf(epoch))
                 .build();
     }
 

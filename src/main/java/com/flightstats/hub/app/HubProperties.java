@@ -38,6 +38,7 @@ public class HubProperties {
     public static String getSpokePath() {
         return getProperty("spoke.path", "/spoke");
     }
+
     static Properties getProperties() {
         return properties;
     }

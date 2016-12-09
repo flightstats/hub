@@ -38,8 +38,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import static com.flightstats.hub.dao.LocalChannelService.HISTORICAL_FIRST_UPDATED;
-
 @Singleton
 public class S3Verifier {
 
@@ -99,12 +97,7 @@ public class S3Verifier {
     void verifyChannel(String channelName) {
         DateTime now = TimeUtil.now();
         ChannelConfig channel = channelService.getChannelConfig(channelName, false);
-        VerifierRange range;
-        if (channel.isHistorical()) {
-            range = getHistoricalVerifierRange(now, channel);
-        } else {
-            range = getSingleVerifierRange(now, channel);
-        }
+        VerifierRange range = getSingleVerifierRange(now, channel);
         if (range != null) {
             verifyChannel(range);
         }
@@ -182,32 +175,6 @@ public class S3Verifier {
                 countDownLatch.countDown();
             }
         });
-    }
-
-    //todo gfm - this will go away with the historical re-write
-    VerifierRange getHistoricalVerifierRange(DateTime now, ChannelConfig channel) {
-        ContentPath lastUpdated = channelService.getLastUpdated(channel.getName(), new MinutePath(now));
-        logger.debug("last updated {} {}", channel.getName(), lastUpdated);
-        if (lastUpdated.equals(ContentKey.NONE)) {
-            logger.debug("lastUpdated is none - ignore {}", channel.getName());
-            return null;
-        }
-        VerifierRange range = new VerifierRange(channel);
-        range.endPath = new MinutePath(lastUpdated.getTime());
-        ContentPath firstUpdated = lastContentPath.get(channel.getName(), range.endPath, HISTORICAL_FIRST_UPDATED);
-        if (lastUpdated.equals(firstUpdated)) {
-            logger.debug("equals {} {}", lastUpdated, firstUpdated);
-            range.startPath = range.endPath;
-        } else {
-            logger.debug("not equal {} {}", lastUpdated, firstUpdated);
-            ContentPath lastVerified = lastContentPath.getOrNull(channel.getName(), LAST_SINGLE_VERIFIED);
-            if (lastVerified == null) {
-                range.startPath = new MinutePath(firstUpdated.getTime());
-            } else {
-                range.startPath = (MinutePath) lastVerified;
-            }
-        }
-        return range;
     }
 
     private MinutePath getSpokeTtlPath(DateTime now) {

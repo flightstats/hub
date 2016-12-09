@@ -13,21 +13,35 @@ import org.joda.time.DateTime;
 public class DirectionQuery implements Query {
     @Wither
     private final String channelName;
-    private final String tagName;
     @Wither
-    private ContentKey contentKey;
+    private final ChannelConfig channelConfig;
+    @Wither
+    private final String tagName;
+    /**
+     * The startKey is exclusive.
+     */
+    @Wither
+    private ContentKey startKey;
     @Wither
     private final int count;
+    @Wither
     private final boolean next;
     @Wither
     private final Location location;
+    @Wither
     private final boolean stable;
+
+    /**
+     * earliestTime is only relevant for previous queries.
+     */
     @Wither
-    private DateTime ttlTime;
-    @Wither
-    private final boolean liveChannel;
+    private DateTime earliestTime;
+
     @Wither
     private final DateTime channelStable;
+
+    @Wither
+    private final Epoch epoch;
 
     public Location getLocation() {
         if (location == null) {
@@ -36,24 +50,35 @@ public class DirectionQuery implements Query {
         return location;
     }
 
+    public Epoch getEpoch() {
+        if (epoch == null) {
+            return Epoch.IMMUTABLE;
+        }
+        return epoch;
+    }
+
     @Override
     public boolean outsideOfCache(DateTime cacheTime) {
-        return !next || contentKey.getTime().isBefore(cacheTime);
+        return !next || startKey.getTime().isBefore(cacheTime);
     }
 
     @Override
     public String getUrlPath() {
         String direction = next ? "/next/" : "/previous/";
-        return "/" + contentKey.toUrl() + direction + count + "?stable=" + stable;
+        return "/" + startKey.toUrl() + direction + count + "?stable=" + stable;
+    }
+
+    public TimeQuery.TimeQueryBuilder convert(TimeUtil.Unit unit) {
+        return TimeQuery.builder().channelName(getChannelName())
+                .startTime(startKey.getTime())
+                .unit(unit)
+                .limitKey(startKey)
+                .count(count)
+                .epoch(epoch);
     }
 
     public TimeQuery convert(DateTime startTime, TimeUtil.Unit unit) {
-        return TimeQuery.builder().channelName(getChannelName())
-                .startTime(startTime)
-                .unit(unit)
-                .limitKey(contentKey)
-                .count(count)
-                .build();
+        return convert(unit).startTime(startTime).build();
     }
 
 }

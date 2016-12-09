@@ -189,10 +189,11 @@ public class S3BatchContentDaoTest {
         DirectionQuery query =
                 DirectionQuery.builder()
                         .channelName(channel)
-                        .contentKey(contentKey)
+                        .channelConfig(ChannelConfig.builder().name(channel).build())
+                        .startKey(contentKey)
                         .next(next)
                         .count(count)
-                        .ttlTime(TimeUtil.now().minusDays(2))
+                        .earliestTime(TimeUtil.now().minusDays(2))
                         .build();
 
         ActiveTraces.start(query);

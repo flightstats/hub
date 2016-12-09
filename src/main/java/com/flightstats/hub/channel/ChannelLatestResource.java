@@ -5,6 +5,9 @@ import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.Epoch;
+import com.flightstats.hub.model.Location;
+import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 
 import javax.ws.rs.*;
@@ -33,11 +36,21 @@ public class ChannelLatestResource {
     public Response getLatest(@PathParam("channel") String channel,
                               @QueryParam("stable") @DefaultValue("true") boolean stable,
                               @QueryParam("trace") @DefaultValue("false") boolean trace,
+                              @QueryParam("location") @DefaultValue(Location.DEFAULT) String location,
+                              @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
                               @QueryParam("tag") String tag) {
         if (tag != null) {
-            return tagLatestResource.getLatest(tag, stable, trace, uriInfo);
+            return tagLatestResource.getLatest(tag, stable, trace, location, epoch, uriInfo);
         }
-        Optional<ContentKey> latest = channelService.getLatest(channel, stable, trace);
+        DirectionQuery query = DirectionQuery.builder()
+                .channelName(channel)
+                .next(false)
+                .stable(stable)
+                .location(Location.valueOf(location))
+                .epoch(Epoch.valueOf(epoch))
+                .count(1)
+                .build();
+        Optional<ContentKey> latest = channelService.getLatest(query);
         if (latest.isPresent()) {
             return Response.status(SEE_OTHER)
                     .location(URI.create(uriInfo.getBaseUri() + "channel/" + channel + "/" + latest.get().toUrl()))
@@ -56,31 +69,47 @@ public class ChannelLatestResource {
                                    @QueryParam("trace") @DefaultValue("false") boolean trace,
                                    @QueryParam("batch") @DefaultValue("false") boolean batch,
                                    @QueryParam("bulk") @DefaultValue("false") boolean bulk,
+                                   @QueryParam("location") @DefaultValue(Location.DEFAULT) String location,
+                                   @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
                                    @QueryParam("tag") String tag,
                                    @HeaderParam("Accept") String accept) {
         if (tag != null) {
-            return tagLatestResource.getLatestCount(tag, count, stable, batch, bulk, trace, accept, uriInfo);
+            return tagLatestResource.getLatestCount(tag, count, stable, batch, bulk, trace, location, epoch, accept, uriInfo);
         }
-        Optional<ContentKey> latest = channelService.getLatest(channel, stable, trace);
+        DirectionQuery latestQuery = DirectionQuery.builder()
+                .channelName(channel)
+                .next(false)
+                .stable(stable)
+                .startKey(new ContentKey(TimeUtil.time(stable), "0"))
+                .location(Location.valueOf(location))
+                .epoch(Epoch.valueOf(epoch))
+                .count(1)
+                .build();
+        Optional<ContentKey> latest = channelService.getLatest(latestQuery);
         if (!latest.isPresent()) {
             return Response.status(NOT_FOUND).build();
         }
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
-                .contentKey(latest.get())
+                .startKey(latest.get())
                 .next(false)
                 .stable(stable)
-                .ttlTime(channelService.getCachedChannelConfig(channel).getTtlTime())
+                .location(Location.valueOf(location))
+                .epoch(Epoch.valueOf(epoch))
                 .count(count - 1)
                 .build();
-        SortedSet<ContentKey> keys = new TreeSet<>(channelService.getKeys(query));
+        SortedSet<ContentKey> keys = new TreeSet<>(channelService.query(query));
         keys.add(latest.get());
+        return getResponse(channel, count, trace, batch, bulk, accept, query, keys);
+    }
+
+    private Response getResponse(String channel, int count, boolean trace, boolean batch, boolean bulk,
+                                 String accept, DirectionQuery query, SortedSet<ContentKey> keys) {
         if (bulk || batch) {
             return BulkBuilder.build(keys, channel, channelService, uriInfo, accept);
         } else {
-            return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, true, trace);
+            return LinkBuilder.directionalResponse(keys, count, query, mapper, uriInfo, true, trace);
         }
-
     }
 
 }

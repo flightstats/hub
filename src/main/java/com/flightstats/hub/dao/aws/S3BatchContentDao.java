@@ -258,8 +258,8 @@ public class S3BatchContentDao implements ContentDao {
     private SortedSet<ContentKey> handleNext(DirectionQuery query) {
         SortedSet<ContentKey> keys = new TreeSet<>();
         Traces traces = ActiveTraces.getLocal();
-        DateTime endTime = TimeUtil.time(query.isStable());
-        DateTime markerTime = query.getContentKey().getTime().minusMinutes(1);
+        DateTime endTime = query.getChannelStable();
+        DateTime markerTime = query.getStartKey().getTime().minusMinutes(1);
         int queryItems = Math.min(s3MaxQueryItems, query.getCount());
         do {
             String channel = query.getChannelName();
@@ -276,7 +276,7 @@ public class S3BatchContentDao implements ContentDao {
             for (MinutePath path : paths) {
                 getKeysForMinute(channel, path, traces, item -> {
                     ContentKey contentKey = ContentKey.fromUrl(item.asText()).get();
-                    if (contentKey.compareTo(query.getContentKey()) > 0
+                    if (contentKey.compareTo(query.getStartKey()) > 0
                             && keys.size() < query.getCount()) {
                         keys.add(contentKey);
                     }

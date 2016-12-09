@@ -43,11 +43,10 @@ public class ChannelStatusResource {
         String baseUri = uriInfo.getRequestUri().toString();
         self.put("href", baseUri);
 
+        addLink("latest", channelService.getLatest(channel, stable), channel, links);
 
-        addLink("latest", channelService.getLatest(channel, stable, trace), channel, links);
-
-        DirectionQuery directionQuery = ChannelEarliestResource.getDirectionQuery(channel, 1, stable, channelService);
-        SortedSet<ContentKey> earliest = channelService.getKeys(directionQuery);
+        DirectionQuery directionQuery = ChannelEarliestResource.getDirectionQuery(channel, 1, stable);
+        SortedSet<ContentKey> earliest = channelService.query(directionQuery);
         if (earliest.isEmpty()) {
             addLink("earliest", Optional.absent(), channel, links);
         } else {

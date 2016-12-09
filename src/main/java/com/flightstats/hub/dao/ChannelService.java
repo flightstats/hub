@@ -16,13 +16,27 @@ public interface ChannelService {
 
     ContentKey insert(String channelName, Content content) throws Exception;
 
-    boolean historicalInsert(String channelName, Content content, boolean minuteComplete) throws Exception;
+    boolean historicalInsert(String channelName, Content content) throws Exception;
 
     Collection<ContentKey> insert(BulkContent bulkContent) throws Exception;
 
     boolean isReplicating(String channelName);
 
-    Optional<ContentKey> getLatest(String channel, boolean stable, boolean trace);
+    /**
+     * Latest exists as a separate path than query(DirectionQuery) to allow the underlying
+     * storage system to highly optimize this frequent and potentially expensive operation.
+     */
+    Optional<ContentKey> getLatest(DirectionQuery query);
+
+    default Optional<ContentKey> getLatest(String channel, boolean stable) {
+        DirectionQuery query = DirectionQuery.builder()
+                .channelName(channel)
+                .next(false)
+                .stable(stable)
+                .count(1)
+                .build();
+        return getLatest(query);
+    }
 
     void deleteBefore(String name, ContentKey limitKey);
 
@@ -42,9 +56,11 @@ public interface ChannelService {
 
     SortedSet<ContentKey> queryByTime(TimeQuery query);
 
-    SortedSet<ContentKey> getKeys(DirectionQuery query);
+    SortedSet<ContentKey> query(DirectionQuery query);
 
     boolean delete(String channelName);
+
+    boolean delete(String channelName, ContentKey contentKey);
 
     ContentPath getLastUpdated(String channelName, ContentPath defaultValue);
 }

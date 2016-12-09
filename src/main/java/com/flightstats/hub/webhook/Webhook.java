@@ -125,15 +125,15 @@ public class Webhook implements Comparable<Webhook>, NamedType {
     private static Optional<ContentPath> getPrevious(Optional<ContentPath> keyOptional, String channelUrl) {
         ChannelService channelService = HubProvider.getInstance(ChannelService.class);
         String channel = RequestUtils.getChannelName(channelUrl);
-        Optional<ContentKey> latest = channelService.getLatest(channel, true, false);
+        Optional<ContentKey> latest = channelService.getLatest(channel, true);
         if (latest.isPresent()) {
             DirectionQuery query = DirectionQuery.builder()
                     .channelName(channel)
-                    .contentKey(latest.get())
+                    .startKey(latest.get())
                     .next(false)
                     .count(1)
                     .build();
-            SortedSet<ContentKey> keys = channelService.getKeys(query);
+            SortedSet<ContentKey> keys = channelService.query(query);
             if (keys.isEmpty()) {
                 keyOptional = Optional.of(new ContentKey(latest.get().getTime().minusMillis(1), "A"));
             } else {

@@ -93,7 +93,8 @@ public class ChannelContentResource {
                            @PathParam("Y") int year,
                            @PathParam("M") int month,
                            @PathParam("D") int day,
-                           @QueryParam("location") @DefaultValue("ALL") String location,
+                           @QueryParam("location") @DefaultValue(Location.DEFAULT) String location,
+                           @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
                            @QueryParam("trace") @DefaultValue("false") boolean trace,
                            @QueryParam("stable") @DefaultValue("true") boolean stable,
                            @QueryParam("batch") @DefaultValue("false") boolean batch,
@@ -101,7 +102,7 @@ public class ChannelContentResource {
                            @QueryParam("tag") String tag,
                            @HeaderParam("Accept") String accept) {
         DateTime startTime = new DateTime(year, month, day, 0, 0, 0, 0, DateTimeZone.UTC);
-        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.DAYS, tag, bulk || batch, accept);
+        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.DAYS, tag, bulk || batch, accept, epoch);
     }
 
     @Path("/{hour}")
@@ -112,7 +113,8 @@ public class ChannelContentResource {
                             @PathParam("M") int month,
                             @PathParam("D") int day,
                             @PathParam("hour") int hour,
-                            @QueryParam("location") @DefaultValue("ALL") String location,
+                            @QueryParam("location") @DefaultValue(Location.DEFAULT) String location,
+                            @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
                             @QueryParam("trace") @DefaultValue("false") boolean trace,
                             @QueryParam("stable") @DefaultValue("true") boolean stable,
                             @QueryParam("batch") @DefaultValue("false") boolean batch,
@@ -120,7 +122,7 @@ public class ChannelContentResource {
                             @QueryParam("tag") String tag,
                             @HeaderParam("Accept") String accept) {
         DateTime startTime = new DateTime(year, month, day, hour, 0, 0, 0, DateTimeZone.UTC);
-        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.HOURS, tag, bulk || batch, accept);
+        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.HOURS, tag, bulk || batch, accept, epoch);
     }
 
     @Path("/{h}/{minute}")
@@ -132,7 +134,8 @@ public class ChannelContentResource {
                               @PathParam("D") int day,
                               @PathParam("h") int hour,
                               @PathParam("minute") int minute,
-                              @QueryParam("location") @DefaultValue("ALL") String location,
+                              @QueryParam("location") @DefaultValue(Location.DEFAULT) String location,
+                              @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
                               @QueryParam("trace") @DefaultValue("false") boolean trace,
                               @QueryParam("stable") @DefaultValue("true") boolean stable,
                               @QueryParam("batch") @DefaultValue("false") boolean batch,
@@ -140,7 +143,7 @@ public class ChannelContentResource {
                               @QueryParam("tag") String tag,
                               @HeaderParam("Accept") String accept) {
         DateTime startTime = new DateTime(year, month, day, hour, minute, 0, 0, DateTimeZone.UTC);
-        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.MINUTES, tag, bulk || batch, accept);
+        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.MINUTES, tag, bulk || batch, accept, epoch);
     }
 
     @Path("/{h}/{m}/{second}")
@@ -153,7 +156,8 @@ public class ChannelContentResource {
                               @PathParam("h") int hour,
                               @PathParam("m") int minute,
                               @PathParam("second") int second,
-                              @QueryParam("location") @DefaultValue("ALL") String location,
+                              @QueryParam("location") @DefaultValue(Location.DEFAULT) String location,
+                              @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
                               @QueryParam("trace") @DefaultValue("false") boolean trace,
                               @QueryParam("stable") @DefaultValue("true") boolean stable,
                               @QueryParam("batch") @DefaultValue("false") boolean batch,
@@ -161,14 +165,13 @@ public class ChannelContentResource {
                               @QueryParam("tag") String tag,
                               @HeaderParam("Accept") String accept) {
         DateTime startTime = new DateTime(year, month, day, hour, minute, second, 0, DateTimeZone.UTC);
-        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.SECONDS, tag, bulk || batch, accept);
+        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.SECONDS, tag, bulk || batch, accept, epoch);
     }
 
     private Response getTimeQueryResponse(String channel, DateTime startTime, String location, boolean trace, boolean stable,
-                                          Unit unit, String tag, boolean bulk, String accept) {
-        //todo - gfm - 12/15/15 - merge this with TagContentResource.getTimeQueryResponse
+                                          Unit unit, String tag, boolean bulk, String accept, String epoch) {
         if (tag != null) {
-            return tagContentResource.getTimeQueryResponse(tag, startTime, location, trace, stable, unit, bulk, accept, uriInfo);
+            return tagContentResource.getTimeQueryResponse(tag, startTime, location, trace, stable, unit, bulk, accept, uriInfo, epoch);
         }
         TimeQuery query = TimeQuery.builder()
                 .channelName(channel)
@@ -176,6 +179,7 @@ public class ChannelContentResource {
                 .stable(stable)
                 .unit(unit)
                 .location(Location.valueOf(location))
+                .epoch(Epoch.valueOf(epoch))
                 .build();
         SortedSet<ContentKey> keys = channelService.queryByTime(query);
         DateTime current = stable ? stable() : now();
@@ -270,21 +274,26 @@ public class ChannelContentResource {
                                  @PathParam("s") int second,
                                  @PathParam("ms") int millis,
                                  @PathParam("hash") String hash,
+                                 @QueryParam("location") @DefaultValue(Location.DEFAULT) String location,
                                  @PathParam("direction") String direction,
+                                 @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
                                  @QueryParam("stable") @DefaultValue("true") boolean stable,
                                  @QueryParam("tag") String tag) {
         ContentKey contentKey = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         boolean next = direction.startsWith("n");
         if (null != tag) {
-            return tagContentResource.adjacent(tag, contentKey, stable, next, uriInfo);
+            return tagContentResource.adjacent(tag, contentKey, stable, next, uriInfo, location, epoch);
         }
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
-                .contentKey(contentKey)
+                .startKey(contentKey)
                 .next(next)
                 .stable(stable)
-                .count(1).build();
-        Collection<ContentKey> keys = channelService.getKeys(query);
+                .location(Location.valueOf(location))
+                .epoch(Epoch.valueOf(epoch))
+                .count(1)
+                .build();
+        Collection<ContentKey> keys = channelService.query(query);
         if (keys.isEmpty()) {
             return Response.status(NOT_FOUND).build();
         }
@@ -342,7 +351,8 @@ public class ChannelContentResource {
                                       @PathParam("count") int count,
                                       @QueryParam("stable") @DefaultValue("true") boolean stable,
                                       @QueryParam("trace") @DefaultValue("false") boolean trace,
-                                      @QueryParam("location") @DefaultValue("ALL") String location,
+                                      @QueryParam("location") @DefaultValue(Location.DEFAULT) String location,
+                                      @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
                                       @QueryParam("batch") @DefaultValue("false") boolean batch,
                                       @QueryParam("bulk") @DefaultValue("false") boolean bulk,
                                       @QueryParam("tag") String tag,
@@ -350,17 +360,18 @@ public class ChannelContentResource {
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         boolean next = direction.startsWith("n");
         if (null != tag) {
-            return tagContentResource.adjacentCount(tag, count, stable, trace, location, next, key, bulk || batch, accept, uriInfo);
+            return tagContentResource.adjacentCount(tag, count, stable, trace, location, next, key, bulk || batch, accept, uriInfo, epoch);
         }
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
-                .contentKey(key)
+                .startKey(key)
                 .next(next)
                 .stable(stable)
                 .location(Location.valueOf(location))
+                .epoch(Epoch.valueOf(epoch))
                 .count(count)
                 .build();
-        SortedSet<ContentKey> keys = channelService.getKeys(query);
+        SortedSet<ContentKey> keys = channelService.query(query);
         if (bulk || batch) {
             return BulkBuilder.build(keys, channel, channelService, uriInfo, accept, (builder) -> {
                 if (!keys.isEmpty()) {
@@ -371,7 +382,7 @@ public class ChannelContentResource {
                 }
             });
         } else {
-            return LinkBuilder.directionalResponse(channel, keys, count, query, mapper, uriInfo, true, trace);
+            return LinkBuilder.directionalResponse(keys, count, query, mapper, uriInfo, true, trace);
         }
     }
 
@@ -388,26 +399,51 @@ public class ChannelContentResource {
                                      @PathParam("ms") int millis,
                                      @HeaderParam("Content-Type") String contentType,
                                      @HeaderParam("Content-Language") String contentLanguage,
-                                     @HeaderParam("minuteComplete") @DefaultValue("false") boolean minuteComplete,
                                      final InputStream data) throws Exception {
+        ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis);
+        return historicalResponse(channelName, key, contentType, data);
+    }
+
+    @Path("/{h}/{m}/{s}/{ms}/{hash}")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response historicalInsertHash(@PathParam("channel") final String channelName,
+                                         @PathParam("Y") int year,
+                                         @PathParam("M") int month,
+                                         @PathParam("D") int day,
+                                         @PathParam("h") int hour,
+                                         @PathParam("m") int minute,
+                                         @PathParam("s") int second,
+                                         @PathParam("ms") int millis,
+                                         @PathParam("hash") String hash,
+                                         @HeaderParam("Content-Type") String contentType,
+                                         @HeaderParam("Content-Language") String contentLanguage,
+                                         final InputStream data) throws Exception {
+        ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
+        return historicalResponse(channelName, key, contentType, data);
+    }
+
+    private Response historicalResponse(String channelName, ContentKey key, String contentType, InputStream data) throws Exception {
         if (!channelService.channelExists(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
-        ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis);
         Content content = Content.builder()
                 .withContentKey(key)
                 .withContentType(contentType)
                 .withStream(data)
                 .build();
         try {
-            boolean success = channelService.historicalInsert(channelName, content, minuteComplete);
+            boolean success = channelService.historicalInsert(channelName, content);
             if (!success) {
                 return Response.status(400).entity("unable to insert historical item").build();
             }
-
             logger.trace("posted {}", key);
             InsertedContentKey insertionResult = new InsertedContentKey(key);
-            URI payloadUri = new URI(uriInfo.getRequestUri() + "/" + key.getHash());
+            URI payloadUri = uriInfo.getBaseUriBuilder()
+                    .path("channel").path(channelName)
+                    .path(key.toUrl())
+                    .build();
+
             Linked<InsertedContentKey> linkedResult = linked(insertionResult)
                     .withLink("channel", LinkBuilder.buildChannelUri(channelName, uriInfo))
                     .withLink("self", payloadUri)
@@ -439,16 +475,30 @@ public class ChannelContentResource {
                               @PathParam("m") String minute,
                               @PathParam("s") String second,
                               @PathParam("ms") String millis) {
-        try {
-            URI redirect = UriBuilder.fromUri(uriInfo.getBaseUri())
-                    .path("channel")
-                    .path(channel)
-                    .path(year).path(month).path(day)
-                    .path(hour).path(minute).path(second).build();
-            return Response.seeOther(redirect).build();
-        } catch (Exception e) {
-            logger.warn("what!?!", e);
-            return null;
-        }
+        UriBuilder builder = UriBuilder.fromUri(uriInfo.getBaseUri())
+                .path("channel")
+                .path(channel)
+                .path(year).path(month).path(day)
+                .path(hour).path(minute).path(second);
+        TimeLinkUtil.addQueryParams(uriInfo, builder);
+        return Response.seeOther(builder.build()).build();
+    }
+
+    @Path("/{h}/{m}/{s}/{ms}/{hash}")
+    @DELETE
+    public Response delete(@PathParam("channel") String channel,
+                           @PathParam("Y") int year,
+                           @PathParam("M") int month,
+                           @PathParam("D") int day,
+                           @PathParam("h") int hour,
+                           @PathParam("m") int minute,
+                           @PathParam("s") int second,
+                           @PathParam("ms") int millis,
+                           @PathParam("hash") String hash
+    ) {
+
+        ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
+        channelService.delete(channel, key);
+        return Response.noContent().build();
     }
 }

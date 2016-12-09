@@ -1,6 +1,5 @@
 package com.flightstats.hub.dao;
 
-import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
 import com.google.common.base.Optional;
 
@@ -10,7 +9,6 @@ import java.util.function.Consumer;
 
 public interface ContentService {
 
-    //todo gfm - this is temporary
     String IMPL = "IMPL";
 
     ContentKey insert(String channelName, Content content) throws Exception;
@@ -27,9 +25,11 @@ public interface ContentService {
 
     void delete(String channelName);
 
+    void delete(String channelName, ContentKey contentKey);
+
     Collection<ContentKey> queryDirection(DirectionQuery query);
 
-    Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces, boolean stable);
+    Optional<ContentKey> getLatest(DirectionQuery query);
 
     default void deleteBefore(String name, ContentKey limitKey) {
         //do nothing
@@ -37,5 +37,12 @@ public interface ContentService {
 
     default void notify(ChannelConfig newConfig, ChannelConfig oldConfig) {
         //do nothing
+    }
+
+    static Optional<ContentKey> chooseLatest(Collection<ContentKey> contentKeys, DirectionQuery query) {
+        if (contentKeys.isEmpty()) {
+            return Optional.absent();
+        }
+        return Optional.of(contentKeys.iterator().next());
     }
 }

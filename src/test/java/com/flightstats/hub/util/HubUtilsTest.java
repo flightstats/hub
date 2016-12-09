@@ -130,7 +130,7 @@ public class HubUtilsTest {
     private void runDirectionQuery(SortedSet<ContentKey> keys, ContentKey startKey, boolean next) {
         Collection<ContentKey> foundKeys;
         DirectionQuery nextQuery = DirectionQuery.builder()
-                .contentKey(startKey)
+                .startKey(startKey)
                 .next(next)
                 .stable(false)
                 .count(9)

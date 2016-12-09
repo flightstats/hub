@@ -100,7 +100,7 @@ public class CommonContentService implements ContentService {
         Traces traces = ActiveTraces.getLocal();
         traces.add("ContentService.insert");
         try {
-            content.setData(ContentMarshaller.toBytes(content));
+            content.packageStream();
             traces.add("ContentService.insert marshalled");
             ContentKey key = content.keyAndStart(timeService.getNow());
             logger.trace("writing key {} to channel {}", key, channelName);
@@ -128,7 +128,10 @@ public class CommonContentService implements ContentService {
 
     @Override
     public boolean historicalInsert(String channelName, Content content) throws Exception {
-        return inFlight(Errors.rethrow().wrap(() -> contentService.historicalInsert(channelName, content)));
+        return inFlight(Errors.rethrow().wrap(() -> {
+            content.packageStream();
+            return contentService.historicalInsert(channelName, content);
+        }));
     }
 
     @Override
@@ -152,13 +155,18 @@ public class CommonContentService implements ContentService {
     }
 
     @Override
+    public void delete(String channelName, ContentKey contentKey) {
+        contentService.delete(channelName, contentKey);
+    }
+
+    @Override
     public Collection<ContentKey> queryDirection(DirectionQuery query) {
         return contentService.queryDirection(query);
     }
 
     @Override
-    public Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces, boolean stable) {
-        return contentService.getLatest(channel, limitKey, traces, stable);
+    public Optional<ContentKey> getLatest(DirectionQuery query) {
+        return contentService.getLatest(query);
     }
 
     @Override

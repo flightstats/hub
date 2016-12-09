@@ -5,5 +5,7 @@ public enum Location {
     CACHE,
     LONG_TERM,
     LONG_TERM_SINGLE,
-    LONG_TERM_BATCH
+    LONG_TERM_BATCH;
+
+    public static final String DEFAULT = "ALL";
 }

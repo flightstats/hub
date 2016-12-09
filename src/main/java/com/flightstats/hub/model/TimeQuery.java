@@ -6,6 +6,10 @@ import lombok.*;
 import lombok.experimental.Wither;
 import org.joda.time.DateTime;
 
+/**
+ * If an endTime or limitKey is specified, the TimeQuery will move forward
+ * by TimeUtil.Unit increments until the endTime or limitKey is reached.
+ */
 @Builder
 @Getter
 @ToString
@@ -13,6 +17,8 @@ import org.joda.time.DateTime;
 public class TimeQuery implements Query {
     @Wither
     private final String channelName;
+    @Wither
+    private final ChannelConfig channelConfig;
     private final String tagName;
     @Wither
     private final DateTime startTime;
@@ -23,12 +29,23 @@ public class TimeQuery implements Query {
     private final boolean stable;
     private final int count;
     private final ContentKey limitKey;
+    @Wither
+    private final Epoch epoch;
+    @Wither
+    private final DateTime channelStable;
 
     public Location getLocation() {
         if (location == null) {
             return Location.ALL;
         }
         return location;
+    }
+
+    public Epoch getEpoch() {
+        if (epoch == null) {
+            return Epoch.IMMUTABLE;
+        }
+        return epoch;
     }
 
     public DateTime getEndTime() {
