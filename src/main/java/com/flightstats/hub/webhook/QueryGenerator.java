@@ -1,5 +1,6 @@
 package com.flightstats.hub.webhook;
 
+import com.flightstats.hub.model.Epoch;
 import com.flightstats.hub.model.Location;
 import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.TimeUtil;
@@ -33,6 +34,7 @@ public class QueryGenerator {
                     .startTime(lastQueryTime)
                     .unit(unit)
                     .location(location)
+                    .epoch(Epoch.IMMUTABLE)
                     .build();
             lastQueryTime = unit.round(lastQueryTime.plus(unit.getDuration()));
             return query;
@@ -42,7 +44,6 @@ public class QueryGenerator {
     }
 
     private TimeUtil.Unit getStepUnit(DateTime latestStableInChannel) {
-        //todo - gfm - 11/23/15 - add Months step?
         if (lastQueryTime.isBefore(latestStableInChannel.minusDays(2))) {
             return TimeUtil.Unit.DAYS;
         } else if (lastQueryTime.isBefore(latestStableInChannel.minusHours(2))) {
