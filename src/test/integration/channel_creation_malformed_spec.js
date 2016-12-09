@@ -2,20 +2,20 @@ require('./integration_config.js');
 
 var request = require('request');
 var http = require('http');
-var webhookName = utils.randomChannelName();
+var channelName = utils.randomChannelName();
 var testName = __filename;
 
 describe("creates malformed" + testName, function () {
 
-    var webhookUrl = hubUrlBase + '/webhook';
-    var webhookResource = webhookUrl + "/" + webhookName;
+    var channelUrl = hubUrlBase + '/channel';
+    var channelResource = channelUrl + "/" + channelName;
 
-    it('creates webhook ' + webhookName, function (done) {
-        console.log('creating webhook ' + webhookName + ' for ' + testName);
+    it('creates channel ' + channelName, function (done) {
+        console.log('creating channel ' + channelName + ' for ' + testName);
         request.put({
-                url: webhookResource,
+                url: channelResource,
                 headers: {"Content-Type": "application/json"},
-                body: "{ callbackUrl : 'http://nothing/callback', channelUrl : 'http://nothing/channel/notHere' }"
+                body: "{ description  'http://nothing/callback'  }"
             },
             function (err, response, body) {
                 expect(err).toBeNull();
@@ -25,6 +25,4 @@ describe("creates malformed" + testName, function () {
                 done();
             });
     });
-
 });
-
