@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.model.DirectionQuery;
@@ -115,8 +116,8 @@ public class Webhook implements Comparable<Webhook>, NamedType {
                 builder.maxWaitMinutes(root.get("maxWaitMinutes").intValue());
             }
         } catch (IOException e) {
-            logger.warn("unable to parse " + json, e);
-            throw new RuntimeException(e);
+            logger.warn("unable to parse json" + json, e);
+            throw new InvalidRequestException(e.getMessage());
         }
         return builder.build();
     }
