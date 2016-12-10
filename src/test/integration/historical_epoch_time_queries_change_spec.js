@@ -30,12 +30,16 @@ describe(testName, function () {
         tags: [tag, "test"]
     };
 
+    utils.itRefreshesChannels();
+
     utils.putChannel(channel, false, channelBody, testName);
 
     var channelURL = hubUrlBase + '/channel/' + channel;
     var pointInThePastURL = channelURL + '/' + mutableTime.format('YYYY/MM/DD/HH/mm/ss/SSS');
 
     var historicalLocation;
+
+    utils.itRefreshesChannels();
 
     it('posts historical item to ' + channel, function (done) {
         utils.postItemQ(pointInThePastURL)

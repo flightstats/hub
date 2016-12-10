@@ -29,6 +29,8 @@ describe(testName, function () {
         tags: [tag, "test"]
     };
 
+    utils.itRefreshesChannels();
+
     utils.putChannel(channel, function (response, body) {
         var parse = utils.parseJson(response, testName);
         expect(parse.ttlDays).toBe(0);
