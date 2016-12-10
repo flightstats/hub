@@ -29,14 +29,14 @@ describe(testName, function () {
         tags: [tag, "test"]
     };
 
-    utils.itRefreshesChannels();
-
     utils.putChannel(channel, function (response, body) {
         var parse = utils.parseJson(response, testName);
         expect(parse.ttlDays).toBe(0);
         expect(parse.maxItems).toBe(0);
         expect(parse.mutableTime).toBe(expected);
     }, channelBody, testName);
+
+    utils.itRefreshesChannels();
 
     utils.getChannel(channel, function (response) {
         var parse = utils.parseJson(response, testName);
