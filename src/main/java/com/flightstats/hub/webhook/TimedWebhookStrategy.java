@@ -133,7 +133,7 @@ class TimedWebhookStrategy implements WebhookStrategy {
                 .channelName(channel)
                 .startTime(time)
                 .unit(timedWebhook.getUnit())
-                .stable(true)
+                .stable(false)
                 .epoch(Epoch.IMMUTABLE)
                 .build();
         return channelService.queryByTime(timeQuery);

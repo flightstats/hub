@@ -375,7 +375,11 @@ public class LocalChannelService implements ChannelService {
     @Override
     public ContentPath getLastUpdated(String channelName, ContentPath defaultValue) {
         if (isReplicating(channelName)) {
-            return lastContentPath.get(channelName, defaultValue, REPLICATED_LAST_UPDATED);
+            ContentPath contentPath = lastContentPath.get(channelName, defaultValue, REPLICATED_LAST_UPDATED);
+            if (!contentPath.equals(defaultValue)) {
+                contentPath = new MinutePath(contentPath.getTime().plusSeconds(1));
+            }
+            return contentPath;
         }
         return defaultValue;
     }
