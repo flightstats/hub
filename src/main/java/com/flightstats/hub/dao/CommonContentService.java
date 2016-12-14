@@ -5,31 +5,22 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.dao.aws.MultiPartParser;
 import com.flightstats.hub.exception.ContentTooLargeException;
-import com.flightstats.hub.exception.FailedQueryException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.time.TimeService;
-import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.SortedSet;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -40,7 +31,6 @@ public class CommonContentService implements ContentService {
 
     private final Integer shutdown_wait_seconds = HubProperties.getProperty("app.shutdown_wait_seconds", 10);
     private final AtomicInteger inFlight = new AtomicInteger();
-    private static final ExecutorService executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("ContentService-%d").build());
 
     @Inject
     private TimeService timeService;
@@ -51,35 +41,6 @@ public class CommonContentService implements ContentService {
 
     public CommonContentService() {
         HubServices.registerPreStop(new CommonContentServiceShutdown());
-    }
-
-    public static SortedSet<ContentKey> query(Function<ContentDao, SortedSet<ContentKey>> daoQuery, List<ContentDao> contentDaos) {
-        try {
-            QueryResult queryResult = new QueryResult(contentDaos.size());
-            CountDownLatch latch = new CountDownLatch(contentDaos.size());
-            Traces traces = ActiveTraces.getLocal();
-            String threadName = Thread.currentThread().getName();
-            for (ContentDao contentDao : contentDaos) {
-                executorService.submit(() -> {
-                    Thread.currentThread().setName(contentDao.getClass().getSimpleName() + "|" + threadName);
-                    ActiveTraces.setLocal(traces);
-                    try {
-                        queryResult.addKeys(daoQuery.apply(contentDao));
-                    } finally {
-                        latch.countDown();
-                    }
-                });
-            }
-            latch.await(118, TimeUnit.SECONDS);
-            if (queryResult.hadSuccess()) {
-                return queryResult.getContentKeys();
-            } else {
-                traces.add("unable to complete query ", queryResult);
-                throw new FailedQueryException("unable to complete query " + queryResult + " " + threadName);
-            }
-        } catch (InterruptedException e) {
-            throw new RuntimeInterruptedException(e);
-        }
     }
 
     private <X> X inFlight(Supplier<X> supplier) {
