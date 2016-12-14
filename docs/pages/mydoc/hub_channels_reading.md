@@ -72,9 +72,9 @@ You can also retrieve the earliest N items by using /earliest/{n}
 
 ## next and previous links {#next-and-previous}
 
-A GET on the next and previous links returned as headers with content will redirect to those respective items.  A 404 will be returned if they don't exist.
+Any item's uri can be appended with /next or /previous to navigate forward or backward.  A 404 will be returned if there isn't an item.
+The starting point does not need to be an real item in the hub, it can be a time.   
 
-Any item's uri can be appended with /next or /previous to navigate forward or backward.
 If you append a number /next/20 or /previous/15, and you'll receive a list of that many items.
 
 For example:

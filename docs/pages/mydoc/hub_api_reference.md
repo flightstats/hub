@@ -76,7 +76,7 @@ ___body_contains_arbitrary_content
 
 ### [Specific item from channel](hub_channels_reading.html#specific)
 
-`GET http://{hub}/channel/{channel-name}/{YYYY}/{MM}/{dd}/{HH}/{mm}/{ss}/{mmm}/{hash}`
+`GET http://{hub}/channel/{channel-name}/{YYYY}/{MM}/{DD}/{hh}/{mm}/{ss}/{SSS}/{hash}`
 
 ### [Latest](hub_channels_reading.html#latest)
 
@@ -90,13 +90,13 @@ ___body_contains_arbitrary_content
 
 Defaults to 1, but can suffix with /{n} to retrieve arbitrary number if items
 
-`GET http://{hub}/channel/{channel-name}/{YYYY}/{MM}/{dd}/{HH}/{mm}/{ss}/{mmm}/{hash}/next[/{n}]`
+`GET http://{hub}/channel/{channel-name}/{YYYY}/{MM}/{DD}/{hh}/{mm}/{ss}/{SSS}/{hash}/next[/{n}]`
 
-`GET http://{hub}/channel/{channel-name}/{YYYY}/{MM}/{dd}/{HH}/{mm}/{ss}/{mmm}/{hash}/previous[/{n}]`
+`GET http://{hub}/channel/{channel-name}/{YYYY}/{MM}/{DD}/{hh}/{mm}/{ss}/{SSS}/{hash}/previous[/{n}]`
 
 ### [Bulk fetch](hub_channels_reading.html#bulk)
 
-`GET http://{hub}/channel/{channel-name}/{YYYY}/{MM}/{dd}/{HH}/{mm}/{ss}/{mmm}/{hash}/{previous | next}[/{n}]?bulk=true`
+`GET http://{hub}/channel/{channel-name}/{YYYY}/{MM}/{DD}/{hh}/{mm}/{ss}/{SSS}/{hash}/{previous | next}[/{n}]?bulk=true`
 
 ### [Time interface](hub_channels_time.html)
 
