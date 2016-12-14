@@ -106,7 +106,7 @@ class TimedWebhookStrategy implements WebhookStrategy {
                     logger.debug("replicating {} stable {}", contentPath, stable);
                 }
                 logger.debug("lastAdded {} nextTime {} stable {}", lastAdded, nextTime, stable);
-                while (nextTime.isBefore(stable) || nextTime.isEqual(stable)) {
+                while (nextTime.isBefore(stable)) {
                     try {
                         ActiveTraces.start("TimedWebhookStrategy.doWork", webhook);
                         Collection<ContentKey> keys = queryKeys(nextTime)
