@@ -1,5 +1,7 @@
 package com.flightstats.hub.app;
 
+import com.diffplug.common.base.Errors;
+import com.diffplug.common.base.Throwing;
 import com.flightstats.hub.util.Sleeper;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Singleton;
@@ -7,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Supplier;
 
 @Singleton
 public class InFlightService {
@@ -18,10 +19,10 @@ public class InFlightService {
         HubServices.registerPreStop(new InFlightServiceShutdown());
     }
 
-    public <X> X inFlight(Supplier<X> supplier) {
+    public <X> X inFlight(Throwing.Supplier<X> supplier) {
         try {
             inFlight.incrementAndGet();
-            return supplier.get();
+            return Errors.rethrow().wrap(supplier).get();
         } finally {
             inFlight.decrementAndGet();
         }

@@ -1,6 +1,5 @@
 package com.flightstats.hub.dao;
 
-import com.diffplug.common.base.Errors;
 import com.flightstats.hub.app.InFlightService;
 import com.flightstats.hub.dao.aws.MultiPartParser;
 import com.flightstats.hub.exception.ContentTooLargeException;
@@ -36,45 +35,43 @@ public class CommonContentService implements ContentService {
 
     @Override
     public ContentKey insert(String channelName, Content content) throws Exception {
-        return inFlightService.inFlight(Errors.rethrow().wrap(() -> doInsert(channelName, content)));
-    }
-
-    private ContentKey doInsert(String channelName, Content content) throws Exception {
-        Traces traces = ActiveTraces.getLocal();
-        traces.add("ContentService.insert");
-        try {
-            content.packageStream();
-            traces.add("ContentService.insert marshalled");
-            ContentKey key = content.keyAndStart(timeService.getNow());
-            logger.trace("writing key {} to channel {}", key, channelName);
-            contentService.insert(channelName, content);
-            traces.add("ContentService.insert end", key);
-            return key;
-        } catch (ContentTooLargeException e) {
-            logger.info("content too large for channel " + channelName);
-            throw e;
-        } catch (Exception e) {
-            traces.add("ContentService.insert", "error", e.getMessage());
-            logger.warn("insertion error " + channelName, e);
-            throw e;
-        }
+        return inFlightService.inFlight(() -> {
+            Traces traces = ActiveTraces.getLocal();
+            traces.add("ContentService.insert");
+            try {
+                content.packageStream();
+                traces.add("ContentService.insert marshalled");
+                ContentKey key = content.keyAndStart(timeService.getNow());
+                logger.trace("writing key {} to channel {}", key, channelName);
+                contentService.insert(channelName, content);
+                traces.add("ContentService.insert end", key);
+                return key;
+            } catch (ContentTooLargeException e) {
+                logger.info("content too large for channel " + channelName);
+                throw e;
+            } catch (Exception e) {
+                traces.add("ContentService.insert", "error", e.getMessage());
+                logger.warn("insertion error " + channelName, e);
+                throw e;
+            }
+        });
     }
 
     @Override
     public Collection<ContentKey> insert(BulkContent bulkContent) throws Exception {
-        return inFlightService.inFlight(Errors.rethrow().wrap(() -> {
+        return inFlightService.inFlight(() -> {
             MultiPartParser multiPartParser = new MultiPartParser(bulkContent);
             multiPartParser.parse();
             return contentService.insert(bulkContent);
-        }));
+        });
     }
 
     @Override
     public boolean historicalInsert(String channelName, Content content) throws Exception {
-        return inFlightService.inFlight(Errors.rethrow().wrap(() -> {
+        return inFlightService.inFlight(() -> {
             content.packageStream();
             return contentService.historicalInsert(channelName, content);
-        }));
+        });
     }
 
     @Override
