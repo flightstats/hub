@@ -29,6 +29,9 @@ import java.util.stream.Stream;
 
 @Singleton
 public class LocalChannelService implements ChannelService {
+    /**
+     * REPLICATED_LAST_UPDATED is set to the last second updated, inclusive of that entire second.
+     */
     public static final String REPLICATED_LAST_UPDATED = "/ReplicatedLastUpdated/";
     private static final String HISTORICAL_EARLIEST = "/HistoricalEarliest/";
 
@@ -376,8 +379,9 @@ public class LocalChannelService implements ChannelService {
     public ContentPath getLastUpdated(String channelName, ContentPath defaultValue) {
         if (isReplicating(channelName)) {
             ContentPath contentPath = lastContentPath.get(channelName, defaultValue, REPLICATED_LAST_UPDATED);
+            //REPLICATED_LAST_UPDATED is inclusive, and we want to be exclusive.
             if (!contentPath.equals(defaultValue)) {
-                contentPath = new MinutePath(contentPath.getTime().plusSeconds(1));
+                contentPath = new SecondPath(contentPath.getTime().plusSeconds(1));
             }
             return contentPath;
         }
