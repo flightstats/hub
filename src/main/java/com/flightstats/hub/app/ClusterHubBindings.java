@@ -31,9 +31,7 @@ class ClusterHubBindings extends AbstractModule {
         bind(ChannelService.class).to(GlobalChannelService.class).asEagerSingleton();
         bind(AwsConnectorFactory.class).asEagerSingleton();
         bind(S3Config.class).asEagerSingleton();
-        bind(ContentService.class).to(CommonContentService.class).asEagerSingleton();
         bind(ContentService.class)
-                .annotatedWith(Names.named(ContentService.IMPL))
                 .to(ClusterContentService.class).asEagerSingleton();
         bind(RemoteSpokeStore.class).asEagerSingleton();
         bind(ContentDao.class)

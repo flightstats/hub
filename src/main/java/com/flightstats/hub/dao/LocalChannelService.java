@@ -1,17 +1,18 @@
 package com.flightstats.hub.dao;
 
 import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.app.InFlightService;
 import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.cluster.LastContentPath;
-import com.flightstats.hub.exception.ForbiddenRequestException;
-import com.flightstats.hub.exception.InvalidRequestException;
-import com.flightstats.hub.exception.MethodNotAllowedException;
-import com.flightstats.hub.exception.NoSuchChannelException;
+import com.flightstats.hub.dao.aws.MultiPartParser;
+import com.flightstats.hub.exception.*;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.DataDog;
 import com.flightstats.hub.metrics.MetricsSender;
+import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.replication.ReplicationGlobalManager;
+import com.flightstats.hub.time.TimeService;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -51,6 +52,10 @@ public class LocalChannelService implements ChannelService {
     private MetricsSender sender;
     @Inject
     private LastContentPath lastContentPath;
+    @Inject
+    private InFlightService inFlightService;
+    @Inject
+    private TimeService timeService;
 
     @Override
     public boolean channelExists(String channelName) {
@@ -102,7 +107,7 @@ public class LocalChannelService implements ChannelService {
             throw new ForbiddenRequestException(channelName + " cannot modified while replicating");
         }
         long start = System.currentTimeMillis();
-        ContentKey contentKey = contentService.insert(channelName, content);
+        ContentKey contentKey = insertInternal(channelName, content);
         long time = System.currentTimeMillis() - start;
         statsd.time("channel", time, "method:post", "type:single", "channel:" + channelName);
         statsd.increment("channel.items", "method:post", "type:single", "channel:" + channelName);
@@ -112,6 +117,29 @@ public class LocalChannelService implements ChannelService {
         sender.send("channel." + channelName + ".post.bytes", content.getSize());
         sender.send("channel.ALL.post", time);
         return contentKey;
+    }
+
+    private ContentKey insertInternal(String channelName, Content content) throws Exception {
+        return inFlightService.inFlight(() -> {
+            Traces traces = ActiveTraces.getLocal();
+            traces.add("ContentService.insert");
+            try {
+                content.packageStream();
+                traces.add("ContentService.insert marshalled");
+                ContentKey key = content.keyAndStart(timeService.getNow());
+                logger.trace("writing key {} to channel {}", key, channelName);
+                contentService.insert(channelName, content);
+                traces.add("ContentService.insert end", key);
+                return key;
+            } catch (ContentTooLargeException e) {
+                logger.info("content too large for channel " + channelName);
+                throw e;
+            } catch (Exception e) {
+                traces.add("ContentService.insert", "error", e.getMessage());
+                logger.warn("insertion error " + channelName, e);
+                throw e;
+            }
+        });
     }
 
     @Override
@@ -128,7 +156,10 @@ public class LocalChannelService implements ChannelService {
             logger.warn(msg);
             throw new InvalidRequestException(msg);
         }
-        boolean insert = contentService.historicalInsert(channelName, content);
+        boolean insert = inFlightService.inFlight(() -> {
+            content.packageStream();
+            return contentService.historicalInsert(channelName, content);
+        });
         lastContentPath.updateDecrease(contentKey, channelName, HISTORICAL_EARLIEST);
         long time = System.currentTimeMillis() - start;
         statsd.time("channel.historical", time, "method:post", "type:single", "channel:" + channelName);
@@ -143,7 +174,11 @@ public class LocalChannelService implements ChannelService {
             throw new ForbiddenRequestException(channel + " cannot modified while replicating");
         }
         long start = System.currentTimeMillis();
-        Collection<ContentKey> contentKeys = contentService.insert(bulkContent);
+        Collection<ContentKey> contentKeys = inFlightService.inFlight(() -> {
+            MultiPartParser multiPartParser = new MultiPartParser(bulkContent);
+            multiPartParser.parse();
+            return contentService.insert(bulkContent);
+        });
         long time = System.currentTimeMillis() - start;
         statsd.time("channel", time, "method:post", "type:bulk", "channel:" + channel);
         statsd.count("channel.items", bulkContent.getItems().size(), "method:post", "type:bulk", "channel:" + channel);
