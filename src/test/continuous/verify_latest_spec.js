@@ -26,7 +26,7 @@ const NONE = '1970/01/01/00/00/00/001/none';
  *
  */
 
-//jasmine-node --forceexit --captureExceptions --config hubUrl hub.svc.dev verify_latest_spec.js
+//jasmine-node --forceexit --captureExceptions --config hubUrl hub verify_latest_spec.js
 
 describe(testName, function () {
 
