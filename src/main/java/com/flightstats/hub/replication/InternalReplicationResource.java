@@ -29,6 +29,31 @@ public class InternalReplicationResource {
     private static final LocalChannelService localChannelService = HubProvider.getInstance(LocalChannelService.class);
     private static final LastContentPath lastReplicated = HubProvider.getInstance(LastContentPath.class);
 
+    @POST
+    public Response putPayload(@PathParam("channel") String channel, String data) {
+        try {
+            JsonNode node = readData(channel, data);
+            SecondPath path = SecondPath.fromUrl(node.get("id").asText()).get();
+            int expectedItems = node.get("uris").size();
+            if (expectedItems > 0) {
+                if (!getAndWriteBatch(channel, path, node.get("batchUrl").asText(), expectedItems)) {
+                    return Response.status(500).build();
+                }
+            }
+            lastReplicated.updateIncrease(path, channel, LocalChannelService.REPLICATED_LAST_UPDATED);
+            return Response.ok().build();
+
+        } catch (Exception e) {
+            logger.warn("unable to handle " + channel + " " + data, e);
+        }
+        return Response.status(500).build();
+    }
+
+    JsonNode readData(String channel, String data) throws IOException {
+        logger.trace("reading {} {}", channel, data);
+        return mapper.readTree(data);
+    }
+
     private static boolean getAndWriteBatch(String channel, ContentPath path,
                                             String batchUrl, int expectedItems) throws Exception {
         BulkContent bulkContent = getBulkContent(channel, path, batchUrl);
@@ -75,31 +100,6 @@ public class InternalReplicationResource {
                 .build();
         localChannelService.insert(bulkContent);
         return bulkContent;
-    }
-
-    @POST
-    public Response putPayload(@PathParam("channel") String channel, String data) {
-        try {
-            JsonNode node = readData(channel, data);
-            SecondPath path = SecondPath.fromUrl(node.get("id").asText()).get();
-            int expectedItems = node.get("uris").size();
-            if (expectedItems > 0) {
-                if (!getAndWriteBatch(channel, path, node.get("batchUrl").asText(), expectedItems)) {
-                    return Response.status(500).build();
-                }
-            }
-            lastReplicated.updateIncrease(path, channel, LocalChannelService.REPLICATED_LAST_UPDATED);
-            return Response.ok().build();
-
-        } catch (Exception e) {
-            logger.warn("unable to handle " + channel + " " + data, e);
-        }
-        return Response.status(500).build();
-    }
-
-    JsonNode readData(String channel, String data) throws IOException {
-        logger.debug("reading {} {}", channel, data);
-        return mapper.readTree(data);
     }
 
 

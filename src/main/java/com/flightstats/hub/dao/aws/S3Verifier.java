@@ -46,8 +46,8 @@ public class S3Verifier {
 
     private final int offsetMinutes = HubProperties.getProperty("s3Verifier.offsetMinutes", 15);
     private final int channelThreads = HubProperties.getProperty("s3Verifier.channelThreads", 3);
-    private final ExecutorService channelThreadPool = Executors.newFixedThreadPool(channelThreads, new ThreadFactoryBuilder().setNameFormat("S3ChannelThread-%d").build());
-    private final ExecutorService queryThreadPool = Executors.newFixedThreadPool(channelThreads * 2, new ThreadFactoryBuilder().setNameFormat("S3QueryThread-%d").build());
+    private final ExecutorService channelThreadPool = Executors.newFixedThreadPool(channelThreads, new ThreadFactoryBuilder().setNameFormat("S3VerifierChannel-%d").build());
+    private final ExecutorService queryThreadPool = Executors.newFixedThreadPool(channelThreads * 2, new ThreadFactoryBuilder().setNameFormat("S3VerifierQuery-%d").build());
     @Inject
     private LastContentPath lastContentPath;
     @Inject
@@ -77,13 +77,17 @@ public class S3Verifier {
             for (ChannelConfig channel : channels) {
                 if (channel.isSingle() || channel.isBoth()) {
                     channelThreadPool.submit(() -> {
+                        String name = Thread.currentThread().getName();
+                        Thread.currentThread().setName(name + "|" + channel.getName());
                         String url = HubProperties.getAppUrl() + "internal/s3Verifier/" + channel.getName();
+                        logger.debug("calling {}", url);
                         ClientResponse post = null;
                         try {
                             post = followClient.resource(url).post(ClientResponse.class);
                             logger.debug("response from post {}", post);
                         } finally {
                             HubUtils.close(post);
+                            Thread.currentThread().setName(name);
                         }
                     });
                 }
@@ -97,6 +101,9 @@ public class S3Verifier {
     void verifyChannel(String channelName) {
         DateTime now = TimeUtil.now();
         ChannelConfig channel = channelService.getChannelConfig(channelName, false);
+        if (channel == null) {
+            return;
+        }
         VerifierRange range = getSingleVerifierRange(now, channel);
         if (range != null) {
             verifyChannel(range);

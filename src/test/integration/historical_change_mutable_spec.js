@@ -50,6 +50,8 @@ describe(testName, function () {
 
     utils.putChannel(channel, false, channelBodyChange, testName);
 
+    utils.itRefreshesChannels();
+
     it('queries both items', function (done) {
         utils.getQuery(channelURL + '/latest/2?trace=true', 200, historicalLocations, done);
     });
