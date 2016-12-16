@@ -102,11 +102,17 @@ public class InternalWebhookResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response errors() {
         ObjectNode root = mapper.createObjectNode();
-        ArrayNode uris = root.putArray("errors");
+        ArrayNode uris = root.putArray("webhooks");
         webhookService.getAll().forEach(webhook -> {
             WebhookStatus status = webhookService.getStatus(webhook);
             if (status.getErrors().size() > 0) {
-                uris.add(constructWebhookURI(webhook).toString());
+                ObjectNode node = uris.addObject();
+                node.put("name", webhook.getName());
+                node.put("href", constructWebhookURI(webhook).toString());
+                node.put("callbackUrl", webhook.getCallbackUrl());
+                node.put("channelUrl", webhook.getChannelUrl());
+                WebhookResource.addLatest(webhook, status, node);
+                WebhookResource.addErrors(status, node);
             }
         });
         return Response.ok(root).build();
