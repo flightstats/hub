@@ -95,7 +95,7 @@ class WebhookError {
 
     @Builder
     @Getter
-    private class Error {
+    private static class Error {
         String name;
         DateTime creationTime;
         String data;
