@@ -108,7 +108,7 @@ exports.getChannel = function getChannel(channelName, verify, description, hubUr
 
 exports.addItem = function addItem(url, responseCode) {
     it("adds item to " + url, function (done) {
-        postItem(url, responseCode, done);
+        utils.postItem(url, responseCode, done);
     }, 5099);
 }
 
@@ -151,7 +151,7 @@ exports.getWebhookUrl = function getGroupUrl() {
 exports.putWebhook = function putGroup(groupName, groupConfig, status, description, groupUrl) {
     description = description || 'none';
     status = status || 201;
-    groupUrl = groupUrl || getGroupUrl();
+    groupUrl = groupUrl || utils.getGroupUrl();
     var groupResource = groupUrl + "/" + groupName;
     it('creates group ' + groupName, function (done) {
         console.log('creating group ' + groupName + ' for ' + description);
