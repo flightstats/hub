@@ -7,9 +7,7 @@ import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 
-import static com.flightstats.hub.util.RequestUtils.getChannelName;
-import static com.flightstats.hub.util.RequestUtils.getTag;
-import static com.flightstats.hub.util.RequestUtils.isValidChannelUrl;
+import static com.flightstats.hub.util.RequestUtils.*;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.*;
@@ -22,7 +20,7 @@ public class RequestUtilsTest {
     public void testGetChannelNameFromString() {
         assertEquals("foobar", getChannelName("http://location:8080/channel/foobar"));
         assertEquals("foobar", getChannelName("http://location:8080/channel/foobar/"));
-        assertEquals("foobar", getChannelName("http://hub.svc.prod/channel/foobar/"));
+        assertEquals("foobar", getChannelName("http://hub.prod/channel/foobar/"));
     }
 
     @Test
