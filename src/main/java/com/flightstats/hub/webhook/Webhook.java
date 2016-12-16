@@ -161,6 +161,7 @@ public class Webhook implements Comparable<Webhook>, NamedType {
         return !Objects.equals(parallelCalls, other.parallelCalls)
                 || paused != other.paused
                 || !callbackUrl.equals(other.callbackUrl)
+                || !channelUrl.equals(other.channelUrl)
                 || !batch.equals(other.batch)
                 || !heartbeat == other.heartbeat
                 || !ttlMinutes.equals(other.ttlMinutes)

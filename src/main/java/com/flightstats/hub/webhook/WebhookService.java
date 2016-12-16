@@ -46,7 +46,7 @@ public class WebhookService {
             if (existing.equals(webhook)) {
                 return webhookOptional;
             } else if (!existing.allowedToChange(webhook)) {
-                throw new ConflictException("{\"error\": \"channelUrl can not change. \"}");
+                throw new ConflictException("{\"error\": \"The channel name in the channelUrl can not change. \"}");
             }
         } else {
             if (webhook.getStartingKey() == null) {

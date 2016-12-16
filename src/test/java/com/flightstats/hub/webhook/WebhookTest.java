@@ -88,12 +88,12 @@ public class WebhookTest {
 
         assertTrue(hubA.allowedToChange(hubB));
 
-        assertFalse(hubA.isChanged(hubB));
+        assertTrue(hubA.isChanged(hubB));
 
     }
 
     @Test
-    public void testNotChanged() {
+    public void testChannelUrlChange() {
         Webhook hubA = Webhook.builder().name("name")
                 .channelUrl("http://hubA/channel/name")
                 .callbackUrl("url").build().withDefaults();
@@ -104,7 +104,7 @@ public class WebhookTest {
 
         assertFalse(hubA.allowedToChange(hubC));
 
-        assertFalse(hubA.isChanged(hubC));
+        assertTrue(hubA.isChanged(hubC));
 
     }
 
