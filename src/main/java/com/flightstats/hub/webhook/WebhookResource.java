@@ -94,7 +94,7 @@ public class WebhookResource {
         root.put("heartbeat", webhook.isHeartbeat());
         root.put("ttlMinutes", webhook.getTtlMinutes());
         root.put("maxWaitMinutes", webhook.getMaxWaitMinutes());
-        addLatest(webhook, status, root);
+        addLatest(webhook, status, root, true);
         TimeLinkUtil.addTime(root, stable, "stableTime");
         ArrayNode inFlight = root.putArray("inFlight");
         for (ContentPath contentPath : status.getInFlight()) {
@@ -108,7 +108,7 @@ public class WebhookResource {
         status.getErrors().forEach(root.putArray("errors")::add);
     }
 
-    static void addLatest(Webhook webhook, WebhookStatus status, ObjectNode root) {
+    static void addLatest(Webhook webhook, WebhookStatus status, ObjectNode root, boolean includeLegacy) {
         if (status.getChannelLatest() == null) {
             root.put("channelLatest", "");
         } else {
@@ -117,7 +117,11 @@ public class WebhookResource {
         if (status.getLastCompleted() == null) {
             root.put("lastCompleted", "");
         } else {
-            root.put("lastCompleted", webhook.getChannelUrl() + "/" + status.getLastCompleted().toUrl());
+            String lastCompleted = webhook.getChannelUrl() + "/" + status.getLastCompleted().toUrl();
+            root.put("lastCompleted", lastCompleted);
+            if (includeLegacy) {
+                root.put("lastCompletedCallback", lastCompleted);
+            }
         }
     }
 
