@@ -14,7 +14,12 @@ var endOffset = parseInt(process.env.endOffset) || 40;
 var testPercent = parseInt(process.env.testPercent) || 10;
 
 /**
+ * Usage:
+ * jasmine-node --forceexit --captureExceptions --config hubUrl hub --config startOffset 48 verify_s3_writer_spec.js
+ *
  * This should load all the channels in the hub.
+ * For each channel, verify that the items in S3 match the items in Spoke
+ * testPercent is used to limit the cost of all the querys
  */
 describe(testName, function () {
 
@@ -94,9 +99,6 @@ describe(testName, function () {
             compare: rootUrl + '?location=LONG_TERM_' + type + '&trace=true'
         });
     }
-
-//    jasmine-node --forceexit --captureExceptions --config hubUrl hub.iad.dev.flightstats.io --config startOffset 48 verify_s3_writer_spec.js
-//    jasmine-node --forceexit --captureExceptions --config hubUrl hub.iad.dev.flightstats.io verify_s3_writer_spec.js
 
     it('cross product of channels and times', function () {
         console.log('now', moment.utc().format(minute_format));
