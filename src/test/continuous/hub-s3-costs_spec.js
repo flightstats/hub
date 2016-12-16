@@ -26,7 +26,7 @@ var MINUTE = 60 * 1000;
  *
  */
 
-//jasmine-node --forceexit --captureExceptions --config hubUrl http://hub.svc.dev --config dataPrefix hub.dev --config graphiteUrl https://www.hostedgraphite.com/ hub-s3-costs_spec.js
+//jasmine-node --forceexit --captureExceptions --config hubUrl http://hub --config dataPrefix hub.dev --config graphiteUrl https://www.hostedgraphite.com/ hub-s3-costs_spec.js
 
 describe(testName, function () {
 
