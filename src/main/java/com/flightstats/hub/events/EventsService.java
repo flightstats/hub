@@ -1,7 +1,8 @@
 package com.flightstats.hub.events;
 
 import com.diffplug.common.base.Errors;
-import com.flightstats.hub.dao.ContentService;
+import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.dao.Request;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.webhook.WebhookService;
@@ -22,7 +23,7 @@ public class EventsService {
     private final static Logger logger = LoggerFactory.getLogger(EventsService.class);
 
     @Inject
-    private ContentService contentService;
+    private ChannelService channelService;
     @Inject
     private WebhookService webhookService;
 
@@ -32,7 +33,11 @@ public class EventsService {
         logger.trace("got uri {} {}", uri, id);
         ChannelContentKey key = ChannelContentKey.fromUrl(uri);
         if (key != null) {
-            Optional<Content> optional = contentService.get(key.getChannel(), key.getContentKey());
+            Request request = Request.builder()
+                    .channel(key.getChannel())
+                    .key(key.getContentKey())
+                    .build();
+            Optional<Content> optional = channelService.get(request);
             if (optional.isPresent()) {
                 Content content = optional.get();
                 sendData(id, Errors.rethrow().wrap(contentOutput -> {

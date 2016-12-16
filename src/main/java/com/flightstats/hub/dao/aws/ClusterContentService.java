@@ -4,15 +4,18 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.*;
+import com.flightstats.hub.exception.FailedQueryException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.replication.S3Batch;
 import com.flightstats.hub.util.HubUtils;
+import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.AbstractScheduledService;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.joda.time.DateTime;
@@ -23,6 +26,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.SortedSet;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -51,6 +57,8 @@ public class ClusterContentService implements ContentService {
     private S3WriteQueue s3WriteQueue;
     @Inject
     private HubUtils hubUtils;
+
+    private static final ExecutorService executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("ClusterContentService-%d").build());
 
     public ClusterContentService() {
         HubServices.registerPreStop(new SpokeS3ContentServiceInit());
@@ -193,8 +201,36 @@ public class ClusterContentService implements ContentService {
                 }
             }
         }
+        return query(daoQuery, daos);
+    }
 
-        return CommonContentService.query(daoQuery, daos);
+    private static SortedSet<ContentKey> query(Function<ContentDao, SortedSet<ContentKey>> daoQuery, List<ContentDao> contentDaos) {
+        try {
+            QueryResult queryResult = new QueryResult(contentDaos.size());
+            CountDownLatch latch = new CountDownLatch(contentDaos.size());
+            Traces traces = ActiveTraces.getLocal();
+            String threadName = Thread.currentThread().getName();
+            for (ContentDao contentDao : contentDaos) {
+                executorService.submit(() -> {
+                    Thread.currentThread().setName(contentDao.getClass().getSimpleName() + "|" + threadName);
+                    ActiveTraces.setLocal(traces);
+                    try {
+                        queryResult.addKeys(daoQuery.apply(contentDao));
+                    } finally {
+                        latch.countDown();
+                    }
+                });
+            }
+            latch.await(118, TimeUnit.SECONDS);
+            if (queryResult.hadSuccess()) {
+                return queryResult.getContentKeys();
+            } else {
+                traces.add("unable to complete query ", queryResult);
+                throw new FailedQueryException("unable to complete query " + queryResult + " " + threadName);
+            }
+        } catch (InterruptedException e) {
+            throw new RuntimeInterruptedException(e);
+        }
     }
 
     @Override

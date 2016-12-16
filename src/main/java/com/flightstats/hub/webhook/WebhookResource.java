@@ -94,27 +94,35 @@ public class WebhookResource {
         root.put("heartbeat", webhook.isHeartbeat());
         root.put("ttlMinutes", webhook.getTtlMinutes());
         root.put("maxWaitMinutes", webhook.getMaxWaitMinutes());
-        String lastCompleted = "";
-        if (status.getLastCompleted() != null) {
-            lastCompleted = webhook.getChannelUrl() + "/" + status.getLastCompleted().toUrl();
-        }
-        root.put("lastCompletedCallback", lastCompleted);
-        root.put("lastCompleted", lastCompleted);
-        if (status.getChannelLatest() == null) {
-            root.put("channelLatest", "");
-        } else {
-            root.put("channelLatest", webhook.getChannelUrl() + "/" + status.getChannelLatest().toUrl());
-        }
+        addLatest(webhook, status, root, true);
         TimeLinkUtil.addTime(root, stable, "stableTime");
         ArrayNode inFlight = root.putArray("inFlight");
         for (ContentPath contentPath : status.getInFlight()) {
             inFlight.add(webhook.getChannelUrl() + "/" + contentPath.toUrl());
         }
-        ArrayNode errors = root.putArray("errors");
-        for (String error : status.getErrors()) {
-            errors.add(error);
-        }
+        addErrors(status, root);
         return Response.ok(root).build();
+    }
+
+    static void addErrors(WebhookStatus status, ObjectNode root) {
+        status.getErrors().forEach(root.putArray("errors")::add);
+    }
+
+    static void addLatest(Webhook webhook, WebhookStatus status, ObjectNode root, boolean includeLegacy) {
+        if (status.getChannelLatest() == null) {
+            root.put("channelLatest", "");
+        } else {
+            root.put("channelLatest", webhook.getChannelUrl() + "/" + status.getChannelLatest().toUrl());
+        }
+        if (status.getLastCompleted() == null) {
+            root.put("lastCompleted", "");
+        } else {
+            String lastCompleted = webhook.getChannelUrl() + "/" + status.getLastCompleted().toUrl();
+            root.put("lastCompleted", lastCompleted);
+            if (includeLegacy) {
+                root.put("lastCompletedCallback", lastCompleted);
+            }
+        }
     }
 
     private static Linked<Webhook> getLinked(Webhook webhook, UriInfo uriInfo) {

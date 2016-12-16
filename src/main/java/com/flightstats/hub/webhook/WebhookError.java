@@ -3,6 +3,8 @@ package com.flightstats.hub.webhook;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import lombok.Builder;
+import lombok.Getter;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
@@ -12,9 +14,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.TreeSet;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 @Singleton
 class WebhookError {
@@ -38,29 +40,33 @@ class WebhookError {
         limitChildren(webhook);
     }
 
-    private void limitChildren(String webhook) {
+    private List<String> limitChildren(String webhook) {
         String errorRoot = getErrorRoot(webhook);
+        List<String> results = new ArrayList<>();
+        SortedMap<String, Error> errors = new TreeMap<>();
         try {
-            List<String> children = curator.getChildren().forPath(errorRoot);
-            children.sort(String.CASE_INSENSITIVE_ORDER);
-            if (children.size() > MAX_SIZE) {
-                int transition = children.size() - MAX_SIZE;
-                for (int i = 0; i < transition; i++) {
-                    curator.delete().forPath(getChildPath(errorRoot, children.get(i)));
-                }
-                DateTime cutoffTime = TimeUtil.now().minusHours(1);
-                for (int i = transition; i < children.size(); i++) {
-                    Stat stat = new Stat();
-                    String child = children.get(i);
-                    curator.getData().storingStatIn(stat).forPath(getChildPath(errorRoot, child));
-                    if (new DateTime(stat.getCtime()).isBefore(cutoffTime)) {
-                        curator.delete().forPath(getChildPath(errorRoot, child));
-                    }
+            for (String child : curator.getChildren().forPath(errorRoot)) {
+                Stat stat = new Stat();
+                byte[] bytes = curator.getData().storingStatIn(stat).forPath(getChildPath(errorRoot, child));
+                errors.put(child, new Error(child, new DateTime(stat.getCtime()), new String(bytes)));
+            }
+            while (errors.size() > MAX_SIZE) {
+                String firstKey = errors.firstKey();
+                errors.remove(firstKey);
+                curator.delete().inBackground().forPath(getChildPath(errorRoot, firstKey));
+            }
+            DateTime cutoffTime = TimeUtil.now().minusDays(1);
+            for (Error error : errors.values()) {
+                if (error.getCreationTime().isBefore(cutoffTime)) {
+                    curator.delete().inBackground().forPath(getChildPath(errorRoot, error.getName()));
+                } else {
+                    results.add(error.getData());
                 }
             }
         } catch (Exception e) {
             logger.warn("unable to limit children " + errorRoot, e);
         }
+        return results;
     }
 
     public void delete(String webhook) {
@@ -84,18 +90,14 @@ class WebhookError {
     }
 
     public List<String> get(String webhook) {
-        String errorRoot = getErrorRoot(webhook);
-        List<String> errors = new ArrayList<>();
-        try {
-            Collection<String> children = new TreeSet<>(curator.getChildren().forPath(errorRoot));
-            for (String child : children) {
-                errors.add(new String(curator.getData().forPath(getChildPath(errorRoot, child))));
-            }
-        } catch (KeeperException.NoNodeException e) {
-            logger.info("unable to get missing node " + errorRoot);
-        } catch (Exception e) {
-            logger.warn("unable to get children " + errorRoot, e);
-        }
-        return errors;
+        return limitChildren(webhook);
+    }
+
+    @Builder
+    @Getter
+    private static class Error {
+        String name;
+        DateTime creationTime;
+        String data;
     }
 }

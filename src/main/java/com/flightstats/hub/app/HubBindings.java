@@ -163,6 +163,7 @@ public class HubBindings extends AbstractModule {
         bind(FileSpokeStore.class).asEagerSingleton();
         bind(SpokeClusterRegister.class).asEagerSingleton();
         bind(FinalCheck.class).to(SpokeFinalCheck.class).asEagerSingleton();
+        bind(InFlightService.class).asEagerSingleton();
     }
 
 }

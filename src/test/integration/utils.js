@@ -6,12 +6,12 @@ var fs = require('fs');
 var request = require('request');
 var Q = require('q');
 
-function runInTestChannel(testName, channelName, functionToExecute) {
+exports.runInTestChannel = function runInTestChannel(testName, channelName, functionToExecute) {
     testName = testName || '';
-    runInTestChannelJson(testName, JSON.stringify({ "name" : channelName}), functionToExecute);
+    utils.runInTestChannelJson(testName, JSON.stringify({"name": channelName}), functionToExecute);
 }
 
-function runInTestChannelJson(testName, jsonBody, functionToExecute) {
+exports.runInTestChannelJson = function runInTestChannelJson(testName, jsonBody, functionToExecute) {
     frisby.create('Creating channel ' + testName + ' ' + jsonBody)
         .post(channelUrl, null, { body: jsonBody})
         .addHeader("Content-Type", "application/json")
@@ -20,11 +20,11 @@ function runInTestChannelJson(testName, jsonBody, functionToExecute) {
         .toss();
 }
 
-function randomChannelName() {
+exports.randomChannelName = function randomChannelName() {
     return "test_" + Math.random().toString().replace(".", "_");
 }
 
-function download(url, completionHandler) {
+exports.download = function download(url, completionHandler) {
     http.get(url, function (res) {
         var imagedata = '';
         res.setEncoding('binary');
@@ -39,14 +39,14 @@ function download(url, completionHandler) {
     });
 }
 
-function configureFrisby(timeout) {
+exports.configureFrisby = function configureFrisby(timeout) {
     timeout = typeof timeout !== 'undefined' ? timeout : 30000;
     frisby.globalSetup({
         timeout: timeout
     });
 }
 
-function createChannel(channelName, url, description) {
+exports.createChannel = function createChannel(channelName, url, description) {
     description = description || 'none';
     url = url || channelUrl;
     it("creates channel " + channelName + " at " + url, function (done) {
@@ -85,7 +85,7 @@ exports.putChannel = function putChannel(channelName, verify, body, description,
     });
 }
 
-function getChannel(channelName, verify, description, hubUrl) {
+exports.getChannel = function getChannel(channelName, verify, description, hubUrl) {
     verify = verify || function () { };
     description = description || 'none';
     hubUrl = hubUrl || hubUrlBase;
@@ -106,13 +106,13 @@ function getChannel(channelName, verify, description, hubUrl) {
     });
 }
 
-function addItem(url, responseCode) {
+exports.addItem = function addItem(url, responseCode) {
     it("adds item to " + url, function (done) {
-        postItem(url, responseCode, done);
+        utils.postItem(url, responseCode, done);
     }, 5099);
 }
 
-function postItem(url, responseCode, completed) {
+exports.postItem = function postItem(url, responseCode, completed) {
     responseCode = responseCode || 201;
     completed = completed || function () {};
     request.post({url : url,
@@ -126,7 +126,7 @@ function postItem(url, responseCode, completed) {
         });
 }
 
-function postItemQ(url) {
+exports.postItemQ = function postItemQ(url) {
     var deferred = Q.defer();
     request.post({
             url : url, json : true,
@@ -141,17 +141,17 @@ function postItemQ(url) {
     return deferred.promise;
 }
 
-function getGroupUrl() {
+exports.getWebhookUrl = function getWebhookUrl() {
     if (Math.random() > 0.5) {
         return hubUrlBase + '/webhook';
     }
     return hubUrlBase + '/group';
 }
 
-function putGroup(groupName, groupConfig, status, description, groupUrl) {
+exports.putWebhook = function putGroup(groupName, groupConfig, status, description, groupUrl) {
     description = description || 'none';
     status = status || 201;
-    groupUrl = groupUrl || getGroupUrl();
+    groupUrl = groupUrl || utils.getWebhookUrl();
     var groupResource = groupUrl + "/" + groupName;
     it('creates group ' + groupName, function (done) {
         console.log('creating group ' + groupName + ' for ' + description);
@@ -176,8 +176,8 @@ function putGroup(groupName, groupConfig, status, description, groupUrl) {
     return groupResource;
 }
 
-function getGroup(groupName, groupConfig, status, verify) {
-    var groupResource = getGroupUrl() + "/" + groupName;
+exports.getWebhook = function getGroup(groupName, groupConfig, status, verify) {
+    var groupResource = utils.getWebhookUrl() + "/" + groupName;
     status = status || 200;
     verify = verify || function (parse) {
             if (typeof groupConfig !== "undefined") {
@@ -212,8 +212,8 @@ function getGroup(groupName, groupConfig, status, verify) {
     return groupResource;
 }
 
-function deleteGroup(groupName) {
-    var groupResource = getGroupUrl() + "/" + groupName;
+exports.deleteWebhook = function deleteGroup(groupName) {
+    var groupResource = utils.getWebhookUrl() + "/" + groupName;
     it('deletes the group ' + groupName, function (done) {
         request.del({url: groupResource },
             function (err, response, body) {
@@ -224,7 +224,7 @@ function deleteGroup(groupName) {
     }, 60 * 1000);
 }
 
-function itRefreshesChannels() {
+exports.itRefreshesChannels = function itRefreshesChannels() {
     it('refreshes channels', function (done) {
         request.get(hubUrlBase + '/internal/channel/refresh',
             function (err, response, body) {
@@ -236,7 +236,7 @@ function itRefreshesChannels() {
     });
 }
 
-function getQ(url, status, stable) {
+exports.getQ = function getQ(url, status, stable) {
     status = status || 200;
     stable = stable || false;
     var deferred = Q.defer();
@@ -278,7 +278,7 @@ exports.sleepQ = function sleepQ(millis) {
     return deferred.promise;
 }
 
-function timeout(millis) {
+exports.timeout = function timeout(millis) {
     it('waits for ' + millis, function (done) {
         setTimeout(function () {
             done()
@@ -286,13 +286,13 @@ function timeout(millis) {
     });
 }
 
-function getPort() {
+exports.getPort = function getPort() {
     var port = callbackPort++;
     console.log('using port', port)
     return port;
 }
 
-function startServer(port, callback) {
+exports.startServer = function startServer(port, callback) {
     console.log('starting server ' + port);
     var started = false;
     runs(function () {
@@ -327,7 +327,7 @@ function serverResponse(request, response, callback) {
     response.end();
 }
 
-function startHttpsServer(port, callback, done) {
+exports.startHttpsServer = function startHttpsServer(port, callback, done) {
 
     var options = {
         key: fs.readFileSync(integrationTestPath + 'localhost.key'),
@@ -349,7 +349,7 @@ function startHttpsServer(port, callback, done) {
     return server;
 }
 
-function closeServer(callback, description) {
+exports.closeServer = function closeServer(callback, description) {
     description = description || 'none';
     callback = callback || function () {};
     var closed = false;
@@ -367,7 +367,7 @@ function closeServer(callback, description) {
     }, 13000);
 }
 
-function parseJson(response, description) {
+exports.parseJson = function parseJson(response, description) {
     try {
         return JSON.parse(response.body);
     } catch (e) {
@@ -394,7 +394,7 @@ exports.getQuery = function getQuery(url, status, expectedUris, done) {
             expect(err).toBeNull();
             expect(response.statusCode).toBe(status);
             if (expectedUris) {
-                var parsed = parseJson(response);
+                var parsed = utils.parseJson(response);
                 expect(parsed._links.uris.length).toBe(expectedUris.length);
                 for (var i = 0; i < expectedUris.length; i++) {
                     expect(parsed._links.uris[i]).toBe(expectedUris[i]);
@@ -403,27 +403,3 @@ exports.getQuery = function getQuery(url, status, expectedUris, done) {
             done();
         });
 }
-
-exports.runInTestChannel = runInTestChannel;
-exports.download = download;
-exports.randomChannelName = randomChannelName;
-exports.configureFrisby = configureFrisby;
-exports.runInTestChannelJson = runInTestChannelJson;
-exports.createChannel = createChannel;
-exports.getChannel = getChannel;
-exports.addItem = addItem;
-exports.timeout = timeout;
-exports.getWebhookUrl = getGroupUrl;
-exports.putWebhook = putGroup;
-exports.getWebhook = getGroup;
-exports.deleteWebhook = deleteGroup;
-exports.postItem = postItem;
-exports.postItemQ = postItemQ;
-exports.startServer = startServer;
-exports.startHttpsServer = startHttpsServer;
-exports.closeServer = closeServer;
-exports.getQ = getQ;
-exports.getPort = getPort;
-exports.parseJson = parseJson;
-exports.itRefreshesChannels = itRefreshesChannels;
-

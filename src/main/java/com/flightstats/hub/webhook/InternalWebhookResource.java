@@ -24,7 +24,7 @@ import static com.flightstats.hub.util.StaleUtil.addStaleEntities;
 @Path("/internal/webhook")
 public class InternalWebhookResource {
 
-    public static final String DESCRIPTION = "Get a list of stale or erroring webhooks.";
+    public static final String DESCRIPTION = "Get all webhooks, or stale or erroring webhooks.";
     private static final Long DEFAULT_STALE_AGE = TimeUnit.HOURS.toMinutes(1);
 
     private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
@@ -40,13 +40,15 @@ public class InternalWebhookResource {
         root.put("description", DESCRIPTION);
 
         ObjectNode directions = root.putObject("directions");
+        directions.put("configs", "HTTP GET to /internal/webhook/configs to list all webhook configurations");
         directions.put("stale", "HTTP GET to /internal/webhook/stale/{age} to list webhooks that are more than {age} minutes behind.");
+        directions.put("errors", "HTTP GET to /internal/webhook/errors to list all webhooks with recent errors.");
 
         ObjectNode links = root.putObject("_links");
         addLink(links, "self", uriInfo.getRequestUri().toString());
+        addLink(links, "configs", uriInfo.getRequestUri().toString() + "/configs");
         addLink(links, "stale", uriInfo.getRequestUri().toString() + "/stale/" + DEFAULT_STALE_AGE.intValue());
-
-        addErroringWebhooks(root);
+        addLink(links, "errors", uriInfo.getRequestUri().toString() + "/errors");
 
         return Response.ok(root).build();
     }
@@ -76,7 +78,6 @@ public class InternalWebhookResource {
     @GET
     @Path("/configs")
     @Produces(MediaType.APPLICATION_JSON)
-    // provides all webhook configs for external webhook processor
     public Response configs(){
         ObjectNode root = mapper.createObjectNode();
         ArrayNode arrayNode = root.putArray("webhooks");
@@ -96,20 +97,29 @@ public class InternalWebhookResource {
         return Response.ok(root).build();
     }
 
-    private void addLink(ObjectNode node, String key, String value) {
-        ObjectNode link = node.putObject(key);
-        link.put("href", value);
-    }
-
-    private void addErroringWebhooks(ObjectNode root) {
-        ObjectNode errors = root.putObject("errors");
-        ArrayNode uris = errors.putArray("uris");
+    @GET
+    @Path("/errors")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response errors() {
+        ObjectNode root = mapper.createObjectNode();
+        ArrayNode uris = root.putArray("webhooks");
         webhookService.getAll().forEach(webhook -> {
             WebhookStatus status = webhookService.getStatus(webhook);
             if (status.getErrors().size() > 0) {
-                uris.add(constructWebhookURI(webhook).toString());
+                ObjectNode node = uris.addObject();
+                node.put("name", webhook.getName());
+                node.put("href", constructWebhookURI(webhook).toString());
+                node.put("callbackUrl", webhook.getCallbackUrl());
+                node.put("channelUrl", webhook.getChannelUrl());
+                WebhookResource.addLatest(webhook, status, node, false);
+                WebhookResource.addErrors(status, node);
             }
         });
+        return Response.ok(root).build();
+    }
+
+    private void addLink(ObjectNode node, String key, String value) {
+        node.putObject(key).put("href", value);
     }
 
     private URI constructWebhookURI(Webhook webhook) {
