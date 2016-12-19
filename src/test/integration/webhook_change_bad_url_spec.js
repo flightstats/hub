@@ -38,7 +38,7 @@ describe(testName, function () {
 
     utils.putWebhook(webhookName, badConfig, 201, testName);
 
-    utils.itSleeps(2000);
+    utils.itSleeps(5000);
 
     utils.putWebhook(webhookName, webhookConfigB, 200, testName);
 

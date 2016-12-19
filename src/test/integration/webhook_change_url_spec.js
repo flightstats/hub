@@ -43,7 +43,7 @@ describe(testName, function () {
 
     utils.putWebhook(webhookName, webhookConfigB, 200, testName);
 
-    utils.itRefreshesChannels();
+    utils.itSleeps(5000);
 
     it('runs callback server: channel:' + channelName + ' webhook:' + webhookName, function () {
         utils.startServer(portB, function (string) {
