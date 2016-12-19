@@ -12,15 +12,13 @@ import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.metrics.DataDog;
-import com.flightstats.hub.metrics.MetricsSender;
+import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.metrics.NewRelicIgnoreTransaction;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.rest.Linked;
 import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
 import com.sun.jersey.core.header.MediaTypes;
-import com.timgroup.statsd.StatsDClient;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.media.sse.EventOutput;
 import org.glassfish.jersey.media.sse.SseFeature;
@@ -44,7 +42,6 @@ import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 @Path("/channel/{channel}/{Y}/{M}/{D}/")
 public class ChannelContentResource {
     static final String CREATION_DATE = "Creation-Date";
-    private final static StatsDClient statsd = DataDog.statsd;
 
     private final static Logger logger = LoggerFactory.getLogger(ChannelContentResource.class);
 
@@ -54,7 +51,7 @@ public class ChannelContentResource {
     private final static TagContentResource tagContentResource = HubProvider.getInstance(TagContentResource.class);
     private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
-    private final static MetricsSender sender = HubProvider.getInstance(MetricsSender.class);
+    private final static MetricsService metricsService = HubProvider.getInstance(MetricsService.class);
     private final static EventsService eventsService = HubProvider.getInstance(EventsService.class);
 
     public static MediaType getContentType(Content content) {
@@ -256,10 +253,7 @@ public class ChannelContentResource {
 
         builder.header("Link", "<" + uriInfo.getRequestUriBuilder().path("previous").build() + ">;rel=\"" + "previous" + "\"");
         builder.header("Link", "<" + uriInfo.getRequestUriBuilder().path("next").build() + ">;rel=\"" + "next" + "\"");
-        long time = System.currentTimeMillis() - start;
-        sender.send("channel." + channel + ".get", time);
-        statsd.time("channel", time, "channel:" + channel, "method:get");
-
+        metricsService.getValue(channel, System.currentTimeMillis() - start);
         return builder.build();
     }
 
