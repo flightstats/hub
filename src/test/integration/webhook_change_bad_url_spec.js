@@ -38,9 +38,11 @@ describe(testName, function () {
 
     utils.putWebhook(webhookName, badConfig, 201, testName);
 
-    utils.itSleeps(5000);
+    utils.itSleeps(1000);
 
     utils.putWebhook(webhookName, webhookConfigB, 200, testName);
+
+    utils.itSleeps(5000);
 
     it('runs callback server: channel:' + channelName + ' webhook:' + webhookName, function () {
         utils.startServer(portB, function (string) {
@@ -55,7 +57,7 @@ describe(testName, function () {
 
         waitsFor(function () {
             return itemsB.length == 1;
-        }, 70001);
+        }, 15001);
 
     });
 
