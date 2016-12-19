@@ -57,7 +57,7 @@ describe(testName, function () {
 
         waitsFor(function () {
             return itemsB.length == 1;
-        }, 15001);
+        }, 71001);
 
     });
 

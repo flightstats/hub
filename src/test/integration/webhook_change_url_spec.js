@@ -60,7 +60,7 @@ describe(testName, function () {
 
         waitsFor(function () {
             return itemsB.length == 2;
-        }, 20002);
+        }, 70002);
 
     });
 
