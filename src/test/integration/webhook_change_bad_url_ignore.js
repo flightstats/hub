@@ -6,10 +6,10 @@ var channelName = utils.randomChannelName();
 var webhookName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
-;
-
 
 /**
+ * This is disabled for now.
+ *
  * This should:
  *
  * 1 - create a channel
