@@ -12,7 +12,7 @@ folder: hub
 
 ## Large Items
 
-The Hub has a configurable maximum for item size, the default is 40 MB.
+The Hub has a [configurable maximum for item size](hub_install_locally.md), the default is 40 MB.
 
 One issue we have run into frequently at FlightStats is managing log files over time.  
 Since storing data ordered by time is what the Hub does, it seems like a logical fit.

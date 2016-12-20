@@ -13,7 +13,10 @@ folder: hub
 ## insert individual payloads {#individual}
 
 To insert data to a channel, issue a POST on the channel's `self` URI and specify the appropriate
-content-type header (all content types should be supported).  The `Content-Encoding` header is optional:
+content-type header (all content types should be supported).  The `Content-Encoding` header is optional.
+
+The Hub has a [configurable maximum for item size](hub_install_locally.md), the default is 40 MB.
+
 
 ```
 POST http://hub/channel/stumptown
