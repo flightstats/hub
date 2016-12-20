@@ -19,6 +19,19 @@ docker run -p 80:80 flightstats/hub:latest
 
 To simplify deployment, this version of the hub does not use AWS services, and is not intended for long term storage.
 
+### Docker Settings
+
+To change configurable hub settings:
+
+1. Copy [hub.properties](https://github.com/flightstats/hub/blob/master/docker/hub.properties) 
+2. Modify the desired settings locally
+3. Run docker with
+
+```
+docker run -v hub.properties:/etc/hub/hub.properties -p 80:80 flightstats/hub:latest
+
+```
+
 ### Docker Development
 
 You can also use Docker to do development with the hub on you local machine.
