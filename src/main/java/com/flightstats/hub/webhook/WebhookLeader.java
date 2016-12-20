@@ -255,9 +255,10 @@ class WebhookLeader implements Leader {
         String name = webhook.getName();
         logger.info("exiting webhook " + name + " deleting " + delete);
         deleteOnExit.set(delete);
-        curatorLeader.close();
         closeStrategy();
         stopExecutor();
+        curatorLeader.close();
+        logger.info("exited webhook " + name + " deleting " + delete);
     }
 
     private void stopExecutor() {
