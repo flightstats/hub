@@ -6,7 +6,8 @@ var channelName = utils.randomChannelName();
 var webhookName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
-;
+
+var MINUTE = 60 * 1000
 
 
 /**
@@ -39,11 +40,13 @@ describe(testName, function () {
 
     utils.putWebhook(webhookName, badConfig, 201, testName);
 
+    utils.itSleeps(2000);
+
     utils.addItem(channelResource);
 
     utils.putWebhook(webhookName, webhookConfigB, 200, testName);
 
-    utils.itRefreshesChannels();
+    utils.itSleeps(10000);
 
     it('runs callback server: channel:' + channelName + ' webhook:' + webhookName, function () {
         utils.startServer(portB, function (string) {
@@ -58,7 +61,7 @@ describe(testName, function () {
 
         waitsFor(function () {
             return itemsB.length == 2;
-        }, 20002);
+        }, 3 * MINUTE + 3);
 
     });
 

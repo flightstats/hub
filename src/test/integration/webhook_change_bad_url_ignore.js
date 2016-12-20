@@ -6,10 +6,10 @@ var channelName = utils.randomChannelName();
 var webhookName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
-;
-
 
 /**
+ * This is disabled for now.
+ *
  * This should:
  *
  * 1 - create a channel
@@ -42,6 +42,8 @@ describe(testName, function () {
 
     utils.putWebhook(webhookName, webhookConfigB, 200, testName);
 
+    utils.itSleeps(10000);
+
     it('runs callback server: channel:' + channelName + ' webhook:' + webhookName, function () {
         utils.startServer(portB, function (string) {
             console.log('called webhook ' + webhookName + ' ' + string);
@@ -55,7 +57,7 @@ describe(testName, function () {
 
         waitsFor(function () {
             return itemsB.length == 1;
-        }, 70001);
+        }, 71001);
 
     });
 
