@@ -6,7 +6,8 @@ var channelName = utils.randomChannelName();
 var webhookName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
-;
+
+var MINUTE = 60 * 1000
 
 
 /**
@@ -60,7 +61,7 @@ describe(testName, function () {
 
         waitsFor(function () {
             return itemsB.length == 2;
-        }, 70002);
+        }, 3 * MINUTE + 3);
 
     });
 
