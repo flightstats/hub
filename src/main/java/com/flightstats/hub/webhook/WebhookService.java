@@ -40,11 +40,11 @@ public class WebhookService {
         logger.info("incoming webhook {} ", webhook);
         webhook = webhook.withDefaults();
         webhookValidator.validate(webhook);
-        Optional<Webhook> webhookOptional = get(webhook.getName());
-        if (webhookOptional.isPresent()) {
-            Webhook existing = webhookOptional.get();
+        Optional<Webhook> preExisting = get(webhook.getName());
+        if (preExisting.isPresent()) {
+            Webhook existing = preExisting.get();
             if (existing.equals(webhook)) {
-                return webhookOptional;
+                return preExisting;
             } else if (!existing.allowedToChange(webhook)) {
                 throw new ConflictException("{\"error\": \"The channel name in the channelUrl can not change. \"}");
             }
@@ -62,7 +62,7 @@ public class WebhookService {
         }
         webhookDao.upsert(webhook);
         webhookManager.notifyWatchers();
-        return webhookOptional;
+        return preExisting;
     }
 
     public Optional<Webhook> get(String name) {
