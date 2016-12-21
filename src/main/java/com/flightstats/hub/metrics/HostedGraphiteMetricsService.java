@@ -18,7 +18,7 @@ public class HostedGraphiteMetricsService implements MetricsService {
 
     @Override
     public void historicalInsert(String channelName, Content content, long time) {
-        //do nothing
+        insert(channelName, content, time);
     }
 
     @Override
@@ -39,5 +39,16 @@ public class HostedGraphiteMetricsService implements MetricsService {
     @Override
     public void getValue(String channel, long time) {
         sender.send("channel." + channel + ".get", time);
+    }
+
+    @Override
+    public void operation(String channel, String operationName, long start, String tag) {
+        sender.send("channel." + channel + "." + operationName, 1);
+    }
+
+    @Override
+    public void operation(String channel, String name, long start, long bytes, String tag) {
+        sender.send("channel." + channel + "." + name, 1);
+        sender.send("channel." + channel + "." + name + ".bytes", bytes);
     }
 }

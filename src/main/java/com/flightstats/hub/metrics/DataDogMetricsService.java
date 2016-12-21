@@ -45,4 +45,15 @@ public class DataDogMetricsService implements MetricsService {
         statsd.time("channel", time, "channel:" + channel, "method:get");
     }
 
+    @Override
+    public void operation(String channel, String operationName, long start, String tag) {
+        statsd.recordExecutionTime(operationName, System.currentTimeMillis() - start, "channel:" + channel, tag);
+    }
+
+    @Override
+    public void operation(String channel, String operationName, long start, long bytes, String tag) {
+        statsd.recordExecutionTime(operationName, System.currentTimeMillis() - start, "channel:" + channel, tag);
+        statsd.count(operationName + ".bytes", bytes, "channel:" + channel, tag);
+    }
+
 }

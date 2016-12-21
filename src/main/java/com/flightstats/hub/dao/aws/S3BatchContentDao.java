@@ -10,15 +10,15 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.metrics.DataDog;
-import com.flightstats.hub.metrics.MetricsSender;
+import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
-import com.timgroup.statsd.StatsDClient;
+import com.google.inject.Singleton;
+import lombok.Builder;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -37,25 +37,23 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+@Singleton
+@Builder
 public class S3BatchContentDao implements ContentDao {
 
     private final static Logger logger = LoggerFactory.getLogger(S3BatchContentDao.class);
     private static final String BATCH_INDEX = "Batch/index/";
     private static final String BATCH_ITEMS = "Batch/items/";
     private static final ObjectMapper mapper = new ObjectMapper();
-    private final AmazonS3 s3Client;
-    private final MetricsSender sender;
+
     private final boolean useEncrypted = HubProperties.isAppEncrypted();
     private final int s3MaxQueryItems = HubProperties.getProperty("s3.maxQueryItems", 1000);
-    private final String s3BucketName;
-    private final static StatsDClient statsd = DataDog.statsd;
-
     @Inject
-    public S3BatchContentDao(AmazonS3 s3Client, S3BucketName s3BucketName, MetricsSender sender) {
-        this.s3Client = s3Client;
-        this.sender = sender;
-        this.s3BucketName = s3BucketName.getS3BucketName();
-    }
+    private AmazonS3 s3Client;
+    @Inject
+    private S3BucketName s3BucketName;
+    @Inject
+    private MetricsService metricsService;
 
     @Override
     public ContentKey insert(String channelName, Content content) throws Exception {
@@ -84,7 +82,6 @@ public class S3BatchContentDao implements ContentDao {
         logger.trace("S3BatchContentDao.getS3Object {} {}", channel, key);
         MinutePath minutePath = new MinutePath(key.getTime());
         Content content = null;
-        long start = System.currentTimeMillis();
         try (ZipInputStream zipStream = getZipInputStream(channel, minutePath)) {
             ZipEntry nextEntry = zipStream.getNextEntry();
             while (nextEntry != null) {
@@ -100,10 +97,7 @@ public class S3BatchContentDao implements ContentDao {
             }
         } finally {
             ActiveTraces.getLocal().add("S3BatchContentDao.getS3Object completed");
-            long time = System.currentTimeMillis() - start;
-            statsd.recordExecutionTime("s3.get", time, "channel:" + channel, "type:batch");
         }
-
         return content;
     }
 
@@ -120,11 +114,13 @@ public class S3BatchContentDao implements ContentDao {
 
     private ZipInputStream getZipInputStream(String channel, ContentPathKeys minutePath) {
         ActiveTraces.getLocal().add("S3BatchContentDao.getZipInputStream");
-        statsd.increment("s3.get", "type:batch", "channel:" + channel);
-        sender.send("channel." + channel + ".s3Batch.get", 1);
-
-        S3Object object = s3Client.getObject(s3BucketName, getS3BatchItemsKey(channel, minutePath));
-        return new ZipInputStream(new BufferedInputStream(object.getObjectContent()));
+        long start = System.currentTimeMillis();
+        try {
+            S3Object object = s3Client.getObject(s3BucketName.getS3BucketName(), getS3BatchItemsKey(channel, minutePath));
+            return new ZipInputStream(new BufferedInputStream(object.getObjectContent()));
+        } finally {
+            metricsService.operation(channel, "s3.get", start, "type:batch");
+        }
     }
 
     @Override
@@ -177,7 +173,7 @@ public class S3BatchContentDao implements ContentDao {
         String channel = query.getChannelName();
         traces.add("S3BatchContentDao.queryHourPlus starting ", channel, rounded, query.getUnit());
         ListObjectsRequest request = new ListObjectsRequest()
-                .withBucketName(s3BucketName)
+                .withBucketName(s3BucketName.getS3BucketName())
                 .withPrefix(channel + BATCH_INDEX + query.getUnit().format(rounded))
                 .withMaxKeys(s3MaxQueryItems);
         SortedSet<MinutePath> minutePaths = listMinutePaths(channel, request, traces, true);
@@ -213,9 +209,8 @@ public class S3BatchContentDao implements ContentDao {
     }
 
     private void getKeysForMinute(String channel, MinutePath minutePath, Traces traces, Consumer<JsonNode> itemNodeConsumer) {
-        try (S3Object object = s3Client.getObject(s3BucketName, getS3BatchIndexKey(channel, minutePath))) {
-            statsd.increment("s3.get", "type:batchIndex", "channel:" + channel);
-            sender.send("channel." + channel + ".s3Batch.get", 1);
+        long start = System.currentTimeMillis();
+        try (S3Object object = s3Client.getObject(s3BucketName.getS3BucketName(), getS3BatchIndexKey(channel, minutePath))) {
             byte[] bytes = ByteStreams.toByteArray(object.getObjectContent());
             JsonNode root = mapper.readTree(bytes);
             JsonNode items = root.get("items");
@@ -233,6 +228,8 @@ public class S3BatchContentDao implements ContentDao {
         } catch (IOException e) {
             logger.warn("unable to get index " + channel, minutePath, e);
             traces.add("issue with getting keys", e);
+        } finally {
+            metricsService.operation(channel, "s3.get", start, "type:batchIndex");
         }
     }
 
@@ -264,7 +261,7 @@ public class S3BatchContentDao implements ContentDao {
         do {
             String channel = query.getChannelName();
             ListObjectsRequest request = new ListObjectsRequest()
-                    .withBucketName(s3BucketName)
+                    .withBucketName(s3BucketName.getS3BucketName())
                     .withPrefix(channel + BATCH_INDEX)
                     .withMarker(channel + BATCH_INDEX + TimeUtil.Unit.MINUTES.format(markerTime))
                     .withMaxKeys(queryItems);
@@ -293,8 +290,9 @@ public class S3BatchContentDao implements ContentDao {
     private SortedSet<MinutePath> listMinutePaths(String channel, ListObjectsRequest request, Traces traces, boolean iterate) {
         SortedSet<MinutePath> paths = new TreeSet<>();
         traces.add("S3BatchContentDao.listMinutePaths ", request.getPrefix(), request.getMarker(), iterate);
-        sender.send("channel." + channel + ".s3Batch.list", 1);
+        long start = System.currentTimeMillis();
         ObjectListing listing = s3Client.listObjects(request);
+        metricsService.operation(channel, "s3.list", start, "type:batch");
         List<S3ObjectSummary> summaries = listing.getObjectSummaries();
         for (S3ObjectSummary summary : summaries) {
             String key = summary.getKey();
@@ -315,11 +313,11 @@ public class S3BatchContentDao implements ContentDao {
     @Override
     public void deleteBefore(String channel, ContentKey limitKey) {
         try {
-            S3Util.delete(channel + BATCH_ITEMS, limitKey, s3BucketName, s3Client);
-            S3Util.delete(channel + BATCH_INDEX, limitKey, s3BucketName, s3Client);
+            S3Util.delete(channel + BATCH_ITEMS, limitKey, s3BucketName.getS3BucketName(), s3Client);
+            S3Util.delete(channel + BATCH_INDEX, limitKey, s3BucketName.getS3BucketName(), s3Client);
             logger.info("completed deleteBefore of " + channel);
         } catch (Exception e) {
-            logger.warn("unable to delete " + channel + " in " + s3BucketName, e);
+            logger.warn("unable to delete " + channel + " in " + s3BucketName.getS3BucketName(), e);
         }
     }
 
@@ -336,7 +334,7 @@ public class S3BatchContentDao implements ContentDao {
 
     @Override
     public void initialize() {
-        S3Util.initialize(s3BucketName, s3Client);
+        S3Util.initialize(s3BucketName.getS3BucketName(), s3Client);
     }
 
     @Override
@@ -350,11 +348,7 @@ public class S3BatchContentDao implements ContentDao {
         try {
             logger.debug("writing {} batch {} keys {} bytes {}", channel, path, keys.size(), bytes.length);
             writeBatchItems(channel, path, bytes);
-            long indexSize = writeBatchIndex(channel, path, keys);
-            statsd.increment("s3.put", "type:batch", "channel:" + channel);
-            statsd.count("s3.put.bytes", bytes.length + indexSize, "channel:" + channel, "type:batch");
-            sender.send("channel." + channel + ".s3Batch.put", 1);
-            sender.send("channel." + channel + ".s3Batch.bytes", bytes.length + indexSize);
+            writeBatchIndex(channel, path, keys);
         } catch (Exception e) {
             logger.warn("unable to write batch to S3 " + channel + " " + path, e);
             throw e;
@@ -363,7 +357,7 @@ public class S3BatchContentDao implements ContentDao {
         }
     }
 
-    private long writeBatchIndex(String channel, ContentPath path, Collection<ContentKey> keys) {
+    private void writeBatchIndex(String channel, ContentPath path, Collection<ContentKey> keys) {
         String batchIndexKey = getS3BatchIndexKey(channel, path);
         ObjectNode root = mapper.createObjectNode();
         root.put("id", path.toUrl());
@@ -374,24 +368,28 @@ public class S3BatchContentDao implements ContentDao {
         String index = root.toString();
         logger.trace("index is {} {}", batchIndexKey, index);
         byte[] bytes = index.getBytes(StandardCharsets.UTF_8);
-        putObject(batchIndexKey, bytes);
-        return bytes.length;
+        putObject(channel, batchIndexKey, bytes);
     }
 
     private void writeBatchItems(String channel, ContentPath path, byte[] bytes) {
         String batchItemsKey = getS3BatchItemsKey(channel, path);
-        putObject(batchItemsKey, bytes);
+        putObject(channel, batchItemsKey, bytes);
     }
 
-    private void putObject(String batchIndexKey, byte[] bytes) {
-        ObjectMetadata metadata = new ObjectMetadata();
-        InputStream stream = new ByteArrayInputStream(bytes);
-        metadata.setContentLength(bytes.length);
-        if (useEncrypted) {
-            metadata.setSSEAlgorithm(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
+    private void putObject(String channel, String batchIndexKey, byte[] bytes) {
+        long start = System.currentTimeMillis();
+        try {
+            ObjectMetadata metadata = new ObjectMetadata();
+            InputStream stream = new ByteArrayInputStream(bytes);
+            metadata.setContentLength(bytes.length);
+            if (useEncrypted) {
+                metadata.setSSEAlgorithm(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
+            }
+            PutObjectRequest request = new PutObjectRequest(s3BucketName.getS3BucketName(), batchIndexKey, stream, metadata);
+            s3Client.putObject(request);
+        } finally {
+            metricsService.operation(channel, "s3.put", start, bytes.length, "type:batch");
         }
-        PutObjectRequest request = new PutObjectRequest(s3BucketName, batchIndexKey, stream, metadata);
-        s3Client.putObject(request);
     }
 
     private String getS3BatchItemsKey(String channel, ContentPath path) {

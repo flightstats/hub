@@ -5,7 +5,6 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.channel.ZipBulkBuilder;
 import com.flightstats.hub.dao.ContentDaoUtil;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.metrics.NoOpMetricsSender;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.TimeUtil;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -37,7 +36,7 @@ public class S3BatchContentDaoTest {
         AmazonS3 s3Client = factory.getS3Client();
         S3BucketName bucketName = new S3BucketName("local", "hub-v2");
         HubProperties.setProperty("s3.maxQueryItems", "5");
-        contentDao = new S3BatchContentDao(s3Client, bucketName, new NoOpMetricsSender());
+        contentDao = S3BatchContentDao.builder().s3Client(s3Client).s3BucketName(bucketName).build();
     }
 
     @Test
