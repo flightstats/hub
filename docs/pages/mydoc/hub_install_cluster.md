@@ -50,13 +50,13 @@ For correct behavior in the [Sequential Write Use Case](hub_other_use_cases.html
 ### S3 Bucket
 
 The hub requires a S3 bucket to be created ahead of time.
-The S3 bucket name is {app.name}-{app.environment}-{s3.environment} from hub.properties
+The S3 bucket name is {app.name}-{s3.environment} from hub.properties
 
 ### AWS credentials
 
 If your cluster is running in EC2, the hub will automatically use the IAM roles to access S3 and Dynamo.
-Otherwise, specify the location of your credentials with the property `aws.credentials`
-`dynamo-prefix` is `app.name`-`app.environment`
+Otherwise, specify the location of your credentials with the property `aws.credentials`.   
+The `dynamo-prefix` is `app.name`-`app.environment`
 
 The following are the permissions you need to set:
 
