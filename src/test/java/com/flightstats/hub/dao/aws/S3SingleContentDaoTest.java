@@ -1,9 +1,8 @@
 package com.flightstats.hub.dao.aws;
 
-import com.amazonaws.services.s3.AmazonS3;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDaoUtil;
-import com.flightstats.hub.metrics.NoOpMetricsSender;
+import com.flightstats.hub.metrics.NoOpMetricsService;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import org.junit.BeforeClass;
@@ -23,10 +22,11 @@ public class S3SingleContentDaoTest {
     @BeforeClass
     public static void setUpClass() throws Exception {
         HubProperties.loadProperties("useDefault");
-        AwsConnectorFactory factory = new AwsConnectorFactory();
-        AmazonS3 s3Client = factory.getS3Client();
-        S3BucketName bucketName = new S3BucketName("local", "hub-v2");
-        s3SingleContentDao = new S3SingleContentDao(s3Client, bucketName, new NoOpMetricsSender());
+        s3SingleContentDao = S3SingleContentDao.builder()
+                .s3Client(new AwsConnectorFactory().getS3Client())
+                .s3BucketName(new S3BucketName("local", "hub-v2"))
+                .metricsService(new NoOpMetricsService())
+                .build();
         util = new ContentDaoUtil(s3SingleContentDao);
     }
 
