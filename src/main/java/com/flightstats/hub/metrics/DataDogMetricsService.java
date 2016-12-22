@@ -9,25 +9,23 @@ public class DataDogMetricsService implements MetricsService {
     private final static StatsDClient statsd = DataDog.statsd;
 
     @Override
-    public void insert(String channelName, Content content, long time) {
-        statsd.time("channel", time, "method:post", "type:single", "channel:" + channelName);
-        statsd.increment("channel.items", "method:post", "type:single", "channel:" + channelName);
-        statsd.count("channel.bytes", content.getSize(), "method:post", "type:single", "channel:" + channelName);
-
+    public void insert(String channel, Content content, long time) {
+        doInsert(channel, time, "single", 1, content.getSize());
     }
 
     @Override
     public void historicalInsert(String channelName, Content content, long time) {
-        statsd.time("channel.historical", time, "method:post", "type:single", "channel:" + channelName);
-        statsd.count("channel.historical.bytes", content.getSize(), "method:post", "type:single", "channel:" + channelName);
+        doInsert(channelName, time, "historical", 1, content.getSize());
     }
 
     @Override
     public void insert(BulkContent bulkContent, long time) {
-        String channel = bulkContent.getChannel();
-        statsd.time("channel", time, "method:post", "type:bulk", "channel:" + channel);
-        statsd.count("channel.items", bulkContent.getItems().size(), "method:post", "type:bulk", "channel:" + channel);
-        statsd.count("channel.bytes", bulkContent.getSize(), "method:post", "type:bulk", "channel:" + channel);
+        doInsert(bulkContent.getChannel(), time, "bulk", bulkContent.getItems().size(), bulkContent.getSize());
+    }
+
+    private void doInsert(String channel, long time, String type, int items, Long bytes) {
+        operation(channel, "channel", time, bytes, "type:" + type);
+        statsd.count("channel.items", items, "method:post", "type:" + type, "channel:" + channel);
     }
 
     @Override
@@ -47,12 +45,12 @@ public class DataDogMetricsService implements MetricsService {
 
     @Override
     public void operation(String channel, String operationName, long start, String tag) {
-        statsd.recordExecutionTime(operationName, System.currentTimeMillis() - start, "channel:" + channel, tag);
+        statsd.time(operationName, System.currentTimeMillis() - start, "channel:" + channel, tag);
     }
 
     @Override
     public void operation(String channel, String operationName, long start, long bytes, String tag) {
-        statsd.recordExecutionTime(operationName, System.currentTimeMillis() - start, "channel:" + channel, tag);
+        statsd.time(operationName, System.currentTimeMillis() - start, "channel:" + channel, tag);
         statsd.count(operationName + ".bytes", bytes, "channel:" + channel, tag);
     }
 

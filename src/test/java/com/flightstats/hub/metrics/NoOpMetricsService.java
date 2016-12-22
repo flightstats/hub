@@ -35,7 +35,7 @@ public class NoOpMetricsService implements MetricsService {
     }
 
     @Override
-    public void operation(String channel, String name, long start, long bytes, String tag) {
+    public void operation(String channel, String operationName, long start, long bytes, String tag) {
 
     }
 }

@@ -11,12 +11,11 @@ public interface MetricsService {
 
     void insert(BulkContent bulkContent, long time);
 
-    //todo gfm - change [] to ...
-    void event(String title, String text, String[] tags);
+    void event(String title, String text, String... tags);
 
     void getValue(String channel, long time);
 
     void operation(String channel, String operationName, long start, String tag);
 
-    void operation(String channel, String name, long start, long bytes, String tag);
+    void operation(String channel, String operationName, long start, long bytes, String tag);
 }

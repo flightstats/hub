@@ -47,8 +47,8 @@ public class HostedGraphiteMetricsService implements MetricsService {
     }
 
     @Override
-    public void operation(String channel, String name, long start, long bytes, String tag) {
-        sender.send("channel." + channel + "." + name, 1);
-        sender.send("channel." + channel + "." + name + ".bytes", bytes);
+    public void operation(String channel, String operationName, long start, long bytes, String tag) {
+        sender.send("channel." + channel + "." + operationName, 1);
+        sender.send("channel." + channel + "." + operationName + ".bytes", bytes);
     }
 }
