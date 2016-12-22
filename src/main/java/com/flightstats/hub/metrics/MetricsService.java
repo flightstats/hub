@@ -12,7 +12,9 @@ public interface MetricsService {
 
     void event(String title, String text, String... tags);
 
-    void count(String name, long value, String... tag);
+    void count(String name, long value, String... tags);
+
+    void gauge(String name, double value, String... tags);
 
     void time(String channel, String name, long start, String... tags);
 

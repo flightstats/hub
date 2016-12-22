@@ -12,6 +12,7 @@ public class DataDogMetricsService implements MetricsService {
 
     @Override
     public void insert(String channel, long start, Insert type, int items, long bytes) {
+        //todo gfm - do we still need method:post ?
         time(channel, "channel", start, bytes, "type:" + type.toString());
         count("channel.items", items, "type:" + type.toString(), "channel:" + channel);
     }
@@ -26,12 +27,18 @@ public class DataDogMetricsService implements MetricsService {
     }
 
     @Override
-    public void count(String name, long value, String... tag) {
-        statsd.count(name, value, tag);
+    public void count(String name, long value, String... tags) {
+        statsd.count(name, value, tags);
+    }
+
+    @Override
+    public void gauge(String name, double value, String... tags) {
+        statsd.gauge(name, value, tags);
     }
 
     @Override
     public void time(String channel, String name, long start, String... tags) {
+        //todo gfm - should this be histogram instead?
         statsd.time(name, System.currentTimeMillis() - start, addChannelTag(channel, tags));
     }
 

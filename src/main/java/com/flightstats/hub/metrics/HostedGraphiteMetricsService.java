@@ -20,7 +20,12 @@ public class HostedGraphiteMetricsService implements MetricsService {
     }
 
     @Override
-    public void count(String name, long value, String... tag) {
+    public void count(String name, long value, String... tags) {
+        sender.send(name, value);
+    }
+
+    @Override
+    public void gauge(String name, double value, String... tags) {
         sender.send(name, value);
     }
 

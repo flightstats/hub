@@ -13,7 +13,12 @@ public class NoOpMetricsService implements MetricsService {
     }
 
     @Override
-    public void count(String name, long value, String... tag) {
+    public void count(String name, long value, String... tags) {
+
+    }
+
+    @Override
+    public void gauge(String name, double value, String... tags) {
 
     }
 
