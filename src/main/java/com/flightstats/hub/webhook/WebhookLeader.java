@@ -7,7 +7,7 @@ import com.flightstats.hub.cluster.Leader;
 import com.flightstats.hub.cluster.Leadership;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.metrics.MetricsTimer;
+import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.model.RecurringTrace;
@@ -52,7 +52,7 @@ class WebhookLeader implements Leader {
     @Inject
     private WebhookService webhookService;
     @Inject
-    private MetricsTimer metricsTimer;
+    private MetricsService metricsService;
     @Inject
     private LastContentPath lastContentPath;
     @Inject
@@ -169,8 +169,7 @@ class WebhookLeader implements Leader {
                 ActiveTraces.start("WebhookLeader.send", webhook, contentPath);
                 webhookInProcess.add(webhook.getName(), contentPath);
                 try {
-                    long delta = System.currentTimeMillis() - contentPath.getTime().getMillis();
-                    metricsTimer.send("webhook." + webhook.getName() + ".delta", delta);
+                    metricsService.time("webhook.delta", contentPath.getTime().getMillis(), "name:" + webhook.getName());
                     makeTimedCall(contentPath, webhookStrategy.createResponse(contentPath));
                     completeCall(contentPath);
                     logger.trace("completed {} call to {} ", contentPath, webhook.getName());
@@ -217,7 +216,7 @@ class WebhookLeader implements Leader {
     }
 
     private void makeTimedCall(ContentPath contentPath, ObjectNode body) throws Exception {
-        metricsTimer.time("webhook", webhook.getName(),
+        metricsService.time("webhook", webhook.getName(),
                 () -> {
                     makeCall(contentPath, body);
                     return null;

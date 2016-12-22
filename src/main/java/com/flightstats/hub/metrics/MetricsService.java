@@ -1,5 +1,7 @@
 package com.flightstats.hub.metrics;
 
+import java.util.concurrent.Callable;
+
 public interface MetricsService {
 
     enum Insert {
@@ -16,7 +18,18 @@ public interface MetricsService {
 
     void gauge(String name, double value, String... tags);
 
+    void time(String name, long start, String... tags);
+
     void time(String channel, String name, long start, String... tags);
 
     void time(String channel, String name, long start, long bytes, String... tags);
+
+    default <T> T time(String label, String name, Callable<T> callable) throws Exception {
+        long start = System.currentTimeMillis();
+        try {
+            return callable.call();
+        } finally {
+            time(label, start, "name:" + name);
+        }
+    }
 }

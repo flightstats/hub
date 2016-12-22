@@ -30,6 +30,11 @@ public class HostedGraphiteMetricsService implements MetricsService {
     }
 
     @Override
+    public void time(String name, long start, String... tags) {
+        sender.send(name, System.currentTimeMillis() - start);
+    }
+
+    @Override
     public void time(String channel, String name, long start, String... tags) {
         sender.send("channel." + channel + "." + name, 1);
     }

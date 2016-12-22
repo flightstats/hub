@@ -37,8 +37,13 @@ public class DataDogMetricsService implements MetricsService {
     }
 
     @Override
+    public void time(String name, long start, String... tags) {
+        statsd.time(name, System.currentTimeMillis() - start, tags);
+    }
+
+    @Override
     public void time(String channel, String name, long start, String... tags) {
-        //todo gfm - should this be histogram instead?
+        //todo gfm - should time be histogram instead?
         statsd.time(name, System.currentTimeMillis() - start, addChannelTag(channel, tags));
     }
 

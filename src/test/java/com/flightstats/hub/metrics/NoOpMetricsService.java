@@ -23,6 +23,11 @@ public class NoOpMetricsService implements MetricsService {
     }
 
     @Override
+    public void time(String name, long start, String... tags) {
+
+    }
+
+    @Override
     public void time(String channel, String name, long start, String... tags) {
 
     }
