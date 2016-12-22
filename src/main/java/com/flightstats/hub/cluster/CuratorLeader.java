@@ -144,7 +144,7 @@ public class CuratorLeader {
             if (pathDates.first().dateTime.isAfter(HubMain.getStartTime())) {
                 logger.warn("found too many locks {} for this server {} {}", getLeaderPath(), localServer, pathDates);
                 metricsService.event("Hub Leader Lock", getLeaderPath() + " " + pathDates.toString()
-                        , new String[]{"leader", "restart", "shutdown"});
+                        , "leader", "restart", "shutdown");
                 Executors.newSingleThreadExecutor().submit(shutdownManager::shutdown);
             }
         }

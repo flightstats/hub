@@ -1,21 +1,9 @@
 package com.flightstats.hub.metrics;
 
-import com.flightstats.hub.model.BulkContent;
-import com.flightstats.hub.model.Content;
-
 public class NoOpMetricsService implements MetricsService {
-    @Override
-    public void insert(String channelName, Content content, long time) {
-
-    }
 
     @Override
-    public void historicalInsert(String channelName, Content content, long time) {
-
-    }
-
-    @Override
-    public void insert(BulkContent bulkContent, long time) {
+    public void insert(String channel, long start, Insert type, int items, long bytes) {
 
     }
 
@@ -25,22 +13,17 @@ public class NoOpMetricsService implements MetricsService {
     }
 
     @Override
-    public void getValue(String channel, long time) {
-
-    }
-
-    @Override
     public void count(String name, long value, String... tag) {
 
     }
 
     @Override
-    public void time(String channel, String name, long start, String tag) {
+    public void time(String channel, String name, long start, String... tags) {
 
     }
 
     @Override
-    public void time(String channel, String name, long start, long bytes, String tag) {
+    public void time(String channel, String name, long start, long bytes, String... tags) {
 
     }
 }

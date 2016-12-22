@@ -253,7 +253,7 @@ public class ChannelContentResource {
 
         builder.header("Link", "<" + uriInfo.getRequestUriBuilder().path("previous").build() + ">;rel=\"" + "previous" + "\"");
         builder.header("Link", "<" + uriInfo.getRequestUriBuilder().path("next").build() + ">;rel=\"" + "next" + "\"");
-        metricsService.getValue(channel, System.currentTimeMillis() - start);
+        metricsService.time(channel, "get", start);
         return builder.build();
     }
 

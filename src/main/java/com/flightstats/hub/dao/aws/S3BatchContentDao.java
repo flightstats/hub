@@ -229,7 +229,7 @@ public class S3BatchContentDao implements ContentDao {
             logger.warn("unable to get index " + channel, minutePath, e);
             traces.add("issue with getting keys", e);
         } finally {
-            metricsService.time(channel, "s3.get", start, "type:batchIndex");
+            metricsService.time(channel, "s3.get", start, "type:batch");
         }
     }
 

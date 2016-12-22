@@ -1,23 +1,20 @@
 package com.flightstats.hub.metrics;
 
-import com.flightstats.hub.model.BulkContent;
-import com.flightstats.hub.model.Content;
-
 public interface MetricsService {
 
-    void insert(String channelName, Content content, long time);
+    enum Insert {
+        single,
+        historical,
+        bulk
+    }
 
-    void historicalInsert(String channelName, Content content, long time);
-
-    void insert(BulkContent bulkContent, long time);
+    void insert(String channel, long start, Insert type, int items, long bytes);
 
     void event(String title, String text, String... tags);
 
-    void getValue(String channel, long time);
-
     void count(String name, long value, String... tag);
 
-    void time(String channel, String name, long start, String tag);
+    void time(String channel, String name, long start, String... tags);
 
-    void time(String channel, String name, long start, long bytes, String tag);
+    void time(String channel, String name, long start, long bytes, String... tags);
 }

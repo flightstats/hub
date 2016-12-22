@@ -8,6 +8,7 @@ import com.flightstats.hub.dao.aws.MultiPartParser;
 import com.flightstats.hub.exception.*;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.MetricsService;
+import com.flightstats.hub.metrics.MetricsService.Insert;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.replication.ReplicationGlobalManager;
@@ -105,7 +106,7 @@ public class LocalChannelService implements ChannelService {
         }
         long start = System.currentTimeMillis();
         ContentKey contentKey = insertInternal(channelName, content);
-        metricsService.insert(channelName, content, System.currentTimeMillis() - start);
+        metricsService.insert(channelName, start, Insert.single, 1, content.getSize());
         return contentKey;
     }
 
@@ -151,7 +152,7 @@ public class LocalChannelService implements ChannelService {
             return contentService.historicalInsert(channelName, content);
         });
         lastContentPath.updateDecrease(contentKey, channelName, HISTORICAL_EARLIEST);
-        metricsService.historicalInsert(channelName, content, System.currentTimeMillis() - start);
+        metricsService.insert(channelName, start, Insert.historical, 1, content.getSize());
         return insert;
     }
 
@@ -167,7 +168,7 @@ public class LocalChannelService implements ChannelService {
             multiPartParser.parse();
             return contentService.insert(bulkContent);
         });
-        metricsService.insert(bulkContent, System.currentTimeMillis() - start);
+        metricsService.insert(channel, start, Insert.bulk, bulkContent.getItems().size(), bulkContent.getSize());
         return contentKeys;
     }
 
