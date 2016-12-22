@@ -96,7 +96,7 @@ public class S3SingleContentDao implements ContentDao {
             logger.warn("unable to write item to S3 " + channelName + " " + key, e);
             throw e;
         } finally {
-            metricsService.operation(channelName, "s3.put", start, length, "type:single");
+            metricsService.time(channelName, "s3.put", start, length, "type:single");
             ActiveTraces.getLocal().add("S3SingleContentDao.write completed");
         }
     }
@@ -151,7 +151,7 @@ public class S3SingleContentDao implements ContentDao {
             }
             return null;
         } finally {
-            metricsService.operation(channelName, "s3.get", start, "type:single");
+            metricsService.time(channelName, "s3.get", start, "type:single");
         }
     }
 
@@ -200,7 +200,7 @@ public class S3SingleContentDao implements ContentDao {
     private ObjectListing getObjectListing(ListObjectsRequest request, String channel) {
         long start = System.currentTimeMillis();
         ObjectListing objects = s3Client.listObjects(request);
-        metricsService.operation(channel, "s3.list", start, "type:single");
+        metricsService.time(channel, "s3.list", start, "type:single");
         return objects;
     }
 

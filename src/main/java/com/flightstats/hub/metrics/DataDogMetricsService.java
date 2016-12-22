@@ -24,7 +24,7 @@ public class DataDogMetricsService implements MetricsService {
     }
 
     private void doInsert(String channel, long time, String type, int items, Long bytes) {
-        operation(channel, "channel", time, bytes, "type:" + type);
+        time(channel, "channel", time, bytes, "type:" + type);
         statsd.count("channel.items", items, "method:post", "type:" + type, "channel:" + channel);
     }
 
@@ -44,14 +44,19 @@ public class DataDogMetricsService implements MetricsService {
     }
 
     @Override
-    public void operation(String channel, String operationName, long start, String tag) {
-        statsd.time(operationName, System.currentTimeMillis() - start, "channel:" + channel, tag);
+    public void count(String name, long value, String... tag) {
+        statsd.count(name, value, tag);
     }
 
     @Override
-    public void operation(String channel, String operationName, long start, long bytes, String tag) {
-        statsd.time(operationName, System.currentTimeMillis() - start, "channel:" + channel, tag);
-        statsd.count(operationName + ".bytes", bytes, "channel:" + channel, tag);
+    public void time(String channel, String name, long start, String tag) {
+        statsd.time(name, System.currentTimeMillis() - start, "channel:" + channel, tag);
+    }
+
+    @Override
+    public void time(String channel, String name, long start, long bytes, String tag) {
+        statsd.time(name, System.currentTimeMillis() - start, "channel:" + channel, tag);
+        statsd.count(name + ".bytes", bytes, "channel:" + channel, tag);
     }
 
 }

@@ -15,7 +15,9 @@ public interface MetricsService {
 
     void getValue(String channel, long time);
 
-    void operation(String channel, String operationName, long start, String tag);
+    void count(String name, long value, String... tag);
 
-    void operation(String channel, String operationName, long start, long bytes, String tag);
+    void time(String channel, String name, long start, String tag);
+
+    void time(String channel, String name, long start, long bytes, String tag);
 }
