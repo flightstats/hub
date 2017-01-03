@@ -18,7 +18,9 @@ import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -39,6 +41,8 @@ import java.util.zip.ZipInputStream;
 
 @Singleton
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class S3BatchContentDao implements ContentDao {
 
     private final static Logger logger = LoggerFactory.getLogger(S3BatchContentDao.class);

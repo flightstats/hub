@@ -7,7 +7,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class DataDogMetricsService implements MetricsService {
+class DataDogMetricsService implements MetricsService {
     private final static StatsDClient statsd = DataDog.statsd;
 
     @Override

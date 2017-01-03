@@ -2,9 +2,9 @@ package com.flightstats.hub.metrics;
 
 import com.flightstats.hub.app.HubProvider;
 
-public class HostedGraphiteMetricsService implements MetricsService {
+class HostedGraphiteMetricsService implements MetricsService {
 
-    private final static MetricsSender sender = HubProvider.getInstance(MetricsSender.class);
+    private final static MetricsSender sender = HubProvider.getInstance(HostedGraphiteSender.class);
 
     @Override
     public void insert(String channel, long start, Insert type, int items, long bytes) {
