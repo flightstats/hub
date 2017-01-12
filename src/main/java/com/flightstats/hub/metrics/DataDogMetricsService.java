@@ -12,7 +12,6 @@ class DataDogMetricsService implements MetricsService {
 
     @Override
     public void insert(String channel, long start, Insert type, int items, long bytes) {
-        //todo gfm - do we still need method:post ?
         time(channel, "channel", start, bytes, "type:" + type.toString());
         count("channel.items", items, "type:" + type.toString(), "channel:" + channel);
     }
