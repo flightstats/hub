@@ -74,11 +74,11 @@ public class HubMain {
                 throw new RuntimeException("unsupported hub.type " + hubType);
         }
         HubProvider.setInjector(Guice.createInjector(modules));
-        HubServices.start(HubServices.TYPE.DEFAULT_PRE_START);
+        HubServices.start(HubServices.TYPE.BEFORE_HEALTH_CHECK);
         HubJettyServer server = new HubJettyServer();
         server.start(resourceConfig);
         logger.info("Hub server has been started.");
-        HubServices.start(HubServices.TYPE.SET_HEALTHY);
+        HubServices.start(HubServices.TYPE.PERFORM_HEALTH_CHECK);
         logger.info("completed initial post start");
         HubServices.start(HubServices.TYPE.AFTER_HEALTHY_START);
         return server;

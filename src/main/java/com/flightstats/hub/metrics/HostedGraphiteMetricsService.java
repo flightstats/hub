@@ -1,10 +1,13 @@
 package com.flightstats.hub.metrics;
 
-import com.flightstats.hub.app.HubProvider;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
+@Singleton
 class HostedGraphiteMetricsService implements MetricsService {
 
-    private final static MetricsSender sender = HubProvider.getInstance(HostedGraphiteSender.class);
+    @Inject
+    private HostedGraphiteSender sender;
 
     @Override
     public void insert(String channel, long start, Insert type, int items, long bytes) {

@@ -88,7 +88,7 @@ public class MetricsRequestFilter implements ContainerRequestFilter, ContainerRe
                 metricsService.count("errors", 1, tagArray);
             }
         } catch (Exception e) {
-            logger.error("DataDog request error", e);
+            logger.error("metrics request error", e);
         } finally {
             threadLocal.remove();
         }
