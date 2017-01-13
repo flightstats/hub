@@ -21,7 +21,7 @@ public class HubHealthCheck {
     private final AtomicBoolean startup = new AtomicBoolean(true);
 
     public HubHealthCheck() {
-        HubServices.register(new HealthService(), HubServices.TYPE.SET_HEALTHY);
+        HubServices.register(new HealthService(), HubServices.TYPE.PERFORM_HEALTH_CHECK);
     }
 
     private class HealthService extends AbstractIdleService {

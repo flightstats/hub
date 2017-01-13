@@ -5,9 +5,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class HubServices {
     private final static Logger logger = LoggerFactory.getLogger(HubServices.class);
-    private static Map<TYPE, List<Service>> serviceMap = new HashMap<>();
+    private final static Map<TYPE, List<Service>> serviceMap = new ConcurrentHashMap<>();
 
     static {
         for (TYPE type : TYPE.values()) {
@@ -24,23 +24,27 @@ public class HubServices {
     }
 
     public static void registerPreStop(Service service) {
-        register(service, TYPE.DEFAULT_PRE_START, TYPE.PRE_STOP);
+        register(service, TYPE.BEFORE_HEALTH_CHECK, TYPE.PRE_STOP);
     }
 
     public static void register(Service service) {
-        register(service, TYPE.DEFAULT_PRE_START);
+        register(service, TYPE.BEFORE_HEALTH_CHECK);
     }
 
-    public static synchronized void register(Service service, TYPE... types) {
+    public static void register(Service service, TYPE... types) {
         for (TYPE type : types) {
             logger.info("registering " + service.getClass().getName() + " for " + type);
             serviceMap.get(type).add(service);
         }
     }
 
-    public static synchronized void start(TYPE type) {
+    public static void start(TYPE type) {
         try {
-            for (Service service : serviceMap.get(type)) {
+            List<Service> serviceList = new ArrayList<>();
+            synchronized (serviceMap) {
+                serviceList.addAll(serviceMap.get(type));
+            }
+            for (Service service : serviceList) {
                 logger.info("starting service " + service.getClass().getName());
                 service.startAsync();
                 service.awaitRunning();
@@ -84,8 +88,11 @@ public class HubServices {
     }
 
     public enum TYPE {
-        DEFAULT_PRE_START,
-        SET_HEALTHY,
+        /**
+         * TYPEs are in execution order
+         */
+        BEFORE_HEALTH_CHECK,
+        PERFORM_HEALTH_CHECK,
         AFTER_HEALTHY_START,
         PRE_STOP,
         STOP
