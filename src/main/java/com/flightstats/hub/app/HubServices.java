@@ -31,14 +31,14 @@ public class HubServices {
         register(service, TYPE.DEFAULT_PRE_START);
     }
 
-    public static void register(Service service, TYPE... types) {
+    public static synchronized void register(Service service, TYPE... types) {
         for (TYPE type : types) {
             logger.info("registering " + service.getClass().getName() + " for " + type);
             serviceMap.get(type).add(service);
         }
     }
 
-    public static void start(TYPE type) {
+    public static synchronized void start(TYPE type) {
         try {
             for (Service service : serviceMap.get(type)) {
                 logger.info("starting service " + service.getClass().getName());

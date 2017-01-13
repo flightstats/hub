@@ -3,13 +3,11 @@ package com.flightstats.hub.time;
 
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.metrics.DataDog;
-import com.flightstats.hub.metrics.MetricsSender;
+import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.util.Commander;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.timgroup.statsd.StatsDClient;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,13 +18,12 @@ import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class NtpMonitor {
-    private final static StatsDClient statsd = DataDog.statsd;
 
     private final static Logger logger = LoggerFactory.getLogger(NtpMonitor.class);
     private final int minPostTimeMillis = HubProperties.getProperty("app.minPostTimeMillis", 5);
     private final int maxPostTimeMillis = HubProperties.getProperty("app.maxPostTimeMillis", 1000);
     @Inject
-    private MetricsSender sender;
+    private MetricsService metricsService;
     private double primaryOffset;
 
     public NtpMonitor() {
@@ -74,12 +71,10 @@ public class NtpMonitor {
         try {
             List<String> lines = Commander.runLines(new String[]{"ntpq", "-p"}, 10);
             double delta = parseClusterRange(lines);
-            statsd.gauge("ntp", delta, "ntpType:clusterTimeDelta");
-            sender.send("clusterTimeDelta", delta);
+            metricsService.gauge("ntp", delta, "ntpType:clusterTimeDelta");
             double primary = parsePrimary(lines);
             primaryOffset = Math.abs(primary);
-            statsd.gauge("ntp", primaryOffset, "ntpType:primaryTimeDelta");
-            sender.send("primaryTimeDelta", primaryOffset);
+            metricsService.gauge("ntp", primaryOffset, "ntpType:primaryTimeDelta");
             logger.info("ntp cluster {} primary {}", delta, primary);
         } catch (Exception e) {
             logger.info("unable to exec", e);

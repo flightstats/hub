@@ -38,7 +38,7 @@ public class SpokeContentDao implements ContentDao {
     public ContentKey insert(String channelName, Content content) throws Exception {
         ContentKey key = content.getContentKey().get();
         String path = getPath(channelName, key);
-        if (!spokeStore.insert(path, content.getData(), "payload")) {
+        if (!spokeStore.insert(path, content.getData(), "payload", channelName)) {
             throw new FailedWriteException("unable to write to spoke " + path);
         }
         return key;
@@ -69,7 +69,7 @@ public class SpokeContentDao implements ContentDao {
             traces.add("SpokeContentDao.writeBulk marshalled");
 
             logger.trace("writing items {} to channel {}", items.size(), channelName);
-            if (!spokeStore.insert(channelName, baos.toByteArray(), "bulkKey")) {
+            if (!spokeStore.insert(channelName, baos.toByteArray(), "bulkKey", channelName)) {
                 throw new FailedWriteException("unable to write bulk to spoke " + channelName);
             }
             traces.add("SpokeContentDao.writeBulk completed", keys);

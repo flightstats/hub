@@ -7,8 +7,8 @@ import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.aws.MultiPartParser;
 import com.flightstats.hub.exception.*;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.metrics.DataDog;
-import com.flightstats.hub.metrics.MetricsSender;
+import com.flightstats.hub.metrics.MetricsService;
+import com.flightstats.hub.metrics.MetricsService.Insert;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.replication.ReplicationGlobalManager;
@@ -18,7 +18,6 @@ import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
-import com.timgroup.statsd.StatsDClient;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +36,6 @@ public class LocalChannelService implements ChannelService {
     private static final String HISTORICAL_EARLIEST = "/HistoricalEarliest/";
 
     private final static Logger logger = LoggerFactory.getLogger(LocalChannelService.class);
-    private final static StatsDClient statsd = DataDog.statsd;
     private static final int DIR_COUNT_LIMIT = HubProperties.getProperty("app.directionCountLimit", 10000);
     @Inject
     private ContentService contentService;
@@ -49,13 +47,13 @@ public class LocalChannelService implements ChannelService {
     @Inject
     private ReplicationGlobalManager replicationGlobalManager;
     @Inject
-    private MetricsSender sender;
-    @Inject
     private LastContentPath lastContentPath;
     @Inject
     private InFlightService inFlightService;
     @Inject
     private TimeService timeService;
+    @Inject
+    private MetricsService metricsService;
 
     @Override
     public boolean channelExists(String channelName) {
@@ -108,14 +106,7 @@ public class LocalChannelService implements ChannelService {
         }
         long start = System.currentTimeMillis();
         ContentKey contentKey = insertInternal(channelName, content);
-        long time = System.currentTimeMillis() - start;
-        statsd.time("channel", time, "method:post", "type:single", "channel:" + channelName);
-        statsd.increment("channel.items", "method:post", "type:single", "channel:" + channelName);
-        statsd.count("channel.bytes", content.getSize(), "method:post", "type:single", "channel:" + channelName);
-        sender.send("channel." + channelName + ".post", time);
-        sender.send("channel." + channelName + ".items", 1);
-        sender.send("channel." + channelName + ".post.bytes", content.getSize());
-        sender.send("channel.ALL.post", time);
+        metricsService.insert(channelName, start, Insert.single, 1, content.getSize());
         return contentKey;
     }
 
@@ -161,9 +152,7 @@ public class LocalChannelService implements ChannelService {
             return contentService.historicalInsert(channelName, content);
         });
         lastContentPath.updateDecrease(contentKey, channelName, HISTORICAL_EARLIEST);
-        long time = System.currentTimeMillis() - start;
-        statsd.time("channel.historical", time, "method:post", "type:single", "channel:" + channelName);
-        statsd.count("channel.historical.bytes", content.getSize(), "method:post", "type:single", "channel:" + channelName);
+        metricsService.insert(channelName, start, Insert.historical, 1, content.getSize());
         return insert;
     }
 
@@ -179,15 +168,7 @@ public class LocalChannelService implements ChannelService {
             multiPartParser.parse();
             return contentService.insert(bulkContent);
         });
-        long time = System.currentTimeMillis() - start;
-        statsd.time("channel", time, "method:post", "type:bulk", "channel:" + channel);
-        statsd.count("channel.items", bulkContent.getItems().size(), "method:post", "type:bulk", "channel:" + channel);
-        statsd.count("channel.bytes", bulkContent.getSize(), "method:post", "type:bulk", "channel:" + channel);
-        sender.send("channel." + channel + ".batchPost", time);
-        sender.send("channel." + channel + ".items", bulkContent.getItems().size());
-        sender.send("channel." + channel + ".post", time);
-        sender.send("channel." + channel + ".post.bytes", bulkContent.getSize());
-        sender.send("channel.ALL.post", time);
+        metricsService.insert(channel, start, Insert.bulk, bulkContent.getItems().size(), bulkContent.getSize());
         return contentKeys;
     }
 
