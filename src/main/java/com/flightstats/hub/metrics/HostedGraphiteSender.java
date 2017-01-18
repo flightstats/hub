@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.concurrent.*;
 
-public class HostedGraphiteSender implements MetricsSender {
+public class HostedGraphiteSender {
     private final static Logger logger = LoggerFactory.getLogger(HostedGraphiteSender.class);
 
     private final BlockingQueue<String> queue = new ArrayBlockingQueue<>(10000);
@@ -35,7 +35,6 @@ public class HostedGraphiteSender implements MetricsSender {
         HubServices.register(new HostedGraphiteSenderService());
     }
 
-    @Override
     public void send(String name, Object value) {
         if (name.contains(".test")) {
             return;

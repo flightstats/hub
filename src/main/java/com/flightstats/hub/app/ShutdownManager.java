@@ -1,11 +1,10 @@
 package com.flightstats.hub.app;
 
 import com.flightstats.hub.health.HubHealthCheck;
-import com.flightstats.hub.metrics.DataDog;
+import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.util.Sleeper;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Singleton;
-import com.timgroup.statsd.Event;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
@@ -57,11 +56,7 @@ public class ShutdownManager {
             return true;
         }
         waitForLock();
-        Event event = DataDog.getEventBuilder()
-                .withTitle("Hub Restart Shutdown")
-                .withText("shutting down")
-                .build();
-        DataDog.statsd.recordEvent(event, "restart", "shutdown");
+        getMetricsService().event("Hub Restart Shutdown", "shutting down", "restart", "shutdown");
         //this call will get the node removed from the Load Balancer
         healthCheck.shutdown();
 
@@ -78,6 +73,11 @@ public class ShutdownManager {
         Executors.newSingleThreadExecutor().submit(() -> System.exit(0));
         return true;
     }
+
+    private MetricsService getMetricsService() {
+        return HubProvider.getInstance(MetricsService.class);
+    }
+
 
     public String getLockData() throws Exception {
         byte[] bytes = getCurator().getData().forPath(PATH);

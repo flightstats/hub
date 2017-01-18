@@ -1,9 +1,9 @@
 package com.flightstats.hub.filter;
 
-import com.flightstats.hub.metrics.DataDog;
+import com.flightstats.hub.app.HubProvider;
+import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.util.RequestUtils;
 import com.google.common.annotations.VisibleForTesting;
-import com.timgroup.statsd.StatsDClient;
 import lombok.Getter;
 import lombok.Setter;
 import org.glassfish.jersey.server.internal.routing.UriRoutingContext;
@@ -23,24 +23,23 @@ import java.util.stream.Collectors;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 /**
- * Filter class to handle intercepting requests and responses from the Hub and pipe statistics to
- * DogStatsD (DataDog) agent running on the server.
+ * Filter class to handle intercepting requests and responses from the Hub and sending metrics
  */
 @Provider
-public class DataDogRequestFilter implements ContainerRequestFilter, ContainerResponseFilter {
+public class MetricsRequestFilter implements ContainerRequestFilter, ContainerResponseFilter {
 
-    private static final Logger logger = LoggerFactory.getLogger(DataDogRequestFilter.class);
-    private final static StatsDClient statsd = DataDog.statsd;
-    private static final ThreadLocal<DataDogState> threadLocal = new ThreadLocal<>();
+    private static final Logger logger = LoggerFactory.getLogger(MetricsRequestFilter.class);
+    private static final MetricsService metricsService = HubProvider.getInstance(MetricsService.class);
+    private static final ThreadLocal<RequestState> threadLocal = new ThreadLocal<>();
     private static final String CHARACTERS_TO_REMOVE = "[\\[\\]|.*+]";
     private static final String CHARACTERS_TO_REPLACE = "[:\\{\\}]";
 
     @Override
     public void filter(ContainerRequestContext request, ContainerResponseContext response) {
         try {
-            DataDogState dataDogState = threadLocal.get();
-            if (null != dataDogState) {
-                dataDogState.setResponse(response);
+            RequestState requestState = threadLocal.get();
+            if (null != requestState) {
+                requestState.setResponse(response);
             }
         } catch (Exception e) {
             logger.error("DataDog request error", e);
@@ -49,13 +48,13 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
 
     public static void finalStats() {
         try {
-            DataDogState dataDogState = threadLocal.get();
-            if (null == dataDogState) {
+            RequestState requestState = threadLocal.get();
+            if (null == requestState) {
                 return;
             }
 
-            ContainerRequestContext request = dataDogState.getRequest();
-            long time = System.currentTimeMillis() - dataDogState.getStart();
+            ContainerRequestContext request = requestState.getRequest();
+            long time = System.currentTimeMillis() - requestState.getStart();
             String endpoint = getRequestTemplate(request);
 
             Map<String, String> tags = new HashMap<>();
@@ -66,33 +65,30 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
             if (!isBlank(channel)) {
                 tags.put("channel", channel);
             }
-
             String tag = RequestUtils.getTag(request);
             if (!isBlank(tag)) {
                 tags.put("tag", tag);
             }
 
             if (isBlank(endpoint)) {
-                logger.trace("DataDog no endpoint, path: {}", request.getUriInfo().getPath());
+                logger.trace("no endpoint, path: {}", request.getUriInfo().getPath());
             } else if (tags.get("call").endsWith("/shutdown")) {
                 logger.info("call to shutdown, ignoring datadog time {}", time);
             } else {
                 String[] tagArray = getTagArray(tags);
                 logger.trace("DataDog data sent: {}", Arrays.toString(tagArray));
-                statsd.recordExecutionTime("request", time, tagArray);
-                statsd.incrementCounter("request", tagArray);
+                metricsService.time("request", requestState.getStart(), tagArray);
             }
-
-            logger.trace("DataDog request {}, time: {}", tags.get("endpoint"), time);
-            int returnCode = dataDogState.getResponse().getStatus();
+            logger.trace("request {}, time: {}", tags.get("endpoint"), time);
+            int returnCode = requestState.getResponse().getStatus();
             if (returnCode > 400 && returnCode != 404) {
                 tags.put("errorCode", String.valueOf(returnCode));
                 String[] tagArray = getTagArray(tags, "errorCode", "call", "channel");
-                logger.trace("DataDog data sent: {}", Arrays.toString(tagArray));
-                statsd.incrementCounter("errors", tagArray);
+                logger.trace("data sent: {}", Arrays.toString(tagArray));
+                metricsService.count("errors", 1, tagArray);
             }
         } catch (Exception e) {
-            logger.error("DataDog request error", e);
+            logger.error("metrics request error", e);
         } finally {
             threadLocal.remove();
         }
@@ -100,7 +96,7 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
 
     @Override
     public void filter(ContainerRequestContext request) throws IOException {
-        threadLocal.set(new DataDogState(request));
+        threadLocal.set(new RequestState(request));
     }
 
     private static String[] getTagArray(Map<String, String> tags, String... tagsOnly) {
@@ -131,12 +127,12 @@ public class DataDogRequestFilter implements ContainerRequestFilter, ContainerRe
 
     @Setter
     @Getter
-    private class DataDogState {
+    private class RequestState {
         private final long start = System.currentTimeMillis();
         private final ContainerRequestContext request;
         private ContainerResponseContext response;
 
-        DataDogState(ContainerRequestContext request) {
+        RequestState(ContainerRequestContext request) {
             this.request = request;
         }
 
