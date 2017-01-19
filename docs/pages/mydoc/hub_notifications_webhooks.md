@@ -72,7 +72,7 @@ To see the configuration and status of a webhook:
 
 `GET http://hub/webhook/{name}`
 
-To delete a webhook:
+## Delete a webhook {#delete}
 
 `DELETE http://hub/webhook/{name}`
 
