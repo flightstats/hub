@@ -1,5 +1,6 @@
 package com.flightstats.hub.model;
 
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.google.common.base.Optional;
@@ -21,6 +22,7 @@ public class Content implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private final Optional<String> contentType;
+    private long contentLength;
     private InputStream stream;
     private byte[] data;
     private Optional<ContentKey> contentKey = Optional.absent();
@@ -31,6 +33,7 @@ public class Content implements Serializable {
         contentKey = builder.contentKey;
         contentType = builder.contentType;
         stream = builder.stream;
+        contentLength = builder.contentLength;
     }
 
     public static Builder builder() {
@@ -64,8 +67,10 @@ public class Content implements Serializable {
     }
 
     public void packageStream() throws IOException {
-        data = ContentMarshaller.toBytes(this);
-        stream = null;
+        if (contentLength < HubProperties.getLargePayload()) {
+            data = ContentMarshaller.toBytes(this);
+            stream = null;
+        }
     }
 
     public byte[] getData() {
@@ -93,9 +98,12 @@ public class Content implements Serializable {
         return size;
     }
 
+    //todo - gfm - would be nice with more lombok
+    @Getter
     public static class Builder {
         private Optional<String> contentType = Optional.absent();
-        public Optional<ContentKey> contentKey = Optional.absent();
+        private long contentLength = 0;
+        private Optional<ContentKey> contentKey = Optional.absent();
         private InputStream stream;
 
         public Builder withContentType(String contentType) {
@@ -110,6 +118,11 @@ public class Content implements Serializable {
 
         public Builder withStream(InputStream stream) {
             this.stream = stream;
+            return this;
+        }
+
+        public Builder withContentLength(Long contentLength) {
+            this.contentLength = contentLength;
             return this;
         }
 

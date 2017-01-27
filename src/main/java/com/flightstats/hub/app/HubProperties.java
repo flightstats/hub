@@ -39,6 +39,10 @@ public class HubProperties {
         return getProperty("spoke.path", "/spoke");
     }
 
+    public static long getLargePayload() {
+        return HubProperties.getProperty("app.large.payload.MB", 9) * 1024 * 1024;
+    }
+
     static Properties getProperties() {
         return properties;
     }
