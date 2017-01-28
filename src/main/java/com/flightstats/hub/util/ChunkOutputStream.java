@@ -28,7 +28,7 @@ public class ChunkOutputStream extends OutputStream {
 
     public void write(int b) throws IOException {
         if (!chunk.add(b)) {
-            sendChunk();
+            sendChunk(chunk);
             count++;
             //todo - gfm - use a Strategy to control the rate that Chunk changes
             chunk = new Chunk(count);
@@ -36,14 +36,14 @@ public class ChunkOutputStream extends OutputStream {
         }
     }
 
-    private void sendChunk() {
+    private void sendChunk(Chunk chunk) {
         futures.add(service.submit(() -> chunkFunction.apply(chunk)));
     }
 
     @Override
     public void close() throws IOException {
         if (chunk.hasData()) {
-            sendChunk();
+            sendChunk(chunk);
         }
         ListenableFuture<String> allFutures = Futures.whenAllSucceed(futures).call(() -> "ok");
         try {
