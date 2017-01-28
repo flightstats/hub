@@ -102,7 +102,7 @@ public class S3LargeContentDao implements ContentDao {
                     //todo - gfm - not sure we need to return this
                     return "ok";
                 } catch (Exception e) {
-                    logger.warn("?!?!", e);
+                    logger.warn("what happened POST to " + channelName + " for chunk " + chunk.getCount(), e);
                     throw e;
                 }
             });
