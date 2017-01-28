@@ -44,7 +44,6 @@ public class S3LargeContentDao implements ContentDao {
 
     private final boolean useEncrypted = HubProperties.isAppEncrypted();
 
-    public static final String CONTENT_TYPE = "application/hub";
     @Inject
     private MetricsService metricsService;
     @Inject

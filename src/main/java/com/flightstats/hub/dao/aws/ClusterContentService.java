@@ -34,6 +34,9 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static com.flightstats.hub.model.LargeContent.createPointer;
+import static com.flightstats.hub.model.LargeContent.fromPointer;
+
 public class ClusterContentService implements ContentService {
 
     private final static Logger logger = LoggerFactory.getLogger(ClusterContentService.class);
@@ -72,9 +75,9 @@ public class ClusterContentService implements ContentService {
     @Override
     public ContentKey insert(String channelName, Content content) throws Exception {
         Content spokeContent = content;
-        if (content.getContentLength() > largePayload) {
+        if (content.getContentLength() >= largePayload) {
             largePayloadContentDao.insert(channelName, content);
-            spokeContent = LargeContent.createIndex(content);
+            spokeContent = createPointer(content);
         }
         ContentKey key = spokeContentDao.insert(channelName, spokeContent);
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
@@ -144,10 +147,9 @@ public class ClusterContentService implements ContentService {
         if (content == null) {
             return Optional.absent();
         }
-        if (content.getContentType().isPresent()
-                && content.getContentType().get().equals(S3LargeContentDao.CONTENT_TYPE)) {
+        if (content.isPointerToLarge()) {
             ContentKey indexKey = content.getContentKey().get();
-            Content largeMeta = LargeContent.fromIndex(content);
+            Content largeMeta = fromPointer(content);
             content = largePayloadContentDao.get(channelName, largeMeta.getContentKey().get());
             content.setContentKey(indexKey);
         }

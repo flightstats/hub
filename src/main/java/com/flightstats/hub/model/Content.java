@@ -44,6 +44,11 @@ public class Content implements Serializable {
         return !contentKey.isPresent();
     }
 
+    public boolean isPointerToLarge() {
+        return getContentType().isPresent()
+                && getContentType().get().equals(LargeContent.CONTENT_TYPE);
+    }
+
     public ContentKey keyAndStart(DateTime effectiveNow) {
         if (isNew()) {
             ContentKey key = new ContentKey(effectiveNow);

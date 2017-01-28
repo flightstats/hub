@@ -1,25 +1,24 @@
-package com.flightstats.hub.dao.aws;
+package com.flightstats.hub.model;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProvider;
-import com.flightstats.hub.model.Content;
-import com.flightstats.hub.model.ContentKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-class LargeContent {
+public class LargeContent {
 
+    static final String CONTENT_TYPE = "application/hub";
     private static final Logger logger = LoggerFactory.getLogger(LargeContent.class);
     private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
 
-    static Content createIndex(Content largePayload) {
+    public static Content createPointer(Content largePayload) {
         try {
             Content.Builder builder = Content.builder();
-            builder.withContentType(S3LargeContentDao.CONTENT_TYPE);
+            builder.withContentType(CONTENT_TYPE);
             ObjectNode data = mapper.createObjectNode();
             data.put("key", largePayload.getContentKey().get().toUrl());
             data.put("size", largePayload.getSize());
@@ -37,7 +36,7 @@ class LargeContent {
         }
     }
 
-    static Content fromIndex(Content content) {
+    public static Content fromPointer(Content content) {
         try {
             String data = new String(content.getData());
             JsonNode jsonNode = mapper.readTree(data);
