@@ -9,7 +9,7 @@ public class Chunk {
 
     Chunk(int count) {
         //todo - gfm - change this value to be dynamic
-        this(count, 3 * 1024 * 1024);
+        this(count, 10 * 1024 * 1024);
     }
 
     Chunk(int count, int chunkSize) {
