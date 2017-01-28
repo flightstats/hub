@@ -25,7 +25,6 @@ describe(testName, function () {
     const SIZE = 41 * 1024 * 1024;
 
     it("posts a large item to " + channelResource, function (done) {
-
         request.post({
                 url: channelResource,
                 headers: {'Content-Type': "text/plain"},
@@ -50,7 +49,7 @@ describe(testName, function () {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
                 expect(response.headers['content-type']).toBe('text/plain');
-                expect(response.body.length).toBe(SIZE);
+                expect(response.body.length).toBe(SIZE - 1);
                 done();
             });
     }, 5 * MINUTE);
