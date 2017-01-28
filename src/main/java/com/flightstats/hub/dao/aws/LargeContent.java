@@ -17,17 +17,24 @@ class LargeContent {
     private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
 
     static Content createIndex(Content largePayload) {
-        Content.Builder builder = Content.builder();
-        builder.withContentType(S3LargeContentDao.CONTENT_TYPE);
-        ObjectNode data = mapper.createObjectNode();
-        data.put("key", largePayload.getContentKey().get().toUrl());
-        data.put("size", largePayload.getSize());
-        if (largePayload.getContentType().isPresent()) {
-            data.put("content-type", largePayload.getContentType().get());
+        try {
+            Content.Builder builder = Content.builder();
+            builder.withContentType(S3LargeContentDao.CONTENT_TYPE);
+            ObjectNode data = mapper.createObjectNode();
+            data.put("key", largePayload.getContentKey().get().toUrl());
+            data.put("size", largePayload.getSize());
+            if (largePayload.getContentType().isPresent()) {
+                data.put("content-type", largePayload.getContentType().get());
+            }
+            builder.withData(data.toString().getBytes());
+            builder.withContentKey(new ContentKey());
+            Content content = builder.build();
+            content.packageStream();
+            return content;
+        } catch (IOException e) {
+            logger.warn("unable to create index");
+            throw new RuntimeException(e);
         }
-        builder.withData(data.toString().getBytes());
-        builder.withContentKey(new ContentKey());
-        return builder.build();
     }
 
     static Content fromIndex(Content content) {
