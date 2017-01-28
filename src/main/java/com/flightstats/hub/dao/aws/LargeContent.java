@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.util.TimeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,9 +26,8 @@ class LargeContent {
             data.put("content-type", largePayload.getContentType().get());
         }
         builder.withData(data.toString().getBytes());
-        Content indexContent = builder.build();
-        indexContent.keyAndStart(TimeUtil.now());
-        return indexContent;
+        builder.withContentKey(new ContentKey());
+        return builder.build();
     }
 
     static Content fromIndex(Content content) {

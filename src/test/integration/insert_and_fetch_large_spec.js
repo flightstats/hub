@@ -22,10 +22,10 @@ describe(testName, function () {
 
     var items = [];
     var location;
+    const SIZE = 10 * 1024 * 1024;
 
     it("posts a large item to " + channelResource, function (done) {
 
-        const SIZE = 10 * 1024 * 1024;
         request.post({
                 url: channelResource,
                 headers: {'Content-Type': "text/plain"},
@@ -53,6 +53,6 @@ describe(testName, function () {
                 expect(response.body.length).toBe(SIZE);
                 done();
             });
-    });
+    }, 5 * MINUTE);
 
 });
