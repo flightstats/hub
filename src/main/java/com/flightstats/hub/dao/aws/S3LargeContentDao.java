@@ -152,7 +152,8 @@ public class S3LargeContentDao implements ContentDao {
 
     private Content getS3Object(String channelName, ContentKey key) throws IOException {
         long start = System.currentTimeMillis();
-        try (S3Object object = s3Client.getObject(s3BucketName.getS3BucketName(), getS3ContentKey(channelName, key))) {
+        try {
+            S3Object object = s3Client.getObject(s3BucketName.getS3BucketName(), getS3ContentKey(channelName, key));
             ObjectMetadata metadata = object.getObjectMetadata();
             Map<String, String> userData = metadata.getUserMetadata();
             /*if (userData.containsKey("compressed")) {

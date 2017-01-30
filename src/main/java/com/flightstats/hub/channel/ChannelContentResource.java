@@ -246,7 +246,10 @@ public class ChannelContentResource {
         if (contentTypeIsNotCompatible(accept, actualContentType)) {
             return Response.status(Response.Status.NOT_ACCEPTABLE).build();
         }
-        Response.ResponseBuilder builder = Response.ok((StreamingOutput) output -> ByteStreams.copy(content.getStream(), output));
+        Response.ResponseBuilder builder = Response.ok((StreamingOutput) output -> {
+            ByteStreams.copy(content.getStream(), output);
+            content.close();
+        });
 
         builder.type(actualContentType)
                 .header(CREATION_DATE, FORMATTER.print(new DateTime(key.getMillis())));

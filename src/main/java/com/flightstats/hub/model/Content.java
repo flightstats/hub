@@ -8,6 +8,7 @@ import com.google.common.io.ByteStreams;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.io.IOUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,6 +77,7 @@ public class Content implements Serializable {
         if (contentLength < HubProperties.getLargePayload()) {
             data = ContentMarshaller.toBytes(this);
             stream = null;
+        } else {
             isLarge = true;
         }
     }
@@ -103,6 +105,10 @@ public class Content implements Serializable {
             size = (long) data.length;
         }
         return size;
+    }
+
+    public void close() {
+        IOUtils.closeQuietly(stream);
     }
 
     //todo - gfm - would be nice with more lombok
