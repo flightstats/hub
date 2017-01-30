@@ -15,7 +15,7 @@ public class LargeContent {
     private static final Logger logger = LoggerFactory.getLogger(LargeContent.class);
     private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
 
-    public static Content createPointer(Content largePayload) {
+    public static Content createIndex(Content largePayload) {
         try {
             Content.Builder builder = Content.builder();
             builder.withContentType(CONTENT_TYPE);
@@ -36,7 +36,7 @@ public class LargeContent {
         }
     }
 
-    public static Content fromPointer(Content content) {
+    public static Content fromIndex(Content content) {
         try {
             String data = new String(content.getData());
             JsonNode jsonNode = mapper.readTree(data);

@@ -193,7 +193,7 @@ public class RemoteSpokeStore {
                     }
                 }
             } catch (JsonMappingException e) {
-                logger.info("JsonMappingException for " + path, e);
+                logger.info("JsonMappingException for " + path);
             } catch (ClientHandlerException e) {
                 if (e.getCause() != null && e.getCause() instanceof ConnectException) {
                     logger.warn("connection exception " + server);

@@ -35,10 +35,8 @@ describe(testName, function () {
                 expect(response.statusCode).toBe(201);
                 var parse = utils.parseJson(response, testName);
                 console.log(response.body);
-
                 location = response.headers.location;
                 console.log(location);
-                //todo - gfm - get the url
                 done();
             });
     }, 5 * MINUTE);

@@ -28,6 +28,7 @@ public class Content implements Serializable {
     private Optional<ContentKey> contentKey = Optional.absent();
     @Setter
     private Long size;
+    private transient boolean isLarge;
 
     private Content(Builder builder) {
         contentKey = builder.contentKey;
@@ -44,7 +45,7 @@ public class Content implements Serializable {
         return !contentKey.isPresent();
     }
 
-    public boolean isPointerToLarge() {
+    public boolean isIndexForLarge() {
         return getContentType().isPresent()
                 && getContentType().get().equals(LargeContent.CONTENT_TYPE);
     }
@@ -75,6 +76,7 @@ public class Content implements Serializable {
         if (contentLength < HubProperties.getLargePayload()) {
             data = ContentMarshaller.toBytes(this);
             stream = null;
+            isLarge = true;
         }
     }
 
