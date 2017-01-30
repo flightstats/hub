@@ -14,7 +14,6 @@ import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.ChunkOutputStream;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
-import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import lombok.AllArgsConstructor;
@@ -154,7 +153,6 @@ public class S3LargeContentDao implements ContentDao {
     private Content getS3Object(String channelName, ContentKey key) throws IOException {
         long start = System.currentTimeMillis();
         try (S3Object object = s3Client.getObject(s3BucketName.getS3BucketName(), getS3ContentKey(channelName, key))) {
-            byte[] bytes = ByteStreams.toByteArray(object.getObjectContent());
             ObjectMetadata metadata = object.getObjectMetadata();
             Map<String, String> userData = metadata.getUserMetadata();
             /*if (userData.containsKey("compressed")) {
@@ -166,7 +164,7 @@ public class S3LargeContentDao implements ContentDao {
                 builder.withContentType(type);
             }
             builder.withContentKey(key);
-            builder.withData(bytes);
+            builder.withStream(object.getObjectContent());
             return builder.build();
         } catch (AmazonS3Exception e) {
             if (e.getStatusCode() != 404) {
