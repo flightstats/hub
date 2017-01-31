@@ -15,11 +15,10 @@ import java.util.function.Function;
 
 public class ChunkOutputStream extends OutputStream {
 
-    //todo - gfm - evaluate 3
     private ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(3));
     private List<ListenableFuture<String>> futures = new ArrayList<>();
     private int count = 1;
-    private Chunk chunk = new Chunk(count);
+    private Chunk chunk = new Chunk(count, ChunkStrategy.getSize(count));
     private Function<Chunk, String> chunkFunction;
 
     public ChunkOutputStream(Function<Chunk, String> chunkFunction) {
@@ -30,8 +29,7 @@ public class ChunkOutputStream extends OutputStream {
         if (!chunk.add(b)) {
             sendChunk(chunk);
             count++;
-            //todo - gfm - use a Strategy to control the rate that Chunk changes
-            chunk = new Chunk(count);
+            chunk = new Chunk(count, ChunkStrategy.getSize(count));
             chunk.add(b);
         }
     }

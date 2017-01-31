@@ -7,11 +7,6 @@ public class Chunk {
     private byte[] bytes;
     private int index = 0;
 
-    Chunk(int count) {
-        //todo - gfm - change this value to be dynamic
-        this(count, 10 * 1024 * 1024);
-    }
-
     Chunk(int count, int chunkSize) {
         this.count = count;
         this.chunkSize = chunkSize;
