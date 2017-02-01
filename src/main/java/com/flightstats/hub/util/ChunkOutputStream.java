@@ -4,6 +4,8 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -14,15 +16,18 @@ import java.util.concurrent.Executors;
 import java.util.function.Function;
 
 public class ChunkOutputStream extends OutputStream {
+    private static final Logger logger = LoggerFactory.getLogger(ChunkOutputStream.class);
 
-    private ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(3));
+    private ListeningExecutorService service;
     private List<ListenableFuture<String>> futures = new ArrayList<>();
     private int count = 1;
     private Chunk chunk = new Chunk(count, ChunkStrategy.getSize(count));
     private Function<Chunk, String> chunkFunction;
 
-    public ChunkOutputStream(Function<Chunk, String> chunkFunction) {
+    public ChunkOutputStream(int threads, Function<Chunk, String> chunkFunction) {
         this.chunkFunction = chunkFunction;
+        service = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(threads));
+        logger.info("creating ChunkOutputStream with {} threads", threads);
     }
 
     public void write(int b) throws IOException {

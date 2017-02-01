@@ -85,7 +85,7 @@ public class S3LargeContentDao implements ContentDao {
             InitiateMultipartUploadRequest initRequest = new InitiateMultipartUploadRequest(name, s3Key, metadata);
             InitiateMultipartUploadResult initResponse = s3Client.initiateMultipartUpload(initRequest);
             uploadId = initResponse.getUploadId();
-            ChunkOutputStream outputStream = new ChunkOutputStream(chunk -> {
+            ChunkOutputStream outputStream = new ChunkOutputStream(content.getThreads(), chunk -> {
                 try {
                     byte[] bytes = chunk.getBytes();
                     logger.info("got bytes {} {}", s3Key, bytes.length);

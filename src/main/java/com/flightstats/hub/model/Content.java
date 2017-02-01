@@ -30,12 +30,14 @@ public class Content implements Serializable {
     @Setter
     private Long size;
     private transient boolean isLarge;
+    private transient int threads;
 
     private Content(Builder builder) {
         contentKey = builder.contentKey;
         contentType = builder.contentType;
         stream = builder.stream;
         contentLength = builder.contentLength;
+        threads = builder.threads;
     }
 
     public static Builder builder() {
@@ -118,6 +120,7 @@ public class Content implements Serializable {
         private long contentLength = 0;
         private Optional<ContentKey> contentKey = Optional.absent();
         private InputStream stream;
+        private int threads;
 
         public Builder withContentType(String contentType) {
             this.contentType = Optional.fromNullable(contentType);
@@ -146,6 +149,11 @@ public class Content implements Serializable {
 
         public Content build() {
             return new Content(this);
+        }
+
+        public Builder withThreads(String threads) {
+            this.threads = Integer.parseInt(threads);
+            return this;
         }
 
     }
