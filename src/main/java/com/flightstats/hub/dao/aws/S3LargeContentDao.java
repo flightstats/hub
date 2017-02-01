@@ -20,6 +20,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,9 +68,10 @@ public class S3LargeContentDao implements ContentDao {
         long start = System.currentTimeMillis();
         int length = 0;
         List<PartETag> partETags = new ArrayList<>();
+        String s3Key = getS3ContentKey(channelName, key);
+        String name = s3BucketName.getS3BucketName();
+        String uploadId = "";
         try {
-            String s3Key = getS3ContentKey(channelName, key);
-            String name = s3BucketName.getS3BucketName();
             ObjectMetadata metadata = new ObjectMetadata();
             if (content.getContentType().isPresent()) {
                 metadata.setContentType(content.getContentType().get());
@@ -82,6 +84,7 @@ public class S3LargeContentDao implements ContentDao {
             }
             InitiateMultipartUploadRequest initRequest = new InitiateMultipartUploadRequest(name, s3Key, metadata);
             InitiateMultipartUploadResult initResponse = s3Client.initiateMultipartUpload(initRequest);
+            uploadId = initResponse.getUploadId();
             ChunkOutputStream outputStream = new ChunkOutputStream(chunk -> {
                 try {
                     byte[] bytes = chunk.getBytes();
@@ -96,7 +99,8 @@ public class S3LargeContentDao implements ContentDao {
                             .withPartSize(bytes.length);
                     UploadPartResult uploadPart = s3Client.uploadPart(uploadRequest);
                     partETags.add(uploadPart.getPartETag());
-                    logger.info("wrote bytes {} {} {}", s3Key, bytes.length, chunk.getCount());
+                    logger.info("wrote chunk {} {} {}", s3Key, chunk.getCount(), bytes.length);
+                    ActiveTraces.getLocal().add("S3LargeContentDao.wrote chunk ", chunk.getCount(), bytes.length);
                     //todo - gfm - not sure we need to return this
                     return "ok";
                 } catch (Exception e) {
@@ -110,17 +114,39 @@ public class S3LargeContentDao implements ContentDao {
             ActiveTraces.getLocal().add("S3LargeContentDao.write processed", copied);
             outputStream.close();
             CompleteMultipartUploadRequest compRequest =
-                    new CompleteMultipartUploadRequest(name, s3Key, initResponse.getUploadId(), partETags);
+                    new CompleteMultipartUploadRequest(name, s3Key, uploadId, partETags);
             s3Client.completeMultipartUpload(compRequest);
             content.setSize(copied);
+            long s3Length = getLength(s3Key, name);
+            if (s3Length != copied) {
+                String message = "object is not the correct size. expected " + copied + ", found " + s3Length;
+                logger.warn(message);
+                throw new RuntimeException(message);
+            }
             return key;
         } catch (Exception e) {
             logger.warn("unable to write large item to S3 " + channelName + " " + key, e);
-            //todo - gfm - delete the uncompleted item in S3.
+            ActiveTraces.getLocal().add("S3LargeContentDao.error ", e.getMessage());
+            if (StringUtils.isNotBlank(uploadId)) {
+                s3Client.abortMultipartUpload(new AbortMultipartUploadRequest(name, s3Key, uploadId));
+                logger.warn("aborting multipart " + channelName + " " + key, e);
+            }
             throw new RuntimeException(e);
         } finally {
             metricsService.time(channelName, "s3.put", start, length, "type:large");
-            ActiveTraces.getLocal().add("S3LargeContentDao.write completed");
+        }
+    }
+
+    private long getLength(String s3Key, String name) throws IOException {
+        try (S3Object object = s3Client.getObject(name, s3Key)) {
+            ObjectMetadata metadata = object.getObjectMetadata();
+            long contentLength = metadata.getContentLength();
+            logger.info("{} {} content length {}", name, s3Key, contentLength);
+            ActiveTraces.getLocal().add("S3LargeContentDao.write completed length ", contentLength);
+            return contentLength;
+        } catch (Exception e) {
+            logger.warn("unable to get length" + name + " " + s3Key, e);
+            return 0;
         }
     }
 
