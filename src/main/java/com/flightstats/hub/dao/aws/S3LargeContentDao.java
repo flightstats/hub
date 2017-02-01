@@ -71,6 +71,7 @@ public class S3LargeContentDao implements ContentDao {
         String s3Key = getS3ContentKey(channelName, key);
         String name = s3BucketName.getS3BucketName();
         String uploadId = "";
+        boolean completed = false;
         try {
             ObjectMetadata metadata = new ObjectMetadata();
             if (content.getContentType().isPresent()) {
@@ -116,6 +117,7 @@ public class S3LargeContentDao implements ContentDao {
             CompleteMultipartUploadRequest compRequest =
                     new CompleteMultipartUploadRequest(name, s3Key, uploadId, partETags);
             s3Client.completeMultipartUpload(compRequest);
+            completed = true;
             content.setSize(copied);
             long s3Length = getLength(s3Key, name);
             if (s3Length != copied) {
@@ -128,8 +130,13 @@ public class S3LargeContentDao implements ContentDao {
             logger.warn("unable to write large item to S3 " + channelName + " " + key, e);
             ActiveTraces.getLocal().add("S3LargeContentDao.error ", e.getMessage());
             if (StringUtils.isNotBlank(uploadId)) {
-                s3Client.abortMultipartUpload(new AbortMultipartUploadRequest(name, s3Key, uploadId));
-                logger.warn("aborting multipart " + channelName + " " + key, e);
+                if (completed) {
+                    logger.warn("deleting multipart " + channelName + " " + key, e);
+                    s3Client.deleteObject(name, s3Key);
+                } else {
+                    logger.warn("aborting multipart " + channelName + " " + key, e);
+                    s3Client.abortMultipartUpload(new AbortMultipartUploadRequest(name, s3Key, uploadId));
+                }
             }
             throw new RuntimeException(e);
         } finally {
