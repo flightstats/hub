@@ -49,7 +49,6 @@ public class S3LargeContentDao implements ContentDao {
     @Inject
     private AmazonS3 s3Client;
     @Inject
-    //todo - gfm - should this use a new bucket?
     private S3BucketName s3BucketName;
 
     public void initialize() {
@@ -132,7 +131,7 @@ public class S3LargeContentDao implements ContentDao {
             if (StringUtils.isNotBlank(uploadId)) {
                 if (completed) {
                     logger.warn("deleting multipart " + channelName + " " + key, e);
-                    s3Client.deleteObject(name, s3Key);
+                    delete(channelName, key);
                 } else {
                     logger.warn("aborting multipart " + channelName + " " + key, e);
                     s3Client.abortMultipartUpload(new AbortMultipartUploadRequest(name, s3Key, uploadId));
@@ -159,12 +158,13 @@ public class S3LargeContentDao implements ContentDao {
 
     @Override
     public void delete(String channelName, ContentKey key) {
-        //todo - gfm - figure this out
+        String s3ContentKey = getS3ContentKey(channelName, key);
+        s3Client.deleteObject(s3BucketName.getS3BucketName(), s3ContentKey);
+        ActiveTraces.getLocal().add("S3largeContentDao.deleted", s3ContentKey);
     }
 
-    //todo - gfm - refactor dupes
     public Content get(final String channelName, final ContentKey key) {
-        ActiveTraces.getLocal().add("S3SingleContentDao.read", key);
+        ActiveTraces.getLocal().add("S3LargeContentDao.read", key);
         try {
             return getS3Object(channelName, key);
         } catch (SocketTimeoutException e) {
@@ -179,7 +179,7 @@ public class S3LargeContentDao implements ContentDao {
             logger.warn("unable to read " + channelName + " " + key, e);
             return null;
         } finally {
-            ActiveTraces.getLocal().add("S3SingleContentDao.read completed");
+            ActiveTraces.getLocal().add("S3LargeContentDao.read completed");
         }
     }
 
@@ -220,30 +220,36 @@ public class S3LargeContentDao implements ContentDao {
         throw new UnsupportedOperationException("the large dao only deals with large objects, queries are tracked using the small dao");
     }
 
-    //todo - gfm - change this
     private String getS3ContentKey(String channelName, ContentKey key) {
         return channelName + "/large/" + key.toUrl();
     }
 
     @Override
     public void deleteBefore(String channel, ContentKey limitKey) {
-        //todo - gfm - what should this look like?
-        /*try {
-            S3Util.delete(channel + "/", limitKey, s3BucketName.getS3BucketName(), s3Client);
+        try {
+            S3Util.delete(channel + "/large/", limitKey, s3BucketName.getS3BucketName(), s3Client);
             logger.info("completed deletion of " + channel);
         } catch (Exception e) {
             logger.warn("unable to delete " + channel + " in " + s3BucketName.getS3BucketName(), e);
-        }*/
+        }
     }
 
     @Override
     public ContentKey insertHistorical(String channelName, Content content) throws Exception {
-        //todo gfm - stream directly into S3 using the new multipart api??
         return insert(channelName, content);
     }
 
     public void delete(String channel) {
-        //todo - gfm -
+        Traces traces = ActiveTraces.getLocal();
+        new Thread(() -> {
+            try {
+                ContentKey limitKey = new ContentKey(TimeUtil.now(), "ZZZZZZ");
+                ActiveTraces.start("S3LargeontentDao.delete", traces, limitKey);
+                deleteBefore(channel, limitKey);
+            } finally {
+                ActiveTraces.end();
+            }
+        }).start();
     }
 
 }
