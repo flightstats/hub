@@ -100,8 +100,6 @@ public class S3LargeContentDao implements ContentDao {
                     UploadPartResult uploadPart = s3Client.uploadPart(uploadRequest);
                     partETags.add(uploadPart.getPartETag());
                     logger.info("wrote chunk {} {} {}", s3Key, chunk.getCount(), bytes.length);
-                    ActiveTraces.getLocal().add("S3LargeContentDao.wrote chunk ", chunk.getCount(), bytes.length);
-                    //todo - gfm - not sure we need to return this
                     return "ok";
                 } catch (Exception e) {
                     logger.warn("what happened POST to " + channelName + " for chunk " + chunk.getCount(), e);
