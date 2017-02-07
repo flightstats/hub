@@ -157,6 +157,8 @@ class WebhookLeader implements Leader {
     }
 
     private void send(ContentPath contentPath) throws InterruptedException {
+        if (webhook.isPaused()) throw new InterruptedException();
+
         semaphore.acquire();
         logger.trace("sending {} to {}", contentPath, webhook.getName());
         String parentName = Thread.currentThread().getName();
