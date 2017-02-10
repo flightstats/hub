@@ -22,7 +22,7 @@ public class SingleHubMain {
         setProperty("zookeeper.connection", "localhost:2181");
         setProperty("runSingleZookeeperInternally", "singleNode");
         setProperty("app.lib_path", "");
-        setProperty("alert.run", "true");
+        setProperty("alert.run", "false");
         setProperty("app.url", "http://localhost:8080/");
         setProperty("http.bind_port", "8080");
         String storagePath = Files.createTempDir().getAbsolutePath();
