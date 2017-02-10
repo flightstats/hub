@@ -9,7 +9,6 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.PreMatching;
 import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.Provider;
 import java.io.IOException;
@@ -28,16 +27,22 @@ public class RequestUriFilter implements ContainerRequestFilter {
         UriInfo uriInfo = request.getUriInfo();
         if (headers.containsKey("X-Forwarded-Host")
                 || headers.containsKey("X-Forwarded-Proto")) {
-            URI requestUri = UriBuilder.fromUri(uriInfo.getRequestUri())
+            URI baseUri = uriInfo.getBaseUriBuilder()
                     .host(getHost(request))
                     .scheme(getScheme(request))
                     .port(-1)
                     .build();
-            request.setRequestUri(requestUri);
+            URI requestUri = uriInfo.getRequestUriBuilder()
+                    .host(getHost(request))
+                    .scheme(getScheme(request))
+                    .port(-1)
+                    .build();
+            request.setRequestUri(baseUri, requestUri);
             logger.trace("new request URI {}", request.getUriInfo().getRequestUri());
         } else if (uriInfo.getBaseUri().getPort() == 80
                 || uriInfo.getBaseUri().getPort() == 443) {
-            request.setRequestUri(UriBuilder.fromUri(uriInfo.getRequestUri()).port(-1).build());
+            request.setRequestUri(uriInfo.getBaseUriBuilder().port(-1).build(),
+                    uriInfo.getRequestUriBuilder().port(-1).build());
             logger.trace("removed port {}", request.getUriInfo().getRequestUri());
         }
     }
