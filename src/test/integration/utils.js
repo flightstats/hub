@@ -25,6 +25,7 @@ exports.randomChannelName = function randomChannelName() {
 }
 
 exports.download = function download(url, completionHandler) {
+    //todo - gfm - doesn't work with https
     https.get(url, function (res) {
         var imagedata = '';
         res.setEncoding('binary');
