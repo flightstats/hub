@@ -25,7 +25,7 @@ exports.randomChannelName = function randomChannelName() {
 }
 
 exports.download = function download(url, completionHandler) {
-    http.get(url, function (res) {
+    https.get(url, function (res) {
         var imagedata = '';
         res.setEncoding('binary');
 
