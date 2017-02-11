@@ -106,11 +106,9 @@ class WebhookLeader implements Leader {
             ContentPath lastCompletedPath = webhookStrategy.getStartingPath();
             lastUpdated.set(lastCompletedPath);
             logger.info("last completed at {} {}", lastCompletedPath, webhook.getName());
-            //todo - gfm - check for paused?
             if (leadership.hasLeadership()) {
                 sendInProcess(lastCompletedPath);
                 webhookStrategy.start(webhook, lastCompletedPath);
-                //todo - gfm - check for paused?
                 while (leadership.hasLeadership()) {
                     Optional<ContentPath> nextOptional = webhookStrategy.next();
                     if (nextOptional.isPresent()) {
@@ -159,8 +157,6 @@ class WebhookLeader implements Leader {
     }
 
     private void send(ContentPath contentPath) throws InterruptedException {
-        if (webhook.isPaused()) throw new InterruptedException();
-
         semaphore.acquire();
         logger.trace("sending {} to {}", contentPath, webhook.getName());
         String parentName = Thread.currentThread().getName();
@@ -240,7 +236,6 @@ class WebhookLeader implements Leader {
                     throw new ItemExpiredException(contentPath.toUrl() + " is before " + ttlTime);
                 }
             }
-            //todo - gfm - check for paused?
             if (!leadership.hasLeadership()) {
                 logger.debug("not leader {} {} {}", webhook.getCallbackUrl(), webhook.getName(), contentPath);
                 return null;
