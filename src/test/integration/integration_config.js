@@ -18,7 +18,7 @@ try {
 }
 catch ( err ){}
 
-hubUrlBase = 'http://' + hubDomain;
+hubUrlBase = 'https://' + hubDomain;
 satelliteUrl = 'http://' + satelliteDomain;
 
 channelUrl = hubUrlBase + '/channel';
