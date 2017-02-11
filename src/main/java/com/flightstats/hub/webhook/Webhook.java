@@ -133,8 +133,8 @@ public class Webhook implements Comparable<Webhook>, NamedType {
     }
 
     private static boolean isValidCallbackTimeoutSeconds(int value) {
-        int minimum = HubProperties.getProperty("webhook.callbackTimeoutSeconds.min", 1);
-        int maximum = HubProperties.getProperty("webhook.callbackTimeoutSeconds.max", 1800);
+        int minimum = HubProperties.getCallbackTimeoutMin();
+        int maximum = HubProperties.getCallbackTimeoutMax();
         if (isOutsideRange(value, minimum, maximum)) {
             throw new InvalidRequestException("callbackTimeoutSeconds must be between " + minimum + " and " + maximum);
         } else {
@@ -218,8 +218,7 @@ public class Webhook implements Comparable<Webhook>, NamedType {
             webhook = webhook.withMaxWaitMinutes(1);
         }
         if (callbackTimeoutSeconds == null) {
-            int callbackTimeoutSeconds = HubProperties.getProperty("webhook.callbackTimeoutSeconds.default", 120);
-            webhook = webhook.withCallbackTimeoutSeconds(callbackTimeoutSeconds);
+            webhook = webhook.withCallbackTimeoutSeconds(HubProperties.getCallbackTimeoutDefault());
         }
         return webhook;
     }

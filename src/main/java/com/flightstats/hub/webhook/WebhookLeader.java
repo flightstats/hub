@@ -1,6 +1,7 @@
 package com.flightstats.hub.webhook;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.cluster.CuratorLeader;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.cluster.Leader;
@@ -270,7 +271,7 @@ class WebhookLeader implements Leader {
         try {
             executorService.shutdown();
             logger.debug("awating termination " + name);
-            executorService.awaitTermination(130, TimeUnit.SECONDS);
+            executorService.awaitTermination(HubProperties.getCallbackTimeoutMax() + 10, TimeUnit.SECONDS);
             logger.debug("stopped Executor " + name);
         } catch (InterruptedException e) {
             logger.warn("unable to stop?" + name, e);
