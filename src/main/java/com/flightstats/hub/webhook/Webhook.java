@@ -3,6 +3,7 @@ package com.flightstats.hub.webhook;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.InvalidRequestException;
@@ -119,13 +120,30 @@ public class Webhook implements Comparable<Webhook>, NamedType {
                 builder.maxWaitMinutes(root.get("maxWaitMinutes").intValue());
             }
             if (root.has("callbackTimeoutSeconds")) {
-                builder.callbackTimeoutSeconds(root.get("callbackTimeoutSeconds").intValue());
+                int value = root.get("callbackTimeoutSeconds").intValue();
+                if (isValidCallbackTimeoutSeconds(value)) {
+                    builder.callbackTimeoutSeconds(value);
+                }
             }
         } catch (IOException e) {
             logger.warn("unable to parse json" + json, e);
             throw new InvalidRequestException(e.getMessage());
         }
         return builder.build();
+    }
+
+    private static boolean isValidCallbackTimeoutSeconds(int value) {
+        int minimum = HubProperties.getProperty("webhook.callbackTimeoutSeconds.min", 1);
+        int maximum = HubProperties.getProperty("webhook.callbackTimeoutSeconds.max", 1800);
+        if (isOutsideRange(value, minimum, maximum)) {
+            throw new InvalidRequestException("callbackTimeoutSeconds must be between " + minimum + " and " + maximum);
+        } else {
+            return true;
+        }
+    }
+
+    private static boolean isOutsideRange(int value, int minimum, int maximum) {
+        return (value > maximum || value < minimum);
     }
 
     private static Optional<ContentPath> getPrevious(Optional<ContentPath> keyOptional, String channelUrl) {
@@ -200,7 +218,8 @@ public class Webhook implements Comparable<Webhook>, NamedType {
             webhook = webhook.withMaxWaitMinutes(1);
         }
         if (callbackTimeoutSeconds == null) {
-            webhook = webhook.withCallbackTimeoutSeconds(120);
+            int callbackTimeoutSeconds = HubProperties.getProperty("webhook.callbackTimeoutSeconds.default", 120);
+            webhook = webhook.withCallbackTimeoutSeconds(callbackTimeoutSeconds);
         }
         return webhook;
     }
