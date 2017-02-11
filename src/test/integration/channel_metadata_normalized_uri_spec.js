@@ -22,6 +22,7 @@ utils.runInTestChannel(testName, channelName, function () {
                     href : thisChannelResource + '/latest'
                 })
                 .expectJSON('_links.ws', {
+                    //todo - gfm - too clever by half for https
                     href : thisChannelResource.replace(/^http/, "ws") + '/ws'
                 })
                 .expectJSON({"name" : channelName})
