@@ -292,6 +292,32 @@ exports.getPort = function getPort() {
     return port;
 }
 
+exports.startCustomServer = function (port, response) {
+    console.log('starting http server');
+    var startupTimeoutInMS = 11000; // 11 seconds
+    var started = false;
+
+    runs(function () {
+        server = http.createServer(response);
+        server.listen(port, function () {
+            console.log('http server listening on port', port);
+            started = true;
+        });
+    });
+
+    waitsFor(function () {
+        return started;
+    }, 'server did not startup in time (' + startupTimeoutInMS + 'ms)', startupTimeoutInMS);
+
+    runs(function () {
+        if (started) {
+            console.log('http server successfully started');
+        } else {
+            console.log('http server failed to start');
+        }
+    });
+};
+
 exports.startServer = function startServer(port, callback) {
     console.log('starting server ' + port);
     var started = false;
