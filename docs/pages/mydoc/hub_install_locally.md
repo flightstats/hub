@@ -28,11 +28,26 @@ To change configurable hub settings:
 3. Run docker with
 
 ```
-docker run -v hub.properties:/etc/hub/hub.properties -p 80:80 flightstats/hub:latest
+docker run -v /full/path/to/hub.properties:/etc/hub/hub.properties -p 80:80 flightstats/hub:latest
 
 ```
 
-### Docker Development
+4. Verify your properties [in the running hub](http://localhost/internal/properties)
+ 
+### Local Docker with AWS
+
+1. Use [aws_hub.properties](https://github.com/flightstats/hub/blob/master/docker/aws_hub.properties) as shown above.
+2. [Create an S3 bucket](https://flightstats.github.io/hub/hub_install_cluster.html#s3-bucket) 
+3. [Create an IAM role](https://flightstats.github.io/hub/hub_install_cluster.html#aws-credentials) 
+4. Modify the docker command to use aws_hub.properties and your credentials.  Your credentials need to match 'aws.credentials' in the aws_hub.properties file.
+5. (Optional) increase the JVM's memory settings by appending min and max values '1g 2g'
+
+```
+docker run -v /full/path/to/aws_hub.properties:/etc/hub/hub.properties -v /full/path/to/hub_test_credentials.properties:/etc/hub/hub_test_credentials.properties -p 80:80 flightstats/hub:latest 1g 2g
+
+```
+
+### Development
 
 You can also use Docker to do development with the hub on you local machine.
 
