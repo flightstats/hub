@@ -87,6 +87,7 @@ public class WebhookResource {
         addSelfLink(root, uriInfo);
         root.put("name", webhook.getName());
         root.put("callbackUrl", webhook.getCallbackUrl());
+        root.put("callbackTimeoutSeconds", webhook.getCallbackTimeoutSeconds());
         root.put("channelUrl", webhook.getChannelUrl());
         root.put("parallelCalls", webhook.getParallelCalls());
         root.put("paused", webhook.isPaused());
