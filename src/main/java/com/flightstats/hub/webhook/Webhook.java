@@ -120,30 +120,13 @@ public class Webhook implements Comparable<Webhook>, NamedType {
                 builder.maxWaitMinutes(root.get("maxWaitMinutes").intValue());
             }
             if (root.has("callbackTimeoutSeconds")) {
-                int value = root.get("callbackTimeoutSeconds").intValue();
-                if (isValidCallbackTimeoutSeconds(value)) {
-                    builder.callbackTimeoutSeconds(value);
-                }
+                builder.callbackTimeoutSeconds(root.get("callbackTimeoutSeconds").intValue());
             }
         } catch (IOException e) {
             logger.warn("unable to parse json" + json, e);
             throw new InvalidRequestException(e.getMessage());
         }
         return builder.build();
-    }
-
-    private static boolean isValidCallbackTimeoutSeconds(int value) {
-        int minimum = HubProperties.getCallbackTimeoutMin();
-        int maximum = HubProperties.getCallbackTimeoutMax();
-        if (isOutsideRange(value, minimum, maximum)) {
-            throw new InvalidRequestException("callbackTimeoutSeconds must be between " + minimum + " and " + maximum);
-        } else {
-            return true;
-        }
-    }
-
-    private static boolean isOutsideRange(int value, int minimum, int maximum) {
-        return (value > maximum || value < minimum);
     }
 
     private static Optional<ContentPath> getPrevious(Optional<ContentPath> keyOptional, String channelUrl) {
