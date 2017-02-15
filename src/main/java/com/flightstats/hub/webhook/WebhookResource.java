@@ -87,7 +87,6 @@ public class WebhookResource {
         addSelfLink(root, uriInfo);
         root.put("name", webhook.getName());
         root.put("callbackUrl", webhook.getCallbackUrl());
-        root.put("callbackTimeoutSeconds", webhook.getCallbackTimeoutSeconds());
         root.put("channelUrl", webhook.getChannelUrl());
         root.put("parallelCalls", webhook.getParallelCalls());
         root.put("paused", webhook.isPaused());
@@ -95,6 +94,7 @@ public class WebhookResource {
         root.put("heartbeat", webhook.isHeartbeat());
         root.put("ttlMinutes", webhook.getTtlMinutes());
         root.put("maxWaitMinutes", webhook.getMaxWaitMinutes());
+        root.put("callbackTimeoutSeconds", webhook.getCallbackTimeoutSeconds());
         addLatest(webhook, status, root, true);
         TimeLinkUtil.addTime(root, stable, "stableTime");
         ArrayNode inFlight = root.putArray("inFlight");
