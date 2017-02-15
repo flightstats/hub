@@ -41,6 +41,7 @@ public class DynamoWebhookDao implements Dao<Webhook> {
         item.put("heartbeat", new AttributeValue().withBOOL(webhook.isHeartbeat()));
         item.put("ttlMinutes", new AttributeValue().withN(String.valueOf(webhook.getTtlMinutes())));
         item.put("maxWaitMinutes", new AttributeValue().withN(String.valueOf(webhook.getMaxWaitMinutes())));
+        item.put("callbackTimeoutSeconds", new AttributeValue().withN(String.valueOf(webhook.getCallbackTimeoutSeconds())));
         dbClient.putItem(getTableName(), item);
     }
 
@@ -82,6 +83,9 @@ public class DynamoWebhookDao implements Dao<Webhook> {
         }
         if (item.containsKey("maxWaitMinutes")) {
             builder.maxWaitMinutes(Integer.valueOf(item.get("maxWaitMinutes").getN()));
+        }
+        if (item.containsKey("callbackTimeoutSeconds")) {
+            builder.callbackTimeoutSeconds(Integer.valueOf(item.get("callbackTimeoutSeconds").getN()));
         }
         return builder.build().withDefaults();
     }
