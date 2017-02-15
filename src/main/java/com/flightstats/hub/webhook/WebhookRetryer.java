@@ -65,7 +65,7 @@ class WebhookRetryer {
                     }
                 })
                 .withWaitStrategy(WaitStrategies.exponentialWait(1000, webhook.getMaxWaitMinutes(), TimeUnit.MINUTES))
-                .withStopStrategy(failedAttempt -> !leadership.hasLeadership())
+                .withStopStrategy(failedAttempt -> !leadership.hasLeadership() || webhook.isPaused())
                 .build();
     }
 
