@@ -16,7 +16,7 @@ class LargeUser(HubUser):
         return "large_test_"
 
     def start_channel(self, payload, tasks):
-        self.create_large(tasks)
+        pass
 
     def start_webhook(self, config):
         pass
@@ -27,39 +27,9 @@ class LargeUser(HubUser):
     def has_websocket(self):
         return False
 
-    def create_large(tasks):
-        size = 50 * 1024
-        loops = 10 * 1024
-        total_size = size * loops
-        if tasks.number == 2:
-            total_size = size * loops * 2
-        elif tasks.number == 3:
-            total_size = size * loops * 4
-
-        large_file = 'large' + str(tasks.number) + '.out'
-        statinfo = os.stat(large_file)
-        if total_size == statinfo.st_size:
-            print "existing " + large_file + " is " + str(total_size)
-            return
-
-        if tasks.number == 1:
-            target = open(large_file, 'w')
-            print "writing file " + large_file
-            target.truncate(0)
-            chars = string.ascii_uppercase + string.digits
-            for x in range(0, loops):
-                target.write(''.join(random.choice(chars) for i in range(size)))
-                target.flush()
-            print "closing " + large_file
-            target.close()
-        elif tasks.number == 2:
-            os.system("cat large1.out large1.out > large2.out")
-        elif tasks.number == 3:
-            os.system("cat large2.out large2.out > large3.out")
-
-
 class LargeTasks(TaskSet):
     hubTasks = None
+    first = True
 
     def on_start(self):
         self.hubTasks = HubTasks(LargeUser(), self.client)
@@ -67,6 +37,9 @@ class LargeTasks(TaskSet):
 
     @task(100)
     def write(self):
+        if self.first:
+            self.create_large(self.hubTasks)
+            self.first = False
         large_file = open('large' + str(self.hubTasks.number) + '.out', 'rb')
         with self.hubTasks.client.post(self.hubTasks.get_channel_url(),
                                        data=large_file,
@@ -76,6 +49,24 @@ class LargeTasks(TaskSet):
             if postResponse.status_code != 201:
                 postResponse.failure("Got wrong response on post: " + str(postResponse.status_code))
 
+    def create_large(self, tasks):
+        if tasks.number == 1:
+            large_file = 'large' + str(tasks.number) + '.out'
+            target = open(large_file, 'w')
+            print "writing file " + large_file
+            target.truncate(0)
+            chars = string.ascii_uppercase + string.digits
+            size = 50 * 1024
+            for x in range(0, 10 * 1024):
+                target.write(''.join(random.choice(chars) for i in range(size)))
+                target.flush()
+
+            print "closing " + large_file
+            target.close()
+        elif tasks.number == 2:
+            os.system("cat large1.out large1.out >> large2.out")
+        elif tasks.number == 3:
+            os.system("cat large2.out large2.out >> large3.out")
 
     # @task(1)
     # def sequential(self):
