@@ -1,5 +1,6 @@
 package com.flightstats.hub.webhook;
 
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.util.RequestUtils;
@@ -33,12 +34,25 @@ public class WebhookValidator {
             throw new InvalidRequestException("{\"error\": \"Invalid channelUrl\"}");
         }
         webhook = webhook.withBatch(StringUtils.upperCase(webhook.getBatch()));
-        if (Webhook.MINUTE.equals(webhook.getBatch())
-                || Webhook.SECOND.equals(webhook.getBatch())
-                || Webhook.SINGLE.equals(webhook.getBatch())) {
-            return;
-        } else {
+        if (!Webhook.MINUTE.equals(webhook.getBatch())
+                && !Webhook.SECOND.equals(webhook.getBatch())
+                && !Webhook.SINGLE.equals(webhook.getBatch())) {
             throw new InvalidRequestException("{\"error\": \"Allowed values for batch are 'SINGLE', 'SECOND' and 'MINUTE'\"}");
         }
+        isValidCallbackTimeoutSeconds(webhook.getCallbackTimeoutSeconds());
+    }
+
+    private static boolean isValidCallbackTimeoutSeconds(int value) {
+        int minimum = HubProperties.getCallbackTimeoutMin();
+        int maximum = HubProperties.getCallbackTimeoutMax();
+        if (isOutsideRange(value, minimum, maximum)) {
+            throw new InvalidRequestException("callbackTimeoutSeconds must be between " + minimum + " and " + maximum);
+        } else {
+            return true;
+        }
+    }
+
+    private static boolean isOutsideRange(int value, int minimum, int maximum) {
+        return (value > maximum || value < minimum);
     }
 }

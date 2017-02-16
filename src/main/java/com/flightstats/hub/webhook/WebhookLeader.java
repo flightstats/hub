@@ -42,7 +42,6 @@ class WebhookLeader implements Leader {
     private final static Logger logger = LoggerFactory.getLogger(WebhookLeader.class);
     static final String WEBHOOK_LAST_COMPLETED = "/GroupLastCompleted/";
 
-    private static final Client client = RestClient.createClient(60, 120, true, false);
     private final AtomicBoolean deleteOnExit = new AtomicBoolean();
 
     @Inject
@@ -66,6 +65,7 @@ class WebhookLeader implements Leader {
     private Semaphore semaphore;
     private Leadership leadership;
     private Retryer<ClientResponse> retryer;
+    private Client client;
 
     private WebhookStrategy webhookStrategy;
     private AtomicReference<ContentPath> lastUpdated = new AtomicReference<>();
@@ -98,6 +98,7 @@ class WebhookLeader implements Leader {
         }
         this.webhook = foundWebhook.get();
         logger.info("taking leadership {} {}", webhook, leadership.hasLeadership());
+        client = RestClient.createClient(60, webhook.getCallbackTimeoutSeconds(), true, false);
         executorService = Executors.newCachedThreadPool();
         semaphore = new Semaphore(webhook.getParallelCalls());
         retryer = WebhookRetryer.buildRetryer(webhook, webhookError, leadership);
@@ -129,6 +130,7 @@ class WebhookLeader implements Leader {
             logger.info("stopped last completed at {} {}", webhookStrategy.getLastCompleted(), webhook.getName());
             webhookStrategy = null;
             executorService = null;
+            client = null;
         }
     }
 
@@ -268,7 +270,7 @@ class WebhookLeader implements Leader {
         try {
             executorService.shutdown();
             logger.debug("awating termination " + name);
-            executorService.awaitTermination(130, TimeUnit.SECONDS);
+            executorService.awaitTermination(webhook.getCallbackTimeoutSeconds() + 10, TimeUnit.SECONDS);
             logger.debug("stopped Executor " + name);
         } catch (InterruptedException e) {
             logger.warn("unable to stop?" + name, e);
