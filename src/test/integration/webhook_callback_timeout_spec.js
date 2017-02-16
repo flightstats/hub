@@ -69,6 +69,10 @@ describe(testName, function () {
         });
 
         utils.closeServer();
+
+        setTimeout(function () {
+            console.log('waiting for server to unbind from port', port);
+        }, 3000);
     });
 
     utils.putWebhook(webhookName, {
