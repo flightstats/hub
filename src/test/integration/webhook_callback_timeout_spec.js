@@ -75,7 +75,7 @@ describe(testName, function () {
         callbackUrl: callbackUrl,
         channelUrl: channelResource,
         callbackTimeoutSeconds: 20
-    }, 201, testName);
+    }, 200, testName);
 
     it('verifies the callback times out after 20 seconds', function () {
         var serverTimeout = 25000; // 25s
