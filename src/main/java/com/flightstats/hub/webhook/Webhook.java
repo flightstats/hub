@@ -3,6 +3,7 @@ package com.flightstats.hub.webhook;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.InvalidRequestException;
@@ -53,6 +54,8 @@ public class Webhook implements Comparable<Webhook>, NamedType {
     private final Integer ttlMinutes;
     @Wither
     private final Integer maxWaitMinutes;
+    @Wither
+    private final Integer callbackTimeoutSeconds;
 
     public static Webhook fromJson(String json, Optional<Webhook> webhookOptional) {
         WebhookBuilder builder = Webhook.builder();
@@ -67,6 +70,7 @@ public class Webhook implements Comparable<Webhook>, NamedType {
                     .batch(existing.batch)
                     .ttlMinutes(existing.ttlMinutes)
                     .maxWaitMinutes(existing.maxWaitMinutes)
+                    .callbackTimeoutSeconds(existing.callbackTimeoutSeconds)
                     .heartbeat(existing.heartbeat);
         }
         try {
@@ -114,6 +118,9 @@ public class Webhook implements Comparable<Webhook>, NamedType {
             }
             if (root.has("maxWaitMinutes")) {
                 builder.maxWaitMinutes(root.get("maxWaitMinutes").intValue());
+            }
+            if (root.has("callbackTimeoutSeconds")) {
+                builder.callbackTimeoutSeconds(root.get("callbackTimeoutSeconds").intValue());
             }
         } catch (IOException e) {
             logger.warn("unable to parse json" + json, e);
@@ -165,7 +172,8 @@ public class Webhook implements Comparable<Webhook>, NamedType {
                 || !batch.equals(other.batch)
                 || !heartbeat == other.heartbeat
                 || !ttlMinutes.equals(other.ttlMinutes)
-                || !maxWaitMinutes.equals(other.maxWaitMinutes);
+                || !maxWaitMinutes.equals(other.maxWaitMinutes)
+                || !callbackTimeoutSeconds.equals(other.callbackTimeoutSeconds);
     }
 
     public String toJson() {
@@ -191,6 +199,9 @@ public class Webhook implements Comparable<Webhook>, NamedType {
         }
         if (maxWaitMinutes == null) {
             webhook = webhook.withMaxWaitMinutes(1);
+        }
+        if (callbackTimeoutSeconds == null) {
+            webhook = webhook.withCallbackTimeoutSeconds(HubProperties.getCallbackTimeoutDefault());
         }
         return webhook;
     }
