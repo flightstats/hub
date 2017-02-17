@@ -1,6 +1,7 @@
 package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.S3ResponseMetadata;
 import com.amazonaws.services.s3.model.*;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDao;
@@ -114,6 +115,8 @@ public class S3LargeContentDao implements ContentDao {
             CompleteMultipartUploadRequest compRequest =
                     new CompleteMultipartUploadRequest(name, s3Key, uploadId, partETags);
             s3Client.completeMultipartUpload(compRequest);
+            S3ResponseMetadata completedMetaData = s3Client.getCachedResponseMetadata(compRequest);
+            logger.info("completed key {} request id {}", s3Key, completedMetaData.getRequestId());
             completed = true;
             content.setSize(copied);
             long s3Length = getLength(s3Key, name);
@@ -129,7 +132,8 @@ public class S3LargeContentDao implements ContentDao {
             if (StringUtils.isNotBlank(uploadId)) {
                 if (completed) {
                     logger.warn("deleting multipart " + channelName + " " + key, e);
-                    delete(channelName, key);
+                    //todo - gfm - disable for now
+                    //delete(channelName, key);
                 } else {
                     logger.warn("aborting multipart " + channelName + " " + key, e);
                     s3Client.abortMultipartUpload(new AbortMultipartUploadRequest(name, s3Key, uploadId));
@@ -142,10 +146,12 @@ public class S3LargeContentDao implements ContentDao {
     }
 
     private long getLength(String s3Key, String name) throws IOException {
-        try (S3Object object = s3Client.getObject(name, s3Key)) {
+        GetObjectRequest request = new GetObjectRequest(name, s3Key);
+        try (S3Object object = s3Client.getObject(request)) {
             ObjectMetadata metadata = object.getObjectMetadata();
             long contentLength = metadata.getContentLength();
-            logger.info("{} {} content length {}", name, s3Key, contentLength);
+            S3ResponseMetadata responseMetadata = s3Client.getCachedResponseMetadata(request);
+            logger.info("{} {} get content length {} {}", name, s3Key, contentLength, responseMetadata.getRequestId());
             ActiveTraces.getLocal().add("S3LargeContentDao.write completed length ", contentLength);
             return contentLength;
         } catch (Exception e) {
