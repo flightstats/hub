@@ -29,10 +29,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketTimeoutException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.SortedSet;
+import java.util.*;
 
 @SuppressWarnings("Duplicates")
 @Singleton
@@ -67,7 +64,7 @@ public class S3LargeContentDao implements ContentDao {
         ActiveTraces.getLocal().add("S3LargeContentDao.write ", key);
         long start = System.currentTimeMillis();
         int length = 0;
-        List<PartETag> partETags = new ArrayList<>();
+        List<PartETag> partETags = Collections.synchronizedList(new ArrayList<>());
         String s3Key = getS3ContentKey(channelName, key);
         String name = s3BucketName.getS3BucketName();
         String uploadId = "";
@@ -111,12 +108,12 @@ public class S3LargeContentDao implements ContentDao {
             InputStream stream = content.getStream();
             long copied = IOUtils.copyLarge(stream, outputStream);
             ActiveTraces.getLocal().add("S3LargeContentDao.write processed", copied);
+            logger.info("before complete key {} with {} parts", s3Key, partETags.size());
             outputStream.close();
-            CompleteMultipartUploadRequest compRequest =
-                    new CompleteMultipartUploadRequest(name, s3Key, uploadId, partETags);
+            CompleteMultipartUploadRequest compRequest = new CompleteMultipartUploadRequest(name, s3Key, uploadId, partETags);
             s3Client.completeMultipartUpload(compRequest);
             S3ResponseMetadata completedMetaData = s3Client.getCachedResponseMetadata(compRequest);
-            logger.info("completed key {} request id {}", s3Key, completedMetaData.getRequestId());
+            logger.info("completed key {} request id {} with {} parts", s3Key, completedMetaData.getRequestId(), partETags.size());
             completed = true;
             content.setSize(copied);
             long s3Length = getLength(s3Key, name);
