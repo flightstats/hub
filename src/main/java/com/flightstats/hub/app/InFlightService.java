@@ -30,7 +30,7 @@ public class InFlightService {
 
     private void waitForInFlight() {
         Integer shutdown_wait_seconds = HubProperties.getProperty("app.shutdown_wait_seconds", 180);
-        logger.info("waiting for in-flight to complete " + inFlight.get());
+        logger.info("waiting for " + inFlight.get() + " in-flight to complete in " + shutdown_wait_seconds + " seconds");
         long start = System.currentTimeMillis();
         while (inFlight.get() > 0) {
             logger.info("still waiting for in-flight to complete " + inFlight.get());
@@ -39,9 +39,9 @@ public class InFlightService {
                 break;
             }
         }
-        logger.info("completed waiting for in-flight to complete " + inFlight.get());
+        logger.info("completed waiting for in-flight to complete " + inFlight.get()
+                + " after " + (System.currentTimeMillis() - start) + " millis");
     }
-
 
     private class InFlightServiceShutdown extends AbstractIdleService {
         @Override
