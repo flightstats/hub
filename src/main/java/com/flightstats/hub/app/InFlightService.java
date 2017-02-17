@@ -29,7 +29,7 @@ public class InFlightService {
     }
 
     private void waitForInFlight() {
-        Integer shutdown_wait_seconds = HubProperties.getProperty("app.shutdown_wait_seconds", 10);
+        Integer shutdown_wait_seconds = HubProperties.getProperty("app.shutdown_wait_seconds", 180);
         logger.info("waiting for in-flight to complete " + inFlight.get());
         long start = System.currentTimeMillis();
         while (inFlight.get() > 0) {
