@@ -40,14 +40,29 @@ class LargeTasks(TaskSet):
         if self.first:
             self.create_large(self.hubTasks)
             self.first = False
-        large_file = open('large' + str(self.hubTasks.number) + '.out', 'rb')
+        filename = 'large' + str(self.hubTasks.number) + '.out'
+        large_file = open(filename, 'rb')
+        expected_size = os.stat(filename).st_size
         with self.hubTasks.client.post(self.hubTasks.get_channel_url(),
                                        data=large_file,
                                        headers={"content-type": "application/octet-stream"},
                                        catch_response=True,
                                        name="post_payload") as postResponse:
             if postResponse.status_code != 201:
-                postResponse.failure("Got wrong response on post: " + str(postResponse.status_code))
+                postResponse.failure("Got wrong response on post: " + str(postResponse.status_code)
+                                     + self.hubTasks.get_channel_url())
+        uri = postResponse.json()['_links']['self']['href']
+
+        with self.client.get(uri, catch_response=True, name="get_payload") as getResponse:
+            if getResponse.status_code != 200:
+                getResponse.failure("Got wrong response on get: " + str(getResponse.status_code) + " " + uri)
+                return
+        with open("output", 'wb') as fd:
+            for chunk in getResponse.iter_content(chunk_size=1024):
+                fd.write(chunk)
+        get_size = os.stat('output').st_size
+        if get_size != expected_size:
+            getResponse.failure("Got wrong size on get: " + str(get_size) + " " + uri)
 
     def create_large(self, tasks):
         if tasks.number == 1:
@@ -105,7 +120,7 @@ class LargeTasks(TaskSet):
 class WebsiteUser(HttpLocust):
     task_set = LargeTasks
     min_wait = 5000
-    max_wait = 60000
+    max_wait = 30000
 
     def __init__(self):
         super(WebsiteUser, self).__init__()
