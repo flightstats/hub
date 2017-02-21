@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.*;
@@ -247,8 +248,13 @@ public class ChannelContentResource {
             return Response.status(Response.Status.NOT_ACCEPTABLE).build();
         }
         Response.ResponseBuilder builder = Response.ok((StreamingOutput) output -> {
-            ByteStreams.copy(content.getStream(), output);
-            content.close();
+            try {
+                ByteStreams.copy(content.getStream(), output);
+            } catch (IOException e) {
+                logger.warn("issue streaming content " + channel + " " + key, e);
+            } finally {
+                content.close();
+            }
         });
 
         builder.type(actualContentType)
