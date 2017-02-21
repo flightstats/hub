@@ -35,14 +35,17 @@ class LargeTasks(TaskSet):
         self.hubTasks = HubTasks(LargeUser(), self.client)
         self.hubTasks.start()
 
+    def large_file_name(self, number, direction):
+        return '/mnt/large' + str(number) + '.' + direction
+
     @task(100)
     def write(self):
         if self.first:
             self.create_large(self.hubTasks)
             self.first = False
-        filename = 'large' + str(self.hubTasks.number) + '.out'
-        large_file = open(filename, 'rb')
-        expected_size = os.stat(filename).st_size
+        large_file_name = self.large_file_name(self.hubTasks.number, 'out')
+        large_file = open(large_file_name, 'rb')
+        expected_size = os.stat(large_file_name).st_size
         with self.hubTasks.client.post(self.hubTasks.get_channel_url(),
                                        data=large_file,
                                        headers={"content-type": "application/octet-stream"},
@@ -57,18 +60,22 @@ class LargeTasks(TaskSet):
             if getResponse.status_code != 200:
                 getResponse.failure("Got wrong response on get: " + str(getResponse.status_code) + " " + uri)
                 return
-        with open("output", 'wb') as fd:
+        input = self.large_file_name(self.hubTasks.number, 'in')
+        with open(input, 'wb') as fd:
             for chunk in getResponse.iter_content(chunk_size=1024):
                 fd.write(chunk)
-        get_size = os.stat('output').st_size
+        get_size = os.stat(input).st_size
         if get_size != expected_size:
             getResponse.failure("Got wrong size on get: " + str(get_size) + " " + uri)
 
     def create_large(self, tasks):
+        large_file_name = self.large_file_name(self.hubTasks.number, 'out')
+        if os.path.isfile(large_file_name):
+            print "using existing file " + large_file_name + " bytes=" + str(os.stat(large_file_name).st_size)
+            return
         if tasks.number == 1:
-            large_file = 'large' + str(tasks.number) + '.out'
-            target = open(large_file, 'w')
-            print "writing file " + large_file
+            target = open(large_file_name, 'w')
+            print "writing file " + large_file_name
             target.truncate(0)
             chars = string.ascii_uppercase + string.digits
             size = 50 * 1024
@@ -76,7 +83,7 @@ class LargeTasks(TaskSet):
                 target.write(''.join(random.choice(chars) for i in range(size)))
                 target.flush()
 
-            print "closing " + large_file
+            print "closing " + large_file_name
             target.close()
         elif tasks.number == 2:
             os.system("cat large1.out large1.out > large2.out")
