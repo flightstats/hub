@@ -79,9 +79,9 @@ class LargeTasks(TaskSet):
             print "closing " + large_file
             target.close()
         elif tasks.number == 2:
-            os.system("cat large1.out large1.out >> large2.out")
+            os.system("cat large1.out large1.out > large2.out")
         elif tasks.number == 3:
-            os.system("cat large2.out large2.out >> large3.out")
+            os.system("cat large2.out large2.out > large3.out")
 
     # @task(1)
     # def sequential(self):
