@@ -90,39 +90,6 @@ class LargeTasks(TaskSet):
         elif tasks.number == 3:
             os.system("cat /mnt/large2.out /mnt/large2.out > /mnt/large3.out")
 
-    # @task(1)
-    # def sequential(self):
-    #     self.hubTasks.sequential()
-    #
-    # @task(1)
-    # def earliest(self):
-    #     self.hubTasks.earliest()
-    #
-    # @task(1)
-    # def latest(self):
-    #     self.hubTasks.latest()
-    #
-    # @task(1)
-    # def hour_query(self):
-    #     self.hubTasks.hour_query()
-    #
-    # @task(1)
-    # def hour_query_get_items(self):
-    #     self.hubTasks.hour_query_get_items()
-    #
-    # @task(1)
-    # def minute_query(self):
-    #     self.hubTasks.minute_query()
-    #
-    # @task(1)
-    # def minute_query_get_items(self):
-    #     self.hubTasks.minute_query_get_items()
-    #
-    # @task(1)
-    # def next_previous(self):
-    #     self.hubTasks.next_previous()
-    #
-
 
 class WebsiteUser(HttpLocust):
     task_set = LargeTasks
