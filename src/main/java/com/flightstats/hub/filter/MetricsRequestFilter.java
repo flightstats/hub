@@ -77,7 +77,9 @@ public class MetricsRequestFilter implements ContainerRequestFilter, ContainerRe
             } else {
                 String[] tagArray = getTagArray(tags);
                 logger.trace("DataDog data sent: {}", Arrays.toString(tagArray));
-                metricsService.time("request", requestState.getStart(), tagArray);
+                if (metricsService.shouldLog(channel)) {
+                    metricsService.time("request", requestState.getStart(), tagArray);
+                }
             }
             logger.trace("request {}, time: {}", tags.get("endpoint"), time);
             int returnCode = requestState.getResponse().getStatus();
