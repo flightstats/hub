@@ -10,7 +10,6 @@ from hubUser import HubUser
 
 # locust -f large.py --host=http://localhost:8080
 
-# todo figure out which tests are appropriate
 class LargeUser(HubUser):
     def name(self):
         return "large_test_"
@@ -67,7 +66,8 @@ class LargeTasks(TaskSet):
                     fd.write(chunk)
         get_size = os.stat(inputFile).st_size
         if get_size == expected_size:
-            getResponse.failure("Got expected size on get: " + str(get_size) + " " + uri)
+            print "Got expected size on get: " + str(get_size) + " " + uri
+            getResponse.success()
         else:
             getResponse.failure("Got wrong size on get: " + str(get_size) + " " + uri)
 
