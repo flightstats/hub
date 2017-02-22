@@ -26,11 +26,9 @@ describe(testName, function () {
                 expect(response.statusCode).toBe(200);
                 var parse = utils.parseJson(response, testName);
                 console.log(response.body);
-
                 var hubType = parse['properties']['hub.type'];
-                console.log(hubType);
                 execute = hubType == 'aws';
-                console.log('execute', execute);
+                console.log(hubType, 'execute', execute);
                 done();
             });
     }, 5 * MINUTE);
