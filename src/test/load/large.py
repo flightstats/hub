@@ -56,15 +56,16 @@ class LargeTasks(TaskSet):
                                      + self.hubTasks.get_channel_url())
         uri = postResponse.json()['_links']['self']['href']
 
-        with self.client.get(uri, catch_response=True, name="get_payload") as getResponse:
+        with self.client.get(uri, stream=True, catch_response=True, name="get_payload") as getResponse:
             if getResponse.status_code != 200:
                 getResponse.failure("Got wrong response on get: " + str(getResponse.status_code) + " " + uri)
                 return
-        input = self.large_file_name(self.hubTasks.number, 'in')
-        with open(input, 'wb') as fd:
+        inputFile = self.large_file_name(self.hubTasks.number, 'in')
+        with open(inputFile, 'wb') as fd:
             for chunk in getResponse.iter_content(chunk_size=1024):
-                fd.write(chunk)
-        get_size = os.stat(input).st_size
+                if chunk:
+                    fd.write(chunk)
+        get_size = os.stat(inputFile).st_size
         if get_size != expected_size:
             getResponse.failure("Got wrong size on get: " + str(get_size) + " " + uri)
 
