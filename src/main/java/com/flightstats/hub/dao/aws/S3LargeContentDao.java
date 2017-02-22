@@ -129,8 +129,7 @@ public class S3LargeContentDao implements ContentDao {
             if (StringUtils.isNotBlank(uploadId)) {
                 if (completed) {
                     logger.warn("deleting multipart " + channelName + " " + key, e);
-                    //todo - gfm - disable for now
-                    //delete(channelName, key);
+                    delete(channelName, key);
                 } else {
                     logger.warn("aborting multipart " + channelName + " " + key, e);
                     s3Client.abortMultipartUpload(new AbortMultipartUploadRequest(name, s3Key, uploadId));
