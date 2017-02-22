@@ -107,7 +107,7 @@ public class MultiPartParser {
     private void addItem(byte[] boundary) {
         byte[] bytes = baos.toByteArray();
         byte[] data = ArrayUtils.subarray(bytes, 0, bytes.length - boundary.length - CRLF.length);
-        if ((data.length == 0 && builder.contentKey.isPresent())
+        if ((data.length == 0 && builder.getContentKey().isPresent())
                 || data.length > 0) {
             builder.withData(data);
             bulkContent.getItems().add(builder.build());

@@ -9,8 +9,6 @@ import java.util.function.Consumer;
 
 public interface ContentService {
 
-    String IMPL = "IMPL";
-
     ContentKey insert(String channelName, Content content) throws Exception;
 
     Collection<ContentKey> insert(BulkContent bulkContent) throws Exception;

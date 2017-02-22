@@ -34,10 +34,14 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static com.flightstats.hub.model.LargeContent.createIndex;
+import static com.flightstats.hub.model.LargeContent.fromIndex;
+
 public class ClusterContentService implements ContentService {
 
     private final static Logger logger = LoggerFactory.getLogger(ClusterContentService.class);
     private static final String CHANNEL_LATEST_UPDATED = "/ChannelLatestUpdated/";
+    private static final long largePayload = HubProperties.getLargePayload();
     private final boolean dropSomeWrites = HubProperties.getProperty("s3.dropSomeWrites", false);
     private final int spokeTtlMinutes = HubProperties.getSpokeTtl();
     @Inject
@@ -49,6 +53,9 @@ public class ClusterContentService implements ContentService {
     @Inject
     @Named(ContentDao.BATCH_LONG_TERM)
     private ContentDao s3BatchContentDao;
+    @Inject
+    @Named(ContentDao.LARGE_PAYLOAD)
+    private ContentDao largePayloadContentDao;
     @Inject
     private ChannelService channelService;
     @Inject
@@ -67,7 +74,12 @@ public class ClusterContentService implements ContentService {
 
     @Override
     public ContentKey insert(String channelName, Content content) throws Exception {
-        ContentKey key = spokeContentDao.insert(channelName, content);
+        Content spokeContent = content;
+        if (content.isLarge()) {
+            largePayloadContentDao.insert(channelName, content);
+            spokeContent = createIndex(content);
+        }
+        ContentKey key = spokeContentDao.insert(channelName, spokeContent);
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
         if (channel.isSingle() || channel.isBoth()) {
             Supplier<Void> local = () -> {
@@ -114,7 +126,7 @@ public class ClusterContentService implements ContentService {
             Content content = spokeContentDao.get(channelName, key);
             if (content != null) {
                 logger.trace("returning from spoke {} {}", key.toString(), channelName);
-                return Optional.of(content);
+                return checkForLargeIndex(channelName, content);
             }
         }
         Content content;
@@ -128,7 +140,20 @@ public class ClusterContentService implements ContentService {
                 content = s3BatchContentDao.get(channelName, key);
             }
         }
-        return Optional.fromNullable(content);
+        return checkForLargeIndex(channelName, content);
+    }
+
+    private Optional<Content> checkForLargeIndex(String channelName, Content content) {
+        if (content == null) {
+            return Optional.absent();
+        }
+        if (content.isIndexForLarge()) {
+            ContentKey indexKey = content.getContentKey().get();
+            Content largeMeta = fromIndex(content);
+            content = largePayloadContentDao.get(channelName, largeMeta.getContentKey().get());
+            content.setContentKey(indexKey);
+        }
+        return Optional.of(content);
     }
 
     private DateTime getSpokeTtlTime(String channelName) {

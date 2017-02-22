@@ -273,7 +273,6 @@ public class S3SingleContentDao implements ContentDao {
 
     @Override
     public ContentKey insertHistorical(String channelName, Content content) throws Exception {
-        //todo gfm - stream directly into S3 using the new multipart api??
         return insert(channelName, content);
     }
 

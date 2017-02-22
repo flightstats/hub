@@ -39,6 +39,10 @@ public class HubProperties {
         return getProperty("spoke.path", "/spoke");
     }
 
+    public static long getLargePayload() {
+        return HubProperties.getProperty("app.large.payload.MB", 40) * 1024 * 1024;
+    }
+
     public static int getCallbackTimeoutMin() {
         return HubProperties.getProperty("webhook.callbackTimeoutSeconds.min", 1);
     }

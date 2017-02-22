@@ -81,7 +81,7 @@ public class HubServices {
 
     private static void await(Service service) {
         try {
-            service.awaitTerminated(1, TimeUnit.MINUTES);
+            service.awaitTerminated(2, TimeUnit.MINUTES);
         } catch (Exception e) {
             logger.error("unable to stop service" + service.getClass().getName(), e);
         }

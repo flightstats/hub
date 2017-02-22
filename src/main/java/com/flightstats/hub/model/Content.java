@@ -1,5 +1,6 @@
 package com.flightstats.hub.model;
 
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.google.common.base.Optional;
@@ -7,6 +8,7 @@ import com.google.common.io.ByteStreams;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.io.IOUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,16 +23,21 @@ public class Content implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private final Optional<String> contentType;
+    private long contentLength;
     private InputStream stream;
     private byte[] data;
     private Optional<ContentKey> contentKey = Optional.absent();
     @Setter
     private Long size;
+    private transient boolean isLarge;
+    private transient int threads;
 
     private Content(Builder builder) {
         contentKey = builder.contentKey;
         contentType = builder.contentType;
         stream = builder.stream;
+        contentLength = builder.contentLength;
+        threads = builder.threads;
     }
 
     public static Builder builder() {
@@ -39,6 +46,11 @@ public class Content implements Serializable {
 
     public boolean isNew() {
         return !contentKey.isPresent();
+    }
+
+    public boolean isIndexForLarge() {
+        return getContentType().isPresent()
+                && getContentType().get().equals(LargeContent.CONTENT_TYPE);
     }
 
     public ContentKey keyAndStart(DateTime effectiveNow) {
@@ -64,8 +76,12 @@ public class Content implements Serializable {
     }
 
     public void packageStream() throws IOException {
-        data = ContentMarshaller.toBytes(this);
-        stream = null;
+        if (contentLength < HubProperties.getLargePayload()) {
+            data = ContentMarshaller.toBytes(this);
+            stream = null;
+        } else {
+            isLarge = true;
+        }
     }
 
     public byte[] getData() {
@@ -93,10 +109,18 @@ public class Content implements Serializable {
         return size;
     }
 
+    public void close() {
+        IOUtils.closeQuietly(stream);
+    }
+
+    //todo - gfm - would be nice with more lombok
+    @Getter
     public static class Builder {
         private Optional<String> contentType = Optional.absent();
-        public Optional<ContentKey> contentKey = Optional.absent();
+        private long contentLength = 0;
+        private Optional<ContentKey> contentKey = Optional.absent();
         private InputStream stream;
+        private int threads;
 
         public Builder withContentType(String contentType) {
             this.contentType = Optional.fromNullable(contentType);
@@ -113,6 +137,11 @@ public class Content implements Serializable {
             return this;
         }
 
+        public Builder withContentLength(Long contentLength) {
+            this.contentLength = contentLength;
+            return this;
+        }
+
         public Builder withData(byte[] data) {
             this.stream = new ByteArrayInputStream(data);
             return this;
@@ -120,6 +149,11 @@ public class Content implements Serializable {
 
         public Content build() {
             return new Content(this);
+        }
+
+        public Builder withThreads(String threads) {
+            this.threads = Integer.parseInt(threads);
+            return this;
         }
 
     }
