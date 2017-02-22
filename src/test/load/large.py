@@ -66,7 +66,9 @@ class LargeTasks(TaskSet):
                 if chunk:
                     fd.write(chunk)
         get_size = os.stat(inputFile).st_size
-        if get_size != expected_size:
+        if get_size == expected_size:
+            getResponse.failure("Got expected size on get: " + str(get_size) + " " + uri)
+        else:
             getResponse.failure("Got wrong size on get: " + str(get_size) + " " + uri)
 
     def create_large(self, tasks):
