@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.flightstats.hub.alert.AlertRunner;
 import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.cluster.*;
 import com.flightstats.hub.health.HubHealthCheck;
@@ -151,7 +150,6 @@ public class HubBindings extends AbstractModule {
         bind(MetricsService.class).to(DelegatingMetricsService.class).asEagerSingleton();
         bind(NtpMonitor.class).asEagerSingleton();
         bind(Leaders.class).asEagerSingleton();
-        bind(AlertRunner.class).asEagerSingleton();
         bind(TimeService.class).asEagerSingleton();
         bind(ShutdownManager.class).asEagerSingleton();
         bind(FileSpokeStore.class).asEagerSingleton();
