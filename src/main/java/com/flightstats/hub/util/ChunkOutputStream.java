@@ -12,7 +12,9 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 public class ChunkOutputStream extends OutputStream {
@@ -26,7 +28,9 @@ public class ChunkOutputStream extends OutputStream {
 
     public ChunkOutputStream(int threads, Function<Chunk, String> chunkFunction) {
         this.chunkFunction = chunkFunction;
-        service = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(threads));
+        service = MoreExecutors.listeningDecorator(
+                new ThreadPoolExecutor(threads, threads, 0L, TimeUnit.MILLISECONDS,
+                        new LinkedBlockingQueue<>(threads * 2)));
         logger.info("creating ChunkOutputStream with {} threads", threads);
     }
 
@@ -55,6 +59,8 @@ public class ChunkOutputStream extends OutputStream {
             throw new RuntimeInterruptedException(e);
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
+        } finally {
+            service.shutdown();
         }
     }
 }
