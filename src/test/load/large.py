@@ -45,11 +45,12 @@ class LargeTasks(TaskSet):
         large_file_name = self.large_file_name(self.hubTasks.number, 'out')
         large_file = open(large_file_name, 'rb')
         expected_size = os.stat(large_file_name).st_size
-        with self.hubTasks.client.post(self.hubTasks.get_channel_url(),
+        threads = str(random.randint(2, 10))
+        with self.hubTasks.client.post(self.hubTasks.get_channel_url() + "?threads=" + threads,
                                        data=large_file,
                                        headers={"content-type": "application/octet-stream"},
                                        catch_response=True,
-                                       name="post_payload") as postResponse:
+                                       name="post_payload_" + threads) as postResponse:
             if postResponse.status_code != 201:
                 postResponse.failure("Got wrong response on post: " + str(postResponse.status_code)
                                      + self.hubTasks.get_channel_url())
