@@ -6,7 +6,7 @@ var locustUrl = process.env.locustUrl;
 locustUrl = 'http://' + locustUrl + '/stats/';
 console.log(locustUrl);
 
-var timeout = 60 * 1000;
+var timeout = 5 * 60 * 1000;
 /**
  * This should get the results from a running locust install and logs results to the console
  * http://locustUrl/stats/requests
