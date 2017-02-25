@@ -45,7 +45,7 @@ class LargeTasks(TaskSet):
         large_file_name = self.large_file_name(self.hubTasks.number, 'out')
         large_file = open(large_file_name, 'rb')
         expected_size = os.stat(large_file_name).st_size
-        threads = str(random.randrange(5, 12, 3))
+        threads = 8
         with self.hubTasks.client.post(self.hubTasks.get_channel_url() + "?threads=" + threads,
                                        data=large_file,
                                        headers={"content-type": "application/octet-stream"},
