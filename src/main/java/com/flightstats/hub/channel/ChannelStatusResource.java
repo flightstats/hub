@@ -4,9 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.model.ChannelConfig;
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.HubUtils;
 import com.google.common.base.Optional;
 
@@ -45,7 +43,8 @@ public class ChannelStatusResource {
 
         addLink("latest", channelService.getLatest(channel, stable), channel, links);
 
-        DirectionQuery directionQuery = ChannelEarliestResource.getDirectionQuery(channel, 1, stable);
+        DirectionQuery directionQuery = ChannelEarliestResource.getDirectionQuery(channel, 1, stable,
+                Location.ALL.name(), Epoch.IMMUTABLE.name());
         SortedSet<ContentKey> earliest = channelService.query(directionQuery);
         if (earliest.isEmpty()) {
             addLink("earliest", Optional.absent(), channel, links);
