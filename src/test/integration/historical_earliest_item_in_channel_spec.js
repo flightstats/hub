@@ -28,8 +28,8 @@ describe(testName, function () {
     var items = [];
 
     it('posts two historical items', function (done) {
-        var historicalItem1 = channelResource + '/' + '2016/11/20/12/00/00/000';
-        var historicalItem2 = channelResource + '/' + '2016/11/20/12/01/00/000';
+        var historicalItem1 = channelResource + '/' + '2013/11/20/12/00/00/000';
+        var historicalItem2 = channelResource + '/' + '2013/11/20/12/01/00/000';
         utils.postItemQ(historicalItem1)
             .then(function (value) {
                 items.push(value.response.headers.location);
