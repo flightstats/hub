@@ -47,4 +47,7 @@ class HostedGraphiteMetricsService implements MetricsService {
         sender.send("channel." + channel + "." + name, 1);
         sender.send("channel." + channel + "." + name + ".bytes", bytes);
     }
+
+    @Override
+    public void mute() {};
 }
