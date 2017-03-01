@@ -113,7 +113,7 @@ An example MINUTE payload:
   "type" : "items",
   "id" : "2014/01/13/10/42",
   "url" : "http://hub/channel/stumptown/2014/01/13/10/42",
-  "batchUrl" : "http://hub/channel/stumptown/2014/01/13/10/42?batch=true",
+  "bulkUrl" : "http://hub/channel/stumptown/2014/01/13/10/42?bulk=true",
   "uris" : [ 
     "http://hub/channel/stumptown/2014/01/13/10/42/05/436/abcdef",
     "http://hub/channel/stumptown/2014/01/13/10/42/31/759/s03ub2"
@@ -130,7 +130,7 @@ An example MINUTE heartbeat :
   "type" : "heartbeat",
   "id" : "2014/01/13/10/42",
   "url" : "http://hub/channel/stumptown/2014/01/13/10/42",
-  "batchUrl" : "http://hub/channel/stumptown/2014/01/13/10/42?batch=true",
+  "bulkUrl" : "http://hub/channel/stumptown/2014/01/13/10/42?bulk=true",
   "uris" : [ ]
 }
 ```
