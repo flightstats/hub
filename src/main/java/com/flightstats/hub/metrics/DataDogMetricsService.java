@@ -83,9 +83,9 @@ class DataDogMetricsService implements MetricsService {
                 .type(MediaType.APPLICATION_JSON)
                 .put(ClientResponse.class, root);
         if(response.getStatus()==200){
-            logger.info("Muting  datadog alerts for " + name + " during restart");
+            logger.info("Muting datadog monitoring: " + name + " during restart");
         }else{
-            logger.warn("Datadog restart mute failed for " + name);
+            logger.warn("Muting datadog monitoring failed: " + name);
         }
     }
 
