@@ -36,4 +36,7 @@ public class NoOpMetricsService implements MetricsService {
     public void time(String channel, String name, long start, long bytes, String... tags) {
 
     }
+
+    @Override
+    public void mute() {};
 }
