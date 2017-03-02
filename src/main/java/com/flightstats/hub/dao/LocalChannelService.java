@@ -119,7 +119,7 @@ public class LocalChannelService implements ChannelService {
                 traces.add("ContentService.insert marshalled");
                 ContentKey key = content.keyAndStart(timeService.getNow());
                 logger.trace("writing key {} to channel {}", key, channelName);
-                contentService.insert(channelName, content);
+                key = contentService.insert(channelName, content);
                 traces.add("ContentService.insert end", key);
                 return key;
             } catch (ContentTooLargeException e) {

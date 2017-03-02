@@ -13,6 +13,7 @@ public interface ContentDao {
     String CACHE = "Cache";
     String SINGLE_LONG_TERM = "LongTerm";
     String BATCH_LONG_TERM = "BatchLongTerm";
+    String LARGE_PAYLOAD = "LargePayload";
 
     ContentKey insert(String channelName, Content content) throws Exception;
 
