@@ -135,33 +135,4 @@ An example MINUTE heartbeat :
 }
 ```
 
-# Webhook alert status {#status}
-
-Following the status link from _links.status.href shows the latest item in a channel, and the last completed callback for that webhook.
-
-`GET http://hub/alert/stumptownWebhook/status`
-
-```
-{
-    "name": "stumptownWebhook",
-    "alert": false,
-    "type": "webhook",
-    "history": [
-        {
-        "href": "http://hub/channel/stumptown/2015/06/17/18/34/38/306/UqCNR4",
-        "name": "channelLatest"
-        },
-        {
-        "href": "http://hub/channel/stumptown/2015/06/17/18/34/38/306/UqCNR4",
-        "name": "lastCompletedCallback"
-        }
-    ],
-    "_links": {
-        "self": {
-            "href": "http://hub/alert/stumptownWebhook/status"
-        }
-    }
-}
-```
-
 {% include links.html %}
