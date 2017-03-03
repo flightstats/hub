@@ -3,7 +3,10 @@ package com.flightstats.hub.channel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.Epoch;
+import com.flightstats.hub.model.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,18 +83,11 @@ public class ChannelEarliestResource {
         }
     }
 
-    public static DirectionQuery getDirectionQuery(String channel, int count, boolean stable) {
-        return getDirectionQuery(channel, count, stable, Location.DEFAULT, Epoch.DEFAULT);
-    }
-
     public static DirectionQuery getDirectionQuery(String channel, int count, boolean stable, String location, String epoch) {
-        ChannelConfig channelConfig = channelService.getCachedChannelConfig(channel);
-        ContentKey startKey = new ContentKey(channelConfig.getTtlTime(), "0");
         return DirectionQuery.builder()
                 .channelName(channel)
                 .next(true)
                 .stable(stable)
-                .startKey(startKey)
                 .count(count)
                 .location(Location.valueOf(location))
                 .epoch(Epoch.valueOf(epoch))

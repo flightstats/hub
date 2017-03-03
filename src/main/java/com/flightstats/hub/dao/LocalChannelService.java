@@ -319,14 +319,14 @@ public class LocalChannelService implements ChannelService {
         DateTime ttlTime = getChannelTtl(channelConfig, query.getEpoch());
         query = query.withEarliestTime(ttlTime);
 
-        if (query.getStartKey().getTime().isBefore(ttlTime)) {
+        if (query.getStartKey() == null || query.getStartKey().getTime().isBefore(ttlTime)) {
             query = query.withStartKey(new ContentKey(ttlTime, "0"));
         }
         if (query.getEpoch().equals(Epoch.MUTABLE)) {
             if (!query.isNext()) {
                 DateTime mutableTime = channelConfig.getMutableTime();
-                if (query.getStartKey().getTime().isAfter(mutableTime)) {
-                    query = query.withStartKey(ContentKey.lastKey(mutableTime.plusMillis(1)));
+                if (query.getStartKey() == null || query.getStartKey().getTime().isAfter(mutableTime)) {
+                    query = query.withStartKey(new ContentKey(mutableTime.plusMillis(1), "0"));
                 }
             }
         }
@@ -339,7 +339,7 @@ public class LocalChannelService implements ChannelService {
         DateTime ttlTime = channelConfig.getTtlTime();
         if (channelConfig.isHistorical()) {
             if (epoch.equals(Epoch.IMMUTABLE)) {
-                ttlTime = channelConfig.getMutableTime();
+                ttlTime = channelConfig.getMutableTime().plusMillis(1);
             } else {
                 ContentKey lastKey = ContentKey.lastKey(channelConfig.getMutableTime());
                 return lastContentPath.get(channelConfig.getName(), lastKey, HISTORICAL_EARLIEST).getTime();
