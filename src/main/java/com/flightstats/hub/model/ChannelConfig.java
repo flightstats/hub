@@ -166,6 +166,9 @@ public class ChannelConfig implements Serializable, NamedType {
     }
 
     public DateTime getTtlTime() {
+        if (isHistorical()) {
+            return mutableTime.plusMillis(1);
+        }
         return TimeUtil.getEarliestTime(ttlDays);
     }
 

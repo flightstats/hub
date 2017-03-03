@@ -23,7 +23,7 @@ var testName = __filename;
  */
 describe(testName, function () {
 
-    var mutableTime = moment.utc().subtract(2, 'years');
+    var mutableTime = moment.utc().subtract(3, 'years');
 
     var channelBody = {
         mutableTime: mutableTime.format('YYYY-MM-DDTHH:mm:ss.SSS'),
@@ -77,7 +77,8 @@ describe(testName, function () {
         ;
     });
 
-    var next7 = earliestTime.subtract(1, 'month').format('/YYYY/MM/DD/HH/mm/ss/SSS') + "/0/next/7?trace=true&stable=false";
+    var parameters = "?trace=true&stable=false";
+    var next7 = earliestTime.subtract(1, 'month').format('/YYYY/MM/DD/HH/mm/ss/SSS') + "/0/next/7" + parameters;
 
     it('queries next 7 All ' + next7, function (done) {
         utils.getQuery(channelURL + next7 + '&epoch=ALL', 200, items, done);
@@ -100,9 +101,16 @@ describe(testName, function () {
 
     it('queries next 7 Immutable after change ' + next7, function (done) {
         utils.getQuery(channelURL + next7 + '&epoch=IMMUTABLE', 200, items.slice(2), done);
-    });
+    }, 3 * 60 * 1000);
 
     it('queries next 7 Mutable after change' + next7, function (done) {
         utils.getQuery(channelURL + next7 + '&epoch=MUTABLE', 200, items.slice(0, 2), done);
-    });
+    }, 3 * 60 * 1000);
+    it('queries earliest 2 Immutable after change ', function (done) {
+        utils.getQuery(channelURL + "/earliest/2" + parameters + '&epoch=IMMUTABLE', 200, items.slice(2, 4), done);
+    }, 5 * 60 * 1000);
+
+    it('queries earliest 2 Mutable after change ', function (done) {
+        utils.getQuery(channelURL + "/earliest/2" + parameters + '&epoch=MUTABLE', 200, items.slice(0, 2), done);
+    }, 5 * 60 * 1000);
 });
