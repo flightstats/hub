@@ -12,8 +12,10 @@ class DataDogMetricsService implements MetricsService {
 
     @Override
     public void insert(String channel, long start, Insert type, int items, long bytes) {
-        time(channel, "channel", start, bytes, "type:" + type.toString());
-        count("channel.items", items, "type:" + type.toString(), "channel:" + channel);
+        if (shouldLog(channel)) {
+            time(channel, "channel", start, bytes, "type:" + type.toString());
+            count("channel.items", items, "type:" + type.toString(), "channel:" + channel);
+        }
     }
 
     @Override
@@ -42,14 +44,17 @@ class DataDogMetricsService implements MetricsService {
 
     @Override
     public void time(String channel, String name, long start, String... tags) {
-        //todo gfm - should time be histogram instead?
-        statsd.time(name, System.currentTimeMillis() - start, addChannelTag(channel, tags));
+        if (shouldLog(channel)) {
+            statsd.time(name, System.currentTimeMillis() - start, addChannelTag(channel, tags));
+        }
     }
 
     @Override
     public void time(String channel, String name, long start, long bytes, String... tags) {
-        time(channel, name, start, tags);
-        count(name + ".bytes", bytes, addChannelTag(channel, tags));
+        if (shouldLog(channel)) {
+            time(channel, name, start, tags);
+            count(name + ".bytes", bytes, addChannelTag(channel, tags));
+        }
     }
 
     String[] addChannelTag(String channel, String... tags) {

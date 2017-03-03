@@ -32,4 +32,8 @@ public interface MetricsService {
             time(label, start, "name:" + name);
         }
     }
+
+    default boolean shouldLog(String channel) {
+        return !channel.startsWith("test_");
+    }
 }
