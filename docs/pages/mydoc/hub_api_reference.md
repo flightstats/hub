@@ -188,31 +188,3 @@ GET http://hub/channel/spella/2015/06/24/19/48/17/000/abc/next/10?tag=coffee
   "ttlMinutes" : 0
 }
 ```
-
-#### [Create New](hub_notifications_webhooks.html#status) 
-`GET http://hub/alert/{webhook-name}/status`
-
-### Alerts
-
-#### [Create/Update Alert](hub_notifications_alerts.html#create)
-
-`PUT http://hub/alert/{alert-name}`
-
-* Content-type: application/json
-
-```json
-{
-    "source": "stumptown",
-    "serviceName": "stumptown@example.com",
-    "timeWindowMinutes": 5,
-    "type": "channel",
-    "operator": "==",
-    "threshold": 0
-}
-```
-
-#### [Alert Status](hub_notifications_alerts.html#status)
-
-`GET http://hub/alert/{alert-name}/status`
-
-

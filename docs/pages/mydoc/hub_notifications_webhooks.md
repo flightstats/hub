@@ -135,5 +135,4 @@ An example MINUTE heartbeat :
 }
 ```
 
-
 {% include links.html %}
