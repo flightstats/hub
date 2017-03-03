@@ -1,5 +1,4 @@
 require('../integration/integration_config.js');
-var verify_utils = require('verify_utils.js');
 var agent = require('superagent');
 var request = require('request');
 var async = require('async');
