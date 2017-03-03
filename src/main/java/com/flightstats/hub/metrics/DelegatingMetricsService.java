@@ -45,7 +45,7 @@ public class DelegatingMetricsService implements MetricsService {
     @Override
     public void mute() {
         services.forEach((service) -> service.mute());
-    };
+    }
 
     @Override
     public void time(String name, long start, String... tags) {
