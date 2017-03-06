@@ -72,8 +72,8 @@ class DataDogMetricsService implements MetricsService {
 
     @Override
     public void mute(){
-        String api_key = HubProperties.getProperty("datadog.api_key", "");
-        String app_key = HubProperties.getProperty("datadog.app_key", "");
+        String api_key = HubProperties.getProperty("data_dog.api_key", "");
+        String app_key = HubProperties.getProperty("data_dog.app_key", "");
         String name = HubHost.getLocalName();
         if( "".equals(api_key) || "".equals(app_key)) {
             logger.warn("datadog api_key or app_key not defined");
