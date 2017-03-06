@@ -8,13 +8,13 @@ import com.flightstats.hub.webhook.WebhookService;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 
-class CallbackStream {
+class EventWebhook {
 
     private final WebhookService webhookService = HubProvider.getInstance(WebhookService.class);
     private final String random = RandomStringUtils.randomAlphanumeric(6);
     private ContentOutput contentOutput;
 
-    CallbackStream(ContentOutput contentOutput) {
+    EventWebhook(ContentOutput contentOutput) {
         this.contentOutput = contentOutput;
     }
 
@@ -25,7 +25,7 @@ class CallbackStream {
                 .channelUrl(getChannelUrl())
                 .heartbeat(true)
                 .startingKey(contentOutput.getContentKey())
-                .batch(Webhook.SINGLE);
+                .batch(Webhook.SECOND);
         Webhook webhook = builder.build();
         webhookService.upsert(webhook);
     }
