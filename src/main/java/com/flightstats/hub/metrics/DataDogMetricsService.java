@@ -72,6 +72,7 @@ class DataDogMetricsService implements MetricsService {
 
     @Override
     public void mute(){
+        logger.info("Attempting to mute datadog");
         String api_key = HubProperties.getProperty("data_dog.api_key", "");
         String app_key = HubProperties.getProperty("data_dog.app_key", "");
         String name = HubHost.getLocalName();
@@ -79,6 +80,7 @@ class DataDogMetricsService implements MetricsService {
             logger.warn("datadog api_key or app_key not defined");
             return;
         }
+        logger.info("datadog api_key " + api_key + " app_key "  + app_key);
 
         try {
             String url = "https://app.datadoghq.com/api/v1/downtime?api_key="
@@ -92,7 +94,7 @@ class DataDogMetricsService implements MetricsService {
                     .type(MediaType.APPLICATION_JSON)
                     .put(ClientResponse.class, root);
             if (response.getStatus() == 200) {
-                logger.info("Muting datadog monitoring: " + name + " during restart");
+                logger.info("Muted datadog monitoring: " + name + " during restart");
             } else {
                 logger.warn("Muting datadog monitoring failed: " + name);
             }
