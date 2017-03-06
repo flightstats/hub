@@ -252,6 +252,7 @@ public class ChannelContentResource {
                 ByteStreams.copy(content.getStream(), output);
             } catch (IOException e) {
                 logger.warn("issue streaming content " + channel + " " + key, e);
+                throw e;
             } finally {
                 content.close();
             }

@@ -55,6 +55,8 @@ public class ChunkOutputStream extends OutputStream {
             throw new RuntimeInterruptedException(e);
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
+        } finally {
+            service.shutdown();
         }
     }
 }
