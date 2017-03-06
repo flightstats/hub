@@ -27,7 +27,7 @@ public class EventsService {
     @Inject
     private WebhookService webhookService;
 
-    private Map<String, CallbackStream> outputStreamMap = new ConcurrentHashMap<>();
+    private Map<String, EventWebhook> outputStreamMap = new ConcurrentHashMap<>();
 
     void getAndSendData(String uri, String id) {
         logger.trace("got uri {} {}", uri, id);
@@ -58,12 +58,12 @@ public class EventsService {
 
     private void sendData(String id, Consumer<ContentOutput> contentConsumer) {
         try {
-            CallbackStream callbackStream = outputStreamMap.get(id);
-            if (callbackStream == null) {
+            EventWebhook eventWebhook = outputStreamMap.get(id);
+            if (eventWebhook == null) {
                 logger.info("unable to find id {}", id);
                 unregister(id);
             } else {
-                contentConsumer.accept(callbackStream.getContentOutput());
+                contentConsumer.accept(eventWebhook.getContentOutput());
             }
         } catch (Errors.WrappedAsRuntimeException e) {
             if (e.getCause() instanceof EofException) {
@@ -79,15 +79,15 @@ public class EventsService {
     }
 
     public void register(ContentOutput contentOutput) {
-        CallbackStream callbackStream = new CallbackStream(contentOutput);
-        logger.info("registering events {}", callbackStream.getGroupName());
-        outputStreamMap.put(callbackStream.getGroupName(), callbackStream);
-        callbackStream.start();
+        EventWebhook eventWebhook = new EventWebhook(contentOutput);
+        logger.info("registering events {}", eventWebhook.getGroupName());
+        outputStreamMap.put(eventWebhook.getGroupName(), eventWebhook);
+        eventWebhook.start();
     }
 
     private void unregister(String id) {
         logger.info("unregistering events {}", id);
-        CallbackStream remove = outputStreamMap.remove(id);
+        EventWebhook remove = outputStreamMap.remove(id);
         if (null != remove) {
             remove.stop();
         } else {
