@@ -88,15 +88,16 @@ class DataDogMetricsService implements MetricsService {
             ObjectNode root = mapper.createObjectNode();
             root.put("scope", "name:" + name);
             root.put("message", "restarting");
-            root.put("end", (new Instant()).getMillis() + (4 * 60 * 60));
+            root.put("end", (new Instant()).getMillis() + (4 * 60 * 60 * 1000));
 
             ClientResponse response = RestClient.defaultClient().resource(url)
                     .type(MediaType.APPLICATION_JSON)
-                    .put(ClientResponse.class, root);
-            if (response.getStatus() == 200) {
+                    .post(ClientResponse.class, root);
+            int status = response.getStatus();
+            if (status >= 200 && status <= 299  ) {
                 logger.info("Muted datadog monitoring: " + name + " during restart");
             } else {
-                logger.warn("Muting datadog monitoring failed: " + name);
+                logger.warn("Muting datadog monitoring failed: " + name + " status " + status);
             }
         }catch(Exception e){
             logger.warn("Muting datadog error ", e);
