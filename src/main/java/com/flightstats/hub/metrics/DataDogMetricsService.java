@@ -76,28 +76,37 @@ class DataDogMetricsService implements MetricsService {
         String api_key = HubProperties.getProperty("data_dog.api_key", "");
         String app_key = HubProperties.getProperty("data_dog.app_key", "");
         String name = HubHost.getLocalName();
+        long end = (new Instant()).getMillis() + (4 * 60 * 60 * 1000);
+
         if( "".equals(api_key) || "".equals(app_key)) {
             logger.warn("datadog api_key or app_key not defined");
             return;
         }
-        logger.info("datadog api_key " + api_key + " app_key "  + app_key);
 
+//        String template = "{\n" +
+//                "      \"message\": \"restarting\",\n" +
+//                "      \"scope\": \"name:%s\",\n" +
+//                "      \"end\": %d\n" +
+//                "    }";
+//        String data = String.format(template,name, end);
         try {
             String url = "https://app.datadoghq.com/api/v1/downtime?api_key="
                     + api_key + "&application_key=" + app_key;
             ObjectNode root = mapper.createObjectNode();
             root.put("scope", "name:" + name);
             root.put("message", "restarting");
-            root.put("end", (new Instant()).getMillis() + (4 * 60 * 60 * 1000));
+            root.put("end", end);
+            String data = root.toString();
 
             ClientResponse response = RestClient.defaultClient().resource(url)
                     .type(MediaType.APPLICATION_JSON)
-                    .post(ClientResponse.class, root);
+                    .post(ClientResponse.class, data);
             int status = response.getStatus();
             if (status >= 200 && status <= 299  ) {
                 logger.info("Muted datadog monitoring: " + name + " during restart");
             } else {
                 logger.warn("Muting datadog monitoring failed: " + name + " status " + status);
+                logger.warn(data);
             }
         }catch(Exception e){
             logger.warn("Muting datadog error ", e);
