@@ -1,7 +1,6 @@
 package com.flightstats.hub.metrics;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubProvider;
@@ -83,20 +82,20 @@ class DataDogMetricsService implements MetricsService {
             return;
         }
 
-//        String template = "{\n" +
-//                "      \"message\": \"restarting\",\n" +
-//                "      \"scope\": \"name:%s\",\n" +
-//                "      \"end\": %d\n" +
-//                "    }";
-//        String data = String.format(template,name, end);
+        String template = "{\n" +
+                "      \"message\": \"restarting\",\n" +
+                "      \"scope\": \"name:%s\",\n" +
+                "      \"end\": %d\n" +
+                "    }";
+        String data = String.format(template,name, end);
         try {
             String url = "https://app.datadoghq.com/api/v1/downtime?api_key="
                     + api_key + "&application_key=" + app_key;
-            ObjectNode root = mapper.createObjectNode();
-            root.put("scope", "name:" + name);
-            root.put("message", "restarting");
-            root.put("end", end);
-            String data = root.toString();
+//            ObjectNode root = mapper.createObjectNode();
+//            root.put("scope", "name:" + name);
+//            root.put("message", "restarting");
+//            root.put("end", end);
+//            String data = root.toString();
 
             ClientResponse response = RestClient.defaultClient().resource(url)
                     .type(MediaType.APPLICATION_JSON)
