@@ -96,6 +96,7 @@ class DataDogMetricsService implements MetricsService {
 //            root.put("message", "restarting");
 //            root.put("end", end);
 //            String data = root.toString();
+            logger.info("sent data" + data);
 
             ClientResponse response = RestClient.defaultClient().resource(url)
                     .type(MediaType.APPLICATION_JSON)
@@ -105,7 +106,6 @@ class DataDogMetricsService implements MetricsService {
                 logger.info("Muted datadog monitoring: " + name + " during restart");
             } else {
                 logger.warn("Muting datadog monitoring failed: " + name + " status " + status);
-                logger.warn(data);
             }
         }catch(Exception e){
             logger.warn("Muting datadog error ", e);
