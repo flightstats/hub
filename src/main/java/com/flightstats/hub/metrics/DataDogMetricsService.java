@@ -75,7 +75,7 @@ class DataDogMetricsService implements MetricsService {
         String api_key = HubProperties.getProperty("data_dog.api_key", "");
         String app_key = HubProperties.getProperty("data_dog.app_key", "");
         String name = HubHost.getLocalName();
-        long end = (new Instant()).getMillis() + (4 * 60 * 1000);
+        long end = (new Instant()).getMillis()/1000 + (4 * 60);
 
         if( "".equals(api_key) || "".equals(app_key)) {
             logger.warn("datadog api_key or app_key not defined");
