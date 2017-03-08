@@ -91,8 +91,6 @@ class DataDogMetricsService implements MetricsService {
         try {
             String url = "https://app.datadoghq.com/api/v1/downtime?api_key="
                     + api_key + "&application_key=" + app_key;
-            logger.info("sent data" + data);
-
             ClientResponse response = RestClient.defaultClient().resource(url)
                     .type(MediaType.APPLICATION_JSON)
                     .post(ClientResponse.class, data);
