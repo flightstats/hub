@@ -3,6 +3,7 @@ package com.flightstats.hub.app;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.dao.*;
 import com.flightstats.hub.dao.file.FileChannelConfigurationDao;
+import com.flightstats.hub.dao.file.FileDocumentationDao;
 import com.flightstats.hub.dao.file.FileWebhookDao;
 import com.flightstats.hub.dao.file.SingleContentService;
 import com.flightstats.hub.model.ChannelConfig;
@@ -27,6 +28,7 @@ class SingleHubBindings extends AbstractModule {
         bind(ContentService.class)
                 .to(SingleContentService.class).asEagerSingleton();
         bind(ChannelTtlEnforcer.class).asEagerSingleton();
+        bind(DocumentationDao.class).to(FileDocumentationDao.class).asEagerSingleton();
     }
 
     @Inject

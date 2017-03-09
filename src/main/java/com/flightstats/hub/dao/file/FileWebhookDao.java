@@ -21,12 +21,12 @@ public class FileWebhookDao implements Dao<Webhook> {
 
     @Override
     public void upsert(Webhook webhook) {
-        FileUtil.writeJson(webhook.toJson(), webhook.getName(), groupPath);
+        FileUtil.write(webhook.toJson(), webhook.getName(), groupPath);
     }
 
     @Override
     public Webhook get(String name) {
-        return FileUtil.readJson(groupPath, name, Webhook::fromJson);
+        return FileUtil.read(groupPath, name, Webhook::fromJson);
     }
 
     @Override

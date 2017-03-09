@@ -26,23 +26,28 @@ class FileUtil {
         return FileUtil.getStoragePath() + "content/";
     }
 
-    static void writeJson(String json, String name, String path) {
+    static boolean write(String content, String filename, String path) {
+        return write(content.getBytes(), filename, path);
+    }
+
+    static boolean write(byte[] bytes, String filename, String path) {
         try {
-            byte[] bytes = json.getBytes();
-            FileUtils.writeByteArrayToFile(new File(path + name), bytes);
+            FileUtils.writeByteArrayToFile(new File(path + filename), bytes);
+            return true;
         } catch (IOException e) {
-            logger.warn("unable to save group for " + name, e);
+            logger.warn("unable to write file " + filename, e);
+            return false;
         }
     }
 
-    static <T> T readJson(String path, String name, Function<String, T> fromJson) {
-        return read(new File(path + name), fromJson);
+    static <T> T read(String path, String name, Function<String, T> function) {
+        return read(new File(path + name), function);
     }
 
-    private static <T> T read(File file, Function<String, T> fromJson) {
+    private static <T> T read(File file, Function<String, T> function) {
         try {
             byte[] bytes = FileUtils.readFileToByteArray(file);
-            return fromJson.apply(new String(bytes));
+            return function.apply(new String(bytes));
         } catch (FileNotFoundException e) {
             logger.info("file not found {} {} ", file.getName(), e.getMessage());
         } catch (IOException e) {
@@ -51,14 +56,14 @@ class FileUtil {
         return null;
     }
 
-    static <T> Collection<T> getIterable(String path, Function<String, T> fromJson) {
+    static <T> Collection<T> getIterable(String path, Function<String, T> function) {
         List<T> list = new ArrayList<>();
         File[] files = new File(path).listFiles();
         if (files == null) {
             return list;
         }
         for (File file : files) {
-            list.add(read(file, fromJson));
+            list.add(read(file, function));
         }
         return list;
     }
