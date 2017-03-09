@@ -20,7 +20,7 @@ public class FileDocumentationDao implements DocumentationDao {
 
     @Override
     public boolean upsert(String channel, byte[] bytes) {
-        logger.info("upsert doc for {} {}", channel, new String(bytes));
+        logger.info("upsert doc for {}", channel);
         String path = FileUtil.getStoragePath() + "content/" + channel + "/";
         return FileUtil.write(bytes, "documentation", path);
     }
