@@ -47,7 +47,7 @@ frisby.create(testName + ': Inserting a bulk into a provider channel .')
             .get(thisChannelResource + "/latest?stable=false")
             .expectStatus(200)
             .expectHeader('content-type', 'multipart/mixed')
-            .expectBodyContains(messageText)
+            .expectBodyContains(multipart)
             .toss();
     })
     .toss();
