@@ -2,7 +2,6 @@ require('./../integration/integration_config.js');
 
 var channelName = utils.randomChannelName();
 var providerResource = hubUrlBase + "/provider";
-var providerBulkResource = hubUrlBase + "/provider/bulk";
 var thisChannelResource = channelUrl + "/" + channelName;
 var messageText = "MY SUPER TEST CASE: this & <that>. " + Math.random().toString();
 var testName = "provider_insert_and_fetch_spec";
@@ -37,13 +36,17 @@ var multipart =
     '{ "type" : "coffee", "roast" : "french" }\r\n' +
     '--abcdefg--';
 
-frisby.create(testName + ': Inserting a bulk into a provider channel .')
+var providerBulkResource = hubUrlBase + "/provider/bulk";
+testName = "provider_bulk_insert_and_fetch_spec";
+channelName = utils.randomChannelName();
+thisChannelResource = channelUrl + "/" + channelName;
+frisby.create(testName + ': Inserting a bulk value into a provider channel .')
     .post(providerBulkResource, null, { body: multipart})
     .addHeader("channelName", channelName)
     .addHeader("Content-Type", "multipart/mixed; boundary=abcdefg")
     .expectStatus(200)
     .after(function () {
-        frisby.create(testName + ': Fetching value to ensure that it was inserted.')
+        frisby.create(testName + ': Fetching bulk value to ensure that it was inserted.')
             .get(thisChannelResource + "/latest?stable=false")
             .expectStatus(200)
             .toss();
