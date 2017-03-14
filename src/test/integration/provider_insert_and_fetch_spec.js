@@ -37,17 +37,17 @@ var multipart =
     '--abcdefg--';
 
 var providerBulkResource = hubUrlBase + "/provider/bulk";
-testName = "provider_bulk_insert_and_fetch_spec";
-channelName = utils.randomChannelName();
-thisChannelResource = channelUrl + "/" + channelName;
-frisby.create(testName + ': Inserting a bulk value into a provider channel .')
+bulkTestName = "provider_bulk_insert_and_fetch_spec";
+bulkChannelName = utils.randomChannelName();
+bulkChannelResource = channelUrl + "/" + bulkChannelName;
+frisby.create(bulkTestName + ': Inserting a bulk value into a provider channel .')
     .post(providerBulkResource, null, { body: multipart})
-    .addHeader("channelName", channelName)
+    .addHeader("channelName", bulkChannelName)
     .addHeader("Content-Type", "multipart/mixed; boundary=abcdefg")
     .expectStatus(200)
     .after(function () {
-        frisby.create(testName + ': Fetching bulk value to ensure that it was inserted.')
-            .get(thisChannelResource + "/latest?stable=false")
+        frisby.create(bulkTestName + ': Fetching bulk value to ensure that it was inserted.')
+            .get(bulkChannelResource + "/latest?stable=false")
             .expectStatus(200)
             .toss();
     })
