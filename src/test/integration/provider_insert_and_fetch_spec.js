@@ -38,7 +38,7 @@ var multipart =
     '--abcdefg--';
 
 frisby.create(testName + ': Inserting a bulk into a provider channel .')
-    .post(providerResource, null, { body: multipart})
+    .post(providerBulkResource, null, { body: multipart})
     .addHeader("channelName", channelName)
     .addHeader("Content-Type", "multipart/mixed; boundary=abcdefg")
     .expectStatus(200)
