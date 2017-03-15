@@ -7,8 +7,8 @@ permalink: index.html
 summary: These brief instructions will help you get started quickly Flightstats/Hub.
 ---
 
-The Hub
-=======
+{% include image.html file="HubLogoSmall.png" url="" alt="" caption="Hub" %}
+
 
 ## overview
 

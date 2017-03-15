@@ -51,12 +51,15 @@ public class ShutdownManager {
 
     public boolean shutdown() throws Exception {
         logger.warn("shutting down!");
+        getMetricsService().mute();
+
         HubHealthCheck healthCheck = HubProvider.getInstance(HubHealthCheck.class);
         if (healthCheck.isShuttingDown()) {
             return true;
         }
         waitForLock();
         getMetricsService().event("Hub Restart Shutdown", "shutting down", "restart", "shutdown");
+
         //this call will get the node removed from the Load Balancer
         healthCheck.shutdown();
 
