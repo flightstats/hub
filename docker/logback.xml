@@ -12,6 +12,7 @@
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>/mnt/log/hub_%d{yyyy-MM-dd-HH}.log.gz</fileNamePattern>
             <maxHistory>14</maxHistory>
+            <totalSizeCap>10GB</totalSizeCap>
         </rollingPolicy>
 
         <encoder>
