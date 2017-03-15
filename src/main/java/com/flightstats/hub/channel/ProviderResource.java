@@ -44,6 +44,7 @@ public class ProviderResource {
                                 final InputStream data) throws Exception {
 
         ensureChannel(channelName);
+
         Content content = Content.builder()
                 .withContentType(contentType)
                 .withStream(data).build();
@@ -69,16 +70,16 @@ public class ProviderResource {
     public Response insertBulk(@HeaderParam("channelName") final String channelName,
                                @HeaderParam("Content-Type") final String contentType,
                                final InputStream data) throws Exception {
-        ensureChannel(channelName);
-
-        BulkContent content = BulkContent.builder()
-                .isNew(true)
-                .contentType(contentType)
-                .stream(data)
-                .channel(channelName)
-                .build();
-
         try {
+            ensureChannel(channelName);
+
+            BulkContent content = BulkContent.builder()
+                    .isNew(true)
+                    .contentType(contentType)
+                    .stream(data)
+                    .channel(channelName)
+                    .build();
+
             Collection<ContentKey> keys = channelService.insert(content);
             logger.trace("posted {}", keys);
             return Response.status(Response.Status.OK).build();
