@@ -8,6 +8,7 @@ var testName = "provider_insert_and_fetch_spec";
 
 utils.configureFrisby();
 
+
 frisby.create(testName + ': Inserting a value into a provider channel .')
     .post(providerResource, null, { body: messageText})
     .addHeader("channelName", channelName)
@@ -22,3 +23,4 @@ frisby.create(testName + ': Inserting a value into a provider channel .')
             .toss();
     })
     .toss();
+
