@@ -9,27 +9,28 @@ import java.util.function.Function;
 public class FileDocumentationDao implements DocumentationDao {
 
     private final static Logger logger = LoggerFactory.getLogger(FileDocumentationDao.class);
+    private final static String FILENAME = "documentation";
 
     @Override
     public String get(String channel) {
-        logger.trace("get doc for {}", channel);
+        logger.trace("getting documentation for channel {}", channel);
         String path = getDocumentationPath(channel);
-        String content = FileUtil.read(path, "documentation", Function.identity());
+        String content = FileUtil.read(path, FILENAME, Function.identity());
         return (content != null) ? content : "";
     }
 
     @Override
     public boolean upsert(String channel, byte[] bytes) {
-        logger.trace("upsert doc for {}", channel);
         String path = getDocumentationPath(channel);
-        return FileUtil.write(bytes, "documentation", path);
+        logger.trace("saving {} bytes to {}", path + FILENAME);
+        return FileUtil.write(bytes, FILENAME, path);
     }
 
     @Override
     public boolean delete(String channel) {
-        logger.trace("delete doc for {}", channel);
+        logger.trace("deleting documentation for {}", channel);
         String path = getDocumentationPath(channel);
-        return FileUtil.delete(path + "documentation");
+        return FileUtil.delete(path + FILENAME);
     }
 
     private String getDocumentationPath(String channel) {
