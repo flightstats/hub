@@ -12,16 +12,27 @@ public class FileDocumentationDao implements DocumentationDao {
 
     @Override
     public String get(String channel) {
-        logger.info("get doc for {}", channel);
-        String path = FileUtil.getStoragePath() + "content/" + channel + "/";
+        logger.trace("get doc for {}", channel);
+        String path = getDocumentationPath(channel);
         String content = FileUtil.read(path, "documentation", Function.identity());
         return (content != null) ? content : "";
     }
 
     @Override
     public boolean upsert(String channel, byte[] bytes) {
-        logger.info("upsert doc for {}", channel);
-        String path = FileUtil.getStoragePath() + "content/" + channel + "/";
+        logger.trace("upsert doc for {}", channel);
+        String path = getDocumentationPath(channel);
         return FileUtil.write(bytes, "documentation", path);
+    }
+
+    @Override
+    public boolean delete(String channel) {
+        logger.trace("delete doc for {}", channel);
+        String path = getDocumentationPath(channel);
+        return FileUtil.delete(path + "documentation");
+    }
+
+    private String getDocumentationPath(String channel) {
+        return FileUtil.getStoragePath() + "content/" + channel + "/";
     }
 }

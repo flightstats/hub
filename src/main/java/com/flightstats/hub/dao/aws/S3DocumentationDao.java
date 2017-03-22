@@ -2,6 +2,7 @@ package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
+import com.amazonaws.services.s3.model.DeleteObjectRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
@@ -27,8 +28,9 @@ public class S3DocumentationDao implements DocumentationDao {
     @Inject
     private S3BucketName s3BucketName;
 
+    @Override
     public String get(String channel) {
-        logger.trace("get documentation for channel {}", channel);
+        logger.trace("getting documentation for channel {}", channel);
         String key = buildS3Key(channel);
         try (S3Object object = s3Client.getObject(s3BucketName.getS3BucketName(), key)) {
             byte[] bytes = ByteStreams.toByteArray(object.getObjectContent());
@@ -66,6 +68,7 @@ public class S3DocumentationDao implements DocumentationDao {
         return outputStream.toByteArray();
     }
 
+    @Override
     public boolean upsert(String channel, byte[] bytes) {
         String key = buildS3Key(channel);
         String bucket = s3BucketName.getS3BucketName();
@@ -81,6 +84,21 @@ public class S3DocumentationDao implements DocumentationDao {
             return true;
         } catch (AmazonS3Exception e) {
             logger.error("unable to write to " + key, e);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean delete(String channel) {
+        String key = buildS3Key(channel);
+        String bucket = s3BucketName.getS3BucketName();
+        logger.trace("deleting documentation for {}", channel);
+        try {
+            DeleteObjectRequest request = new DeleteObjectRequest(bucket, key);
+            s3Client.deleteObject(request);
+            return true;
+        } catch (AmazonS3Exception e) {
+            logger.error("unable to delete " + key, e);
             return false;
         }
     }

@@ -8,6 +8,7 @@ import org.commonmark.renderer.html.HtmlRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.PUT;
@@ -52,6 +53,16 @@ public class ChannelDocumentationResource {
             return Response.accepted().build();
         } else {
             // TODO: differentiate between server and user error
+            return Response.serverError().build();
+        }
+    }
+
+    @DELETE
+    public Response put(@PathParam("channel") String channel) {
+        boolean success = documentationDao.delete(channel);
+        if (success) {
+            return Response.accepted().build();
+        } else {
             return Response.serverError().build();
         }
     }

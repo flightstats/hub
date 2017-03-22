@@ -9,6 +9,8 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -68,4 +70,9 @@ class FileUtil {
         return list;
     }
 
+    static boolean delete(String filepath) {
+        Path path = Paths.get(filepath);
+        File file = path.toFile();
+        return FileUtils.deleteQuietly(file);
+    }
 }
