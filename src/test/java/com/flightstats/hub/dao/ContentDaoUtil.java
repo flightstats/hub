@@ -108,7 +108,7 @@ public class ContentDaoUtil {
 
         TimeQuery timeQuery = TimeQuery.builder().channelName(channel)
                 .startTime(start)
-                .endTime(start.plusMinutes(19))
+                .limitKey(ContentKey.lastKey(start.plusMinutes(19)))
                 .unit(TimeUtil.Unit.MINUTES)
                 .build();
         Collection<ContentKey> found = contentDao.queryByTime(timeQuery);
@@ -119,7 +119,7 @@ public class ContentDaoUtil {
         create10ItemsBy6Minutes(channel, start, keys);
         timeQuery = TimeQuery.builder().channelName(channel)
                 .startTime(start)
-                .endTime(start.plusMinutes(19))
+                .limitKey(ContentKey.lastKey(start.plusMinutes(19)))
                 .unit(TimeUtil.Unit.MINUTES)
                 .build();
         found = contentDao.queryByTime(timeQuery);
@@ -127,7 +127,7 @@ public class ContentDaoUtil {
 
         timeQuery = TimeQuery.builder().channelName(channel)
                 .startTime(start.plusHours(2))
-                .endTime(start.plusHours(2).plusMinutes(19))
+                .limitKey(ContentKey.lastKey(start.plusHours(2).plusMinutes(19)))
                 .unit(TimeUtil.Unit.MINUTES)
                 .build();
         found = contentDao.queryByTime(timeQuery);

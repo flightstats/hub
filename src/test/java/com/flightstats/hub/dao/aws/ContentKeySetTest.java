@@ -16,10 +16,8 @@ public class ContentKeySetTest {
     private final static Logger logger = LoggerFactory.getLogger(ContentKeySetTest.class);
 
     @Test
-    public void testLimit() {
+    public void testSizeAndLimitKey() {
         long millis = System.currentTimeMillis();
-        final DateTime endTime = new DateTime(millis + 8);
-
         List<ContentKey> keys = new ArrayList<>();
 
         for (int i = 0; i < 10; i++) {
@@ -33,6 +31,25 @@ public class ContentKeySetTest {
         List<ContentKey> list = new ArrayList<>(contentKeys);
         for (int i = 0; i < 5; i++) {
             assertEquals(keys.get(i + 2), list.get(i));
+        }
+    }
+
+    @Test
+    public void testLimitKey() {
+        long millis = System.currentTimeMillis();
+        List<ContentKey> keys = new ArrayList<>();
+
+        for (int i = 0; i < 10; i++) {
+            keys.add(new ContentKey(new DateTime(millis + i), "" + i));
+        }
+        logger.info("keys {}", keys);
+        ContentKeySet contentKeys = new ContentKeySet(0, keys.get(7));
+        contentKeys.addAll(keys);
+        logger.info("contentKeys {}", contentKeys);
+        assertEquals(7, contentKeys.size());
+        List<ContentKey> list = new ArrayList<>(contentKeys);
+        for (int i = 0; i < 7; i++) {
+            assertEquals(keys.get(i), list.get(i));
         }
     }
 

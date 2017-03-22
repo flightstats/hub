@@ -21,7 +21,7 @@ class ContentKeySet extends TreeSet<ContentKey> {
             return false;
         }
         boolean add = super.add(contentKey);
-        if (size() > maxSize) {
+        if (maxSize > 0 && size() > maxSize) {
             remove(oldest());
         }
         return add;

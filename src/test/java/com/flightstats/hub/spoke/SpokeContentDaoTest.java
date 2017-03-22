@@ -90,4 +90,9 @@ public class SpokeContentDaoTest {
         util.testEmptyQuery();
 
     }
+
+    @Test
+    public void testPreviousFromBulk_Issue753() throws Exception {
+        util.testPreviousFromBulk_Issue753();
+    }
 }
