@@ -1,5 +1,7 @@
 Read the docs: https://flightstats.github.io/hub/
 
+![hub logo](./docs/images/HubLogoSmall.png)
+
 # What is the Hub? 
 
 The hub is a distributed linked list.   

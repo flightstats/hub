@@ -24,6 +24,8 @@ public interface MetricsService {
 
     void time(String channel, String name, long start, long bytes, String... tags);
 
+    void mute();
+
     default <T> T time(String label, String name, Callable<T> callable) throws Exception {
         long start = System.currentTimeMillis();
         try {

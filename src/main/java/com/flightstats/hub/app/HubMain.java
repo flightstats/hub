@@ -1,6 +1,7 @@
 package com.flightstats.hub.app;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
+import com.flightstats.hub.filter.CORSFilter;
 import com.flightstats.hub.filter.StreamEncodingFilter;
 import com.google.inject.Guice;
 import com.google.inject.Module;
@@ -55,7 +56,9 @@ public class HubMain {
         ResourceConfig resourceConfig = new ResourceConfig();
         resourceConfig.register(new ObjectMapperResolver(HubBindings.objectMapper()));
         resourceConfig.register(JacksonJsonProvider.class);
-        resourceConfig.registerClasses(EncodingFilter.class, StreamEncodingFilter.class, GZipEncoder.class, DeflateEncoder.class);
+        resourceConfig.registerClasses(CORSFilter.class,EncodingFilter.class, StreamEncodingFilter.class, GZipEncoder
+                        .class,
+                DeflateEncoder.class);
 
         List<Module> modules = new ArrayList<>();
         modules.add(new HubBindings());
