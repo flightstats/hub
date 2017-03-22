@@ -10,10 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.SortedSet;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
@@ -147,6 +144,20 @@ public class ContentDaoUtil {
         }
     }
 
+
+    public void testPreviousFromBulk_Issue753() throws Exception {
+        String channel = "testPreviousFromBulk_Issue753" + RandomStringUtils.randomAlphanumeric(20);
+        LinkedList<ContentKey> keys = new LinkedList<>();
+        DateTime start = TimeUtil.now();
+        for (int i = 0; i < 7; i++) {
+            ContentKey key = new ContentKey(start, "A" + i);
+            keys.add(key);
+            logger.info("writing " + key);
+            contentDao.insert(channel, createContent(key));
+        }
+        query(channel, keys, 6, 6, false, keys.getLast());
+    }
+
     public void testDirectionQueryTTL() throws Exception {
         String channel = "testDirectionQueryTTL" + RandomStringUtils.randomAlphanumeric(20);
         List<ContentKey> keys = new ArrayList<>();
@@ -225,7 +236,11 @@ public class ContentDaoUtil {
 
     private void query(String channel, List<ContentKey> keys,
                        int count, int expected, boolean next, DateTime queryTime) {
-        ActiveTraces.start("query ", channel, count, queryTime);
+        query(channel, keys, count, expected, next, new ContentKey(queryTime, "0"));
+    }
+
+    private void query(String channel, List<ContentKey> keys, int count, int expected, boolean next, ContentKey startKey) {
+        ActiveTraces.start("query ", channel, count, startKey);
         ChannelConfig channelConfig = ChannelConfig.builder().name(channel).build();
         DirectionQuery query = DirectionQuery.builder()
                 .stable(false)
@@ -233,12 +248,12 @@ public class ContentDaoUtil {
                 .channelConfig(channelConfig)
                 .count(count)
                 .next(next)
-                .startKey(new ContentKey(queryTime, "0"))
+                .startKey(startKey)
                 .earliestTime(TimeUtil.now().minusDays((int) channelConfig.getTtlDays()))
                 .channelStable(TimeUtil.now())
                 .build();
         Collection<ContentKey> found = contentDao.query(query);
-        logger.info("query {}", queryTime);
+        logger.info("startKey {}", startKey);
         logger.info("keys {}", keys);
         logger.info("found {}", found);
         ActiveTraces.getLocal().log(logger);

@@ -190,13 +190,13 @@ public class S3SingleContentDao implements ContentDao {
         logger.trace("list {} {} {}", channel, request.getPrefix(), request.getMarker());
         traces.add("S3SingleContentDao.iterateListObjects prefix:", request.getPrefix(), request.getMarker());
         ObjectListing listing = getObjectListing(request, channel);
-        ContentKey marker = addKeys(channel, listing, keys, endTime);
+        ContentKey marker = addKeys(channel, listing, keys);
         while (shouldContinue(maxItems, endTime, keys, listing, marker)) {
             request.withMarker(channel + "/" + marker.toUrl());
             logger.trace("list {} {}", channel, request.getMarker());
             traces.add("S3SingleContentDao.iterateListObjects marker:", request.getMarker());
             listing = getObjectListing(request, channel);
-            marker = addKeys(channel, listing, keys, endTime);
+            marker = addKeys(channel, listing, keys);
         }
         return keys;
     }
@@ -217,15 +217,13 @@ public class S3SingleContentDao implements ContentDao {
                 && marker.getTime().isBefore(endTime);
     }
 
-    private ContentKey addKeys(String channelName, ObjectListing listing, Set<ContentKey> keys, DateTime endTime) {
+    private ContentKey addKeys(String channelName, ObjectListing listing, Set<ContentKey> keys) {
         Optional<ContentKey> contentKey = Optional.absent();
         List<S3ObjectSummary> summaries = listing.getObjectSummaries();
         for (S3ObjectSummary summary : summaries) {
             contentKey = ContentKey.fromUrl(StringUtils.substringAfter(summary.getKey(), channelName + "/"));
             if (contentKey.isPresent()) {
-                if (contentKey.get().getTime().isBefore(endTime)) {
-                    keys.add(contentKey.get());
-                } else {
+                if (!keys.add(contentKey.get())) {
                     return contentKey.get();
                 }
             }
