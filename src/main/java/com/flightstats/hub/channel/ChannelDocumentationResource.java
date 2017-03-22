@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -23,13 +24,17 @@ public class ChannelDocumentationResource {
     private final static HtmlRenderer markdownRenderer = HtmlRenderer.builder().build();
 
     @GET
-    public Response get(@PathParam("channel") String channel) {
+    public Response get(@PathParam("channel") String channel, @HeaderParam("accept") String accept) {
         String documentation = documentationDao.get(channel);
         if (documentation == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
-        } else {
+        }
+
+        if (accept.contains("text/html")) {
             String markedDownDoc = markdown(documentation);
             return Response.ok(markedDownDoc).build();
+        } else {
+            return Response.ok(documentation).build();
         }
     }
 
@@ -45,6 +50,7 @@ public class ChannelDocumentationResource {
         if (success) {
             return Response.accepted().build();
         } else {
+            // TODO: differentiate between server and user error
             return Response.serverError().build();
         }
     }
