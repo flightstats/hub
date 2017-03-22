@@ -58,7 +58,7 @@ public class ChannelDocumentationResource {
     }
 
     @DELETE
-    public Response put(@PathParam("channel") String channel) {
+    public Response delete(@PathParam("channel") String channel) {
         boolean success = documentationDao.delete(channel);
         if (success) {
             return Response.accepted().build();
