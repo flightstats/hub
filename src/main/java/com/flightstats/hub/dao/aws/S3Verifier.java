@@ -148,7 +148,7 @@ public class S3Verifier {
         if (endPath != null) {
             Duration duration = new Duration(startPath.getTime(), endPath.getTime());
             timeout += duration.getStandardDays();
-            builder.endTime(endPath.getTime());
+            builder.limitKey(ContentKey.lastKey(endPath.getTime()));
         }
         TimeQuery timeQuery = builder.build();
         try {

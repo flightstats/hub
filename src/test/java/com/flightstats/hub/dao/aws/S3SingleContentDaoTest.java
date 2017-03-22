@@ -66,6 +66,11 @@ public class S3SingleContentDaoTest {
     }
 
     @Test
+    public void testPreviousFromBulk_Issue753() throws Exception {
+        util.testPreviousFromBulk_Issue753();
+    }
+
+    @Test
     public void testWriteReadOld() throws Exception {
         String channel = "testWriteReadOld";
         Content content = ContentDaoUtil.createContent();

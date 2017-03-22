@@ -128,11 +128,11 @@ public class SpokeContentDao implements ContentDao {
         logger.trace("query by time {} ", query);
         ActiveTraces.getLocal().add("SpokeContentDao.queryByTime", query);
         SortedSet<ContentKey> contentKeys;
-        if (query.getEndTime() == null) {
+        if (query.getLimitKey() == null) {
             contentKeys = queryByTimeKeys(query);
         } else {
             contentKeys = queryByTimeKeys(query);
-            while (query.getStartTime().isBefore(query.getEndTime())) {
+            while (query.getStartTime().isBefore(query.getLimitKey().getTime())) {
                 query = query.withStartTime(query.getStartTime().plus(query.getUnit().getDuration()));
                 contentKeys.addAll(queryByTimeKeys(query));
             }
@@ -196,7 +196,6 @@ public class SpokeContentDao implements ContentDao {
                     && startTime.isBefore(query.getChannelStable().plusHours(1))) {
                 TimeQuery timeQuery = query.convert(TimeUtil.Unit.HOURS)
                         .startTime(startTime)
-                        .endTime(startTime)
                         .build();
                 SortedSet<ContentKey> queryByTime = queryByTime(timeQuery);
                 queryByTime.addAll(contentKeys);
