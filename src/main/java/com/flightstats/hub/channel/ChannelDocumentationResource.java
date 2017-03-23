@@ -1,6 +1,7 @@
 package com.flightstats.hub.channel;
 
 import com.flightstats.hub.app.HubProvider;
+import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.DocumentationDao;
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
@@ -21,6 +22,7 @@ public class ChannelDocumentationResource {
 
     private final static Logger logger = LoggerFactory.getLogger(ChannelDocumentationResource.class);
     private final static DocumentationDao documentationDao = HubProvider.getInstance(DocumentationDao.class);
+    private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
     private final static Parser markdownParser = Parser.builder().build();
     private final static HtmlRenderer markdownRenderer = HtmlRenderer.builder().build();
 
@@ -48,17 +50,24 @@ public class ChannelDocumentationResource {
 
     @PUT
     public Response put(@PathParam("channel") String channel, String content) {
+        if (!channelService.channelExists(channel)) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
         boolean success = documentationDao.upsert(channel, content.getBytes());
         if (success) {
             return Response.accepted().build();
         } else {
-            // TODO: differentiate between server and user error
             return Response.serverError().build();
         }
     }
 
     @DELETE
     public Response delete(@PathParam("channel") String channel) {
+        if (!channelService.channelExists(channel)) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
         boolean success = documentationDao.delete(channel);
         if (success) {
             return Response.accepted().build();
