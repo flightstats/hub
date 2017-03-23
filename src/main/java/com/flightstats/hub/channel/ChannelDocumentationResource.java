@@ -56,7 +56,7 @@ public class ChannelDocumentationResource {
 
         boolean success = documentationDao.upsert(channel, content.getBytes());
         if (success) {
-            return Response.accepted().build();
+            return Response.ok().entity(content).build();
         } else {
             return Response.serverError().build();
         }
@@ -70,7 +70,7 @@ public class ChannelDocumentationResource {
 
         boolean success = documentationDao.delete(channel);
         if (success) {
-            return Response.accepted().build();
+            return Response.noContent().build();
         } else {
             return Response.serverError().build();
         }
