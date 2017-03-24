@@ -50,7 +50,7 @@ curl -X GET http://hub/channel/stumptown/doc -H 'Accept: text/html'
 
 # Updating the docs
 
-Creating a new document requires a PUT request with your document sent to the ```/doc``` endpoint of your channel. 
+Creating a new document requires a ```PUT``` request with your document sent to the ```/doc``` endpoint of your channel. 
 
 **Request:**
 
