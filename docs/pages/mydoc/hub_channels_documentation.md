@@ -71,7 +71,9 @@ Deleting just requires a ```DELETE``` request be sent to the ```/doc``` endpoint
 
 **Request:**
 
-    curl -X DELETE http://hub/channel/stumptown/doc
+```bash
+curl -X DELETE http://hub/channel/stumptown/doc
+```
 
 **Response:** ```204 No Content```
 
