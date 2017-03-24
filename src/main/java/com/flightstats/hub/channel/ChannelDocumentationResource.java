@@ -28,10 +28,13 @@ public class ChannelDocumentationResource {
 
     @GET
     public Response get(@PathParam("channel") String channel, @HeaderParam("accept") String accept) {
+        if (!channelService.channelExists(channel)) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
         String documentation = documentationDao.get(channel);
         if (documentation == null) {
-            String response = "There is currently no documentation for the " + channel + " channel. See the Hub documentation for instructions on how to add channel documentation.";
-            return Response.status(Response.Status.NOT_FOUND).entity(response).build();
+            return Response.status(Response.Status.NOT_FOUND).build();
         }
 
         if (accept.contains("text/html")) {
