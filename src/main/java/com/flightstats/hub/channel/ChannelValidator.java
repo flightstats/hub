@@ -165,6 +165,9 @@ public class ChannelValidator {
                     throw new InvalidRequestException("{\"error\": \"mutableTime can not move forward. \"}");
                 }
             }
+            if (!request.isSingle()) {
+                throw new InvalidRequestException("{\"error\": \"mutableTime is not compatable with BATCH storage. \"}");
+            }
         }
         if (request.getMaxItems() > 5000) {
             throw new InvalidRequestException("{\"error\": \"maxItems must be less than 5000 \"}");
