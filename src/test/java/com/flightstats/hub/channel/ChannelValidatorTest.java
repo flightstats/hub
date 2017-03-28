@@ -149,6 +149,24 @@ public class ChannelValidatorTest {
                 .build(), null, false);
     }
 
+    @Test(expected = InvalidRequestException.class)
+    public void testInvalidBatchMutable() throws Exception {
+        validator.validate(ChannelConfig.builder()
+                .name("mychan")
+                .storage(ChannelConfig.BATCH)
+                .mutableTime(new DateTime())
+                .build(), null, false);
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void testInvalidBothMutable() throws Exception {
+        validator.validate(ChannelConfig.builder()
+                .name("mychan")
+                .storage(ChannelConfig.BOTH)
+                .mutableTime(new DateTime())
+                .build(), null, false);
+    }
+
     @Test
     public void testDescription1024() throws Exception {
         validator.validate(ChannelConfig.builder().name("desc").description(Strings.repeat("A", 1024)).build(), null, false);
