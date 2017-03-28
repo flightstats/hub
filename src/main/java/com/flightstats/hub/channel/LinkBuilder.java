@@ -67,14 +67,15 @@ public class LinkBuilder {
         root.put("ttlDays", config.getTtlDays());
 
         ObjectNode links = root.putObject("_links");
-        addLink(links, "self",      uriInfo.getBaseUriBuilder().path("channel").path(config.getName()).build());
-        addLink(links, "latest",    uriInfo.getBaseUriBuilder().path("channel").path(config.getName()).path("latest").build());
-        addLink(links, "earliest",  uriInfo.getBaseUriBuilder().path("channel").path(config.getName()).path("earliest").build());
-        addLink(links, "bulk",      uriInfo.getBaseUriBuilder().path("channel").path(config.getName()).path("bulk").build());
-        addLink(links, "ws",        uriInfo.getBaseUriBuilder().path("channel").path(config.getName()).path("ws").scheme("ws").build());
-        addLink(links, "events",    uriInfo.getBaseUriBuilder().path("channel").path(config.getName()).path("events").build());
-        addLink(links, "time",      uriInfo.getBaseUriBuilder().path("channel").path(config.getName()).path("time").build());
-        addLink(links, "status",    uriInfo.getBaseUriBuilder().path("channel").path(config.getName()).path("status").build());
+        addLink(links, "self",          uriInfo.getBaseUriBuilder().path("channel").path(config.getName()).build());
+        addLink(links, "documentation", uriInfo.getBaseUriBuilder().path("channel").path(config.getName()).path("doc").build());
+        addLink(links, "latest",        uriInfo.getBaseUriBuilder().path("channel").path(config.getName()).path("latest").build());
+        addLink(links, "earliest",      uriInfo.getBaseUriBuilder().path("channel").path(config.getName()).path("earliest").build());
+        addLink(links, "bulk",          uriInfo.getBaseUriBuilder().path("channel").path(config.getName()).path("bulk").build());
+        addLink(links, "ws",            uriInfo.getBaseUriBuilder().path("channel").path(config.getName()).path("ws").scheme("ws").build());
+        addLink(links, "events",        uriInfo.getBaseUriBuilder().path("channel").path(config.getName()).path("events").build());
+        addLink(links, "time",          uriInfo.getBaseUriBuilder().path("channel").path(config.getName()).path("time").build());
+        addLink(links, "status",        uriInfo.getBaseUriBuilder().path("channel").path(config.getName()).path("status").build());
 
         return root;
     }

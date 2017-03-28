@@ -51,6 +51,7 @@ class ClusterHubBindings extends AbstractModule {
         bind(S3Verifier.class).asEagerSingleton();
         bind(AppUrlCheck.class).asEagerSingleton();
         bind(SpokeTtlEnforcer.class).asEagerSingleton();
+        bind(DocumentationDao.class).to(S3DocumentationDao.class).asEagerSingleton();
     }
 
     @Inject
