@@ -9,6 +9,7 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.metrics.Traces;
+import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.model.RecurringTrace;
 import com.flightstats.hub.rest.RestClient;
@@ -70,6 +71,7 @@ class WebhookLeader implements Leader {
     private WebhookStrategy webhookStrategy;
     private AtomicReference<ContentPath> lastUpdated = new AtomicReference<>();
     private String id = RandomStringUtils.randomAlphanumeric(4);
+    private String channelName;
 
     void setWebhook(Webhook webhook) {
         this.webhook = webhook;
@@ -91,7 +93,8 @@ class WebhookLeader implements Leader {
     public void takeLeadership(Leadership leadership) {
         this.leadership = leadership;
         Optional<Webhook> foundWebhook = webhookService.getCached(webhook.getName());
-        if (!foundWebhook.isPresent() || !channelService.channelExists(webhook.getChannelName())) {
+        channelName = webhook.getChannelName();
+        if (!foundWebhook.isPresent() || !channelService.channelExists(channelName)) {
             logger.info("webhook or channel is missing, exiting " + webhook.getName());
             Sleeper.sleep(60 * 1000);
             return;
@@ -232,12 +235,8 @@ class WebhookLeader implements Leader {
         traces.add(recurringTrace);
         retryer.call(() -> {
             ActiveTraces.setLocal(traces);
-            if (webhook.getTtlMinutes() > 0) {
-                DateTime ttlTime = TimeUtil.now().minusMinutes(webhook.getTtlMinutes());
-                if (contentPath.getTime().isBefore(ttlTime)) {
-                    throw new ItemExpiredException(contentPath.toUrl() + " is before " + ttlTime);
-                }
-            }
+            ChannelConfig channelConfig = channelService.getCachedChannelConfig(channelName);
+            checkExpiration(contentPath, channelConfig, webhook);
             if (!leadership.hasLeadership()) {
                 logger.debug("not leader {} {} {}", webhook.getCallbackUrl(), webhook.getName(), contentPath);
                 return null;
@@ -250,6 +249,18 @@ class WebhookLeader implements Leader {
             recurringTrace.update("WebhookLeader.makeCall completed", clientResponse);
             return clientResponse;
         });
+    }
+
+    static void checkExpiration(ContentPath contentPath, ChannelConfig channelConfig, Webhook webhook) {
+        if (webhook.getTtlMinutes() > 0) {
+            DateTime ttlTime = TimeUtil.now().minusMinutes(webhook.getTtlMinutes());
+            if (contentPath.getTime().isBefore(ttlTime)) {
+                throw new ItemExpiredException(contentPath.toUrl() + " is before " + ttlTime);
+            }
+        }
+        if (contentPath.getTime().isBefore(channelConfig.getTtlTime())) {
+            throw new ItemExpiredException(contentPath.toUrl() + " is before channel ttl " + channelConfig.getTtlTime());
+        }
     }
 
     void exit(boolean delete) {
