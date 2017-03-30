@@ -233,7 +233,11 @@ class WebhookLeader implements Leader {
         traces.add("WebhookLeader.makeCall start");
         RecurringTrace recurringTrace = new RecurringTrace("WebhookLeader.makeCall start");
         traces.add(recurringTrace);
-        retryer.call(() -> {
+        retryer.call(() -> getClientResponse(contentPath, body, traces, recurringTrace));
+    }
+
+    private ClientResponse getClientResponse(ContentPath contentPath, ObjectNode body, Traces traces, RecurringTrace recurringTrace) {
+        try {
             ActiveTraces.setLocal(traces);
             ChannelConfig channelConfig = channelService.getCachedChannelConfig(channelName);
             checkExpiration(contentPath, channelConfig, webhook);
@@ -246,9 +250,16 @@ class WebhookLeader implements Leader {
             ClientResponse clientResponse = client.resource(webhook.getCallbackUrl())
                     .type(MediaType.APPLICATION_JSON_TYPE)
                     .post(ClientResponse.class, entity);
-            recurringTrace.update("WebhookLeader.makeCall completed", clientResponse);
+            if (clientResponse.getStatus() < 400) {
+                recurringTrace.update("WebhookLeader.makeCall completed", clientResponse);
+            } else {
+                webhookError.add(webhook.getName(), new DateTime() + " " + contentPath + " " + clientResponse);
+            }
             return clientResponse;
-        });
+        } catch (Exception e) {
+            webhookError.add(webhook.getName(), new DateTime() + " " + contentPath + " " + e.getMessage());
+            throw e;
+        }
     }
 
     static void checkExpiration(ContentPath contentPath, ChannelConfig channelConfig, Webhook webhook) {
