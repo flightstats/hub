@@ -44,6 +44,8 @@ describe(testName, function () {
         expect(parse.allowZeroBytes).toEqual(false);
     }, {allowZeroBytes: false});
 
+    utils.itRefreshesChannels();
+
     it("fails to add zero byte item", function (done) {
         request.post({
                 url: channelResource,
