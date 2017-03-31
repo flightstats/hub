@@ -132,7 +132,7 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
             builder.protect(item.get("protect").getBOOL());
         }
         if (item.containsKey("allowZeroBytes")) {
-            builder.protect(item.get("allowZeroBytes").getBOOL());
+            builder.allowZeroBytes(item.get("allowZeroBytes").getBOOL());
         }
         if (item.containsKey("mutableTime")) {
             builder.mutableTime(new DateTime(Long.parseLong(item.get("mutableTime").getN()), DateTimeZone.UTC));
