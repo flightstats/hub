@@ -44,6 +44,7 @@ public class LinkBuilder {
         ObjectNode root = mapper.createObjectNode();
 
         root.put("name", config.getName());
+        root.put("allowZeroBytes", config.isAllowZeroBytes());
         root.put("creationDate", TimeUtil.FORMATTER.print(new DateTime(config.getCreationDate())));
         root.put("description", config.getDescription());
         if (config.isGlobal()) {

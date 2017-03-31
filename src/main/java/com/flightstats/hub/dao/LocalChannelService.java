@@ -111,11 +111,13 @@ public class LocalChannelService implements ChannelService {
     }
 
     private ContentKey insertInternal(String channelName, Content content) throws Exception {
+        ChannelConfig channelConfig = getCachedChannelConfig(channelName);
         return inFlightService.inFlight(() -> {
             Traces traces = ActiveTraces.getLocal();
             traces.add("ContentService.insert");
             try {
                 content.packageStream();
+                checkZeroBytes(content, channelConfig);
                 traces.add("ContentService.insert marshalled");
                 ContentKey key = content.keyAndStart(timeService.getNow());
                 logger.trace("writing key {} to channel {}", key, channelName);
@@ -149,11 +151,18 @@ public class LocalChannelService implements ChannelService {
         }
         boolean insert = inFlightService.inFlight(() -> {
             content.packageStream();
+            checkZeroBytes(content, channelConfig);
             return contentService.historicalInsert(channelName, content);
         });
         lastContentPath.updateDecrease(contentKey, channelName, HISTORICAL_EARLIEST);
         metricsService.insert(channelName, start, Insert.historical, 1, content.getSize());
         return insert;
+    }
+
+    private void checkZeroBytes(Content content, ChannelConfig channelConfig) {
+        if (!channelConfig.isAllowZeroBytes() && content.getContentLength() == 0) {
+            throw new InvalidRequestException("zero byte items are not allowed in this channel");
+        }
     }
 
     @Override
