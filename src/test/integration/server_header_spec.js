@@ -4,10 +4,8 @@ var testName = __filename;
 
 describe(testName, function () {
 
-    var rootUrl = 'http://' + hubDomain + '/';
-
     function verifyHeader(url, done) {
-
+        console.log('url', url);
         request.get({
                 url: url,
                 headers: {"Content-Type": "application/json"}
@@ -20,16 +18,16 @@ describe(testName, function () {
             });
     }
 
-    it('verfies header at root ' + rootUrl, function (done) {
-        verifyHeader(rootUrl, done);
+    it('verfies header at root ' + hubUrlBase, function (done) {
+        verifyHeader(hubUrlBase, done);
     });
 
     it('verfies header at channel ', function (done) {
-        verifyHeader(rootUrl + 'channel', done);
+        verifyHeader(hubUrlBase + '/channel', done);
     });
 
     it('verfies header at health ', function (done) {
-        verifyHeader(rootUrl + 'health', done);
+        verifyHeader(hubUrlBase + '/health', done);
     });
 
 });
