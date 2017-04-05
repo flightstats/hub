@@ -81,6 +81,10 @@ entries:
       url: /hub_channels_delete.html
       output: web, pdf
 
+    - title: Protected channels
+      url: /hub_channels_protect.html
+      output: web, pdf
+
     - title: Tag Interface
       url: /hub_channels_tag.html
       output: web, pdf
