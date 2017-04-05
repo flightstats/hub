@@ -78,7 +78,7 @@ To see the configuration and status of a webhook:
 
 DELETE will return a 202, and it may take up to a minute to properly stop a webhook from servicing the callback.
 
-# Webhook behavior
+## Webhook behavior
 
 The application listening at `callbackUrl` will get a payload POSTed to it for every new item in the channel, starting after `startItem` or at the time the webhook is created.
 A 2XX-level client response is considered successful.  Any other response is considered an error, and will cause the server to retry.   Redirects are allowed.
@@ -113,7 +113,7 @@ An example MINUTE payload:
   "type" : "items",
   "id" : "2014/01/13/10/42",
   "url" : "http://hub/channel/stumptown/2014/01/13/10/42",
-  "batchUrl" : "http://hub/channel/stumptown/2014/01/13/10/42?batch=true",
+  "bulkUrl" : "http://hub/channel/stumptown/2014/01/13/10/42?bulk=true",
   "uris" : [ 
     "http://hub/channel/stumptown/2014/01/13/10/42/05/436/abcdef",
     "http://hub/channel/stumptown/2014/01/13/10/42/31/759/s03ub2"
@@ -130,37 +130,8 @@ An example MINUTE heartbeat :
   "type" : "heartbeat",
   "id" : "2014/01/13/10/42",
   "url" : "http://hub/channel/stumptown/2014/01/13/10/42",
-  "batchUrl" : "http://hub/channel/stumptown/2014/01/13/10/42?batch=true",
+  "bulkUrl" : "http://hub/channel/stumptown/2014/01/13/10/42?bulk=true",
   "uris" : [ ]
-}
-```
-
-# Webhook alert status {#status}
-
-Following the status link from _links.status.href shows the latest item in a channel, and the last completed callback for that webhook.
-
-`GET http://hub/alert/stumptownWebhook/status`
-
-```
-{
-    "name": "stumptownWebhook",
-    "alert": false,
-    "type": "webhook",
-    "history": [
-        {
-        "href": "http://hub/channel/stumptown/2015/06/17/18/34/38/306/UqCNR4",
-        "name": "channelLatest"
-        },
-        {
-        "href": "http://hub/channel/stumptown/2015/06/17/18/34/38/306/UqCNR4",
-        "name": "lastCompletedCallback"
-        }
-    ],
-    "_links": {
-        "self": {
-            "href": "http://hub/alert/stumptownWebhook/status"
-        }
-    }
 }
 ```
 

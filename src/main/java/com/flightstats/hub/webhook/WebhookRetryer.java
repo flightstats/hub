@@ -9,7 +9,6 @@ import com.google.common.base.Predicate;
 import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
 import com.timgroup.statsd.StatsDClient;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +25,6 @@ class WebhookRetryer {
         return RetryerBuilder.<ClientResponse>newBuilder()
                 .retryIfException(throwable -> {
                     if (throwable != null) {
-                        webhookError.add(webhook.getName(), new DateTime() + " " + throwable.getMessage());
                         if (throwable.getClass().isAssignableFrom(ClientHandlerException.class)) {
                             logger.info("got ClientHandlerException trying to call client back " + throwable.getMessage());
                         } else {
@@ -46,7 +44,6 @@ class WebhookRetryer {
                         try {
                             boolean failure = response.getStatus() >= 400;
                             if (failure) {
-                                webhookError.add(webhook.getName(), new DateTime() + " " + response.toString());
                                 emitErrorToDataDog(webhook.getName(), response.getStatus());
                                 logger.info("unable to send to " + response);
                             }
@@ -65,7 +62,7 @@ class WebhookRetryer {
                     }
                 })
                 .withWaitStrategy(WaitStrategies.exponentialWait(1000, webhook.getMaxWaitMinutes(), TimeUnit.MINUTES))
-                .withStopStrategy(failedAttempt -> !leadership.hasLeadership())
+                .withStopStrategy(failedAttempt -> !leadership.hasLeadership() || webhook.isPaused())
                 .build();
     }
 

@@ -43,11 +43,15 @@ class ClusterHubBindings extends AbstractModule {
         bind(ContentDao.class)
                 .annotatedWith(Names.named(ContentDao.BATCH_LONG_TERM))
                 .to(S3BatchContentDao.class).asEagerSingleton();
+        bind(ContentDao.class)
+                .annotatedWith(Names.named(ContentDao.LARGE_PAYLOAD))
+                .to(S3LargeContentDao.class).asEagerSingleton();
         bind(DynamoUtils.class).asEagerSingleton();
         bind(S3BatchManager.class).asEagerSingleton();
         bind(S3Verifier.class).asEagerSingleton();
         bind(AppUrlCheck.class).asEagerSingleton();
         bind(SpokeTtlEnforcer.class).asEagerSingleton();
+        bind(DocumentationDao.class).to(S3DocumentationDao.class).asEagerSingleton();
     }
 
     @Inject

@@ -111,15 +111,17 @@ public class LocalChannelService implements ChannelService {
     }
 
     private ContentKey insertInternal(String channelName, Content content) throws Exception {
+        ChannelConfig channelConfig = getCachedChannelConfig(channelName);
         return inFlightService.inFlight(() -> {
             Traces traces = ActiveTraces.getLocal();
             traces.add("ContentService.insert");
             try {
                 content.packageStream();
+                checkZeroBytes(content, channelConfig);
                 traces.add("ContentService.insert marshalled");
                 ContentKey key = content.keyAndStart(timeService.getNow());
                 logger.trace("writing key {} to channel {}", key, channelName);
-                contentService.insert(channelName, content);
+                key = contentService.insert(channelName, content);
                 traces.add("ContentService.insert end", key);
                 return key;
             } catch (ContentTooLargeException e) {
@@ -149,11 +151,18 @@ public class LocalChannelService implements ChannelService {
         }
         boolean insert = inFlightService.inFlight(() -> {
             content.packageStream();
+            checkZeroBytes(content, channelConfig);
             return contentService.historicalInsert(channelName, content);
         });
         lastContentPath.updateDecrease(contentKey, channelName, HISTORICAL_EARLIEST);
         metricsService.insert(channelName, start, Insert.historical, 1, content.getSize());
         return insert;
+    }
+
+    private void checkZeroBytes(Content content, ChannelConfig channelConfig) {
+        if (!channelConfig.isAllowZeroBytes() && content.getContentLength() == 0) {
+            throw new InvalidRequestException("zero byte items are not allowed in this channel");
+        }
     }
 
     @Override
@@ -319,14 +328,14 @@ public class LocalChannelService implements ChannelService {
         DateTime ttlTime = getChannelTtl(channelConfig, query.getEpoch());
         query = query.withEarliestTime(ttlTime);
 
-        if (query.getStartKey().getTime().isBefore(ttlTime)) {
+        if (query.getStartKey() == null || query.getStartKey().getTime().isBefore(ttlTime)) {
             query = query.withStartKey(new ContentKey(ttlTime, "0"));
         }
         if (query.getEpoch().equals(Epoch.MUTABLE)) {
             if (!query.isNext()) {
                 DateTime mutableTime = channelConfig.getMutableTime();
-                if (query.getStartKey().getTime().isAfter(mutableTime)) {
-                    query = query.withStartKey(ContentKey.lastKey(mutableTime.plusMillis(1)));
+                if (query.getStartKey() == null || query.getStartKey().getTime().isAfter(mutableTime)) {
+                    query = query.withStartKey(new ContentKey(mutableTime.plusMillis(1), "0"));
                 }
             }
         }
@@ -339,7 +348,7 @@ public class LocalChannelService implements ChannelService {
         DateTime ttlTime = channelConfig.getTtlTime();
         if (channelConfig.isHistorical()) {
             if (epoch.equals(Epoch.IMMUTABLE)) {
-                ttlTime = channelConfig.getMutableTime();
+                ttlTime = channelConfig.getMutableTime().plusMillis(1);
             } else {
                 ContentKey lastKey = ContentKey.lastKey(channelConfig.getMutableTime());
                 return lastContentPath.get(channelConfig.getName(), lastKey, HISTORICAL_EARLIEST).getTime();

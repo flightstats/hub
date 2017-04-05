@@ -85,7 +85,25 @@ public class WebhookValidatorTest {
 
     @Test
     public void testBatchLowerCase() throws Exception {
-        webhook = webhook.withBatch("single").withName("blah");
+        webhook = webhook.withBatch("single").withCallbackTimeoutSeconds(10).withName("blah");
+        webhookValidator.validate(webhook);
+    }
+
+    @Test()
+    public void testValidCallbackTimeout() throws Exception {
+        webhook = webhook.withCallbackTimeoutSeconds(1000).withBatch("SINGLE").withName("blah");
+        webhookValidator.validate(webhook);
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void testInvalidCallbackTimeout() throws Exception {
+        webhook = webhook.withCallbackTimeoutSeconds(10 * 1000).withBatch("SINGLE").withName("blah");
+        webhookValidator.validate(webhook);
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void testInvalidCallbackTimeoutZero() throws Exception {
+        webhook = webhook.withCallbackTimeoutSeconds(0).withBatch("SINGLE").withName("blah");
         webhookValidator.validate(webhook);
     }
 

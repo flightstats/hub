@@ -142,7 +142,7 @@ class HubTasks:
 
     def write(self):
         payload = {"name": self.payload, "count": self.count}
-        with self.client.post(self.user.channel_post_url(self.channel),
+        with self.client.post(self.get_channel_url(),
                               data=(json.dumps(payload)),
                               headers={"Content-Type": "application/json"},
                               catch_response=True,
@@ -150,6 +150,12 @@ class HubTasks:
             if postResponse.status_code != 201:
                 postResponse.failure("Got wrong response on post: " + str(postResponse.status_code))
 
+        return self.parse_write(postResponse)
+
+    def get_channel_url(self):
+        return self.user.channel_post_url(self.channel)
+
+    def parse_write(self, postResponse):
         links = postResponse.json()
         self.count += 1
         href = links['_links']['self']['href']

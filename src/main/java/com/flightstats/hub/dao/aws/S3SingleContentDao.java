@@ -22,7 +22,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -168,35 +167,35 @@ public class S3SingleContentDao implements ContentDao {
         ListObjectsRequest request = new ListObjectsRequest()
                 .withBucketName(s3BucketName.getS3BucketName())
                 .withMaxKeys(s3MaxQueryItems);
-        DateTime endTime = query.getEndTime();
-        if (endTime == null) {
+        ContentKey limitKey = query.getLimitKey();
+        if (limitKey == null) {
             request.withPrefix(query.getChannelName() + "/" + timePath);
-            endTime = query.getStartTime().plus(query.getUnit().getDuration());
+            limitKey = ContentKey.lastKey(query.getStartTime().plus(query.getUnit().getDuration()));
         } else {
             request.withMarker(query.getChannelName() + "/" + timePath);
         }
-        SortedSet<ContentKey> keys = iterateListObjects(query.getChannelName(), request, MAX_ITEMS, endTime, query.getCount(), query.getLimitKey());
+        SortedSet<ContentKey> keys = iterateListObjects(query.getChannelName(), request, MAX_ITEMS, query.getCount(), limitKey);
         traces.add("S3SingleContentDao.queryByTime completed", keys);
         return keys;
     }
 
     private SortedSet<ContentKey> iterateListObjects(String channel, ListObjectsRequest request,
-                                                     int maxItems, DateTime endTime, int count, ContentKey limitKey) {
+                                                     int maxItems, int count, ContentKey limitKey) {
         Traces traces = ActiveTraces.getLocal();
         SortedSet<ContentKey> keys = new TreeSet<>();
-        if (count > 0 && limitKey != null) {
+        if (limitKey != null) {
             keys = new ContentKeySet(count, limitKey);
         }
         logger.trace("list {} {} {}", channel, request.getPrefix(), request.getMarker());
         traces.add("S3SingleContentDao.iterateListObjects prefix:", request.getPrefix(), request.getMarker());
         ObjectListing listing = getObjectListing(request, channel);
-        ContentKey marker = addKeys(channel, listing, keys, endTime);
-        while (shouldContinue(maxItems, endTime, keys, listing, marker)) {
+        ContentKey marker = addKeys(channel, listing, keys);
+        while (shouldContinue(maxItems, limitKey, keys, listing, marker)) {
             request.withMarker(channel + "/" + marker.toUrl());
             logger.trace("list {} {}", channel, request.getMarker());
             traces.add("S3SingleContentDao.iterateListObjects marker:", request.getMarker());
             listing = getObjectListing(request, channel);
-            marker = addKeys(channel, listing, keys, endTime);
+            marker = addKeys(channel, listing, keys);
         }
         return keys;
     }
@@ -208,24 +207,22 @@ public class S3SingleContentDao implements ContentDao {
         return objects;
     }
 
-    private boolean shouldContinue(int maxItems, DateTime endTime, SortedSet<ContentKey> keys, ObjectListing listing, ContentKey marker) {
+    private boolean shouldContinue(int maxItems, ContentKey limitKey, SortedSet<ContentKey> keys, ObjectListing listing, ContentKey marker) {
         if (marker == null) {
             return false;
         }
         return listing.isTruncated()
                 && keys.size() < maxItems
-                && marker.getTime().isBefore(endTime);
+                && marker.getTime().isBefore(limitKey.getTime());
     }
 
-    private ContentKey addKeys(String channelName, ObjectListing listing, Set<ContentKey> keys, DateTime endTime) {
+    private ContentKey addKeys(String channelName, ObjectListing listing, Set<ContentKey> keys) {
         Optional<ContentKey> contentKey = Optional.absent();
         List<S3ObjectSummary> summaries = listing.getObjectSummaries();
         for (S3ObjectSummary summary : summaries) {
             contentKey = ContentKey.fromUrl(StringUtils.substringAfter(summary.getKey(), channelName + "/"));
             if (contentKey.isPresent()) {
-                if (contentKey.get().getTime().isBefore(endTime)) {
-                    keys.add(contentKey.get());
-                } else {
+                if (!keys.add(contentKey.get())) {
                     return contentKey.get();
                 }
             }
@@ -254,7 +251,8 @@ public class S3SingleContentDao implements ContentDao {
                 .withPrefix(query.getChannelName() + "/")
                 .withMarker(query.getChannelName() + "/" + query.getStartKey().toUrl())
                 .withMaxKeys(query.getCount());
-        return iterateListObjects(query.getChannelName(), request, query.getCount(), TimeUtil.now(), query.getCount(), null);
+        return iterateListObjects(query.getChannelName(), request, query.getCount(), query.getCount(),
+                ContentKey.lastKey(TimeUtil.time(query.isStable())));
     }
 
     private String getS3ContentKey(String channelName, ContentKey key) {
@@ -273,7 +271,6 @@ public class S3SingleContentDao implements ContentDao {
 
     @Override
     public ContentKey insertHistorical(String channelName, Content content) throws Exception {
-        //todo gfm - stream directly into S3 using the new multipart api??
         return insert(channelName, content);
     }
 

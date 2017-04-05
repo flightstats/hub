@@ -22,12 +22,12 @@ public class FileChannelConfigurationDao implements Dao<ChannelConfig> {
 
     @Override
     public void upsert(ChannelConfig config) {
-        FileUtil.writeJson(config.toJson(), config.getName(), channelPath);
+        FileUtil.write(config.toJson(), config.getName(), channelPath);
     }
 
     @Override
     public ChannelConfig get(String name) {
-        return FileUtil.readJson(channelPath, name, ChannelConfig::createFromJson);
+        return FileUtil.read(channelPath, name, ChannelConfig::createFromJson);
     }
 
     @Override

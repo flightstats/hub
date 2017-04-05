@@ -35,7 +35,7 @@ High volume channels can see significant reductions in S3 costs by using `BATCH`
 `BOTH` is a way to transition between the two states, and perform comparisons.  More information in [storage](#storage)
 
 * `protect` is the optional setting to prevent changes which might cause some data loss.
-Please see [channel modification](#channel-modification) for more details.
+Please see [protected channels](hub_channels_protect.html) for more details.
 
 `PUT http://hub/channel/stumptown`
 

@@ -59,6 +59,7 @@ public class RequestUriFilter implements ContainerRequestFilter {
 
     private String getScheme(ContainerRequestContext request) {
         String protocol = request.getHeaderString("X-Forwarded-Proto");
+        logger.trace("uri {} protocol {}", request.getUriInfo().getRequestUri(), protocol);
         if (StringUtils.isBlank(protocol)) {
             protocol = request.getUriInfo().getBaseUri().getScheme();
         } else if (protocol.contains(",")) {

@@ -22,7 +22,6 @@ public class TimeQuery implements Query {
     private final String tagName;
     @Wither
     private final DateTime startTime;
-    private final DateTime endTime;
     private final TimeUtil.Unit unit;
     @Wither
     private final Location location;
@@ -46,13 +45,6 @@ public class TimeQuery implements Query {
             return Epoch.IMMUTABLE;
         }
         return epoch;
-    }
-
-    public DateTime getEndTime() {
-        if (endTime == null && limitKey != null) {
-            return limitKey.getTime();
-        }
-        return endTime;
     }
 
     public boolean outsideOfCache(DateTime cacheTime) {

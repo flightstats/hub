@@ -9,6 +9,7 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.metrics.Traces;
+import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.model.RecurringTrace;
 import com.flightstats.hub.rest.RestClient;
@@ -42,7 +43,6 @@ class WebhookLeader implements Leader {
     private final static Logger logger = LoggerFactory.getLogger(WebhookLeader.class);
     static final String WEBHOOK_LAST_COMPLETED = "/GroupLastCompleted/";
 
-    private static final Client client = RestClient.createClient(60, 120, true, false);
     private final AtomicBoolean deleteOnExit = new AtomicBoolean();
 
     @Inject
@@ -66,10 +66,12 @@ class WebhookLeader implements Leader {
     private Semaphore semaphore;
     private Leadership leadership;
     private Retryer<ClientResponse> retryer;
+    private Client client;
 
     private WebhookStrategy webhookStrategy;
     private AtomicReference<ContentPath> lastUpdated = new AtomicReference<>();
     private String id = RandomStringUtils.randomAlphanumeric(4);
+    private String channelName;
 
     void setWebhook(Webhook webhook) {
         this.webhook = webhook;
@@ -91,13 +93,15 @@ class WebhookLeader implements Leader {
     public void takeLeadership(Leadership leadership) {
         this.leadership = leadership;
         Optional<Webhook> foundWebhook = webhookService.getCached(webhook.getName());
-        if (!foundWebhook.isPresent() || !channelService.channelExists(webhook.getChannelName())) {
+        channelName = webhook.getChannelName();
+        if (!foundWebhook.isPresent() || !channelService.channelExists(channelName)) {
             logger.info("webhook or channel is missing, exiting " + webhook.getName());
             Sleeper.sleep(60 * 1000);
             return;
         }
         this.webhook = foundWebhook.get();
         logger.info("taking leadership {} {}", webhook, leadership.hasLeadership());
+        client = RestClient.createClient(60, webhook.getCallbackTimeoutSeconds(), true, false);
         executorService = Executors.newCachedThreadPool();
         semaphore = new Semaphore(webhook.getParallelCalls());
         retryer = WebhookRetryer.buildRetryer(webhook, webhookError, leadership);
@@ -129,6 +133,7 @@ class WebhookLeader implements Leader {
             logger.info("stopped last completed at {} {}", webhookStrategy.getLastCompleted(), webhook.getName());
             webhookStrategy = null;
             executorService = null;
+            client = null;
         }
     }
 
@@ -228,14 +233,14 @@ class WebhookLeader implements Leader {
         traces.add("WebhookLeader.makeCall start");
         RecurringTrace recurringTrace = new RecurringTrace("WebhookLeader.makeCall start");
         traces.add(recurringTrace);
-        retryer.call(() -> {
+        retryer.call(() -> getClientResponse(contentPath, body, traces, recurringTrace));
+    }
+
+    private ClientResponse getClientResponse(ContentPath contentPath, ObjectNode body, Traces traces, RecurringTrace recurringTrace) {
+        try {
             ActiveTraces.setLocal(traces);
-            if (webhook.getTtlMinutes() > 0) {
-                DateTime ttlTime = TimeUtil.now().minusMinutes(webhook.getTtlMinutes());
-                if (contentPath.getTime().isBefore(ttlTime)) {
-                    throw new ItemExpiredException(contentPath.toUrl() + " is before " + ttlTime);
-                }
-            }
+            ChannelConfig channelConfig = channelService.getCachedChannelConfig(channelName);
+            checkExpiration(contentPath, channelConfig, webhook);
             if (!leadership.hasLeadership()) {
                 logger.debug("not leader {} {} {}", webhook.getCallbackUrl(), webhook.getName(), contentPath);
                 return null;
@@ -245,9 +250,28 @@ class WebhookLeader implements Leader {
             ClientResponse clientResponse = client.resource(webhook.getCallbackUrl())
                     .type(MediaType.APPLICATION_JSON_TYPE)
                     .post(ClientResponse.class, entity);
-            recurringTrace.update("WebhookLeader.makeCall completed", clientResponse);
+            if (clientResponse.getStatus() < 400) {
+                recurringTrace.update("WebhookLeader.makeCall completed", clientResponse);
+            } else {
+                webhookError.add(webhook.getName(), new DateTime() + " " + contentPath + " " + clientResponse);
+            }
             return clientResponse;
-        });
+        } catch (Exception e) {
+            webhookError.add(webhook.getName(), new DateTime() + " " + contentPath + " " + e.getMessage());
+            throw e;
+        }
+    }
+
+    static void checkExpiration(ContentPath contentPath, ChannelConfig channelConfig, Webhook webhook) {
+        if (webhook.getTtlMinutes() > 0) {
+            DateTime ttlTime = TimeUtil.now().minusMinutes(webhook.getTtlMinutes());
+            if (contentPath.getTime().isBefore(ttlTime)) {
+                throw new ItemExpiredException(contentPath.toUrl() + " is before " + ttlTime);
+            }
+        }
+        if (contentPath.getTime().isBefore(channelConfig.getTtlTime())) {
+            throw new ItemExpiredException(contentPath.toUrl() + " is before channel ttl " + channelConfig.getTtlTime());
+        }
     }
 
     void exit(boolean delete) {
@@ -268,7 +292,7 @@ class WebhookLeader implements Leader {
         try {
             executorService.shutdown();
             logger.debug("awating termination " + name);
-            executorService.awaitTermination(130, TimeUnit.SECONDS);
+            executorService.awaitTermination(webhook.getCallbackTimeoutSeconds() + 10, TimeUnit.SECONDS);
             logger.debug("stopped Executor " + name);
         } catch (InterruptedException e) {
             logger.warn("unable to stop?" + name, e);

@@ -15,7 +15,8 @@ folder: hub
 To insert data to a channel, issue a POST on the channel's `self` URI and specify the appropriate
 content-type header (all content types should be supported).  The `Content-Encoding` header is optional.
 
-The Hub has a [configurable maximum for item size](hub_install_locally.md), the default is 40 MB.
+Clustered Hubs using AWS have a configurable max item size, the default is 390 GB.
+A singleHub which only uses Spoke has a default max item size of 40 MB, which is [configurable](hub_install_locally.md)
 
 
 ```
@@ -111,5 +112,9 @@ For external data providers, there is a simplified interface suitable for exposi
 * does not return any links
 * access by external data providers is controlled through a proxy maintained by Operations
 
+### provider bulk {#providerBulk}
+`POST http://hub/provider/bulk`
+
+This API allows bulk uploading to the provider interface.  It works just like the provider interface, except the uploaded payload is a multipart message.  You must still provide the `channelName` in the header.   See [bulk](#bulk) for more info on how to compose the multipart bulk payload.
 
 {% include links.html %}

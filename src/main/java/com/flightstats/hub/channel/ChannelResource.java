@@ -44,6 +44,7 @@ import static com.flightstats.hub.rest.Linked.linked;
 @Path("/channel/{channel}")
 public class ChannelResource {
     private final static Logger logger = LoggerFactory.getLogger(ChannelResource.class);
+    public static final String THREADS = HubProperties.getProperty("s3.large.threads", "3");
 
     @Context
     private UriInfo uriInfo;
@@ -108,8 +109,10 @@ public class ChannelResource {
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
-    public Response insertValue(@PathParam("channel") final String channelName,
-                                @HeaderParam("Content-Type") final String contentType,
+    public Response insertValue(@PathParam("channel") String channelName,
+                                @HeaderParam("Content-Length") long contentLength,
+                                @HeaderParam("Content-Type") String contentType,
+                                @QueryParam("threads") String threads,
                                 final InputStream data) throws Exception {
         if (!channelService.channelExists(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
@@ -117,13 +120,15 @@ public class ChannelResource {
         long start = System.currentTimeMillis();
         Content content = Content.builder()
                 .withContentType(contentType)
+                .withContentLength(contentLength)
                 .withStream(data)
+                .withThreads(StringUtils.defaultIfBlank(threads, THREADS))
                 .build();
         try {
             ContentKey contentKey = channelService.insert(channelName, content);
             logger.trace("posted {}", contentKey);
             InsertedContentKey insertionResult = new InsertedContentKey(contentKey);
-            URI payloadUri = LinkBuilder.buildItemUri(contentKey, uriInfo.getRequestUri());
+            URI payloadUri = LinkBuilder.buildItemUri(contentKey, uriInfo.getAbsolutePath());
             Linked<InsertedContentKey> linkedResult = linked(insertionResult)
                     .withLink("channel", buildChannelUri(channelName, uriInfo))
                     .withLink("self", payloadUri)

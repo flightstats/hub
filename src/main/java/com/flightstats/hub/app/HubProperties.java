@@ -39,6 +39,22 @@ public class HubProperties {
         return getProperty("spoke.path", "/spoke");
     }
 
+    public static long getLargePayload() {
+        return HubProperties.getProperty("app.large.payload.MB", 40) * 1024 * 1024;
+    }
+
+    public static int getCallbackTimeoutMin() {
+        return HubProperties.getProperty("webhook.callbackTimeoutSeconds.min", 1);
+    }
+
+    public static int getCallbackTimeoutMax() {
+        return HubProperties.getProperty("webhook.callbackTimeoutSeconds.max", 1800);
+    }
+
+    public static int getCallbackTimeoutDefault() {
+        return HubProperties.getProperty("webhook.callbackTimeoutSeconds.default", 120);
+    }
+
     static Properties getProperties() {
         return properties;
     }

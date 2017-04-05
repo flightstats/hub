@@ -40,22 +40,23 @@ public class ChannelConfig implements Serializable, NamedType {
             .create();
     private static final ObjectMapper mapper = new ObjectMapper();
 
-    private final String name;
-    private final String owner;
-    private final Date creationDate;
-    private final long ttlDays;
-    private final long maxItems;
-    private final String description;
-    private final Set<String> tags;
-    private final String replicationSource;
-    private final String storage;
-    private final GlobalConfig global;
-    private final boolean protect;
-    private final DateTime mutableTime;
+    String name;
+    String owner;
+    Date creationDate;
+    long ttlDays;
+    long maxItems;
+    String description;
+    Set<String> tags;
+    String replicationSource;
+    String storage;
+    GlobalConfig global;
+    boolean protect;
+    DateTime mutableTime;
+    boolean allowZeroBytes;
 
     private ChannelConfig(String name, String owner, Date creationDate, long ttlDays, long maxItems, String description,
                           Set<String> tags, String replicationSource, String storage, GlobalConfig global,
-                          boolean protect, DateTime mutableTime) {
+                          boolean protect, DateTime mutableTime, boolean allowZeroBytes) {
         this.name = StringUtils.trim(name);
         this.owner = StringUtils.trim(owner);
         this.creationDate = creationDate;
@@ -63,7 +64,7 @@ public class ChannelConfig implements Serializable, NamedType {
         this.tags = tags;
         this.replicationSource = replicationSource;
         this.mutableTime = mutableTime;
-
+        this.allowZeroBytes = allowZeroBytes;
         if (maxItems == 0 && ttlDays == 0 && mutableTime == null) {
             this.ttlDays = 120;
             this.maxItems = 0;
@@ -135,6 +136,7 @@ public class ChannelConfig implements Serializable, NamedType {
         if (rootNode.has("mutableTime")) {
             builder.mutableTime(HubDateTimeTypeAdapter.deserialize(rootNode.get("mutableTime").asText()));
         }
+        if (rootNode.has("allowZeroBytes")) builder.allowZeroBytes(rootNode.get("allowZeroBytes").asBoolean());
         return builder.build();
     }
 
@@ -166,6 +168,9 @@ public class ChannelConfig implements Serializable, NamedType {
     }
 
     public DateTime getTtlTime() {
+        if (isHistorical()) {
+            return mutableTime.plusMillis(1);
+        }
         return TimeUtil.getEarliestTime(ttlDays);
     }
 
@@ -218,6 +223,7 @@ public class ChannelConfig implements Serializable, NamedType {
         private String replicationSource = "";
         private String storage = "";
         private boolean protect = HubProperties.isProtected();
+        private boolean allowZeroBytes = true;
 
         public ChannelConfigBuilder tags(List<String> tagList) {
             this.tags.clear();

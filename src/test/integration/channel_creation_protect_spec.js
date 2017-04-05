@@ -38,6 +38,7 @@ describe(testName, function () {
     utils.putChannel(channelName, false, {storage: 'BATCH'}, 'storage Batch', 403);
     utils.putChannel(channelName, false, {tags: ['one']}, 'tag removal', 403);
     utils.putChannel(channelName, false, {ttlDays: 119}, 'ttlDays', 403);
+    utils.putChannel(channelName, false, {owner: 'CBA'}, 'owner', 403);
 
     utils.putChannel(channelName, function (response, body) {
         var parse = utils.parseJson(response, testName);

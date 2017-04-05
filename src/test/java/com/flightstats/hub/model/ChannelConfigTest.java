@@ -4,6 +4,8 @@ import com.flightstats.hub.util.TimeUtil;
 import com.google.common.collect.Sets;
 import org.joda.time.DateTime;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -12,6 +14,7 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 public class ChannelConfigTest {
+    private static final Logger logger = LoggerFactory.getLogger(ChannelConfigTest.class);
 
     @Test
     public void testDefaults() throws Exception {
@@ -37,6 +40,7 @@ public class ChannelConfigTest {
         assertEquals("SINGLE", config.getStorage());
         assertEquals(null, config.getGlobal());
         assertEquals(null, config.getMutableTime());
+        assertTrue(config.isAllowZeroBytes());
     }
 
     @Test
@@ -126,6 +130,25 @@ public class ChannelConfigTest {
     }
 
     @Test
+    public void testCopy() throws IOException {
+        ChannelConfig config = ChannelConfig.builder()
+                .owner("ABC")
+                .description("something something")
+                .ttlDays(15)
+                .maxItems(5)
+                .tags(Arrays.asList("uno", "dos"))
+                .replicationSource("theSources")
+                .storage("whyNotEnum?")
+                .protect(false)
+                .mutableTime(TimeUtil.now())
+                .allowZeroBytes(false)
+                .build();
+        assertTrue(config.equals(config.toBuilder().build()));
+
+        assertTrue(config.equals(ChannelConfig.createFromJson(config.toJson())));
+    }
+
+    @Test
     public void testGlobalCopy() throws IOException {
         GlobalConfig globalConfig = new GlobalConfig();
         globalConfig.setMaster("master");
@@ -161,6 +184,12 @@ public class ChannelConfigTest {
         ChannelConfig createdFromJson = ChannelConfig.createFromJson(updated.toJson());
         assertEquals(updated, createdFromJson);
 
+    }
+
+    @Test
+    public void testZeroBytes() {
+        ChannelConfig testZeroBytes = ChannelConfig.builder().name("testZeroBytes").allowZeroBytes(false).build();
+        assertFalse(testZeroBytes.isAllowZeroBytes());
     }
 
 }
