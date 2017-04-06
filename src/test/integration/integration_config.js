@@ -1,6 +1,7 @@
 frisby = require('frisby');
 utils = require('./utils.js');
 ip = require('ip');
+var _ = require('lodash');
 
 hubDomain = process.env.hubDomain;
 satelliteDomain = process.env.satelliteDomain;
@@ -18,8 +19,17 @@ try {
 }
 catch ( err ){}
 
-hubUrlBase = 'https://' + hubDomain;
-satelliteUrl = 'http://' + satelliteDomain;
+if (_.startsWith(hubDomain, 'http')) {
+    hubUrlBase = hubDomain;
+} else {
+    hubUrlBase = 'http://' + hubDomain;
+}
+
+if (_.startsWith(satelliteDomain, 'http')) {
+    satelliteUrl = satelliteDomain;
+} else {
+    satelliteUrl = 'http://' + satelliteDomain;
+}
 
 channelUrl = hubUrlBase + '/channel';
 callbackDomain = 'http://' + ipAddress;
