@@ -21,10 +21,6 @@ utils.runInTestChannel(testName, channelName, function () {
                 .expectJSON('_links.latest', {
                     href : thisChannelResource + '/latest'
                 })
-                .expectJSON('_links.ws', {
-                    //todo - gfm - too clever by half for https
-                    href : thisChannelResource.replace(/^http/, "ws") + '/ws'
-                })
                 .expectJSON({"name" : channelName})
                 .expectJSON({"ttlDays" : 120})
                 .toss();
