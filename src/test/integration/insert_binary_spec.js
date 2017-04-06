@@ -16,7 +16,7 @@ utils.runInTestChannel(testName, channelName, function () {
     var imagedata = [0];
 
     runs(function () {
-        utils.download(catUrl, function (imgdata) {
+        utils.getItem(catUrl, function (nothing, imgdata) {
             imagedata = imgdata;
             buf = new Buffer(imgdata, 'binary');
             request.post({url : thisChannelResource, headers : {"Content-Type" : "image/jpeg"}, body : buf}, function (err, response, body) {
@@ -24,7 +24,7 @@ utils.runInTestChannel(testName, channelName, function () {
                 resultObj = utils.parseJson(response, testName);
                 returnedHref = resultObj['_links']['channel']['href'];
                 var valueUrl = resultObj['_links']['self']['href'];
-                utils.download(valueUrl, function (data) {
+                utils.getItem(valueUrl, function (nothing, data) {
                     hubdata = data;
                     comparisonHasBeenFetched = true;
                 });

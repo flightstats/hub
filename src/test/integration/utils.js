@@ -9,7 +9,7 @@ var Q = require('q');
 exports.runInTestChannel = function runInTestChannel(testName, channelName, functionToExecute) {
     testName = testName || '';
     utils.runInTestChannelJson(testName, JSON.stringify({"name": channelName}), functionToExecute);
-}
+};
 
 exports.runInTestChannelJson = function runInTestChannelJson(testName, jsonBody, functionToExecute) {
     frisby.create('Creating channel ' + testName + ' ' + jsonBody)
@@ -18,33 +18,33 @@ exports.runInTestChannelJson = function runInTestChannelJson(testName, jsonBody,
         .expectStatus(201)
         .afterJSON(functionToExecute)
         .toss();
-}
+};
 
 exports.randomChannelName = function randomChannelName() {
     return "test_" + Math.random().toString().replace(".", "_");
-}
+};
 
-exports.download = function download(url, completionHandler) {
-    http.get(url, function (res) {
-        var imagedata = '';
-        res.setEncoding('binary');
-
-        res.on('data', function (chunk) {
-            imagedata += chunk
-        });
-
-        res.on('end', function () {
-            completionHandler(imagedata);
-        });
+exports.getItem = function getItem(uri, callback) {
+    request({uri: uri, encoding: null}, function (error, response, body) {
+        expect(error).toBe(null);
+        if (error) {
+            console.log('got error ', uri, error);
+        } else {
+            if (response.statusCode !== 200) {
+                console.log('wrong status ', uri, response.statusCode);
+            }
+            expect(response.statusCode).toBe(200);
+        }
+        callback(null, body);
     });
-}
+};
 
 exports.configureFrisby = function configureFrisby(timeout) {
     timeout = typeof timeout !== 'undefined' ? timeout : 30000;
     frisby.globalSetup({
         timeout: timeout
     });
-}
+};
 
 exports.createChannel = function createChannel(channelName, url, description) {
     description = description || 'none';
@@ -61,7 +61,7 @@ exports.createChannel = function createChannel(channelName, url, description) {
             });
     }, 10 * 1001);
 
-}
+};
 
 exports.putChannel = function putChannel(channelName, verify, body, description, expectedStatus) {
     expectedStatus = expectedStatus || 201;
@@ -78,12 +78,12 @@ exports.putChannel = function putChannel(channelName, verify, body, description,
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(expectedStatus);
-                console.log("respinse " + body)
+                console.log("respinse " + body);
                 verify(response, body);
                 done();
             });
     });
-}
+};
 
 exports.getChannel = function getChannel(channelName, verify, description, hubUrl) {
     verify = verify || function () { };
@@ -99,18 +99,18 @@ exports.getChannel = function getChannel(channelName, verify, description, hubUr
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
-                console.log("get response " + body)
+                console.log("get response " + body);
                 verify(response, body, hubUrl);
                 done();
             });
     });
-}
+};
 
 exports.addItem = function addItem(url, responseCode) {
     it("adds item to " + url, function (done) {
         utils.postItem(url, responseCode, done);
     }, 5099);
-}
+};
 
 exports.postItem = function postItem(url, responseCode, completed) {
     responseCode = responseCode || 201;
@@ -124,7 +124,7 @@ exports.postItem = function postItem(url, responseCode, completed) {
             console.log('posted', response.headers.location);
             completed();
         });
-}
+};
 
 exports.postItemQ = function postItemQ(url) {
     var deferred = Q.defer();
@@ -139,14 +139,14 @@ exports.postItemQ = function postItemQ(url) {
             deferred.resolve({response : response, body : body});
         });
     return deferred.promise;
-}
+};
 
 exports.getWebhookUrl = function getWebhookUrl() {
     if (Math.random() > 0.5) {
         return hubUrlBase + '/webhook';
     }
     return hubUrlBase + '/group';
-}
+};
 
 exports.putWebhook = function putGroup(groupName, groupConfig, status, description, groupUrl) {
     description = description || 'none';
@@ -174,7 +174,7 @@ exports.putWebhook = function putGroup(groupName, groupConfig, status, descripti
             });
     });
     return groupResource;
-}
+};
 
 exports.getWebhook = function getGroup(groupName, groupConfig, status, verify) {
     var groupResource = utils.getWebhookUrl() + "/" + groupName;
@@ -210,7 +210,7 @@ exports.getWebhook = function getGroup(groupName, groupConfig, status, verify) {
             });
     });
     return groupResource;
-}
+};
 
 exports.deleteWebhook = function deleteGroup(groupName) {
     var groupResource = utils.getWebhookUrl() + "/" + groupName;
@@ -222,7 +222,7 @@ exports.deleteWebhook = function deleteGroup(groupName) {
                 done();
             });
     }, 60 * 1000);
-}
+};
 
 exports.itRefreshesChannels = function itRefreshesChannels() {
     it('refreshes channels', function (done) {
@@ -234,7 +234,7 @@ exports.itRefreshesChannels = function itRefreshesChannels() {
                 done();
             });
     });
-}
+};
 
 exports.getQ = function getQ(url, status, stable) {
     status = status || 200;
@@ -247,13 +247,13 @@ exports.getQ = function getQ(url, status, stable) {
             deferred.resolve({response: response, body: body});
         });
     return deferred.promise;
-}
+};
 
 exports.itSleeps = function itSleeps(millis) {
     it('sleeps', function () {
         utils.sleep(millis);
     })
-}
+};
 
 exports.sleep = function sleep(millis) {
     runs(function() {
@@ -268,7 +268,7 @@ exports.sleep = function sleep(millis) {
     waitsFor(function() {
         return flag;
     }, millis + 1000);
-}
+};
 
 exports.sleepQ = function sleepQ(millis) {
     var deferred = Q.defer();
@@ -276,7 +276,7 @@ exports.sleepQ = function sleepQ(millis) {
         deferred.resolve('slept');
     }, millis);
     return deferred.promise;
-}
+};
 
 exports.timeout = function timeout(millis) {
     it('waits for ' + millis, function (done) {
@@ -284,13 +284,13 @@ exports.timeout = function timeout(millis) {
             done()
         }, millis);
     });
-}
+};
 
 exports.getPort = function getPort() {
     var port = callbackPort++;
-    console.log('using port', port)
+    console.log('using port', port);
     return port;
-}
+};
 
 exports.startServer = function startServer(port, callback) {
     console.log('starting server ' + port);
@@ -312,7 +312,7 @@ exports.startServer = function startServer(port, callback) {
     waitsFor(function() {
         return started;
     }, 11000);
-}
+};
 
 function serverResponse(request, response, callback) {
     callback = callback || function () {};
@@ -347,14 +347,14 @@ exports.startHttpsServer = function startHttpsServer(port, callback, done) {
     });
 
     return server;
-}
+};
 
 exports.closeServer = function closeServer(callback, description) {
     description = description || 'none';
     callback = callback || function () {};
     var closed = false;
     runs(function () {
-        console.log('closing server for ', description)
+        console.log('closing server for ', description);
         server.close(function () {
             closed = true;
         });
@@ -365,7 +365,7 @@ exports.closeServer = function closeServer(callback, description) {
     waitsFor(function() {
         return closed;
     }, 13000);
-}
+};
 
 exports.parseJson = function parseJson(response, description) {
     try {
@@ -374,7 +374,7 @@ exports.parseJson = function parseJson(response, description) {
         console.log("unable to parse json", response.statusCode, response.req.path, response.req.method, description, e);
         return {};
     }
-}
+};
 
 exports.getLocation = function getLocation(url, status, expectedLocation, done) {
     request.get({url: url, followRedirect: false},
@@ -386,7 +386,7 @@ exports.getLocation = function getLocation(url, status, expectedLocation, done) 
             }
             done();
         });
-}
+};
 
 exports.getQuery = function getQuery(url, status, expectedUris, done) {
     request.get({url: url, followRedirect: true},
@@ -402,4 +402,4 @@ exports.getQuery = function getQuery(url, status, expectedUris, done) {
             }
             done();
         });
-}
+};

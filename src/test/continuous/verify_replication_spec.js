@@ -1,3 +1,4 @@
+require('../integration/integration_config.js');
 var agent = require('superagent');
 var request = require('request');
 var async = require('async');
@@ -163,29 +164,15 @@ describe(testName, function () {
     }, MINUTE);
 
     it('compares replicated items to source items', function (done) {
-        function getItem(uri, callback) {
-            request(uri, function (error, response, body) {
-                expect(error).toBe(null);
-                if (error) {
-                    console.log('got error ', uri, error);
-                } else {
-                    if (response.statusCode !== 200) {
-                        console.log('wrong status ', uri, response.statusCode);
-                    }
-                    expect(response.statusCode).toBe(200);
-                }
-                callback(null, body);
-            });
-        }
 
         async.eachLimit(itemsToVerify, 50,
             function (item, callback) {
                 async.parallel([
                         function (callback) {
-                            getItem(replicatedChannels[item.name].replicationSource + item.contentKey, callback);
+                            utils.getItem(replicatedChannels[item.name].replicationSource + item.contentKey, callback);
                         },
                         function (callback) {
-                            getItem(item.uri, callback);
+                            utils.getItem(item.uri, callback);
                         }
                     ],
                     function (err, results) {
