@@ -147,6 +147,7 @@ public class S3SingleContentDao implements ContentDao {
             }
             builder.withContentKey(key);
             builder.withData(bytes);
+            //todo - gfm - payload length?
             return builder.build();
         } catch (AmazonS3Exception e) {
             if (e.getStatusCode() != 404) {

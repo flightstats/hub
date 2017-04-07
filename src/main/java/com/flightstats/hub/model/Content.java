@@ -23,7 +23,10 @@ public class Content implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private final Optional<String> contentType;
+    //contentLength is the total compressed length of everything (meta & item)
     private long contentLength;
+    //payloadLength is just the size of the raw, uncompressed item
+    private long payloadLength;
     private InputStream stream;
     private byte[] data;
     private Optional<ContentKey> contentKey = Optional.absent();
@@ -38,6 +41,7 @@ public class Content implements Serializable {
         stream = builder.stream;
         contentLength = builder.contentLength;
         threads = builder.threads;
+        payloadLength = builder.payloadLength;
     }
 
     public static Builder builder() {
@@ -118,6 +122,7 @@ public class Content implements Serializable {
     public static class Builder {
         private Optional<String> contentType = Optional.absent();
         private long contentLength = 0;
+        private long payloadLength = 0;
         private Optional<ContentKey> contentKey = Optional.absent();
         private InputStream stream;
         private int threads;
@@ -139,6 +144,11 @@ public class Content implements Serializable {
 
         public Builder withContentLength(Long contentLength) {
             this.contentLength = contentLength;
+            return this;
+        }
+
+        public Builder withPayloadLength(Long payloadLength) {
+            this.payloadLength = payloadLength;
             return this;
         }
 

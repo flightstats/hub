@@ -39,7 +39,7 @@ public class SpokeTtlEnforcer {
             String channelPath = storagePath + "/" + channel.getName();
             if (channel.isLive()) {
                 DateTime ttlDateTime = TimeUtil.stable().minusMinutes(ttlMinutes + 1);
-                for (int i = 0; i < 3; i++) {
+                for (int i = 0; i < 2; i++) {
                     Commander.run(new String[]{"rm", "-rf", channelPath + "/" + TimeUtil.minutes(ttlDateTime.minusMinutes(i))}, 1);
                     Commander.run(new String[]{"rm", "-rf", channelPath + "/" + TimeUtil.hours(ttlDateTime.minusHours(i + 1))}, 5);
                 }

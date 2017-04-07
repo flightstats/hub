@@ -80,6 +80,7 @@ public class ZipBulkBuilder {
         try {
             String keyId = content.getContentKey().get().toUrl();
             ZipEntry zipEntry = new ZipEntry(keyId);
+            //todo - gfm - this needs to change
             zipEntry.setExtra(ContentMarshaller.getMetaData(content).getBytes());
             output.putNextEntry(zipEntry);
             long bytesCopied = ByteStreams.copy(content.getStream(), output);
