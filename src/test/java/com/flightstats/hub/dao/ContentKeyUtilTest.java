@@ -35,7 +35,7 @@ public class ContentKeyUtilTest {
 
     @Test
     public void testFilterStartKey() throws Exception {
-        ContentKey startKey = new ContentKey(new DateTime(2016, 12, 7, 17, 8), "B");
+        ContentKey startKey = new ContentKey(new DateTime().minusDays(60), "B");
         List<ContentKey> items = getEpochItems(startKey);
         DirectionQuery query = DirectionQuery.builder()
                 .channelName("testFilterNext")
