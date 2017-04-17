@@ -8,7 +8,6 @@ import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.google.common.io.ByteStreams;
-import com.google.common.primitives.Longs;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -36,8 +35,7 @@ public class ContentMarshaller {
             throw new ContentTooLargeException("max payload size is " + maxBytes + " bytes");
         }
         content.setSize(bytesCopied);
-        byte[] byteArray = Longs.toByteArray(bytesCopied);
-        zipOut.setComment(new String(byteArray));
+        zipOut.setComment("" + bytesCopied);
         zipOut.close();
         return baos.toByteArray();
     }
@@ -57,9 +55,10 @@ public class ContentMarshaller {
         Content.Builder builder = Content.builder().withContentKey(key);
         setMetaData(new String(bytes), builder);
         zipStream.getNextEntry();
-        String commentString = ZipComment.getZipCommentFromBuffer(read, read.length);
-        //todo - gfm - handle null case
-        builder.withPayloadLength(Longs.fromByteArray(commentString.getBytes()));
+        String comment = ZipComment.getZipCommentFromBuffer(read);
+        if (comment != null) {
+            builder.withPayloadLength(Long.parseLong(comment));
+        }
         return builder.withStream(zipStream).build();
     }
 

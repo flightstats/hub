@@ -14,13 +14,42 @@ import static org.junit.Assert.assertTrue;
 public class ContentMarshallerTest {
 
     @Test
+    public void testAllFieldsZero() throws IOException {
+        verify(getContent(0), 0);
+    }
+
+    @Test
     public void testAllFieldsSmall() throws IOException {
         verify(getContent(10), 10);
     }
 
     @Test
-    public void testAllFieldsLarge() throws IOException {
+    public void testAllFields10K() throws IOException {
+        int size = 10 * 1024;
+        verify(getContent(size), size);
+    }
+
+    @Test
+    public void testAllFields100K() throws IOException {
         int size = 100 * 1024;
+        verify(getContent(size), size);
+    }
+
+    @Test
+    public void testAllFields1MB() throws IOException {
+        int size = 1024 * 1024;
+        verify(getContent(size), size);
+    }
+
+    @Test
+    public void testAllFields10MB() throws IOException {
+        int size = 10 * 1024 * 1024;
+        verify(getContent(size), size);
+    }
+
+    @Test
+    public void testAllFields40MB() throws IOException {
+        int size = 40 * 1024 * 1024;
         verify(getContent(size), size);
     }
 

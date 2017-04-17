@@ -25,7 +25,7 @@ public class Content implements Serializable {
     private final Optional<String> contentType;
     //contentLength is the total compressed length of everything (meta & item)
     private long contentLength;
-    //payloadLength is just the size of the raw, uncompressed item
+    //payloadLength is the size of the raw, uncompressed item
     private long payloadLength;
     private InputStream stream;
     private byte[] data;
