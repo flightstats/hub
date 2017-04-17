@@ -7,7 +7,6 @@ import com.flightstats.hub.dao.TtlEnforcer;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.Commander;
 import com.flightstats.hub.util.TimeUtil;
-import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -30,7 +29,6 @@ public class SpokeTtlEnforcer {
     public SpokeTtlEnforcer() {
         if (HubProperties.getProperty("spoke.enforceTTL", true)) {
             HubServices.register(new SpokeTtlEnforcerService());
-            HubServices.register(new SpokeTtlEnforcerInitialService());
         }
     }
 
@@ -69,17 +67,4 @@ public class SpokeTtlEnforcer {
 
     }
 
-    private class SpokeTtlEnforcerInitialService extends AbstractIdleService {
-        @Override
-        protected void startUp() throws Exception {
-            logger.info("performing Spoke cleanup");
-            Commander.run(new String[]{"find", storagePath, "-mmin", "+" + ttlMinutes, "-delete"}, 10 * 60);
-            logger.info("completed Spoke cleanup");
-        }
-
-        @Override
-        protected void shutDown() throws Exception {
-
-        }
-    }
 }
