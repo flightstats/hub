@@ -343,7 +343,7 @@ public class ChannelConfig implements Serializable, NamedType {
     }
 
     public ChannelConfigBuilder toBuilder() {
-        return new ChannelConfigBuilder();
+        return new ChannelConfigBuilder(this);
     }
 
     @SuppressWarnings("unused")
@@ -363,6 +363,22 @@ public class ChannelConfig implements Serializable, NamedType {
         private DateTime mutableTime;
 
         ChannelConfigBuilder() {
+        }
+
+        ChannelConfigBuilder(ChannelConfig config) {
+            owner(config.getOwner());
+            creationDate(config.getCreationDate());
+            description(config.getDescription());
+            tags(config.getTags());
+            replicationSource(config.getReplicationSource());
+            storage(config.getStorage());
+            protect(config.isProtect());
+            allowZeroBytes(config.isAllowZeroBytes());
+            name(config.getName());
+            ttlDays(config.getTtlDays());
+            maxItems(config.getMaxItems());
+            global(config.getGlobal());
+            mutableTime(config.getMutableTime());
         }
 
         public ChannelConfigBuilder tags(List<String> tagList) {
