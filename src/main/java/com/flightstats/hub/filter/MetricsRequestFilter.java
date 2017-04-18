@@ -4,8 +4,6 @@ import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.util.RequestUtils;
 import com.google.common.annotations.VisibleForTesting;
-import lombok.Getter;
-import lombok.Setter;
 import org.glassfish.jersey.server.internal.routing.UriRoutingContext;
 import org.glassfish.jersey.uri.UriTemplate;
 import org.slf4j.Logger;
@@ -127,8 +125,6 @@ public class MetricsRequestFilter implements ContainerRequestFilter, ContainerRe
                 .collect(Collectors.joining(""));
     }
 
-    @Setter
-    @Getter
     private class RequestState {
         private final long start = System.currentTimeMillis();
         private final ContainerRequestContext request;
@@ -138,5 +134,20 @@ public class MetricsRequestFilter implements ContainerRequestFilter, ContainerRe
             this.request = request;
         }
 
+        public long getStart() {
+            return this.start;
+        }
+
+        public ContainerRequestContext getRequest() {
+            return this.request;
+        }
+
+        public ContainerResponseContext getResponse() {
+            return this.response;
+        }
+
+        public void setResponse(ContainerResponseContext response) {
+            this.response = response;
+        }
     }
 }

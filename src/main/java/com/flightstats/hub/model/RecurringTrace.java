@@ -1,11 +1,9 @@
 package com.flightstats.hub.model;
 
-import lombok.Getter;
 import org.joda.time.DateTime;
 
 import java.util.Arrays;
 
-@Getter
 public class RecurringTrace implements Trace {
     private final long startTime = System.currentTimeMillis();
     private Object[] objects;
@@ -33,5 +31,21 @@ public class RecurringTrace implements Trace {
     @Override
     public String context() {
         return Arrays.toString(objects);
+    }
+
+    public long getStartTime() {
+        return this.startTime;
+    }
+
+    public Object[] getObjects() {
+        return this.objects;
+    }
+
+    public long getCount() {
+        return this.count;
+    }
+
+    public long getLatestTime() {
+        return this.latestTime;
     }
 }
