@@ -3,8 +3,6 @@ package com.flightstats.hub.webhook;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import lombok.Builder;
-import lombok.Getter;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
@@ -93,11 +91,65 @@ class WebhookError {
         return limitChildren(webhook);
     }
 
-    @Builder
-    @Getter
     private static class Error {
         String name;
         DateTime creationTime;
         String data;
+
+        @java.beans.ConstructorProperties({"name", "creationTime", "data"})
+        Error(String name, DateTime creationTime, String data) {
+            this.name = name;
+            this.creationTime = creationTime;
+            this.data = data;
+        }
+
+        public static ErrorBuilder builder() {
+            return new ErrorBuilder();
+        }
+
+        public String getName() {
+            return this.name;
+        }
+
+        public DateTime getCreationTime() {
+            return this.creationTime;
+        }
+
+        public String getData() {
+            return this.data;
+        }
+
+        public static class ErrorBuilder {
+            private String name;
+            private DateTime creationTime;
+            private String data;
+
+            ErrorBuilder() {
+            }
+
+            public Error.ErrorBuilder name(String name) {
+                this.name = name;
+                return this;
+            }
+
+            public Error.ErrorBuilder creationTime(DateTime creationTime) {
+                this.creationTime = creationTime;
+                return this;
+            }
+
+            public Error.ErrorBuilder data(String data) {
+                this.data = data;
+                return this;
+            }
+
+
+            public Error build() {
+                return new Error(name, creationTime, data);
+            }
+
+            public String toString() {
+                return "com.flightstats.hub.webhook.WebhookError.Error.ErrorBuilder(name=" + this.name + ", creationTime=" + this.creationTime + ", data=" + this.data + ")";
+            }
+        }
     }
 }

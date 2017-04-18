@@ -24,8 +24,6 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
-import lombok.AllArgsConstructor;
-import lombok.ToString;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.slf4j.Logger;
@@ -188,7 +186,6 @@ public class S3Verifier {
         return new MinutePath(now.minusMinutes(HubProperties.getSpokeTtl() - 2));
     }
 
-    @ToString
     class VerifierRange {
 
         MinutePath startPath;
@@ -198,14 +195,24 @@ public class S3Verifier {
         VerifierRange(ChannelConfig channel) {
             this.channel = channel;
         }
+
+        public String toString() {
+            return "com.flightstats.hub.dao.aws.S3Verifier.VerifierRange(startPath=" + this.startPath + ", endPath=" + this.endPath + ", channel=" + this.channel + ")";
+        }
     }
 
-    @AllArgsConstructor
     private class S3VerifierService extends AbstractIdleService implements Leader {
 
         private String leaderPath;
         private int minutes;
         private Runnable runnable;
+
+        @java.beans.ConstructorProperties({"leaderPath", "minutes", "runnable"})
+        public S3VerifierService(String leaderPath, int minutes, Runnable runnable) {
+            this.leaderPath = leaderPath;
+            this.minutes = minutes;
+            this.runnable = runnable;
+        }
 
         @Override
         protected void startUp() throws Exception {

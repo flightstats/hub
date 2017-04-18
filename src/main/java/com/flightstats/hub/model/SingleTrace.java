@@ -1,11 +1,9 @@
 package com.flightstats.hub.model;
 
-import lombok.Getter;
 import org.joda.time.DateTime;
 
 import java.util.Arrays;
 
-@Getter
 public class SingleTrace implements Trace {
     private final Object[] objects;
     private final long time = System.currentTimeMillis();
@@ -22,5 +20,13 @@ public class SingleTrace implements Trace {
     @Override
     public String context() {
         return Arrays.toString(objects);
+    }
+
+    public Object[] getObjects() {
+        return this.objects;
+    }
+
+    public long getTime() {
+        return this.time;
     }
 }

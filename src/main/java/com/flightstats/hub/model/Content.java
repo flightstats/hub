@@ -5,9 +5,6 @@ import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
 import org.apache.commons.io.IOUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -15,8 +12,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 
-@Getter
-@EqualsAndHashCode(of = {"contentType"})
 public class Content implements Serializable {
     private final static Logger logger = LoggerFactory.getLogger(Content.class);
 
@@ -27,7 +22,6 @@ public class Content implements Serializable {
     private InputStream stream;
     private byte[] data;
     private Optional<ContentKey> contentKey = Optional.absent();
-    @Setter
     private Long size;
     private transient boolean isLarge;
     private transient int threads;
@@ -113,8 +107,55 @@ public class Content implements Serializable {
         IOUtils.closeQuietly(stream);
     }
 
+    public Optional<String> getContentType() {
+        return this.contentType;
+    }
+
+    public long getContentLength() {
+        return this.contentLength;
+    }
+
+    public Optional<ContentKey> getContentKey() {
+        return this.contentKey;
+    }
+
+    public boolean isLarge() {
+        return this.isLarge;
+    }
+
+    public int getThreads() {
+        return this.threads;
+    }
+
+    public boolean equals(Object o) {
+        if (o == this) return true;
+        if (!(o instanceof Content)) return false;
+        final Content other = (Content) o;
+        if (!other.canEqual((Object) this)) return false;
+        final Object this$contentType = this.getContentType();
+        final Object other$contentType = other.getContentType();
+        if (this$contentType == null ? other$contentType != null : !this$contentType.equals(other$contentType))
+            return false;
+        return true;
+    }
+
+    public int hashCode() {
+        final int PRIME = 59;
+        int result = 1;
+        final Object $contentType = this.getContentType();
+        result = result * PRIME + ($contentType == null ? 43 : $contentType.hashCode());
+        return result;
+    }
+
+    protected boolean canEqual(Object other) {
+        return other instanceof Content;
+    }
+
+    public void setSize(Long size) {
+        this.size = size;
+    }
+
     //todo - gfm - would be nice with more lombok
-    @Getter
     public static class Builder {
         private Optional<String> contentType = Optional.absent();
         private long contentLength = 0;
@@ -156,5 +197,24 @@ public class Content implements Serializable {
             return this;
         }
 
+        public Optional<String> getContentType() {
+            return this.contentType;
+        }
+
+        public long getContentLength() {
+            return this.contentLength;
+        }
+
+        public Optional<ContentKey> getContentKey() {
+            return this.contentKey;
+        }
+
+        public InputStream getStream() {
+            return this.stream;
+        }
+
+        public int getThreads() {
+            return this.threads;
+        }
     }
 }

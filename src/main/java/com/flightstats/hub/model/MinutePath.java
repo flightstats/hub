@@ -2,8 +2,6 @@ package com.flightstats.hub.model;
 
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
 import org.apache.commons.io.Charsets;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -17,8 +15,6 @@ import java.util.Collections;
  * A MinutePath represents the end of a minute period.
  * So any ContentKeys contained within that minute come before the MinutePath.
  */
-@Getter
-@EqualsAndHashCode(of = "time")
 public class MinutePath implements ContentPathKeys {
     private final static Logger logger = LoggerFactory.getLogger(MinutePath.class);
 
@@ -94,5 +90,36 @@ public class MinutePath implements ContentPathKeys {
 
     public MinutePath addMinute() {
         return new MinutePath(time.plusMinutes(1));
+    }
+
+    public DateTime getTime() {
+        return this.time;
+    }
+
+    public Collection<ContentKey> getKeys() {
+        return this.keys;
+    }
+
+    public boolean equals(Object o) {
+        if (o == this) return true;
+        if (!(o instanceof MinutePath)) return false;
+        final MinutePath other = (MinutePath) o;
+        if (!other.canEqual((Object) this)) return false;
+        final Object this$time = this.getTime();
+        final Object other$time = other.getTime();
+        if (this$time == null ? other$time != null : !this$time.equals(other$time)) return false;
+        return true;
+    }
+
+    public int hashCode() {
+        final int PRIME = 59;
+        int result = 1;
+        final Object $time = this.getTime();
+        result = result * PRIME + ($time == null ? 43 : $time.hashCode());
+        return result;
+    }
+
+    protected boolean canEqual(Object other) {
+        return other instanceof MinutePath;
     }
 }

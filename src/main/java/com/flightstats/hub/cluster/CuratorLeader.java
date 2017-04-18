@@ -9,9 +9,6 @@ import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.leader.CancelLeadershipException;
 import org.apache.curator.framework.recipes.leader.LeaderSelector;
@@ -151,16 +148,51 @@ public class CuratorLeader {
 
     }
 
-    @EqualsAndHashCode
-    @AllArgsConstructor
-    @ToString
     private class PathDate implements Comparable<PathDate> {
         DateTime dateTime;
         String child;
 
+        @java.beans.ConstructorProperties({"dateTime", "child"})
+        public PathDate(DateTime dateTime, String child) {
+            this.dateTime = dateTime;
+            this.child = child;
+        }
+
         @Override
         public int compareTo(PathDate other) {
             return dateTime.compareTo(other.dateTime);
+        }
+
+        public boolean equals(Object o) {
+            if (o == this) return true;
+            if (!(o instanceof PathDate)) return false;
+            final PathDate other = (PathDate) o;
+            if (!other.canEqual((Object) this)) return false;
+            final Object this$dateTime = this.dateTime;
+            final Object other$dateTime = other.dateTime;
+            if (this$dateTime == null ? other$dateTime != null : !this$dateTime.equals(other$dateTime)) return false;
+            final Object this$child = this.child;
+            final Object other$child = other.child;
+            if (this$child == null ? other$child != null : !this$child.equals(other$child)) return false;
+            return true;
+        }
+
+        public int hashCode() {
+            final int PRIME = 59;
+            int result = 1;
+            final Object $dateTime = this.dateTime;
+            result = result * PRIME + ($dateTime == null ? 43 : $dateTime.hashCode());
+            final Object $child = this.child;
+            result = result * PRIME + ($child == null ? 43 : $child.hashCode());
+            return result;
+        }
+
+        protected boolean canEqual(Object other) {
+            return other instanceof PathDate;
+        }
+
+        public String toString() {
+            return "com.flightstats.hub.cluster.CuratorLeader.PathDate(dateTime=" + this.dateTime + ", child=" + this.child + ")";
         }
     }
 }
