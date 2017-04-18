@@ -18,9 +18,6 @@ import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -40,9 +37,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 @Singleton
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
 public class S3BatchContentDao implements ContentDao {
 
     private final static Logger logger = LoggerFactory.getLogger(S3BatchContentDao.class);
@@ -58,6 +52,20 @@ public class S3BatchContentDao implements ContentDao {
     private S3BucketName s3BucketName;
     @Inject
     private MetricsService metricsService;
+
+    @java.beans.ConstructorProperties({"s3Client", "s3BucketName", "metricsService"})
+    public S3BatchContentDao(AmazonS3 s3Client, S3BucketName s3BucketName, MetricsService metricsService) {
+        this.s3Client = s3Client;
+        this.s3BucketName = s3BucketName;
+        this.metricsService = metricsService;
+    }
+
+    public S3BatchContentDao() {
+    }
+
+    public static S3BatchContentDaoBuilder builder() {
+        return new S3BatchContentDaoBuilder();
+    }
 
     @Override
     public ContentKey insert(String channelName, Content content) throws Exception {
@@ -402,5 +410,37 @@ public class S3BatchContentDao implements ContentDao {
 
     private String getS3BatchIndexKey(String channel, ContentPath path) {
         return channel + BATCH_INDEX + path.toUrl();
+    }
+
+    public static class S3BatchContentDaoBuilder {
+        private AmazonS3 s3Client;
+        private S3BucketName s3BucketName;
+        private MetricsService metricsService;
+
+        S3BatchContentDaoBuilder() {
+        }
+
+        public S3BatchContentDao.S3BatchContentDaoBuilder s3Client(AmazonS3 s3Client) {
+            this.s3Client = s3Client;
+            return this;
+        }
+
+        public S3BatchContentDao.S3BatchContentDaoBuilder s3BucketName(S3BucketName s3BucketName) {
+            this.s3BucketName = s3BucketName;
+            return this;
+        }
+
+        public S3BatchContentDao.S3BatchContentDaoBuilder metricsService(MetricsService metricsService) {
+            this.metricsService = metricsService;
+            return this;
+        }
+
+        public S3BatchContentDao build() {
+            return new S3BatchContentDao(s3Client, s3BucketName, metricsService);
+        }
+
+        public String toString() {
+            return "com.flightstats.hub.dao.aws.S3BatchContentDao.S3BatchContentDaoBuilder(s3Client=" + this.s3Client + ", s3BucketName=" + this.s3BucketName + ", metricsService=" + this.metricsService + ")";
+        }
     }
 }

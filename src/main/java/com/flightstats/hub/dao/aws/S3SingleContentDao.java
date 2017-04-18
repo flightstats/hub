@@ -18,9 +18,6 @@ import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,9 +29,6 @@ import java.net.SocketTimeoutException;
 import java.util.*;
 
 @Singleton
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
 public class S3SingleContentDao implements ContentDao {
 
     private final static Logger logger = LoggerFactory.getLogger(S3SingleContentDao.class);
@@ -48,6 +42,20 @@ public class S3SingleContentDao implements ContentDao {
     private AmazonS3 s3Client;
     @Inject
     private S3BucketName s3BucketName;
+
+    @java.beans.ConstructorProperties({"metricsService", "s3Client", "s3BucketName"})
+    public S3SingleContentDao(MetricsService metricsService, AmazonS3 s3Client, S3BucketName s3BucketName) {
+        this.metricsService = metricsService;
+        this.s3Client = s3Client;
+        this.s3BucketName = s3BucketName;
+    }
+
+    public S3SingleContentDao() {
+    }
+
+    public static S3SingleContentDaoBuilder builder() {
+        return new S3SingleContentDaoBuilder();
+    }
 
     public void initialize() {
         S3Util.initialize(s3BucketName.getS3BucketName(), s3Client);
@@ -288,4 +296,35 @@ public class S3SingleContentDao implements ContentDao {
         }).start();
     }
 
+    public static class S3SingleContentDaoBuilder {
+        private MetricsService metricsService;
+        private AmazonS3 s3Client;
+        private S3BucketName s3BucketName;
+
+        S3SingleContentDaoBuilder() {
+        }
+
+        public S3SingleContentDao.S3SingleContentDaoBuilder metricsService(MetricsService metricsService) {
+            this.metricsService = metricsService;
+            return this;
+        }
+
+        public S3SingleContentDao.S3SingleContentDaoBuilder s3Client(AmazonS3 s3Client) {
+            this.s3Client = s3Client;
+            return this;
+        }
+
+        public S3SingleContentDao.S3SingleContentDaoBuilder s3BucketName(S3BucketName s3BucketName) {
+            this.s3BucketName = s3BucketName;
+            return this;
+        }
+
+        public S3SingleContentDao build() {
+            return new S3SingleContentDao(metricsService, s3Client, s3BucketName);
+        }
+
+        public String toString() {
+            return "com.flightstats.hub.dao.aws.S3SingleContentDao.S3SingleContentDaoBuilder(metricsService=" + this.metricsService + ", s3Client=" + this.s3Client + ", s3BucketName=" + this.s3BucketName + ")";
+        }
+    }
 }

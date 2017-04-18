@@ -2,8 +2,6 @@ package com.flightstats.hub.model;
 
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -15,8 +13,6 @@ import org.slf4j.LoggerFactory;
 
 import java.text.DecimalFormat;
 
-@EqualsAndHashCode
-@Getter
 public class ContentKey implements ContentPath {
     public static final ContentKey NONE = new ContentKey(TimeUtil.BIG_BANG, "none");
     private final static Logger logger = LoggerFactory.getLogger(ContentKey.class);
@@ -147,5 +143,41 @@ public class ContentKey implements ContentPath {
     public ContentKey fromZk(String value) {
         String[] split = value.split(":");
         return new ContentKey(new DateTime(Long.parseLong(split[0]), DateTimeZone.UTC), split[1]);
+    }
+
+    public DateTime getTime() {
+        return this.time;
+    }
+
+    public String getHash() {
+        return this.hash;
+    }
+
+    public boolean equals(Object o) {
+        if (o == this) return true;
+        if (!(o instanceof ContentKey)) return false;
+        final ContentKey other = (ContentKey) o;
+        if (!other.canEqual((Object) this)) return false;
+        final Object this$time = this.getTime();
+        final Object other$time = other.getTime();
+        if (this$time == null ? other$time != null : !this$time.equals(other$time)) return false;
+        final Object this$hash = this.getHash();
+        final Object other$hash = other.getHash();
+        if (this$hash == null ? other$hash != null : !this$hash.equals(other$hash)) return false;
+        return true;
+    }
+
+    public int hashCode() {
+        final int PRIME = 59;
+        int result = 1;
+        final Object $time = this.getTime();
+        result = result * PRIME + ($time == null ? 43 : $time.hashCode());
+        final Object $hash = this.getHash();
+        result = result * PRIME + ($hash == null ? 43 : $hash.hashCode());
+        return result;
+    }
+
+    protected boolean canEqual(Object other) {
+        return other instanceof ContentKey;
     }
 }
