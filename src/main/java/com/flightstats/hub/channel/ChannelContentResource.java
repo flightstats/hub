@@ -263,6 +263,9 @@ public class ChannelContentResource {
 
         builder.header("Link", "<" + uriInfo.getRequestUriBuilder().path("previous").build() + ">;rel=\"" + "previous" + "\"");
         builder.header("Link", "<" + uriInfo.getRequestUriBuilder().path("next").build() + ">;rel=\"" + "next" + "\"");
+        if (content.getPayloadLength() > 0) {
+            builder.header("payloadLength", content.getPayloadLength());
+        }
         metricsService.time(channel, "get", start);
         return builder.build();
     }

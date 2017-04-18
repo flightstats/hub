@@ -21,6 +21,7 @@ public class LargeContent {
             builder.withContentType(CONTENT_TYPE);
             ObjectNode data = mapper.createObjectNode();
             data.put("key", largePayload.getContentKey().get().toUrl());
+            //todo - gfm - do we need payload size?
             data.put("size", largePayload.getSize());
             if (largePayload.getContentType().isPresent()) {
                 data.put("content-type", largePayload.getContentType().get());

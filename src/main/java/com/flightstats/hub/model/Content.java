@@ -30,6 +30,7 @@ public class Content implements Serializable {
     private InputStream stream;
     private byte[] data;
     private Optional<ContentKey> contentKey = Optional.absent();
+    //todo - gfm - is size different than payloadLength?
     @Setter
     private Long size;
     private transient boolean isLarge;
