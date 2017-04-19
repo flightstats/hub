@@ -33,7 +33,6 @@ class TimedWebhookStrategy implements WebhookStrategy {
 
     private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private final Webhook webhook;
-    private final TimedWebhook timedWebhook;
     private final LastContentPath lastContentPath;
     private final ChannelService channelService;
     private AtomicBoolean shouldExit = new AtomicBoolean(false);
@@ -55,7 +54,6 @@ class TimedWebhookStrategy implements WebhookStrategy {
 
     TimedWebhookStrategy(Webhook webhook, LastContentPath lastContentPath, ChannelService channelService) {
         this.webhook = webhook;
-        this.timedWebhook = TimedWebhook.getTimedWebhook(webhook);
         this.channel = webhook.getChannelName();
         this.lastContentPath = lastContentPath;
         this.channelService = channelService;
@@ -92,14 +90,24 @@ class TimedWebhookStrategy implements WebhookStrategy {
         getNextTime = (currentTime) -> currentTime.plus(unit.getDuration());
     }
 
+    private void determineStrategy(DateTime currentTime) {
+        if (webhook.isMinute()) return;
+        if (shouldFastForward(currentTime)) {
+            minuteConfig();
+        } else {
+            secondConfig();
+        }
+    }
+
     private boolean shouldFastForward(DateTime currentTime) {
         // arbitrarily picked 4 minutes as the fast forward threshold
         return webhook.isFastForwardable()
-                && webhook.isMinute()
+                && webhook.isSecond()  //only can fast forward type second to type minute
                 && Math.abs(Minutes.minutesBetween(stableTime(), currentTime).getMinutes()) > 4;
     }
 
-    private DateTime replicatingStable_minute(ContentPath contentPath) {
+    static protected DateTime replicatingStable_minute(ContentPath contentPath) {
+        TimeUtil.Unit unit = TimeUtil.Unit.MINUTES;
         if (contentPath instanceof SecondPath) {
             SecondPath secondPath = (SecondPath) contentPath;
             if (secondPath.getTime().getSecondOfMinute() < 59) {
@@ -185,7 +193,7 @@ class TimedWebhookStrategy implements WebhookStrategy {
                         logger.trace("results {} {} {}", channel, nextPath, nextPath.getKeys());
                         queue.put(nextPath);
                         lastAdded = nextPath;
-
+                        determineStrategy(lastAdded.getTime());
                         nextTime = getNextTime.apply(lastAdded.getTime());
                     } finally {
                         ActiveTraces.end();
@@ -200,7 +208,7 @@ class TimedWebhookStrategy implements WebhookStrategy {
         TimeQuery timeQuery = TimeQuery.builder()
                 .channelName(channel)
                 .startTime(time)
-                .unit(timedWebhook.getUnit())
+                .unit(unit)
                 .stable(true)
                 .epoch(Epoch.IMMUTABLE)
                 .build();
@@ -244,7 +252,7 @@ class TimedWebhookStrategy implements WebhookStrategy {
 
     @Override
     public ContentPath inProcess(ContentPath contentPath) {
-        return timedWebhook.newTime(contentPath.getTime(), queryKeys(contentPath.getTime()));
+        return newTime.apply(contentPath.getTime(), queryKeys(contentPath.getTime()));
     }
 
     @Override
