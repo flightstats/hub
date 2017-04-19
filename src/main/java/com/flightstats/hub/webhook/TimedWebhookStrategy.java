@@ -14,6 +14,7 @@ import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
+import org.joda.time.Minutes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,6 +22,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 class TimedWebhookStrategy implements WebhookStrategy {
@@ -38,6 +42,17 @@ class TimedWebhookStrategy implements WebhookStrategy {
     private String channel;
     private ScheduledExecutorService executorService;
 
+    // time unit specific functions
+    private TimeUtil.Unit unit;
+    private int period;
+    private Supplier<Integer> getOffsetSeconds;
+    private Supplier<Integer> getPeriodSeconds;
+    private BiFunction<DateTime, Collection<ContentKey>, ContentPathKeys> newTime;
+    private Supplier<ContentPath> getNone;
+    private Function<ContentPath, DateTime> getReplicatingStable;
+    private Function<DateTime, DateTime> getNextTime;
+    private Duration duration;
+
     TimedWebhookStrategy(Webhook webhook, LastContentPath lastContentPath, ChannelService channelService) {
         this.webhook = webhook;
         this.timedWebhook = TimedWebhook.getTimedWebhook(webhook);
@@ -45,6 +60,59 @@ class TimedWebhookStrategy implements WebhookStrategy {
         this.lastContentPath = lastContentPath;
         this.channelService = channelService;
         this.queue = new ArrayBlockingQueue<>(webhook.getParallelCalls() * 2);
+        if (webhook.isSecond()) {
+            secondConfig();
+        } else {
+            minuteConfig();
+        }
+    }
+
+
+    private void minuteConfig() {
+        getOffsetSeconds = () -> (66 - (new DateTime().getSecondOfMinute())) % 60;
+        period = 60;
+        unit = TimeUtil.Unit.MINUTES;
+        duration = unit.getDuration();
+
+        newTime = (pathTime, keys) -> new MinutePath(pathTime, keys);
+        getNone = () -> MinutePath.NONE;
+        getReplicatingStable = (contentPath) -> replicatingStable_minute(contentPath);
+        getNextTime = (currentTime) -> currentTime.plus(unit.getDuration());
+    }
+
+    private void secondConfig() {
+        getOffsetSeconds = () -> 0;
+        period = 1;
+        unit = TimeUtil.Unit.SECONDS;
+        duration = unit.getDuration();
+
+        newTime = (pathTime, keys) -> new SecondPath(pathTime, keys);
+        getNone = () -> SecondPath.NONE;
+        getReplicatingStable = (contentPath) -> contentPath.getTime();
+        getNextTime = (currentTime) -> currentTime.plus(unit.getDuration());
+    }
+
+    private boolean shouldFastForward(DateTime currentTime) {
+        // arbitrarily picked 4 minutes as the fast forward threshold
+        return webhook.isFastForwardable()
+                && webhook.isMinute()
+                && Math.abs(Minutes.minutesBetween(stableTime(), currentTime).getMinutes()) > 4;
+    }
+
+    private DateTime replicatingStable_minute(ContentPath contentPath) {
+        if (contentPath instanceof SecondPath) {
+            SecondPath secondPath = (SecondPath) contentPath;
+            if (secondPath.getTime().getSecondOfMinute() < 59) {
+                return unit.round(contentPath.getTime().minusMinutes(1));
+            }
+        } else if (contentPath instanceof ContentKey) {
+            return unit.round(contentPath.getTime().minusMinutes(1));
+        }
+        return unit.round(contentPath.getTime());
+    }
+
+    private DateTime stableTime() {
+        return TimeUtil.stable().minus(unit.getDuration());
     }
 
     private static String getBulkUrl(String channelUrl, ContentPath path, String parameter) {
@@ -91,15 +159,14 @@ class TimedWebhookStrategy implements WebhookStrategy {
             }
 
             private void doWork() throws InterruptedException {
-                Duration duration = timedWebhook.getUnit().getDuration();
-                DateTime nextTime = lastAdded.getTime().plus(duration);
+                DateTime nextTime = getNextTime.apply(lastAdded.getTime());
                 if (lastAdded instanceof ContentKey) {
                     nextTime = lastAdded.getTime();
                 }
                 DateTime stable = TimeUtil.stable().minus(duration);
                 if (!channelConfig.isLive()) {
-                    ContentPath contentPath = channelService.getLastUpdated(channel, timedWebhook.getNone());
-                    DateTime replicatedStable = timedWebhook.getReplicatingStable(contentPath);
+                    ContentPath contentPath = channelService.getLastUpdated(channel, getNone.get());
+                    DateTime replicatedStable = getReplicatingStable.apply(contentPath);
                     if (replicatedStable.isBefore(stable)) {
                         stable = replicatedStable;
                     }
@@ -114,18 +181,19 @@ class TimedWebhookStrategy implements WebhookStrategy {
                                 .filter(key -> key.compareTo(lastAdded) > 0)
                                 .collect(Collectors.toCollection(ArrayList::new));
 
-                        ContentPathKeys nextPath = timedWebhook.newTime(nextTime, keys);
+                        ContentPathKeys nextPath = newTime.apply(nextTime, keys);
                         logger.trace("results {} {} {}", channel, nextPath, nextPath.getKeys());
                         queue.put(nextPath);
                         lastAdded = nextPath;
-                        nextTime = lastAdded.getTime().plus(duration);
+
+                        nextTime = getNextTime.apply(lastAdded.getTime());
                     } finally {
                         ActiveTraces.end();
                     }
                 }
             }
 
-        }, timedWebhook.getOffsetSeconds(), timedWebhook.getPeriodSeconds(), TimeUnit.SECONDS);
+        }, getOffsetSeconds.get(), period, TimeUnit.SECONDS);
     }
 
     private Collection<ContentKey> queryKeys(DateTime time) {
