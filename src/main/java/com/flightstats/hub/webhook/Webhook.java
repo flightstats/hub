@@ -178,15 +178,6 @@ public class Webhook implements Comparable<Webhook>, NamedType {
     boolean isChanged(Webhook other) {
         DiffNode diff = ObjectDifferBuilder.buildDefault().compare(this, other);
         return !Objects.equals(parallelCalls, other.parallelCalls) || diff.hasChanges();
-//        return !Objects.equals(parallelCalls, other.parallelCalls)
-//                || paused != other.paused
-//                || !callbackUrl.equals(other.callbackUrl)
-//                || !channelUrl.equals(other.channelUrl)
-//                || !batch.equals(other.batch)
-//                || !heartbeat == other.heartbeat
-//                || !ttlMinutes.equals(other.ttlMinutes)
-//                || !maxWaitMinutes.equals(other.maxWaitMinutes)
-//                || !callbackTimeoutSeconds.equals(other.callbackTimeoutSeconds);
     }
 
     public String toJson() {
