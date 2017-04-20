@@ -168,7 +168,7 @@ public class Content implements Serializable {
     public static class Builder {
         private Optional<String> contentType = Optional.absent();
         private long contentLength = 0;
-        private long payloadLength = 0;
+        private long payloadLength = -1;
         private Optional<ContentKey> contentKey = Optional.absent();
         private InputStream stream;
         private int threads;
