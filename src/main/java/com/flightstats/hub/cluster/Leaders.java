@@ -25,7 +25,7 @@ public class Leaders {
 
     @Inject
     @Named("HubCuratorCluster")
-    private CuratorCluster hubCuratorCluster;
+    private Cluster hubCuratorCluster;
 
     public Leaders() {
         register(new LeaderRotatorService(), TYPE.PRE_STOP, TYPE.AFTER_HEALTHY_START);
@@ -46,7 +46,7 @@ public class Leaders {
             logger.debug("running...");
             try {
                 for (CuratorLeader leader : leaders) {
-                    leader.limitChildren(hubCuratorCluster.getServers().size());
+                    leader.limitChildren(hubCuratorCluster.getAllServers().size());
                 }
             } catch (Exception e) {
                 logger.warn("unexpected Leaders issue ", e);

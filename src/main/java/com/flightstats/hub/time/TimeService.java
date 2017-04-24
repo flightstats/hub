@@ -3,7 +3,7 @@ package com.flightstats.hub.time;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.cluster.CuratorCluster;
+import com.flightstats.hub.cluster.Cluster;
 import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.TimeUtil;
@@ -15,6 +15,7 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
@@ -32,9 +33,11 @@ public class TimeService {
     private final String remoteFile = HubProperties.getProperty("app.remoteTimeFile", "/home/hub/remoteTime");
     private final static Client client = RestClient.createClient(1, 5, true, false);
 
+    private final static String randomKey = RandomStringUtils.randomAlphanumeric(6);
+
     @Inject
     @Named("HubCuratorCluster")
-    private CuratorCluster cluster;
+    private Cluster cluster;
 
     private boolean isRemote = false;
 
@@ -65,7 +68,7 @@ public class TimeService {
     }
 
     DateTime getRemoteNow() {
-        for (String server : cluster.getRandomRemoteServers()) {
+        for (String server : cluster.getRandomRemoteServers(randomKey)) {
             ClientResponse response = null;
             try {
                 response = client.resource(HubHost.getScheme() + server + "/internal/time/millis")

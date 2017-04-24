@@ -26,11 +26,11 @@ public class SpokeContentDaoTest {
         CuratorFramework curator = injector.getInstance(CuratorFramework.class);
         CuratorCluster cluster = HubBindings.buildSpokeCuratorCluster(curator);
         for (int i = 0; i < 10; i++) {
-            if (cluster.getServers().size() == 0) {
+            if (cluster.getAllServers().size() == 0) {
                 logger.info("no servers yet...");
                 Sleeper.sleep(500);
             } else {
-                logger.info("servers {}", cluster.getServers());
+                logger.info("servers {}", cluster.getAllServers());
                 return;
             }
         }

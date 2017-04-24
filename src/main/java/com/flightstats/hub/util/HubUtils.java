@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProvider;
+import com.flightstats.hub.cluster.Cluster;
 import com.flightstats.hub.cluster.CuratorCluster;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.webhook.Webhook;
@@ -256,9 +257,9 @@ public class HubUtils {
     }
 
     public ObjectNode refreshAll() {
-        CuratorCluster spokeCuratorCluster = HubProvider.getInstance(CuratorCluster.class, "SpokeCuratorCluster");
+        Cluster hubCluster = HubProvider.getInstance(CuratorCluster.class, "HubCuratorCluster");
         ObjectNode root = mapper.createObjectNode();
-        Set<String> servers = spokeCuratorCluster.getServers();
+        Set<String> servers = hubCluster.getAllServers();
         for (String server : servers) {
             String url = HubHost.getScheme() + server + "/internal/channel/refresh?all=false";
             ClientResponse response = followClient.resource(url).get(ClientResponse.class);

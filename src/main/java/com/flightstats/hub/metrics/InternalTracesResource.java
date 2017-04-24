@@ -25,7 +25,7 @@ public class InternalTracesResource {
         ObjectNode root = mapper.createObjectNode();
         root.put("server", HubHost.getLocalHttpNameUri() + path);
         ArrayNode servers = root.putArray("servers");
-        for (String spokeServer : curatorCluster.getServers()) {
+        for (String spokeServer : curatorCluster.getAllServers()) {
             servers.add(HubHost.getScheme() + spokeServer + path);
         }
         return root;

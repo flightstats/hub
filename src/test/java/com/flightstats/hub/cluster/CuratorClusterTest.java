@@ -28,20 +28,20 @@ public class CuratorClusterTest {
     public void testPath() throws Exception {
         logger.info("starting testPath");
         CuratorCluster cluster = new CuratorCluster(curator, "/SpokeCluster", false);
-        Collection<String> servers = cluster.getServers();
+        Collection<String> servers = cluster.getAllServers();
         assertNotNull(servers);
         assertEquals(0, servers.size());
         logger.info("got expected 0");
         cluster.register();
         Sleeper.sleep(5000);
         logger.info("slept 5000");
-        servers = cluster.getServers();
+        servers = cluster.getAllServers();
         assertNotNull(servers);
         assertEquals(1, servers.size());
         logger.info("got expected 1");
         cluster.delete();
         Sleeper.sleep(5000);
-        servers = cluster.getServers();
+        servers = cluster.getAllServers();
         assertNotNull(servers);
         assertEquals(0, servers.size());
     }
