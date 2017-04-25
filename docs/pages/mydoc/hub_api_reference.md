@@ -2,7 +2,7 @@
 title: REST API Reference
 keywords: API
 last_updated: July 3, 2016
-tags: []
+tags: [api]
 summary: 
 sidebar: mydoc_sidebar
 permalink: hub_api_reference.html
@@ -10,7 +10,7 @@ folder: hub
 ---
 
 
-#Intro
+# Intro
 This reference uses [httpie](https://httpie.org/) for examples.  Httpie is easier to write and the output is easier to read than curl.  Check out the link for installation and usage instructions.  
 
 # Channels
@@ -29,7 +29,7 @@ Content-type: application/json
 }
 ```
 
-#####httpie example:
+##### httpie example:
 ```bash
 -> % http PUT hub.pdx.dev.flightstats.io/channel/aTestChannel ttlDays=8 description:='"a channel for testing"' \
 tags:='["coffee"]'
@@ -53,7 +53,7 @@ Accept: application/json
 ___body_contains_arbitrary_content
 ```
 
-#####httpie example:
+##### httpie example:
 ```bash
 -> % http POST hub.pdx.dev.flightstats.io/channel/aTestChannel exampleValue:=3 exampleText:='"three"'
 HTTP/1.1 201 Created
@@ -89,7 +89,7 @@ channelName: {channel-name}
 ___body_contains_arbitrary_content
 ```
 
-#####httpie example:
+##### httpie example:
 Note - the channel must be passed in via the channelName header
 
 ```bash
@@ -103,7 +103,7 @@ HTTP/1.1 200 OK
 
 `GET http://{hub}/channel/{channel-name}/{YYYY}/{MM}/{DD}/{hh}/{mm}/{ss}/{SSS}/{hash}`
 
-#####httpie example:
+##### httpie example:
 Note that to get the payload from latest, you need to use the --follow option to follow the redirect
 ```bash
 -> % http hub.pdx.dev.flightstats.io/channel/aTestChannel/2017/04/24/18/30/02/574/Ulpaxh
@@ -119,7 +119,7 @@ HTTP/1.1 200 OK
 
 `GET http://{hub}/channel/{channel-name}/latest`
 
-#####httpie example:
+##### httpie example:
 Note that to get the payload from latest, you need to use the --follow option to follow the redirect
 ```bash
 -> % http --follow hub.pdx.dev.flightstats.io/channel/aTestChannel/latest
@@ -135,7 +135,7 @@ HTTP/1.1 200 OK
 
 `GET http://{hub}/channel/{channel-name}/earliest`
 
-#####httpie example:
+##### httpie example:
 ```bash
 -> % http --follow hub.pdx.dev.flightstats.io/channel/aTestChannel/earliest
 HTTP/1.1 200 OK
@@ -154,7 +154,7 @@ Defaults to 1, but can suffix with /{n} to retrieve arbitrary number if items
 
 `GET http://{hub}/channel/{channel-name}/{YYYY}/{MM}/{DD}/{hh}/{mm}/{ss}/{SSS}/{hash}/previous[/{n}]`
 
-#####httpie example:
+##### httpie example:
 Next/previous also need the --follow option
 ```bash
 -> % http --follow hub.pdx.dev.flightstats.io/channel/aTestChannel/2017/04/21/17/52/38/393/DIK4NH/next
@@ -170,7 +170,7 @@ HTTP/1.1 200 OK
 
 `GET http://{hub}/channel/{channel-name}/{YYYY}/{MM}/{DD}/{hh}/{mm}/{ss}/{SSS}/{hash}/{previous | next}[/{n}]?bulk=true`
 
-#####httpie example:
+##### httpie example:
 Note the query parameter "bulk==true "
 ```bash
 -> % http hub.pdx.dev.flightstats.io/channel/aTestChannel/2017/04/21/17/52/38/393/DIK4NH/next/3 bulk==true
@@ -237,7 +237,7 @@ Creation-Date: 2017-04-24T18:30:02.574Z
 
 `GET http://hub/tag`
 
-#####httpie example:
+##### httpie example:
 Note that to get the payload from latest, you need to use the --follow option to follow the redirect
 ```bash
 -> % http hub.pdx.dev.flightstats.io/tag

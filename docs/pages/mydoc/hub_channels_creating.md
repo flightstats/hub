@@ -32,7 +32,7 @@ Please see [global channels](hub_channels_global.html) for more details.
 
 * `storage` is the optional specification of how to store long term data.  The default is `SINGLE`.  
 High volume channels can see significant reductions in S3 costs by using `BATCH`.  
-`BOTH` is a way to transition between the two states, and perform comparisons.  More information in [storage](#storage)
+`BOTH` is a way to transition between the two states, and perform comparisons.  More information in [storage](hub_other_channel_storage.html)
 
 * `protect` is the optional setting to prevent changes which might cause some data loss.
 Please see [protected channels](hub_channels_protect.html) for more details.

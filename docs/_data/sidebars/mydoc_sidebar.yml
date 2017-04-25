@@ -117,9 +117,6 @@ entries:
       url: /hub_notifications_events.html
       output: web, pdf
 
-    - title: Alerts
-      url: /hub_notifications_alerts.html
-      output: web, pdf
 
   - title: Other topics
     output: web, pdf
