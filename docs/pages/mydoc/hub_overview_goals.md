@@ -59,7 +59,6 @@ The modular design has allowed us to more easily add additional features.
 
 ## Loose Coupling
 ## Fault Tolerance
-## Loose Coupling
 ## Distributed Parallel Clients
 
 
