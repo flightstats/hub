@@ -85,7 +85,7 @@ public class CuratorCluster implements Cluster {
     }
 
     @Override
-    public Set<String> getServers(String channel) {
+    public Set<String> getCurrentServers(String channel) {
         return getAllServers();
     }
 

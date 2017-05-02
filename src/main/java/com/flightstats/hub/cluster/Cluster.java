@@ -6,14 +6,25 @@ import java.net.UnknownHostException;
 import java.util.*;
 
 public interface Cluster {
+    /**
+     * @return the localhost's server
+     */
     Collection<String> getLocalServer() throws UnknownHostException;
 
+    /**
+     * @return All servers in the cluster
+     */
     Set<String> getAllServers();
 
-    Set<String> getServers(String channel);
+    /**
+     * @return the current set of servers for this channel.
+     */
+    Set<String> getCurrentServers(String channel);
+
+    //todo - gfm - these will need to know the time (range) of the request to determine the correct servers.
 
     default List<String> getRandomServers(String channel) {
-        List<String> servers = new ArrayList<>(getServers(channel));
+        List<String> servers = new ArrayList<>(getCurrentServers(channel));
         Collections.shuffle(servers);
         return servers;
     }
