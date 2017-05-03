@@ -24,7 +24,7 @@ public class Leaders {
     private static final Set<CuratorLeader> leaders = new ConcurrentHashSet<>();
 
     @Inject
-    @Named("HubCuratorCluster")
+    @Named("HubCluster")
     private Cluster hubCuratorCluster;
 
     public Leaders() {

@@ -257,7 +257,7 @@ public class HubUtils {
     }
 
     public ObjectNode refreshAll() {
-        Cluster hubCluster = HubProvider.getInstance(CuratorCluster.class, "HubCuratorCluster");
+        Cluster hubCluster = HubProvider.getInstance(CuratorCluster.class, "HubCluster");
         ObjectNode root = mapper.createObjectNode();
         Set<String> servers = hubCluster.getAllServers();
         for (String server : servers) {

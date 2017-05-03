@@ -52,7 +52,7 @@ public class RemoteSpokeStore {
     private final int stableSeconds = HubProperties.getProperty("app.stable_seconds", 5);
 
     @Inject
-    public RemoteSpokeStore(@Named("SpokeCuratorCluster") Cluster cluster, MetricsService metricsService) {
+    public RemoteSpokeStore(@Named("SpokeCluster") Cluster cluster, MetricsService metricsService) {
         this.cluster = cluster;
         this.metricsService = metricsService;
         executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("RemoteSpokeStore-%d").build());

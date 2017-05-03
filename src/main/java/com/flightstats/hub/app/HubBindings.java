@@ -95,18 +95,32 @@ public class HubBindings extends AbstractModule {
         return client;
     }
 
+    @Named("HubCluster")
+    @Singleton
+    @Provides
+    public static Cluster buildHubCluster(CuratorFramework curator) throws Exception {
+        return new CuratorCluster(curator, "/HubCluster", true);
+    }
+
     @Named("HubCuratorCluster")
     @Singleton
     @Provides
-    public static Cluster buildHubCuratorCluster(CuratorFramework curator) throws Exception {
-        return new CuratorCluster(curator, "/HubCluster", true);
+    public static CuratorCluster buildHubCuratorCluster(@Named("HubCluster") Cluster cluster) throws Exception {
+        return (CuratorCluster) cluster;
+    }
+
+    @Named("SpokeCluster")
+    @Singleton
+    @Provides
+    public static Cluster buildSpokeCluster(CuratorFramework curator) throws Exception {
+        return new CuratorCluster(curator, "/SpokeCluster", false);
     }
 
     @Named("SpokeCuratorCluster")
     @Singleton
     @Provides
-    public static CuratorCluster buildSpokeCuratorCluster(CuratorFramework curator) throws Exception {
-        return new CuratorCluster(curator, "/SpokeCluster", false);
+    public static CuratorCluster buildSpokeCuratorCluster(@Named("SpokeCluster") Cluster cluster) throws Exception {
+        return (CuratorCluster) cluster;
     }
 
     @Singleton

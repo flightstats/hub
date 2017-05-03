@@ -36,7 +36,7 @@ public class TimeService {
     private final static String randomKey = RandomStringUtils.randomAlphanumeric(6);
 
     @Inject
-    @Named("HubCuratorCluster")
+    @Named("HubCluster")
     private Cluster cluster;
 
     private boolean isRemote = false;

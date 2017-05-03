@@ -16,7 +16,7 @@ class AppUrlCheck extends AbstractIdleService {
     private final static Logger logger = LoggerFactory.getLogger(AppUrlCheck.class);
 
     @Inject
-    @Named("SpokeCuratorCluster")
+    @Named("SpokeCluster")
     private Cluster spokeCuratorCluster;
 
     @Inject

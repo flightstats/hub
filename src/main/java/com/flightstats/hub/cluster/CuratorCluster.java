@@ -1,5 +1,6 @@
 package com.flightstats.hub.cluster;
 
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -7,6 +8,7 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
+import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
@@ -14,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.UnknownHostException;
 import java.util.*;
+import java.util.concurrent.Executor;
 
 @Singleton
 public class CuratorCluster implements Cluster {
@@ -21,7 +24,6 @@ public class CuratorCluster implements Cluster {
     private final static Logger logger = LoggerFactory.getLogger(CuratorCluster.class);
     private final CuratorFramework curator;
     private final String clusterPath;
-    //todo - gfm - eliminate the need for this
     private final boolean useName;
     private final PathChildrenCache clusterCache;
     private String fullPath;
@@ -36,12 +38,20 @@ public class CuratorCluster implements Cluster {
     }
 
     public void addCacheListener() {
-        clusterCache.getListenable().addListener((client, event) -> {
+        addListener((client, event) -> {
             logger.info("event {} {}", event, clusterPath);
             if (event.getType().equals(PathChildrenCacheEvent.Type.CONNECTION_RECONNECTED)) {
                 register();
             }
         });
+    }
+
+    private void addListener(PathChildrenCacheListener listener) {
+        addListener(listener, MoreExecutors.directExecutor());
+    }
+
+    void addListener(PathChildrenCacheListener listener, Executor executor) {
+        clusterCache.getListenable().addListener(listener, executor);
     }
 
     public void register() throws UnknownHostException {
