@@ -18,10 +18,10 @@ public class SpokeRingTest {
         spokeRing = new SpokeRing(new DateTime(), createNodes(nodes));
     }
 
-    private SpokeNode[] createNodes(int nodes) {
-        SpokeNode[] spokeNodes = new SpokeNode[nodes];
+    private String[] createNodes(int nodes) {
+        String[] spokeNodes = new String[nodes];
         for (int i = 0; i < nodes; i++) {
-            spokeNodes[i] = spokeNode("n" + i);
+            spokeNodes[i] = "n" + i;
         }
         return spokeNodes;
     }
@@ -57,13 +57,13 @@ public class SpokeRingTest {
         checkNodes(channel, spokeRing.getNodes(channel), expected);
     }
 
-    private void checkNodes(String channel, Collection<SpokeNode> nodes, String... expected) {
-        List<SpokeNode> nodesFound = new ArrayList<>(nodes);
+    private void checkNodes(String channel, Collection<String> nodes, String... expected) {
+        List<String> nodesFound = new ArrayList<>(nodes);
         assertEquals(3, nodesFound.size());
         System.out.println("found " + channel + " " + nodesFound);
-        assertEquals(expected[0], nodesFound.get(0).getName());
-        assertEquals(expected[1], nodesFound.get(1).getName());
-        assertEquals(expected[2], nodesFound.get(2).getName());
+        assertEquals(expected[0], nodesFound.get(0));
+        assertEquals(expected[1], nodesFound.get(1));
+        assertEquals(expected[2], nodesFound.get(2));
     }
 
     @Test
@@ -79,12 +79,12 @@ public class SpokeRingTest {
         Map<String, AtomicInteger> countMap = new HashMap<>();
         for (int i = 0; i < loops; i++) {
             String random = RandomStringUtils.randomAlphanumeric(6);
-            Collection<SpokeNode> spokeNodes = spokeRing.getNodes(random);
+            Collection<String> spokeNodes = spokeRing.getNodes(random);
             assertEquals(3, spokeNodes.size());
-            SpokeNode spokeNode = spokeNodes.iterator().next();
-            AtomicInteger integer = countMap.getOrDefault(spokeNode.getName(), new AtomicInteger(0));
+            String spokeNode = spokeNodes.iterator().next();
+            AtomicInteger integer = countMap.getOrDefault(spokeNode, new AtomicInteger(0));
             integer.incrementAndGet();
-            countMap.put(spokeNode.getName(), integer);
+            countMap.put(spokeNode, integer);
         }
         for (Map.Entry<String, AtomicInteger> entry : countMap.entrySet()) {
             assertEquals(loops / nodes, entry.getValue().get(), loops * .007);
@@ -121,8 +121,5 @@ public class SpokeRingTest {
         assertTrue(spokeRing.getNodes("A", start.minusDays(21)).isEmpty());
     }
 
-    private SpokeNode spokeNode(String name) {
-        return SpokeNode.builder().name(name).build();
-    }
 
 }

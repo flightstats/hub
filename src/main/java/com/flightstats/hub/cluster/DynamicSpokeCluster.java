@@ -27,6 +27,7 @@ public class DynamicSpokeCluster implements Cluster {
     private CuratorCluster spokeCluster;
     private WatchManager watchManager;
     private CuratorFramework curator;
+    private volatile SpokeRings spokeRings;
 
     private static final String PATH = "/SpokeClusterEvents";
 
@@ -39,16 +40,16 @@ public class DynamicSpokeCluster implements Cluster {
         this.watchManager = watchManager;
         createChildWatcher();
         addSpokeClusterListener();
+        handleChange();
     }
 
     private void createChildWatcher() {
         watchManager.register(new Watcher() {
             @Override
             public void callback(CuratorEvent event) {
-                logger.info("watcher callback {}", event);
-                //todo - gfm - when there is a new event, recreate the SpokeRings
+                logger.debug("watcher callback {}", event);
                 if (event.getType().equals(CuratorEventType.WATCHED)) {
-                    logger.info("watched {}", event.getType());
+                    logger.debug("watched {}", event.getType());
                     handleChange();
                 }
             }
@@ -69,7 +70,11 @@ public class DynamicSpokeCluster implements Cluster {
 
         try {
             List<String> children = curator.getChildren().forPath(PATH);
-
+            logger.info("kids {}", children);
+            SpokeRings newRings = new SpokeRings();
+            newRings.process(children);
+            logger.info("rings {}", newRings);
+            spokeRings = newRings;
         } catch (Exception e) {
             logger.warn("unable to process Spoke Change");
         }
@@ -78,21 +83,18 @@ public class DynamicSpokeCluster implements Cluster {
     private void addSpokeClusterListener() {
         spokeCluster.addListener((client, event) -> {
             if (event.getType().equals(PathChildrenCacheEvent.Type.CHILD_REMOVED)) {
-                addZkPath(event, "REMOVED");
+                addZkPath(event, false);
             } else if (event.getType().equals(PathChildrenCacheEvent.Type.CHILD_ADDED)) {
-                addZkPath(event, "ADDED");
+                addZkPath(event, true);
             }
         }, executor);
     }
 
-    private void addZkPath(PathChildrenCacheEvent event, String type) throws Exception {
+    private void addZkPath(PathChildrenCacheEvent event, boolean added) throws Exception {
         String nodeName = new String(event.getData().getData());
         long ctime = event.getData().getStat().getCtime();
-        logger.info("event {}", event);
-        logger.info("deets {} ctime {} ", nodeName, ctime);
-        //todo - gfm - consolidate this parsing
-        String path = PATH + "/" + nodeName + "|" + ctime + "|" + type;
-        logger.info("adding path {} ", path);
+        String path = PATH + "/" + ClusterEvent.encode(nodeName, ctime, added);
+        logger.debug("adding path {} ", path);
         curator.create()
                 .creatingParentsIfNeeded()
                 .withMode(CreateMode.PERSISTENT)
@@ -115,6 +117,8 @@ public class DynamicSpokeCluster implements Cluster {
         if (servers.size() <= 3) {
             return servers;
         }
+
+        //todo - gfm - add in rings
         return null;
     }
 

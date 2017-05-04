@@ -3,6 +3,11 @@ package com.flightstats.hub.util;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 
+/**
+ * TimeInterval differs from Joda's Interval in that a null endTime is always 'now'.
+ * Interval locks 'now' to be the construction time of the object.
+ * TimeInterval is also always inclusive, while Interval in exclusive on the end point.
+ */
 public class TimeInterval {
 
     private DateTime startTime;
@@ -14,7 +19,9 @@ public class TimeInterval {
 
     public TimeInterval(DateTime startTime, DateTime endTime) {
         this.startTime = startTime;
-        this.endTime = endTime;
+        if (endTime != null) {
+            this.endTime = endTime.plusMillis(1);
+        }
     }
 
     public boolean contains(DateTime pointInTime) {
@@ -30,7 +37,22 @@ public class TimeInterval {
                 return true;
             }
         }
-        return new Interval(startTime, endTime).overlaps(new Interval(start, end));
+        //adding a millisecond to make the end also inclusive
+        return new Interval(startTime, endTime).overlaps(new Interval(start, end.plusMillis(1)));
+    }
 
+    @Override
+    public String toString() {
+        return "TimeInterval{" +
+                "startTime=" + startTime +
+                ", endTime=" + endTime +
+                '}';
+    }
+
+    public boolean isAfter(DateTime pointInTime) {
+        if (startTime.isAfter(pointInTime)) {
+            return true;
+        }
+        return contains(pointInTime);
     }
 }
