@@ -3,6 +3,7 @@ package com.flightstats.hub.cluster;
 import org.joda.time.DateTime;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -14,6 +15,20 @@ public class SpokeRings implements Ring {
     private SortedSet<SpokeRing> spokeRings = new TreeSet<>();
 
     //todo - gfm - create this by reading events
+
+    /**
+     * SpokeRings accepts a list of Strings which follow the format:
+     * nodeName + "|" + ctime + "|" + type;
+     * This class is responsible for:
+     * parsing the values
+     * determining if there are any changes
+     * if there are changes, create the new rings
+     * if any old record exist, clean those up
+     */
+    public void processChanges(List<String> changes) {
+
+
+    }
 
 
     @Override

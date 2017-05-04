@@ -13,4 +13,8 @@ public interface Watcher {
      * The unique path to watch.
      */
     String getPath();
+
+    default boolean watchChildren() {
+        return false;
+    }
 }

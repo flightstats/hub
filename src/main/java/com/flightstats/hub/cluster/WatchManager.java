@@ -50,10 +50,10 @@ public class WatchManager {
     @VisibleForTesting
     void addCuratorListener() {
         curator.getCuratorListenable().addListener((client, event) -> {
-            logger.debug("event {}", event);
+            logger.info("event {}", event);
             final Watcher watcher = watcherMap.get(event.getPath());
             if (watcher != null) {
-                addWatch(watcher.getPath());
+                addWatch(watcher);
                 if (executorService.isShutdown()) {
                     logger.warn("service is shutdown, skipping event {}", event);
                 } else {
@@ -66,14 +66,14 @@ public class WatchManager {
                     });
                 }
             }
-        });
+        }, Executors.newSingleThreadExecutor());
     }
 
     public void register(Watcher watcher) {
         String path = watcher.getPath();
         createNode(watcher);
         watcherMap.put(path, watcher);
-        addWatch(path);
+        addWatch(watcher);
     }
 
     public void notifyWatcher(String path) {
@@ -97,9 +97,13 @@ public class WatchManager {
         }
     }
 
-    private void addWatch(String path) {
+    private void addWatch(Watcher watcher) {
         try {
-            curator.getData().watched().forPath(path);
+            if (watcher.watchChildren()) {
+                curator.getChildren().watched().forPath(watcher.getPath());
+            } else {
+                curator.getData().watched().forPath(watcher.getPath());
+            }
         } catch (Exception e) {
             logger.warn("unable to start watcher", e);
         }

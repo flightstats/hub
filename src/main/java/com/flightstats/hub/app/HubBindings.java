@@ -49,7 +49,7 @@ public class HubBindings extends AbstractModule {
     public static CuratorFramework buildCurator(@Named("app.name") String appName, @Named("app.environment") String environment,
                                                 @Named("zookeeper.connection") String zkConnection,
                                                 ZooKeeperState zooKeeperState) {
-        logger.info("connecting to zookeeper(s) at " + zkConnection);
+        logger.info("connecting to zookeeper(s) at {} with name {} env {}", zkConnection, appName, environment);
         FixedEnsembleProvider ensembleProvider = new FixedEnsembleProvider(zkConnection);
         CuratorFramework curatorFramework = CuratorFrameworkFactory.builder()
                 .namespace(appName + "-" + environment)
