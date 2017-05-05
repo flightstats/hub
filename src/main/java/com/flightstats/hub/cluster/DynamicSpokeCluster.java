@@ -2,6 +2,7 @@ package com.flightstats.hub.cluster;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -11,6 +12,7 @@ import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,9 +22,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Supplier;
 
 @Singleton
-public class DynamicSpokeCluster implements Cluster {
+public class DynamicSpokeCluster implements Cluster, Ring {
 
     private static final Logger logger = LoggerFactory.getLogger(DynamicSpokeCluster.class);
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -114,14 +117,26 @@ public class DynamicSpokeCluster implements Cluster {
     }
 
     @Override
-    public Set<String> getCurrentServers(String channel) {
+    public Set<String> getServers(String channel) {
+        return getServers(() -> spokeRings.getServers(channel));
+    }
+
+    @Override
+    public Set<String> getServers(String channel, DateTime pointInTime) {
+        return getServers(() -> spokeRings.getServers(channel, pointInTime));
+    }
+
+    @Override
+    public Set<String> getServers(String channel, DateTime startTime, DateTime endTime) {
+        return getServers(() -> spokeRings.getServers(channel, startTime, endTime));
+    }
+
+    private Set<String> getServers(Supplier<Set<String>> supplier) {
         Set<String> servers = spokeCluster.getAllServers();
         if (servers.size() <= 3) {
             return servers;
         }
-
-        //todo - gfm - add in rings
-        return null;
+        return Sets.union(servers, supplier.get());
     }
 
     public void status(ObjectNode root) {

@@ -70,16 +70,16 @@ class SpokeRing implements Ring {
         timeInterval = new TimeInterval(startTime, endTime);
     }
 
-    public Collection<String> getNodes(String channel) {
+    public Set<String> getServers(String channel) {
         if (spokeNodes.size() <= 3) {
-            return spokeNodes;
+            return new HashSet<>(spokeNodes);
         }
         long hash = Hash.hash(channel);
         int node = (int) (hash / rangeSize);
         if (hash < 0) {
             node = spokeNodes.size() + node - 1;
         }
-        Collection<String> found = new ArrayList<>();
+        Set<String> found = new HashSet<>();
         int minimum = Math.min(3, spokeNodes.size());
         while (found.size() < minimum) {
             if (node == spokeNodes.size()) {
@@ -92,18 +92,18 @@ class SpokeRing implements Ring {
         return found;
     }
 
-    public Collection<String> getNodes(String channel, DateTime pointInTime) {
+    public Set<String> getServers(String channel, DateTime pointInTime) {
         if (timeInterval.contains(pointInTime)) {
-            return getNodes(channel);
+            return getServers(channel);
         }
-        return Collections.emptyList();
+        return Collections.emptySet();
     }
 
-    public Collection<String> getNodes(String channel, DateTime startTime, DateTime endTime) {
+    public Set<String> getServers(String channel, DateTime startTime, DateTime endTime) {
         if (timeInterval.overlaps(startTime, endTime)) {
-            return getNodes(channel);
+            return getServers(channel);
         }
-        return Collections.emptyList();
+        return Collections.emptySet();
     }
 
     boolean endsBefore(DateTime endTime) {

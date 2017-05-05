@@ -5,7 +5,7 @@ import com.flightstats.hub.app.HubHost;
 import java.net.UnknownHostException;
 import java.util.*;
 
-public interface Cluster {
+public interface Cluster extends Ring {
     /**
      * @return the localhost's server
      */
@@ -16,22 +16,8 @@ public interface Cluster {
      */
     Set<String> getAllServers();
 
-    /**
-     * @return the current set of servers for this channel.
-     */
-    Set<String> getCurrentServers(String channel);
-
-    //todo - gfm - these will need to know the time (range) of the request to determine the correct servers.
-
-    default List<String> getRandomServers(String channel) {
-        List<String> servers = new ArrayList<>(getCurrentServers(channel));
-        Collections.shuffle(servers);
-        return servers;
-    }
-
-    default List<String> getRandomRemoteServers(String channel) {
-        List<String> servers = getRandomServers(channel);
-        //todo - gfm - figure this out, can we remove the dichotomy between name and ip ???
+    default List<String> getRemoteServers(String channel) {
+        List<String> servers = new ArrayList<>(getServers(channel));
         servers.remove(getHost(true));
         return servers;
     }
@@ -42,5 +28,11 @@ public interface Cluster {
         } else {
             return HubHost.getLocalAddressPort();
         }
+    }
+
+    default List<String> randomize(Collection<String> incoming) {
+        List<String> servers = new ArrayList<>(incoming);
+        Collections.shuffle(servers);
+        return servers;
     }
 }

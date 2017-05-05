@@ -46,24 +46,24 @@ public class SpokeRings implements Ring {
     }
 
     @Override
-    public Collection<String> getNodes(String channel) {
-        return spokeRings.getLast().getNodes(channel);
+    public Set<String> getServers(String channel) {
+        return spokeRings.getLast().getServers(channel);
     }
 
     @Override
-    public Collection<String> getNodes(String channel, DateTime pointInTime) {
+    public Set<String> getServers(String channel, DateTime pointInTime) {
         Set<String> nodes = new HashSet<>();
         for (SpokeRing spokeRing : spokeRings) {
-            nodes.addAll(spokeRing.getNodes(channel, pointInTime));
+            nodes.addAll(spokeRing.getServers(channel, pointInTime));
         }
         return nodes;
     }
 
     @Override
-    public Collection<String> getNodes(String channel, DateTime startTime, DateTime endTime) {
+    public Set<String> getServers(String channel, DateTime startTime, DateTime endTime) {
         Set<String> nodes = new HashSet<>();
         for (SpokeRing spokeRing : spokeRings) {
-            nodes.addAll(spokeRing.getNodes(channel, startTime, endTime));
+            nodes.addAll(spokeRing.getServers(channel, startTime, endTime));
         }
         return nodes;
     }

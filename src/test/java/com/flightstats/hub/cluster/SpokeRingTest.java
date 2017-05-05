@@ -54,7 +54,7 @@ public class SpokeRingTest {
     }
 
     private void checkNodes(String channel, String... expected) {
-        checkNodes(channel, spokeRing.getNodes(channel), expected);
+        checkNodes(channel, spokeRing.getServers(channel), expected);
     }
 
     private void checkNodes(String channel, Collection<String> nodes, String... expected) {
@@ -81,7 +81,7 @@ public class SpokeRingTest {
         Map<String, AtomicInteger> countMap = new HashMap<>();
         for (int i = 0; i < loops; i++) {
             String random = RandomStringUtils.randomAlphanumeric(6);
-            Collection<String> spokeNodes = spokeRing.getNodes(random);
+            Collection<String> spokeNodes = spokeRing.getServers(random);
             assertEquals(3, spokeNodes.size());
             String spokeNode = spokeNodes.iterator().next();
             AtomicInteger integer = countMap.getOrDefault(spokeNode, new AtomicInteger(0));
@@ -97,14 +97,14 @@ public class SpokeRingTest {
     public void testCurrentRing() {
         DateTime start = new DateTime();
         spokeRing = new SpokeRing(start.minusHours(1), createNodes(4));
-        checkNodes("A", spokeRing.getNodes("A", start), "n0", "n1", "n2");
-        checkNodes("A", spokeRing.getNodes("A", start.minusMinutes(59)), "n0", "n1", "n2");
-        checkNodes("A", spokeRing.getNodes("A", start.minusMinutes(60)), "n0", "n1", "n2");
+        checkNodes("A", spokeRing.getServers("A", start), "n0", "n1", "n2");
+        checkNodes("A", spokeRing.getServers("A", start.minusMinutes(59)), "n0", "n1", "n2");
+        checkNodes("A", spokeRing.getServers("A", start.minusMinutes(60)), "n0", "n1", "n2");
 
-        checkNodes("A", spokeRing.getNodes("A", start.minusHours(5), start.minusMinutes(59)), "n0", "n1", "n2");
+        checkNodes("A", spokeRing.getServers("A", start.minusHours(5), start.minusMinutes(59)), "n0", "n1", "n2");
 
-        assertTrue(spokeRing.getNodes("A", start.minusMinutes(61)).isEmpty());
-        assertTrue(spokeRing.getNodes("A", start.minusDays(61)).isEmpty());
+        assertTrue(spokeRing.getServers("A", start.minusMinutes(61)).isEmpty());
+        assertTrue(spokeRing.getServers("A", start.minusDays(61)).isEmpty());
     }
 
     @Test
@@ -112,15 +112,15 @@ public class SpokeRingTest {
         DateTime start = new DateTime();
         spokeRing = new SpokeRing(start.minusHours(1), start.minusMinutes(20), createNodes(4));
 
-        checkNodes("A", spokeRing.getNodes("A", start.minusMinutes(21)), "n0", "n1", "n2");
-        checkNodes("A", spokeRing.getNodes("A", start.minusMinutes(25), start.minusMinutes(20)), "n0", "n1", "n2");
-        checkNodes("A", spokeRing.getNodes("A", start.minusMinutes(21), start.minusMinutes(10)), "n0", "n1", "n2");
-        checkNodes("A", spokeRing.getNodes("A", start.minusMinutes(62), start.minusMinutes(59)), "n0", "n1", "n2");
+        checkNodes("A", spokeRing.getServers("A", start.minusMinutes(21)), "n0", "n1", "n2");
+        checkNodes("A", spokeRing.getServers("A", start.minusMinutes(25), start.minusMinutes(20)), "n0", "n1", "n2");
+        checkNodes("A", spokeRing.getServers("A", start.minusMinutes(21), start.minusMinutes(10)), "n0", "n1", "n2");
+        checkNodes("A", spokeRing.getServers("A", start.minusMinutes(62), start.minusMinutes(59)), "n0", "n1", "n2");
 
-        assertTrue(spokeRing.getNodes("A", start).isEmpty());
-        assertTrue(spokeRing.getNodes("A", start.minusMinutes(19)).isEmpty());
-        assertTrue(spokeRing.getNodes("A", start.minusMinutes(19), start.minusMinutes(18)).isEmpty());
-        assertTrue(spokeRing.getNodes("A", start.minusDays(21)).isEmpty());
+        assertTrue(spokeRing.getServers("A", start).isEmpty());
+        assertTrue(spokeRing.getServers("A", start.minusMinutes(19)).isEmpty());
+        assertTrue(spokeRing.getServers("A", start.minusMinutes(19), start.minusMinutes(18)).isEmpty());
+        assertTrue(spokeRing.getServers("A", start.minusDays(21)).isEmpty());
     }
 
 

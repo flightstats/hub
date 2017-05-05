@@ -33,12 +33,12 @@ public class SpokeRingsTest {
         clusterEvents.add(new ClusterEvent("/SCE/" + steps[2] + "|C|ADDED", steps[2]));
         SpokeRings spokeRings = new SpokeRings();
         spokeRings.process(clusterEvents);
-        assertTrue(spokeRings.getNodes("test1").containsAll(Arrays.asList("A", "B", "C")));
-        assertTrue(spokeRings.getNodes("channel2").containsAll(Arrays.asList("A", "B", "C")));
-        assertTrue(spokeRings.getNodes("channel2", getTime(steps[0])).containsAll(Arrays.asList("A")));
-        assertTrue(spokeRings.getNodes("channel2", getTime(steps[1])).containsAll(Arrays.asList("A", "B")));
-        assertTrue(spokeRings.getNodes("channel2", getTime(steps[2])).containsAll(Arrays.asList("A", "B", "C")));
-        assertTrue(spokeRings.getNodes("channel2", getTime(steps[0]), getTime(steps[2])).containsAll(Arrays.asList("A", "B", "C")));
+        assertTrue(spokeRings.getServers("test1").containsAll(Arrays.asList("A", "B", "C")));
+        assertTrue(spokeRings.getServers("channel2").containsAll(Arrays.asList("A", "B", "C")));
+        assertTrue(spokeRings.getServers("channel2", getTime(steps[0])).containsAll(Arrays.asList("A")));
+        assertTrue(spokeRings.getServers("channel2", getTime(steps[1])).containsAll(Arrays.asList("A", "B")));
+        assertTrue(spokeRings.getServers("channel2", getTime(steps[2])).containsAll(Arrays.asList("A", "B", "C")));
+        assertTrue(spokeRings.getServers("channel2", getTime(steps[0]), getTime(steps[2])).containsAll(Arrays.asList("A", "B", "C")));
     }
 
     @Test
@@ -51,16 +51,16 @@ public class SpokeRingsTest {
         SpokeRings spokeRings = new SpokeRings();
         spokeRings.process(clusterEvents);
 
-        assertTrue(spokeRings.getNodes("test1").containsAll(Arrays.asList("A", "B", "C")));
-        assertTrue(spokeRings.getNodes("channel2").containsAll(Arrays.asList("A", "B", "D")));
-        assertTrue(spokeRings.getNodes("other").containsAll(Arrays.asList("B", "C", "D")));
-        assertTrue(spokeRings.getNodes("name").containsAll(Arrays.asList("A", "D", "C")));
-        assertTrue(spokeRings.getNodes("channel2", getTime(steps[0])).containsAll(Arrays.asList("A")));
-        assertTrue(spokeRings.getNodes("channel2", getTime(steps[1])).containsAll(Arrays.asList("A", "B")));
-        assertTrue(spokeRings.getNodes("channel2", getTime(steps[2])).containsAll(Arrays.asList("A", "B", "C")));
-        assertTrue(spokeRings.getNodes("channel2", getTime(steps[3])).containsAll(Arrays.asList("A", "B", "D")));
-        assertTrue(spokeRings.getNodes("channel2", getTime(steps[0]), getTime(steps[3])).containsAll(Arrays.asList("A", "B", "C", "D")));
-        assertTrue(spokeRings.getNodes("channel2", getTime(steps[3]), getTime(steps[4])).containsAll(Arrays.asList("A", "B", "D")));
+        assertTrue(spokeRings.getServers("test1").containsAll(Arrays.asList("A", "B", "C")));
+        assertTrue(spokeRings.getServers("channel2").containsAll(Arrays.asList("A", "B", "D")));
+        assertTrue(spokeRings.getServers("other").containsAll(Arrays.asList("B", "C", "D")));
+        assertTrue(spokeRings.getServers("name").containsAll(Arrays.asList("A", "D", "C")));
+        assertTrue(spokeRings.getServers("channel2", getTime(steps[0])).containsAll(Arrays.asList("A")));
+        assertTrue(spokeRings.getServers("channel2", getTime(steps[1])).containsAll(Arrays.asList("A", "B")));
+        assertTrue(spokeRings.getServers("channel2", getTime(steps[2])).containsAll(Arrays.asList("A", "B", "C")));
+        assertTrue(spokeRings.getServers("channel2", getTime(steps[3])).containsAll(Arrays.asList("A", "B", "D")));
+        assertTrue(spokeRings.getServers("channel2", getTime(steps[0]), getTime(steps[3])).containsAll(Arrays.asList("A", "B", "C", "D")));
+        assertTrue(spokeRings.getServers("channel2", getTime(steps[3]), getTime(steps[4])).containsAll(Arrays.asList("A", "B", "D")));
     }
 
     @Test
@@ -73,19 +73,19 @@ public class SpokeRingsTest {
         clusterEvents.add(new ClusterEvent("/SCE/" + steps[4] + "|E|ADDED", steps[4]));
         SpokeRings spokeRings = new SpokeRings();
         spokeRings.process(clusterEvents);
-        assertTrue(spokeRings.getNodes("test1").containsAll(Arrays.asList("B", "C", "E")));
-        assertTrue(spokeRings.getNodes("channel2").containsAll(Arrays.asList("A", "B", "D")));
-        assertTrue(spokeRings.getNodes("other").containsAll(Arrays.asList("B", "C", "E")));
-        assertTrue(spokeRings.getNodes("name").containsAll(Arrays.asList("A", "D", "E")));
+        assertTrue(spokeRings.getServers("test1").containsAll(Arrays.asList("B", "C", "E")));
+        assertTrue(spokeRings.getServers("channel2").containsAll(Arrays.asList("A", "B", "D")));
+        assertTrue(spokeRings.getServers("other").containsAll(Arrays.asList("B", "C", "E")));
+        assertTrue(spokeRings.getServers("name").containsAll(Arrays.asList("A", "D", "E")));
 
-        assertTrue(spokeRings.getNodes("channel2", getTime(steps[0])).containsAll(Arrays.asList("A")));
-        assertTrue(spokeRings.getNodes("channel2", getTime(steps[1])).containsAll(Arrays.asList("A", "B")));
-        assertTrue(spokeRings.getNodes("channel2", getTime(steps[2])).containsAll(Arrays.asList("A", "B", "C")));
-        assertTrue(spokeRings.getNodes("channel2", getTime(steps[3])).containsAll(Arrays.asList("A", "B", "D")));
-        assertTrue(spokeRings.getNodes("channel2", getTime(steps[0]), getTime(steps[4])).containsAll(Arrays.asList("A", "B", "C", "D")));
-        assertTrue(spokeRings.getNodes("other", getTime(steps[0]), getTime(steps[4])).containsAll(Arrays.asList("A", "B", "C", "D", "E")));
-        assertTrue(spokeRings.getNodes("other", getTime(steps[5]), getTime(steps[6])).containsAll(Arrays.asList("B", "C", "E")));
-        assertTrue(spokeRings.getNodes("other", getTime(steps[4]), getTime(steps[6])).containsAll(Arrays.asList("B", "C", "E")));
+        assertTrue(spokeRings.getServers("channel2", getTime(steps[0])).containsAll(Arrays.asList("A")));
+        assertTrue(spokeRings.getServers("channel2", getTime(steps[1])).containsAll(Arrays.asList("A", "B")));
+        assertTrue(spokeRings.getServers("channel2", getTime(steps[2])).containsAll(Arrays.asList("A", "B", "C")));
+        assertTrue(spokeRings.getServers("channel2", getTime(steps[3])).containsAll(Arrays.asList("A", "B", "D")));
+        assertTrue(spokeRings.getServers("channel2", getTime(steps[0]), getTime(steps[4])).containsAll(Arrays.asList("A", "B", "C", "D")));
+        assertTrue(spokeRings.getServers("other", getTime(steps[0]), getTime(steps[4])).containsAll(Arrays.asList("A", "B", "C", "D", "E")));
+        assertTrue(spokeRings.getServers("other", getTime(steps[5]), getTime(steps[6])).containsAll(Arrays.asList("B", "C", "E")));
+        assertTrue(spokeRings.getServers("other", getTime(steps[4]), getTime(steps[6])).containsAll(Arrays.asList("B", "C", "E")));
     }
 
     @Test
@@ -116,33 +116,33 @@ public class SpokeRingsTest {
         SpokeRings spokeRings = new SpokeRings();
         spokeRings.process(events);
 
-        compare(spokeRings.getNodes("test1"), Arrays.asList("B", "C", "E"));
-        compare(spokeRings.getNodes("channel2"), Arrays.asList("A", "B", "D"));
-        compare(spokeRings.getNodes("name"), Arrays.asList("A", "D", "E"));
-        compare(spokeRings.getNodes("test3"), Arrays.asList("C", "D", "E"));
-        compare(spokeRings.getNodes("other"), Arrays.asList("B", "C", "E"));
+        compare(spokeRings.getServers("test1"), Arrays.asList("B", "C", "E"));
+        compare(spokeRings.getServers("channel2"), Arrays.asList("A", "B", "D"));
+        compare(spokeRings.getServers("name"), Arrays.asList("A", "D", "E"));
+        compare(spokeRings.getServers("test3"), Arrays.asList("C", "D", "E"));
+        compare(spokeRings.getServers("other"), Arrays.asList("B", "C", "E"));
 
-        compare(spokeRings.getNodes("other", getTime(steps[0] + HALF_STEP)), Arrays.asList("A"));
-        compare(spokeRings.getNodes("other", getTime(steps[1] + HALF_STEP)), Arrays.asList("A", "B"));
-        compare(spokeRings.getNodes("other", getTime(steps[2] + HALF_STEP)), Arrays.asList("A", "B", "C"));
-        compare(spokeRings.getNodes("other", getTime(steps[3] + HALF_STEP)), Arrays.asList("B", "C", "D"));
-        compare(spokeRings.getNodes("other", getTime(steps[4] + HALF_STEP)), Arrays.asList("B", "C", "E"));
-        compare(spokeRings.getNodes("other", getTime(steps[2] + HALF_STEP), getTime(steps[4] + HALF_STEP)), Arrays.asList("A", "B", "C", "D", "E"));
+        compare(spokeRings.getServers("other", getTime(steps[0] + HALF_STEP)), Arrays.asList("A"));
+        compare(spokeRings.getServers("other", getTime(steps[1] + HALF_STEP)), Arrays.asList("A", "B"));
+        compare(spokeRings.getServers("other", getTime(steps[2] + HALF_STEP)), Arrays.asList("A", "B", "C"));
+        compare(spokeRings.getServers("other", getTime(steps[3] + HALF_STEP)), Arrays.asList("B", "C", "D"));
+        compare(spokeRings.getServers("other", getTime(steps[4] + HALF_STEP)), Arrays.asList("B", "C", "E"));
+        compare(spokeRings.getServers("other", getTime(steps[2] + HALF_STEP), getTime(steps[4] + HALF_STEP)), Arrays.asList("A", "B", "C", "D", "E"));
 
-        compare(spokeRings.getNodes("other", getTime(steps[5] + HALF_STEP)), Arrays.asList("B", "C", "E"));
+        compare(spokeRings.getServers("other", getTime(steps[5] + HALF_STEP)), Arrays.asList("B", "C", "E"));
 
-        compare(spokeRings.getNodes("other", getTime(steps[6] + HALF_STEP)), Arrays.asList("B", "C", "E"));
-        compare(spokeRings.getNodes("other", getTime(steps[7] + HALF_STEP)), Arrays.asList("C", "D", "E"));
+        compare(spokeRings.getServers("other", getTime(steps[6] + HALF_STEP)), Arrays.asList("B", "C", "E"));
+        compare(spokeRings.getServers("other", getTime(steps[7] + HALF_STEP)), Arrays.asList("C", "D", "E"));
 
-        compare(spokeRings.getNodes("other", getTime(steps[6] + HALF_STEP), getTime(steps[7] + HALF_STEP)), Arrays.asList("B", "C", "D", "E"));
+        compare(spokeRings.getServers("other", getTime(steps[6] + HALF_STEP), getTime(steps[7] + HALF_STEP)), Arrays.asList("B", "C", "D", "E"));
 
-        compare(spokeRings.getNodes("other", getTime(steps[8] + HALF_STEP)), Arrays.asList("B", "C", "E"));
-        compare(spokeRings.getNodes("other", getTime(steps[9] + HALF_STEP)), Arrays.asList("B", "D", "E"));
-        compare(spokeRings.getNodes("other", getTime(steps[10] + HALF_STEP)), Arrays.asList("B", "C", "E"));
-        compare(spokeRings.getNodes("other", getTime(steps[11] + HALF_STEP)), Arrays.asList("B", "C", "E"));
-        compare(spokeRings.getNodes("other", getTime(steps[12] + HALF_STEP)), Arrays.asList("B", "C", "E"));
-        compare(spokeRings.getNodes("other", getTime(steps[13] + HALF_STEP)), Arrays.asList("B", "C", "D"));
-        compare(spokeRings.getNodes("other", getTime(steps[14] + HALF_STEP)), Arrays.asList("B", "C", "E"));
+        compare(spokeRings.getServers("other", getTime(steps[8] + HALF_STEP)), Arrays.asList("B", "C", "E"));
+        compare(spokeRings.getServers("other", getTime(steps[9] + HALF_STEP)), Arrays.asList("B", "D", "E"));
+        compare(spokeRings.getServers("other", getTime(steps[10] + HALF_STEP)), Arrays.asList("B", "C", "E"));
+        compare(spokeRings.getServers("other", getTime(steps[11] + HALF_STEP)), Arrays.asList("B", "C", "E"));
+        compare(spokeRings.getServers("other", getTime(steps[12] + HALF_STEP)), Arrays.asList("B", "C", "E"));
+        compare(spokeRings.getServers("other", getTime(steps[13] + HALF_STEP)), Arrays.asList("B", "C", "D"));
+        compare(spokeRings.getServers("other", getTime(steps[14] + HALF_STEP)), Arrays.asList("B", "C", "E"));
     }
 
     private void compare(Collection<String> found, Collection<String> expected) {
