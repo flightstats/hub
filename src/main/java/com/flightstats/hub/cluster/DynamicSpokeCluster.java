@@ -1,11 +1,13 @@
 package com.flightstats.hub.cluster;
 
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.api.CuratorEvent;
-import org.apache.curator.framework.api.CuratorEventType;
+import org.apache.curator.framework.recipes.cache.ChildData;
+import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.apache.zookeeper.CreateMode;
 import org.slf4j.Logger;
@@ -25,58 +27,50 @@ public class DynamicSpokeCluster implements Cluster {
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     private CuratorCluster spokeCluster;
-    private WatchManager watchManager;
     private CuratorFramework curator;
     private volatile SpokeRings spokeRings;
+
+    private final PathChildrenCache eventsCache;
 
     private static final String PATH = "/SpokeClusterEvents";
 
     @Inject
     public DynamicSpokeCluster(CuratorFramework curator,
-                               @Named("SpokeCuratorCluster") CuratorCluster spokeCluster,
-                               WatchManager watchManager) {
+                               @Named("SpokeCuratorCluster") CuratorCluster spokeCluster) throws Exception {
         this.curator = curator;
         this.spokeCluster = spokeCluster;
-        this.watchManager = watchManager;
+        eventsCache = new PathChildrenCache(curator, PATH, true);
+        eventsCache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
         createChildWatcher();
         addSpokeClusterListener();
         handleChange();
     }
 
     private void createChildWatcher() {
-        watchManager.register(new Watcher() {
-            @Override
-            public void callback(CuratorEvent event) {
-                logger.debug("watcher callback {}", event);
-                if (event.getType().equals(CuratorEventType.WATCHED)) {
-                    logger.debug("watched {}", event.getType());
-                    handleChange();
-                }
-            }
-
-            @Override
-            public String getPath() {
-                return PATH;
-            }
-
-            @Override
-            public boolean watchChildren() {
-                return true;
-            }
-        });
+        eventsCache.getListenable().addListener(
+                (client, event) -> {
+                    logger.info("event {} {}", event, PATH);
+                    if (event.getType().equals(PathChildrenCacheEvent.Type.CHILD_ADDED)) {
+                        handleChange();
+                    }
+                }, executor);
     }
 
     private void handleChange() {
 
         try {
-            List<String> children = curator.getChildren().forPath(PATH);
-            logger.info("kids {}", children);
+            List<ChildData> currentData = eventsCache.getCurrentData();
+            Set<ClusterEvent> sortedEvents = ClusterEvent.set();
+            for (ChildData data : currentData) {
+                sortedEvents.add(new ClusterEvent(data.getPath(), data.getStat().getMtime()));
+            }
+            logger.info("kids {}", sortedEvents);
             SpokeRings newRings = new SpokeRings();
-            newRings.process(children);
+            newRings.process(sortedEvents);
             logger.info("rings {}", newRings);
             spokeRings = newRings;
         } catch (Exception e) {
-            logger.warn("unable to process Spoke Change");
+            logger.warn("unable to process Spoke Change", e);
         }
     }
 
@@ -122,4 +116,20 @@ public class DynamicSpokeCluster implements Cluster {
         return null;
     }
 
+    public void status(ObjectNode root) {
+        ArrayNode active = root.putArray("active");
+        Set<String> allServers = getAllServers();
+        for (String server : allServers) {
+            active.add(server);
+        }
+
+        spokeRings.status(root);
+    }
+
+    @Override
+    public String toString() {
+        return "DynamicSpokeCluster{" +
+                "spokeRings=" + spokeRings +
+                '}';
+    }
 }

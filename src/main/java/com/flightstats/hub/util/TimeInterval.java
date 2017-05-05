@@ -1,5 +1,6 @@
 package com.flightstats.hub.util;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 
@@ -43,10 +44,7 @@ public class TimeInterval {
 
     @Override
     public String toString() {
-        return "TimeInterval{" +
-                "startTime=" + startTime +
-                ", endTime=" + endTime +
-                '}';
+        return "startTime=" + startTime + ", endTime=" + endTime + '}';
     }
 
     public boolean isAfter(DateTime pointInTime) {
@@ -54,5 +52,12 @@ public class TimeInterval {
             return true;
         }
         return contains(pointInTime);
+    }
+
+    public void status(ObjectNode root) {
+        root.put("start", startTime.toString());
+        if (endTime != null) {
+            root.put("end", endTime.toString());
+        }
     }
 }

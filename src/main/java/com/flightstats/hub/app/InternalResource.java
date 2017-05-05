@@ -8,6 +8,7 @@ import com.flightstats.hub.cluster.InternalZookeeperResource;
 import com.flightstats.hub.health.InternalHealthResource;
 import com.flightstats.hub.metrics.InternalStacktraceResource;
 import com.flightstats.hub.metrics.InternalTracesResource;
+import com.flightstats.hub.spoke.InternalClusterResource;
 import com.flightstats.hub.time.InternalTimeResource;
 import com.flightstats.hub.webhook.InternalWebhookResource;
 import org.apache.commons.lang3.StringUtils;
@@ -42,6 +43,7 @@ public class InternalResource {
         links.with("self").put("href", requestUri);
 
         addLink("channel", InternalChannelResource.DESCRIPTION);
+        addLink("cluster", InternalClusterResource.DESCRIPTION);
         addLink("curator", InternalCuratorResource.DESCRIPTION);
         addLink("health", InternalHealthResource.DESCRIPTION);
         addLink("properties", InternalPropertiesResource.DESCRIPTION);

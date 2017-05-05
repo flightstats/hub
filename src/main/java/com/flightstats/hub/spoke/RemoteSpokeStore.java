@@ -180,6 +180,7 @@ public class RemoteSpokeStore {
     }
 
     public Content get(String channelName, String path, ContentKey key) {
+        //todo - gfm - this needs to use the time interface
         Collection<String> servers = cluster.getRandomServers(channelName);
         for (String server : servers) {
             ClientResponse response = null;
@@ -222,6 +223,7 @@ public class RemoteSpokeStore {
 
     private QueryResult getKeys(String channel, final String path) throws InterruptedException {
         Traces traces = ActiveTraces.getLocal();
+        //todo - gfm - this needs to use the time interval interface
         Collection<String> servers = cluster.getCurrentServers(channel);
         CountDownLatch countDownLatch = new CountDownLatch(servers.size());
         QueryResult queryResult = new QueryResult(servers.size());
@@ -265,6 +267,7 @@ public class RemoteSpokeStore {
     }
 
     public Optional<ContentKey> getLatest(String channel, String path, Traces traces) throws InterruptedException {
+        //todo - gfm - this needs to use the time interface
         Collection<String> servers = cluster.getCurrentServers(channel);
         CountDownLatch countDownLatch = new CountDownLatch(servers.size());
         SortedSet<ContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
@@ -312,6 +315,7 @@ public class RemoteSpokeStore {
     }
 
     public boolean delete(String channel) throws Exception {
+        //todo - gfm - this needs to use the time interval interface
         Collection<String> servers = cluster.getCurrentServers(channel);
         int quorum = servers.size();
         CountDownLatch countDownLatch = new CountDownLatch(quorum);

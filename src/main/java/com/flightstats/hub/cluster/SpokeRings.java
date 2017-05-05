@@ -1,5 +1,7 @@
 package com.flightstats.hub.cluster;
 
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.util.TimeUtil;
 import org.joda.time.DateTime;
@@ -14,14 +16,20 @@ public class SpokeRings implements Ring {
 
     private LinkedList<SpokeRing> spokeRings = new LinkedList<>();
 
+    //todo - gfm - remove this from tests
+    @Deprecated
     public void process(List<String> events) {
-        LinkedList<SpokeRing> firstPass = new LinkedList<>();
         Map<Long, ClusterEvent> orderedEvents = new TreeMap<>();
         for (String event : events) {
-            ClusterEvent clusterEvent = new ClusterEvent(event);
-            orderedEvents.put(clusterEvent.getTime(), clusterEvent);
+            ClusterEvent clusterEvent = new ClusterEvent(event, 0);
+            orderedEvents.put(clusterEvent.getCreationTime(), clusterEvent);
         }
-        for (ClusterEvent clusterEvent : orderedEvents.values()) {
+        process(orderedEvents.values());
+    }
+
+    public void process(Collection<ClusterEvent> events) {
+        LinkedList<SpokeRing> firstPass = new LinkedList<>();
+        for (ClusterEvent clusterEvent : events) {
             if (firstPass.isEmpty()) {
                 if (clusterEvent.isAdded()) {
                     firstPass.add(new SpokeRing(clusterEvent));
@@ -68,4 +76,10 @@ public class SpokeRings implements Ring {
         return nodes;
     }
 
+    public void status(ObjectNode root) {
+        ArrayNode ringsNode = root.putArray("rings");
+        for (SpokeRing ring : spokeRings) {
+            ring.status(ringsNode.addObject());
+        }
+    }
 }

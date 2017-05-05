@@ -1,5 +1,6 @@
 package com.flightstats.hub.cluster;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.util.Hash;
 import com.flightstats.hub.util.TimeInterval;
 import org.joda.time.DateTime;
@@ -38,6 +39,7 @@ class SpokeRing implements Ring {
     SpokeRing(ClusterEvent clusterEvent, SpokeRing previousRing) {
         setStartTime(clusterEvent);
         //todo - gfm - maybe the times should overlap a bit ...
+        //todo - gfm - or, should this use the clusterEvent.modifiedTime ???
         previousRing.setEndTime(this.startTime);
         HashSet<String> nodes = new HashSet<>(previousRing.spokeNodes);
         if (clusterEvent.isAdded()) {
@@ -49,7 +51,7 @@ class SpokeRing implements Ring {
     }
 
     private void setStartTime(ClusterEvent clusterEvent) {
-        this.startTime = new DateTime(clusterEvent.getTime(), DateTimeZone.UTC);
+        this.startTime = new DateTime(clusterEvent.getCreationTime(), DateTimeZone.UTC);
         timeInterval = new TimeInterval(startTime, null);
     }
 
@@ -114,5 +116,10 @@ class SpokeRing implements Ring {
                 ", timeInterval=" + timeInterval +
                 ", rangeSize=" + rangeSize +
                 '}';
+    }
+
+    public void status(ObjectNode root) {
+        root.put("nodes", spokeNodes.toString());
+        timeInterval.status(root);
     }
 }
