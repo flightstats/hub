@@ -12,13 +12,13 @@ import static org.junit.Assert.assertTrue;
 
 public class SpokeRingsTest {
 
-    private static final int STEP = 1000;
+    private static final int STEP = 10 * 1000;
     private static final int HALF_STEP = STEP / 2;
     private long[] steps;
 
     @Before
     public void setUp() throws Exception {
-        long start = System.currentTimeMillis() - 100 * 1000;
+        long start = System.currentTimeMillis() - 100 * STEP;
         steps = new long[100];
         for (int i = 0; i < steps.length; i++) {
             steps[i] = start + STEP * i;
