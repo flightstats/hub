@@ -127,9 +127,15 @@ public class SpokeRingsTest {
         compare(spokeRings.getNodes("other", getTime(steps[2] + HALF_STEP)), Arrays.asList("A", "B", "C"));
         compare(spokeRings.getNodes("other", getTime(steps[3] + HALF_STEP)), Arrays.asList("B", "C", "D"));
         compare(spokeRings.getNodes("other", getTime(steps[4] + HALF_STEP)), Arrays.asList("B", "C", "E"));
+        compare(spokeRings.getNodes("other", getTime(steps[2] + HALF_STEP), getTime(steps[4] + HALF_STEP)), Arrays.asList("A", "B", "C", "D", "E"));
+
         compare(spokeRings.getNodes("other", getTime(steps[5] + HALF_STEP)), Arrays.asList("B", "C", "E"));
+
         compare(spokeRings.getNodes("other", getTime(steps[6] + HALF_STEP)), Arrays.asList("B", "C", "E"));
         compare(spokeRings.getNodes("other", getTime(steps[7] + HALF_STEP)), Arrays.asList("C", "D", "E"));
+
+        compare(spokeRings.getNodes("other", getTime(steps[6] + HALF_STEP), getTime(steps[7] + HALF_STEP)), Arrays.asList("B", "C", "D", "E"));
+
         compare(spokeRings.getNodes("other", getTime(steps[8] + HALF_STEP)), Arrays.asList("B", "C", "E"));
         compare(spokeRings.getNodes("other", getTime(steps[9] + HALF_STEP)), Arrays.asList("B", "D", "E"));
         compare(spokeRings.getNodes("other", getTime(steps[10] + HALF_STEP)), Arrays.asList("B", "C", "E"));
