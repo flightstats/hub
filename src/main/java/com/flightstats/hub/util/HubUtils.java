@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.cluster.Cluster;
-import com.flightstats.hub.cluster.CuratorCluster;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.webhook.Webhook;
 import com.google.common.base.Optional;
@@ -257,7 +256,7 @@ public class HubUtils {
     }
 
     public ObjectNode refreshAll() {
-        Cluster hubCluster = HubProvider.getInstance(CuratorCluster.class, "HubCluster");
+        Cluster hubCluster = HubProvider.getInstance(Cluster.class, "HubCluster");
         ObjectNode root = mapper.createObjectNode();
         Set<String> servers = hubCluster.getAllServers();
         for (String server : servers) {
