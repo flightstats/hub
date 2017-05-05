@@ -38,9 +38,8 @@ class SpokeRing implements Ring {
 
     SpokeRing(ClusterEvent clusterEvent, SpokeRing previousRing) {
         setStartTime(clusterEvent);
-        //todo - gfm - maybe the times should overlap a bit ...
-        //todo - gfm - or, should this use the clusterEvent.modifiedTime ???
-        previousRing.setEndTime(this.startTime);
+        //todo - gfm - maybe the times should overlap a bit more ???
+        previousRing.setEndTime(new DateTime(clusterEvent.getModifiedTime(), DateTimeZone.UTC));
         HashSet<String> nodes = new HashSet<>(previousRing.spokeNodes);
         if (clusterEvent.isAdded()) {
             nodes.add(clusterEvent.getName());
