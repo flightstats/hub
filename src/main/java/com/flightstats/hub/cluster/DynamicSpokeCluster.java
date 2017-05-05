@@ -10,6 +10,7 @@ import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,15 +85,22 @@ public class DynamicSpokeCluster implements Cluster {
         }, executor);
     }
 
-    private void addZkPath(PathChildrenCacheEvent event, boolean added) throws Exception {
+    private void addZkPath(PathChildrenCacheEvent event, boolean added) {
         String nodeName = new String(event.getData().getData());
         long ctime = event.getData().getStat().getCtime();
         String path = PATH + "/" + ClusterEvent.encode(nodeName, ctime, added);
         logger.debug("adding path {} ", path);
-        curator.create()
-                .creatingParentsIfNeeded()
-                .withMode(CreateMode.PERSISTENT)
-                .forPath(path);
+        try {
+            curator.create()
+                    .creatingParentsIfNeeded()
+                    .withMode(CreateMode.PERSISTENT)
+                    .forPath(path);
+        } catch (KeeperException.NodeExistsException e) {
+            logger.debug("node already exists " + e.getMessage());
+        } catch (Exception e) {
+            logger.warn("unexpected " + nodeName, e);
+        }
+
     }
 
     @Override
