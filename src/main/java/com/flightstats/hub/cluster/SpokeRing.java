@@ -50,7 +50,7 @@ class SpokeRing implements Ring {
     }
 
     private void setStartTime(ClusterEvent clusterEvent) {
-        this.startTime = new DateTime(clusterEvent.getCreationTime(), DateTimeZone.UTC);
+        this.startTime = new DateTime(clusterEvent.getModifiedTime(), DateTimeZone.UTC);
         timeInterval = new TimeInterval(startTime, null);
     }
 
