@@ -16,7 +16,7 @@ To insert data to a channel, issue a POST on the channel's `self` URI and specif
 content-type header (all content types should be supported).  The `Content-Encoding` header is optional.
 
 Clustered Hubs using AWS have a configurable max item size, the default is 390 GB.
-A singleHub which only uses Spoke has a default max item size of 40 MB, which is [configurable](hub_install_locally.md)
+A singleHub which only uses Spoke has a default max item size of 40 MB, which is [configurable](hub_install_locally.html)
 
 
 ```
