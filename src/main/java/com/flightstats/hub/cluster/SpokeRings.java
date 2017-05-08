@@ -31,7 +31,7 @@ public class SpokeRings implements Ring {
             }
         }
         LinkedList<SpokeRing> newRings = new LinkedList<>();
-        DateTime spokeTtl = TimeUtil.now().minusMinutes(HubProperties.getSpokeTtl());
+        DateTime spokeTtl = TimeUtil.now().minusMinutes(HubProperties.getSpokeTtlMinutes());
         for (SpokeRing ring : firstPass) {
             if (!ring.endsBefore(spokeTtl)) {
                 newRings.add(ring);

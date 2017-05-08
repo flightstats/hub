@@ -166,7 +166,7 @@ public class SpokeContentDao implements ContentDao {
 
     @Override
     public SortedSet<ContentKey> query(DirectionQuery query) {
-        int ttlMinutes = HubProperties.getSpokeTtl();
+        int ttlMinutes = HubProperties.getSpokeTtlMinutes();
         DateTime spokeTtlTime = TimeUtil.BIG_BANG;
         if (HubProperties.getProperty("spoke.enforceTTL", true)) {
             spokeTtlTime = query.getChannelStable().minusMinutes(ttlMinutes);

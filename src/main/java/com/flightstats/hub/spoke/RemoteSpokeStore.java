@@ -269,7 +269,7 @@ public class RemoteSpokeStore {
     public Optional<ContentKey> getLatest(String channel, String path, Traces traces) throws InterruptedException {
         //todo - gfm - this needs to use the time interface
         //todo - gfm - how much of the range should we use?
-        Collection<String> servers = cluster.getServers(channel);
+        Collection<String> servers = cluster.getAllServers();
         CountDownLatch countDownLatch = new CountDownLatch(servers.size());
         SortedSet<ContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
         for (final String server : servers) {
@@ -316,9 +316,9 @@ public class RemoteSpokeStore {
     }
 
     public boolean delete(String channel) throws Exception {
-        //todo - gfm - this needs to use the time interval interface
-        //todo - gfm - this should use all in Spoke range
-        Collection<String> servers = cluster.getServers(channel);
+        DateTime now = TimeUtil.now();
+        DateTime ttlTime = now.minusMinutes(HubProperties.getSpokeTtlMinutes());
+        Collection<String> servers = cluster.getServers(channel, ttlTime, now);
         int quorum = servers.size();
         CountDownLatch countDownLatch = new CountDownLatch(quorum);
         for (final String server : servers) {
