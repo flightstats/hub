@@ -2,6 +2,7 @@ package com.flightstats.hub.cluster;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.util.TimeInterval;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -64,11 +65,14 @@ class SpokeRing implements Ring {
     }
 
     public Set<String> getServers(String channel) {
-        return strategy.getServers(channel);
+        Set<String> servers = strategy.getServers(channel);
+        ActiveTraces.getLocal().add("ring servers ", servers);
+        return servers;
     }
 
     public Set<String> getServers(String channel, DateTime pointInTime) {
         if (timeInterval.contains(pointInTime)) {
+            ActiveTraces.getLocal().add("ring interval {} contains start {}", this.startTime, startTime);
             return getServers(channel);
         }
         return Collections.emptySet();
@@ -76,6 +80,7 @@ class SpokeRing implements Ring {
 
     public Set<String> getServers(String channel, DateTime startTime, DateTime endTime) {
         if (timeInterval.overlaps(startTime, endTime)) {
+            ActiveTraces.getLocal().add("ring interval {} overlaps start {} end {}", this.startTime, startTime, endTime);
             return getServers(channel);
         }
         return Collections.emptySet();
