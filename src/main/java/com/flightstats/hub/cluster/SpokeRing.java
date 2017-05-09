@@ -2,7 +2,6 @@ package com.flightstats.hub.cluster;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProperties;
-import com.flightstats.hub.util.Hash;
 import com.flightstats.hub.util.TimeInterval;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -18,10 +17,9 @@ class SpokeRing implements Ring {
 
     private static final int OVERLAP_SECONDS = HubProperties.getProperty("spoke.ring.overlap.seconds", 1);
 
-    private List<String> spokeNodes;
-    private long rangeSize;
     private TimeInterval timeInterval;
     private DateTime startTime;
+    private EqualRangesStrategy strategy;
 
     SpokeRing(DateTime startTime, String... nodes) {
         this(startTime, null, nodes);
@@ -43,7 +41,7 @@ class SpokeRing implements Ring {
         previousRing.setEndTime(
                 new DateTime(clusterEvent.getModifiedTime(), DateTimeZone.UTC)
                         .plusSeconds(OVERLAP_SECONDS));
-        HashSet<String> nodes = new HashSet<>(previousRing.spokeNodes);
+        HashSet<String> nodes = new HashSet<>(previousRing.strategy.getAllServers());
         if (clusterEvent.isAdded()) {
             nodes.add(clusterEvent.getName());
         } else {
@@ -58,12 +56,7 @@ class SpokeRing implements Ring {
     }
 
     private void initialize(Collection<String> nodes) {
-        Map<Long, String> hashedNodes = new TreeMap<>();
-        for (String node : nodes) {
-            hashedNodes.put(Hash.hash(node), node);
-        }
-        rangeSize = Hash.getRangeSize(hashedNodes.size());
-        spokeNodes = new ArrayList<>(hashedNodes.values());
+        strategy = new EqualRangesStrategy(nodes);
     }
 
     void setEndTime(DateTime endTime) {
@@ -71,25 +64,7 @@ class SpokeRing implements Ring {
     }
 
     public Set<String> getServers(String channel) {
-        if (spokeNodes.size() <= 3) {
-            return new HashSet<>(spokeNodes);
-        }
-        long hash = Hash.hash(channel);
-        int node = (int) (hash / rangeSize);
-        if (hash < 0) {
-            node = spokeNodes.size() + node - 1;
-        }
-        Set<String> found = new HashSet<>();
-        int minimum = Math.min(3, spokeNodes.size());
-        while (found.size() < minimum) {
-            if (node == spokeNodes.size()) {
-                node = 0;
-            }
-            found.add(spokeNodes.get(node));
-            node++;
-
-        }
-        return found;
+        return strategy.getServers(channel);
     }
 
     public Set<String> getServers(String channel, DateTime pointInTime) {
@@ -114,14 +89,12 @@ class SpokeRing implements Ring {
     public String toString() {
         return "SpokeRing{" +
                 "startTime=" + startTime +
-                ", spokeNodes=" + spokeNodes +
                 ", timeInterval=" + timeInterval +
-                ", rangeSize=" + rangeSize +
                 '}';
     }
 
     public void status(ObjectNode root) {
-        root.put("nodes", spokeNodes.toString());
+        root.put("nodes", strategy.getAllServers().toString());
         timeInterval.status(root);
     }
 }
