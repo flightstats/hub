@@ -2,6 +2,7 @@ package com.flightstats.hub.cluster;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.metrics.ActiveTraces;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -132,11 +133,14 @@ public class DynamicSpokeCluster implements Cluster, Ring {
     }
 
     private Set<String> getServers(Supplier<Set<String>> supplier) {
-        Set<String> servers = spokeCluster.getAllServers();
-        if (servers.size() <= 3) {
-            return servers;
+        Set<String> allServers = spokeCluster.getAllServers();
+        if (allServers.size() <= 3) {
+            return allServers;
         }
-        return Sets.union(servers, supplier.get());
+        Set<String> found = supplier.get();
+        Sets.SetView<String> union = Sets.union(allServers, found);
+        ActiveTraces.getLocal().add("all {} supplier {} union {}", allServers, found);
+        return union;
     }
 
     public void status(ObjectNode root) {

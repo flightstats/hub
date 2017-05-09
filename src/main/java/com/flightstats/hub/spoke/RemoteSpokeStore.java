@@ -215,6 +215,7 @@ public class RemoteSpokeStore {
         DateTime endTime = query.getStartTime().plus(query.getUnit().getDuration());
         Set<String> servers = cluster.getServers(query.getChannelName(), query.getStartTime(), endTime);
         String timePath = query.getUnit().format(query.getStartTime());
+        ActiveTraces.getLocal().add("readTimeBucket start {} end {} servers {}", query.getStartTime(), endTime, servers);
         return getKeys("/internal/spoke/time/" + query.getChannelName() + "/" + timePath, servers);
     }
 
