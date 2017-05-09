@@ -39,7 +39,7 @@ public class SingleContentService implements ContentService {
         ContentKey key = content.getContentKey().get();
         String path = getPath(channelName, content.getContentKey().get());
         if (!fileSpokeStore.insert(path, content.getData())) {
-            throw new FailedWriteException("unable to write to file syste, " + path);
+            throw new FailedWriteException("unable to write to file system, " + path);
         }
         return key;
     }

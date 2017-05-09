@@ -74,7 +74,7 @@ describe(testName, function () {
         utils.postItemQ(pointInThePastURL + '/abcdefg')
             .then(function (value) {
                 hashItem = value.response.headers.location;
-                expect(hashItem).toContain('/abcdefg')
+                expect(hashItem).toContain('/abcdefg');
                 done();
             });
     });
@@ -87,5 +87,36 @@ describe(testName, function () {
                 done();
             });
     });
+
+    // test large item in historical setting
+    var items = [];
+    var location;
+    const SIZE = 41 * 1024 * 1024;
+    var MINUTE = 60 * 1000;
+
+    var payload = {
+        url: channel,
+        headers: {'Content-Type': "text/plain"},
+        body: Array(SIZE).join("a")
+    };
+    var hashItem2;
+
+    it("posts a large item to " + channel, function (done) {
+        utils.postItemQwithPayload(pointInThePastURL + '/large01', payload)
+            .then(function (value) {
+                hashItem2 = value.response.headers.location;
+                expect(hashItem).toContain('/large01');
+                done();
+            });
+    }, 5 * MINUTE);
+
+    it("gets item " + hashItem2, function (done) {
+        request.get({url: hashItem2},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+                done();
+            });
+    }, 5 * MINUTE);
 
 });
