@@ -20,6 +20,7 @@ class SpokeRing implements Ring {
 
     private TimeInterval timeInterval;
     private DateTime startTime;
+    private ClusterEvent clusterEvent;
     private EqualRangesStrategy strategy;
 
     SpokeRing(DateTime startTime, String... nodes) {
@@ -53,6 +54,7 @@ class SpokeRing implements Ring {
 
     private void setStartTime(ClusterEvent clusterEvent) {
         this.startTime = new DateTime(clusterEvent.getModifiedTime(), DateTimeZone.UTC);
+        this.clusterEvent = clusterEvent;
         timeInterval = new TimeInterval(startTime, null);
     }
 
@@ -93,9 +95,13 @@ class SpokeRing implements Ring {
     @Override
     public String toString() {
         return "SpokeRing{" +
-                "startTime=" + startTime +
-                ", timeInterval=" + timeInterval +
+                "timeInterval=" + timeInterval +
+                ", clusterEvent=" + clusterEvent +
                 '}';
+    }
+
+    public ClusterEvent getClusterEvent() {
+        return clusterEvent;
     }
 
     public void status(ObjectNode root) {

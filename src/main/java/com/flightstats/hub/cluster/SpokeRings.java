@@ -8,10 +8,7 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Set;
+import java.util.*;
 
 public class SpokeRings implements Ring {
 
@@ -19,20 +16,24 @@ public class SpokeRings implements Ring {
 
     private LinkedList<SpokeRing> spokeRings = new LinkedList<>();
 
-    public void process(Collection<ClusterEvent> events) {
-        LinkedList<SpokeRing> firstPass = new LinkedList<>();
+    /**
+     * Processes a Collection of ClusterEvents into a List of Rings.
+     * Returns the records which are out of date and can be deleted.
+     */
+    public List<String> process(Collection<ClusterEvent> events) {
+        LinkedList<SpokeRing> initialRings = new LinkedList<>();
         for (ClusterEvent clusterEvent : events) {
-            if (firstPass.isEmpty()) {
+            if (initialRings.isEmpty()) {
                 if (clusterEvent.isAdded()) {
-                    firstPass.add(new SpokeRing(clusterEvent));
+                    initialRings.add(new SpokeRing(clusterEvent));
                 }
             } else {
-                firstPass.add(new SpokeRing(clusterEvent, firstPass.getLast()));
+                initialRings.add(new SpokeRing(clusterEvent, initialRings.getLast()));
             }
         }
         LinkedList<SpokeRing> newRings = new LinkedList<>();
         DateTime spokeTtl = TimeUtil.now().minusMinutes(HubProperties.getSpokeTtlMinutes());
-        for (SpokeRing ring : firstPass) {
+        for (SpokeRing ring : initialRings) {
             if (!ring.endsBefore(spokeTtl)) {
                 newRings.add(ring);
             }
@@ -43,6 +44,12 @@ public class SpokeRings implements Ring {
             }
         }
         spokeRings = newRings;
+        initialRings.removeAll(newRings);
+        List<String> oldEvents = new ArrayList<>();
+        for (SpokeRing ring : initialRings) {
+            oldEvents.add(ring.getClusterEvent().event());
+        }
+        return oldEvents;
     }
 
     @Override

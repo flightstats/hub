@@ -10,6 +10,10 @@ public class EqualRangesStrategy implements RingStrategy {
     private long rangeSize;
 
     EqualRangesStrategy(Collection<String> nodes) {
+        if (nodes.isEmpty()) {
+            spokeNodes = new ArrayList<>();
+            return;
+        }
         Map<Long, String> hashedNodes = new TreeMap<>();
         for (String node : nodes) {
             hashedNodes.put(Hash.hash(node), node);

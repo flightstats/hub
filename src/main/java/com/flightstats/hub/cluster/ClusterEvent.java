@@ -2,7 +2,6 @@ package com.flightstats.hub.cluster;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.ToString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,7 +12,6 @@ import java.util.regex.Pattern;
 
 @Getter
 @EqualsAndHashCode
-@ToString
 class ClusterEvent {
 
     private static final Logger logger = LoggerFactory.getLogger(ClusterEvent.class);
@@ -23,9 +21,11 @@ class ClusterEvent {
     private final String name;
     private final long creationTime;
     private final boolean added;
+    private String event;
     private final long modifiedTime;
 
     ClusterEvent(String event, long modifiedTime) {
+        this.event = event;
         this.modifiedTime = modifiedTime;
         String[] splitEvent = event.split(PIPE);
         creationTime = Long.parseLong(splitEvent[0].split(SLASH)[2]);
@@ -59,5 +59,9 @@ class ClusterEvent {
             }
             return (int) diff;
         };
+    }
+
+    public String event() {
+        return event;
     }
 }
