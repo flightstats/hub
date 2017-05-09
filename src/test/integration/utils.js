@@ -137,7 +137,7 @@ function postItemQwithPayload(url, payload) {
     return deferred.promise;
 };
 
-exports.postItemQwithPaylaod = function (url, payload) {
+exports.postItemQwithPayload = function (url, payload) {
     return postItemQwithPayload(url, payload);
 };
 
