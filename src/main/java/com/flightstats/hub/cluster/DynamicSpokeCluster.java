@@ -138,7 +138,7 @@ public class DynamicSpokeCluster implements Cluster, Ring {
             return allServers;
         }
         Set<String> found = supplier.get();
-        Sets.SetView<String> union = Sets.union(allServers, found);
+        Sets.SetView<String> union = Sets.intersection(allServers, found);
         ActiveTraces.getLocal().add("all {} supplier {} union {}", allServers, found);
         return union;
     }
