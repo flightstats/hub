@@ -101,22 +101,53 @@ describe(testName, function () {
     };
     var hashItem2;
 
-    it("posts a large item to " + channel, function (done) {
-        utils.postItemQwithPayload(pointInThePastURL + '/large01', payload)
-            .then(function (value) {
-                hashItem2 = value.response.headers.location;
-                expect(hashItem).toContain('/large01');
-                done();
-            });
+    // it("posts a large item to " + channel, function (done) {
+    //     utils.postItemQwithPayload(pointInThePastURL + '/large01', payload)
+    //         .then(function (value) {
+    //             hashItem2 = value.response.headers.location;
+    //             expect(hashItem).toContain('/large01');
+    //             done();
+    //         });
+    // }, 5 * MINUTE);
+    //
+    // it("gets item " + hashItem2, function (done) {
+    //     request.get({url: hashItem2},
+    //         function (err, response, body) {
+    //             expect(err).toBeNull();
+    //             expect(response.statusCode).toBe(200);
+    //             done();
+    //         });
+    // }, 5 * MINUTE);
+    var execute = true;
+
+    it("posts a large historical item to " + channel, function (done) {
+        if (execute) {
+            request.post({
+                    url: channel,
+                    headers: {'Content-Type': "text/plain"},
+                    body: Array(SIZE).join("a")
+                },
+                function (err, response, body) {
+                    hashItem2 = response.headers.location;
+                    expect(err).toBeNull();
+                    console.log(location);
+                    done();
+                });
+        } else {
+            done();
+        }
     }, 5 * MINUTE);
 
-    it("gets item " + hashItem2, function (done) {
-        request.get({url: hashItem2},
-            function (err, response, body) {
-                expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
-                done();
-            });
+    it("gets item " + channel, function (done) {
+        if (execute) {
+            request.get({url: hashItem2},
+                function (err, response, body) {
+                    expect(err).toBeNull();
+                    expect(response.statusCode).toBe(200);
+                    done();
+                });
+        } else {
+            done();
+        }
     }, 5 * MINUTE);
-
 });
