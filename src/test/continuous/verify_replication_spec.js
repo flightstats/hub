@@ -73,11 +73,12 @@ describe(testName, function () {
     it('gets lists of replicated items', function (done) {
         async.eachLimit(validReplicatedChannelUrls, 20,
             function (channel, callback) {
-                agent.get(channel + '/time/hour?stable=false')
+                agent.get(channel + '/time/hour?stable=false&trace=true')
                     .set('Accept', 'application/json')
                     .end(function (res) {
                         expect(res.error).toBe(false);
                         channels[channel] = [];
+                        console.log("hours", res.body);
                         agent.get(res.body._links.previous.href)
                             .set('Accept', 'application/json')
                             .end(function (res) {
