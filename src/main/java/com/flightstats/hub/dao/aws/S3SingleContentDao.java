@@ -195,6 +195,9 @@ public class S3SingleContentDao implements ContentDao {
             keys = new ContentKeySet(count, limitKey);
         }
         logger.trace("list {} {} {}", channel, request.getPrefix(), request.getMarker());
+        //todo - gfm - this needs to include the prefix during previous queries
+        //2017-05-10T19:03:26.661Z [S3SingleContentDao.iterateListObjects prefix:, null, FFM_FleetTables/2017/05/10/19]
+
         traces.add("S3SingleContentDao.iterateListObjects prefix:", request.getPrefix(), request.getMarker());
         ObjectListing listing = getObjectListing(request, channel);
         ContentKey marker = addKeys(channel, listing, keys);
