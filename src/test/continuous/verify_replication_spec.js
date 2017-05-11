@@ -78,11 +78,12 @@ describe(testName, function () {
                     .end(function (res) {
                         expect(res.error).toBe(false);
                         channels[channel] = [];
-                        console.log("hours", res.body);
+                        console.log("hour", res.body);
                         agent.get(res.body._links.previous.href)
                             .set('Accept', 'application/json')
                             .end(function (res) {
                                 expect(res.error).toBe(false);
+                                console.log("prev", res.body);
                                 channels[channel] = res.body._links.uris.concat(channels[channel]);
                                 console.log('found dest second ', channels[channel][0]);
                                 callback(res.error);
