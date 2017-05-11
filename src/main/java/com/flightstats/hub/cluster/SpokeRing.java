@@ -81,11 +81,15 @@ class SpokeRing implements Ring {
     }
 
     public Set<String> getServers(String channel, DateTime startTime, DateTime endTime) {
-        if (timeInterval.overlaps(startTime, endTime)) {
+        if (overlaps(startTime, endTime)) {
             ActiveTraces.getLocal().add("ring interval {} overlaps start {} end {}", this.startTime, startTime, endTime);
             return getServers(channel);
         }
         return Collections.emptySet();
+    }
+
+    boolean overlaps(DateTime startTime, DateTime endTime) {
+        return timeInterval.overlaps(startTime, endTime);
     }
 
     boolean endsBefore(DateTime endTime) {
@@ -100,7 +104,7 @@ class SpokeRing implements Ring {
                 '}';
     }
 
-    public ClusterEvent getClusterEvent() {
+    ClusterEvent getClusterEvent() {
         return clusterEvent;
     }
 

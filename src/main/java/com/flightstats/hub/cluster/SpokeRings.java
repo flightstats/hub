@@ -32,15 +32,14 @@ public class SpokeRings implements Ring {
             }
         }
         LinkedList<SpokeRing> newRings = new LinkedList<>();
-        DateTime spokeTtl = TimeUtil.now().minusMinutes(HubProperties.getSpokeTtlMinutes());
+        DateTime now = TimeUtil.now();
+        DateTime spokeTtl = now.minusMinutes(HubProperties.getSpokeTtlMinutes() + 1);
         for (SpokeRing ring : initialRings) {
-            if (!ring.endsBefore(spokeTtl)) {
+            if (ring.overlaps(spokeTtl, now)) {
                 newRings.add(ring);
-            }
-        }
-        if (logger.isDebugEnabled()) {
-            for (SpokeRing newRing : newRings) {
-                logger.debug("new ring {}", newRing);
+                logger.debug("new ring {}", ring);
+            } else {
+                logger.debug("old ring {}", ring);
             }
         }
         spokeRings = newRings;
