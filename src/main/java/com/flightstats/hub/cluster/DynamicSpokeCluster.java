@@ -43,7 +43,7 @@ public class DynamicSpokeCluster implements Cluster, Ring {
 
     private final PathChildrenCache eventsCache;
 
-    private static final String PATH = "/SpokeClusterEvents";
+    static final String PATH = "/SpokeClusterEvents";
 
     @Inject
     public DynamicSpokeCluster(CuratorFramework curator,
@@ -65,7 +65,8 @@ public class DynamicSpokeCluster implements Cluster, Ring {
             List<String> oldEvents = handleChanges(false);
             logger.info("cleaning up old cluster info {}", oldEvents);
             for (String oldEvent : oldEvents) {
-                curator.delete().forPath(oldEvent);
+                logger.info("would have deleted {}", oldEvent);
+                //curator.delete().forPath(oldEvent);
             }
             logger.info("cleaned up old cluster info");
         }

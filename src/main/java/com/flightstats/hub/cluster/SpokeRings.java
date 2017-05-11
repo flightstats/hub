@@ -34,6 +34,7 @@ public class SpokeRings implements Ring {
         LinkedList<SpokeRing> newRings = new LinkedList<>();
         DateTime now = TimeUtil.now();
         DateTime spokeTtl = now.minusMinutes(HubProperties.getSpokeTtlMinutes() + 1);
+        logger.info("spoke minutes {} spokeTTL {} millis {}", HubProperties.getSpokeTtlMinutes(), spokeTtl, spokeTtl.getMillis());
         for (SpokeRing ring : initialRings) {
             if (ring.overlaps(spokeTtl, now)) {
                 newRings.add(ring);
