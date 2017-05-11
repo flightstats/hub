@@ -2,6 +2,7 @@ package com.flightstats.hub.cluster;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.ToString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,6 +13,7 @@ import java.util.regex.Pattern;
 
 @Getter
 @EqualsAndHashCode
+@ToString
 class ClusterEvent {
 
     private static final Logger logger = LoggerFactory.getLogger(ClusterEvent.class);
