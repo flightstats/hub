@@ -99,7 +99,8 @@ class SpokeRing implements Ring {
     @Override
     public String toString() {
         return "SpokeRing{" +
-                "timeInterval=" + timeInterval +
+                "nodes=" + strategy.getAllServers() +
+                ", timeInterval=" + timeInterval +
                 ", clusterEvent=" + clusterEvent +
                 '}';
     }
