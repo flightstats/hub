@@ -91,16 +91,10 @@ public class RemoteSpokeStore {
     }
 
     boolean testAll() throws UnknownHostException {
+        Collection<String> servers = new HashSet<>(cluster.getServers(RandomStringUtils.randomAlphabetic(3)));
+        servers.addAll(cluster.getLocalServer());
         logger.info("*********************************************");
-        Collection<String> servers = cluster.getServers(RandomStringUtils.randomAlphabetic(3));
         logger.info("testing servers {}", servers);
-        Collection<String> localServer = cluster.getLocalServer();
-        if (localServer.isEmpty()) {
-            logger.warn("local server is emtpy? {}", localServer);
-        } else {
-            servers.add(localServer.iterator().next());
-        }
-        logger.info("");
         logger.info("*********************************************");
         String path = HubHost.getLocalAddressPort();
         for (String server : servers) {
