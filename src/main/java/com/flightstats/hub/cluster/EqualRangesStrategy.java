@@ -30,6 +30,7 @@ public class EqualRangesStrategy implements RingStrategy {
             return new HashSet<>(spokeNodes);
         }
         long hash = Hash.hash(channel);
+
         int node = (int) (hash / rangeSize);
         if (hash < 0) {
             node = spokeNodes.size() + node - 1;
