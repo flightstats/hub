@@ -19,7 +19,6 @@ import org.slf4j.LoggerFactory;
 
 import java.net.UnknownHostException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -62,11 +61,12 @@ public class DynamicSpokeCluster implements Cluster, Ring {
 
         @Override
         protected synchronized void runOneIteration() throws Exception {
-            List<String> oldEvents = handleChanges(false);
+            Collection<ClusterEvent> oldEvents = spokeRings.generateOld(getClusterEvents());
             logger.info("cleaning up old cluster info {}", oldEvents);
-            for (String oldEvent : oldEvents) {
-                logger.info("would have deleted {}", oldEvent);
-                //curator.delete().forPath(oldEvent);
+            for (ClusterEvent oldEvent : oldEvents) {
+                String fullPath = PATH + "/" + oldEvent.encode();
+                logger.info("would have deleted {}", fullPath);
+                //curator.delete().forPath(fullPath);
             }
             logger.info("cleaned up old cluster info");
         }
@@ -88,26 +88,28 @@ public class DynamicSpokeCluster implements Cluster, Ring {
                 }, executor);
     }
 
-    private List<String> handleChanges(boolean assign) {
-        List<String> emptyList = Collections.emptyList();
+    private void handleChanges(boolean assign) {
         try {
-            List<ChildData> currentData = eventsCache.getCurrentData();
-            Set<ClusterEvent> sortedEvents = ClusterEvent.set();
-            for (ChildData data : currentData) {
-                sortedEvents.add(new ClusterEvent(data.getPath(), data.getStat().getMtime()));
-            }
+            Set<ClusterEvent> sortedEvents = getClusterEvents();
             logger.info("kids {}", sortedEvents);
             SpokeRings newRings = new SpokeRings();
-            List<String> oldEvents = newRings.process(sortedEvents);
+            newRings.process(sortedEvents);
             logger.info("rings {}", newRings);
             if (assign) {
                 spokeRings = newRings;
             }
-            return oldEvents;
         } catch (Exception e) {
-            logger.warn("unable to process Spoke Change", e);
+            logger.warn("unable to process Spoke Cluster Change", e);
         }
-        return emptyList;
+    }
+
+    private Set<ClusterEvent> getClusterEvents() {
+        List<ChildData> currentData = eventsCache.getCurrentData();
+        Set<ClusterEvent> sortedEvents = ClusterEvent.set();
+        for (ChildData data : currentData) {
+            sortedEvents.add(new ClusterEvent(data.getPath(), data.getStat().getMtime()));
+        }
+        return sortedEvents;
     }
 
     private void addSpokeClusterListener() {

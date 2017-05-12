@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.util.TimeInterval;
+import lombok.EqualsAndHashCode;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
@@ -14,6 +15,7 @@ import java.util.*;
  * There must always be a start time.
  * The end time is only used if this cluster is no longer active.
  */
+@EqualsAndHashCode(of = {"clusterEvent", "strategy"})
 class SpokeRing implements Ring {
 
     private static final int OVERLAP_SECONDS = HubProperties.getProperty("spoke.ring.overlap.seconds", 1);

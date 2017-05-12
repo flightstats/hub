@@ -1,9 +1,11 @@
 package com.flightstats.hub.cluster;
 
 import com.flightstats.hub.util.Hash;
+import lombok.EqualsAndHashCode;
 
 import java.util.*;
 
+@EqualsAndHashCode
 public class EqualRangesStrategy implements RingStrategy {
 
     private List<String> spokeNodes;

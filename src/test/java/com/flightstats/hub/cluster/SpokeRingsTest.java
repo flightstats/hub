@@ -95,7 +95,7 @@ public class SpokeRingsTest {
     public void test5NodeRollingRestart() {
         Collection<ClusterEvent> events = ClusterEvent.set();
 
-        addRollingRestarts(events);
+        addRollingRestarts(events, 0);
 
         SpokeRings spokeRings = new SpokeRings();
         spokeRings.process(events);
@@ -129,56 +129,67 @@ public class SpokeRingsTest {
         compare(spokeRings.getServers("other", getTime(steps[14] + HALF_STEP)), Arrays.asList("B", "C", "E"));
     }
 
-    private void addRollingRestarts(Collection<ClusterEvent> events) {
+    private void addRollingRestarts(Collection<ClusterEvent> events, long offset) {
 
+        events.add(new ClusterEvent("/SCE/" + (steps[0] + offset) + "|A|ADDED", (steps[0] + offset)));
+        events.add(new ClusterEvent("/SCE/" + (steps[1] + offset) + "|B|ADDED", (steps[1] + offset)));
+        events.add(new ClusterEvent("/SCE/" + (steps[2] + offset) + "|C|ADDED", (steps[2] + offset)));
+        events.add(new ClusterEvent("/SCE/" + (steps[3] + offset) + "|D|ADDED", (steps[3] + offset)));
+        events.add(new ClusterEvent("/SCE/" + (steps[4] + offset) + "|E|ADDED", (steps[4] + offset)));
+        events.add(new ClusterEvent("/SCE/" + (steps[0] + offset) + "|A|REMOVED", (steps[5] + offset)));
 
-        events.add(new ClusterEvent("/SCE/" + steps[0] + "|A|ADDED", steps[0]));
-        events.add(new ClusterEvent("/SCE/" + steps[1] + "|B|ADDED", steps[1]));
-
-        events.add(new ClusterEvent("/SCE/" + steps[2] + "|C|ADDED", steps[2]));
-        events.add(new ClusterEvent("/SCE/" + steps[3] + "|D|ADDED", steps[3]));
-        events.add(new ClusterEvent("/SCE/" + steps[4] + "|E|ADDED", steps[4]));
-
-        events.add(new ClusterEvent("/SCE/" + steps[0] + "|A|REMOVED", steps[5]));
-        events.add(new ClusterEvent("/SCE/" + steps[6] + "|A|ADDED", steps[6]));
-
-        events.add(new ClusterEvent("/SCE/" + steps[1] + "|B|REMOVED", steps[7]));
-        events.add(new ClusterEvent("/SCE/" + steps[8] + "|B|ADDED", steps[8]));
-
-        events.add(new ClusterEvent("/SCE/" + steps[2] + "|C|REMOVED", steps[9]));
-        events.add(new ClusterEvent("/SCE/" + steps[10] + "|C|ADDED", steps[10]));
-
-        events.add(new ClusterEvent("/SCE/" + steps[3] + "|D|REMOVED", steps[11]));
-        events.add(new ClusterEvent("/SCE/" + steps[12] + "|D|ADDED", steps[12]));
-
-        events.add(new ClusterEvent("/SCE/" + steps[4] + "|E|REMOVED", steps[13]));
-        events.add(new ClusterEvent("/SCE/" + steps[14] + "|E|ADDED", steps[14]));
+        events.add(new ClusterEvent("/SCE/" + (steps[6] + offset) + "|A|ADDED", (steps[6] + offset)));//
+        events.add(new ClusterEvent("/SCE/" + (steps[1] + offset) + "|B|REMOVED", (steps[7] + offset)));
+        events.add(new ClusterEvent("/SCE/" + (steps[8] + offset) + "|B|ADDED", (steps[8] + offset)));
+        events.add(new ClusterEvent("/SCE/" + (steps[2] + offset) + "|C|REMOVED", (steps[9] + offset)));
+        events.add(new ClusterEvent("/SCE/" + (steps[10] + offset) + "|C|ADDED", (steps[10] + offset)));
+        events.add(new ClusterEvent("/SCE/" + (steps[3] + offset) + "|D|REMOVED", (steps[11] + offset)));
+        events.add(new ClusterEvent("/SCE/" + (steps[12] + offset) + "|D|ADDED", (steps[12] + offset)));
+        events.add(new ClusterEvent("/SCE/" + (steps[4] + offset) + "|E|REMOVED", (steps[13] + offset)));
+        events.add(new ClusterEvent("/SCE/" + (steps[14] + offset) + "|E|ADDED", (steps[14] + offset)));
     }
 
     @Test
-    public void testProcessReturn() {
+    public void testProcessCycleGenerateOld() {
         int spokeTtlMinutes = HubProperties.getSpokeTtlMinutes() + 100;
+        long offset = -TimeUnit.MILLISECONDS.convert(spokeTtlMinutes, TimeUnit.MINUTES);
 
         Collection<ClusterEvent> events = ClusterEvent.set();
-
-        long beforeTime = start - TimeUnit.MILLISECONDS.convert(spokeTtlMinutes, TimeUnit.MINUTES);
-
-        String first = "/SCE/" + beforeTime + "|A|ADDED";
-        events.add(new ClusterEvent(first, beforeTime));
-        String second = "/SCE/" + beforeTime + "|A|REMOVED";
-        events.add(new ClusterEvent(second, beforeTime + HALF_STEP));
-        long beforeTime2 = beforeTime + STEP;
-        String third = "/SCE/" + beforeTime2 + "|B|ADDED";
-        events.add(new ClusterEvent(third, beforeTime2));
-        events.add(new ClusterEvent("/SCE/" + beforeTime2 + "|B|REMOVED", beforeTime2 + HALF_STEP));
-
-        addRollingRestarts(events);
+        addRollingRestarts(events, offset);
+        addRollingRestarts(events, 0);
 
         SpokeRings spokeRings = new SpokeRings();
-        List<String> process = spokeRings.process(events);
-        assertEquals(3, process.size());
-        assertTrue(process.containsAll(Arrays.asList(first, second, third)));
+        Collection<ClusterEvent> oldEventIds = spokeRings.generateOld(events);
+        assertEquals(10, oldEventIds.size());
+        Set<ClusterEvent> oldSet = new HashSet<>(oldEventIds);
+        Collection<ClusterEvent> filteredEvents = ClusterEvent.set();
+        for (ClusterEvent event : events) {
+            if (!oldSet.contains(event)) {
+                filteredEvents.add(event);
+            }
+        }
+        assertEquals(20, filteredEvents.size());
+        SpokeRings newRings = new SpokeRings();
+        Collection<ClusterEvent> newOldEventIds = newRings.generateOld(filteredEvents);
+
+        assertEquals(0, spokeRings.compareTo(newRings));
+        assertEquals(0, newOldEventIds.size());
     }
+
+    @Test
+    public void testProcessCycle2() {
+        int spokeTtlMinutes = HubProperties.getSpokeTtlMinutes() + 100;
+        long offset = -TimeUnit.MILLISECONDS.convert(spokeTtlMinutes, TimeUnit.MINUTES);
+
+        Collection<ClusterEvent> events = ClusterEvent.set();
+        addRollingRestarts(events, offset);
+        addRollingRestarts(events, 0);
+
+        for (ClusterEvent event : events) {
+            System.out.println(event);
+        }
+    }
+
 
     private void compare(Collection<String> found, Collection<String> expected) {
         assertEquals(expected.size(), found.size());
