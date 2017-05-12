@@ -60,13 +60,11 @@ public class DynamicSpokeCluster implements Cluster, Ring {
     private class DynamicSpokeClusterService extends AbstractScheduledService {
 
         @Override
-        protected synchronized void runOneIteration() throws Exception {
+        protected synchronized void runOneIteration() {
             Collection<ClusterEvent> oldEvents = spokeRings.generateOld(getClusterEvents());
             logger.info("cleaning up old cluster info {}", oldEvents);
             for (ClusterEvent oldEvent : oldEvents) {
-                String fullPath = PATH + "/" + oldEvent.encode();
-                logger.info("would have deleted {}", fullPath);
-                //curator.delete().forPath(fullPath);
+                delete(oldEvent);
             }
             logger.info("cleaned up old cluster info");
         }
@@ -76,6 +74,16 @@ public class DynamicSpokeCluster implements Cluster, Ring {
             return Scheduler.newFixedDelaySchedule(0, 6, TimeUnit.HOURS);
         }
 
+    }
+
+    private void delete(ClusterEvent oldEvent) {
+        try {
+            String fullPath = PATH + "/" + oldEvent.encode();
+            logger.info("deleted {}", fullPath);
+            curator.delete().forPath(fullPath);
+        } catch (Exception e) {
+            logger.warn("unable to delete " + oldEvent, e);
+        }
     }
 
     private void createChildWatcher() {
