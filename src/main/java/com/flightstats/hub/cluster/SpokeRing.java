@@ -23,7 +23,7 @@ class SpokeRing implements Ring {
     private TimeInterval timeInterval;
     private DateTime startTime;
     private ClusterEvent clusterEvent;
-    private EqualRangesStrategy strategy;
+    private ConsistentHashStrategy strategy;
 
     SpokeRing(DateTime startTime, String... nodes) {
         this(startTime, null, nodes);
@@ -61,7 +61,7 @@ class SpokeRing implements Ring {
     }
 
     private void initialize(Collection<String> nodes) {
-        strategy = new EqualRangesStrategy(nodes);
+        strategy = new ConsistentHashStrategy(nodes);
     }
 
     void setEndTime(DateTime endTime) {
