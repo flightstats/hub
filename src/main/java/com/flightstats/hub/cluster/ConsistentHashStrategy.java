@@ -1,5 +1,6 @@
 package com.flightstats.hub.cluster;
 
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.util.Hash;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
@@ -11,7 +12,7 @@ import java.util.*;
 public class ConsistentHashStrategy implements RingStrategy {
 
     private final HashFunction hashFunction = Hashing.farmHashFingerprint64();
-    private final int numberOfReplicas = 128;
+    private final int numberOfReplicas = HubProperties.getProperty("consistent.hashing.replicas", 256);
     private final SortedMap<Long, String> circle = new TreeMap<>();
     private List<String> spokeNodes = new ArrayList<>();
 
