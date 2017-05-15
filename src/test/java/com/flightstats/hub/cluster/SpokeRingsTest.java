@@ -8,10 +8,11 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
-import java.util.TreeSet;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class SpokeRingsTest {
 
@@ -24,6 +25,7 @@ public class SpokeRingsTest {
     @Before
     public void setUp() throws Exception {
         HubProperties.setProperty("consistent.hashing.replicas", "128");
+        HubProperties.setProperty("spoke.ring.strategy", "EqualRangesStrategy");
         start = System.currentTimeMillis() - 100 * STEP;
         steps = new long[100];
         for (int i = 0; i < steps.length; i++) {
@@ -31,7 +33,7 @@ public class SpokeRingsTest {
         }
     }
 
-    /*@Test
+    @Test
     public void test3Nodes() {
         List<ClusterEvent> clusterEvents = new ArrayList<>();
         clusterEvents.add(new ClusterEvent("/SCE/" + steps[0] + "|A|ADDED", steps[0]));
@@ -64,9 +66,9 @@ public class SpokeRingsTest {
         compare(spokeRings.getServers("channel2", getTime(steps[0])), (Arrays.asList("A")));
         compare(spokeRings.getServers("channel2", getTime(steps[1])), (Arrays.asList("A", "B")));
         compare(spokeRings.getServers("channel2", getTime(steps[2])), (Arrays.asList("A", "B", "C")));
-        compare(spokeRings.getServers("channel2", getTime(steps[3])), (Arrays.asList("A", "B", "D")));
+        compare(spokeRings.getServers("channel2", getTime(steps[3])), (Arrays.asList("A", "B", "C", "D")));
         compare(spokeRings.getServers("channel2", getTime(steps[0]), getTime(steps[3])), (Arrays.asList("A", "B", "C", "D")));
-        compare(spokeRings.getServers("channel2", getTime(steps[3]), getTime(steps[4])), (Arrays.asList("A", "B", "D")));
+        compare(spokeRings.getServers("channel2", getTime(steps[3]), getTime(steps[4])), (Arrays.asList("A", "B", "C", "D")));
     }
 
     @Test
@@ -191,11 +193,6 @@ public class SpokeRingsTest {
         for (ClusterEvent event : events) {
             System.out.println(event);
         }
-    }*/
-
-    @Test
-    public void testNothing() {
-        //todo - gfm - fix these
     }
 
     private void compare(Collection<String> found, Collection<String> expected) {

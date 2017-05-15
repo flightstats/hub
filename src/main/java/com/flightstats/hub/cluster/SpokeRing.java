@@ -19,11 +19,12 @@ import java.util.*;
 class SpokeRing implements Ring {
 
     private static final int OVERLAP_SECONDS = HubProperties.getProperty("spoke.ring.overlap.seconds", 1);
+    private static final String RING_STRATEGY = HubProperties.getProperty("spoke.ring.strategy", "ConsistentHashStrategy");
 
     private TimeInterval timeInterval;
     private DateTime startTime;
     private ClusterEvent clusterEvent;
-    private ConsistentHashStrategy strategy;
+    private RingStrategy strategy;
 
     SpokeRing(DateTime startTime, String... nodes) {
         this(startTime, null, nodes);
@@ -61,7 +62,11 @@ class SpokeRing implements Ring {
     }
 
     private void initialize(Collection<String> nodes) {
-        strategy = new ConsistentHashStrategy(nodes);
+        if (RING_STRATEGY.equalsIgnoreCase("EqualRangesStrategy")) {
+            strategy = new EqualRangesStrategy(nodes);
+        } else {
+            strategy = new ConsistentHashStrategy(nodes);
+        }
     }
 
     void setEndTime(DateTime endTime) {
