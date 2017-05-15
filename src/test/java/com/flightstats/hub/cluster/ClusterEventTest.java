@@ -13,7 +13,7 @@ public class ClusterEventTest {
 
     @Test
     public void testParse() {
-        ClusterEvent clusterEvent = new ClusterEvent("10|A|ADDED", 10);
+        ClusterEvent clusterEvent = new ClusterEvent("/SCE/10|A|ADDED", 10);
         assertEquals(10, clusterEvent.getCreationTime());
         assertEquals("A", clusterEvent.getName());
         assertTrue(clusterEvent.isAdded());
@@ -22,10 +22,10 @@ public class ClusterEventTest {
     @Test
     public void testSorting() {
         Set<ClusterEvent> events = ClusterEvent.set();
-        events.add(new ClusterEvent("10|A|REMOVED", 21));
-        events.add(new ClusterEvent("20|B|ADDED", 20));
-        events.add(new ClusterEvent("20|B|REMOVED", 30));
-        events.add(new ClusterEvent("10|A|ADDED", 10));
+        events.add(new ClusterEvent("/SCE/10|A|REMOVED", 21));
+        events.add(new ClusterEvent("/SCE/20|B|ADDED", 20));
+        events.add(new ClusterEvent("/SCE/20|B|REMOVED", 30));
+        events.add(new ClusterEvent("/SCE/10|A|ADDED", 10));
 
         List<ClusterEvent> eventsList = new ArrayList<>(events);
         assertEquals("10|A|ADDED", eventsList.get(0).encode());

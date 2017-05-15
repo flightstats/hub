@@ -1,5 +1,7 @@
 package com.flightstats.hub.cluster;
 
+import com.flightstats.hub.app.HubProperties;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -12,6 +14,11 @@ import static org.junit.Assert.assertTrue;
 public class ConsistentHashStrategyTest {
 
     private ConsistentHashStrategy strategy;
+
+    @Before
+    public void setUp() throws Exception {
+        HubProperties.setProperty("consistent.hashing.replicas", "128");
+    }
 
     @Test
     public void testTwo() {
