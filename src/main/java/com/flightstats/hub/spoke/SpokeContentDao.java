@@ -94,7 +94,7 @@ public class SpokeContentDao implements ContentDao {
         Traces traces = ActiveTraces.getLocal();
         traces.add("SpokeContentDao.read");
         try {
-            return spokeStore.get(path, key);
+            return spokeStore.get(channelName, path, key);
         } catch (Exception e) {
             logger.warn("unable to get data: " + path, e);
             return null;

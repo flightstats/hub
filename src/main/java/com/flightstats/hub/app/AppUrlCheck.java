@@ -1,6 +1,6 @@
 package com.flightstats.hub.app;
 
-import com.flightstats.hub.cluster.CuratorCluster;
+import com.flightstats.hub.cluster.Cluster;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -16,8 +16,8 @@ class AppUrlCheck extends AbstractIdleService {
     private final static Logger logger = LoggerFactory.getLogger(AppUrlCheck.class);
 
     @Inject
-    @Named("SpokeCuratorCluster")
-    private CuratorCluster spokeCuratorCluster;
+    @Named("SpokeCluster")
+    private Cluster spokeCuratorCluster;
 
     @Inject
     private Client client;
@@ -28,7 +28,7 @@ class AppUrlCheck extends AbstractIdleService {
 
     @Override
     protected void startUp() throws Exception {
-        if (spokeCuratorCluster.getServers().isEmpty()) {
+        if (spokeCuratorCluster.getAllServers().isEmpty()) {
             logger.info("no servers to test");
         } else {
             String appUrl = HubProperties.getAppUrl();

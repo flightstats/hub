@@ -1,6 +1,6 @@
 package com.flightstats.hub.cluster;
 
-import com.flightstats.hub.app.HubHost;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -8,6 +8,7 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
+import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
@@ -15,9 +16,10 @@ import org.slf4j.LoggerFactory;
 
 import java.net.UnknownHostException;
 import java.util.*;
+import java.util.concurrent.Executor;
 
 @Singleton
-public class CuratorCluster {
+public class CuratorCluster implements Cluster {
 
     private final static Logger logger = LoggerFactory.getLogger(CuratorCluster.class);
     private final CuratorFramework curator;
@@ -36,12 +38,20 @@ public class CuratorCluster {
     }
 
     public void addCacheListener() {
-        clusterCache.getListenable().addListener((client, event) -> {
+        addListener((client, event) -> {
             logger.info("event {} {}", event, clusterPath);
             if (event.getType().equals(PathChildrenCacheEvent.Type.CONNECTION_RECONNECTED)) {
                 register();
             }
         });
+    }
+
+    private void addListener(PathChildrenCacheListener listener) {
+        addListener(listener, MoreExecutors.directExecutor());
+    }
+
+    void addListener(PathChildrenCacheListener listener, Executor executor) {
+        clusterCache.getListenable().addListener(listener, executor);
     }
 
     public void register() throws UnknownHostException {
@@ -64,21 +74,15 @@ public class CuratorCluster {
         return fullPath;
     }
 
-    private static String getHost(boolean useName) {
-        if (useName) {
-            return HubHost.getLocalNamePort();
-        } else {
-            return HubHost.getLocalAddressPort();
-        }
-    }
-
-    public static Collection<String> getLocalServer() throws UnknownHostException {
+    @Override
+    public Collection<String> getLocalServer() throws UnknownHostException {
         List<String> server = new ArrayList<>();
         server.add(getHost(false));
         return server;
     }
 
-    public Set<String> getServers() {
+    @Override
+    public Set<String> getAllServers() {
         Set<String> servers = new HashSet<>();
         List<ChildData> currentData = clusterCache.getCurrentData();
         for (ChildData childData : currentData) {
@@ -90,16 +94,9 @@ public class CuratorCluster {
         return servers;
     }
 
-    public List<String> getRandomServers() {
-        List<String> servers = new ArrayList<>(getServers());
-        Collections.shuffle(servers);
-        return servers;
-    }
-
-    public List<String> getRandomRemoteServers() {
-        List<String> servers = getRandomServers();
-        servers.remove(getHost(useName));
-        return servers;
+    @Override
+    public Set<String> getCurrentServers(String channel) {
+        return getAllServers();
     }
 
     public void delete() {
