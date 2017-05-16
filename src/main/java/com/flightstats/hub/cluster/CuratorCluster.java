@@ -40,7 +40,7 @@ public class CuratorCluster implements Cluster {
 
     public void addCacheListener() {
         addListener((client, event) -> {
-            logger.info("event {} {}", event, clusterPath);
+            logger.debug("event {} {}", event, clusterPath);
             if (event.getType().equals(PathChildrenCacheEvent.Type.CONNECTION_RECONNECTED)) {
                 register();
             }
@@ -59,7 +59,7 @@ public class CuratorCluster implements Cluster {
         String host = getHost(useName);
         try {
             logger.info("registering host {} {}", host, clusterPath);
-            curator.create().withMode(CreateMode.EPHEMERAL).forPath(getFullPath(true), host.getBytes());
+            curator.create().withMode(CreateMode.EPHEMERAL).forPath(getFullPath(), host.getBytes());
         } catch (KeeperException.NodeExistsException e) {
             logger.warn("node already exists {} {} - not likely in prod", host, clusterPath);
         } catch (Exception e) {
@@ -68,10 +68,8 @@ public class CuratorCluster implements Cluster {
         }
     }
 
-    private String getFullPath(boolean create) throws UnknownHostException {
-        if (create) {
-            fullPath = clusterPath + "/" + getHost(useName) + RandomStringUtils.randomAlphanumeric(6);
-        }
+    private String getFullPath() throws UnknownHostException {
+        fullPath = clusterPath + "/" + getHost(useName) + RandomStringUtils.randomAlphanumeric(6);
         return fullPath;
     }
 

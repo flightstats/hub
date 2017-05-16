@@ -34,7 +34,7 @@ import static com.flightstats.hub.app.HubServices.register;
 public class DynamicSpokeCluster implements Cluster, Ring {
 
     private static final Logger logger = LoggerFactory.getLogger(DynamicSpokeCluster.class);
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private static final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     private CuratorCluster spokeCluster;
     private CuratorFramework curator;
@@ -42,7 +42,7 @@ public class DynamicSpokeCluster implements Cluster, Ring {
 
     private final PathChildrenCache eventsCache;
 
-    static final String PATH = "/SpokeClusterEvents";
+    private static final String PATH = "/SpokeClusterEvents";
 
     @Inject
     public DynamicSpokeCluster(CuratorFramework curator,
