@@ -180,6 +180,7 @@ public class S3SingleContentDao implements ContentDao {
             request.withPrefix(query.getChannelName() + "/" + timePath);
             limitKey = ContentKey.lastKey(query.getStartTime().plus(query.getUnit().getDuration()));
         } else {
+            request.withPrefix(query.getChannelName() + "/");
             request.withMarker(query.getChannelName() + "/" + timePath);
         }
         SortedSet<ContentKey> keys = iterateListObjects(query.getChannelName(), request, MAX_ITEMS, query.getCount(), limitKey);
