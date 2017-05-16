@@ -25,6 +25,7 @@ public class Content implements Serializable {
     private Long size;
     private transient boolean isLarge;
     private transient int threads;
+    private transient boolean isHistorical;
 
     private Content(Builder builder) {
         contentKey = builder.contentKey;
@@ -65,6 +66,16 @@ public class Content implements Serializable {
     public void setContentLength(long contentLength) {
         this.contentLength = contentLength;
     }
+
+    public void setHistorical(boolean isHistorical) {
+        this.isHistorical = isHistorical;
+    }
+
+    public boolean isHistorical() {
+        return this.isHistorical;
+    }
+
+    ;
 
     public InputStream getStream() {
         if (stream == null) {

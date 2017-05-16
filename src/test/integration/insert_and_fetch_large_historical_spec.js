@@ -51,8 +51,6 @@ describe(testName, function () {
 
     var pointInThePastURL = channelResource + '/' + mutableTime.format('YYYY/MM/DD/HH/mm/ss/SSS');
     var hashItem;
-    console.log("url");
-    console.log(pointInThePastURL);
     it("posts a large historical item to " + channelName, function (done) {
         if (execute) {
             request.post({
@@ -63,8 +61,6 @@ describe(testName, function () {
                 function (err, response, body) {
                     hashItem = response.headers.location;
                     expect(err).toBeNull();
-                    console.log("hashItem");
-                    console.log(hashItem);
                     done();
                 });
         } else {
@@ -74,7 +70,6 @@ describe(testName, function () {
 
     it("gets item " + channelName, function (done) {
         if (execute) {
-            console.log(hashItem);
             request.get({url: hashItem},
                 function (err, response, body) {
                     expect(err).toBeNull();

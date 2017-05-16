@@ -73,7 +73,7 @@ public class S3LargeContentDao implements ContentDao {
         long start = System.currentTimeMillis();
         int length = 0;
         List<PartETag> partETags = Collections.synchronizedList(new ArrayList<>());
-        String s3Key = getS3ContentKey(channelName, key);
+        String s3Key = getS3ContentKey(channelName, key, content.isHistorical());
         String name = s3BucketName.getS3BucketName();
         String uploadId = "";
         boolean completed = false;
@@ -166,7 +166,7 @@ public class S3LargeContentDao implements ContentDao {
 
     @Override
     public void delete(String channelName, ContentKey key) {
-        String s3ContentKey = getS3ContentKey(channelName, key);
+        String s3ContentKey = getS3ContentKey(channelName, key, false);
         s3Client.deleteObject(s3BucketName.getS3BucketName(), s3ContentKey);
         ActiveTraces.getLocal().add("S3largeContentDao.deleted", s3ContentKey);
     }
@@ -194,7 +194,7 @@ public class S3LargeContentDao implements ContentDao {
     private Content getS3Object(String channelName, ContentKey key) throws IOException {
         long start = System.currentTimeMillis();
         try {
-            S3Object object = s3Client.getObject(s3BucketName.getS3BucketName(), getS3ContentKey(channelName, key));
+            S3Object object = s3Client.getObject(s3BucketName.getS3BucketName(), getS3ContentKey(channelName, key, false));
             ObjectMetadata metadata = object.getObjectMetadata();
             Map<String, String> userData = metadata.getUserMetadata();
             /*if (userData.containsKey("compressed")) {
@@ -228,8 +228,10 @@ public class S3LargeContentDao implements ContentDao {
         throw new UnsupportedOperationException("the large dao only deals with large objects, queries are tracked using the small dao");
     }
 
-    private String getS3ContentKey(String channelName, ContentKey key) {
-        return channelName + "/large/" + key.toUrl();
+    private String getS3ContentKey(String channelName, ContentKey key, boolean isHistorical) {
+        return isHistorical ?
+                channelName + "/" + key.toUrl()
+                : channelName + "/large/" + key.toUrl();
     }
 
     @Override
