@@ -62,6 +62,10 @@ public class Content implements Serializable {
         this.contentKey = Optional.of(contentKey);
     }
 
+    public void setContentLength(long contentLength) {
+        this.contentLength = contentLength;
+    }
+
     public InputStream getStream() {
         if (stream == null) {
             return new ByteArrayInputStream(getData());
