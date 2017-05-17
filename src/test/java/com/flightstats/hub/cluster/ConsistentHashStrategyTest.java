@@ -1,12 +1,12 @@
 package com.flightstats.hub.cluster;
 
 import com.flightstats.hub.app.HubProperties;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -63,5 +63,48 @@ public class ConsistentHashStrategyTest {
         assertEquals(expectedList.size(), nodesFound.size());
         System.out.println("found " + channel + " found " + nodesFound + " expected " + expectedList);
         assertTrue(nodesFound.containsAll(expectedList));
+    }
+
+    @Test
+    public void testEvenDistribution() {
+
+        runStrategy(getNodes(3));
+        runStrategy(getNodes(4));
+        runStrategy(getNodes(5));
+        runStrategy(getNodes(6));
+        runStrategy(getNodes(7));
+        runStrategy(getNodes(9));
+        runStrategy(getNodes(11));
+        runStrategy(getNodes(13));
+    }
+
+    private List<String> getNodes(int count) {
+        List<String> nodes = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            nodes.add("10.10.120." + i + ":8080");
+        }
+        return nodes;
+    }
+
+    private void runStrategy(List<String> nodes) {
+        ConsistentHashStrategy strategy = new ConsistentHashStrategy(nodes);
+        Map<String, AtomicInteger> values = new HashMap<>();
+
+        int loops = 100 * 1000;
+        for (int i = 0; i < loops; i++) {
+            String channel = RandomStringUtils.randomAlphanumeric(12);
+            Set<String> servers = strategy.getServers(channel);
+            for (String server : servers) {
+                AtomicInteger integer = values.getOrDefault(server, new AtomicInteger());
+                integer.addAndGet(1);
+                values.put(server, integer);
+            }
+        }
+
+        for (Map.Entry<String, AtomicInteger> entry : values.entrySet()) {
+            int count = entry.getValue().get();
+            int expected = loops * 3 / nodes.size();
+            assertEquals(expected, count, expected * 0.1);
+        }
     }
 }
