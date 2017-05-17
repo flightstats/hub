@@ -225,6 +225,7 @@ public class RemoteSpokeStore {
 
     private QueryResult getKeys(final String path, Collection<String> servers) throws InterruptedException {
         Traces traces = ActiveTraces.getLocal();
+        traces.add("servers", servers);
         CountDownLatch countDownLatch = new CountDownLatch(servers.size());
         QueryResult queryResult = new QueryResult(servers.size());
         for (final String server : servers) {
