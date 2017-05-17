@@ -78,16 +78,7 @@ public class S3LargeContentDao implements ContentDao {
         String uploadId = "";
         boolean completed = false;
         try {
-            ObjectMetadata metadata = new ObjectMetadata();
-            if (content.getContentType().isPresent()) {
-                metadata.setContentType(content.getContentType().get());
-                metadata.addUserMetadata("type", content.getContentType().get());
-            } else {
-                metadata.addUserMetadata("type", "none");
-            }
-            if (useEncrypted) {
-                metadata.setSSEAlgorithm(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
-            }
+            ObjectMetadata metadata = S3SingleContentDao.createObjectMetadata(content, useEncrypted);
             InitiateMultipartUploadRequest initRequest = new InitiateMultipartUploadRequest(name, s3Key, metadata);
             InitiateMultipartUploadResult initResponse = s3Client.initiateMultipartUpload(initRequest);
             uploadId = initResponse.getUploadId();
