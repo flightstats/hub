@@ -85,21 +85,12 @@ public class S3SingleContentDao implements ContentDao {
         int length = 0;
         try {
             String s3Key = getS3ContentKey(channelName, key);
-            ObjectMetadata metadata = new ObjectMetadata();
+            ObjectMetadata metadata = S3SingleContentDao.createObjectMetadata(content, useEncrypted);
             byte[] bytes = handler.apply(metadata);
             length = bytes.length;
             logger.trace("insert {} {} {} {}", channelName, key, content.getSize(), length);
             InputStream stream = new ByteArrayInputStream(bytes);
             metadata.setContentLength(length);
-            if (content.getContentType().isPresent()) {
-                metadata.setContentType(content.getContentType().get());
-                metadata.addUserMetadata("type", content.getContentType().get());
-            } else {
-                metadata.addUserMetadata("type", "none");
-            }
-            if (useEncrypted) {
-                metadata.setSSEAlgorithm(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
-            }
             PutObjectRequest request = new PutObjectRequest(s3BucketName.getS3BucketName(), s3Key, stream, metadata);
             s3Client.putObject(request);
             return key;
@@ -326,5 +317,19 @@ public class S3SingleContentDao implements ContentDao {
         public String toString() {
             return "com.flightstats.hub.dao.aws.S3SingleContentDao.S3SingleContentDaoBuilder(metricsService=" + this.metricsService + ", s3Client=" + this.s3Client + ", s3BucketName=" + this.s3BucketName + ")";
         }
+    }
+
+    public static ObjectMetadata createObjectMetadata(Content content, boolean useEncrypted) {
+        ObjectMetadata metadata = new ObjectMetadata();
+        if (content.getContentType().isPresent()) {
+            metadata.setContentType(content.getContentType().get());
+            metadata.addUserMetadata("type", content.getContentType().get());
+        } else {
+            metadata.addUserMetadata("type", "none");
+        }
+        if (useEncrypted) {
+            metadata.setSSEAlgorithm(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
+        }
+        return metadata;
     }
 }

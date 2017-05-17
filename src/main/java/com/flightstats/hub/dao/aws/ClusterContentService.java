@@ -114,7 +114,11 @@ public class ClusterContentService implements ContentService {
 
     @Override
     public boolean historicalInsert(String channelName, Content content) throws Exception {
-        s3SingleContentDao.insertHistorical(channelName, content);
+        if (content.isLarge()) {
+            largePayloadContentDao.insertHistorical(channelName, content);
+        } else {
+            s3SingleContentDao.insertHistorical(channelName, content);
+        }
         return true;
     }
 
