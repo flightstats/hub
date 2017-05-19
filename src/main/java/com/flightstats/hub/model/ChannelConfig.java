@@ -41,6 +41,7 @@ public class ChannelConfig implements Serializable, NamedType {
     Date creationDate;
     long ttlDays;
     long maxItems;
+    boolean keepForever;
     String description;
     Set<String> tags;
     String replicationSource;
@@ -50,7 +51,7 @@ public class ChannelConfig implements Serializable, NamedType {
     DateTime mutableTime;
     boolean allowZeroBytes;
 
-    private ChannelConfig(String name, String owner, Date creationDate, long ttlDays, long maxItems, String description,
+    private ChannelConfig(String name, String owner, Date creationDate, long ttlDays, long maxItems, boolean keepForever, String description,
                           Set<String> tags, String replicationSource, String storage, GlobalConfig global,
                           boolean protect, DateTime mutableTime, boolean allowZeroBytes) {
         this.name = StringUtils.trim(name);
@@ -61,6 +62,7 @@ public class ChannelConfig implements Serializable, NamedType {
         this.replicationSource = replicationSource;
         this.mutableTime = mutableTime;
         this.allowZeroBytes = allowZeroBytes;
+        this.keepForever = keepForever;  // keepForever overrides all other retention policies
         if (maxItems == 0 && ttlDays == 0 && mutableTime == null) {
             this.ttlDays = 120;
             this.maxItems = 0;
@@ -126,6 +128,7 @@ public class ChannelConfig implements Serializable, NamedType {
 
         if (rootNode.has("owner")) builder.owner(getString(rootNode.get("owner")));
         if (rootNode.has("description")) builder.description(getString(rootNode.get("description")));
+        if (rootNode.has("keepForever")) builder.keepForever(rootNode.get("keepForever").asBoolean());
         if (rootNode.has("ttlDays")) builder.ttlDays(rootNode.get("ttlDays").asLong());
         if (rootNode.has("maxItems")) builder.maxItems(rootNode.get("maxItems").asLong());
         if (rootNode.has("tags")) builder.tags(getSet(rootNode.get("tags")));
@@ -168,6 +171,7 @@ public class ChannelConfig implements Serializable, NamedType {
     }
 
     public DateTime getTtlTime() {
+        //bc todo: keepForever - what should we return if keep forever is set?
         if (isHistorical()) {
             return mutableTime.plusMillis(1);
         }
@@ -226,6 +230,10 @@ public class ChannelConfig implements Serializable, NamedType {
         return this.creationDate;
     }
 
+    public boolean getKeepForever() {
+        return this.keepForever;
+    }
+
     public long getTtlDays() {
         return this.ttlDays;
     }
@@ -280,6 +288,7 @@ public class ChannelConfig implements Serializable, NamedType {
         final Object other$creationDate = other.getCreationDate();
         if (this$creationDate == null ? other$creationDate != null : !this$creationDate.equals(other$creationDate))
             return false;
+        if (this.getKeepForever() != other.getKeepForever()) return false;
         if (this.getTtlDays() != other.getTtlDays()) return false;
         if (this.getMaxItems() != other.getMaxItems()) return false;
         final Object this$description = this.getDescription();
@@ -317,6 +326,8 @@ public class ChannelConfig implements Serializable, NamedType {
         result = result * PRIME + ($owner == null ? 43 : $owner.hashCode());
         final Object $creationDate = this.getCreationDate();
         result = result * PRIME + ($creationDate == null ? 43 : $creationDate.hashCode());
+        final boolean $keepForever = this.getKeepForever();
+        result = result * PRIME + ($keepForever ? 1 : 0);
         final long $ttlDays = this.getTtlDays();
         result = result * PRIME + (int) ($ttlDays >>> 32 ^ $ttlDays);
         final long $maxItems = this.getMaxItems();
@@ -346,6 +357,7 @@ public class ChannelConfig implements Serializable, NamedType {
         return new ChannelConfigBuilder(this);
     }
 
+
     @SuppressWarnings("unused")
     public static class ChannelConfigBuilder {
         private String owner = "";
@@ -357,6 +369,7 @@ public class ChannelConfig implements Serializable, NamedType {
         private boolean protect = HubProperties.isProtected();
         private boolean allowZeroBytes = true;
         private String name;
+        private boolean keepForever;
         private long ttlDays;
         private long maxItems;
         private GlobalConfig global;
@@ -375,6 +388,7 @@ public class ChannelConfig implements Serializable, NamedType {
             protect(config.isProtect());
             allowZeroBytes(config.isAllowZeroBytes());
             name(config.getName());
+            keepForever(config.getKeepForever());
             ttlDays(config.getTtlDays());
             maxItems(config.getMaxItems());
             global(config.getGlobal());
@@ -405,6 +419,11 @@ public class ChannelConfig implements Serializable, NamedType {
 
         public ChannelConfigBuilder creationDate(Date creationDate) {
             this.creationDate = creationDate;
+            return this;
+        }
+
+        public ChannelConfigBuilder keepForever(boolean keepForever) {
+            this.keepForever = keepForever;
             return this;
         }
 
@@ -454,11 +473,13 @@ public class ChannelConfig implements Serializable, NamedType {
         }
 
         public ChannelConfig build() {
-            return new ChannelConfig(name, owner, creationDate, ttlDays, maxItems, description, tags, replicationSource, storage, global, protect, mutableTime, allowZeroBytes);
+            return new ChannelConfig(name, owner, creationDate, ttlDays, maxItems, keepForever, description, tags, replicationSource, storage, global, protect, mutableTime, allowZeroBytes);
         }
 
         public String toString() {
             return "com.flightstats.hub.model.ChannelConfig.ChannelConfigBuilder(owner=" + this.owner + ", creationDate=" + this.creationDate + ", description=" + this.description + ", tags=" + this.tags + ", replicationSource=" + this.replicationSource + ", storage=" + this.storage + ", protect=" + this.protect + ", allowZeroBytes=" + this.allowZeroBytes + ", name=" + this.name + ", ttlDays=" + this.ttlDays + ", maxItems=" + this.maxItems + ", global=" + this.global + ", mutableTime=" + this.mutableTime + ")";
         }
+
+
     }
 }

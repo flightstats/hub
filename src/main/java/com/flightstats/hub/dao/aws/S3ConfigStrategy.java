@@ -19,7 +19,9 @@ class S3ConfigStrategy {
     static List<BucketLifecycleConfiguration.Rule> apportion(Iterable<ChannelConfig> channelConfigs, DateTime timeForSharding, int max) {
         List<BucketLifecycleConfiguration.Rule> rules = new ArrayList<>();
         for (ChannelConfig config : channelConfigs) {
-            addRule(rules, config);
+            if (!config.getKeepForever()) {  // no rule = keep forever
+                addRule(rules, config);
+            }
         }
         if (rules.size() <= max) {
             return rules;

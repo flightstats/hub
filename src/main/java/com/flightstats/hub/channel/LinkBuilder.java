@@ -66,6 +66,7 @@ public class LinkBuilder {
         ArrayNode tags = root.putArray("tags");
         config.getTags().forEach(tags::add);
         root.put("ttlDays", config.getTtlDays());
+        root.put("keepForever", config.getKeepForever());
 
         ObjectNode links = root.putObject("_links");
         addLink(links, "self",          uriInfo.getBaseUriBuilder().path("channel").path(config.getName()).build());
