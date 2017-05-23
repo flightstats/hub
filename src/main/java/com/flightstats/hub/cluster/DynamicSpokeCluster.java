@@ -53,7 +53,7 @@ public class DynamicSpokeCluster implements Cluster, Ring {
         eventsCache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
         createChildWatcher();
         addSpokeClusterListener();
-        handleChanges(true);
+        handleChanges();
         register(new DynamicSpokeClusterService(), AFTER_HEALTHY_START, PRE_STOP);
     }
 
@@ -91,21 +91,19 @@ public class DynamicSpokeCluster implements Cluster, Ring {
                 (client, event) -> {
                     logger.info("event {} {}", event, PATH);
                     if (event.getType().equals(PathChildrenCacheEvent.Type.CHILD_ADDED)) {
-                        handleChanges(true);
+                        handleChanges();
                     }
                 }, executor);
     }
 
-    private void handleChanges(boolean assign) {
+    private void handleChanges() {
         try {
             Set<ClusterEvent> sortedEvents = getClusterEvents();
             logger.info("kids {}", sortedEvents);
             SpokeRings newRings = new SpokeRings();
             newRings.process(sortedEvents);
             logger.info("rings {}", newRings);
-            if (assign) {
-                spokeRings = newRings;
-            }
+            spokeRings = newRings;
         } catch (Exception e) {
             logger.warn("unable to process Spoke Cluster Change", e);
         }

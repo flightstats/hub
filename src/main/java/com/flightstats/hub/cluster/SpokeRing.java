@@ -61,7 +61,8 @@ class SpokeRing implements Ring {
     }
 
     private void initialize(Collection<String> nodes) {
-        if (HubProperties.getProperty("spoke.ring.strategy", "ConsistentHashStrategy").equalsIgnoreCase("EqualRangesStrategy")) {
+        String property = HubProperties.getProperty("spoke.ring.strategy", "ConsistentHashStrategy");
+        if (property.equalsIgnoreCase("EqualRangesStrategy")) {
             strategy = new EqualRangesStrategy(nodes);
         } else {
             strategy = new ConsistentHashStrategy(nodes);
