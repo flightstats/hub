@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.util.TimeInterval;
-import lombok.EqualsAndHashCode;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
@@ -15,7 +14,6 @@ import java.util.*;
  * There must always be a start time.
  * The end time is only used if this cluster is no longer active.
  */
-@EqualsAndHashCode(of = {"clusterEvent", "strategy"})
 class SpokeRing implements Ring {
 
     private static final int OVERLAP_SECONDS = HubProperties.getProperty("spoke.ring.overlap.seconds", 1);
@@ -119,5 +117,34 @@ class SpokeRing implements Ring {
     public void status(ObjectNode root) {
         root.put("nodes", strategy.getAllServers().toString());
         timeInterval.status(root);
+    }
+
+    public boolean equals(Object o) {
+        if (o == this) return true;
+        if (!(o instanceof SpokeRing)) return false;
+        final SpokeRing other = (SpokeRing) o;
+        if (!other.canEqual((Object) this)) return false;
+        final Object this$clusterEvent = this.getClusterEvent();
+        final Object other$clusterEvent = other.getClusterEvent();
+        if (this$clusterEvent == null ? other$clusterEvent != null : !this$clusterEvent.equals(other$clusterEvent))
+            return false;
+        final Object this$strategy = this.strategy;
+        final Object other$strategy = other.strategy;
+        if (this$strategy == null ? other$strategy != null : !this$strategy.equals(other$strategy)) return false;
+        return true;
+    }
+
+    public int hashCode() {
+        final int PRIME = 59;
+        int result = 1;
+        final Object $clusterEvent = this.getClusterEvent();
+        result = result * PRIME + ($clusterEvent == null ? 43 : $clusterEvent.hashCode());
+        final Object $strategy = this.strategy;
+        result = result * PRIME + ($strategy == null ? 43 : $strategy.hashCode());
+        return result;
+    }
+
+    protected boolean canEqual(Object other) {
+        return other instanceof SpokeRing;
     }
 }
