@@ -76,7 +76,7 @@ dependencies {
 
     compile 'de.danielbechler:java-object-diff:0.94'
 
-    compile 'com.amazonaws:aws-java-sdk:1.11.68'
+    compile 'com.amazonaws:aws-java-sdk:1.11.133'
     compile 'org.apache.curator:curator-recipes:2.11.1'
     testCompile 'org.apache.curator:curator-test:2.11.1'
     testCompile 'org.testng:testng:6.10'
