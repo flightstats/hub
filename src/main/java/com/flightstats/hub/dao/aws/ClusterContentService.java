@@ -43,7 +43,7 @@ public class ClusterContentService implements ContentService {
     private static final String CHANNEL_LATEST_UPDATED = "/ChannelLatestUpdated/";
     private static final long largePayload = HubProperties.getLargePayload();
     private final boolean dropSomeWrites = HubProperties.getProperty("s3.dropSomeWrites", false);
-    private final int spokeTtlMinutes = HubProperties.getSpokeTtl();
+    private final int spokeTtlMinutes = HubProperties.getSpokeTtlMinutes();
     @Inject
     @Named(ContentDao.CACHE)
     private ContentDao spokeContentDao;

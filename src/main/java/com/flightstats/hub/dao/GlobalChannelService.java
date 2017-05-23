@@ -34,7 +34,7 @@ public class GlobalChannelService implements ChannelService {
     @Named(ContentDao.CACHE)
     private ContentDao spokeContentDao;
 
-    private final int spokeTtlMinutes = HubProperties.getSpokeTtl();
+    private final int spokeTtlMinutes = HubProperties.getSpokeTtlMinutes();
 
     public static <X> X handleGlobal(ChannelConfig channel, Supplier<X> standard, Supplier<X> satellite, Supplier<X> master) {
         if (channel.isGlobal()) {

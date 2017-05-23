@@ -12,58 +12,89 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
-public class SpokeRings implements Ring {
+public class SpokeRings implements Ring, Comparable<SpokeRings> {
 
     private static final Logger logger = LoggerFactory.getLogger(SpokeRings.class);
 
     private LinkedList<SpokeRing> spokeRings = new LinkedList<>();
 
+    /**
+     * Processes a Collection of ClusterEvents into a List of Rings.
+     */
     public void process(Collection<ClusterEvent> events) {
-        LinkedList<SpokeRing> firstPass = new LinkedList<>();
+        spokeRings = createRings(events);
+    }
+
+    private LinkedList<SpokeRing> createRings(Collection<ClusterEvent> events) {
+        LinkedList<SpokeRing> initialRings = new LinkedList<>();
         for (ClusterEvent clusterEvent : events) {
-            if (firstPass.isEmpty()) {
+            if (initialRings.isEmpty()) {
                 if (clusterEvent.isAdded()) {
-                    firstPass.add(new SpokeRing(clusterEvent));
+                    initialRings.add(new SpokeRing(clusterEvent));
                 }
             } else {
-                firstPass.add(new SpokeRing(clusterEvent, firstPass.getLast()));
+                initialRings.add(new SpokeRing(clusterEvent, initialRings.getLast()));
             }
         }
         LinkedList<SpokeRing> newRings = new LinkedList<>();
-        DateTime spokeTtl = TimeUtil.now().minusMinutes(HubProperties.getSpokeTtl());
-        for (SpokeRing ring : firstPass) {
-            if (!ring.endsBefore(spokeTtl)) {
+        DateTime now = TimeUtil.now();
+        DateTime spokeTtl = now.minusMinutes(getSpokeTtlMinutes());
+        logger.info("spoke minutes {} spokeTTL {} millis {}", HubProperties.getSpokeTtlMinutes(), spokeTtl, spokeTtl.getMillis());
+        for (SpokeRing ring : initialRings) {
+            if (ring.overlaps(spokeTtl, now)) {
                 newRings.add(ring);
+                logger.debug("new ring {}", ring);
+            } else {
+                logger.debug("old ring {}", ring);
             }
         }
-        if (logger.isDebugEnabled()) {
-            for (SpokeRing newRing : newRings) {
-                logger.debug("new ring {}", newRing);
+        return newRings;
+    }
+
+    private int getSpokeTtlMinutes() {
+        return HubProperties.getSpokeTtlMinutes() + 1;
+    }
+
+    /**
+     * Returns the ClusterEvents which are out of date and can be deleted.
+     */
+    Collection<ClusterEvent> generateOld(Collection<ClusterEvent> events) {
+        long spokeTtlTime = System.currentTimeMillis() - TimeUnit.MILLISECONDS.convert(getSpokeTtlMinutes(), TimeUnit.MINUTES);
+        Set<ClusterEvent> oldEvents = ClusterEvent.set();
+        for (ClusterEvent event : events) {
+            if (!event.isAdded() && event.getModifiedTime() < spokeTtlTime) {
+                for (ClusterEvent clusterEvent : events) {
+                    if (clusterEvent.getCreationTime() == event.getCreationTime()) {
+                        oldEvents.add(clusterEvent);
+                    }
+                }
             }
         }
-        spokeRings = newRings;
+        return oldEvents;
+    }
+
+
+    @Override
+    public Set<String> getServers(String channel) {
+        return spokeRings.getLast().getServers(channel);
     }
 
     @Override
-    public Collection<String> getNodes(String channel) {
-        return spokeRings.getLast().getNodes(channel);
-    }
-
-    @Override
-    public Collection<String> getNodes(String channel, DateTime pointInTime) {
+    public Set<String> getServers(String channel, DateTime pointInTime) {
         Set<String> nodes = new HashSet<>();
         for (SpokeRing spokeRing : spokeRings) {
-            nodes.addAll(spokeRing.getNodes(channel, pointInTime));
+            nodes.addAll(spokeRing.getServers(channel, pointInTime));
         }
         return nodes;
     }
 
     @Override
-    public Collection<String> getNodes(String channel, DateTime startTime, DateTime endTime) {
+    public Set<String> getServers(String channel, DateTime startTime, DateTime endTime) {
         Set<String> nodes = new HashSet<>();
         for (SpokeRing spokeRing : spokeRings) {
-            nodes.addAll(spokeRing.getNodes(channel, startTime, endTime));
+            nodes.addAll(spokeRing.getServers(channel, startTime, endTime));
         }
         return nodes;
     }
@@ -73,5 +104,23 @@ public class SpokeRings implements Ring {
         for (SpokeRing ring : spokeRings) {
             ring.status(ringsNode.addObject());
         }
+    }
+
+
+    @Override
+    public int compareTo(SpokeRings other) {
+        int diff = spokeRings.size() - other.spokeRings.size();
+        if (diff == 0) {
+            for (int i = 0; i < spokeRings.size(); i++) {
+                SpokeRing ring1 = spokeRings.get(i);
+                SpokeRing ring2 = other.spokeRings.get(i);
+                if (!ring1.equals(ring2)) {
+                    logger.info("unequal ring1 {} ", ring1);
+                    logger.info("unequal ring2 {} ", ring2);
+                    return -1;
+                }
+            }
+        }
+        return diff;
     }
 }

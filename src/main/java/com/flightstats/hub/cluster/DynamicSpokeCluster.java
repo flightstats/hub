@@ -2,6 +2,8 @@ package com.flightstats.hub.cluster;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -11,6 +13,7 @@ import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,12 +23,18 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
+
+import static com.flightstats.hub.app.HubServices.TYPE.AFTER_HEALTHY_START;
+import static com.flightstats.hub.app.HubServices.TYPE.PRE_STOP;
+import static com.flightstats.hub.app.HubServices.register;
 
 @Singleton
-public class DynamicSpokeCluster implements Cluster {
+public class DynamicSpokeCluster implements Cluster, Ring {
 
     private static final Logger logger = LoggerFactory.getLogger(DynamicSpokeCluster.class);
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private static final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     private CuratorCluster spokeCluster;
     private CuratorFramework curator;
@@ -44,7 +53,37 @@ public class DynamicSpokeCluster implements Cluster {
         eventsCache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
         createChildWatcher();
         addSpokeClusterListener();
-        handleChange();
+        handleChanges();
+        register(new DynamicSpokeClusterService(), AFTER_HEALTHY_START, PRE_STOP);
+    }
+
+    private class DynamicSpokeClusterService extends AbstractScheduledService {
+
+        @Override
+        protected synchronized void runOneIteration() {
+            Collection<ClusterEvent> oldEvents = spokeRings.generateOld(getClusterEvents());
+            logger.info("cleaning up old cluster info {}", oldEvents);
+            for (ClusterEvent oldEvent : oldEvents) {
+                delete(oldEvent);
+            }
+            logger.info("cleaned up old cluster info");
+        }
+
+        @Override
+        protected AbstractScheduledService.Scheduler scheduler() {
+            return Scheduler.newFixedDelaySchedule(0, 6, TimeUnit.HOURS);
+        }
+
+    }
+
+    private void delete(ClusterEvent oldEvent) {
+        try {
+            String fullPath = PATH + "/" + oldEvent.encode();
+            logger.info("deleted {}", fullPath);
+            curator.delete().forPath(fullPath);
+        } catch (Exception e) {
+            logger.warn("unable to delete " + oldEvent, e);
+        }
     }
 
     private void createChildWatcher() {
@@ -52,27 +91,31 @@ public class DynamicSpokeCluster implements Cluster {
                 (client, event) -> {
                     logger.info("event {} {}", event, PATH);
                     if (event.getType().equals(PathChildrenCacheEvent.Type.CHILD_ADDED)) {
-                        handleChange();
+                        handleChanges();
                     }
                 }, executor);
     }
 
-    private void handleChange() {
-
+    private void handleChanges() {
         try {
-            List<ChildData> currentData = eventsCache.getCurrentData();
-            Set<ClusterEvent> sortedEvents = ClusterEvent.set();
-            for (ChildData data : currentData) {
-                sortedEvents.add(new ClusterEvent(data.getPath(), data.getStat().getMtime()));
-            }
+            Set<ClusterEvent> sortedEvents = getClusterEvents();
             logger.info("kids {}", sortedEvents);
             SpokeRings newRings = new SpokeRings();
             newRings.process(sortedEvents);
             logger.info("rings {}", newRings);
             spokeRings = newRings;
         } catch (Exception e) {
-            logger.warn("unable to process Spoke Change", e);
+            logger.warn("unable to process Spoke Cluster Change", e);
         }
+    }
+
+    private Set<ClusterEvent> getClusterEvents() {
+        List<ChildData> currentData = eventsCache.getCurrentData();
+        Set<ClusterEvent> sortedEvents = ClusterEvent.set();
+        for (ChildData data : currentData) {
+            sortedEvents.add(new ClusterEvent(data.getPath(), data.getStat().getMtime()));
+        }
+        return sortedEvents;
     }
 
     private void addSpokeClusterListener() {
@@ -114,14 +157,26 @@ public class DynamicSpokeCluster implements Cluster {
     }
 
     @Override
-    public Set<String> getCurrentServers(String channel) {
-        Set<String> servers = spokeCluster.getAllServers();
-        if (servers.size() <= 3) {
-            return servers;
-        }
+    public Set<String> getServers(String channel) {
+        return getServers(() -> spokeRings.getServers(channel));
+    }
 
-        //todo - gfm - add in rings
-        return null;
+    @Override
+    public Set<String> getServers(String channel, DateTime pointInTime) {
+        return getServers(() -> spokeRings.getServers(channel, pointInTime));
+    }
+
+    @Override
+    public Set<String> getServers(String channel, DateTime startTime, DateTime endTime) {
+        return getServers(() -> spokeRings.getServers(channel, startTime, endTime));
+    }
+
+    private Set<String> getServers(Supplier<Set<String>> supplier) {
+        Set<String> allServers = spokeCluster.getAllServers();
+        if (allServers.size() <= 3) {
+            return allServers;
+        }
+        return Sets.intersection(allServers, supplier.get());
     }
 
     public void status(ObjectNode root) {
