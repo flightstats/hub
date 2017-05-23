@@ -1,5 +1,5 @@
 ---
-title: Creating and modyfying channels
+title: Creating and modifying channels
 keywords: channel, create, update
 last_updated: July 3, 2016
 tags: [channel]
