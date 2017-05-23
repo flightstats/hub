@@ -143,11 +143,10 @@ public class SpokeContentDao implements ContentDao {
 
     private SortedSet<ContentKey> queryByTimeKeys(TimeQuery query) {
         try {
-            String timePath = query.getUnit().format(query.getStartTime());
-            QueryResult queryResult = spokeStore.readTimeBucket(query.getChannelName(), timePath);
+            QueryResult queryResult = spokeStore.readTimeBucket(query);
             ActiveTraces.getLocal().add("spoke query result", queryResult);
             if (!queryResult.hadSuccess()) {
-                QueryResult retryResult = spokeStore.readTimeBucket(query.getChannelName(), timePath);
+                QueryResult retryResult = spokeStore.readTimeBucket(query);
                 ActiveTraces.getLocal().add("spoke query retryResult", retryResult);
                 if (!retryResult.hadSuccess()) {
                     ActiveTraces.getLocal().log(logger);
@@ -167,7 +166,7 @@ public class SpokeContentDao implements ContentDao {
 
     @Override
     public SortedSet<ContentKey> query(DirectionQuery query) {
-        int ttlMinutes = HubProperties.getSpokeTtl();
+        int ttlMinutes = HubProperties.getSpokeTtlMinutes();
         DateTime spokeTtlTime = TimeUtil.BIG_BANG;
         if (HubProperties.getProperty("spoke.enforceTTL", true)) {
             spokeTtlTime = query.getChannelStable().minusMinutes(ttlMinutes);
@@ -183,7 +182,7 @@ public class SpokeContentDao implements ContentDao {
         SortedSet<ContentKey> contentKeys = Collections.emptySortedSet();
         if (query.isNext()) {
             try {
-                contentKeys = spokeStore.getNext(query.getChannelName(), query.getCount(), query.getStartKey().toUrl());
+                contentKeys = spokeStore.getNext(query.getChannelName(), query.getCount(), query.getStartKey());
             } catch (InterruptedException e) {
                 logger.warn("what happened? " + query, e);
             }
@@ -206,13 +205,6 @@ public class SpokeContentDao implements ContentDao {
         }
         ActiveTraces.getLocal().add("SpokeContentDao.query completed", contentKeys);
         return contentKeys;
-    }
-
-    private void query(DirectionQuery query, SortedSet<ContentKey> orderedKeys, DateTime startTime, TimeUtil.Unit unit) {
-        SortedSet<ContentKey> queryByTime = queryByTime(query.convert(startTime, unit));
-        queryByTime.addAll(orderedKeys);
-        Set<ContentKey> filtered = ContentKeyUtil.filter(queryByTime, query);
-        orderedKeys.addAll(filtered);
     }
 
     @Override

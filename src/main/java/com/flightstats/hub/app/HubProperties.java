@@ -23,7 +23,7 @@ public class HubProperties {
         return HubProperties.getProperty("app.encrypted", false);
     }
 
-    public static int getSpokeTtl() {
+    public static int getSpokeTtlMinutes() {
         return getProperty("spoke.ttlMinutes", 60);
     }
 

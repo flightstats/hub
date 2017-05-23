@@ -95,7 +95,6 @@ public class Content implements Serializable {
 
     public byte[] getData() {
         if (data == null && stream != null) {
-            //todo gfm - can this go away?
             try {
                 data = ByteStreams.toByteArray(stream);
                 stream = null;
@@ -170,7 +169,6 @@ public class Content implements Serializable {
         this.size = size;
     }
 
-    //todo - gfm - would be nice with more lombok
     public static class Builder {
         private Optional<String> contentType = Optional.absent();
         private long contentLength = 0;

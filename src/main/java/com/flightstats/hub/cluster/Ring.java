@@ -2,12 +2,12 @@ package com.flightstats.hub.cluster;
 
 import org.joda.time.DateTime;
 
-import java.util.Collection;
+import java.util.Set;
 
 public interface Ring {
-    Collection<String> getNodes(String channel);
+    Set<String> getServers(String channel);
 
-    Collection<String> getNodes(String channel, DateTime pointInTime);
+    Set<String> getServers(String channel, DateTime pointInTime);
 
-    Collection<String> getNodes(String channel, DateTime startTime, DateTime endTime);
+    Set<String> getServers(String channel, DateTime startTime, DateTime endTime);
 }

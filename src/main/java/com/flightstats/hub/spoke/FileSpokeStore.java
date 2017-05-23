@@ -209,7 +209,7 @@ public class FileSpokeStore {
                 }
             }
         }
-        int ttlMinutes = HubProperties.getSpokeTtl();
+        int ttlMinutes = HubProperties.getSpokeTtlMinutes();
         DateTime ttlTime = TimeUtil.now().minusMinutes(ttlMinutes);
         DateTime previous = hourToSearch.minusHours(1).withMinuteOfHour(59).withSecondOfMinute(59).withMillisOfSecond(999);
         if (previous.isBefore(ttlTime)) {
