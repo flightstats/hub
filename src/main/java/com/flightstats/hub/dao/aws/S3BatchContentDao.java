@@ -86,7 +86,7 @@ public class S3BatchContentDao implements ContentDao {
             }
         } catch (Exception e) {
             logger.warn("unable to read " + channelName + " " + key, e);
-            return null;
+            throw new RuntimeException(e);
         }
     }
 
