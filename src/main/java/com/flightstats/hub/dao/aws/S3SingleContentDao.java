@@ -120,11 +120,11 @@ public class S3SingleContentDao implements ContentDao {
                 return getS3Object(channelName, key);
             } catch (Exception e2) {
                 logger.warn("unable to read second time " + channelName + " " + key + " " + e.getMessage(), e2);
-                return null;
+                throw new RuntimeException(e);
             }
         } catch (Exception e) {
             logger.warn("unable to read " + channelName + " " + key, e);
-            return null;
+            throw new RuntimeException(e);
         } finally {
             ActiveTraces.getLocal().add("S3SingleContentDao.read completed");
         }

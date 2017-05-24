@@ -60,9 +60,6 @@ public class S3BatchContentDao implements ContentDao {
         this.metricsService = metricsService;
     }
 
-    public S3BatchContentDao() {
-    }
-
     public static S3BatchContentDaoBuilder builder() {
         return new S3BatchContentDaoBuilder();
     }
@@ -86,7 +83,7 @@ public class S3BatchContentDao implements ContentDao {
             }
         } catch (Exception e) {
             logger.warn("unable to read " + channelName + " " + key, e);
-            return null;
+            throw new RuntimeException(e);
         }
     }
 
