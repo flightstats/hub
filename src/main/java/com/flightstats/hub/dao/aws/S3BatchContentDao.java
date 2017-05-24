@@ -60,6 +60,9 @@ public class S3BatchContentDao implements ContentDao {
         this.metricsService = metricsService;
     }
 
+    public S3BatchContentDao() {
+    }
+
     public static S3BatchContentDaoBuilder builder() {
         return new S3BatchContentDaoBuilder();
     }
