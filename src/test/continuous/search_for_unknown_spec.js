@@ -19,7 +19,7 @@ var MINUTE = 60 * 1000;
  */
 describe("test", function () {
 
-    var channels = ['verifier_test_1'];
+    var channels = ['verifier_test_1', 'verifier_test_2', 'verifier_test_3'];
     var urisToVerify = [];
 
     it('runs day queries ', function (done) {
@@ -56,7 +56,6 @@ describe("test", function () {
                             console.log('got error ', uri, error);
                         } else {
                             if (response.statusCode === 200) {
-                                console.log('right status ', uri, response.statusCode);
                                 success++
                             } else {
                                 console.log('wrong status ', uri, response.statusCode);
