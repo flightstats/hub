@@ -10,6 +10,9 @@ hubUrl = 'http://' + hubUrl;
 console.log(hubUrl);
 var channelInput = process.env.channels;
 console.log(channelInput);
+var errorRate = parseInt(process.env.errorRate || 0.9);
+console.log('errorRate', errorRate);
+
 
 var MINUTE = 60 * 1000;
 
@@ -38,8 +41,9 @@ describe(testName, function () {
                     .end(function (res) {
                         expect(res.error).toBe(false);
                         var uris = res.body._links.uris;
+                        console.log('taking ' + errorRate + '% of the ' + urisToVerify.length + ' items ');
                         uris.forEach(function (uri) {
-                            if (Math.random() > 0.995) {
+                            if (Math.random() > errorRate) {
                                 urisToVerify.push(uri);
                             }
                         });
