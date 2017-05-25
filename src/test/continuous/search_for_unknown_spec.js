@@ -8,6 +8,8 @@ var testName = __filename;
 var hubUrl = process.env.hubUrl;
 hubUrl = 'http://' + hubUrl;
 console.log(hubUrl);
+var channelInput = process.env.channels;
+console.log(channelInput);
 
 var MINUTE = 60 * 1000;
 
@@ -17,9 +19,14 @@ var MINUTE = 60 * 1000;
  * Log any non-2xx responses as failures.
  *
  */
-describe("test", function () {
+describe(testName, function () {
 
     var channels = ['verifier_test_1', 'verifier_test_2', 'verifier_test_3'];
+    if (channelInput) {
+        channels = channelInput.split(",");
+    }
+    console.log('channels', channels);
+
     var urisToVerify = [];
 
     it('runs day queries ', function (done) {
