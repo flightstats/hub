@@ -41,7 +41,7 @@ describe(testName, function () {
                     .end(function (res) {
                         expect(res.error).toBe(false);
                         var uris = res.body._links.uris;
-                        console.log('taking ' + errorRate + '% of the ' + urisToVerify.length + ' items ');
+                        console.log('taking ' + errorRate + '% of the ' + uris.length + ' items ');
                         uris.forEach(function (uri) {
                             if (Math.random() > errorRate) {
                                 urisToVerify.push(uri);
