@@ -39,7 +39,7 @@ describe(testName, function () {
                         expect(res.error).toBe(false);
                         var uris = res.body._links.uris;
                         uris.forEach(function (uri) {
-                            if (Math.random() > 0.9) {
+                            if (Math.random() > 0.995) {
                                 urisToVerify.push(uri);
                             }
                         });
