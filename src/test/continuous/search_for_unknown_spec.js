@@ -31,7 +31,6 @@ describe("test", function () {
                     .end(function (res) {
                         expect(res.error).toBe(false);
                         var uris = res.body._links.uris;
-                        console.log('uris', uris);
                         uris.forEach(function (uri) {
                             if (Math.random() > 0.9) {
                                 urisToVerify.push(uri);
