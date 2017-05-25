@@ -101,3 +101,13 @@ li.sidebarTitle {
     margin-left: 5px;
 
 }
+
+.cse .gsc-search-button input.gsc-search-button-v2, input.gsc-search-button-v2 {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: content-box;
+    box-sizing: content-box;
+}
+
+.gsc-search-box-tools .gsc-search-box .gsc-input {
+    text-align: center;
+}
