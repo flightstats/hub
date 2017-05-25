@@ -10,7 +10,7 @@ hubUrl = 'http://' + hubUrl;
 console.log(hubUrl);
 var channelInput = process.env.channels;
 console.log(channelInput);
-var errorRate = parseInt(process.env.errorRate || 0.9);
+var errorRate = parseFloat(process.env.errorRate || 0.95);
 console.log('errorRate', errorRate);
 
 
