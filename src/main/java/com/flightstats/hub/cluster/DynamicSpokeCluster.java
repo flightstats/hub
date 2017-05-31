@@ -175,11 +175,11 @@ public class DynamicSpokeCluster implements Cluster, Ring {
     @Override
     public Set<String> getAllServers() {
         Set<String> allServers = spokeCluster.getAllServers();
-        getDecommissioned(allServers);
+        addDecommissioned(allServers);
         return allServers;
     }
 
-    private void getDecommissioned(Set<String> allServers) {
+    private void addDecommissioned(Set<String> allServers) {
         List<ChildData> currentData = decommisionCache.getCurrentData();
         for (ChildData childData : currentData) {
             allServers.add(new String(childData.getData()));
@@ -208,11 +208,11 @@ public class DynamicSpokeCluster implements Cluster, Ring {
             logger.info("not decommisioned");
         } else {
             logger.info("decommisioned!");
-            doDecommWork(host, System.currentTimeMillis() - path.getCtime());
+            doDecommissionWork(host, System.currentTimeMillis() - path.getCtime());
         }
     }
 
-    private void doDecommWork(String host, long sleptMillis) throws Exception {
+    private void doDecommissionWork(String host, long sleptMillis) throws Exception {
         healthCheck.decommission();
         curator.create()
                 .creatingParentsIfNeeded()
@@ -236,7 +236,7 @@ public class DynamicSpokeCluster implements Cluster, Ring {
                     .creatingParentsIfNeeded()
                     .withMode(CreateMode.PERSISTENT)
                     .forPath(DECOMMISION_PERSISTENT + "/" + host, host.getBytes());
-            doDecommWork(host, 0);
+            doDecommissionWork(host, 0);
         } catch (Exception e) {
             logger.warn("we cant decommission " + host, e);
             throw new RuntimeException(e);
@@ -280,7 +280,7 @@ public class DynamicSpokeCluster implements Cluster, Ring {
         }
 
         TreeSet<String> decommissioned = new TreeSet<>();
-        getDecommissioned(decommissioned);
+        addDecommissioned(decommissioned);
         ArrayNode decomm = root.putArray("decommissioned");
         for (String decommiss : decommissioned) {
             decomm.add(decommiss);
