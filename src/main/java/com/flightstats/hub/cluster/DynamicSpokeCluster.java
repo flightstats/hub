@@ -25,6 +25,7 @@ import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -167,17 +168,19 @@ public class DynamicSpokeCluster implements Cluster, Ring {
 
     /**
      * All Servers can include decommission servers.
-     *
-     * @return
      */
     @Override
     public Set<String> getAllServers() {
         Set<String> allServers = spokeCluster.getAllServers();
+        getDecommissioned(allServers);
+        return allServers;
+    }
+
+    private void getDecommissioned(Set<String> allServers) {
         List<ChildData> currentData = decommisionCache.getCurrentData();
         for (ChildData childData : currentData) {
             allServers.add(new String(childData.getData()));
         }
-        return allServers;
     }
 
     @Override
@@ -210,7 +213,7 @@ public class DynamicSpokeCluster implements Cluster, Ring {
             curator.create()
                     .creatingParentsIfNeeded()
                     .withMode(CreateMode.EPHEMERAL)
-                    .forPath(DECOMMISION_EVENTS + "/" + host);
+                    .forPath(DECOMMISION_EVENTS + "/" + host, host.getBytes());
             Sleeper.sleep(500);
             spokeCluster.delete();
             Executors.newSingleThreadExecutor().submit(this::sleepAndShutdown);
@@ -246,11 +249,17 @@ public class DynamicSpokeCluster implements Cluster, Ring {
 
     public void status(ObjectNode root) {
         ArrayNode active = root.putArray("active");
-        Set<String> allServers = getAllServers();
+        Set<String> allServers = spokeCluster.getAllServers();
         for (String server : allServers) {
             active.add(server);
         }
 
+        TreeSet<String> decommissioned = new TreeSet<>();
+        getDecommissioned(decommissioned);
+        ArrayNode decomm = root.putArray("decommissioned");
+        for (String decommiss : decommissioned) {
+            decomm.add(decommiss);
+        }
         spokeRings.status(root);
     }
 
