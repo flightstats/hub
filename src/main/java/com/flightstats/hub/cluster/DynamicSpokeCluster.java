@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.ShutdownManager;
+import com.flightstats.hub.health.HubHealthCheck;
 import com.flightstats.hub.util.Sleeper;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractScheduledService;
@@ -40,6 +41,7 @@ public class DynamicSpokeCluster implements Cluster, Ring {
     private static final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     private final CuratorFramework curator;
+    private HubHealthCheck healthCheck;
     private final CuratorCluster spokeCluster;
     private final ShutdownManager shutdownManager;
 
@@ -52,10 +54,11 @@ public class DynamicSpokeCluster implements Cluster, Ring {
     private static final String DECOMMISION_EVENTS = "/DecommisionEvents";
 
     @Inject
-    public DynamicSpokeCluster(CuratorFramework curator,
+    public DynamicSpokeCluster(CuratorFramework curator, HubHealthCheck healthCheck,
                                @Named("SpokeCuratorCluster") CuratorCluster spokeCluster,
                                ShutdownManager shutdownManager) throws Exception {
         this.curator = curator;
+        this.healthCheck = healthCheck;
         this.spokeCluster = spokeCluster;
         this.shutdownManager = shutdownManager;
         eventsCache = new PathChildrenCache(curator, SPOKE_CLUSTER_EVENTS, true);
@@ -163,7 +166,7 @@ public class DynamicSpokeCluster implements Cluster, Ring {
     }
 
     /**
-     * All Servers can include decommissioned servers.
+     * All Servers can include decommission servers.
      *
      * @return
      */
@@ -198,11 +201,15 @@ public class DynamicSpokeCluster implements Cluster, Ring {
      * Shut down in Spoke TTL minutes
      */
     public void decommission() {
+        //todo - gfm - write a file to the system?
+        //todo - gfm - if the system starts with the file, recreate the ephemeral node
+        //todo - gfm - restart shutdown thread
         String host = spokeCluster.getHost(false);
         try {
+            healthCheck.decommission();
             curator.create()
                     .creatingParentsIfNeeded()
-                    .withMode(CreateMode.PERSISTENT)
+                    .withMode(CreateMode.EPHEMERAL)
                     .forPath(DECOMMISION_EVENTS + "/" + host);
             Sleeper.sleep(500);
             spokeCluster.delete();

@@ -34,10 +34,10 @@ public class InternalClusterResource {
         root.put("directions", "Make HTTP POSTs to links below to take the desired action");
         URI requestUri = uriInfo.getRequestUri();
         String localhostLink = HubHost.getLocalhostUri() + requestUri.getPath();
-        dynamicSpokeCluster.status(root);
         Linked.Builder<?> links = Linked.linked(root);
         links.withLink("self", requestUri);
         links.withLink("decommission", localhostLink + "/decommission");
+        dynamicSpokeCluster.status(root);
         return Response.ok(links.build()).build();
     }
 
