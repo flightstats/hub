@@ -17,6 +17,7 @@ import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.data.Stat;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +53,8 @@ public class DynamicSpokeCluster implements Cluster, Ring {
     private final PathChildrenCache decommisionCache;
 
     private static final String SPOKE_CLUSTER_EVENTS = "/SpokeClusterEvents";
-    private static final String DECOMMISION_EVENTS = "/DecommisionEvents";
+    private static final String DECOMMISION_EPHEMERAL = "/DecommisionEvents" + "/Ephemeral";
+    private static final String DECOMMISION_PERSISTENT = "/DecommisionEvents" + "/Persistent";
 
     @Inject
     public DynamicSpokeCluster(CuratorFramework curator, HubHealthCheck healthCheck,
@@ -64,8 +66,9 @@ public class DynamicSpokeCluster implements Cluster, Ring {
         this.shutdownManager = shutdownManager;
         eventsCache = new PathChildrenCache(curator, SPOKE_CLUSTER_EVENTS, true);
         eventsCache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
-        decommisionCache = new PathChildrenCache(curator, DECOMMISION_EVENTS, true);
+        decommisionCache = new PathChildrenCache(curator, DECOMMISION_EPHEMERAL, true);
         decommisionCache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
+        checkForDecommission();
         createChildWatcher();
         addSpokeClusterListener();
         handleChanges();
@@ -198,45 +201,67 @@ public class DynamicSpokeCluster implements Cluster, Ring {
         return getServers(() -> spokeRings.getServers(channel, startTime, endTime));
     }
 
+    private void checkForDecommission() throws Exception {
+        String host = spokeCluster.getHost(false);
+        Stat path = curator.checkExists().creatingParentContainersIfNeeded().forPath(DECOMMISION_PERSISTENT + "/" + host);
+        if (path == null) {
+            logger.info("not decommisioned");
+        } else {
+            logger.info("decommisioned!");
+            doDecommWork(host, System.currentTimeMillis() - path.getCtime());
+        }
+    }
+
+    private void doDecommWork(String host, long sleptMillis) throws Exception {
+        healthCheck.decommission();
+        curator.create()
+                .creatingParentsIfNeeded()
+                .withMode(CreateMode.EPHEMERAL)
+                .forPath(DECOMMISION_EPHEMERAL + "/" + host, host.getBytes());
+        //let the change propagate to all the nodes
+        Sleeper.sleep(500);
+        spokeCluster.decommission();
+        Executors.newSingleThreadExecutor().submit(() -> sleepAndShutdown(sleptMillis));
+    }
+
     /**
      * Stop writes to Spoke
      * Allow this server to still get reads and queries
      * Shut down in Spoke TTL minutes
      */
     public void decommission() {
-        //todo - gfm - write a file to the system?
-        //todo - gfm - if the system starts with the file, recreate the ephemeral node
-        //todo - gfm - restart shutdown thread
         String host = spokeCluster.getHost(false);
         try {
-            healthCheck.decommission();
             curator.create()
                     .creatingParentsIfNeeded()
-                    .withMode(CreateMode.EPHEMERAL)
-                    .forPath(DECOMMISION_EVENTS + "/" + host, host.getBytes());
-            Sleeper.sleep(500);
-            spokeCluster.delete();
-            Executors.newSingleThreadExecutor().submit(this::sleepAndShutdown);
+                    .withMode(CreateMode.PERSISTENT)
+                    .forPath(DECOMMISION_PERSISTENT + "/" + host, host.getBytes());
+            doDecommWork(host, 0);
         } catch (Exception e) {
             logger.warn("we cant decommission " + host, e);
             throw new RuntimeException(e);
         }
     }
 
-    private void sleepAndShutdown() {
+    private void sleepAndShutdown(long millisSlept) {
+        int ttlMinutes = HubProperties.getSpokeTtlMinutes() + 1;
+        long millisToSleep = TimeUnit.MILLISECONDS.convert(ttlMinutes, TimeUnit.MINUTES) - millisSlept;
         String host = spokeCluster.getHost(false);
         try {
-            int ttlMinutes = HubProperties.getSpokeTtlMinutes() + 1;
-            logger.info("sleeping for " + ttlMinutes);
-            Sleeper.sleep(TimeUnit.MILLISECONDS.convert(ttlMinutes, TimeUnit.MINUTES));
-            logger.info("slept for " + ttlMinutes + ".  Shutting down");
-            String path = DECOMMISION_EVENTS + "/" + host;
-            curator.delete().forPath(path);
-            logger.info("deleted " + path);
+            logger.info("sleeping for " + millisToSleep + " millis");
+            Sleeper.sleep(millisToSleep);
+            logger.info("slept for " + millisToSleep + ".  Shutting down");
+            delete(DECOMMISION_EPHEMERAL + "/" + host);
+            delete(DECOMMISION_PERSISTENT + "/" + host);
             shutdownManager.shutdown(false);
         } catch (Exception e) {
             logger.warn("unable to sleepAndShutdown " + host, e);
         }
+    }
+
+    private void delete(String path) throws Exception {
+        curator.delete().forPath(path);
+        logger.info("deleted " + path);
     }
 
     private Set<String> getServers(Supplier<Set<String>> supplier) {
