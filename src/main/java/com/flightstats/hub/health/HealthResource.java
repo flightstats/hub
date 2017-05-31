@@ -32,8 +32,6 @@ public class HealthResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response checkHealth() {
         ObjectNode rootNode = mapper.createObjectNode();
-        //todo - gfm - report decommission status
-
         HealthStatus healthStatus = healthCheck.getStatus();
         rootNode.put("healthy", healthStatus.isHealthy());
         rootNode.put("description", healthStatus.getDescription());

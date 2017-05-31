@@ -252,7 +252,6 @@ public class DynamicSpokeCluster implements Cluster, Ring {
             Sleeper.sleep(millisToSleep);
             logger.info("slept for " + millisToSleep + ".  Shutting down");
             delete(DECOMMISION_EPHEMERAL + "/" + host);
-            delete(DECOMMISION_PERSISTENT + "/" + host);
             shutdownManager.shutdown(false);
         } catch (Exception e) {
             logger.warn("unable to sleepAndShutdown " + host, e);
