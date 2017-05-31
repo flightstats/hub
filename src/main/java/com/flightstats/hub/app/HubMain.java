@@ -49,7 +49,7 @@ public class HubMain {
         });
         latch.await();
         logger.warn("calling shutdown");
-        HubProvider.getInstance(ShutdownManager.class).shutdown();
+        HubProvider.getInstance(ShutdownManager.class).shutdown(true);
         server.halt();
         logger.info("Server shutdown complete.  Exiting application.");
     }
