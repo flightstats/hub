@@ -28,7 +28,7 @@ public class HubHost {
         }
     }
 
-    static String getLocalhostUri() {
+    public static String getLocalhostUri() {
         return getScheme() + "localhost:" + getLocalPort();
     }
 

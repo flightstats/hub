@@ -28,6 +28,7 @@ public class CuratorCluster implements Cluster {
     private final boolean useName;
     private final PathChildrenCache clusterCache;
     private String fullPath;
+    private boolean decommissioned = false;
 
     @Inject
     public CuratorCluster(CuratorFramework curator, String clusterPath, boolean useName) throws Exception {
@@ -36,6 +37,11 @@ public class CuratorCluster implements Cluster {
         this.useName = useName;
         clusterCache = new PathChildrenCache(curator, clusterPath, true);
         clusterCache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
+    }
+
+    void decommission() {
+        this.decommissioned = true;
+        delete();
     }
 
     public void addCacheListener() {
@@ -56,6 +62,10 @@ public class CuratorCluster implements Cluster {
     }
 
     public void register() throws UnknownHostException {
+        if (decommissioned) {
+            logger.info("node is decommissioned, not gonna register");
+            return;
+        }
         String host = getHost(useName);
         try {
             logger.info("registering host {} {}", host, clusterPath);

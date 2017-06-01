@@ -142,7 +142,7 @@ public class CuratorLeader {
                 logger.warn("found too many locks {} for this server {} {}", getLeaderPath(), localServer, pathDates);
                 metricsService.event("Hub Leader Lock", getLeaderPath() + " " + pathDates.toString()
                         , "leader", "restart", "shutdown");
-                Executors.newSingleThreadExecutor().submit(shutdownManager::shutdown);
+                Executors.newSingleThreadExecutor().submit(() -> shutdownManager.shutdown(true));
             }
         }
 

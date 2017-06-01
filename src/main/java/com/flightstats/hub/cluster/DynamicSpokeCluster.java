@@ -2,6 +2,10 @@ package com.flightstats.hub.cluster;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.app.ShutdownManager;
+import com.flightstats.hub.health.HubHealthCheck;
+import com.flightstats.hub.util.Sleeper;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
@@ -13,6 +17,7 @@ import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.data.Stat;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +26,7 @@ import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -36,21 +42,33 @@ public class DynamicSpokeCluster implements Cluster, Ring {
     private static final Logger logger = LoggerFactory.getLogger(DynamicSpokeCluster.class);
     private static final ExecutorService executor = Executors.newSingleThreadExecutor();
 
-    private CuratorCluster spokeCluster;
-    private CuratorFramework curator;
+    private final CuratorFramework curator;
+    private HubHealthCheck healthCheck;
+    private final CuratorCluster spokeCluster;
+    private final ShutdownManager shutdownManager;
+
     private volatile SpokeRings spokeRings;
 
     private final PathChildrenCache eventsCache;
+    private final PathChildrenCache decommisionCache;
 
-    private static final String PATH = "/SpokeClusterEvents";
+    private static final String SPOKE_CLUSTER_EVENTS = "/SpokeClusterEvents";
+    private static final String DECOMMISION_EPHEMERAL = "/DecommisionEvents" + "/Ephemeral";
+    private static final String DECOMMISION_PERSISTENT = "/DecommisionEvents" + "/Persistent";
 
     @Inject
-    public DynamicSpokeCluster(CuratorFramework curator,
-                               @Named("SpokeCuratorCluster") CuratorCluster spokeCluster) throws Exception {
+    public DynamicSpokeCluster(CuratorFramework curator, HubHealthCheck healthCheck,
+                               @Named("SpokeCuratorCluster") CuratorCluster spokeCluster,
+                               ShutdownManager shutdownManager) throws Exception {
         this.curator = curator;
+        this.healthCheck = healthCheck;
         this.spokeCluster = spokeCluster;
-        eventsCache = new PathChildrenCache(curator, PATH, true);
+        this.shutdownManager = shutdownManager;
+        eventsCache = new PathChildrenCache(curator, SPOKE_CLUSTER_EVENTS, true);
         eventsCache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
+        decommisionCache = new PathChildrenCache(curator, DECOMMISION_EPHEMERAL, true);
+        decommisionCache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
+        checkForDecommission();
         createChildWatcher();
         addSpokeClusterListener();
         handleChanges();
@@ -78,7 +96,7 @@ public class DynamicSpokeCluster implements Cluster, Ring {
 
     private void delete(ClusterEvent oldEvent) {
         try {
-            String fullPath = PATH + "/" + oldEvent.encode();
+            String fullPath = SPOKE_CLUSTER_EVENTS + "/" + oldEvent.encode();
             logger.info("deleted {}", fullPath);
             curator.delete().forPath(fullPath);
         } catch (Exception e) {
@@ -89,7 +107,7 @@ public class DynamicSpokeCluster implements Cluster, Ring {
     private void createChildWatcher() {
         eventsCache.getListenable().addListener(
                 (client, event) -> {
-                    logger.info("event {} {}", event, PATH);
+                    logger.info("event {} {}", event, SPOKE_CLUSTER_EVENTS);
                     if (event.getType().equals(PathChildrenCacheEvent.Type.CHILD_ADDED)) {
                         handleChanges();
                     }
@@ -131,7 +149,7 @@ public class DynamicSpokeCluster implements Cluster, Ring {
     private void addZkPath(PathChildrenCacheEvent event, boolean added) {
         String nodeName = new String(event.getData().getData());
         long ctime = event.getData().getStat().getCtime();
-        String path = PATH + "/" + ClusterEvent.encode(nodeName, ctime, added);
+        String path = SPOKE_CLUSTER_EVENTS + "/" + ClusterEvent.encode(nodeName, ctime, added);
         logger.debug("adding path {} ", path);
         try {
             curator.create()
@@ -151,9 +169,21 @@ public class DynamicSpokeCluster implements Cluster, Ring {
         return spokeCluster.getLocalServer();
     }
 
+    /**
+     * All Servers can include decommission servers.
+     */
     @Override
     public Set<String> getAllServers() {
-        return spokeCluster.getAllServers();
+        Set<String> allServers = spokeCluster.getAllServers();
+        addDecommissioned(allServers);
+        return allServers;
+    }
+
+    private void addDecommissioned(Set<String> allServers) {
+        List<ChildData> currentData = decommisionCache.getCurrentData();
+        for (ChildData childData : currentData) {
+            allServers.add(new String(childData.getData()));
+        }
     }
 
     @Override
@@ -171,8 +201,70 @@ public class DynamicSpokeCluster implements Cluster, Ring {
         return getServers(() -> spokeRings.getServers(channel, startTime, endTime));
     }
 
+    private void checkForDecommission() throws Exception {
+        String host = spokeCluster.getHost(false);
+        Stat path = curator.checkExists().creatingParentContainersIfNeeded().forPath(DECOMMISION_PERSISTENT + "/" + host);
+        if (path == null) {
+            logger.info("not decommisioned");
+        } else {
+            logger.info("decommisioned!");
+            doDecommissionWork(host, System.currentTimeMillis() - path.getCtime());
+        }
+    }
+
+    private void doDecommissionWork(String host, long sleptMillis) throws Exception {
+        healthCheck.decommission();
+        curator.create()
+                .creatingParentsIfNeeded()
+                .withMode(CreateMode.EPHEMERAL)
+                .forPath(DECOMMISION_EPHEMERAL + "/" + host, host.getBytes());
+        //let the change propagate to all the nodes
+        Sleeper.sleep(500);
+        spokeCluster.decommission();
+        Executors.newSingleThreadExecutor().submit(() -> sleepAndShutdown(sleptMillis));
+    }
+
+    /**
+     * Stop writes to Spoke
+     * Allow this server to still get reads and queries
+     * Shut down in Spoke TTL minutes
+     */
+    public void decommission() {
+        String host = spokeCluster.getHost(false);
+        try {
+            curator.create()
+                    .creatingParentsIfNeeded()
+                    .withMode(CreateMode.PERSISTENT)
+                    .forPath(DECOMMISION_PERSISTENT + "/" + host, host.getBytes());
+            doDecommissionWork(host, 0);
+        } catch (Exception e) {
+            logger.warn("we cant decommission " + host, e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void sleepAndShutdown(long millisSlept) {
+        int ttlMinutes = HubProperties.getSpokeTtlMinutes() + 1;
+        long millisToSleep = TimeUnit.MILLISECONDS.convert(ttlMinutes, TimeUnit.MINUTES) - millisSlept;
+        String host = spokeCluster.getHost(false);
+        try {
+            logger.info("sleeping for " + millisToSleep + " millis");
+            Sleeper.sleep(millisToSleep);
+            logger.info("slept for " + millisToSleep + ".  Shutting down");
+            delete(DECOMMISION_EPHEMERAL + "/" + host);
+            shutdownManager.shutdown(false);
+        } catch (Exception e) {
+            logger.warn("unable to sleepAndShutdown " + host, e);
+        }
+    }
+
+    private void delete(String path) throws Exception {
+        curator.delete().forPath(path);
+        logger.info("deleted " + path);
+    }
+
     private Set<String> getServers(Supplier<Set<String>> supplier) {
-        Set<String> allServers = spokeCluster.getAllServers();
+        Set<String> allServers = getAllServers();
         if (allServers.size() <= 3) {
             return allServers;
         }
@@ -181,11 +273,17 @@ public class DynamicSpokeCluster implements Cluster, Ring {
 
     public void status(ObjectNode root) {
         ArrayNode active = root.putArray("active");
-        Set<String> allServers = getAllServers();
+        Set<String> allServers = spokeCluster.getAllServers();
         for (String server : allServers) {
             active.add(server);
         }
 
+        TreeSet<String> decommissioned = new TreeSet<>();
+        addDecommissioned(decommissioned);
+        ArrayNode decomm = root.putArray("decommissioned");
+        for (String decommiss : decommissioned) {
+            decomm.add(decommiss);
+        }
         spokeRings.status(root);
     }
 

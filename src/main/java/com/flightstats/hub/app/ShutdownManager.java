@@ -49,7 +49,7 @@ public class ShutdownManager {
         }
     }
 
-    public boolean shutdown() throws Exception {
+    public boolean shutdown(boolean useLock) throws Exception {
         logger.warn("shutting down!");
         getMetricsService().mute();
 
@@ -57,7 +57,9 @@ public class ShutdownManager {
         if (healthCheck.isShuttingDown()) {
             return true;
         }
-        waitForLock();
+        if (useLock) {
+            waitForLock();
+        }
         getMetricsService().event("Hub Restart Shutdown", "shutting down", "restart", "shutdown");
 
         //this call will get the node removed from the Load Balancer
