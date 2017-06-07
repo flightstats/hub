@@ -34,6 +34,38 @@ public class SpokeRingsTest {
     }
 
     @Test
+    public void testDoubleAdd() {
+        List<ClusterEvent> clusterEvents = new ArrayList<>();
+        clusterEvents.add(new ClusterEvent("/SCE/" + steps[0] + "|A|ADDED", steps[0]));
+        clusterEvents.add(new ClusterEvent("/SCE/" + steps[1] + "|B|ADDED", steps[1]));
+        clusterEvents.add(new ClusterEvent("/SCE/" + steps[2] + "|A|ADDED", steps[2]));
+        clusterEvents.add(new ClusterEvent("/SCE/" + steps[3] + "|B|ADDED", steps[3]));
+        SpokeRings spokeRings = new SpokeRings();
+        spokeRings.process(clusterEvents);
+        assertTrue(spokeRings.getServers("test1").containsAll(Arrays.asList("A", "B")));
+
+    }
+
+    @Test
+    public void testRemoveAfterAdded() {
+        /*
+        If a server is restarted before the ZooKeeper timeout
+        it can happen that the REMOVE from the first ADDED comes after the second ADDED
+          The net result: The node is briefly in the cluster, looking healthy, then it is removed.
+
+         */
+        List<ClusterEvent> clusterEvents = new ArrayList<>();
+        clusterEvents.add(new ClusterEvent("/SCE/" + steps[0] + "|A|ADDED", steps[0]));
+        clusterEvents.add(new ClusterEvent("/SCE/" + steps[1] + "|A|ADDED", steps[1]));
+        clusterEvents.add(new ClusterEvent("/SCE/" + steps[2] + "|B|ADDED", steps[2]));
+        clusterEvents.add(new ClusterEvent("/SCE/" + steps[0] + "|A|REMOVED", steps[3]));
+        SpokeRings spokeRings = new SpokeRings();
+        spokeRings.process(clusterEvents);
+        assertTrue(spokeRings.getServers("test1").containsAll(Arrays.asList("A", "B")));
+
+    }
+
+    @Test
     public void test3Nodes() {
         List<ClusterEvent> clusterEvents = new ArrayList<>();
         clusterEvents.add(new ClusterEvent("/SCE/" + steps[0] + "|A|ADDED", steps[0]));

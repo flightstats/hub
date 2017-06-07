@@ -24,10 +24,6 @@ public class SpokeRings implements Ring, Comparable<SpokeRings> {
      * Processes a Collection of ClusterEvents into a List of Rings.
      */
     public void process(Collection<ClusterEvent> events) {
-        spokeRings = createRings(events);
-    }
-
-    private LinkedList<SpokeRing> createRings(Collection<ClusterEvent> events) {
         LinkedList<SpokeRing> initialRings = new LinkedList<>();
         for (ClusterEvent clusterEvent : events) {
             if (initialRings.isEmpty()) {
@@ -50,7 +46,7 @@ public class SpokeRings implements Ring, Comparable<SpokeRings> {
                 logger.debug("old ring {}", ring);
             }
         }
-        return newRings;
+        spokeRings = newRings;
     }
 
     private int getSpokeTtlMinutes() {
