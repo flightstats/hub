@@ -142,15 +142,6 @@ public class DynamicSpokeCluster implements Cluster, Ring {
     }
 
     private void addZkPath(PathChildrenCacheEvent event, boolean added) {
-        //todo - gfm - before we create an ADDED event, we should make sure that:
-        /*
-         * If a previous ADD exists, it also has a REMOVE
-          * if there is not a REMOVE
-          * 1 - Create Remove
-          * 2 - Wait a moment
-          * 3 - verify that the change is registered
-          * 4 - Create ADDED
-         */
         String nodeName = new String(event.getData().getData());
         long ctime = event.getData().getStat().getCtime();
         String path = SPOKE_CLUSTER_EVENTS + "/" + ClusterEvent.encode(nodeName, ctime, added);
@@ -165,7 +156,6 @@ public class DynamicSpokeCluster implements Cluster, Ring {
         } catch (Exception e) {
             logger.warn("unexpected " + nodeName, e);
         }
-
     }
 
     @Override
