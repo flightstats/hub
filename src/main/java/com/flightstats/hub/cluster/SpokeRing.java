@@ -21,6 +21,7 @@ class SpokeRing implements Ring {
     private TimeInterval timeInterval;
     private DateTime startTime;
     private ClusterEvent clusterEvent;
+    private SpokeRing previousRing;
     private RingStrategy strategy;
 
     SpokeRing(DateTime startTime, String... nodes) {
@@ -39,6 +40,8 @@ class SpokeRing implements Ring {
     }
 
     SpokeRing(ClusterEvent clusterEvent, SpokeRing previousRing) {
+        this.clusterEvent = clusterEvent;
+        this.previousRing = previousRing;
         setStartTime(clusterEvent);
         previousRing.setEndTime(
                 new DateTime(clusterEvent.getModifiedTime(), DateTimeZone.UTC)
@@ -46,10 +49,22 @@ class SpokeRing implements Ring {
         HashSet<String> nodes = new HashSet<>(previousRing.strategy.getAllServers());
         if (clusterEvent.isAdded()) {
             nodes.add(clusterEvent.getName());
-        } else {
+        } else if (previousRing.shouldRemove(clusterEvent)) {
             nodes.remove(clusterEvent.getName());
         }
         initialize(nodes);
+    }
+
+    private boolean shouldRemove(ClusterEvent removeEvent) {
+        ClusterEvent event = getClusterEvent();
+        if (event.isAdded()) {
+            if (event.getCreationTime() > removeEvent.getCreationTime()) {
+                if (event.getName().equals(removeEvent.getName())) {
+                    return false;
+                }
+            }
+        }
+        return previousRing == null || previousRing.shouldRemove(removeEvent);
     }
 
     private void setStartTime(ClusterEvent clusterEvent) {
@@ -110,7 +125,7 @@ class SpokeRing implements Ring {
                 '}';
     }
 
-    ClusterEvent getClusterEvent() {
+    private ClusterEvent getClusterEvent() {
         return clusterEvent;
     }
 

@@ -2,8 +2,6 @@ package com.flightstats.hub.cluster;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubProperties;
-import com.flightstats.hub.app.ShutdownManager;
 import com.flightstats.hub.health.HubHealthCheck;
 import com.flightstats.hub.util.Sleeper;
 import com.google.common.collect.Sets;
@@ -45,7 +43,6 @@ public class DynamicSpokeCluster implements Cluster, Ring {
     private final CuratorFramework curator;
     private HubHealthCheck healthCheck;
     private final CuratorCluster spokeCluster;
-    private final ShutdownManager shutdownManager;
 
     private volatile SpokeRings spokeRings;
 
@@ -58,12 +55,10 @@ public class DynamicSpokeCluster implements Cluster, Ring {
 
     @Inject
     public DynamicSpokeCluster(CuratorFramework curator, HubHealthCheck healthCheck,
-                               @Named("SpokeCuratorCluster") CuratorCluster spokeCluster,
-                               ShutdownManager shutdownManager) throws Exception {
+                               @Named("SpokeCuratorCluster") CuratorCluster spokeCluster) throws Exception {
         this.curator = curator;
         this.healthCheck = healthCheck;
         this.spokeCluster = spokeCluster;
-        this.shutdownManager = shutdownManager;
         eventsCache = new PathChildrenCache(curator, SPOKE_CLUSTER_EVENTS, true);
         eventsCache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
         decommisionCache = new PathChildrenCache(curator, DECOMMISION_EPHEMERAL, true);
@@ -161,7 +156,6 @@ public class DynamicSpokeCluster implements Cluster, Ring {
         } catch (Exception e) {
             logger.warn("unexpected " + nodeName, e);
         }
-
     }
 
     @Override
@@ -208,11 +202,11 @@ public class DynamicSpokeCluster implements Cluster, Ring {
             logger.info("not decommisioned");
         } else {
             logger.info("decommisioned!");
-            doDecommissionWork(host, System.currentTimeMillis() - path.getCtime());
+            doDecommissionWork(host);
         }
     }
 
-    private void doDecommissionWork(String host, long sleptMillis) throws Exception {
+    private void doDecommissionWork(String host) throws Exception {
         healthCheck.decommission();
         curator.create()
                 .creatingParentsIfNeeded()
@@ -221,7 +215,6 @@ public class DynamicSpokeCluster implements Cluster, Ring {
         //let the change propagate to all the nodes
         Sleeper.sleep(500);
         spokeCluster.decommission();
-        Executors.newSingleThreadExecutor().submit(() -> sleepAndShutdown(sleptMillis));
     }
 
     /**
@@ -236,32 +229,13 @@ public class DynamicSpokeCluster implements Cluster, Ring {
                     .creatingParentsIfNeeded()
                     .withMode(CreateMode.PERSISTENT)
                     .forPath(DECOMMISION_PERSISTENT + "/" + host, host.getBytes());
-            doDecommissionWork(host, 0);
+            doDecommissionWork(host);
         } catch (Exception e) {
             logger.warn("we cant decommission " + host, e);
             throw new RuntimeException(e);
         }
     }
 
-    private void sleepAndShutdown(long millisSlept) {
-        int ttlMinutes = HubProperties.getSpokeTtlMinutes() + 1;
-        long millisToSleep = TimeUnit.MILLISECONDS.convert(ttlMinutes, TimeUnit.MINUTES) - millisSlept;
-        String host = spokeCluster.getHost(false);
-        try {
-            logger.info("sleeping for " + millisToSleep + " millis");
-            Sleeper.sleep(millisToSleep);
-            logger.info("slept for " + millisToSleep + ".  Shutting down");
-            delete(DECOMMISION_EPHEMERAL + "/" + host);
-            shutdownManager.shutdown(false);
-        } catch (Exception e) {
-            logger.warn("unable to sleepAndShutdown " + host, e);
-        }
-    }
-
-    private void delete(String path) throws Exception {
-        curator.delete().forPath(path);
-        logger.info("deleted " + path);
-    }
 
     private Set<String> getServers(Supplier<Set<String>> supplier) {
         Set<String> allServers = getAllServers();
