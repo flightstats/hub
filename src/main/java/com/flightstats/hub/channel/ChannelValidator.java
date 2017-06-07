@@ -29,7 +29,7 @@ public class ChannelValidator {
 
         validateNameWasGiven(channelNameOptional);
         String channelName = channelNameOptional.get().trim();
-        ensureNotAllBlank(channelName);
+        ensurePropertyNotBlank("Channel name", channelName);
         ensureSize(channelName, "name");
         ensureSize(config.getOwner(), "owner");
         checkForInvalidCharacters(channelName);
@@ -41,6 +41,9 @@ public class ChannelValidator {
         validateTags(config);
         validateStorage(config);
         validateGlobal(config);
+        if (config.isProtect()) {
+            ensurePropertyNotBlank("Owner", config.getOwner());
+        }
         if (!isLocalHost) {
             preventDataLoss(config, oldConfig);
         }
@@ -193,9 +196,9 @@ public class ChannelValidator {
         }
     }
 
-    private void ensureNotAllBlank(String channelName) throws InvalidRequestException {
-        if (Strings.nullToEmpty(channelName).trim().isEmpty()) {
-            throw new InvalidRequestException("{\"error\": \"Channel name cannot be blank\"}");
+    private void ensurePropertyNotBlank(String propertyName, String propertyValue) {
+        if (Strings.nullToEmpty(propertyValue).trim().isEmpty()) {
+            throw new InvalidRequestException("{\"error\": \"" + propertyName + " cannot be blank\"}");
         }
     }
 
