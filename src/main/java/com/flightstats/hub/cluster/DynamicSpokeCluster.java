@@ -2,6 +2,7 @@ package com.flightstats.hub.cluster;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.health.HubHealthCheck;
 import com.flightstats.hub.util.Sleeper;
 import com.google.common.collect.Sets;
@@ -17,6 +18,7 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.Stat;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -103,7 +105,8 @@ public class DynamicSpokeCluster implements Cluster, Ring {
         eventsCache.getListenable().addListener(
                 (client, event) -> {
                     logger.info("event {} {}", event, SPOKE_CLUSTER_EVENTS);
-                    if (event.getType().equals(PathChildrenCacheEvent.Type.CHILD_ADDED)) {
+                    if (event.getType().equals(PathChildrenCacheEvent.Type.CHILD_ADDED)
+                            || event.getType().equals(PathChildrenCacheEvent.Type.CHILD_REMOVED)) {
                         handleChanges();
                     }
                 }, executor);
@@ -197,12 +200,22 @@ public class DynamicSpokeCluster implements Cluster, Ring {
 
     private void checkForDecommission() throws Exception {
         String host = spokeCluster.getHost(false);
-        Stat path = curator.checkExists().creatingParentContainersIfNeeded().forPath(DECOMMISION_PERSISTENT + "/" + host);
-        if (path == null) {
+        Stat stat = curator.checkExists().creatingParentContainersIfNeeded().forPath(DECOMMISION_PERSISTENT + "/" + host);
+        if (stat == null) {
             logger.info("not decommisioned");
         } else {
-            logger.info("decommisioned!");
-            doDecommissionWork(host);
+            long ttlMillis = TimeUnit.MILLISECONDS.convert(HubProperties.getSpokeTtlMinutes(), TimeUnit.MINUTES);
+            long spokeTtlTimeMillis = System.currentTimeMillis() - ttlMillis;
+            if (stat.getCtime() > spokeTtlTimeMillis) {
+                logger.info("decommisioned!");
+                doDecommissionWork(host);
+            } else {
+                String msg = "decommisioned and will not start. " +
+                        "spoke ttl Time" + new DateTime(spokeTtlTimeMillis, DateTimeZone.UTC) +
+                        " stat.getCtime() " + new DateTime(stat.getCtime(), DateTimeZone.UTC);
+                logger.warn(msg);
+                throw new RuntimeException(msg);
+            }
         }
     }
 
