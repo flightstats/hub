@@ -237,12 +237,12 @@ public class LocalChannelService implements ChannelService {
     }
 
     @Override
-    public Optional<Content> get(Request request) {
-        DateTime limitTime = getChannelLimitTime(request.getChannel()).minusMinutes(15);
-        if (request.getKey().getTime().isBefore(limitTime)) {
+    public Optional<Content> get(ItemRequest itemRequest) {
+        DateTime limitTime = getChannelLimitTime(itemRequest.getChannel()).minusMinutes(15);
+        if (itemRequest.getKey().getTime().isBefore(limitTime)) {
             return Optional.absent();
         }
-        return contentService.get(request.getChannel(), request.getKey());
+        return contentService.get(itemRequest.getChannel(), itemRequest.getKey(), itemRequest.isRemoteOnly());
     }
 
     @Override

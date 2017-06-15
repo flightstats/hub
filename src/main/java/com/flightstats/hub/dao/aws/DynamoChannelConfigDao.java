@@ -128,13 +128,15 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
                 .withExpressionAttributeValues(attributeValues);
         QueryResult query = dbClient.query(queryRequest);
         List<Map<String, AttributeValue>> items = query.getItems();
+        logger.info("found {}", items);
         if (items.size() == 1) {
             return mapItem(items.get(0));
         }
-        throw new RuntimeException("unable to find channel with query " + name);
+        //todo - gfm - figure out why the query doesn't work ..
+        //throw new RuntimeException("unable to find channel with query " + name);
+        return getCaseSensitive(name);
     }
 
-    /*
     //todo - gfm - this will be used again once all channels are lower case
     private ChannelConfig getCaseSensitive(String name) {
         HashMap<String, AttributeValue> keyMap = new HashMap<>();
@@ -153,7 +155,7 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
             logger.info("channel not found " + e.getMessage());
             return null;
         }
-    }*/
+    }
 
     private ChannelConfig mapItem(Map<String, AttributeValue> item) {
         ChannelConfig.ChannelConfigBuilder builder = ChannelConfig.builder()

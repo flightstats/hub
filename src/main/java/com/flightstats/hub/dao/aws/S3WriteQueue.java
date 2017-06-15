@@ -72,7 +72,7 @@ public class S3WriteQueue {
         if (key != null) {
             ActiveTraces.start("S3WriteQueue.writeContent", key);
             try {
-                logger.trace("writing {}", key.getContentKey());
+                logger.info("writing {}", key.getContentKey());
                 Content content = spokeContentDao.get(key.getChannel(), key.getContentKey());
                 content.packageStream();
                 if (content.getData() == null) {

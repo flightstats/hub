@@ -123,10 +123,10 @@ public class ClusterContentService implements ContentService {
     }
 
     @Override
-    public Optional<Content> get(String channelName, ContentKey key) {
+    public Optional<Content> get(String channelName, ContentKey key, boolean remoteOnly) {
         logger.trace("fetching {} from channel {} ", key.toString(), channelName);
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
-        if (key.getTime().isAfter(getSpokeTtlTime(channelName))) {
+        if (!remoteOnly && key.getTime().isAfter(getSpokeTtlTime(channelName))) {
             Content content = spokeContentDao.get(channelName, key);
             if (content != null) {
                 logger.trace("returning from spoke {} {}", key.toString(), channelName);
@@ -184,7 +184,7 @@ public class ClusterContentService implements ContentService {
 
     private void getValues(String channelName, Consumer<Content> callback, ContentPathKeys contentPathKeys) {
         for (ContentKey contentKey : contentPathKeys.getKeys()) {
-            Optional<Content> contentOptional = get(channelName, contentKey);
+            Optional<Content> contentOptional = get(channelName, contentKey, false);
             if (contentOptional.isPresent()) {
                 callback.accept(contentOptional.get());
             }

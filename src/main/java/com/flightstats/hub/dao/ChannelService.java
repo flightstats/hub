@@ -40,7 +40,7 @@ public interface ChannelService {
 
     void deleteBefore(String name, ContentKey limitKey);
 
-    Optional<Content> get(Request request);
+    Optional<Content> get(ItemRequest itemRequest);
 
     void get(String channel, SortedSet<ContentKey> keys, Consumer<Content> callback);
 

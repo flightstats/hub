@@ -158,15 +158,15 @@ public class GlobalChannelService implements ChannelService {
     }
 
     @Override
-    public Optional<Content> get(Request request) {
-        return primaryAndSecondary(request.getChannel(),
-                () -> localChannelService.get(request),
+    public Optional<Content> get(ItemRequest itemRequest) {
+        return primaryAndSecondary(itemRequest.getChannel(),
+                () -> localChannelService.get(itemRequest),
                 () -> {
-                    Content read = spokeContentDao.get(request.getChannel(), request.getKey());
+                    Content read = spokeContentDao.get(itemRequest.getChannel(), itemRequest.getKey());
                     if (read != null) {
                         return Optional.of(read);
                     }
-                    return Optional.fromNullable(hubUtils.get(getMasterChannelUrl(request.getChannel()), request.getKey()));
+                    return Optional.fromNullable(hubUtils.get(getMasterChannelUrl(itemRequest.getChannel()), itemRequest.getKey()));
                 });
     }
 

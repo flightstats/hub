@@ -67,7 +67,7 @@ public class SingleContentService implements ContentService {
     }
 
     @Override
-    public Optional<Content> get(String channelName, ContentKey key) {
+    public Optional<Content> get(String channelName, ContentKey key, boolean cached) {
         String path = getPath(channelName, key);
         try {
             byte[] bytes = fileSpokeStore.read(path);
@@ -83,7 +83,7 @@ public class SingleContentService implements ContentService {
     @Override
     public void get(String channel, SortedSet<ContentKey> keys, Consumer<Content> callback) {
         for (ContentKey key : keys) {
-            Optional<Content> contentOptional = get(channel, key);
+            Optional<Content> contentOptional = get(channel, key, false);
             if (contentOptional.isPresent()) {
                 callback.accept(contentOptional.get());
             }

@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.dao.Request;
+import com.flightstats.hub.dao.ItemRequest;
 import com.flightstats.hub.events.ContentOutput;
 import com.flightstats.hub.events.EventsService;
 import com.flightstats.hub.exception.ConflictException;
@@ -218,25 +218,27 @@ public class ChannelContentResource {
 
     @Path("/{h}/{m}/{s}/{ms}/{hash}")
     @GET
-    public Response getValue(@PathParam("channel") String channel,
-                             @PathParam("Y") int year,
-                             @PathParam("M") int month,
-                             @PathParam("D") int day,
-                             @PathParam("h") int hour,
-                             @PathParam("m") int minute,
-                             @PathParam("s") int second,
-                             @PathParam("ms") int millis,
-                             @PathParam("hash") String hash,
-                             @HeaderParam("Accept") String accept
+    public Response getItem(@PathParam("channel") String channel,
+                            @PathParam("Y") int year,
+                            @PathParam("M") int month,
+                            @PathParam("D") int day,
+                            @PathParam("h") int hour,
+                            @PathParam("m") int minute,
+                            @PathParam("s") int second,
+                            @PathParam("ms") int millis,
+                            @PathParam("hash") String hash,
+                            @HeaderParam("Accept") String accept,
+                            @QueryParam("remoteOnly") @DefaultValue("false") boolean remoteOnly
     ) {
         long start = System.currentTimeMillis();
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
-        Request request = Request.builder()
+        ItemRequest itemRequest = ItemRequest.builder()
                 .channel(channel)
                 .key(key)
                 .uri(uriInfo.getRequestUri())
+                .remoteOnly(remoteOnly)
                 .build();
-        Optional<Content> optionalResult = channelService.get(request);
+        Optional<Content> optionalResult = channelService.get(itemRequest);
 
         if (!optionalResult.isPresent()) {
             logger.warn("404 content not found {} {}", channel, key);

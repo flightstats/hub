@@ -23,7 +23,8 @@ describe(testName, function () {
     var lowerCase = channelUrl + "/" + channelName.toLowerCase();
 
     function getUrl(url, done) {
-        done = done || {};
+        done = done || function () {
+            };
         request.get({url: url},
             function (err, response, body) {
                 expect(err).toBeNull();
@@ -75,6 +76,8 @@ describe(testName, function () {
 
     utils.addItem(lowerCase, 201);
 
+    var uris;
+
     function getTwo(channelUrl, path, done) {
 
         request.get({url: channelUrl + path},
@@ -82,11 +85,13 @@ describe(testName, function () {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
                 var parsed = utils.parseJson(response, 'time hour');
-                var uris = parsed._links.uris;
+                uris = parsed._links.uris;
                 expect(uris.length).toBe(2);
                 expect(uris[0]).toContain(channelUrl);
                 expect(uris[1]).toContain(channelUrl);
                 getUrl(uris[0], done);
+
+
             });
     }
 
@@ -94,9 +99,17 @@ describe(testName, function () {
         getTwo(lowerCase, '/time/hour?stable=false', done);
     });
 
+    it("gets first url remote ", function (done) {
+        utils.sleep(1000);
+        getUrl(uris[0] + '?remoteOnly=true', done);
+    });
+
+    it("gets second url remote ", function (done) {
+        getUrl(uris[1] + '?remoteOnly=true', done);
+    });
+
     it("gets latest 2 " + upperCase, function (done) {
         getTwo(upperCase, '/latest/2?stable=false', done);
-
     });
 
 
