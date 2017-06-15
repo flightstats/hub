@@ -53,7 +53,7 @@ public class InternalGlobalResource {
         return create(channelName, json, false);
     }
 
-    private Response create(@PathParam("channel") String channelName, String json, boolean isMaster) throws IOException {
+    private Response create(String channelName, String json, boolean isMaster) throws IOException {
         ChannelConfig newConfig = ChannelConfig.createFromJsonWithName(json, channelName);
         ChannelConfig oldConfig = channelService.getChannelConfig(channelName, false);
         if (oldConfig != null) {
@@ -63,7 +63,7 @@ public class InternalGlobalResource {
         newConfig.getGlobal().setIsMaster(isMaster);
         newConfig = channelService.updateChannel(newConfig, oldConfig, true);
         URI channelUri = LinkBuilder.buildChannelUri(newConfig.getName(), uriInfo);
-        ObjectNode output = buildChannelConfigResponse(newConfig, uriInfo);
+        ObjectNode output = buildChannelConfigResponse(newConfig, uriInfo, channelName);
         return Response.created(channelUri).entity(output).build();
     }
 }

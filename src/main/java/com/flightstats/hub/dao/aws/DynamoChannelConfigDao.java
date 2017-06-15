@@ -1,6 +1,7 @@
 package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.amazonaws.services.dynamodbv2.document.utils.NameMap;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.dao.Dao;
@@ -33,6 +34,8 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
     public void upsert(ChannelConfig config) {
         Map<String, AttributeValue> item = new HashMap<>();
         item.put("key", new AttributeValue(config.getName()));
+        item.put("displayName", new AttributeValue(config.getDisplayName()));
+        item.put("lowerCaseName", new AttributeValue(config.getLowerCaseName()));
         item.put("date", new AttributeValue().withN(String.valueOf(config.getCreationDate().getTime())));
         item.put("ttlDays", new AttributeValue().withN(String.valueOf(config.getTtlDays())));
         item.put("maxItems", new AttributeValue().withN(String.valueOf(config.getMaxItems())));
@@ -69,15 +72,71 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
     }
 
     private void initialize() {
-        createTable();
-    }
+        //todo - gfm - inline code for now to see what works
+        String tableName = getTableName();
+        ProvisionedThroughput throughput = dynamoUtils.getProvisionedThroughput("channel");
+        logger.info("creating table {} ", tableName);
+        List<AttributeDefinition> attributes = new ArrayList<>();
+        attributes.add(new AttributeDefinition("key", ScalarAttributeType.S));
+        attributes.add(new AttributeDefinition("lowerCaseName", ScalarAttributeType.S));
 
-    private void createTable() {
-        dynamoUtils.createAndUpdate(getTableName(), "channel", "key");
+        GlobalSecondaryIndex globalSecondaryIndex = new GlobalSecondaryIndex();
+        globalSecondaryIndex
+                .withIndexName("tempLowerCaseName")
+                .withProvisionedThroughput(throughput)
+                .withKeySchema(new KeySchemaElement().withAttributeName("lowerCaseName").withKeyType(KeyType.HASH))
+                .withProjection(new Projection().withProjectionType(ProjectionType.ALL));
+
+        CreateTableRequest request = new CreateTableRequest()
+                .withTableName(tableName)
+                .withAttributeDefinitions(attributes)
+                .withKeySchema(new KeySchemaElement("key", KeyType.HASH))
+                .withGlobalSecondaryIndexes(globalSecondaryIndex)
+                .withProvisionedThroughput(throughput);
+
+        dynamoUtils.createTable(request);
+        dynamoUtils.updateTable(tableName, throughput);
+
+        //todo - gfm - handle the case of older channels
+        /*boolean updated = false;
+        Collection<ChannelConfig> channelConfigs = getAll(false);
+        for (ChannelConfig channelConfig : channelConfigs) {
+            if (StringUtils.isBlank(channelConfig.getDisplayName())){
+                logger.info("updating {}", channelConfig);
+                ChannelConfig updatedConfig = new ChannelConfig.ChannelConfigBuilder(channelConfig)
+                        .displayName(channelConfig.getName())
+                        .lowerCaseName(channelConfig.getName().toLowerCase())
+                        .build();
+                upsert(updatedConfig);
+                updated = true;
+            }
+        }
+        if (updated || channelConfigs.isEmpty()) {
+            logger.info("creating lower case index!");
+            dynamoUtils.addLowerCaseIndex(tableName, "channel");
+        }*/
     }
 
     @Override
     public ChannelConfig get(String name) {
+        Map<String, AttributeValue> attributeValues = new HashMap<>();
+        attributeValues.put(":value", new AttributeValue(name));
+        QueryRequest queryRequest = new QueryRequest(getTableName())
+                .withIndexName("tempLowerCaseName")
+                .withKeyConditionExpression("#name = :value")
+                .withExpressionAttributeNames(new NameMap().with("#name", "lowerCaseName"))
+                .withExpressionAttributeValues(attributeValues);
+        QueryResult query = dbClient.query(queryRequest);
+        List<Map<String, AttributeValue>> items = query.getItems();
+        if (items.size() == 1) {
+            return mapItem(items.get(0));
+        }
+        throw new RuntimeException("unable to find channel with query " + name);
+    }
+
+    /*
+    //todo - gfm - this will be used again once all channels are lower case
+    private ChannelConfig getCaseSensitive(String name) {
         HashMap<String, AttributeValue> keyMap = new HashMap<>();
         keyMap.put("key", new AttributeValue().withS(name));
         GetItemRequest getItemRequest = new GetItemRequest()
@@ -94,12 +153,18 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
             logger.info("channel not found " + e.getMessage());
             return null;
         }
-    }
+    }*/
 
     private ChannelConfig mapItem(Map<String, AttributeValue> item) {
         ChannelConfig.ChannelConfigBuilder builder = ChannelConfig.builder()
                 .creationDate(new Date(Long.parseLong(item.get("date").getN())))
                 .name(item.get("key").getS());
+        if (item.containsKey("displayName")) {
+            builder.displayName(item.get("displayName").getS());
+        }
+        if (item.containsKey("lowerCaseName")) {
+            builder.lowerCaseName(item.get("lowerCaseName").getS());
+        }
         if (item.get("ttlDays") != null) {
             builder.ttlDays(Long.parseLong(item.get("ttlDays").getN()));
         }

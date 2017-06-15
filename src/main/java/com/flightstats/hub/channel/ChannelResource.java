@@ -65,7 +65,7 @@ public class ChannelResource {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
 
-        ObjectNode output = buildChannelConfigResponse(config, uriInfo);
+        ObjectNode output = buildChannelConfigResponse(config, uriInfo, channelName);
         return Response.ok(output).build();
     }
 
@@ -84,7 +84,7 @@ public class ChannelResource {
         channelConfig = channelService.updateChannel(channelConfig, oldConfig, LocalHostOnly.isLocalhost(uriInfo));
 
         URI channelUri = buildChannelUri(channelConfig.getName(), uriInfo);
-        ObjectNode output = buildChannelConfigResponse(channelConfig, uriInfo);
+        ObjectNode output = buildChannelConfigResponse(channelConfig, uriInfo, channelName);
         return Response.created(channelUri).entity(output).build();
     }
 
@@ -103,7 +103,7 @@ public class ChannelResource {
         newConfig = channelService.updateChannel(newConfig, oldConfig, LocalHostOnly.isLocalhost(uriInfo));
 
         URI channelUri = buildChannelUri(newConfig.getName(), uriInfo);
-        ObjectNode output = buildChannelConfigResponse(newConfig, uriInfo);
+        ObjectNode output = buildChannelConfigResponse(newConfig, uriInfo, channelName);
         return Response.ok(channelUri).entity(output).build();
     }
 

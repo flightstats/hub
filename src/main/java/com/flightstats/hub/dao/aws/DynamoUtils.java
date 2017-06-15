@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 public class DynamoUtils {
 
@@ -33,25 +34,36 @@ public class DynamoUtils {
         return appName + "-" + environment + "-" + baseTableName;
     }
 
+    //todo - gfm - update for webhook
     void createAndUpdate(String tableName, String type, String keyName) {
-        long readThroughput = HubProperties.getProperty("dynamo.throughput." + type + ".read", 100);
-        long writeThroughput = HubProperties.getProperty("dynamo.throughput." + type + ".write", 10);
-        logger.info("creating table {} with read {} and write {}", tableName, readThroughput, writeThroughput);
-        ProvisionedThroughput throughput = new ProvisionedThroughput(readThroughput, writeThroughput);
+        createAndUpdate(tableName, type, keyName, createTableRequest -> createTableRequest);
+    }
+
+    void createAndUpdate(String tableName, String type, String keyName,
+                         Function<CreateTableRequest, CreateTableRequest> function) {
+        ProvisionedThroughput throughput = getProvisionedThroughput(type);
+        logger.info("creating table {} ", tableName);
         CreateTableRequest request = new CreateTableRequest()
                 .withTableName(tableName)
                 .withAttributeDefinitions(new AttributeDefinition(keyName, ScalarAttributeType.S))
                 .withKeySchema(new KeySchemaElement(keyName, KeyType.HASH))
                 .withProvisionedThroughput(throughput);
+        request = function.apply(request);
         createTable(request);
         updateTable(tableName, throughput);
+    }
+
+    ProvisionedThroughput getProvisionedThroughput(String type) {
+        long readThroughput = HubProperties.getProperty("dynamo.throughput." + type + ".read", 100);
+        long writeThroughput = HubProperties.getProperty("dynamo.throughput." + type + ".write", 10);
+        return new ProvisionedThroughput(readThroughput, writeThroughput);
     }
 
     /**
      * If a table does not already exist, create it.
      * Waits for the table to become ready for use.
      */
-    private void createTable(CreateTableRequest request) {
+    void createTable(CreateTableRequest request) {
         String tableName = request.getTableName();
         try {
             waitForTableStatus(tableName, TableStatus.ACTIVE);
@@ -62,7 +74,7 @@ public class DynamoUtils {
         }
     }
 
-    private void updateTable(String tableName, ProvisionedThroughput throughput) {
+    void updateTable(String tableName, ProvisionedThroughput throughput) {
         try {
             TableDescription tableDescription = waitForTableStatus(tableName, TableStatus.ACTIVE);
             ProvisionedThroughputDescription provisionedThroughput = tableDescription.getProvisionedThroughput();
@@ -76,6 +88,26 @@ public class DynamoUtils {
             }
         } catch (ResourceNotFoundException e) {
             logger.warn("update presumes the table exists " + tableName, e);
+            throw new RuntimeException("unable to update table " + tableName);
+        }
+    }
+
+    //todo - gfm - not sure if this is needed
+    void addLowerCaseIndex(String tableName, String type) {
+        try {
+            ProvisionedThroughput throughput = getProvisionedThroughput(type);
+            CreateGlobalSecondaryIndexAction tempLowerCaseName = new CreateGlobalSecondaryIndexAction()
+                    .withIndexName("tempLowerCaseName")
+                    .withProvisionedThroughput(throughput)
+                    .withKeySchema(new KeySchemaElement().withAttributeName("lowerCaseName").withKeyType(KeyType.HASH))
+                    .withProjection(new Projection().withProjectionType(ProjectionType.ALL));
+            GlobalSecondaryIndexUpdate update = new GlobalSecondaryIndexUpdate().withCreate(tempLowerCaseName);
+            UpdateTableRequest tableRequest = new UpdateTableRequest(tableName, throughput)
+                    .withGlobalSecondaryIndexUpdates(update);
+            dbClient.updateTable(tableRequest);
+            waitForTableStatus(tableName, TableStatus.ACTIVE);
+        } catch (Exception e) {
+            logger.warn("not sure what happened " + tableName, e);
             throw new RuntimeException("unable to update table " + tableName);
         }
     }
