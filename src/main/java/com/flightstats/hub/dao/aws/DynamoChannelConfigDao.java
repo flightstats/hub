@@ -1,6 +1,9 @@
 package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.amazonaws.services.dynamodbv2.document.DynamoDB;
+import com.amazonaws.services.dynamodbv2.document.Index;
+import com.amazonaws.services.dynamodbv2.document.Table;
 import com.amazonaws.services.dynamodbv2.document.utils.NameMap;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.flightstats.hub.app.HubServices;
@@ -19,6 +22,7 @@ import java.util.*;
 
 public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
     private final static Logger logger = LoggerFactory.getLogger(DynamoChannelConfigDao.class);
+    public static final String INDEX_NAME = "tempLowerCaseName";
 
     @Inject
     private AmazonDynamoDBClient dbClient;
@@ -71,7 +75,7 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
         dbClient.putItem(putItemRequest);
     }
 
-    private void initialize() {
+    void initialize() {
         //todo - gfm - inline code for now to see what works
         String tableName = getTableName();
         ProvisionedThroughput throughput = dynamoUtils.getProvisionedThroughput("channel");
@@ -82,7 +86,7 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
 
         GlobalSecondaryIndex globalSecondaryIndex = new GlobalSecondaryIndex();
         globalSecondaryIndex
-                .withIndexName("tempLowerCaseName")
+                .withIndexName(INDEX_NAME)
                 .withProvisionedThroughput(throughput)
                 .withKeySchema(new KeySchemaElement().withAttributeName("lowerCaseName").withKeyType(KeyType.HASH))
                 .withProjection(new Projection().withProjectionType(ProjectionType.ALL));
@@ -97,24 +101,22 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
         dynamoUtils.createTable(request);
         dynamoUtils.updateTable(tableName, throughput);
 
-        //todo - gfm - handle the case of older channels
-        /*boolean updated = false;
-        Collection<ChannelConfig> channelConfigs = getAll(false);
-        for (ChannelConfig channelConfig : channelConfigs) {
-            if (StringUtils.isBlank(channelConfig.getDisplayName())){
+        DynamoDB dynamoDB = new DynamoDB(dbClient);
+        Table table = dynamoDB.getTable(tableName);
+        try {
+            Index index = table.getIndex(INDEX_NAME);
+            logger.info("found index {} {} {}", index, index.getIndexName(), index.getTable().getTableName());
+            TableDescription waitForActive = index.waitForActive();
+            logger.info("index active! {} {} {}", index, index.getIndexName(), waitForActive);
+        } catch (Exception e) {
+            logger.info("index not found, creating");
+            Collection<ChannelConfig> channelConfigs = getAll(false);
+            for (ChannelConfig channelConfig : channelConfigs) {
                 logger.info("updating {}", channelConfig);
-                ChannelConfig updatedConfig = new ChannelConfig.ChannelConfigBuilder(channelConfig)
-                        .displayName(channelConfig.getName())
-                        .lowerCaseName(channelConfig.getName().toLowerCase())
-                        .build();
-                upsert(updatedConfig);
-                updated = true;
+                upsert(channelConfig);
             }
-        }
-        if (updated || channelConfigs.isEmpty()) {
-            logger.info("creating lower case index!");
             dynamoUtils.addLowerCaseIndex(tableName, "channel");
-        }*/
+        }
     }
 
     @Override
@@ -122,7 +124,7 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
         Map<String, AttributeValue> attributeValues = new HashMap<>();
         attributeValues.put(":value", new AttributeValue(name.toLowerCase()));
         QueryRequest queryRequest = new QueryRequest(getTableName())
-                .withIndexName("tempLowerCaseName")
+                .withIndexName(INDEX_NAME)
                 .withKeyConditionExpression("#name = :value")
                 .withExpressionAttributeNames(new NameMap().with("#name", "lowerCaseName"))
                 .withExpressionAttributeValues(attributeValues);

@@ -11,11 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 
 import java.io.Serializable;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.function.Function;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -38,8 +34,6 @@ public class ChannelConfig implements Serializable, NamedType {
 
     private String name;
     private String displayName;
-    //todo - gfm - lowerCaseName is temporary
-    private String lowerCaseName;
     private String owner;
     private Date creationDate;
     private long ttlDays;
@@ -58,7 +52,6 @@ public class ChannelConfig implements Serializable, NamedType {
                           boolean protect, DateTime mutableTime, boolean allowZeroBytes, String displayName) {
         this.name = StringUtils.trim(name);
         this.displayName = StringUtils.defaultIfBlank(displayName, name);
-        this.lowerCaseName = this.displayName.toLowerCase();
         this.owner = StringUtils.trim(owner);
         this.creationDate = creationDate;
         this.description = description;
@@ -275,7 +268,7 @@ public class ChannelConfig implements Serializable, NamedType {
     }
 
     public String getLowerCaseName() {
-        return lowerCaseName;
+        return getDisplayName().toLowerCase();
     }
 
     public boolean equals(Object o) {
@@ -355,7 +348,6 @@ public class ChannelConfig implements Serializable, NamedType {
         return "ChannelConfig{" +
                 "name='" + name + '\'' +
                 ", displayName='" + displayName + '\'' +
-                ", lowerCaseName='" + lowerCaseName + '\'' +
                 ", owner='" + owner + '\'' +
                 ", creationDate=" + creationDate +
                 ", ttlDays=" + ttlDays +
@@ -395,7 +387,7 @@ public class ChannelConfig implements Serializable, NamedType {
         ChannelConfigBuilder() {
         }
 
-        public ChannelConfigBuilder(ChannelConfig config) {
+        ChannelConfigBuilder(ChannelConfig config) {
             owner(config.getOwner());
             creationDate(config.getCreationDate());
             description(config.getDescription());
@@ -414,7 +406,7 @@ public class ChannelConfig implements Serializable, NamedType {
 
         public ChannelConfigBuilder tags(List<String> tagList) {
             this.tags.clear();
-            this.tags.addAll(tagList.stream().map(Function.identity()).collect(Collectors.toSet()));
+            this.tags.addAll(new HashSet<>(tagList));
             return this;
         }
 
@@ -493,8 +485,5 @@ public class ChannelConfig implements Serializable, NamedType {
             return new ChannelConfig(name, owner, creationDate, ttlDays, maxItems, description, tags, replicationSource, storage, global, protect, mutableTime, allowZeroBytes, displayName);
         }
 
-        public String toString() {
-            return "com.flightstats.hub.model.ChannelConfig.ChannelConfigBuilder(owner=" + this.owner + ", creationDate=" + this.creationDate + ", description=" + this.description + ", tags=" + this.tags + ", replicationSource=" + this.replicationSource + ", storage=" + this.storage + ", protect=" + this.protect + ", allowZeroBytes=" + this.allowZeroBytes + ", name=" + this.name + ", ttlDays=" + this.ttlDays + ", maxItems=" + this.maxItems + ", global=" + this.global + ", mutableTime=" + this.mutableTime + ")";
-        }
     }
 }

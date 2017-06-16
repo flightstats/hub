@@ -97,13 +97,17 @@ public class DynamoUtils {
         try {
             ProvisionedThroughput throughput = getProvisionedThroughput(type);
             CreateGlobalSecondaryIndexAction tempLowerCaseName = new CreateGlobalSecondaryIndexAction()
-                    .withIndexName("tempLowerCaseName")
+                    .withIndexName(DynamoChannelConfigDao.INDEX_NAME)
                     .withProvisionedThroughput(throughput)
                     .withKeySchema(new KeySchemaElement().withAttributeName("lowerCaseName").withKeyType(KeyType.HASH))
+
                     .withProjection(new Projection().withProjectionType(ProjectionType.ALL));
             GlobalSecondaryIndexUpdate update = new GlobalSecondaryIndexUpdate().withCreate(tempLowerCaseName);
-            UpdateTableRequest tableRequest = new UpdateTableRequest(tableName, throughput)
-                    .withGlobalSecondaryIndexUpdates(update);
+            UpdateTableRequest tableRequest = new UpdateTableRequest()
+                    .withTableName(tableName)
+                    .withGlobalSecondaryIndexUpdates(update)
+                    .withAttributeDefinitions(new AttributeDefinition("lowerCaseName", ScalarAttributeType.S));
+            logger.info("updating table {}", tableRequest);
             dbClient.updateTable(tableRequest);
             waitForTableStatus(tableName, TableStatus.ACTIVE);
         } catch (Exception e) {
