@@ -103,8 +103,16 @@ describe(testName, function () {
         getTwo(lowerCase, '/time/hour?stable=false', done);
     });
 
-    it("gets first url remote ", function (done) {
+    it("gets latest 2 " + upperCase, function (done) {
         utils.sleep(5000);
+        getTwo(upperCase, '/latest/2?stable=false', done);
+    });
+
+    it("gets time hour LONG_TERM_SINGLE " + lowerCase, function (done) {
+        getTwo(lowerCase, '/time/hour?location=LONG_TERM_SINGLE&stable=false&trace=true', done);
+    });
+
+    it("gets first url remote ", function (done) {
         getUrl(uris[0] + '?remoteOnly=true', done);
     });
 
@@ -112,17 +120,13 @@ describe(testName, function () {
         getUrl(uris[1] + '?remoteOnly=true', done);
     });
 
-    it("gets time hour LONG_TERM_SINGLE " + lowerCase, function (done) {
-        getTwo(lowerCase, '/time/hour?location=LONG_TERM_SINGLE&stable=false', done);
-    });
-
-    it("gets latest 2 " + upperCase, function (done) {
-        getTwo(upperCase, '/latest/2?stable=false', done);
-    });
-
-
     //todo - gfm - use more API endpoints
+    /*
+     next/previous
+     earliest
+     batch
 
+     */
 
 
 

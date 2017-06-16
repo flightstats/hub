@@ -55,10 +55,10 @@ public class ChannelConfig implements Serializable, NamedType {
 
     private ChannelConfig(String name, String owner, Date creationDate, long ttlDays, long maxItems, String description,
                           Set<String> tags, String replicationSource, String storage, GlobalConfig global,
-                          boolean protect, DateTime mutableTime, boolean allowZeroBytes, String displayName, String lowerCaseName) {
+                          boolean protect, DateTime mutableTime, boolean allowZeroBytes, String displayName) {
         this.name = StringUtils.trim(name);
-        this.displayName = StringUtils.trim(displayName);
-        this.lowerCaseName = StringUtils.trim(lowerCaseName);
+        this.displayName = StringUtils.defaultIfBlank(displayName, name);
+        this.lowerCaseName = this.displayName.toLowerCase();
         this.owner = StringUtils.trim(owner);
         this.creationDate = creationDate;
         this.description = description;
@@ -110,7 +110,6 @@ public class ChannelConfig implements Serializable, NamedType {
     }
 
     public static ChannelConfig createFromJson(String json) {
-        //todo - gfm - handle names
         if (StringUtils.isEmpty(json)) {
             throw new InvalidRequestException("this method requires at least a json name");
         } else {
@@ -123,14 +122,12 @@ public class ChannelConfig implements Serializable, NamedType {
         if (!StringUtils.isEmpty(json)) {
             builder = gson.fromJson(json, ChannelConfigBuilder.class);
         }
-        return builder.name(name).displayName(name).lowerCaseName(name.toLowerCase()).build();
+        return builder.name(name).build();
     }
 
     public static ChannelConfig updateFromJson(ChannelConfig config, String json) {
         ChannelConfigBuilder builder = config.toBuilder();
         JsonNode rootNode = readJSON(json);
-        //todo - gfm - what about names?
-
         if (rootNode.has("owner")) builder.owner(getString(rootNode.get("owner")));
         if (rootNode.has("description")) builder.description(getString(rootNode.get("description")));
         if (rootNode.has("ttlDays")) builder.ttlDays(rootNode.get("ttlDays").asLong());
@@ -353,8 +350,25 @@ public class ChannelConfig implements Serializable, NamedType {
         return result;
     }
 
+    @Override
     public String toString() {
-        return "com.flightstats.hub.model.ChannelConfig(name=" + this.getName() + ", owner=" + this.getOwner() + ", creationDate=" + this.getCreationDate() + ", ttlDays=" + this.getTtlDays() + ", maxItems=" + this.getMaxItems() + ", description=" + this.getDescription() + ", tags=" + this.getTags() + ", replicationSource=" + this.getReplicationSource() + ", storage=" + this.getStorage() + ", global=" + this.getGlobal() + ", protect=" + this.isProtect() + ", mutableTime=" + this.getMutableTime() + ", allowZeroBytes=" + this.isAllowZeroBytes() + ")";
+        return "ChannelConfig{" +
+                "name='" + name + '\'' +
+                ", displayName='" + displayName + '\'' +
+                ", lowerCaseName='" + lowerCaseName + '\'' +
+                ", owner='" + owner + '\'' +
+                ", creationDate=" + creationDate +
+                ", ttlDays=" + ttlDays +
+                ", maxItems=" + maxItems +
+                ", description='" + description + '\'' +
+                ", tags=" + tags +
+                ", replicationSource='" + replicationSource + '\'' +
+                ", storage='" + storage + '\'' +
+                ", global=" + global +
+                ", protect=" + protect +
+                ", mutableTime=" + mutableTime +
+                ", allowZeroBytes=" + allowZeroBytes +
+                '}';
     }
 
     public ChannelConfigBuilder toBuilder() {
@@ -377,7 +391,6 @@ public class ChannelConfig implements Serializable, NamedType {
         private GlobalConfig global;
         private DateTime mutableTime;
         private String displayName;
-        private String lowerCaseName;
 
         ChannelConfigBuilder() {
         }
@@ -397,7 +410,6 @@ public class ChannelConfig implements Serializable, NamedType {
             global(config.getGlobal());
             mutableTime(config.getMutableTime());
             displayName(config.getDisplayName());
-            lowerCaseName(config.getLowerCaseName());
         }
 
         public ChannelConfigBuilder tags(List<String> tagList) {
@@ -419,11 +431,6 @@ public class ChannelConfig implements Serializable, NamedType {
 
         public ChannelConfigBuilder displayName(String displayName) {
             this.displayName = displayName;
-            return this;
-        }
-
-        public ChannelConfigBuilder lowerCaseName(String lowerCaseName) {
-            this.lowerCaseName = lowerCaseName;
             return this;
         }
 
@@ -483,7 +490,7 @@ public class ChannelConfig implements Serializable, NamedType {
         }
 
         public ChannelConfig build() {
-            return new ChannelConfig(name, owner, creationDate, ttlDays, maxItems, description, tags, replicationSource, storage, global, protect, mutableTime, allowZeroBytes, displayName, lowerCaseName);
+            return new ChannelConfig(name, owner, creationDate, ttlDays, maxItems, description, tags, replicationSource, storage, global, protect, mutableTime, allowZeroBytes, displayName);
         }
 
         public String toString() {

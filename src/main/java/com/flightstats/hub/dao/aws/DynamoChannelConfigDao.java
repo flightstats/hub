@@ -132,13 +132,12 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
         if (items.size() == 1) {
             return mapItem(items.get(0));
         }
-        //todo - gfm - figure out why the query doesn't work ..
-        //throw new RuntimeException("unable to find channel with query " + name);
-        return getCaseSensitive(name);
+        logger.info("channel not found " + name);
+        return null;
     }
 
-    //todo - gfm - this will be used again once all channels are lower case
-    private ChannelConfig getCaseSensitive(String name) {
+    //todo - gfm - getCaseSensitive will be used again once all channels are lower case
+    /*private ChannelConfig getCaseSensitive(String name) {
         HashMap<String, AttributeValue> keyMap = new HashMap<>();
         keyMap.put("key", new AttributeValue().withS(name));
         GetItemRequest getItemRequest = new GetItemRequest()
@@ -155,7 +154,7 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
             logger.info("channel not found " + e.getMessage());
             return null;
         }
-    }
+    }*/
 
     private ChannelConfig mapItem(Map<String, AttributeValue> item) {
         ChannelConfig.ChannelConfigBuilder builder = ChannelConfig.builder()
@@ -163,9 +162,6 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
                 .name(item.get("key").getS());
         if (item.containsKey("displayName")) {
             builder.displayName(item.get("displayName").getS());
-        }
-        if (item.containsKey("lowerCaseName")) {
-            builder.lowerCaseName(item.get("lowerCaseName").getS());
         }
         if (item.get("ttlDays") != null) {
             builder.ttlDays(Long.parseLong(item.get("ttlDays").getN()));
