@@ -87,11 +87,15 @@ describe(testName, function () {
                 var parsed = utils.parseJson(response, 'time hour');
                 uris = parsed._links.uris;
                 expect(uris.length).toBe(2);
-                expect(uris[0]).toContain(channelUrl);
-                expect(uris[1]).toContain(channelUrl);
-                getUrl(uris[0], done);
-
-
+                if (uris.length >= 2) {
+                    expect(uris[1]).toContain(channelUrl);
+                }
+                if (uris.length >= 1) {
+                    expect(uris[0]).toContain(channelUrl);
+                    getUrl(uris[0], done);
+                } else {
+                    done();
+                }
             });
     }
 
@@ -108,15 +112,18 @@ describe(testName, function () {
         getUrl(uris[1] + '?remoteOnly=true', done);
     });
 
+    it("gets time hour LONG_TERM_SINGLE " + lowerCase, function (done) {
+        getTwo(lowerCase, '/time/hour?location=LONG_TERM_SINGLE&stable=false&trace=true', done);
+    });
+
     it("gets latest 2 " + upperCase, function (done) {
         getTwo(upperCase, '/latest/2?stable=false', done);
     });
 
 
-    //todo - gfm - also use other API endpoints
+    //todo - gfm - use more API endpoints
 
 
-    //todo - gfm - can we do a direct item GET from S3?
 
 
 });
