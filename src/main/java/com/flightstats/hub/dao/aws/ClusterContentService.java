@@ -443,7 +443,7 @@ public class ClusterContentService implements ContentService {
 
         @Override
         protected Scheduler scheduler() {
-            return Scheduler.newFixedDelaySchedule(0, 59, TimeUnit.MINUTES);
+            return Scheduler.newFixedDelaySchedule(2, 59, TimeUnit.MINUTES);
         }
 
     }

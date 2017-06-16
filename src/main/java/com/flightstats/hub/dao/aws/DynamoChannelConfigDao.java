@@ -75,7 +75,7 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
         dbClient.putItem(putItemRequest);
     }
 
-    void initialize() {
+    void initialize() throws InterruptedException {
         //todo - gfm - inline code for now to see what works
         String tableName = getTableName();
         ProvisionedThroughput throughput = dynamoUtils.getProvisionedThroughput("channel");
@@ -103,8 +103,8 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
 
         DynamoDB dynamoDB = new DynamoDB(dbClient);
         Table table = dynamoDB.getTable(tableName);
+        Index index = table.getIndex(INDEX_NAME);
         try {
-            Index index = table.getIndex(INDEX_NAME);
             logger.info("found index {} {} {}", index, index.getIndexName(), index.getTable().getTableName());
             TableDescription waitForActive = index.waitForActive();
             logger.info("index active! {} {} {}", index, index.getIndexName(), waitForActive);
@@ -116,6 +116,8 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
                 upsert(channelConfig);
             }
             dynamoUtils.addLowerCaseIndex(tableName, "channel");
+            TableDescription waitForActive = index.waitForActive();
+            logger.info("index active! {} {} {}", index, index.getIndexName(), waitForActive);
         }
     }
 
