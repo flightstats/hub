@@ -113,6 +113,7 @@ public class ChannelResource {
                                 @HeaderParam("Content-Length") long contentLength,
                                 @HeaderParam("Content-Type") String contentType,
                                 @QueryParam("threads") String threads,
+                                @QueryParam("forceWrite") @DefaultValue("false") boolean forceWrite,
                                 final InputStream data) throws Exception {
         if (!channelService.channelExists(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
@@ -123,6 +124,7 @@ public class ChannelResource {
                 .withContentLength(contentLength)
                 .withStream(data)
                 .withThreads(StringUtils.defaultIfBlank(threads, THREADS))
+                .withForceWrite(forceWrite)
                 .build();
         try {
             ContentKey contentKey = channelService.insert(channelName, content);

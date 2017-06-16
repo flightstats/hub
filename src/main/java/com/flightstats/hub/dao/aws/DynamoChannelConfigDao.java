@@ -120,7 +120,7 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
     @Override
     public ChannelConfig get(String name) {
         Map<String, AttributeValue> attributeValues = new HashMap<>();
-        attributeValues.put(":value", new AttributeValue(name));
+        attributeValues.put(":value", new AttributeValue(name.toLowerCase()));
         QueryRequest queryRequest = new QueryRequest(getTableName())
                 .withIndexName("tempLowerCaseName")
                 .withKeyConditionExpression("#name = :value")

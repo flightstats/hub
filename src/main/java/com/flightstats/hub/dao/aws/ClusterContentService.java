@@ -83,7 +83,7 @@ public class ClusterContentService implements ContentService {
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
         if (channel.isSingle() || channel.isBoth()) {
             Supplier<Void> local = () -> {
-                s3SingleWrite(channelName, key);
+                s3SingleWrite(channelName, key, content.isForceWrite());
                 return null;
             };
             GlobalChannelService.handleGlobal(channel, local, () -> null, local);
@@ -91,8 +91,8 @@ public class ClusterContentService implements ContentService {
         return key;
     }
 
-    private void s3SingleWrite(String channelName, ContentKey key) {
-        if (dropSomeWrites && Math.random() > 0.5) {
+    private void s3SingleWrite(String channelName, ContentKey key, boolean forceWrite) {
+        if (!forceWrite && dropSomeWrites && Math.random() > 0.5) {
             logger.debug("dropping {} {}", channelName, key);
         } else {
             s3WriteQueue.add(new ChannelContentKey(channelName, key));
@@ -106,7 +106,7 @@ public class ClusterContentService implements ContentService {
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
         if (channel.isSingle() || channel.isBoth()) {
             for (ContentKey key : keys) {
-                s3SingleWrite(channelName, key);
+                s3SingleWrite(channelName, key, false);
             }
         }
         return keys;

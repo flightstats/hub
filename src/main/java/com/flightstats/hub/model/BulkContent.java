@@ -1,14 +1,18 @@
 package com.flightstats.hub.model;
 
+import lombok.experimental.Wither;
+
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+
 
 public class BulkContent {
 
     private final boolean isNew;
     private final InputStream stream;
     private final String contentType;
+    @Wither
     private final String channel;
     private final List<Content> items = new ArrayList<>();
     private ContentKey masterKey;

@@ -40,7 +40,7 @@ public class ChannelsResource {
     public Response getChannels() {
         Map<String, URI> mappedUris = new TreeMap<>();
         for (ChannelConfig channelConfig : channelService.getChannels()) {
-            String channelName = channelConfig.getName();
+            String channelName = channelConfig.getDisplayName();
             mappedUris.put(channelName, LinkBuilder.buildChannelUri(channelName, uriInfo));
         }
         Linked<?> result = LinkBuilder.buildLinks(uriInfo, mappedUris, "channels");

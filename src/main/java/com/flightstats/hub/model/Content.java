@@ -26,6 +26,7 @@ public class Content implements Serializable {
     private transient boolean isLarge;
     private transient int threads;
     private transient boolean isHistorical;
+    private boolean forceWrite;
 
     private Content(Builder builder) {
         contentKey = builder.contentKey;
@@ -33,6 +34,7 @@ public class Content implements Serializable {
         stream = builder.stream;
         contentLength = builder.contentLength;
         threads = builder.threads;
+        forceWrite = builder.forceWrite;
     }
 
     public static Builder builder() {
@@ -75,7 +77,9 @@ public class Content implements Serializable {
         return this.isHistorical;
     }
 
-    ;
+    public boolean isForceWrite() {
+        return forceWrite;
+    }
 
     public InputStream getStream() {
         if (stream == null) {
@@ -175,6 +179,7 @@ public class Content implements Serializable {
         private Optional<ContentKey> contentKey = Optional.absent();
         private InputStream stream;
         private int threads;
+        private boolean forceWrite;
 
         public Builder withContentType(String contentType) {
             this.contentType = Optional.fromNullable(contentType);
@@ -207,6 +212,11 @@ public class Content implements Serializable {
 
         public Builder withThreads(String threads) {
             this.threads = Integer.parseInt(threads);
+            return this;
+        }
+
+        public Builder withForceWrite(boolean forceWrite) {
+            this.forceWrite = forceWrite;
             return this;
         }
 

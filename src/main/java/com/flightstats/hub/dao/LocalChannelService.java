@@ -232,8 +232,8 @@ public class LocalChannelService implements ChannelService {
     }
 
     @Override
-    public void deleteBefore(String name, ContentKey limitKey) {
-        contentService.deleteBefore(name, limitKey);
+    public void deleteBefore(String channel, ContentKey limitKey) {
+        contentService.deleteBefore(channel, limitKey);
     }
 
     @Override

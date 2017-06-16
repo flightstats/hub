@@ -61,7 +61,7 @@ describe(testName, function () {
     var posted;
 
     it('posts item', function (done) {
-        utils.postItemQ(upperCase)
+        utils.postItemQ(upperCase + '?forceWrite=true')
             .then(function (value) {
                 posted = value.response.headers.location;
                 console.log('posted', posted);
@@ -74,7 +74,7 @@ describe(testName, function () {
         getUrl(posted, done);
     });
 
-    utils.addItem(lowerCase, 201);
+    utils.addItem(lowerCase + '?forceWrite=true', 201);
 
     var uris;
 
@@ -104,7 +104,7 @@ describe(testName, function () {
     });
 
     it("gets first url remote ", function (done) {
-        utils.sleep(1000);
+        utils.sleep(5000);
         getUrl(uris[0] + '?remoteOnly=true', done);
     });
 
@@ -113,7 +113,7 @@ describe(testName, function () {
     });
 
     it("gets time hour LONG_TERM_SINGLE " + lowerCase, function (done) {
-        getTwo(lowerCase, '/time/hour?location=LONG_TERM_SINGLE&stable=false&trace=true', done);
+        getTwo(lowerCase, '/time/hour?location=LONG_TERM_SINGLE&stable=false', done);
     });
 
     it("gets latest 2 " + upperCase, function (done) {

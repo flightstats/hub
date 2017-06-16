@@ -148,10 +148,10 @@ public class GlobalChannelService implements ChannelService {
     }
 
     @Override
-    public void deleteBefore(String name, ContentKey limitKey) {
-        primaryAndSecondary(name,
+    public void deleteBefore(String channel, ContentKey limitKey) {
+        primaryAndSecondary(channel,
                 () -> {
-                    localChannelService.deleteBefore(name, limitKey);
+                    localChannelService.deleteBefore(channel, limitKey);
                     return null;
                 },
                 (Supplier<Void>) () -> null);

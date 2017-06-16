@@ -8,6 +8,8 @@ import java.util.SortedSet;
 import java.util.function.Consumer;
 
 public interface ChannelService {
+    String DELEGATE = "DELEGATE";
+
     boolean channelExists(String channelName);
 
     ChannelConfig createChannel(ChannelConfig configuration);
@@ -38,7 +40,7 @@ public interface ChannelService {
         return getLatest(query);
     }
 
-    void deleteBefore(String name, ContentKey limitKey);
+    void deleteBefore(String channel, ContentKey limitKey);
 
     Optional<Content> get(ItemRequest itemRequest);
 
