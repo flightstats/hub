@@ -69,7 +69,7 @@ public class ClusterContentService implements ContentService {
 
     public ClusterContentService() {
         HubServices.registerPreStop(new SpokeS3ContentServiceInit());
-        HubServices.register(new ChannelLatestUpdatedService());
+        HubServices.register(new ChannelLatestUpdatedService(), HubServices.TYPE.AFTER_HEALTHY_START);
     }
 
     @Override
