@@ -36,7 +36,7 @@ class SingleHubBindings extends AbstractModule {
     @Provides
     @Named("ChannelConfig")
     public static Dao<ChannelConfig> buildChannelConfigDao(WatchManager watchManager, FileChannelConfigurationDao dao) {
-        return new CachedDao<>(dao, watchManager, "/channels/cache");
+        return new CachedLowerCaseDao<>(dao, watchManager, "/channels/cache");
     }
 
     @Inject
