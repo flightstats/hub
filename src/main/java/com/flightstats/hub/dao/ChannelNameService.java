@@ -92,7 +92,6 @@ public class ChannelNameService implements ChannelService {
         return delegate.getCachedChannelConfig(channelName);
     }
 
-    //todo - gfm - check for usages of this
     @Override
     public Collection<ChannelConfig> getChannels() {
         return delegate.getChannels();

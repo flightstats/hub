@@ -47,9 +47,7 @@ public class CachedLowerCaseDao<T extends NamedType> implements Dao<T> {
     @Override
     public T get(String name) {
         String lowerCase = name.toLowerCase();
-        logger.info("looking for {} -> {}", name, lowerCase);
         T t = delegate.get(lowerCase);
-        logger.info("delegate for {} {}", lowerCase, t);
         if (null != t) {
             cacheMap.put(lowerCase, t);
         }
@@ -87,7 +85,6 @@ public class CachedLowerCaseDao<T extends NamedType> implements Dao<T> {
 
     @Override
     public void delete(String name) {
-        //todo - gfm -
         delegate.delete(name.toLowerCase());
         cacheMap.remove(name.toLowerCase());
         notifyWatchers();

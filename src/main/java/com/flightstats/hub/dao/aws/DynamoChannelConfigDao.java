@@ -132,7 +132,6 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
                 .withExpressionAttributeValues(attributeValues);
         QueryResult query = dbClient.query(queryRequest);
         List<Map<String, AttributeValue>> items = query.getItems();
-        logger.info("found {}", items);
         if (items.size() == 1) {
             return mapItem(items.get(0));
         }
