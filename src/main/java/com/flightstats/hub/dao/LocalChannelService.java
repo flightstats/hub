@@ -376,8 +376,8 @@ public class LocalChannelService implements ChannelService {
             return false;
         }
         ChannelConfig channelConfig = getCachedChannelConfig(channelName);
-        contentService.delete(channelName);
-        channelConfigDao.delete(channelName);
+        contentService.delete(channelConfig.getDisplayName());
+        channelConfigDao.delete(channelConfig.getDisplayName());
         if (channelConfig.isReplicating()) {
             replicationGlobalManager.notifyWatchers();
             lastContentPath.delete(channelName, REPLICATED_LAST_UPDATED);
