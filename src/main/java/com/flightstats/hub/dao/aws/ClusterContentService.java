@@ -355,7 +355,7 @@ public class ClusterContentService implements ContentService {
     @Override
     public void notify(ChannelConfig newConfig, ChannelConfig oldConfig) {
         if (oldConfig == null) {
-            lastContentPath.updateIncrease(ContentKey.NONE, newConfig.getName(), CHANNEL_LATEST_UPDATED);
+            lastContentPath.updateIncrease(ContentKey.NONE, newConfig.getDisplayName(), CHANNEL_LATEST_UPDATED);
         }
         if (newConfig.isSingle()) {
             if (oldConfig != null && !oldConfig.isSingle()) {
@@ -372,13 +372,13 @@ public class ClusterContentService implements ContentService {
     }
 
     private void handleMutableTimeChange(ChannelConfig newConfig, ChannelConfig oldConfig) {
-        ContentPath latest = lastContentPath.get(newConfig.getName(), ContentKey.NONE, CHANNEL_LATEST_UPDATED);
+        ContentPath latest = lastContentPath.get(newConfig.getDisplayName(), ContentKey.NONE, CHANNEL_LATEST_UPDATED);
         logger.info("handleMutableTimeChange {}", latest);
         if (latest.equals(ContentKey.NONE)) {
             DirectionQuery query = DirectionQuery.builder()
                     .startKey(ContentKey.lastKey(oldConfig.getMutableTime().plusMillis(1)))
                     .earliestTime(newConfig.getMutableTime())
-                    .channelName(newConfig.getName())
+                    .channelName(newConfig.getDisplayName())
                     .channelConfig(oldConfig)
                     .next(false)
                     .stable(true)
@@ -392,7 +392,7 @@ public class ClusterContentService implements ContentService {
                 ContentKey mutableKey = mutableLatest.get();
                 if (mutableKey.getTime().isAfter(newConfig.getMutableTime())) {
                     logger.info("handleMutableTimeChange.updateIncrease {}", mutableKey);
-                    lastContentPath.updateIncrease(mutableKey, newConfig.getName(), CHANNEL_LATEST_UPDATED);
+                    lastContentPath.updateIncrease(mutableKey, newConfig.getDisplayName(), CHANNEL_LATEST_UPDATED);
                 }
             }
         }
@@ -421,9 +421,9 @@ public class ClusterContentService implements ContentService {
             channelService.getChannels().forEach(channelConfig -> {
                 try {
                     DateTime time = TimeUtil.stable().plusMinutes(1);
-                    Traces traces = new Traces(channelConfig.getName(), time);
+                    Traces traces = new Traces(channelConfig.getDisplayName(), time);
                     DirectionQuery latestQuery = DirectionQuery.builder()
-                            .channelName(channelConfig.getName())
+                            .channelName(channelConfig.getDisplayName())
                             .next(false)
                             .stable(false)
                             .location(Location.ALL)
@@ -432,10 +432,10 @@ public class ClusterContentService implements ContentService {
                             .count(1)
                             .build();
                     Optional<ContentKey> latest = getLatest(latestQuery);
-                    logger.debug("latest updated {} {}", channelConfig.getName(), latest);
+                    logger.debug("latest updated {} {}", channelConfig.getDisplayName(), latest);
                     traces.log(logger);
                 } catch (Exception e) {
-                    logger.warn("unexpected ChannelLatestUpdatedService issue " + channelConfig.getName(), e);
+                    logger.warn("unexpected ChannelLatestUpdatedService issue " + channelConfig.getDisplayName(), e);
                 }
             });
             ActiveTraces.end();

@@ -47,7 +47,7 @@ public class TagContentResource {
         Iterable<ChannelConfig> channels = tagService.getChannels(tag);
         Map<String, URI> mappedUris = new HashMap<>();
         for (ChannelConfig channelConfig : channels) {
-            String channelName = channelConfig.getName();
+            String channelName = channelConfig.getDisplayName();
             mappedUris.put(channelName, LinkBuilder.buildChannelUri(channelName, uriInfo));
         }
         Linked<?> result = LinkBuilder.buildLinks(mappedUris, "channels", builder -> {

@@ -83,7 +83,7 @@ public class ChannelResource {
         logger.info("creating channel {} {}", channelConfig, channelConfig.getCreationDate().getTime());
         channelConfig = channelService.updateChannel(channelConfig, oldConfig, LocalHostOnly.isLocalhost(uriInfo));
 
-        URI channelUri = buildChannelUri(channelConfig.getName(), uriInfo);
+        URI channelUri = buildChannelUri(channelConfig.getDisplayName(), uriInfo);
         ObjectNode output = buildChannelConfigResponse(channelConfig, uriInfo, channelName);
         return Response.created(channelUri).entity(output).build();
     }
@@ -102,7 +102,7 @@ public class ChannelResource {
         ChannelConfig newConfig = ChannelConfig.updateFromJson(oldConfig, json);
         newConfig = channelService.updateChannel(newConfig, oldConfig, LocalHostOnly.isLocalhost(uriInfo));
 
-        URI channelUri = buildChannelUri(newConfig.getName(), uriInfo);
+        URI channelUri = buildChannelUri(newConfig.getDisplayName(), uriInfo);
         ObjectNode output = buildChannelConfigResponse(newConfig, uriInfo, channelName);
         return Response.ok(channelUri).entity(output).build();
     }

@@ -27,11 +27,11 @@ class ChannelReplicator implements Replicator {
     }
 
     private String getCallbackUrl() {
-        return HubProperties.getAppUrl() + "internal/repls/" + channel.getName();
+        return HubProperties.getAppUrl() + "internal/repls/" + channel.getDisplayName();
     }
 
     private String getGroupName() {
-        return "Repl_" + HubProperties.getAppEnv() + "_" + channel.getName();
+        return "Repl_" + HubProperties.getAppEnv() + "_" + channel.getDisplayName();
     }
 
     public ChannelConfig getChannel() {

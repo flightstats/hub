@@ -54,7 +54,7 @@ public class ChannelsResource {
         logger.debug("post channel {}", json);
         ChannelConfig channelConfig = ChannelConfig.createFromJson(json);
         channelConfig = channelService.createChannel(channelConfig);
-        URI channelUri = LinkBuilder.buildChannelUri(channelConfig.getName(), uriInfo);
+        URI channelUri = LinkBuilder.buildChannelUri(channelConfig.getDisplayName(), uriInfo);
         ObjectNode output = buildChannelConfigResponse(channelConfig, uriInfo, channelConfig.getDisplayName());
         return Response.created(channelUri).entity(output).build();
     }

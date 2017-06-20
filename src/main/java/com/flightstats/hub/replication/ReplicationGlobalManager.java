@@ -99,7 +99,7 @@ public class ReplicationGlobalManager {
 
     private void processGlobal(Set<String> replicators, ChannelConfig channel) {
         for (String satellite : channel.getGlobal().getSatellites()) {
-            logger.info("creating satellite {} {}", satellite, channel.getName());
+            logger.info("creating satellite {} {}", satellite, channel.getDisplayName());
             GlobalReplicator replicator = new GlobalReplicator(channel, satellite);
             String replicatorKey = replicator.getKey();
             replicators.add(replicatorKey);
@@ -124,7 +124,7 @@ public class ReplicationGlobalManager {
         Iterable<ChannelConfig> replicatedChannels = channelService.getChannels(BuiltInTag.REPLICATED.toString(), false);
         logger.info("replicating channels {}", replicatedChannels);
         for (ChannelConfig channel : replicatedChannels) {
-            logger.info("replicating channel {}", channel.getName());
+            logger.info("replicating channel {}", channel.getDisplayName());
             try {
                 processChannel(replicators, channel);
             } catch (Exception e) {
@@ -135,9 +135,10 @@ public class ReplicationGlobalManager {
     }
 
     private void processChannel(Set<String> replicators, ChannelConfig channel) {
-        replicators.add(channel.getName());
-        if (channelReplicatorMap.containsKey(channel.getName())) {
-            ChannelReplicator existingReplicator = channelReplicatorMap.get(channel.getName());
+        String name = channel.getDisplayName();
+        replicators.add(name);
+        if (channelReplicatorMap.containsKey(name)) {
+            ChannelReplicator existingReplicator = channelReplicatorMap.get(name);
             if (!existingReplicator.getChannel().getReplicationSource().equals(channel.getReplicationSource())) {
                 ChannelReplicator newReplicator = createReplicator(channel);
                 executorPool.submit(() -> changeReplication(existingReplicator, newReplicator));
@@ -152,7 +153,7 @@ public class ReplicationGlobalManager {
 
     private ChannelReplicator createReplicator(ChannelConfig channel) {
         ChannelReplicator newReplicator = new ChannelReplicator(channel);
-        channelReplicatorMap.put(channel.getName(), newReplicator);
+        channelReplicatorMap.put(channel.getDisplayName(), newReplicator);
         return newReplicator;
     }
 
@@ -176,11 +177,11 @@ public class ReplicationGlobalManager {
 
     private void startReplication(ChannelReplicator replicator) {
         try {
-            logger.debug("starting replication of " + replicator.getChannel().getName());
+            logger.debug("starting replication of " + replicator.getChannel().getDisplayName());
             replicator.start();
         } catch (Exception e) {
-            channelReplicatorMap.remove(replicator.getChannel().getName());
-            logger.warn("unexpected replication issue " + replicator.getChannel().getName(), e);
+            channelReplicatorMap.remove(replicator.getChannel().getDisplayName());
+            logger.warn("unexpected replication issue " + replicator.getChannel().getDisplayName(), e);
         }
     }
 

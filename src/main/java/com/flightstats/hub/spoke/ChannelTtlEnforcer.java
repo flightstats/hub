@@ -34,7 +34,7 @@ public class ChannelTtlEnforcer {
     private Consumer<ChannelConfig> handleCleanup() {
         return channel -> {
             if (channel.getTtlDays() > 0) {
-                String channelPath = storagePath + "/" + channel.getName();
+                String channelPath = storagePath + "/" + channel.getDisplayName();
                 DateTime channelTTL = TimeUtil.stable().minusDays((int) channel.getTtlDays());
                 for (int i = 0; i < 3; i++) {
                     Commander.run(new String[]{"rm", "-rf", channelPath + "/" + TimeUtil.days(channelTTL.minusDays(i))}, 1);

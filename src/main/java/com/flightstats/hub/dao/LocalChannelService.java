@@ -80,7 +80,7 @@ public class LocalChannelService implements ChannelService {
         if (newConfig.isHistorical()) {
             if (oldConfig == null || !oldConfig.isHistorical()) {
                 ContentKey lastKey = ContentKey.lastKey(newConfig.getMutableTime());
-                lastContentPath.update(lastKey, newConfig.getName(), HISTORICAL_EARLIEST);
+                lastContentPath.update(lastKey, newConfig.getDisplayName(), HISTORICAL_EARLIEST);
             }
         }
         contentService.notify(newConfig, oldConfig);
@@ -351,7 +351,7 @@ public class LocalChannelService implements ChannelService {
                 ttlTime = channelConfig.getMutableTime().plusMillis(1);
             } else {
                 ContentKey lastKey = ContentKey.lastKey(channelConfig.getMutableTime());
-                return lastContentPath.get(channelConfig.getName(), lastKey, HISTORICAL_EARLIEST).getTime();
+                return lastContentPath.get(channelConfig.getDisplayName(), lastKey, HISTORICAL_EARLIEST).getTime();
             }
         }
         return ttlTime;

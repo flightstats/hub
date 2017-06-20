@@ -22,6 +22,7 @@ public class FileChannelConfigurationDao implements Dao<ChannelConfig> {
 
     @Override
     public void upsert(ChannelConfig config) {
+        //todo - gfm -
         FileUtil.write(config.toJson(), config.getName(), channelPath);
     }
 

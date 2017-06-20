@@ -83,7 +83,7 @@ public class GlobalChannelService implements ChannelService {
 
     private Supplier<ChannelConfig> createGlobalMaster(ChannelConfig channel) {
         return () -> {
-            if (hubUtils.putChannel(channel.getGlobal().getMaster() + "internal/global/master/" + channel.getName(), channel)) {
+            if (hubUtils.putChannel(channel.getGlobal().getMaster() + "internal/global/master/" + channel.getDisplayName(), channel)) {
                 return channel;
             }
             return null;

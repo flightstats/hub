@@ -31,7 +31,7 @@ class S3ConfigStrategy {
         int buckets = (int) Math.ceil(rulesCount / (0.8 * max));
         Map<Integer, List<BucketLifecycleConfiguration.Rule>> shardedRules = new HashMap<>();
         for (ChannelConfig config : channelConfigs) {
-            byte[] md5 = DigestUtils.md5(config.getName());
+            byte[] md5 = DigestUtils.md5(config.getDisplayName());
             int mod = Math.abs(md5[0]) % buckets;
             List<BucketLifecycleConfiguration.Rule> ruleList = shardedRules.getOrDefault(mod, new ArrayList<>());
             shardedRules.put(mod, ruleList);
@@ -71,7 +71,7 @@ class S3ConfigStrategy {
     }
 
     private static BucketLifecycleConfiguration.Rule createRule(ChannelConfig config, String postfix) {
-        String id = config.getName() + postfix;
+        String id = config.getDisplayName() + postfix;
         return new BucketLifecycleConfiguration.Rule()
                 .withPrefix(id + "/")
                 .withId(id)

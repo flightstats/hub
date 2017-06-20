@@ -62,7 +62,7 @@ public class InternalGlobalResource {
         }
         newConfig.getGlobal().setIsMaster(isMaster);
         newConfig = channelService.updateChannel(newConfig, oldConfig, true);
-        URI channelUri = LinkBuilder.buildChannelUri(newConfig.getName(), uriInfo);
+        URI channelUri = LinkBuilder.buildChannelUri(newConfig.getDisplayName(), uriInfo);
         ObjectNode output = buildChannelConfigResponse(newConfig, uriInfo, channelName);
         return Response.created(channelUri).entity(output).build();
     }
