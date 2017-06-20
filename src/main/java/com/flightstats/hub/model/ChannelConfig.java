@@ -51,7 +51,7 @@ public class ChannelConfig implements Serializable, NamedType {
                           Set<String> tags, String replicationSource, String storage, GlobalConfig global,
                           boolean protect, DateTime mutableTime, boolean allowZeroBytes, String displayName) {
         this.name = StringUtils.trim(name);
-        this.displayName = StringUtils.defaultIfBlank(displayName, name);
+        this.displayName = StringUtils.defaultIfBlank(StringUtils.trim(displayName), this.name);
         this.owner = StringUtils.trim(owner);
         this.creationDate = creationDate;
         this.description = description;
@@ -106,7 +106,7 @@ public class ChannelConfig implements Serializable, NamedType {
         if (StringUtils.isEmpty(json)) {
             throw new InvalidRequestException("this method requires at least a json name");
         } else {
-            return gson.fromJson(json, ChannelConfig.ChannelConfigBuilder.class).build();
+            return gson.fromJson(json, ChannelConfigBuilder.class).build();
         }
     }
 
