@@ -43,7 +43,7 @@ public class LinkBuilder {
     static ObjectNode buildChannelConfigResponse(ChannelConfig config, UriInfo uriInfo, String channel) {
         ObjectNode root = mapper.createObjectNode();
 
-        root.put("name", channel);
+        root.put("name", config.getDisplayName());
         root.put("allowZeroBytes", config.isAllowZeroBytes());
         root.put("creationDate", TimeUtil.FORMATTER.print(new DateTime(config.getCreationDate())));
         root.put("description", config.getDescription());
