@@ -62,7 +62,7 @@ public class ChannelValidator {
                     throw new ForbiddenRequestException("{\"error\": \"A channels storage is not allowed to remove a storage source in this environment\"}");
                 }
             }
-            if (!config.getOwner().equals(oldConfig.getOwner())) {
+            if (!StringUtils.isEmpty(oldConfig.getOwner()) && !config.getOwner().equals(oldConfig.getOwner())) {
                 throw new ForbiddenRequestException("{\"error\": \"The owner can not be changed on a protected channel\"}");
             }
             if (!config.getTags().containsAll(oldConfig.getTags())) {
