@@ -31,7 +31,7 @@ describe(testName, function () {
         expect(parse._links.self.href).toEqual(channelResource);
         expect(parse.protect).toEqual(true);
 
-    }, {protect: true});
+    }, {protect: true, owner: 'someone'});
 
     utils.putChannel(channelName, false, {protect: false}, 'protect', 403);
 
