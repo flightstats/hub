@@ -1,11 +1,15 @@
 require('./integration_config.js');
 
 var request = require('request');
+var moment = require('moment');
 var channelName = utils.randomChannelName() + '_AbCdE';
 var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
 
 describe(testName, function () {
+
+    var startTime = moment.utc();
+
     console.log('channel url', channelResource);
     it("creates channel " + channelName + " at " + channelUrl, function (done) {
         request.put({
@@ -103,6 +107,10 @@ describe(testName, function () {
         getTwo(lowerCase, '/time/hour?stable=false', done);
     });
 
+    it("gets time hour " + upperCase, function (done) {
+        getTwo(upperCase, '/time/hour?stable=false', done);
+    });
+
     it("gets latest 2 " + upperCase, function (done) {
         utils.sleep(5000);
         getTwo(upperCase, '/latest/2?stable=false', done);
@@ -120,13 +128,29 @@ describe(testName, function () {
         getUrl(uris[1] + '?remoteOnly=true', done);
     });
 
-    //todo - gfm - use more API endpoints
-    /*
-     next/previous
-     earliest
-     batch
+    it("gets next 2 " + lowerCase, function (done) {
+        getTwo(lowerCase, startTime.format('/YYYY/MM/DD/HH/mm/ss/SSS') + '/A/next/2', done);
+    });
 
-     */
+    it("gets next 2 " + upperCase, function (done) {
+        getTwo(upperCase, startTime.format('/YYYY/MM/DD/HH/mm/ss/SSS') + '/A/next/2', done);
+    });
+
+    it("gets prev 2 " + lowerCase, function (done) {
+        getTwo(lowerCase, moment.utc().format('/YYYY/MM/DD/HH/mm/ss/SSS') + '/A/prev/2', done);
+    });
+
+    it("gets prev 2 " + upperCase, function (done) {
+        getTwo(upperCase, moment.utc().format('/YYYY/MM/DD/HH/mm/ss/SSS') + '/A/prev/2', done);
+    });
+
+    it("gets earliest 2 " + lowerCase, function (done) {
+        getTwo(lowerCase, '/earliest/2?stable=false', done);
+    });
+
+    it("gets earliest 2 " + upperCase, function (done) {
+        getTwo(upperCase, '/earliest/2?stable=false', done);
+    });
 
 
 

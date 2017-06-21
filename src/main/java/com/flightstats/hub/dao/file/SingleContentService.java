@@ -36,6 +36,7 @@ public class SingleContentService implements ContentService {
 
     @Override
     public ContentKey insert(String channelName, Content content) throws Exception {
+        channelName = formatChannel(channelName);
         ContentKey key = content.getContentKey().get();
         String path = getPath(channelName, content.getContentKey().get());
         if (!fileSpokeStore.insert(path, content.getData())) {
@@ -46,6 +47,7 @@ public class SingleContentService implements ContentService {
 
     @Override
     public Collection<ContentKey> insert(BulkContent bulkContent) throws Exception {
+        bulkContent.withChannel(formatChannel(bulkContent.getChannel()));
         Collection<ContentKey> keys = new ArrayList<>();
         logger.info("inserting {}", bulkContent);
         for (Content content : bulkContent.getItems()) {
@@ -63,7 +65,7 @@ public class SingleContentService implements ContentService {
     }
 
     private String getPath(String channelName, ContentKey key) {
-        return channelName + "/" + key.toUrl();
+        return formatChannel(channelName) + "/" + key.toUrl();
     }
 
     @Override
@@ -92,6 +94,7 @@ public class SingleContentService implements ContentService {
 
     @Override
     public Collection<ContentKey> queryByTime(TimeQuery query) {
+        query = query.withChannelName(formatChannel(query.getChannelName()));
         String path = query.getChannelName() + "/" + query.getUnit().format(query.getStartTime());
         Traces traces = ActiveTraces.getLocal();
         traces.add("query by time", path);
@@ -104,10 +107,14 @@ public class SingleContentService implements ContentService {
     @Override
     public void delete(String channelName) {
         try {
-            fileSpokeStore.delete(channelName);
+            fileSpokeStore.delete(formatChannel(channelName));
         } catch (Exception e) {
             logger.warn("unable to delete channel " + channelName, e);
         }
+    }
+
+    private String formatChannel(String channelName) {
+        return channelName.toLowerCase();
     }
 
     @Override
@@ -123,6 +130,7 @@ public class SingleContentService implements ContentService {
 
     @Override
     public Collection<ContentKey> queryDirection(DirectionQuery query) {
+        query = query.withChannelName(formatChannel(query.getChannelName()));
         SortedSet<ContentKey> keys = new TreeSet<>();
         TimeUtil.Unit hours = TimeUtil.Unit.HOURS;
         DateTime time = query.getStartKey().getTime();
