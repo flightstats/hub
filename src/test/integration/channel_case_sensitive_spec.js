@@ -112,6 +112,7 @@ describe(testName, function () {
     });
 
     it("gets latest 2 " + upperCase, function (done) {
+        // this delay is to allow the item time for the S3 write.
         utils.sleep(5000);
         getTwo(upperCase, '/latest/2?stable=false', done);
     });
