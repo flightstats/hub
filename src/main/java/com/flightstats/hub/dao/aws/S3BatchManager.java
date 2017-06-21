@@ -57,10 +57,10 @@ public class S3BatchManager {
         for (ChannelConfig channel : channelService.getChannels()) {
             S3Batch s3Batch = new S3Batch(channel, hubUtils);
             if (channel.isSingle()) {
-                logger.debug("turning off batch {}", channel.getName());
+                logger.debug("turning off batch {}", channel.getDisplayName());
                 s3Batch.stop();
             } else {
-                logger.info("batching channel {}", channel.getName());
+                logger.info("batching channel {}", channel.getDisplayName());
                 s3Batch.start();
                 existingBatchGroups.remove(s3Batch.getGroupName());
             }

@@ -21,7 +21,7 @@ exports.runInTestChannelJson = function runInTestChannelJson(testName, jsonBody,
 };
 
 exports.randomChannelName = function randomChannelName() {
-    return "test_" + Math.random().toString().replace(".", "_");
+    return "TeSt_" + Math.random().toString().replace(".", "_");
 };
 
 exports.getItem = function getItem(uri, callback) {

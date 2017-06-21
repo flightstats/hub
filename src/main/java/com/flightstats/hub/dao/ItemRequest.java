@@ -5,24 +5,26 @@ import com.flightstats.hub.model.ContentKey;
 import java.net.URI;
 import java.util.Date;
 
-public class Request {
+public class ItemRequest {
     private final String channel;
     private final String tag;
     private final URI uri;
     private final ContentKey key;
     private Date date = new Date();
+    private boolean remoteOnly = false;
 
-    @java.beans.ConstructorProperties({"channel", "tag", "uri", "key", "date"})
-    private Request(String channel, String tag, URI uri, ContentKey key, Date date) {
+    @java.beans.ConstructorProperties({"channel", "tag", "uri", "key", "date", "remoteOnly"})
+    private ItemRequest(String channel, String tag, URI uri, ContentKey key, Date date, boolean remoteOnly) {
         this.channel = channel;
         this.tag = tag;
         this.uri = uri;
         this.key = key;
         this.date = date;
+        this.remoteOnly = remoteOnly;
     }
 
-    public static RequestBuilder builder() {
-        return new RequestBuilder();
+    public static ItemRequestBuilder builder() {
+        return new ItemRequestBuilder();
     }
 
     public String getChannel() {
@@ -45,10 +47,14 @@ public class Request {
         return this.date;
     }
 
+    public boolean isRemoteOnly() {
+        return this.remoteOnly;
+    }
+
     public boolean equals(Object o) {
         if (o == this) return true;
-        if (!(o instanceof Request)) return false;
-        final Request other = (Request) o;
+        if (!(o instanceof ItemRequest)) return false;
+        final ItemRequest other = (ItemRequest) o;
         if (!other.canEqual((Object) this)) return false;
         final Object this$channel = this.getChannel();
         final Object other$channel = other.getChannel();
@@ -70,58 +76,64 @@ public class Request {
     }
 
     protected boolean canEqual(Object other) {
-        return other instanceof Request;
+        return other instanceof ItemRequest;
     }
 
     public String toString() {
-        return "com.flightstats.hub.dao.Request(channel=" + this.getChannel() + ", tag=" + this.getTag() + ", uri=" + this.getUri() + ", key=" + this.getKey() + ", date=" + this.getDate() + ")";
+        return "com.flightstats.hub.dao.ItemRequest(channel=" + this.getChannel() + ", tag=" + this.getTag() + ", uri=" + this.getUri() + ", key=" + this.getKey() + ", date=" + this.getDate() + ", remoteOnly=" + this.isRemoteOnly() + ")";
     }
 
-    public Request withChannel(String channel) {
-        return this.channel == channel ? this : new Request(channel, this.tag, this.uri, this.key, this.date);
+    public ItemRequest withChannel(String channel) {
+        return this.channel == channel ? this : new ItemRequest(channel, this.tag, this.uri, this.key, this.date, this.remoteOnly);
     }
 
-    public static class RequestBuilder {
+    public static class ItemRequestBuilder {
         private String channel;
         private String tag;
         private URI uri;
         private ContentKey key;
         private Date date;
+        private boolean remoteOnly;
 
-        RequestBuilder() {
+        ItemRequestBuilder() {
         }
 
-        public Request.RequestBuilder channel(String channel) {
+        public ItemRequest.ItemRequestBuilder channel(String channel) {
             this.channel = channel;
             return this;
         }
 
-        public Request.RequestBuilder tag(String tag) {
+        public ItemRequest.ItemRequestBuilder tag(String tag) {
             this.tag = tag;
             return this;
         }
 
-        public Request.RequestBuilder uri(URI uri) {
+        public ItemRequest.ItemRequestBuilder uri(URI uri) {
             this.uri = uri;
             return this;
         }
 
-        public Request.RequestBuilder key(ContentKey key) {
+        public ItemRequest.ItemRequestBuilder key(ContentKey key) {
             this.key = key;
             return this;
         }
 
-        public Request.RequestBuilder date(Date date) {
+        public ItemRequest.ItemRequestBuilder date(Date date) {
             this.date = date;
             return this;
         }
 
-        public Request build() {
-            return new Request(channel, tag, uri, key, date);
+        public ItemRequest.ItemRequestBuilder remoteOnly(boolean remoteOnly) {
+            this.remoteOnly = remoteOnly;
+            return this;
+        }
+
+        public ItemRequest build() {
+            return new ItemRequest(channel, tag, uri, key, date, remoteOnly);
         }
 
         public String toString() {
-            return "com.flightstats.hub.dao.Request.RequestBuilder(channel=" + this.channel + ", tag=" + this.tag + ", uri=" + this.uri + ", key=" + this.key + ", date=" + this.date + ")";
+            return "com.flightstats.hub.dao.ItemRequest.ItemRequestBuilder(channel=" + this.channel + ", tag=" + this.tag + ", uri=" + this.uri + ", key=" + this.key + ", date=" + this.date + ", remoteOnly=" + this.remoteOnly + ")";
         }
     }
 }

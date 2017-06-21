@@ -34,7 +34,7 @@ public class SpokeTtlEnforcer {
 
     private Consumer<ChannelConfig> handleCleanup() {
         return channel -> {
-            String channelPath = storagePath + "/" + channel.getName();
+            String channelPath = storagePath + "/" + channel.getDisplayName();
             if (channel.isLive()) {
                 DateTime ttlDateTime = TimeUtil.stable().minusMinutes(ttlMinutes + 1);
                 for (int i = 0; i < 2; i++) {

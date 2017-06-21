@@ -80,7 +80,7 @@ public class LocalChannelService implements ChannelService {
         if (newConfig.isHistorical()) {
             if (oldConfig == null || !oldConfig.isHistorical()) {
                 ContentKey lastKey = ContentKey.lastKey(newConfig.getMutableTime());
-                lastContentPath.update(lastKey, newConfig.getName(), HISTORICAL_EARLIEST);
+                lastContentPath.update(lastKey, newConfig.getDisplayName(), HISTORICAL_EARLIEST);
             }
         }
         contentService.notify(newConfig, oldConfig);
@@ -232,17 +232,17 @@ public class LocalChannelService implements ChannelService {
     }
 
     @Override
-    public void deleteBefore(String name, ContentKey limitKey) {
-        contentService.deleteBefore(name, limitKey);
+    public void deleteBefore(String channel, ContentKey limitKey) {
+        contentService.deleteBefore(channel, limitKey);
     }
 
     @Override
-    public Optional<Content> get(Request request) {
-        DateTime limitTime = getChannelLimitTime(request.getChannel()).minusMinutes(15);
-        if (request.getKey().getTime().isBefore(limitTime)) {
+    public Optional<Content> get(ItemRequest itemRequest) {
+        DateTime limitTime = getChannelLimitTime(itemRequest.getChannel()).minusMinutes(15);
+        if (itemRequest.getKey().getTime().isBefore(limitTime)) {
             return Optional.absent();
         }
-        return contentService.get(request.getChannel(), request.getKey());
+        return contentService.get(itemRequest.getChannel(), itemRequest.getKey(), itemRequest.isRemoteOnly());
     }
 
     @Override
@@ -351,7 +351,7 @@ public class LocalChannelService implements ChannelService {
                 ttlTime = channelConfig.getMutableTime().plusMillis(1);
             } else {
                 ContentKey lastKey = ContentKey.lastKey(channelConfig.getMutableTime());
-                return lastContentPath.get(channelConfig.getName(), lastKey, HISTORICAL_EARLIEST).getTime();
+                return lastContentPath.get(channelConfig.getDisplayName(), lastKey, HISTORICAL_EARLIEST).getTime();
             }
         }
         return ttlTime;
@@ -376,8 +376,8 @@ public class LocalChannelService implements ChannelService {
             return false;
         }
         ChannelConfig channelConfig = getCachedChannelConfig(channelName);
-        contentService.delete(channelName);
-        channelConfigDao.delete(channelName);
+        contentService.delete(channelConfig.getDisplayName());
+        channelConfigDao.delete(channelConfig.getDisplayName());
         if (channelConfig.isReplicating()) {
             replicationGlobalManager.notifyWatchers();
             lastContentPath.delete(channelName, REPLICATED_LAST_UPDATED);

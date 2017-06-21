@@ -12,7 +12,7 @@ describe(testName, function () {
     it("deletes channel " + channelName, function (done) {
         request.del({url: channelResource},
             function (err, response, body) {
-                console.log('body', body)
+                console.log('body', body);
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(202);
                 done();

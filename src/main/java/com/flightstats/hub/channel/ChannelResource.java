@@ -65,7 +65,7 @@ public class ChannelResource {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
 
-        ObjectNode output = buildChannelConfigResponse(config, uriInfo);
+        ObjectNode output = buildChannelConfigResponse(config, uriInfo, channelName);
         return Response.ok(output).build();
     }
 
@@ -83,8 +83,8 @@ public class ChannelResource {
         logger.info("creating channel {} {}", channelConfig, channelConfig.getCreationDate().getTime());
         channelConfig = channelService.updateChannel(channelConfig, oldConfig, LocalHostOnly.isLocalhost(uriInfo));
 
-        URI channelUri = buildChannelUri(channelConfig.getName(), uriInfo);
-        ObjectNode output = buildChannelConfigResponse(channelConfig, uriInfo);
+        URI channelUri = buildChannelUri(channelConfig.getDisplayName(), uriInfo);
+        ObjectNode output = buildChannelConfigResponse(channelConfig, uriInfo, channelName);
         return Response.created(channelUri).entity(output).build();
     }
 
@@ -102,8 +102,8 @@ public class ChannelResource {
         ChannelConfig newConfig = ChannelConfig.updateFromJson(oldConfig, json);
         newConfig = channelService.updateChannel(newConfig, oldConfig, LocalHostOnly.isLocalhost(uriInfo));
 
-        URI channelUri = buildChannelUri(newConfig.getName(), uriInfo);
-        ObjectNode output = buildChannelConfigResponse(newConfig, uriInfo);
+        URI channelUri = buildChannelUri(newConfig.getDisplayName(), uriInfo);
+        ObjectNode output = buildChannelConfigResponse(newConfig, uriInfo, channelName);
         return Response.ok(channelUri).entity(output).build();
     }
 
@@ -113,6 +113,7 @@ public class ChannelResource {
                                 @HeaderParam("Content-Length") long contentLength,
                                 @HeaderParam("Content-Type") String contentType,
                                 @QueryParam("threads") String threads,
+                                @QueryParam("forceWrite") @DefaultValue("false") boolean forceWrite,
                                 final InputStream data) throws Exception {
         if (!channelService.channelExists(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
@@ -123,6 +124,7 @@ public class ChannelResource {
                 .withContentLength(contentLength)
                 .withStream(data)
                 .withThreads(StringUtils.defaultIfBlank(threads, THREADS))
+                .withForceWrite(forceWrite)
                 .build();
         try {
             ContentKey contentKey = channelService.insert(channelName, content);

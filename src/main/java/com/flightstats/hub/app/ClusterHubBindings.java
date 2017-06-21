@@ -29,7 +29,10 @@ class ClusterHubBindings extends AbstractModule {
     protected void configure() {
         logger.info("starting server {} ", HubHost.getLocalName());
 
-        bind(ChannelService.class).to(GlobalChannelService.class).asEagerSingleton();
+        bind(ChannelService.class).to(ChannelNameService.class).asEagerSingleton();
+        bind(ChannelService.class)
+                .annotatedWith(Names.named(ChannelService.DELEGATE))
+                .to(GlobalChannelService.class).asEagerSingleton();
         bind(AwsConnectorFactory.class).asEagerSingleton();
         bind(S3Config.class).asEagerSingleton();
         bind(DynamicSpokeCluster.class).asEagerSingleton();
@@ -61,7 +64,7 @@ class ClusterHubBindings extends AbstractModule {
     @Provides
     @Named("ChannelConfig")
     public static Dao<ChannelConfig> buildChannelConfigDao(WatchManager watchManager, DynamoChannelConfigDao dao) {
-        return new CachedDao<>(dao, watchManager, "/channels/cache");
+        return new CachedLowerCaseDao<>(dao, watchManager, "/channels/cache");
     }
 
     @Inject

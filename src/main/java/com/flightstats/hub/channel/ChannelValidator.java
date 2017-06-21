@@ -24,7 +24,7 @@ public class ChannelValidator {
     public void validate(ChannelConfig config, ChannelConfig oldConfig, boolean isLocalHost) throws InvalidRequestException, ConflictException {
         Optional<String> channelNameOptional = Optional.absent();
         if (config != null) {
-            channelNameOptional = Optional.fromNullable(config.getName());
+            channelNameOptional = Optional.fromNullable(config.getDisplayName());
         }
 
         validateNameWasGiven(channelNameOptional);
