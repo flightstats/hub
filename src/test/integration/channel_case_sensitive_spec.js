@@ -129,19 +129,19 @@ describe(testName, function () {
     });
 
     it("gets next 2 " + lowerCase, function (done) {
-        getTwo(lowerCase, startTime.format('/YYYY/MM/DD/HH/mm/ss/SSS') + '/A/next/2', done);
+        getTwo(lowerCase, startTime.format('/YYYY/MM/DD/HH/mm/ss/SSS') + '/A/next/2?stable=false', done);
     });
 
     it("gets next 2 " + upperCase, function (done) {
-        getTwo(upperCase, startTime.format('/YYYY/MM/DD/HH/mm/ss/SSS') + '/A/next/2', done);
+        getTwo(upperCase, startTime.format('/YYYY/MM/DD/HH/mm/ss/SSS') + '/A/next/2?stable=false', done);
     });
 
     it("gets prev 2 " + lowerCase, function (done) {
-        getTwo(lowerCase, moment.utc().format('/YYYY/MM/DD/HH/mm/ss/SSS') + '/A/prev/2', done);
+        getTwo(lowerCase, moment.utc().format('/YYYY/MM/DD/HH/mm/ss/SSS') + '/A/prev/2?stable=false', done);
     });
 
     it("gets prev 2 " + upperCase, function (done) {
-        getTwo(upperCase, moment.utc().format('/YYYY/MM/DD/HH/mm/ss/SSS') + '/A/prev/2', done);
+        getTwo(upperCase, moment.utc().format('/YYYY/MM/DD/HH/mm/ss/SSS') + '/A/prev/2?stable=false', done);
     });
 
     it("gets earliest 2 " + lowerCase, function (done) {
