@@ -44,10 +44,13 @@ public class S3SingleContentDao implements ContentDao {
     private S3BucketName s3BucketName;
 
     @java.beans.ConstructorProperties({"metricsService", "s3Client", "s3BucketName"})
-    S3SingleContentDao(MetricsService metricsService, AmazonS3 s3Client, S3BucketName s3BucketName) {
+    public S3SingleContentDao(MetricsService metricsService, AmazonS3 s3Client, S3BucketName s3BucketName) {
         this.metricsService = metricsService;
         this.s3Client = s3Client;
         this.s3BucketName = s3BucketName;
+    }
+
+    public S3SingleContentDao() {
     }
 
     public static S3SingleContentDaoBuilder builder() {
