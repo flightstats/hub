@@ -1,15 +1,12 @@
 package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
-import com.amazonaws.services.dynamodbv2.document.DynamoDB;
-import com.amazonaws.services.dynamodbv2.document.Index;
-import com.amazonaws.services.dynamodbv2.document.Table;
-import com.amazonaws.services.dynamodbv2.document.utils.NameMap;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.GlobalConfig;
+import com.flightstats.hub.util.Sleeper;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
@@ -37,7 +34,7 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
     @Override
     public void upsert(ChannelConfig config) {
         Map<String, AttributeValue> item = new HashMap<>();
-        item.put("key", new AttributeValue(config.getName()));
+        item.put("key", new AttributeValue(config.getName().toLowerCase()));
         item.put("displayName", new AttributeValue(config.getDisplayName()));
         item.put("lowerCaseName", new AttributeValue(config.getLowerCaseName()));
         item.put("date", new AttributeValue().withN(String.valueOf(config.getCreationDate().getTime())));
@@ -101,46 +98,17 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
         dynamoUtils.createTable(request);
         dynamoUtils.updateTable(tableName, throughput);
 
-        DynamoDB dynamoDB = new DynamoDB(dbClient);
-        Table table = dynamoDB.getTable(tableName);
-        Index index = table.getIndex(INDEX_NAME);
-        try {
-            logger.info("found index {} {} {}", index, index.getIndexName(), index.getTable().getTableName());
-            TableDescription waitForActive = index.waitForActive();
-            logger.info("index active! {} {} {}", index, index.getIndexName(), waitForActive);
-        } catch (Exception e) {
-            logger.info("index not found, creating");
-            Collection<ChannelConfig> channelConfigs = getAll(false);
-            for (ChannelConfig channelConfig : channelConfigs) {
-                logger.info("updating {}", channelConfig);
-                upsert(channelConfig);
-            }
-            dynamoUtils.addLowerCaseIndex(tableName, "channel");
-            TableDescription waitForActive = index.waitForActive();
-            logger.info("index active! {} {} {}", index, index.getIndexName(), waitForActive);
+        //todo - gfm - this can be deleted once it is run everywhere
+        Collection<ChannelConfig> channelConfigs = getAll(false);
+        for (ChannelConfig channelConfig : channelConfigs) {
+            logger.info("updating {}", channelConfig);
+            upsert(channelConfig);
+            Sleeper.sleep(10);
         }
     }
 
     @Override
     public ChannelConfig get(String name) {
-        Map<String, AttributeValue> attributeValues = new HashMap<>();
-        attributeValues.put(":value", new AttributeValue(name.toLowerCase()));
-        QueryRequest queryRequest = new QueryRequest(getTableName())
-                .withIndexName(INDEX_NAME)
-                .withKeyConditionExpression("#name = :value")
-                .withExpressionAttributeNames(new NameMap().with("#name", "lowerCaseName"))
-                .withExpressionAttributeValues(attributeValues);
-        QueryResult query = dbClient.query(queryRequest);
-        List<Map<String, AttributeValue>> items = query.getItems();
-        if (items.size() == 1) {
-            return mapItem(items.get(0));
-        }
-        logger.info("channel not found " + name);
-        return null;
-    }
-
-    //todo - gfm - getCaseSensitive will be used again once all channels are lower case
-    /*private ChannelConfig getCaseSensitive(String name) {
         HashMap<String, AttributeValue> keyMap = new HashMap<>();
         keyMap.put("key", new AttributeValue().withS(name));
         GetItemRequest getItemRequest = new GetItemRequest()
@@ -157,15 +125,14 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
             logger.info("channel not found " + e.getMessage());
             return null;
         }
-    }*/
+    }
 
     private ChannelConfig mapItem(Map<String, AttributeValue> item) {
+        String displayName = item.get("displayName").getS();
         ChannelConfig.ChannelConfigBuilder builder = ChannelConfig.builder()
                 .creationDate(new Date(Long.parseLong(item.get("date").getN())))
-                .name(item.get("key").getS());
-        if (item.containsKey("displayName")) {
-            builder.displayName(item.get("displayName").getS());
-        }
+                .name(displayName.toLowerCase())
+                .displayName(displayName);
         if (item.get("ttlDays") != null) {
             builder.ttlDays(Long.parseLong(item.get("ttlDays").getN()));
         }
