@@ -3,7 +3,8 @@ package com.flightstats.hub.spoke;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProperties;
-import com.flightstats.hub.cluster.CuratorCluster;
+import com.flightstats.hub.cluster.Cluster;
+import com.flightstats.hub.cluster.DynamicSpokeCluster;
 import com.flightstats.hub.dao.ContentKeyUtil;
 import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.dao.QueryResult;
@@ -12,25 +13,25 @@ import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.HubUtils;
+import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.ConnectException;
 import java.net.UnknownHostException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -45,13 +46,13 @@ public class RemoteSpokeStore {
     private final static Client write_client = RestClient.createClient(1, 5, true, false);
     private final static Client query_client = RestClient.createClient(5, 15, true, true);
 
-    private final CuratorCluster cluster;
+    private final Cluster cluster;
     private final MetricsService metricsService;
     private final ExecutorService executorService;
     private final int stableSeconds = HubProperties.getProperty("app.stable_seconds", 5);
 
     @Inject
-    public RemoteSpokeStore(@Named("SpokeCuratorCluster") CuratorCluster cluster, MetricsService metricsService) {
+    public RemoteSpokeStore(DynamicSpokeCluster cluster, MetricsService metricsService) {
         this.cluster = cluster;
         this.metricsService = metricsService;
         executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("RemoteSpokeStore-%d").build());
@@ -90,8 +91,8 @@ public class RemoteSpokeStore {
     }
 
     boolean testAll() throws UnknownHostException {
-        Collection<String> servers = cluster.getRandomServers();
-        servers.addAll(CuratorCluster.getLocalServer());
+        Collection<String> servers = new HashSet<>(cluster.getServers(RandomStringUtils.randomAlphabetic(3)));
+        servers.addAll(cluster.getLocalServer());
         logger.info("*********************************************");
         logger.info("testing servers {}", servers);
         logger.info("*********************************************");
@@ -119,7 +120,7 @@ public class RemoteSpokeStore {
     }
 
     public boolean insert(String path, byte[] payload, String spokeApi, String channel) throws InterruptedException {
-        return insert(path, payload, cluster.getServers(), ActiveTraces.getLocal(), spokeApi, channel);
+        return insert(path, payload, cluster.getServers(channel), ActiveTraces.getLocal(), spokeApi, channel);
     }
 
     private boolean insert(String path, byte[] payload, Collection<String> servers, Traces traces,
@@ -177,8 +178,8 @@ public class RemoteSpokeStore {
         return (int) Math.max(1, Math.ceil(size / 2.0));
     }
 
-    public Content get(String path, ContentKey key) {
-        Collection<String> servers = cluster.getRandomServers();
+    public Content get(String channelName, String path, ContentKey key) {
+        Collection<String> servers = cluster.randomize(cluster.getServers(channelName, key.getTime()));
         for (String server : servers) {
             ClientResponse response = null;
             try {
@@ -210,17 +211,21 @@ public class RemoteSpokeStore {
         return null;
     }
 
-    QueryResult readTimeBucket(String channel, String timePath) throws InterruptedException {
-        return getKeys("/internal/spoke/time/" + channel + "/" + timePath);
+    QueryResult readTimeBucket(TimeQuery query) throws InterruptedException {
+        DateTime endTime = query.getStartTime().plus(query.getUnit().getDuration());
+        Set<String> servers = cluster.getServers(query.getChannelName(), query.getStartTime(), endTime);
+        String timePath = query.getUnit().format(query.getStartTime());
+        return getKeys("/internal/spoke/time/" + query.getChannelName() + "/" + timePath, servers);
     }
 
-    SortedSet<ContentKey> getNext(String channel, int count, String startKey) throws InterruptedException {
-        return getKeys("/internal/spoke/next/" + channel + "/" + count + "/" + startKey).getContentKeys();
+    SortedSet<ContentKey> getNext(String channel, int count, ContentKey startKey) throws InterruptedException {
+        Set<String> servers = cluster.getServers(channel, startKey.getTime(), TimeUtil.now());
+        return getKeys("/internal/spoke/next/" + channel + "/" + count + "/" + startKey.toUrl(), servers).getContentKeys();
     }
 
-    private QueryResult getKeys(final String path) throws InterruptedException {
+    private QueryResult getKeys(final String path, Collection<String> servers) throws InterruptedException {
         Traces traces = ActiveTraces.getLocal();
-        Collection<String> servers = cluster.getServers();
+        traces.add("servers", servers);
         CountDownLatch countDownLatch = new CountDownLatch(servers.size());
         QueryResult queryResult = new QueryResult(servers.size());
         for (final String server : servers) {
@@ -263,7 +268,7 @@ public class RemoteSpokeStore {
     }
 
     public Optional<ContentKey> getLatest(String channel, String path, Traces traces) throws InterruptedException {
-        Collection<String> servers = cluster.getServers();
+        Collection<String> servers = getAllSpokeServers(channel);
         CountDownLatch countDownLatch = new CountDownLatch(servers.size());
         SortedSet<ContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
         for (final String server : servers) {
@@ -309,8 +314,8 @@ public class RemoteSpokeStore {
         return Optional.of(orderedKeys.last());
     }
 
-    public boolean delete(String path) throws Exception {
-        Collection<String> servers = cluster.getServers();
+    public boolean delete(String channel) throws Exception {
+        Collection<String> servers = getAllSpokeServers(channel);
         int quorum = servers.size();
         CountDownLatch countDownLatch = new CountDownLatch(quorum);
         for (final String server : servers) {
@@ -319,15 +324,15 @@ public class RemoteSpokeStore {
                 public void run() {
                     ClientResponse response = null;
                     try {
-                        setThread(path);
-                        response = query_client.resource(HubHost.getScheme() + server + "/internal/spoke/payload/" + path)
+                        setThread(channel);
+                        response = query_client.resource(HubHost.getScheme() + server + "/internal/spoke/payload/" + channel)
                                 .delete(ClientResponse.class);
                         if (response.getStatus() < 400) {
                             countDownLatch.countDown();
                         }
-                        logger.trace("server {} path {} response {}", server, path, response);
+                        logger.trace("server {} path {} response {}", server, channel, response);
                     } catch (Exception e) {
-                        logger.warn("unable to delete " + path, e);
+                        logger.warn("unable to delete " + channel, e);
                     } finally {
                         HubUtils.close(response);
                         resetThread();
@@ -338,4 +343,12 @@ public class RemoteSpokeStore {
 
         return countDownLatch.await(60, TimeUnit.SECONDS);
     }
+
+    private Collection<String> getAllSpokeServers(String channel) {
+        DateTime now = TimeUtil.now();
+        DateTime ttlTime = now.minusMinutes(HubProperties.getSpokeTtlMinutes());
+        return cluster.getServers(channel, ttlTime, now);
+    }
+
+
 }

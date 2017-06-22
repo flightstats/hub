@@ -46,7 +46,7 @@ public class InternalShutdownResource {
 
     @POST
     public Response shutdown(@Context UriInfo uriInfo) throws Exception {
-        return LocalHostOnly.getResponse(uriInfo, () -> getManager().shutdown());
+        return LocalHostOnly.getResponse(uriInfo, () -> getManager().shutdown(true));
     }
 
     @POST

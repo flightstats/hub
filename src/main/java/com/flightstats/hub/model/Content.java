@@ -29,6 +29,8 @@ public class Content implements Serializable {
     private Long size;
     private transient boolean isLarge;
     private transient int threads;
+    private transient boolean isHistorical;
+    private boolean forceWrite;
 
     private Content(Builder builder) {
         contentKey = builder.contentKey;
@@ -37,6 +39,7 @@ public class Content implements Serializable {
         contentLength = builder.contentLength;
         threads = builder.threads;
         payloadLength = builder.payloadLength;
+        forceWrite = builder.forceWrite;
     }
 
     public static Builder builder() {
@@ -67,6 +70,22 @@ public class Content implements Serializable {
         this.contentKey = Optional.of(contentKey);
     }
 
+    public void setContentLength(long contentLength) {
+        this.contentLength = contentLength;
+    }
+
+    public void setHistorical(boolean isHistorical) {
+        this.isHistorical = isHistorical;
+    }
+
+    public boolean isHistorical() {
+        return this.isHistorical;
+    }
+
+    public boolean isForceWrite() {
+        return forceWrite;
+    }
+
     public InputStream getStream() {
         if (stream == null) {
             return new ByteArrayInputStream(getData());
@@ -85,7 +104,6 @@ public class Content implements Serializable {
 
     public byte[] getData() {
         if (data == null && stream != null) {
-            //todo gfm - can this go away?
             try {
                 data = ByteStreams.toByteArray(stream);
                 stream = null;
@@ -164,7 +182,6 @@ public class Content implements Serializable {
         this.size = size;
     }
 
-    //todo - gfm - would be nice with more lombok
     public static class Builder {
         private Optional<String> contentType = Optional.absent();
         private long contentLength = 0;
@@ -172,6 +189,7 @@ public class Content implements Serializable {
         private Optional<ContentKey> contentKey = Optional.absent();
         private InputStream stream;
         private int threads;
+        private boolean forceWrite;
 
         public Builder withContentType(String contentType) {
             this.contentType = Optional.fromNullable(contentType);
@@ -209,6 +227,11 @@ public class Content implements Serializable {
 
         public Builder withThreads(String threads) {
             this.threads = Integer.parseInt(threads);
+            return this;
+        }
+
+        public Builder withForceWrite(boolean forceWrite) {
+            this.forceWrite = forceWrite;
             return this;
         }
 

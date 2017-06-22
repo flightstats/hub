@@ -53,6 +53,10 @@ class VerifierTasks(TaskSet):
     def latest(self):
         self.hubTasks.latest()
 
+    @task(10)
+    def day_query(self):
+        self.hubTasks.day_query()
+
     @task(1)
     def hour_query(self):
         self.hubTasks.hour_query()

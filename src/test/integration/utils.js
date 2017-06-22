@@ -21,7 +21,7 @@ exports.runInTestChannelJson = function runInTestChannelJson(testName, jsonBody,
 };
 
 exports.randomChannelName = function randomChannelName() {
-    return "test_" + Math.random().toString().replace(".", "_");
+    return "TeSt_" + Math.random().toString().replace(".", "_");
 };
 
 exports.getItem = function getItem(uri, callback) {
@@ -126,19 +126,28 @@ exports.postItem = function postItem(url, responseCode, completed) {
         });
 };
 
-exports.postItemQ = function postItemQ(url) {
+function postItemQwithPayload(url, payload) {
     var deferred = Q.defer();
-    request.post({
-            url : url, json : true,
-            headers : {"Content-Type" : "application/json"},
-            body : JSON.stringify({"data" : Date.now()})
-        },
+    request.post(payload,
         function (err, response, body) {
             expect(err).toBeNull();
             expect(response.statusCode).toBe(201);
             deferred.resolve({response : response, body : body});
         });
     return deferred.promise;
+};
+
+exports.postItemQwithPayload = function (url, payload) {
+    return postItemQwithPayload(url, payload);
+};
+
+exports.postItemQ = function postItemQ(url) {  //with default json payload
+    var payload = {
+        url: url, json: true,
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({"data": Date.now()})
+    }
+    return postItemQwithPayload(url, payload);
 };
 
 exports.getWebhookUrl = function getWebhookUrl() {

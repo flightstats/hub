@@ -8,9 +8,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-public class MinuteTimedWebhookTest {
-
-    private final MinuteTimedWebhook minuteTimedGroup = MinuteTimedWebhook.WEBHOOK;
+public class TimedWebhookStrategyTest {
 
     @Test
     public void testRoundingSecondPath() {
@@ -22,7 +20,7 @@ public class MinuteTimedWebhookTest {
 
     private void compare(DateTime start, String expected) {
         SecondPath secondPath = new SecondPath(start);
-        DateTime stable = minuteTimedGroup.getReplicatingStable(secondPath);
+        DateTime stable = TimedWebhookStrategy.replicatingStable_minute(secondPath);
         assertEquals(start.toString(), expected, stable.toString());
     }
 
@@ -36,7 +34,7 @@ public class MinuteTimedWebhookTest {
 
     private void compareContentKey(DateTime start, String expected) {
         ContentKey secondPath = new ContentKey(start);
-        DateTime stable = minuteTimedGroup.getReplicatingStable(secondPath);
+        DateTime stable = TimedWebhookStrategy.replicatingStable_minute(secondPath);
         assertEquals(start.toString(), expected, stable.toString());
     }
 

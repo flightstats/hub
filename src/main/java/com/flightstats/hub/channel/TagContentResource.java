@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProvider;
-import com.flightstats.hub.dao.Request;
+import com.flightstats.hub.dao.ItemRequest;
 import com.flightstats.hub.dao.TagService;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.*;
@@ -47,7 +47,7 @@ public class TagContentResource {
         Iterable<ChannelConfig> channels = tagService.getChannels(tag);
         Map<String, URI> mappedUris = new HashMap<>();
         for (ChannelConfig channelConfig : channels) {
-            String channelName = channelConfig.getName();
+            String channelName = channelConfig.getDisplayName();
             mappedUris.put(channelName, LinkBuilder.buildChannelUri(channelName, uriInfo));
         }
         Linked<?> result = LinkBuilder.buildLinks(mappedUris, "channels", builder -> {
@@ -197,12 +197,12 @@ public class TagContentResource {
     ) {
         long start = System.currentTimeMillis();
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
-        Request request = Request.builder()
+        ItemRequest itemRequest = ItemRequest.builder()
                 .tag(tag)
                 .key(key)
                 .uri(uriInfo.getRequestUri())
                 .build();
-        Optional<Content> optionalResult = tagService.getValue(request);
+        Optional<Content> optionalResult = tagService.getValue(itemRequest);
 
         if (!optionalResult.isPresent()) {
             logger.warn("404 content not found {} {}", tag, key);

@@ -40,7 +40,7 @@ public class ChannelsResource {
     public Response getChannels() {
         Map<String, URI> mappedUris = new TreeMap<>();
         for (ChannelConfig channelConfig : channelService.getChannels()) {
-            String channelName = channelConfig.getName();
+            String channelName = channelConfig.getDisplayName();
             mappedUris.put(channelName, LinkBuilder.buildChannelUri(channelName, uriInfo));
         }
         Linked<?> result = LinkBuilder.buildLinks(uriInfo, mappedUris, "channels");
@@ -54,8 +54,8 @@ public class ChannelsResource {
         logger.debug("post channel {}", json);
         ChannelConfig channelConfig = ChannelConfig.createFromJson(json);
         channelConfig = channelService.createChannel(channelConfig);
-        URI channelUri = LinkBuilder.buildChannelUri(channelConfig.getName(), uriInfo);
-        ObjectNode output = buildChannelConfigResponse(channelConfig, uriInfo);
+        URI channelUri = LinkBuilder.buildChannelUri(channelConfig.getDisplayName(), uriInfo);
+        ObjectNode output = buildChannelConfigResponse(channelConfig, uriInfo, channelConfig.getDisplayName());
         return Response.created(channelUri).entity(output).build();
     }
 }

@@ -3,9 +3,10 @@ package com.flightstats.hub.channel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.dao.Request;
+import com.flightstats.hub.dao.ItemRequest;
 import com.flightstats.hub.events.ContentOutput;
 import com.flightstats.hub.events.EventsService;
 import com.flightstats.hub.exception.ConflictException;
@@ -43,6 +44,7 @@ import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 @Path("/channel/{channel}/{Y}/{M}/{D}/")
 public class ChannelContentResource {
     static final String CREATION_DATE = "Creation-Date";
+    public static final String THREADS = HubProperties.getProperty("s3.large.threads", "3");
 
     private final static Logger logger = LoggerFactory.getLogger(ChannelContentResource.class);
 
@@ -216,25 +218,27 @@ public class ChannelContentResource {
 
     @Path("/{h}/{m}/{s}/{ms}/{hash}")
     @GET
-    public Response getValue(@PathParam("channel") String channel,
-                             @PathParam("Y") int year,
-                             @PathParam("M") int month,
-                             @PathParam("D") int day,
-                             @PathParam("h") int hour,
-                             @PathParam("m") int minute,
-                             @PathParam("s") int second,
-                             @PathParam("ms") int millis,
-                             @PathParam("hash") String hash,
-                             @HeaderParam("Accept") String accept
+    public Response getItem(@PathParam("channel") String channel,
+                            @PathParam("Y") int year,
+                            @PathParam("M") int month,
+                            @PathParam("D") int day,
+                            @PathParam("h") int hour,
+                            @PathParam("m") int minute,
+                            @PathParam("s") int second,
+                            @PathParam("ms") int millis,
+                            @PathParam("hash") String hash,
+                            @HeaderParam("Accept") String accept,
+                            @QueryParam("remoteOnly") @DefaultValue("false") boolean remoteOnly
     ) {
         long start = System.currentTimeMillis();
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
-        Request request = Request.builder()
+        ItemRequest itemRequest = ItemRequest.builder()
                 .channel(channel)
                 .key(key)
                 .uri(uriInfo.getRequestUri())
+                .remoteOnly(remoteOnly)
                 .build();
-        Optional<Content> optionalResult = channelService.get(request);
+        Optional<Content> optionalResult = channelService.get(itemRequest);
 
         if (!optionalResult.isPresent()) {
             logger.warn("404 content not found {} {}", channel, key);
@@ -402,11 +406,21 @@ public class ChannelContentResource {
                                      @PathParam("m") int minute,
                                      @PathParam("s") int second,
                                      @PathParam("ms") int millis,
+                                     @HeaderParam("Content-Length") long contentLength,
                                      @HeaderParam("Content-Type") String contentType,
                                      @HeaderParam("Content-Language") String contentLanguage,
                                      final InputStream data) throws Exception {
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis);
-        return historicalResponse(channelName, key, contentType, data);
+        Content content = Content.builder()
+                .withContentKey(key)
+                .withContentType(contentType)
+                .withContentLength(contentLength)
+                .withStream(data)
+                .withThreads(THREADS)
+                .build();
+        content.setHistorical(true);
+
+        return historicalResponse(channelName, content);
     }
 
     @Path("/{h}/{m}/{s}/{ms}/{hash}")
@@ -421,22 +435,28 @@ public class ChannelContentResource {
                                          @PathParam("s") int second,
                                          @PathParam("ms") int millis,
                                          @PathParam("hash") String hash,
+                                         @HeaderParam("Content-Length") long contentLength,
                                          @HeaderParam("Content-Type") String contentType,
                                          @HeaderParam("Content-Language") String contentLanguage,
                                          final InputStream data) throws Exception {
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
-        return historicalResponse(channelName, key, contentType, data);
-    }
 
-    private Response historicalResponse(String channelName, ContentKey key, String contentType, InputStream data) throws Exception {
-        if (!channelService.channelExists(channelName)) {
-            throw new WebApplicationException(Response.Status.NOT_FOUND);
-        }
         Content content = Content.builder()
                 .withContentKey(key)
                 .withContentType(contentType)
+                .withContentLength(contentLength)
                 .withStream(data)
+                .withThreads(THREADS)
                 .build();
+        content.setHistorical(true);
+        return historicalResponse(channelName, content);
+    }
+
+    private Response historicalResponse(String channelName, Content content) throws Exception {
+        if (!channelService.channelExists(channelName)) {
+            throw new WebApplicationException(Response.Status.NOT_FOUND);
+        }
+        ContentKey key = content.getContentKey().get();
         try {
             boolean success = channelService.historicalInsert(channelName, content);
             if (!success) {

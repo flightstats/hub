@@ -43,7 +43,7 @@ public class ClusterContentService implements ContentService {
     private static final String CHANNEL_LATEST_UPDATED = "/ChannelLatestUpdated/";
     private static final long largePayload = HubProperties.getLargePayload();
     private final boolean dropSomeWrites = HubProperties.getProperty("s3.dropSomeWrites", false);
-    private final int spokeTtlMinutes = HubProperties.getSpokeTtl();
+    private final int spokeTtlMinutes = HubProperties.getSpokeTtlMinutes();
     @Inject
     @Named(ContentDao.CACHE)
     private ContentDao spokeContentDao;
@@ -69,7 +69,7 @@ public class ClusterContentService implements ContentService {
 
     public ClusterContentService() {
         HubServices.registerPreStop(new SpokeS3ContentServiceInit());
-        HubServices.register(new ChannelLatestUpdatedService());
+        HubServices.register(new ChannelLatestUpdatedService(), HubServices.TYPE.AFTER_HEALTHY_START);
     }
 
     @Override
@@ -83,7 +83,7 @@ public class ClusterContentService implements ContentService {
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
         if (channel.isSingle() || channel.isBoth()) {
             Supplier<Void> local = () -> {
-                s3SingleWrite(channelName, key);
+                s3SingleWrite(channelName, key, content.isForceWrite());
                 return null;
             };
             GlobalChannelService.handleGlobal(channel, local, () -> null, local);
@@ -91,8 +91,8 @@ public class ClusterContentService implements ContentService {
         return key;
     }
 
-    private void s3SingleWrite(String channelName, ContentKey key) {
-        if (dropSomeWrites && Math.random() > 0.5) {
+    private void s3SingleWrite(String channelName, ContentKey key, boolean forceWrite) {
+        if (!forceWrite && dropSomeWrites && Math.random() > 0.5) {
             logger.debug("dropping {} {}", channelName, key);
         } else {
             s3WriteQueue.add(new ChannelContentKey(channelName, key));
@@ -106,7 +106,7 @@ public class ClusterContentService implements ContentService {
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
         if (channel.isSingle() || channel.isBoth()) {
             for (ContentKey key : keys) {
-                s3SingleWrite(channelName, key);
+                s3SingleWrite(channelName, key, false);
             }
         }
         return keys;
@@ -114,15 +114,19 @@ public class ClusterContentService implements ContentService {
 
     @Override
     public boolean historicalInsert(String channelName, Content content) throws Exception {
-        s3SingleContentDao.insertHistorical(channelName, content);
+        if (content.isLarge()) {
+            largePayloadContentDao.insertHistorical(channelName, content);
+        } else {
+            s3SingleContentDao.insertHistorical(channelName, content);
+        }
         return true;
     }
 
     @Override
-    public Optional<Content> get(String channelName, ContentKey key) {
+    public Optional<Content> get(String channelName, ContentKey key, boolean remoteOnly) {
         logger.trace("fetching {} from channel {} ", key.toString(), channelName);
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
-        if (key.getTime().isAfter(getSpokeTtlTime(channelName))) {
+        if (!remoteOnly && key.getTime().isAfter(getSpokeTtlTime(channelName))) {
             Content content = spokeContentDao.get(channelName, key);
             if (content != null) {
                 logger.trace("returning from spoke {} {}", key.toString(), channelName);
@@ -180,7 +184,7 @@ public class ClusterContentService implements ContentService {
 
     private void getValues(String channelName, Consumer<Content> callback, ContentPathKeys contentPathKeys) {
         for (ContentKey contentKey : contentPathKeys.getKeys()) {
-            Optional<Content> contentOptional = get(channelName, contentKey);
+            Optional<Content> contentOptional = get(channelName, contentKey, false);
             if (contentOptional.isPresent()) {
                 callback.accept(contentOptional.get());
             }
@@ -351,7 +355,7 @@ public class ClusterContentService implements ContentService {
     @Override
     public void notify(ChannelConfig newConfig, ChannelConfig oldConfig) {
         if (oldConfig == null) {
-            lastContentPath.updateIncrease(ContentKey.NONE, newConfig.getName(), CHANNEL_LATEST_UPDATED);
+            lastContentPath.updateIncrease(ContentKey.NONE, newConfig.getDisplayName(), CHANNEL_LATEST_UPDATED);
         }
         if (newConfig.isSingle()) {
             if (oldConfig != null && !oldConfig.isSingle()) {
@@ -368,13 +372,13 @@ public class ClusterContentService implements ContentService {
     }
 
     private void handleMutableTimeChange(ChannelConfig newConfig, ChannelConfig oldConfig) {
-        ContentPath latest = lastContentPath.get(newConfig.getName(), ContentKey.NONE, CHANNEL_LATEST_UPDATED);
+        ContentPath latest = lastContentPath.get(newConfig.getDisplayName(), ContentKey.NONE, CHANNEL_LATEST_UPDATED);
         logger.info("handleMutableTimeChange {}", latest);
         if (latest.equals(ContentKey.NONE)) {
             DirectionQuery query = DirectionQuery.builder()
                     .startKey(ContentKey.lastKey(oldConfig.getMutableTime().plusMillis(1)))
                     .earliestTime(newConfig.getMutableTime())
-                    .channelName(newConfig.getName())
+                    .channelName(newConfig.getDisplayName())
                     .channelConfig(oldConfig)
                     .next(false)
                     .stable(true)
@@ -388,7 +392,7 @@ public class ClusterContentService implements ContentService {
                 ContentKey mutableKey = mutableLatest.get();
                 if (mutableKey.getTime().isAfter(newConfig.getMutableTime())) {
                     logger.info("handleMutableTimeChange.updateIncrease {}", mutableKey);
-                    lastContentPath.updateIncrease(mutableKey, newConfig.getName(), CHANNEL_LATEST_UPDATED);
+                    lastContentPath.updateIncrease(mutableKey, newConfig.getDisplayName(), CHANNEL_LATEST_UPDATED);
                 }
             }
         }
@@ -417,9 +421,9 @@ public class ClusterContentService implements ContentService {
             channelService.getChannels().forEach(channelConfig -> {
                 try {
                     DateTime time = TimeUtil.stable().plusMinutes(1);
-                    Traces traces = new Traces(channelConfig.getName(), time);
+                    Traces traces = new Traces(channelConfig.getDisplayName(), time);
                     DirectionQuery latestQuery = DirectionQuery.builder()
-                            .channelName(channelConfig.getName())
+                            .channelName(channelConfig.getDisplayName())
                             .next(false)
                             .stable(false)
                             .location(Location.ALL)
@@ -428,10 +432,10 @@ public class ClusterContentService implements ContentService {
                             .count(1)
                             .build();
                     Optional<ContentKey> latest = getLatest(latestQuery);
-                    logger.debug("latest updated {} {}", channelConfig.getName(), latest);
+                    logger.debug("latest updated {} {}", channelConfig.getDisplayName(), latest);
                     traces.log(logger);
                 } catch (Exception e) {
-                    logger.warn("unexpected ChannelLatestUpdatedService issue " + channelConfig.getName(), e);
+                    logger.warn("unexpected ChannelLatestUpdatedService issue " + channelConfig.getDisplayName(), e);
                 }
             });
             ActiveTraces.end();
@@ -439,7 +443,7 @@ public class ClusterContentService implements ContentService {
 
         @Override
         protected Scheduler scheduler() {
-            return Scheduler.newFixedDelaySchedule(0, 59, TimeUnit.MINUTES);
+            return Scheduler.newFixedDelaySchedule(2, 59, TimeUnit.MINUTES);
         }
 
     }

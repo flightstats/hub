@@ -85,22 +85,12 @@ public class S3SingleContentDao implements ContentDao {
         int length = 0;
         try {
             String s3Key = getS3ContentKey(channelName, key);
-            ObjectMetadata metadata = new ObjectMetadata();
+            ObjectMetadata metadata = S3SingleContentDao.createObjectMetadata(content, useEncrypted);
             byte[] bytes = handler.apply(metadata);
             length = bytes.length;
             logger.trace("insert {} {} {} {}", channelName, key, content.getSize(), length);
             InputStream stream = new ByteArrayInputStream(bytes);
             metadata.setContentLength(length);
-            if (content.getContentType().isPresent()) {
-                metadata.setContentType(content.getContentType().get());
-                metadata.addUserMetadata("type", content.getContentType().get());
-            } else {
-                metadata.addUserMetadata("type", "none");
-            }
-            metadata.addUserMetadata("payload", "none");
-            if (useEncrypted) {
-                metadata.setSSEAlgorithm(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
-            }
             PutObjectRequest request = new PutObjectRequest(s3BucketName.getS3BucketName(), s3Key, stream, metadata);
             s3Client.putObject(request);
             return key;
@@ -130,11 +120,11 @@ public class S3SingleContentDao implements ContentDao {
                 return getS3Object(channelName, key);
             } catch (Exception e2) {
                 logger.warn("unable to read second time " + channelName + " " + key + " " + e.getMessage(), e2);
-                return null;
+                throw new RuntimeException(e);
             }
         } catch (Exception e) {
             logger.warn("unable to read " + channelName + " " + key, e);
-            return null;
+            throw new RuntimeException(e);
         } finally {
             ActiveTraces.getLocal().add("S3SingleContentDao.read completed");
         }
@@ -182,6 +172,7 @@ public class S3SingleContentDao implements ContentDao {
             request.withPrefix(query.getChannelName() + "/" + timePath);
             limitKey = ContentKey.lastKey(query.getStartTime().plus(query.getUnit().getDuration()));
         } else {
+            request.withPrefix(query.getChannelName() + "/");
             request.withMarker(query.getChannelName() + "/" + timePath);
         }
         SortedSet<ContentKey> keys = iterateListObjects(query.getChannelName(), request, MAX_ITEMS, query.getCount(), limitKey);
@@ -327,5 +318,20 @@ public class S3SingleContentDao implements ContentDao {
         public String toString() {
             return "com.flightstats.hub.dao.aws.S3SingleContentDao.S3SingleContentDaoBuilder(metricsService=" + this.metricsService + ", s3Client=" + this.s3Client + ", s3BucketName=" + this.s3BucketName + ")";
         }
+    }
+
+    public static ObjectMetadata createObjectMetadata(Content content, boolean useEncrypted) {
+        ObjectMetadata metadata = new ObjectMetadata();
+        if (content.getContentType().isPresent()) {
+            metadata.setContentType(content.getContentType().get());
+            metadata.addUserMetadata("type", content.getContentType().get());
+        } else {
+            metadata.addUserMetadata("type", "none");
+        }
+        metadata.addUserMetadata("payload", "none");
+        if (useEncrypted) {
+            metadata.setSSEAlgorithm(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
+        }
+        return metadata;
     }
 }

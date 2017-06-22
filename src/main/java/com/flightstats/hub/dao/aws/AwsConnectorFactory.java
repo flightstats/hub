@@ -1,11 +1,13 @@
 package com.flightstats.hub.dao.aws;
 
-import com.amazonaws.ClientConfiguration;
-import com.amazonaws.Protocol;
+import com.amazonaws.*;
 import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.auth.PropertiesCredentials;
 import com.amazonaws.retry.PredefinedRetryPolicies;
 import com.amazonaws.retry.RetryPolicy;
+import com.amazonaws.retry.RetryUtils;
+import com.amazonaws.retry.v2.BackoffStrategy;
+import com.amazonaws.retry.v2.RetryPolicyContext;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
@@ -15,6 +17,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.UnknownHostException;
+
+import static com.amazonaws.retry.PredefinedBackoffStrategies.EqualJitterBackoffStrategy;
+import static com.amazonaws.retry.PredefinedBackoffStrategies.FullJitterBackoffStrategy;
 
 public class AwsConnectorFactory {
 
@@ -72,8 +78,7 @@ public class AwsConnectorFactory {
 
     private ClientConfiguration getClientConfiguration(String name, boolean compress) {
         RetryPolicy retryPolicy = new RetryPolicy(PredefinedRetryPolicies.DEFAULT_RETRY_CONDITION,
-                PredefinedRetryPolicies.DEFAULT_BACKOFF_STRATEGY,
-                6, true);
+                new HubBackoffStrategy(), 6, true);
         ClientConfiguration configuration = new ClientConfiguration()
                 .withMaxConnections(HubProperties.getProperty(name + ".maxConnections", 50))
                 .withRetryPolicy(retryPolicy)
@@ -84,5 +89,44 @@ public class AwsConnectorFactory {
         logger.info("using config {} {}", name, configuration);
         return configuration;
     }
+
+    /**
+     * Copied code from AWS client since SDKDefaultBackoffStrategy and V2CompatibleBackoffStrategyAdapter are not public.
+     */
+    static class HubBackoffStrategy implements RetryPolicy.BackoffStrategy {
+
+        private final BackoffStrategy fullJitterBackoffStrategy;
+        private final BackoffStrategy equalJitterBackoffStrategy;
+        int unknownHostDelay = HubProperties.getProperty("aws.retry.unknown.host.delay.millis", 5000);
+
+        HubBackoffStrategy() {
+            int delayMillis = HubProperties.getProperty("aws.retry.delay.millis", 100);
+            int maxBackoffTime = HubProperties.getProperty("aws.retry.max.delay.millis", 20 * 1000);
+            fullJitterBackoffStrategy = new FullJitterBackoffStrategy(delayMillis, maxBackoffTime);
+            equalJitterBackoffStrategy = new EqualJitterBackoffStrategy(delayMillis * 5, maxBackoffTime);
+        }
+
+        long computeDelayBeforeNextRetry(RetryPolicyContext context) {
+            SdkBaseException exception = context.exception();
+            if (RetryUtils.isThrottlingException(exception)) {
+                return equalJitterBackoffStrategy.computeDelayBeforeNextRetry(context);
+            } else if (exception != null && exception.getCause() != null
+                    && exception.getCause() instanceof UnknownHostException) {
+                return unknownHostDelay;
+            } else {
+                return fullJitterBackoffStrategy.computeDelayBeforeNextRetry(context);
+            }
+        }
+
+        @Override
+        public long delayBeforeNextRetry(AmazonWebServiceRequest originalRequest, AmazonClientException exception, int retriesAttempted) {
+            return computeDelayBeforeNextRetry(RetryPolicyContext.builder()
+                    .originalRequest(originalRequest)
+                    .exception(exception)
+                    .retriesAttempted(retriesAttempted)
+                    .build());
+        }
+    }
+
 
 }

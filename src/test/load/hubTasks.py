@@ -236,6 +236,9 @@ class HubTasks:
     def earliest(self):
         self.client.get('/channel/' + self.channel + '/earliest', name="earliest")
 
+    def day_query(self):
+        self.client.get(self.time_path("day"), name="time_day")
+
     def hour_query(self):
         self.client.get(self.time_path("hour"), name="time_hour")
 

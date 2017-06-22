@@ -66,7 +66,7 @@ On success: `HTTP/1.1 200 OK`
 }
 ```
 
-## channel limits {#limits}
+## channel limits
 
 `ttlDays` and `maxItems` are mutually exclusive.  When one field is set, the other must be 0 (zero).
 

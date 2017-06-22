@@ -15,7 +15,7 @@ public interface ContentService {
 
     boolean historicalInsert(String channelName, Content content) throws Exception;
 
-    Optional<Content> get(String channelName, ContentKey key);
+    Optional<Content> get(String channelName, ContentKey key, boolean cached);
 
     void get(String channel, SortedSet<ContentKey> keys, Consumer<Content> callback);
 

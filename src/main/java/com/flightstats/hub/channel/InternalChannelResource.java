@@ -103,7 +103,7 @@ public class InternalChannelResource {
         addStaleEntities(root, age, (staleCutoff) -> {
             Map<DateTime, URI> staleChannels = new TreeMap<>();
             channelService.getChannels().forEach(channelConfig -> {
-                Optional<ContentKey> optionalContentKey = channelService.getLatest(channelConfig.getName(), false);
+                Optional<ContentKey> optionalContentKey = channelService.getLatest(channelConfig.getDisplayName(), false);
                 if (!optionalContentKey.isPresent()) return;
 
                 ContentKey contentKey = optionalContentKey.get();
@@ -123,7 +123,7 @@ public class InternalChannelResource {
     }
 
     private URI constructChannelURI(ChannelConfig channelConfig) {
-        return UriBuilder.fromUri(uriInfo.getBaseUri()).path("channel").path(channelConfig.getName()).build();
+        return UriBuilder.fromUri(uriInfo.getBaseUri()).path("channel").path(channelConfig.getDisplayName()).build();
     }
 
     @GET
@@ -137,7 +137,7 @@ public class InternalChannelResource {
         addStaleEntities(root, age, (staleCutoff) -> {
             Map<DateTime, URI> staleChannels = new TreeMap<>();
             channelService.getChannels().forEach(channelConfig -> {
-                Optional<ContentKey> optionalContentKey = channelService.getLatest(channelConfig.getName(), false);
+                Optional<ContentKey> optionalContentKey = channelService.getLatest(channelConfig.getDisplayName(), false);
                 if (!optionalContentKey.isPresent()) return;
 
                 ContentKey contentKey = optionalContentKey.get();

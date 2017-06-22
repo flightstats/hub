@@ -74,7 +74,9 @@ dependencies {
     compile 'org.slf4j:log4j-over-slf4j:1.7.22'
     compile 'org.slf4j:jcl-over-slf4j:1.7.22'
 
-    compile 'com.amazonaws:aws-java-sdk:1.11.68'
+    compile 'de.danielbechler:java-object-diff:0.94'
+
+    compile 'com.amazonaws:aws-java-sdk:1.11.133'
     compile 'org.apache.curator:curator-recipes:2.11.1'
     testCompile 'org.apache.curator:curator-test:2.11.1'
     testCompile 'org.testng:testng:6.10'
@@ -87,7 +89,8 @@ dependencies {
     compile 'com.google.code.gson:gson:2.8.0'
     compile 'com.newrelic.agent.java:newrelic-agent:3.24.1'
     compile 'com.newrelic.agent.java:newrelic-api:3.24.1'
-    compile 'org.projectlombok:lombok:1.16.12'
+    /*we are leaving lombok commented out to prevent it from being a build requirement*/
+    //compile 'org.projectlombok:lombok:1.16.12'
     compile 'com.datadoghq:java-dogstatsd-client:2.3'
 
     compile 'com.atlassian.commonmark:commonmark:0.9.0'

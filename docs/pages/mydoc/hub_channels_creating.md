@@ -1,5 +1,5 @@
 ---
-title: Creating and modyfying channels
+title: Creating and modifying channels
 keywords: channel, create, update
 last_updated: July 3, 2016
 tags: [channel]
@@ -17,7 +17,7 @@ folder: hub
 * `owner` is optional and is limited to 48 characters.
 
 * `ttlDays` and `maxItems` are optional, and only one can have a value greater than zero at a time. If neither is specified, a default value of 120 ttlDays is used.
-Please see [channel limits](#channel-limits) for more details.  To change a channel to ttlDays or maxItems, set the other value explicitly to zero.
+Please see [channel limits](hub_channels_overview.html#channel-limits) for more details.  To change a channel to ttlDays or maxItems, set the other value explicitly to zero.
 
 * `description` is optional and defaults to an empty string.  This text field can be up to 1024 bytes long.
 
@@ -25,14 +25,14 @@ Please see [channel limits](#channel-limits) for more details.  To change a chan
 A channel may have at most 20 tags.
 
 * `replicationSource` is the optional fully qualified path to channel in a another hub.  The data from the other channel
-will be duplicated into this channel.  Please see [replication](#replication) for more details.
+will be duplicated into this channel.  Please see [replication](hub_channels_replication.html) for more details.
 
 * `global` are optional settings for distributing data from a master hub cluster to other satellite hub clusters.
-Please see [global channels](#global-channels) for more details.
+Please see [global channels](hub_channels_global.html) for more details.
 
 * `storage` is the optional specification of how to store long term data.  The default is `SINGLE`.  
 High volume channels can see significant reductions in S3 costs by using `BATCH`.  
-`BOTH` is a way to transition between the two states, and perform comparisons.  More information in [storage](#storage)
+`BOTH` is a way to transition between the two states, and perform comparisons.  More information in [storage](hub_other_channel_storage.html)
 
 * `protect` is the optional setting to prevent changes which might cause some data loss.
 Please see [protected channels](hub_channels_protect.html) for more details.

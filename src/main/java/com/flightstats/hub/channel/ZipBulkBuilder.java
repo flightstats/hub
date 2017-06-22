@@ -2,7 +2,7 @@ package com.flightstats.hub.channel;
 
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentMarshaller;
-import com.flightstats.hub.dao.Request;
+import com.flightstats.hub.dao.ItemRequest;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.ChannelContentKey;
@@ -64,11 +64,11 @@ public class ZipBulkBuilder {
 
     private static void writeContent(ZipOutputStream output, ContentKey key, String channel,
                                      ChannelService channelService) {
-        Request request = Request.builder()
+        ItemRequest itemRequest = ItemRequest.builder()
                 .channel(channel)
                 .key(key)
                 .build();
-        Optional<Content> contentOptional = channelService.get(request);
+        Optional<Content> contentOptional = channelService.get(itemRequest);
         if (contentOptional.isPresent()) {
             createZipEntry(output, contentOptional.get());
         } else {

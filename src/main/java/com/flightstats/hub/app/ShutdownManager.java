@@ -49,7 +49,7 @@ public class ShutdownManager {
         }
     }
 
-    public boolean shutdown() throws Exception {
+    public boolean shutdown(boolean useLock) throws Exception {
         logger.warn("shutting down!");
         getMetricsService().mute();
 
@@ -57,19 +57,26 @@ public class ShutdownManager {
         if (healthCheck.isShuttingDown()) {
             return true;
         }
-        waitForLock();
+        if (useLock) {
+            waitForLock();
+        }
         getMetricsService().event("Hub Restart Shutdown", "shutting down", "restart", "shutdown");
 
         //this call will get the node removed from the Load Balancer
         healthCheck.shutdown();
-
+        long start = System.currentTimeMillis();
         HubServices.preStop();
 
         //wait until it's likely the node is removed from the Load Balancer
-        int shutdown_delay_seconds = HubProperties.getProperty("app.shutdown_delay_seconds", 60);
-        logger.warn("sleeping for " + shutdown_delay_seconds);
-        Sleeper.sleep(shutdown_delay_seconds * 1000);
-        logger.warn("slept for " + shutdown_delay_seconds);
+        long end = System.currentTimeMillis();
+        int shutdown_delay_millis = HubProperties.getProperty("app.shutdown_delay_seconds", 60) * 1000;
+        long millisStopping = end - start;
+        if (millisStopping < shutdown_delay_millis) {
+            long sleepTime = shutdown_delay_millis - millisStopping;
+            logger.warn("sleeping for " + sleepTime);
+            Sleeper.sleep(sleepTime);
+            logger.warn("slept for " + sleepTime);
+        }
 
         HubServices.stopAll();
         logger.warn("completed shutdown tasks, exiting JVM");

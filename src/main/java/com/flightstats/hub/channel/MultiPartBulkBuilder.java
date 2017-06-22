@@ -1,7 +1,7 @@
 package com.flightstats.hub.channel;
 
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.dao.Request;
+import com.flightstats.hub.dao.ItemRequest;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.ChannelContentKey;
@@ -76,11 +76,11 @@ class MultiPartBulkBuilder {
 
     private static void writeContent(UriInfo uriInfo, BufferedOutputStream output, ContentKey key, String channel,
                                      ChannelService channelService) {
-        Request request = Request.builder()
+        ItemRequest itemRequest = ItemRequest.builder()
                 .channel(channel)
                 .key(key)
                 .build();
-        Optional<Content> content = channelService.get(request);
+        Optional<Content> content = channelService.get(itemRequest);
         if (content.isPresent()) {
             Content item = content.get();
             writeContent(item, output, LinkBuilder.buildChannelUri(channel, uriInfo), channel);
