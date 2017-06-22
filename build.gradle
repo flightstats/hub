@@ -53,44 +53,49 @@ dependencies {
     compile 'org.glassfish.jersey.core:jersey-common:2.22.1'
     compile 'org.glassfish.jersey.media:jersey-media-sse:2.22.1'
 
-    compile 'com.sun.jersey:jersey-client:1.19.3'
-    compile 'com.sun.jersey:jersey-core:1.19.3'
+    compile 'com.sun.jersey:jersey-client:1.19.4'
+    compile 'com.sun.jersey:jersey-core:1.19.4'
 
-    compile 'com.fasterxml.jackson.core:jackson-core:2.8.5'
-    compile 'com.fasterxml.jackson.core:jackson-annotations:2.8.5'
-    compile 'com.fasterxml.jackson.core:jackson-databind:2.8.5'
-    compile 'com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.8.5'
-    compile 'com.fasterxml.jackson.datatype:jackson-datatype-guava:2.8.5'
+    compile 'com.fasterxml.jackson.core:jackson-core:2.8.9'
+    compile 'com.fasterxml.jackson.core:jackson-annotations:2.8.9'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.8.9'
+    compile 'com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.8.9'
+    compile 'com.fasterxml.jackson.datatype:jackson-datatype-guava:2.8.9'
 
     compile 'com.google.inject:guice:4.1.0'
     compile 'com.google.inject.extensions:guice-servlet:4.1.0'
-    compile 'com.google.guava:guava:20.0'
+    compile 'com.google.guava:guava:22.0'
     compile 'com.diffplug.durian:durian:3.4.0'
-    compile 'joda-time:joda-time:2.9.6'
+    compile 'joda-time:joda-time:2.9.9'
 
-    compile 'ch.qos.logback:logback-core:1.1.8'
-    compile 'ch.qos.logback:logback-classic:1.1.8'
-    compile 'org.slf4j:jul-to-slf4j:1.7.22'
-    compile 'org.slf4j:log4j-over-slf4j:1.7.22'
-    compile 'org.slf4j:jcl-over-slf4j:1.7.22'
+    compile 'ch.qos.logback:logback-core:1.2.2'
+    compile 'ch.qos.logback:logback-classic:1.2.2'
+    compile 'org.slf4j:jul-to-slf4j:1.7.25'
+    compile 'org.slf4j:log4j-over-slf4j:1.7.25'
+    compile 'org.slf4j:jcl-over-slf4j:1.7.25'
 
     compile 'de.danielbechler:java-object-diff:0.94'
 
-    compile 'com.amazonaws:aws-java-sdk:1.11.133'
-    compile 'org.apache.curator:curator-recipes:2.11.1'
-    testCompile 'org.apache.curator:curator-test:2.11.1'
-    testCompile 'org.testng:testng:6.10'
+    compile 'com.amazonaws:aws-java-sdk:1.11.152'
+    compile 'org.apache.curator:curator-recipes:2.12.0'
+    testCompile 'org.apache.curator:curator-test:2.12.0'
+    testCompile 'org.testng:testng:6.11'
 
-    compile 'org.apache.commons:commons-lang3:3.5'
+    compile 'org.apache.commons:commons-lang3:3.6'
     compile 'commons-io:commons-io:2.5'
     compile('com.github.rholder:guava-retrying:2.0.0') {
         exclude group: 'com.google.guava'
     }
-    compile 'com.google.code.gson:gson:2.8.0'
-    compile 'com.newrelic.agent.java:newrelic-agent:3.24.1'
-    compile 'com.newrelic.agent.java:newrelic-api:3.24.1'
-    /*we are leaving lombok commented out to prevent it from being a build requirement*/
-    //compile 'org.projectlombok:lombok:1.16.12'
+    compile 'com.google.code.gson:gson:2.8.1'
+
+
+    /*
+    we are leaving lombok commented out to prevent it from being a build requirement
+    if you want to use lombok, after using and testing annotations,
+    before the final merge to master, use delombok to generate the code and remove the annotations
+    compile 'org.projectlombok:lombok:1.16.12'
+     */
+
     compile 'com.datadoghq:java-dogstatsd-client:2.3'
 
     compile 'com.atlassian.commonmark:commonmark:0.9.0'
