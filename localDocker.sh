@@ -18,5 +18,5 @@ docker build docker
 
 NEWESTIMAGE=$(docker images -q | head -1)
 
-echo "Now run the following command using the image id above"
-echo "E.g. docker run -p 80:80 ${NEWESTIMAGE}"
+echo "Now run the following command using the image id above:"
+echo "docker run -p 80:80 ${NEWESTIMAGE}"
