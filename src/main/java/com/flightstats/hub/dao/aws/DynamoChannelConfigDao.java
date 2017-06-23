@@ -120,11 +120,12 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
     private void processItems(ScanResult result) {
         for (Map<String, AttributeValue> item : result.getItems()) {
             String displayName = item.get("displayName").getS();
-            String name = item.get("name").getS();
-            if (!name.equals(displayName)) {
+            String name = item.get("key").getS();
+            if (!name.equals(displayName.toLowerCase())) {
                 ChannelConfig channelConfig = mapItem(item);
                 logger.info("updating {}", channelConfig);
                 upsert(channelConfig);
+                delete(name);
                 Sleeper.sleep(10);
             }
         }
