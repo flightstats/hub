@@ -24,7 +24,6 @@ utils.runInTestChannel(testName, channelName, function () {
                 .get(valueUrl)
                 .expectStatus(200)
                 .expectHeader('content-type', 'text/plain')
-                .expectHeader('payloadLength', '' + messageText.length)
                 .expectBodyContains(messageText)
                 .after(function (err, res, body) {
                     expect(res.headers['user']).toBeUndefined();
