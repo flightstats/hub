@@ -85,7 +85,7 @@ public class CachedLowerCaseDao<T extends NamedType> implements Dao<T> {
 
     @Override
     public void delete(String name) {
-        delegate.delete(name);
+        delegate.delete(name.toLowerCase());
         cacheMap.remove(name.toLowerCase());
         notifyWatchers();
     }
