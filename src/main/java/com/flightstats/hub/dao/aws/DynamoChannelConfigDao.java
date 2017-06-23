@@ -99,11 +99,34 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
         dynamoUtils.updateTable(tableName, throughput);
 
         //todo - gfm - this can be deleted once it is run everywhere
-        Collection<ChannelConfig> channelConfigs = getAll(false);
-        for (ChannelConfig channelConfig : channelConfigs) {
-            logger.info("updating {}", channelConfig);
-            upsert(channelConfig);
-            Sleeper.sleep(10);
+        temporaryUpdateToLowerCaseName();
+    }
+
+    private void temporaryUpdateToLowerCaseName() {
+        ScanRequest scanRequest = new ScanRequest()
+                .withConsistentRead(true)
+                .withTableName(getTableName());
+
+        ScanResult result = dbClient.scan(scanRequest);
+        processItems(result);
+
+        while (result.getLastEvaluatedKey() != null) {
+            scanRequest.setExclusiveStartKey(result.getLastEvaluatedKey());
+            result = dbClient.scan(scanRequest);
+            processItems(result);
+        }
+    }
+
+    private void processItems(ScanResult result) {
+        for (Map<String, AttributeValue> item : result.getItems()) {
+            String displayName = item.get("displayName").getS();
+            String name = item.get("name").getS();
+            if (!name.equals(displayName)) {
+                ChannelConfig channelConfig = mapItem(item);
+                logger.info("updating {}", channelConfig);
+                upsert(channelConfig);
+                Sleeper.sleep(10);
+            }
         }
     }
 
