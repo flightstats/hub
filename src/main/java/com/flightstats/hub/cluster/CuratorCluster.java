@@ -28,7 +28,6 @@ public class CuratorCluster implements Cluster {
     private final boolean useName;
     private final PathChildrenCache clusterCache;
     private String fullPath;
-    private boolean decommissioned = false;
 
     @Inject
     public CuratorCluster(CuratorFramework curator, String clusterPath, boolean useName) throws Exception {
@@ -37,11 +36,6 @@ public class CuratorCluster implements Cluster {
         this.useName = useName;
         clusterCache = new PathChildrenCache(curator, clusterPath, true);
         clusterCache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
-    }
-
-    void decommission() {
-        this.decommissioned = true;
-        delete();
     }
 
     public void addCacheListener() {
@@ -62,10 +56,6 @@ public class CuratorCluster implements Cluster {
     }
 
     public void register() throws UnknownHostException {
-        if (decommissioned) {
-            logger.info("node is decommissioned, not gonna register");
-            return;
-        }
         String host = getHost(useName);
         try {
             logger.info("registering host {} {}", host, clusterPath);
@@ -90,6 +80,10 @@ public class CuratorCluster implements Cluster {
         return server;
     }
 
+    public Set<String> getServers() {
+        return getAllServers();
+    }
+
     @Override
     public Set<String> getAllServers() {
         Set<String> servers = new HashSet<>();
@@ -100,6 +94,12 @@ public class CuratorCluster implements Cluster {
         if (servers.isEmpty()) {
             logger.warn("returning empty collection");
         }
+        return servers;
+    }
+
+    public List<String> getRandomServers() {
+        List<String> servers = new ArrayList<>(getServers());
+        Collections.shuffle(servers);
         return servers;
     }
 
