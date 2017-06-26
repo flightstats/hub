@@ -94,7 +94,7 @@ public class SpokeContentDao implements ContentDao {
         Traces traces = ActiveTraces.getLocal();
         traces.add("SpokeContentDao.read");
         try {
-            return spokeStore.get(channelName, path, key);
+            return spokeStore.get(path, key);
         } catch (Exception e) {
             logger.warn("unable to get data: " + path, e);
             return null;
@@ -143,10 +143,11 @@ public class SpokeContentDao implements ContentDao {
 
     private SortedSet<ContentKey> queryByTimeKeys(TimeQuery query) {
         try {
-            QueryResult queryResult = spokeStore.readTimeBucket(query);
+            String timePath = query.getUnit().format(query.getStartTime());
+            QueryResult queryResult = spokeStore.readTimeBucket(query.getChannelName(), timePath);
             ActiveTraces.getLocal().add("spoke query result", queryResult);
             if (!queryResult.hadSuccess()) {
-                QueryResult retryResult = spokeStore.readTimeBucket(query);
+                QueryResult retryResult = spokeStore.readTimeBucket(query.getChannelName(), timePath);
                 ActiveTraces.getLocal().add("spoke query retryResult", retryResult);
                 if (!retryResult.hadSuccess()) {
                     ActiveTraces.getLocal().log(logger);
@@ -182,7 +183,7 @@ public class SpokeContentDao implements ContentDao {
         SortedSet<ContentKey> contentKeys = Collections.emptySortedSet();
         if (query.isNext()) {
             try {
-                contentKeys = spokeStore.getNext(query.getChannelName(), query.getCount(), query.getStartKey());
+                contentKeys = spokeStore.getNext(query.getChannelName(), query.getCount(), query.getStartKey().toUrl());
             } catch (InterruptedException e) {
                 logger.warn("what happened? " + query, e);
             }
