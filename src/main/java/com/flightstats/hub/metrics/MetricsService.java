@@ -36,6 +36,6 @@ public interface MetricsService {
     }
 
     default boolean shouldLog(String channel) {
-        return !channel.startsWith("test_");
+        return !channel.toLowerCase().startsWith("test_");
     }
 }
