@@ -31,7 +31,7 @@ describe(testName, function () {
         expect(parse._links.self.href).toEqual(channelResource);
         expect(parse.protect).toEqual(true);
 
-    }, {protect: true});
+    }, {protect: true, owner: 'someone'});
 
     utils.putChannel(channelName, false, {protect: false}, 'protect', 403);
 
@@ -51,7 +51,7 @@ describe(testName, function () {
     it("deletes channel " + channelName, function (done) {
         request.del({url: channelResource},
             function (err, response, body) {
-                console.log('body', body)
+                console.log('body', body);
                 expect(response.statusCode).toBe(403);
                 done();
             });

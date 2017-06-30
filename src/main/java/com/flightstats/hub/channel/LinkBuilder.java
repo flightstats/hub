@@ -40,10 +40,10 @@ public class LinkBuilder {
         return URI.create(channelUri.toString() + "/" + key);
     }
 
-    static ObjectNode buildChannelConfigResponse(ChannelConfig config, UriInfo uriInfo) {
+    static ObjectNode buildChannelConfigResponse(ChannelConfig config, UriInfo uriInfo, String channel) {
         ObjectNode root = mapper.createObjectNode();
 
-        root.put("name", config.getName());
+        root.put("name", config.getDisplayName());
         root.put("allowZeroBytes", config.isAllowZeroBytes());
         root.put("creationDate", TimeUtil.FORMATTER.print(new DateTime(config.getCreationDate())));
         root.put("description", config.getDescription());
@@ -69,15 +69,15 @@ public class LinkBuilder {
         root.put("keepForever", config.getKeepForever());
 
         ObjectNode links = root.putObject("_links");
-        addLink(links, "self",          uriInfo.getBaseUriBuilder().path("channel").path(config.getName()).build());
-        addLink(links, "documentation", uriInfo.getBaseUriBuilder().path("channel").path(config.getName()).path("doc").build());
-        addLink(links, "latest",        uriInfo.getBaseUriBuilder().path("channel").path(config.getName()).path("latest").build());
-        addLink(links, "earliest",      uriInfo.getBaseUriBuilder().path("channel").path(config.getName()).path("earliest").build());
-        addLink(links, "bulk",          uriInfo.getBaseUriBuilder().path("channel").path(config.getName()).path("bulk").build());
-        addLink(links, "ws",            uriInfo.getBaseUriBuilder().path("channel").path(config.getName()).path("ws").scheme("ws").build());
-        addLink(links, "events",        uriInfo.getBaseUriBuilder().path("channel").path(config.getName()).path("events").build());
-        addLink(links, "time",          uriInfo.getBaseUriBuilder().path("channel").path(config.getName()).path("time").build());
-        addLink(links, "status",        uriInfo.getBaseUriBuilder().path("channel").path(config.getName()).path("status").build());
+        addLink(links, "self", uriInfo.getBaseUriBuilder().path("channel").path(channel).build());
+        addLink(links, "documentation", uriInfo.getBaseUriBuilder().path("channel").path(channel).path("doc").build());
+        addLink(links, "latest", uriInfo.getBaseUriBuilder().path("channel").path(channel).path("latest").build());
+        addLink(links, "earliest", uriInfo.getBaseUriBuilder().path("channel").path(channel).path("earliest").build());
+        addLink(links, "bulk", uriInfo.getBaseUriBuilder().path("channel").path(channel).path("bulk").build());
+        addLink(links, "ws", uriInfo.getBaseUriBuilder().path("channel").path(channel).path("ws").scheme("ws").build());
+        addLink(links, "events", uriInfo.getBaseUriBuilder().path("channel").path(channel).path("events").build());
+        addLink(links, "time", uriInfo.getBaseUriBuilder().path("channel").path(channel).path("time").build());
+        addLink(links, "status", uriInfo.getBaseUriBuilder().path("channel").path(channel).path("status").build());
 
         return root;
     }

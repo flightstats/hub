@@ -2,7 +2,7 @@ package com.flightstats.hub.cluster;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProperties;
-import com.flightstats.hub.util.Hash;
+import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.util.TimeInterval;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -18,10 +18,11 @@ class SpokeRing implements Ring {
 
     private static final int OVERLAP_SECONDS = HubProperties.getProperty("spoke.ring.overlap.seconds", 1);
 
-    private List<String> spokeNodes;
-    private long rangeSize;
     private TimeInterval timeInterval;
     private DateTime startTime;
+    private ClusterEvent clusterEvent;
+    private SpokeRing previousRing;
+    private RingStrategy strategy;
 
     SpokeRing(DateTime startTime, String... nodes) {
         this(startTime, null, nodes);
@@ -39,71 +40,76 @@ class SpokeRing implements Ring {
     }
 
     SpokeRing(ClusterEvent clusterEvent, SpokeRing previousRing) {
+        this.clusterEvent = clusterEvent;
+        this.previousRing = previousRing;
         setStartTime(clusterEvent);
         previousRing.setEndTime(
                 new DateTime(clusterEvent.getModifiedTime(), DateTimeZone.UTC)
                         .plusSeconds(OVERLAP_SECONDS));
-        HashSet<String> nodes = new HashSet<>(previousRing.spokeNodes);
+        HashSet<String> nodes = new HashSet<>(previousRing.strategy.getAllServers());
         if (clusterEvent.isAdded()) {
             nodes.add(clusterEvent.getName());
-        } else {
+        } else if (previousRing.shouldRemove(clusterEvent)) {
             nodes.remove(clusterEvent.getName());
         }
         initialize(nodes);
     }
 
+    private boolean shouldRemove(ClusterEvent removeEvent) {
+        ClusterEvent event = getClusterEvent();
+        if (event.isAdded()) {
+            if (event.getCreationTime() > removeEvent.getCreationTime()) {
+                if (event.getName().equals(removeEvent.getName())) {
+                    return false;
+                }
+            }
+        }
+        return previousRing == null || previousRing.shouldRemove(removeEvent);
+    }
+
     private void setStartTime(ClusterEvent clusterEvent) {
         this.startTime = new DateTime(clusterEvent.getModifiedTime(), DateTimeZone.UTC);
+        this.clusterEvent = clusterEvent;
         timeInterval = new TimeInterval(startTime, null);
     }
 
     private void initialize(Collection<String> nodes) {
-        Map<Long, String> hashedNodes = new TreeMap<>();
-        for (String node : nodes) {
-            hashedNodes.put(Hash.hash(node), node);
+        String property = HubProperties.getProperty("spoke.ring.strategy", "ConsistentHashStrategy");
+        if (property.equalsIgnoreCase("EqualRangesStrategy")) {
+            strategy = new EqualRangesStrategy(nodes);
+        } else {
+            strategy = new ConsistentHashStrategy(nodes);
         }
-        rangeSize = Hash.getRangeSize(hashedNodes.size());
-        spokeNodes = new ArrayList<>(hashedNodes.values());
     }
 
     void setEndTime(DateTime endTime) {
         timeInterval = new TimeInterval(startTime, endTime);
     }
 
-    public Collection<String> getNodes(String channel) {
-        if (spokeNodes.size() <= 3) {
-            return spokeNodes;
-        }
-        long hash = Hash.hash(channel);
-        int node = (int) (hash / rangeSize);
-        if (hash < 0) {
-            node = spokeNodes.size() + node - 1;
-        }
-        Collection<String> found = new ArrayList<>();
-        int minimum = Math.min(3, spokeNodes.size());
-        while (found.size() < minimum) {
-            if (node == spokeNodes.size()) {
-                node = 0;
-            }
-            found.add(spokeNodes.get(node));
-            node++;
-
-        }
-        return found;
+    public Set<String> getServers(String channel) {
+        Set<String> servers = strategy.getServers(channel);
+        ActiveTraces.getLocal().add("ring servers ", servers);
+        return servers;
     }
 
-    public Collection<String> getNodes(String channel, DateTime pointInTime) {
+    public Set<String> getServers(String channel, DateTime pointInTime) {
         if (timeInterval.contains(pointInTime)) {
-            return getNodes(channel);
+            ActiveTraces.getLocal().add("ring interval {} contains start {}", this.startTime, startTime);
+            return getServers(channel);
         }
-        return Collections.emptyList();
+        return Collections.emptySet();
     }
 
-    public Collection<String> getNodes(String channel, DateTime startTime, DateTime endTime) {
-        if (timeInterval.overlaps(startTime, endTime)) {
-            return getNodes(channel);
+    public Set<String> getServers(String channel, DateTime startTime, DateTime endTime) {
+        if (overlaps(startTime, endTime)) {
+            ActiveTraces.getLocal().add("ring interval {} overlaps start {} end {}", this.startTime, startTime, endTime);
+            return getServers(channel);
         }
-        return Collections.emptyList();
+        return Collections.emptySet();
+    }
+
+    boolean overlaps(DateTime startTime, DateTime endTime) {
+        return timeInterval.overlaps(startTime, endTime);
     }
 
     boolean endsBefore(DateTime endTime) {
@@ -113,15 +119,47 @@ class SpokeRing implements Ring {
     @Override
     public String toString() {
         return "SpokeRing{" +
-                "startTime=" + startTime +
-                ", spokeNodes=" + spokeNodes +
+                "nodes=" + strategy.getAllServers() +
                 ", timeInterval=" + timeInterval +
-                ", rangeSize=" + rangeSize +
+                ", clusterEvent=" + clusterEvent +
                 '}';
     }
 
+    private ClusterEvent getClusterEvent() {
+        return clusterEvent;
+    }
+
     public void status(ObjectNode root) {
-        root.put("nodes", spokeNodes.toString());
+        root.put("nodes", strategy.getAllServers().toString());
         timeInterval.status(root);
+    }
+
+    public boolean equals(Object o) {
+        if (o == this) return true;
+        if (!(o instanceof SpokeRing)) return false;
+        final SpokeRing other = (SpokeRing) o;
+        if (!other.canEqual((Object) this)) return false;
+        final Object this$clusterEvent = this.getClusterEvent();
+        final Object other$clusterEvent = other.getClusterEvent();
+        if (this$clusterEvent == null ? other$clusterEvent != null : !this$clusterEvent.equals(other$clusterEvent))
+            return false;
+        final Object this$strategy = this.strategy;
+        final Object other$strategy = other.strategy;
+        if (this$strategy == null ? other$strategy != null : !this$strategy.equals(other$strategy)) return false;
+        return true;
+    }
+
+    public int hashCode() {
+        final int PRIME = 59;
+        int result = 1;
+        final Object $clusterEvent = this.getClusterEvent();
+        result = result * PRIME + ($clusterEvent == null ? 43 : $clusterEvent.hashCode());
+        final Object $strategy = this.strategy;
+        result = result * PRIME + ($strategy == null ? 43 : $strategy.hashCode());
+        return result;
+    }
+
+    protected boolean canEqual(Object other) {
+        return other instanceof SpokeRing;
     }
 }

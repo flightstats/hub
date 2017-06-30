@@ -31,15 +31,15 @@ public class S3Batch {
     }
 
     private String getChannelUrl() {
-        return HubProperties.getAppUrl() + "channel/" + channel.getName();
+        return HubProperties.getAppUrl() + "channel/" + channel.getDisplayName();
     }
 
     private String getCallbackUrl() {
-        return HubProperties.getAppUrl() + "internal/s3Batch/" + channel.getName();
+        return HubProperties.getAppUrl() + "internal/s3Batch/" + channel.getDisplayName();
     }
 
     public String getGroupName() {
-        return S3_BATCH + HubProperties.getAppEnv() + "_" + channel.getName();
+        return S3_BATCH + HubProperties.getAppEnv() + "_" + channel.getDisplayName();
     }
 
     public ChannelConfig getChannel() {

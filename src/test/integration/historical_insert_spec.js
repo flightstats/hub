@@ -74,7 +74,7 @@ describe(testName, function () {
         utils.postItemQ(pointInThePastURL + '/abcdefg')
             .then(function (value) {
                 hashItem = value.response.headers.location;
-                expect(hashItem).toContain('/abcdefg')
+                expect(hashItem).toContain('/abcdefg');
                 done();
             });
     });
@@ -87,5 +87,4 @@ describe(testName, function () {
                 done();
             });
     });
-
 });

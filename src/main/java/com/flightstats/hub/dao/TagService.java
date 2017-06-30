@@ -36,9 +36,9 @@ public class TagService {
         Iterable<ChannelConfig> channels = getChannels(timeQuery.getTagName());
         SortedSet<ChannelContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
         for (ChannelConfig channel : channels) {
-            Collection<ContentKey> contentKeys = channelService.queryByTime(timeQuery.withChannelName(channel.getName()));
+            Collection<ContentKey> contentKeys = channelService.queryByTime(timeQuery.withChannelName(channel.getDisplayName()));
             for (ContentKey contentKey : contentKeys) {
-                orderedKeys.add(new ChannelContentKey(channel.getName(), contentKey));
+                orderedKeys.add(new ChannelContentKey(channel.getDisplayName(), contentKey));
             }
         }
         return orderedKeys;
@@ -49,11 +49,11 @@ public class TagService {
         SortedSet<ChannelContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
         Traces traces = ActiveTraces.getLocal();
         for (ChannelConfig channel : channels) {
-            traces.add("query for channel", channel.getName());
-            Collection<ContentKey> contentKeys = channelService.query(query.withChannelName(channel.getName()));
-            traces.add("query size for channel", channel.getName(), contentKeys.size());
+            traces.add("query for channel", channel.getDisplayName());
+            Collection<ContentKey> contentKeys = channelService.query(query.withChannelName(channel.getDisplayName()));
+            traces.add("query size for channel", channel.getDisplayName(), contentKeys.size());
             for (ContentKey contentKey : contentKeys) {
-                orderedKeys.add(new ChannelContentKey(channel.getName(), contentKey));
+                orderedKeys.add(new ChannelContentKey(channel.getDisplayName(), contentKey));
             }
         }
 
@@ -73,9 +73,9 @@ public class TagService {
         Iterable<ChannelConfig> channels = getChannels(tagQuery.getTagName());
         SortedSet<ChannelContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
         for (ChannelConfig channel : channels) {
-            Optional<ContentKey> contentKey = channelService.getLatest(tagQuery.withChannelName(channel.getName()));
+            Optional<ContentKey> contentKey = channelService.getLatest(tagQuery.withChannelName(channel.getDisplayName()));
             if (contentKey.isPresent()) {
-                orderedKeys.add(new ChannelContentKey(channel.getName(), contentKey.get()));
+                orderedKeys.add(new ChannelContentKey(channel.getDisplayName(), contentKey.get()));
             }
         }
         if (orderedKeys.isEmpty()) {
@@ -91,20 +91,20 @@ public class TagService {
         traces.add("TagService.getEarliest", tagQuery.getTagName());
         SortedSet<ChannelContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
         for (ChannelConfig channel : channels) {
-            DirectionQuery query = ChannelEarliestResource.getDirectionQuery(channel.getName(), tagQuery.getCount(),
+            DirectionQuery query = ChannelEarliestResource.getDirectionQuery(channel.getDisplayName(), tagQuery.getCount(),
                     tagQuery.isStable(), tagQuery.getLocation().name(), tagQuery.getEpoch().name());
             for (ContentKey contentKey : channelService.query(query)) {
-                orderedKeys.add(new ChannelContentKey(channel.getName(), contentKey));
+                orderedKeys.add(new ChannelContentKey(channel.getDisplayName(), contentKey));
             }
         }
         traces.add("TagService.getEarliest completed", orderedKeys);
         return orderedKeys;
     }
 
-    public Optional<Content> getValue(Request request) {
-        Iterable<ChannelConfig> channels = getChannels(request.getTag());
+    public Optional<Content> getValue(ItemRequest itemRequest) {
+        Iterable<ChannelConfig> channels = getChannels(itemRequest.getTag());
         for (ChannelConfig channel : channels) {
-            Optional<Content> value = channelService.get(request.withChannel(channel.getName()));
+            Optional<Content> value = channelService.get(itemRequest.withChannel(channel.getDisplayName()));
             if (value.isPresent()) {
                 return value;
             }

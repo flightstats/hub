@@ -2,7 +2,6 @@ package com.flightstats.hub.app;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
-import com.flightstats.hub.cluster.DynamicSpokeCluster;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.dao.*;
 import com.flightstats.hub.dao.aws.*;
@@ -29,10 +28,12 @@ class ClusterHubBindings extends AbstractModule {
     protected void configure() {
         logger.info("starting server {} ", HubHost.getLocalName());
 
-        bind(ChannelService.class).to(GlobalChannelService.class).asEagerSingleton();
+        bind(ChannelService.class).to(ChannelNameService.class).asEagerSingleton();
+        bind(ChannelService.class)
+                .annotatedWith(Names.named(ChannelService.DELEGATE))
+                .to(GlobalChannelService.class).asEagerSingleton();
         bind(AwsConnectorFactory.class).asEagerSingleton();
         bind(S3Config.class).asEagerSingleton();
-        bind(DynamicSpokeCluster.class).asEagerSingleton();
         bind(ContentService.class)
                 .to(ClusterContentService.class).asEagerSingleton();
         bind(RemoteSpokeStore.class).asEagerSingleton();
@@ -61,7 +62,7 @@ class ClusterHubBindings extends AbstractModule {
     @Provides
     @Named("ChannelConfig")
     public static Dao<ChannelConfig> buildChannelConfigDao(WatchManager watchManager, DynamoChannelConfigDao dao) {
-        return new CachedDao<>(dao, watchManager, "/channels/cache");
+        return new CachedLowerCaseDao<>(dao, watchManager, "/channels/cache");
     }
 
     @Inject

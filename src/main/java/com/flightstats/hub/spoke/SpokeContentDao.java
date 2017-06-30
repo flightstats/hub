@@ -94,7 +94,7 @@ public class SpokeContentDao implements ContentDao {
         Traces traces = ActiveTraces.getLocal();
         traces.add("SpokeContentDao.read");
         try {
-            return spokeStore.get(channelName, path, key);
+            return spokeStore.get(path, key);
         } catch (Exception e) {
             logger.warn("unable to get data: " + path, e);
             return null;
@@ -167,7 +167,7 @@ public class SpokeContentDao implements ContentDao {
 
     @Override
     public SortedSet<ContentKey> query(DirectionQuery query) {
-        int ttlMinutes = HubProperties.getSpokeTtl();
+        int ttlMinutes = HubProperties.getSpokeTtlMinutes();
         DateTime spokeTtlTime = TimeUtil.BIG_BANG;
         if (HubProperties.getProperty("spoke.enforceTTL", true)) {
             spokeTtlTime = query.getChannelStable().minusMinutes(ttlMinutes);
@@ -206,13 +206,6 @@ public class SpokeContentDao implements ContentDao {
         }
         ActiveTraces.getLocal().add("SpokeContentDao.query completed", contentKeys);
         return contentKeys;
-    }
-
-    private void query(DirectionQuery query, SortedSet<ContentKey> orderedKeys, DateTime startTime, TimeUtil.Unit unit) {
-        SortedSet<ContentKey> queryByTime = queryByTime(query.convert(startTime, unit));
-        queryByTime.addAll(orderedKeys);
-        Set<ContentKey> filtered = ContentKeyUtil.filter(queryByTime, query);
-        orderedKeys.addAll(filtered);
     }
 
     @Override

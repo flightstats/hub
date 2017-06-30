@@ -6,6 +6,7 @@ import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.GlobalConfig;
+import com.flightstats.hub.util.Sleeper;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
@@ -18,6 +19,7 @@ import java.util.*;
 
 public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
     private final static Logger logger = LoggerFactory.getLogger(DynamoChannelConfigDao.class);
+    public static final String INDEX_NAME = "tempLowerCaseName";
 
     @Inject
     private AmazonDynamoDBClient dbClient;
@@ -32,7 +34,9 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
     @Override
     public void upsert(ChannelConfig config) {
         Map<String, AttributeValue> item = new HashMap<>();
-        item.put("key", new AttributeValue(config.getName()));
+        item.put("key", new AttributeValue(config.getName().toLowerCase()));
+        item.put("displayName", new AttributeValue(config.getDisplayName()));
+        item.put("lowerCaseName", new AttributeValue(config.getLowerCaseName()));
         item.put("date", new AttributeValue().withN(String.valueOf(config.getCreationDate().getTime())));
         item.put("keepForever", new AttributeValue().withBOOL(config.getKeepForever()));
         item.put("ttlDays", new AttributeValue().withN(String.valueOf(config.getTtlDays())));
@@ -69,12 +73,63 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
         dbClient.putItem(putItemRequest);
     }
 
-    private void initialize() {
-        createTable();
+    void initialize() throws InterruptedException {
+        //todo - gfm - inline code for now to see what works
+        String tableName = getTableName();
+        ProvisionedThroughput throughput = dynamoUtils.getProvisionedThroughput("channel");
+        logger.info("creating table {} ", tableName);
+        List<AttributeDefinition> attributes = new ArrayList<>();
+        attributes.add(new AttributeDefinition("key", ScalarAttributeType.S));
+        attributes.add(new AttributeDefinition("lowerCaseName", ScalarAttributeType.S));
+
+        GlobalSecondaryIndex globalSecondaryIndex = new GlobalSecondaryIndex();
+        globalSecondaryIndex
+                .withIndexName(INDEX_NAME)
+                .withProvisionedThroughput(throughput)
+                .withKeySchema(new KeySchemaElement().withAttributeName("lowerCaseName").withKeyType(KeyType.HASH))
+                .withProjection(new Projection().withProjectionType(ProjectionType.ALL));
+
+        CreateTableRequest request = new CreateTableRequest()
+                .withTableName(tableName)
+                .withAttributeDefinitions(attributes)
+                .withKeySchema(new KeySchemaElement("key", KeyType.HASH))
+                .withGlobalSecondaryIndexes(globalSecondaryIndex)
+                .withProvisionedThroughput(throughput);
+
+        dynamoUtils.createTable(request);
+        dynamoUtils.updateTable(tableName, throughput);
+
+        //todo - gfm - this can be deleted once it is run everywhere
+        temporaryUpdateToLowerCaseName();
     }
 
-    private void createTable() {
-        dynamoUtils.createAndUpdate(getTableName(), "channel", "key");
+    private void temporaryUpdateToLowerCaseName() {
+        ScanRequest scanRequest = new ScanRequest()
+                .withConsistentRead(true)
+                .withTableName(getTableName());
+
+        ScanResult result = dbClient.scan(scanRequest);
+        processItems(result);
+
+        while (result.getLastEvaluatedKey() != null) {
+            scanRequest.setExclusiveStartKey(result.getLastEvaluatedKey());
+            result = dbClient.scan(scanRequest);
+            processItems(result);
+        }
+    }
+
+    private void processItems(ScanResult result) {
+        for (Map<String, AttributeValue> item : result.getItems()) {
+            String displayName = item.get("displayName").getS();
+            String name = item.get("key").getS();
+            if (!name.equals(displayName.toLowerCase())) {
+                ChannelConfig channelConfig = mapItem(item);
+                logger.info("updating {}", channelConfig);
+                upsert(channelConfig);
+                delete(name);
+                Sleeper.sleep(10);
+            }
+        }
     }
 
     @Override
@@ -98,9 +153,11 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
     }
 
     private ChannelConfig mapItem(Map<String, AttributeValue> item) {
+        String displayName = item.get("displayName").getS();
         ChannelConfig.ChannelConfigBuilder builder = ChannelConfig.builder()
                 .creationDate(new Date(Long.parseLong(item.get("date").getN())))
-                .name(item.get("key").getS());
+                .name(displayName.toLowerCase())
+                .displayName(displayName);
         if (item.get("ttlDays") != null) {
             builder.ttlDays(Long.parseLong(item.get("ttlDays").getN()));
         }

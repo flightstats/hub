@@ -11,11 +11,11 @@ site_title: Flightstats/Hub Docs
 company_name: Flightstats
 # this appears in the footer
 
-github_editme_path: flightstats/hub/gh-pages/pages/
+#github_editme_path: flightstats/hub/gh-pages/pages/
 # if you're using Github, provide the basepath to the branch you've created for reviews, following the sample here. if not, leave this value blank.
 
-disqus: true
-disqus_shortname: flightstatshub
+#disqus: false
+#disqus_shortname: flightstatshub
 # if you're using disqus for comments, add the shortname here. if not, leave this value blank.
 
 host: 127.0.0.1

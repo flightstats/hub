@@ -34,7 +34,7 @@ public class GlobalChannelService implements ChannelService {
     @Named(ContentDao.CACHE)
     private ContentDao spokeContentDao;
 
-    private final int spokeTtlMinutes = HubProperties.getSpokeTtl();
+    private final int spokeTtlMinutes = HubProperties.getSpokeTtlMinutes();
 
     public static <X> X handleGlobal(ChannelConfig channel, Supplier<X> standard, Supplier<X> satellite, Supplier<X> master) {
         if (channel.isGlobal()) {
@@ -83,7 +83,7 @@ public class GlobalChannelService implements ChannelService {
 
     private Supplier<ChannelConfig> createGlobalMaster(ChannelConfig channel) {
         return () -> {
-            if (hubUtils.putChannel(channel.getGlobal().getMaster() + "internal/global/master/" + channel.getName(), channel)) {
+            if (hubUtils.putChannel(channel.getGlobal().getMaster() + "internal/global/master/" + channel.getDisplayName(), channel)) {
                 return channel;
             }
             return null;
@@ -148,25 +148,25 @@ public class GlobalChannelService implements ChannelService {
     }
 
     @Override
-    public void deleteBefore(String name, ContentKey limitKey) {
-        primaryAndSecondary(name,
+    public void deleteBefore(String channel, ContentKey limitKey) {
+        primaryAndSecondary(channel,
                 () -> {
-                    localChannelService.deleteBefore(name, limitKey);
+                    localChannelService.deleteBefore(channel, limitKey);
                     return null;
                 },
                 (Supplier<Void>) () -> null);
     }
 
     @Override
-    public Optional<Content> get(Request request) {
-        return primaryAndSecondary(request.getChannel(),
-                () -> localChannelService.get(request),
+    public Optional<Content> get(ItemRequest itemRequest) {
+        return primaryAndSecondary(itemRequest.getChannel(),
+                () -> localChannelService.get(itemRequest),
                 () -> {
-                    Content read = spokeContentDao.get(request.getChannel(), request.getKey());
+                    Content read = spokeContentDao.get(itemRequest.getChannel(), itemRequest.getKey());
                     if (read != null) {
                         return Optional.of(read);
                     }
-                    return Optional.fromNullable(hubUtils.get(getMasterChannelUrl(request.getChannel()), request.getKey()));
+                    return Optional.fromNullable(hubUtils.get(getMasterChannelUrl(itemRequest.getChannel()), itemRequest.getKey()));
                 });
     }
 

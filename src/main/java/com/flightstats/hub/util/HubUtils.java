@@ -260,6 +260,13 @@ public class HubUtils {
         ObjectNode root = mapper.createObjectNode();
         Set<String> servers = hubCluster.getAllServers();
         for (String server : servers) {
+            refreshServer(root, server);
+        }
+        return root;
+    }
+
+    private void refreshServer(ObjectNode root, String server) {
+        try {
             String url = HubHost.getScheme() + server + "/internal/channel/refresh?all=false";
             ClientResponse response = followClient.resource(url).get(ClientResponse.class);
             if (response.getStatus() == 200) {
@@ -267,7 +274,8 @@ public class HubUtils {
             } else {
                 root.put(response.getEntity(String.class), "failure");
             }
+        } catch (Exception e) {
+            logger.warn("unable to refresh " + server, e);
         }
-        return root;
     }
 }

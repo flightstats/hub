@@ -7,8 +7,7 @@ frisby.create(testName + ': Making sure channel resource does not yet exist.')
     .expectStatus(200)
     .expectHeader('content-type', 'application/json')
     .expectJSON({
-        healthy: true,
-        description: "OK"
+        healthy: true
     })
     .toss();
 

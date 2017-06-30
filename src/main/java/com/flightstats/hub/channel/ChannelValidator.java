@@ -24,12 +24,12 @@ public class ChannelValidator {
     public void validate(ChannelConfig config, ChannelConfig oldConfig, boolean isLocalHost) throws InvalidRequestException, ConflictException {
         Optional<String> channelNameOptional = Optional.absent();
         if (config != null) {
-            channelNameOptional = Optional.fromNullable(config.getName());
+            channelNameOptional = Optional.fromNullable(config.getDisplayName());
         }
 
         validateNameWasGiven(channelNameOptional);
         String channelName = channelNameOptional.get().trim();
-        ensureNotAllBlank(channelName);
+        ensurePropertyNotBlank("Channel name", channelName);
         ensureSize(channelName, "name");
         ensureSize(config.getOwner(), "owner");
         checkForInvalidCharacters(channelName);
@@ -41,6 +41,9 @@ public class ChannelValidator {
         validateTags(config);
         validateStorage(config);
         validateGlobal(config);
+        if (config.isProtect()) {
+            ensurePropertyNotBlank("Owner", config.getOwner());
+        }
         if (!isLocalHost) {
             preventDataLoss(config, oldConfig);
         }
@@ -59,7 +62,7 @@ public class ChannelValidator {
                     throw new ForbiddenRequestException("{\"error\": \"A channels storage is not allowed to remove a storage source in this environment\"}");
                 }
             }
-            if (!config.getOwner().equals(oldConfig.getOwner())) {
+            if (!StringUtils.isEmpty(oldConfig.getOwner()) && !config.getOwner().equals(oldConfig.getOwner())) {
                 throw new ForbiddenRequestException("{\"error\": \"The owner can not be changed on a protected channel\"}");
             }
             if (!config.getTags().containsAll(oldConfig.getTags())) {
@@ -197,9 +200,9 @@ public class ChannelValidator {
         }
     }
 
-    private void ensureNotAllBlank(String channelName) throws InvalidRequestException {
-        if (Strings.nullToEmpty(channelName).trim().isEmpty()) {
-            throw new InvalidRequestException("{\"error\": \"Channel name cannot be blank\"}");
+    private void ensurePropertyNotBlank(String propertyName, String propertyValue) {
+        if (Strings.nullToEmpty(propertyValue).trim().isEmpty()) {
+            throw new InvalidRequestException("{\"error\": \"" + propertyName + " cannot be blank\"}");
         }
     }
 

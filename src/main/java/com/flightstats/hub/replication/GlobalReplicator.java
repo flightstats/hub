@@ -25,7 +25,7 @@ class GlobalReplicator implements Replicator {
     }
 
     public void start() {
-        String channelName = channel.getName();
+        String channelName = channel.getDisplayName();
         try {
             logger.info("starting global replication {}", channel);
             hubUtils.putChannel(satellite + "internal/global/satellite/" + channelName, channel);
@@ -59,7 +59,7 @@ class GlobalReplicator implements Replicator {
 
     String getKey() {
         String domain = StringUtils.removeEnd(StringUtils.substringAfter(satellite, "://"), "/");
-        return StringUtils.replace(StringUtils.replace(domain, ":", "_"), ".", "_") + "_" + channel.getName();
+        return StringUtils.replace(StringUtils.replace(domain, ":", "_"), ".", "_") + "_" + channel.getDisplayName();
     }
 
 }

@@ -11,11 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 
 import java.io.Serializable;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.function.Function;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -36,25 +32,27 @@ public class ChannelConfig implements Serializable, NamedType {
             .create();
     private static final ObjectMapper mapper = new ObjectMapper();
 
-    String name;
-    String owner;
-    Date creationDate;
-    long ttlDays;
-    long maxItems;
-    boolean keepForever;
-    String description;
-    Set<String> tags;
-    String replicationSource;
-    String storage;
-    GlobalConfig global;
-    boolean protect;
-    DateTime mutableTime;
-    boolean allowZeroBytes;
+    private String name;
+    private String displayName;
+    private boolean keepForever;
+    private String owner;
+    private Date creationDate;
+    private long ttlDays;
+    private long maxItems;
+    private String description;
+    private Set<String> tags;
+    private String replicationSource;
+    private String storage;
+    private GlobalConfig global;
+    private boolean protect;
+    private DateTime mutableTime;
+    private boolean allowZeroBytes;
 
     private ChannelConfig(String name, String owner, Date creationDate, long ttlDays, long maxItems, boolean keepForever, String description,
                           Set<String> tags, String replicationSource, String storage, GlobalConfig global,
-                          boolean protect, DateTime mutableTime, boolean allowZeroBytes) {
+                          boolean protect, DateTime mutableTime, boolean allowZeroBytes, String displayName) {
         this.name = StringUtils.trim(name);
+        this.displayName = StringUtils.defaultIfBlank(StringUtils.trim(displayName), this.name);
         this.owner = StringUtils.trim(owner);
         this.creationDate = creationDate;
         this.description = description;
@@ -110,7 +108,7 @@ public class ChannelConfig implements Serializable, NamedType {
         if (StringUtils.isEmpty(json)) {
             throw new InvalidRequestException("this method requires at least a json name");
         } else {
-            return gson.fromJson(json, ChannelConfig.ChannelConfigBuilder.class).build();
+            return gson.fromJson(json, ChannelConfigBuilder.class).build();
         }
     }
 
@@ -125,7 +123,6 @@ public class ChannelConfig implements Serializable, NamedType {
     public static ChannelConfig updateFromJson(ChannelConfig config, String json) {
         ChannelConfigBuilder builder = config.toBuilder();
         JsonNode rootNode = readJSON(json);
-
         if (rootNode.has("owner")) builder.owner(getString(rootNode.get("owner")));
         if (rootNode.has("description")) builder.description(getString(rootNode.get("description")));
         if (rootNode.has("keepForever")) builder.keepForever(rootNode.get("keepForever").asBoolean());
@@ -274,6 +271,14 @@ public class ChannelConfig implements Serializable, NamedType {
         return this.allowZeroBytes;
     }
 
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public String getLowerCaseName() {
+        return getDisplayName().toLowerCase();
+    }
+
     public boolean equals(Object o) {
         if (o == this) return true;
         if (!(o instanceof ChannelConfig)) return false;
@@ -357,7 +362,6 @@ public class ChannelConfig implements Serializable, NamedType {
         return new ChannelConfigBuilder(this);
     }
 
-
     @SuppressWarnings("unused")
     public static class ChannelConfigBuilder {
         private String owner = "";
@@ -374,6 +378,7 @@ public class ChannelConfig implements Serializable, NamedType {
         private long maxItems;
         private GlobalConfig global;
         private DateTime mutableTime;
+        private String displayName;
 
         ChannelConfigBuilder() {
         }
@@ -393,11 +398,12 @@ public class ChannelConfig implements Serializable, NamedType {
             maxItems(config.getMaxItems());
             global(config.getGlobal());
             mutableTime(config.getMutableTime());
+            displayName(config.getDisplayName());
         }
 
         public ChannelConfigBuilder tags(List<String> tagList) {
             this.tags.clear();
-            this.tags.addAll(tagList.stream().map(Function.identity()).collect(Collectors.toSet()));
+            this.tags.addAll(new HashSet<>(tagList));
             return this;
         }
 
@@ -409,6 +415,11 @@ public class ChannelConfig implements Serializable, NamedType {
 
         public ChannelConfigBuilder name(String name) {
             this.name = name;
+            return this;
+        }
+
+        public ChannelConfigBuilder displayName(String displayName) {
+            this.displayName = displayName;
             return this;
         }
 
@@ -473,13 +484,8 @@ public class ChannelConfig implements Serializable, NamedType {
         }
 
         public ChannelConfig build() {
-            return new ChannelConfig(name, owner, creationDate, ttlDays, maxItems, keepForever, description, tags, replicationSource, storage, global, protect, mutableTime, allowZeroBytes);
+            return new ChannelConfig(name, owner, creationDate, ttlDays, maxItems, keepForever, description, tags, replicationSource, storage, global, protect, mutableTime, allowZeroBytes, displayName);
         }
-
-        public String toString() {
-            return "com.flightstats.hub.model.ChannelConfig.ChannelConfigBuilder(owner=" + this.owner + ", creationDate=" + this.creationDate + ", description=" + this.description + ", tags=" + this.tags + ", replicationSource=" + this.replicationSource + ", storage=" + this.storage + ", protect=" + this.protect + ", allowZeroBytes=" + this.allowZeroBytes + ", name=" + this.name + ", ttlDays=" + this.ttlDays + ", maxItems=" + this.maxItems + ", global=" + this.global + ", mutableTime=" + this.mutableTime + ")";
-        }
-
 
     }
 }

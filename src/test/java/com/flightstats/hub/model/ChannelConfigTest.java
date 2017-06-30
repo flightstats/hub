@@ -20,7 +20,6 @@ public class ChannelConfigTest {
     public void testDefaults() throws Exception {
         ChannelConfig config = ChannelConfig.builder().name("defaults").build();
         assertDefaults(config);
-        // TODO: what is this copy attempting to test?
         ChannelConfig copy = config.toBuilder().build();
         assertDefaults(copy);
         assertTrue(config.equals(copy));
@@ -52,7 +51,6 @@ public class ChannelConfigTest {
     @Test
     public void testDescriptionCopy() throws Exception {
         ChannelConfig config = ChannelConfig.builder().description("some copy").build();
-        // TODO: what is this copy attempting to test?
         ChannelConfig copy = config.toBuilder().build();
         assertEquals("some copy", copy.getDescription());
         assertTrue(config.equals(copy));
@@ -70,7 +68,6 @@ public class ChannelConfigTest {
     public void testTagsCopy() throws Exception {
         List<String> tags = Arrays.asList("one", "two", "three", "4 four");
         ChannelConfig config = ChannelConfig.builder().tags(tags).build();
-        // TODO: what is this copy attempting to test?
         ChannelConfig copy = config.toBuilder().build();
         assertTrue(copy.getTags().containsAll(config.getTags()));
         assertTrue(config.equals(copy));
@@ -87,7 +84,6 @@ public class ChannelConfigTest {
     public void testReplicationSourceCopy() throws Exception {
         String replicationSource = "http://hub/channel/blah";
         ChannelConfig config = ChannelConfig.builder().replicationSource(replicationSource).build();
-        // TODO: what is this copy attempting to test?
         ChannelConfig copy = config.toBuilder().build();
         assertEquals(replicationSource, copy.getReplicationSource());
         assertTrue(config.equals(copy));
@@ -96,7 +92,6 @@ public class ChannelConfigTest {
     @Test
     public void testTypeCopy() {
         ChannelConfig config = ChannelConfig.builder().storage("BOTH").build();
-        // TODO: what is this copy attempting to test?
         ChannelConfig copy = config.toBuilder().build();
         assertEquals("BOTH", copy.getStorage());
         assertTrue(config.equals(copy));

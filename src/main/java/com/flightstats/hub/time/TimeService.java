@@ -68,7 +68,7 @@ public class TimeService {
     }
 
     DateTime getRemoteNow() {
-        for (String server : cluster.getRandomRemoteServers(randomKey)) {
+        for (String server : cluster.getRemoteServers(randomKey)) {
             ClientResponse response = null;
             try {
                 response = client.resource(HubHost.getScheme() + server + "/internal/time/millis")

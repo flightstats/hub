@@ -11,6 +11,7 @@ import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +40,7 @@ public class CuratorCluster implements Cluster {
 
     public void addCacheListener() {
         addListener((client, event) -> {
-            logger.info("event {} {}", event, clusterPath);
+            logger.debug("event {} {}", event, clusterPath);
             if (event.getType().equals(PathChildrenCacheEvent.Type.CONNECTION_RECONNECTED)) {
                 register();
             }
@@ -58,7 +59,7 @@ public class CuratorCluster implements Cluster {
         String host = getHost(useName);
         try {
             logger.info("registering host {} {}", host, clusterPath);
-            curator.create().withMode(CreateMode.EPHEMERAL).forPath(getFullPath(true), host.getBytes());
+            curator.create().withMode(CreateMode.EPHEMERAL).forPath(getFullPath(), host.getBytes());
         } catch (KeeperException.NodeExistsException e) {
             logger.warn("node already exists {} {} - not likely in prod", host, clusterPath);
         } catch (Exception e) {
@@ -67,10 +68,8 @@ public class CuratorCluster implements Cluster {
         }
     }
 
-    private String getFullPath(boolean create) throws UnknownHostException {
-        if (create) {
-            fullPath = clusterPath + "/" + getHost(useName) + RandomStringUtils.randomAlphanumeric(6);
-        }
+    private String getFullPath() throws UnknownHostException {
+        fullPath = clusterPath + "/" + getHost(useName) + RandomStringUtils.randomAlphanumeric(6);
         return fullPath;
     }
 
@@ -79,6 +78,10 @@ public class CuratorCluster implements Cluster {
         List<String> server = new ArrayList<>();
         server.add(getHost(false));
         return server;
+    }
+
+    public Set<String> getServers() {
+        return getAllServers();
     }
 
     @Override
@@ -94,8 +97,24 @@ public class CuratorCluster implements Cluster {
         return servers;
     }
 
+    public List<String> getRandomServers() {
+        List<String> servers = new ArrayList<>(getServers());
+        Collections.shuffle(servers);
+        return servers;
+    }
+
     @Override
-    public Set<String> getCurrentServers(String channel) {
+    public Set<String> getServers(String channel) {
+        return getAllServers();
+    }
+
+    @Override
+    public Set<String> getServers(String channel, DateTime pointInTime) {
+        return getAllServers();
+    }
+
+    @Override
+    public Set<String> getServers(String channel, DateTime startTime, DateTime endTime) {
         return getAllServers();
     }
 

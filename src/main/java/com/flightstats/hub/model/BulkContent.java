@@ -4,6 +4,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+
 public class BulkContent {
 
     private final boolean isNew;
@@ -61,6 +62,10 @@ public class BulkContent {
 
     public ContentKey getMasterKey() {
         return this.masterKey;
+    }
+
+    public BulkContent withChannel(String channel) {
+        return this.channel == channel ? this : new BulkContent(this.isNew, this.stream, this.contentType, channel, this.masterKey);
     }
 
     public static class BulkContentBuilder {

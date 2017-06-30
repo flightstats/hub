@@ -16,6 +16,6 @@ public class ShutdownResource {
     @POST
     public Response shutdown(@Context UriInfo uriInfo) throws Exception {
         ShutdownManager manager = HubProvider.getInstance(ShutdownManager.class);
-        return LocalHostOnly.getResponse(uriInfo, manager::shutdown);
+        return LocalHostOnly.getResponse(uriInfo, () -> manager.shutdown(true));
     }
 }
