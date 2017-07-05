@@ -20,7 +20,6 @@ import com.github.rholder.retry.RetryException;
 import com.github.rholder.retry.Retryer;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
-import com.newrelic.api.agent.Trace;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -166,7 +165,6 @@ class WebhookLeader implements Leader {
         logger.trace("sending {} to {}", contentPath, webhook.getName());
         String parentName = Thread.currentThread().getName();
         executorService.submit(new Callable<Object>() {
-            @Trace(metricName = "WebhookCaller", dispatcher = true)
             @Override
             public Object call() throws Exception {
                 String workerName = Thread.currentThread().getName();

@@ -52,10 +52,10 @@ docker run -v /full/path/to/aws_hub.properties:/etc/hub/hub.properties -v /full/
 You can also use Docker to do development with the hub on you local machine.
 
 ```
-bash docker/attackHubCodeWithGradle.sh
-docker build docker
-   Successfully built b69667db279b
-docker run -p 80:80 b69667db279b
+bash localDocker.sh
+  Successfully built 608be75e8038
+  Now run the following command using the image id above:
+docker run -p 80:80 608be75e8038
 ```
 
 ## More detailed instructions for active development
