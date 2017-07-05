@@ -76,16 +76,15 @@ class WebhookLeader implements Leader {
         this.webhook = webhook;
     }
 
-    boolean tryLeadership(Webhook webhook) {
+    void tryLeadership(Webhook webhook) {
         logger.debug("starting webhook: " + webhook);
         setWebhook(webhook);
-        curatorLeader = new CuratorLeader(getLeaderPath(), this);
-        if (!webhook.isPaused()) {
-            curatorLeader.start();
-        } else {
+        if (webhook.isPaused()) {
             logger.info("not starting paused webhook " + webhook);
+        } else {
+            curatorLeader = new CuratorLeader(getLeaderPath(), this);
+            curatorLeader.start();
         }
-        return true;
     }
 
     @Override
@@ -96,6 +95,10 @@ class WebhookLeader implements Leader {
         if (!foundWebhook.isPresent() || !channelService.channelExists(channelName)) {
             logger.info("webhook or channel is missing, exiting " + webhook.getName());
             Sleeper.sleep(60 * 1000);
+            return;
+        }
+        if (webhook.isPaused()) {
+            logger.info("webhook is paused " + webhook.getName());
             return;
         }
         this.webhook = foundWebhook.get();
