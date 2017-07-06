@@ -135,7 +135,6 @@ public class S3Config {
         }
 
         private void updateTtlDays() {
-            // bc todo #782: need to delete rule if keepForever set on channel
             logger.info("updateTtlDays");
             ActiveTraces.start("S3Config.updateTtlDays");
             int maxRules = HubProperties.getProperty("s3.maxRules", 1000);
