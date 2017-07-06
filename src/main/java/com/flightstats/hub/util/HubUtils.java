@@ -167,14 +167,18 @@ public class HubUtils {
     }
 
     public Content get(String channelUrl, ContentKey contentKey) {
+        return getContent(channelUrl + "/" + contentKey.toUrl());
+    }
+
+    public Content getContent(String uri) {
         ClientResponse response = null;
         try {
-            response = followClient.resource(channelUrl + "/" + contentKey.toUrl())
+            response = followClient.resource(uri)
                     .get(ClientResponse.class);
             if (response.getStatus() == 200) {
                 Content.Builder builder = Content.builder()
                         .withStream(response.getEntityInputStream())
-                        .withContentKey(contentKey);
+                        .withContentKey(ContentKey.fromFullUrl(uri));
                 MultivaluedMap<String, String> headers = response.getHeaders();
                 if (headers.containsKey("Content-Type")) {
                     builder.withContentType(headers.getFirst("Content-Type"));
@@ -184,7 +188,7 @@ public class HubUtils {
                 content.getData();
                 return content;
             } else {
-                logger.info("unable to get {} {} {}", channelUrl, contentKey, response);
+                logger.info("unable to get {} {}", uri, response);
                 return null;
             }
         } finally {
