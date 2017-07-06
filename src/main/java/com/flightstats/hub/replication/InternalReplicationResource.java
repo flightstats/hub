@@ -90,25 +90,29 @@ public class InternalReplicationResource {
                                                 String batchUrl) throws Exception {
         ActiveTraces.getLocal().add("attemptBatch", path);
         logger.trace("path {} {}", path, batchUrl);
-        //todo - gfm - close response object
-        ClientResponse response = RestClient.gzipClient()
-                .resource(batchUrl)
-                .accept("multipart/mixed")
-                .get(ClientResponse.class);
-        logger.trace("response.getStatus() {}", response.getStatus());
-        if (response.getStatus() != 200) {
-            logger.warn("unable to get data for {} {}", channel, response);
-            return null;
+        ClientResponse response = null;
+        BulkContent bulkContent;
+        try {
+            response = RestClient.gzipClient()
+                    .resource(batchUrl)
+                    .accept("multipart/mixed")
+                    .get(ClientResponse.class);
+            logger.trace("response.getStatus() {}", response.getStatus());
+            if (response.getStatus() != 200) {
+                logger.warn("unable to get data for {} {}", channel, response);
+                return null;
+            }
+            ActiveTraces.getLocal().add("attemptBatch got response", response.getStatus());
+            bulkContent = BulkContent.builder()
+                    .stream(response.getEntityInputStream())
+                    .contentType(response.getHeaders().getFirst("Content-Type"))
+                    .channel(channel)
+                    .isNew(false)
+                    .build();
+            localChannelService.insert(bulkContent);
+        } finally {
+            HubUtils.close(response);
         }
-        ActiveTraces.getLocal().add("attemptBatch got response", response.getStatus());
-
-        BulkContent bulkContent = BulkContent.builder()
-                .stream(response.getEntityInputStream())
-                .contentType(response.getHeaders().getFirst("Content-Type"))
-                .channel(channel)
-                .isNew(false)
-                .build();
-        localChannelService.insert(bulkContent);
         return bulkContent;
     }
 
