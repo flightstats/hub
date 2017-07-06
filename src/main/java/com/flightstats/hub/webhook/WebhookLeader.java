@@ -20,7 +20,6 @@ import com.github.rholder.retry.RetryException;
 import com.github.rholder.retry.Retryer;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
-import com.newrelic.api.agent.Trace;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -77,16 +76,15 @@ class WebhookLeader implements Leader {
         this.webhook = webhook;
     }
 
-    boolean tryLeadership(Webhook webhook) {
+    void tryLeadership(Webhook webhook) {
         logger.debug("starting webhook: " + webhook);
         setWebhook(webhook);
-        curatorLeader = new CuratorLeader(getLeaderPath(), this);
-        if (!webhook.isPaused()) {
-            curatorLeader.start();
-        } else {
+        if (webhook.isPaused()) {
             logger.info("not starting paused webhook " + webhook);
+        } else {
+            curatorLeader = new CuratorLeader(getLeaderPath(), this);
+            curatorLeader.start();
         }
-        return true;
     }
 
     @Override
@@ -97,6 +95,10 @@ class WebhookLeader implements Leader {
         if (!foundWebhook.isPresent() || !channelService.channelExists(channelName)) {
             logger.info("webhook or channel is missing, exiting " + webhook.getName());
             Sleeper.sleep(60 * 1000);
+            return;
+        }
+        if (webhook.isPaused()) {
+            logger.info("webhook is paused " + webhook.getName());
             return;
         }
         this.webhook = foundWebhook.get();
@@ -166,7 +168,6 @@ class WebhookLeader implements Leader {
         logger.trace("sending {} to {}", contentPath, webhook.getName());
         String parentName = Thread.currentThread().getName();
         executorService.submit(new Callable<Object>() {
-            @Trace(metricName = "WebhookCaller", dispatcher = true)
             @Override
             public Object call() throws Exception {
                 String workerName = Thread.currentThread().getName();

@@ -6,8 +6,6 @@ import com.flightstats.hub.util.Commander;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.newrelic.api.agent.NewRelic;
-import com.newrelic.api.agent.Trace;
 import com.sun.management.UnixOperatingSystemMXBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,8 +48,7 @@ public class MetricsRunner {
         for (Map.Entry<Thread, StackTraceElement[]> entry : allStackTraces.entrySet()) {
             StackTraceElement[] value = entry.getValue();
             info += entry.getKey().getName() + " : \r\n";
-            for (int i = 0; i < value.length; i++) {
-                StackTraceElement element = value[i];
+            for (StackTraceElement element : value) {
                 info += "\t" + element.toString() + "\r\n";
             }
         }
@@ -64,19 +61,9 @@ public class MetricsRunner {
         if (openFiles >= 0) {
             logger.info("open files {}", openFiles);
             metricsService.count("openFiles", openFiles);
-            newRelic(openFiles);
         }
     }
 
-    @Trace(metricName = "MetricsRunner", dispatcher = true)
-    private void newRelic(long openFiles) {
-        NewRelic.addCustomParameter("openFileCount", openFiles);
-        NewRelic.recordResponseTimeMetric("Custom/OpenFileCount", openFiles);
-        if (openFiles >= 1000) {
-            NewRelic.noticeError("too many open files");
-            logger.info(logFilesInfo());
-        }
-    }
 
     private class MetricsRunnerService extends AbstractScheduledService {
         @Override
