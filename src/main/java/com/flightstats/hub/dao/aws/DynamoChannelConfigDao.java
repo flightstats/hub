@@ -38,6 +38,7 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
         item.put("displayName", new AttributeValue(config.getDisplayName()));
         item.put("lowerCaseName", new AttributeValue(config.getLowerCaseName()));
         item.put("date", new AttributeValue().withN(String.valueOf(config.getCreationDate().getTime())));
+        item.put("keepForever", new AttributeValue().withBOOL(config.getKeepForever()));
         item.put("ttlDays", new AttributeValue().withN(String.valueOf(config.getTtlDays())));
         item.put("maxItems", new AttributeValue().withN(String.valueOf(config.getMaxItems())));
         if (config.getMutableTime() != null) {
@@ -159,6 +160,9 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
                 .displayName(displayName);
         if (item.get("ttlDays") != null) {
             builder.ttlDays(Long.parseLong(item.get("ttlDays").getN()));
+        }
+        if (item.get("keepForever") != null) {
+            builder.keepForever(item.get("keepForever").getBOOL());
         }
         if (item.containsKey("description")) {
             builder.description(item.get("description").getS());
