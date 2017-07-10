@@ -92,9 +92,8 @@ public class S3Config {
         private void updateMaxItems() {
             logger.info("updating max items");
             for (ChannelConfig config : configurations) {
-                if (config.getMaxItems() > 0) {
+                if (config.getMaxItems() > 0 && !config.getKeepForever()) {
                     updateMaxItems(config);
-
                 }
             }
         }
