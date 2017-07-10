@@ -1,6 +1,8 @@
 FROM openjdk:8
 
-RUN apt-get update && apt-get install -y bash ntp curl && \
+RUN apt-get update && \
+    apt-get install -y bash ntp curl && \
+    apt-get purge -y ncurses berkleydb giflib avahi libtiff gdkpixbuff && \
     mkdir -p /mnt/log && \
     mkdir -p /mnt/spoke && \
     adduser --home /opt/hub --uid 4242 --shell /bin/bash --disabled-password --gecos "Hub4Docker" hub && \
