@@ -66,7 +66,7 @@ public class ContentMarshallerTest {
         Content cycled = ContentMarshaller.toContent(ContentMarshaller.toBytes(content), content.getContentKey().get());
         assertTrue(content.equals(cycled));
         assertEquals(size, cycled.getData().length);
-        assertEquals(size, cycled.getPayloadLength());
+        assertEquals(size, cycled.getSize());
     }
 
     private static Content getContent(int size) {

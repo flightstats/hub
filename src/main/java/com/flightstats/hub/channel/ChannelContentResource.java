@@ -228,6 +228,7 @@ public class ChannelContentResource {
                             @PathParam("ms") int millis,
                             @PathParam("hash") String hash,
                             @HeaderParam("Accept") String accept,
+                            @HeaderParam("X-Item-Length-Required") boolean itemLengthRequired,
                             @QueryParam("remoteOnly") @DefaultValue("false") boolean remoteOnly
     ) {
         long start = System.currentTimeMillis();
@@ -267,9 +268,22 @@ public class ChannelContentResource {
 
         builder.header("Link", "<" + uriInfo.getRequestUriBuilder().path("previous").build() + ">;rel=\"" + "previous" + "\"");
         builder.header("Link", "<" + uriInfo.getRequestUriBuilder().path("next").build() + ">;rel=\"" + "next" + "\"");
-        builder.header("X-Item-Length", content.getPayloadLength());
+        long itemLength = content.getSize();
+        if (itemLength == -1 && itemLengthRequired) {
+            itemLength = calculateSize(content);
+            updateContentSize(content, itemLength);
+        }
+        builder.header("X-Item-Length", itemLength);
         metricsService.time(channel, "get", start);
         return builder.build();
+    }
+
+    private long calculateSize(Content content) {
+        return content.getData().length;
+    }
+
+    private void updateContentSize(Content content, long itemLength) {
+
     }
 
     @Path("/{h}/{m}/{s}/{ms}/{hash}/{direction:[n|p].*}")

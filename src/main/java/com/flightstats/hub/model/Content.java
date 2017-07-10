@@ -18,15 +18,13 @@ public class Content implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private final Optional<String> contentType;
-    //contentLength is the total compressed length of everything (meta & item)
+    //contentLength is the number of bytes in the total compressed payload (meta & item)
     private long contentLength;
-    //payloadLength is the size of the raw, uncompressed item
-    private long payloadLength;
     private InputStream stream;
     private byte[] data;
     private Optional<ContentKey> contentKey = Optional.absent();
-    //todo - gfm - is size different than payloadLength?
-    private Long size;
+    //size is the number of bytes in the raw, uncompressed item
+    private long size = -1;
     private transient boolean isLarge;
     private transient int threads;
     private transient boolean isHistorical;
@@ -38,7 +36,6 @@ public class Content implements Serializable {
         stream = builder.stream;
         contentLength = builder.contentLength;
         threads = builder.threads;
-        payloadLength = builder.payloadLength;
         forceWrite = builder.forceWrite;
     }
 
@@ -116,8 +113,8 @@ public class Content implements Serializable {
         return data;
     }
 
-    public Long getSize() {
-        if (size == null) {
+    public long getSize() {
+        if (size == -1) {
             if (data == null) {
                 throw new UnsupportedOperationException("convert stream to bytes first");
             }
@@ -136,10 +133,6 @@ public class Content implements Serializable {
 
     public long getContentLength() {
         return this.contentLength;
-    }
-
-    public long getPayloadLength() {
-        return this.payloadLength;
     }
 
     public Optional<ContentKey> getContentKey() {
@@ -185,7 +178,7 @@ public class Content implements Serializable {
     public static class Builder {
         private Optional<String> contentType = Optional.absent();
         private long contentLength = 0;
-        private long payloadLength = -1;
+        private long size = -1;
         private Optional<ContentKey> contentKey = Optional.absent();
         private InputStream stream;
         private int threads;
@@ -211,8 +204,8 @@ public class Content implements Serializable {
             return this;
         }
 
-        public Builder withPayloadLength(Long payloadLength) {
-            this.payloadLength = payloadLength;
+        public Builder withSize(Long size) {
+            this.size = size;
             return this;
         }
 
@@ -243,8 +236,8 @@ public class Content implements Serializable {
             return this.contentLength;
         }
 
-        public long getPayloadLength() {
-            return this.payloadLength;
+        public long getSize() {
+            return this.size;
         }
 
         public Optional<ContentKey> getContentKey() {

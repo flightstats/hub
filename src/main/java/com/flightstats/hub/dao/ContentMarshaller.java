@@ -57,7 +57,7 @@ public class ContentMarshaller {
         zipStream.getNextEntry();
         String comment = ZipComment.getZipCommentFromBuffer(read);
         if (comment != null) {
-            builder.withPayloadLength(Long.parseLong(comment));
+            builder.withSize(Long.parseLong(comment));
         }
         return builder.withStream(zipStream).build();
     }
