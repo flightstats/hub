@@ -26,7 +26,7 @@ describe(testName, function () {
                 var channels = res.body._links.channels;
                 console.log('found replicated channels', channels);
                 channels.forEach(function (channel) {
-                    if (channel.name.substring(0, 4) !== 'test') {
+                    if (channel.name.substring(0, 4).toLowerCase() !== 'test') {
                         console.log('adding channel ', channel.href);
                         replicatedChannelUrls.push(channel.href);
                         replicatedChannels[channel.href] = channel;
