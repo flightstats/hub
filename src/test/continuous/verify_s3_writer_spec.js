@@ -35,7 +35,7 @@ describe(testName, function () {
                 var allChannels = res.body._links.channels;
                 allChannels.forEach(function (channel) {
                     console.log('channel', channel);
-                    if (channel.name.substring(0, 4) !== 'test') {
+                    if (channel.name.substring(0, 4).toLowerCase() !== 'test') {
                         channels.push(channel);
                     }
                 })
@@ -108,7 +108,7 @@ describe(testName, function () {
             channels.forEach(function (channel) {
                 var start = channel.start.subtract(i, 'minutes');
                 var formatted = start.format(minute_format);
-                if (_.startsWith(channel.name, 'test')
+                if (_.startsWith(channel.name.toLowerCase(), 'test')
                     || _.startsWith(channel.name, 'verifyMaxItems')
                     || Math.random() * 100 > testPercent) {
                     //do nothing
