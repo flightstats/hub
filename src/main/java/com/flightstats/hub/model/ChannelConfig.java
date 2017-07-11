@@ -34,6 +34,7 @@ public class ChannelConfig implements Serializable, NamedType {
 
     private String name;
     private String displayName;
+    private boolean keepForever;
     private String owner;
     private Date creationDate;
     private long ttlDays;
@@ -47,7 +48,7 @@ public class ChannelConfig implements Serializable, NamedType {
     private DateTime mutableTime;
     private boolean allowZeroBytes;
 
-    private ChannelConfig(String name, String owner, Date creationDate, long ttlDays, long maxItems, String description,
+    private ChannelConfig(String name, String owner, Date creationDate, long ttlDays, long maxItems, boolean keepForever, String description,
                           Set<String> tags, String replicationSource, String storage, GlobalConfig global,
                           boolean protect, DateTime mutableTime, boolean allowZeroBytes, String displayName) {
         this.name = StringUtils.trim(name);
@@ -59,6 +60,7 @@ public class ChannelConfig implements Serializable, NamedType {
         this.replicationSource = replicationSource;
         this.mutableTime = mutableTime;
         this.allowZeroBytes = allowZeroBytes;
+        this.keepForever = keepForever;  // keepForever overrides all other retention policies
         if (maxItems == 0 && ttlDays == 0 && mutableTime == null) {
             this.ttlDays = 120;
             this.maxItems = 0;
@@ -111,11 +113,11 @@ public class ChannelConfig implements Serializable, NamedType {
     }
 
     public static ChannelConfig createFromJsonWithName(String json, String name) {
-        ChannelConfigBuilder builder = builder();
-        if (!StringUtils.isEmpty(json)) {
-            builder = gson.fromJson(json, ChannelConfigBuilder.class);
+        if (StringUtils.isEmpty(json)) {
+            return builder().name(name).build();
+        } else {
+            return gson.fromJson(json, ChannelConfig.ChannelConfigBuilder.class).name(name).build();
         }
-        return builder.name(name).build();
     }
 
     public static ChannelConfig updateFromJson(ChannelConfig config, String json) {
@@ -123,6 +125,7 @@ public class ChannelConfig implements Serializable, NamedType {
         JsonNode rootNode = readJSON(json);
         if (rootNode.has("owner")) builder.owner(getString(rootNode.get("owner")));
         if (rootNode.has("description")) builder.description(getString(rootNode.get("description")));
+        if (rootNode.has("keepForever")) builder.keepForever(rootNode.get("keepForever").asBoolean());
         if (rootNode.has("ttlDays")) builder.ttlDays(rootNode.get("ttlDays").asLong());
         if (rootNode.has("maxItems")) builder.maxItems(rootNode.get("maxItems").asLong());
         if (rootNode.has("tags")) builder.tags(getSet(rootNode.get("tags")));
@@ -165,6 +168,7 @@ public class ChannelConfig implements Serializable, NamedType {
     }
 
     public DateTime getTtlTime() {
+        //bc todo: keepForever - what should we return if keep forever is set?
         if (isHistorical()) {
             return mutableTime.plusMillis(1);
         }
@@ -221,6 +225,10 @@ public class ChannelConfig implements Serializable, NamedType {
 
     public Date getCreationDate() {
         return this.creationDate;
+    }
+
+    public boolean getKeepForever() {
+        return this.keepForever;
     }
 
     public long getTtlDays() {
@@ -285,6 +293,7 @@ public class ChannelConfig implements Serializable, NamedType {
         final Object other$creationDate = other.getCreationDate();
         if (this$creationDate == null ? other$creationDate != null : !this$creationDate.equals(other$creationDate))
             return false;
+        if (this.getKeepForever() != other.getKeepForever()) return false;
         if (this.getTtlDays() != other.getTtlDays()) return false;
         if (this.getMaxItems() != other.getMaxItems()) return false;
         final Object this$description = this.getDescription();
@@ -322,6 +331,8 @@ public class ChannelConfig implements Serializable, NamedType {
         result = result * PRIME + ($owner == null ? 43 : $owner.hashCode());
         final Object $creationDate = this.getCreationDate();
         result = result * PRIME + ($creationDate == null ? 43 : $creationDate.hashCode());
+        final boolean $keepForever = this.getKeepForever();
+        result = result * PRIME + ($keepForever ? 1 : 0);
         final long $ttlDays = this.getTtlDays();
         result = result * PRIME + (int) ($ttlDays >>> 32 ^ $ttlDays);
         final long $maxItems = this.getMaxItems();
@@ -343,24 +354,8 @@ public class ChannelConfig implements Serializable, NamedType {
         return result;
     }
 
-    @Override
     public String toString() {
-        return "ChannelConfig{" +
-                "name='" + name + '\'' +
-                ", displayName='" + displayName + '\'' +
-                ", owner='" + owner + '\'' +
-                ", creationDate=" + creationDate +
-                ", ttlDays=" + ttlDays +
-                ", maxItems=" + maxItems +
-                ", description='" + description + '\'' +
-                ", tags=" + tags +
-                ", replicationSource='" + replicationSource + '\'' +
-                ", storage='" + storage + '\'' +
-                ", global=" + global +
-                ", protect=" + protect +
-                ", mutableTime=" + mutableTime +
-                ", allowZeroBytes=" + allowZeroBytes +
-                '}';
+        return "com.flightstats.hub.model.ChannelConfig(name=" + this.getName() + ", owner=" + this.getOwner() + ", creationDate=" + this.getCreationDate() + ", ttlDays=" + this.getTtlDays() + ", maxItems=" + this.getMaxItems() + ", description=" + this.getDescription() + ", tags=" + this.getTags() + ", replicationSource=" + this.getReplicationSource() + ", storage=" + this.getStorage() + ", global=" + this.getGlobal() + ", protect=" + this.isProtect() + ", mutableTime=" + this.getMutableTime() + ", allowZeroBytes=" + this.isAllowZeroBytes() + ")";
     }
 
     public ChannelConfigBuilder toBuilder() {
@@ -378,6 +373,7 @@ public class ChannelConfig implements Serializable, NamedType {
         private boolean protect = HubProperties.isProtected();
         private boolean allowZeroBytes = true;
         private String name;
+        private boolean keepForever;
         private long ttlDays;
         private long maxItems;
         private GlobalConfig global;
@@ -397,6 +393,7 @@ public class ChannelConfig implements Serializable, NamedType {
             protect(config.isProtect());
             allowZeroBytes(config.isAllowZeroBytes());
             name(config.getName());
+            keepForever(config.getKeepForever());
             ttlDays(config.getTtlDays());
             maxItems(config.getMaxItems());
             global(config.getGlobal());
@@ -433,6 +430,11 @@ public class ChannelConfig implements Serializable, NamedType {
 
         public ChannelConfigBuilder creationDate(Date creationDate) {
             this.creationDate = creationDate;
+            return this;
+        }
+
+        public ChannelConfigBuilder keepForever(boolean keepForever) {
+            this.keepForever = keepForever;
             return this;
         }
 
@@ -482,7 +484,7 @@ public class ChannelConfig implements Serializable, NamedType {
         }
 
         public ChannelConfig build() {
-            return new ChannelConfig(name, owner, creationDate, ttlDays, maxItems, description, tags, replicationSource, storage, global, protect, mutableTime, allowZeroBytes, displayName);
+            return new ChannelConfig(name, owner, creationDate, ttlDays, maxItems, keepForever, description, tags, replicationSource, storage, global, protect, mutableTime, allowZeroBytes, displayName);
         }
 
     }

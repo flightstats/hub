@@ -1,0 +1,14 @@
+{
+  "name": "continuous",
+  "scripts": {
+    "test": "node_modules/.bin/jasmine-node --forceexit --captureExceptions"
+  },
+  "dependencies": {
+    "async": "^1.3.0",
+    "jasmine-node": "^1.14.5",
+    "lodash": "^3.7.0",
+    "moment": "^2.5.1",
+    "request": "^2.33.0",
+    "superagent": "^0.16.0"
+  }
+}
