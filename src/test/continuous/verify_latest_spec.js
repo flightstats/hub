@@ -56,7 +56,7 @@ describe(testName, function () {
                     .end(function (res) {
                         expect(res.error).toBe(false);
                         var name = zkChannel.substring(channelLastUpdated.length + 1);
-                        if (name.substring(0, 4) !== 'test') {
+                        if (name.substring(0, 4).toLowerCase() !== 'test') {
                             values[name] = {
                                 zkKey: res.body.data.string,
                                 stats: res.body.stats,
