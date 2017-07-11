@@ -36,7 +36,11 @@ public class InternalReplicationResource {
             SecondPath path = SecondPath.fromUrl(node.get("id").asText()).get();
             JsonNode uris = node.get("uris");
             int expectedItems = uris.size();
-            if (expectedItems > 0) {
+            if (expectedItems == 1) {
+                if (!attemptSingle(channel, uris)) {
+                    return Response.status(500).build();
+                }
+            } else if (expectedItems > 1) {
                 if (!attemptBatch(channel, path, node.get("batchUrl").asText())) {
                     if (!attemptSingle(channel, uris)) {
                         return Response.status(500).build();
@@ -56,12 +60,19 @@ public class InternalReplicationResource {
         try {
             for (JsonNode jsonNode : uris) {
                 String uri = jsonNode.asText();
-                Content content = hubUtils.getContent(uri);
-                ContentKey inserted = localChannelService.insert(channel, content);
-                if (inserted == null) {
-                    logger.warn("unable to process {} {}", channel, uri);
-                    return false;
-                }
+                hubUtils.getContent(uri, (response) -> {
+                    try {
+                        Content content = hubUtils.createContent(uri, response, false);
+                        ContentKey inserted = localChannelService.insert(channel, content);
+                        if (inserted == null) {
+                            logger.warn("unable to process {} {}", channel, uri);
+                            return null;
+                        }
+                        return content;
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                });
             }
             return true;
         } catch (Exception e) {
