@@ -24,7 +24,7 @@ public class Content implements Serializable {
     private byte[] data;
     private Optional<ContentKey> contentKey = Optional.absent();
     //size is the number of bytes in the raw, uncompressed item
-    private long size = -1;
+    private Long size;
     private transient boolean isLarge;
     private transient int threads;
     private transient boolean isHistorical;
@@ -113,8 +113,8 @@ public class Content implements Serializable {
         return data;
     }
 
-    public long getSize() {
-        if (size == -1) {
+    public Long getSize() {
+        if (size == null) {
             if (data == null) {
                 throw new UnsupportedOperationException("convert stream to bytes first");
             }
@@ -178,7 +178,7 @@ public class Content implements Serializable {
     public static class Builder {
         private Optional<String> contentType = Optional.absent();
         private long contentLength = 0;
-        private long size = -1;
+        private Long size;
         private Optional<ContentKey> contentKey = Optional.absent();
         private InputStream stream;
         private int threads;
