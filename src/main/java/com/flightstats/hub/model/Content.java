@@ -35,6 +35,7 @@ public class Content implements Serializable {
         contentLength = builder.contentLength;
         threads = builder.threads;
         forceWrite = builder.forceWrite;
+        isLarge = builder.large;
     }
 
     public static Builder builder() {
@@ -180,6 +181,7 @@ public class Content implements Serializable {
         private InputStream stream;
         private int threads;
         private boolean forceWrite;
+        private boolean large;
 
         public Builder withContentType(String contentType) {
             this.contentType = Optional.fromNullable(contentType);
@@ -217,6 +219,11 @@ public class Content implements Serializable {
 
         public Builder withForceWrite(boolean forceWrite) {
             this.forceWrite = forceWrite;
+            return this;
+        }
+
+        public Builder withLarge(boolean large) {
+            this.large = large;
             return this;
         }
 

@@ -198,6 +198,9 @@ public class HubUtils {
         if (headers.containsKey("Content-Type")) {
             builder.withContentType(headers.getFirst("Content-Type"));
         }
+        if (headers.containsKey("X-LargeItem")) {
+            builder.withLarge(true);
+        }
         Content content = builder.build();
         if (loadData) {
             content.getData();
