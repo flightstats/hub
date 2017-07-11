@@ -198,6 +198,7 @@ public class S3LargeContentDao implements ContentDao {
             }
             builder.withContentKey(key);
             builder.withStream(object.getObjectContent());
+            builder.withLarge(true);
             return builder.build();
         } catch (AmazonS3Exception e) {
             if (e.getStatusCode() != 404) {
