@@ -1,8 +1,9 @@
 # locust.py
+import json
 import os
 import random
 import string
-from locust import HttpLocust, TaskSet, task
+from locust import HttpLocust, TaskSet, task, web
 
 from hubTasks import HubTasks
 from hubUser import HubUser
@@ -18,10 +19,17 @@ class LargeUser(HubUser):
         pass
 
     def start_webhook(self, config):
-        pass
+        if config['number'] == 1:
+            config['webhook_channel'] = config['channel'] + "_replicated"
+            replicationSource = config['host'] + "/channel/" + config['channel']
+            config['client'].put("/channel/" + config['webhook_channel'],
+                                 data=json.dumps({"name": config['webhook_channel'], "ttlDays": "3",
+                                                  "replicationSource": replicationSource}),
+                                 headers={"Content-Type": "application/json"},
+                                 name="replication")
 
     def has_webhook(self):
-        return False
+        return True
 
     def has_websocket(self):
         return False
@@ -37,6 +45,8 @@ class LargeTasks(TaskSet):
     def large_file_name(self, number, direction):
         return '/mnt/large' + str(number) + '.' + direction
 
+    # todo have this create a replicated channel
+
     @task(100)
     def write(self):
         if self.first:
@@ -45,7 +55,7 @@ class LargeTasks(TaskSet):
         large_file_name = self.large_file_name(self.hubTasks.number, 'out')
         large_file = open(large_file_name, 'rb')
         expected_size = os.stat(large_file_name).st_size
-        threads = 8
+        threads = "8"
         with self.hubTasks.client.post(self.hubTasks.get_channel_url() + "?threads=" + threads,
                                        data=large_file,
                                        headers={"content-type": "application/octet-stream"},
@@ -54,21 +64,21 @@ class LargeTasks(TaskSet):
             if postResponse.status_code != 201:
                 postResponse.failure("Got wrong response on post: " + str(postResponse.status_code)
                                      + self.hubTasks.get_channel_url())
-        uri = postResponse.json()['_links']['self']['href']
-
-        with self.client.get(uri, stream=True, catch_response=True, name="get_payload") as getResponse:
-            if getResponse.status_code != 200:
-                getResponse.failure("Got wrong response on get: " + str(getResponse.status_code) + " " + uri)
-            inputFile = self.large_file_name(self.hubTasks.number, 'in')
-            with open(inputFile, 'wb') as fd:
-                for chunk in getResponse.iter_content(chunk_size=1024):
-                    if chunk:
-                        fd.write(chunk)
-            get_size = os.stat(inputFile).st_size
-            if get_size == expected_size:
-                print "Got expected size on get: " + str(get_size) + " " + uri
             else:
-                getResponse.failure("Got wrong size on get: " + str(get_size) + " " + uri)
+                uri = postResponse.json()['_links']['self']['href']
+                with self.client.get(uri, stream=True, catch_response=True, name="get_payload") as getResponse:
+                    if getResponse.status_code != 200:
+                        getResponse.failure("Got wrong response on get: " + str(getResponse.status_code) + " " + uri)
+                    inputFile = self.large_file_name(self.hubTasks.number, 'in')
+                    with open(inputFile, 'wb') as fd:
+                        for chunk in getResponse.iter_content(chunk_size=1024):
+                            if chunk:
+                                fd.write(chunk)
+                    get_size = os.stat(inputFile).st_size
+                    if get_size == expected_size:
+                        print "Got expected size on get: " + str(get_size) + " " + uri
+                    else:
+                        getResponse.failure("Got wrong size on get: " + str(get_size) + " " + uri)
 
     def create_large(self, tasks):
         large_file_name = self.large_file_name(self.hubTasks.number, 'out')
@@ -91,6 +101,18 @@ class LargeTasks(TaskSet):
             os.system("cat /mnt/large1.out /mnt/large1.out > /mnt/large2.out")
         elif tasks.number == 3:
             os.system("cat /mnt/large2.out /mnt/large2.out > /mnt/large3.out")
+
+    @task(10)
+    def verify_callback_length(self):
+        self.hubTasks.verify_callback_length()
+
+    @web.app.route("/callback", methods=['GET'])
+    def get_channels():
+        return HubTasks.get_channels()
+
+    @web.app.route("/callback/<channel>", methods=['GET', 'POST'])
+    def callback(channel):
+        return HubTasks.callback(channel)
 
 
 class WebsiteUser(HttpLocust):

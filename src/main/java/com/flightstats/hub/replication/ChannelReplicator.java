@@ -22,6 +22,7 @@ class ChannelReplicator implements Replicator {
                 .callbackUrl(getCallbackUrl())
                 .channelUrl(channel.getReplicationSource())
                 .heartbeat(true)
+                .callbackTimeoutSeconds(5 * 60)
                 .batch(Webhook.SECOND);
         hubUtils.startWebhook(builder.build());
     }

@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.Function;
 
 @Singleton
 public class HubUtils {
@@ -167,29 +168,44 @@ public class HubUtils {
     }
 
     public Content get(String channelUrl, ContentKey contentKey) {
+        return getContent(channelUrl + "/" + contentKey.toUrl());
+    }
+
+    private Content getContent(String uri) {
+        return getContent(uri, (response) -> createContent(uri, response, true));
+    }
+
+    public Content getContent(String uri, Function<ClientResponse, Content> handler) {
         ClientResponse response = null;
         try {
-            response = followClient.resource(channelUrl + "/" + contentKey.toUrl())
-                    .get(ClientResponse.class);
+            response = followClient.resource(uri).get(ClientResponse.class);
             if (response.getStatus() == 200) {
-                Content.Builder builder = Content.builder()
-                        .withStream(response.getEntityInputStream())
-                        .withContentKey(contentKey);
-                MultivaluedMap<String, String> headers = response.getHeaders();
-                if (headers.containsKey("Content-Type")) {
-                    builder.withContentType(headers.getFirst("Content-Type"));
-                }
-                Content content = builder.build();
-                //load the data into the Content before closing response
-                content.getData();
-                return content;
+                return handler.apply(response);
             } else {
-                logger.info("unable to get {} {} {}", channelUrl, contentKey, response);
+                logger.info("unable to get {} {}", uri, response);
                 return null;
             }
         } finally {
             HubUtils.close(response);
         }
+    }
+
+    public Content createContent(String uri, ClientResponse response, boolean loadData) {
+        Content.Builder builder = Content.builder()
+                .withStream(response.getEntityInputStream())
+                .withContentKey(ContentKey.fromFullUrl(uri));
+        MultivaluedMap<String, String> headers = response.getHeaders();
+        if (headers.containsKey("Content-Type")) {
+            builder.withContentType(headers.getFirst("Content-Type"));
+        }
+        if (headers.containsKey("X-LargeItem")) {
+            builder.withLarge(true);
+        }
+        Content content = builder.build();
+        if (loadData) {
+            content.getData();
+        }
+        return content;
     }
 
     public Collection<ContentKey> insert(String channelUrl, BulkContent content) {

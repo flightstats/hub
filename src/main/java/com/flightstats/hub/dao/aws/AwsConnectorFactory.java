@@ -103,7 +103,7 @@ public class AwsConnectorFactory {
             int delayMillis = HubProperties.getProperty("aws.retry.delay.millis", 100);
             int maxBackoffTime = HubProperties.getProperty("aws.retry.max.delay.millis", 20 * 1000);
             fullJitterBackoffStrategy = new FullJitterBackoffStrategy(delayMillis, maxBackoffTime);
-            equalJitterBackoffStrategy = new EqualJitterBackoffStrategy(delayMillis * 5, maxBackoffTime);
+            equalJitterBackoffStrategy = new EqualJitterBackoffStrategy(delayMillis * 10, maxBackoffTime);  // bc doubling base delay
         }
 
         long computeDelayBeforeNextRetry(RetryPolicyContext context) {

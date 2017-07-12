@@ -20,14 +20,18 @@ public class LargeContent {
             Content.Builder builder = Content.builder();
             builder.withContentType(CONTENT_TYPE);
             ObjectNode data = mapper.createObjectNode();
-            data.put("key", largePayload.getContentKey().get().toUrl());
-            //todo - gfm - do we need payload size?
+            ContentKey largeKey = largePayload.getContentKey().get();
+            data.put("key", largeKey.toUrl());
             data.put("size", largePayload.getSize());
             if (largePayload.getContentType().isPresent()) {
                 data.put("content-type", largePayload.getContentType().get());
             }
             builder.withData(data.toString().getBytes());
-            builder.withContentKey(new ContentKey());
+            if (largePayload.isReplicated()) {
+                builder.withContentKey(largeKey);
+            } else {
+                builder.withContentKey(new ContentKey());
+            }
             Content content = builder.build();
             content.packageStream();
             return content;
@@ -44,6 +48,7 @@ public class LargeContent {
             Content.Builder builder = Content.builder();
             builder.withContentKey(ContentKey.fromUrl(jsonNode.get("key").asText()).get());
             builder.withContentType(jsonNode.get("content-type").asText());
+            builder.withLarge(true);
             return builder.build();
         } catch (IOException e) {
             logger.info("trying to read " + content.getContentKey(), e);
