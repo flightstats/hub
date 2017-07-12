@@ -37,6 +37,7 @@ public class Content implements Serializable {
         contentLength = builder.contentLength;
         threads = builder.threads;
         forceWrite = builder.forceWrite;
+        size = builder.size;
     }
 
     public static Builder builder() {
