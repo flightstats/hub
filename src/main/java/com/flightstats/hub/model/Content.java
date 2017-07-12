@@ -16,6 +16,7 @@ public class Content implements Serializable {
     private final static Logger logger = LoggerFactory.getLogger(Content.class);
 
     private static final long serialVersionUID = 1L;
+    public static final int THREADS = HubProperties.getProperty("s3.large.threads", 3);
 
     private final Optional<String> contentType;
     private long contentLength;
@@ -34,7 +35,7 @@ public class Content implements Serializable {
         contentType = builder.contentType;
         stream = builder.stream;
         contentLength = builder.contentLength;
-        threads = Math.max(1, builder.threads);
+        threads = Math.max(THREADS, builder.threads);
         forceWrite = builder.forceWrite;
         isLarge = builder.large;
     }
@@ -221,8 +222,8 @@ public class Content implements Serializable {
             return new Content(this);
         }
 
-        public Builder withThreads(String threads) {
-            this.threads = Integer.parseInt(threads);
+        public Builder withThreads(int threads) {
+            this.threads = threads;
             return this;
         }
 

@@ -418,7 +418,6 @@ public class ChannelContentResource {
                 .withContentType(contentType)
                 .withContentLength(contentLength)
                 .withStream(data)
-                .withThreads(THREADS)
                 .build();
         content.setHistorical(true);
 
@@ -448,7 +447,6 @@ public class ChannelContentResource {
                 .withContentType(contentType)
                 .withContentLength(contentLength)
                 .withStream(data)
-                .withThreads(THREADS)
                 .build();
         content.setHistorical(true);
         return historicalResponse(channelName, content);

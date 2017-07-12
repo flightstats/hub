@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProvider;
-import com.flightstats.hub.channel.ChannelResource;
 import com.flightstats.hub.cluster.Cluster;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.webhook.Webhook;
@@ -201,7 +200,6 @@ public class HubUtils {
         }
         if (headers.containsKey("X-LargeItem")) {
             builder.withLarge(true);
-            builder.withThreads(ChannelResource.THREADS);
         }
         Content content = builder.build();
         if (loadData) {
