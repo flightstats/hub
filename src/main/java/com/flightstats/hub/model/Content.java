@@ -90,11 +90,11 @@ public class Content implements Serializable {
     }
 
     public void packageStream() throws IOException {
-        if (contentLength < HubProperties.getLargePayload()) {
+        if (isLarge || contentLength >= HubProperties.getLargePayload()) {
+            isLarge = true;
+        } else {
             data = ContentMarshaller.toBytes(this);
             stream = null;
-        } else {
-            isLarge = true;
         }
     }
 
