@@ -33,7 +33,7 @@ public class Content implements Serializable {
         contentType = builder.contentType;
         stream = builder.stream;
         contentLength = builder.contentLength;
-        threads = builder.threads;
+        threads = Math.max(1, builder.threads);
         forceWrite = builder.forceWrite;
         isLarge = builder.large;
     }

@@ -76,6 +76,7 @@ public class InternalReplicationResource {
                         }
                         return content;
                     } catch (Exception e) {
+                        logger.warn("issue with handling " + channel + " " + uri, e);
                         throw new RuntimeException(e);
                     }
                 });
