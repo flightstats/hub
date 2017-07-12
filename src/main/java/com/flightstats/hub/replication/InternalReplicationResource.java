@@ -35,25 +35,31 @@ public class InternalReplicationResource {
             JsonNode node = readData(channel, data);
             SecondPath path = SecondPath.fromUrl(node.get("id").asText()).get();
             JsonNode uris = node.get("uris");
+            logger.trace("incoming {} {} ", channel, uris);
             int expectedItems = uris.size();
             if (expectedItems == 1) {
                 if (!attemptSingle(channel, uris)) {
+                    logger.warn("unable to handle " + channel + " " + uris);
                     return Response.status(500).build();
                 }
             } else if (expectedItems > 1) {
                 if (!attemptBatch(channel, path, node.get("batchUrl").asText())) {
                     if (!attemptSingle(channel, uris)) {
+                        logger.warn("unable to handle " + channel + " " + uris);
                         return Response.status(500).build();
                     }
                 }
             }
             lastReplicated.updateIncrease(path, channel, LocalChannelService.REPLICATED_LAST_UPDATED);
+            logger.trace("handled {} {} ", channel, uris);
             return Response.ok().build();
-
         } catch (Exception e) {
             logger.warn("unable to handle " + channel + " " + data, e);
+            return Response.status(500).build();
+        } catch (Throwable e) {
+            logger.error("Throwable unable to handle " + channel + " " + data, e);
+            throw e;
         }
-        return Response.status(500).build();
     }
 
     private boolean attemptSingle(String channel, JsonNode uris) {
