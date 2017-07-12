@@ -69,6 +69,7 @@ public class InternalReplicationResource {
                 hubUtils.getContent(uri, (response) -> {
                     try {
                         Content content = hubUtils.createContent(uri, response, false);
+                        content.replicated();
                         ContentKey inserted = localChannelService.insert(channel, content);
                         if (inserted == null) {
                             logger.warn("unable to process {} {}", channel, uri);

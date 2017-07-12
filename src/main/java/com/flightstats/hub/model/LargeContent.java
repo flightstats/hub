@@ -20,13 +20,18 @@ public class LargeContent {
             Content.Builder builder = Content.builder();
             builder.withContentType(CONTENT_TYPE);
             ObjectNode data = mapper.createObjectNode();
-            data.put("key", largePayload.getContentKey().get().toUrl());
+            ContentKey largeKey = largePayload.getContentKey().get();
+            data.put("key", largeKey.toUrl());
             data.put("size", largePayload.getSize());
             if (largePayload.getContentType().isPresent()) {
                 data.put("content-type", largePayload.getContentType().get());
             }
             builder.withData(data.toString().getBytes());
-            builder.withContentKey(new ContentKey());
+            if (largePayload.isReplicated()) {
+                builder.withContentKey(largeKey);
+            } else {
+                builder.withContentKey(new ContentKey());
+            }
             Content content = builder.build();
             content.packageStream();
             return content;

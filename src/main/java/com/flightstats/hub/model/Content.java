@@ -27,6 +27,7 @@ public class Content implements Serializable {
     private transient int threads;
     private transient boolean isHistorical;
     private boolean forceWrite;
+    private boolean replicated;
 
     private Content(Builder builder) {
         contentKey = builder.contentKey;
@@ -80,6 +81,14 @@ public class Content implements Serializable {
 
     public boolean isForceWrite() {
         return forceWrite;
+    }
+
+    public boolean isReplicated() {
+        return replicated;
+    }
+
+    public void replicated() {
+        replicated = true;
     }
 
     public InputStream getStream() {
