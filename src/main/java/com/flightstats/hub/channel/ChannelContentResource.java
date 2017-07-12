@@ -262,6 +262,9 @@ public class ChannelContentResource {
             }
         });
 
+        if (content.isLarge()) {
+            builder.header("X-LargeItem", "true");
+        }
         builder.type(actualContentType)
                 .header(CREATION_DATE, FORMATTER.print(new DateTime(key.getMillis())));
 
@@ -415,7 +418,6 @@ public class ChannelContentResource {
                 .withContentType(contentType)
                 .withContentLength(contentLength)
                 .withStream(data)
-                .withThreads(THREADS)
                 .build();
         content.setHistorical(true);
 
@@ -445,7 +447,6 @@ public class ChannelContentResource {
                 .withContentType(contentType)
                 .withContentLength(contentLength)
                 .withStream(data)
-                .withThreads(THREADS)
                 .build();
         content.setHistorical(true);
         return historicalResponse(channelName, content);

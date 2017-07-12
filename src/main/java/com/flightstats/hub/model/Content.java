@@ -16,6 +16,7 @@ public class Content implements Serializable {
     private final static Logger logger = LoggerFactory.getLogger(Content.class);
 
     private static final long serialVersionUID = 1L;
+    public static final int THREADS = HubProperties.getProperty("s3.large.threads", 3);
 
     private final Optional<String> contentType;
     private long contentLength;
@@ -27,14 +28,16 @@ public class Content implements Serializable {
     private transient int threads;
     private transient boolean isHistorical;
     private boolean forceWrite;
+    private boolean replicated;
 
     private Content(Builder builder) {
         contentKey = builder.contentKey;
         contentType = builder.contentType;
         stream = builder.stream;
         contentLength = builder.contentLength;
-        threads = builder.threads;
+        threads = Math.max(THREADS, builder.threads);
         forceWrite = builder.forceWrite;
+        isLarge = builder.large;
     }
 
     public static Builder builder() {
@@ -81,6 +84,14 @@ public class Content implements Serializable {
         return forceWrite;
     }
 
+    public boolean isReplicated() {
+        return replicated;
+    }
+
+    public void replicated() {
+        replicated = true;
+    }
+
     public InputStream getStream() {
         if (stream == null) {
             return new ByteArrayInputStream(getData());
@@ -89,11 +100,11 @@ public class Content implements Serializable {
     }
 
     public void packageStream() throws IOException {
-        if (contentLength < HubProperties.getLargePayload()) {
+        if (isLarge || contentLength >= HubProperties.getLargePayload()) {
+            isLarge = true;
+        } else {
             data = ContentMarshaller.toBytes(this);
             stream = null;
-        } else {
-            isLarge = true;
         }
     }
 
@@ -180,6 +191,7 @@ public class Content implements Serializable {
         private InputStream stream;
         private int threads;
         private boolean forceWrite;
+        private boolean large;
 
         public Builder withContentType(String contentType) {
             this.contentType = Optional.fromNullable(contentType);
@@ -210,13 +222,18 @@ public class Content implements Serializable {
             return new Content(this);
         }
 
-        public Builder withThreads(String threads) {
-            this.threads = Integer.parseInt(threads);
+        public Builder withThreads(int threads) {
+            this.threads = threads;
             return this;
         }
 
         public Builder withForceWrite(boolean forceWrite) {
             this.forceWrite = forceWrite;
+            return this;
+        }
+
+        public Builder withLarge(boolean large) {
+            this.large = large;
             return this;
         }
 
