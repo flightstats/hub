@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.dao.ItemRequest;
 import com.flightstats.hub.events.ContentOutput;
 import com.flightstats.hub.events.EventsService;
@@ -253,19 +254,14 @@ public class ChannelContentResource {
             return Response.status(Response.Status.NOT_ACCEPTABLE).build();
         }
 
-        if (content.getSize() == -1 && itemLengthRequired) {
-            content = channelService.calculateContentSize(content);
-        }
-
-        final Content finalContent = content;
         Response.ResponseBuilder builder = Response.ok((StreamingOutput) output -> {
             try {
-                ByteStreams.copy(finalContent.getStream(), output);
+                ByteStreams.copy(content.getStream(), output);
             } catch (IOException e) {
                 logger.warn("issue streaming content " + channel + " " + key, e);
                 throw e;
             } finally {
-                finalContent.close();
+                content.close();
             }
         });
 
@@ -275,10 +271,25 @@ public class ChannelContentResource {
         builder.header("Link", "<" + uriInfo.getRequestUriBuilder().path("previous").build() + ">;rel=\"" + "previous" + "\"");
         builder.header("Link", "<" + uriInfo.getRequestUriBuilder().path("next").build() + ">;rel=\"" + "next" + "\"");
 
-        builder.header("X-Item-Length", content.getSize());
+        long itemLength = content.getSize();
+        if (itemLength == -1 && itemLengthRequired) {
+            itemLength = calculateContentSize(content);
+        }
+
+        builder.header("X-Item-Length", itemLength);
 
         metricsService.time(channel, "get", start);
         return builder.build();
+    }
+
+    private long calculateContentSize(Content content) {
+        try {
+            byte[] bytes = ContentMarshaller.toBytes(content);
+            Content marshalledContent = ContentMarshaller.toContent(bytes, content.getContentKey().get());
+            return marshalledContent.getSize();
+        } catch (Exception e) {
+            throw new RuntimeException("something bad happened");
+        }
     }
 
     @Path("/{h}/{m}/{s}/{ms}/{hash}/{direction:[n|p].*}")
