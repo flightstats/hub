@@ -117,9 +117,10 @@ public class Content implements Serializable {
     public Long getSize() {
         if (size == null) {
             if (data == null) {
-                throw new UnsupportedOperationException("convert stream to bytes first");
+                size = -1L;
+            } else {
+                size = (long) data.length;
             }
-            size = (long) data.length;
         }
         return size;
     }
