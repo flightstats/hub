@@ -1,6 +1,7 @@
 package com.flightstats.hub.app;
 
-import com.flightstats.hub.ws.ChannelWSEndpoint;
+import com.flightstats.hub.ws.ChannelItemWSEndpoint;
+import com.flightstats.hub.ws.ChannelLatestWSEndpoint;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import org.eclipse.jetty.server.*;
@@ -56,7 +57,8 @@ public class HubJettyServer {
 
             ServletContextHandler wsContext = new ServletContextHandler(server, "/", ServletContextHandler.SESSIONS);
             ServerContainer wsContainer = WebSocketServerContainerInitializer.configureContext(wsContext);
-            wsContainer.addEndpoint(ChannelWSEndpoint.class);
+            wsContainer.addEndpoint(ChannelLatestWSEndpoint.class);
+            wsContainer.addEndpoint(ChannelItemWSEndpoint.class);
             handler.addWSHandler(wsContext);
 
             server.setHandler(handler);

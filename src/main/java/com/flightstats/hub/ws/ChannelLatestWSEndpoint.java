@@ -12,11 +12,11 @@ import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
 
 @ServerEndpoint(value = "/channel/{channel}/ws")
-public class ChannelWSEndpoint {
+public class ChannelLatestWSEndpoint {
 
     private static final WebSocketService webSocketService = WebSocketService.getInstance();
 
-    private final static Logger logger = LoggerFactory.getLogger(ChannelWSEndpoint.class);
+    private final static Logger logger = LoggerFactory.getLogger(ChannelLatestWSEndpoint.class);
 
     @OnOpen
     public void onOpen(Session session, @PathParam("channel") String channel) throws IOException {

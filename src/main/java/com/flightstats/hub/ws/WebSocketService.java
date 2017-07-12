@@ -36,7 +36,10 @@ class WebSocketService {
     }
 
     void createCallback(Session session, String channel) throws UnknownHostException {
-        ContentKey contentKey = new ContentKey();
+        createCallback(session, channel, new ContentKey());
+    }
+
+    void createCallback(Session session, String channel, ContentKey startingKey) throws UnknownHostException {
         String id = setId(session, channel);
         URI uri = session.getRequestURI();
         logger.info("creating callback {} {} {}", channel, id, uri);
@@ -46,7 +49,7 @@ class WebSocketService {
                 .callbackUrl(getCallbackUrl(id))
                 .parallelCalls(1)
                 .name(id)
-                .startingKey(contentKey)
+                .startingKey(startingKey)
                 .build();
         webhookService.upsert(webhook);
     }
