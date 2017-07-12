@@ -252,14 +252,20 @@ public class ChannelContentResource {
         if (contentTypeIsNotCompatible(accept, actualContentType)) {
             return Response.status(Response.Status.NOT_ACCEPTABLE).build();
         }
+
+        if (content.getSize() == -1 && itemLengthRequired) {
+            content = channelService.calculateContentSize(content);
+        }
+
+        final Content finalContent = content;
         Response.ResponseBuilder builder = Response.ok((StreamingOutput) output -> {
             try {
-                ByteStreams.copy(content.getStream(), output);
+                ByteStreams.copy(finalContent.getStream(), output);
             } catch (IOException e) {
                 logger.warn("issue streaming content " + channel + " " + key, e);
                 throw e;
             } finally {
-                content.close();
+                finalContent.close();
             }
         });
 
@@ -269,22 +275,10 @@ public class ChannelContentResource {
         builder.header("Link", "<" + uriInfo.getRequestUriBuilder().path("previous").build() + ">;rel=\"" + "previous" + "\"");
         builder.header("Link", "<" + uriInfo.getRequestUriBuilder().path("next").build() + ">;rel=\"" + "next" + "\"");
 
-        long itemLength = content.getSize() == null ? -1 : content.getSize();
-        if (itemLength == -1 && itemLengthRequired) {
-            itemLength = calculateSize(content);
-            updateContentSize(content, itemLength);
-        }
-        builder.header("X-Item-Length", itemLength);
+        builder.header("X-Item-Length", content.getSize());
+
         metricsService.time(channel, "get", start);
         return builder.build();
-    }
-
-    private long calculateSize(Content content) {
-        return content.getData().length;
-    }
-
-    private void updateContentSize(Content content, long itemLength) {
-
     }
 
     @Path("/{h}/{m}/{s}/{ms}/{hash}/{direction:[n|p].*}")
