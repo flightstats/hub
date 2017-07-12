@@ -268,7 +268,8 @@ public class ChannelContentResource {
 
         builder.header("Link", "<" + uriInfo.getRequestUriBuilder().path("previous").build() + ">;rel=\"" + "previous" + "\"");
         builder.header("Link", "<" + uriInfo.getRequestUriBuilder().path("next").build() + ">;rel=\"" + "next" + "\"");
-        long itemLength = content.getSize();
+
+        long itemLength = content.getSize() == null ? -1 : content.getSize();
         if (itemLength == -1 && itemLengthRequired) {
             itemLength = calculateSize(content);
             updateContentSize(content, itemLength);
