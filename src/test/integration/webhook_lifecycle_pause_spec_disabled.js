@@ -1,3 +1,5 @@
+// bc -- this test does not run reliably due to what appears to be timing issues.
+
 require('./integration_config.js');
 
 var request = require('request');
