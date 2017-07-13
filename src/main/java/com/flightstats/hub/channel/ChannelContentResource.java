@@ -229,7 +229,7 @@ public class ChannelContentResource {
                             @PathParam("ms") int millis,
                             @PathParam("hash") String hash,
                             @HeaderParam("Accept") String accept,
-                            @HeaderParam("X-Item-Length-Required") boolean itemLengthRequired,
+                            @HeaderParam("X-Item-Length-Required") @DefaultValue("false") boolean itemLengthRequired,
                             @QueryParam("remoteOnly") @DefaultValue("false") boolean remoteOnly
     ) {
         long start = System.currentTimeMillis();
@@ -276,7 +276,11 @@ public class ChannelContentResource {
 
         long itemLength = content.getSize();
         if (itemLength == -1 && itemLengthRequired) {
-            itemLength = calculateContentSize(content);
+            if (content.isLarge()) {
+                itemLength = content.getSize();
+            } else {
+                itemLength = calculateContentSize(content);
+            }
         }
 
         builder.header("X-Item-Length", itemLength);
@@ -288,8 +292,7 @@ public class ChannelContentResource {
     private long calculateContentSize(Content content) {
         try {
             byte[] bytes = ContentMarshaller.toBytes(content);
-            Content marshalledContent = ContentMarshaller.toContent(bytes, content.getContentKey().get());
-            return marshalledContent.getSize();
+            return bytes.length;
         } catch (Exception e) {
             throw new RuntimeException("something bad happened");
         }
