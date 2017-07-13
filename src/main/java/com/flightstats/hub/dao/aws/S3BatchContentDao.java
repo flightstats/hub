@@ -93,24 +93,27 @@ public class S3BatchContentDao implements ContentDao {
     private Content getS3Object(String channel, ContentKey key) throws IOException {
         logger.trace("S3BatchContentDao.getS3Object {} {}", channel, key);
         MinutePath minutePath = new MinutePath(key.getTime());
-        Content content = null;
+        return mapMinute(channel, minutePath).get(key);
+    }
+
+    private Map<ContentKey, Content> mapMinute(String channel, MinutePath minutePath) throws IOException {
+        Map<ContentKey, Content> map = new HashMap<>();
         try (ZipInputStream zipStream = getZipInputStream(channel, minutePath)) {
             ZipEntry nextEntry = zipStream.getNextEntry();
             while (nextEntry != null) {
                 logger.trace("found zip entry {} in {}", nextEntry.getName(), minutePath);
-                if (nextEntry.getName().equals(key.toUrl())) {
-                    content = getContent(key, zipStream, nextEntry);
-                }
+                ContentKey contentKey = ContentKey.fromUrl(nextEntry.getName()).get();
+                map.put(contentKey, getContent(contentKey, zipStream, nextEntry));
                 nextEntry = zipStream.getNextEntry();
             }
         } catch (AmazonS3Exception e) {
             if (e.getStatusCode() != 404) {
-                logger.warn("AmazonS3Exception : unable to read " + channel + " " + key, e);
+                logger.warn("AmazonS3Exception : unable to read " + channel + " " + minutePath, e);
             }
         } finally {
             ActiveTraces.getLocal().add("S3BatchContentDao.getS3Object completed");
         }
-        return content;
+        return map;
     }
 
     private Content getContent(ContentKey key, ZipInputStream zipStream, ZipEntry nextEntry) throws IOException {
