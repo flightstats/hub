@@ -170,11 +170,13 @@ public class ClusterContentService implements ContentService {
         SortedSet<MinutePath> minutePaths = ContentKeyUtil.convert(keys);
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
         DateTime spokeTtlTime = getSpokeTtlTime(channelName);
+        //todo - gfm - support reverse ordering
         for (MinutePath minutePath : minutePaths) {
             if (minutePath.getTime().isAfter(spokeTtlTime)
                     || channel.isSingle()) {
                 getValues(channelName, callback, minutePath);
             } else {
+                //todo - gfm - is s3BatchContentDao called even for non-Batch channels?
                 if (!s3BatchContentDao.streamMinute(channelName, minutePath, callback)) {
                     getValues(channelName, callback, minutePath);
                 }
@@ -183,6 +185,7 @@ public class ClusterContentService implements ContentService {
     }
 
     private void getValues(String channelName, Consumer<Content> callback, ContentPathKeys contentPathKeys) {
+        //todo - gfm - support reverse ordering
         for (ContentKey contentKey : contentPathKeys.getKeys()) {
             Optional<Content> contentOptional = get(channelName, contentKey, false);
             if (contentOptional.isPresent()) {

@@ -102,6 +102,9 @@ public class S3BatchContentDao implements ContentDao {
                     content = getContent(key, zipStream, nextEntry);
                 }
                 nextEntry = zipStream.getNextEntry();
+                //todo - gfm - AWS complains if the whole stream isn't read
+                //todo - gfm - we should read the whole stream, and add a delay
+                //todo - gfm - that would be the same pattern as needed for reverse ordered streaming
             }
         } catch (AmazonS3Exception e) {
             if (e.getStatusCode() != 404) {
@@ -137,6 +140,11 @@ public class S3BatchContentDao implements ContentDao {
 
     @Override
     public boolean streamMinute(String channel, ContentPathKeys minutePath, Consumer<Content> callback) {
+        /*
+        //todo - gfm - To support reverse ordering ...
+        We to read the entire S3 zip stream into a HashMap<ContentKey, Content>
+        then, we can reverse the ordering to send back out
+         */
         Map<String, ContentKey> keyMap = new HashMap<>();
         boolean found = false;
         for (ContentKey key : minutePath.getKeys()) {
