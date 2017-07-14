@@ -150,9 +150,10 @@ public class S3BatchContentDao implements ContentDao {
         boolean found = false;
         try {
             Map<ContentKey, Content> map = mapMinute(channel, minutePath);
-            for (Map.Entry<ContentKey, Content> entry : map.entrySet()) {
-                if (minutePath.getKeys().contains(entry.getKey())) {
-                    callback.accept(entry.getValue());
+            NavigableSet<ContentKey> descendingSet = new TreeSet<>(map.keySet()).descendingSet();
+            for (ContentKey contentKey : descendingSet) {
+                if (minutePath.getKeys().contains(contentKey)) {
+                    callback.accept(map.get(contentKey));
                     found = true;
                 }
             }
