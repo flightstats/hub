@@ -3,8 +3,6 @@ package com.flightstats.hub.channel;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.ContentKey;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -12,8 +10,6 @@ import java.util.SortedSet;
 import java.util.function.Consumer;
 
 class BulkBuilder {
-
-    private final static Logger logger = LoggerFactory.getLogger(BulkBuilder.class);
 
     public static Response build(SortedSet<ContentKey> keys, String channel,
                                  ChannelService channelService, UriInfo uriInfo, String accept) {

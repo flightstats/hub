@@ -79,8 +79,11 @@ describe(testName, function () {
         callTime(start + 'A/previous/4?order=descending&stable=false', descendingItems, 0, done);
     });
 
-    //todo - gfm - add queries for next/prev
-    //todo - gfm - earliest/latest
+    it('gets descending hour', function (done) {
+        var start = moment.utc().format('/YYYY/MM/DD/HH');
+        callTime(start + '?order=descending&stable=false', descendingItems, 0, done);
+    });
+
     //todo - gfm - bulk gets
 
 });

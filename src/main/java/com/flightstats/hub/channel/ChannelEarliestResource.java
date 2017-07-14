@@ -67,8 +67,7 @@ public class ChannelEarliestResource {
                                      @QueryParam("tag") String tag,
                                      @HeaderParam("Accept") String accept) {
         if (tag != null) {
-            //todo - gfm - order
-            return tagEarliestResource.getEarliestCount(tag, count, stable, bulk, batch, trace, location, epoch, accept, uriInfo);
+            return tagEarliestResource.getEarliestCount(tag, count, stable, bulk, batch, trace, location, epoch, order, accept, uriInfo);
         }
         DirectionQuery query = getDirectionQuery(channel, count, stable, location, epoch);
         SortedSet<ContentKey> keys = channelService.query(query);

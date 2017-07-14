@@ -20,10 +20,7 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.net.URI;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.SortedSet;
+import java.util.*;
 
 import static com.flightstats.hub.util.TimeUtil.Unit;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -73,10 +70,11 @@ public class TagContentResource {
                            @QueryParam("trace") @DefaultValue("false") boolean trace,
                            @QueryParam("batch") @DefaultValue("false") boolean batch,
                            @QueryParam("bulk") @DefaultValue("false") boolean bulk,
+                           @QueryParam("order") @DefaultValue(Order.DEFAULT) String order,
                            @QueryParam("stable") @DefaultValue("true") boolean stable,
                            @HeaderParam("Accept") String accept) {
         DateTime startTime = new DateTime(year, month, day, 0, 0, 0, 0, DateTimeZone.UTC);
-        return getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.DAYS, bulk || batch, accept, uriInfo, epoch);
+        return getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.DAYS, bulk || batch, accept, uriInfo, epoch, Order.isDescending(order));
     }
 
     @Path("/{Y}/{M}/{D}/{hour}")
@@ -92,10 +90,11 @@ public class TagContentResource {
                             @QueryParam("trace") @DefaultValue("false") boolean trace,
                             @QueryParam("batch") @DefaultValue("false") boolean batch,
                             @QueryParam("bulk") @DefaultValue("false") boolean bulk,
+                            @QueryParam("order") @DefaultValue(Order.DEFAULT) String order,
                             @QueryParam("stable") @DefaultValue("true") boolean stable,
                             @HeaderParam("Accept") String accept) {
         DateTime startTime = new DateTime(year, month, day, hour, 0, 0, 0, DateTimeZone.UTC);
-        return getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.HOURS, bulk || batch, accept, uriInfo, epoch);
+        return getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.HOURS, bulk || batch, accept, uriInfo, epoch, Order.isDescending(order));
     }
 
     @Path("/{Y}/{M}/{D}/{h}/{minute}")
@@ -112,10 +111,11 @@ public class TagContentResource {
                               @QueryParam("trace") @DefaultValue("false") boolean trace,
                               @QueryParam("batch") @DefaultValue("false") boolean batch,
                               @QueryParam("bulk") @DefaultValue("false") boolean bulk,
+                              @QueryParam("order") @DefaultValue(Order.DEFAULT) String order,
                               @QueryParam("stable") @DefaultValue("true") boolean stable,
                               @HeaderParam("Accept") String accept) {
         DateTime startTime = new DateTime(year, month, day, hour, minute, 0, 0, DateTimeZone.UTC);
-        return getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.MINUTES, bulk || batch, accept, uriInfo, epoch);
+        return getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.MINUTES, bulk || batch, accept, uriInfo, epoch, Order.isDescending(order));
     }
 
     @Path("/{Y}/{M}/{D}/{h}/{m}/{second}")
@@ -133,14 +133,15 @@ public class TagContentResource {
                               @QueryParam("trace") @DefaultValue("false") boolean trace,
                               @QueryParam("batch") @DefaultValue("false") boolean batch,
                               @QueryParam("bulk") @DefaultValue("false") boolean bulk,
+                              @QueryParam("order") @DefaultValue(Order.DEFAULT) String order,
                               @QueryParam("stable") @DefaultValue("true") boolean stable,
                               @HeaderParam("Accept") String accept) {
         DateTime startTime = new DateTime(year, month, day, hour, minute, second, 0, DateTimeZone.UTC);
-        return getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.SECONDS, bulk || batch, accept, uriInfo, epoch);
+        return getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.SECONDS, bulk || batch, accept, uriInfo, epoch, Order.isDescending(order));
     }
 
     public Response getTimeQueryResponse(String tag, DateTime startTime, String location, boolean trace, boolean stable,
-                                         Unit unit, boolean bulk, String accept, UriInfo uriInfo, String epoch) {
+                                         Unit unit, boolean bulk, String accept, UriInfo uriInfo, String epoch, boolean descending) {
         TimeQuery query = TimeQuery.builder()
                 .tagName(tag)
                 .startTime(startTime)
@@ -155,6 +156,7 @@ public class TagContentResource {
         DateTime previous = startTime.minus(unit.getDuration());
         String baseUri = uriInfo.getBaseUri() + "tag/" + tag + "/";
         if (bulk) {
+            //todo - gfm - order
             return BulkBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo, accept, (builder) -> {
                 if (next.isBefore(current)) {
                     builder.header("Link", "<" + baseUri + unit.format(next) + "?bulk=true&stable=" + stable + ">;rel=\"" + "next" + "\"");
@@ -171,7 +173,11 @@ public class TagContentResource {
         }
         links.putObject("previous").put("href", baseUri + unit.format(previous) + "?stable=" + stable);
         ArrayNode ids = links.putArray("uris");
-        for (ChannelContentKey key : keys) {
+        ArrayList<ChannelContentKey> list = new ArrayList<>(keys);
+        if (descending) {
+            Collections.reverse(list);
+        }
+        for (ChannelContentKey key : list) {
             URI channelUri = LinkBuilder.buildChannelUri(key.getChannel(), uriInfo);
             URI uri = LinkBuilder.buildItemUri(key.getContentKey(), channelUri);
             ids.add(uri.toString() + "?tag=" + tag);
