@@ -177,7 +177,7 @@ public class ClusterContentService implements ContentService {
                     || channel.isSingle()) {
                 getValues(channelName, streamResults.getCallback(), minutePath, streamResults.isDescending());
             } else {
-                if (!s3BatchContentDao.streamMinute(channelName, minutePath, callback)) {
+                if (!s3BatchContentDao.streamMinute(channelName, minutePath, streamResults.isDescending(), callback)) {
                     getValues(channelName, callback, minutePath, streamResults.isDescending());
                 }
             }

@@ -105,9 +105,6 @@ public class S3BatchContentDao implements ContentDao {
                 ContentKey contentKey = ContentKey.fromUrl(nextEntry.getName()).get();
                 map.put(contentKey, getContent(contentKey, zipStream, nextEntry));
                 nextEntry = zipStream.getNextEntry();
-                //todo - gfm - AWS complains if the whole stream isn't read
-                //todo - gfm - we should read the whole stream, and add a delay
-                //todo - gfm - that would be the same pattern as needed for reverse ordered streaming
             }
         } catch (AmazonS3Exception e) {
             if (e.getStatusCode() != 404) {
@@ -142,12 +139,30 @@ public class S3BatchContentDao implements ContentDao {
     }
 
     @Override
-    public boolean streamMinute(String channel, ContentPathKeys minutePath, Consumer<Content> callback) {
-        /*
-        //todo - gfm - To support reverse ordering ...
-        We to read the entire S3 zip stream into a HashMap<ContentKey, Content>
-        then, we can reverse the ordering to send back out
-         */
+    public boolean streamMinute(String channel, MinutePath minutePath, boolean descending, Consumer<Content> callback) {
+        if (descending) {
+            return descending(channel, minutePath, callback);
+        }
+        return ascending(channel, minutePath, callback);
+    }
+
+    private boolean descending(String channel, MinutePath minutePath, Consumer<Content> callback) {
+        boolean found = false;
+        try {
+            Map<ContentKey, Content> map = mapMinute(channel, minutePath);
+            for (Map.Entry<ContentKey, Content> entry : map.entrySet()) {
+                if (minutePath.getKeys().contains(entry.getKey())) {
+                    callback.accept(entry.getValue());
+                    found = true;
+                }
+            }
+        } catch (IOException e) {
+            logger.warn("unexpected IOException for " + channel + " " + minutePath, e);
+        }
+        return found;
+    }
+
+    private boolean ascending(String channel, MinutePath minutePath, Consumer<Content> callback) {
         Map<String, ContentKey> keyMap = new HashMap<>();
         boolean found = false;
         for (ContentKey key : minutePath.getKeys()) {
