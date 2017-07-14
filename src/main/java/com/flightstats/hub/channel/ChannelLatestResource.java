@@ -3,10 +3,7 @@ package com.flightstats.hub.channel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.DirectionQuery;
-import com.flightstats.hub.model.Epoch;
-import com.flightstats.hub.model.Location;
+import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 
@@ -71,9 +68,11 @@ public class ChannelLatestResource {
                                    @QueryParam("bulk") @DefaultValue("false") boolean bulk,
                                    @QueryParam("location") @DefaultValue(Location.DEFAULT) String location,
                                    @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
+                                   @QueryParam("order") @DefaultValue(Order.DEFAULT) String order,
                                    @QueryParam("tag") String tag,
                                    @HeaderParam("Accept") String accept) {
         if (tag != null) {
+            //todo - gfm - order
             return tagLatestResource.getLatestCount(tag, count, stable, batch, bulk, trace, location, epoch, accept, uriInfo);
         }
         DirectionQuery latestQuery = DirectionQuery.builder()
@@ -100,15 +99,16 @@ public class ChannelLatestResource {
                 .build();
         SortedSet<ContentKey> keys = new TreeSet<>(channelService.query(query));
         keys.add(latest.get());
-        return getResponse(channel, count, trace, batch, bulk, accept, query, keys);
+        return getResponse(channel, count, trace, batch, bulk, accept, query, keys, Order.isDescending(order));
     }
 
     private Response getResponse(String channel, int count, boolean trace, boolean batch, boolean bulk,
-                                 String accept, DirectionQuery query, SortedSet<ContentKey> keys) {
+                                 String accept, DirectionQuery query, SortedSet<ContentKey> keys, boolean descending) {
         if (bulk || batch) {
+            //todo - gfm - order
             return BulkBuilder.build(keys, channel, channelService, uriInfo, accept);
         } else {
-            return LinkBuilder.directionalResponse(keys, count, query, mapper, uriInfo, true, trace);
+            return LinkBuilder.directionalResponse(keys, count, query, mapper, uriInfo, true, trace, descending);
         }
     }
 

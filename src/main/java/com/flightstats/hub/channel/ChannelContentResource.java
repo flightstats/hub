@@ -366,6 +366,7 @@ public class ChannelContentResource {
                                       @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
                                       @QueryParam("batch") @DefaultValue("false") boolean batch,
                                       @QueryParam("bulk") @DefaultValue("false") boolean bulk,
+                                      @QueryParam("order") @DefaultValue(Order.DEFAULT) String order,
                                       @QueryParam("tag") String tag,
                                       @HeaderParam("Accept") String accept) {
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
@@ -393,7 +394,7 @@ public class ChannelContentResource {
                 }
             });
         } else {
-            return LinkBuilder.directionalResponse(keys, count, query, mapper, uriInfo, true, trace);
+            return LinkBuilder.directionalResponse(keys, count, query, mapper, uriInfo, true, trace, Order.isDescending(order));
         }
     }
 

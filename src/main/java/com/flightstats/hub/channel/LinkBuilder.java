@@ -18,10 +18,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 
 public class LinkBuilder {
@@ -114,9 +111,9 @@ public class LinkBuilder {
                 .build();
     }
 
-    static Response directionalResponse(Collection<ContentKey> keys, int count,
+    static Response directionalResponse(SortedSet<ContentKey> keys, int count,
                                         DirectionQuery query, ObjectMapper mapper, UriInfo uriInfo,
-                                        boolean includePrevious, boolean trace) {
+                                        boolean includePrevious, boolean trace, boolean descending) {
         String channel = query.getChannelName();
         ObjectNode root = mapper.createObjectNode();
         ObjectNode links = root.putObject("_links");
@@ -142,7 +139,10 @@ public class LinkBuilder {
         }
         ArrayNode ids = links.putArray("uris");
         URI channelUri = buildChannelUri(channel, uriInfo);
-        for (ContentKey key : keys) {
+        if (descending) {
+            Collections.reverse(list);
+        }
+        for (ContentKey key : list) {
             URI uri = buildItemUri(key, channelUri);
             ids.add(uri.toString());
         }
