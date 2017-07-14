@@ -3,10 +3,7 @@ package com.flightstats.hub.channel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.TagService;
-import com.flightstats.hub.model.ChannelContentKey;
-import com.flightstats.hub.model.DirectionQuery;
-import com.flightstats.hub.model.Epoch;
-import com.flightstats.hub.model.Location;
+import com.flightstats.hub.model.*;
 import com.google.common.base.Optional;
 
 import javax.ws.rs.*;
@@ -67,6 +64,7 @@ public class TagLatestResource {
                                    @QueryParam("trace") @DefaultValue("false") boolean trace,
                                    @QueryParam("location") @DefaultValue(Location.DEFAULT) String location,
                                    @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
+                                   @QueryParam("order") @DefaultValue(Order.DEFAULT) String order,
                                    @HeaderParam("Accept") String accept,
                                    @Context UriInfo uriInfo) {
         Optional<ChannelContentKey> latest = tagService.getLatest(getQuery(tag, stable, location, epoch));
@@ -85,9 +83,10 @@ public class TagLatestResource {
         SortedSet<ChannelContentKey> keys = tagService.getKeys(query);
         keys.add(latest.get());
         if (bulk || batch) {
+            //todo - gfm -
             return BulkBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo, accept);
         }
-        return LinkBuilder.directionalTagResponse(tag, keys, count, query, mapper, uriInfo, true, trace);
+        return LinkBuilder.directionalTagResponse(tag, keys, count, query, mapper, uriInfo, true, trace, Order.isDescending(order));
     }
 
 }

@@ -291,13 +291,14 @@ public class TagContentResource {
                                       @QueryParam("bulk") @DefaultValue("false") boolean bulk,
                                       @QueryParam("location") @DefaultValue(Location.DEFAULT) String location,
                                       @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
+                                      @QueryParam("order") @DefaultValue(Order.DEFAULT) String order,
                                       @HeaderParam("Accept") String accept) {
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
-        return adjacentCount(tag, count, stable, trace, location, direction.startsWith("n"), key, bulk || batch, accept, uriInfo, epoch);
+        return adjacentCount(tag, count, stable, trace, location, direction.startsWith("n"), key, bulk || batch, accept, uriInfo, epoch, Order.isDescending(order));
     }
 
     public Response adjacentCount(String tag, int count, boolean stable, boolean trace, String location,
-                                  boolean next, ContentKey contentKey, boolean bulk, String accept, UriInfo uriInfo, String epoch) {
+                                  boolean next, ContentKey contentKey, boolean bulk, String accept, UriInfo uriInfo, String epoch, boolean descending) {
         DirectionQuery query = DirectionQuery.builder()
                 .tagName(tag)
                 .startKey(contentKey)
@@ -308,6 +309,7 @@ public class TagContentResource {
                 .count(count).build();
         SortedSet<ChannelContentKey> keys = tagService.getKeys(query);
         if (bulk) {
+            //todo - gfm - order
             return BulkBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo, accept, (builder) -> {
                 String baseUri = uriInfo.getBaseUri() + "tag/" + tag + "/";
                 if (!keys.isEmpty()) {
@@ -316,6 +318,6 @@ public class TagContentResource {
                 }
             });
         }
-        return LinkBuilder.directionalTagResponse(tag, keys, count, query, mapper, uriInfo, true, trace);
+        return LinkBuilder.directionalTagResponse(tag, keys, count, query, mapper, uriInfo, true, trace, descending);
     }
 }

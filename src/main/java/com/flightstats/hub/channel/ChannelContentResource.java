@@ -372,7 +372,7 @@ public class ChannelContentResource {
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         boolean next = direction.startsWith("n");
         if (null != tag) {
-            return tagContentResource.adjacentCount(tag, count, stable, trace, location, next, key, bulk || batch, accept, uriInfo, epoch);
+            return tagContentResource.adjacentCount(tag, count, stable, trace, location, next, key, bulk || batch, accept, uriInfo, epoch, Order.isDescending(order));
         }
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)

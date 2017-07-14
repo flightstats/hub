@@ -72,8 +72,7 @@ public class ChannelLatestResource {
                                    @QueryParam("tag") String tag,
                                    @HeaderParam("Accept") String accept) {
         if (tag != null) {
-            //todo - gfm - order
-            return tagLatestResource.getLatestCount(tag, count, stable, batch, bulk, trace, location, epoch, accept, uriInfo);
+            return tagLatestResource.getLatestCount(tag, count, stable, batch, bulk, trace, location, epoch, order, accept, uriInfo);
         }
         DirectionQuery latestQuery = DirectionQuery.builder()
                 .channelName(channel)

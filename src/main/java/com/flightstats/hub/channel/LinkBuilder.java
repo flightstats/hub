@@ -152,9 +152,9 @@ public class LinkBuilder {
         return Response.ok(root).build();
     }
 
-    static Response directionalTagResponse(String tag, Collection<ChannelContentKey> keys, int count,
+    static Response directionalTagResponse(String tag, SortedSet<ChannelContentKey> keys, int count,
                                            DirectionQuery query, ObjectMapper mapper, UriInfo uriInfo,
-                                           boolean includePrevious, boolean trace) {
+                                           boolean includePrevious, boolean trace, boolean descending) {
         ObjectNode root = mapper.createObjectNode();
         ObjectNode links = root.putObject("_links");
         ObjectNode self = links.putObject("self");
@@ -178,7 +178,10 @@ public class LinkBuilder {
             }
         }
         ArrayNode ids = links.putArray("uris");
-        for (ChannelContentKey key : keys) {
+        if (descending) {
+            Collections.reverse(list);
+        }
+        for (ChannelContentKey key : list) {
             ids.add(uriInfo.getBaseUri() + key.toUrl() + "?tag=" + tag);
         }
         if (trace) {
