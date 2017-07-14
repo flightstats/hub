@@ -190,8 +190,7 @@ public class ChannelContentResource {
         DateTime next = startTime.plus(unit.getDuration());
         DateTime previous = startTime.minus(unit.getDuration());
         if (bulk) {
-            //todo - gfm - order
-            return BulkBuilder.build(keys, channel, channelService, uriInfo, accept, (builder) -> {
+            return BulkBuilder.build(keys, channel, channelService, uriInfo, accept, descending, (builder) -> {
                 if (next.isBefore(current)) {
                     builder.header("Link", "<" + TimeLinkUtil.getUri(channel, uriInfo, unit, next) +
                             ">;rel=\"" + "next" + "\"");
@@ -380,8 +379,9 @@ public class ChannelContentResource {
                                       @HeaderParam("Accept") String accept) {
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         boolean next = direction.startsWith("n");
+        boolean descending = Order.isDescending(order);
         if (null != tag) {
-            return tagContentResource.adjacentCount(tag, count, stable, trace, location, next, key, bulk || batch, accept, uriInfo, epoch, Order.isDescending(order));
+            return tagContentResource.adjacentCount(tag, count, stable, trace, location, next, key, bulk || batch, accept, uriInfo, epoch, descending);
         }
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
@@ -394,7 +394,7 @@ public class ChannelContentResource {
                 .build();
         SortedSet<ContentKey> keys = channelService.query(query);
         if (bulk || batch) {
-            return BulkBuilder.build(keys, channel, channelService, uriInfo, accept, (builder) -> {
+            return BulkBuilder.build(keys, channel, channelService, uriInfo, accept, descending, (builder) -> {
                 if (!keys.isEmpty()) {
                     builder.header("Link", "<" + LinkBuilder.getDirection("previous", channel, uriInfo, keys.first(), count) +
                             ">;rel=\"" + "previous" + "\"");
@@ -403,7 +403,7 @@ public class ChannelContentResource {
                 }
             });
         } else {
-            return LinkBuilder.directionalResponse(keys, count, query, mapper, uriInfo, true, trace, Order.isDescending(order));
+            return LinkBuilder.directionalResponse(keys, count, query, mapper, uriInfo, true, trace, descending);
         }
     }
 

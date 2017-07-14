@@ -7,7 +7,6 @@ import com.google.inject.name.Named;
 
 import java.util.Collection;
 import java.util.SortedSet;
-import java.util.function.Consumer;
 
 /**
  * ChannelNameService will normalize the names of the channel.
@@ -78,8 +77,8 @@ public class ChannelNameService implements ChannelService {
     }
 
     @Override
-    public void get(String channel, SortedSet<ContentKey> keys, Consumer<Content> callback) {
-        delegate.get(getDisplayName(channel), keys, callback);
+    public void get(StreamResults streamResults) {
+        delegate.get(streamResults.withChannel(getDisplayName(streamResults.getChannel())));
     }
 
     @Override

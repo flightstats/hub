@@ -74,10 +74,11 @@ public class ChannelEarliestResource {
         if (keys.isEmpty()) {
             return Response.status(NOT_FOUND).build();
         }
+        boolean descending = Order.isDescending(order);
         if (bulk || batch) {
-            return BulkBuilder.build(keys, channel, channelService, uriInfo, accept);
+            return BulkBuilder.build(keys, channel, channelService, uriInfo, accept, descending);
         } else {
-            return LinkBuilder.directionalResponse(keys, count, query, mapper, uriInfo, false, trace, Order.isDescending(order));
+            return LinkBuilder.directionalResponse(keys, count, query, mapper, uriInfo, false, trace, descending);
         }
     }
 

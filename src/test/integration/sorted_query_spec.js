@@ -69,9 +69,10 @@ describe(testName, function () {
         callTime('/latest/4?order=desc&stable=false', descendingItems, 0, done);
     });
 
+    var next = moment.utc().subtract(1, 'minute').format('/YYYY/MM/DD/HH/mm/ss/SSS/')
+        + 'A/next/4?order=descending&stable=false';
     it('gets descending next', function (done) {
-        var start = moment.utc().subtract(1, 'minute').format('/YYYY/MM/DD/HH/mm/ss/SSS/');
-        callTime(start + 'A/next/4?order=descending&stable=false', descendingItems, 0, done);
+        callTime(next, descendingItems, 0, done);
     });
 
     it('gets descending previous', function (done) {
@@ -84,7 +85,30 @@ describe(testName, function () {
         callTime(start + '?order=descending&stable=false', descendingItems, 0, done);
     });
 
-    //todo - gfm - bulk gets
+    function checkIndex(body, start, index) {
+        var indexOf = body.indexOf(descendingItems[index], start);
+        console.log('indexOf', indexOf);
+        expect(indexOf).toBeGreaterThan(0);
+        return indexOf;
+    }
+
+    it('bulk get', function (done) {
+        var url = next + '&bulk=true';
+        console.log('url ', url);
+        request.get({url: channelResource + url, json: true},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+                console.log('bulk body', body);
+                var index = checkIndex(body, 0, 0);
+                index = checkIndex(body, index, 1);
+                index = checkIndex(body, index, 2);
+                checkIndex(body, index, 3);
+                done();
+            });
+    })
+
+
 
 });
 

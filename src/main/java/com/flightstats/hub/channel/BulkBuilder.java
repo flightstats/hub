@@ -12,20 +12,19 @@ import java.util.function.Consumer;
 class BulkBuilder {
 
     public static Response build(SortedSet<ContentKey> keys, String channel,
-                                 ChannelService channelService, UriInfo uriInfo, String accept) {
-        //todo - gfm - order
-        return build(keys, channel, channelService, uriInfo, accept, (builder) -> {
+                                 ChannelService channelService, UriInfo uriInfo, String accept, boolean descending) {
+        return build(keys, channel, channelService, uriInfo, accept, descending, (builder) -> {
         });
     }
 
     public static Response build(SortedSet<ContentKey> keys, String channel,
                                  ChannelService channelService, UriInfo uriInfo, String accept,
-                                 Consumer<Response.ResponseBuilder> headerBuilder) {
-        //todo - gfm - order
+                                 boolean descending, Consumer<Response.ResponseBuilder> headerBuilder) {
+
         if ("application/zip".equalsIgnoreCase(accept)) {
-            return ZipBulkBuilder.build(keys, channel, channelService, headerBuilder);
+            return ZipBulkBuilder.build(keys, channel, channelService, descending, headerBuilder);
         } else {
-            return MultiPartBulkBuilder.build(keys, channel, channelService, uriInfo, headerBuilder);
+            return MultiPartBulkBuilder.build(keys, channel, channelService, uriInfo, headerBuilder, descending);
         }
     }
 

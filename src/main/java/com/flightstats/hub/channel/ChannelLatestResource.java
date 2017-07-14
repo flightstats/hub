@@ -104,8 +104,7 @@ public class ChannelLatestResource {
     private Response getResponse(String channel, int count, boolean trace, boolean batch, boolean bulk,
                                  String accept, DirectionQuery query, SortedSet<ContentKey> keys, boolean descending) {
         if (bulk || batch) {
-            //todo - gfm - order
-            return BulkBuilder.build(keys, channel, channelService, uriInfo, accept);
+            return BulkBuilder.build(keys, channel, channelService, uriInfo, accept, descending);
         } else {
             return LinkBuilder.directionalResponse(keys, count, query, mapper, uriInfo, true, trace, descending);
         }

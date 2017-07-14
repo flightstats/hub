@@ -8,6 +8,7 @@ import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.StreamResults;
 import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
 import org.slf4j.Logger;
@@ -27,11 +28,17 @@ public class ZipBulkBuilder {
     private final static Logger logger = LoggerFactory.getLogger(ZipBulkBuilder.class);
 
     public static Response build(SortedSet<ContentKey> keys, String channel,
-                                 ChannelService channelService, Consumer<Response.ResponseBuilder> headerBuilder) {
+                                 ChannelService channelService, boolean descending, Consumer<Response.ResponseBuilder> headerBuilder) {
         Traces traces = ActiveTraces.getLocal();
         return write((ZipOutputStream output) -> {
             ActiveTraces.setLocal(traces);
-            channelService.get(channel, keys, content -> createZipEntry(output, content));
+            channelService.get(StreamResults.builder()
+                    .channel(channel)
+                    .keys(keys)
+                    .callback(content -> createZipEntry(output, content))
+                    .descending(descending)
+                    .build()
+            );
         }, headerBuilder);
     }
 
