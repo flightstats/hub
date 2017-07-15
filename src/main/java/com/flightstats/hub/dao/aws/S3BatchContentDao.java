@@ -139,7 +139,31 @@ public class S3BatchContentDao implements ContentDao {
     }
 
     @Override
-    public boolean streamMinute(String channel, ContentPathKeys minutePath, Consumer<Content> callback) {
+    public boolean streamMinute(String channel, MinutePath minutePath, boolean descending, Consumer<Content> callback) {
+        if (descending) {
+            return descending(channel, minutePath, callback);
+        }
+        return ascending(channel, minutePath, callback);
+    }
+
+    private boolean descending(String channel, MinutePath minutePath, Consumer<Content> callback) {
+        boolean found = false;
+        try {
+            Map<ContentKey, Content> map = mapMinute(channel, minutePath);
+            NavigableSet<ContentKey> descendingSet = new TreeSet<>(map.keySet()).descendingSet();
+            for (ContentKey contentKey : descendingSet) {
+                if (minutePath.getKeys().contains(contentKey)) {
+                    callback.accept(map.get(contentKey));
+                    found = true;
+                }
+            }
+        } catch (IOException e) {
+            logger.warn("unexpected IOException for " + channel + " " + minutePath, e);
+        }
+        return found;
+    }
+
+    private boolean ascending(String channel, MinutePath minutePath, Consumer<Content> callback) {
         Map<String, ContentKey> keyMap = new HashMap<>();
         boolean found = false;
         for (ContentKey key : minutePath.getKeys()) {

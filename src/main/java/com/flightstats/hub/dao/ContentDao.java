@@ -39,7 +39,7 @@ public interface ContentDao {
         throw new UnsupportedOperationException("writeBatch is not supported");
     }
 
-    default boolean streamMinute(String channel, ContentPathKeys path, Consumer<Content> callback) {
+    default boolean streamMinute(String channel, MinutePath path, boolean descending, Consumer<Content> callback) {
         throw new UnsupportedOperationException("streamMinute is not supported");
     }
 

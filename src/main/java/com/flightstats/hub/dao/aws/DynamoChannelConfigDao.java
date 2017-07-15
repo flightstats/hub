@@ -6,7 +6,6 @@ import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.GlobalConfig;
-import com.flightstats.hub.util.Sleeper;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
@@ -99,37 +98,6 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
         dynamoUtils.createTable(request);
         dynamoUtils.updateTable(tableName, throughput);
 
-        //todo - gfm - this can be deleted once it is run everywhere
-        temporaryUpdateToLowerCaseName();
-    }
-
-    private void temporaryUpdateToLowerCaseName() {
-        ScanRequest scanRequest = new ScanRequest()
-                .withConsistentRead(true)
-                .withTableName(getTableName());
-
-        ScanResult result = dbClient.scan(scanRequest);
-        processItems(result);
-
-        while (result.getLastEvaluatedKey() != null) {
-            scanRequest.setExclusiveStartKey(result.getLastEvaluatedKey());
-            result = dbClient.scan(scanRequest);
-            processItems(result);
-        }
-    }
-
-    private void processItems(ScanResult result) {
-        for (Map<String, AttributeValue> item : result.getItems()) {
-            String displayName = item.get("displayName").getS();
-            String name = item.get("key").getS();
-            if (!name.equals(displayName.toLowerCase())) {
-                ChannelConfig channelConfig = mapItem(item);
-                logger.info("updating {}", channelConfig);
-                upsert(channelConfig);
-                delete(name);
-                Sleeper.sleep(10);
-            }
-        }
     }
 
     @Override

@@ -7,6 +7,7 @@ import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.StreamResults;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
@@ -38,12 +39,17 @@ class MultiPartBulkBuilder {
 
     public static Response build(SortedSet<ContentKey> keys, String channel,
                                  ChannelService channelService, UriInfo uriInfo,
-                                 Consumer<Response.ResponseBuilder> headerBuilder) {
+                                 Consumer<Response.ResponseBuilder> headerBuilder, boolean descending) {
         Traces traces = ActiveTraces.getLocal();
         return write((BufferedOutputStream output) -> {
             ActiveTraces.setLocal(traces);
-            channelService.get(channel, keys, content -> writeContent(content, output,
-                    LinkBuilder.buildChannelUri(channel, uriInfo), channel));
+            channelService.get(StreamResults.builder()
+                    .channel(channel)
+                    .keys(keys)
+                    .callback(content -> writeContent(content, output,
+                            LinkBuilder.buildChannelUri(channel, uriInfo), channel))
+                    .descending(descending)
+                    .build());
         }, headerBuilder);
     }
 

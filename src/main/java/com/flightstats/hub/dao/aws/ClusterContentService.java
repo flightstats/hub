@@ -22,10 +22,7 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.SortedSet;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -166,24 +163,33 @@ public class ClusterContentService implements ContentService {
     }
 
     @Override
-    public void get(String channelName, SortedSet<ContentKey> keys, Consumer<Content> callback) {
-        SortedSet<MinutePath> minutePaths = ContentKeyUtil.convert(keys);
+    public void get(StreamResults streamResults) {
+        String channelName = streamResults.getChannel();
+        Consumer<Content> callback = streamResults.getCallback();
+        List<MinutePath> minutePaths = new ArrayList<>(ContentKeyUtil.convert(streamResults.getKeys()));
+        if (streamResults.isDescending()) {
+            Collections.reverse(minutePaths);
+        }
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
         DateTime spokeTtlTime = getSpokeTtlTime(channelName);
         for (MinutePath minutePath : minutePaths) {
             if (minutePath.getTime().isAfter(spokeTtlTime)
                     || channel.isSingle()) {
-                getValues(channelName, callback, minutePath);
+                getValues(channelName, streamResults.getCallback(), minutePath, streamResults.isDescending());
             } else {
-                if (!s3BatchContentDao.streamMinute(channelName, minutePath, callback)) {
-                    getValues(channelName, callback, minutePath);
+                if (!s3BatchContentDao.streamMinute(channelName, minutePath, streamResults.isDescending(), callback)) {
+                    getValues(channelName, callback, minutePath, streamResults.isDescending());
                 }
             }
         }
     }
 
-    private void getValues(String channelName, Consumer<Content> callback, ContentPathKeys contentPathKeys) {
-        for (ContentKey contentKey : contentPathKeys.getKeys()) {
+    private void getValues(String channelName, Consumer<Content> callback, ContentPathKeys contentPathKeys, boolean descending) {
+        List<ContentKey> keys = new ArrayList<>(contentPathKeys.getKeys());
+        if (descending) {
+            Collections.reverse(keys);
+        }
+        for (ContentKey contentKey : keys) {
             Optional<Content> contentOptional = get(channelName, contentKey, false);
             if (contentOptional.isPresent()) {
                 callback.accept(contentOptional.get());
@@ -291,7 +297,7 @@ public class ClusterContentService implements ContentService {
         ActiveTraces.getLocal().add("found latestCache", channel, latestCache);
         if (latestCache != null) {
             DateTime channelTtlTime = cachedChannelConfig.getTtlTime();
-            if(latestCache.getTime().isBefore(channelTtlTime)){
+            if (latestCache.getTime().isBefore(channelTtlTime)) {
                 lastContentPath.update(ContentKey.NONE, channel, CHANNEL_LATEST_UPDATED);
             }
             ActiveTraces.getLocal().add("found cached latest", channel, latest);
