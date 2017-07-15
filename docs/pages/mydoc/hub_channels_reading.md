@@ -148,4 +148,12 @@ Content-Key: http://hub/channel/stumptown/2014/12/23/23/14/49/887/x46z8p
 --||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||--
 ```
 
+## ordering content from channel 
+
+Any query operation (including next, previous, earliest, latest, and times) supports the addition of the
+query parameter `?order=descending`.  `descending` can be abbreviated to `d`, or any partial spelling.
+Anything else will be interpreted as the default ascending.
+This will cause all results (including bulk queries) to be returned in descending time order.
+
+
 {% include links.html %}
