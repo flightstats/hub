@@ -5,10 +5,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.TagService;
-import com.flightstats.hub.model.ChannelContentKey;
-import com.flightstats.hub.model.DirectionQuery;
-import com.flightstats.hub.model.Epoch;
-import com.flightstats.hub.model.Location;
+import com.flightstats.hub.model.*;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
@@ -16,10 +13,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.SortedSet;
+import java.util.*;
 
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.SEE_OTHER;
@@ -71,11 +65,13 @@ public class TagEarliestResource {
                                      @QueryParam("trace") @DefaultValue("false") boolean trace,
                                      @QueryParam("location") @DefaultValue(Location.DEFAULT) String location,
                                      @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
+                                     @QueryParam("order") @DefaultValue(Order.DEFAULT) String order,
                                      @HeaderParam("Accept") String accept,
                                      @Context UriInfo uriInfo) {
         DirectionQuery query = getQuery(tag, count, stable, location, epoch);
         SortedSet<ChannelContentKey> keys = tagService.getEarliest(query);
         if (bulk || batch) {
+            //todo - gfm - order
             return BulkBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo, accept);
         }
         ObjectNode root = mapper.createObjectNode();
@@ -89,7 +85,10 @@ public class TagEarliestResource {
             next.put("href", baseUri + list.get(list.size() - 1).getContentKey().toUrl() + "/next/" + count);
         }
         ArrayNode ids = links.putArray("uris");
-        for (ChannelContentKey key : keys) {
+        if (Order.isDescending(order)) {
+            Collections.reverse(list);
+        }
+        for (ChannelContentKey key : list) {
             ids.add(uriInfo.getBaseUri() + key.toUrl() + "?tag=" + tag);
         }
         return Response.ok(root).build();

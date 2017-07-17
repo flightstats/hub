@@ -5,7 +5,6 @@ import com.google.common.base.Optional;
 
 import java.util.Collection;
 import java.util.SortedSet;
-import java.util.function.Consumer;
 
 public interface ChannelService {
     String DELEGATE = "DELEGATE";
@@ -44,7 +43,7 @@ public interface ChannelService {
 
     Optional<Content> get(ItemRequest itemRequest);
 
-    void get(String channel, SortedSet<ContentKey> keys, Consumer<Content> callback);
+    void get(StreamResults streamResults);
 
     ChannelConfig getChannelConfig(String channelName, boolean allowChannelCache);
 

@@ -4,8 +4,6 @@ import com.flightstats.hub.model.*;
 import com.google.common.base.Optional;
 
 import java.util.Collection;
-import java.util.SortedSet;
-import java.util.function.Consumer;
 
 public interface ContentService {
 
@@ -17,7 +15,7 @@ public interface ContentService {
 
     Optional<Content> get(String channelName, ContentKey key, boolean cached);
 
-    void get(String channel, SortedSet<ContentKey> keys, Consumer<Content> callback);
+    void get(StreamResults streamResults);
 
     Collection<ContentKey> queryByTime(TimeQuery timeQuery);
 

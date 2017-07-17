@@ -100,10 +100,11 @@ public class ChannelContentResource {
                            @QueryParam("stable") @DefaultValue("true") boolean stable,
                            @QueryParam("batch") @DefaultValue("false") boolean batch,
                            @QueryParam("bulk") @DefaultValue("false") boolean bulk,
+                           @QueryParam("order") @DefaultValue(Order.DEFAULT) String order,
                            @QueryParam("tag") String tag,
                            @HeaderParam("Accept") String accept) {
         DateTime startTime = new DateTime(year, month, day, 0, 0, 0, 0, DateTimeZone.UTC);
-        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.DAYS, tag, bulk || batch, accept, epoch);
+        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.DAYS, tag, bulk || batch, accept, epoch, Order.isDescending(order));
     }
 
     @Path("/{hour}")
@@ -120,10 +121,11 @@ public class ChannelContentResource {
                             @QueryParam("stable") @DefaultValue("true") boolean stable,
                             @QueryParam("batch") @DefaultValue("false") boolean batch,
                             @QueryParam("bulk") @DefaultValue("false") boolean bulk,
+                            @QueryParam("order") @DefaultValue(Order.DEFAULT) String order,
                             @QueryParam("tag") String tag,
                             @HeaderParam("Accept") String accept) {
         DateTime startTime = new DateTime(year, month, day, hour, 0, 0, 0, DateTimeZone.UTC);
-        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.HOURS, tag, bulk || batch, accept, epoch);
+        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.HOURS, tag, bulk || batch, accept, epoch, Order.isDescending(order));
     }
 
     @Path("/{h}/{minute}")
@@ -141,10 +143,11 @@ public class ChannelContentResource {
                               @QueryParam("stable") @DefaultValue("true") boolean stable,
                               @QueryParam("batch") @DefaultValue("false") boolean batch,
                               @QueryParam("bulk") @DefaultValue("false") boolean bulk,
+                              @QueryParam("order") @DefaultValue(Order.DEFAULT) String order,
                               @QueryParam("tag") String tag,
                               @HeaderParam("Accept") String accept) {
         DateTime startTime = new DateTime(year, month, day, hour, minute, 0, 0, DateTimeZone.UTC);
-        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.MINUTES, tag, bulk || batch, accept, epoch);
+        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.MINUTES, tag, bulk || batch, accept, epoch, Order.isDescending(order));
     }
 
     @Path("/{h}/{m}/{second}")
@@ -163,16 +166,17 @@ public class ChannelContentResource {
                               @QueryParam("stable") @DefaultValue("true") boolean stable,
                               @QueryParam("batch") @DefaultValue("false") boolean batch,
                               @QueryParam("bulk") @DefaultValue("false") boolean bulk,
+                              @QueryParam("order") @DefaultValue(Order.DEFAULT) String order,
                               @QueryParam("tag") String tag,
                               @HeaderParam("Accept") String accept) {
         DateTime startTime = new DateTime(year, month, day, hour, minute, second, 0, DateTimeZone.UTC);
-        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.SECONDS, tag, bulk || batch, accept, epoch);
+        return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.SECONDS, tag, bulk || batch, accept, epoch, Order.isDescending(order));
     }
 
     private Response getTimeQueryResponse(String channel, DateTime startTime, String location, boolean trace, boolean stable,
-                                          Unit unit, String tag, boolean bulk, String accept, String epoch) {
+                                          Unit unit, String tag, boolean bulk, String accept, String epoch, boolean descending) {
         if (tag != null) {
-            return tagContentResource.getTimeQueryResponse(tag, startTime, location, trace, stable, unit, bulk, accept, uriInfo, epoch);
+            return tagContentResource.getTimeQueryResponse(tag, startTime, location, trace, stable, unit, bulk, accept, uriInfo, epoch, descending);
         }
         TimeQuery query = TimeQuery.builder()
                 .channelName(channel)
@@ -187,7 +191,7 @@ public class ChannelContentResource {
         DateTime next = startTime.plus(unit.getDuration());
         DateTime previous = startTime.minus(unit.getDuration());
         if (bulk) {
-            return BulkBuilder.build(keys, channel, channelService, uriInfo, accept, (builder) -> {
+            return BulkBuilder.build(keys, channel, channelService, uriInfo, accept, descending, (builder) -> {
                 if (next.isBefore(current)) {
                     builder.header("Link", "<" + TimeLinkUtil.getUri(channel, uriInfo, unit, next) +
                             ">;rel=\"" + "next" + "\"");
@@ -206,7 +210,11 @@ public class ChannelContentResource {
             links.putObject("previous").put("href", TimeLinkUtil.getUri(channel, uriInfo, unit, previous).toString());
             ArrayNode ids = links.putArray("uris");
             URI channelUri = LinkBuilder.buildChannelUri(channel, uriInfo);
-            for (ContentKey key : keys) {
+            ArrayList<ContentKey> list = new ArrayList<>(keys);
+            if (descending) {
+                Collections.reverse(list);
+            }
+            for (ContentKey key : list) {
                 URI uri = LinkBuilder.buildItemUri(key, channelUri);
                 ids.add(uri.toString());
             }
@@ -390,12 +398,14 @@ public class ChannelContentResource {
                                       @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
                                       @QueryParam("batch") @DefaultValue("false") boolean batch,
                                       @QueryParam("bulk") @DefaultValue("false") boolean bulk,
+                                      @QueryParam("order") @DefaultValue(Order.DEFAULT) String order,
                                       @QueryParam("tag") String tag,
                                       @HeaderParam("Accept") String accept) {
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         boolean next = direction.startsWith("n");
+        boolean descending = Order.isDescending(order);
         if (null != tag) {
-            return tagContentResource.adjacentCount(tag, count, stable, trace, location, next, key, bulk || batch, accept, uriInfo, epoch);
+            return tagContentResource.adjacentCount(tag, count, stable, trace, location, next, key, bulk || batch, accept, uriInfo, epoch, descending);
         }
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
@@ -408,7 +418,7 @@ public class ChannelContentResource {
                 .build();
         SortedSet<ContentKey> keys = channelService.query(query);
         if (bulk || batch) {
-            return BulkBuilder.build(keys, channel, channelService, uriInfo, accept, (builder) -> {
+            return BulkBuilder.build(keys, channel, channelService, uriInfo, accept, descending, (builder) -> {
                 if (!keys.isEmpty()) {
                     builder.header("Link", "<" + LinkBuilder.getDirection("previous", channel, uriInfo, keys.first(), count) +
                             ">;rel=\"" + "previous" + "\"");
@@ -417,7 +427,7 @@ public class ChannelContentResource {
                 }
             });
         } else {
-            return LinkBuilder.directionalResponse(keys, count, query, mapper, uriInfo, true, trace);
+            return LinkBuilder.directionalResponse(keys, count, query, mapper, uriInfo, true, trace, descending);
         }
     }
 
