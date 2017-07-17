@@ -22,6 +22,7 @@ ws://hub/channel/{channel}/ws
 ### Time
 Returns items starting at the provided time.
 ```
+ws://hub/channel/{channel}/{Y}/{M}/{D}/ws
 ws://hub/channel/{channel}/{Y}/{M}/{D}/{h}/ws
 ws://hub/channel/{channel}/{Y}/{M}/{D}/{h}/{m}/ws
 ws://hub/channel/{channel}/{Y}/{M}/{D}/{h}/{m}/{s}/ws

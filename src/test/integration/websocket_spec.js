@@ -61,7 +61,7 @@ describe(__filename, function () {
 
     });
 
-    describe('websocket hour endpoint', function () {
+    describe('websocket day endpoint', function () {
 
         var wsURL;
         var webSocket;
@@ -69,6 +69,67 @@ describe(__filename, function () {
 
         it('builds websocket url', function () {
             expect(itemURLs.length).toEqual(1);
+            var itemPath = url.parse(itemURLs[0]).pathname;
+            var itemPathComponents = itemPath.split('/');
+            var itemYear = itemPathComponents[3];
+            var itemMonth = itemPathComponents[4];
+            var itemDay = itemPathComponents[5];
+            var dayURL = channelResource + '/' + itemYear + '/' + itemMonth + '/' + itemDay;
+            wsURL = dayURL.replace('http', 'ws') + '/ws'
+        });
+
+        it('opens websocket', function () {
+            expect(wsURL).not.toEqual('undefined');
+
+            webSocket = new WebSocket(wsURL);
+            webSocket.onmessage = function (message) {
+                console.log('received:', message.data);
+                receivedMessages.push(message.data);
+            };
+
+            webSocket.onclose = function () {
+                console.log('closed:', wsURL);
+            };
+
+            webSocket.on('open', function () {
+                console.log('opened:', wsURL);
+            });
+        }, 5000);
+
+        it('posts item to channel', function (done) {
+            utils.postItemQ(channelResource)
+                .then(function (result) {
+                    console.log('posted:', result.response.headers.location);
+                    itemURLs.push(result.response.headers.location);
+                    done();
+                });
+        });
+
+        it('waits for data', function (done) {
+            waitForMessages(receivedMessages, itemURLs, done);
+        });
+
+        it('verifies the correct data was received', function () {
+            expect(receivedMessages.length).toEqual(itemURLs.length);
+            for (var i = 0; i < itemURLs.length; ++i) {
+                expect(receivedMessages).toContain(itemURLs[i]);
+            }
+        });
+
+        it('closes websocket', function () {
+            webSocket.close();
+        });
+
+    });
+
+    describe('websocket hour endpoint', function () {
+
+        var wsURL;
+        var webSocket;
+        var receivedMessages = [];
+
+        it('builds websocket url', function () {
+            expect(itemURLs.length).toEqual(2);
             var itemPath = url.parse(itemURLs[0]).pathname;
             var itemPathComponents = itemPath.split('/');
             var itemYear = itemPathComponents[3];
@@ -130,7 +191,7 @@ describe(__filename, function () {
         var receivedMessages = [];
 
         it('builds websocket url', function () {
-            expect(itemURLs.length).toEqual(2);
+            expect(itemURLs.length).toEqual(3);
             var itemPath = url.parse(itemURLs[0]).pathname;
             var itemPathComponents = itemPath.split('/');
             var itemYear = itemPathComponents[3];
@@ -193,7 +254,7 @@ describe(__filename, function () {
         var receivedMessages = [];
 
         it('builds websocket url', function () {
-            expect(itemURLs.length).toEqual(3);
+            expect(itemURLs.length).toEqual(4);
             var itemPath = url.parse(itemURLs[0]).pathname;
             var itemPathComponents = itemPath.split('/');
             var itemYear = itemPathComponents[3];
@@ -257,7 +318,7 @@ describe(__filename, function () {
         var receivedMessages = [];
 
         it('builds websocket url', function () {
-            expect(itemURLs.length).toEqual(4);
+            expect(itemURLs.length).toEqual(5);
             wsURL = itemURLs[0].replace('http', 'ws') + '/ws'
         });
 

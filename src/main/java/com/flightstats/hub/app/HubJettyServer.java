@@ -1,5 +1,6 @@
 package com.flightstats.hub.app;
 
+import com.flightstats.hub.ws.WebSocketDayEndpoint;
 import com.flightstats.hub.ws.WebSocketHashEndpoint;
 import com.flightstats.hub.ws.WebSocketChannelEndpoint;
 import com.flightstats.hub.ws.WebSocketHourEndpoint;
@@ -61,6 +62,7 @@ public class HubJettyServer {
             ServletContextHandler wsContext = new ServletContextHandler(server, "/", ServletContextHandler.SESSIONS);
             ServerContainer wsContainer = WebSocketServerContainerInitializer.configureContext(wsContext);
             wsContainer.addEndpoint(WebSocketChannelEndpoint.class);
+            wsContainer.addEndpoint(WebSocketDayEndpoint.class);
             wsContainer.addEndpoint(WebSocketHourEndpoint.class);
             wsContainer.addEndpoint(WebSocketMinuteEndpoint.class);
             wsContainer.addEndpoint(WebSocketSecondEndpoint.class);
