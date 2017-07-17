@@ -12,12 +12,12 @@ import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
 
-@ServerEndpoint(value = "/channel/{channel}/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}/ws")
-public class ChannelItemWSEndpoint {
+@ServerEndpoint(value = "/channel/{channel}/{Y}/{M}/{D}/{h}/{m}/ws")
+public class WebSocketMinuteEndpoint {
 
     private static final WebSocketService webSocketService = WebSocketService.getInstance();
 
-    private final static Logger logger = LoggerFactory.getLogger(ChannelLatestWSEndpoint.class);
+    private final static Logger logger = LoggerFactory.getLogger(WebSocketChannelEndpoint.class);
 
     @OnOpen
     public void onOpen(Session session,
@@ -26,12 +26,9 @@ public class ChannelItemWSEndpoint {
                        @PathParam("M") int month,
                        @PathParam("D") int day,
                        @PathParam("h") int hour,
-                       @PathParam("m") int minute,
-                       @PathParam("s") int second,
-                       @PathParam("ms") int millis,
-                       @PathParam("hash") String hash
+                       @PathParam("m") int minute
     ) throws IOException {
-        ContentKey startingKey = new ContentKey(year, month, day, hour, minute, second, millis, hash);
+        ContentKey startingKey = new ContentKey(year, month, day, hour, minute, 0, 0);
         webSocketService.createCallback(session, channel, startingKey);
     }
 
