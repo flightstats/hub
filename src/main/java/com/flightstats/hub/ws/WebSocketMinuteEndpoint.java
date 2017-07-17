@@ -1,5 +1,6 @@
 package com.flightstats.hub.ws;
 
+import com.flightstats.hub.model.ContentKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,16 +12,24 @@ import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
 
-@ServerEndpoint(value = "/channel/{channel}/ws")
-public class ChannelWSEndpoint {
+@ServerEndpoint(value = "/channel/{channel}/{Y}/{M}/{D}/{h}/{m}/ws")
+public class WebSocketMinuteEndpoint {
 
     private static final WebSocketService webSocketService = WebSocketService.getInstance();
 
-    private final static Logger logger = LoggerFactory.getLogger(ChannelWSEndpoint.class);
+    private final static Logger logger = LoggerFactory.getLogger(WebSocketChannelEndpoint.class);
 
     @OnOpen
-    public void onOpen(Session session, @PathParam("channel") String channel) throws IOException {
-        webSocketService.createCallback(session, channel);
+    public void onOpen(Session session,
+                       @PathParam("channel") String channel,
+                       @PathParam("Y") int year,
+                       @PathParam("M") int month,
+                       @PathParam("D") int day,
+                       @PathParam("h") int hour,
+                       @PathParam("m") int minute
+    ) throws IOException {
+        ContentKey startingKey = new ContentKey(year, month, day, hour, minute, 0, 0);
+        webSocketService.createCallback(session, channel, startingKey);
     }
 
     @OnError
