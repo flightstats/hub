@@ -19,7 +19,9 @@ describe(__filename, function () {
         var webSocket;
         var receivedMessages = [];
 
-        it('opens websocket', function () {
+        it('opens websocket', function (done) {
+            expect(wsURL).not.toEqual('undefined');
+
             webSocket = new WebSocket(wsURL);
             webSocket.onmessage = function (message) {
                 console.log('received:', message.data);
@@ -32,8 +34,9 @@ describe(__filename, function () {
 
             webSocket.on('open', function () {
                 console.log('opened:', wsURL);
+                setTimeout(done, 5000);
             });
-        }, 5000);
+        });
 
         it('posts item to channel', function (done) {
             utils.postItemQ(channelResource)
@@ -78,7 +81,7 @@ describe(__filename, function () {
             wsURL = dayURL.replace('http', 'ws') + '/ws'
         });
 
-        it('opens websocket', function () {
+        it('opens websocket', function (done) {
             expect(wsURL).not.toEqual('undefined');
 
             webSocket = new WebSocket(wsURL);
@@ -93,8 +96,9 @@ describe(__filename, function () {
 
             webSocket.on('open', function () {
                 console.log('opened:', wsURL);
+                setTimeout(done, 5000);
             });
-        }, 5000);
+        });
 
         it('posts item to channel', function (done) {
             utils.postItemQ(channelResource)
@@ -140,7 +144,7 @@ describe(__filename, function () {
             wsURL = hourURL.replace('http', 'ws') + '/ws'
         });
 
-        it('opens websocket', function () {
+        it('opens websocket', function (done) {
             expect(wsURL).not.toEqual('undefined');
 
             webSocket = new WebSocket(wsURL);
@@ -155,8 +159,9 @@ describe(__filename, function () {
 
             webSocket.on('open', function () {
                 console.log('opened:', wsURL);
+                setTimeout(done, 5000);
             });
-        }, 5000);
+        });
 
         it('posts item to channel', function (done) {
             utils.postItemQ(channelResource)
@@ -203,7 +208,7 @@ describe(__filename, function () {
             wsURL = minuteURL.replace('http', 'ws') + '/ws'
         });
 
-        it('opens websocket', function () {
+        it('opens websocket', function (done) {
             expect(wsURL).not.toEqual('undefined');
 
             webSocket = new WebSocket(wsURL);
@@ -218,8 +223,9 @@ describe(__filename, function () {
 
             webSocket.on('open', function () {
                 console.log('opened:', wsURL);
+                setTimeout(done, 5000);
             });
-        }, 5000);
+        });
 
         it('posts item to channel', function (done) {
             utils.postItemQ(channelResource)
@@ -267,7 +273,7 @@ describe(__filename, function () {
             wsURL = secondURL.replace('http', 'ws') + '/ws'
         });
 
-        it('opens websocket', function () {
+        it('opens websocket', function (done) {
             expect(wsURL).not.toEqual('undefined');
 
             webSocket = new WebSocket(wsURL);
@@ -282,8 +288,9 @@ describe(__filename, function () {
 
             webSocket.on('open', function () {
                 console.log('opened:', wsURL);
+                setTimeout(done, 5000);
             });
-        }, 5000);
+        });
 
         it('posts item to channel', function (done) {
             utils.postItemQ(channelResource)
@@ -322,7 +329,7 @@ describe(__filename, function () {
             wsURL = itemURLs[0].replace('http', 'ws') + '/ws'
         });
 
-        it('opens websocket', function () {
+        it('opens websocket', function (done) {
             expect(wsURL).not.toEqual('undefined');
 
             webSocket = new WebSocket(wsURL);
@@ -337,8 +344,9 @@ describe(__filename, function () {
 
             webSocket.on('open', function () {
                 console.log('opened:', wsURL);
+                setTimeout(done, 5000);
             });
-        }, 5000);
+        });
 
         it('posts item to channel', function (done) {
             utils.postItemQ(channelResource)
