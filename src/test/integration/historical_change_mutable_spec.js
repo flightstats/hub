@@ -32,6 +32,7 @@ describe(testName, function () {
     var historicalLocations = [];
 
     it('posts historical item to ' + channel, function (done) {
+        console.log('----- DEBUG BEGIN -----');
         utils.postItemQ(channelURL + '/' + moment(mutableTime).subtract(1, 'hour').format('YYYY/MM/DD/HH/mm/ss/SSS'))
             .then(function (value) {
                 historicalLocations.push(value.response.headers.location);
@@ -39,6 +40,7 @@ describe(testName, function () {
             })
             .then(function (value) {
                 historicalLocations.push(value.response.headers.location);
+                console.log('----- DEBUG BEGIN -----');
                 done();
             });
     });

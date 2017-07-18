@@ -138,9 +138,13 @@ function postItemQwithPayload(url, headers, body) {
         options = Object.assign({}, options, {json: true});
     }
 
+    console.log('options:', options);
+
     request.post(options, function (error, response, body) {
         expect(error).toBeNull();
         expect(response.statusCode).toBe(201);
+        console.log('headers:', response.headers);
+        console.log('body:', body);
         deferred.resolve({response: response, body: body});
     });
 
