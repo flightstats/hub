@@ -327,7 +327,6 @@ public class S3SingleContentDao implements ContentDao {
         } else {
             metadata.addUserMetadata("type", "none");
         }
-        metadata.addUserMetadata("payload", "none");
         if (useEncrypted) {
             metadata.setSSEAlgorithm(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
         }
