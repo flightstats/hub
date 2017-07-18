@@ -138,13 +138,9 @@ function postItemQwithPayload(url, headers, body) {
         options = Object.assign({}, options, {json: true});
     }
 
-    console.log('options:', options);
-
     request.post(options, function (error, response, body) {
         expect(error).toBeNull();
         expect(response.statusCode).toBe(201);
-        console.log('headers:', response.headers);
-        console.log('body:', body);
         deferred.resolve({response: response, body: body});
     });
 
@@ -414,6 +410,8 @@ exports.getQuery = function getQuery(url, status, expectedUris, done) {
             expect(response.statusCode).toBe(status);
             if (expectedUris) {
                 var parsed = utils.parseJson(response);
+                expect(parsed.hasOwnProperty('_links')).toBeTruthy();
+                expect(parsed._links.hasOwnProperty('uris')).toBeTruthy();
                 expect(parsed._links.uris.length).toBe(expectedUris.length);
                 for (var i = 0; i < expectedUris.length; i++) {
                     expect(parsed._links.uris[i]).toBe(expectedUris[i]);
