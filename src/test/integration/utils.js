@@ -410,8 +410,6 @@ exports.getQuery = function getQuery(url, status, expectedUris, done) {
             expect(response.statusCode).toBe(status);
             if (expectedUris) {
                 var parsed = utils.parseJson(response);
-                expect(parsed.hasOwnProperty('_links')).toBeTruthy();
-                expect(parsed._links.hasOwnProperty('uris')).toBeTruthy();
                 expect(parsed._links.uris.length).toBe(expectedUris.length);
                 for (var i = 0; i < expectedUris.length; i++) {
                     expect(parsed._links.uris[i]).toBe(expectedUris[i]);

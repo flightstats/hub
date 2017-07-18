@@ -32,30 +32,14 @@ describe(testName, function () {
     var historicalLocations = [];
 
     it('posts historical item to ' + channel, function (done) {
-        var historicalTimeURL = channelURL + '/' + moment(mutableTime).subtract(1, 'hour').format('YYYY/MM/DD/HH/mm/ss/SSS');
-        console.log('POST:', historicalTimeURL);
-        utils.postItemQ(historicalTimeURL)
+        utils.postItemQ(channelURL + '/' + moment(mutableTime).subtract(1, 'hour').format('YYYY/MM/DD/HH/mm/ss/SSS'))
             .then(function (value) {
-                console.log('response:', {
-                    'status': value.response.statusCode,
-                    'location': value.response.headers.location
-                });
                 historicalLocations.push(value.response.headers.location);
-                var mutableTimeURL = channelURL + '/' + mutableTime.format('YYYY/MM/DD/HH/mm/ss/SSS');
-                console.log('POST:', mutableTimeURL);
-                return utils.postItemQ(mutableTimeURL);
+                return utils.postItemQ(channelURL + '/' + mutableTime.format('YYYY/MM/DD/HH/mm/ss/SSS'));
             })
             .then(function (value) {
-                console.log('response:', {
-                    'status': value.response.statusCode,
-                    'location': value.response.headers.location
-                });
                 historicalLocations.push(value.response.headers.location);
                 done();
-            })
-            .catch(function (error) {
-                console.log(error);
-                fail(error);
             });
     });
 
