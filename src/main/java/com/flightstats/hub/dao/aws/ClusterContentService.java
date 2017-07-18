@@ -153,6 +153,7 @@ public class ClusterContentService implements ContentService {
             Content largeMeta = fromIndex(content);
             content = largePayloadContentDao.get(channelName, largeMeta.getContentKey().get());
             content.setContentKey(indexKey);
+            content.setSize(largeMeta.getSize());
         }
         return Optional.of(content);
     }
