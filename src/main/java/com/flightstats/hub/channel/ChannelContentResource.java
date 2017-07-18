@@ -239,7 +239,7 @@ public class ChannelContentResource {
                             @HeaderParam("Accept") String accept,
                             @HeaderParam("X-Item-Length-Required") @DefaultValue("false") boolean itemLengthRequired,
                             @QueryParam("remoteOnly") @DefaultValue("false") boolean remoteOnly
-    ) {
+    ) throws Exception {
         long start = System.currentTimeMillis();
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         ItemRequest itemRequest = ItemRequest.builder()
@@ -287,7 +287,8 @@ public class ChannelContentResource {
             if (content.isLarge()) {
                 itemLength = content.getSize();
             } else {
-                itemLength = calculateContentSize(content);
+                byte[] bytes = ContentMarshaller.toBytes(content);
+                itemLength = bytes.length;
             }
         }
 
@@ -295,15 +296,6 @@ public class ChannelContentResource {
 
         metricsService.time(channel, "get", start);
         return builder.build();
-    }
-
-    private long calculateContentSize(Content content) {
-        try {
-            byte[] bytes = ContentMarshaller.toBytes(content);
-            return bytes.length;
-        } catch (Exception e) {
-            throw new RuntimeException("something bad happened");
-        }
     }
 
     @Path("/{h}/{m}/{s}/{ms}/{hash}/{direction:[n|p].*}")
