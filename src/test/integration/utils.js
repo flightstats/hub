@@ -149,7 +149,9 @@ function postItemQwithPayload(url, headers, body) {
 
 exports.postItemQwithPayload = postItemQwithPayload;
 
-exports.postItemQ = function postItemQ(url) {  //with default json payload
+exports.postItemQ = function postItemQ(url) {
+    //with default json payload
+    //todo - gfm - this is effectively rolled back to the function from ~6/16
     var payload = {
         url: url, json: true,
         headers: {"Content-Type": "application/json"},
