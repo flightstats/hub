@@ -27,7 +27,7 @@ describe(testName, function () {
                 var parse = utils.parseJson(response, testName);
                 console.log(response.body);
                 var hubType = parse['properties']['hub.type'];
-                execute = hubType == 'aws';
+                execute = hubType === 'aws';
                 console.log(hubType, 'execute', execute);
                 done();
             });
@@ -72,7 +72,7 @@ describe(testName, function () {
                     expect(response.statusCode).toBe(200);
                     expect(response.headers['content-type']).toBe('text/plain');
                     expect(response.body.length).toBe(SIZE - 1);
-                    expect(response.headers['x-item-length']).toBe(SIZE - 1);
+                    expect(parseInt(response.headers['x-item-length'])).toBe(SIZE - 1);
                     done();
                 });
         } else {
