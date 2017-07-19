@@ -27,7 +27,7 @@ describe(testName, function () {
                 var parse = utils.parseJson(response, testName);
                 console.log(response.body);
                 var hubType = parse['properties']['hub.type'];
-                execute = hubType == 'aws';
+                execute = hubType === 'aws';
                 console.log(hubType, 'execute', execute);
                 done();
             });
