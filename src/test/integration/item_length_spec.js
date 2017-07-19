@@ -32,7 +32,7 @@ describe(__filename, function () {
             expect(itemURL !== undefined).toBe(true);
             utils.getItem(itemURL, function (headers, body) {
                 expect('x-item-length' in headers).toBe(true);
-                var bytes = Buffer.from(itemContent, 'utf-8').length;
+                var bytes = new Buffer(itemContent, 'utf-8').length;
                 expect(headers['x-item-length']).toBe(bytes.toString());
                 expect(body.toString()).toEqual(itemContent);
                 done();
@@ -78,7 +78,7 @@ describe(__filename, function () {
         it('verifies first item has correct length info', function (done) {
             utils.getItem(itemURLs[0], function (headers, body) {
                 expect('x-item-length' in headers).toBe(true);
-                var bytes = Buffer.from(itemOneContent, 'utf-8').length;
+                var bytes = new Buffer(itemOneContent, 'utf-8').length;
                 expect(headers['x-item-length']).toBe(bytes.toString());
                 expect(body.toString()).toEqual(itemOneContent);
                 done();
@@ -88,7 +88,7 @@ describe(__filename, function () {
         it('verifies second item has correct length info', function (done) {
             utils.getItem(itemURLs[1], function (headers, body) {
                 expect('x-item-length' in headers).toBe(true);
-                var bytes = Buffer.from(itemTwoContent, 'utf-8').length;
+                var bytes = new Buffer(itemTwoContent, 'utf-8').length;
                 expect(headers['x-item-length']).toBe(bytes.toString());
                 expect(body.toString()).toEqual(itemTwoContent);
                 done();
@@ -166,7 +166,7 @@ describe(__filename, function () {
             expect(itemURL !== undefined).toBe(true);
             utils.getItem(itemURL, function (headers, body) {
                 expect('x-item-length' in headers).toBe(true);
-                var bytes = Buffer.from(itemContent, 'utf-8').length;
+                var bytes = new Buffer(itemContent, 'utf-8').length;
                 expect(headers['x-item-length']).toBe(bytes.toString());
                 expect(body.toString()).toEqual(itemContent);
                 done();
