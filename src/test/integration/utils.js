@@ -149,11 +149,20 @@ function postItemQwithPayload(url, headers, body) {
 
 exports.postItemQwithPayload = postItemQwithPayload;
 
-exports.postItemQ = function postItemQ(url) {
-    // with default json payload
-    var headers = {'Content-Type': 'application/json'};
-    var body = JSON.stringify({"data": Date.now()});
-    return postItemQwithPayload(url, headers, body);
+exports.postItemQ = function postItemQ(url) {  //with default json payload
+    var payload = {
+        url: url, json: true,
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({"data": Date.now()})
+    };
+    var deferred = Q.defer();
+    request.post(payload,
+        function (err, response, body) {
+            expect(err).toBeNull();
+            expect(response.statusCode).toBe(201);
+            deferred.resolve({response: response, body: body});
+        });
+    return deferred.promise;
 };
 
 exports.getWebhookUrl = function getWebhookUrl() {
