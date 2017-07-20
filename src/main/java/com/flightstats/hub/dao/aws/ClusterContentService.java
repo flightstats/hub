@@ -52,7 +52,7 @@ public class ClusterContentService implements ContentService {
     private ContentDao s3BatchContentDao;
     @Inject
     @Named(ContentDao.LARGE_PAYLOAD)
-    private ContentDao largePayloadContentDao;
+    private ContentDao s3LargePayloadContentDao;
     @Inject
     private ChannelService channelService;
     @Inject
@@ -73,7 +73,7 @@ public class ClusterContentService implements ContentService {
     public ContentKey insert(String channelName, Content content) throws Exception {
         Content spokeContent = content;
         if (content.isLarge()) {
-            largePayloadContentDao.insert(channelName, content);
+            s3LargePayloadContentDao.insert(channelName, content);
             spokeContent = createIndex(content);
         }
         ContentKey key = spokeContentDao.insert(channelName, spokeContent);
@@ -112,7 +112,7 @@ public class ClusterContentService implements ContentService {
     @Override
     public boolean historicalInsert(String channelName, Content content) throws Exception {
         if (content.isLarge()) {
-            largePayloadContentDao.insertHistorical(channelName, content);
+            s3LargePayloadContentDao.insertHistorical(channelName, content);
         } else {
             s3SingleContentDao.insertHistorical(channelName, content);
         }
@@ -151,7 +151,7 @@ public class ClusterContentService implements ContentService {
         if (content.isIndexForLarge()) {
             ContentKey indexKey = content.getContentKey().get();
             Content largeMeta = fromIndex(content);
-            content = largePayloadContentDao.get(channelName, largeMeta.getContentKey().get());
+            content = s3LargePayloadContentDao.get(channelName, largeMeta.getContentKey().get());
             content.setContentKey(indexKey);
             content.setSize(largeMeta.getSize());
         }
@@ -340,6 +340,7 @@ public class ClusterContentService implements ContentService {
         spokeContentDao.delete(channelName);
         s3SingleContentDao.delete(channelName);
         s3BatchContentDao.delete(channelName);
+        s3LargePayloadContentDao.delete(channelName);
         lastContentPath.delete(channelName, CHANNEL_LATEST_UPDATED);
         lastContentPath.delete(channelName, S3Verifier.LAST_SINGLE_VERIFIED);
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
@@ -351,12 +352,14 @@ public class ClusterContentService implements ContentService {
     @Override
     public void delete(String channelName, ContentKey contentKey) {
         s3SingleContentDao.delete(channelName, contentKey);
+        s3LargePayloadContentDao.delete(channelName, contentKey);
     }
 
     @Override
     public void deleteBefore(String name, ContentKey limitKey) {
         s3SingleContentDao.deleteBefore(name, limitKey);
         s3BatchContentDao.deleteBefore(name, limitKey);
+        s3LargePayloadContentDao.deleteBefore(name, limitKey);
     }
 
     @Override
