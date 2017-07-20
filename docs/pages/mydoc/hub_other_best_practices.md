@@ -5,7 +5,7 @@ last_updated: July 3, 2016
 tags: []
 summary: 
 sidebar: mydoc_sidebar
-permalink: hub_other_use_cases.html
+permalink: hub_other_best_practices.html
 folder: hub
 ---
 
