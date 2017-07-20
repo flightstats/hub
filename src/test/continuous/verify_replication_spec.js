@@ -178,13 +178,21 @@ describe(testName, function () {
                         }
                     ],
                     function (err, results) {
-                        var itemZero = results[0].length;
-                        var itemOne = results[1].length;
-                        if (itemOne !== itemZero) {
-                            console.log('wrong length for item ' + item.uri + ' expected ' + itemZero + ' found ' + itemOne);
+                        if (results[0] && results[1]) {
+                            var itemZero = results[0].length;
+                            var itemOne = results[1].length;
+                            if (itemOne !== itemZero) {
+                                console.log('wrong length for item ' + item.uri + ' expected ' + itemZero + ' found ' + itemOne);
+                            }
+                            expect(itemOne).toBe(itemZero);
+
+                        } else {
+                            console.log('missing result for ' + item.name + ' ' + item.contentKey);
+                            expect(results[0]).not.toBeNull();
+                            expect(results[1]).not.toBeNull();
                         }
-                        expect(itemOne).toBe(itemZero);
                         callback(err);
+
                     });
 
             }, function (err) {
