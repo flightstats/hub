@@ -54,9 +54,9 @@ public class WebhookService {
             }
         }
         logger.info("upsert webhook {} ", webhook);
-        ContentPath existing = lastContentPath.getOrNull(webhook.getName(), WEBHOOK_LAST_COMPLETED);
-        logger.info("webhook {} existing {} startingKey {}", webhook.getName(), existing, webhook.getStartingKey());
-        if (existing == null || webhook.getStartingKey() != null) {
+        ContentPath existingContentPath = lastContentPath.getOrNull(webhook.getName(), WEBHOOK_LAST_COMPLETED);
+        logger.info("webhook {} existing {} startingKey {}", webhook.getName(), existingContentPath, webhook.getStartingKey());
+        if (existingContentPath == null || webhook.getStartingKey() != null) {
             logger.info("initializing {} with startingKey {}", webhook.getName(), webhook.getStartingKey());
             lastContentPath.initialize(webhook.getName(), webhook.getStartingKey(), WEBHOOK_LAST_COMPLETED);
         }
@@ -98,4 +98,31 @@ public class WebhookService {
         webhookManager.delete(name);
     }
 
+    public void updateCursor(Webhook webhook, ContentPath item) {
+        boolean isCurrentlyPaused = webhook.isPaused();
+
+        if (!isCurrentlyPaused) {
+            // pause webhook
+            webhook = webhook.withPaused(true);
+            webhookDao.upsert(webhook);
+            webhookManager.notifyWatchers();  // initiate pause
+
+            try // wait a few seconds? TODO - something more intelligent
+            {
+                Thread.sleep(2000);
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            }
+            // wait for it to be ready. see webhookLeader.isReadyToDelete()
+        }
+
+        // update zookeeper
+        lastContentPath.update(item, webhook.getName(), WEBHOOK_LAST_COMPLETED);
+
+        if (!isCurrentlyPaused) {  // return original pause state
+            webhookDao.upsert(webhook.withPaused(false));
+            webhookManager.notifyWatchers();  // initiate pause
+        }
+        return;
+    }
 }

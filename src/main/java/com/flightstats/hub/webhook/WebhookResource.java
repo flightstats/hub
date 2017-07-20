@@ -1,5 +1,6 @@
 package com.flightstats.hub.webhook;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -18,6 +19,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.TreeSet;
 
@@ -166,6 +168,31 @@ public class WebhookResource {
         }
         logger.info("delete webhook {}", name);
         webhookService.delete(name);
+        return Response.status(Response.Status.ACCEPTED).build();
+    }
+
+    @Path("/{name}/updateCursor")
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response updateCursor(@PathParam("name") String name, String body) {
+        return cursorUpdater(name, body, uriInfo);
+    }
+
+    static Response cursorUpdater(@PathParam("name") String name, String body, UriInfo uriInfo) {
+        logger.info("update cursor webhook {} {}", name, body);
+        Webhook webhook = Webhook.fromJson(body, webhookService.get(name)).withName(name);
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            JsonNode root = mapper.readTree(body);
+            if (root.has("item")) {
+                String itemString = root.get("item").asText();
+                ContentPath item = ContentPath.fromFullUrl(itemString).get();
+                webhookService.updateCursor(webhook, item);
+            }
+        } catch (IOException e) {
+            logger.error("IO exception updating cursor", e);
+        }
         return Response.status(Response.Status.ACCEPTED).build();
     }
 }
