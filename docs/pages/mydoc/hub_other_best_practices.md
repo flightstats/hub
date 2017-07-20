@@ -14,11 +14,11 @@ folder: hub
 tl;dr
 If you are inserting more than 10 items per minute, use BATCH channels and bulk endpoints for best performance and lowest cost.
 
-### When channel storage matter more?
+### Bulk vs BATCH
 
-At FlightStats, most of our use cases are within a few minutes of now.  
-The hub's Spoke cache typically holds 6 hours of data, so most responses are served by Spoke.
-The hub also writes items to S3 for longer term access.
+Bulk means the Bulk API, posting to /channel/<name>/bulk and getting items back out with the query parameter ?bulk=true.
+
+BATCH is the storage mechanism the hub uses to write items to S3.  The user sets the storage of the channel to SINGLE or BATCH.  
 
 ### What's the difference between SINGLE and BATCH?
 
