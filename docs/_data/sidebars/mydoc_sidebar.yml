@@ -118,7 +118,7 @@ entries:
       output: web, pdf
 
 
-  - title: Other topics
+  - title: Uses, Best Practices, FAQ, etc
     output: web, pdf
     folderitems:
 
