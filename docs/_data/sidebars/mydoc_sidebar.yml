@@ -118,12 +118,16 @@ entries:
       output: web, pdf
 
 
-  - title: Other topics
+  - title: Uses, Best Practices, FAQ, etc
     output: web, pdf
     folderitems:
 
     - title: Use Cases
       url: /hub_other_use_cases.html
+      output: web, pdf
+
+    - title: Best Practices
+      url: /hub_other_best_practices.html
       output: web, pdf
 
     - title: FAQ
