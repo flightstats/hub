@@ -2,6 +2,7 @@ frisby = require('frisby');
 utils = require('./utils.js');
 ip = require('ip');
 var _ = require('lodash');
+var reporter = require('./ddt_reporter');
 
 hubDomain = process.env.hubDomain;
 satelliteDomain = process.env.satelliteDomain;
@@ -35,9 +36,12 @@ channelUrl = hubUrlBase + '/channel';
 callbackDomain = 'http://' + ipAddress;
 stableOffset = 5;
 
+jasmine.getEnv().defaultTimeoutInterval = 60 * 1000;
+jasmine.getEnv().reporter = new jasmine.MultiReporter();
+jasmine.getEnv().addReporter(reporter);
+
 console.log("hubDomain " + hubDomain);
 console.log("satelliteDomain " + satelliteDomain);
 console.log("runEncrypted " + runEncrypted);
 console.log("callbackDomain " + callbackDomain);
-
-jasmine.getEnv().defaultTimeoutInterval = 60 * 1000;
+console.log("default timeout " + jasmine.getEnv().defaultTimeoutInterval + "ms");
