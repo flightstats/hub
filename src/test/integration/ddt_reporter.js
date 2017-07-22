@@ -14,6 +14,8 @@ const ANSI = {
 
 const reporter = {
 
+    finished: false,
+
     passed: 0,
     failed: 0,
     disabled: 0,
@@ -73,6 +75,8 @@ const reporter = {
         console.log(ANSI.GREEN + 'PASSED: ' + ANSI.BOLD + reporter.passed + ANSI.OFF);
         console.log(ANSI.RED + 'FAILED: ' + ANSI.BOLD + reporter.failed + ANSI.OFF);
         console.log(ANSI.YELLOW + 'DISABLED: ' + ANSI.BOLD + reporter.disabled + ANSI.OFF);
+
+        this.finished = true;
     }
 
 };
