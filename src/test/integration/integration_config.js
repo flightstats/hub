@@ -37,7 +37,7 @@ callbackDomain = 'http://' + ipAddress;
 stableOffset = 5;
 
 jasmine.getEnv().defaultTimeoutInterval = 60 * 1000;
-jasmine.getEnv().reporter = new jasmine.MultiReporter();
+jasmine.getEnv().reporter.subReporters_.length = 0;
 jasmine.getEnv().addReporter(reporter);
 
 console.log("hubDomain " + hubDomain);
