@@ -38,7 +38,7 @@ stableOffset = 5;
 
 jasmine.getEnv().defaultTimeoutInterval = 60 * 1000;
 // jasmine.getEnv().reporter = new jasmine.MultiReporter();
-// jasmine.getEnv().addReporter(reporter);
+jasmine.getEnv().addReporter(reporter);
 
 console.log("hubDomain " + hubDomain);
 console.log("satelliteDomain " + satelliteDomain);
