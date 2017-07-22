@@ -12,23 +12,23 @@ const ANSI = {
     WHITE: '\u001b[37m'
 };
 
-const reporter = {
+module.exports = function (config) {
 
-    finished: false,
+    this.callback = config.onComplete || false;
 
-    passed: 0,
-    failed: 0,
-    disabled: 0,
+    this.passed = 0;
+    this.failed = 0;
+    this.disabled = 0;
 
-    reportRunnerStarting: function (info) {
+    this.reportRunnerStarting = function (info) {
         console.log('\n' + ANSI.BOLD + ANSI.MAGENTA + 'Executing tests...' + ANSI.OFF);
-    },
+    };
 
-    reportSpecStarting: function (info) {
+    this.reportSpecStarting = function (info) {
         console.log('\n' + ANSI.BOLD + '> ' + ANSI.BLUE + info.description + ANSI.OFF);
-    },
+    };
 
-    reportSpecResults: function (info) {
+    this.reportSpecResults = function (info) {
         var results = info.results();
         var status;
         if (results.skipped) {
@@ -64,21 +64,19 @@ const reporter = {
             default:
                 console.log(ANSI.BOLD + '< ' + ANSI.CYAN + status + ANSI.OFF);
         }
-    },
+    };
 
-    reportSuiteResults: function (info) {
+    this.reportSuiteResults = function (info) {
         // don't output anything
-    },
+    };
 
-    reportRunnerResults: function (info) {
+    this.reportRunnerResults = function (runner) {
         console.log('\n' + new Array(50).join('-') + '\n');
         console.log(ANSI.GREEN + 'PASSED: ' + ANSI.BOLD + reporter.passed + ANSI.OFF);
         console.log(ANSI.RED + 'FAILED: ' + ANSI.BOLD + reporter.failed + ANSI.OFF);
         console.log(ANSI.YELLOW + 'DISABLED: ' + ANSI.BOLD + reporter.disabled + ANSI.OFF);
 
-        this.finished = true;
-    }
+        if (this.callback) this.callback(runner);
+    };
 
 };
-
-module.exports = reporter;
