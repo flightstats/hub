@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y bash ntp curl && \
     chown -R hub:hub /mnt
 
 ENV MIN_HEAP=1g \
-    MAX_HEAP=2g \
+    MAX_HEAP=3g \
     NEW_SIZE=100m
 
 ADD logback.xml /etc/hub/logback.xml
