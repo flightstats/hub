@@ -29,6 +29,15 @@ websockets = {}
 # BasicTasks is meant to be used as a common class for running tests
 # The using class must define the 'host' value
 
+def key_from_time(dt, unit="second"):
+    key_options = {"second": dt.strftime("%Y/%m/%d/%H/%M/%S"),
+                   "minute": dt.strftime("%Y/%m/%d/%H/%M"),
+                   "hour": dt.strftime("%Y/%m/%d/%H"),
+                   "day": dt.strftime("%Y/%m/%d"),
+                   "month": dt.strftime("%Y/%m"),
+                   "year": dt.strftime("%Y"),
+                   }
+    return key_options[unit]
 
 class HubTasks:
     host = None
@@ -64,6 +73,10 @@ class HubTasks:
             self.start_websocket()
         time.sleep(5)
 
+    def webhook_name(self):
+        return "/webhook/locust_" + self.channel
+
+
     def start_webhook(self):
         config = {
             "number": self.number,
@@ -77,8 +90,8 @@ class HubTasks:
         }
 
         self.user.start_webhook(config)
-        group_name = "/group/locust_" + config['webhook_channel']
-        self.client.delete(group_name, name="group")
+        webhook = webhook_name()
+        self.client.delete(webhook, name="group")
         logger.info("group channel " + config['webhook_channel'] + " parallel:" + str(config['parallel']))
         groupCallbacks[self.channel] = {
             "data": [],
@@ -98,10 +111,26 @@ class HubTasks:
             "batch": config['batch'],
             "heartbeat": config['heartbeat']
         }
-        self.client.put(group_name,
+        self.client.put(webhook,
                         data=json.dumps(group),
                         headers={"Content-Type": "application/json"},
                         name="group")
+
+    def update_webhook(self):
+        # update with a key 1 day in the past
+        yesterday = datetime.datetime.now() - datetime.timedelta(days=1)
+        key = key_from_time(yesterday, "second")
+
+        url = self.host + webhook_name(self) + "/" + key
+        logger.info("updating webhook with url:  " + url)
+        data = {
+            "item": url
+        }
+        self.client.put(webhook_name(self) + "/updateCursor", data=json.dumps(data),
+                        headers={"Content-Type": "application/json"})
+
+    def get_webhook_config(self):
+        initial = (self.client.get(webhook_name(), name="webhook_config")).json()
 
     def start_websocket(self):
         websockets[self.channel] = {
@@ -154,6 +183,9 @@ class HubTasks:
 
     def get_channel_url(self):
         return self.user.channel_post_url(self.channel)
+
+    def get_webhook_config(self):
+        pass
 
     def parse_write(self, postResponse):
         links = postResponse.json()

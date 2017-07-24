@@ -99,30 +99,15 @@ public class WebhookService {
     }
 
     public void updateCursor(Webhook webhook, ContentPath item) {
-        boolean isCurrentlyPaused = webhook.isPaused();
-
-        if (!isCurrentlyPaused) {
-            // pause webhook
-            webhook = webhook.withPaused(true);
-            webhookDao.upsert(webhook);
-            webhookManager.notifyWatchers();  // initiate pause
-
-            try // wait a few seconds? TODO - something more intelligent
+        this.delete(webhook.getName());
+        try // wait a few seconds? TODO - something more intelligent?
             {
                 Thread.sleep(2000);
             } catch (InterruptedException ex) {
+            logger.warn("Interruption exception while deleting");
                 Thread.currentThread().interrupt();
             }
-            // wait for it to be ready. see webhookLeader.isReadyToDelete()
-        }
-
-        // update zookeeper
-        lastContentPath.update(item, webhook.getName(), WEBHOOK_LAST_COMPLETED);
-
-        if (!isCurrentlyPaused) {  // return original pause state
-            webhookDao.upsert(webhook.withPaused(false));
-            webhookManager.notifyWatchers();  // initiate pause
-        }
+        this.upsert(webhook.withStartingKey(item));
         return;
     }
 }
