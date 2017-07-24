@@ -1,6 +1,8 @@
 require('./integration_config');
 const moment = require('moment');
 
+var MINUTE = 60 * 1000;
+
 describe(__filename, function () {
 
     var executeTest = true;
