@@ -75,13 +75,13 @@ module.exports = {
         // don't output anything
     },
 
-    reportRunnerResults: function (runner) {
+    reportRunnerResults: function (info) {
         console.log('\n' + new Array(50).join('-') + '\n');
         console.log(ANSI.GREEN + 'PASSED: ' + ANSI.BOLD + this.passed + ANSI.OFF);
         console.log(ANSI.RED + 'FAILED: ' + ANSI.BOLD + this.failed + ANSI.OFF);
         console.log(ANSI.YELLOW + 'DISABLED: ' + ANSI.BOLD + this.disabled + ANSI.OFF);
 
-        process.exit(this.failed);
+        process.exit(this.failed ? 1 : 0);
     }
 
 };
