@@ -127,6 +127,8 @@ describe(testName, function () {
                     checkIndex(body, index, 3);
                     done();
                 });
+        } else {
+            done();
         }
     })
 
