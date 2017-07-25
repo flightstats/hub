@@ -164,7 +164,7 @@ describe(testName, function () {
 
     it('select some random items for content verification ', function (done) {
         for (var channel in channels) {
-            if (channel.toLowerCase().indexOf('large_test') === -1) {
+            if (channel.toLowerCase().indexOf('large_test') > 0) {
                 console.log('excluding', channel);
             } else {
                 console.log('working on', channel);
