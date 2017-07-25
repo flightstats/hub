@@ -34,6 +34,27 @@ describe(testName, function () {
 
     utils.createChannel(channelName, false, testName);
 
-    utils.putWebhook(webhookName, badConfig, 400, testName);
+    var MINUTE = 60 * 1000;
+    var execute = true;
+
+    it("checks the hub for large item suport", function (done) {
+        request.get({
+                url: hubUrlBase + '/internal/properties'
+            },
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(200);
+                var parse = utils.parseJson(response, testName);
+                console.log(response.body);
+                var hubType = parse['properties']['hub.type'];
+                execute = hubType === 'aws';
+                console.log(hubType, 'execute', execute);
+                if (execute) {
+                    utils.putWebhook(webhookName, badConfig, 400, testName);
+                }
+                done();
+            });
+    }, 5 * MINUTE);
+
 
 });

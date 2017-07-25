@@ -92,20 +92,44 @@ describe(testName, function () {
         return indexOf;
     }
 
-    it('bulk get', function (done) {
-        var url = next + '&bulk=true';
-        console.log('url ', url);
-        request.get({url: channelResource + url, json: true},
+    var MINUTE = 60 * 1000;
+    var execute = true;
+
+    it("checks the hub for large item suport", function (done) {
+        request.get({
+                url: hubUrlBase + '/internal/properties'
+            },
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(200);
-                console.log('bulk body', body);
-                var index = checkIndex(body, 0, 0);
-                index = checkIndex(body, index, 1);
-                index = checkIndex(body, index, 2);
-                checkIndex(body, index, 3);
+                var parse = utils.parseJson(response, testName);
+                console.log(response.body);
+                var hubType = parse['properties']['hub.type'];
+                execute = hubType === 'aws';
+                console.log(hubType, 'execute', execute);
                 done();
             });
+    }, 5 * MINUTE);
+
+
+    it('bulk get', function (done) {
+        if (execute) {
+            var url = next + '&bulk=true';
+            console.log('url ', url);
+            request.get({url: channelResource + url, json: true},
+                function (err, response, body) {
+                    expect(err).toBeNull();
+                    expect(response.statusCode).toBe(200);
+                    console.log('bulk body', body);
+                    var index = checkIndex(body, 0, 0);
+                    index = checkIndex(body, index, 1);
+                    index = checkIndex(body, index, 2);
+                    checkIndex(body, index, 3);
+                    done();
+                });
+        } else {
+            done();
+        }
     })
 
 
