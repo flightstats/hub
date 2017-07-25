@@ -164,14 +164,18 @@ describe(testName, function () {
 
     it('select some random items for content verification ', function (done) {
         for (var channel in channels) {
-            console.log('working on', channel);
-            channels[channel].forEach(function (uri) {
-                var replicatedChannel = replicatedChannels[channel];
-                if (Math.random() > 0.99) {
-                    var contentKey = getContentKey(uri, channel);
-                    itemsToVerify.push({name: channel, uri: uri, contentKey: contentKey});
-                }
-            });
+            if (channel.toLowerCase().indexOf('large_test') > 0) {
+                console.log('excluding', channel);
+            } else {
+                console.log('working on', channel);
+                channels[channel].forEach(function (uri) {
+                    var replicatedChannel = replicatedChannels[channel];
+                    if (Math.random() > 0.99) {
+                        var contentKey = getContentKey(uri, channel);
+                        itemsToVerify.push({name: channel, uri: uri, contentKey: contentKey});
+                    }
+                });
+            }
 
             console.log(channels[channel].length + ' items for ' + channel + ' verify ' + itemsToVerify.length);
         }
