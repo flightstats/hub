@@ -165,7 +165,7 @@ describe(testName, function () {
     it('select some random items for content verification ', function (done) {
         for (var channel in channels) {
             var exclusion = 'large_test';
-            if (channel.substring(0, exclusion.length) === exclusion) {
+            if (channel.name.substring(0, exclusion.length) === exclusion) {
                 console.log('excluding', channel);
             } else {
                 console.log('working on', channel);
