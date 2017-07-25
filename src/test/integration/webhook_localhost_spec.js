@@ -49,12 +49,26 @@ describe(testName, function () {
                 var hubType = parse['properties']['hub.type'];
                 execute = hubType === 'aws';
                 console.log(hubType, 'execute', execute);
-                if (execute) {
-                    utils.putWebhook(webhookName, badConfig, 400, testName);
-                }
                 done();
             });
     }, 5 * MINUTE);
 
+    it("executes large item suport", function (done) {
+        if (execute) {
+            var webhookResource = utils.getWebhookUrl() + "/" + webhookName;
+            request.put({
+                    url: webhookResource,
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify(badConfig)
+                },
+                function (err, response, body) {
+                    expect(err).toBeNull();
+                    expect(response.statusCode).toBe(400);
+                    done();
+                });
+        } else {
+            done();
+        }
+    }, 5 * MINUTE);
 
 });
