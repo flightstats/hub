@@ -23,7 +23,14 @@ module.exports = {
     },
 
     reportSpecStarting: function (info) {
-        console.log('\n' + ANSI.BOLD + '> ' + ANSI.BLUE + info.description + ANSI.OFF);
+        if (info.suite.description && info.suite.description.indexOf('Frisby') != -1) {
+            console.log('\n' + ANSI.BOLD + '> ' + ANSI.BLUE + info.suite.description + ANSI.OFF);
+            console.log(info.description
+                .replace('\t', '')
+                .replace('\n', ''));
+        } else {
+            console.log(ANSI.BOLD + '> ' + ANSI.BLUE + info.description + ANSI.OFF);
+        }
     },
 
     reportSpecResults: function (info) {
