@@ -124,6 +124,8 @@ class WebhookLeader implements Leader {
             }
         } catch (RuntimeInterruptedException | InterruptedException e) {
             logger.info("saw InterruptedException for " + webhook.getName());
+        } catch (Exception e) {
+            logger.warn("Execption for " + webhook.getName(), e);
         } finally {
             logger.info("stopping last completed at {} {}", webhookStrategy.getLastCompleted(), webhook.getName());
             leadership.setLeadership(false);

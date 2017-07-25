@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Collection;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 class SingleWebhookStrategy implements WebhookStrategy {
 
@@ -30,7 +31,7 @@ class SingleWebhookStrategy implements WebhookStrategy {
     private final LastContentPath lastContentPath;
     private final ChannelService channelService;
     private AtomicBoolean shouldExit = new AtomicBoolean(false);
-    private AtomicBoolean error = new AtomicBoolean(false);
+    private AtomicReference<Exception> exceptionReference = new AtomicReference<>();
     private BlockingQueue<ContentPath> queue;
     private String channel;
     private QueryGenerator queryGenerator;
@@ -80,15 +81,13 @@ class SingleWebhookStrategy implements WebhookStrategy {
         return contentPath;
     }
 
-    public Optional<ContentPath> next() {
-        if (error.get()) {
-            logger.error("unable to determine next");
+    public Optional<ContentPath> next() throws Exception {
+        Exception e = exceptionReference.get();
+        if (e != null) {
+            logger.error("unable to determine next " + webhook.getName(), e);
+            throw e;
         }
-        try {
-            return Optional.fromNullable(queue.poll(10, TimeUnit.SECONDS));
-        } catch (InterruptedException e) {
-            throw new RuntimeInterruptedException(e);
-        }
+        return Optional.fromNullable(queue.poll(10, TimeUnit.SECONDS));
     }
 
     public void start(Webhook webhook, ContentPath startingPath) {
@@ -110,14 +109,14 @@ class SingleWebhookStrategy implements WebhookStrategy {
                         }
                     }
                 } catch (InterruptedException | RuntimeInterruptedException e) {
-                    error.set(true);
-                    logger.info("InterruptedException with " + channel);
+                    exceptionReference.set(e);
+                    logger.info("InterruptedException with " + webhook.getName());
                 } catch (NoSuchChannelException e) {
-                    error.set(true);
-                    logger.debug("NoSuchChannelException for " + channel);
+                    exceptionReference.set(e);
+                    logger.debug("NoSuchChannelException for " + webhook.getName());
                 } catch (Exception e) {
-                    error.set(true);
-                    logger.warn("unexpected issue with " + channel, e);
+                    exceptionReference.set(e);
+                    logger.warn("unexpected issue with " + webhook.getName(), e);
                 }
             }
 
