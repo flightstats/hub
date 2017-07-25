@@ -18,6 +18,8 @@ module.exports = {
     failed: 0,
     disabled: 0,
 
+    failures: [],
+
     reportRunnerStarting: function (info) {
         console.log('\n' + ANSI.BOLD + ANSI.MAGENTA + 'Executing tests...' + ANSI.OFF);
     },
@@ -54,9 +56,11 @@ module.exports = {
             case 'FAILED':
                 console.log(ANSI.BOLD + '< ' + ANSI.RED + status + ANSI.OFF);
                 this.failed++;
+                var self = this;
                 results.items_.forEach(function (item) {
                     if (!item.passed_) {
                         console.log(ANSI.RED + item.trace.stack + ANSI.OFF);
+                        self.failures.push(item.trace.stack);
                     }
                 });
                 break;
@@ -76,10 +80,18 @@ module.exports = {
     },
 
     reportRunnerResults: function (info) {
+        if (this.failed) {
+            var twentyDashes = new Array(20).join('-');
+            console.log('\n' + twentyDashes + ' FAILURE SUMMARY ' + twentyDashes);
+            this.failures.forEach(function (failure) {
+                console.log('\n' + ANSI.RED + failure + ANSI.OFF);
+            });
+        }
+
         console.log('\n' + new Array(50).join('-') + '\n');
         console.log(ANSI.GREEN + 'PASSED: ' + ANSI.BOLD + this.passed + ANSI.OFF);
         console.log(ANSI.RED + 'FAILED: ' + ANSI.BOLD + this.failed + ANSI.OFF);
-        console.log(ANSI.YELLOW + 'DISABLED: ' + ANSI.BOLD + this.disabled + ANSI.OFF);
+        console.log(ANSI.YELLOW + 'DISABLED: ' + ANSI.BOLD + this.disabled + ANSI.OFF + '\n');
 
         process.exit(this.failed ? 1 : 0);
     }
