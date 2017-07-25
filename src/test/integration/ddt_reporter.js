@@ -29,7 +29,7 @@ module.exports = {
                 .replace('\t', '')
                 .replace('\n', ''));
         } else {
-            console.log(ANSI.BOLD + '> ' + ANSI.BLUE + info.description + ANSI.OFF);
+            console.log('\n' + ANSI.BOLD + '> ' + ANSI.BLUE + info.description + ANSI.OFF);
         }
     },
 
