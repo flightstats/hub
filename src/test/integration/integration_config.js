@@ -1,4 +1,3 @@
-frisby = require('frisby');
 utils = require('./utils.js');
 ip = require('ip');
 var _ = require('lodash');
@@ -46,6 +45,7 @@ jasmine.getEnv().addReporter(reporter);
 // when running in Jenkins. This is a short-term solution until I get everything
 // migrated to Jasmine 2.0 (which removes the need for jasmine-node).
 var useJUnitReporter = process.env.JENKINS_URL !== undefined;
+console.log('useJUnitReporter?', useJUnitReporter);
 if (useJUnitReporter) {
 
     // hardcoded values typically provided by the CLI
