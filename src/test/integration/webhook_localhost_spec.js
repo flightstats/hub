@@ -55,12 +55,11 @@ describe(testName, function () {
 
     it("executes large item suport", function (done) {
         if (execute) {
-            var groupUrl = utils.getWebhookUrl();
-            var groupResource = groupUrl + "/" + groupName;
+            var webhookResource = utils.getWebhookUrl() + "/" + webhookName;
             request.put({
-                    url: groupResource,
+                    url: webhookResource,
                     headers: {"Content-Type": "application/json"},
-                    body: JSON.stringify(groupConfig)
+                    body: JSON.stringify(badConfig)
                 },
                 function (err, response, body) {
                     expect(err).toBeNull();
