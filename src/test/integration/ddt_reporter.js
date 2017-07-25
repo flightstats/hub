@@ -12,23 +12,21 @@ const ANSI = {
     WHITE: '\u001b[37m'
 };
 
-module.exports = function (config) {
+module.exports = {
 
-    this.callback = config.onComplete || false;
+    passed: 0,
+    failed: 0,
+    disabled: 0,
 
-    this.passed = 0;
-    this.failed = 0;
-    this.disabled = 0;
-
-    this.reportRunnerStarting = function (info) {
+    reportRunnerStarting: function (info) {
         console.log('\n' + ANSI.BOLD + ANSI.MAGENTA + 'Executing tests...' + ANSI.OFF);
-    };
+    },
 
-    this.reportSpecStarting = function (info) {
+    reportSpecStarting: function (info) {
         console.log('\n' + ANSI.BOLD + '> ' + ANSI.BLUE + info.description + ANSI.OFF);
-    };
+    },
 
-    this.reportSpecResults = function (info) {
+    reportSpecResults: function (info) {
         var results = info.results();
         var status;
         if (results.skipped) {
@@ -43,12 +41,12 @@ module.exports = function (config) {
 
             case 'PASSED':
                 console.log(ANSI.BOLD + '< ' + ANSI.GREEN + status + ANSI.OFF);
-                reporter.passed++;
+                this.passed++;
                 break;
 
             case 'FAILED':
                 console.log(ANSI.BOLD + '< ' + ANSI.RED + status + ANSI.OFF);
-                reporter.failed++;
+                this.failed++;
                 results.items_.forEach(function (item) {
                     if (!item.passed_) {
                         console.log(ANSI.RED + item.trace.stack + ANSI.OFF);
@@ -57,26 +55,26 @@ module.exports = function (config) {
                 break;
 
             case 'DISABLED':
-                reporter.disabled++;
+                this.disabled++;
                 console.log(ANSI.BOLD + '< ' + ANSI.YELLOW + status + ANSI.OFF);
                 break;
 
             default:
                 console.log(ANSI.BOLD + '< ' + ANSI.CYAN + status + ANSI.OFF);
         }
-    };
+    },
 
-    this.reportSuiteResults = function (info) {
+    reportSuiteResults: function (info) {
         // don't output anything
-    };
+    },
 
-    this.reportRunnerResults = function (runner) {
+    reportRunnerResults: function (runner) {
         console.log('\n' + new Array(50).join('-') + '\n');
-        console.log(ANSI.GREEN + 'PASSED: ' + ANSI.BOLD + reporter.passed + ANSI.OFF);
-        console.log(ANSI.RED + 'FAILED: ' + ANSI.BOLD + reporter.failed + ANSI.OFF);
-        console.log(ANSI.YELLOW + 'DISABLED: ' + ANSI.BOLD + reporter.disabled + ANSI.OFF);
+        console.log(ANSI.GREEN + 'PASSED: ' + ANSI.BOLD + this.passed + ANSI.OFF);
+        console.log(ANSI.RED + 'FAILED: ' + ANSI.BOLD + this.failed + ANSI.OFF);
+        console.log(ANSI.YELLOW + 'DISABLED: ' + ANSI.BOLD + this.disabled + ANSI.OFF);
 
-        if (this.callback) this.callback(runner);
-    };
+        process.exit(this.failed ? 1 : 0);
+    }
 
 };
