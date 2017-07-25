@@ -81,7 +81,7 @@ module.exports = {
         console.log(ANSI.RED + 'FAILED: ' + ANSI.BOLD + this.failed + ANSI.OFF);
         console.log(ANSI.YELLOW + 'DISABLED: ' + ANSI.BOLD + this.disabled + ANSI.OFF);
 
-        process.exit(this.failed ? 1 : 0);
+        process.exit(this.failed);
     }
 
 };
