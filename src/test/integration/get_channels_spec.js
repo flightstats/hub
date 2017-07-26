@@ -28,7 +28,10 @@ describe(__filename, function () {
                 expect(response.statusCode).toEqual(200);
                 expect(response.headers['content-type']).toEqual('application/json');
                 expect(response.body._links.self.href).toEqual(channelUrl);
-                expect(response.body._links.channels).toContain(channelResource);
+                var channelURLs = response.body._links.channels.map(function (obj) {
+                    return obj.href;
+                });
+                expect(channelURLs).toContain(channelResource);
             })
             .catch(function (error) {
                 expect(error).toBeNull();
