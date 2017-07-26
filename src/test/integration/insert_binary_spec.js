@@ -8,7 +8,7 @@ describe(__filename, function () {
     it('creates a channel', function (done) {
         var url = channelUrl;
         var headers = {'Content-Type': 'application/json'};
-        var body = {};
+        var body = {'name': channelName};
         
         utils.httpPost(url, headers, body)
             .then(function (response) {
