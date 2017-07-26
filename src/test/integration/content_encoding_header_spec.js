@@ -46,7 +46,6 @@ describe(__filename, function () {
 
         utils.httpGet(url, headers)
             .then(function (response) {
-                expect(response.statusCode).toEqual(404);
                 expect(response.headers['content-encoding']).toEqual('gzip');
             })
             .catch(function (error) {
