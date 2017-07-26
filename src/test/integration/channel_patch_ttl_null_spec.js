@@ -6,9 +6,7 @@ var channelResource = channelUrl + "/" + channelName;
 describe(__filename, function () {
 
     it('verifies the channel doesn\'t exist yet', function (done) {
-        var url = channelUrl;
-
-        utils.httpGet(url)
+        utils.httpGet(channelResource)
             .then(function (response) {
                 expect(response.statusCode).toEqual(404);
             })
