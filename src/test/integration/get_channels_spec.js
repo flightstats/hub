@@ -1,31 +1,41 @@
 require('./integration_config.js');
 
 var channelName = utils.randomChannelName();
-var testName = "get_channels_spec";
+var channelResource = channelUrl + '/' + channelName;
 
-utils.configureFrisby();
+describe(__filename, function () {
 
-frisby.create(testName + ': Making a channel and then checking that it is in the result list...')
-    .post(channelUrl, null, { body: JSON.stringify({ "name": channelName})})
-    .addHeader("Content-Type", "application/json")
-    .afterJSON(function () {
-        frisby.create(testName + ": Fetching the channel list")
-            .get(channelUrl)
-            .expectStatus(200)
-            .expectHeader('content-type', 'application/json')
-            .afterJSON(function (result) {
-                var selfLink = result['_links']['self']['href'];
-                expect(selfLink).toBe(channelUrl);
-                var channels = result['_links']['channels'];
-                var foundHref = "";
-                for (var i = 0; i < channels.length; i++) {
-                    if (channels[i]['name'] == channelName) {
-                        foundHref = channels[i]['href'];
-                    }
-                }
-                expect(foundHref).toBe(channelUrl + "/" + channelName);
+    it('creates a channel', function (done) {
+        var url = channelUrl;
+        var headers = {'Content-Type': 'application/json'};
+        var body = {'name': channelName};
 
-            }).toss()
-    })
-    .toss();
+        utils.httpPost(url, headers, body)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(201);
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
 
+    it('fetches the list of channels', function (done) {
+        utils.httpGet(channelUrl)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(200);
+                expect(response.headers['content-type']).toEqual('application/json');
+                expect(response.body._links.self.href).toEqual(channelUrl);
+                expect(response.body._links.channels).toContain(channelResource);
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
+
+});

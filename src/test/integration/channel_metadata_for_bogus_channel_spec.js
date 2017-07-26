@@ -1,12 +1,29 @@
 require('./integration_config.js');
 
 var channelName = "no_way_jose90928280xFF";
-var thisChannelResource = channelUrl + "/" + channelName;
-var testName = "channel_metadata_for_bogus_channel_spec";
+var channelResource = channelUrl + "/" + channelName;
 
-utils.configureFrisby();
+describe(__filename, function () {
 
-frisby.create(testName + ': Fetching channel metadata for nonexistent channel')
-    .post(thisChannelResource)
-    .expectStatus(404)
-    .toss();
+    it('gets channel metadata for a nonexistent channel', function (done) {
+        var url = channelResource;
+        var headers = {};
+        var body = '';
+
+        // TODO: i don't think POST is the correct verb for this test
+        // I'm keeping it as POST for now though since thats what the
+        // Frisby test did.
+
+        utils.httpPost(url, headers, body)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(404);
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
+
+});

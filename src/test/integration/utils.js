@@ -1,5 +1,4 @@
 require('./integration_config.js');
-var frisby = require('frisby');
 var http = require('http');
 var https = require('https');
 var fs = require('fs');
@@ -39,13 +38,6 @@ exports.getItem = function getItem(uri, callback) {
     });
 };
 
-exports.configureFrisby = function configureFrisby(timeout) {
-    timeout = typeof timeout !== 'undefined' ? timeout : 30000;
-    frisby.globalSetup({
-        timeout: timeout
-    });
-};
-
 exports.createChannel = function createChannel(channelName, url, description) {
     description = description || 'none';
     url = url || channelUrl;
@@ -61,6 +53,129 @@ exports.createChannel = function createChannel(channelName, url, description) {
             });
     }, 10 * 1001);
 
+};
+
+exports.httpGet = function httpGet(url, headers) {
+    var deferred = Q.defer();
+
+    if (headers)
+        headers = utils.keysToLowerCase(headers);
+
+    var options = {
+        url: url,
+        headers: headers || {}
+    };
+
+    console.log('GET', JSON.stringify(options, null, 0));
+    request.get(options, function (error, response) {
+        if (error)
+            deferred.reject(error);
+        else
+            deferred.resolve(response);
+    });
+
+    return deferred.promise;
+};
+
+exports.httpPost = function httpPost(url, headers, body) {
+    var deferred = Q.defer();
+
+    if (headers)
+        headers = utils.keysToLowerCase(headers);
+
+    var options = {
+        url: url,
+        headers: headers || {},
+        body: body || ''
+    };
+
+    var hasContentType = 'content-type' in headers;
+    var contentTypeIsJSON = headers['content-type'] === 'application/json';
+    if (hasContentType && contentTypeIsJSON) {
+        options.json = true;
+    }
+
+    console.log('POST', JSON.stringify(options, null, 0));
+    request.post(options, function (error, response) {
+        if (error)
+            deferred.reject(error);
+        else
+            deferred.resolve(response);
+    });
+
+    return deferred.promise;
+};
+
+exports.httpDelete = function httpDelete(url, headers) {
+    var deferred = Q.defer();
+    
+    if (headers)
+        headers = utils.keysToLowerCase(headers);
+    
+    var options = {
+        url: url,
+        headers: headers || {}
+    };
+    
+    console.log('DELETE', JSON.stringify(options, null, 0));
+    request.delete(options, function (error, response) {
+        if (error)
+            deferred.reject(error);
+        else
+            deferred.resolve(response);
+    });
+    
+    return deferred.promise;
+};
+
+exports.httpPatch = function httpPatch(url, headers, body) {
+    var deferred = Q.defer();
+
+    if (headers)
+        headers = utils.keysToLowerCase(headers);
+
+    var options = {
+        url: url,
+        headers: headers || {},
+        body: body || ''
+    };
+
+    var hasContentType = 'content-type' in headers;
+    var contentTypeIsJSON = headers['content-type'] === 'application/json';
+    if (hasContentType && contentTypeIsJSON) {
+        options.json = true;
+    }
+
+    console.log('PATCH', JSON.stringify(options, null, 0));
+    request.patch(options, function (error, response) {
+        if (error)
+            deferred.reject(error);
+        else
+            deferred.resolve(response);
+    });
+
+    return deferred.promise;
+};
+
+exports.keysToLowerCase = function keysToLowerCase(obj) {
+    var output = {};
+    var keys = Object.keys(obj);
+    for (var i = 0; i < keys.length; ++i) {
+        var originalKey = keys[i];
+        var lowerCaseKey = utils.toLowerCase(originalKey);
+        output[lowerCaseKey] = obj[originalKey];
+    }
+    return output;
+};
+
+exports.toLowerCase = function toLowerCase(str) {
+    var output = '';
+    for (var i = 0; i < str.length; ++i) {
+        var character = str[i];
+        var code = parseInt(character, 36) || character;
+        output += code.toString(36);
+    }
+    return output;
 };
 
 exports.putChannel = function putChannel(channelName, verify, body, description, expectedStatus) {

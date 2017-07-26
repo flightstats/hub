@@ -1,34 +1,64 @@
 require('./integration_config.js');
 
 var channelName = utils.randomChannelName();
-var thisChannelResource = channelUrl + "/" + channelName;
+var channelResource = channelUrl + "/" + channelName;
 var messageText = "MY SUPER TEST CASE: this & <that>. " + Math.random().toString();
-var testName = __filename;
 
-utils.configureFrisby();
+describe(__filename, function () {
 
-utils.runInTestChannel(testName, channelName, function () {
-    frisby.create(testName + ': Inserting a value into a channel.')
-        .post(thisChannelResource, null, { body : messageText})
-        .addHeader("Content-Type", "text/plain")
-        .expectStatus(201)
-        .expectHeader('content-type', 'application/json')
-        .expectJSON('_links', {
-            channel : {
-                href : thisChannelResource
-            }
-        })
-        .afterJSON(function (result) {
-            var valueUrl = result['_links']['self']['href'];
-            frisby.create(testName + ': Fetching value to ensure that it was inserted.')
-                .get(valueUrl)
-                .expectStatus(200)
-                .expectHeader('content-type', 'text/plain')
-                .expectBodyContains(messageText)
-                .after(function (err, res, body) {
-                    expect(res.headers['user']).toBeUndefined();
-                })
-                .toss();
-        })
-        .toss();
+    it('creates a channel', function (done) {
+        var url = channelUrl;
+        var headers = {'Content-Type': 'text/plain'};
+        var body = messageText;
+
+        utils.httpPost(url, headers, body)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(201);
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
+
+    var itemURL;
+
+    it('inserts an item', function (done) {
+        var url = channelResource;
+        var headers = {'Content-Type': 'application/json'};
+        var body = {'name': channelName};
+
+        utils.httpPost(url, headers, body)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(201);
+                expect(response.headers['content-type']).toEqual('application/json');
+                expect(response.body._links.channel.href).toEqual(channelResource);
+                itemURL = response.body._links.self.href;
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
+
+    it('verifies the item was inserted successfully', function (done) {
+        utils.httpGet(itemURL)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(200);
+                expect(response.headers['content-type']).toEqual('text/plain');
+                expect(response.headers['user']).toBeUndefined();
+                expect(response.body).toContain(messageText);
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
+
 });

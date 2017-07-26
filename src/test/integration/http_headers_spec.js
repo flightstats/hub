@@ -4,7 +4,6 @@ var request = require('request');
 var channelName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
-utils.configureFrisby();
 
 /**
  * verify that X-Forwarded-Host and X-Forwarded-Proto are respected.

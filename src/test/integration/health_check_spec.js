@@ -1,15 +1,22 @@
 require('./integration_config.js');
 
-var testName = 'health_check_spec';
+describe(__filename, function () {
 
-frisby.create(testName + ': Making sure channel resource does not yet exist.')
-    .get(hubUrlBase + "/health")
-    .expectStatus(200)
-    .expectHeader('content-type', 'application/json')
-    .expectJSON({
-        healthy: true
-    })
-    .toss();
+    it('verifies the health check returns healthy', function (done) {
+        var url = hubUrlBase + '/health';
 
+        utils.httpGet(url)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(200);
+                expect(response.headers['content-type']).toEqual('application/json');
+                expect(response.body.health).toEqual(true);
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
 
-
+});

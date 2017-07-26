@@ -1,38 +1,90 @@
 require('./integration_config.js');
 
 var channelName = utils.randomChannelName();
-var testName = __filename;
+var channelResource = channelUrl + '/' + channelName;
 
-utils.configureFrisby();
+describe(__filename, function () {
 
-utils.runInTestChannel(testName, channelName, function (channelResponse) {
-    var channelResource = channelResponse['_links']['self']['href'];
-    frisby.create(testName + ': Inserting a first item')
-        .post(channelResource, null, { body : "FIRST ITEM"})
-        .addHeader("Content-Type", "text/plain")
-        .expectStatus(201)
-        .afterJSON(function (response) {
-            var firstItemUrl = response['_links']['self']['href'];
-            frisby.create(testName + ': Verifying that first channel item doesnt have a next')
-                .get(firstItemUrl)
-                .expectStatus(200)
-                .after(function (err, res, body) {
+    it('creates a channel', function (done) {
+        var url = channelUrl;
+        var headers = {'Content-Type': 'application/json'};
+        var body = {'name': channelName};
 
-                    frisby.create(testName + ": Inserting a second item")
-                        .post(channelResource, null, {body : "SECOND ITEM"})
-                        .addHeader("Content-Type", "text/plain")
-                        .expectStatus(201)
-                        .afterJSON(function (response) {
-                            var secondItemUrl = response['_links']['self']['href'];
-                            frisby.create(testName + ": Checking the Link header that should come back with the first url now.")
-                                .get(firstItemUrl)
-                                .expectStatus(200)
-                                .toss()
-                        })
-                        .toss();
-                })
-                .toss();
-        })
-        .toss();
+        utils.httpPost(url, headers, body)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(201);
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
+
+    var firstItemURL;
+
+    it('inserts the first item', function (done) {
+        var url = channelResource;
+        var headers = {'Content-Type': 'text/plain'};
+        var body = 'FIRST ITEM';
+
+        utils.httpPost(url, headers, body)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(201);
+                firstItemURL = reponse.body._links.self.href;
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
+
+    it('verifies the first item doesn\'t have a next link', function (done) {
+        utils.httpGet(firstItemURL)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(200);
+                expect(response.headers['link']).toNotContain('next');
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
+
+    it('inserts the second item', function (done) {
+        var url = channelResource;
+        var headers = {'Content-Type': 'text/plain'};
+        var body = 'SECOND ITEM';
+
+        utils.httpPost(url, headers, body)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(201);
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
+
+    it('verifies the first item does have a next link', function (done) {
+        utils.httpGet(firstItemURL)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(200);
+                expect(response.headers['link']).toContain('next');
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
+
 });
-

@@ -1,15 +1,40 @@
 require('./integration_config.js');
 
 var channelName = utils.randomChannelName();
-var testName = __filename;
 
-utils.configureFrisby();
+describe(__filename, function () {
 
-utils.runInTestChannel(testName, channelName, function (channelResponse) {
-    var earliestLink = channelResponse['_links']['earliest']['href'];
-    frisby.create(testName + ':Test earliest item is 404 when channel is empty')
-        .get(earliestLink)
-        .expectStatus(404)
-        .toss();
+    var earliestURL;
+
+    it('creates a channel', function (done) {
+        var url = channelUrl;
+        var headers = {'Content-Type': 'application/json'};
+        var body = {'name': channelName};
+
+        utils.httpPost(url, headers, body)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(201);
+                earliestURL = response.body._links.earliest.href;
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
+
+    it('verifies the earliest endpoint returns 404 on an empty channel', function (done) {
+        utils.httpGet(earliestURL)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(404);
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
+
 });
-

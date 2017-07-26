@@ -1,15 +1,22 @@
 require('./integration_config.js');
 
-var jsonBody = JSON.stringify({});
-var testName = "channel_creation_no_name_spec";
+describe(__filename, function () {
 
-utils.configureFrisby();
+    it('creates a channel with no name', function (done) {
+        var url = channelUrl;
+        var headers = {'Content-Type': 'application/json'};
+        var body = {};
 
-frisby.create(testName + ':Test create channel with no name')
-    .post(channelUrl, null, { body: jsonBody })
-    .addHeader("Content-Type", "application/json")
-    .expectStatus(400)
-    .toss();
+        utils.httpPost(url, headers, body)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(400);
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
 
-
-
+});
