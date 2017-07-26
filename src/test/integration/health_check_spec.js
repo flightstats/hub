@@ -9,7 +9,7 @@ describe(__filename, function () {
             .then(function (response) {
                 expect(response.statusCode).toEqual(200);
                 expect(response.headers['content-type']).toEqual('application/json');
-                expect(response.body.health).toEqual(true);
+                expect(response.body.healthy).toEqual(true);
             })
             .catch(function (error) {
                 expect(error).toBeNull();
