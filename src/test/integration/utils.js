@@ -52,7 +52,7 @@ exports.httpGet = function httpGet(url, headers) {
         headers: headers || {}
     };
 
-    console.log('GET', JSON.stringify(options, null, 0));
+    console.log('GET', options.url, options.headers);
     request.get(options, function (error, response) {
         if (error)
             deferred.reject(error);
@@ -88,7 +88,7 @@ exports.httpPost = function httpPost(url, headers, body) {
         options.json = true;
     }
 
-    console.log('POST', JSON.stringify(options, null, 0));
+    console.log('POST', options.url, options.headers, options.body.length);
     request.post(options, function (error, response) {
         if (error)
             deferred.reject(error);
@@ -124,7 +124,7 @@ exports.httpPut = function httpPut(url, headers, body) {
         options.json = true;
     }
     
-    console.log('PUT', JSON.stringify(options, null, 0));
+    console.log('PUT', options.url, options.headers, options.body.length);
     request.put(options, function (error, response) {
         if (error)
             deferred.reject(error);
@@ -146,7 +146,7 @@ exports.httpDelete = function httpDelete(url, headers) {
         headers: headers || {}
     };
     
-    console.log('DELETE', JSON.stringify(options, null, 0));
+    console.log('DELETE', options.url, options.headers);
     request.del(options, function (error, response) {
         if (error)
             deferred.reject(error);
@@ -173,7 +173,7 @@ exports.httpPatch = function httpPatch(url, headers, body) {
         options.json = true;
     }
 
-    console.log('PATCH', JSON.stringify(options, null, 0));
+    console.log('PATCH', options.url, options.headers, options.body.length);
     request.patch(options, function (error, response) {
         if (error)
             deferred.reject(error);
