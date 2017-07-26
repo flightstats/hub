@@ -57,7 +57,7 @@ exports.httpGet = function httpGet(url, headers) {
         if (error)
             deferred.reject(error);
         else {
-            if (utils.isJSON(response.headers)) {
+            if (utils.contentIsJSON(response.headers)) {
                 try {
                     response.body = JSON.parse(response.body);
                 } catch (error) {
@@ -84,7 +84,7 @@ exports.httpPost = function httpPost(url, headers, body) {
         body: body || ''
     };
 
-    if (utils.isJSON(headers)) {
+    if (utils.contentIsJSON(headers)) {
         options.json = true;
     }
 
@@ -111,7 +111,7 @@ exports.httpDelete = function httpDelete(url, headers) {
     };
     
     console.log('DELETE', JSON.stringify(options, null, 0));
-    request.delete(options, function (error, response) {
+    request.del(options, function (error, response) {
         if (error)
             deferred.reject(error);
         else
@@ -133,7 +133,7 @@ exports.httpPatch = function httpPatch(url, headers, body) {
         body: body || ''
     };
 
-    if (utils.isJSON(headers)) {
+    if (utils.contentIsJSON(headers)) {
         options.json = true;
     }
 
@@ -148,7 +148,7 @@ exports.httpPatch = function httpPatch(url, headers, body) {
     return deferred.promise;
 };
 
-exports.isJSON = function responseIsJSON(headers) {
+exports.contentIsJSON = function contentIsJSON(headers) {
     var hasContentType = 'content-type' in headers;
     var contentTypeIsJSON = headers['content-type'] === 'application/json';
     return hasContentType && contentTypeIsJSON;
