@@ -56,8 +56,17 @@ exports.httpGet = function httpGet(url, headers) {
     request.get(options, function (error, response) {
         if (error)
             deferred.reject(error);
-        else
+        else {
+            if (utils.isJSON(response.headers)) {
+                try {
+                    response.body = JSON.parse(response.body);
+                } catch (error) {
+                    console.log('Expected JSON but couldn\'t parse it:', error);
+                }
+            }
+
             deferred.resolve(response);
+        }
     });
 
     return deferred.promise;
@@ -75,9 +84,7 @@ exports.httpPost = function httpPost(url, headers, body) {
         body: body || ''
     };
 
-    var hasContentType = 'content-type' in headers;
-    var contentTypeIsJSON = headers['content-type'] === 'application/json';
-    if (hasContentType && contentTypeIsJSON) {
+    if (utils.isJSON(headers)) {
         options.json = true;
     }
 
@@ -126,9 +133,7 @@ exports.httpPatch = function httpPatch(url, headers, body) {
         body: body || ''
     };
 
-    var hasContentType = 'content-type' in headers;
-    var contentTypeIsJSON = headers['content-type'] === 'application/json';
-    if (hasContentType && contentTypeIsJSON) {
+    if (utils.isJSON(headers)) {
         options.json = true;
     }
 
@@ -141,6 +146,12 @@ exports.httpPatch = function httpPatch(url, headers, body) {
     });
 
     return deferred.promise;
+};
+
+exports.isJSON = function responseIsJSON(headers) {
+    var hasContentType = 'content-type' in headers;
+    var contentTypeIsJSON = headers['content-type'] === 'application/json';
+    return hasContentType && contentTypeIsJSON;
 };
 
 exports.keysToLowerCase = function keysToLowerCase(obj) {
