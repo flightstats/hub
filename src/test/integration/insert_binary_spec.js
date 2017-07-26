@@ -1,44 +1,78 @@
 require('./integration_config.js');
-var fs = require('fs');
-var request = require('request');
+
 var channelName = utils.randomChannelName();
-var thisChannelResource = channelUrl + "/" + channelName;
-var testName = __filename;
+var channelResource = channelUrl + "/" + channelName;
 
-utils.runInTestChannel(testName, channelName, function () {
+describe(__filename, function () {
 
-    catUrl = 'http://www.lolcats.com/images/u/08/32/lolcatsdotcombkf8azsotkiwu8z2.jpg';
-
-    var error;
-    var comparisonHasBeenFetched = false;
-    var returnedHref = "";
-    var hubdata = [1];
-    var imagedata = [0];
-
-    runs(function () {
-        utils.getItem(catUrl, function (nothing, imgdata) {
-            imagedata = imgdata;
-            buf = new Buffer(imgdata, 'binary');
-            request.post({url : thisChannelResource, headers : {"Content-Type" : "image/jpeg"}, body : buf}, function (err, response, body) {
-                error = err;
-                resultObj = utils.parseJson(response, testName);
-                returnedHref = resultObj['_links']['channel']['href'];
-                var valueUrl = resultObj['_links']['self']['href'];
-                utils.getItem(valueUrl, function (nothing, data) {
-                    hubdata = data;
-                    comparisonHasBeenFetched = true;
-                });
+    it('creates a channel', function (done) {
+        var url = channelUrl;
+        var headers = {'Content-Type': 'application/json'};
+        var body = {};
+        
+        utils.httpPost(url, headers, body)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(201);
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
             });
-        });
     });
 
-    waitsFor(function () {
-        return comparisonHasBeenFetched;
-    }, 5000);
+    var imageData;
+    
+    it('downloads an image of a cat', function (done) {
+        var url = 'http://www.lolcats.com/images/u/08/32/lolcatsdotcombkf8azsotkiwu8z2.jpg';
 
-    runs(function () {
-        expect(error).toBeNull();
-        expect(resultObj['_links']['channel']['href']).toBe(thisChannelResource);
-        expect(hubdata.length).toEqual(imagedata.length);
+        utils.httpGet(url)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(200);
+                imageData = response.body;
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
     });
+
+    var itemURL;
+
+    it('inserts an image into the channel', function (done) {
+        var url = channelResource;
+        var headers = {'Content-Type': 'image/jpeg'};
+        var body = new Buffer(imageData, 'binary');
+
+        utils.httpPost(url, headers, body)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(201);
+                expect(response.body._links.channel.href).toEqual(channelResource);
+                itemURL = response.body._links.self.href;
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
+
+    it('verifies the image data was inserted correctly', function (done) {
+        utils.httpGet(itemURL)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(200);
+                expect(response.body.length).toEqual(imageData.length);
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
+
 });
