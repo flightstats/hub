@@ -33,7 +33,7 @@ describe(__filename, function () {
         utils.httpGet(url)
             .then(function (response) {
                 expect(response.statusCode).toEqual(200);
-                expect(response.headers['content-type']).toEqual(text/plain);
+                expect(response.headers['content-type']).toEqual('text/plain');
                 expect(response.body).toContain(messageText);
             })
             .catch(function (error) {
