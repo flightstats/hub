@@ -8,8 +8,8 @@ describe(__filename, function () {
 
     it('creates a channel', function (done) {
         var url = channelUrl;
-        var headers = {'Content-Type': 'text/plain'};
-        var body = messageText;
+        var headers = {'Content-Type': 'application/json'};
+        var body = {'name': channelName};
 
         utils.httpPost(url, headers, body)
             .then(function (response) {
@@ -27,8 +27,8 @@ describe(__filename, function () {
 
     it('inserts an item', function (done) {
         var url = channelResource;
-        var headers = {'Content-Type': 'application/json'};
-        var body = {'name': channelName};
+        var headers = {'Content-Type': 'text/plain'};
+        var body = messageText;
 
         utils.httpPost(url, headers, body)
             .then(function (response) {
