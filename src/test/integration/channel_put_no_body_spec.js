@@ -10,7 +10,7 @@ describe(__filename, function () {
         var headers = {'Content-Type': 'application/json'};
         var body = '';
 
-        utils.httpPost(url, headers, body)
+        utils.httpPut(url, headers, body)
             .then(function (response) {
                 expect(response.statusCode).toEqual(201);
             })

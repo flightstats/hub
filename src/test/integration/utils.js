@@ -99,6 +99,33 @@ exports.httpPost = function httpPost(url, headers, body) {
     return deferred.promise;
 };
 
+exports.httpPut = function httpPut(url, headers, body) {
+    var deferred = Q.defer();
+    
+    if (headers)
+        headers = utils.keysToLowerCase(headers);
+    
+    var options = {
+        url: url,
+        headers: headers || {},
+        body: body || ''
+    };
+    
+    if (utils.contentIsJSON(headers)) {
+        options.json = true;
+    }
+    
+    console.log('PUT', JSON.stringify(options, null, 0));
+    request.put(options, function (error, response) {
+        if (error)
+            deferred.reject(error);
+        else
+            deferred.resolve(response);
+    });
+    
+    return deferred.promise;
+};
+
 exports.httpDelete = function httpDelete(url, headers) {
     var deferred = Q.defer();
     
