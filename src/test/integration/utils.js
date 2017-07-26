@@ -61,7 +61,7 @@ exports.httpGet = function httpGet(url, headers) {
                 try {
                     response.body = JSON.parse(response.body);
                 } catch (error) {
-                    console.warn('Response header says the content is JSON but it failed to parse');
+                    console.warn('Response header says the content is JSON but it couldn\'t be parsed');
                 }
             }
 
@@ -97,7 +97,7 @@ exports.httpPost = function httpPost(url, headers, body) {
                 try {
                     response.body = JSON.parse(response.body);
                 } catch (error) {
-                    console.warn('Response header says the content is JSON but it failed to parse');
+                    console.warn('Response header says the content is JSON but it couldn\'t be parsed');
                 }
             }
 
