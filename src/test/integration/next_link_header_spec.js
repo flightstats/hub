@@ -32,7 +32,7 @@ describe(__filename, function () {
         utils.httpPost(url, headers, body)
             .then(function (response) {
                 expect(response.statusCode).toEqual(201);
-                firstItemURL = reponse.body._links.self.href;
+                firstItemURL = response.body._links.self.href;
             })
             .catch(function (error) {
                 expect(error).toBeNull();
