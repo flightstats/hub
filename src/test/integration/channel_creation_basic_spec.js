@@ -1,6 +1,5 @@
 require('./integration_config.js');
 
-const request = require('request-promise');
 const channelName = utils.randomChannelName();
 const channelResource = channelUrl + "/" + channelName;
 
