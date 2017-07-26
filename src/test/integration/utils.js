@@ -92,8 +92,17 @@ exports.httpPost = function httpPost(url, headers, body) {
     request.post(options, function (error, response) {
         if (error)
             deferred.reject(error);
-        else
+        else {
+            if (utils.contentIsJSON(response.headers)) {
+                try {
+                    response.body = JSON.parse(response.body);
+                } catch (error) {
+                    console.warn('Response header says the content is JSON but it failed to parse');
+                }
+            }
+
             deferred.resolve(response);
+        }
     });
 
     return deferred.promise;
