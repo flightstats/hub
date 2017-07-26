@@ -5,20 +5,6 @@ var fs = require('fs');
 var request = require('request');
 var Q = require('q');
 
-exports.runInTestChannel = function runInTestChannel(testName, channelName, functionToExecute) {
-    testName = testName || '';
-    utils.runInTestChannelJson(testName, JSON.stringify({"name": channelName}), functionToExecute);
-};
-
-exports.runInTestChannelJson = function runInTestChannelJson(testName, jsonBody, functionToExecute) {
-    frisby.create('Creating channel ' + testName + ' ' + jsonBody)
-        .post(channelUrl, null, { body: jsonBody})
-        .addHeader("Content-Type", "application/json")
-        .expectStatus(201)
-        .afterJSON(functionToExecute)
-        .toss();
-};
-
 exports.randomChannelName = function randomChannelName() {
     return "TeSt_" + Math.random().toString().replace(".", "_");
 };
