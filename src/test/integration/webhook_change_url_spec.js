@@ -28,7 +28,7 @@ describe(testName, function () {
     var itemsB = [];
     var postedItem;
     var badConfig = {
-        callbackUrl: 'http://localhost:8080/nothing',
+        callbackUrl: 'http://nothing:8080/nothing',
         channelUrl: channelResource
     };
     var webhookConfigB = {

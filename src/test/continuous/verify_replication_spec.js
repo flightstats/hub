@@ -18,6 +18,21 @@ describe(testName, function () {
     //uses key of replicationSource to channel body
     var replicatedChannels = {};
 
+    getItem = function getItem(uri, callback) {
+        request({uri: uri, encoding: null}, function (error, response, body) {
+            expect(error).toBe(null);
+            if (error) {
+                console.log('got error ', uri, error);
+            } else {
+                if (response.statusCode !== 200) {
+                    console.log('wrong status ', uri, response.statusCode);
+                }
+                expect(response.statusCode).toBe(200);
+            }
+            callback(null, body);
+        });
+    };
+
     it('loads ' + hubUrl + ' replicated channels ', function (done) {
         agent.get(hubUrl + '/tag/replicated')
             .set('Accept', 'application/json')
@@ -78,12 +93,10 @@ describe(testName, function () {
                     .end(function (res) {
                         expect(res.error).toBe(false);
                         channels[channel] = [];
-                        console.log("hour", res.body);
                         agent.get(res.body._links.previous.href)
                             .set('Accept', 'application/json')
                             .end(function (res) {
                                 expect(res.error).toBe(false);
-                                console.log("prev", res.body);
                                 channels[channel] = res.body._links.uris.concat(channels[channel]);
                                 console.log('found dest second ', channels[channel][0]);
                                 callback(res.error);
@@ -151,14 +164,18 @@ describe(testName, function () {
 
     it('select some random items for content verification ', function (done) {
         for (var channel in channels) {
-            console.log('working on', channel);
-            channels[channel].forEach(function (uri) {
-                var replicatedChannel = replicatedChannels[channel];
-                if (Math.random() > 0.99) {
-                    var contentKey = getContentKey(uri, channel);
-                    itemsToVerify.push({name: channel, uri: uri, contentKey: contentKey});
-                }
-            });
+            if (channel.toLowerCase().indexOf('large_test') > 0) {
+                console.log('excluding', channel);
+            } else {
+                console.log('working on', channel);
+                channels[channel].forEach(function (uri) {
+                    var replicatedChannel = replicatedChannels[channel];
+                    if (Math.random() > 0.99) {
+                        var contentKey = getContentKey(uri, channel);
+                        itemsToVerify.push({name: channel, uri: uri, contentKey: contentKey});
+                    }
+                });
+            }
 
             console.log(channels[channel].length + ' items for ' + channel + ' verify ' + itemsToVerify.length);
         }
@@ -171,20 +188,28 @@ describe(testName, function () {
             function (item, callback) {
                 async.parallel([
                         function (callback) {
-                            utils.getItem(replicatedChannels[item.name].replicationSource + item.contentKey, callback);
+                            getItem(replicatedChannels[item.name].replicationSource + item.contentKey, callback);
                         },
                         function (callback) {
-                            utils.getItem(item.uri, callback);
+                            getItem(item.uri, callback);
                         }
                     ],
                     function (err, results) {
-                        var itemZero = results[0].length;
-                        var itemOne = results[1].length;
-                        if (itemOne !== itemZero) {
-                            console.log('wrong length for item ' + item.uri + ' expected ' + itemZero + ' found ' + itemOne);
+                        if (results[0] && results[1]) {
+                            var itemZero = results[0].length;
+                            var itemOne = results[1].length;
+                            if (itemOne !== itemZero) {
+                                console.log('wrong length for item ' + item.uri + ' expected ' + itemZero + ' found ' + itemOne);
+                            }
+                            expect(itemOne).toBe(itemZero);
+
+                        } else {
+                            console.log('missing result for ' + item.name + ' ' + item.contentKey);
+                            expect(results[0]).not.toBeNull();
+                            expect(results[1]).not.toBeNull();
                         }
-                        expect(itemOne).toBe(itemZero);
                         callback(err);
+
                     });
 
             }, function (err) {

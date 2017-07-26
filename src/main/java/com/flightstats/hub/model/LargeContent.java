@@ -48,6 +48,7 @@ public class LargeContent {
             Content.Builder builder = Content.builder();
             builder.withContentKey(ContentKey.fromUrl(jsonNode.get("key").asText()).get());
             builder.withContentType(jsonNode.get("content-type").asText());
+            builder.withSize(jsonNode.get("size").asLong());
             builder.withLarge(true);
             return builder.build();
         } catch (IOException e) {

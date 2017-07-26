@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.dao.ItemRequest;
 import com.flightstats.hub.events.ContentOutput;
 import com.flightstats.hub.events.EventsService;
@@ -236,8 +237,9 @@ public class ChannelContentResource {
                             @PathParam("ms") int millis,
                             @PathParam("hash") String hash,
                             @HeaderParam("Accept") String accept,
+                            @HeaderParam("X-Item-Length-Required") @DefaultValue("false") boolean itemLengthRequired,
                             @QueryParam("remoteOnly") @DefaultValue("false") boolean remoteOnly
-    ) {
+    ) throws Exception {
         long start = System.currentTimeMillis();
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         ItemRequest itemRequest = ItemRequest.builder()
@@ -259,6 +261,7 @@ public class ChannelContentResource {
         if (contentTypeIsNotCompatible(accept, actualContentType)) {
             return Response.status(Response.Status.NOT_ACCEPTABLE).build();
         }
+
         Response.ResponseBuilder builder = Response.ok((StreamingOutput) output -> {
             try {
                 ByteStreams.copy(content.getStream(), output);
@@ -278,6 +281,19 @@ public class ChannelContentResource {
 
         builder.header("Link", "<" + uriInfo.getRequestUriBuilder().path("previous").build() + ">;rel=\"" + "previous" + "\"");
         builder.header("Link", "<" + uriInfo.getRequestUriBuilder().path("next").build() + ">;rel=\"" + "next" + "\"");
+
+        long itemLength = content.getSize();
+        if (itemLength == -1 && itemLengthRequired) {
+            if (content.isLarge()) {
+                itemLength = content.getSize();
+            } else {
+                byte[] bytes = ContentMarshaller.toBytes(content);
+                itemLength = bytes.length;
+            }
+        }
+
+        builder.header("X-Item-Length", itemLength);
+
         metricsService.time(channel, "get", start);
         return builder.build();
     }

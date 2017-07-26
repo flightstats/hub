@@ -34,10 +34,12 @@ describe(testName, function () {
     it('posts historical item to ' + channel, function (done) {
         utils.postItemQ(channelURL + '/' + moment(mutableTime).subtract(1, 'hour').format('YYYY/MM/DD/HH/mm/ss/SSS'))
             .then(function (value) {
+                console.log('uno - value.response.headers.location', value.response.headers.location);
                 historicalLocations.push(value.response.headers.location);
                 return utils.postItemQ(channelURL + '/' + mutableTime.format('YYYY/MM/DD/HH/mm/ss/SSS'));
             })
             .then(function (value) {
+                console.log('due - value.response.headers.location', value.response.headers.location);
                 historicalLocations.push(value.response.headers.location);
                 done();
             });

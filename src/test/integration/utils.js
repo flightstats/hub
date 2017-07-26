@@ -35,7 +35,7 @@ exports.getItem = function getItem(uri, callback) {
             }
             expect(response.statusCode).toBe(200);
         }
-        callback(null, body);
+        callback(response.headers, body);
     });
 };
 
@@ -126,28 +126,45 @@ exports.postItem = function postItem(url, responseCode, completed) {
         });
 };
 
-function postItemQwithPayload(url, payload) {
+function postItemQwithPayload(url, headers, body) {
+    var deferred = Q.defer();
+    var options = {
+        url: url,
+        headers: headers || {},
+        body: body
+    };
+    
+    if ('Content-Type' in options.headers && options.headers['Content-Type'] === 'application/json') {
+        options = Object.assign({}, options, {json: true});
+    }
+
+    request.post(options, function (error, response, body) {
+        expect(error).toBeNull();
+        expect(response.statusCode).toBe(201);
+        deferred.resolve({response: response, body: body});
+    });
+
+    return deferred.promise;
+}
+
+exports.postItemQwithPayload = postItemQwithPayload;
+
+exports.postItemQ = function postItemQ(url) {
+    //with default json payload
+    //todo - gfm - this is effectively rolled back to the function from ~6/16
+    var payload = {
+        url: url, json: true,
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({"data": Date.now()})
+    };
     var deferred = Q.defer();
     request.post(payload,
         function (err, response, body) {
             expect(err).toBeNull();
             expect(response.statusCode).toBe(201);
-            deferred.resolve({response : response, body : body});
+            deferred.resolve({response: response, body: body});
         });
     return deferred.promise;
-};
-
-exports.postItemQwithPayload = function (url, payload) {
-    return postItemQwithPayload(url, payload);
-};
-
-exports.postItemQ = function postItemQ(url) {  //with default json payload
-    var payload = {
-        url: url, json: true,
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({"data": Date.now()})
-    }
-    return postItemQwithPayload(url, payload);
 };
 
 exports.getWebhookUrl = function getWebhookUrl() {

@@ -28,10 +28,6 @@ describe(__filename, function () {
                 receivedMessages.push(message.data);
             };
 
-            webSocket.onclose = function () {
-                console.log('closed:', wsURL);
-            };
-
             webSocket.on('open', function () {
                 console.log('opened:', wsURL);
                 setTimeout(done, 5000);
@@ -58,7 +54,12 @@ describe(__filename, function () {
             }
         });
 
-        it('closes websocket', function () {
+        it('closes websocket', function (done) {
+            webSocket.onclose = function () {
+                console.log('closed:', wsURL);
+                done();
+            };
+
             webSocket.close();
         });
 
@@ -90,10 +91,6 @@ describe(__filename, function () {
                 receivedMessages.push(message.data);
             };
 
-            webSocket.onclose = function () {
-                console.log('closed:', wsURL);
-            };
-
             webSocket.on('open', function () {
                 console.log('opened:', wsURL);
                 setTimeout(done, 5000);
@@ -120,7 +117,12 @@ describe(__filename, function () {
             }
         });
 
-        it('closes websocket', function () {
+        it('closes websocket', function (done) {
+            webSocket.onclose = function () {
+                console.log('closed:', wsURL);
+                done();
+            };
+
             webSocket.close();
         });
 
@@ -153,10 +155,6 @@ describe(__filename, function () {
                 receivedMessages.push(message.data);
             };
 
-            webSocket.onclose = function () {
-                console.log('closed:', wsURL);
-            };
-
             webSocket.on('open', function () {
                 console.log('opened:', wsURL);
                 setTimeout(done, 5000);
@@ -183,7 +181,12 @@ describe(__filename, function () {
             }
         });
 
-        it('closes websocket', function () {
+        it('closes websocket', function (done) {
+            webSocket.onclose = function () {
+                console.log('closed:', wsURL);
+                done();
+            };
+
             webSocket.close();
         });
 
@@ -217,10 +220,6 @@ describe(__filename, function () {
                 receivedMessages.push(message.data);
             };
 
-            webSocket.onclose = function () {
-                console.log('closed:', wsURL);
-            };
-
             webSocket.on('open', function () {
                 console.log('opened:', wsURL);
                 setTimeout(done, 5000);
@@ -247,7 +246,12 @@ describe(__filename, function () {
             }
         });
 
-        it('closes websocket', function () {
+        it('closes websocket', function (done) {
+            webSocket.onclose = function () {
+                console.log('closed:', wsURL);
+                done();
+            };
+
             webSocket.close();
         });
 
@@ -282,10 +286,6 @@ describe(__filename, function () {
                 receivedMessages.push(message.data);
             };
 
-            webSocket.onclose = function () {
-                console.log('closed:', wsURL);
-            };
-
             webSocket.on('open', function () {
                 console.log('opened:', wsURL);
                 setTimeout(done, 5000);
@@ -312,7 +312,12 @@ describe(__filename, function () {
             }
         });
 
-        it('closes websocket', function () {
+        it('closes websocket', function (done) {
+            webSocket.onclose = function () {
+                console.log('closed:', wsURL);
+                done();
+            };
+
             webSocket.close();
         });
 
@@ -336,10 +341,6 @@ describe(__filename, function () {
             webSocket.onmessage = function (message) {
                 console.log('received:', message.data);
                 receivedMessages.push(message.data);
-            };
-
-            webSocket.onclose = function () {
-                console.log('closed:', wsURL);
             };
 
             webSocket.on('open', function () {
@@ -369,7 +370,12 @@ describe(__filename, function () {
             }
         });
 
-        it('closes websocket', function () {
+        it('closes websocket', function (done) {
+            webSocket.onclose = function () {
+                console.log('closed:', wsURL);
+                done();
+            };
+
             webSocket.close();
         });
 

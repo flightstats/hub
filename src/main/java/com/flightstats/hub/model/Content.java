@@ -19,10 +19,12 @@ public class Content implements Serializable {
     public static final int THREADS = HubProperties.getProperty("s3.large.threads", 3);
 
     private final Optional<String> contentType;
+    //contentLength is the number of bytes in the total compressed payload (meta & item)
     private long contentLength;
     private InputStream stream;
     private byte[] data;
     private Optional<ContentKey> contentKey = Optional.absent();
+    //size is the number of bytes in the raw, uncompressed item
     private Long size;
     private transient boolean isLarge;
     private transient int threads;
@@ -38,6 +40,7 @@ public class Content implements Serializable {
         threads = Math.max(THREADS, builder.threads);
         forceWrite = builder.forceWrite;
         isLarge = builder.large;
+        size = builder.size;
     }
 
     public static Builder builder() {
@@ -125,9 +128,10 @@ public class Content implements Serializable {
     public Long getSize() {
         if (size == null) {
             if (data == null) {
-                throw new UnsupportedOperationException("convert stream to bytes first");
+                size = -1L;
+            } else {
+                size = (long) data.length;
             }
-            size = (long) data.length;
         }
         return size;
     }
@@ -187,6 +191,7 @@ public class Content implements Serializable {
     public static class Builder {
         private Optional<String> contentType = Optional.absent();
         private long contentLength = 0;
+        private Long size;
         private Optional<ContentKey> contentKey = Optional.absent();
         private InputStream stream;
         private int threads;
@@ -210,6 +215,11 @@ public class Content implements Serializable {
 
         public Builder withContentLength(Long contentLength) {
             this.contentLength = contentLength;
+            return this;
+        }
+
+        public Builder withSize(Long size) {
+            this.size = size;
             return this;
         }
 
@@ -243,6 +253,10 @@ public class Content implements Serializable {
 
         public long getContentLength() {
             return this.contentLength;
+        }
+
+        public long getSize() {
+            return this.size;
         }
 
         public Optional<ContentKey> getContentKey() {
