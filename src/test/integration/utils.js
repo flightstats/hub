@@ -61,7 +61,7 @@ exports.httpGet = function httpGet(url, headers) {
                 try {
                     response.body = JSON.parse(response.body);
                 } catch (error) {
-                    console.log('Expected JSON but couldn\'t parse it:', error);
+                    console.warn('Response header says the content is JSON but it failed to parse');
                 }
             }
 
