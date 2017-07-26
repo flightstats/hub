@@ -8,7 +8,7 @@ from hubUser import HubUser
 
 class UpdateCursorUser(HubUser):
     def name(self):
-        return "single_test_"
+        return "update_cursor_test_"
 
     def start_channel(self, payload, tasks):
         payload["storage"] = "SINGLE"
@@ -30,33 +30,13 @@ class UpdateCursorTasks(TaskSet):
     def write_read(self):
         self.hubTasks.write_read()
 
-    @task(10)
-    def update_cursor(self):
-        self.hubTasks.update_webhook()
+    @task(1)
+    def verify_cursor_update(self):
+        self.hubTasks.verify_cursor_update()
 
     @task(10)
     def get_webhook_config(self):
         self.hubTasks.get_webhook_config()
-
-    # @task(10)
-    # def hour_query(self):
-    #     self.hubTasks.hour_query()
-    #
-    # @task(10)
-    # def minute_query(self):
-    #     self.hubTasks.minute_query()
-    #
-    # @task(10)
-    # def second_query(self):
-    #     self.hubTasks.second_query()
-    #
-    # @task(10)
-    # def next_previous(self):
-    #     self.hubTasks.next_previous()
-    #
-    # @task(10)
-    # def verify_callback_length(self):
-    #     self.hubTasks.verify_callback_length(20000)
 
     @web.app.route("/callback", methods=['GET'])
     def get_channels(self):

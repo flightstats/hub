@@ -39,6 +39,10 @@ def key_from_time(dt, unit="second"):
                    }
     return key_options[unit]
 
+
+def webhook_name(channel):
+    return "/webhook/locust_" + str(channel)
+
 class HubTasks:
     host = None
     channelNum = 0
@@ -73,8 +77,7 @@ class HubTasks:
             self.start_websocket()
         time.sleep(5)
 
-    def webhook_name(self):
-        return "/webhook/locust_" + self.channel
+
 
 
     def start_webhook(self):
@@ -90,7 +93,7 @@ class HubTasks:
         }
 
         self.user.start_webhook(config)
-        webhook = webhook_name()
+        webhook = webhook_name(self.channel)
         self.client.delete(webhook, name="group")
         logger.info("group channel " + config['webhook_channel'] + " parallel:" + str(config['parallel']))
         groupCallbacks[self.channel] = {
@@ -116,21 +119,56 @@ class HubTasks:
                         headers={"Content-Type": "application/json"},
                         name="group")
 
-    def update_webhook(self):
-        # update with a key 1 day in the past
-        yesterday = datetime.datetime.now() - datetime.timedelta(days=1)
-        key = key_from_time(yesterday, "second")
+    def get_webhook_config(self):
+        json = (self.client.get(webhook_name(self.channel), name="webhook_config")).json()
+        return json
 
-        url = self.host + webhook_name(self) + "/" + key
+    def get_webhook_last_completed(self):
+        config = self.get_webhook_config()
+        return config["lastCompleted"]
+
+    def get_channel_latest_date(self):
+        config = self.get_webhook_config()
+        channel_latest_url = config["channelLatest"]
+
+    # update webhook cursor to now "current=True" or 1 day in the past
+    def update_webhook(self, current=True):
+        if current:
+            key = key_from_time(datetime.now(), "second")
+        else:
+            yesterday = datetime.now() - timedelta(days=1)
+            key = key_from_time(yesterday, "second")
+        url = self.host + "/channel/" + self.channel + "/" + key
         logger.info("updating webhook with url:  " + url)
         data = {
             "item": url
         }
-        self.client.put(webhook_name(self) + "/updateCursor", data=json.dumps(data),
+        self.client.put(webhook_name(self.channel) + "/updateCursor", data=json.dumps(data),
                         headers={"Content-Type": "application/json"})
 
-    def get_webhook_config(self):
-        initial = (self.client.get(webhook_name(), name="webhook_config")).json()
+    def verify_cursor_update(self):
+        # get current latest completed
+        old_latest = self.get_webhook_last_completed()
+        # update cursor
+
+        self.update_webhook(False)
+        # wait a bit
+        time.sleep(2)
+        new_latest = self.get_webhook_last_completed()
+
+        # verify that new latest < old latest
+        it_works = new_latest < old_latest
+        logger.info(">>> it works " + str(it_works) + " old " + str(old_latest) + " new " + str(new_latest))
+
+        self.update_webhook(True)
+        time.sleep(1)
+
+        if it_works:
+            events.request_success.fire(request_type="group", name="update", response_time=1,
+                                        response_length=1)
+        else:
+            events.request_failure.fire(request_type="group", name="update", response_time=1,
+                                        exception=-1)
 
     def start_websocket(self):
         websockets[self.channel] = {
@@ -183,9 +221,6 @@ class HubTasks:
 
     def get_channel_url(self):
         return self.user.channel_post_url(self.channel)
-
-    def get_webhook_config(self):
-        pass
 
     def parse_write(self, postResponse):
         links = postResponse.json()
