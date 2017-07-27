@@ -52,8 +52,14 @@ module.exports = {
                 var self = this;
                 results.items_.forEach(function (item) {
                     if (!item.passed_) {
-                        console.log(ANSI.RED + item.trace.stack + ANSI.OFF);
-                        self.failures.push(item.trace.stack);
+                        var failure = item.trace.stack;
+                        if (failure === undefined) {
+                            console.log('An error occured but a stack trace couldn\'t be found');
+                            console.log('DEBUG INFO:', item);
+                            exit(1);
+                        }
+                        console.log(ANSI.RED + failure + ANSI.OFF);
+                        self.failures.push(failure);
                     }
                 });
                 break;
