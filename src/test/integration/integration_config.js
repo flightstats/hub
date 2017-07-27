@@ -1,7 +1,6 @@
 utils = require('./utils.js');
 ip = require('ip');
 var _ = require('lodash');
-var reporter = require('./ddt_reporter');
 
 hubDomain = process.env.hubDomain;
 satelliteDomain = process.env.satelliteDomain;
