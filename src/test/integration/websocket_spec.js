@@ -44,7 +44,7 @@ describe(__filename, function () {
         });
 
         it('waits for data', function (done) {
-            waitForMessages(receivedMessages, itemURLs, done);
+            utils.waitForData(receivedMessages, itemURLs, done);
         });
 
         it('verifies the correct data was received', function () {
@@ -107,7 +107,7 @@ describe(__filename, function () {
         });
 
         it('waits for data', function (done) {
-            waitForMessages(receivedMessages, itemURLs, done);
+            utils.waitForData(receivedMessages, itemURLs, done);
         });
 
         it('verifies the correct data was received', function () {
@@ -171,7 +171,7 @@ describe(__filename, function () {
         });
 
         it('waits for data', function (done) {
-            waitForMessages(receivedMessages, itemURLs, done);
+            utils.waitForData(receivedMessages, itemURLs, done);
         });
 
         it('verifies the correct data was received', function () {
@@ -236,7 +236,7 @@ describe(__filename, function () {
         });
 
         it('waits for data', function (done) {
-            waitForMessages(receivedMessages, itemURLs, done);
+            utils.waitForData(receivedMessages, itemURLs, done);
         });
 
         it('verifies the correct data was received', function () {
@@ -302,7 +302,7 @@ describe(__filename, function () {
         });
 
         it('waits for data', function (done) {
-            waitForMessages(receivedMessages, itemURLs, done);
+            utils.waitForData(receivedMessages, itemURLs, done);
         });
 
         it('verifies the correct data was received', function () {
@@ -359,7 +359,7 @@ describe(__filename, function () {
         });
 
         it('waits for data', function (done) {
-            waitForMessages(receivedMessages, itemURLs.slice(1), done);
+            utils.waitForData(receivedMessages, itemURLs.slice(1), done);
         });
 
         it('verifies the correct data was received', function () {
@@ -382,17 +382,3 @@ describe(__filename, function () {
     });
 
 });
-
-function waitForMessages(actual, expected, done) {
-    expect(actual).isPrototypeOf(Array);
-    expect(expected).isPrototypeOf(Array);
-    setTimeout(function () {
-        if (actual.length !== expected.length) {
-            waitForMessages(actual, expected, done);
-        } else {
-            console.log('expected:', expected);
-            console.log('actual:', actual);
-            done();
-        }
-    }, 500);
-}
