@@ -42,6 +42,7 @@ public class InternalResource {
         links.with("self").put("href", requestUri);
 
         addLink("channel", InternalChannelResource.DESCRIPTION);
+        addLink("cluster", InternalClusterResource.DESCRIPTION);
         addLink("curator", InternalCuratorResource.DESCRIPTION);
         addLink("deploy", InternalDeployResource.DESCRIPTION);
         addLink("health", InternalHealthResource.DESCRIPTION);

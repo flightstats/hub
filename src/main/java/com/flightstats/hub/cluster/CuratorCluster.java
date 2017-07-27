@@ -1,5 +1,6 @@
 package com.flightstats.hub.cluster;
 
+import com.flightstats.hub.app.HubProperties;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -23,6 +24,8 @@ import java.util.concurrent.Executor;
 public class CuratorCluster implements Cluster {
 
     private final static Logger logger = LoggerFactory.getLogger(CuratorCluster.class);
+
+    private final static int WRITE_FACTOR = HubProperties.getProperty("spoke.write.factor", 3);
     private final CuratorFramework curator;
     private final String clusterPath;
     private final boolean useName;
@@ -84,8 +87,8 @@ public class CuratorCluster implements Cluster {
         List<String> servers = new ArrayList<>();
         List<ChildData> currentData = clusterCache.getCurrentData();
         int limit = currentData.size();
-        if (currentData.size() > 3) {
-            limit = 3;
+        if (currentData.size() > WRITE_FACTOR) {
+            limit = WRITE_FACTOR;
             Collections.shuffle(currentData);
         }
         for (int i = 0; i < limit; i++) {
