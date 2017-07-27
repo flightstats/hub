@@ -577,3 +577,17 @@ exports.getQuery = function getQuery(url, status, expectedUris, done) {
             done();
         });
 };
+
+exports.waitForMessages = function waitForMessages(actual, expected, done) {
+    expect(actual).isPrototypeOf(Array);
+    expect(expected).isPrototypeOf(Array);
+    setTimeout(function () {
+        if (actual.length !== expected.length) {
+            waitForMessages(actual, expected, done);
+        } else {
+            console.log('expected:', expected);
+            console.log('actual:', actual);
+            done();
+        }
+    }, 500);
+};
