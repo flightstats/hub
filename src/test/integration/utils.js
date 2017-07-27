@@ -49,7 +49,8 @@ exports.httpGet = function httpGet(url, headers) {
 
     var options = {
         url: url,
-        headers: headers || {}
+        headers: headers || {},
+        encoding: null
     };
 
     console.log('GET', options.url, options.headers);
