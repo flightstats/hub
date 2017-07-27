@@ -427,24 +427,9 @@ exports.getQ = function getQ(url, status, stable) {
 };
 
 exports.itSleeps = function itSleeps(millis) {
-    it('sleeps', function () {
-        utils.sleep(millis);
-    })
-};
-
-exports.sleep = function sleep(millis) {
-    runs(function() {
-        console.log('sleeping for ' + millis);
-        flag = false;
-
-        setTimeout(function() {
-            flag = true;
-        }, millis);
+    it('sleeps for ' + millis + 'ms', function (done) {
+        setTimeout(done, millis);
     });
-
-    waitsFor(function() {
-        return flag;
-    }, millis + 1000);
 };
 
 exports.sleepQ = function sleepQ(millis) {

@@ -27,12 +27,9 @@ describe(testName, function () {
     var postedItems = [];
     var firstItem;
 
-    function postedItem(value, post) {
+    function addPostedItem(value) {
         postedItems.push(value.body._links.self.href);
         console.log('postedItems', postedItems);
-        if (post) {
-            return utils.postItemQ(channelResource);
-        }
     }
 
     it('posts initial items ' + channelResource, function (done) {
@@ -40,13 +37,14 @@ describe(testName, function () {
             .then(function (value) {
                 firstItem = value.body._links.self.href;
                 return utils.postItemQ(channelResource);
-            }).then(function (value) {
-            postedItem(value, false);
-            return utils.sleepQ(6 * 1000);
-        }).then(function (value) {
-            done();
-        });
+            })
+            .then(function (value) {
+                addPostedItem(value);
+                done();
+            });
     });
+    
+    utils.itSleeps(6000);
 
     it('creates webhook ' + webhookName, function (done) {
         var webhookConfig = {
@@ -84,14 +82,20 @@ describe(testName, function () {
 
         utils.postItemQ(channelResource)
             .then(function (value) {
-                return postedItem(value, true);
-            }).then(function (value) {
-            return postedItem(value, true);
-        }).then(function (value) {
-            return postedItem(value, true);
-        }).then(function (value) {
-            postedItem(value, false);
-        });
+                addPostedItem(value);
+                return utils.postItemQ(channelResource);
+            })
+            .then(function (value) {
+                addPostedItem(value);
+                return utils.postItemQ(channelResource);
+            })
+            .then(function (value) {
+                addPostedItem(value);
+                return utils.postItemQ(channelResource);
+            })
+            .then(function (value) {
+                addPostedItem(value);
+            });
 
         waitsFor(function () {
             return callbackItems.length == 5;

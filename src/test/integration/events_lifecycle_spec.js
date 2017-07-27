@@ -35,31 +35,32 @@ describe(testName, function () {
         source.addEventListener('open', function (e) {
             console.log('opened');
         }, false);
-
-
-        utils.sleepQ(1000)
+    });
+    
+    utils.itSleeps(1000);
+    
+    it('posts items', function (done) {
+        utils.postItemQ(channelResource)
             .then(function (value) {
+                addPostedItem(value);
                 return utils.postItemQ(channelResource);
-            }).then(function (value) {
-                return postedItem(value, true);
-            }).then(function (value) {
-                return postedItem(value, true);
-            }).then(function (value) {
-                return postedItem(value, true);
-            }).then(function (value) {
-                postedItem(value, false);
+            })
+            .then(function (value) {
+                addPostedItem(value);
+                return utils.postItemQ(channelResource);
+            })
+            .then(function (value) {
+                addPostedItem(value);
+                return utils.postItemQ(channelResource);
+            })
+            .then(function (value) {
+                addPostedItem(value);
+                done();
             });
-
-        waitsFor(function () {
-            return events.length == 4;
-        }, 9999);
-
-        function postedItem(value, post) {
+        
+        function addPostedItem(value) {
             console.log('posted ', value.body._links.self.href);
             postedItems.push(value.body._links.self.href);
-            if (post) {
-                return utils.postItemQ(channelResource);
-            }
         }
 
     }, 10 * 1000);

@@ -41,12 +41,9 @@ describe(testName, function () {
     var callbackItems = [];
     var postedItems = [];
 
-    function postedItem(value, post) {
+    function addPostedItem(value) {
         postedItems.push(value.body._links.self.href);
         console.log('value.body._links.self.href', value.body._links.self.href)
-        if (post) {
-            return utils.postItemQ(channelResource);
-        }
     }
 
     var channel = utils.createChannel(channelName);
@@ -63,11 +60,12 @@ describe(testName, function () {
             // adding two items
             utils.postItemQ(channelResource)
                 .then(function (value) {
-                    return postedItem(value, true);
+                    addpostedItem(value);
+                    return utils.postItemQ(channelResource);
                 }).then(function (value) {
-                postedItem(value, false);
-                done();
-            });
+                    addPostedItem(value);
+                    done();
+                });
         });
         waitsFor(function () {
             console.log(postedItems.length, callbackItems.length);
@@ -84,20 +82,21 @@ describe(testName, function () {
     console.log("###### pausing web hook");
     webhook = utils.putWebhook(webhookName, webhookConfigPaused, 200, testName);
 
+    utils.itSleeps(2000);
+    
     it('posts items to paused ' + webhookName, function (done) {
-        utils.sleepQ(2000).then(function () {
-            utils.postItemQ(channelResource)
-                .then(function (value) {
-                    return postedItem(value, true);
-                }).then(function (value) {
-                postedItem(value, false);
-                utils.sleep(500);
+        utils.postItemQ(channelResource)
+            .then(function (value) {
+                addPostedItem(value);
+                return utils.postItemQ(channelResource);
+            })
+            .then(function (value) {
+                addPostedItem(value);
                 done();
             });
-            });
-
-
     }, 3000);
+    
+    utils.itSleeps(500);
 
     // we added another 2 to a paused web hook.  should still be 2
     it('verfies number ' + webhookName, function () {
@@ -108,20 +107,26 @@ describe(testName, function () {
     console.log("###### resuming web hook");
     webhook = utils.putWebhook(webhookName, webhookConfig, 200, testName);
     utils.timeout(2000);
-    it('waits for items ' + webhookName, function () {
-        utils.sleepQ(2000).then(function () {
-            utils.closeServer(function () {
-                expect(callbackItems.length).toBe(4);
-                expect(postedItems.length).toBe(4);
-                // for (var i = 0; i < callbackItems.length; i++) {
-                //     var parse = JSON.parse(callbackItems[i]);
-                //     expect(parse.uris[0]).toBe(postedItems[i]);
-                //     expect(parse.name).toBe(webhookName);
-                // }
-                utils.deleteWebhook(webhookName);
-            }, testName);
-        });
+    
+    utils.itSleeps(2000);
+    
+    it('closes the callback server', function (done) {
+        utils.closeServer(function () {
+            done();
+        }, testName);
     });
+    
+    it('verifies posted items were received', function () {
+        expect(callbackItems.length).toBe(4);
+        expect(postedItems.length).toBe(4);
+        // for (var i = 0; i < callbackItems.length; i++) {
+        //     var parse = JSON.parse(callbackItems[i]);
+        //     expect(parse.uris[0]).toBe(postedItems[i]);
+        //     expect(parse.name).toBe(webhookName);
+        // }
+    });
+
+    utils.deleteWebhook(webhookName);
 
 });
 
