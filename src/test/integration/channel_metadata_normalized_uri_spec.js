@@ -1,29 +1,62 @@
 require('./integration_config.js');
 
 var channelName = utils.randomChannelName();
-var thisChannelResource = channelUrl + "/" + channelName;
+var channelResource = channelUrl + "/" + channelName;
 var messageText = "MY SUPER TEST CASE: this & <that>. " + Math.random().toString();
-var testName = __filename;
 
-utils.configureFrisby();
+describe(__filename, function () {
 
-utils.runInTestChannel(testName, channelName, function () {
-    frisby.create(testName + ': Inserting a value into a channel.')
-        .post(thisChannelResource, null, { body : messageText})
-        .addHeader("Content-Type", "text/plain")
-        .expectStatus(201)
-        .afterJSON(function (result) {
-            var valueUrl = result['_links']['self']['href'];
-            frisby.create(testName + ': Now fetching metadata')
-                .get(thisChannelResource + "/")
-                .expectStatus(200)
-                .expectHeader('content-type', 'application/json')
-                .expectJSON('_links.latest', {
-                    href : thisChannelResource + '/latest'
-                })
-                .expectJSON({"name" : channelName})
-                .expectJSON({"ttlDays" : 120})
-                .toss();
-        })
-        .toss();
+    it('creates a channel', function (done) {
+        var url = channelUrl;
+        var headers = {'Content-Type': 'application/json'};
+        var body = {'name': channelName};
+
+        utils.httpPost(url, headers, body)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(201);
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
+
+    it('inserts an item into the channel', function (done) {
+        var url = channelResource;
+        var headers = {'Content-Type': 'text/plain'};
+        var body = messageText;
+
+        utils.httpPost(url, headers, body)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(201);
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
+
+    it('verifies the channel metadata is accurate', function (done) {
+        var url = channelResource + '/';
+
+        utils.httpGet(url)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(200);
+                expect(response.headers['content-type']).toEqual('application/json');
+                expect(response.body._links.latest.href).toEqual(channelResource + '/latest');
+                expect(response.body.name).toEqual(channelName);
+                expect(response.body.ttlDays).toEqual(120);
+            })
+            .catch(function (error) {
+               expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
+
 });

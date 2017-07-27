@@ -1,14 +1,23 @@
 require('./integration_config.js');
 
 var channelName = utils.randomChannelName();
-var badValueUrl = channelUrl + "/" + channelName + "/2014/12/31/23/59/59/999/685221b0-77c2-11e2-8a3e-20c9d08600a5";
-var testName = __filename;
+var channelResource = channelUrl + "/" + channelName;
 
-utils.configureFrisby();
+describe(__filename, function () {
 
-utils.runInTestChannel(testName, channelName, function () {
-    frisby.create(testName + ':Fetching a nonexistent channel.')
-        .get(badValueUrl)
-        .expectStatus(404)
-        .toss();
+    it('verifies a 404 is returned on a nonexistent channel', function (done) {
+        var url = channelResource + '/2014/12/31/23/59/59/999/685221b0-77c2-11e2-8a3e-20c9d08600a5';
+
+        utils.httpGet(url)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(404);
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
+
 });

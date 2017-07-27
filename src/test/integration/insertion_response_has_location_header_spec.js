@@ -1,19 +1,44 @@
 require('./integration_config.js');
 
 var channelName = utils.randomChannelName();
-var thisChannelResource = channelUrl + "/" + channelName;
+var channelResource = channelUrl + "/" + channelName;
 var messageText = "MY SUPER TEST CASE: this & <that>. " + Math.random().toString();
-var testName = __filename;
 
-utils.configureFrisby();
+describe(__filename, function () {
 
-utils.runInTestChannel(testName, channelName, function () {
-    frisby.create(testName + ': Inserting a value into a channel.')
-        .post(thisChannelResource, null, { body : messageText})
-        .addHeader("Content-Type", "text/plain")
-        .expectStatus(201)
-        .after(function (err, res, body) {
-            expect(res.headers['location']).toBeDefined();
-        })
-        .toss();
+    it('creates a channel', function (done) {
+        var url = channelUrl;
+        var headers = {'Content-Type': 'application/json'};
+        var body = {'name': channelName};
+
+        utils.httpPost(url, headers, body)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(201);
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
+
+    it('inserts an item', function (done) {
+        var url = channelResource;
+        var headers = {'Content-Type': 'text/plain'};
+        var body = messageText;
+
+        utils.httpPost(url, headers, body)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(201);
+                expect(response.headers['location']).toBeDefined();
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
+
 });

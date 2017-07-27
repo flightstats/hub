@@ -1,14 +1,24 @@
 require('./integration_config.js');
 
 var channelName = utils.randomChannelName();
-var jsonBody = JSON.stringify({ "name": channelName, "description": Array(1026).join("a")});
-var testName = "channel_creation_invalid_description_spec";
 
-utils.configureFrisby();
+describe(__filename, function () {
 
-frisby.create(testName + ': Test create channel with invalid description')
-    .post(channelUrl, null, { body: jsonBody })
-    .addHeader("Content-Type", "application/json")
-    .expectStatus(400)
-    .toss();
+    it('creates a channel with an invalid description', function (done) {
+        var url = channelUrl;
+        var headers = {'Content-Type': 'application/json'};
+        var body = {'name': channelName, 'description': new Array(1026).join('a')};
 
+        utils.httpPost(url, headers, body)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(400);
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
+
+});

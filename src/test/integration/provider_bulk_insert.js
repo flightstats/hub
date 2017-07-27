@@ -1,6 +1,8 @@
 require('./../integration/integration_config.js');
 
-utils.configureFrisby();
+var providerResource = hubUrlBase + "/provider/bulk";
+var channelName = utils.randomChannelName();
+var channelResource = channelUrl + "/" + channelName;
 var multipart =
     'This is a message with multiple parts in MIME format.  This section is ignored.\r\n' +
     '--abcdefg\r\n' +
@@ -13,19 +15,41 @@ var multipart =
     '{ "type" : "coffee", "roast" : "french" }\r\n' +
     '--abcdefg--';
 
-var providerBulkResource = hubUrlBase + "/provider/bulk";
-bulkTestName = "provider_bulk_insert_and_fetch_spec";
-bulkChannelName = utils.randomChannelName();
-bulkChannelResource = channelUrl + "/" + bulkChannelName;
-frisby.create(bulkTestName + ': Inserting a bulk value into a provider channel .')
-    .post(providerBulkResource, null, { body: multipart})
-    .addHeader("channelName", bulkChannelName)
-    .addHeader("Content-Type", "multipart/mixed; boundary=abcdefg")
-    .expectStatus(200)
-    .after(function () {
-        frisby.create(bulkTestName + ': Fetching bulk value to ensure that it was inserted.')
-            .get(bulkChannelResource + "/latest?stable=false")
-            .expectStatus(200)
-            .toss();
-    })
-    .toss();
+describe(__filename, function () {
+
+    it('inserts a bulk value into a provider channel', function (done) {
+        var url = providerResource;
+        var headers = {
+            'channelName': channelName,
+            'Content-Type': 'multipart/mixed; boundary=abcdefg'
+        };
+        var body = multipart;
+
+        utils.httpPost(url, headers, body)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(200);
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
+
+    it('verifies the bulk value was inserted', function (done) {
+        var url = channelResource + '/latest?stable=false';
+
+        utils.httpGet(url)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(200);
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
+
+});

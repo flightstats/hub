@@ -1,24 +1,9 @@
 require('./integration_config.js');
-var frisby = require('frisby');
 var http = require('http');
 var https = require('https');
 var fs = require('fs');
 var request = require('request');
 var Q = require('q');
-
-exports.runInTestChannel = function runInTestChannel(testName, channelName, functionToExecute) {
-    testName = testName || '';
-    utils.runInTestChannelJson(testName, JSON.stringify({"name": channelName}), functionToExecute);
-};
-
-exports.runInTestChannelJson = function runInTestChannelJson(testName, jsonBody, functionToExecute) {
-    frisby.create('Creating channel ' + testName + ' ' + jsonBody)
-        .post(channelUrl, null, { body: jsonBody})
-        .addHeader("Content-Type", "application/json")
-        .expectStatus(201)
-        .afterJSON(functionToExecute)
-        .toss();
-};
 
 exports.randomChannelName = function randomChannelName() {
     return "TeSt_" + Math.random().toString().replace(".", "_");
@@ -39,13 +24,6 @@ exports.getItem = function getItem(uri, callback) {
     });
 };
 
-exports.configureFrisby = function configureFrisby(timeout) {
-    timeout = typeof timeout !== 'undefined' ? timeout : 30000;
-    frisby.globalSetup({
-        timeout: timeout
-    });
-};
-
 exports.createChannel = function createChannel(channelName, url, description) {
     description = description || 'none';
     url = url || channelUrl;
@@ -61,6 +39,179 @@ exports.createChannel = function createChannel(channelName, url, description) {
             });
     }, 10 * 1001);
 
+};
+
+exports.httpGet = function httpGet(url, headers, isBinary) {
+    var deferred = Q.defer();
+
+    if (headers)
+        headers = utils.keysToLowerCase(headers);
+
+    var options = {
+        url: url,
+        headers: headers || {}
+    };
+
+    if (isBinary)
+        options.encoding = null;
+
+    console.log('GET', options.url, options.headers);
+    request.get(options, function (error, response) {
+        if (error)
+            deferred.reject(error);
+        else {
+            if (utils.contentIsJSON(response.headers)) {
+                try {
+                    response.body = JSON.parse(response.body);
+                } catch (error) {
+                    console.warn('Response header says the content is JSON but it couldn\'t be parsed');
+                }
+            }
+
+            deferred.resolve(response);
+        }
+    });
+
+    return deferred.promise;
+};
+
+exports.httpPost = function httpPost(url, headers, body) {
+    var deferred = Q.defer();
+
+    if (headers)
+        headers = utils.keysToLowerCase(headers);
+
+    var options = {
+        url: url,
+        headers: headers || {},
+        body: body || ''
+    };
+
+    if (utils.contentIsJSON(headers)) {
+        options.json = true;
+    }
+
+    console.log('POST', options.url, options.headers, options.body.length);
+    request.post(options, function (error, response) {
+        if (error)
+            deferred.reject(error);
+        else {
+            if (utils.contentIsJSON(response.headers)) {
+                try {
+                    response.body = JSON.parse(response.body);
+                } catch (error) {
+                    console.warn('Response header says the content is JSON but it couldn\'t be parsed');
+                }
+            }
+
+            deferred.resolve(response);
+        }
+    });
+
+    return deferred.promise;
+};
+
+exports.httpPut = function httpPut(url, headers, body) {
+    var deferred = Q.defer();
+    
+    if (headers)
+        headers = utils.keysToLowerCase(headers);
+    
+    var options = {
+        url: url,
+        headers: headers || {},
+        body: body || ''
+    };
+    
+    if (utils.contentIsJSON(headers)) {
+        options.json = true;
+    }
+    
+    console.log('PUT', options.url, options.headers, options.body.length);
+    request.put(options, function (error, response) {
+        if (error)
+            deferred.reject(error);
+        else
+            deferred.resolve(response);
+    });
+    
+    return deferred.promise;
+};
+
+exports.httpDelete = function httpDelete(url, headers) {
+    var deferred = Q.defer();
+    
+    if (headers)
+        headers = utils.keysToLowerCase(headers);
+    
+    var options = {
+        url: url,
+        headers: headers || {}
+    };
+    
+    console.log('DELETE', options.url, options.headers);
+    request.del(options, function (error, response) {
+        if (error)
+            deferred.reject(error);
+        else
+            deferred.resolve(response);
+    });
+    
+    return deferred.promise;
+};
+
+exports.httpPatch = function httpPatch(url, headers, body) {
+    var deferred = Q.defer();
+
+    if (headers)
+        headers = utils.keysToLowerCase(headers);
+
+    var options = {
+        url: url,
+        headers: headers || {},
+        body: body || ''
+    };
+
+    if (utils.contentIsJSON(headers)) {
+        options.json = true;
+    }
+
+    console.log('PATCH', options.url, options.headers, options.body.length);
+    request.patch(options, function (error, response) {
+        if (error)
+            deferred.reject(error);
+        else
+            deferred.resolve(response);
+    });
+
+    return deferred.promise;
+};
+
+exports.contentIsJSON = function contentIsJSON(headers) {
+    var hasContentType = 'content-type' in headers;
+    var contentTypeIsJSON = headers['content-type'] === 'application/json';
+    return hasContentType && contentTypeIsJSON;
+};
+
+exports.keysToLowerCase = function keysToLowerCase(obj) {
+    var output = {};
+    var keys = Object.keys(obj);
+    for (var i = 0; i < keys.length; ++i) {
+        var originalKey = keys[i];
+        var lowerCaseKey = utils.toLowerCase(originalKey);
+        output[lowerCaseKey] = obj[originalKey];
+    }
+    return output;
+};
+
+exports.toLowerCase = function toLowerCase(str) {
+    var output = '';
+    for (var i = 0; i < str.length; ++i) {
+        var character = str[i];
+        var code = parseInt(character, 36) || character;
+        output += code.toString(36);
+    }
+    return output;
 };
 
 exports.putChannel = function putChannel(channelName, verify, body, description, expectedStatus) {

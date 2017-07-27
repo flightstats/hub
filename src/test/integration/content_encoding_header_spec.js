@@ -1,25 +1,59 @@
 require('./integration_config.js');
-var request = require('request');
 
 var channelName = utils.randomChannelName();
-var thisChannelResource = channelUrl + "/" + channelName;
+var channelResource = channelUrl + "/" + channelName;
 var messageText = "Testing that the Content-Encoding header is returned";
-var testName = __filename;
 
-utils.configureFrisby();
+describe(__filename, function () {
 
-utils.runInTestChannel(testName, channelName, function () {
-    // Note: We have to use request directly here, because Frisby insists on having a content-type specified.
-    frisby.create(testName + ": Testing the content-encoding header")
-        .post(thisChannelResource, null, { body : messageText})
-        .expectStatus(201)
-        .afterJSON(function (result) {
-            var valueUrl = result['_links']['self']['href'];
-            frisby.create(testName + ": Fetching to confirm header")
-                .get(valueUrl)
-                .addHeader('accept-encoding', 'gzip')
-                .expectHeader('content-encoding', 'gzip')
-                .toss()
-        })
-        .toss();
+    it('creates a channel', function (done) {
+        var url = channelUrl;
+        var headers = {'Content-Type': 'application/json'};
+        var body = {'name': channelName};
+
+        utils.httpPost(url, headers, body)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(201);
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
+
+    it('inserts an item', function (done) {
+        var url = channelResource;
+        var headers = {};
+        var body = messageText;
+
+        utils.httpPost(url, headers, body)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(201);
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
+
+    it('verifies the Content-Encoding header is returned', function (done) {
+        var url = channelResource;
+        var headers = {'accept-encoding': 'gzip'};
+
+        utils.httpGet(url, headers)
+            .then(function (response) {
+                expect(response.headers['content-encoding']).toEqual('gzip');
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
+
 });

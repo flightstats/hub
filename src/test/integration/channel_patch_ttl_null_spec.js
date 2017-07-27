@@ -1,32 +1,57 @@
 require('./integration_config.js');
 
 var channelName = utils.randomChannelName();
-var jsonBody = JSON.stringify({ "name": channelName, "ttlMillis": null});
 var channelResource = channelUrl + "/" + channelName;
-var testName = __filename;
 
-utils.configureFrisby();
+describe(__filename, function () {
 
-frisby.create(testName + ': Making sure channel resource does not yet exist.')
-    .get(channelResource)
-    .expectStatus(404)
-    .after(function () {
-        frisby.create(testName + ': Test create channel')
-            .post(channelUrl, null, { body: jsonBody})
-            .addHeader("Content-Type", "application/json")
-            .expectStatus(201)
-            .afterJSON(function (result) {
-                var updateBody = {"ttlMillis": null};
-                frisby.create(testName + ': Update channel ttlMillis')
-                    .patch(channelResource, updateBody, {json:true})
-                    .expectStatus(200)
-                    .expectHeader('content-type', 'application/json')
-                    .expectJSON({"name": channelName})
-                    .toss()
+    it('verifies the channel doesn\'t exist yet', function (done) {
+        utils.httpGet(channelResource)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(404);
             })
-            .toss()
-    })
-    .toss();
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
 
+    it('creates the channel', function (done) {
+        var url = channelUrl;
+        var headers = {'Content-Type': 'application/json'};
+        var body = {'name': channelName, 'ttlMillis': null};
 
+        utils.httpPost(url, headers, body)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(201);
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
 
+    it('updates the channel TTL', function (done) {
+        var url = channelResource;
+        var headers = {'Content-Type': 'application/json'};
+        var body = {'ttlMillis': null};
+        
+        utils.httpPatch(url, headers, body)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(200);
+                expect(response.headers['content-type']).toEqual('application/json');
+                expect(response.body.name).toEqual(channelName);
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
+    
+});
