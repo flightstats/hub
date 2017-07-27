@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.cluster.Cluster;
 import com.flightstats.hub.rest.Linked;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -52,8 +53,9 @@ public class InternalClusterResource {
         Set<String> allServers = new TreeSet<>(spokeCluster.getAllServers());
         for (String server : allServers) {
             ObjectNode node = cluster.addObject();
-            node.put("ip", server);
-            node.put("name", InetAddress.getByName(server).getHostName());
+            String ip = StringUtils.substringBefore(server, ":");
+            node.put("ip", ip);
+            node.put("name", InetAddress.getByName(ip).getHostName());
         }
     }
 
