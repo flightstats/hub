@@ -41,7 +41,7 @@ exports.createChannel = function createChannel(channelName, url, description) {
 
 };
 
-exports.httpGet = function httpGet(url, headers) {
+exports.httpGet = function httpGet(url, headers, isBinary) {
     var deferred = Q.defer();
 
     if (headers)
@@ -49,9 +49,11 @@ exports.httpGet = function httpGet(url, headers) {
 
     var options = {
         url: url,
-        headers: headers || {},
-        encoding: null
+        headers: headers || {}
     };
+
+    if (isBinary)
+        options.encoding = null;
 
     console.log('GET', options.url, options.headers);
     request.get(options, function (error, response) {
