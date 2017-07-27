@@ -25,7 +25,7 @@ var webhookConfig = {
  */
 describe(testName, function () {
     utils.createChannel(channelName, false, testName);
-    utils.timeout(1000);
+    utils.itSleeps(1000);
     utils.addItem(channelResource);
     utils.addItem(channelResource);
 

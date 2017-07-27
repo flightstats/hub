@@ -432,14 +432,6 @@ exports.itSleeps = function itSleeps(millis) {
     });
 };
 
-exports.timeout = function timeout(millis) {
-    it('waits for ' + millis, function (done) {
-        setTimeout(function () {
-            done()
-        }, millis);
-    });
-};
-
 exports.getPort = function getPort() {
     var port = callbackPort++;
     console.log('using port', port);

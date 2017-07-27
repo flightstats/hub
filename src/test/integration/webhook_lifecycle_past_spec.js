@@ -23,7 +23,7 @@ var callbackUrl = callbackDomain + ':' + port + '/';
 describe(testName, function () {
     utils.createChannel(channelName, false, testName);
 
-    utils.timeout(1000);
+    utils.itSleeps(1000);
     var postedItems = [];
     var firstItem;
 

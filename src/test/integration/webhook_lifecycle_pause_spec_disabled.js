@@ -74,7 +74,9 @@ describe(testName, function () {
         }, "2 callbacks collected", 15 * 1000);
 
     }, 15 * 1000);
-    utils.timeout(2000);
+    
+    utils.itSleeps(2000);
+
     it('expects 2 items collected', function () {
         expect(callbackItems.length).toBe(2);
     });
@@ -106,7 +108,6 @@ describe(testName, function () {
 
     console.log("###### resuming web hook");
     webhook = utils.putWebhook(webhookName, webhookConfig, 200, testName);
-    utils.timeout(2000);
     
     utils.itSleeps(2000);
     
