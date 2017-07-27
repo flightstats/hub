@@ -432,14 +432,6 @@ exports.itSleeps = function itSleeps(millis) {
     });
 };
 
-exports.sleepQ = function sleepQ(millis) {
-    var deferred = Q.defer();
-    setTimeout(function () {
-        deferred.resolve('slept');
-    }, millis);
-    return deferred.promise;
-};
-
 exports.timeout = function timeout(millis) {
     it('waits for ' + millis, function (done) {
         setTimeout(function () {
