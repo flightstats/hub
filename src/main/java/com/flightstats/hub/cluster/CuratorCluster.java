@@ -80,8 +80,21 @@ public class CuratorCluster implements Cluster {
         return server;
     }
 
-    public Set<String> getServers() {
-        return getAllServers();
+    public List<String> getWriteServers() {
+        List<String> servers = new ArrayList<>();
+        List<ChildData> currentData = clusterCache.getCurrentData();
+        int limit = currentData.size();
+        if (currentData.size() > 3) {
+            limit = 3;
+            Collections.shuffle(currentData);
+        }
+        for (int i = 0; i < limit; i++) {
+            servers.add(new String(currentData.get(i).getData()));
+        }
+        if (servers.isEmpty()) {
+            logger.warn("returning empty collection");
+        }
+        return servers;
     }
 
     @Override
@@ -98,7 +111,7 @@ public class CuratorCluster implements Cluster {
     }
 
     public List<String> getRandomServers() {
-        List<String> servers = new ArrayList<>(getServers());
+        List<String> servers = new ArrayList<>(getAllServers());
         Collections.shuffle(servers);
         return servers;
     }

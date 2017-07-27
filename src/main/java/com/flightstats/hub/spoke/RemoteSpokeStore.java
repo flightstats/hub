@@ -121,7 +121,7 @@ public class RemoteSpokeStore {
     }
 
     public boolean insert(String path, byte[] payload, String spokeApi, String channel) throws InterruptedException {
-        return insert(path, payload, cluster.getServers(), ActiveTraces.getLocal(), spokeApi, channel);
+        return insert(path, payload, cluster.getWriteServers(), ActiveTraces.getLocal(), spokeApi, channel);
     }
 
     private boolean insert(String path, byte[] payload, Collection<String> servers, Traces traces,
@@ -222,7 +222,7 @@ public class RemoteSpokeStore {
 
     private QueryResult getKeys(final String path) throws InterruptedException {
         Traces traces = ActiveTraces.getLocal();
-        Collection<String> servers = cluster.getServers();
+        Collection<String> servers = cluster.getAllServers();
         CountDownLatch countDownLatch = new CountDownLatch(servers.size());
         QueryResult queryResult = new QueryResult(servers.size());
         for (final String server : servers) {
@@ -265,7 +265,7 @@ public class RemoteSpokeStore {
     }
 
     public Optional<ContentKey> getLatest(String channel, String path, Traces traces) throws InterruptedException {
-        Collection<String> servers = cluster.getServers();
+        Collection<String> servers = cluster.getAllServers();
         CountDownLatch countDownLatch = new CountDownLatch(servers.size());
         SortedSet<ContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
         for (final String server : servers) {
@@ -312,7 +312,7 @@ public class RemoteSpokeStore {
     }
 
     public boolean delete(String path) throws Exception {
-        Collection<String> servers = cluster.getServers();
+        Collection<String> servers = cluster.getAllServers();
         int quorum = servers.size();
         CountDownLatch countDownLatch = new CountDownLatch(quorum);
         for (final String server : servers) {
