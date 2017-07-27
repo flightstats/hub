@@ -20,25 +20,20 @@ module.exports = {
 
     failures: [],
 
-    reportRunnerStarting: function (info) {
+    jasmineStarted: function (info) {
         console.log('\n' + ANSI.BOLD + ANSI.MAGENTA + 'Executing tests...' + ANSI.OFF);
     },
 
-    reportSpecStarting: function (info) {
+    suiteStarted: function (info) {
+        // don't output anything
+    },
+
+    specStarted: function (info) {
         console.log('\n' + ANSI.BOLD + '> ' + ANSI.BLUE + info.description + ANSI.OFF);
     },
 
-    reportSpecResults: function (info) {
-        var results = info.results();
-        var status;
-        if (results.skipped) {
-            status = 'DISABLED';
-        } else if (results.passed()) {
-            status = 'PASSED';
-        } else {
-            status = 'FAILED';
-        }
-
+    specDone: function (info) {
+        var status = info.status.toUpperCase();
         switch (status) {
 
             case 'PASSED':
@@ -49,19 +44,18 @@ module.exports = {
             case 'FAILED':
                 console.log(ANSI.BOLD + '< ' + ANSI.RED + status + ANSI.OFF);
                 this.failed++;
-                var self = this;
-                results.items_.forEach(function (item) {
-                    if (!item.passed_) {
-                        var failure = item.trace.stack;
-                        if (failure === undefined) {
-                            console.log('An error occured but a stack trace couldn\'t be found');
-                            console.log('DEBUG INFO:', item);
-                            exit(1);
-                        }
-                        console.log(ANSI.RED + failure + ANSI.OFF);
-                        self.failures.push(failure);
+                for (var i = 0; i < info.failedExpectations.length; ++i) {
+                    var failure = info.failedExpectations[i].stack;
+
+                    if (failure === undefined) {
+                        console.log('An error occured but a stack trace couldn\'t be found');
+                        console.log('DEBUG INFO:', item);
+                        exit(1);
                     }
-                });
+
+                    console.log(ANSI.RED + failure + ANSI.OFF);
+                    this.failures.push(failure);
+                }
                 break;
 
             case 'DISABLED':
@@ -74,11 +68,11 @@ module.exports = {
         }
     },
 
-    reportSuiteResults: function (info) {
+    suiteDone: function (info) {
         // don't output anything
     },
 
-    reportRunnerResults: function (info) {
+    jasmineDone: function (info) {
         if (this.failed) {
             var twentyDashes = new Array(20).join('-');
             console.log('\n' + twentyDashes + ' FAILURE SUMMARY ' + twentyDashes);

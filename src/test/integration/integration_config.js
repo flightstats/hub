@@ -35,13 +35,10 @@ channelUrl = hubUrlBase + '/channel';
 callbackDomain = 'http://' + ipAddress;
 stableOffset = 5;
 
-jasmine.getEnv().defaultTimeoutInterval = 60 * 1000;
-jasmine.getEnv().reporter.subReporters_.length = 0;
-jasmine.getEnv().addReporter(reporter);
-process.removeAllListeners('exit');
+jasmine.DEFAULT_TIMEOUT_INTERVAL = 60 * 1000;
 
 console.log("hubDomain " + hubDomain);
 console.log("satelliteDomain " + satelliteDomain);
 console.log("runEncrypted " + runEncrypted);
 console.log("callbackDomain " + callbackDomain);
-console.log("default timeout " + jasmine.getEnv().defaultTimeoutInterval + "ms");
+console.log("default timeout " + jasmine.DEFAULT_TIMEOUT_INTERVAL + "ms");

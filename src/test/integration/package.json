@@ -5,7 +5,7 @@
     "eventsource": "^0.1.6",
     "feed-read": "0.0.1",
     "ip": "^0.3.0",
-    "jasmine-node": "^1.14.5",
+    "jasmine": "^2.6.0",
     "lodash": "^3.7.0",
     "moment": "^2.5.0",
     "parse-link-header": "^1.0.1",
