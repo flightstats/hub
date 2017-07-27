@@ -1,14 +1,27 @@
 require('./integration_config.js');
 
 var channelName = '123_you_aint_gunna_find_me';
-var thisChannelResource = channelUrl + "/" + channelName;
+var channelResource = channelUrl + "/" + channelName;
 var messageText = "Any old value!";
-var testName = "insert_to_nonexistent_channel_spec";
 
-utils.configureFrisby();
+describe(__filename, function () {
 
-frisby.create(testName + ': Inserting a value into a bogus channel.')
-    .post(thisChannelResource, null, { body: messageText})
-    .addHeader("Content-Type", "text/plain")
-    .expectStatus(404)
-    .toss();
+    it('inserts an item into a bogus channel', function (done) {
+        var url = channelResource;
+        var headers = {'Content-Type': 'text/plain'};
+        var body = messageText;
+
+        utils.httpPost(url, headers, body)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(404);
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
+
+
+});

@@ -1,17 +1,27 @@
 require('./integration_config.js');
 
 var channelName = utils.randomChannelName();
-var jsonBody = JSON.stringify({ "name": "    " + channelName + "    "});
-var testName = "channel_creation_with_whitespace_spec";
+var channelResource = channelUrl + '/' + channelName;
 
-utils.configureFrisby();
+describe(__filename, function () {
 
-frisby.create(testName + ':Test create channel with whitespace')
-    .post(channelUrl, null, { body: jsonBody })
-    .addHeader("Content-Type", "application/json")
-    .expectStatus(201)
-    .expectHeader('location', channelUrl + "/" + channelName)
-    .toss();
+    it('creates a channel with whitespace in the name', function (done) {
+        var url = channelUrl;
+        var headers = {'Content-Type': 'application/json'};
+        var body = {'name': '    ' + channelName + '    '};
 
+        utils.httpPost(url, headers, body)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(201);
+                expect(response.headers['content-type']).toEqual('application/json');
+                expect(response.headers['location']).toEqual(channelResource);
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
 
-
+});

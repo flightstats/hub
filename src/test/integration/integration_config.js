@@ -1,4 +1,3 @@
-frisby = require('frisby');
 utils = require('./utils.js');
 ip = require('ip');
 var _ = require('lodash');

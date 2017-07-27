@@ -25,14 +25,7 @@ module.exports = {
     },
 
     reportSpecStarting: function (info) {
-        if (info.suite.description && info.suite.description.indexOf('Frisby') != -1) {
-            console.log('\n' + ANSI.BOLD + '> ' + ANSI.BLUE + info.suite.description + ANSI.OFF);
-            console.log(info.description
-                .replace('\t', '')
-                .replace('\n', ''));
-        } else {
-            console.log('\n' + ANSI.BOLD + '> ' + ANSI.BLUE + info.description + ANSI.OFF);
-        }
+        console.log('\n' + ANSI.BOLD + '> ' + ANSI.BLUE + info.description + ANSI.OFF);
     },
 
     reportSpecResults: function (info) {
@@ -59,8 +52,14 @@ module.exports = {
                 var self = this;
                 results.items_.forEach(function (item) {
                     if (!item.passed_) {
-                        console.log(ANSI.RED + item.trace.stack + ANSI.OFF);
-                        self.failures.push(item.trace.stack);
+                        var failure = item.trace.stack;
+                        if (failure === undefined) {
+                            console.log('An error occured but a stack trace couldn\'t be found');
+                            console.log('DEBUG INFO:', item);
+                            exit(1);
+                        }
+                        console.log(ANSI.RED + failure + ANSI.OFF);
+                        self.failures.push(failure);
                     }
                 });
                 break;

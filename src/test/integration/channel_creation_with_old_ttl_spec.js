@@ -1,18 +1,23 @@
 require('./integration_config.js');
 
 var channelName = utils.randomChannelName();
-var jsonBody = JSON.stringify({ "name" : channelName, "ttlMillis" : 0});
-var channelResource = channelUrl + "/" + channelName;
-var testName = __filename;
 
-utils.configureFrisby();
+describe(__filename, function () {
 
-frisby.create(testName + ':Test create channel with zero TTL Days')
-    .post(channelUrl, null, { body : jsonBody })
-    .addHeader("Content-Type", "application/json")
-    .expectStatus(201)
-    .toss();
+    it('creates a channel with an old TTL', function (done) {
+        var url = channelUrl;
+        var headers = {'Content-Type': 'application/json'};
+        var body = {'name': channelName, 'ttlMillis': 0};
 
-
-
-
+        utils.httpPost(url, headers, body)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(201);
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    })
+});

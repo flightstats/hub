@@ -1,34 +1,56 @@
 require('./integration_config.js');
 
 var channelName = utils.randomChannelName();
-var jsonBody = JSON.stringify({ "name": channelName, "ttlMillis": 30000});
 var channelResource = channelUrl + "/" + channelName;
-var testName = __filename;
 
-utils.configureFrisby();
+describe(__filename, function () {
 
-frisby.create(testName + ': Making sure channel resource does not yet exist.')
-    .get(channelResource)
-    .expectStatus(404)
-    .after(function () {
-        frisby.create(testName + ' Test create channel with valid ttl')
-            .post(channelUrl, null, { body: jsonBody})
-            .addHeader("Content-Type", "application/json")
-            .expectStatus(201)
-            .expectJSON({"ttlDays" : 120})
-            .afterJSON(function (result) {
-                frisby.create(testName + ': Now fetching metadata')
-                    .get(channelResource)
-                    .expectStatus(200)
-                    .expectHeader('content-type', 'application/json')
-                    .expectJSON({"name": channelName})
-                    .expectJSON({"ttlDays" : 120})
-                    .toss();
+    it('verifies the channel doesn\'t exist yet', function (done) {
+        utils.httpGet(channelResource)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(404);
             })
-            .toss();
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
 
-    })
-    .toss();
+    it('creates a channel with a valid TTL', function (done) {
+        var url = channelUrl;
+        var headers = {'Content-Type': 'application/json'};
+        var body = {'name': channelName, 'ttlMillis': 30000};
 
+        utils.httpPost(url, headers, body)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(201);
+                expect(response.headers['content-type']).toEqual('application/json');
+                expect(response.body.ttlDays).toEqual(120);
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
 
+    it('verifies the channel does exist', function (done) {
+        utils.httpGet(channelResource)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(200);
+                expect(response.headers['content-type']).toEqual('application/json');
+                expect(response.body.name).toEqual(channelName);
+                expect(response.body.ttlDays).toEqual(120);
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
 
+});
