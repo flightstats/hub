@@ -28,18 +28,24 @@ public class InternalClusterResource {
     private static final Cluster spokeCluster = HubProvider.getInstance(Cluster.class, "SpokeCluster");
 
     public static final String DESCRIPTION = "Information about the cluster";
+    private @Context
+    UriInfo uriInfo;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response get(@Context UriInfo uriInfo) throws Exception {
+    public Response get() throws Exception {
         URI requestUri = uriInfo.getRequestUri();
         ObjectNode root = mapper.createObjectNode();
         root.put("description", DESCRIPTION);
         //root.put("directions", "Make HTTP POSTs to links below to take the desired action");
         /*
 
-        todo - provide mechanism to change the write factor?
-        todo - could we change the write factor by channel?
+
+        //todo - gfm - add decommission method
+        decomm removes the node from the write pool.
+        the node remains in the query pool
+        if the node is restarted, it should not start, with an error message on how to fix it
+        //todo - gfm - also provide a mechanism to clear/modify the decomm list
          */
         addCluster(root);
 
@@ -55,23 +61,24 @@ public class InternalClusterResource {
             ObjectNode node = cluster.addObject();
             String ip = StringUtils.substringBefore(server, ":");
             node.put("ip", ip);
+            //todo - gfm - resolve the hostname with a direct call?
+            //todo - gfm - or should we just put this in /internal/health ?
             node.put("name", InetAddress.getByName(ip).getHostName());
         }
     }
 
     @POST
-    public Response shutdown(@Context UriInfo uriInfo) throws Exception {
-        return LocalHostOnly.getResponse(uriInfo, () -> getManager().shutdown(true));
+    @Path("decommission")
+    public Response decommission() throws Exception {
+        //return LocalHostOnly.getResponse(uriInfo, () -> getManager().resetLock());
+        return null;
     }
+
 
     @POST
-    @Path("resetLock")
-    public Response resetLock(@Context UriInfo uriInfo) throws Exception {
-        return LocalHostOnly.getResponse(uriInfo, () -> getManager().resetLock());
+    @Path("decommission/clearAll")
+    public Response clearDecommission() throws Exception {
+        //return LocalHostOnly.getResponse(uriInfo, () -> getManager().resetLock());
+        return null;
     }
-
-    private static ShutdownManager getManager() {
-        return HubProvider.getInstance(ShutdownManager.class);
-    }
-
 }
