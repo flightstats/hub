@@ -22,7 +22,7 @@ interface WebhookStrategy extends AutoCloseable {
 
     void start(Webhook webhook, ContentPath startingKey);
 
-    Optional<ContentPath> next();
+    Optional<ContentPath> next() throws Exception;
 
     ObjectNode createResponse(ContentPath contentPath);
 

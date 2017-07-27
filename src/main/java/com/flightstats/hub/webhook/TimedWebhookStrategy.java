@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.RuntimeInterruptedException;
@@ -22,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -36,7 +38,7 @@ class TimedWebhookStrategy implements WebhookStrategy {
     private final LastContentPath lastContentPath;
     private final ChannelService channelService;
     private AtomicBoolean shouldExit = new AtomicBoolean(false);
-    private AtomicBoolean error = new AtomicBoolean(false);
+    private AtomicReference<Exception> exceptionReference = new AtomicReference<>();
     private BlockingQueue<ContentPathKeys> queue;
     private String channel;
     private ScheduledExecutorService executorService;
@@ -45,7 +47,6 @@ class TimedWebhookStrategy implements WebhookStrategy {
     private TimeUtil.Unit unit;
     private int period;
     private Supplier<Integer> getOffsetSeconds;
-    private Supplier<Integer> getPeriodSeconds;
     private BiFunction<DateTime, Collection<ContentKey>, ContentPathKeys> newTime;
     private Supplier<ContentPath> getNone;
     private Function<ContentPath, DateTime> getReplicatingStable;
@@ -72,9 +73,9 @@ class TimedWebhookStrategy implements WebhookStrategy {
         unit = TimeUtil.Unit.MINUTES;
         duration = unit.getDuration();
 
-        newTime = (pathTime, keys) -> new MinutePath(pathTime, keys);
+        newTime = MinutePath::new;
         getNone = () -> MinutePath.NONE;
-        getReplicatingStable = (contentPath) -> replicatingStable_minute(contentPath);
+        getReplicatingStable = TimedWebhookStrategy::replicatingStable_minute;
         getNextTime = (currentTime) -> currentTime.plus(unit.getDuration());
     }
 
@@ -84,9 +85,9 @@ class TimedWebhookStrategy implements WebhookStrategy {
         unit = TimeUtil.Unit.SECONDS;
         duration = unit.getDuration();
 
-        newTime = (pathTime, keys) -> new SecondPath(pathTime, keys);
+        newTime = SecondPath::new;
         getNone = () -> SecondPath.NONE;
-        getReplicatingStable = (contentPath) -> contentPath.getTime();
+        getReplicatingStable = ContentPath::getTime;
         getNextTime = (currentTime) -> currentTime.plus(unit.getDuration());
     }
 
@@ -106,7 +107,7 @@ class TimedWebhookStrategy implements WebhookStrategy {
                 && Math.abs(Minutes.minutesBetween(stableTime(), currentTime).getMinutes()) > 4;
     }
 
-    static protected DateTime replicatingStable_minute(ContentPath contentPath) {
+    static DateTime replicatingStable_minute(ContentPath contentPath) {
         TimeUtil.Unit unit = TimeUtil.Unit.MINUTES;
         if (contentPath instanceof SecondPath) {
             SecondPath secondPath = (SecondPath) contentPath;
@@ -158,11 +159,14 @@ class TimedWebhookStrategy implements WebhookStrategy {
                         doWork();
                     }
                 } catch (InterruptedException | RuntimeInterruptedException e) {
-                    error.set(true);
-                    logger.info("InterruptedException with " + channel);
+                    exceptionReference.set(e);
+                    logger.info("InterruptedException with " + webhook.getName());
+                } catch (NoSuchChannelException e) {
+                    exceptionReference.set(e);
+                    logger.debug("NoSuchChannelException for " + webhook.getName());
                 } catch (Exception e) {
-                    error.set(true);
-                    logger.warn("unexpected issue with " + channel, e);
+                    exceptionReference.set(e);
+                    logger.warn("unexpected issue with " + webhook.getName(), e);
                 }
             }
 
@@ -216,15 +220,13 @@ class TimedWebhookStrategy implements WebhookStrategy {
     }
 
     @Override
-    public Optional<ContentPath> next() {
-        if (error.get()) {
-            throw new RuntimeException("unable to determine next");
+    public Optional<ContentPath> next() throws Exception {
+        Exception e = exceptionReference.get();
+        if (e != null) {
+            logger.error("unable to determine next " + webhook.getName(), e);
+            throw e;
         }
-        try {
-            return Optional.fromNullable(queue.poll(10, TimeUnit.MINUTES));
-        } catch (InterruptedException e) {
-            throw new RuntimeInterruptedException(e);
-        }
+        return Optional.fromNullable(queue.poll(10, TimeUnit.MINUTES));
     }
 
     @Override
