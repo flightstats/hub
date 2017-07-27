@@ -507,8 +507,8 @@ function serverResponse(request, response, callback) {
 exports.startHttpsServer = function startHttpsServer(port, callback, done) {
 
     var options = {
-        key: fs.readFileSync(integrationTestPath + 'localhost.key'),
-        cert: fs.readFileSync(integrationTestPath + 'localhost.cert')
+        key: fs.readFileSync('localhost.key'),
+        cert: fs.readFileSync('localhost.cert')
     };
 
     var server = https.createServer(options, function (request, response) {

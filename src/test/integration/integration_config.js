@@ -5,7 +5,6 @@ var _ = require('lodash');
 hubDomain = process.env.hubDomain;
 satelliteDomain = process.env.satelliteDomain;
 runEncrypted = process.env.runEncrypted || false;
-integrationTestPath = process.env.integrationTestPath || 'src/test/integration/';
 callbackPort = runEncrypted = process.env.callbackPort || 8888;
 
 //this does not report the correct ip address when connected via the vpn
