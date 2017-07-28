@@ -25,6 +25,7 @@ var webhookConfig = {
  * 7 - post item - should only see new item
  */
 describe(testName, function () {
+    var callbackServer;
     var callbackItems = [];
     var postedItems = [];
 
@@ -32,56 +33,55 @@ describe(testName, function () {
 
     utils.putWebhook(webhookName, webhookConfig, 201, testName);
 
-    it('waits', function (done) {
-        setTimeout(function () {
-            done();
-        }, 500);
+    utils.itSleeps(500);
+
+    it('starts the callback server', function (done) {
+        callbackServer = utils.startHttpServer(port, function (string) {
+            callbackItems.push(string);
+        }, done);
     });
 
-    it('runs callback server', function () {
-        utils.startServer(port, function (string) {
-            callbackItems.push(string);
-        });
-
+    it('inserts an item', function (done) {
         utils.postItemQ(channelResource)
             .then(function (value) {
                 postedItems.push(value.body._links.self.href);
+                done();
             });
-
-        waitsFor(function () {
-            return callbackItems.length == 1;
-        }, 18333);
-
     });
 
+    it('waits for data', function (done) {
+        utils.waitForData(callbackItems, postedItems, done);
+    });
+    
     utils.deleteWebhook(webhookName);
 
     utils.addItem(channelResource);
 
     utils.putWebhook(webhookName, webhookConfig, 201, testName);
 
-    it('waits', function (done) {
-        setTimeout(function () {
-            done();
-        }, 500);
-    });
+    utils.itSleeps(500);
 
-    it('waits for item webhook ' + webhookName + ' channel ' + channelName, function () {
+    it('inserts an item', function (done) {
         utils.postItemQ(channelResource)
             .then(function (value) {
                 postedItems.push(value.body._links.self.href);
+                done();
             });
-
-        waitsFor(function () {
-            return callbackItems.length == 2;
-        }, 18444);
-
     });
 
-    utils.closeServer(function () {
+    it('waits for data', function (done) {
+        utils.waitForData(callbackItems, postedItems, done);
+    });
+
+    it('verifies we got what we expected through the callback', function () {
         expect(callbackItems.length).toBe(2);
         expect(JSON.parse(callbackItems[0]).uris[0]).toBe(postedItems[0]);
         expect(JSON.parse(callbackItems[1]).uris[0]).toBe(postedItems[1]);
-    }, testName);
+    });
+
+    it('closes the callback server', function (done) {
+        utils.closeServer(callbackServer, done);
+    });
+
 });
 

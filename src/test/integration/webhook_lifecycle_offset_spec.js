@@ -31,47 +31,53 @@ describe(testName, function () {
 
     utils.putWebhook(webhookName, webhookConfig, 201, testName);
 
-    it('runs callback server', function () {
-        var callbackItems = [];
-        var postedItems = [];
+    var callbackServer;
+    var callbackItems = [];
+    var postedItems = [];
 
-        utils.startServer(port, function (string) {
-            console.log('called webhook ' + webhookName + ' ' + string);
+    it('runs callback server', function (done) {
+        callbackServer = utils.startHttpsServer(port, function (string) {
             callbackItems.push(string);
-        });
+        }, done);
 
+    });
+
+    it('posts items', function (done) {
         utils.postItemQ(channelResource)
             .then(function (value) {
-                return postedItem(value, true);
-            }).then(function (value) {
-                return postedItem(value, true);
-            }).then(function (value) {
-                return postedItem(value, true);
-            }).then(function (value) {
-                postedItem(value, false);
-            });
-
-        waitsFor(function () {
-            return callbackItems.length == 4;
-        }, 11997);
-
-        utils.closeServer(function () {
-            expect(callbackItems.length).toBe(4);
-            expect(postedItems.length).toBe(4);
-            for (var i = 0; i < callbackItems.length; i++) {
-                var parse = JSON.parse(callbackItems[i]);
-                expect(parse.uris[0]).toBe(postedItems[i]);
-                expect(parse.name).toBe(webhookName);
-            }
-        }, testName);
-
-        function postedItem(value, post) {
-            postedItems.push(value.body._links.self.href);
-            if (post) {
+                postedItems.push(value.body._links.self.href);
                 return utils.postItemQ(channelResource);
-            }
-        }
+            })
+            .then(function (value) {
+                postedItems.push(value.body._links.self.href);
+                return utils.postItemQ(channelResource);
+            })
+            .then(function (value) {
+                postedItems.push(value.body._links.self.href);
+                return utils.postItemQ(channelResource);
+            })
+            .then(function (value) {
+                postedItems.push(value.body._links.self.href);
+                done();
+            });
+    });
 
+    it('waits for data', function (done) {
+        utils.waitForData(callbackItems, postedItems, done);
+    });
+
+    it('closes the callback server', function (done) {
+        utils.closeServer(callbackServer, done);
+    });
+
+    it('verifies we got what we expected through the callback', function () {
+        expect(callbackItems.length).toBe(4);
+        expect(postedItems.length).toBe(4);
+        for (var i = 0; i < callbackItems.length; i++) {
+            var parse = JSON.parse(callbackItems[i]);
+            expect(parse.uris[0]).toBe(postedItems[i]);
+            expect(parse.name).toBe(webhookName);
+        }
     });
 
 });

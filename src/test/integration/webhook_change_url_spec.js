@@ -1,14 +1,9 @@
-require('../integration/integration_config.js');
+require('./integration_config.js');
 
-var request = require('request');
-var http = require('http');
 var channelName = utils.randomChannelName();
 var webhookName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
-
-var MINUTE = 60 * 1000
-
 
 /**
  * This should:
@@ -23,16 +18,15 @@ var MINUTE = 60 * 1000
 
 describe(testName, function () {
 
-    var portB = utils.getPort();
+    var callbackServer;
+    var port = utils.getPort();
 
-    var itemsB = [];
-    var postedItem;
     var badConfig = {
         callbackUrl: 'http://nothing:8080/nothing',
         channelUrl: channelResource
     };
-    var webhookConfigB = {
-        callbackUrl: callbackDomain + ':' + portB + '/',
+    var goodConfig = {
+        callbackUrl: callbackDomain + ':' + port + '/',
         channelUrl: channelResource
     };
 
@@ -42,32 +36,56 @@ describe(testName, function () {
 
     utils.itSleeps(2000);
 
-    utils.addItem(channelResource);
+    var firstItemURL;
+    
+    it('posts the first item', function (done) {
+        utils.postItemQ(channelResource)
+            .then(function (value) {
+                firstItemURL = value.body._links.self.href;
+                done();
+            });
+    });
 
-    utils.putWebhook(webhookName, webhookConfigB, 200, testName);
+    utils.putWebhook(webhookName, goodConfig, 200, testName);
 
     utils.itSleeps(10000);
 
-    it('runs callback server: channel:' + channelName + ' webhook:' + webhookName, function () {
-        utils.startServer(portB, function (string) {
+    var receivedItems = [];
+
+    it('starts a callback server', function (done) {
+        callbackServer = utils.startHttpServer(port, function (string) {
             console.log('called webhook ' + webhookName + ' ' + string);
-            itemsB.push(string);
-        });
-
-        utils.postItemQ(channelResource)
-            .then(function (value) {
-                postedItem = value.body._links.self.href;
-            });
-
-        waitsFor(function () {
-            return itemsB.length == 2;
-        }, 3 * MINUTE + 3);
-
+            receivedItems.push(string);
+        }, done);
     });
 
-    utils.closeServer(function () {
-        expect(itemsB.length).toBe(2);
-        expect(JSON.parse(itemsB[1]).uris[0]).toBe(postedItem);
-    }, testName);
+    var secondItemURL;
+
+    it('posts the second item', function (done) {
+        utils.postItemQ(channelResource)
+            .then(function (value) {
+                secondItemURL = value.body._links.self.href;
+                done();
+            });
+    });
+
+    it('waits for data', function (done) {
+        var sentItems = [
+            firstItemURL,
+            secondItemURL
+        ];
+        utils.waitForData(receivedItems, sentItems, done);
+    });
+
+    it('verifies we got both items through the callback', function () {
+        expect(receivedItems.length).toBe(2);
+        expect(receivedItems).toContain(firstItemURL);
+        expect(receivedItems).toContain(secondItemURL);
+    });
+
+    it('closes the callback server', function (done) {
+        utils.closeServer(callbackServer, done);
+    });
+
 });
 

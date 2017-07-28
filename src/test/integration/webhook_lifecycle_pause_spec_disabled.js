@@ -50,29 +50,28 @@ describe(testName, function () {
 
     var webhook = utils.putWebhook(webhookName, webhookConfig, 201, testName);
 
-    it('runs callback server and posts ' + webhookName, function (done) {
-        runs(function () {
-            utils.startServer(port, function (string) {
-                callbackItems.push(string);
-                console.log(callbackItems.length, 'called back', string);
+    var callbackServer;
+    
+    it('starts a callback server', function (done) {
+        callbackServer = utils.startHttpServer(port, function (string) {
+            callbackItems.push(string);
+            console.log(callbackItems.length, 'called back', string);
+        }, done);
+    });
+
+    it('posts two items', function (done) {
+        utils.postItemQ(channelResource)
+            .then(function (value) {
+                addPostedItem(value);
+                return utils.postItemQ(channelResource);
+            }).then(function (value) {
+                addPostedItem(value);
+                done();
             });
+    });
 
-            // adding two items
-            utils.postItemQ(channelResource)
-                .then(function (value) {
-                    addpostedItem(value);
-                    return utils.postItemQ(channelResource);
-                }).then(function (value) {
-                    addPostedItem(value);
-                    done();
-                });
-        });
-        waitsFor(function () {
-            console.log(postedItems.length, callbackItems.length);
-
-            return callbackItems.length > 0;
-        }, "2 callbacks collected", 15 * 1000);
-
+    it('waits for data', function (done) {
+        utils.waitForData(callbackItems, postedItems, done);
     }, 15 * 1000);
     
     utils.itSleeps(2000);
@@ -112,9 +111,7 @@ describe(testName, function () {
     utils.itSleeps(2000);
     
     it('closes the callback server', function (done) {
-        utils.closeServer(function () {
-            done();
-        }, testName);
+        utils.closeServer(callbackServer, done);
     });
     
     it('verifies posted items were received', function () {
