@@ -44,12 +44,31 @@ describe(testName, function () {
             });
     });
 
-    utils.putWebhook(webhookName, {
-        callbackUrl: callbackUrl,
-        channelUrl: channelResource,
-        startItem: firstItem
-    }, 201, testName);
-    
+    it('creates a webhook', function (done) {
+        var url = utils.getWebhookUrl() + '/' + webhookName;
+        var headers = {'Content-Type': 'application/json'};
+        var body = {
+            callbackUrl: callbackUrl,
+            channelUrl: channelResource,
+            startItem: firstItem
+        };
+
+        utils.httpPut(url, headers, body)
+            .then(function (response) {
+                expect(response.statusCode).toBe(201);
+                expect(response.headers.location).toBe(url);
+                expect(response.body.callbackUrl).toBe(callbackUrl);
+                expect(response.body.channelUrl).toBe(channelResource);
+                expect(response.body.name).toBe(webhookName);
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
+
     var callbackServer;
     var callbackItems = [];
 
