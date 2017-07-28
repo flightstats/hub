@@ -19,14 +19,16 @@ var testName = __filename;
 describe(testName, function () {
 
     var callbackServer;
-    var port = utils.getPort();
+    var portB = utils.getPort();
 
+    var itemsB = [];
+    var postedItem;
     var badConfig = {
         callbackUrl: 'http://nothing:8080/nothing',
         channelUrl: channelResource
     };
     var goodConfig = {
-        callbackUrl: callbackDomain + ':' + port + '/',
+        callbackUrl: callbackDomain + ':' + portB + '/',
         channelUrl: channelResource
     };
 
@@ -36,51 +38,38 @@ describe(testName, function () {
 
     utils.itSleeps(2000);
 
-    var firstItemURL;
-    
-    it('posts the first item', function (done) {
-        utils.postItemQ(channelResource)
-            .then(function (value) {
-                firstItemURL = value.body._links.self.href;
-                done();
-            });
-    });
+    utils.addItem(channelResource);
 
     utils.putWebhook(webhookName, goodConfig, 200, testName);
 
     utils.itSleeps(10000);
 
-    var receivedItems = [];
-
     it('starts a callback server', function (done) {
-        callbackServer = utils.startHttpServer(port, function (string) {
+        callbackServer = utils.startHttpServer(portB, function (string) {
             console.log('called webhook ' + webhookName + ' ' + string);
-            receivedItems.push(string);
+            itemsB.push(string);
         }, done);
     });
 
-    var secondItemURL;
-
-    it('posts the second item', function (done) {
+    it('inserts an item', function (done) {
         utils.postItemQ(channelResource)
             .then(function (value) {
-                secondItemURL = value.body._links.self.href;
+                postedItem = value.body._links.self.href;
                 done();
             });
     });
 
     it('waits for data', function (done) {
         var sentItems = [
-            firstItemURL,
-            secondItemURL
+            'we dont care about the first item',
+            postedItem
         ];
-        utils.waitForData(receivedItems, sentItems, done);
+        utils.waitForData(itemsB, sentItems, done);
     });
 
     it('verifies we got both items through the callback', function () {
-        expect(receivedItems.length).toBe(2);
-        expect(receivedItems).toContain(firstItemURL);
-        expect(receivedItems).toContain(secondItemURL);
+        expect(itemsB.length).toBe(2);
+        expect(JSON.parse(itemsB[1]).uris[0]).toBe(postedItem);
     });
 
     it('closes the callback server', function (done) {
