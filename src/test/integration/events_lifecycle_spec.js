@@ -65,8 +65,13 @@ describe(testName, function () {
 
     }, 10 * 1000);
 
+    it('waits for data', function (done) {
+        utils.waitForData(postedItems, events, done);
+    });
+
     it('verifies events', function () {
-        for (i = 0; i < postedItems.length; i++) {
+        console.log('events:', events);
+        for (var i = 0; i < postedItems.length; i++) {
             expect(postedItems[i]).toBe(events[i]);
         }
 
