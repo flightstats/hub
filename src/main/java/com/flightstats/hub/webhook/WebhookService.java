@@ -45,7 +45,7 @@ public class WebhookService {
         if (preExisting.isPresent()) {
             Webhook existing = preExisting.get();
             ContentPath newStartingKey = webhook.getStartingKey();
-            if (newStartingKey.getTime().compareTo(new DateTime(1980, 1, 1, 1, 1)) >= 0
+            if (newStartingKey != null && newStartingKey.getTime().compareTo(new DateTime(1980, 1, 1, 1, 1)) >= 0
                     && !newStartingKey.equals(existing.getStartingKey())) {
                 updateCursor(webhook, webhook.getStartingKey());
             } else if (existing.equals(webhook)) {
