@@ -54,7 +54,7 @@ describe(testName, function () {
     var callbackItems;
 
     it('starts a callback server', function (done) {
-        callbackServer = this.startHttpServer(port, function (string) {
+        callbackServer = utils.startHttpServer(port, function (string) {
             console.log('called webhook ' + webhookName + ' ' + string);
             callbackItems.push(string);
         }, done);

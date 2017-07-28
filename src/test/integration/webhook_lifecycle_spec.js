@@ -33,7 +33,7 @@ describe(testName, function () {
     utils.putWebhook(webhookName, webhookConfig, 201, testName);
 
     it('starts a callback server', function (done) {
-        callbackServer = this.startHttpServer(port, function (string) {
+        callbackServer = utils.startHttpServer(port, function (string) {
             callbackItems.push(string);
         }, done);
     });
