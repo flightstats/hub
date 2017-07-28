@@ -51,7 +51,7 @@ describe(testName, function () {
     }, 201, testName);
     
     var callbackServer;
-    var callbackItems;
+    var callbackItems = [];
 
     it('starts a callback server', function (done) {
         callbackServer = utils.startHttpServer(port, function (string) {
