@@ -438,9 +438,9 @@ exports.getPort = function getPort() {
     return port;
 };
 
-exports.startHttpServer = function startHTTPServer(port, callback, done) {
+exports.startHttpServer = function startHttpServer(port, callback, done) {
     var httpServer = new http.Server();
-    return startServer(httpServer, port, callback, done);
+    return utils.startServer(httpServer, port, callback, done);
 };
 
 exports.startHttpsServer = function startHttpsServer(port, callback, done) {
@@ -449,7 +449,7 @@ exports.startHttpsServer = function startHttpsServer(port, callback, done) {
         cert: fs.readFileSync('localhost.cert')
     };
     var httpsServer = new https.Server(options);
-    return startServer(httpsServer, port, callback, done);
+    return utils.startServer(httpsServer, port, callback, done);
 };
 
 exports.startServer = function startServer(server, port, callback, done) {
