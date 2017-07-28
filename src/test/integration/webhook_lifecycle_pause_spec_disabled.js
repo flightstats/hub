@@ -111,6 +111,7 @@ describe(testName, function () {
     utils.itSleeps(2000);
     
     it('closes the callback server', function (done) {
+        expect(callbackServer).toBeDefined();
         utils.closeServer(callbackServer, done);
     });
     

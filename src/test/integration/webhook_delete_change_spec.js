@@ -96,10 +96,12 @@ describe(testName, function () {
     });
 
     it('closes the first callback server', function (done) {
+        expect(callbackServerA).toBeDefined();
         utils.closeServer(callbackServerA, done);
     });
 
     it('closes the second callback server', function (done) {
+        expect(callbackServerB).toBeDefined();
         utils.closeServer(callbackServerB, done);
     });
 

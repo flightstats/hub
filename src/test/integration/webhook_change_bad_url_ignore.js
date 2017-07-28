@@ -72,6 +72,7 @@ describe(testName, function () {
     });
     
     it('closes the callback server', function (done) {
+        expect(callbackServer).toBeDefined();
         utils.closeServer(callbackServer, done);
     });
 
