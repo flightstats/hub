@@ -36,7 +36,8 @@ describe(testName, function () {
     var postedItems = [];
 
     it('runs callback server', function (done) {
-        callbackServer = utils.startHttpsServer(port, function (string) {
+        callbackServer = utils.startHttpServer(port, function (string) {
+            console.log('called webhook ' + webhookName + ' ' + string);
             callbackItems.push(string);
         }, done);
 
