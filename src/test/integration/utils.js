@@ -483,10 +483,9 @@ exports.startServer = function startServer(server, port, callback, done) {
 };
 
 exports.closeServer = function closeServer(server, callback) {
-    server.close(function () {
-        console.log('server closed on port', server.getPort());
-        if (callback) callback();
-    });
+    console.log('closing server on port', server.address().port);
+    callback = callback || function () {};
+    server.close(callback);
 };
 
 exports.parseJson = function parseJson(response, description) {
