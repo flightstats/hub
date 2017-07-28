@@ -66,7 +66,7 @@ delete the callback first.
 ```
 
 Once a Webhook is created, the channel's name can not change.  PUT may be safely called multiple times with the same
- configuration.  Changes to `startItem` and `batch` will be ignored.
+ configuration.  Changes to `batch` will be ignored.  Change to `startItem` will update the cursor to the startItem key.
 
 To see the configuration and status of a webhook:
 
@@ -88,6 +88,8 @@ With this api, you can adjust the webhook cursor forward or backward in time.
   "item" : "http://localhost:8080/channel/coffee/2017/07/17/07/07/07"
 }
 ``` 
+
+The same result can be accomplished with updating the startItem and re-PUTting (upserting) the webhook.
 
 #####HTTPie example
 ```

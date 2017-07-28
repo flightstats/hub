@@ -39,7 +39,6 @@ def key_from_time(dt, unit="second"):
                    }
     return key_options[unit]
 
-
 def webhook_name(channel):
     return "/webhook/locust_" + str(channel)
 
@@ -77,22 +76,33 @@ class HubTasks:
             self.start_websocket()
         time.sleep(5)
 
-
-
-
-    def start_webhook(self):
+    def webhook_config(self, overrides={}, type=""):
         config = {
-            "number": self.number,
-            "channel": self.channel,
-            "webhook_channel": self.channel,
-            "parallel": 1,
+            "callbackUrl": "http://" + groupConfig['ip'] + ":8089/callback/" + self.channel,
+            "channelUrl": groupConfig['host'] + "/channel/" + self.channel,
+            "parallelCalls": 1,
             "batch": "SINGLE",
             "heartbeat": False,
-            "client": self.client,
-            "host": self.host
         }
-
         self.user.start_webhook(config)
+        if type != "webhook":
+            config["client"] = self.client
+            config["host"] = self.host
+            config["webhook_channel"] = self.channel
+            config["channel"] = self.channel
+            config["number"] = self.number
+        config.update(overrides)
+        return config
+
+    def upsert_webhook(self, overrides={}):
+        config = self.webhook_config(overrides, "webhook")
+        self.client.put(webhook_name(self.channel),
+                        data=json.dumps(config),
+                        headers={"Content-Type": "application/json"},
+                        name="group")
+
+    def start_webhook(self):
+        config = self.webhook_config()
         webhook = webhook_name(self.channel)
         self.client.delete(webhook, name="group")
         logger.info("group channel " + config['webhook_channel'] + " parallel:" + str(config['parallel']))
@@ -107,17 +117,8 @@ class HubTasks:
         groupCallbackLocks[self.channel] = {
             "lock": threading.Lock(),
         }
-        group = {
-            "callbackUrl": "http://" + groupConfig['ip'] + ":8089/callback/" + self.channel,
-            "channelUrl": groupConfig['host'] + "/channel/" + config['webhook_channel'],
-            "parallelCalls": config['parallel'],
-            "batch": config['batch'],
-            "heartbeat": config['heartbeat']
-        }
-        self.client.put(webhook,
-                        data=json.dumps(group),
-                        headers={"Content-Type": "application/json"},
-                        name="group")
+        self.upsert_webhook()
+
 
     def get_webhook_config(self):
         json = (self.client.get(webhook_name(self.channel), name="webhook_config")).json()
@@ -131,14 +132,17 @@ class HubTasks:
         config = self.get_webhook_config()
         channel_latest_url = config["channelLatest"]
 
-    # update webhook cursor to now "current=True" or 1 day in the past
-    def update_webhook(self, current=True):
+    def channel_url_from_time(self, time, unit="second"):
+        return self.host + "/channel/" + self.channel + "/" + key_from_time(time, unit)
+
+        # update webhook cursor to now "current=True" or 1 day in the past
+
+    def update_webhook_cursor(self, current=True):
         if current:
-            key = key_from_time(datetime.now(), "second")
+            url = self.channel_url_from_time(datetime.now(), "second")
         else:
             yesterday = datetime.now() - timedelta(days=1)
-            key = key_from_time(yesterday, "second")
-        url = self.host + "/channel/" + self.channel + "/" + key
+            url = self.channel_url_from_time(yesterday, "second")
         logger.info("updating webhook with url:  " + url)
         data = {
             "item": url
@@ -146,29 +150,38 @@ class HubTasks:
         self.client.put(webhook_name(self.channel) + "/updateCursor", data=json.dumps(data),
                         headers={"Content-Type": "application/json"})
 
-    def verify_cursor_update(self):
+    def perform_cursor_update(self, update_to_yesterday, update_to_now, name="upsertCursor"):
         # get current latest completed
         old_latest = self.get_webhook_last_completed()
         # update cursor
-
-        self.update_webhook(False)
+        update_to_yesterday()
         # wait a bit
         time.sleep(2)
         new_latest = self.get_webhook_last_completed()
 
         # verify that new latest < old latest
         it_works = new_latest < old_latest
-        logger.info(">>> it works " + str(it_works) + " old " + str(old_latest) + " new " + str(new_latest))
 
-        self.update_webhook(True)
+        update_to_now()
         time.sleep(1)
 
         if it_works:
-            events.request_success.fire(request_type="group", name="update", response_time=1,
+            events.request_success.fire(request_type="group", name=name, response_time=1,
                                         response_length=1)
         else:
-            events.request_failure.fire(request_type="group", name="update", response_time=1,
+            events.request_failure.fire(request_type="group", name=name, response_time=1,
                                         exception=-1)
+
+    def verify_cursor_update(self):
+        update_to_yesterday = lambda: self.update_webhook_cursor(False)
+        update_to_now = lambda: self.update_webhook_cursor(True)
+        self.perform_cursor_update(update_to_yesterday, update_to_now, "updateCursor")
+
+    def verify_cursor_update_via_upsert(self):
+        update_to_yesterday = lambda: self.upsert_webhook(
+            overrides={"startItem": self.channel_url_from_time(datetime.now() - timedelta(days=1))})
+        update_to_now = lambda: self.upsert_webhook(overrides={"startItem": self.channel_url_from_time(datetime.now())})
+        self.perform_cursor_update(update_to_yesterday, update_to_now, "upsertWebhook")
 
     def start_websocket(self):
         websockets[self.channel] = {

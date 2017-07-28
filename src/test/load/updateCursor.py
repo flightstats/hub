@@ -30,9 +30,13 @@ class UpdateCursorTasks(TaskSet):
     def write_read(self):
         self.hubTasks.write_read()
 
-    @task(1)
+    @task(50)
     def verify_cursor_update(self):
         self.hubTasks.verify_cursor_update()
+
+    @task(50)
+    def verify_cursor_update_via_upsert(self):
+        self.hubTasks.verify_cursor_update_via_upsert()
 
     @task(10)
     def get_webhook_config(self):
@@ -49,8 +53,8 @@ class UpdateCursorTasks(TaskSet):
 
 class WebsiteUser(HttpLocust):
     task_set = UpdateCursorTasks
-    min_wait = 1
-    max_wait = 3
+    min_wait = 100
+    max_wait = 1000
 
     def __init__(self):
         super(WebsiteUser, self).__init__()

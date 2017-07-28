@@ -10,6 +10,7 @@ import com.flightstats.hub.model.ContentPath;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +44,11 @@ public class WebhookService {
         Optional<Webhook> preExisting = get(webhook.getName());
         if (preExisting.isPresent()) {
             Webhook existing = preExisting.get();
-            if (existing.equals(webhook)) {
+            ContentPath newStartingKey = webhook.getStartingKey();
+            if (newStartingKey.getTime().compareTo(new DateTime(1980, 1, 1, 1, 1)) >= 0
+                    && !newStartingKey.equals(existing.getStartingKey())) {
+                updateCursor(webhook, webhook.getStartingKey());
+            } else if (existing.equals(webhook)) {
                 return preExisting;
             } else if (!existing.allowedToChange(webhook)) {
                 throw new ConflictException("{\"error\": \"The channel name in the channelUrl can not change. \"}");
