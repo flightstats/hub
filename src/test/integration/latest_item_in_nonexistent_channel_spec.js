@@ -1,13 +1,23 @@
 require('./integration_config.js');
 
 var channelName = utils.randomChannelName();
-var testName = __filename;
+var channelResource = channelUrl + '/' + channelName;
 
-utils.configureFrisby();
+describe(__filename, function () {
 
-var latestLink = hubUrlBase + "/channel/" + channelName + "/latest";
-frisby.create(testName + ":Test latest item is 404 when channel dosn't exist")
-    .get(latestLink)
-    .expectStatus(404)
-    .toss();
+    it('verifies the latest endpoint returns 404 on a nonexistent channel', function (done) {
+        var url = channelResource + '/latest';
 
+        utils.httpGet(url)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(404);
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
+
+});

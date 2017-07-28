@@ -2,25 +2,46 @@ require('./../integration/integration_config.js');
 
 var channelName = utils.randomChannelName();
 var providerResource = hubUrlBase + "/provider";
-var thisChannelResource = channelUrl + "/" + channelName;
+var channelResource = channelUrl + "/" + channelName;
 var messageText = "MY SUPER TEST CASE: this & <that>. " + Math.random().toString();
-var testName = "provider_insert_and_fetch_spec";
 
-utils.configureFrisby();
+describe(__filename, function () {
 
+    it('inserts a value into a provider channel', function (done) {
+        var url = providerResource;
+        var headers = {
+            'channelName': channelName,
+            'Content-Type': 'text/plain'
+        };
+        var body = messageText;
 
-frisby.create(testName + ': Inserting a value into a provider channel .')
-    .post(providerResource, null, { body: messageText})
-    .addHeader("channelName", channelName)
-    .addHeader("Content-Type", "text/plain")
-    .expectStatus(200)
-    .after(function () {
-        frisby.create(testName + ': Fetching value to ensure that it was inserted.')
-            .get(thisChannelResource + "/latest?stable=false")
-            .expectStatus(200)
-            .expectHeader('content-type', 'text/plain')
-            .expectBodyContains(messageText)
-            .toss();
-    })
-    .toss();
+        utils.httpPost(url, headers, body)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(200);
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
 
+    it('verifies the value was inserted', function (done) {
+        var url = channelResource + '/latest?stable=false';
+
+        utils.httpGet(url)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(200);
+                expect(response.headers['content-type']).toEqual('text/plain');
+                expect(response.body).toContain(messageText);
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
+
+});

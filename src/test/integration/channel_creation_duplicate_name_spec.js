@@ -1,30 +1,55 @@
 require('./integration_config.js');
 
 var channelName = utils.randomChannelName();
-var jsonBody = JSON.stringify({ "name": channelName});
-var channelResource = channelUrl + "/" + channelName;
-var testName = "channel_creation_duplicate_name_spec";
+var channelResource = channelUrl + '/' + channelName;
 
-utils.configureFrisby();
+describe(__filename, function () {
 
-frisby.create(testName + ': Making sure channel resource does not yet exist.')
-    .get(channelResource)
-    .expectStatus(404)
-	.after(function () {
-		frisby.create(testName + ': Test create channel')
-			.post(channelUrl, null, { body: jsonBody})
-			.addHeader("Content-Type", "application/json")
-			.expectStatus(201)
-	        .after(function () {
-				frisby.create(testName + ': Test create channel with same name')
-					.post(channelUrl, null, { body: jsonBody})
-					.addHeader("Content-Type", "application/json")
-					.expectStatus(409)
-					.toss()
+	it('verifies the channel doesn\'t exist yet', function (done) {
+		utils.httpGet(channelResource)
+			.then(function (response) {
+				expect(response.statusCode).toEqual(404);
 			})
-            .toss();
-    })
-    .toss();
+			.catch(function (error) {
+				expect(error).toBeNull();
+			})
+			.fin(function () {
+				done();
+			});
+	});
+	
+	it('creates the channel', function (done) {
+		var url = channelUrl;
+		var headers = {'Content-Type': 'application/json'};
+		var body = {'name': channelName};
+		
+		utils.httpPost(url, headers, body)
+			.then(function (response) {
+				expect(response.statusCode).toEqual(201);
+			})
+			.catch(function (error) {
+				expect(error).toBeNull();
+			})
+			.fin(function () {
+				done();
+			});
+	});
+	
+	it('verifies creating a channel with an existing name returns an error', function (done) {
+		var url = channelUrl;
+		var headers = {'Content-Type': 'application/json'};
+		var body = {'name': channelName};
 
+		utils.httpPost(url, headers, body)
+			.then(function (response) {
+				expect(response.statusCode).toEqual(409);
+			})
+			.catch(function (error) {
+				expect(error).toBeNull();
+			})
+			.fin(function () {
+				done();
+			});
+	});
 
-
+});

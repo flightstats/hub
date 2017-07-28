@@ -1,25 +1,60 @@
 require('./integration_config.js');
 
 var channelName = utils.randomChannelName();
-var thisChannelResource = channelUrl + "/" + channelName;
+var channelResource = channelUrl + "/" + channelName;
 var messageText = "there's a snake in my boot!";
-var testName = __filename;
 
-utils.configureFrisby();
+describe(__filename, function () {
 
-utils.runInTestChannel(testName, channelName, function () {
-    frisby.create(testName + ': Inserting a value into a channel.')
-        .post(thisChannelResource, null, { body : messageText})
-        .addHeader("Content-Type", "text/plain")
-        .expectStatus(201)
-        .afterJSON(function (result) {
-            var valueUrl = result['_links']['self']['href'];
-            frisby.create(testName + ': Fetching value in order to check creation date.')
-                .get(valueUrl)
-                .expectStatus(200)
-                // Wishing frisby allowed callbacks for header validation too...but it doesn't yet.
-                .expectHeaderContains('creation-date', 'T')
-                .toss();
-        })
-        .toss();
+    it('creates a channel', function (done) {
+        var url = channelUrl;
+        var headers = {'Content-Type': 'application/json'};
+        var body = {'name': channelName};
+
+        utils.httpPost(url, headers, body)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(201);
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
+
+    var itemURL;
+
+    it('inserts an item', function (done) {
+        var url = channelResource;
+        var headers = {'Content-Type': 'text/plain'};
+        var body = messageText;
+
+        utils.httpPost(url, headers, body)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(201);
+                itemURL = response.body._links.self.href;
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
+
+    it('verifies the creation-date header is returned', function (done) {
+        utils.httpGet(itemURL)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(200);
+                expect(response.headers['creation-date']).toContain('T');
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
+
 });

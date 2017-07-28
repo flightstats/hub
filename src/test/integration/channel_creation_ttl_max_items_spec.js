@@ -4,13 +4,12 @@ var request = require('request');
 var channelName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
-utils.configureFrisby();
 
 describe(testName, function () {
 
     it("puts channel with ttl and max " + channelName, function (done) {
         request.put({
-                url: channelUrl + '/' + channelName,
+                url: channelResource,
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({
                     maxItems: 1,

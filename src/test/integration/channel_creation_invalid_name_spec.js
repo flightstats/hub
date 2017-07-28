@@ -1,15 +1,22 @@
 require('./integration_config.js');
 
-var jsonBody = JSON.stringify({ "name": "not valid!"});
-var testName = "channel_creation_invalid_name_spec";
+describe(__filename, function () {
 
-utils.configureFrisby();
+    it('creates a channel with an invalid name', function (done) {
+        var url = channelUrl;
+        var headers = {'Content-Type': 'application/json'};
+        var body = {'name': 'not valid!'};
 
-frisby.create(testName + ': Test create channel with invalid name')
-    .post(channelUrl, null, { body: jsonBody })
-    .addHeader("Content-Type", "application/json")
-    .expectStatus(400)
-    .toss();
+        utils.httpPost(url, headers, body)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(400);
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
 
-
-
+});
