@@ -64,8 +64,8 @@ describe(testName, function () {
                 done();
             });
     });
-    
-    var foundWebhookHrefs = [];
+
+    var foundURLs = [];
 
     it('gets a list of the webhooks', function (done) {
         var url = webhookUrl;
@@ -74,16 +74,10 @@ describe(testName, function () {
         utils.httpGet(url, headers)
             .then(function (response) {
                 expect(response.statusCode).toBe(200);
-                expect(response.body._links.self.href).toBe(webhookUrl);
-                var items = response.body._links.groups || response.body._links.webhooks;
-                for (var i = 0; i < items.length; ++i) {
-                    if (item.name === webhookName1 || item.name === webhookName2) {
-                        foundWebhookHrefs.push(item.href);
-                    }
-                }
-                expect(foundWebhookHrefs.length).toEqual(2);
-                expect(foundWebhookHrefs).toContain(firstWebhookURL);
-                expect(foundWebhookHrefs).toContain(secondWebhookURL);
+                expect(response.body._links.self.href).toEqual(webhookUrl);
+                foundURLs = (response.body._links.groups || response.body._links.webhooks)
+                    .map(function (item) { return item.href })
+                    .filter(function (href) { return href == firstWebhookURL || href == secondWebhookURL });
             })
             .catch(function (error) {
                 expect(error).toBeNull();
@@ -91,6 +85,12 @@ describe(testName, function () {
             .fin(function () {
                 done();
             });
+    });
+
+    it('verifies we found the correct URLs', function () {
+        expect(foundURLs.length).toEqual(2);
+        expect(foundURLs).toContain(firstWebhookURL);
+        expect(foundURLs).toContain(secondWebhookURL);
     });
 
     utils.deleteWebhook(webhookName1);
