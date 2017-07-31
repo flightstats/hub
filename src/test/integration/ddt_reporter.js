@@ -21,11 +21,18 @@ module.exports = {
     failures: [],
 
     jasmineStarted: function (info) {
-        console.log('\n' + ANSI.BOLD + ANSI.MAGENTA + 'Executing tests...' + ANSI.OFF);
+        var message = 'Executing ' + info.totalSpecsDefined + ' specs at ' + __dirname;
+        console.log('\n' + ANSI.BOLD + ANSI.MAGENTA + message + ANSI.OFF);
     },
 
     suiteStarted: function (info) {
-        // don't output anything
+        var indexOfFilename = info.description.lastIndexOf('/') + 1;
+        var filename = info.description.slice(indexOfFilename);
+        var line = new Array(50).join('-');
+        console.log('\n');
+        console.log(line);
+        console.log(ANSI.BOLD + '  ' + filename + ANSI.OFF);
+        console.log(line);
     },
 
     specStarted: function (info) {
