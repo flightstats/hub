@@ -19,39 +19,78 @@ var webhookConfig = {
  */
 describe(testName, function () {
 
-    var webhookHrefs = [
-        utils.putWebhook(webhookName1, webhookConfig, 201, testName, webhookUrl),
-        utils.putWebhook(webhookName2, webhookConfig, 201, testName, webhookUrl)
-    ];
-    var foundWebhookHrefs = [];
-
-    it('gets the webhooks ', function () {
-        runs(function () {
-            request.get({url: webhookUrl, headers: {'Content-Type': 'application/json'}},
-                function (err, response, body) {
-                    expect(err).toBeNull();
-                    expect(response.statusCode).toBe(200);
-                    var parse = utils.parseJson(response, testName);
-                    expect(parse._links.self.href).toBe(webhookUrl);
-                    var webhooks = parse._links.groups || parse._links.webhooks;
-                    webhooks.forEach(function (item) {
-                        if (item.name === webhookName1 || item.name === webhookName2) {
-                            foundWebhookHrefs.push(item.href);
-                        }
-                    });
-                });
-        });
-
-        waitsFor(function () {
-            return foundWebhookHrefs.length === 2;
-        });
-
-        runs(function () {
-            webhookHrefs.forEach(function (item) {
-                expect(foundWebhookHrefs.indexOf(item)).not.toBe(-1);
+    var firstWebhookURL = webhookUrl + '/' + webhookName1;
+    
+    it('creates the first webhook', function (done) {
+        var url = firstWebhookURL;
+        var headers = {'Content-Type': 'application/json'};
+        var body = webhookConfig;
+        
+        utils.httpPut(url, headers, body)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(201);
+                expect(response.headers.location).toBe(firstWebhookURL);
+                expect(response.body.callbackUrl).toBe(webhookConfig.callbackUrl);
+                expect(response.body.channelUrl).toBe(webhookConfig.channelUrl);
+                expect(response.body.name).toBe(webhookName1);
             })
-        });
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
+    
+    var secondWebhookURL = webhookUrl + '/' + webhookName2;
+    
+    it('creates the second webhook', function (done) {
+        var url = secondWebhookURL;
+        var headers = {'Content-Type': 'application/json'};
+        var body = webhookConfig;
 
+        utils.httpPut(url, headers, body)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(201);
+                expect(response.headers.location).toBe(secondWebhookURL);
+                expect(response.body.callbackUrl).toBe(webhookConfig.callbackUrl);
+                expect(response.body.channelUrl).toBe(webhookConfig.channelUrl);
+                expect(response.body.name).toBe(webhookName2);
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
+
+    var foundURLs = [];
+
+    it('gets a list of the webhooks', function (done) {
+        var url = webhookUrl;
+        var headers = {'Content-Type': 'application/json'};
+
+        utils.httpGet(url, headers)
+            .then(function (response) {
+                expect(response.statusCode).toBe(200);
+                expect(response.body._links.self.href).toEqual(webhookUrl);
+                foundURLs = (response.body._links.groups || response.body._links.webhooks)
+                    .map(function (item) { return item.href })
+                    .filter(function (href) { return href == firstWebhookURL || href == secondWebhookURL });
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
+                done();
+            });
+    });
+
+    it('verifies we found the correct URLs', function () {
+        expect(foundURLs.length).toEqual(2);
+        expect(foundURLs).toContain(firstWebhookURL);
+        expect(foundURLs).toContain(secondWebhookURL);
     });
 
     utils.deleteWebhook(webhookName1);

@@ -14,8 +14,9 @@ describe(testName, function () {
 
     var localChannelUrl = hubUrlBase + '/channel/' + channelName;
 
+    utils.itSleeps(1000);
+
     it('tries to add item to channel ' + channelName, function (done) {
-        utils.sleep(1000);
         request.post({
                 url: localChannelUrl,
                 headers: {"Content-Type": "application/json", user: 'somebody'},
