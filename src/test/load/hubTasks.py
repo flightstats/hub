@@ -76,33 +76,38 @@ class HubTasks:
             self.start_websocket()
         time.sleep(5)
 
-    def webhook_config(self, overrides={}, type=""):
+    def webhook_config(self):
         config = {
-            "callbackUrl": "http://" + groupConfig['ip'] + ":8089/callback/" + self.channel,
-            "channelUrl": groupConfig['host'] + "/channel/" + self.channel,
-            "parallelCalls": 1,
+            "number": self.number,
+            "channel": self.channel,
+            "webhook_channel": self.channel,
+            "parallel": 1,
             "batch": "SINGLE",
             "heartbeat": False,
+            "client": self.client,
+            "host": self.host
         }
         self.user.start_webhook(config)
-        if type != "webhook":
-            config["client"] = self.client
-            config["host"] = self.host
-            config["webhook_channel"] = self.channel
-            config["channel"] = self.channel
-            config["number"] = self.number
-        config.update(overrides)
         return config
 
     def upsert_webhook(self, overrides={}):
-        config = self.webhook_config(overrides, "webhook")
+        config = self.webhook_config()
+        wh_config = {
+            "callbackUrl": "http://" + groupConfig['ip'] + ":8089/callback/" + self.channel,
+            "channelUrl": groupConfig['host'] + "/channel/" + config['webhook_channel'],
+            "parallelCalls": config['parallel'],
+            "batch": config['batch'],
+            "heartbeat": config['heartbeat']
+        }
+        wh_config.update(overrides)
         self.client.put(webhook_name(self.channel),
-                        data=json.dumps(config),
+                        data=json.dumps(wh_config),
                         headers={"Content-Type": "application/json"},
                         name="group")
 
     def start_webhook(self):
         config = self.webhook_config()
+        logger.info(config)
         webhook = webhook_name(self.channel)
         self.client.delete(webhook, name="group")
         logger.info("group channel " + config['webhook_channel'] + " parallel:" + str(config['parallel']))
