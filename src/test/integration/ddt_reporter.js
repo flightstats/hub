@@ -52,16 +52,20 @@ module.exports = {
                 console.log(ANSI.BOLD + '< ' + ANSI.RED + status + ANSI.OFF);
                 this.failed++;
                 for (var i = 0; i < info.failedExpectations.length; ++i) {
-                    var failure = info.failedExpectations[i].stack;
+                    var stackTrace = info.failedExpectations[i].stack;
 
-                    if (failure === undefined) {
+                    if (stackTrace === undefined) {
                         console.log('An error occured but a stack trace couldn\'t be found');
                         console.log('DEBUG INFO:', item);
                         exit(1);
                     }
 
-                    console.log(ANSI.RED + failure + ANSI.OFF);
-                    this.failures.push(failure);
+                    console.log(ANSI.RED + stackTrace + ANSI.OFF);
+
+                    this.failures.push({
+                        filename: info.fullName.split(' ')[0],
+                        stackTrace: stackTrace
+                    });
                 }
                 break;
 
@@ -84,7 +88,9 @@ module.exports = {
             var twentyDashes = new Array(20).join('-');
             console.log('\n' + twentyDashes + ' FAILURE SUMMARY ' + twentyDashes);
             this.failures.forEach(function (failure) {
-                console.log('\n' + ANSI.RED + failure + ANSI.OFF);
+                console.log('\n');
+                console.log(ANSI.BOLD + ANSI.RED + failure.filename + ANSI.OFF);
+                console.log(ANSI.RED + failure.stackTrace + ANSI.OFF);
             });
         }
 
