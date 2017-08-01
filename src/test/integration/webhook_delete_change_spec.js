@@ -24,6 +24,8 @@ var testName = __filename;
 
 describe(testName, function () {
 
+    var callbackServerA;
+    var callbackServerB;
     var portA = utils.getPort();
     var portB = utils.getPort();
 
@@ -44,20 +46,22 @@ describe(testName, function () {
 
     utils.putWebhook(webhookName, webhookConfigA, 201, testName);
 
-    it('runs callback server', function () {
-        utils.startServer(portA, function (string) {
+    it('starts the first callback server', function (done) {
+        callbackServerA = utils.startHttpServer(portA, function (string) {
             callbackItemsA.push(string);
-        });
+        }, done);
+    });
 
+    it('posts the first item', function (done) {
         utils.postItemQ(channelResource)
             .then(function (value) {
                 postedItemsA.push(value.body._links.self.href);
+                done();
             });
+    });
 
-        waitsFor(function () {
-            return callbackItemsA.length == 1;
-        }, 11999);
-
+    it('waits for data', function (done) {
+        utils.waitForData(callbackItemsA, postedItemsA, done);
     });
 
     utils.deleteWebhook(webhookName);
@@ -66,27 +70,40 @@ describe(testName, function () {
 
     utils.putWebhook(webhookName, webhookConfigB, 201, testName);
 
-    it('runs callback server', function () {
-        utils.startServer(portB, function (string) {
+    it('starts the second callback server', function (done) {
+        callbackServerB = utils.startHttpServer(portB, function (string) {
             callbackItemsB.push(string);
-        });
+        }, done);
+    });
 
+    it('posts the second item', function (done) {
         utils.postItemQ(channelResource)
             .then(function (value) {
                 postedItemsB.push(value.body._links.self.href);
+                done();
             });
-
-        waitsFor(function () {
-            return callbackItemsB.length == 1;
-        }, 11998);
-
     });
 
-    utils.closeServer(function () {
+    it('waits for data', function (done) {
+        utils.waitForData(callbackItemsB, postedItemsB, done);
+    });
+
+    it('verifies we got what we expected through the callback', function () {
         expect(callbackItemsA.length).toBe(1);
         expect(callbackItemsB.length).toBe(1);
         expect(JSON.parse(callbackItemsA[0]).uris[0]).toBe(postedItemsA[0]);
         expect(JSON.parse(callbackItemsB[0]).uris[0]).toBe(postedItemsB[0]);
-    }, testName);
+    });
+
+    it('closes the first callback server', function (done) {
+        expect(callbackServerA).toBeDefined();
+        utils.closeServer(callbackServerA, done);
+    });
+
+    it('closes the second callback server', function (done) {
+        expect(callbackServerB).toBeDefined();
+        utils.closeServer(callbackServerB, done);
+    });
+
 });
 

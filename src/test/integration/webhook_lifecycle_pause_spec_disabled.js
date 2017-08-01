@@ -41,42 +41,41 @@ describe(testName, function () {
     var callbackItems = [];
     var postedItems = [];
 
-    function postedItem(value, post) {
+    function addPostedItem(value) {
         postedItems.push(value.body._links.self.href);
         console.log('value.body._links.self.href', value.body._links.self.href)
-        if (post) {
-            return utils.postItemQ(channelResource);
-        }
     }
 
     var channel = utils.createChannel(channelName);
 
     var webhook = utils.putWebhook(webhookName, webhookConfig, 201, testName);
 
-    it('runs callback server and posts ' + webhookName, function (done) {
-        runs(function () {
-            utils.startServer(port, function (string) {
-                callbackItems.push(string);
-                console.log(callbackItems.length, 'called back', string);
-            });
+    var callbackServer;
+    
+    it('starts a callback server', function (done) {
+        callbackServer = utils.startHttpServer(port, function (string) {
+            callbackItems.push(string);
+            console.log(callbackItems.length, 'called back', string);
+        }, done);
+    });
 
-            // adding two items
-            utils.postItemQ(channelResource)
-                .then(function (value) {
-                    return postedItem(value, true);
-                }).then(function (value) {
-                postedItem(value, false);
+    it('posts two items', function (done) {
+        utils.postItemQ(channelResource)
+            .then(function (value) {
+                addPostedItem(value);
+                return utils.postItemQ(channelResource);
+            }).then(function (value) {
+                addPostedItem(value);
                 done();
             });
-        });
-        waitsFor(function () {
-            console.log(postedItems.length, callbackItems.length);
+    });
 
-            return callbackItems.length > 0;
-        }, "2 callbacks collected", 15 * 1000);
-
+    it('waits for data', function (done) {
+        utils.waitForData(callbackItems, postedItems, done);
     }, 15 * 1000);
-    utils.timeout(2000);
+    
+    utils.itSleeps(2000);
+
     it('expects 2 items collected', function () {
         expect(callbackItems.length).toBe(2);
     });
@@ -84,20 +83,21 @@ describe(testName, function () {
     console.log("###### pausing web hook");
     webhook = utils.putWebhook(webhookName, webhookConfigPaused, 200, testName);
 
+    utils.itSleeps(2000);
+    
     it('posts items to paused ' + webhookName, function (done) {
-        utils.sleepQ(2000).then(function () {
-            utils.postItemQ(channelResource)
-                .then(function (value) {
-                    return postedItem(value, true);
-                }).then(function (value) {
-                postedItem(value, false);
-                utils.sleep(500);
+        utils.postItemQ(channelResource)
+            .then(function (value) {
+                addPostedItem(value);
+                return utils.postItemQ(channelResource);
+            })
+            .then(function (value) {
+                addPostedItem(value);
                 done();
             });
-            });
-
-
     }, 3000);
+    
+    utils.itSleeps(500);
 
     // we added another 2 to a paused web hook.  should still be 2
     it('verfies number ' + webhookName, function () {
@@ -107,21 +107,25 @@ describe(testName, function () {
 
     console.log("###### resuming web hook");
     webhook = utils.putWebhook(webhookName, webhookConfig, 200, testName);
-    utils.timeout(2000);
-    it('waits for items ' + webhookName, function () {
-        utils.sleepQ(2000).then(function () {
-            utils.closeServer(function () {
-                expect(callbackItems.length).toBe(4);
-                expect(postedItems.length).toBe(4);
-                // for (var i = 0; i < callbackItems.length; i++) {
-                //     var parse = JSON.parse(callbackItems[i]);
-                //     expect(parse.uris[0]).toBe(postedItems[i]);
-                //     expect(parse.name).toBe(webhookName);
-                // }
-                utils.deleteWebhook(webhookName);
-            }, testName);
-        });
+    
+    utils.itSleeps(2000);
+    
+    it('closes the callback server', function (done) {
+        expect(callbackServer).toBeDefined();
+        utils.closeServer(callbackServer, done);
     });
+    
+    it('verifies posted items were received', function () {
+        expect(callbackItems.length).toBe(4);
+        expect(postedItems.length).toBe(4);
+        // for (var i = 0; i < callbackItems.length; i++) {
+        //     var parse = JSON.parse(callbackItems[i]);
+        //     expect(parse.uris[0]).toBe(postedItems[i]);
+        //     expect(parse.name).toBe(webhookName);
+        // }
+    });
+
+    utils.deleteWebhook(webhookName);
 
 });
 

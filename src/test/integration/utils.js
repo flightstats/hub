@@ -427,39 +427,8 @@ exports.getQ = function getQ(url, status, stable) {
 };
 
 exports.itSleeps = function itSleeps(millis) {
-    it('sleeps', function () {
-        utils.sleep(millis);
-    })
-};
-
-exports.sleep = function sleep(millis) {
-    runs(function() {
-        console.log('sleeping for ' + millis);
-        flag = false;
-
-        setTimeout(function() {
-            flag = true;
-        }, millis);
-    });
-
-    waitsFor(function() {
-        return flag;
-    }, millis + 1000);
-};
-
-exports.sleepQ = function sleepQ(millis) {
-    var deferred = Q.defer();
-    setTimeout(function () {
-        deferred.resolve('slept');
-    }, millis);
-    return deferred.promise;
-};
-
-exports.timeout = function timeout(millis) {
-    it('waits for ' + millis, function (done) {
-        setTimeout(function () {
-            done()
-        }, millis);
+    it('sleeps for ' + millis + 'ms', function (done) {
+        setTimeout(done, millis);
     });
 };
 
@@ -469,79 +438,54 @@ exports.getPort = function getPort() {
     return port;
 };
 
-exports.startServer = function startServer(port, callback) {
-    console.log('starting server ' + port);
-    var started = false;
-    runs(function () {
-        server = http.createServer(function (request, response) {
-            serverResponse(request, response, callback);
-        });
-
-        server.on('connection', function(socket) {
-            socket.setTimeout(1000);
-        });
-
-        server.listen(port, function () {
-            started = true;
-        });
-    });
-
-    waitsFor(function() {
-        return started;
-    }, 11000);
+exports.startHttpServer = function startHttpServer(port, callback, done) {
+    var httpServer = new http.Server();
+    return utils.startServer(httpServer, port, callback, done);
 };
 
-function serverResponse(request, response, callback) {
-    callback = callback || function () {};
-    var payload = '';
-    request.on('data', function(chunk) {
-        payload += chunk.toString();
-    });
-    request.on('end', function() {
-        callback(payload);
-    });
-    response.writeHead(200);
-    response.end();
-}
-
 exports.startHttpsServer = function startHttpsServer(port, callback, done) {
-
     var options = {
-        key: fs.readFileSync(integrationTestPath + 'localhost.key'),
-        cert: fs.readFileSync(integrationTestPath + 'localhost.cert')
+        key: fs.readFileSync('localhost.key'),
+        cert: fs.readFileSync('localhost.cert')
     };
+    var httpsServer = new https.Server(options);
+    return utils.startServer(httpsServer, port, callback, done);
+};
 
-    var server = https.createServer(options, function (request, response) {
-        serverResponse(request, response, callback);
-    });
-
-    server.on('connection', function(socket) {
+exports.startServer = function startServer(server, port, callback, done) {
+    server.on('connection', function (socket) {
         socket.setTimeout(1000);
     });
 
-    server.listen(port, function () {
+    server.on('request', function (request, response) {
+        var incoming = '';
+
+        request.on('data', function (chunk) {
+            incoming += chunk.toString();
+        });
+
+        request.on('end', function () {
+            if (callback) callback(incoming);
+        });
+
+        response.writeHead(200);
+        response.end();
+    });
+
+    server.on('listening', function () {
+        console.log('server listening on port', port);
         done();
     });
+
+    server.listen(port);
 
     return server;
 };
 
-exports.closeServer = function closeServer(callback, description) {
-    description = description || 'none';
+exports.closeServer = function closeServer(server, callback) {
+    console.log('closing server on port', server.address().port);
     callback = callback || function () {};
-    var closed = false;
-    runs(function () {
-        console.log('closing server for ', description);
-        server.close(function () {
-            closed = true;
-        });
-
-        callback();
-    });
-
-    waitsFor(function() {
-        return closed;
-    }, 13000);
+    server.close(callback);
 };
 
 exports.parseJson = function parseJson(response, description) {
@@ -579,4 +523,18 @@ exports.getQuery = function getQuery(url, status, expectedUris, done) {
             }
             done();
         });
+};
+
+exports.waitForData = function waitForData(actual, expected, done) {
+    expect(actual).isPrototypeOf(Array);
+    expect(expected).isPrototypeOf(Array);
+    setTimeout(function () {
+        if (actual.length !== expected.length) {
+            waitForData(actual, expected, done);
+        } else {
+            console.log('expected:', expected);
+            console.log('actual:', actual);
+            done();
+        }
+    }, 500);
 };
