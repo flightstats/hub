@@ -1,7 +1,6 @@
 require('./integration_config.js');
 
 var WebSocket = require('ws');
-var url = require('url');
 
 var channelName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
