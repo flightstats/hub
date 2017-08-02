@@ -1,7 +1,6 @@
 require('./integration_config.js');
 
 var WebSocket = require('ws');
-var url = require('url');
 
 var channelName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
@@ -10,24 +9,36 @@ describe(__filename, function () {
 
     utils.createChannel(channelName, null, 'websocket testing');
 
+    var startingItem;
+
+    it('posts item to channel', function (done) {
+        utils.postItemQ(channelResource)
+            .then(function (result) {
+                var itemURL = result.response.headers.location;
+                console.log('posted:', itemURL);
+                startingItem = itemURL;
+                done();
+            });
+    });
+
     var wsURL;
-    var webSocket;
-    var receivedMessages = [];
 
     it('builds websocket url', function () {
-        expect(itemURLs.length).toEqual(2);
-        var itemPath = url.parse(itemURLs[0]).pathname;
-        var itemPathComponents = itemPath.split('/');
-        var itemYear = itemPathComponents[3];
-        var itemMonth = itemPathComponents[4];
-        var itemDay = itemPathComponents[5];
-        var itemHour = itemPathComponents[6];
+        expect(startingItem).toBeDefined();
+        var itemPathComponents = startingItem.split('/');
+        var itemYear = itemPathComponents[5];
+        var itemMonth = itemPathComponents[6];
+        var itemDay = itemPathComponents[7];
+        var itemHour = itemPathComponents[8];
         var hourURL = channelResource + '/' + itemYear + '/' + itemMonth + '/' + itemDay + '/' + itemHour;
         wsURL = hourURL.replace('http', 'ws') + '/ws'
     });
 
+    var webSocket;
+    var receivedMessages = [];
+
     it('opens websocket', function (done) {
-        expect(wsURL).not.toEqual('undefined');
+        expect(wsURL).toBeDefined();
 
         webSocket = new WebSocket(wsURL);
         webSocket.onmessage = function (message) {
@@ -41,24 +52,27 @@ describe(__filename, function () {
         });
     });
 
+    var postedItem;
+
     it('posts item to channel', function (done) {
         utils.postItemQ(channelResource)
             .then(function (result) {
-                console.log('posted:', result.response.headers.location);
-                itemURLs.push(result.response.headers.location);
+                var itemURL = result.response.headers.location;
+                console.log('posted:', itemURL);
+                postedItem = itemURL;
                 done();
             });
     });
 
     it('waits for data', function (done) {
-        utils.waitForMessages(receivedMessages, itemURLs, done);
+        var sentItems = [startingItem, postedItem];
+        utils.waitForData(receivedMessages, sentItems, done);
     });
 
     it('verifies the correct data was received', function () {
-        expect(receivedMessages.length).toEqual(itemURLs.length);
-        for (var i = 0; i < itemURLs.length; ++i) {
-            expect(receivedMessages).toContain(itemURLs[i]);
-        }
+        expect(receivedMessages.length).toEqual(2);
+        expect(receivedMessages).toContain(startingItem);
+        expect(receivedMessages).toContain(postedItem);
     });
 
     it('closes websocket', function (done) {

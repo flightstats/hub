@@ -1,7 +1,6 @@
 require('./integration_config.js');
 
 var WebSocket = require('ws');
-var url = require('url');
 
 var channelName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
@@ -41,7 +40,7 @@ describe(__filename, function () {
     });
 
     it('waits for data', function (done) {
-        utils.waitForMessages(receivedMessages, itemURLs, done);
+        utils.waitForData(receivedMessages, itemURLs, done);
     });
 
     it('verifies the correct data was received', function () {

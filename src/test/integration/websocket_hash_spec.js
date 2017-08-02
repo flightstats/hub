@@ -1,7 +1,6 @@
 require('./integration_config.js');
 
 var WebSocket = require('ws');
-var url = require('url');
 
 var channelName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
@@ -10,17 +9,30 @@ describe(__filename, function () {
 
     utils.createChannel(channelName, null, 'websocket testing');
 
+    var startingItem;
+
+    it('posts item to channel', function (done) {
+        utils.postItemQ(channelResource)
+            .then(function (result) {
+                var itemURL = result.response.headers.location;
+                console.log('posted:', itemURL);
+                startingItem = itemURL;
+                done();
+            });
+    });
+
     var wsURL;
+
+    it('builds websocket url', function () {
+        expect(startingItem).toBeDefined();
+        wsURL = startingItem.replace('http', 'ws') + '/ws'
+    });
+
     var webSocket;
     var receivedMessages = [];
 
-    it('builds websocket url', function () {
-        expect(itemURLs.length).toEqual(5);
-        wsURL = itemURLs[0].replace('http', 'ws') + '/ws'
-    });
-
     it('opens websocket', function (done) {
-        expect(wsURL).not.toEqual('undefined');
+        expect(wsURL).toBeDefined();
 
         webSocket = new WebSocket(wsURL);
         webSocket.onmessage = function (message) {
@@ -34,25 +46,25 @@ describe(__filename, function () {
         });
     });
 
+    var postedItem;
+
     it('posts item to channel', function (done) {
         utils.postItemQ(channelResource)
             .then(function (result) {
-                console.log('posted:', result.response.headers.location);
-                itemURLs.push(result.response.headers.location);
+                var itemURL = result.response.headers.location;
+                console.log('posted:', itemURL);
+                postedItem = itemURL;
                 done();
             });
     });
 
     it('waits for data', function (done) {
-        utils.waitForMessages(receivedMessages, itemURLs.slice(1), done);
+        utils.waitForData(receivedMessages, [postedItem], done);
     });
 
     it('verifies the correct data was received', function () {
-        var exclusiveItemURLs = itemURLs.slice(1);
-        expect(receivedMessages.length).toEqual(exclusiveItemURLs.length);
-        for (var i = 0; i < exclusiveItemURLs.length; ++i) {
-            expect(receivedMessages).toContain(exclusiveItemURLs[i]);
-        }
+        expect(receivedMessages.length).toEqual(1);
+        expect(receivedMessages).toContain(postedItem);
     });
 
     it('closes websocket', function (done) {
