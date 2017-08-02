@@ -14,43 +14,57 @@ var testName = __filename;
  * 3 - post items into the channel
  * 4 - verify that the item payloads are returned within delta time
  */
-describe(testName, function () {
+
+xdescribe(testName, function () {
+
     var callbackItems = [];
     var postedItems = [];
 
     utils.createChannel(channelName, false, testName);
 
-    /*it('calls stream and waits for items', function (done) {
+    it('opens a stream', function (done) {
+        var url = channelResource + '/stream';
+        var headers = {"Content-Type": "application/json"};
 
-        request.get({
-                url: channelResource + '/stream',
-                headers: {"Content-Type": "application/json"}
-            },
-            function (err, response, body) {
-                expect(err).toBeNull();
+        utils.httpGet(url, headers)
+            .then(function (response) {
                 expect(response.statusCode).toBe(200);
                 console.log('body', body);
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .fin(function () {
                 done();
             });
+    });
 
+    it('inserts multiple items', function (done) {
         utils.postItemQ(channelResource)
             .then(function (value) {
-                return postedItem(value, true);
-            }).then(function (value) {
-                return postedItem(value, true);
-            }).then(function (value) {
-                return postedItem(value, true);
-            }).then(function (value) {
-                postedItem(value, false);
+                postedItems.push(value);
+                return utils.postItemQ(channelResource);
+            })
+            .then(function (value) {
+                postedItems.push(value);
+                return utils.postItemQ(channelResource);
+            })
+            .then(function (value) {
+                postedItems.push(value);
+                return utils.postItemQ(channelResource);
+            })
+            .then(function (value) {
+                postedItems.push(value);
+                done();
             });
+    });
 
-        waitsFor(function () {
-            return callbackItems.length == 4;
-        }, 20 * 1000);
+    it('waits for the data', function (done) {
+        utils.waitForData(callbackItems, postedItems, done);
+    });
 
-
-     });*/
-
+    it('verifies we got the correct number of items', function (done) {
+        expect(callbackItems.length).toEqual(4);
+    });
 
 });
-

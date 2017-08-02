@@ -90,18 +90,18 @@ class WebhookLeader implements Leader {
     @Override
     public void takeLeadership(Leadership leadership) {
         this.leadership = leadership;
-        Optional<Webhook> foundWebhook = webhookService.getCached(webhook.getName());
+        Optional<Webhook> foundWebhook = webhookService.get(webhook.getName());
         channelName = webhook.getChannelName();
         if (!foundWebhook.isPresent() || !channelService.channelExists(channelName)) {
             logger.info("webhook or channel is missing, exiting " + webhook.getName());
             Sleeper.sleep(60 * 1000);
             return;
         }
+        this.webhook = foundWebhook.get();
         if (webhook.isPaused()) {
             logger.info("webhook is paused " + webhook.getName());
             return;
         }
-        this.webhook = foundWebhook.get();
         logger.info("taking leadership {} {}", webhook, leadership.hasLeadership());
         client = RestClient.createClient(60, webhook.getCallbackTimeoutSeconds(), true, false);
         executorService = Executors.newCachedThreadPool();
@@ -124,6 +124,8 @@ class WebhookLeader implements Leader {
             }
         } catch (RuntimeInterruptedException | InterruptedException e) {
             logger.info("saw InterruptedException for " + webhook.getName());
+        } catch (Exception e) {
+            logger.warn("Execption for " + webhook.getName(), e);
         } finally {
             logger.info("stopping last completed at {} {}", webhookStrategy.getLastCompleted(), webhook.getName());
             leadership.setLeadership(false);

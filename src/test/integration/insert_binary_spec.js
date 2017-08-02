@@ -26,8 +26,10 @@ describe(__filename, function () {
     
     it('downloads an image of a cat', function (done) {
         var url = 'http://www.lolcats.com/images/u/08/32/lolcatsdotcombkf8azsotkiwu8z2.jpg';
+        var headers = {};
+        var isBinary = true;
 
-        utils.httpGet(url)
+        utils.httpGet(url, headers, isBinary)
             .then(function (response) {
                 expect(response.statusCode).toEqual(200);
                 imageData = response.body;
@@ -62,7 +64,11 @@ describe(__filename, function () {
     });
 
     it('verifies the image data was inserted correctly', function (done) {
-        utils.httpGet(itemURL)
+        var url = itemURL;
+        var headers = {};
+        var isBinary = true;
+
+        utils.httpGet(url, headers, isBinary)
             .then(function (response) {
                 expect(response.statusCode).toEqual(200);
                 expect(response.body.length).toEqual(imageData.length);

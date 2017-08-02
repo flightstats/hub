@@ -1,14 +1,9 @@
-require('../integration/integration_config.js');
+require('./integration_config.js');
 
-var request = require('request');
-var http = require('http');
 var channelName = utils.randomChannelName();
 var webhookName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
-
-var MINUTE = 60 * 1000
-
 
 /**
  * This should:
@@ -23,6 +18,7 @@ var MINUTE = 60 * 1000
 
 describe(testName, function () {
 
+    var callbackServer;
     var portB = utils.getPort();
 
     var itemsB = [];
@@ -31,7 +27,7 @@ describe(testName, function () {
         callbackUrl: 'http://nothing:8080/nothing',
         channelUrl: channelResource
     };
-    var webhookConfigB = {
+    var goodConfig = {
         callbackUrl: callbackDomain + ':' + portB + '/',
         channelUrl: channelResource
     };
@@ -44,30 +40,42 @@ describe(testName, function () {
 
     utils.addItem(channelResource);
 
-    utils.putWebhook(webhookName, webhookConfigB, 200, testName);
+    utils.putWebhook(webhookName, goodConfig, 200, testName);
 
     utils.itSleeps(10000);
 
-    it('runs callback server: channel:' + channelName + ' webhook:' + webhookName, function () {
-        utils.startServer(portB, function (string) {
+    it('starts a callback server', function (done) {
+        callbackServer = utils.startHttpServer(portB, function (string) {
             console.log('called webhook ' + webhookName + ' ' + string);
             itemsB.push(string);
-        });
+        }, done);
+    });
 
+    it('inserts an item', function (done) {
         utils.postItemQ(channelResource)
             .then(function (value) {
                 postedItem = value.body._links.self.href;
+                done();
             });
-
-        waitsFor(function () {
-            return itemsB.length == 2;
-        }, 3 * MINUTE + 3);
-
     });
 
-    utils.closeServer(function () {
+    it('waits for data', function (done) {
+        var sentItems = [
+            'we dont care about the first item',
+            postedItem
+        ];
+        utils.waitForData(itemsB, sentItems, done);
+    });
+
+    it('verifies we got both items through the callback', function () {
         expect(itemsB.length).toBe(2);
         expect(JSON.parse(itemsB[1]).uris[0]).toBe(postedItem);
-    }, testName);
+    });
+
+    it('closes the callback server', function (done) {
+        expect(callbackServer).toBeDefined();
+        utils.closeServer(callbackServer, done);
+    });
+
 });
 

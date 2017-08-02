@@ -23,16 +23,13 @@ var callbackUrl = callbackDomain + ':' + port + '/';
 describe(testName, function () {
     utils.createChannel(channelName, false, testName);
 
-    utils.timeout(1000);
+    utils.itSleeps(1000);
     var postedItems = [];
     var firstItem;
 
-    function postedItem(value, post) {
+    function addPostedItem(value) {
         postedItems.push(value.body._links.self.href);
         console.log('postedItems', postedItems);
-        if (post) {
-            return utils.postItemQ(channelResource);
-        }
     }
 
     it('posts initial items ' + channelResource, function (done) {
@@ -40,74 +37,68 @@ describe(testName, function () {
             .then(function (value) {
                 firstItem = value.body._links.self.href;
                 return utils.postItemQ(channelResource);
-            }).then(function (value) {
-            postedItem(value, false);
-            return utils.sleepQ(6 * 1000);
-        }).then(function (value) {
-            done();
-        });
+            })
+            .then(function (value) {
+                addPostedItem(value);
+                done();
+            });
+    });
+    
+    utils.itSleeps(6000);
+
+    utils.putWebhook(webhookName, {
+        callbackUrl: callbackUrl,
+        channelUrl: channelResource,
+        startItem: 'previous'
+    }, 201, testName);
+
+    var callbackServer;
+    var callbackItems = [];
+
+    it('starts a callback server', function (done) {
+        callbackServer = utils.startHttpServer(port, function (string) {
+            console.log('called webhook ' + webhookName + ' ' + string);
+            callbackItems.push(string);
+        }, done);
     });
 
-    it('creates webhook ' + webhookName, function (done) {
-        var webhookConfig = {
-            callbackUrl: callbackUrl,
-            channelUrl: channelResource,
-            startItem: 'previous'
-        };
-        var webhookResource = utils.getWebhookUrl() + "/" + webhookName;
-        console.log('creating webhook', webhookName, webhookConfig);
-        request.put({
-                url: webhookResource,
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify(webhookConfig)
-            },
-            function (err, response, body) {
-                expect(err).toBeNull();
-                expect(response.statusCode).toBe(201);
-                expect(response.headers.location).toBe(webhookResource);
-                var parse = utils.parseJson(response, testName);
-                expect(parse.callbackUrl).toBe(webhookConfig.callbackUrl);
-                expect(parse.channelUrl).toBe(webhookConfig.channelUrl);
-                expect(parse.name).toBe(webhookName);
+    it('inserts items', function (done) {
+        utils.postItemQ(channelResource)
+            .then(function (value) {
+                addPostedItem(value);
+                return utils.postItemQ(channelResource);
+            })
+            .then(function (value) {
+                addPostedItem(value);
+                return utils.postItemQ(channelResource);
+            })
+            .then(function (value) {
+                addPostedItem(value);
+                return utils.postItemQ(channelResource);
+            })
+            .then(function (value) {
+                addPostedItem(value);
                 done();
             });
     });
 
+    it('waits for data', function (done) {
+        utils.waitForData(callbackItems, postedItems, done);
+    });
 
-    it('runs callback server webhook:' + webhookName + ' channel:' + channelName, function () {
-        var callbackItems = [];
+    it('closes the first callback server', function (done) {
+        expect(callbackServer).toBeDefined();
+        utils.closeServer(callbackServer, done);
+    });
 
-        utils.startServer(port, function (string) {
-            console.log('called webhook ' + webhookName + ' ' + string);
-            callbackItems.push(string);
-        });
-
-        utils.postItemQ(channelResource)
-            .then(function (value) {
-                return postedItem(value, true);
-            }).then(function (value) {
-            return postedItem(value, true);
-        }).then(function (value) {
-            return postedItem(value, true);
-        }).then(function (value) {
-            postedItem(value, false);
-        });
-
-        waitsFor(function () {
-            return callbackItems.length == 5;
-        }, 11997);
-
-        utils.closeServer(function () {
-            expect(callbackItems.length).toBe(5);
-            expect(postedItems.length).toBe(5);
-            for (var i = 0; i < callbackItems.length; i++) {
-                var parse = JSON.parse(callbackItems[i]);
-                expect(parse.uris[0]).toBe(postedItems[i]);
-                expect(parse.name).toBe(webhookName);
-            }
-        }, testName);
-
+    it('verifies we got what we expected through the callback', function () {
+        expect(callbackItems.length).toBe(5);
+        expect(postedItems.length).toBe(5);
+        for (var i = 0; i < callbackItems.length; i++) {
+            var parse = JSON.parse(callbackItems[i]);
+            expect(parse.uris[0]).toBe(postedItems[i]);
+            expect(parse.name).toBe(webhookName);
+        }
     });
 
 });
-

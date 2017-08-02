@@ -29,41 +29,45 @@ describe(testName, function () {
 
     var callbackItems = [];
     var postedItems = [];
-    var server;
+    var callbackServer;
 
     it('runs callback server', function (done) {
-        server = utils.startHttpsServer(port, function (string) {
+        callbackServer = utils.startHttpsServer(port, function (string) {
             callbackItems.push(string);
         }, done);
 
     });
 
-    it('posts items', function () {
+    it('posts items', function (done) {
         utils.postItemQ(channelResource)
             .then(function (value) {
-                return postedItem(value, true);
-            }).then(function (value) {
-                return postedItem(value, true);
-            }).then(function (value) {
-                return postedItem(value, true);
-            }).then(function (value) {
-                postedItem(value, false);
-            });
-
-        waitsFor(function () {
-            return callbackItems.length == 4;
-        }, 12000);
-
-        function postedItem(value, post) {
-            postedItems.push(value.body._links.self.href);
-            if (post) {
+                postedItems.push(value.body._links.self.href);
                 return utils.postItemQ(channelResource);
-            }
-        }
+            })
+            .then(function (value) {
+                postedItems.push(value.body._links.self.href);
+                return utils.postItemQ(channelResource);
+            })
+            .then(function (value) {
+                postedItems.push(value.body._links.self.href);
+                return utils.postItemQ(channelResource);
+            })
+            .then(function (value) {
+                postedItems.push(value.body._links.self.href);
+                done();
+            });
     });
 
-    it('closes server and verifies items', function () {
-        server.close();
+    it('waits for data', function (done) {
+        utils.waitForData(callbackItems, postedItems, done);
+    });
+
+    it('closes the callback server', function (done) {
+        expect(callbackServer).toBeDefined();
+        utils.closeServer(callbackServer, done);
+    });
+
+    it('verifies we got what we expected through the callback', function () {
         expect(callbackItems.length).toBe(4);
         expect(postedItems.length).toBe(4);
         for (var i = 0; i < callbackItems.length; i++) {
@@ -71,8 +75,7 @@ describe(testName, function () {
             expect(parse.uris[0]).toBe(postedItems[i]);
             expect(parse.name).toBe(webhookName);
         }
-
-    })
+    });
 
 });
 

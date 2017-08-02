@@ -17,8 +17,9 @@ describe(testName, function () {
     utils.createChannel(channelName, channelUrl, testName);
     utils.putWebhook(channelName, webhookConfig, 201, testName);
 
+    utils.itSleeps(10000);
+    
     it('gets webhook ' + channelName, function (done) {
-        utils.sleep(10000);
         request.get({
                 url: gUrl,
                 headers: {"Content-Type": "application/json"}
