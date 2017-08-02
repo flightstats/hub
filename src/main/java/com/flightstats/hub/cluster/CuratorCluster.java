@@ -29,14 +29,17 @@ public class CuratorCluster implements Cluster {
     private final CuratorFramework curator;
     private final String clusterPath;
     private final boolean useName;
+    private DecommissionCluster decommissionCluster;
     private final PathChildrenCache clusterCache;
     private String fullPath;
 
     @Inject
-    public CuratorCluster(CuratorFramework curator, String clusterPath, boolean useName) throws Exception {
+    public CuratorCluster(CuratorFramework curator, String clusterPath, boolean useName,
+                          DecommissionCluster decommissionCluster) throws Exception {
         this.curator = curator;
         this.clusterPath = clusterPath;
         this.useName = useName;
+        this.decommissionCluster = decommissionCluster;
         clusterCache = new PathChildrenCache(curator, clusterPath, true);
         clusterCache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
     }
@@ -59,7 +62,7 @@ public class CuratorCluster implements Cluster {
     }
 
     public void register() throws UnknownHostException {
-        String host = getHost(useName);
+        String host = Cluster.getHost(useName);
         try {
             logger.info("registering host {} {}", host, clusterPath);
             curator.create().withMode(CreateMode.EPHEMERAL).forPath(getFullPath(), host.getBytes());
@@ -72,32 +75,25 @@ public class CuratorCluster implements Cluster {
     }
 
     private String getFullPath() throws UnknownHostException {
-        fullPath = clusterPath + "/" + getHost(useName) + RandomStringUtils.randomAlphanumeric(6);
+        fullPath = clusterPath + "/" + Cluster.getHost(useName) + RandomStringUtils.randomAlphanumeric(6);
         return fullPath;
     }
 
     @Override
     public Collection<String> getLocalServer() throws UnknownHostException {
         List<String> server = new ArrayList<>();
-        server.add(getHost(false));
+        server.add(Cluster.getHost(false));
         return server;
     }
 
     public List<String> getWriteServers() {
-        List<String> servers = new ArrayList<>();
-        List<ChildData> currentData = clusterCache.getCurrentData();
-        int limit = currentData.size();
-        if (currentData.size() > WRITE_FACTOR) {
-            limit = WRITE_FACTOR;
-            Collections.shuffle(currentData);
+        List<String> servers = decommissionCluster.filter(getAllServers());
+        if (servers.size() <= WRITE_FACTOR) {
+            return servers;
+        } else {
+            Collections.shuffle(servers);
+            return servers.subList(0, WRITE_FACTOR);
         }
-        for (int i = 0; i < limit; i++) {
-            servers.add(new String(currentData.get(i).getData()));
-        }
-        if (servers.isEmpty()) {
-            logger.warn("returning empty collection");
-        }
-        return servers;
     }
 
     @Override
@@ -136,9 +132,9 @@ public class CuratorCluster implements Cluster {
 
     public void delete() {
         try {
-            logger.info("removing host from cluster {} {}", getHost(useName), fullPath);
+            logger.info("removing host from cluster {} {}", Cluster.getHost(useName), fullPath);
             curator.delete().forPath(fullPath);
-            logger.info("deleted host from cluster {} {}", getHost(useName), fullPath);
+            logger.info("deleted host from cluster {} {}", Cluster.getHost(useName), fullPath);
         } catch (KeeperException.NoNodeException e) {
             logger.info("no node for" + fullPath);
         } catch (Exception e) {

@@ -4,13 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.cluster.Cluster;
+import com.flightstats.hub.cluster.DecommissionManager;
 import com.flightstats.hub.rest.Linked;
 import org.apache.commons.lang3.StringUtils;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -26,6 +24,7 @@ import java.util.TreeSet;
 public class InternalClusterResource {
     private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private static final Cluster spokeCluster = HubProvider.getInstance(Cluster.class, "SpokeCluster");
+    private static final DecommissionManager decommissionManager = HubProvider.getInstance(DecommissionManager.class);
 
     public static final String DESCRIPTION = "Information about the cluster";
     private @Context
@@ -70,15 +69,14 @@ public class InternalClusterResource {
     @POST
     @Path("decommission")
     public Response decommission() throws Exception {
-        //return LocalHostOnly.getResponse(uriInfo, () -> getManager().resetLock());
-        return null;
+        return LocalHostOnly.getResponse(uriInfo, decommissionManager::decommission);
     }
 
 
     @POST
-    @Path("decommission/clearAll")
-    public Response clearDecommission() throws Exception {
-        //return LocalHostOnly.getResponse(uriInfo, () -> getManager().resetLock());
-        return null;
+    @Path("commission/{server}")
+    public Response commission(@PathParam("server") String server) throws Exception {
+        decommissionManager.commission(server);
+        return Response.accepted().build();
     }
 }
