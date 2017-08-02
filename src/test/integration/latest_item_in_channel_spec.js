@@ -62,7 +62,7 @@ describe(testName, function () {
             });
     });
 
-    utils.sleep(6000);
+    utils.itSleeps(6000);
     utils.addItem(channelResource, 201);
 
     it("gets latest stable in channel ", function (done) {

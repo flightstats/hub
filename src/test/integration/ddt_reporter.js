@@ -20,25 +20,27 @@ module.exports = {
 
     failures: [],
 
-    reportRunnerStarting: function (info) {
-        console.log('\n' + ANSI.BOLD + ANSI.MAGENTA + 'Executing tests...' + ANSI.OFF);
+    jasmineStarted: function (info) {
+        var message = 'Executing ' + info.totalSpecsDefined + ' specs at ' + __dirname;
+        console.log('\n' + ANSI.BOLD + ANSI.MAGENTA + message + ANSI.OFF);
     },
 
-    reportSpecStarting: function (info) {
+    suiteStarted: function (info) {
+        var indexOfFilename = info.description.lastIndexOf('/') + 1;
+        var filename = info.description.slice(indexOfFilename);
+        var line = new Array(50).join('-');
+        console.log('\n');
+        console.log(line);
+        console.log(ANSI.BOLD + '  ' + filename + ANSI.OFF);
+        console.log(line);
+    },
+
+    specStarted: function (info) {
         console.log('\n' + ANSI.BOLD + '> ' + ANSI.BLUE + info.description + ANSI.OFF);
     },
 
-    reportSpecResults: function (info) {
-        var results = info.results();
-        var status;
-        if (results.skipped) {
-            status = 'DISABLED';
-        } else if (results.passed()) {
-            status = 'PASSED';
-        } else {
-            status = 'FAILED';
-        }
-
+    specDone: function (info) {
+        var status = info.status.toUpperCase();
         switch (status) {
 
             case 'PASSED':
@@ -49,19 +51,22 @@ module.exports = {
             case 'FAILED':
                 console.log(ANSI.BOLD + '< ' + ANSI.RED + status + ANSI.OFF);
                 this.failed++;
-                var self = this;
-                results.items_.forEach(function (item) {
-                    if (!item.passed_) {
-                        var failure = item.trace.stack;
-                        if (failure === undefined) {
-                            console.log('An error occured but a stack trace couldn\'t be found');
-                            console.log('DEBUG INFO:', item);
-                            exit(1);
-                        }
-                        console.log(ANSI.RED + failure + ANSI.OFF);
-                        self.failures.push(failure);
+                for (var i = 0; i < info.failedExpectations.length; ++i) {
+                    var stackTrace = info.failedExpectations[i].stack;
+
+                    if (stackTrace === undefined) {
+                        console.log('An error occured but a stack trace couldn\'t be found');
+                        console.log('DEBUG INFO:', item);
+                        exit(1);
                     }
-                });
+
+                    console.log(ANSI.RED + stackTrace + ANSI.OFF);
+
+                    this.failures.push({
+                        filename: info.fullName.split(' ')[0],
+                        stackTrace: stackTrace
+                    });
+                }
                 break;
 
             case 'DISABLED':
@@ -74,16 +79,18 @@ module.exports = {
         }
     },
 
-    reportSuiteResults: function (info) {
+    suiteDone: function (info) {
         // don't output anything
     },
 
-    reportRunnerResults: function (info) {
+    jasmineDone: function (info) {
         if (this.failed) {
             var twentyDashes = new Array(20).join('-');
             console.log('\n' + twentyDashes + ' FAILURE SUMMARY ' + twentyDashes);
             this.failures.forEach(function (failure) {
-                console.log('\n' + ANSI.RED + failure + ANSI.OFF);
+                console.log('\n');
+                console.log(ANSI.BOLD + ANSI.RED + failure.filename + ANSI.OFF);
+                console.log(ANSI.RED + failure.stackTrace + ANSI.OFF);
             });
         }
 
@@ -91,8 +98,6 @@ module.exports = {
         console.log(ANSI.GREEN + 'PASSED: ' + ANSI.BOLD + this.passed + ANSI.OFF);
         console.log(ANSI.RED + 'FAILED: ' + ANSI.BOLD + this.failed + ANSI.OFF);
         console.log(ANSI.YELLOW + 'DISABLED: ' + ANSI.BOLD + this.disabled + ANSI.OFF + '\n');
-
-        process.exit(this.failed ? 1 : 0);
     }
 
 };

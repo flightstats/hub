@@ -21,16 +21,15 @@ var testName = __filename;
  */
 describe(testName, function () {
 
-    var portB = utils.getPort();
+    var callbackServer;
+    var port = utils.getPort();
 
-    var itemsB = [];
-    var postedItem;
     var badConfig = {
         callbackUrl: 'http://localhost:8080/nothing',
         channelUrl: channelResource
     };
-    var webhookConfigB = {
-        callbackUrl: callbackDomain + ':' + portB + '/',
+    var goodConfig = {
+        callbackUrl: callbackDomain + ':' + port + '/',
         channelUrl: channelResource
     };
 
@@ -40,30 +39,41 @@ describe(testName, function () {
 
     utils.itSleeps(2000);
 
-    utils.putWebhook(webhookName, webhookConfigB, 200, testName);
+    utils.putWebhook(webhookName, goodConfig, 200, testName);
 
     utils.itSleeps(10000);
 
-    it('runs callback server: channel:' + channelName + ' webhook:' + webhookName, function () {
-        utils.startServer(portB, function (string) {
-            console.log('called webhook ' + webhookName + ' ' + string);
-            itemsB.push(string);
-        });
+    var receivedItems = [];
 
+    it('starts a callback server', function (done) {
+        callbackServer = utils.startHttpServer(port, function (string) {
+            console.log('called webhook ' + webhookName + ' ' + string);
+            receivedItems.push(string);
+        }, done);
+    });
+    
+    var itemURL;
+    
+    it('posts and item', function (done) {
         utils.postItemQ(channelResource)
             .then(function (value) {
-                postedItem = value.body._links.self.href;
+                itemURL = value.body._links.self.href;
+                done();
             });
-
-        waitsFor(function () {
-            return itemsB.length == 1;
-        }, 71001);
-
+    });
+    
+    it('waits for data', function (done) {
+       utils.waitForData(receivedItems, [itemURL], done); 
+    });
+    
+    it('verifies we got the item through the callback', function () {
+        expect(receivedItems.length).toBe(1);
+        expect(receivedItems).toContain(itemURL);
+    });
+    
+    it('closes the callback server', function (done) {
+        expect(callbackServer).toBeDefined();
+        utils.closeServer(callbackServer, done);
     });
 
-    utils.closeServer(function () {
-        expect(itemsB.length).toBe(1);
-        expect(JSON.parse(itemsB[0]).uris[0]).toBe(postedItem);
-    }, testName);
 });
-
