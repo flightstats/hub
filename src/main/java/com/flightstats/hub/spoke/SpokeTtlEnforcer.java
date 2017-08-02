@@ -40,6 +40,8 @@ public class SpokeTtlEnforcer {
                 for (int i = 0; i < 2; i++) {
                     Commander.run(new String[]{"rm", "-rf", channelPath + "/" + TimeUtil.minutes(ttlDateTime.minusMinutes(i))}, 1);
                     Commander.run(new String[]{"rm", "-rf", channelPath + "/" + TimeUtil.hours(ttlDateTime.minusHours(i + 1))}, 5);
+                    Commander.run(new String[]{"rm", "-rf", channelPath + "/" + TimeUtil.days(ttlDateTime.minusDays(i + 1))}, 5);
+                    Commander.run(new String[]{"rm", "-rf", channelPath + "/" + TimeUtil.months(ttlDateTime.minusMonths(i + 1))}, 5);
                 }
             } else {
                 Commander.run(new String[]{"find", channelPath, "-mmin", "+" + ttlMinutes, "-delete"}, 1);
