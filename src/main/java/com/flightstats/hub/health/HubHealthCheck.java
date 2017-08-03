@@ -73,6 +73,7 @@ public class HubHealthCheck {
     }
 
     public void decommissionedDoNotRestart() {
+        decommissionedWithinSpoke.set(false);
         decommissionedDoNotRestart.set(true);
     }
 
