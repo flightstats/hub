@@ -37,6 +37,11 @@ public class SpokeDecommissionCluster implements DecommissionCluster {
         withinSpokeCache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
     }
 
+    void initialize() throws Exception {
+        createQuietly(WITHIN_SPOKE, getHost().getBytes());
+        createQuietly(DO_NOT_RESTART, getHost().getBytes());
+    }
+
     void decommission() throws Exception {
         logger.info("decommissioning" + withinSpokeKey());
         if (!withinSpokeExists() && !doNotRestartExists()) {

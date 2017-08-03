@@ -62,6 +62,7 @@ public class SpokeDecommissionManager implements DecommissionManager {
     }
 
     private void startCheck() throws Exception {
+        decommissionCluster.initialize();
         if (decommissionCluster.doNotRestartExists()) {
             String msg = "We can not start a server with a 'do not start' key";
             logger.error(msg);
