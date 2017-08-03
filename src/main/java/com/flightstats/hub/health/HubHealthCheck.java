@@ -19,7 +19,8 @@ public class HubHealthCheck {
 
     private final AtomicBoolean shutdown = new AtomicBoolean(false);
     private final AtomicBoolean startup = new AtomicBoolean(true);
-    private final AtomicBoolean decommissioned = new AtomicBoolean(false);
+    private final AtomicBoolean decommissionedWithinSpoke = new AtomicBoolean(false);
+    private final AtomicBoolean decommissionedDoNotRestart = new AtomicBoolean(false);
 
     public HubHealthCheck() {
         HubServices.register(new HealthService(), HubServices.TYPE.PERFORM_HEALTH_CHECK);
@@ -50,8 +51,11 @@ public class HubHealthCheck {
         if (startup.get()) {
             return builder.healthy(false).description("Starting up...").build();
         }
-        if (decommissioned.get()) {
-            return builder.healthy(true).description("DECOMMISSIONED").build();
+        if (decommissionedWithinSpoke.get()) {
+            return builder.healthy(true).description("Decommissioned, still serving Spoke queries").build();
+        }
+        if (decommissionedDoNotRestart.get()) {
+            return builder.healthy(false).description("Decommissioned, not serving Spoke queries").build();
         }
         return builder.healthy(true).description("OK").build();
     }
@@ -64,7 +68,12 @@ public class HubHealthCheck {
         return shutdown.get();
     }
 
-    public void decommission() {
-        decommissioned.set(true);
+    public void decommissionWithinSpoke() {
+        decommissionedWithinSpoke.set(true);
     }
+
+    public void decommissionedDoNotRestart() {
+        decommissionedDoNotRestart.set(true);
+    }
+
 }

@@ -1,6 +1,7 @@
 package com.flightstats.hub.cluster;
 
 import com.flightstats.hub.app.HubServices;
+import com.flightstats.hub.health.HubHealthCheck;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -25,13 +26,16 @@ public class SpokeDecommissionManager implements DecommissionManager {
     private static final Logger logger = LoggerFactory.getLogger(SpokeDecommissionManager.class);
 
     private final CuratorCluster spokeCuratorCluster;
+    private HubHealthCheck hubHealthCheck;
     private SpokeDecommissionCluster decommissionCluster;
 
     @Inject
     public SpokeDecommissionManager(SpokeDecommissionCluster decommissionCluster,
-                                    @Named("SpokeCuratorCluster") CuratorCluster spokeCuratorCluster) throws Exception {
+                                    @Named("SpokeCuratorCluster") CuratorCluster spokeCuratorCluster,
+                                    HubHealthCheck hubHealthCheck) throws Exception {
         this.decommissionCluster = decommissionCluster;
         this.spokeCuratorCluster = spokeCuratorCluster;
+        this.hubHealthCheck = hubHealthCheck;
         HubServices.register(new SpokeDecommissionManagerService(), HubServices.TYPE.BEFORE_HEALTH_CHECK);
     }
 
@@ -49,6 +53,7 @@ public class SpokeDecommissionManager implements DecommissionManager {
 
     @Override
     public boolean decommission() throws Exception {
+        hubHealthCheck.decommissionWithinSpoke();
         decommissionCluster.decommission();
         scheduleDoNotRestart();
         return true;
@@ -100,6 +105,7 @@ public class SpokeDecommissionManager implements DecommissionManager {
             logger.info("deleting spoke cluster ");
             spokeCuratorCluster.delete();
             logger.info("doNotRestart complete");
+            hubHealthCheck.decommissionedDoNotRestart();
         } catch (Exception e) {
             logger.warn("unable to complete ", e);
         }

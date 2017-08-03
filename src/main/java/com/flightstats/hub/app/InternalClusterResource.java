@@ -30,7 +30,7 @@ public class InternalClusterResource {
     private static final DecommissionManager decommissionManager = HubProvider.getInstance(SpokeDecommissionManager.class);
     private static final SpokeDecommissionCluster decommissionCluster = HubProvider.getInstance(SpokeDecommissionCluster.class);
 
-    public static final String DESCRIPTION = "Information about the cluster";
+    public static final String DESCRIPTION = "Information about the cluster and decommissioning nodes.";
     private @Context
     UriInfo uriInfo;
 
@@ -41,7 +41,10 @@ public class InternalClusterResource {
         ObjectNode root = mapper.createObjectNode();
         root.put("description", DESCRIPTION);
         root.put("directions", "Make HTTP POSTs to links below to take the desired action");
-
+        root.put("/decommission", "POSTing to /decommission will remove the localhost from Spoke writes.  " +
+                "The server will continue to receive Spoke queries until all of its data is expired from Spoke.");
+        root.put("/commission/{server}", "POSTing to /commission/{server} with the ip address of a previously decommissioned " +
+                "server will allow that server to rejoin the cluster.  The new server should be started after this command.");
         addNodes("spokeCluster", spokeCluster.getAllServers(), root);
         addNodes("decommissioned.withinSpokeTTL", decommissionCluster.getWithinSpokeTTL(), root);
         addNodes("decommissioned.doNotStart", decommissionCluster.getDoNotRestart(), root);
@@ -51,7 +54,6 @@ public class InternalClusterResource {
         Linked.Builder<?> links = Linked.linked(root);
         links.withLink("self", requestUri);
         links.withLink("decommission", localhostLink + "/decommission");
-        //todo - gfm - we could prepopulate this with servers
         links.withLink("commission", localhostLink + "/commission");
         return Response.ok(links.build()).build();
     }
