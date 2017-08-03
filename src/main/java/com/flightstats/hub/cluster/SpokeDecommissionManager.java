@@ -74,6 +74,7 @@ public class SpokeDecommissionManager implements DecommissionManager {
             throw new RuntimeException(msg);
         }
         if (decommissionCluster.withinSpokeExists()) {
+            hubHealthCheck.decommissionWithinSpoke();
             scheduleDoNotRestart();
         }
     }
