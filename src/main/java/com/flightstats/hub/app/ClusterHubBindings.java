@@ -2,6 +2,7 @@ package com.flightstats.hub.app;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
+import com.flightstats.hub.cluster.SpokeDecommissionManager;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.dao.*;
 import com.flightstats.hub.dao.aws.*;
@@ -55,6 +56,7 @@ class ClusterHubBindings extends AbstractModule {
         bind(AppUrlCheck.class).asEagerSingleton();
         bind(SpokeTtlEnforcer.class).asEagerSingleton();
         bind(DocumentationDao.class).to(S3DocumentationDao.class).asEagerSingleton();
+        bind(SpokeDecommissionManager.class).asEagerSingleton();
     }
 
     @Inject
