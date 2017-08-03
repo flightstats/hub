@@ -41,7 +41,7 @@ public class SpokeDecommissionCluster implements DecommissionCluster {
         logger.info("decommissioning" + withinSpokeKey());
         if (!withinSpokeExists() && !doNotRestartExists()) {
             logger.info("creating " + withinSpokeKey());
-            curator.create().creatingParentsIfNeeded().forPath(withinSpokeKey());
+            curator.create().creatingParentsIfNeeded().forPath(withinSpokeKey(), getHost().getBytes());
         }
         logger.info("decommission started " + withinSpokeKey());
     }
@@ -59,11 +59,15 @@ public class SpokeDecommissionCluster implements DecommissionCluster {
     }
 
     private String withinSpokeKey() {
-        return WITHIN_SPOKE + "/" + Cluster.getHost(false);
+        return WITHIN_SPOKE + "/" + getHost();
     }
 
     private String doNotRestartKey() {
-        return DO_NOT_RESTART + "/" + Cluster.getHost(false);
+        return DO_NOT_RESTART + "/" + getHost();
+    }
+
+    private String getHost() {
+        return Cluster.getHost(false);
     }
 
     void commission(String server) throws Exception {
@@ -72,11 +76,25 @@ public class SpokeDecommissionCluster implements DecommissionCluster {
         deleteQuietly(DO_NOT_RESTART + "/" + server);
     }
 
+    public List<String> getWithinSpokeTTL() {
+        List<String> servers = new ArrayList<>();
+        List<ChildData> currentData = withinSpokeCache.getCurrentData();
+        for (ChildData childData : currentData) {
+            servers.add(new String(childData.getData()));
+        }
+        return servers;
+    }
+
+    public List<String> getDoNotRestart() throws Exception {
+        return curator.getChildren().forPath(DO_NOT_RESTART);
+    }
+
+
     public List<String> filter(Set<String> servers) {
         List<String> filteredServers = new ArrayList<>(servers);
         List<ChildData> currentData = withinSpokeCache.getCurrentData();
         for (ChildData childData : currentData) {
-            String server = childData.getPath();
+            String server = new String(childData.getData());
             if (servers.contains(server)) {
                 filteredServers.remove(server);
             }
@@ -92,7 +110,7 @@ public class SpokeDecommissionCluster implements DecommissionCluster {
 
     void doNotRestart() {
         try {
-            createQuietly(doNotRestartKey());
+            createQuietly(doNotRestartKey(), getHost().getBytes());
             logger.info("deleting key " + withinSpokeKey());
             deleteQuietly(withinSpokeKey());
             logger.info("doNotRestart complete");
@@ -101,10 +119,10 @@ public class SpokeDecommissionCluster implements DecommissionCluster {
         }
     }
 
-    private void createQuietly(String key) throws Exception {
+    private void createQuietly(String key, byte[] bytes) throws Exception {
         try {
             logger.info("creating key " + key);
-            curator.create().creatingParentsIfNeeded().forPath(key);
+            curator.create().creatingParentsIfNeeded().forPath(key, bytes);
         } catch (KeeperException.NodeExistsException e) {
             logger.info(" key already exists " + key);
         }

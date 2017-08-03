@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.cluster.Cluster;
 import com.flightstats.hub.cluster.DecommissionManager;
+import com.flightstats.hub.cluster.SpokeDecommissionCluster;
+import com.flightstats.hub.cluster.SpokeDecommissionManager;
 import com.flightstats.hub.rest.Linked;
 import org.apache.commons.lang3.StringUtils;
 
@@ -16,6 +18,7 @@ import javax.ws.rs.core.UriInfo;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
+import java.util.Collection;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -24,7 +27,8 @@ import java.util.TreeSet;
 public class InternalClusterResource {
     private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private static final Cluster spokeCluster = HubProvider.getInstance(Cluster.class, "SpokeCluster");
-    private static final DecommissionManager decommissionManager = HubProvider.getInstance(DecommissionManager.class);
+    private static final DecommissionManager decommissionManager = HubProvider.getInstance(SpokeDecommissionManager.class);
+    private static final SpokeDecommissionCluster decommissionCluster = HubProvider.getInstance(SpokeDecommissionCluster.class);
 
     public static final String DESCRIPTION = "Information about the cluster";
     private @Context
@@ -36,35 +40,35 @@ public class InternalClusterResource {
         URI requestUri = uriInfo.getRequestUri();
         ObjectNode root = mapper.createObjectNode();
         root.put("description", DESCRIPTION);
-        //root.put("directions", "Make HTTP POSTs to links below to take the desired action");
-        /*
+        root.put("directions", "Make HTTP POSTs to links below to take the desired action");
 
+        addNodes("spokeCluster", spokeCluster.getAllServers(), root);
+        addNodes("decommissioned.withinSpokeTTL", decommissionCluster.getWithinSpokeTTL(), root);
+        addNodes("decommissioned.doNotStart", decommissionCluster.getDoNotRestart(), root);
 
-        //todo - gfm - add decommission method
-        decomm removes the node from the write pool.
-        the node remains in the query pool
-        if the node is restarted, it should not start, with an error message on how to fix it
-        //todo - gfm - also provide a mechanism to clear/modify the decomm list
-         */
-        addCluster(root);
+        String localhostLink = HubHost.getLocalhostUri() + requestUri.getPath();
 
         Linked.Builder<?> links = Linked.linked(root);
         links.withLink("self", requestUri);
+        links.withLink("decommission", localhostLink + "/decommission");
+        //todo - gfm - we could prepopulate this with servers
+        links.withLink("commission", localhostLink + "/commission");
         return Response.ok(links.build()).build();
     }
 
-    private void addCluster(ObjectNode root) throws UnknownHostException {
-        ArrayNode cluster = root.putArray("cluster");
-        Set<String> allServers = new TreeSet<>(spokeCluster.getAllServers());
+
+    private void addNodes(String name, Collection<String> servers, ObjectNode root) throws UnknownHostException {
+        ArrayNode cluster = root.putArray(name);
+        Set<String> allServers = new TreeSet<>(servers);
         for (String server : allServers) {
             ObjectNode node = cluster.addObject();
             String ip = StringUtils.substringBefore(server, ":");
             node.put("ip", ip);
-            //todo - gfm - resolve the hostname with a direct call?
-            //todo - gfm - or should we just put this in /internal/health ?
+            //todo - gfm - this isn't working
             node.put("name", InetAddress.getByName(ip).getHostName());
         }
     }
+
 
     @POST
     @Path("decommission")
