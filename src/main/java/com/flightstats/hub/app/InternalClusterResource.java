@@ -8,14 +8,12 @@ import com.flightstats.hub.cluster.DecommissionManager;
 import com.flightstats.hub.cluster.SpokeDecommissionCluster;
 import com.flightstats.hub.cluster.SpokeDecommissionManager;
 import com.flightstats.hub.rest.Linked;
-import org.apache.commons.lang3.StringUtils;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.Collection;
@@ -64,10 +62,9 @@ public class InternalClusterResource {
         Set<String> allServers = new TreeSet<>(servers);
         for (String server : allServers) {
             ObjectNode node = cluster.addObject();
-            String ip = StringUtils.substringBefore(server, ":");
-            node.put("ip", ip);
+            node.put("server", server);
             //todo - gfm - this isn't working
-            node.put("name", InetAddress.getByName(ip).getHostName());
+            //node.put("name", InetAddress.getByName(ip).getHostName());
         }
     }
 

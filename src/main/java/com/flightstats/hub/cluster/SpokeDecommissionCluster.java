@@ -1,6 +1,7 @@
 package com.flightstats.hub.cluster;
 
 import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -26,59 +27,74 @@ public class SpokeDecommissionCluster implements DecommissionCluster {
 
     private final CuratorFramework curator;
     private final PathChildrenCache withinSpokeCache;
+    private HubUtils hubUtils;
 
     private static final String WITHIN_SPOKE = "/SpokeDecommission/withinSpokeTtl";
     private static final String DO_NOT_RESTART = "/SpokeDecommission/doNotRestart";
 
     @Inject
-    public SpokeDecommissionCluster(CuratorFramework curator) throws Exception {
+    public SpokeDecommissionCluster(CuratorFramework curator, HubUtils hubUtils) throws Exception {
         this.curator = curator;
         withinSpokeCache = new PathChildrenCache(curator, WITHIN_SPOKE, true);
+        this.hubUtils = hubUtils;
         withinSpokeCache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
     }
 
     void initialize() throws Exception {
-        createQuietly(WITHIN_SPOKE, getHost().getBytes());
-        createQuietly(DO_NOT_RESTART, getHost().getBytes());
+        byte[] bytes = getLocalhost().getBytes();
+        createQuietly(WITHIN_SPOKE, bytes);
+        createQuietly(DO_NOT_RESTART, bytes);
     }
 
     void decommission() throws Exception {
-        logger.info("decommissioning" + withinSpokeKey());
-        if (!withinSpokeExists() && !doNotRestartExists()) {
-            logger.info("creating " + withinSpokeKey());
-            curator.create().creatingParentsIfNeeded().forPath(withinSpokeKey(), getHost().getBytes());
+        String server = getLocalhost();
+        logger.info("decommissioning" + withinSpokeKey(server));
+        if (!withinSpokeExists(server) && !doNotRestartExists(server)) {
+            logger.info("creating " + withinSpokeKey(server));
+            curator.create().creatingParentsIfNeeded().forPath(withinSpokeKey(server), server.getBytes());
         }
-        logger.info("decommission started " + withinSpokeKey());
+        logger.info("decommission started " + withinSpokeKey(server));
     }
 
     boolean withinSpokeExists() throws Exception {
-        return withinSpokeStat() != null;
+        return withinSpokeExists(getLocalhost());
     }
 
-    private Stat withinSpokeStat() throws Exception {
-        return curator.checkExists().forPath(withinSpokeKey());
+    boolean withinSpokeExists(String server) throws Exception {
+        return withinSpokeStat(server) != null;
+    }
+
+    private Stat withinSpokeStat(String server) throws Exception {
+        return curator.checkExists().forPath(withinSpokeKey(server));
     }
 
     boolean doNotRestartExists() throws Exception {
-        return curator.checkExists().forPath(doNotRestartKey()) != null;
+        return doNotRestartExists(getLocalhost());
     }
 
-    private String withinSpokeKey() {
-        return WITHIN_SPOKE + "/" + getHost();
+    boolean doNotRestartExists(String server) throws Exception {
+        return curator.checkExists().forPath(doNotRestartKey(server)) != null;
     }
 
-    private String doNotRestartKey() {
-        return DO_NOT_RESTART + "/" + getHost();
+    private String withinSpokeKey(String server) {
+        return WITHIN_SPOKE + "/" + server;
     }
 
-    private String getHost() {
+    private String doNotRestartKey(String server) {
+        return DO_NOT_RESTART + "/" + server;
+    }
+
+    private String getLocalhost() {
         return Cluster.getHost(false);
     }
 
     void commission(String server) throws Exception {
-        //todo - gfm - check to see if the server is running ???
-        deleteQuietly(WITHIN_SPOKE + "/" + server);
-        deleteQuietly(DO_NOT_RESTART + "/" + server);
+        if (!doNotRestartExists(server) && !withinSpokeExists(server)) {
+            throw new RuntimeException("server " + server + "does not have zookeeper keys.");
+        }
+        deleteQuietly(withinSpokeKey(server));
+        deleteQuietly(doNotRestartKey(server));
+        hubUtils.shutdown(server);
     }
 
     public List<String> getWithinSpokeTTL() {
@@ -108,16 +124,17 @@ public class SpokeDecommissionCluster implements DecommissionCluster {
     }
 
     long getDoNotRestartMinutes() throws Exception {
-        DateTime creationTime = new DateTime(withinSpokeStat().getCtime(), DateTimeZone.UTC);
+        DateTime creationTime = new DateTime(withinSpokeStat(getLocalhost()).getCtime(), DateTimeZone.UTC);
         DateTime ttlDateTime = TimeUtil.now().minusMinutes(HubProperties.getSpokeTtlMinutes());
         return new Duration(ttlDateTime, creationTime).getStandardMinutes();
     }
 
     void doNotRestart() {
         try {
-            createQuietly(doNotRestartKey(), getHost().getBytes());
-            logger.info("deleting key " + withinSpokeKey());
-            deleteQuietly(withinSpokeKey());
+            String localhost = getLocalhost();
+            createQuietly(doNotRestartKey(localhost), localhost.getBytes());
+            logger.info("deleting key " + withinSpokeKey(localhost));
+            deleteQuietly(withinSpokeKey(localhost));
             logger.info("doNotRestart complete");
         } catch (Exception e) {
             logger.warn("unable to complete ", e);

@@ -1,19 +1,17 @@
 package com.flightstats.hub.cluster;
 
+import com.flightstats.hub.app.HubBindings;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.util.HubUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static org.junit.Assert.*;
 
 public class SpokeDecommissionClusterTest {
-
-    private final static Logger logger = LoggerFactory.getLogger(SpokeDecommissionClusterTest.class);
 
     private static CuratorFramework curator;
     private static SpokeDecommissionCluster cluster;
@@ -21,7 +19,8 @@ public class SpokeDecommissionClusterTest {
     @BeforeClass
     public static void setUpClass() throws Exception {
         curator = Integration.startZooKeeper();
-        cluster = new SpokeDecommissionCluster(curator);
+        HubUtils hubUtils = new HubUtils(HubBindings.buildJerseyClientNoRedirects(), HubBindings.buildJerseyClient());
+        cluster = new SpokeDecommissionCluster(curator, hubUtils);
     }
 
     @After
