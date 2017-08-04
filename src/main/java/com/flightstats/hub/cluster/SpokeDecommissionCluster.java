@@ -94,7 +94,6 @@ public class SpokeDecommissionCluster implements DecommissionCluster {
         }
         deleteQuietly(withinSpokeKey(server));
         deleteQuietly(doNotRestartKey(server));
-        hubUtils.shutdown(server);
     }
 
     public List<String> getWithinSpokeTTL() {

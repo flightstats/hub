@@ -295,14 +295,4 @@ public class HubUtils {
         }
     }
 
-    public void shutdown(String server) {
-        try {
-            String url = HubHost.getScheme() + server + "/shutdown";
-            logger.info("calling shutdown on {}", url);
-            ClientResponse response = followClient.resource(url).post(ClientResponse.class);
-            logger.info("completed shutdown on {} {}", url, response);
-        } catch (Exception e) {
-            logger.warn("unable to shutdown " + server, e);
-        }
-    }
 }
