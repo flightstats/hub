@@ -61,9 +61,8 @@ public class SpokeDecommissionManager implements DecommissionManager {
 
 
     @Override
-    public void commission(String server) throws Exception {
-        //todo - gfm - check to see if the server is running ???
-        decommissionCluster.commission(server);
+    public void recommission(String server) throws Exception {
+        decommissionCluster.recommission(server);
     }
 
     private void startCheck() throws Exception {

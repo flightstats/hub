@@ -88,7 +88,7 @@ public class SpokeDecommissionCluster implements DecommissionCluster {
         return Cluster.getHost(false);
     }
 
-    void commission(String server) throws Exception {
+    void recommission(String server) throws Exception {
         if (!doNotRestartExists(server) && !withinSpokeExists(server)) {
             throw new RuntimeException("server " + server + "does not have zookeeper keys.");
         }

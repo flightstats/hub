@@ -11,7 +11,7 @@ public interface DecommissionManager {
         return true;
     }
 
-    default void commission(String server) throws Exception {
+    default void recommission(String server) throws Exception {
         logger.error("default does nothing");
     }
 
