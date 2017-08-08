@@ -61,7 +61,7 @@ public class ChannelConfig implements Serializable, NamedType {
         this.mutableTime = mutableTime;
         this.allowZeroBytes = allowZeroBytes;
         this.keepForever = keepForever;  // keepForever overrides all other retention policies
-        if (maxItems == 0 && ttlDays == 0 && mutableTime == null) {
+        if (maxItems == 0 && ttlDays == 0 && mutableTime == null && !this.keepForever) {
             this.ttlDays = 120;
             this.maxItems = 0;
         } else {
@@ -435,16 +435,18 @@ public class ChannelConfig implements Serializable, NamedType {
 
         public ChannelConfigBuilder keepForever(boolean keepForever) {
             this.keepForever = keepForever;
+            this.ttlDays = 0;
+            this.maxItems = 0;
             return this;
         }
 
         public ChannelConfigBuilder ttlDays(long ttlDays) {
-            this.ttlDays = ttlDays;
+            this.ttlDays = this.keepForever ? 0 : ttlDays;
             return this;
         }
 
         public ChannelConfigBuilder maxItems(long maxItems) {
-            this.maxItems = maxItems;
+            this.maxItems = this.keepForever ? 0 : maxItems;
             return this;
         }
 
