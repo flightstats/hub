@@ -376,7 +376,7 @@ public class ChannelConfig implements Serializable, NamedType {
         private boolean protect = HubProperties.isProtected();
         private boolean allowZeroBytes = true;
         private String name;
-        private boolean keepForever;
+        private boolean keepForever = false;
         private long ttlDays;
         private long maxItems;
         private GlobalConfig global;
