@@ -445,8 +445,8 @@ exports.startHttpServer = function startHttpServer(port, callback, done) {
 
 exports.startHttpsServer = function startHttpsServer(port, callback, done) {
     var options = {
-        key: fs.readFileSync('../localhost.key'),
-        cert: fs.readFileSync('../localhost.cert')
+        key: fs.readFileSync('localhost.key'),
+        cert: fs.readFileSync('localhost.cert')
     };
     var httpsServer = new https.Server(options);
     return utils.startServer(httpsServer, port, callback, done);
