@@ -1,4 +1,4 @@
-require('../integration_config .js');
+require('../integration_config');
 var request = require('request');
 var testName = __filename;
 

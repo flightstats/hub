@@ -1,4 +1,4 @@
-require('../integration_config .js');
+require('../integration_config');
 
 var channelName = utils.randomChannelName();
 var providerResource = hubUrlBase + "/provider";

@@ -1,4 +1,4 @@
-require('../integration_config .js');
+require('../integration_config');
 var agent = require('superagent');
 var request = require('request');
 var async = require('async');

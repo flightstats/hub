@@ -1,5 +1,5 @@
 // This test is intended to be run as a jenkins scheduled "continuous" test on pdx dev
-require('../integration_config .js');
+require('../integration_config');
 
 var request = require('request');
 var _ = require('lodash');
