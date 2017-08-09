@@ -1,3 +1,4 @@
+require('../integration_config.js');
 var async = require('async');
 var moment = require('moment');
 var testName = __filename;
