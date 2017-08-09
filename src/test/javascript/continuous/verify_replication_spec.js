@@ -39,7 +39,6 @@ describe(testName, function () {
             .then(res => {
                 var channels = res.body._links.channels;
                 console.log('found replicated channels', channels);
-
                 channels.forEach(channel => {
                     if (channel.name.substring(0, 4).toLowerCase() !== 'test') {
                         console.log('adding channel ', channel.href);
@@ -119,33 +118,32 @@ describe(testName, function () {
 
     it('verifies number of replicated items', function (done) {
         let acceptHeader = {'Accept': 'application/json'};
-        let uris = [];
 
         async.eachLimit(validReplicatedChannelUrls, 20, (channel, callback) => {
-                var source = replicatedChannels[channel]['replicationSource'];
-                let url = `${source}/time/hour?stable=false`;
-            
-                utils.httpGet(url, acceptHeader)
-                    .then(res => {
-                        let url = res.body._links.previous.href;
-                        return utils.httpGet(url, acceptHeader);
-                    })
-                    .then(res => {
-                        uris = res.body._links.uris.concat(uris);
-                        if (uris.length !== channels[channel].length) {
-                            console.log('unequal lengths ', channel, uris.length, channels[channel].length);
-                            logDifference(uris, channels[channel]);
-                        }
-                        expect(channels[channel].length).toBe(uris.length);
-                        callback(res.error);
-                    })
-                    .catch(error => {
-                        expect(error).toBeNull();
-                    });
-            }, function (err) {
-                done(err);
-            });
-    }, MINUTE);
+            var source = replicatedChannels[channel]['replicationSource'];
+            let uris = [];
+
+            utils.httpGet(`${source}/time/hour?stable=false`, acceptHeader)
+                .then(res => {
+                    let url = res.body._links.previous.href;
+                    return utils.httpGet(url, acceptHeader);
+                })
+                .then(res => {
+                    uris = res.body._links.uris.concat(uris);
+                    if (uris.length !== channels[channel].length) {
+                        console.log('unequal lengths ', channel, uris.length, channels[channel].length);
+                        logDifference(uris, channels[channel]);
+                    }
+                    expect(channels[channel].length).toBe(uris.length);
+                    callback(res.error);
+                })
+                .catch(error => {
+                    expect(error).toBeNull();
+                });
+        }, function (err) {
+            done(err);
+        });
+    });
 
     function logDifference(source, destination) {
         if (source.length == 0 || destination.length == 0) {
