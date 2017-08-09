@@ -21,7 +21,7 @@ module.exports = {
     failures: [],
 
     jasmineStarted: function (info) {
-        var message = 'Executing ' + info.totalSpecsDefined + ' specs at ' + __dirname;
+        var message = 'Executing ' + info.totalSpecsDefined + ' specs';
         console.log('\n' + ANSI.BOLD + ANSI.MAGENTA + message + ANSI.OFF);
     },
 
