@@ -72,17 +72,15 @@ describe(testName, function () {
                         let headers = {'Accept': 'application/json'};
                         replicatedChannels[channel]['replicationSource'] = url;
 
-                        utils.httpGet(url, headers)
-                            .then(res => {
-                                if (res.statusCode >= 400) {
-                                    console.log('channel is missing remote source ', channel, res.body.replicationSource);
-                                    callback();
-                                } else {
-                                    expect(res.error).toBe(false);
-                                    validReplicatedChannelUrls.push(channel);
-                                    callback(res.error);
-                                }
-                            });
+                        return utils.httpGet(url, headers);
+                    }).then(res => {
+                        if (res.statusCode >= 400) {
+                            console.log('channel is missing remote source ', channel, res.body.replicationSource);
+                            callback();
+                        } else {
+                            validReplicatedChannelUrls.push(channel);
+                            callback(res.error);
+                        }
                     })
                     .catch(error => {
                         expect(error).toBeNull();
