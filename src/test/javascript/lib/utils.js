@@ -52,6 +52,10 @@ exports.httpGet = function httpGet(url, headers, isBinary) {
         headers: headers || {}
     };
 
+    if (utils.shouldBeJSON(options.headers)) {
+        options.json = true;
+    }
+
     if (isBinary)
         options.encoding = null;
 
@@ -188,9 +192,17 @@ exports.httpPatch = function httpPatch(url, headers, body) {
 };
 
 exports.contentIsJSON = function contentIsJSON(headers) {
+    var hasHeaders = headers !== undefined;
     var hasContentType = 'content-type' in headers;
     var contentTypeIsJSON = headers['content-type'] === 'application/json';
-    return hasContentType && contentTypeIsJSON;
+    return hasHeaders && hasContentType && contentTypeIsJSON;
+};
+
+exports.shouldBeJSON = function responseShouldBeJSON(headers) {
+    var hasHeaders = headers !== undefined;
+    let hasAcceptHeader = 'accept' in headers;
+    let acceptIsJSON = headers['accept'] == 'application/json';
+    return hasHeaders && hasAcceptHeader && acceptIsJSON;
 };
 
 exports.keysToLowerCase = function keysToLowerCase(obj) {

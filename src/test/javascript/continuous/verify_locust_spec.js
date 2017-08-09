@@ -3,7 +3,7 @@ var async = require('async');
 var moment = require('moment');
 var testName = __filename;
 var locustUrl = process.env.locustUrl;
-locustUrl = 'http://' + locustUrl + '/stats/';
+locustUrl = 'http://' + locustUrl + '/stats';
 console.log(locustUrl);
 
 var timeout = 5 * 60 * 1000;
@@ -18,15 +18,11 @@ describe(testName, function () {
     var results;
 
     it('loads results', function (done) {
-        var url = locustUrl + 'requests';
-        let headers = {'Accept': 'application/json'};
-        console.log('url', url);
-        utils.httpGet(url, headers)
-            .then(res => {
-                results = JSON.parse(res.text);
-                console.log('results', results);
-                results.stats.forEach(function (item) {
-                    console.log('item ' + item.name + ' ' + item.num_failures);
+        utils.httpGet(`${locustUrl}/requests`, {'Accept': 'application/json'})
+            .then(response => {
+                console.log('response:', response.body);
+                response.body.stats.forEach(function (item) {
+                    console.log(`item ${item.name} ${item.num_failures}`);
                     expect(item.num_failures).toBe(0);
                 });
             })
@@ -37,12 +33,9 @@ describe(testName, function () {
     }, timeout);
 
     it('resets stats', function (done) {
-        var url = locustUrl + 'reset';
-        let headers = {'Accept': 'application/json'};
-        console.log('url', url);
-        utils.httpGet(url, headers)
-            .then(res => {
-                expect(res.status).toBe(200);
+        utils.httpGet(`${locustUrl}/reset`)
+            .then(response => {
+                expect(response.statusCode).toBe(200);
             })
             .catch(error => {
                 expect(error).toBeNull();
