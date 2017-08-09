@@ -1,5 +1,4 @@
 require('../integration_config');
-var agent = require('superagent');
 var request = require('request');
 var async = require('async');
 var moment = require('moment');
@@ -34,40 +33,38 @@ describe(testName, function () {
     var channel;
     it('0 - loads channel info ', function (done) {
         console.log('channelUrl', channelUrl);
-        agent
-            .get(channelUrl)
-            .end(function (err, res) {
-                expect(err).toBe(null);
+        utils.httpGet(channelUrl)
+            .then(res => {
                 expect(res.status).toBe(200);
                 channel = res.body;
                 expect(channel.ttlDays).toBeGreaterThan(0);
-
-                agent
-                    .get(res.body._links.time.href)
-                    .end(function (err, res) {
-                        expect(err).toBe(null);
-                        expect(res.status).toBe(200);
-                        channel.millis = res.body.now.millis;
-                        expect(channel.millis).toBeGreaterThan(1435865512097);
-                        console.log('channel', channel);
-                        done();
-                    })
+                return utils.httpGet(res.body._links.time.href);
             })
+            .then(res => {
+                expect(res.status).toBe(200);
+                channel.millis = res.body.now.millis;
+                expect(channel.millis).toBeGreaterThan(1435865512097);
+                console.log('channel', channel);
+            })
+            .catch(error => {
+                expect(error).toBeNull();
+            })
+            .fin(done);
     }, 60 * 1000);
 
     it('1 - gets two days ago', function (done) {
         console.log('twoDaysAgo', twoDaysAgo);
-        agent
-            .get(twoDaysAgo)
-            .end(function (err, res) {
-                expect(err).toBe(null);
+        utils.httpGet(twoDaysAgo)
+            .then(res => {
                 //console.log('res', res);
                 expect(res.status).toBe(200);
-
                 uris = res.body._links.uris;
                 console.log('length', uris.length);
-                done();
             })
+            .catch(error => {
+                expect(error).toBeNull();
+            })
+            .fin(done);
     }, 60 * 1000);
 
     var previous = '';
@@ -97,39 +94,39 @@ describe(testName, function () {
 
     function getLocation(url, done, assign) {
         console.log('get location ', url);
-        agent
-            .get(url)
-            .redirects(0)
-            .end(function (err, res) {
-                expect(err).toBe(null);
+        // this shouldn't redirect
+        utils.httpGet(url)
+            .then(res => {
                 expect(res.status).toBe(303);
                 console.log('res.headers.location', res.headers.location);
                 assign(res.headers.location);
-                done();
             })
+            .catch(error => {
+                expect(error).toBeNull();
+            })
+            .fin(done);
     }
 
     function getAndCompare(url, done) {
         console.log('gets ', url);
-        agent
-            .get(url)
-            .end(function (err, res) {
-                expect(err).toBe(null);
+        utils.httpGet(url)
+            .then(res => {
                 expect(res.status).toBe(200);
                 for (var i = 0; i < uris.length; i++) {
                     expect(res.body._links.uris[i]).toBe(uris[i]);
                 }
-                done();
             })
+            .catch(error => {
+                expect(error).toBeNull();
+            })
+            .fin(done);
     }
 
     it('6 - gets earliest', function (done) {
         console.log('earliest', channel._links.earliest.href);
-        agent
-            .get(channel._links.earliest.href)
-            .redirects(0)
-            .end(function (err, res) {
-                expect(err).toBe(null);
+        // this shouldn't redirect
+        utils.httpGet(channel._links.earliest.href)
+            .then(res => {
                 expect(res.status).toBe(303);
                 var time = moment(channel.millis).subtract(channel.ttlDays, 'days').utc();
                 var timeUrlSegments = res.headers.location.substring(channelUrl.length)
@@ -137,8 +134,11 @@ describe(testName, function () {
                 var earliestTime = moment(timeUrlSegments + ' +0000', '/YYYY/MM/DD/HH/mm/ss/SSS Z');
                 expect(earliestTime.isAfter(time)).toBe(true);
                 expect(earliestTime.isBefore(time.add(1, 'hours'))).toBe(true);
-                done();
             })
+            .catch(error => {
+                expect(error).toBeNull();
+            })
+            .fin(done);
     }, 60 * 1000);
 
 });

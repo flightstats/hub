@@ -1,5 +1,4 @@
 require('../integration_config');
-var agent = require('superagent');
 var request = require('request');
 var async = require('async');
 var moment = require('moment');
@@ -25,28 +24,30 @@ describe(testName, function () {
     var maxItems = 10;
 
     it('1 - creates verifyMaxItems channel', function (done) {
-        agent
-            .put(verifyMaxItems)
-            .accept('json')
-            .send({"maxItems": maxItems})
-            .end(function (err, res) {
-                expect(err).toBe(null);
+        let headers = {'Accept': 'application/json'};
+        let body = {'maxItems': maxItems};
+        utils.httpPut(verifyMaxItems, headers, body)
+            .then(res => {
                 console.log('created', res.body);
-                done();
             })
+            .catch(error => {
+                expect(error).toBeNull();
+            })
+            .fin(done);
     });
 
     it('2 - checks for max items', function (done) {
         var checkUrl = verifyMaxItems + '/latest/' + (maxItems * 2);
         console.log('check url ' + checkUrl);
-        agent
-            .get(checkUrl)
-            .end(function (err, res) {
-                expect(err).toBe(null);
+        utils.httpGet(checkUrl)
+            .then(res => {
                 expect(res.status).toBe(200);
                 expect(res.body._links.uris.length).toBe(maxItems);
-                done();
             })
+            .catch(error => {
+                expect(error).toBeNull();
+            })
+            .fin(done);
 
     }, 5 * 60 * 1000);
 

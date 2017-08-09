@@ -1,5 +1,4 @@
 require('../integration_config');
-var agent = require('superagent');
 var request = require('request');
 var async = require('async');
 var moment = require('moment');
@@ -34,13 +33,14 @@ describe(testName, function () {
     };
 
     it('loads ' + hubUrl + ' replicated channels ', function (done) {
-        agent.get(hubUrl + '/tag/replicated')
-            .set('Accept', 'application/json')
-            .end(function (res) {
-                expect(res.error).toBe(false);
+        let url = `${hubUrl}/tag/replicated`;
+        let headers = {'Accept': 'application/json'};
+        utils.httpGet(url, headers)
+            .then(res => {
                 var channels = res.body._links.channels;
                 console.log('found replicated channels', channels);
-                channels.forEach(function (channel) {
+
+                channels.forEach(channel => {
                     if (channel.name.substring(0, 4).toLowerCase() !== 'test') {
                         console.log('adding channel ', channel.href);
                         replicatedChannelUrls.push(channel.href);
@@ -50,9 +50,12 @@ describe(testName, function () {
                     }
                 });
                 expect(replicatedChannelUrls.length).not.toBe(0);
-                done();
             })
-    }, MINUTE);
+            .catch(error => {
+                expect(error).toBeNull();
+            })
+            .fin(done);
+    });
 
     var validReplicatedChannelUrls = [];
 
@@ -60,14 +63,17 @@ describe(testName, function () {
         async.eachLimit(replicatedChannelUrls, 20,
             function (channel, callback) {
                 console.log('get channel', channel);
-                agent.get(channel)
-                    .set('Accept', 'application/json')
-                    .end(function (res) {
-                        expect(res.error).toBe(false);
-                        replicatedChannels[channel]['replicationSource'] = res.body.replicationSource;
-                        agent.get(res.body.replicationSource)
-                            .set('Accept', 'application/json')
-                            .end(function (res) {
+
+                let url = channel;
+                let headers = {'Accept': 'application/json'};
+                utils.httpGet(url, headers)
+                    .then(res => {
+                        let url = res.body.replicationSource;
+                        let headers = {'Accept': 'application/json'};
+                        replicatedChannels[channel]['replicationSource'] = url;
+
+                        utils.httpGet(url, headers)
+                            .then(res => {
                                 if (res.statusCode >= 400) {
                                     console.log('channel is missing remote source ', channel, res.body.replicationSource);
                                     callback();
@@ -77,6 +83,9 @@ describe(testName, function () {
                                     callback(res.error);
                                 }
                             });
+                    })
+                    .catch(error => {
+                        expect(error).toBeNull();
                     });
             }, function (err) {
                 done(err);
@@ -86,48 +95,54 @@ describe(testName, function () {
     var channels = {};
 
     it('gets lists of replicated items', function (done) {
-        async.eachLimit(validReplicatedChannelUrls, 20,
-            function (channel, callback) {
-                agent.get(channel + '/time/hour?stable=false&trace=true')
-                    .set('Accept', 'application/json')
-                    .end(function (res) {
-                        expect(res.error).toBe(false);
-                        channels[channel] = [];
-                        agent.get(res.body._links.previous.href)
-                            .set('Accept', 'application/json')
-                            .end(function (res) {
-                                expect(res.error).toBe(false);
-                                channels[channel] = res.body._links.uris.concat(channels[channel]);
-                                console.log('found dest second ', channels[channel][0]);
-                                callback(res.error);
-                            });
-                    });
-            }, function (err) {
-                done(err);
-            });
+        async.eachLimit(validReplicatedChannelUrls, 20, (channel, callback) => {
+            let url = channel + '/time/hour?stable=false&trace=true';
+            let headers = {'Accept': 'application/json'};
+
+            utils.httpGet(url, headers)
+                .then(res => {
+                    channels[channel] = [];
+                    let url = res.body._links.previous.href
+                    let headers = {'Accept': 'application/json'};
+                    return utils.httpGet(url, headers)
+                })
+                .then(res => {
+                    channels[channel] = res.body._links.uris.concat(channels[channel]);
+                    console.log('found dest second ', channels[channel][0]);
+                    callback(res.error);
+                })
+                .catch(error => {
+                    expect(error).toBeNull();
+                });
+        }, function (err) {
+            done(err);
+        });
     }, 5 * MINUTE);
 
     it('verifies number of replicated items', function (done) {
-        async.eachLimit(validReplicatedChannelUrls, 20,
-            function (channel, callback) {
+        let acceptHeader = {'Accept': 'application/json'};
+        let uris = [];
+
+        async.eachLimit(validReplicatedChannelUrls, 20, (channel, callback) => {
                 var source = replicatedChannels[channel]['replicationSource'];
-                agent.get(source + '/time/hour?stable=false')
-                    .set('Accept', 'application/json')
-                    .end(function (res) {
-                        expect(res.error).toBe(false);
-                        var uris = [];
-                        agent.get(res.body._links.previous.href)
-                            .set('Accept', 'application/json')
-                            .end(function (res) {
-                                expect(res.error).toBe(false);
-                                uris = res.body._links.uris.concat(uris);
-                                if (uris.length !== channels[channel].length) {
-                                    console.log('unequal lengths ', channel, uris.length, channels[channel].length);
-                                    logDifference(uris, channels[channel]);
-                                }
-                                expect(channels[channel].length).toBe(uris.length);
-                                callback(res.error);
-                            });
+                let url = `${source}/time/hour?stable=false`;
+            
+                utils.httpGet(url, acceptHeader)
+                    .then(res => {
+                        let url = res.body._links.previous.href;
+                        return utils.httpGet(url, acceptHeader);
+                    })
+                    .then(res => {
+                        uris = res.body._links.uris.concat(uris);
+                        if (uris.length !== channels[channel].length) {
+                            console.log('unequal lengths ', channel, uris.length, channels[channel].length);
+                            logDifference(uris, channels[channel]);
+                        }
+                        expect(channels[channel].length).toBe(uris.length);
+                        callback(res.error);
+                    })
+                    .catch(error => {
+                        expect(error).toBeNull();
                     });
             }, function (err) {
                 done(err);

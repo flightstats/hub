@@ -1,5 +1,4 @@
 require('../integration_config');
-var agent = require('superagent');
 var request = require('request');
 var async = require('async');
 var moment = require('moment');
@@ -35,15 +34,16 @@ describe(testName, function () {
     var zkChannels;
     it('1 - loads channels from ZooKeeper cache', function (done) {
         console.log('channelLastUpdated', channelLastUpdated);
-        agent
-            .get(channelLastUpdated)
-            .end(function (err, res) {
-                expect(err).toBe(null);
+        utils.httpGet(channelLastUpdated)
+            .then(res => {
                 expect(res.status).toBe(200);
                 zkChannels = res.body.children;
                 console.log('body', res.body);
-                done();
             })
+            .catch(error => {
+                expect(error).toBeNull();
+            })
+            .fin(done);
     }, MINUTE);
 
     var values = {};
@@ -51,10 +51,10 @@ describe(testName, function () {
         async.eachLimit(zkChannels, 10,
             function (zkChannel, callback) {
                 console.log('get channel', zkChannel);
-                agent.get(zkChannel)
-                    .set('Accept', 'application/json')
-                    .end(function (res) {
-                        expect(res.error).toBe(false);
+                let headers = {'Accept': 'application/json'};
+                
+                utils.httpGet(zkChannel, headers)
+                    .then(res => {
                         var name = zkChannel.substring(channelLastUpdated.length + 1);
                         if (name.substring(0, 4).toLowerCase() !== 'test') {
                             values[name] = {
@@ -65,6 +65,9 @@ describe(testName, function () {
                             console.log('zk value', name, values[name].zkKey);
                         }
                         callback();
+                    })
+                    .catch(error => {
+                        expect(error).toBeNull();
                     });
             }, function (err) {
                 done(err);
@@ -76,10 +79,11 @@ describe(testName, function () {
         async.forEachOfLimit(values, 10,
             function (item, name, callback) {
                 console.log('get latest ', name);
-                agent.get(channelUrl + '/' + name + '/latest?trace=true')
-                    .set('Accept', 'application/json')
-                    .redirects(0)
-                    .end(function (res) {
+                let url = `${channelUrl}/${name}/latest?trace=true`;
+                let headers = {'Accept': 'application/json'};
+                
+                utils.httpGet(url, headers)
+                    .then(res => {
                         if (res.status == 404) {
                             item['empty'] = true;
                         } else if (res.status == 303) {
@@ -92,6 +96,9 @@ describe(testName, function () {
                             console.log('unexpected result', res);
                         }
                         callback();
+                    })
+                    .catch(error => {
+                        expect(error).toBeNull();
                     });
             }, function (err) {
                 done(err);
@@ -103,31 +110,33 @@ describe(testName, function () {
         async.forEachOfLimit(values, 10,
             function (item, name, callback) {
                 console.log('get latest ', name);
-
+                let headers = {'Accept': 'application/json'};
                 if (item['empty']) {
-                    agent.get(item.zkChannel)
-                        .set('Accept', 'application/json')
-                        .end(function (res) {
-                            expect(res.error).toBe(false);
+                    utils.httpGet(item.zkChannel, headers)
+                        .then(res => {
                             console.log('comparing to NONE ', name, res.body.data.string)
                             expect(res.body.data.string).toBe(NONE);
                             callback();
+                        })
+                        .catch(error => {
+                            expect(error).toBeNull();
                         });
                 } else {
                     expect(item.latestKey).toBeDefined();
                     if (item.latestKey !== item.zkKey) {
                         console.log('doing comparison on ', item);
-                        agent.get(item.zkChannel)
-                            .set('Accept', 'application/json')
-                            .end(function (res) {
+                        utils.httpGet(item.zkChannel, headers)
+                            .then(res => {
                                 if (res.status == 404) {
                                     expect(isWithinSpokeWindow(item.latestKey)).toBe(true);
                                     console.log('missing zk value for ' + name);
                                 } else {
-                                    expect(res.error).toBe(false);
                                     expect(res.body.data.string).toBe(item.latestKey);
                                 }
                                 callback();
+                            })
+                            .catch(error => {
+                                expect(error).toBeNull();
                             });
                     } else {
                         expect(item.zkKey).toBe(item.latestKey);

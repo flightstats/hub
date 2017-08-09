@@ -1,5 +1,4 @@
 require('../integration_config');
-var agent = require('superagent');
 var request = require('request');
 var async = require('async');
 var moment = require('moment');
@@ -36,10 +35,11 @@ describe(testName, function () {
         async.eachLimit(channels, 2,
             function (channel, callback) {
                 console.log('get channel', channel);
-                agent.get(hubUrl + '/channel/' + channel + '/time/day')
-                    .set('Accept', 'application/json')
-                    .end(function (res) {
-                        expect(res.error).toBe(false);
+                let url = `${hubUrl}/channel/${channel}/time/day`;
+                let headers = {'Accept': 'application/json'};
+
+                utils.httpGet(url, headers)
+                    .then(res => {
                         var uris = res.body._links.uris;
                         console.log('taking ' + errorRate + '% of the ' + uris.length + ' items ');
                         uris.forEach(function (uri) {
@@ -48,6 +48,9 @@ describe(testName, function () {
                             }
                         });
                         callback();
+                    })
+                    .catch(error => {
+                        expect(error).toBeNull();
                     });
             }, function (err) {
                 done(err);

@@ -1,4 +1,3 @@
-var agent = require('superagent');
 var async = require('async');
 var moment = require('moment');
 var testName = __filename;
@@ -19,33 +18,35 @@ describe(testName, function () {
 
     it('loads results', function (done) {
         var url = locustUrl + 'requests';
+        let headers = {'Accept': 'application/json'};
         console.log('url', url);
-        agent
-            .get(url)
-            .set('Accept', 'application/json')
-            .end(function (res) {
-                expect(res.error).toBe(false);
+        utils.httpGet(url, headers)
+            .then(res => {
                 results = JSON.parse(res.text);
                 console.log('results', results);
                 results.stats.forEach(function (item) {
                     console.log('item ' + item.name + ' ' + item.num_failures);
                     expect(item.num_failures).toBe(0);
                 });
-                done();
             })
+            .catch(error => {
+                expect(error).toBeNull();
+            })
+            .fin(done);
     }, timeout);
 
     it('resets stats', function (done) {
         var url = locustUrl + 'reset';
+        let headers = {'Accept': 'application/json'};
         console.log('url', url);
-        agent
-            .get(url)
-            .set('Accept', 'application/json')
-            .end(function (res) {
-                expect(res.error).toBe(false);
+        utils.httpGet(url, headers)
+            .then(res => {
                 expect(res.status).toBe(200);
-                done();
             })
+            .catch(error => {
+                expect(error).toBeNull();
+            })
+            .fin(done);
     }, timeout);
 
 });

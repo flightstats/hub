@@ -1,4 +1,3 @@
-var agent = require('superagent');
 var async = require('async');
 var moment = require('moment');
 var _ = require('lodash');
@@ -27,31 +26,30 @@ describe(testName, function () {
     var channelTimes = [];
 
     it('loads channels', function (done) {
-        agent
-            .get(hubUrl)
-            .set('Accept', 'application/json')
-            .end(function (res) {
-                expect(res.error).toBe(false);
+        let headers = {'Accept': 'application/json'};
+        utils.httpGet(hubUrl, headers)
+            .then(res => {
                 var allChannels = res.body._links.channels;
                 allChannels.forEach(function (channel) {
                     console.log('channel', channel);
                     if (channel.name.substring(0, 4).toLowerCase() !== 'test') {
                         channels.push(channel);
                     }
-                })
-                done();
+                });
             })
+            .catch(error => {
+                expect(error).toBeNull();
+            })
+            .fin(done);
     }, timeout);
 
     it('loads channel data', function (done) {
         async.eachLimit(channels, 10,
             function (channel, callback) {
                 console.log('calling', channel);
-                agent
-                    .get(channel.href)
-                    .set('Accept', 'application/json')
-                    .end(function (res) {
-                        expect(res.error).toBe(false);
+                let headers = {'Accept': 'application/json'};
+                utils.httpGet(channel.href, headers)
+                    .then(res => {
                         channel.storage = res.body.storage;
                         channel.start = moment.utc();
                         if (res.body.historical) {
@@ -59,6 +57,9 @@ describe(testName, function () {
                         }
                         callback();
                     })
+                    .catch(error => {
+                        expect(error).toBeNull();
+                    });
             }, function (err) {
                 done(err);
             });
@@ -73,11 +74,10 @@ describe(testName, function () {
                     return
                 }
                 console.log('history check ', channel);
-                agent
-                    .get(channel.href + '/latest')
-                    .redirects(0)
-                    .set('Accept', 'application/json')
-                    .end(function (res) {
+                let url = `${channel.href}/latest`;
+                let headers = {'Accept': 'application/json'};
+                utils.httpGet(url, headers)
+                    .then(res => {
                         var location = res.header['location'];
                         if (location) {
                             var lastSlash = location.lastIndexOf(channel.name);
@@ -87,6 +87,9 @@ describe(testName, function () {
                         }
                         callback();
                     })
+                    .catch(error => {
+                        expect(error).toBeNull();
+                    });
             }, function (err) {
                 done(err);
             });
@@ -130,33 +133,34 @@ describe(testName, function () {
         async.eachLimit(channelTimes, 5,
             function (channelTime, callback) {
                 console.log('calling', channelTime);
+                let headers = {'Accept': 'application/json'};
                 async.parallel([
                         function (callback) {
-                            agent
-                                .get(channelTime.source)
-                                .set('Accept', 'application/json')
-                                .end(function (res) {
-                                    expect(res.error).toBe(false);
+                            utils.httpGet(channelTime.source, headers)
+                                .then(res => {
                                     if (!res.body._links) {
                                         console.log('unable to find cache links', res.status, channelTime.source, res.body);
                                         callback(null, []);
                                     } else {
                                         callback(null, res.body._links.uris);
                                     }
+                                })
+                                .catch(error => {
+                                    expect(error).toBeNull();
                                 });
                         },
                         function (callback) {
-                            agent
-                                .get(channelTime.compare)
-                                .set('Accept', 'application/json')
-                                .end(function (res) {
-                                    expect(res.error).toBe(false);
+                            utils.httpGet(channelTime.compare, headers)
+                                .then(res => {
                                     if (!res.body._links) {
                                         console.log('unable to find long term links', res.status, channelTime.compare, res.body);
                                         callback(null, []);
                                     } else {
                                         callback(null, res.body._links.uris);
                                     }
+                                })
+                                .catch(error => {
+                                    expect(error).toBeNull();
                                 });
                         }
                     ],
