@@ -45,6 +45,13 @@ describe(__filename, function () {
 
         utils.httpGet(url)
             .then(function (response) {
+                if (utils.isRedirect(response)) {
+                    return utils.httpGet(response.headers.location);
+                } else {
+                    return response;
+                }
+            })
+            .then(function (response) {
                 expect(response.statusCode).toEqual(200);
                 expect(response.headers['content-type']).toEqual('application/json');
                 expect(response.body._links.latest.href).toEqual(channelResource + '/latest');
