@@ -565,3 +565,7 @@ exports.waitForData = function waitForData(actual, expected, done) {
         }
     }, 500);
 };
+
+exports.isRedirect = function isRedirect(response) {
+    return response.statusCode >= 300 && response.statusCode <= 399;
+};
