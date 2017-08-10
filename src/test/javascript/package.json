@@ -19,7 +19,6 @@
     "parse-link-header": "^1.0.1",
     "q": "^1.0.1",
     "request": "~2.33.0",
-    "superagent": "^0.16.0",
     "ws": "^0.4.0"
   }
 }

@@ -49,18 +49,24 @@ exports.httpGet = function httpGet(url, headers, isBinary) {
 
     var options = {
         url: url,
-        headers: headers || {}
+        headers: headers || {},
+        followRedirect: false
     };
+
+    if (utils.isReceivingJSON(options.headers)) {
+        options.json = true;
+    }
 
     if (isBinary)
         options.encoding = null;
 
-    console.log('GET', options.url, options.headers);
+    console.log('GET >', options.url, options.headers);
     request.get(options, function (error, response) {
         if (error)
             deferred.reject(error);
         else {
-            if (utils.contentIsJSON(response.headers)) {
+            console.log('GET <', options.url, response.statusCode);
+            if (!options.json && utils.isSendingJSON(response.headers)) {
                 try {
                     response.body = JSON.parse(response.body);
                 } catch (error) {
@@ -87,16 +93,19 @@ exports.httpPost = function httpPost(url, headers, body) {
         body: body || ''
     };
 
-    if (utils.contentIsJSON(headers)) {
+    if (utils.isSendingOrReceivingJSON(headers)) {
         options.json = true;
     }
 
-    console.log('POST', options.url, options.headers, options.body.length);
+    let bytes = (options.json) ? JSON.stringify(options.body).length : options.body.length;
+
+    console.log('POST >', options.url, options.headers, bytes);
     request.post(options, function (error, response) {
         if (error)
             deferred.reject(error);
         else {
-            if (utils.contentIsJSON(response.headers)) {
+            console.log('POST <', options.url, response.statusCode);
+            if (!options.json && utils.isSendingJSON(response.headers)) {
                 try {
                     response.body = JSON.parse(response.body);
                 } catch (error) {
@@ -123,16 +132,20 @@ exports.httpPut = function httpPut(url, headers, body) {
         body: body || ''
     };
     
-    if (utils.contentIsJSON(headers)) {
+    if (utils.isSendingOrReceivingJSON(headers)) {
         options.json = true;
     }
-    
-    console.log('PUT', options.url, options.headers, options.body.length);
+
+    let bytes = (options.json) ? JSON.stringify(options.body).length : options.body.length;
+
+    console.log('PUT >', options.url, options.headers, bytes);
     request.put(options, function (error, response) {
         if (error)
             deferred.reject(error);
-        else
+        else {
+            console.log('PUT <', options.url, response.statusCode);
             deferred.resolve(response);
+        }
     });
     
     return deferred.promise;
@@ -149,12 +162,14 @@ exports.httpDelete = function httpDelete(url, headers) {
         headers: headers || {}
     };
     
-    console.log('DELETE', options.url, options.headers);
+    console.log('DELETE >', options.url, options.headers);
     request.del(options, function (error, response) {
         if (error)
             deferred.reject(error);
-        else
+        else {
+            console.log('DELETE <', options.url, response.statusCode);
             deferred.resolve(response);
+        }
     });
     
     return deferred.promise;
@@ -172,7 +187,7 @@ exports.httpPatch = function httpPatch(url, headers, body) {
         body: body || ''
     };
 
-    if (utils.contentIsJSON(headers)) {
+    if (utils.isSendingJSON(headers)) {
         options.json = true;
     }
 
@@ -187,10 +202,22 @@ exports.httpPatch = function httpPatch(url, headers, body) {
     return deferred.promise;
 };
 
-exports.contentIsJSON = function contentIsJSON(headers) {
+exports.isSendingJSON = function contentIsJSON(headers) {
+    var hasHeaders = headers !== undefined;
     var hasContentType = 'content-type' in headers;
     var contentTypeIsJSON = headers['content-type'] === 'application/json';
-    return hasContentType && contentTypeIsJSON;
+    return hasHeaders && hasContentType && contentTypeIsJSON;
+};
+
+exports.isReceivingJSON = function responseShouldBeJSON(headers) {
+    var hasHeaders = headers !== undefined;
+    let hasAcceptHeader = 'accept' in headers;
+    let acceptIsJSON = headers['accept'] == 'application/json';
+    return hasHeaders && hasAcceptHeader && acceptIsJSON;
+};
+
+exports.isSendingOrReceivingJSON = function isSendingOrReceivingJSON(headers) {
+    return utils.isSendingJSON(headers) || utils.isReceivingJSON(headers);
 };
 
 exports.keysToLowerCase = function keysToLowerCase(obj) {
