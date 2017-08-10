@@ -94,7 +94,6 @@ describe(testName, function () {
 
     function getLocation(url, done, assign) {
         console.log('get location ', url);
-        // this shouldn't redirect
         utils.httpGet(url)
             .then(res => {
                 expect(res.statusCode).toBe(303);
@@ -124,7 +123,6 @@ describe(testName, function () {
 
     it('6 - gets earliest', function (done) {
         console.log('earliest', channel._links.earliest.href);
-        // this shouldn't redirect
         utils.httpGet(channel._links.earliest.href)
             .then(res => {
                 expect(res.statusCode).toBe(303);
