@@ -1,3 +1,4 @@
+require('../integration_config');
 var async = require('async');
 var moment = require('moment');
 var _ = require('lodash');
