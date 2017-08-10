@@ -13,7 +13,6 @@
     "eventsource": "^0.1.6",
     "ip": "^0.3.0",
     "jasmine": "^2.6.0",
-    "lodash": "^3.7.0",
     "moment": "^2.5.1",
     "parse-link-header": "^1.0.1",
     "request": "~2.33.0",
