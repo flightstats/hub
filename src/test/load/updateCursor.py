@@ -18,6 +18,10 @@ class UpdateCursorUser(HubUser):
         config['batch'] = "SECOND"
         config['heartbeat'] = True
 
+    # this test messes with the order of the webhook by design - so turning off this test
+    def should_verify_ordered(self):
+        return False
+
 
 class UpdateCursorTasks(TaskSet):
     hubTasks = None
