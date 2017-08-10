@@ -41,8 +41,6 @@ exports.createChannel = function createChannel(channelName, url, description) {
 };
 
 exports.httpGet = function httpGet(url, headers, isBinary) {
-    var promise = new Promise();
-
     if (headers)
         headers = utils.keysToLowerCase(headers);
 
@@ -59,30 +57,28 @@ exports.httpGet = function httpGet(url, headers, isBinary) {
     if (isBinary)
         options.encoding = null;
 
-    console.log('GET >', options.url, options.headers);
-    request.get(options, function (error, response) {
-        if (error)
-            promise.reject(error);
-        else {
-            console.log('GET <', options.url, response.statusCode);
-            if (!options.json && utils.isSendingJSON(response.headers)) {
-                try {
-                    response.body = JSON.parse(response.body);
-                } catch (error) {
-                    console.warn('Response header says the content is JSON but it couldn\'t be parsed');
+    return new Promise((resolve, reject) => {
+        console.log('GET >', options.url, options.headers);
+        request.get(options, function (error, response) {
+            if (error)
+                reject(error);
+            else {
+                console.log('GET <', options.url, response.statusCode);
+                if (!options.json && utils.isSendingJSON(response.headers)) {
+                    try {
+                        response.body = JSON.parse(response.body);
+                    } catch (error) {
+                        console.warn('Response header says the content is JSON but it couldn\'t be parsed');
+                    }
                 }
+    
+                resolve(response);
             }
-
-            promise.resolve(response);
-        }
+        });
     });
-
-    return promise;
 };
 
 exports.httpPost = function httpPost(url, headers, body) {
-    var promise = new Promise();
-
     if (headers)
         headers = utils.keysToLowerCase(headers);
 
@@ -98,30 +94,28 @@ exports.httpPost = function httpPost(url, headers, body) {
 
     let bytes = (options.json) ? JSON.stringify(options.body).length : options.body.length;
 
-    console.log('POST >', options.url, options.headers, bytes);
-    request.post(options, function (error, response) {
-        if (error)
-            promise.reject(error);
-        else {
-            console.log('POST <', options.url, response.statusCode);
-            if (!options.json && utils.isSendingJSON(response.headers)) {
-                try {
-                    response.body = JSON.parse(response.body);
-                } catch (error) {
-                    console.warn('Response header says the content is JSON but it couldn\'t be parsed');
+    return new Promise((resolve, reject) => {
+        console.log('POST >', options.url, options.headers, bytes);
+        request.post(options, function (error, response) {
+            if (error)
+                reject(error);
+            else {
+                console.log('POST <', options.url, response.statusCode);
+                if (!options.json && utils.isSendingJSON(response.headers)) {
+                    try {
+                        response.body = JSON.parse(response.body);
+                    } catch (error) {
+                        console.warn('Response header says the content is JSON but it couldn\'t be parsed');
+                    }
                 }
+    
+                resolve(response);
             }
-
-            promise.resolve(response);
-        }
+        });
     });
-
-    return promise;
 };
 
 exports.httpPut = function httpPut(url, headers, body) {
-    var promise = new Promise();
-    
     if (headers)
         headers = utils.keysToLowerCase(headers);
     
@@ -137,22 +131,20 @@ exports.httpPut = function httpPut(url, headers, body) {
 
     let bytes = (options.json) ? JSON.stringify(options.body).length : options.body.length;
 
-    console.log('PUT >', options.url, options.headers, bytes);
-    request.put(options, function (error, response) {
-        if (error)
-            promise.reject(error);
-        else {
-            console.log('PUT <', options.url, response.statusCode);
-            promise.resolve(response);
-        }
+    return new Promise((resolve, reject) => {
+        console.log('PUT >', options.url, options.headers, bytes);
+        request.put(options, function (error, response) {
+            if (error)
+                reject(error);
+            else {
+                console.log('PUT <', options.url, response.statusCode);
+                resolve(response);
+            }
+        });
     });
-    
-    return promise;
 };
 
 exports.httpDelete = function httpDelete(url, headers) {
-    var promise = new Promise();
-    
     if (headers)
         headers = utils.keysToLowerCase(headers);
     
@@ -160,23 +152,21 @@ exports.httpDelete = function httpDelete(url, headers) {
         url: url,
         headers: headers || {}
     };
-    
-    console.log('DELETE >', options.url, options.headers);
-    request.del(options, function (error, response) {
-        if (error)
-            promise.reject(error);
-        else {
-            console.log('DELETE <', options.url, response.statusCode);
-            promise.resolve(response);
-        }
+
+    return new Promise((resolve, reject) => {
+        console.log('DELETE >', options.url, options.headers);
+        request.del(options, function (error, response) {
+            if (error)
+                reject(error);
+            else {
+                console.log('DELETE <', options.url, response.statusCode);
+                resolve(response);
+            }
+        });
     });
-    
-    return promise;
 };
 
 exports.httpPatch = function httpPatch(url, headers, body) {
-    var promise = new Promise();
-
     if (headers)
         headers = utils.keysToLowerCase(headers);
 
@@ -190,15 +180,15 @@ exports.httpPatch = function httpPatch(url, headers, body) {
         options.json = true;
     }
 
-    console.log('PATCH', options.url, options.headers, options.body.length);
-    request.patch(options, function (error, response) {
-        if (error)
-            promise.reject(error);
-        else
-            promise.resolve(response);
+    return new Promise((resolve, reject) => {
+        console.log('PATCH', options.url, options.headers, options.body.length);
+        request.patch(options, function (error, response) {
+            if (error)
+                promise.reject(error);
+            else
+                promise.resolve(response);
+        });
     });
-
-    return promise;
 };
 
 exports.isSendingJSON = function contentIsJSON(headers) {
@@ -304,7 +294,6 @@ exports.postItem = function postItem(url, responseCode, completed) {
 };
 
 function postItemQwithPayload(url, headers, body) {
-    var promise = new Promise();
     var options = {
         url: url,
         headers: headers || {},
@@ -315,13 +304,13 @@ function postItemQwithPayload(url, headers, body) {
         options = Object.assign({}, options, {json: true});
     }
 
-    request.post(options, function (error, response, body) {
-        expect(error).toBeNull();
-        expect(response.statusCode).toBe(201);
-        promise.resolve({response: response, body: body});
+    return new Promise((resolve, reject) => {
+        request.post(options, function (error, response, body) {
+            expect(error).toBeNull();
+            expect(response.statusCode).toBe(201);
+            resolve({response: response, body: body});
+        });
     });
-
-    return promise;
 }
 
 exports.postItemQwithPayload = postItemQwithPayload;
@@ -334,14 +323,14 @@ exports.postItemQ = function postItemQ(url) {
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({"data": Date.now()})
     };
-    var promise = new Promise();
-    request.post(payload,
-        function (err, response, body) {
-            expect(err).toBeNull();
-            expect(response.statusCode).toBe(201);
-            promise.resolve({response: response, body: body});
-        });
-    return promise;
+    return new Promise((resolve, reject) => {
+        request.post(payload,
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(201);
+                resolve({response: response, body: body});
+            });
+    });
 };
 
 exports.getWebhookUrl = function getWebhookUrl() {
@@ -442,14 +431,14 @@ exports.itRefreshesChannels = function itRefreshesChannels() {
 exports.getQ = function getQ(url, status, stable) {
     status = status || 200;
     stable = stable || false;
-    var promise = new Promise();
-    request.get({url: url + '?stable=' + stable, json: true},
-        function (err, response, body) {
-            expect(err).toBeNull();
-            expect(response.statusCode).toBe(status);
-            promise.resolve({response: response, body: body});
-        });
-    return promise;
+    return new Promise((resolve, reject) => {
+        request.get({url: url + '?stable=' + stable, json: true},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(status);
+                resolve({response: response, body: body});
+            });
+    });
 };
 
 exports.itSleeps = function itSleeps(millis) {

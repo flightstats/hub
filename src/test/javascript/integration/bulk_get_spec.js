@@ -69,20 +69,19 @@ describe(testName, function () {
     });
 
     function getQ(url, param, verifyFunction, accept) {
-        var promise = new Promise();
-        request.get({
+        return new Promise((resolve, reject) => {
+            request.get({
                 url: url + param,
                 followRedirect: true,
                 headers: {Accept: accept}
-            },
-            function (err, response, body) {
+            }, (err, response, body) => {
                 expect(err).toBeNull();
                 console.log("url " + url + param + " status=" + response.statusCode);
                 expect(response.statusCode).toBe(200);
                 verifyFunction(response, param);
-                promise.resolve({response: response, body: body});
+                resolve({response: response, body: body});
             });
-        return promise;
+        });
     }
 
     function standardVerify(response) {
