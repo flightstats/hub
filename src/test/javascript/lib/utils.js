@@ -59,11 +59,12 @@ exports.httpGet = function httpGet(url, headers, isBinary) {
     if (isBinary)
         options.encoding = null;
 
-    console.log('GET', options.url, options.headers);
+    console.log('GET >', options.url, options.headers);
     request.get(options, function (error, response) {
         if (error)
             deferred.reject(error);
         else {
+            console.log('GET <', options.url, response.statusCode);
             if (utils.isSendingJSON(response.headers)) {
                 try {
                     response.body = JSON.parse(response.body);
@@ -97,11 +98,12 @@ exports.httpPost = function httpPost(url, headers, body) {
 
     let bytes = (options.json) ? JSON.stringify(options.body).length : options.body.length;
 
-    console.log('POST', options.url, options.headers, bytes);
+    console.log('POST >', options.url, options.headers, bytes);
     request.post(options, function (error, response) {
         if (error)
             deferred.reject(error);
         else {
+            console.log('POST <', options.url, response.statusCode);
             if (utils.isSendingJSON(response.headers)) {
                 try {
                     response.body = JSON.parse(response.body);
@@ -135,12 +137,14 @@ exports.httpPut = function httpPut(url, headers, body) {
 
     let bytes = (options.json) ? JSON.stringify(options.body).length : options.body.length;
 
-    console.log('PUT', options.url, options.headers, bytes);
+    console.log('PUT >', options.url, options.headers, bytes);
     request.put(options, function (error, response) {
         if (error)
             deferred.reject(error);
-        else
+        else {
+            console.log('PUT <', options.url, response.statusCode);
             deferred.resolve(response);
+        }
     });
     
     return deferred.promise;
@@ -157,12 +161,14 @@ exports.httpDelete = function httpDelete(url, headers) {
         headers: headers || {}
     };
     
-    console.log('DELETE', options.url, options.headers);
+    console.log('DELETE >', options.url, options.headers);
     request.del(options, function (error, response) {
         if (error)
             deferred.reject(error);
-        else
+        else {
+            console.log('DELETE <', options.url, response.statusCode);
             deferred.resolve(response);
+        }
     });
     
     return deferred.promise;
