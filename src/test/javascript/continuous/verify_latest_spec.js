@@ -25,8 +25,6 @@ const NONE = '1970/01/01/00/00/00/001/none';
  *
  */
 
-//jasmine-node --forceexit --captureExceptions --config hubUrl hub verify_latest_spec.js
-
 describe(testName, function () {
 
     var channelLastUpdated = hubUrlBase + '/internal/zookeeper/ChannelLatestUpdated';
@@ -36,7 +34,7 @@ describe(testName, function () {
         console.log('channelLastUpdated', channelLastUpdated);
         utils.httpGet(channelLastUpdated)
             .then(res => {
-                expect(res.status).toBe(200);
+                expect(res.statusCode).toBe(200);
                 zkChannels = res.body.children;
                 console.log('body', res.body);
             })
@@ -84,16 +82,15 @@ describe(testName, function () {
                 
                 utils.httpGet(url, headers)
                     .then(res => {
-                        if (res.status == 404) {
+                        if (res.statusCode === 404) {
                             item['empty'] = true;
-                        } else if (res.status == 303) {
-                            expect(res.error).toBe(false);
-                            var location = res.header['location'];
+                        } else if (res.statusCode === 303) {
+                            var location = res.headers.location;
                             var latestKey = location.substring(channelUrl.length + name.length + 2);
                             console.log('latestKey ', latestKey, location);
                             item['latestKey'] = latestKey;
                         } else {
-                            console.log('unexpected result', res);
+                            console.log('unexpected result');
                         }
                         callback();
                     })
@@ -127,7 +124,7 @@ describe(testName, function () {
                         console.log('doing comparison on ', item);
                         utils.httpGet(item.zkChannel, headers)
                             .then(res => {
-                                if (res.status == 404) {
+                                if (res.statusCode == 404) {
                                     expect(isWithinSpokeWindow(item.latestKey)).toBe(true);
                                     console.log('missing zk value for ' + name);
                                 } else {
