@@ -16,8 +16,6 @@ var testName = __filename;
  *
  */
 
-//jasmine-node --forceexit --captureExceptions --config hubDomain hub-v2.svc.dev verify_max_items_spec.js
-
 describe(testName, function () {
 
     var verifyMaxItems = hubUrlBase + '/channel/verifyMaxItems';
@@ -41,7 +39,7 @@ describe(testName, function () {
         console.log('check url ' + checkUrl);
         utils.httpGet(checkUrl)
             .then(res => {
-                expect(res.status).toBe(200);
+                expect(res.statusCode).toBe(200);
                 expect(res.body._links.uris.length).toBe(maxItems);
             })
             .catch(error => {
@@ -49,7 +47,7 @@ describe(testName, function () {
             })
             .fin(done);
 
-    }, 5 * 60 * 1000);
+    });
 
     it('2 - adds 2 * N items', function (done) {
         //timesLimit(n, limit, iterator, [callback])
@@ -61,7 +59,7 @@ describe(testName, function () {
                 done();
             });
 
-    }, 60 * 1000);
+    });
 
 
 });
