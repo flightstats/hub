@@ -44,13 +44,7 @@ describe(__filename, function () {
         var url = channelResource + '/';
 
         utils.httpGet(url)
-            .then(function (response) {
-                if (utils.isRedirect(response)) {
-                    return utils.httpGet(response.headers.location);
-                } else {
-                    return response;
-                }
-            })
+            .then(utils.followRedirectIfPresent)
             .then(function (response) {
                 expect(response.statusCode).toEqual(200);
                 expect(response.headers['content-type']).toEqual('application/json');
