@@ -30,7 +30,7 @@ describe(testName, function () {
             .catch(error => {
                 expect(error).toBeNull();
             })
-            .fin(done);
+            .finally(done);
     });
 
     it('2 - checks for max items', function (done) {
@@ -44,7 +44,7 @@ describe(testName, function () {
             .catch(error => {
                 expect(error).toBeNull();
             })
-            .fin(done);
+            .finally(done);
 
     });
 

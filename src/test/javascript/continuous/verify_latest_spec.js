@@ -40,7 +40,7 @@ describe(testName, function () {
             .catch(error => {
                 expect(error).toBeNull();
             })
-            .fin(done);
+            .finally(done);
     }, MINUTE);
 
     var values = {};

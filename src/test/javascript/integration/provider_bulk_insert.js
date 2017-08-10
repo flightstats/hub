@@ -32,9 +32,7 @@ describe(__filename, function () {
             .catch(function (error) {
                 expect(error).toBeNull();
             })
-            .fin(function () {
-                done();
-            });
+            .finally(done);
     });
 
     it('verifies the bulk value was inserted', function (done) {
@@ -47,9 +45,7 @@ describe(__filename, function () {
             .catch(function (error) {
                 expect(error).toBeNull();
             })
-            .fin(function () {
-                done();
-            });
+            .finally(done);
     });
 
 });

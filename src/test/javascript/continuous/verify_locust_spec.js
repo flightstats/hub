@@ -29,7 +29,7 @@ describe(testName, function () {
             .catch(error => {
                 expect(error).toBeNull();
             })
-            .fin(done);
+            .finally(done);
     }, timeout);
 
     it('resets stats', function (done) {
@@ -40,7 +40,7 @@ describe(testName, function () {
             .catch(error => {
                 expect(error).toBeNull();
             })
-            .fin(done);
+            .finally(done);
     }, timeout);
 
 });

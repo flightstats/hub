@@ -40,7 +40,7 @@ describe(testName, function () {
             .catch(error => {
                 expect(error).toBeNull();
             })
-            .fin(done);
+            .finally(done);
     }, timeout);
 
     it('loads channel data', function (done) {

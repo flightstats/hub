@@ -13,9 +13,7 @@ describe(__filename, function () {
 			.catch(function (error) {
 				expect(error).toBeNull();
 			})
-			.fin(function () {
-				done();
-			});
+			.finally(done);
 	});
 	
 	it('creates the channel', function (done) {
@@ -30,9 +28,7 @@ describe(__filename, function () {
 			.catch(function (error) {
 				expect(error).toBeNull();
 			})
-			.fin(function () {
-				done();
-			});
+			.finally(done);
 	});
 	
 	it('verifies creating a channel with an existing name returns an error', function (done) {
@@ -47,9 +43,7 @@ describe(__filename, function () {
 			.catch(function (error) {
 				expect(error).toBeNull();
 			})
-			.fin(function () {
-				done();
-			});
+			.finally(done);
 	});
 
 });

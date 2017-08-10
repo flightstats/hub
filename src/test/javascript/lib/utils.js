@@ -4,6 +4,15 @@ var https = require('https');
 var fs = require('fs');
 var request = require('request');
 
+/**
+ * Monkey patching Promise.prototype.finally until its officially supported
+ *  proposal: https://github.com/tc39/proposal-promise-finally
+ */
+
+Promise.prototype.finally = (callback) => {
+    return this.then(callback);
+};
+
 exports.randomChannelName = function randomChannelName() {
     return "TeSt_" + Math.random().toString().replace(".", "_");
 };

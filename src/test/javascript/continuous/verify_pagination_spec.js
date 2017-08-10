@@ -48,7 +48,7 @@ describe(testName, function () {
             .catch(error => {
                 expect(error).toBeNull();
             })
-            .fin(done);
+            .finally(done);
     }, 60 * 1000);
 
     it('1 - gets two days ago', function (done) {
@@ -63,7 +63,7 @@ describe(testName, function () {
             .catch(error => {
                 expect(error).toBeNull();
             })
-            .fin(done);
+            .finally(done);
     }, 60 * 1000);
 
     var previous = '';
@@ -102,7 +102,7 @@ describe(testName, function () {
             .catch(error => {
                 expect(error).toBeNull();
             })
-            .fin(done);
+            .finally(done);
     }
 
     function getAndCompare(url, done) {
@@ -117,7 +117,7 @@ describe(testName, function () {
             .catch(error => {
                 expect(error).toBeNull();
             })
-            .fin(done);
+            .finally(done);
     }
 
     it('6 - gets earliest', function (done) {
@@ -135,7 +135,7 @@ describe(testName, function () {
             .catch(error => {
                 expect(error).toBeNull();
             })
-            .fin(done);
+            .finally(done);
     }, 60 * 1000);
 
 });

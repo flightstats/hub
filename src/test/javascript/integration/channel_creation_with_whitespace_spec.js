@@ -19,9 +19,7 @@ describe(__filename, function () {
             .catch(function (error) {
                 expect(error).toBeNull();
             })
-            .fin(function () {
-                done();
-            });
+            .finally(done);
     });
 
 });
