@@ -35,13 +35,13 @@ describe(testName, function () {
         console.log('channelUrl', channelUrl);
         utils.httpGet(channelUrl)
             .then(res => {
-                expect(res.status).toBe(200);
+                expect(res.statusCode).toBe(200);
                 channel = res.body;
                 expect(channel.ttlDays).toBeGreaterThan(0);
                 return utils.httpGet(res.body._links.time.href);
             })
             .then(res => {
-                expect(res.status).toBe(200);
+                expect(res.statusCode).toBe(200);
                 channel.millis = res.body.now.millis;
                 expect(channel.millis).toBeGreaterThan(1435865512097);
                 console.log('channel', channel);
@@ -57,7 +57,7 @@ describe(testName, function () {
         utils.httpGet(twoDaysAgo)
             .then(res => {
                 //console.log('res', res);
-                expect(res.status).toBe(200);
+                expect(res.statusCode).toBe(200);
                 uris = res.body._links.uris;
                 console.log('length', uris.length);
             })
@@ -97,7 +97,7 @@ describe(testName, function () {
         // this shouldn't redirect
         utils.httpGet(url)
             .then(res => {
-                expect(res.status).toBe(303);
+                expect(res.statusCode).toBe(303);
                 console.log('res.headers.location', res.headers.location);
                 assign(res.headers.location);
             })
@@ -111,7 +111,7 @@ describe(testName, function () {
         console.log('gets ', url);
         utils.httpGet(url)
             .then(res => {
-                expect(res.status).toBe(200);
+                expect(res.statusCode).toBe(200);
                 for (var i = 0; i < uris.length; i++) {
                     expect(res.body._links.uris[i]).toBe(uris[i]);
                 }
@@ -127,7 +127,7 @@ describe(testName, function () {
         // this shouldn't redirect
         utils.httpGet(channel._links.earliest.href)
             .then(res => {
-                expect(res.status).toBe(303);
+                expect(res.statusCode).toBe(303);
                 var time = moment(channel.millis).subtract(channel.ttlDays, 'days').utc();
                 var timeUrlSegments = res.headers.location.substring(channelUrl.length)
                 timeUrlSegments = timeUrlSegments.substring(0, timeUrlSegments.lastIndexOf('/'));
