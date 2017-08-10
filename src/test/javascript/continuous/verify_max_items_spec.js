@@ -1,5 +1,4 @@
 require('../integration_config');
-var agent = require('superagent');
 var request = require('request');
 var async = require('async');
 var moment = require('moment');
@@ -17,38 +16,38 @@ var testName = __filename;
  *
  */
 
-//jasmine-node --forceexit --captureExceptions --config hubDomain hub-v2.svc.dev verify_max_items_spec.js
-
 describe(testName, function () {
 
     var verifyMaxItems = hubUrlBase + '/channel/verifyMaxItems';
     var maxItems = 10;
 
     it('1 - creates verifyMaxItems channel', function (done) {
-        agent
-            .put(verifyMaxItems)
-            .accept('json')
-            .send({"maxItems": maxItems})
-            .end(function (err, res) {
-                expect(err).toBe(null);
+        let headers = {'Accept': 'application/json'};
+        let body = {'maxItems': maxItems};
+        utils.httpPut(verifyMaxItems, headers, body)
+            .then(res => {
                 console.log('created', res.body);
-                done();
             })
+            .catch(error => {
+                expect(error).toBeNull();
+            })
+            .fin(done);
     });
 
     it('2 - checks for max items', function (done) {
         var checkUrl = verifyMaxItems + '/latest/' + (maxItems * 2);
         console.log('check url ' + checkUrl);
-        agent
-            .get(checkUrl)
-            .end(function (err, res) {
-                expect(err).toBe(null);
-                expect(res.status).toBe(200);
+        utils.httpGet(checkUrl)
+            .then(res => {
+                expect(res.statusCode).toBe(200);
                 expect(res.body._links.uris.length).toBe(maxItems);
-                done();
             })
+            .catch(error => {
+                expect(error).toBeNull();
+            })
+            .fin(done);
 
-    }, 5 * 60 * 1000);
+    });
 
     it('2 - adds 2 * N items', function (done) {
         //timesLimit(n, limit, iterator, [callback])
@@ -60,7 +59,7 @@ describe(testName, function () {
                 done();
             });
 
-    }, 60 * 1000);
+    });
 
 
 });
