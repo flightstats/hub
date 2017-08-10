@@ -39,6 +39,7 @@ describe(testName, function () {
                 let headers = {'Accept': 'application/json'};
 
                 utils.httpGet(url, headers)
+                    .then(utils.followRedirectIfPresent)
                     .then(res => {
                         var uris = res.body._links.uris;
                         console.log('taking ' + errorRate + '% of the ' + uris.length + ' items ');

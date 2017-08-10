@@ -97,6 +97,7 @@ describe(testName, function () {
             let headers = {'Accept': 'application/json'};
 
             utils.httpGet(url, headers)
+                .then(utils.followRedirectIfPresent)
                 .then(res => {
                     channels[channel] = [];
                     let url = res.body._links.previous.href
@@ -124,6 +125,7 @@ describe(testName, function () {
             let uris = [];
 
             utils.httpGet(`${source}/time/hour?stable=false`, acceptHeader)
+                .then(utils.followRedirectIfPresent)
                 .then(res => {
                     let url = res.body._links.previous.href;
                     return utils.httpGet(url, acceptHeader);
