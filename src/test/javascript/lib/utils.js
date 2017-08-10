@@ -565,3 +565,15 @@ exports.waitForData = function waitForData(actual, expected, done) {
         }
     }, 500);
 };
+
+exports.isRedirect = function isRedirect(response) {
+    return response.statusCode >= 300 && response.statusCode <= 399;
+};
+
+exports.followRedirectIfPresent = function followRedirectIfPresent(response) {
+    if (utils.isRedirect(response)) {
+        return utils.httpGet(response.headers.location);
+    } else {
+        return response;
+    }
+};
