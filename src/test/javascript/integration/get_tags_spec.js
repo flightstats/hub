@@ -1,7 +1,6 @@
 require('../integration_config');
 
 var request = require('request');
-var _ = require('lodash');
 var http = require('http');
 var parse = require('parse-link-header');
 var channel = utils.randomChannelName();
@@ -45,7 +44,7 @@ describe(testName, function () {
                 if (response.statusCode == 200) {
                     body = utils.parseJson(response, testName);
                     var tags = body._links[nodeName];
-                    var found = _.find(tags, {'name': name});
+                    var found = tags.find(tag => tag.name === name);
                     console.log("found ", found);
                     expect(found.name).toBe(name);
                 } else {
