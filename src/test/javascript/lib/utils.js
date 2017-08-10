@@ -49,7 +49,8 @@ exports.httpGet = function httpGet(url, headers, isBinary) {
 
     var options = {
         url: url,
-        headers: headers || {}
+        headers: headers || {},
+        followRedirect: false
     };
 
     if (utils.isReceivingJSON(options.headers)) {
@@ -65,7 +66,7 @@ exports.httpGet = function httpGet(url, headers, isBinary) {
             deferred.reject(error);
         else {
             console.log('GET <', options.url, response.statusCode);
-            if (utils.isSendingJSON(response.headers)) {
+            if (!options.json && utils.isSendingJSON(response.headers)) {
                 try {
                     response.body = JSON.parse(response.body);
                 } catch (error) {
@@ -104,7 +105,7 @@ exports.httpPost = function httpPost(url, headers, body) {
             deferred.reject(error);
         else {
             console.log('POST <', options.url, response.statusCode);
-            if (utils.isSendingJSON(response.headers)) {
+            if (!options.json && utils.isSendingJSON(response.headers)) {
                 try {
                     response.body = JSON.parse(response.body);
                 } catch (error) {
