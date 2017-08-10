@@ -52,7 +52,7 @@ exports.httpGet = function httpGet(url, headers, isBinary) {
         headers: headers || {}
     };
 
-    if (utils.shouldBeJSON(options.headers)) {
+    if (utils.isReceivingJSON(options.headers)) {
         options.json = true;
     }
 
@@ -64,7 +64,7 @@ exports.httpGet = function httpGet(url, headers, isBinary) {
         if (error)
             deferred.reject(error);
         else {
-            if (utils.contentIsJSON(response.headers)) {
+            if (utils.isSendingJSON(response.headers)) {
                 try {
                     response.body = JSON.parse(response.body);
                 } catch (error) {
@@ -91,16 +91,18 @@ exports.httpPost = function httpPost(url, headers, body) {
         body: body || ''
     };
 
-    if (utils.contentIsJSON(headers)) {
+    if (utils.isSendingOrReceivingJSON(headers)) {
         options.json = true;
     }
 
-    console.log('POST', options.url, options.headers, options.body.length);
+    let bytes = (options.json) ? JSON.stringify(options.body).length : options.body.length;
+
+    console.log('POST', options.url, options.headers, bytes);
     request.post(options, function (error, response) {
         if (error)
             deferred.reject(error);
         else {
-            if (utils.contentIsJSON(response.headers)) {
+            if (utils.isSendingJSON(response.headers)) {
                 try {
                     response.body = JSON.parse(response.body);
                 } catch (error) {
@@ -127,11 +129,13 @@ exports.httpPut = function httpPut(url, headers, body) {
         body: body || ''
     };
     
-    if (utils.contentIsJSON(headers)) {
+    if (utils.isSendingOrReceivingJSON(headers)) {
         options.json = true;
     }
-    
-    console.log('PUT', options.url, options.headers, options.body.length);
+
+    let bytes = (options.json) ? JSON.stringify(options.body).length : options.body.length;
+
+    console.log('PUT', options.url, options.headers, bytes);
     request.put(options, function (error, response) {
         if (error)
             deferred.reject(error);
@@ -176,7 +180,7 @@ exports.httpPatch = function httpPatch(url, headers, body) {
         body: body || ''
     };
 
-    if (utils.contentIsJSON(headers)) {
+    if (utils.isSendingJSON(headers)) {
         options.json = true;
     }
 
@@ -191,18 +195,22 @@ exports.httpPatch = function httpPatch(url, headers, body) {
     return deferred.promise;
 };
 
-exports.contentIsJSON = function contentIsJSON(headers) {
+exports.isSendingJSON = function contentIsJSON(headers) {
     var hasHeaders = headers !== undefined;
     var hasContentType = 'content-type' in headers;
     var contentTypeIsJSON = headers['content-type'] === 'application/json';
     return hasHeaders && hasContentType && contentTypeIsJSON;
 };
 
-exports.shouldBeJSON = function responseShouldBeJSON(headers) {
+exports.isReceivingJSON = function responseShouldBeJSON(headers) {
     var hasHeaders = headers !== undefined;
     let hasAcceptHeader = 'accept' in headers;
     let acceptIsJSON = headers['accept'] == 'application/json';
     return hasHeaders && hasAcceptHeader && acceptIsJSON;
+};
+
+exports.isSendingOrReceivingJSON = function isSendingOrReceivingJSON(headers) {
+    return utils.isSendingJSON(headers) || utils.isReceivingJSON(headers);
 };
 
 exports.keysToLowerCase = function keysToLowerCase(obj) {
