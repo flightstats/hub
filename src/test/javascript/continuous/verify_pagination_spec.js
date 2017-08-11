@@ -2,7 +2,6 @@ require('../integration_config');
 var request = require('request');
 var async = require('async');
 var moment = require('moment');
-var _ = require('lodash');
 var testName = __filename;
 var hubUrl = process.env.hubUrl;
 hubUrl = 'http://' + hubUrl;
@@ -49,7 +48,7 @@ describe(testName, function () {
             .catch(error => {
                 expect(error).toBeNull();
             })
-            .fin(done);
+            .finally(done);
     }, 60 * 1000);
 
     it('1 - gets two days ago', function (done) {
@@ -64,7 +63,7 @@ describe(testName, function () {
             .catch(error => {
                 expect(error).toBeNull();
             })
-            .fin(done);
+            .finally(done);
     }, 60 * 1000);
 
     var previous = '';
@@ -94,7 +93,6 @@ describe(testName, function () {
 
     function getLocation(url, done, assign) {
         console.log('get location ', url);
-        // this shouldn't redirect
         utils.httpGet(url)
             .then(res => {
                 expect(res.statusCode).toBe(303);
@@ -104,7 +102,7 @@ describe(testName, function () {
             .catch(error => {
                 expect(error).toBeNull();
             })
-            .fin(done);
+            .finally(done);
     }
 
     function getAndCompare(url, done) {
@@ -119,12 +117,11 @@ describe(testName, function () {
             .catch(error => {
                 expect(error).toBeNull();
             })
-            .fin(done);
+            .finally(done);
     }
 
     it('6 - gets earliest', function (done) {
         console.log('earliest', channel._links.earliest.href);
-        // this shouldn't redirect
         utils.httpGet(channel._links.earliest.href)
             .then(res => {
                 expect(res.statusCode).toBe(303);
@@ -138,7 +135,7 @@ describe(testName, function () {
             .catch(error => {
                 expect(error).toBeNull();
             })
-            .fin(done);
+            .finally(done);
     }, 60 * 1000);
 
 });

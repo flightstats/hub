@@ -18,9 +18,7 @@ describe(__filename, function () {
             .catch(function (error) {
                 expect(error).toBeNull();
             })
-            .fin(function () {
-                done();
-            });
+            .finally(done);
     });
 
     it('inserts an item into the channel', function (done) {
@@ -35,9 +33,7 @@ describe(__filename, function () {
             .catch(function (error) {
                 expect(error).toBeNull();
             })
-            .fin(function () {
-                done();
-            });
+            .finally(done);
     });
 
     it('verifies the channel metadata is accurate', function (done) {
@@ -55,9 +51,7 @@ describe(__filename, function () {
             .catch(function (error) {
                expect(error).toBeNull();
             })
-            .fin(function () {
-                done();
-            });
+            .finally(done);
     });
 
 });

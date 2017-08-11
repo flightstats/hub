@@ -1,7 +1,6 @@
 require('../integration_config');
 var async = require('async');
 var moment = require('moment');
-var _ = require('lodash');
 var testName = __filename;
 var hubUrl = process.env.hubUrl;
 hubUrl = 'http://' + hubUrl + '/channel';
@@ -41,7 +40,7 @@ describe(testName, function () {
             .catch(error => {
                 expect(error).toBeNull();
             })
-            .fin(done);
+            .finally(done);
     }, timeout);
 
     it('loads channel data', function (done) {
@@ -112,8 +111,8 @@ describe(testName, function () {
             channels.forEach(function (channel) {
                 var start = channel.start.subtract(i, 'minutes');
                 var formatted = start.format(minute_format);
-                if (_.startsWith(channel.name.toLowerCase(), 'test')
-                    || _.startsWith(channel.name, 'verifyMaxItems')
+                if (channel.name.toLowerCase().startsWith('test')
+                    || channel.name.startsWith('verifyMaxItems')
                     || Math.random() * 100 > testPercent) {
                     //do nothing
                 } else {

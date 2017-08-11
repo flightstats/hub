@@ -13,9 +13,7 @@ describe(__filename, function () {
             .catch(function (error) {
                 expect(error).toBeNull();
             })
-            .fin(function () {
-                done();
-            });
+            .finally(done);
     });
 
     it('creates a channel with a replicationSource', function (done) {
@@ -32,9 +30,7 @@ describe(__filename, function () {
             .catch(function (error) {
                 expect(error).toBeNull();
             })
-            .fin(function () {
-                done();
-            });
+            .finally(done);
     });
 
     it('verifies the channel does exist', function (done) {
@@ -48,9 +44,7 @@ describe(__filename, function () {
             .catch(function (error) {
                 expect(error).toBeNull();
             })
-            .fin(function () {
-                done();
-            });
+            .finally(done);
     });
 
 });

@@ -1,7 +1,6 @@
 require('../integration_config');
 
 var request = require('request');
-var _ = require('lodash');
 var channelName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;

@@ -37,9 +37,7 @@ describe(testName, function () {
             .catch(function (error) {
                 expect(error).toBeNull();
             })
-            .fin(function () {
-                done();
-            });
+            .finally(done);
     });
     
     var secondWebhookURL = webhookUrl + '/' + webhookName2;
@@ -60,9 +58,7 @@ describe(testName, function () {
             .catch(function (error) {
                 expect(error).toBeNull();
             })
-            .fin(function () {
-                done();
-            });
+            .finally(done);
     });
 
     var foundURLs = [];
@@ -82,9 +78,7 @@ describe(testName, function () {
             .catch(function (error) {
                 expect(error).toBeNull();
             })
-            .fin(function () {
-                done();
-            });
+            .finally(done);
     });
 
     it('verifies we found the correct URLs', function () {

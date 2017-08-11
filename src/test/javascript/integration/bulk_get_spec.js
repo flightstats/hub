@@ -1,7 +1,6 @@
 require('../integration_config');
 
 var request = require('request');
-var Q = require('q');
 var channelName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
@@ -70,20 +69,19 @@ describe(testName, function () {
     });
 
     function getQ(url, param, verifyFunction, accept) {
-        var deferred = Q.defer();
-        request.get({
+        return new Promise((resolve, reject) => {
+            request.get({
                 url: url + param,
                 followRedirect: true,
                 headers: {Accept: accept}
-            },
-            function (err, response, body) {
+            }, (err, response, body) => {
                 expect(err).toBeNull();
                 console.log("url " + url + param + " status=" + response.statusCode);
                 expect(response.statusCode).toBe(200);
                 verifyFunction(response, param);
-                deferred.resolve({response: response, body: body});
+                resolve({response: response, body: body});
             });
-        return deferred.promise;
+        });
     }
 
     function standardVerify(response) {

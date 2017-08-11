@@ -2,7 +2,6 @@ require('../integration_config');
 
 var request = require('request');
 var http = require('http');
-var Q = require('q');
 var moment = require('moment');
 var channelName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;

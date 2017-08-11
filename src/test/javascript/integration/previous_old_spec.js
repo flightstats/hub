@@ -2,7 +2,6 @@ require('../integration_config');
 
 var request = require('request');
 var http = require('http');
-var Q = require('q');
 var moment = require('moment');
 var channelName = utils.randomChannelName();
 var groupName = utils.randomChannelName();
@@ -68,14 +67,16 @@ describe(testName, function () {
 
     function getItem(url, status) {
         status = status || 200;
-        var deferred = Q.defer();
-        request.get({url: url + '?stable=false', json: true},
-            function (err, response, body) {
+        return new Promise((resolve, reject) => {
+            request.get({
+                url: url + '?stable=false',
+                json: true
+            }, (err, response, body) => {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(status);
-                deferred.resolve({response: response, body: body});
+                resolve({response: response, body: body});
             });
-        return deferred.promise;
+        });
     }
 
 });
