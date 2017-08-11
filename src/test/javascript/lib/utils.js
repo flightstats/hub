@@ -10,7 +10,9 @@ var request = require('request');
  */
 
 Promise.prototype.finally = (callback) => {
-    return this.then(callback);
+    const res = () => this;
+    const fin = () => Promise.resolve(callback()).then(res);
+    return this.then(fin, fin);
 };
 
 exports.randomChannelName = function randomChannelName() {
