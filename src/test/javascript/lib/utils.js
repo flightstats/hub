@@ -195,9 +195,9 @@ exports.httpPatch = function httpPatch(url, headers, body) {
         console.log('PATCH', options.url, options.headers, options.body.length);
         request.patch(options, function (error, response) {
             if (error)
-                promise.reject(error);
+                reject(error);
             else
-                promise.resolve(response);
+                resolve(response);
         });
     });
 };
