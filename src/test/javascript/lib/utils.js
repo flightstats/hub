@@ -9,7 +9,7 @@ var request = require('request');
  *  proposal: https://github.com/tc39/proposal-promise-finally
  */
 
-Promise.prototype.finally = (callback) => {
+Promise.prototype.finally = function (callback) {
     const res = () => this;
     const fin = () => Promise.resolve(callback()).then(res);
     return this.then(fin, fin);
