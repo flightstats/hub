@@ -15,6 +15,15 @@ let callbackURL = `${callbackDomain}:${callbackPort}`;
 let callbackMessages = [];
 let postedItems = [];
 
+var webhookConfig = {
+    callbackUrl: callbackURL,
+    channelUrl: channelURL,
+    parallel: 1,
+    batch: 'SECOND',
+    heartbeat: true
+};
+
+
 // this function will be available in the utils lib soon
 const expectNoErrors = (error) => {
     expect(error).toBeNull();
@@ -23,7 +32,8 @@ const expectNoErrors = (error) => {
 describe(__filename, () => {
 
     it('creates a channel', (done) => {
-        utils.httpPut(channelURL, contentTypeJSON, {})
+        var body = {'name': channelName};
+        utils.httpPost(channelUrl, contentTypeJSON, body)
             .then(response => {
                 expect(response.statusCode).toEqual(201);
             })
@@ -38,11 +48,7 @@ describe(__filename, () => {
     });
 
     it('creates a webhook', (done) => {
-        const config = {
-            'channelUrl': channelURL,
-            'callbackUrl': callbackURL
-        };
-        utils.httpPut(webhookURL, contentTypeJSON, config)
+        utils.httpPut(webhookURL, contentTypeJSON, webhookConfig)
             .then(response => {
                 expect(response.statusCode).toEqual(201);
             })
@@ -64,7 +70,7 @@ describe(__filename, () => {
 
     let secondItemURL;
     it('inserts the second item', (done) => {
-        utils.httpPost(channelURL, contentTypePlain, secondItemURL)
+        utils.httpPost(channelURL, contentTypePlain, Date.now())
             .then(response => {
                 expect(response.statusCode).toEqual(201);
                 secondItemURL = respond.body._links.self.href;
