@@ -2,7 +2,6 @@ require('../integration_config');
 var request = require('request');
 var async = require('async');
 var moment = require('moment');
-var _ = require('lodash');
 var testName = __filename;
 var hubUrl = process.env.hubUrl;
 hubUrl = 'http://' + hubUrl;
@@ -41,7 +40,7 @@ describe(testName, function () {
             .catch(error => {
                 expect(error).toBeNull();
             })
-            .fin(done);
+            .finally(done);
     }, MINUTE);
 
     var values = {};

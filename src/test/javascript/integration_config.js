@@ -1,6 +1,5 @@
 utils = require('./lib/utils.js');
 ip = require('ip');
-var _ = require('lodash');
 
 hubDomain = process.env.hubDomain;
 satelliteDomain = process.env.satelliteDomain;
@@ -17,13 +16,13 @@ try {
 }
 catch ( err ){}
 
-if (_.startsWith(hubDomain, 'http')) {
+if (hubDomain !== undefined && hubDomain.startsWith('http')) {
     hubUrlBase = hubDomain;
 } else {
     hubUrlBase = 'http://' + hubDomain;
 }
 
-if (_.startsWith(satelliteDomain, 'http')) {
+if (satelliteDomain !== undefined && satelliteDomain.startsWith('http')) {
     satelliteUrl = satelliteDomain;
 } else {
     satelliteUrl = 'http://' + satelliteDomain;

@@ -18,9 +18,7 @@ describe(__filename, function () {
             .catch(function (error) {
                 expect(error).toBeNull();
             })
-            .fin(function () {
-                done();
-            });
+            .finally(done);
     });
 
     var itemURL;
@@ -39,9 +37,7 @@ describe(__filename, function () {
             .catch(function (error) {
                 expect(error).toBeNull();
             })
-            .fin(function () {
-                done();
-            });
+            .finally(done);
     });
 
     it('verifies the correct Content-Type header is returned', function (done) {
@@ -54,9 +50,7 @@ describe(__filename, function () {
             .catch(function (error) {
                 expect(error).toBeNull();
             })
-            .fin(function () {
-                done();
-            });
+            .finally(done);
     });
 
 });

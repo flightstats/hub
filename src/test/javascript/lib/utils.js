@@ -3,7 +3,17 @@ var http = require('http');
 var https = require('https');
 var fs = require('fs');
 var request = require('request');
-var Q = require('q');
+
+/**
+ * Monkey patching Promise.prototype.finally until its officially supported
+ *  proposal: https://github.com/tc39/proposal-promise-finally
+ */
+
+Promise.prototype.finally = function (callback) {
+    const res = () => this;
+    const fin = () => Promise.resolve(callback()).then(res);
+    return this.then(fin, fin);
+};
 
 exports.randomChannelName = function randomChannelName() {
     return "TeSt_" + Math.random().toString().replace(".", "_");
@@ -42,8 +52,6 @@ exports.createChannel = function createChannel(channelName, url, description) {
 };
 
 exports.httpGet = function httpGet(url, headers, isBinary) {
-    var deferred = Q.defer();
-
     if (headers)
         headers = utils.keysToLowerCase(headers);
 
@@ -60,30 +68,28 @@ exports.httpGet = function httpGet(url, headers, isBinary) {
     if (isBinary)
         options.encoding = null;
 
-    console.log('GET >', options.url, options.headers);
-    request.get(options, function (error, response) {
-        if (error)
-            deferred.reject(error);
-        else {
-            console.log('GET <', options.url, response.statusCode);
-            if (!options.json && utils.isSendingJSON(response.headers)) {
-                try {
-                    response.body = JSON.parse(response.body);
-                } catch (error) {
-                    console.warn('Response header says the content is JSON but it couldn\'t be parsed');
+    return new Promise((resolve, reject) => {
+        console.log('GET >', options.url, options.headers);
+        request.get(options, function (error, response) {
+            if (error)
+                reject(error);
+            else {
+                console.log('GET <', options.url, response.statusCode);
+                if (!options.json && utils.isSendingJSON(response.headers)) {
+                    try {
+                        response.body = JSON.parse(response.body);
+                    } catch (error) {
+                        console.warn('Response header says the content is JSON but it couldn\'t be parsed');
+                    }
                 }
+    
+                resolve(response);
             }
-
-            deferred.resolve(response);
-        }
+        });
     });
-
-    return deferred.promise;
 };
 
 exports.httpPost = function httpPost(url, headers, body) {
-    var deferred = Q.defer();
-
     if (headers)
         headers = utils.keysToLowerCase(headers);
 
@@ -99,30 +105,28 @@ exports.httpPost = function httpPost(url, headers, body) {
 
     let bytes = (options.json) ? JSON.stringify(options.body).length : options.body.length;
 
-    console.log('POST >', options.url, options.headers, bytes);
-    request.post(options, function (error, response) {
-        if (error)
-            deferred.reject(error);
-        else {
-            console.log('POST <', options.url, response.statusCode);
-            if (!options.json && utils.isSendingJSON(response.headers)) {
-                try {
-                    response.body = JSON.parse(response.body);
-                } catch (error) {
-                    console.warn('Response header says the content is JSON but it couldn\'t be parsed');
+    return new Promise((resolve, reject) => {
+        console.log('POST >', options.url, options.headers, bytes);
+        request.post(options, function (error, response) {
+            if (error)
+                reject(error);
+            else {
+                console.log('POST <', options.url, response.statusCode);
+                if (!options.json && utils.isSendingJSON(response.headers)) {
+                    try {
+                        response.body = JSON.parse(response.body);
+                    } catch (error) {
+                        console.warn('Response header says the content is JSON but it couldn\'t be parsed');
+                    }
                 }
+    
+                resolve(response);
             }
-
-            deferred.resolve(response);
-        }
+        });
     });
-
-    return deferred.promise;
 };
 
 exports.httpPut = function httpPut(url, headers, body) {
-    var deferred = Q.defer();
-    
     if (headers)
         headers = utils.keysToLowerCase(headers);
     
@@ -138,22 +142,20 @@ exports.httpPut = function httpPut(url, headers, body) {
 
     let bytes = (options.json) ? JSON.stringify(options.body).length : options.body.length;
 
-    console.log('PUT >', options.url, options.headers, bytes);
-    request.put(options, function (error, response) {
-        if (error)
-            deferred.reject(error);
-        else {
-            console.log('PUT <', options.url, response.statusCode);
-            deferred.resolve(response);
-        }
+    return new Promise((resolve, reject) => {
+        console.log('PUT >', options.url, options.headers, bytes);
+        request.put(options, function (error, response) {
+            if (error)
+                reject(error);
+            else {
+                console.log('PUT <', options.url, response.statusCode);
+                resolve(response);
+            }
+        });
     });
-    
-    return deferred.promise;
 };
 
 exports.httpDelete = function httpDelete(url, headers) {
-    var deferred = Q.defer();
-    
     if (headers)
         headers = utils.keysToLowerCase(headers);
     
@@ -161,23 +163,21 @@ exports.httpDelete = function httpDelete(url, headers) {
         url: url,
         headers: headers || {}
     };
-    
-    console.log('DELETE >', options.url, options.headers);
-    request.del(options, function (error, response) {
-        if (error)
-            deferred.reject(error);
-        else {
-            console.log('DELETE <', options.url, response.statusCode);
-            deferred.resolve(response);
-        }
+
+    return new Promise((resolve, reject) => {
+        console.log('DELETE >', options.url, options.headers);
+        request.del(options, function (error, response) {
+            if (error)
+                reject(error);
+            else {
+                console.log('DELETE <', options.url, response.statusCode);
+                resolve(response);
+            }
+        });
     });
-    
-    return deferred.promise;
 };
 
 exports.httpPatch = function httpPatch(url, headers, body) {
-    var deferred = Q.defer();
-
     if (headers)
         headers = utils.keysToLowerCase(headers);
 
@@ -191,15 +191,15 @@ exports.httpPatch = function httpPatch(url, headers, body) {
         options.json = true;
     }
 
-    console.log('PATCH', options.url, options.headers, options.body.length);
-    request.patch(options, function (error, response) {
-        if (error)
-            deferred.reject(error);
-        else
-            deferred.resolve(response);
+    return new Promise((resolve, reject) => {
+        console.log('PATCH', options.url, options.headers, options.body.length);
+        request.patch(options, function (error, response) {
+            if (error)
+                reject(error);
+            else
+                resolve(response);
+        });
     });
-
-    return deferred.promise;
 };
 
 exports.isSendingJSON = function contentIsJSON(headers) {
@@ -305,7 +305,6 @@ exports.postItem = function postItem(url, responseCode, completed) {
 };
 
 function postItemQwithPayload(url, headers, body) {
-    var deferred = Q.defer();
     var options = {
         url: url,
         headers: headers || {},
@@ -316,13 +315,13 @@ function postItemQwithPayload(url, headers, body) {
         options = Object.assign({}, options, {json: true});
     }
 
-    request.post(options, function (error, response, body) {
-        expect(error).toBeNull();
-        expect(response.statusCode).toBe(201);
-        deferred.resolve({response: response, body: body});
+    return new Promise((resolve, reject) => {
+        request.post(options, function (error, response, body) {
+            expect(error).toBeNull();
+            expect(response.statusCode).toBe(201);
+            resolve({response: response, body: body});
+        });
     });
-
-    return deferred.promise;
 }
 
 exports.postItemQwithPayload = postItemQwithPayload;
@@ -335,14 +334,14 @@ exports.postItemQ = function postItemQ(url) {
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({"data": Date.now()})
     };
-    var deferred = Q.defer();
-    request.post(payload,
-        function (err, response, body) {
-            expect(err).toBeNull();
-            expect(response.statusCode).toBe(201);
-            deferred.resolve({response: response, body: body});
-        });
-    return deferred.promise;
+    return new Promise((resolve, reject) => {
+        request.post(payload,
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(201);
+                resolve({response: response, body: body});
+            });
+    });
 };
 
 exports.getWebhookUrl = function getWebhookUrl() {
@@ -443,14 +442,14 @@ exports.itRefreshesChannels = function itRefreshesChannels() {
 exports.getQ = function getQ(url, status, stable) {
     status = status || 200;
     stable = stable || false;
-    var deferred = Q.defer();
-    request.get({url: url + '?stable=' + stable, json: true},
-        function (err, response, body) {
-            expect(err).toBeNull();
-            expect(response.statusCode).toBe(status);
-            deferred.resolve({response: response, body: body});
-        });
-    return deferred.promise;
+    return new Promise((resolve, reject) => {
+        request.get({url: url + '?stable=' + stable, json: true},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(status);
+                resolve({response: response, body: body});
+            });
+    });
 };
 
 exports.itSleeps = function itSleeps(millis) {

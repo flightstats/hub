@@ -34,9 +34,7 @@ xdescribe(testName, function () {
             .catch(function (error) {
                 expect(error).toBeNull();
             })
-            .fin(function () {
-                done();
-            });
+            .finally(done);
     });
 
     it('inserts multiple items', function (done) {

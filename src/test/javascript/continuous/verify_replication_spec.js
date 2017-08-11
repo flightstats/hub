@@ -2,7 +2,6 @@ require('../integration_config');
 var request = require('request');
 var async = require('async');
 var moment = require('moment');
-var _ = require('lodash');
 var testName = __filename;
 var hubUrl = process.env.hubUrl;
 hubUrl = 'http://' + hubUrl;
@@ -53,7 +52,7 @@ describe(testName, function () {
             .catch(error => {
                 expect(error).toBeNull();
             })
-            .fin(done);
+            .finally(done);
     });
 
     var validReplicatedChannelUrls = [];
@@ -159,12 +158,12 @@ describe(testName, function () {
         }
         var sourceItems = mapContentKey(source, source[0].split('/')[4]);
         var destinationItems = mapContentKey(destination, destination[0].split('/')[4]);
-        console.log('missing from source:', _.difference(sourceItems, destinationItems));
-        console.log('missing from destination:', _.difference(destinationItems, sourceItems));
+        console.log('missing from source:', sourceItems.filter(sourceItem => !(sourceItem in destinationItems)));
+        console.log('missing from destination:', destinationItems.filter(destinationItem => !(destinationItem in sourceItems)));
     }
 
     function mapContentKey(uris, channel) {
-        return _.map(uris, function (value) {
+        return uris.map(function (value) {
             return getContentKey(value, channel);
         });
     }
