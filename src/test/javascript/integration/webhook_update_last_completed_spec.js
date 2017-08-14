@@ -53,37 +53,20 @@ describe(__filename, () => {
 
     utils.putWebhook(webhookName, webhookConfig, 201, webhookURL)
 
-    // let firstItemURL;
-    // it('inserts the first item', (done) => {
-    //     utils.httpPost(channelResource, contentTypePlain, "a test " + Date.now())
-    //         .then(response => {
-    //             expect(response.statusCode).toEqual(201);
-    //             firstItemURL = response.body._links.self.href;
-    //             postedItems.push(firstItemURL);
-    //         })
-    //         .catch(function (error) {
-    //             expect(error).toBeNull();
-    //         })
-    //         .finally(done);
-    // });
-    //
-    // let secondItemURL;
-    // it('inserts the second item', (done) => {
-    //     utils.httpPost(channelResource, contentTypePlain, "a test " + Date.now())
-    //         .then(response => {
-    //             expect(response.statusCode).toEqual(201);
-    //             secondItemURL = response.body._links.self.href;
-    //             postedItems.push(secondItemURL);
-    //         })
-    //         .catch(function (error) {
-    //             expect(error).toBeNull();
-    //         })
-    //         .finally(done);
-    // });
+    let firstItemURL;
+    it('inserts the first item', (done) => {
+        utils.httpPost(channelResource, contentTypePlain, "a test " + Date.now())
+            .then(response => {
+                expect(response.statusCode).toEqual(201);
+                firstItemURL = response.body._links.self.href;
+                postedItems.push(firstItemURL);
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .finally(done);
+    });
 
-    // it('waits for data', (done) => {
-    //     utils.waitForData(callbackMessages, postedItems, done);
-    // });
 
     utils.itSleeps(5000);
 
@@ -152,29 +135,16 @@ describe(__filename, () => {
             .finally(done);
     });
 
-    // it('waits for data', (done) => {
-    //     const expectedItems = [firstItemURL, secondItemURL, secondItemURL];
-    //     utils.waitForData(callbackMessages, expectedItems, done);
-    // });
-
-    // it('verifies we got the correct items', () => {
-    //     expect(callbackMessages.length).toEqual(3);
-    //     expect(callbackMessages[0]).toEqual(firstItemURL);
-    //     expect(callbackMessages[1]).toEqual(secondItemURL);
-    //     expect(callbackMessages[2]).toEqual(secondItemURL);
-    // });
-
-    // delete callback
-    // delete webhook
 
     it('closes the callback server', (done) => {
-        console.log("checking if defined");
-        console.log(callbackServer);
         expect(callbackServer).toBeDefined();
-        console.log("before close");
-        utils.closeServer(callbackServer, () => {
-            console.log("after close");
-            done();
+
+        callbackServer.close(() => {
+            console.log("closed server....");
+            done()
+        });
+        setImmediate(function () {
+            callbackServer.emit('close')
         });
     });
 
