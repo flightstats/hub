@@ -12,14 +12,6 @@ from datetime import datetime, timedelta
 from flask import request, jsonify
 from locust import events
 
-logger = logging.getLogger('hub-locust')
-logger.setLevel(logging.INFO)
-fh = logging.FileHandler('./locust.log')
-fh.setLevel(logging.INFO)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-fh.setFormatter(formatter)
-logger.addHandler(fh)
-
 groupCallbacks = {}
 groupCallbackLocks = {}
 groupConfig = {}
