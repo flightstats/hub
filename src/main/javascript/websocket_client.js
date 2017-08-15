@@ -1,38 +1,38 @@
-var url = process.argv[2];
-if (url === undefined || process.argv.length > 3) {
-    console.log('You must supply a websocket URL as the only parameter');
-    process.exit(1);
-}
+/**
+ * This is a WebSocket client that logs incoming messages until closed (e.g. CTRL-C).
+ */
 
-var WebSocket = require('ws');
-var webSocket = new WebSocket(url);
-var messages = [];
+const {getTimestamp, logParameters} = require('./utils');
+const WebSocket = require('ws');
+const minimist = require('minimist');
+const {URL} = require('url');
 
-webSocket.on('message', function (message) {
-    messages.push(message);
+const arguments = minimist(process.argv.slice(2));
+const urlInput = arguments.url || arguments._[0];
+if (!urlInput) throw new Error('You must specify a WebSocket URL (e.g. --url ws://some.where/out/there).');
+const url = new URL(urlInput);
+
+logParameters({url: url.href});
+
+const socket = new WebSocket(url.href);
+
+socket.on('message', (message) => {
+    console.log(getTimestamp(), 'message:', message);
 });
 
-webSocket.on('error', function (error) {
-    console.log('websocket error:', error);
+socket.on('error', (error) => {
+    console.log(getTimestamp(), error);
 });
 
-webSocket.on('open', function () {
-    console.log('websocket opened:', url);
+socket.on('open', () => {
+    console.log(getTimestamp(), 'socket opened');
 });
 
-webSocket.on('close', function () {
-    console.log('websocket closed');
+socket.on('close', () => {
+    console.log(getTimestamp(), 'socket closed');
 });
 
-function waitForData(delayInMS) {
-    setTimeout(function () {
-        if (messages.length > 0) {
-            console.log('data received:', messages);
-            webSocket.close();
-        } else {
-            waitForData(delayInMS);
-        }
-    }, delayInMS);
-}
-
-waitForData(1000);
+process.on('SIGINT', () => {
+    socket.close();
+    process.exit();
+});
