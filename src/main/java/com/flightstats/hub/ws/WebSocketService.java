@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.websocket.Session;
+import javax.ws.rs.core.UriBuilder;
 import java.io.IOException;
 import java.net.URI;
 import java.net.UnknownHostException;
@@ -36,7 +37,10 @@ class WebSocketService {
     }
 
     void createCallback(Session session, String channel) throws UnknownHostException {
-        ContentKey contentKey = new ContentKey();
+        createCallback(session, channel, new ContentKey());
+    }
+
+    void createCallback(Session session, String channel, ContentKey startingKey) throws UnknownHostException {
         String id = setId(session, channel);
         URI uri = session.getRequestURI();
         logger.info("creating callback {} {} {}", channel, id, uri);
@@ -46,14 +50,18 @@ class WebSocketService {
                 .callbackUrl(getCallbackUrl(id))
                 .parallelCalls(1)
                 .name(id)
-                .startingKey(contentKey)
+                .startingKey(startingKey)
                 .build();
         webhookService.upsert(webhook);
     }
 
     private String getChannelUrl(URI uri) {
-        String channelUrl = uri.toString().replaceFirst("ws://", HubHost.getScheme());
-        return StringUtils.removeEnd(channelUrl, "/ws");
+        int indexBefore = "/channel/".length();
+        int indexAfter = uri.getPath().indexOf("/", indexBefore);
+        String channelPath = uri.getPath().substring(0, indexAfter);
+        String serverURL = HubHost.getScheme() + uri.getAuthority();
+        URI channelUrl = UriBuilder.fromUri(serverURL).path(channelPath).build();
+        return channelUrl.toString();
     }
 
     private String getCallbackUrl(String id) throws UnknownHostException {

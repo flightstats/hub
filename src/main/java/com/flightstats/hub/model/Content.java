@@ -16,25 +16,31 @@ public class Content implements Serializable {
     private final static Logger logger = LoggerFactory.getLogger(Content.class);
 
     private static final long serialVersionUID = 1L;
+    public static final int THREADS = HubProperties.getProperty("s3.large.threads", 3);
 
     private final Optional<String> contentType;
+    //contentLength is the number of bytes in the total compressed payload (meta & item)
     private long contentLength;
     private InputStream stream;
     private byte[] data;
     private Optional<ContentKey> contentKey = Optional.absent();
+    //size is the number of bytes in the raw, uncompressed item
     private Long size;
     private transient boolean isLarge;
     private transient int threads;
     private transient boolean isHistorical;
     private boolean forceWrite;
+    private boolean replicated;
 
     private Content(Builder builder) {
         contentKey = builder.contentKey;
         contentType = builder.contentType;
         stream = builder.stream;
         contentLength = builder.contentLength;
-        threads = builder.threads;
+        threads = Math.max(THREADS, builder.threads);
         forceWrite = builder.forceWrite;
+        isLarge = builder.large;
+        size = builder.size;
     }
 
     public static Builder builder() {
@@ -81,6 +87,14 @@ public class Content implements Serializable {
         return forceWrite;
     }
 
+    public boolean isReplicated() {
+        return replicated;
+    }
+
+    public void replicated() {
+        replicated = true;
+    }
+
     public InputStream getStream() {
         if (stream == null) {
             return new ByteArrayInputStream(getData());
@@ -89,11 +103,11 @@ public class Content implements Serializable {
     }
 
     public void packageStream() throws IOException {
-        if (contentLength < HubProperties.getLargePayload()) {
+        if (isLarge || contentLength >= HubProperties.getLargePayload()) {
+            isLarge = true;
+        } else {
             data = ContentMarshaller.toBytes(this);
             stream = null;
-        } else {
-            isLarge = true;
         }
     }
 
@@ -114,9 +128,10 @@ public class Content implements Serializable {
     public Long getSize() {
         if (size == null) {
             if (data == null) {
-                throw new UnsupportedOperationException("convert stream to bytes first");
+                size = -1L;
+            } else {
+                size = (long) data.length;
             }
-            size = (long) data.length;
         }
         return size;
     }
@@ -176,10 +191,12 @@ public class Content implements Serializable {
     public static class Builder {
         private Optional<String> contentType = Optional.absent();
         private long contentLength = 0;
+        private Long size;
         private Optional<ContentKey> contentKey = Optional.absent();
         private InputStream stream;
         private int threads;
         private boolean forceWrite;
+        private boolean large;
 
         public Builder withContentType(String contentType) {
             this.contentType = Optional.fromNullable(contentType);
@@ -201,6 +218,11 @@ public class Content implements Serializable {
             return this;
         }
 
+        public Builder withSize(Long size) {
+            this.size = size;
+            return this;
+        }
+
         public Builder withData(byte[] data) {
             this.stream = new ByteArrayInputStream(data);
             return this;
@@ -210,13 +232,18 @@ public class Content implements Serializable {
             return new Content(this);
         }
 
-        public Builder withThreads(String threads) {
-            this.threads = Integer.parseInt(threads);
+        public Builder withThreads(int threads) {
+            this.threads = threads;
             return this;
         }
 
         public Builder withForceWrite(boolean forceWrite) {
             this.forceWrite = forceWrite;
+            return this;
+        }
+
+        public Builder withLarge(boolean large) {
+            this.large = large;
             return this;
         }
 
@@ -226,6 +253,10 @@ public class Content implements Serializable {
 
         public long getContentLength() {
             return this.contentLength;
+        }
+
+        public long getSize() {
+            return this.size;
         }
 
         public Optional<ContentKey> getContentKey() {

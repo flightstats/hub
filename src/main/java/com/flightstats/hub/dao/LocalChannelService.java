@@ -23,7 +23,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -358,8 +357,8 @@ public class LocalChannelService implements ChannelService {
     }
 
     @Override
-    public void get(String channel, SortedSet<ContentKey> keys, Consumer<Content> callback) {
-        contentService.get(channel, keys, callback);
+    public void get(StreamResults streamResults) {
+        contentService.get(streamResults);
     }
 
     private DateTime getChannelLimitTime(String channelName) {

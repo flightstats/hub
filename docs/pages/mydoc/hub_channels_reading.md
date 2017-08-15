@@ -23,14 +23,18 @@ Content-Type: text/plain
 Creation-Date: 2013-04-23T00:21:30.662Z
 Link: <http://hub/channel/stumptown/2013/04/23/20/42/31/749/{hash}/previous>;rel="previous"
 Link: <http://hub/channel/stumptown/2013/04/23/20/42/31/749/{hash}/next>;rel="next"
+X-Item-Length: 1234567890
 ...other.headers...
 
 your content here
 ```
 
-Note: The `Content-Type` will match the Content-Type used when inserting the data.  
-There are two `Link` headers that provide links to the previous and next items in the channel.
-The `Creation-Date` header will correspond to when the data was inserted into the channel.
+Notes:
+
+- The `Content-Type` will match the Content-Type used when inserting the data.  
+- There are two `Link` headers that provide links to the previous and next items in the channel.
+- The `Creation-Date` header will correspond to when the data was inserted into the channel.
+- The `X-Item-Length` header will return `-1` for items inserted prior to the headers addition. You can force calculation by including the `X-Item-Length-Required: true` header on your request.
 
 Here's how you can do this with curl:
 
@@ -147,5 +151,13 @@ Content-Key: http://hub/channel/stumptown/2014/12/23/23/14/49/887/x46z8p
 { "type" : "coffee", "roast" : "hair bender" }
 --||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||--
 ```
+
+## ordering content from channel 
+
+Any query operation (including next, previous, earliest, latest, and times) supports the addition of the
+query parameter `?order=descending`.  `descending` can be abbreviated to `d`, or any partial spelling.
+Anything else will be interpreted as the default ascending.
+This will cause all results (including bulk queries) to be returned in descending time order.
+
 
 {% include links.html %}

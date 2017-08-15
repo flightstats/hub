@@ -22,10 +22,7 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.SortedSet;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -55,7 +52,7 @@ public class ClusterContentService implements ContentService {
     private ContentDao s3BatchContentDao;
     @Inject
     @Named(ContentDao.LARGE_PAYLOAD)
-    private ContentDao largePayloadContentDao;
+    private ContentDao s3LargePayloadContentDao;
     @Inject
     private ChannelService channelService;
     @Inject
@@ -76,7 +73,7 @@ public class ClusterContentService implements ContentService {
     public ContentKey insert(String channelName, Content content) throws Exception {
         Content spokeContent = content;
         if (content.isLarge()) {
-            largePayloadContentDao.insert(channelName, content);
+            s3LargePayloadContentDao.insert(channelName, content);
             spokeContent = createIndex(content);
         }
         ContentKey key = spokeContentDao.insert(channelName, spokeContent);
@@ -115,7 +112,7 @@ public class ClusterContentService implements ContentService {
     @Override
     public boolean historicalInsert(String channelName, Content content) throws Exception {
         if (content.isLarge()) {
-            largePayloadContentDao.insertHistorical(channelName, content);
+            s3LargePayloadContentDao.insertHistorical(channelName, content);
         } else {
             s3SingleContentDao.insertHistorical(channelName, content);
         }
@@ -154,8 +151,9 @@ public class ClusterContentService implements ContentService {
         if (content.isIndexForLarge()) {
             ContentKey indexKey = content.getContentKey().get();
             Content largeMeta = fromIndex(content);
-            content = largePayloadContentDao.get(channelName, largeMeta.getContentKey().get());
+            content = s3LargePayloadContentDao.get(channelName, largeMeta.getContentKey().get());
             content.setContentKey(indexKey);
+            content.setSize(largeMeta.getSize());
         }
         return Optional.of(content);
     }
@@ -166,24 +164,33 @@ public class ClusterContentService implements ContentService {
     }
 
     @Override
-    public void get(String channelName, SortedSet<ContentKey> keys, Consumer<Content> callback) {
-        SortedSet<MinutePath> minutePaths = ContentKeyUtil.convert(keys);
+    public void get(StreamResults streamResults) {
+        String channelName = streamResults.getChannel();
+        Consumer<Content> callback = streamResults.getCallback();
+        List<MinutePath> minutePaths = new ArrayList<>(ContentKeyUtil.convert(streamResults.getKeys()));
+        if (streamResults.isDescending()) {
+            Collections.reverse(minutePaths);
+        }
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
         DateTime spokeTtlTime = getSpokeTtlTime(channelName);
         for (MinutePath minutePath : minutePaths) {
             if (minutePath.getTime().isAfter(spokeTtlTime)
                     || channel.isSingle()) {
-                getValues(channelName, callback, minutePath);
+                getValues(channelName, streamResults.getCallback(), minutePath, streamResults.isDescending());
             } else {
-                if (!s3BatchContentDao.streamMinute(channelName, minutePath, callback)) {
-                    getValues(channelName, callback, minutePath);
+                if (!s3BatchContentDao.streamMinute(channelName, minutePath, streamResults.isDescending(), callback)) {
+                    getValues(channelName, callback, minutePath, streamResults.isDescending());
                 }
             }
         }
     }
 
-    private void getValues(String channelName, Consumer<Content> callback, ContentPathKeys contentPathKeys) {
-        for (ContentKey contentKey : contentPathKeys.getKeys()) {
+    private void getValues(String channelName, Consumer<Content> callback, ContentPathKeys contentPathKeys, boolean descending) {
+        List<ContentKey> keys = new ArrayList<>(contentPathKeys.getKeys());
+        if (descending) {
+            Collections.reverse(keys);
+        }
+        for (ContentKey contentKey : keys) {
             Optional<Content> contentOptional = get(channelName, contentKey, false);
             if (contentOptional.isPresent()) {
                 callback.accept(contentOptional.get());
@@ -291,7 +298,7 @@ public class ClusterContentService implements ContentService {
         ActiveTraces.getLocal().add("found latestCache", channel, latestCache);
         if (latestCache != null) {
             DateTime channelTtlTime = cachedChannelConfig.getTtlTime();
-            if(latestCache.getTime().isBefore(channelTtlTime)){
+            if (latestCache.getTime().isBefore(channelTtlTime)) {
                 lastContentPath.update(ContentKey.NONE, channel, CHANNEL_LATEST_UPDATED);
             }
             ActiveTraces.getLocal().add("found cached latest", channel, latest);
@@ -333,6 +340,7 @@ public class ClusterContentService implements ContentService {
         spokeContentDao.delete(channelName);
         s3SingleContentDao.delete(channelName);
         s3BatchContentDao.delete(channelName);
+        s3LargePayloadContentDao.delete(channelName);
         lastContentPath.delete(channelName, CHANNEL_LATEST_UPDATED);
         lastContentPath.delete(channelName, S3Verifier.LAST_SINGLE_VERIFIED);
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
@@ -344,12 +352,14 @@ public class ClusterContentService implements ContentService {
     @Override
     public void delete(String channelName, ContentKey contentKey) {
         s3SingleContentDao.delete(channelName, contentKey);
+        s3LargePayloadContentDao.delete(channelName, contentKey);
     }
 
     @Override
     public void deleteBefore(String name, ContentKey limitKey) {
         s3SingleContentDao.deleteBefore(name, limitKey);
         s3BatchContentDao.deleteBefore(name, limitKey);
+        s3LargePayloadContentDao.deleteBefore(name, limitKey);
     }
 
     @Override

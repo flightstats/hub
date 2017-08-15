@@ -62,7 +62,7 @@ public class S3BatchContentDaoTest {
 
     private void assertCount(String channel, MinutePath pathAndKeys, int expected) {
         AtomicInteger count = new AtomicInteger();
-        contentDao.streamMinute(channel, pathAndKeys, content -> {
+        contentDao.streamMinute(channel, pathAndKeys, false, content -> {
                     ContentKey key = content.getContentKey().get();
                     logger.info("found content {}", key);
                     count.incrementAndGet();

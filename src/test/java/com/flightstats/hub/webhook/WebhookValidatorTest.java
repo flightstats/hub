@@ -1,5 +1,6 @@
 package com.flightstats.hub.webhook;
 
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.google.common.base.Strings;
 import org.junit.Before;
@@ -104,6 +105,21 @@ public class WebhookValidatorTest {
     @Test(expected = InvalidRequestException.class)
     public void testInvalidCallbackTimeoutZero() throws Exception {
         webhook = webhook.withCallbackTimeoutSeconds(0).withBatch("SINGLE").withName("blah");
+        webhookValidator.validate(webhook);
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void testInvalidLocalhost() throws Exception {
+        HubProperties.setProperty("hub.type", "aws");
+        webhook = Webhook.builder()
+                .callbackUrl("http:/localhost:8080/url")
+                .channelUrl("http://hub/channel/channelName")
+                .parallelCalls(1)
+                .name("testInvalidChannelUrl")
+                .batch("SINGLE")
+                .callbackTimeoutSeconds(1)
+                .build();
+
         webhookValidator.validate(webhook);
     }
 

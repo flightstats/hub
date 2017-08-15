@@ -35,6 +35,7 @@ public class ContentMarshaller {
             throw new ContentTooLargeException("max payload size is " + maxBytes + " bytes");
         }
         content.setSize(bytesCopied);
+        zipOut.setComment("" + bytesCopied);
         zipOut.close();
         return baos.toByteArray();
     }
@@ -54,6 +55,10 @@ public class ContentMarshaller {
         Content.Builder builder = Content.builder().withContentKey(key);
         setMetaData(new String(bytes), builder);
         zipStream.getNextEntry();
+        String comment = ZipComment.getZipCommentFromBuffer(read);
+        if (comment != null) {
+            builder.withSize(Long.parseLong(comment));
+        }
         return builder.withStream(zipStream).build();
     }
 

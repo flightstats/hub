@@ -40,15 +40,20 @@ public class WebhookValidator {
             throw new InvalidRequestException("{\"error\": \"Allowed values for batch are 'SINGLE', 'SECOND' and 'MINUTE'\"}");
         }
         isValidCallbackTimeoutSeconds(webhook.getCallbackTimeoutSeconds());
+        if (HubProperties.getProperty("hub.type", "aws").equals("aws")) {
+            if (webhook.getCallbackUrl().toLowerCase().contains("localhost")) {
+                throw new InvalidRequestException("{\"error\": \"A callbackUrl to localhost will never succeed.\"}");
+            }
+        }
+
+
     }
 
-    private static boolean isValidCallbackTimeoutSeconds(int value) {
+    private static void isValidCallbackTimeoutSeconds(int value) {
         int minimum = HubProperties.getCallbackTimeoutMin();
         int maximum = HubProperties.getCallbackTimeoutMax();
         if (isOutsideRange(value, minimum, maximum)) {
             throw new InvalidRequestException("callbackTimeoutSeconds must be between " + minimum + " and " + maximum);
-        } else {
-            return true;
         }
     }
 

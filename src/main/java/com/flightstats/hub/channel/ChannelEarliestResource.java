@@ -3,10 +3,7 @@ package com.flightstats.hub.channel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.DirectionQuery;
-import com.flightstats.hub.model.Epoch;
-import com.flightstats.hub.model.Location;
+import com.flightstats.hub.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,20 +63,22 @@ public class ChannelEarliestResource {
                                      @QueryParam("bulk") @DefaultValue("false") boolean bulk,
                                      @QueryParam("location") @DefaultValue(Location.DEFAULT) String location,
                                      @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
+                                     @QueryParam("order") @DefaultValue(Order.DEFAULT) String order,
                                      @QueryParam("tag") String tag,
                                      @HeaderParam("Accept") String accept) {
         if (tag != null) {
-            return tagEarliestResource.getEarliestCount(tag, count, stable, bulk, batch, trace, location, epoch, accept, uriInfo);
+            return tagEarliestResource.getEarliestCount(tag, count, stable, bulk, batch, trace, location, epoch, order, accept, uriInfo);
         }
         DirectionQuery query = getDirectionQuery(channel, count, stable, location, epoch);
         SortedSet<ContentKey> keys = channelService.query(query);
         if (keys.isEmpty()) {
             return Response.status(NOT_FOUND).build();
         }
+        boolean descending = Order.isDescending(order);
         if (bulk || batch) {
-            return BulkBuilder.build(keys, channel, channelService, uriInfo, accept);
+            return BulkBuilder.build(keys, channel, channelService, uriInfo, accept, descending);
         } else {
-            return LinkBuilder.directionalResponse(keys, count, query, mapper, uriInfo, false, trace);
+            return LinkBuilder.directionalResponse(keys, count, query, mapper, uriInfo, false, trace, descending);
         }
     }
 

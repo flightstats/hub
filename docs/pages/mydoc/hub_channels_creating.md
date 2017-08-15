@@ -19,6 +19,8 @@ folder: hub
 * `ttlDays` and `maxItems` are optional, and only one can have a value greater than zero at a time. If neither is specified, a default value of 120 ttlDays is used.
 Please see [channel limits](hub_channels_overview.html#channel-limits) for more details.  To change a channel to ttlDays or maxItems, set the other value explicitly to zero.
 
+* `keepForever` overrides any `ttlDays` and `maxItems` settings.  Data inserted into a channel with keepForever=true will not be deleted.
+
 * `description` is optional and defaults to an empty string.  This text field can be up to 1024 bytes long.
 
 * `tags` is an optional array of string values.  Tag values are limited to 48 characters, and may only contain `a-z`, `A-Z` and `0-9`.

@@ -44,7 +44,6 @@ import static com.flightstats.hub.rest.Linked.linked;
 @Path("/channel/{channel}")
 public class ChannelResource {
     private final static Logger logger = LoggerFactory.getLogger(ChannelResource.class);
-    public static final String THREADS = HubProperties.getProperty("s3.large.threads", "3");
 
     @Context
     private UriInfo uriInfo;
@@ -112,7 +111,7 @@ public class ChannelResource {
     public Response insertValue(@PathParam("channel") String channelName,
                                 @HeaderParam("Content-Length") long contentLength,
                                 @HeaderParam("Content-Type") String contentType,
-                                @QueryParam("threads") String threads,
+                                @QueryParam("threads") @DefaultValue("3") String threads,
                                 @QueryParam("forceWrite") @DefaultValue("false") boolean forceWrite,
                                 final InputStream data) throws Exception {
         if (!channelService.channelExists(channelName)) {
@@ -123,7 +122,7 @@ public class ChannelResource {
                 .withContentType(contentType)
                 .withContentLength(contentLength)
                 .withStream(data)
-                .withThreads(StringUtils.defaultIfBlank(threads, THREADS))
+                .withThreads(Integer.parseInt(threads))
                 .withForceWrite(forceWrite)
                 .build();
         try {

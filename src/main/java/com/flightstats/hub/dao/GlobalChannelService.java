@@ -14,7 +14,6 @@ import org.joda.time.DateTime;
 
 import java.util.Collection;
 import java.util.SortedSet;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static java.util.Objects.isNull;
@@ -202,15 +201,15 @@ public class GlobalChannelService implements ChannelService {
     }
 
     @Override
-    public void get(String channel, SortedSet<ContentKey> keys, Consumer<Content> callback) {
-        primaryAndSecondary(channel,
+    public void get(StreamResults streamResults) {
+        primaryAndSecondary(streamResults.getChannel(),
                 () -> {
-                    localChannelService.get(channel, keys, callback);
+                    localChannelService.get(streamResults);
                     return null;
                 },
                 () -> {
                     //todo - gfm - 6/3/16 - if this is outside of the spoke TTL window, call the master.
-                    localChannelService.get(channel, keys, callback);
+                    localChannelService.get(streamResults);
                     return null;
                 });
     }
