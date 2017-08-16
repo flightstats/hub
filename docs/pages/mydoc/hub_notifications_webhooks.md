@@ -83,18 +83,18 @@ With this api, you can adjust the webhook cursor forward or backward in time.
  
 `PUT http://hub/webhook/{name}/updateCursor`
 
-``` json
-{
-  "item" : "http://localhost:8080/channel/coffee/2017/07/17/07/07/07"
-}
-``` 
+With a channel url as a body.  e.g.:
+
+`http://localhost:8080/channel/coffee/2017/07/17/07/07/07`
+
 
 The same result can be accomplished with updating the startItem and re-PUTting (upserting) the webhook.
 
 #####HTTPie example
 ```
 http PUT localhost:8080/webhook/coffeeWebhook/updateCursor \
-        item=http://localhost:8080/channel/coffee/2017/07/17/07/07/07
+        Content-Type:text/plain \
+        http://localhost:8080/channel/coffee/2017/07/17/07/07/07
 ```
 ## Webhook behavior
 

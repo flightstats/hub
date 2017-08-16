@@ -1,6 +1,5 @@
 package com.flightstats.hub.webhook;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -8,6 +7,7 @@ import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.channel.TimeLinkUtil;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.rest.Linked;
+import com.flightstats.hub.util.RequestUtils;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import org.joda.time.DateTime;
@@ -19,7 +19,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.TreeSet;
 
@@ -174,23 +173,25 @@ public class WebhookResource {
     @Path("/{name}/updateCursor")
     @PUT
     @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.TEXT_PLAIN)
     public Response updateCursor(@PathParam("name") String name, String body) {
         return cursorUpdater(name, body, uriInfo);
     }
 
     static Response cursorUpdater(@PathParam("name") String name, String body, UriInfo uriInfo) {
         logger.info("update cursor webhook {} {}", name, body);
-        Webhook webhook = Webhook.fromJson(body, webhookService.get(name)).withName(name);
+        Webhook webhook = Webhook.fromJson("{}", webhookService.get(name)).withName(name);
         ObjectMapper mapper = new ObjectMapper();
         try {
-            JsonNode root = mapper.readTree(body);
-            if (root.has("item")) {
-                String itemString = root.get("item").asText();
-                ContentPath item = ContentPath.fromFullUrl(itemString).get();
+            String itemUrl = body;
+            if (RequestUtils.isValidChannelUrl(itemUrl)) {
+                ContentPath item = ContentPath.fromFullUrl(itemUrl).get();
                 webhookService.updateCursor(webhook, item);
+            } else {
+                logger.info("cursor update failed.  Bad item: " + itemUrl);
+                return Response.status(Response.Status.BAD_REQUEST).build();
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.error("IO exception updating cursor", e);
         }
         return Response.status(Response.Status.ACCEPTED).build();

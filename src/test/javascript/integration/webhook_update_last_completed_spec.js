@@ -87,7 +87,7 @@ describe(__filename, () => {
         var url = channelResource + "/" + formatted;
         console.log("backward cursor ", url)
         var item = {'item': url};
-        utils.httpPut(webhookURL + "/updateCursor", contentTypeJSON, item)
+        utils.httpPut(webhookURL + "/updateCursor", contentTypePlain, url)
             .then(response => {
                 expect(response.statusCode).toBeLessThan(300);
             })
@@ -114,7 +114,7 @@ describe(__filename, () => {
         var url = channelResource + "/" + formatted;
         console.log("forward cursor ", url)
         var item = {'item': url};
-        utils.httpPut(webhookURL + "/updateCursor", contentTypeJSON, item)
+        utils.httpPut(webhookURL + "/updateCursor", contentTypePlain, url)
             .then(response => {
                 expect(response.statusCode).toBeLessThan(300);
             })
