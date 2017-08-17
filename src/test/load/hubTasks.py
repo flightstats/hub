@@ -12,6 +12,8 @@ from datetime import datetime, timedelta
 from flask import request, jsonify
 from locust import events
 
+logger = logging.getLogger('stdout')
+
 groupCallbacks = {}
 groupCallbackLocks = {}
 groupConfig = {}
