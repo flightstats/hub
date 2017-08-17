@@ -207,6 +207,7 @@ class HubTasks:
     def on_message(self, ws, message):
         logger.debug("ws %s", message)
         shortHref = HubTasks.getShortPath(message)
+        logger.info("websocket got " + str(shortHref) + " " + str(websockets[self.channel]["data"][0]))
         HubTasks.verify_ordered(self.channel, shortHref, websockets, "websocket")
 
     def on_close(self, ws):
