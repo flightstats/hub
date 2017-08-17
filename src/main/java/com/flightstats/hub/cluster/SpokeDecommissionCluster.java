@@ -1,7 +1,6 @@
 package com.flightstats.hub.cluster;
 
 import com.flightstats.hub.app.HubProperties;
-import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -27,16 +26,14 @@ public class SpokeDecommissionCluster implements DecommissionCluster {
 
     private final CuratorFramework curator;
     private final PathChildrenCache withinSpokeCache;
-    private HubUtils hubUtils;
 
     private static final String WITHIN_SPOKE = "/SpokeDecommission/withinSpokeTtl";
     private static final String DO_NOT_RESTART = "/SpokeDecommission/doNotRestart";
 
     @Inject
-    public SpokeDecommissionCluster(CuratorFramework curator, HubUtils hubUtils) throws Exception {
+    public SpokeDecommissionCluster(CuratorFramework curator) throws Exception {
         this.curator = curator;
         withinSpokeCache = new PathChildrenCache(curator, WITHIN_SPOKE, true);
-        this.hubUtils = hubUtils;
         withinSpokeCache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
     }
 
@@ -60,7 +57,7 @@ public class SpokeDecommissionCluster implements DecommissionCluster {
         return withinSpokeExists(getLocalhost());
     }
 
-    boolean withinSpokeExists(String server) throws Exception {
+    private boolean withinSpokeExists(String server) throws Exception {
         return withinSpokeStat(server) != null;
     }
 
@@ -72,7 +69,7 @@ public class SpokeDecommissionCluster implements DecommissionCluster {
         return doNotRestartExists(getLocalhost());
     }
 
-    boolean doNotRestartExists(String server) throws Exception {
+    private boolean doNotRestartExists(String server) throws Exception {
         return curator.checkExists().forPath(doNotRestartKey(server)) != null;
     }
 
