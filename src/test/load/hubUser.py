@@ -23,5 +23,5 @@ class HubUser:
     def start_webhook(self, config):
         pass
 
-    def should_verify_ordered(self):
-        return True
+    def skip_verify_ordered(self):
+        return False
