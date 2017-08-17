@@ -6,12 +6,13 @@ import random
 import socket
 import string
 import threading
-
 import time
 from flask import request, jsonify
 from locust import HttpLocust, TaskSet, task, events, web
 
 import globalConfig
+
+# TODO - global.py is out of date.  It may have value in the future
 
 # This test uses the http://locust.io/ framework.
 #
@@ -36,13 +37,9 @@ import globalConfig
 #
 # After starting the process, go to http://locust:8089/
 
-logger = logging.getLogger('hub-locust')
-logger.setLevel(logging.INFO)
-fh = logging.FileHandler('./locust.log')
-fh.setLevel(logging.INFO)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-fh.setFormatter(formatter)
-logger.addHandler(fh)
+# TODO - global.py is out of date.  It may have value in the future
+
+logger = logging.getLogger('stdout')
 
 groupCallbacks = {}
 groupCallbackLocks = {}
