@@ -67,6 +67,13 @@ public class WebhookManager {
         Iterable<Webhook> webhooks = webhookDao.getAll(false);
         for (Webhook webhook : webhooks) {
             webhooksToStop.remove(webhook.getName());
+            manageWebhook(webhook);
+        }
+        stop(webhooksToStop, true);
+    }
+
+    private void manageWebhook(Webhook webhook) {
+        try {
             WebhookLeader activeLeader = activeWebhooks.get(webhook.getName());
             if (activeLeader == null) {
                 start(webhook);
@@ -78,8 +85,9 @@ public class WebhookManager {
             } else {
                 logger.debug("webhook not changed {}", webhook);
             }
+        } catch (Exception e) {
+            logger.warn("error processing webhook " + webhook.getName(), e);
         }
-        stop(webhooksToStop, true);
     }
 
     private void stop(Set<String> webhooksToStop, final boolean delete) {

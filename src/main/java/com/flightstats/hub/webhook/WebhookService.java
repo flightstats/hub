@@ -10,6 +10,7 @@ import com.flightstats.hub.model.ContentPath;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +44,11 @@ public class WebhookService {
         Optional<Webhook> preExisting = get(webhook.getName());
         if (preExisting.isPresent()) {
             Webhook existing = preExisting.get();
-            if (existing.equals(webhook)) {
+            ContentPath newStartingKey = webhook.getStartingKey();
+            if (newStartingKey != null && newStartingKey.getTime().compareTo(new DateTime(1980, 1, 1, 1, 1)) >= 0
+                    && !newStartingKey.equals(existing.getStartingKey())) {
+                updateCursor(webhook, webhook.getStartingKey());
+            } else if (existing.equals(webhook)) {
                 return preExisting;
             } else if (!existing.allowedToChange(webhook)) {
                 throw new ConflictException("{\"error\": \"The channel name in the channelUrl can not change. \"}");
@@ -54,9 +59,9 @@ public class WebhookService {
             }
         }
         logger.info("upsert webhook {} ", webhook);
-        ContentPath existing = lastContentPath.getOrNull(webhook.getName(), WEBHOOK_LAST_COMPLETED);
-        logger.info("webhook {} existing {} startingKey {}", webhook.getName(), existing, webhook.getStartingKey());
-        if (existing == null || webhook.getStartingKey() != null) {
+        ContentPath existingContentPath = lastContentPath.getOrNull(webhook.getName(), WEBHOOK_LAST_COMPLETED);
+        logger.info("webhook {} existing {} startingKey {}", webhook.getName(), existingContentPath, webhook.getStartingKey());
+        if (existingContentPath == null || webhook.getStartingKey() != null) {
             logger.info("initializing {} with startingKey {}", webhook.getName(), webhook.getStartingKey());
             lastContentPath.initialize(webhook.getName(), webhook.getStartingKey(), WEBHOOK_LAST_COMPLETED);
         }
@@ -98,4 +103,16 @@ public class WebhookService {
         webhookManager.delete(name);
     }
 
+    public void updateCursor(Webhook webhook, ContentPath item) {
+        this.delete(webhook.getName());
+        try // wait a few seconds? TODO - something more intelligent?
+            {
+                Thread.sleep(2000);
+            } catch (InterruptedException ex) {
+            logger.warn("Interruption exception while deleting");
+                Thread.currentThread().interrupt();
+            }
+        this.upsert(webhook.withStartingKey(item));
+        return;
+    }
 }

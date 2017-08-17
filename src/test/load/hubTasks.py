@@ -12,15 +12,30 @@ from datetime import datetime, timedelta
 from flask import request, jsonify
 from locust import events
 
+logger = logging.getLogger('stdout')
+
 groupCallbacks = {}
 groupCallbackLocks = {}
 groupConfig = {}
 websockets = {}
+should_verify_ordered = True;
 
 
 # BasicTasks is meant to be used as a common class for running tests
 # The using class must define the 'host' value
 
+def key_from_time(dt, unit="second"):
+    key_options = {"second": dt.strftime("%Y/%m/%d/%H/%M/%S"),
+                   "minute": dt.strftime("%Y/%m/%d/%H/%M"),
+                   "hour": dt.strftime("%Y/%m/%d/%H"),
+                   "day": dt.strftime("%Y/%m/%d"),
+                   "month": dt.strftime("%Y/%m"),
+                   "year": dt.strftime("%Y"),
+                   }
+    return key_options[unit]
+
+def webhook_name(channel):
+    return "/webhook/locust_" + str(channel)
 
 class HubTasks:
     host = None
@@ -54,9 +69,11 @@ class HubTasks:
             self.start_webhook()
         if self.user.has_websocket():
             self.start_websocket()
+        should_verify_ordered = self.user.should_verify_ordered()
+
         time.sleep(5)
 
-    def start_webhook(self):
+    def webhook_config(self):
         config = {
             "number": self.number,
             "channel": self.channel,
@@ -67,10 +84,29 @@ class HubTasks:
             "client": self.client,
             "host": self.host
         }
-
         self.user.start_webhook(config)
-        group_name = "/group/locust_" + config['webhook_channel']
-        self.client.delete(group_name, name="group")
+        return config
+
+    def upsert_webhook(self, overrides={}):
+        config = self.webhook_config()
+        wh_config = {
+            "callbackUrl": "http://" + groupConfig['ip'] + ":8089/callback/" + self.channel,
+            "channelUrl": groupConfig['host'] + "/channel/" + config['webhook_channel'],
+            "parallelCalls": config['parallel'],
+            "batch": config['batch'],
+            "heartbeat": config['heartbeat']
+        }
+        wh_config.update(overrides)
+        self.client.put(webhook_name(self.channel),
+                        data=json.dumps(wh_config),
+                        headers={"Content-Type": "application/json"},
+                        name="group")
+
+    def start_webhook(self):
+        config = self.webhook_config()
+        logger.info(config)
+        webhook = webhook_name(self.channel)
+        self.client.delete(webhook, name="group")
         logger.info("group channel " + config['webhook_channel'] + " parallel:" + str(config['parallel']))
         groupCallbacks[self.channel] = {
             "data": [],
@@ -83,17 +119,71 @@ class HubTasks:
         groupCallbackLocks[self.channel] = {
             "lock": threading.Lock(),
         }
-        group = {
-            "callbackUrl": "http://" + groupConfig['ip'] + ":8089/callback/" + self.channel,
-            "channelUrl": groupConfig['host'] + "/channel/" + config['webhook_channel'],
-            "parallelCalls": config['parallel'],
-            "batch": config['batch'],
-            "heartbeat": config['heartbeat']
+        self.upsert_webhook()
+
+
+    def get_webhook_config(self):
+        json = (self.client.get(webhook_name(self.channel), name="webhook_config")).json()
+        return json
+
+    def get_webhook_last_completed(self):
+        config = self.get_webhook_config()
+        return config["lastCompleted"]
+
+    def get_channel_latest_date(self):
+        config = self.get_webhook_config()
+        channel_latest_url = config["channelLatest"]
+
+    def channel_url_from_time(self, time, unit="second"):
+        return self.host + "/channel/" + self.channel + "/" + key_from_time(time, unit)
+
+        # update webhook cursor to now "current=True" or 1 day in the past
+
+    def update_webhook_cursor(self, current=True):
+        if current:
+            url = self.channel_url_from_time(datetime.now(), "second")
+        else:
+            yesterday = datetime.now() - timedelta(days=1)
+            url = self.channel_url_from_time(yesterday, "second")
+        logger.info("updating webhook with url:  " + url)
+        data = {
+            "item": url
         }
-        self.client.put(group_name,
-                        data=json.dumps(group),
-                        headers={"Content-Type": "application/json"},
-                        name="group")
+        self.client.put(webhook_name(self.channel) + "/updateCursor", data=json.dumps(data),
+                        headers={"Content-Type": "application/json"})
+
+    def perform_cursor_update(self, update_to_yesterday, update_to_now, name="upsertCursor"):
+        # get current latest completed
+        old_latest = self.get_webhook_last_completed()
+        # update cursor
+        update_to_yesterday()
+        # wait a bit
+        time.sleep(2)
+        new_latest = self.get_webhook_last_completed()
+
+        # verify that new latest < old latest
+        it_works = new_latest < old_latest
+
+        update_to_now()
+        time.sleep(1)
+
+        if it_works:
+            events.request_success.fire(request_type="group", name=name, response_time=1,
+                                        response_length=1)
+        else:
+            events.request_failure.fire(request_type="group", name=name, response_time=1,
+                                        exception=-1)
+
+    def verify_cursor_update(self):
+        update_to_yesterday = lambda: self.update_webhook_cursor(False)
+        update_to_now = lambda: self.update_webhook_cursor(True)
+        self.perform_cursor_update(update_to_yesterday, update_to_now, "updateCursor")
+
+    def verify_cursor_update_via_upsert(self):
+        update_to_yesterday = lambda: self.upsert_webhook(
+            overrides={"startItem": self.channel_url_from_time(datetime.now() - timedelta(days=1))})
+        update_to_now = lambda: self.upsert_webhook(overrides={"startItem": self.channel_url_from_time(datetime.now())})
+        self.perform_cursor_update(update_to_yesterday, update_to_now, "upsertWebhook")
 
     def start_websocket(self):
         websockets[self.channel] = {
@@ -339,6 +429,10 @@ class HubTasks:
 
     @staticmethod
     def verify_ordered(channel, incoming_uri, obj, name):
+        if should_verify_ordered:
+            logger.debug("skipping verify_order")
+            return
+
         if obj[channel]["data"][0] == incoming_uri:
             (obj[channel]["data"]).remove(incoming_uri)
             events.request_success.fire(request_type=name, name="ordered", response_time=1,
