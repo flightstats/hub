@@ -37,6 +37,13 @@ A new channel is created with the mutableTime set to a time in the past.  Like a
 time -------------------|---------->
 ```
 
+**HTTPie Example**
+```bash
+-> % http POST localhost:8080/channel/aTestChannel/2017/08/17/09/00/00/000 \
+exampleValue:=3 exampleText:='"three"'
+```
+
+
 ### Modifying Data
 While the real-time inserts (*) are happening a multithreaded writer is inserting (+) and deleting (-) items at various points in time prior to mutableTime.
 
@@ -46,6 +53,20 @@ While the real-time inserts (*) are happening a multithreaded writer is insertin
 time -------------------|------------>
           +      - + - +             *
 ```
+
+
+**HTTPie Example:  - letting hub create the hash**
+```bash
+http POST localhost:8080/channel/aTestChannel/2017/08/17/09/00/00 \
+exampleValue:=3 exampleText:='"three"'
+```
+
+**and user defined hash**
+```bash
+-> % http POST localhost:8080/channel/aTestChannel/2017/08/17/09/00/00/000/qwerty \
+exampleValue:=3 exampleText:='"three"'
+```
+
 
 ### Querying Data
 
@@ -58,6 +79,10 @@ The epoch defaults to `IMMUTABLE`.
 time -------------------|------------>
 ```
 
+***HTTPie example: will return the links from the above two inserts***
+```bash
+-> % http localhost:8080/channel/aTestChannel/2017/08/17?epoch=MUTABLE
+```
 
 ### Changing mutableTime
 
