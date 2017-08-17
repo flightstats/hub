@@ -18,7 +18,7 @@ groupCallbacks = {}
 groupCallbackLocks = {}
 groupConfig = {}
 websockets = {}
-should_verify_ordered = True;
+skip_verify_ordered = False
 
 
 # BasicTasks is meant to be used as a common class for running tests
@@ -69,7 +69,9 @@ class HubTasks:
             self.start_webhook()
         if self.user.has_websocket():
             self.start_websocket()
-        should_verify_ordered = self.user.should_verify_ordered()
+        skip_verify_ordered = self.user.skip_verify_ordered()
+        if skip_verify_ordered:
+            logger.warn("skipping verify_ordered")
 
         time.sleep(5)
 
@@ -429,7 +431,7 @@ class HubTasks:
 
     @staticmethod
     def verify_ordered(channel, incoming_uri, obj, name):
-        if should_verify_ordered:
+        if skip_verify_ordered:
             logger.debug("skipping verify_order")
             return
 
