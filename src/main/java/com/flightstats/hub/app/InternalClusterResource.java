@@ -44,8 +44,9 @@ public class InternalClusterResource {
         root.put("/recommission/{server}", "POSTing to /recommission/{server} with the ip address of a previously decommissioned " +
                 "server will allow that server to rejoin the cluster.  The new server should be started after this command.");
         addNodes("spokeCluster", spokeCluster.getAllServers(), root);
-        addNodes("decommissioned.withinSpokeTTL", decommissionCluster.getWithinSpokeTTL(), root);
-        addNodes("decommissioned.doNotStart", decommissionCluster.getDoNotRestart(), root);
+        ObjectNode decommissioned = root.putObject("decommissioned");
+        addNodes("withinSpokeTTL", decommissionCluster.getWithinSpokeTTL(), decommissioned);
+        addNodes("doNotStart", decommissionCluster.getDoNotRestart(), decommissioned);
 
         String localhostLink = HubHost.getLocalhostUri() + requestUri.getPath();
 
