@@ -438,18 +438,16 @@ public class ChannelConfig implements Serializable, NamedType {
 
         public ChannelConfigBuilder keepForever(boolean keepForever) {
             this.keepForever = keepForever;
-            this.ttlDays = 0;
-            this.maxItems = 0;
             return this;
         }
 
         public ChannelConfigBuilder ttlDays(long ttlDays) {
-            this.ttlDays = this.keepForever ? 0 : ttlDays;
+            this.ttlDays = ttlDays;
             return this;
         }
 
         public ChannelConfigBuilder maxItems(long maxItems) {
-            this.maxItems = this.keepForever ? 0 : maxItems;
+            this.maxItems = maxItems;
             return this;
         }
 
