@@ -1,16 +1,18 @@
-FROM java:8
+FROM openjdk:8
 
-RUN apt-get update && apt-get install -y bash ntp curl
+RUN apt-get update && apt-get install -y bash ntp curl && \
+    mkdir -p /mnt/log && \
+    mkdir -p /mnt/spoke
 
-RUN mkdir -p /mnt/log
-RUN mkdir -p /mnt/spoke
-RUN mkdir -p /tmp/storage
+ENV MIN_HEAP=1g \
+    MAX_HEAP=3g \
+    NEW_SIZE=100m
+
+ADD logback.xml /etc/hub/logback.xml
+ADD hub.properties /etc/hub/hub.properties
 
 ADD hub /opt/hub
 ADD run /opt/hub/bin/run
 RUN chmod +x /opt/hub/bin/*
-
-ADD logback.xml /etc/hub/logback.xml
-ADD hub.properties /etc/hub/hub.properties
 
 ENTRYPOINT ["/bin/bash", "/opt/hub/bin/run"]
