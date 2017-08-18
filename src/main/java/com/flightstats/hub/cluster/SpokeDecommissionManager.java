@@ -26,15 +26,18 @@ public class SpokeDecommissionManager implements DecommissionManager {
     private static final Logger logger = LoggerFactory.getLogger(SpokeDecommissionManager.class);
 
     private final CuratorCluster spokeCuratorCluster;
+    private final CuratorCluster hubCuratorCluster;
     private HubHealthCheck hubHealthCheck;
     private SpokeDecommissionCluster decommissionCluster;
 
     @Inject
     public SpokeDecommissionManager(SpokeDecommissionCluster decommissionCluster,
                                     @Named("SpokeCuratorCluster") CuratorCluster spokeCuratorCluster,
+                                    @Named("HubCuratorCluster") CuratorCluster hubCuratorCluster,
                                     HubHealthCheck hubHealthCheck) throws Exception {
         this.decommissionCluster = decommissionCluster;
         this.spokeCuratorCluster = spokeCuratorCluster;
+        this.hubCuratorCluster = hubCuratorCluster;
         this.hubHealthCheck = hubHealthCheck;
         HubServices.register(new SpokeDecommissionManagerService(), HubServices.TYPE.BEFORE_HEALTH_CHECK);
     }
@@ -54,7 +57,9 @@ public class SpokeDecommissionManager implements DecommissionManager {
     @Override
     public boolean decommission() throws Exception {
         hubHealthCheck.decommissionWithinSpoke();
+
         decommissionCluster.decommission();
+
         scheduleDoNotRestart();
         return true;
     }
@@ -104,6 +109,7 @@ public class SpokeDecommissionManager implements DecommissionManager {
             decommissionCluster.doNotRestart();
             logger.info("deleting spoke cluster ");
             spokeCuratorCluster.delete();
+            hubCuratorCluster.delete();
             logger.info("doNotRestart complete");
             hubHealthCheck.decommissionedDoNotRestart();
         } catch (Exception e) {
