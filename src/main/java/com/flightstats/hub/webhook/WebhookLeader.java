@@ -283,7 +283,9 @@ class WebhookLeader implements Leader {
         deleteOnExit.set(delete);
         closeStrategy();
         stopExecutor();
-        curatorLeader.close();
+        if (null != curatorLeader) {
+            curatorLeader.close();
+        }
         logger.info("exited webhook " + name + " deleting " + delete);
     }
 

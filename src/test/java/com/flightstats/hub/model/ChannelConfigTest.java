@@ -144,6 +144,31 @@ public class ChannelConfigTest {
     }
 
     @Test
+    public void testEnforceChannelRetention() throws IOException {
+        ChannelConfig config = ChannelConfig.builder()
+                .owner("ABC")
+                .description("something something")
+                .ttlDays(15)
+                .maxItems(5)
+                .tags(Arrays.asList("uno", "dos"))
+                .replicationSource("theSources")
+                .storage("whyNotEnum?")
+                .protect(false)
+                .allowZeroBytes(false)
+                .build();
+
+        ChannelConfig config2 = ChannelConfig.builder()
+                .owner("ABC")
+                .description("something something")
+                .keepForever(true)
+                .ttlDays(15)
+                .build();
+        ChannelConfig updated = ChannelConfig.updateFromJson(config, config2.toJson());
+        assertEquals(0, updated.getMaxItems());
+        assertEquals(0, updated.getTtlDays());
+    }
+
+    @Test
     public void testGlobalCopy() throws IOException {
         GlobalConfig globalConfig = new GlobalConfig();
         globalConfig.setMaster("master");

@@ -7,6 +7,7 @@ import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.channel.TimeLinkUtil;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.rest.Linked;
+import com.flightstats.hub.util.RequestUtils;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import org.joda.time.DateTime;
@@ -166,6 +167,33 @@ public class WebhookResource {
         }
         logger.info("delete webhook {}", name);
         webhookService.delete(name);
+        return Response.status(Response.Status.ACCEPTED).build();
+    }
+
+    @Path("/{name}/updateCursor")
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.TEXT_PLAIN)
+    public Response updateCursor(@PathParam("name") String name, String body) {
+        return cursorUpdater(name, body, uriInfo);
+    }
+
+    static Response cursorUpdater(@PathParam("name") String name, String body, UriInfo uriInfo) {
+        logger.info("update cursor webhook {} {}", name, body);
+        Webhook webhook = Webhook.fromJson("{}", webhookService.get(name)).withName(name);
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            String itemUrl = body;
+            if (RequestUtils.isValidChannelUrl(itemUrl)) {
+                ContentPath item = ContentPath.fromFullUrl(itemUrl).get();
+                webhookService.updateCursor(webhook, item);
+            } else {
+                logger.info("cursor update failed.  Bad item: " + itemUrl);
+                return Response.status(Response.Status.BAD_REQUEST).build();
+            }
+        } catch (Exception e) {
+            logger.error("IO exception updating cursor", e);
+        }
         return Response.status(Response.Status.ACCEPTED).build();
     }
 }
