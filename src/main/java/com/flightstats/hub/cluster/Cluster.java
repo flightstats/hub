@@ -22,7 +22,7 @@ public interface Cluster extends Ring {
         return servers;
     }
 
-    default String getHost(boolean useName) {
+    static String getHost(boolean useName) {
         if (useName) {
             return HubHost.getLocalNamePort();
         } else {

@@ -1,5 +1,6 @@
 package com.flightstats.hub.cluster;
 
+import com.flightstats.hub.app.HubProperties;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -23,17 +24,22 @@ import java.util.concurrent.Executor;
 public class CuratorCluster implements Cluster {
 
     private final static Logger logger = LoggerFactory.getLogger(CuratorCluster.class);
+
+    private final static int WRITE_FACTOR = HubProperties.getProperty("spoke.write.factor", 3);
     private final CuratorFramework curator;
     private final String clusterPath;
     private final boolean useName;
+    private DecommissionCluster decommissionCluster;
     private final PathChildrenCache clusterCache;
     private String fullPath;
 
     @Inject
-    public CuratorCluster(CuratorFramework curator, String clusterPath, boolean useName) throws Exception {
+    public CuratorCluster(CuratorFramework curator, String clusterPath, boolean useName,
+                          DecommissionCluster decommissionCluster) throws Exception {
         this.curator = curator;
         this.clusterPath = clusterPath;
         this.useName = useName;
+        this.decommissionCluster = decommissionCluster;
         clusterCache = new PathChildrenCache(curator, clusterPath, true);
         clusterCache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
     }
@@ -56,7 +62,7 @@ public class CuratorCluster implements Cluster {
     }
 
     public void register() throws UnknownHostException {
-        String host = getHost(useName);
+        String host = Cluster.getHost(useName);
         try {
             logger.info("registering host {} {}", host, clusterPath);
             curator.create().withMode(CreateMode.EPHEMERAL).forPath(getFullPath(), host.getBytes());
@@ -69,19 +75,25 @@ public class CuratorCluster implements Cluster {
     }
 
     private String getFullPath() throws UnknownHostException {
-        fullPath = clusterPath + "/" + getHost(useName) + RandomStringUtils.randomAlphanumeric(6);
+        fullPath = clusterPath + "/" + Cluster.getHost(useName) + RandomStringUtils.randomAlphanumeric(6);
         return fullPath;
     }
 
     @Override
     public Collection<String> getLocalServer() throws UnknownHostException {
         List<String> server = new ArrayList<>();
-        server.add(getHost(false));
+        server.add(Cluster.getHost(false));
         return server;
     }
 
-    public Set<String> getServers() {
-        return getAllServers();
+    public List<String> getWriteServers() {
+        List<String> servers = decommissionCluster.filter(getAllServers());
+        if (servers.size() <= WRITE_FACTOR) {
+            return servers;
+        } else {
+            Collections.shuffle(servers);
+            return servers.subList(0, WRITE_FACTOR);
+        }
     }
 
     @Override
@@ -98,7 +110,7 @@ public class CuratorCluster implements Cluster {
     }
 
     public List<String> getRandomServers() {
-        List<String> servers = new ArrayList<>(getServers());
+        List<String> servers = new ArrayList<>(getAllServers());
         Collections.shuffle(servers);
         return servers;
     }
@@ -120,9 +132,9 @@ public class CuratorCluster implements Cluster {
 
     public void delete() {
         try {
-            logger.info("removing host from cluster {} {}", getHost(useName), fullPath);
+            logger.info("removing host from cluster {} {}", Cluster.getHost(useName), fullPath);
             curator.delete().forPath(fullPath);
-            logger.info("deleted host from cluster {} {}", getHost(useName), fullPath);
+            logger.info("deleted host from cluster {} {}", Cluster.getHost(useName), fullPath);
         } catch (KeeperException.NoNodeException e) {
             logger.info("no node for" + fullPath);
         } catch (Exception e) {

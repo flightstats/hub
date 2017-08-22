@@ -3,9 +3,11 @@ package com.flightstats.hub.spoke;
 import com.flightstats.hub.app.HubBindings;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.cluster.Cluster;
+import com.flightstats.hub.cluster.SpokeDecommissionCluster;
 import com.flightstats.hub.dao.ContentDaoUtil;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.Sleeper;
 import com.google.inject.Injector;
 import org.apache.curator.framework.CuratorFramework;
@@ -24,7 +26,8 @@ public class SpokeContentDaoTest {
         Injector injector = Integration.startAwsHub();
         util = new ContentDaoUtil(injector.getInstance(SpokeContentDao.class));
         CuratorFramework curator = injector.getInstance(CuratorFramework.class);
-        Cluster cluster = HubBindings.buildSpokeCluster(curator);
+        HubUtils hubUtils = injector.getInstance(HubUtils.class);
+        Cluster cluster = HubBindings.buildSpokeCluster(curator, new SpokeDecommissionCluster(curator, hubUtils));
         for (int i = 0; i < 10; i++) {
             if (cluster.getAllServers().size() == 0) {
                 logger.info("no servers yet...");
