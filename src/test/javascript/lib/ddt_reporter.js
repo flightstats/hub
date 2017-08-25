@@ -16,7 +16,7 @@ module.exports = {
 
     passed: 0,
     failed: 0,
-    disabled: 0,
+    skipped: 0,
 
     failures: [],
 
@@ -70,7 +70,8 @@ module.exports = {
                 break;
 
             case 'DISABLED':
-                this.disabled++;
+            case 'PENDING':
+                this.skipped++;
                 console.log(ANSI.BOLD + '< ' + ANSI.YELLOW + status + ANSI.OFF);
                 break;
 
@@ -97,7 +98,7 @@ module.exports = {
         console.log('\n' + new Array(50).join('-') + '\n');
         console.log(ANSI.GREEN + 'PASSED: ' + ANSI.BOLD + this.passed + ANSI.OFF);
         console.log(ANSI.RED + 'FAILED: ' + ANSI.BOLD + this.failed + ANSI.OFF);
-        console.log(ANSI.YELLOW + 'DISABLED: ' + ANSI.BOLD + this.disabled + ANSI.OFF + '\n');
+        console.log(ANSI.YELLOW + 'SKIPPED: ' + ANSI.BOLD + this.skipped + ANSI.OFF + '\n');
     }
 
 };
