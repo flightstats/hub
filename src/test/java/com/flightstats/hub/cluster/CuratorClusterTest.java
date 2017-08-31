@@ -1,8 +1,6 @@
 package com.flightstats.hub.cluster;
 
-import com.flightstats.hub.app.HubBindings;
 import com.flightstats.hub.test.Integration;
-import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.Sleeper;
 import org.apache.curator.framework.CuratorFramework;
 import org.junit.BeforeClass;
@@ -29,8 +27,7 @@ public class CuratorClusterTest {
     @Test
     public void testPath() throws Exception {
         logger.info("starting testPath");
-        HubUtils hubUtils = new HubUtils(HubBindings.buildJerseyClientNoRedirects(), HubBindings.buildJerseyClient());
-        CuratorCluster cluster = new CuratorCluster(curator, "/SpokeCluster", false, new SpokeDecommissionCluster(curator, hubUtils));
+        CuratorCluster cluster = new CuratorCluster(curator, "/SpokeCluster", false, new SpokeDecommissionCluster(curator));
 
         Collection<String> servers = cluster.getAllServers();
         assertNotNull(servers);
