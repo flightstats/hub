@@ -30,6 +30,9 @@ public class WebhookValidator {
         } catch (URISyntaxException e) {
             throw new InvalidRequestException("{\"error\": \"Invalid callbackUrl\"}");
         }
+        if (!webhook.getTag().isEmpty()) {
+            //TODO
+        }
         if (!RequestUtils.isValidChannelUrl(webhook.getChannelUrl())) {
             throw new InvalidRequestException("{\"error\": \"Invalid channelUrl\"}");
         }
