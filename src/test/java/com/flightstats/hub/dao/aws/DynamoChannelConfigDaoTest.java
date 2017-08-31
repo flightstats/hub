@@ -28,10 +28,10 @@ public class DynamoChannelConfigDaoTest {
     public void testSimple() {
         logger.info("DynamoChannelConfigDao {}", channelConfigDao);
         assertNotNull(channelConfigDao);
-        ChannelConfig channelConfig = ChannelConfig.builder().name("testSimple").build();
+        ChannelConfig channelConfig = ChannelConfig.builder().name("testsimple").build();
         channelConfigDao.upsert(channelConfig);
 
-        ChannelConfig testSimple = channelConfigDao.get("testSimple");
+        ChannelConfig testSimple = channelConfigDao.get("testsimple");
         logger.info("channel {}", testSimple);
         assertNotNull(testSimple);
     }
