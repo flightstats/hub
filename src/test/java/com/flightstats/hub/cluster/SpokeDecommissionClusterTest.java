@@ -1,9 +1,7 @@
 package com.flightstats.hub.cluster;
 
-import com.flightstats.hub.app.HubBindings;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.test.Integration;
-import com.flightstats.hub.util.HubUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.junit.After;
 import org.junit.BeforeClass;
@@ -19,8 +17,7 @@ public class SpokeDecommissionClusterTest {
     @BeforeClass
     public static void setUpClass() throws Exception {
         curator = Integration.startZooKeeper();
-        HubUtils hubUtils = new HubUtils(HubBindings.buildJerseyClientNoRedirects(), HubBindings.buildJerseyClient());
-        cluster = new SpokeDecommissionCluster(curator, hubUtils);
+        cluster = new SpokeDecommissionCluster(curator);
     }
 
     @After
