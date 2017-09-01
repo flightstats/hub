@@ -12,7 +12,6 @@ import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -117,16 +116,6 @@ public class CuratorCluster implements Cluster {
 
     @Override
     public Set<String> getServers(String channel) {
-        return getAllServers();
-    }
-
-    @Override
-    public Set<String> getServers(String channel, DateTime pointInTime) {
-        return getAllServers();
-    }
-
-    @Override
-    public Set<String> getServers(String channel, DateTime startTime, DateTime endTime) {
         return getAllServers();
     }
 

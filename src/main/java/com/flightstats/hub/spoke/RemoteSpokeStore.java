@@ -14,7 +14,6 @@ import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.HubUtils;
-import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
@@ -23,7 +22,6 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
 import org.apache.commons.lang3.StringUtils;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -340,12 +338,5 @@ public class RemoteSpokeStore {
 
         return countDownLatch.await(60, TimeUnit.SECONDS);
     }
-
-    private Collection<String> getAllSpokeServers(String channel) {
-        DateTime now = TimeUtil.now();
-        DateTime ttlTime = now.minusMinutes(HubProperties.getSpokeTtlMinutes());
-        return cluster.getServers(channel, ttlTime, now);
-    }
-
 
 }

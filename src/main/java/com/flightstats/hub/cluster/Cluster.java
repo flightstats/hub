@@ -3,9 +3,12 @@ package com.flightstats.hub.cluster;
 import com.flightstats.hub.app.HubHost;
 
 import java.net.UnknownHostException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
-public interface Cluster extends Ring {
+public interface Cluster {
     /**
      * @return the localhost's server
      */
@@ -15,6 +18,8 @@ public interface Cluster extends Ring {
      * @return All servers in the cluster
      */
     Set<String> getAllServers();
+
+    Set<String> getServers(String channel);
 
     default List<String> getRemoteServers(String channel) {
         List<String> servers = new ArrayList<>(getServers(channel));
@@ -30,9 +35,4 @@ public interface Cluster extends Ring {
         }
     }
 
-    default List<String> randomize(Collection<String> incoming) {
-        List<String> servers = new ArrayList<>(incoming);
-        Collections.shuffle(servers);
-        return servers;
-    }
 }
