@@ -1,6 +1,7 @@
 package com.flightstats.hub.cluster;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import org.apache.curator.framework.state.ConnectionState;
 import org.apache.curator.framework.state.ConnectionStateListener;
 import org.slf4j.Logger;
@@ -8,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@Singleton
 public class ZooKeeperState {
     private final static Logger logger = LoggerFactory.getLogger(ZooKeeperState.class);
     private final ConnectionStateListener connectionStateListener;
@@ -40,5 +42,9 @@ public class ZooKeeperState {
 
     boolean shouldStopWorking() {
         return stopWorking.get();
+    }
+
+    boolean shouldKeepWorking() {
+        return !shouldStopWorking();
     }
 }

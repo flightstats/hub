@@ -7,10 +7,7 @@ import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.model.ContentPath;
 import org.joda.time.DateTime;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.net.URI;
 import java.util.Collection;
@@ -29,6 +26,7 @@ public class InternalWebhookResource {
 
     private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private final static WebhookService webhookService = HubProvider.getInstance(WebhookService.class);
+    private final static WebhookManager WEBHOOK_MANAGER = HubProvider.getInstance(WebhookManager.class);
 
     @Context
     private UriInfo uriInfo;
@@ -125,4 +123,27 @@ public class InternalWebhookResource {
     private URI constructWebhookURI(Webhook webhook) {
         return UriBuilder.fromUri(uriInfo.getBaseUri()).path("webhook").path(webhook.getName()).build();
     }
+
+    @PUT
+    @Path("/run/{name}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response run(@PathParam("name") String name) {
+        if (WEBHOOK_MANAGER.runLocal(name)) {
+            return Response.ok().build();
+        }
+        return Response.status(400).build();
+    }
+
+    @PUT
+    @Path("/stop/{name}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response stop(@PathParam("name") String name) {
+        /*
+        todo - gfm -
+        if running, stop, waiting until completion
+         if not running, return ???
+         */
+        return null;
+    }
+
 }

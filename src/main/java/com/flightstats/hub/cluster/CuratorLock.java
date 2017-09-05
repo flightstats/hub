@@ -50,11 +50,6 @@ public class CuratorLock {
         }
     }
 
-    public void delete(final String lockPath) {
-        //deleting the path within a lock will cause Curator to log an error 'Lease already released', which can be ignored.
-        runWithLock(() -> curator.delete().deletingChildrenIfNeeded().forPath(lockPath), lockPath, 1, TimeUnit.SECONDS);
-    }
-
     /**
      * All users should handle this
      */

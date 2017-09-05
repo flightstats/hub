@@ -1,47 +1,63 @@
 package com.flightstats.hub.webhook;
 
+import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubServices;
+import com.flightstats.hub.cluster.Cluster;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.Watcher;
 import com.flightstats.hub.dao.Dao;
-import com.flightstats.hub.util.RuntimeInterruptedException;
-import com.flightstats.hub.util.Sleeper;
+import com.flightstats.hub.model.ContentPath;
+import com.flightstats.hub.rest.RestClient;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import com.google.inject.Singleton;
 import com.google.inject.name.Named;
+import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientResponse;
 import org.apache.curator.framework.api.CuratorEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static com.flightstats.hub.app.HubServices.register;
 
+@Singleton
 public class WebhookManager {
 
     private final static Logger logger = LoggerFactory.getLogger(WebhookManager.class);
 
     private static final String WATCHER_PATH = "/groupCallback/watcher";
 
-    private final WatchManager watchManager;
-    private final Dao<Webhook> webhookDao;
-    private final Provider<WebhookLeader> leaderProvider;
+    @Inject
+    private WatchManager watchManager;
+    @Inject
+    @Named("Webhook")
+    private Dao<Webhook> webhookDao;
+    @Inject
+    private Provider<WebhookLeader> v2Provider;
+    @Inject
     private LastContentPath lastContentPath;
-    private final Map<String, WebhookLeader> activeWebhooks = new HashMap<>();
+    @Inject
+    private ActiveWebhooks activeWebhooks;
 
     @Inject
-    public WebhookManager(WatchManager watchManager, @Named("Webhook") Dao<Webhook> webhookDao,
-                          Provider<WebhookLeader> leaderProvider, LastContentPath lastContentPath) {
-        this.watchManager = watchManager;
-        this.webhookDao = webhookDao;
-        this.leaderProvider = leaderProvider;
-        this.lastContentPath = lastContentPath;
+    @Named("HubCluster")
+    private Cluster hubCluster;
+
+    @Inject
+    private WebhookError webhookError;
+    @Inject
+    private WebhookContentPathSet webhookInProcess;
+
+    private Map<String, WebhookLeader> localLeaders = new HashMap<>();
+    private final Client client = RestClient.createClient(5, 15, true, true);
+
+    @Inject
+    public WebhookManager() {
         register(new WebhookIdleService(), HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
     }
 
@@ -63,93 +79,99 @@ public class WebhookManager {
     }
 
     private synchronized void manageWebhooks() {
-        Set<String> webhooksToStop = new HashSet<>(activeWebhooks.keySet());
-        Iterable<Webhook> webhooks = webhookDao.getAll(false);
-        for (Webhook webhook : webhooks) {
-            webhooksToStop.remove(webhook.getName());
-            manageWebhook(webhook);
-        }
-        stop(webhooksToStop, true);
-    }
+        //todo - gfm - do we really need to run this N(odes) times for all webhooks?
+        /*
+        //todo - gfm -
 
-    private void manageWebhook(Webhook webhook) {
-        try {
-            WebhookLeader activeLeader = activeWebhooks.get(webhook.getName());
-            if (activeLeader == null) {
-                start(webhook);
-            } else if (activeLeader.getWebhook().isChanged(webhook)) {
-                logger.info("changed webhook {}", webhook);
-                activeWebhooks.remove(webhook.getName());
-                activeLeader.exit(false);
-                start(webhook);
+        call /run on every item in Dao & ZK
+            running server is responsible for checking if the webhook has changed
+        if is in ZK and not in Dynamo, stop it on the running server
+        is key is orphaned in ZK, delete the key
+         */
+
+        Set<String> v1Webhooks = activeWebhooks.getV1();
+        Set<String> v2Webhooks = activeWebhooks.getV2();
+        Set<Webhook> daoWebhooks = new HashSet<>(webhookDao.getAll(false));
+
+        for (Webhook daoWebhook : daoWebhooks) {
+            if (v1Webhooks.contains(daoWebhook.getName())) {
+                //if is in v1 ZK, leave it alone ...
+                //todo - gfm - this can go away, eventually
+                logger.info("found v1 webhook {}", daoWebhook.getName());
+            } else if (v2Webhooks.contains(daoWebhook.getName())) {
+                logger.debug("found existing v2 webhook {}", daoWebhook.getName());
+                //todo - gfm - let the existing server evaluate if the webhook has changed
+                //todo - gfm - call /run at existing server
             } else {
-                logger.debug("webhook not changed {}", webhook);
-            }
-        } catch (Exception e) {
-            logger.warn("error processing webhook " + webhook.getName(), e);
-        }
-    }
+                logger.debug("found new v2 webhook {}", daoWebhook.getName());
 
-    private void stop(Set<String> webhooksToStop, final boolean delete) {
-        List<Callable<Object>> callables = new ArrayList<>();
-        logger.info("stopping webhooks {}", webhooksToStop);
-        for (String webhook : webhooksToStop) {
-            logger.info("stopping " + webhook);
-            final WebhookLeader webhookLeader = activeWebhooks.remove(webhook);
-            callables.add(() -> {
-                webhookLeader.exit(delete);
-                return null;
-            });
-        }
-        try {
-            List<Future<Object>> futures = Executors.newCachedThreadPool().invokeAll(callables, 90, TimeUnit.SECONDS);
-            logger.info("stopped webhook " + futures);
-        } catch (InterruptedException e) {
-            logger.warn("interrupted! ", e);
-            throw new RuntimeInterruptedException(e);
-        }
-    }
-
-    private void start(Webhook webhook) {
-        logger.trace("starting webhook {}", webhook);
-        WebhookLeader webhookLeader = leaderProvider.get();
-        webhookLeader.tryLeadership(webhook);
-        activeWebhooks.put(webhook.getName(), webhookLeader);
-    }
-
-    public void delete(String name) {
-        WebhookLeader webhookLeader = activeWebhooks.get(name);
-        if (webhookLeader == null) {
-            webhookLeader = leaderProvider.get();
-            webhookLeader.setWebhook(Webhook.builder().name(name).build());
-        }
-        notifyWatchers();
-        if (webhookLeader != null) {
-            logger.info("deleting...{}", webhookLeader);
-            for (int i = 0; i < 30; i++) {
-                if (webhookLeader.deleteIfReady()) {
-                    logger.info("deleted successfully! " + name);
-                    return;
-                } else {
-                    Sleeper.sleep(1000);
-                    logger.info("waiting to delete " + name);
+                List<String> servers = new ArrayList<>(hubCluster.getAllServers());
+                Collections.shuffle(servers);
+                for (String server : servers) {
+                    String url = HubHost.getScheme() + server + "/internal/webhook/run/" + daoWebhook.getName();
+                    logger.info("calling {}", url);
+                    ClientResponse response = client.resource(url).put(ClientResponse.class);
+                    if (response.getStatus() != 200) {
+                        logger.warn("unexpected response {}", response);
+                    } else {
+                        logger.debug("success {}", response);
+                        break;
+                    }
                 }
             }
-            webhookLeader.deleteAnyway();
+        }
+
+        Set<String> daoNames = daoWebhooks.stream()
+                .map(Webhook::getName)
+                .collect(Collectors.toSet());
+        v2Webhooks.removeAll(daoNames);
+        for (String orphanedV2 : v2Webhooks) {
+            //todo - gfm - call stop on the orphan
         }
     }
 
+    void runRemote(String name) {
+        //todo - gfm - get server name from zookeeper, if it is running ..
+
+    }
+
+    boolean runLocal(String name) {
+        logger.info("run {}", name);
+        if (localLeaders.containsKey(name)) {
+            logger.info("checking for change {}", name);
+            //todo - gfm - if it is running, check if it has changed
+
+            return false;
+        } else {
+            logger.info("starting new {}", name);
+            Webhook webhook = webhookDao.get(name);
+            WebhookLeader webhookLeader = v2Provider.get();
+            boolean hasLeadership = webhookLeader.tryLeadership(webhook);
+            if (hasLeadership) {
+                localLeaders.put(webhook.getName(), webhookLeader);
+            }
+            return hasLeadership;
+        }
+    }
+
+    //todo - gfm - it would be nice if notify for a single change did not trigger calls about all webhooks
     void notifyWatchers() {
         watchManager.notifyWatcher(WATCHER_PATH);
     }
 
+    public void delete(String name) {
+        //todo - gfm - call delete on the server running the webhook ...
+
+    }
+
     public void getStatus(Webhook webhook, WebhookStatus.WebhookStatusBuilder statusBuilder) {
         statusBuilder.lastCompleted(lastContentPath.get(webhook.getName(), WebhookStrategy.createContentPath(webhook), WebhookLeader.WEBHOOK_LAST_COMPLETED));
-        WebhookLeader webhookLeader = activeWebhooks.get(webhook.getName());
-        if (webhookLeader != null) {
-            statusBuilder.errors(webhookLeader.getErrors());
-            statusBuilder.inFlight(webhookLeader.getInFlight(webhook));
-        } else {
+        try {
+            statusBuilder.errors(webhookError.get(webhook.getName()));
+            ArrayList<ContentPath> inFlight = new ArrayList<>(new TreeSet<>(webhookInProcess.getSet(webhook.getName(), WebhookStrategy.createContentPath(webhook))));
+            statusBuilder.inFlight(inFlight);
+        } catch (Exception e) {
+            logger.warn("unable to get status " + webhook.getName(), e);
             statusBuilder.errors(Collections.emptyList());
             statusBuilder.inFlight(Collections.emptyList());
         }
@@ -164,7 +186,7 @@ public class WebhookManager {
 
         @Override
         protected void shutDown() throws Exception {
-            stop(new HashSet<>(activeWebhooks.keySet()), false);
+            //todo - gfm - stop any webhooks on this server
         }
 
     }

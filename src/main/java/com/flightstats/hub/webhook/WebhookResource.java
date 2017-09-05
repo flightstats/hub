@@ -74,7 +74,7 @@ public class WebhookResource {
         return get(name, uriInfo);
     }
 
-    static Response get(@PathParam("name") String name, UriInfo uriInfo) {
+    static Response get(String name, UriInfo uriInfo) {
         Optional<Webhook> webhookOptional = webhookService.get(name);
         if (!webhookOptional.isPresent()) {
             logger.info("webhook not found {} ", name);
@@ -141,7 +141,7 @@ public class WebhookResource {
         return upsert(name, body, uriInfo);
     }
 
-    static Response upsert(@PathParam("name") String name, String body, UriInfo uriInfo) {
+    static Response upsert(String name, String body, UriInfo uriInfo) {
         logger.info("upsert webhook {} {}", name, body);
         Webhook webhook = Webhook.fromJson(body, webhookService.get(name)).withName(name);
         Optional<Webhook> upsert = webhookService.upsert(webhook);
@@ -159,7 +159,7 @@ public class WebhookResource {
         return deleter(name);
     }
 
-    static Response deleter(@PathParam("name") String name) {
+    static Response deleter(String name) {
         Optional<Webhook> webhookOptional = webhookService.get(name);
         if (!webhookOptional.isPresent()) {
             logger.info("webhook not found for delete {} ", name);
@@ -178,7 +178,7 @@ public class WebhookResource {
         return cursorUpdater(name, body, uriInfo);
     }
 
-    static Response cursorUpdater(@PathParam("name") String name, String body, UriInfo uriInfo) {
+    static Response cursorUpdater(String name, String body, UriInfo uriInfo) {
         logger.info("update cursor webhook {} {}", name, body);
         Webhook webhook = Webhook.fromJson("{}", webhookService.get(name)).withName(name);
         ObjectMapper mapper = new ObjectMapper();
