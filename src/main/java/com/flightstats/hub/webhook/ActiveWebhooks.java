@@ -39,14 +39,18 @@ public class ActiveWebhooks {
         cleanupEmpty(v2Webhooks);
     }
 
-    private void cleanupEmpty(PathChildrenCache webhooks) {
+    private void cleanupEmpty(PathChildrenCache webhooks) throws Exception {
         List<ChildData> currentData = webhooks.getCurrentData();
-        logger.info("data {}" + currentData.size());
+        logger.info("data {}", currentData.size());
         for (ChildData childData : currentData) {
             String path = childData.getPath();
-            logger.info("path {}", path);
-            //todo - gfm - we should delete empty nodes.  the hierarchy is different between v1 & v2
-
+            List<String> children = curator.getChildren().forPath(path);
+            if (children.isEmpty()) {
+                logger.info("deleting empty {}", path);
+                curator.delete().forPath(path);
+            } else {
+                logger.info("not empty {}", path);
+            }
         }
     }
 
