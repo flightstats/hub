@@ -135,10 +135,10 @@ public class InternalWebhookResource {
     }
 
     @PUT
-    @Path("/stop/{name}")
+    @Path("/delete/{name}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response stop(@PathParam("name") String name) {
-        WEBHOOK_MANAGER.stopLocal(name);
+    public Response delete(@PathParam("name") String name) {
+        WEBHOOK_MANAGER.stopLocal(name, true);
         return Response.ok().build();
     }
 

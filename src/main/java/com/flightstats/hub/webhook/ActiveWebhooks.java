@@ -1,5 +1,6 @@
 package com.flightstats.hub.webhook;
 
+import com.flightstats.hub.app.HubHost;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.commons.lang3.StringUtils;
@@ -80,7 +81,7 @@ public class ActiveWebhooks {
         List<String> leases = curator.getChildren().forPath(path);
         for (String lease : leases) {
             byte[] bytes = curator.getData().forPath(path + "/" + lease);
-            servers.add(new String(bytes));
+            servers.add(new String(bytes) + ":" + HubHost.getLocalPort());
         }
     }
 

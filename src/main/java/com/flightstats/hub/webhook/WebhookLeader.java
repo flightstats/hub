@@ -268,16 +268,16 @@ class WebhookLeader implements Lockable {
         }
     }
 
-    void exit() {
+    void exit(boolean delete) {
         String name = webhook.getName();
-        logger.info("exiting webhook " + name + " deleting ");
-        deleteOnExit.set(false);
+        logger.info("exiting webhook " + name + "deleting " + delete);
+        deleteOnExit.set(delete);
         if (null != curatorLock2) {
             curatorLock2.delete();
         }
         closeStrategy();
         stopExecutor();
-        logger.info("exited webhook " + name + " deleting ");
+        logger.info("exited webhook " + name);
     }
 
     private void stopExecutor() {

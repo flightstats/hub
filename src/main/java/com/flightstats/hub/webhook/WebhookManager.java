@@ -93,12 +93,15 @@ public class WebhookManager {
                 logger.info("found v1 webhook {}", name);
             } else if (activeV2Webhooks.contains(name)) {
                 logger.debug("found existing v2 webhook {}", name);
-                callAllServers(name, "run", activeWebhooks.getV2Servers(name));
+                Set<String> v2Servers = activeWebhooks.getV2Servers(name);
+                if (v2Servers.isEmpty()) {
+                    startOne(name);
+                } else {
+                    callAllServers(name, "run", v2Servers);
+                }
             } else {
                 logger.debug("found new v2 webhook {}", name);
-                List<String> servers = new ArrayList<>(hubCluster.getAllServers());
-                Collections.shuffle(servers);
-                callOneServer(name, "run", servers);
+                startOne(name);
             }
         }
 
@@ -107,8 +110,14 @@ public class WebhookManager {
                 .collect(Collectors.toSet());
         activeV2Webhooks.removeAll(daoNames);
         for (String orphanedV2 : activeV2Webhooks) {
-            callAllServers(orphanedV2, "stop", activeWebhooks.getV2Servers(orphanedV2));
+            delete(orphanedV2);
         }
+    }
+
+    private void startOne(String name) {
+        List<String> servers = new ArrayList<>(hubCluster.getAllServers());
+        Collections.shuffle(servers);
+        callOneServer(name, "run", servers);
     }
 
     //todo - gfm - consolidate callAllServers & callOneServer
@@ -150,7 +159,7 @@ public class WebhookManager {
                 return false;
             }
             logger.info("webhook has changed {} to {}", runningWebhook, daoWebhook);
-            stopLocal(name);
+            stopLocal(name, false);
         }
         logger.info("starting {}", name);
         return startLocal(daoWebhook);
@@ -165,11 +174,11 @@ public class WebhookManager {
         return hasLeadership;
     }
 
-    void stopLocal(String name) {
-        logger.info("stop {}", name);
+    void stopLocal(String name, boolean delete) {
+        logger.info("stop {} {}", name, delete);
         if (localLeaders.containsKey(name)) {
             logger.info("stopping local {}", name);
-            localLeaders.get(name).exit();
+            localLeaders.get(name).exit(delete);
             localLeaders.remove(name);
         }
     }
@@ -180,7 +189,8 @@ public class WebhookManager {
     }
 
     public void delete(String name) {
-        callAllServers(name, "stop", activeWebhooks.getV2Servers(name));
+        callAllServers(name, "delete", activeWebhooks.getV2Servers(name));
+        lastContentPath.delete(name, WebhookLeader.WEBHOOK_LAST_COMPLETED);
     }
 
     public void getStatus(Webhook webhook, WebhookStatus.WebhookStatusBuilder statusBuilder) {
@@ -206,7 +216,7 @@ public class WebhookManager {
         @Override
         protected void shutDown() throws Exception {
             for (String name : localLeaders.keySet()) {
-                stopLocal(name);
+                stopLocal(name, false);
             }
             notifyWatchers();
         }

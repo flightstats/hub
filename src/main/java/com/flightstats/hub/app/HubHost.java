@@ -57,7 +57,7 @@ public class HubHost {
         }
     }
 
-    static int getLocalPort() {
+    public static int getLocalPort() {
         return port;
     }
 
