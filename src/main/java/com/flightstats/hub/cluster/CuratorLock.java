@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
  * The CuratorLock should be used for short running processes which need a global lock across all instances.
  * Longer running processes should use CuratorLeader.
  */
+//todo - gfm - deprecated?
 public class CuratorLock {
     private final static Logger logger = LoggerFactory.getLogger(CuratorLock.class);
 
@@ -48,6 +49,17 @@ public class CuratorLock {
                 //ignore
             }
         }
+    }
+
+    public void delete(final String lockPath) {
+        //deleting the path within a lock will cause Curator to log an error 'Lease already released', which can be ignored.
+        Lockable lockable = new Lockable() {
+            @Override
+            public void runWithLock() throws Exception {
+                curator.delete().deletingChildrenIfNeeded().forPath(lockPath);
+            }
+        };
+        runWithLock(lockable, lockPath, 1, TimeUnit.SECONDS);
     }
 
     /**
