@@ -181,14 +181,12 @@ public class WebhookResource {
     static Response cursorUpdater(String name, String body, UriInfo uriInfo) {
         logger.info("update cursor webhook {} {}", name, body);
         Webhook webhook = Webhook.fromJson("{}", webhookService.get(name)).withName(name);
-        ObjectMapper mapper = new ObjectMapper();
         try {
-            String itemUrl = body;
-            if (RequestUtils.isValidChannelUrl(itemUrl)) {
-                ContentPath item = ContentPath.fromFullUrl(itemUrl).get();
+            if (RequestUtils.isValidChannelUrl(body)) {
+                ContentPath item = ContentPath.fromFullUrl(body).get();
                 webhookService.updateCursor(webhook, item);
             } else {
-                logger.info("cursor update failed.  Bad item: " + itemUrl);
+                logger.info("cursor update failed.  Bad item: " + body);
                 return Response.status(Response.Status.BAD_REQUEST).build();
             }
         } catch (Exception e) {

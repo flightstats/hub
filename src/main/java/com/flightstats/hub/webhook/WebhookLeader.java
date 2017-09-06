@@ -19,7 +19,6 @@ import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -65,8 +64,8 @@ class WebhookLeader implements Lockable {
 
     private WebhookStrategy webhookStrategy;
     private AtomicReference<ContentPath> lastUpdated = new AtomicReference<>();
-    private String id = RandomStringUtils.randomAlphanumeric(4);
     private String channelName;
+    private CuratorLock2 curatorLock2;
 
     void setWebhook(Webhook webhook) {
         this.webhook = webhook;
@@ -79,7 +78,7 @@ class WebhookLeader implements Lockable {
             logger.info("not starting paused webhook " + webhook);
             return false;
         } else {
-            CuratorLock2 curatorLock2 = new CuratorLock2(curator, zooKeeperState);
+            curatorLock2 = new CuratorLock2(curator, zooKeeperState);
             return curatorLock2.runWithLock(this, getLeaderPath(), 1, TimeUnit.SECONDS);
         }
     }
@@ -269,17 +268,16 @@ class WebhookLeader implements Lockable {
         }
     }
 
-    void exit(boolean delete) {
+    void exit() {
         String name = webhook.getName();
-        logger.info("exiting webhook " + name + " deleting " + delete);
-        deleteOnExit.set(delete);
+        logger.info("exiting webhook " + name + " deleting ");
+        deleteOnExit.set(false);
+        if (null != curatorLock2) {
+            curatorLock2.delete();
+        }
         closeStrategy();
         stopExecutor();
-        //todo - gfm -
-        /*if (null != curatorLeader) {
-            curatorLeader.close();
-        }*/
-        logger.info("exited webhook " + name + " deleting " + delete);
+        logger.info("exited webhook " + name + " deleting ");
     }
 
     private void stopExecutor() {

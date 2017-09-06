@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import static com.flightstats.hub.app.HubServices.register;
@@ -53,7 +54,7 @@ public class WebhookManager {
     @Inject
     private WebhookContentPathSet webhookInProcess;
 
-    private Map<String, WebhookLeader> localLeaders = new HashMap<>();
+    private Map<String, WebhookLeader> localLeaders = new ConcurrentHashMap<>();
     private final Client client = RestClient.createClient(5, 15, true, true);
 
     @Inject
@@ -80,77 +81,96 @@ public class WebhookManager {
 
     private synchronized void manageWebhooks() {
         //todo - gfm - do we really need to run this N(odes) times for all webhooks?
-        /*
-        //todo - gfm -
-
-        call /run on every item in Dao & ZK
-            running server is responsible for checking if the webhook has changed
-        if is in ZK and not in Dynamo, stop it on the running server
-        is key is orphaned in ZK, delete the key
-         */
-
-        Set<String> v1Webhooks = activeWebhooks.getV1();
-        Set<String> v2Webhooks = activeWebhooks.getV2();
+        Set<String> activeV1Webhooks = activeWebhooks.getV1();
+        Set<String> activeV2Webhooks = activeWebhooks.getV2();
         Set<Webhook> daoWebhooks = new HashSet<>(webhookDao.getAll(false));
 
         for (Webhook daoWebhook : daoWebhooks) {
-            if (v1Webhooks.contains(daoWebhook.getName())) {
+            String name = daoWebhook.getName();
+            if (activeV1Webhooks.contains(name)) {
                 //if is in v1 ZK, leave it alone ...
                 //todo - gfm - this can go away, eventually
-                logger.info("found v1 webhook {}", daoWebhook.getName());
-            } else if (v2Webhooks.contains(daoWebhook.getName())) {
-                logger.debug("found existing v2 webhook {}", daoWebhook.getName());
-                //todo - gfm - let the existing server evaluate if the webhook has changed
-                //todo - gfm - call /run at existing server
+                logger.info("found v1 webhook {}", name);
+            } else if (activeV2Webhooks.contains(name)) {
+                logger.debug("found existing v2 webhook {}", name);
+                callAllServers(name, "run", activeWebhooks.getV2Servers(name));
             } else {
-                logger.debug("found new v2 webhook {}", daoWebhook.getName());
-
+                logger.debug("found new v2 webhook {}", name);
                 List<String> servers = new ArrayList<>(hubCluster.getAllServers());
                 Collections.shuffle(servers);
-                for (String server : servers) {
-                    String url = HubHost.getScheme() + server + "/internal/webhook/run/" + daoWebhook.getName();
-                    logger.info("calling {}", url);
-                    ClientResponse response = client.resource(url).put(ClientResponse.class);
-                    if (response.getStatus() != 200) {
-                        logger.warn("unexpected response {}", response);
-                    } else {
-                        logger.debug("success {}", response);
-                        break;
-                    }
-                }
+                callOneServer(name, "run", servers);
             }
         }
 
         Set<String> daoNames = daoWebhooks.stream()
                 .map(Webhook::getName)
                 .collect(Collectors.toSet());
-        v2Webhooks.removeAll(daoNames);
-        for (String orphanedV2 : v2Webhooks) {
-            //todo - gfm - call stop on the orphan
+        activeV2Webhooks.removeAll(daoNames);
+        for (String orphanedV2 : activeV2Webhooks) {
+            callAllServers(orphanedV2, "stop", activeWebhooks.getV2Servers(orphanedV2));
         }
     }
 
-    void runRemote(String name) {
-        //todo - gfm - get server name from zookeeper, if it is running ..
-
+    //todo - gfm - consolidate callAllServers & callOneServer
+    private void callAllServers(String name, String method, Collection<String> servers) {
+        for (String server : servers) {
+            String url = HubHost.getScheme() + server + "/internal/webhook/" + method + "/" + name;
+            logger.info("calling {}", url);
+            ClientResponse response = client.resource(url).put(ClientResponse.class);
+            if (response.getStatus() == 200) {
+                logger.debug("success {}", response);
+            } else {
+                logger.warn("unexpected response {}", response);
+            }
+        }
     }
 
-    boolean runLocal(String name) {
-        logger.info("run {}", name);
+    private void callOneServer(String name, String method, Collection<String> servers) {
+        for (String server : servers) {
+            String url = HubHost.getScheme() + server + "/internal/webhook/" + method + "/" + name;
+            logger.info("calling {}", url);
+            ClientResponse response = client.resource(url).put(ClientResponse.class);
+            if (response.getStatus() == 200) {
+                logger.debug("success {}", response);
+                break;
+            } else {
+                logger.warn("unexpected response {}", response);
+            }
+        }
+    }
+
+    boolean checkLocal(String name) {
+        Webhook daoWebhook = webhookDao.get(name);
+        logger.info("checkLocal {}", daoWebhook);
         if (localLeaders.containsKey(name)) {
             logger.info("checking for change {}", name);
-            //todo - gfm - if it is running, check if it has changed
-
-            return false;
-        } else {
-            logger.info("starting new {}", name);
-            Webhook webhook = webhookDao.get(name);
-            WebhookLeader webhookLeader = v2Provider.get();
-            boolean hasLeadership = webhookLeader.tryLeadership(webhook);
-            if (hasLeadership) {
-                localLeaders.put(webhook.getName(), webhookLeader);
+            WebhookLeader webhookLeader = localLeaders.get(name);
+            Webhook runningWebhook = webhookLeader.getWebhook();
+            if (!runningWebhook.isChanged(daoWebhook)) {
+                return false;
             }
-            return hasLeadership;
+            logger.info("webhook has changed {} to {}", runningWebhook, daoWebhook);
+            stopLocal(name);
+        }
+        logger.info("starting {}", name);
+        return startLocal(daoWebhook);
+    }
+
+    private boolean startLocal(Webhook daoWebhook) {
+        WebhookLeader webhookLeader = v2Provider.get();
+        boolean hasLeadership = webhookLeader.tryLeadership(daoWebhook);
+        if (hasLeadership) {
+            localLeaders.put(daoWebhook.getName(), webhookLeader);
+        }
+        return hasLeadership;
+    }
+
+    void stopLocal(String name) {
+        logger.info("stop {}", name);
+        if (localLeaders.containsKey(name)) {
+            logger.info("stopping local {}", name);
+            localLeaders.get(name).exit();
+            localLeaders.remove(name);
         }
     }
 
@@ -160,8 +180,7 @@ public class WebhookManager {
     }
 
     public void delete(String name) {
-        //todo - gfm - call delete on the server running the webhook ...
-
+        callAllServers(name, "stop", activeWebhooks.getV2Servers(name));
     }
 
     public void getStatus(Webhook webhook, WebhookStatus.WebhookStatusBuilder statusBuilder) {
@@ -186,7 +205,10 @@ public class WebhookManager {
 
         @Override
         protected void shutDown() throws Exception {
-            //todo - gfm - stop any webhooks on this server
+            for (String name : localLeaders.keySet()) {
+                stopLocal(name);
+            }
+            notifyWatchers();
         }
 
     }

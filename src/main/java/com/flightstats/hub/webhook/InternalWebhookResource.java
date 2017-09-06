@@ -128,7 +128,7 @@ public class InternalWebhookResource {
     @Path("/run/{name}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response run(@PathParam("name") String name) {
-        if (WEBHOOK_MANAGER.runLocal(name)) {
+        if (WEBHOOK_MANAGER.checkLocal(name)) {
             return Response.ok().build();
         }
         return Response.status(400).build();
@@ -138,12 +138,8 @@ public class InternalWebhookResource {
     @Path("/stop/{name}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response stop(@PathParam("name") String name) {
-        /*
-        todo - gfm -
-        if running, stop, waiting until completion
-         if not running, return ???
-         */
-        return null;
+        WEBHOOK_MANAGER.stopLocal(name);
+        return Response.ok().build();
     }
 
 }
