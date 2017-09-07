@@ -10,6 +10,7 @@ import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.rest.RestClient;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
@@ -22,6 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.flightstats.hub.app.HubServices.register;
@@ -60,6 +62,7 @@ public class WebhookManager {
     @Inject
     public WebhookManager() {
         register(new WebhookIdleService(), HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
+        register(new WebhookScheduledService(), HubServices.TYPE.AFTER_HEALTHY_START);
     }
 
     private void start() {
@@ -93,11 +96,12 @@ public class WebhookManager {
                 logger.info("found v1 webhook {}", name);
             } else if (activeV2Webhooks.contains(name)) {
                 logger.debug("found existing v2 webhook {}", name);
+                //todo - gfm - what happens if we have more than one?  call stop & start?
                 Set<String> v2Servers = activeWebhooks.getV2Servers(name);
                 if (v2Servers.isEmpty()) {
                     startOne(name);
                 } else {
-                    callAllServers(name, "run", v2Servers);
+                    callOneServer(name, "run", v2Servers);
                 }
             } else {
                 logger.debug("found new v2 webhook {}", name);
@@ -155,8 +159,11 @@ public class WebhookManager {
             logger.info("checking for change {}", name);
             WebhookLeader webhookLeader = localLeaders.get(name);
             Webhook runningWebhook = webhookLeader.getWebhook();
+            /*
+            todo - gfm - if a webhook is changed, we only want to run the start & stop once, not 3 times
+             */
             if (!runningWebhook.isChanged(daoWebhook)) {
-                return false;
+                return true;
             }
             logger.info("webhook has changed {} to {}", runningWebhook, daoWebhook);
             stopLocal(name, false);
@@ -165,6 +172,10 @@ public class WebhookManager {
         return startLocal(daoWebhook);
     }
 
+
+    //todo - gfm - create a new restart method that gets the lock
+
+    //todo - gfm - start & stop should use webhook specific local locks
     private boolean startLocal(Webhook daoWebhook) {
         WebhookLeader webhookLeader = v2Provider.get();
         boolean hasLeadership = webhookLeader.tryLeadership(daoWebhook);
@@ -174,6 +185,7 @@ public class WebhookManager {
         return hasLeadership;
     }
 
+    //todo - gfm - start & stop should use webhook specific local locks
     void stopLocal(String name, boolean delete) {
         logger.info("stop {} {}", name, delete);
         if (localLeaders.containsKey(name)) {
@@ -221,5 +233,18 @@ public class WebhookManager {
             notifyWatchers();
         }
 
+    }
+
+    private class WebhookScheduledService extends AbstractScheduledService {
+        @Override
+        protected void runOneIteration() throws Exception {
+            manageWebhooks();
+        }
+
+        @Override
+        protected Scheduler scheduler() {
+            //todo - gfm - hmmm
+            return Scheduler.newFixedRateSchedule(1, 2, TimeUnit.MINUTES);
+        }
     }
 }
