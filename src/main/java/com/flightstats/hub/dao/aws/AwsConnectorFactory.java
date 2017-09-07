@@ -11,6 +11,7 @@ import com.amazonaws.retry.v2.RetryPolicyContext;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.flightstats.hub.app.HubProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,10 +33,12 @@ public class AwsConnectorFactory {
 
     public AmazonS3 getS3Client() throws IOException {
         AmazonS3Client amazonS3Client;
+        AmazonS3 s3 = AmazonS3ClientBuilder.defaultClient();
         ClientConfiguration configuration = getClientConfiguration("s3", true);
         try {
             InstanceProfileCredentialsProvider credentialsProvider = new InstanceProfileCredentialsProvider();
             credentialsProvider.getCredentials();
+//            amazonS3Client = s3.;
             amazonS3Client = new AmazonS3Client(credentialsProvider, configuration);
         } catch (Exception e) {
             logger.warn("unable to use InstanceProfileCredentialsProvider " + e.getMessage());
