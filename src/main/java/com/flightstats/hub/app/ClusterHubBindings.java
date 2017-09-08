@@ -1,6 +1,6 @@
 package com.flightstats.hub.app;
 
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.s3.AmazonS3;
 import com.flightstats.hub.cluster.SpokeDecommissionManager;
 import com.flightstats.hub.cluster.WatchManager;
@@ -78,7 +78,7 @@ class ClusterHubBindings extends AbstractModule {
     @Inject
     @Provides
     @Singleton
-    public AmazonDynamoDBClient buildDynamoClient(AwsConnectorFactory factory) throws IOException {
+    public AmazonDynamoDB buildDynamoClient(AwsConnectorFactory factory) throws IOException {
         return factory.getDynamoClient();
     }
 
