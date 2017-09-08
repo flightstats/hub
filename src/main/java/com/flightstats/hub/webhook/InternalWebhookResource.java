@@ -128,7 +128,7 @@ public class InternalWebhookResource {
     @Path("/run/{name}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response run(@PathParam("name") String name) {
-        if (WEBHOOK_MANAGER.checkLocal(name)) {
+        if (WEBHOOK_MANAGER.ensureRunning(name)) {
             return Response.ok().build();
         }
         return Response.status(400).build();

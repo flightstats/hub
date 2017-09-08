@@ -17,6 +17,8 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
+import de.jkeylockmanager.manager.KeyLockManager;
+import de.jkeylockmanager.manager.KeyLockManagers;
 import org.apache.curator.framework.api.CuratorEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,9 +60,11 @@ public class WebhookManager {
 
     private Map<String, WebhookLeader> localLeaders = new ConcurrentHashMap<>();
     private final Client client = RestClient.createClient(5, 15, true, true);
+    private final KeyLockManager lockManager;
 
     @Inject
     public WebhookManager() {
+        lockManager = KeyLockManagers.newLock(1, TimeUnit.SECONDS);
         register(new WebhookIdleService(), HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
         register(new WebhookScheduledService(), HubServices.TYPE.AFTER_HEALTHY_START);
     }
@@ -152,16 +156,17 @@ public class WebhookManager {
         }
     }
 
-    boolean checkLocal(String name) {
+    boolean ensureRunning(String name) {
+        return lockManager.executeLocked(name, () -> ensureRunningWithLock(name));
+    }
+
+    private boolean ensureRunningWithLock(String name) {
         Webhook daoWebhook = webhookDao.get(name);
-        logger.info("checkLocal {}", daoWebhook);
+        logger.info("ensureRunning {}", daoWebhook);
         if (localLeaders.containsKey(name)) {
             logger.info("checking for change {}", name);
             WebhookLeader webhookLeader = localLeaders.get(name);
             Webhook runningWebhook = webhookLeader.getWebhook();
-            /*
-            todo - gfm - if a webhook is changed, we only want to run the start & stop once, not 3 times
-             */
             if (!runningWebhook.isChanged(daoWebhook)) {
                 return true;
             }
@@ -172,10 +177,6 @@ public class WebhookManager {
         return startLocal(daoWebhook);
     }
 
-
-    //todo - gfm - create a new restart method that gets the lock
-
-    //todo - gfm - start & stop should use webhook specific local locks
     private boolean startLocal(Webhook daoWebhook) {
         WebhookLeader webhookLeader = v2Provider.get();
         boolean hasLeadership = webhookLeader.tryLeadership(daoWebhook);
@@ -185,7 +186,6 @@ public class WebhookManager {
         return hasLeadership;
     }
 
-    //todo - gfm - start & stop should use webhook specific local locks
     void stopLocal(String name, boolean delete) {
         logger.info("stop {} {}", name, delete);
         if (localLeaders.containsKey(name)) {
@@ -238,6 +238,7 @@ public class WebhookManager {
     private class WebhookScheduledService extends AbstractScheduledService {
         @Override
         protected void runOneIteration() throws Exception {
+            //todo - gfm -  could this just check for empty locks ...
             manageWebhooks();
         }
 
