@@ -57,8 +57,12 @@ public class CuratorLock2 {
         }
     }
 
-    public void delete() {
+    public void stopWorking() {
         leadershipV2.setLeadership(false);
+    }
+
+    public void delete() {
+        stopWorking();
         if (mutex != null) {
             release();
         }
