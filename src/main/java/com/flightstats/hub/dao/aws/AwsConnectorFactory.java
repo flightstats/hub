@@ -1,7 +1,7 @@
 package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.*;
-import com.amazonaws.auth.InstanceProfileCredentialsProvider;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.auth.PropertiesCredentials;
 import com.amazonaws.retry.PredefinedRetryPolicies;
 import com.amazonaws.retry.RetryPolicy;
@@ -34,7 +34,7 @@ public class AwsConnectorFactory {
         AmazonS3Client amazonS3Client;
         ClientConfiguration configuration = getClientConfiguration("s3", true);
         try {
-            InstanceProfileCredentialsProvider credentialsProvider = new InstanceProfileCredentialsProvider();
+            DefaultAWSCredentialsProviderChain credentialsProvider = new DefaultAWSCredentialsProviderChain();
             credentialsProvider.getCredentials();
             amazonS3Client = new AmazonS3Client(credentialsProvider, configuration);
         } catch (Exception e) {
@@ -50,7 +50,7 @@ public class AwsConnectorFactory {
         AmazonDynamoDBClient client;
         ClientConfiguration configuration = getClientConfiguration("dynamo", false);
         try {
-            InstanceProfileCredentialsProvider credentialsProvider = new InstanceProfileCredentialsProvider();
+            DefaultAWSCredentialsProviderChain credentialsProvider = new DefaultAWSCredentialsProviderChain();
             credentialsProvider.getCredentials();
             client = new AmazonDynamoDBClient(credentialsProvider, configuration);
         } catch (Exception e) {
