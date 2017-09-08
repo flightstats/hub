@@ -3,7 +3,7 @@ package com.flightstats.hub.webhook;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.text.RandomStringGenerator;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.Stat;
@@ -29,7 +29,7 @@ class WebhookError {
     }
 
     public void add(String webhook, String error) {
-        String path = getErrorRoot(webhook) + "/" + TimeUtil.now().getMillis() + RandomStringUtils.randomAlphanumeric(6);
+        String path = getErrorRoot(webhook) + "/" + TimeUtil.now().getMillis() + (new RandomStringGenerator.Builder().build()).generate(6);
         try {
             curator.create().creatingParentsIfNeeded().forPath(path, error.getBytes());
         } catch (Exception e) {

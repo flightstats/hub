@@ -22,7 +22,7 @@ import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
-import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.text.RandomStringGenerator;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
 import org.joda.time.DateTime;
@@ -69,7 +69,7 @@ class WebhookLeader implements Leader {
 
     private WebhookStrategy webhookStrategy;
     private AtomicReference<ContentPath> lastUpdated = new AtomicReference<>();
-    private String id = RandomStringUtils.randomAlphanumeric(4);
+    private String id = (new RandomStringGenerator.Builder().build()).generate(4);
     private String channelName;
 
     void setWebhook(Webhook webhook) {

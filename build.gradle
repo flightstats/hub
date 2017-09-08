@@ -93,6 +93,7 @@ dependencies {
     testCompile 'org.testng:testng:6.11'
 
     compile 'org.apache.commons:commons-lang3:3.6'
+    compile group: 'org.apache.commons', name: 'commons-text', version: '1.1'
     compile 'commons-io:commons-io:2.5'
     compile('com.github.rholder:guava-retrying:2.0.0') {
         exclude group: 'com.google.guava'

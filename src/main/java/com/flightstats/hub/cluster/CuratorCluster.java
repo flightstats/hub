@@ -4,7 +4,7 @@ import com.flightstats.hub.app.HubProperties;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.text.RandomStringGenerator;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
@@ -74,7 +74,7 @@ public class CuratorCluster implements Cluster {
     }
 
     private String getFullPath() throws UnknownHostException {
-        fullPath = clusterPath + "/" + Cluster.getHost(useName) + RandomStringUtils.randomAlphanumeric(6);
+        fullPath = clusterPath + "/" + Cluster.getHost(useName) + (new RandomStringGenerator.Builder().build()).generate(6);
         return fullPath;
     }
 

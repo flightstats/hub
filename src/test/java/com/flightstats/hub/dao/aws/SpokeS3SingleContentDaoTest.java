@@ -7,7 +7,7 @@ import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.spoke.SpokeContentDao;
 import com.flightstats.hub.test.Integration;
 import com.google.inject.Injector;
-import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.text.RandomStringGenerator;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -36,7 +36,7 @@ public class SpokeS3SingleContentDaoTest {
     @Test
     public void testSpokeReadWrite() throws Exception {
         String channel = "testSpokeReadWrite";
-        byte[] bytes = RandomStringUtils.random(10 * 1024).getBytes();
+        byte[] bytes = (new RandomStringGenerator.Builder().build()).generate(10 * 1024).getBytes();
         Content firstContent = Content.builder()
                 .withContentKey(new ContentKey())
                 .withContentType("stuff")

@@ -6,12 +6,12 @@ import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.webhook.Webhook;
 import com.flightstats.hub.webhook.WebhookService;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.text.RandomStringGenerator;
 
 class EventWebhook {
 
     private final WebhookService webhookService = HubProvider.getInstance(WebhookService.class);
-    private final String random = RandomStringUtils.randomAlphanumeric(6);
+    private final String random = (new RandomStringGenerator.Builder().build()).generate(6);
     private ContentOutput contentOutput;
 
     EventWebhook(ContentOutput contentOutput) {

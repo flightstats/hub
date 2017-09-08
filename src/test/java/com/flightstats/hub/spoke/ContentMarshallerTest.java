@@ -3,7 +3,7 @@ package com.flightstats.hub.spoke;
 import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
-import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.text.RandomStringGenerator;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -56,7 +56,7 @@ public class ContentMarshallerTest {
     @Test
     public void testJustData() throws IOException {
         Content content = Content.builder()
-                .withData(RandomStringUtils.randomAlphanumeric(1024).getBytes())
+                .withData((new RandomStringGenerator.Builder().build()).generate(1024).getBytes())
                 .withContentKey(new ContentKey())
                 .build();
         verify(content, 1024);
@@ -70,7 +70,7 @@ public class ContentMarshallerTest {
     }
 
     private static Content getContent(int size) {
-        String random = RandomStringUtils.randomAlphanumeric(size);
+        String random = (new RandomStringGenerator.Builder().build()).generate(size);
         return Content.builder()
                 .withContentType("application/json")
                 .withData(random.getBytes())
