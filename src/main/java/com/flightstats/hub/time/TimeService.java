@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.net.ConnectException;
+import java.nio.charset.StandardCharsets;
 
 @Singleton
 public class TimeService {
@@ -104,7 +105,7 @@ public class TimeService {
     private void createFile() {
         try {
             File file = new File(remoteFile);
-            FileUtils.write(file, "true");
+            FileUtils.write(file, "true", StandardCharsets.UTF_8);
             logger.info("wrote file " + remoteFile);
         } catch (IOException e) {
             logger.warn("unable to write file", e);
