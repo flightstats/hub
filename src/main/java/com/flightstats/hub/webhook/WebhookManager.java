@@ -108,7 +108,7 @@ public class WebhookManager {
             if (v2Servers.isEmpty()) {
                 startOne(name);
             } else {
-                callOneServer(name, "run", v2Servers);
+                callOneRun(name, v2Servers);
             }
         } else {
             logger.debug("found new v2 webhook {}", name);
@@ -119,13 +119,12 @@ public class WebhookManager {
     private void startOne(String name) {
         List<String> servers = new ArrayList<>(hubCluster.getAllServers());
         Collections.shuffle(servers);
-        callOneServer(name, "run", servers);
+        callOneRun(name, servers);
     }
 
-    //todo - gfm - consolidate callAllServers & callOneServer
-    private void callAllServers(String name, String method, Collection<String> servers) {
+    private void callAllDelete(String name, Collection<String> servers) {
         for (String server : servers) {
-            String url = HubHost.getScheme() + server + "/internal/webhook/" + method + "/" + name;
+            String url = HubHost.getScheme() + server + "/internal/webhook/delete/" + name;
             logger.info("calling {}", url);
             ClientResponse response = client.resource(url).put(ClientResponse.class);
             if (response.getStatus() == 200) {
@@ -136,9 +135,9 @@ public class WebhookManager {
         }
     }
 
-    private void callOneServer(String name, String method, Collection<String> servers) {
+    private void callOneRun(String name, Collection<String> servers) {
         for (String server : servers) {
-            String url = HubHost.getScheme() + server + "/internal/webhook/" + method + "/" + name;
+            String url = HubHost.getScheme() + server + "/internal/webhook/run/" + name;
             logger.info("calling {}", url);
             ClientResponse response = client.resource(url).put(ClientResponse.class);
             if (response.getStatus() == 200) {
@@ -194,7 +193,7 @@ public class WebhookManager {
     }
 
     public void delete(String name) {
-        callAllServers(name, "delete", activeWebhooks.getV2Servers(name));
+        callAllDelete(name, activeWebhooks.getV2Servers(name));
         lastContentPath.delete(name, WebhookLeader.WEBHOOK_LAST_COMPLETED);
     }
 
