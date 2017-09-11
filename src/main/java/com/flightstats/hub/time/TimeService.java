@@ -6,6 +6,7 @@ import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.Cluster;
 import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.HubUtils;
+import com.flightstats.hub.util.StringUtils;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -15,7 +16,6 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.text.RandomStringGenerator;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
@@ -34,7 +34,7 @@ public class TimeService {
     private final String remoteFile = HubProperties.getProperty("app.remoteTimeFile", "/home/hub/remoteTime");
     private final static Client client = RestClient.createClient(1, 5, true, false);
 
-    private final static String randomKey = (new RandomStringGenerator.Builder().build()).generate(6);
+    private final static String randomKey = StringUtils.randomAlphaNumeric(6);
 
     @Inject
     @Named("HubCluster")

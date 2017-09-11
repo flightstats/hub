@@ -15,6 +15,7 @@ import com.flightstats.hub.model.RecurringTrace;
 import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
+import com.flightstats.hub.util.StringUtils;
 import com.flightstats.hub.util.TimeUtil;
 import com.github.rholder.retry.RetryException;
 import com.github.rholder.retry.Retryer;
@@ -22,7 +23,6 @@ import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
-import org.apache.commons.text.RandomStringGenerator;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
 import org.joda.time.DateTime;
@@ -69,7 +69,7 @@ class WebhookLeader implements Leader {
 
     private WebhookStrategy webhookStrategy;
     private AtomicReference<ContentPath> lastUpdated = new AtomicReference<>();
-    private String id = (new RandomStringGenerator.Builder().build()).generate(4);
+    private String id = StringUtils.randomAlphaNumeric(4);
     private String channelName;
 
     void setWebhook(Webhook webhook) {

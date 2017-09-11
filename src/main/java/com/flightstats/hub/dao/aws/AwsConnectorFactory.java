@@ -36,19 +36,25 @@ public class AwsConnectorFactory {
     public AmazonS3 getS3Client() throws IOException {
         AmazonS3 amazonS3Client;
         ClientConfiguration configuration = getClientConfiguration("s3", true);
-        DefaultAWSCredentialsProviderChain credentialsProvider = new DefaultAWSCredentialsProviderChain();
-        credentialsProvider.getCredentials();
+        DefaultAWSCredentialsProviderChain credentialsProvider;
         try {
+            credentialsProvider = new DefaultAWSCredentialsProviderChain();
+            credentialsProvider.getCredentials();
             amazonS3Client = AmazonS3ClientBuilder.standard()
                     .withCredentials(credentialsProvider)
                     .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(s3Endpoint, "us-east-1"))
                     .build();
         } catch (Exception e) {
             logger.warn("unable to use DefaultAWSCredentialsProviderChain " + e.getMessage());
-            amazonS3Client = AmazonS3ClientBuilder.standard()
-                    .withCredentials(new AWSStaticCredentialsProvider(getPropertiesCredentials()))
-                    .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(s3Endpoint, "us-east-1"))
-                    .build();
+            try {
+                amazonS3Client = AmazonS3ClientBuilder.standard()
+                        .withCredentials(new AWSStaticCredentialsProvider(getPropertiesCredentials()))
+                        .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(s3Endpoint, "us-east-1"))
+                        .build();
+            } catch (Exception e1) {
+                e1.printStackTrace();
+                throw e1;
+            }
         }
         return amazonS3Client;
     }
@@ -57,19 +63,25 @@ public class AwsConnectorFactory {
         logger.info("creating for  " + protocol + " " + dynamoEndpoint);
         AmazonDynamoDB client;
         ClientConfiguration configuration = getClientConfiguration("dynamo", false);
-        DefaultAWSCredentialsProviderChain credentialsProvider = new DefaultAWSCredentialsProviderChain();
-        credentialsProvider.getCredentials();
+        DefaultAWSCredentialsProviderChain credentialsProvider;
         try {
+            credentialsProvider = new DefaultAWSCredentialsProviderChain();
+            credentialsProvider.getCredentials();
             client = AmazonDynamoDBClientBuilder.standard()
                     .withCredentials(credentialsProvider)
                     .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(dynamoEndpoint, "us-east-1"))  // TODO: do we use more than one signingRegion?
                     .build();
         } catch (Exception e) {
             logger.warn("unable to use DefaultAWSCredentialsProviderChain " + e.getMessage());
-            client = AmazonDynamoDBClientBuilder.standard()
-                    .withCredentials(credentialsProvider)
-                    .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(dynamoEndpoint, "us-east-1"))
-                    .build();
+            try {
+                client = AmazonDynamoDBClientBuilder.standard()
+                        .withCredentials(new AWSStaticCredentialsProvider(getPropertiesCredentials()))
+                        .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(dynamoEndpoint, "us-east-1"))
+                        .build();
+            } catch (Exception e1) {
+                e1.printStackTrace();
+                throw e1;
+            }
         }
         return client;
 

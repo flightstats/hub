@@ -3,7 +3,6 @@ package com.flightstats.hub.model;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.text.RandomStringGenerator;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormatter;
@@ -25,7 +24,7 @@ public class ContentKey implements ContentPath {
     }
 
     public ContentKey(DateTime time) {
-        this(time, (new RandomStringGenerator.Builder().build()).generate(6));
+        this(time, com.flightstats.hub.util.StringUtils.randomAlphaNumeric(6));
     }
 
     public ContentKey(DateTime time, String hash) {
