@@ -3,7 +3,6 @@ package com.flightstats.hub.util;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.test.Integration;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -20,7 +19,7 @@ public class HubUtilsTest {
 
     private final static Logger logger = LoggerFactory.getLogger(HubUtilsTest.class);
 
-    private static final String HUT_TEST = "test_0_HubUtilsTest" + RandomStringUtils.randomAlphanumeric(6);
+    private static final String HUT_TEST = "test_0_HubUtilsTest" + StringUtils.randomAlphaNumeric(6);
     private static HubUtils hubUtils;
     private static String channelUrl;
 

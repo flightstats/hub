@@ -6,8 +6,8 @@ import com.flightstats.hub.dao.ContentDaoUtil;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.NoOpMetricsService;
 import com.flightstats.hub.model.*;
+import com.flightstats.hub.util.StringUtils;
 import com.flightstats.hub.util.TimeUtil;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.joda.time.DateTime;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -94,7 +94,7 @@ public class S3BatchContentDaoTest {
 
     @Test
     public void testQueryMinute() throws IOException {
-        String channel = "testQueryMinute" + RandomStringUtils.randomAlphanumeric(20);
+        String channel = "testQueryMinute" + StringUtils.randomAlphaNumeric(20);
         DateTime start = TimeUtil.now().minusMinutes(10);
         ContentKey key = new ContentKey(start, "start");
         for (int i = 0; i < 5; i++) {
@@ -111,7 +111,7 @@ public class S3BatchContentDaoTest {
 
     @Test
     public void testQueryHour() throws IOException {
-        String channel = "testQueryHour" + RandomStringUtils.randomAlphanumeric(20);
+        String channel = "testQueryHour" + StringUtils.randomAlphaNumeric(20);
         DateTime start = TimeUtil.now().withMinuteOfHour(54);
         ContentKey key = new ContentKey(start, "start");
         for (int i = 0; i < 12; i++) {
@@ -153,7 +153,7 @@ public class S3BatchContentDaoTest {
 
     @Test
     public void testDirectionQueryAndDelete() throws Exception {
-        String channel = "testDirectionQuery" + RandomStringUtils.randomAlphanumeric(20);
+        String channel = "testDirectionQuery" + StringUtils.randomAlphaNumeric(20);
         DateTime start = TimeUtil.now().minusHours(2);
         ContentKey key = new ContentKey(new MinutePath(start).getTime(), "-");
         for (int i = 0; i < 12; i++) {
@@ -174,7 +174,7 @@ public class S3BatchContentDaoTest {
 
     @Test
     public void testPreviousEdgeCase() throws Exception {
-        String channel = "testPreviousEdgeCase" + RandomStringUtils.randomAlphanumeric(20);
+        String channel = "testPreviousEdgeCase" + StringUtils.randomAlphaNumeric(20);
         DateTime start = TimeUtil.now().minusHours(2);
         List<ContentKey> contentKeys = writeBatchMinute(channel, new MinutePath(start), 4);
         logger.info("wrote keys ", contentKeys);
@@ -207,7 +207,7 @@ public class S3BatchContentDaoTest {
 
     @Test
     public void testDirectionQueryBug() throws Exception {
-        String channel = "testDirectionQueryBug" + RandomStringUtils.randomAlphanumeric(20);
+        String channel = "testDirectionQueryBug" + StringUtils.randomAlphaNumeric(20);
         DateTime start = TimeUtil.now().minusHours(2);
         MinutePath startItem = new MinutePath(start);
         writeBatchMinute(channel, startItem, 20);

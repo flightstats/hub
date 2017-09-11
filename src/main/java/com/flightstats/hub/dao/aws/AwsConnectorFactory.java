@@ -1,16 +1,19 @@
 package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.*;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.auth.PropertiesCredentials;
+import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.retry.PredefinedRetryPolicies;
 import com.amazonaws.retry.RetryPolicy;
 import com.amazonaws.retry.RetryUtils;
 import com.amazonaws.retry.v2.BackoffStrategy;
 import com.amazonaws.retry.v2.RetryPolicyContext;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.flightstats.hub.app.HubProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,35 +32,58 @@ public class AwsConnectorFactory {
     private final String dynamoEndpoint = HubProperties.getProperty("dynamo.endpoint", "dynamodb.us-east-1.amazonaws.com");
     private final String s3Endpoint = HubProperties.getProperty("s3.endpoint", "s3-external-1.amazonaws.com");
     private final String protocol = HubProperties.getProperty("aws.protocol", "HTTP");
+    private final String signingRegion = HubProperties.getSigningRegion();
 
     public AmazonS3 getS3Client() throws IOException {
-        AmazonS3Client amazonS3Client;
+        AmazonS3 amazonS3Client;
         ClientConfiguration configuration = getClientConfiguration("s3", true);
+        DefaultAWSCredentialsProviderChain credentialsProvider;
         try {
-            DefaultAWSCredentialsProviderChain credentialsProvider = new DefaultAWSCredentialsProviderChain();
+            credentialsProvider = new DefaultAWSCredentialsProviderChain();
             credentialsProvider.getCredentials();
-            amazonS3Client = new AmazonS3Client(credentialsProvider, configuration);
+            amazonS3Client = AmazonS3ClientBuilder.standard()
+                    .withCredentials(credentialsProvider)
+                    .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(s3Endpoint, signingRegion))
+                    .build();
         } catch (Exception e) {
-            logger.warn("unable to use InstanceProfileCredentialsProvider " + e.getMessage());
-            amazonS3Client = new AmazonS3Client(getPropertiesCredentials(), configuration);
+            logger.warn("unable to use DefaultAWSCredentialsProviderChain " + e.getMessage());
+            try {
+                amazonS3Client = AmazonS3ClientBuilder.standard()
+                        .withCredentials(new AWSStaticCredentialsProvider(getPropertiesCredentials()))
+                        .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(s3Endpoint, signingRegion))
+                        .build();
+            } catch (Exception e1) {
+                e1.printStackTrace();
+                throw e1;
+            }
         }
-        amazonS3Client.setEndpoint(s3Endpoint);
         return amazonS3Client;
     }
 
-    public AmazonDynamoDBClient getDynamoClient() throws IOException {
+    public AmazonDynamoDB getDynamoClient() throws IOException {
         logger.info("creating for  " + protocol + " " + dynamoEndpoint);
-        AmazonDynamoDBClient client;
+        AmazonDynamoDB client;
         ClientConfiguration configuration = getClientConfiguration("dynamo", false);
+        DefaultAWSCredentialsProviderChain credentialsProvider;
         try {
-            DefaultAWSCredentialsProviderChain credentialsProvider = new DefaultAWSCredentialsProviderChain();
+            credentialsProvider = new DefaultAWSCredentialsProviderChain();
             credentialsProvider.getCredentials();
-            client = new AmazonDynamoDBClient(credentialsProvider, configuration);
+            client = AmazonDynamoDBClientBuilder.standard()
+                    .withCredentials(credentialsProvider)
+                    .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(dynamoEndpoint, signingRegion))  // TODO: do we use more than one signingRegion?
+                    .build();
         } catch (Exception e) {
-            logger.warn("unable to use InstanceProfileCredentialsProvider " + e.getMessage());
-            client = new AmazonDynamoDBClient(getPropertiesCredentials(), configuration);
+            logger.warn("unable to use DefaultAWSCredentialsProviderChain " + e.getMessage());
+            try {
+                client = AmazonDynamoDBClientBuilder.standard()
+                        .withCredentials(new AWSStaticCredentialsProvider(getPropertiesCredentials()))
+                        .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(dynamoEndpoint, signingRegion))
+                        .build();
+            } catch (Exception e1) {
+                e1.printStackTrace();
+                throw e1;
+            }
         }
-        client.setEndpoint(dynamoEndpoint);
         return client;
 
     }

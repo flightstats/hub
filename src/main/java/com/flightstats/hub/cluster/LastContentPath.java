@@ -6,13 +6,13 @@ import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.model.ContentPath;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
-import org.apache.commons.io.Charsets;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
 import java.util.function.Function;
 
 public class LastContentPath {
@@ -81,7 +81,7 @@ public class LastContentPath {
 
     private ContentPath get(String path) throws Exception {
         byte[] bytes = curator.getData().forPath(path);
-        String found = new String(bytes, Charsets.UTF_8);
+        String found = new String(bytes, StandardCharsets.UTF_8);
         trace(path, "get found {}", found);
         return ContentPath.fromUrl(found).get();
     }
@@ -166,7 +166,7 @@ public class LastContentPath {
     private LastUpdated getLastUpdated(String path) throws Exception {
         Stat stat = new Stat();
         byte[] bytes = curator.getData().storingStatIn(stat).forPath(path);
-        Optional<ContentPath> pathOptional = ContentPath.fromUrl(new String(bytes, Charsets.UTF_8));
+        Optional<ContentPath> pathOptional = ContentPath.fromUrl(new String(bytes, StandardCharsets.UTF_8));
         return new LastUpdated(pathOptional.get(), stat.getVersion());
     }
 

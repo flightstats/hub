@@ -55,6 +55,10 @@ public class HubProperties {
         return HubProperties.getProperty("webhook.callbackTimeoutSeconds.default", 120);
     }
 
+    public static String getSigningRegion() {
+        return getProperty("aws.signing_region", "us-east-1");
+    }
+
     static Properties getProperties() {
         return properties;
     }
@@ -134,6 +138,7 @@ public class HubProperties {
             properties.put("data_dog.enable", "false");
             properties.put("s3Verifier.run", "false");
             properties.put("aws.credentials", "config/credentials/hub_test_credentials.properties");
+            properties.put("aws.signing_region", "us-east-1");
             return properties;
         }
     }

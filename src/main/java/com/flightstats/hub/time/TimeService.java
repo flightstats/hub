@@ -6,6 +6,7 @@ import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.Cluster;
 import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.HubUtils;
+import com.flightstats.hub.util.StringUtils;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -15,7 +16,6 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.net.ConnectException;
+import java.nio.charset.StandardCharsets;
 
 @Singleton
 public class TimeService {
@@ -33,7 +34,7 @@ public class TimeService {
     private final String remoteFile = HubProperties.getProperty("app.remoteTimeFile", "/home/hub/remoteTime");
     private final static Client client = RestClient.createClient(1, 5, true, false);
 
-    private final static String randomKey = RandomStringUtils.randomAlphanumeric(6);
+    private final static String randomKey = StringUtils.randomAlphaNumeric(6);
 
     @Inject
     @Named("HubCluster")
@@ -104,7 +105,7 @@ public class TimeService {
     private void createFile() {
         try {
             File file = new File(remoteFile);
-            FileUtils.write(file, "true");
+            FileUtils.write(file, "true", StandardCharsets.UTF_8);
             logger.info("wrote file " + remoteFile);
         } catch (IOException e) {
             logger.warn("unable to write file", e);

@@ -2,8 +2,6 @@ package com.flightstats.hub.model;
 
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
-import org.apache.commons.io.Charsets;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -11,6 +9,7 @@ import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 
 public class ContentKey implements ContentPath {
@@ -25,7 +24,7 @@ public class ContentKey implements ContentPath {
     }
 
     public ContentKey(DateTime time) {
-        this(time, RandomStringUtils.randomAlphanumeric(6));
+        this(time, com.flightstats.hub.util.StringUtils.randomAlphaNumeric(6));
     }
 
     public ContentKey(DateTime time, String hash) {
@@ -133,7 +132,7 @@ public class ContentKey implements ContentPath {
     }
 
     public byte[] toBytes() {
-        return toUrl().getBytes(Charsets.UTF_8);
+        return toUrl().getBytes(StandardCharsets.UTF_8);
     }
 
     public String toZk() {
