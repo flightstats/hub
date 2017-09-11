@@ -106,22 +106,15 @@ public class WebhookManager {
             logger.info("found v1 webhook {}", name);
         } else if (activeWebhooks.getV2().contains(name)) {
             logger.debug("found existing v2 webhook {}", name);
-            Set<String> v2Servers = activeWebhooks.getV2Servers(name);
+            Collection<String> v2Servers = activeWebhooks.getV2Servers(name);
             if (v2Servers.isEmpty()) {
-                startOne(name);
-            } else {
-                callOneRun(name, v2Servers);
+                v2Servers = hubCluster.getRandomServers();
             }
+            callOneRun(name, v2Servers);
         } else {
             logger.debug("found new v2 webhook {}", name);
-            startOne(name);
+            callOneRun(name, hubCluster.getRandomServers());
         }
-    }
-
-    private void startOne(String name) {
-        List<String> servers = new ArrayList<>(hubCluster.getAllServers());
-        Collections.shuffle(servers);
-        callOneRun(name, servers);
     }
 
     private void callAllDelete(String name, Collection<String> servers) {
