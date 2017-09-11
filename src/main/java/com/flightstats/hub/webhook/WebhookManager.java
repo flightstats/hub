@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import static com.flightstats.hub.app.HubServices.register;
 
@@ -87,38 +86,33 @@ public class WebhookManager {
     }
 
     private synchronized void manageWebhooks() {
-        //todo - gfm - do we really need to run this N(odes) times for all webhooks?
-        Set<String> activeV1Webhooks = activeWebhooks.getV1();
-        Set<String> activeV2Webhooks = activeWebhooks.getV2();
         Set<Webhook> daoWebhooks = new HashSet<>(webhookDao.getAll(false));
-
         for (Webhook daoWebhook : daoWebhooks) {
-            String name = daoWebhook.getName();
-            if (activeV1Webhooks.contains(name)) {
-                //if is in v1 ZK, leave it alone ...
-                //todo - gfm - this can go away, eventually
-                logger.info("found v1 webhook {}", name);
-            } else if (activeV2Webhooks.contains(name)) {
-                logger.debug("found existing v2 webhook {}", name);
-                //todo - gfm - what happens if we have more than one?  call stop & start?
-                Set<String> v2Servers = activeWebhooks.getV2Servers(name);
-                if (v2Servers.isEmpty()) {
-                    startOne(name);
-                } else {
-                    callOneServer(name, "run", v2Servers);
-                }
-            } else {
-                logger.debug("found new v2 webhook {}", name);
-                startOne(name);
-            }
+            manageWebhook(daoWebhook);
         }
+    }
 
-        Set<String> daoNames = daoWebhooks.stream()
-                .map(Webhook::getName)
-                .collect(Collectors.toSet());
-        activeV2Webhooks.removeAll(daoNames);
-        for (String orphanedV2 : activeV2Webhooks) {
-            delete(orphanedV2);
+    void notifyWatchers(Webhook webhook) {
+        manageWebhook(webhook);
+    }
+
+    private void manageWebhook(Webhook daoWebhook) {
+        String name = daoWebhook.getName();
+        if (activeWebhooks.getV1().contains(name)) {
+            //if is in v1 ZK, leave it alone ...
+            //todo - gfm - this can go away, eventually
+            logger.info("found v1 webhook {}", name);
+        } else if (activeWebhooks.getV2().contains(name)) {
+            logger.debug("found existing v2 webhook {}", name);
+            Set<String> v2Servers = activeWebhooks.getV2Servers(name);
+            if (v2Servers.isEmpty()) {
+                startOne(name);
+            } else {
+                callOneServer(name, "run", v2Servers);
+            }
+        } else {
+            logger.debug("found new v2 webhook {}", name);
+            startOne(name);
         }
     }
 
@@ -195,8 +189,7 @@ public class WebhookManager {
         }
     }
 
-    //todo - gfm - it would be nice if notify for a single change did not trigger calls about all webhooks
-    void notifyWatchers() {
+    private void notifyWatchers() {
         watchManager.notifyWatcher(WATCHER_PATH);
     }
 
