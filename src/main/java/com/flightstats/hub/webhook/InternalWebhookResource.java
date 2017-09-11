@@ -41,6 +41,8 @@ public class InternalWebhookResource {
         directions.put("configs", "HTTP GET to /internal/webhook/configs to list all webhook configurations");
         directions.put("stale", "HTTP GET to /internal/webhook/stale/{age} to list webhooks that are more than {age} minutes behind.");
         directions.put("errors", "HTTP GET to /internal/webhook/errors to list all webhooks with recent errors.");
+        directions.put("run/{name}", "HTTP PUT to /internal/webhook/run/{name} to start processing this webhook.");
+        directions.put("delete/{name}", "HTTP PUT to /internal/webhook/delete/{name} to stop processing this webhook on this server.");
 
         ObjectNode links = root.putObject("_links");
         addLink(links, "self", uriInfo.getRequestUri().toString());
