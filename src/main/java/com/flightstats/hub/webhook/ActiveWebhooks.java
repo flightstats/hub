@@ -37,20 +37,24 @@ public class ActiveWebhooks {
 
         logger.info("cleaning...");
         cleanupEmpty(v1Webhooks, "");
-        cleanupEmpty(v2Webhooks, "/leases");
+        cleanupEmpty(v2Webhooks, "/leases", "/locks");
     }
 
-    private void cleanupEmpty(PathChildrenCache webhooks, String trailingPath) throws Exception {
+    private void cleanupEmpty(PathChildrenCache webhooks, String... trailingPath) throws Exception {
         List<ChildData> currentData = webhooks.getCurrentData();
         logger.info("data {}", currentData.size());
         for (ChildData childData : currentData) {
-            String fullPath = childData.getPath() + trailingPath;
-            List<String> children = curator.getChildren().forPath(fullPath);
-            if (children.isEmpty()) {
-                logger.info("deleting empty {}", fullPath);
-                curator.delete().forPath(fullPath);
-            } else {
-                logger.info("not empty {}", fullPath);
+            boolean isEmpty = true;
+            for (String trailing : trailingPath) {
+                String fullPath = childData.getPath() + trailing;
+                List<String> children = curator.getChildren().forPath(fullPath);
+                if (!children.isEmpty()) {
+                    isEmpty = false;
+                }
+            }
+            if (isEmpty) {
+                logger.info("deleting empty {}", childData.getPath());
+                curator.delete().deletingChildrenIfNeeded().forPath(childData.getPath());
             }
         }
     }
