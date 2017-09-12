@@ -61,6 +61,8 @@ class WebhookError {
                     results.add(error.getData());
                 }
             }
+        } catch (KeeperException.NoNodeException ignore) {
+            logger.debug(ignore.getMessage());
         } catch (Exception e) {
             logger.warn("unable to limit children " + errorRoot, e);
         }

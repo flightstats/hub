@@ -44,9 +44,7 @@ public class QueryGenerator {
     }
 
     private TimeUtil.Unit getStepUnit(DateTime latestStableInChannel) {
-        if (lastQueryTime.isBefore(latestStableInChannel.minusDays(2))) {
-            return TimeUtil.Unit.DAYS;
-        } else if (lastQueryTime.isBefore(latestStableInChannel.minusHours(2))) {
+        if (lastQueryTime.isBefore(latestStableInChannel.minusHours(2))) {
             return TimeUtil.Unit.HOURS;
         } else if (lastQueryTime.isBefore(latestStableInChannel.minusMinutes(2))) {
             return TimeUtil.Unit.MINUTES;

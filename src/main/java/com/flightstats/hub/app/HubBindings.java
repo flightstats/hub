@@ -164,7 +164,6 @@ public class HubBindings extends AbstractModule {
         bind(WatchManager.class).asEagerSingleton();
         bind(MetricsService.class).to(DelegatingMetricsService.class).asEagerSingleton();
         bind(NtpMonitor.class).asEagerSingleton();
-        bind(Leaders.class).asEagerSingleton();
         bind(TimeService.class).asEagerSingleton();
         bind(ShutdownManager.class).asEagerSingleton();
         bind(FileSpokeStore.class).asEagerSingleton();

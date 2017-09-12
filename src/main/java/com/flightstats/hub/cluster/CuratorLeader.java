@@ -39,7 +39,7 @@ public class CuratorLeader {
     private String leaderPath;
     private Leader leader;
     private LeaderSelector leaderSelector;
-    private Leadership leadership = new Leadership();
+    private Leadership leadership = new LeadershipV1();
 
     private String id;
 
@@ -63,7 +63,6 @@ public class CuratorLeader {
             leaderSelector.requeue();
             logger.info("requeue {}", id);
         }
-        Leaders.add(this);
     }
 
     public void close() {
@@ -72,7 +71,6 @@ public class CuratorLeader {
         if (leaderSelector != null) {
             leaderSelector.close();
         }
-        Leaders.remove(this);
         logger.info("closed {}", id);
     }
 

@@ -1,9 +1,7 @@
 package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.*;
-import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.EnvironmentVariableCredentialsProvider;
-import com.amazonaws.auth.InstanceProfileCredentialsProvider;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.auth.PropertiesCredentials;
 import com.amazonaws.retry.PredefinedRetryPolicies;
 import com.amazonaws.retry.RetryPolicy;
@@ -33,35 +31,35 @@ public class AwsConnectorFactory {
     private final String protocol = HubProperties.getProperty("aws.protocol", "HTTP");
 
     public AmazonS3 getS3Client() throws IOException {
-        AmazonS3Client amazonS3Client = new AmazonS3Client(getAwsCredentials(), getClientConfiguration("s3", true));
+        AmazonS3Client amazonS3Client;
+        ClientConfiguration configuration = getClientConfiguration("s3", true);
+        try {
+            DefaultAWSCredentialsProviderChain credentialsProvider = new DefaultAWSCredentialsProviderChain();
+            credentialsProvider.getCredentials();
+            amazonS3Client = new AmazonS3Client(credentialsProvider, configuration);
+        } catch (Exception e) {
+            logger.warn("unable to use InstanceProfileCredentialsProvider " + e.getMessage());
+            amazonS3Client = new AmazonS3Client(getPropertiesCredentials(), configuration);
+        }
         amazonS3Client.setEndpoint(s3Endpoint);
         return amazonS3Client;
     }
 
     public AmazonDynamoDBClient getDynamoClient() throws IOException {
-        AmazonDynamoDBClient client = new AmazonDynamoDBClient(getAwsCredentials(), getClientConfiguration("dynamo", false));
-        client.setEndpoint(dynamoEndpoint);
-        return client;
-    }
-
-    private AWSCredentials getAwsCredentials() {
-        AWSCredentials credentials = null;
+        logger.info("creating for  " + protocol + " " + dynamoEndpoint);
+        AmazonDynamoDBClient client;
+        ClientConfiguration configuration = getClientConfiguration("dynamo", false);
         try {
-            credentials = InstanceProfileCredentialsProvider.getInstance().getCredentials();
+            DefaultAWSCredentialsProviderChain credentialsProvider = new DefaultAWSCredentialsProviderChain();
+            credentialsProvider.getCredentials();
+            client = new AmazonDynamoDBClient(credentialsProvider, configuration);
         } catch (Exception e) {
             logger.warn("unable to use InstanceProfileCredentialsProvider " + e.getMessage());
+            client = new AmazonDynamoDBClient(getPropertiesCredentials(), configuration);
         }
-        if (credentials == null) {
-            try {
-                credentials = new EnvironmentVariableCredentialsProvider().getCredentials();
-            } catch (Exception e) {
-                logger.warn("unable to use EnvironmentVariableCredentialsProvider " + e.getMessage());
-            }
-        }
-        if (credentials == null) {
-            credentials = getPropertiesCredentials();
-        }
-        return credentials;
+        client.setEndpoint(dynamoEndpoint);
+        return client;
+
     }
 
     private PropertiesCredentials getPropertiesCredentials() {

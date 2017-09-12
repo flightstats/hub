@@ -3,7 +3,6 @@ package com.flightstats.hub.app;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.channel.InternalChannelResource;
-import com.flightstats.hub.cluster.InternalCuratorResource;
 import com.flightstats.hub.cluster.InternalZookeeperResource;
 import com.flightstats.hub.health.InternalHealthResource;
 import com.flightstats.hub.metrics.InternalStacktraceResource;
@@ -43,7 +42,6 @@ public class InternalResource {
 
         addLink("channel", InternalChannelResource.DESCRIPTION);
         addLink("cluster", InternalClusterResource.DESCRIPTION);
-        addLink("curator", InternalCuratorResource.DESCRIPTION);
         addLink("deploy", InternalDeployResource.DESCRIPTION);
         addLink("health", InternalHealthResource.DESCRIPTION);
         addLink("properties", InternalPropertiesResource.DESCRIPTION);

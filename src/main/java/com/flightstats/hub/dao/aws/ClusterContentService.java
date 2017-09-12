@@ -40,6 +40,7 @@ public class ClusterContentService implements ContentService {
     private static final String CHANNEL_LATEST_UPDATED = "/ChannelLatestUpdated/";
     private static final long largePayload = HubProperties.getLargePayload();
     private final boolean dropSomeWrites = HubProperties.getProperty("s3.dropSomeWrites", false);
+    private static final int queryMergeMaxWaitMinutes = HubProperties.getProperty("query.merge.max.wait.minutes", 2);
     private final int spokeTtlMinutes = HubProperties.getSpokeTtlMinutes();
     @Inject
     @Named(ContentDao.CACHE)
@@ -257,7 +258,7 @@ public class ClusterContentService implements ContentService {
                     }
                 });
             }
-            latch.await(118, TimeUnit.SECONDS);
+            latch.await(queryMergeMaxWaitMinutes, TimeUnit.MINUTES);
             if (queryResult.hadSuccess()) {
                 return queryResult.getContentKeys();
             } else {

@@ -12,13 +12,14 @@ import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 
 @Singleton
 public class CuratorCluster implements Cluster {
@@ -44,6 +45,16 @@ public class CuratorCluster implements Cluster {
         clusterCache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
     }
 
+    public void addRemovalListener(Consumer<PathChildrenCacheEvent> consumer) {
+        addListener((client, event) -> {
+            logger.debug("event {} {}", event, clusterPath);
+            if (event.getType().equals(PathChildrenCacheEvent.Type.CHILD_REMOVED)
+                    || event.getType().equals(PathChildrenCacheEvent.Type.CONNECTION_RECONNECTED)) {
+                consumer.accept(event);
+            }
+        }, Executors.newSingleThreadExecutor());
+    }
+
     public void addCacheListener() {
         addListener((client, event) -> {
             logger.debug("event {} {}", event, clusterPath);
@@ -57,7 +68,7 @@ public class CuratorCluster implements Cluster {
         addListener(listener, MoreExecutors.directExecutor());
     }
 
-    void addListener(PathChildrenCacheListener listener, Executor executor) {
+    private void addListener(PathChildrenCacheListener listener, Executor executor) {
         clusterCache.getListenable().addListener(listener, executor);
     }
 
@@ -117,16 +128,6 @@ public class CuratorCluster implements Cluster {
 
     @Override
     public Set<String> getServers(String channel) {
-        return getAllServers();
-    }
-
-    @Override
-    public Set<String> getServers(String channel, DateTime pointInTime) {
-        return getAllServers();
-    }
-
-    @Override
-    public Set<String> getServers(String channel, DateTime startTime, DateTime endTime) {
         return getAllServers();
     }
 

@@ -216,6 +216,7 @@ public class S3Verifier {
 
         @Override
         protected void startUp() throws Exception {
+            //todo - gfm - change this to be a CuratorLock?
             CuratorLeader curatorLeader = new CuratorLeader(leaderPath, this);
             curatorLeader.start();
         }
