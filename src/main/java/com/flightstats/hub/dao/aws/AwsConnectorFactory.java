@@ -1,6 +1,7 @@
 package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.*;
+import com.amazonaws.auth.AWSCredentialsProviderChain;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.auth.PropertiesCredentials;
@@ -35,57 +36,27 @@ public class AwsConnectorFactory {
     private final String signingRegion = HubProperties.getSigningRegion();
 
     public AmazonS3 getS3Client() throws IOException {
-        AmazonS3 amazonS3Client;
-        ClientConfiguration configuration = getClientConfiguration("s3", true);
-        DefaultAWSCredentialsProviderChain credentialsProvider;
-        try {
-            credentialsProvider = new DefaultAWSCredentialsProviderChain();
-            credentialsProvider.getCredentials();
-            amazonS3Client = AmazonS3ClientBuilder.standard()
-                    .withCredentials(credentialsProvider)
-                    .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(s3Endpoint, signingRegion))
-                    .build();
-        } catch (Exception e) {
-            logger.warn("unable to use DefaultAWSCredentialsProviderChain " + e.getMessage());
-            try {
-                amazonS3Client = AmazonS3ClientBuilder.standard()
-                        .withCredentials(new AWSStaticCredentialsProvider(getPropertiesCredentials()))
-                        .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(s3Endpoint, signingRegion))
-                        .build();
-            } catch (Exception e1) {
-                e1.printStackTrace();
-                throw e1;
-            }
-        }
-        return amazonS3Client;
+        logger.info("creating for  " + protocol + " " + s3Endpoint + " " + signingRegion);
+        return AmazonS3ClientBuilder.standard()
+                .withClientConfiguration(getClientConfiguration("s3", true))
+                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(s3Endpoint, signingRegion))
+                .withCredentials(getAwsCredentials())
+                .build();
     }
 
     public AmazonDynamoDB getDynamoClient() throws IOException {
-        logger.info("creating for  " + protocol + " " + dynamoEndpoint);
-        AmazonDynamoDB client;
-        ClientConfiguration configuration = getClientConfiguration("dynamo", false);
-        DefaultAWSCredentialsProviderChain credentialsProvider;
-        try {
-            credentialsProvider = new DefaultAWSCredentialsProviderChain();
-            credentialsProvider.getCredentials();
-            client = AmazonDynamoDBClientBuilder.standard()
-                    .withCredentials(credentialsProvider)
-                    .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(dynamoEndpoint, signingRegion))  // TODO: do we use more than one signingRegion?
-                    .build();
-        } catch (Exception e) {
-            logger.warn("unable to use DefaultAWSCredentialsProviderChain " + e.getMessage());
-            try {
-                client = AmazonDynamoDBClientBuilder.standard()
-                        .withCredentials(new AWSStaticCredentialsProvider(getPropertiesCredentials()))
-                        .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(dynamoEndpoint, signingRegion))
-                        .build();
-            } catch (Exception e1) {
-                e1.printStackTrace();
-                throw e1;
-            }
-        }
-        return client;
+        logger.info("creating for  " + protocol + " " + dynamoEndpoint + " " + signingRegion);
+        return AmazonDynamoDBClientBuilder.standard()
+                .withClientConfiguration(getClientConfiguration("dynamo", false))
+                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(dynamoEndpoint, signingRegion))
+                .withCredentials(getAwsCredentials())
+                .build();
+    }
 
+    private AWSCredentialsProviderChain getAwsCredentials() {
+        return new AWSCredentialsProviderChain(
+                new DefaultAWSCredentialsProviderChain(),
+                new AWSStaticCredentialsProvider(getPropertiesCredentials()));
     }
 
     private PropertiesCredentials getPropertiesCredentials() {
