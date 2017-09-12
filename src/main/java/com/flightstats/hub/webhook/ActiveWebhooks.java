@@ -47,9 +47,13 @@ public class ActiveWebhooks {
             boolean isEmpty = true;
             for (String trailing : trailingPath) {
                 String fullPath = childData.getPath() + trailing;
-                List<String> children = curator.getChildren().forPath(fullPath);
-                if (!children.isEmpty()) {
-                    isEmpty = false;
+                try {
+                    List<String> children = curator.getChildren().forPath(fullPath);
+                    if (!children.isEmpty()) {
+                        isEmpty = false;
+                    }
+                } catch (KeeperException.NoNodeException ignore) {
+                    //ignore
                 }
             }
             if (isEmpty) {
