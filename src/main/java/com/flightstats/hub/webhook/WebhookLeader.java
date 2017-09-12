@@ -65,7 +65,7 @@ class WebhookLeader implements Lockable {
     private WebhookStrategy webhookStrategy;
     private AtomicReference<ContentPath> lastUpdated = new AtomicReference<>();
     private String channelName;
-    private CuratorLock2 curatorLock2;
+    private CuratorLock curatorLock;
 
     void setWebhook(Webhook webhook) {
         this.webhook = webhook;
@@ -78,8 +78,8 @@ class WebhookLeader implements Lockable {
             logger.info("not starting paused webhook " + webhook);
             return false;
         } else {
-            curatorLock2 = new CuratorLock2(curator, zooKeeperState);
-            return curatorLock2.runWithLock(this, getLeaderPath(), 1, TimeUnit.SECONDS);
+            curatorLock = new CuratorLock(curator, zooKeeperState);
+            return curatorLock.runWithLock(this, getLeaderPath(), 1, TimeUnit.SECONDS);
         }
     }
 
@@ -272,13 +272,13 @@ class WebhookLeader implements Lockable {
         String name = webhook.getName();
         logger.info("exiting webhook " + name + "deleting " + delete);
         deleteOnExit.set(delete);
-        if (null != curatorLock2) {
-            curatorLock2.stopWorking();
+        if (null != curatorLock) {
+            curatorLock.stopWorking();
         }
         closeStrategy();
         stopExecutor();
-        if (null != curatorLock2) {
-            curatorLock2.delete();
+        if (null != curatorLock) {
+            curatorLock.delete();
         }
         logger.info("exited webhook " + name);
     }
