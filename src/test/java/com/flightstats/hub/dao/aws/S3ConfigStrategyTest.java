@@ -2,7 +2,7 @@ package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.services.s3.model.BucketLifecycleConfiguration;
 import com.flightstats.hub.model.ChannelConfig;
-import org.apache.commons.lang3.RandomStringUtils;
+import com.flightstats.hub.util.StringUtils;
 import org.joda.time.DateTime;
 import org.junit.Test;
 
@@ -37,7 +37,7 @@ public class S3ConfigStrategyTest {
     private void verify(int channels, int iterations) {
         List<String> names = new ArrayList<>();
         for (int i = 0; i < channels; i++) {
-            String name = RandomStringUtils.randomAlphanumeric(10);
+            String name = StringUtils.randomAlphaNumeric(10);
             channelConfigs.add(ChannelConfig.builder().name(name).build());
             names.add(name);
         }

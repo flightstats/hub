@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -31,7 +32,7 @@ public class Commander {
         return process(command, waitTimeSeconds,
                 (input -> {
                     try {
-                        return IOUtils.readLines(input);
+                        return IOUtils.readLines(input, StandardCharsets.UTF_8);
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }

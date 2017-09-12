@@ -1,7 +1,7 @@
 package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.AmazonServiceException;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.flightstats.hub.app.HubProperties;
 import com.google.inject.Inject;
@@ -16,13 +16,13 @@ public class DynamoUtils {
 
     private final static Logger logger = LoggerFactory.getLogger(DynamoUtils.class);
 
-    private final AmazonDynamoDBClient dbClient;
+    private final AmazonDynamoDB dbClient;
     private final String environment;
     private final String appName;
     private final int tableCreationWaitMinutes;
 
     @Inject
-    public DynamoUtils(AmazonDynamoDBClient dbClient,
+    public DynamoUtils(AmazonDynamoDB dbClient,
                        @Named("app.environment") String environment, @Named("app.name") String appName) {
         this.dbClient = dbClient;
         this.environment = environment;

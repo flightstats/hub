@@ -1,7 +1,10 @@
 package com.flightstats.hub.webhook;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.cluster.*;
+import com.flightstats.hub.cluster.CuratorLeader;
+import com.flightstats.hub.cluster.LastContentPath;
+import com.flightstats.hub.cluster.Leader;
+import com.flightstats.hub.cluster.Leadership;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.MetricsService;
@@ -12,6 +15,7 @@ import com.flightstats.hub.model.RecurringTrace;
 import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
+import com.flightstats.hub.util.StringUtils;
 import com.flightstats.hub.util.TimeUtil;
 import com.github.rholder.retry.RetryException;
 import com.github.rholder.retry.Retryer;
@@ -20,27 +24,28 @@ import com.google.inject.Inject;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import org.apache.curator.framework.CuratorFramework;
+import org.apache.zookeeper.KeeperException;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.MediaType;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-class WebhookLeader implements Lockable {
+class WebhookLeader implements Leader {
     private final static Logger logger = LoggerFactory.getLogger(WebhookLeader.class);
     static final String WEBHOOK_LAST_COMPLETED = "/GroupLastCompleted/";
-    public static final String LEADER_PATH = "/WebhookLeader";
 
     private final AtomicBoolean deleteOnExit = new AtomicBoolean();
 
     @Inject
     private CuratorFramework curator;
-    @Inject
-    private ZooKeeperState zooKeeperState;
     @Inject
     private ChannelService channelService;
     @Inject
@@ -55,7 +60,7 @@ class WebhookLeader implements Lockable {
     private WebhookError webhookError;
 
     private Webhook webhook;
-
+    private CuratorLeader curatorLeader;
     private ExecutorService executorService;
     private Semaphore semaphore;
     private Leadership leadership;
@@ -64,22 +69,21 @@ class WebhookLeader implements Lockable {
 
     private WebhookStrategy webhookStrategy;
     private AtomicReference<ContentPath> lastUpdated = new AtomicReference<>();
+    private String id = StringUtils.randomAlphaNumeric(4);
     private String channelName;
-    private CuratorLock2 curatorLock2;
 
     void setWebhook(Webhook webhook) {
         this.webhook = webhook;
     }
 
-    boolean tryLeadership(Webhook webhook) {
+    void tryLeadership(Webhook webhook) {
         logger.debug("starting webhook: " + webhook);
         setWebhook(webhook);
         if (webhook.isPaused()) {
             logger.info("not starting paused webhook " + webhook);
-            return false;
         } else {
-            curatorLock2 = new CuratorLock2(curator, zooKeeperState);
-            return curatorLock2.runWithLock(this, getLeaderPath(), 1, TimeUnit.SECONDS);
+            curatorLeader = new CuratorLeader(getLeaderPath(), this);
+            curatorLeader.start();
         }
     }
 
@@ -135,6 +139,11 @@ class WebhookLeader implements Lockable {
             executorService = null;
             client = null;
         }
+    }
+
+    @Override
+    public String getId() {
+        return id;
     }
 
     private void sendInProcess(ContentPath lastCompletedPath) throws InterruptedException {
@@ -270,17 +279,14 @@ class WebhookLeader implements Lockable {
 
     void exit(boolean delete) {
         String name = webhook.getName();
-        logger.info("exiting webhook " + name + "deleting " + delete);
+        logger.info("exiting webhook " + name + " deleting " + delete);
         deleteOnExit.set(delete);
-        if (null != curatorLock2) {
-            curatorLock2.stopWorking();
-        }
         closeStrategy();
         stopExecutor();
-        if (null != curatorLock2) {
-            curatorLock2.delete();
+        if (null != curatorLeader) {
+            curatorLeader.close();
         }
-        logger.info("exited webhook " + name);
+        logger.info("exited webhook " + name + " deleting " + delete);
     }
 
     private void stopExecutor() {
@@ -309,7 +315,7 @@ class WebhookLeader implements Lockable {
     }
 
     private String getLeaderPath() {
-        return LEADER_PATH + "/" + webhook.getName();
+        return "/GroupLeader/" + webhook.getName();
     }
 
     private void delete() {
@@ -319,6 +325,60 @@ class WebhookLeader implements Lockable {
         lastContentPath.delete(name, WEBHOOK_LAST_COMPLETED);
         webhookError.delete(name);
         logger.info("deleted " + name);
+    }
+
+    boolean deleteIfReady() {
+        if (isReadyToDelete()) {
+            deleteAnyway();
+            return true;
+        }
+        return false;
+    }
+
+    void deleteAnyway() {
+        try {
+            debugLeaderPath();
+            curator.delete().deletingChildrenIfNeeded().forPath(getLeaderPath());
+        } catch (Exception e) {
+            logger.warn("unable to delete leader path " + webhook.getName(), e);
+        }
+        delete();
+    }
+
+    private void debugLeaderPath() {
+        try {
+            String leaderPath = getLeaderPath();
+            List<String> children = curator.getChildren().forPath(leaderPath);
+            for (String child : children) {
+                String path = leaderPath + "/" + child;
+                byte[] bytes = curator.getData().forPath(path);
+                logger.info("found child {} {} ", new String(bytes), path);
+            }
+        } catch (KeeperException.NoNodeException ignore) {
+            //do nothing
+        } catch (Exception e) {
+            logger.info("unexpected exception " + webhook.getName(), e);
+        }
+    }
+
+    private boolean isReadyToDelete() {
+        try {
+            List<String> children = curator.getChildren().forPath(getLeaderPath());
+            return children.isEmpty();
+        } catch (KeeperException.NoNodeException ignore) {
+            return true;
+        } catch (Exception e) {
+            logger.warn("unexpected exception " + webhook.getName(), e);
+            return true;
+        }
+    }
+
+    public List<String> getErrors() {
+        return webhookError.get(webhook.getName());
+    }
+
+    List<ContentPath> getInFlight(Webhook webhook) {
+        return new ArrayList<>(new TreeSet<>(webhookInProcess.getSet(this.webhook.getName(), WebhookStrategy.createContentPath(webhook))));
     }
 
     public Webhook getWebhook() {

@@ -1,12 +1,6 @@
 package com.flightstats.hub.app;
 
-import com.flightstats.hub.ws.WebSocketDayEndpoint;
-import com.flightstats.hub.ws.WebSocketHashEndpoint;
-import com.flightstats.hub.ws.WebSocketChannelEndpoint;
-import com.flightstats.hub.ws.WebSocketHourEndpoint;
-import com.flightstats.hub.ws.WebSocketMinuteEndpoint;
-import com.flightstats.hub.ws.WebSocketSecondEndpoint;
-import com.google.common.base.Charsets;
+import com.flightstats.hub.ws.*;
 import com.google.common.io.Resources;
 import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -23,6 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -85,7 +80,7 @@ public class HubJettyServer {
             sslContextFactory.setKeyStorePath(getKeyStorePath());
             String keyStorePasswordPath = HubProperties.getProperty("app.keyStorePasswordPath", "/etc/ssl/key");
             URL passwordUrl = new File(keyStorePasswordPath).toURI().toURL();
-            String password = Resources.readLines(passwordUrl, Charsets.UTF_8).get(0);
+            String password = Resources.readLines(passwordUrl, StandardCharsets.UTF_8).get(0);
             sslContextFactory.setKeyStorePassword(password);
         }
         return sslContextFactory;

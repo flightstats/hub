@@ -2,8 +2,8 @@ package com.flightstats.hub.dao;
 
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.*;
+import com.flightstats.hub.util.StringUtils;
 import com.flightstats.hub.util.TimeUtil;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
@@ -34,7 +34,7 @@ public class ContentDaoUtil {
     }
 
     public void testWriteHistorical() throws Exception {
-        String data = RandomStringUtils.randomAlphanumeric(2048);
+        String data = StringUtils.randomAlphaNumeric(2048);
         String channel = "testWriteHistorical";
         ContentKey contentKey = new ContentKey();
         Content content = Content.builder().withContentType("contentIsThis")
@@ -51,7 +51,7 @@ public class ContentDaoUtil {
     }
 
     public void testQueryRangeDay() throws Exception {
-        String channel = "testQueryRangeDay" + RandomStringUtils.randomAlphanumeric(20);
+        String channel = "testQueryRangeDay" + StringUtils.randomAlphaNumeric(20);
         List<ContentKey> keys = new ArrayList<>();
         DateTime start = new DateTime(2014, 11, 14, 0, 0, DateTimeZone.UTC);
         for (int i = 0; i < 24; i += 3) {
@@ -70,7 +70,7 @@ public class ContentDaoUtil {
     }
 
     public void testQueryRangeHour() throws Exception {
-        String channel = "testQueryRangeHour" + RandomStringUtils.randomAlphanumeric(20);
+        String channel = "testQueryRangeHour" + StringUtils.randomAlphaNumeric(20);
         List<ContentKey> keys = new ArrayList<>();
         DateTime start = new DateTime(2014, 11, 14, 14, 0, DateTimeZone.UTC);
         create10ItemsBy6Minutes(channel, start, keys);
@@ -84,7 +84,7 @@ public class ContentDaoUtil {
     }
 
     public void testQueryRangeMinute() throws Exception {
-        String channel = "testQueryRangeMinute" + RandomStringUtils.randomAlphanumeric(20);
+        String channel = "testQueryRangeMinute" + StringUtils.randomAlphaNumeric(20);
         List<ContentKey> keys = new ArrayList<>();
         DateTime start = new DateTime(2014, 11, 14, 15, 27, DateTimeZone.UTC);
         for (int i = 0; i < 60; i += 6) {
@@ -103,7 +103,7 @@ public class ContentDaoUtil {
     }
 
     public void testQuery15Minutes() throws Exception {
-        String channel = "testQuery15Minutes" + RandomStringUtils.randomAlphanumeric(20);
+        String channel = "testQuery15Minutes" + StringUtils.randomAlphaNumeric(20);
         DateTime start = new DateTime(2014, 11, 14, 14, 0, DateTimeZone.UTC);
 
         TimeQuery timeQuery = TimeQuery.builder().channelName(channel)
@@ -146,7 +146,7 @@ public class ContentDaoUtil {
 
 
     public void testPreviousFromBulk_Issue753() throws Exception {
-        String channel = "testPreviousFromBulk_Issue753" + RandomStringUtils.randomAlphanumeric(20);
+        String channel = "testPreviousFromBulk_Issue753" + StringUtils.randomAlphaNumeric(20);
         LinkedList<ContentKey> keys = new LinkedList<>();
         DateTime start = TimeUtil.now();
         for (int i = 0; i < 7; i++) {
@@ -159,7 +159,7 @@ public class ContentDaoUtil {
     }
 
     public void testDirectionQueryTTL() throws Exception {
-        String channel = "testDirectionQueryTTL" + RandomStringUtils.randomAlphanumeric(20);
+        String channel = "testDirectionQueryTTL" + StringUtils.randomAlphaNumeric(20);
         List<ContentKey> keys = new ArrayList<>();
         DateTime start = TimeUtil.now();
         create7Items(channel, keys, start);
@@ -181,7 +181,7 @@ public class ContentDaoUtil {
     }
 
     public void testDirectionQuery() throws Exception {
-        String channel = "testDirectionQuery" + RandomStringUtils.randomAlphanumeric(20);
+        String channel = "testDirectionQuery" + StringUtils.randomAlphaNumeric(20);
         List<ContentKey> keys = new ArrayList<>();
         DateTime start = TimeUtil.now();
         create7Items(channel, keys, start);
@@ -201,7 +201,7 @@ public class ContentDaoUtil {
     }
 
     public void testEarliest() throws Exception {
-        String channel = "testEarliest" + RandomStringUtils.randomAlphanumeric(20);
+        String channel = "testEarliest" + StringUtils.randomAlphaNumeric(20);
         List<ContentKey> keys = new ArrayList<>();
         DateTime start = TimeUtil.now();
         for (int i = 0; i < 60; i++) {
@@ -217,7 +217,7 @@ public class ContentDaoUtil {
     }
 
     public void testDeleteMaxItems() throws Exception {
-        String channel = "testDeleteMaxItems" + RandomStringUtils.randomAlphanumeric(20);
+        String channel = "testDeleteMaxItems" + StringUtils.randomAlphaNumeric(20);
         List<ContentKey> keys = new ArrayList<>();
         DateTime start = TimeUtil.now();
         for (int i = 0; i < 5; i++) {
@@ -313,7 +313,7 @@ public class ContentDaoUtil {
     }
 
     public void testEmptyQuery() throws Exception {
-        String channel = "testEmptyQuery" + RandomStringUtils.randomAlphanumeric(20);
+        String channel = "testEmptyQuery" + StringUtils.randomAlphaNumeric(20);
         List<ContentKey> keys = new ArrayList<>();
         DateTime start = TimeUtil.now().minusHours(10);
         query(channel, keys, 1, 0, false, start);
