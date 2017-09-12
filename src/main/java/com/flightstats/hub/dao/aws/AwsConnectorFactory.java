@@ -1,16 +1,17 @@
 package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.*;
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
-import com.amazonaws.auth.PropertiesCredentials;
+import com.amazonaws.auth.*;
+import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.retry.PredefinedRetryPolicies;
 import com.amazonaws.retry.RetryPolicy;
 import com.amazonaws.retry.RetryUtils;
 import com.amazonaws.retry.v2.BackoffStrategy;
 import com.amazonaws.retry.v2.RetryPolicyContext;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.flightstats.hub.app.HubProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,50 +30,39 @@ public class AwsConnectorFactory {
     private final String dynamoEndpoint = HubProperties.getProperty("dynamo.endpoint", "dynamodb.us-east-1.amazonaws.com");
     private final String s3Endpoint = HubProperties.getProperty("s3.endpoint", "s3-external-1.amazonaws.com");
     private final String protocol = HubProperties.getProperty("aws.protocol", "HTTP");
+    private final String signingRegion = HubProperties.getSigningRegion();
 
     public AmazonS3 getS3Client() throws IOException {
-        AmazonS3Client amazonS3Client;
-        ClientConfiguration configuration = getClientConfiguration("s3", true);
-        try {
-            DefaultAWSCredentialsProviderChain credentialsProvider = new DefaultAWSCredentialsProviderChain();
-            credentialsProvider.getCredentials();
-            amazonS3Client = new AmazonS3Client(credentialsProvider, configuration);
-        } catch (Exception e) {
-            logger.warn("unable to use InstanceProfileCredentialsProvider " + e.getMessage());
-            amazonS3Client = new AmazonS3Client(getPropertiesCredentials(), configuration);
-        }
-        amazonS3Client.setEndpoint(s3Endpoint);
-        return amazonS3Client;
+        logger.info("creating for  " + protocol + " " + s3Endpoint + " " + signingRegion);
+        return AmazonS3ClientBuilder.standard()
+                .withClientConfiguration(getClientConfiguration("s3", true))
+                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(s3Endpoint, signingRegion))
+                .withCredentials(getAwsCredentials())
+                .build();
     }
 
-    public AmazonDynamoDBClient getDynamoClient() throws IOException {
-        logger.info("creating for  " + protocol + " " + dynamoEndpoint);
-        AmazonDynamoDBClient client;
-        ClientConfiguration configuration = getClientConfiguration("dynamo", false);
-        try {
-            DefaultAWSCredentialsProviderChain credentialsProvider = new DefaultAWSCredentialsProviderChain();
-            credentialsProvider.getCredentials();
-            client = new AmazonDynamoDBClient(credentialsProvider, configuration);
-        } catch (Exception e) {
-            logger.warn("unable to use InstanceProfileCredentialsProvider " + e.getMessage());
-            client = new AmazonDynamoDBClient(getPropertiesCredentials(), configuration);
-        }
-        client.setEndpoint(dynamoEndpoint);
-        return client;
-
+    public AmazonDynamoDB getDynamoClient() throws IOException {
+        logger.info("creating for  " + protocol + " " + dynamoEndpoint + " " + signingRegion);
+        return AmazonDynamoDBClientBuilder.standard()
+                .withClientConfiguration(getClientConfiguration("dynamo", false))
+                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(dynamoEndpoint, signingRegion))
+                .withCredentials(getAwsCredentials())
+                .build();
     }
 
-    private PropertiesCredentials getPropertiesCredentials() {
-        return loadTestCredentials(HubProperties.getProperty("aws.credentials", "hub_test_credentials.properties"));
+    private AWSCredentialsProviderChain getAwsCredentials() {
+        return new AWSCredentialsProviderChain(
+                new DefaultAWSCredentialsProviderChain(),
+                new AWSStaticCredentialsProvider(loadTestCredentials(HubProperties.getProperty("aws.credentials", "hub_test_credentials.properties"))));
     }
 
-    private PropertiesCredentials loadTestCredentials(String credentialsPath) {
+    private AWSCredentials loadTestCredentials(String credentialsPath) {
         logger.info("loading test credentials " + credentialsPath);
         try {
             return new PropertiesCredentials(new File(credentialsPath));
-        } catch (Exception e1) {
-            logger.warn("unable to load test credentials " + credentialsPath, e1);
-            throw new RuntimeException(e1);
+        } catch (Exception e) {
+            logger.info("unable to load test credentials " + credentialsPath + " " + e.getMessage());
+            return new BasicAWSCredentials("noKey", "noSecret");
         }
     }
 

@@ -1,10 +1,10 @@
 package com.flightstats.hub.cluster;
 
 import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.util.StringUtils;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
@@ -86,7 +86,7 @@ public class CuratorCluster implements Cluster {
     }
 
     private String getFullPath() throws UnknownHostException {
-        fullPath = clusterPath + "/" + Cluster.getHost(useName) + RandomStringUtils.randomAlphanumeric(6);
+        fullPath = clusterPath + "/" + Cluster.getHost(useName) + StringUtils.randomAlphaNumeric(6);
         return fullPath;
     }
 

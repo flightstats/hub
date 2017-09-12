@@ -3,10 +3,9 @@ package com.flightstats.hub.ws;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.util.StringUtils;
 import com.flightstats.hub.webhook.Webhook;
 import com.flightstats.hub.webhook.WebhookService;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,7 +69,7 @@ class WebSocketService {
 
     private String setId(Session session, String channel) {
         Map<String, Object> userProperties = session.getUserProperties();
-        String id = "WS_" + channel + "_" + System.currentTimeMillis() + "_" + RandomStringUtils.randomAlphanumeric(6);
+        String id = "WS_" + channel + "_" + System.currentTimeMillis() + "_" + StringUtils.randomAlphaNumeric(6);
         userProperties.put("id", id);
         return id;
     }

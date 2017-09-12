@@ -2,12 +2,12 @@ package com.flightstats.hub.model;
 
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
-import org.apache.commons.io.Charsets;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -38,7 +38,7 @@ public class MinutePath implements ContentPathKeys {
 
     @Override
     public byte[] toBytes() {
-        return toUrl().getBytes(Charsets.UTF_8);
+        return toUrl().getBytes(StandardCharsets.UTF_8);
     }
 
     @Override
@@ -71,7 +71,7 @@ public class MinutePath implements ContentPathKeys {
     }
 
     public static MinutePath fromBytes(byte[] bytes) {
-        return fromUrl(new String(bytes, Charsets.UTF_8)).get();
+        return fromUrl(new String(bytes, StandardCharsets.UTF_8)).get();
     }
 
     public static Optional<MinutePath> fromUrl(String key) {

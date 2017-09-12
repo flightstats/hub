@@ -6,9 +6,9 @@ import com.flightstats.hub.dao.LocalChannelService;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.MinutePath;
 import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.util.StringUtils;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Injector;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -48,7 +48,7 @@ public class S3VerifierTest {
     @Before
     public void setUp() throws Exception {
         offsetTime = now.minusMinutes(offsetMinutes);
-        channelName = (testName.getMethodName() + RandomStringUtils.randomAlphanumeric(6)).toLowerCase();
+        channelName = (testName.getMethodName() + StringUtils.randomAlphaNumeric(6)).toLowerCase();
         logger.info("channel name " + channelName);
     }
 
