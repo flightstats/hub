@@ -1,6 +1,6 @@
 package com.flightstats.hub.dao.aws;
 
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.dao.Dao;
@@ -21,7 +21,7 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
     public static final String INDEX_NAME = "tempLowerCaseName";
 
     @Inject
-    private AmazonDynamoDBClient dbClient;
+    private AmazonDynamoDB dbClient;
     @Inject
     private DynamoUtils dynamoUtils;
 
