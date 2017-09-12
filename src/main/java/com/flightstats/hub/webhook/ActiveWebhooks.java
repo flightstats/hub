@@ -7,6 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
+import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,21 +36,21 @@ public class ActiveWebhooks {
         v2Webhooks.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
 
         logger.info("cleaning...");
-        cleanupEmpty(v1Webhooks);
-        cleanupEmpty(v2Webhooks);
+        cleanupEmpty(v1Webhooks, "");
+        cleanupEmpty(v2Webhooks, "/leases");
     }
 
-    private void cleanupEmpty(PathChildrenCache webhooks) throws Exception {
+    private void cleanupEmpty(PathChildrenCache webhooks, String trailingPath) throws Exception {
         List<ChildData> currentData = webhooks.getCurrentData();
         logger.info("data {}", currentData.size());
         for (ChildData childData : currentData) {
-            String path = childData.getPath();
-            List<String> children = curator.getChildren().forPath(path);
+            String fullPath = childData.getPath() + trailingPath;
+            List<String> children = curator.getChildren().forPath(fullPath);
             if (children.isEmpty()) {
-                logger.info("deleting empty {}", path);
-                curator.delete().forPath(path);
+                logger.info("deleting empty {}", fullPath);
+                curator.delete().forPath(fullPath);
             } else {
-                logger.info("not empty {}", path);
+                logger.info("not empty {}", fullPath);
             }
         }
     }
@@ -72,7 +73,8 @@ public class ActiveWebhooks {
         Set<String> servers = new HashSet<>();
         try {
             addAll(name, servers, "leases");
-            addAll(name, servers, "locks");
+        } catch (KeeperException.NoNodeException ignore) {
+            logger.info("no nodes " + name);
         } catch (Exception e) {
             logger.warn("unable to get children " + name, e);
         }
