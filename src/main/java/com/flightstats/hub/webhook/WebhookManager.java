@@ -33,15 +33,18 @@ public class WebhookManager {
     private final Dao<Webhook> webhookDao;
     private final Provider<WebhookLeader> leaderProvider;
     private LastContentPath lastContentPath;
+    private ActiveWebhooks activeWebhooksFuture;
     private final Map<String, WebhookLeader> activeWebhooks = new HashMap<>();
+
 
     @Inject
     public WebhookManager(WatchManager watchManager, @Named("Webhook") Dao<Webhook> webhookDao,
-                          Provider<WebhookLeader> leaderProvider, LastContentPath lastContentPath) {
+                          Provider<WebhookLeader> leaderProvider, LastContentPath lastContentPath, ActiveWebhooks activeWebhooksFuture) {
         this.watchManager = watchManager;
         this.webhookDao = webhookDao;
         this.leaderProvider = leaderProvider;
         this.lastContentPath = lastContentPath;
+        this.activeWebhooksFuture = activeWebhooksFuture;
         register(new WebhookIdleService(), HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
     }
 
@@ -74,6 +77,11 @@ public class WebhookManager {
 
     private void manageWebhook(Webhook webhook) {
         try {
+            Set<String> v2Servers = activeWebhooksFuture.getV2Servers(webhook.getName());
+            if (!v2Servers.isEmpty()) {
+                logger.info("ignoring v2 webhook {}", webhook.getName());
+                return;
+            }
             WebhookLeader activeLeader = activeWebhooks.get(webhook.getName());
             if (activeLeader == null) {
                 start(webhook);

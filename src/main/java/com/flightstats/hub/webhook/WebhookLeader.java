@@ -41,6 +41,7 @@ import java.util.concurrent.atomic.AtomicReference;
 class WebhookLeader implements Leader {
     private final static Logger logger = LoggerFactory.getLogger(WebhookLeader.class);
     static final String WEBHOOK_LAST_COMPLETED = "/GroupLastCompleted/";
+    public static final String LEADER_PATH = "/GroupLeader";
 
     private final AtomicBoolean deleteOnExit = new AtomicBoolean();
 
