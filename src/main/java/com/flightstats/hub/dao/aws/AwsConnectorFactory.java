@@ -1,10 +1,7 @@
 package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.*;
-import com.amazonaws.auth.AWSCredentialsProviderChain;
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
-import com.amazonaws.auth.PropertiesCredentials;
+import com.amazonaws.auth.*;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.retry.PredefinedRetryPolicies;
 import com.amazonaws.retry.RetryPolicy;
@@ -56,20 +53,16 @@ public class AwsConnectorFactory {
     private AWSCredentialsProviderChain getAwsCredentials() {
         return new AWSCredentialsProviderChain(
                 new DefaultAWSCredentialsProviderChain(),
-                new AWSStaticCredentialsProvider(getPropertiesCredentials()));
+                new AWSStaticCredentialsProvider(loadTestCredentials(HubProperties.getProperty("aws.credentials", "hub_test_credentials.properties"))));
     }
 
-    private PropertiesCredentials getPropertiesCredentials() {
-        return loadTestCredentials(HubProperties.getProperty("aws.credentials", "hub_test_credentials.properties"));
-    }
-
-    private PropertiesCredentials loadTestCredentials(String credentialsPath) {
+    private AWSCredentials loadTestCredentials(String credentialsPath) {
         logger.info("loading test credentials " + credentialsPath);
         try {
             return new PropertiesCredentials(new File(credentialsPath));
-        } catch (Exception e1) {
-            logger.warn("unable to load test credentials " + credentialsPath, e1);
-            throw new RuntimeException(e1);
+        } catch (Exception e) {
+            logger.info("unable to load test credentials " + credentialsPath + " " + e.getMessage());
+            return new BasicAWSCredentials("noKey", "noSecret");
         }
     }
 
