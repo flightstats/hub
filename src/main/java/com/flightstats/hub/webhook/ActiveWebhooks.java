@@ -19,6 +19,8 @@ import java.util.stream.Collectors;
 public class ActiveWebhooks {
 
     private static final Logger logger = LoggerFactory.getLogger(ActiveWebhooks.class);
+    private static final String V2_LEADER = "/WebhookLeader";
+    private static final String V1_LEADER = "/GroupLeader";
     private final CuratorFramework curator;
 
     //todo - gfm - v1Webhooks can go away eventually
@@ -28,10 +30,10 @@ public class ActiveWebhooks {
     @Inject
     public ActiveWebhooks(CuratorFramework curator) throws Exception {
         this.curator = curator;
-        v1Webhooks = new PathChildrenCache(curator, "/GroupLeader", true);
+        v1Webhooks = new PathChildrenCache(curator, V1_LEADER, true);
         v1Webhooks.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
 
-        v2Webhooks = new PathChildrenCache(curator, "/WebhookLeader", true);
+        v2Webhooks = new PathChildrenCache(curator, V2_LEADER, true);
         v2Webhooks.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
 
         logger.info("cleaning...");
@@ -81,7 +83,7 @@ public class ActiveWebhooks {
     }
 
     private void addAll(String name, Set<String> servers, String zkName) throws Exception {
-        String path = WebhookLeader.LEADER_PATH + "/" + name + "/" + zkName;
+        String path = V2_LEADER + "/" + name + "/" + zkName;
         List<String> leases = curator.getChildren().forPath(path);
         for (String lease : leases) {
             byte[] bytes = curator.getData().forPath(path + "/" + lease);
