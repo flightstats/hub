@@ -10,14 +10,17 @@ import com.sun.jersey.api.client.ClientResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Singleton
 class AppUrlCheck extends AbstractIdleService {
 
     private final static Logger logger = LoggerFactory.getLogger(AppUrlCheck.class);
 
     @Inject
-    @Named("SpokeCluster")
-    private Cluster spokeCuratorCluster;
+    @Named("HubCluster")
+    private Cluster cluster;
 
     @Inject
     private Client client;
@@ -28,7 +31,7 @@ class AppUrlCheck extends AbstractIdleService {
 
     @Override
     protected void startUp() throws Exception {
-        if (spokeCuratorCluster.getAllServers().isEmpty()) {
+        if (getValidServers().isEmpty()) {
             logger.info("no servers to test");
         } else {
             String appUrl = HubProperties.getAppUrl();
@@ -40,6 +43,20 @@ class AppUrlCheck extends AbstractIdleService {
                 throw new RuntimeException(msg);
             }
         }
+    }
+
+    private Set<String> getValidServers() {
+        Set<String> validServers = new HashSet<>();
+        cluster.getAllServers().forEach(server -> {
+            ClientResponse response = client
+                    .resource(HubHost.getScheme() + server + "/health")
+                    .get(ClientResponse.class);
+            logger.info("got response {}", response);
+            if (response.getStatus() == 200) {
+                validServers.add(server);
+            }
+        });
+        return validServers;
     }
 
     @Override
