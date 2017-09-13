@@ -26,7 +26,7 @@ public class InternalWebhookResource {
 
     private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private final static WebhookService webhookService = HubProvider.getInstance(WebhookService.class);
-    private final static WebhookManager WEBHOOK_MANAGER = HubProvider.getInstance(WebhookManager.class);
+    private final static LocalWebhookManager LOCAL_WEBHOOK_MANAGER = HubProvider.getInstance(LocalWebhookManager.class);
 
     @Context
     private UriInfo uriInfo;
@@ -130,7 +130,7 @@ public class InternalWebhookResource {
     @Path("/run/{name}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response run(@PathParam("name") String name) {
-        if (WEBHOOK_MANAGER.ensureRunning(name)) {
+        if (LOCAL_WEBHOOK_MANAGER.ensureRunning(name)) {
             return Response.ok().build();
         }
         return Response.status(400).build();
@@ -140,7 +140,7 @@ public class InternalWebhookResource {
     @Path("/delete/{name}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response delete(@PathParam("name") String name) {
-        WEBHOOK_MANAGER.stopLocal(name, true);
+        LOCAL_WEBHOOK_MANAGER.stopLocal(name, true);
         return Response.ok().build();
     }
 

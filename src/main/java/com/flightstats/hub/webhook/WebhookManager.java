@@ -1,6 +1,7 @@
 package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.app.HubHost;
+import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.CuratorCluster;
 import com.flightstats.hub.cluster.LastContentPath;
@@ -12,19 +13,15 @@ import com.flightstats.hub.rest.RestClient;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
-import de.jkeylockmanager.manager.KeyLockManager;
-import de.jkeylockmanager.manager.KeyLockManagers;
 import org.apache.curator.framework.api.CuratorEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import static com.flightstats.hub.app.HubServices.register;
@@ -42,8 +39,6 @@ public class WebhookManager {
     @Named("Webhook")
     private Dao<Webhook> webhookDao;
     @Inject
-    private Provider<WebhookLeader> v2Provider;
-    @Inject
     private LastContentPath lastContentPath;
     @Inject
     private ActiveWebhooks activeWebhooks;
@@ -57,13 +52,10 @@ public class WebhookManager {
     @Inject
     private WebhookContentPathSet webhookInProcess;
 
-    private Map<String, WebhookLeader> localLeaders = new ConcurrentHashMap<>();
     private final Client client = RestClient.createClient(5, 15, true, true);
-    private final KeyLockManager lockManager;
 
     @Inject
     public WebhookManager() {
-        lockManager = KeyLockManagers.newLock(1, TimeUnit.SECONDS);
         register(new WebhookIdleService(), HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
         register(new WebhookScheduledService(), HubServices.TYPE.AFTER_HEALTHY_START);
     }
@@ -144,45 +136,6 @@ public class WebhookManager {
         }
     }
 
-    boolean ensureRunning(String name) {
-        return lockManager.executeLocked(name, () -> ensureRunningWithLock(name));
-    }
-
-    private boolean ensureRunningWithLock(String name) {
-        Webhook daoWebhook = webhookDao.get(name);
-        logger.info("ensureRunning {}", daoWebhook);
-        if (localLeaders.containsKey(name)) {
-            logger.info("checking for change {}", name);
-            WebhookLeader webhookLeader = localLeaders.get(name);
-            Webhook runningWebhook = webhookLeader.getWebhook();
-            if (!runningWebhook.isChanged(daoWebhook)) {
-                return true;
-            }
-            logger.info("webhook has changed {} to {}", runningWebhook, daoWebhook);
-            stopLocal(name, false);
-        }
-        logger.info("starting {}", name);
-        return startLocal(daoWebhook);
-    }
-
-    private boolean startLocal(Webhook daoWebhook) {
-        WebhookLeader webhookLeader = v2Provider.get();
-        boolean hasLeadership = webhookLeader.tryLeadership(daoWebhook);
-        if (hasLeadership) {
-            localLeaders.put(daoWebhook.getName(), webhookLeader);
-        }
-        return hasLeadership;
-    }
-
-    void stopLocal(String name, boolean delete) {
-        logger.info("stop {} {}", name, delete);
-        if (localLeaders.containsKey(name)) {
-            logger.info("stopping local {}", name);
-            localLeaders.get(name).exit(delete);
-            localLeaders.remove(name);
-        }
-    }
-
     private void notifyWatchers() {
         watchManager.notifyWatcher(WATCHER_PATH);
     }
@@ -214,9 +167,7 @@ public class WebhookManager {
 
         @Override
         protected void shutDown() throws Exception {
-            for (String name : localLeaders.keySet()) {
-                stopLocal(name, false);
-            }
+            HubProvider.getInstance(LocalWebhookManager.class).stopAllLocal();
             notifyWatchers();
         }
 
