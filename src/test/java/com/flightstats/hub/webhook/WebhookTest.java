@@ -115,6 +115,8 @@ public class WebhookTest {
         assertEquals(withDefaultsA, withDefaultsB);
         Webhook withStartingKey = withDefaultsB.withStartingKey(new ContentKey());
         assertEquals(withDefaultsA, withStartingKey);
+        assertFalse(withDefaultsA.isChanged(withDefaultsA));
+        assertFalse(withDefaultsB.isChanged(withDefaultsB));
     }
 
 }
