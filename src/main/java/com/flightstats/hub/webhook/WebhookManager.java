@@ -10,7 +10,6 @@ import com.flightstats.hub.cluster.Watcher;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.rest.RestClient;
-import com.flightstats.hub.util.Sleeper;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
@@ -88,33 +87,26 @@ public class WebhookManager {
     }
 
     void notifyWatchers(Webhook webhook) {
-        if (!manageWebhook(webhook, true)) {
-            logger.info("unable to manage webhook {}", webhook);
-            Sleeper.sleep(2000);
-            logger.info("trying manage webhook {}", webhook);
-            manageWebhook(webhook, true);
-        }
+        manageWebhook(webhook, true);
     }
 
-    private boolean manageWebhook(Webhook daoWebhook, boolean webhookChanged) {
+    private void manageWebhook(Webhook daoWebhook, boolean webhookChanged) {
         String name = daoWebhook.getName();
         if (activeWebhooks.getV1().contains(name)) {
             //if is in v1 ZK, leave it alone ...
             //todo - gfm - this can go away, eventually
             logger.info("found v1 webhook {}", name);
-            return true;
         } else if (activeWebhooks.getV2().contains(name)) {
             logger.debug("found existing v2 webhook {}", name);
             Collection<String> v2Servers = activeWebhooks.getV2Servers(name);
             if (v2Servers.isEmpty()) {
-                return callOneRun(name, hubCluster.getRandomServers());
+                callOneRun(name, hubCluster.getRandomServers());
             } else if (webhookChanged) {
-                return callOneRun(name, v2Servers);
+                callOneRun(name, v2Servers);
             }
-            return true;
         } else {
             logger.debug("found new v2 webhook {}", name);
-            return callOneRun(name, hubCluster.getRandomServers());
+            callOneRun(name, hubCluster.getRandomServers());
         }
     }
 
@@ -131,26 +123,17 @@ public class WebhookManager {
         }
     }
 
-    private boolean callOneRun(String name, Collection<String> servers) {
+    private void callOneRun(String name, Collection<String> servers) {
         for (String server : servers) {
-            if (getResponse(HubHost.getScheme() + server + "/internal/webhook/run/" + name)
-                    .filter(response -> response.getStatus() == 200)
-                    .isPresent()) {
-                return true;
+            String url = HubHost.getScheme() + server + "/internal/webhook/run/" + name;
+            logger.info("calling {}", url);
+            ClientResponse response = client.resource(url).put(ClientResponse.class);
+            if (response.getStatus() == 200) {
+                logger.debug("success {}", response);
+                break;
+            } else {
+                logger.warn("unexpected response {}", response);
             }
-        }
-        return false;
-    }
-
-    private Optional<ClientResponse> getResponse(String url) {
-        logger.debug("calling {}", url);
-        try {
-            ClientResponse response = client.resource(url).get(ClientResponse.class);
-            logger.debug("called {}", response);
-            return Optional.of(response);
-        } catch (Exception e) {
-            logger.warn("unable to call " + url, e);
-            return Optional.empty();
         }
     }
 
