@@ -6,64 +6,78 @@ import org.apache.curator.framework.recipes.locks.InterProcessSemaphoreMutex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
- * The CuratorLock should be used for short running processes which need a global lock across all instances.
- * Longer running processes should use CuratorLeader.
+ * CuratorLock is intended for long or short running processes.
  */
 public class CuratorLock {
     private final static Logger logger = LoggerFactory.getLogger(CuratorLock.class);
 
     private final CuratorFramework curator;
-    private final ZooKeeperState zooKeeperState;
+    private final ExecutorService singleThreadExecutor;
+    private final Leadership leadershipV2;
+    private InterProcessSemaphoreMutex mutex;
 
     @Inject
     public CuratorLock(CuratorFramework curator, ZooKeeperState zooKeeperState) {
         this.curator = curator;
-        this.zooKeeperState = zooKeeperState;
+        singleThreadExecutor = Executors.newSingleThreadExecutor();
+        leadershipV2 = new LeadershipV2(zooKeeperState);
     }
 
-    /**
-     * Long running processes need to check shouldStopWorking to see if you've lost the lock.
-     * runWithLock will not throw an exception up the stack.
-     */
-    public void runWithLock(Lockable lockable, String lockPath, long time, TimeUnit timeUnit) {
-
-        InterProcessSemaphoreMutex mutex = new InterProcessSemaphoreMutex(curator, lockPath);
+    public boolean runWithLock(Lockable lockable, String lockPath, long time, TimeUnit timeUnit) {
+        mutex = new InterProcessSemaphoreMutex(curator, lockPath);
         try {
             logger.debug("attempting acquire {}", lockPath);
             if (mutex.acquire(time, timeUnit)) {
-                logger.debug("acquired {}", lockPath);
-                lockable.runWithLock();
+                leadershipV2.setLeadership(true);
+                logger.debug("acquired {} {}", lockPath, leadershipV2.hasLeadership());
+                singleThreadExecutor.submit(() -> {
+                    try {
+                        lockable.takeLeadership(leadershipV2);
+                    } catch (Exception e) {
+                        logger.warn("we lost the lock " + lockPath, e);
+                        leadershipV2.setLeadership(false);
+                    }
+                });
+                return true;
             } else {
                 logger.debug("unable to acquire {} ", lockPath);
+                return false;
             }
         } catch (Exception e) {
             logger.warn("oh no! issue with " + lockPath, e);
-        } finally {
-            try {
-                mutex.release();
-            } catch (Exception e) {
-                //ignore
-            }
+            leadershipV2.setLeadership(false);
+            release();
+            return false;
         }
     }
 
-    public void delete(final String lockPath) {
-        //deleting the path within a lock will cause Curator to log an error 'Lease already released', which can be ignored.
-        runWithLock(() -> curator.delete().deletingChildrenIfNeeded().forPath(lockPath), lockPath, 1, TimeUnit.SECONDS);
+    public void stopWorking() {
+        leadershipV2.setLeadership(false);
     }
 
-    /**
-     * All users should handle this
-     */
-    private boolean shouldStopWorking() {
-        return zooKeeperState.shouldStopWorking();
+    public void delete() {
+        stopWorking();
+        if (mutex != null) {
+            release();
+        }
+        try {
+            singleThreadExecutor.awaitTermination(1, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            logger.info("InterruptedException", e);
+        }
     }
 
-    public boolean shouldKeepWorking() {
-        return !shouldStopWorking();
+    private void release() {
+        try {
+            mutex.release();
+        } catch (Exception e) {
+            logger.warn("issue releasing mutex", e);
+        }
     }
 
 }

@@ -7,10 +7,7 @@ import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.model.ContentPath;
 import org.joda.time.DateTime;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.net.URI;
 import java.util.Collection;
@@ -29,6 +26,7 @@ public class InternalWebhookResource {
 
     private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private final static WebhookService webhookService = HubProvider.getInstance(WebhookService.class);
+    private final static LocalWebhookManager LOCAL_WEBHOOK_MANAGER = HubProvider.getInstance(LocalWebhookManager.class);
 
     @Context
     private UriInfo uriInfo;
@@ -43,6 +41,8 @@ public class InternalWebhookResource {
         directions.put("configs", "HTTP GET to /internal/webhook/configs to list all webhook configurations");
         directions.put("stale", "HTTP GET to /internal/webhook/stale/{age} to list webhooks that are more than {age} minutes behind.");
         directions.put("errors", "HTTP GET to /internal/webhook/errors to list all webhooks with recent errors.");
+        directions.put("run/{name}", "HTTP PUT to /internal/webhook/run/{name} to start processing this webhook.");
+        directions.put("delete/{name}", "HTTP PUT to /internal/webhook/delete/{name} to stop processing this webhook on this server.");
 
         ObjectNode links = root.putObject("_links");
         addLink(links, "self", uriInfo.getRequestUri().toString());
@@ -125,4 +125,23 @@ public class InternalWebhookResource {
     private URI constructWebhookURI(Webhook webhook) {
         return UriBuilder.fromUri(uriInfo.getBaseUri()).path("webhook").path(webhook.getName()).build();
     }
+
+    @PUT
+    @Path("/run/{name}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response run(@PathParam("name") String name) {
+        if (LOCAL_WEBHOOK_MANAGER.ensureRunning(name)) {
+            return Response.ok().build();
+        }
+        return Response.status(400).build();
+    }
+
+    @PUT
+    @Path("/delete/{name}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response delete(@PathParam("name") String name) {
+        LOCAL_WEBHOOK_MANAGER.stopLocal(name, true);
+        return Response.ok().build();
+    }
+
 }

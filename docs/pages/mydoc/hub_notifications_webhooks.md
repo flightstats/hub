@@ -99,6 +99,7 @@ http PUT localhost:8080/webhook/coffeeWebhook/updateCursor \
 ## Webhook behavior
 
 The application listening at `callbackUrl` will get a payload POSTed to it for every new item in the channel, starting after `startItem` or at the time the webhook is created.
+The POST has a `Content-type` of `application/json`.
 A 2XX-level client response is considered successful.  Any other response is considered an error, and will cause the server to retry.   Redirects are allowed.
 Retries will use an exponential backoff up to one minute, and the server will continue to retry at one minute intervals indefinitely.
 
