@@ -20,7 +20,7 @@ for word in $(<${CONFIG_DIR}/hub.properties); do
 done
 
 # Account for encrypted hub flavor
-if [[ $APP_PORT == "8443" ]]; then
+if [[ $APP_PORT == "8443"  || $APP_PORT == "443" ]]; then
   CURL="curl -kis -X POST https://"
 else
   CURL="curl -is -X POST http://"
