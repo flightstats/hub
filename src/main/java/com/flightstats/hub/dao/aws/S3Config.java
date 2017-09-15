@@ -5,6 +5,7 @@ import com.amazonaws.services.s3.model.BucketLifecycleConfiguration;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.CuratorLock;
+import com.flightstats.hub.cluster.Leadership;
 import com.flightstats.hub.cluster.Lockable;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Dao;
@@ -84,7 +85,7 @@ public class S3Config {
         }
 
         @Override
-        public void runWithLock() throws Exception {
+        public void takeLeadership(Leadership leadership) throws Exception {
             updateTtlDays();
             updateMaxItems();
         }
