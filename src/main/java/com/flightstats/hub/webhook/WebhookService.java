@@ -67,6 +67,7 @@ public class WebhookService {
         }
         webhookDao.upsert(webhook);
         webhookManager.notifyWatchers(webhook);
+        if (webhook.isTagPrototype()) TagWebhook.addTagWebhookInstances(webhook);
         return preExisting;
     }
 

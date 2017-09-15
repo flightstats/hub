@@ -1,7 +1,9 @@
 package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.app.HubProvider;
+import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Dao;
+import com.flightstats.hub.dao.LocalChannelService;
 import com.flightstats.hub.model.ChannelConfig;
 import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
@@ -10,6 +12,7 @@ import com.google.inject.TypeLiteral;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -26,6 +29,7 @@ import java.util.Set;
 public class TagWebhook {
     private final static Logger logger = LoggerFactory.getLogger(WebhookResource.class);
     private final static WebhookService webhookService = HubProvider.getInstance(WebhookService.class);
+    private final static ChannelService channelService = HubProvider.getInstance(LocalChannelService.class);
     private final static Dao<Webhook> webhookDao = HubProvider.getInstance(
             new TypeLiteral<Dao<Webhook>>() {
             }, "Webhook");
@@ -98,13 +102,9 @@ public class TagWebhook {
     }
 
 
-    // 1. if the webhook has a tag - see if there are any webhooks with the tag
-    // 2. if so, see if the channel is already a member (i.e. has a tag webhook already defined)
-    // 3. if not, create one
     public static void updateTagWebhooks(ChannelConfig channelConfig) {
         Set<Webhook> webhookSet = new HashSet<>(webhookDao.getAll(false));  // should I pass this in?
 
-        // ensureChannelIsMemberOfTagWebhooks
         Set<String> tags = channelConfig.getTags();
         for (String tag : tags) {
             Set<Webhook> taggedWebhooks = webhookPrototypesWithTag(tag);
@@ -116,5 +116,20 @@ public class TagWebhook {
         ensureNoOrphans(webhookSet, channelConfig);
     }
 
-    // TODO delete tagged webhooks associated with the channel
+    public static void deleteAllTagWebhooksForChannel(ChannelConfig channelConfig) {
+        Set<Webhook> webhookSet = new HashSet<>(webhookDao.getAll(false));  // should I pass this in?
+        Set<Webhook> managedWebHooks = allManagedWebhooksForChannel(webhookSet, channelConfig);
+
+        for (Webhook wh : allManagedWebhooksForChannel(managedWebHooks, channelConfig)) {
+            webhookService.delete(wh.getName());
+        }
+    }
+
+    // Add new wh instances for new or updated tag webhook
+    public static void addTagWebhookInstances(Webhook webhook) {
+        Collection<ChannelConfig> channels = channelService.getChannels(webhook.getTag(), false);
+        for (ChannelConfig channel : channels) {
+            webhookService.upsert(Webhook.instanceFromTagPrototype(webhook, channel));
+        }
+    }
 }

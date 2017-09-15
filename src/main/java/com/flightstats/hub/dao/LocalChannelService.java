@@ -93,6 +93,7 @@ public class LocalChannelService implements ChannelService {
             logger.info("updating channel {} from {}", configuration, oldConfig);
             channelValidator.validate(configuration, oldConfig, isLocalHost);
             channelConfigDao.upsert(configuration);
+            TagWebhook.updateTagWebhooks(configuration);
             notify(configuration, oldConfig);
         } else {
             logger.info("update with no changes {}", configuration);
@@ -384,6 +385,7 @@ public class LocalChannelService implements ChannelService {
             lastContentPath.delete(channelName, REPLICATED_LAST_UPDATED);
         }
         lastContentPath.delete(channelName, HISTORICAL_EARLIEST);
+        TagWebhook.deleteAllTagWebhooksForChannel(channelConfig);
         return true;
     }
 
