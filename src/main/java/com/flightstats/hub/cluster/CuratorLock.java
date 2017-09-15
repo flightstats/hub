@@ -18,7 +18,7 @@ public class CuratorLock {
 
     private final CuratorFramework curator;
     private final ExecutorService singleThreadExecutor;
-    private final LeadershipV2 leadershipV2;
+    private final Leadership leadershipV2;
     private InterProcessSemaphoreMutex mutex;
 
     @Inject

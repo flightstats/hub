@@ -20,7 +20,6 @@ public class LeadershipV2 implements Leadership {
         return zooKeeperState.shouldKeepWorking() && hasLeadership.get();
     }
 
-    //todo - gfm - do we need this?
     public void close() {
         setLeadership(false);
     }
