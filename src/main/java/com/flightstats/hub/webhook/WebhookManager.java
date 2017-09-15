@@ -99,7 +99,15 @@ public class WebhookManager {
     }
 
     private void manageWebhook(Webhook daoWebhook) {
+        if (!daoWebhook.getTag().isEmpty()) {
+            // tag webhooks are not processed like normal webhooks.
+            // they are used as prototype definitions for new webhooks added
+            // automatically when a new/existing channel is assigned a tag that is
+            // associated with a tag webhook
+            return;
+        }
         String name = daoWebhook.getName();
+
         if (activeWebhooks.getV1().contains(name)) {
             //if is in v1 ZK, leave it alone ...
             //todo - gfm - this can go away, eventually

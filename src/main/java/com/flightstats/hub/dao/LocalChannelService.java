@@ -14,6 +14,7 @@ import com.flightstats.hub.model.*;
 import com.flightstats.hub.replication.ReplicationGlobalManager;
 import com.flightstats.hub.time.TimeService;
 import com.flightstats.hub.util.TimeUtil;
+import com.flightstats.hub.webhook.TagWebhook;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -65,6 +66,7 @@ public class LocalChannelService implements ChannelService {
         channelValidator.validate(configuration, null, false);
         channelConfigDao.upsert(configuration);
         notify(configuration, null);
+        TagWebhook.updateTagWebhooks(configuration);
         return configuration;
     }
 
