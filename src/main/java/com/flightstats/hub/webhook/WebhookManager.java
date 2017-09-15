@@ -65,7 +65,7 @@ public class WebhookManager {
         watchManager.register(new Watcher() {
             @Override
             public void callback(CuratorEvent event) {
-                manageWebhooks();
+                manageWebhooks(true);
             }
 
             @Override
@@ -76,21 +76,21 @@ public class WebhookManager {
         });
         //todo - gfm - once we are past v1 webhooks, we can replace watchManager with addRemovalListener
         //hubCluster.addRemovalListener(event -> manageWebhooks());
-        manageWebhooks();
+        manageWebhooks(false);
     }
 
-    private synchronized void manageWebhooks() {
-        Set<Webhook> daoWebhooks = new HashSet<>(webhookDao.getAll(false));
+    private synchronized void manageWebhooks(boolean useCache) {
+        Set<Webhook> daoWebhooks = new HashSet<>(webhookDao.getAll(useCache));
         for (Webhook daoWebhook : daoWebhooks) {
-            manageWebhook(daoWebhook);
+            manageWebhook(daoWebhook, false);
         }
     }
 
     void notifyWatchers(Webhook webhook) {
-        manageWebhook(webhook);
+        manageWebhook(webhook, true);
     }
 
-    private void manageWebhook(Webhook daoWebhook) {
+    private void manageWebhook(Webhook daoWebhook, boolean webhookChanged) {
         String name = daoWebhook.getName();
         if (activeWebhooks.getV1().contains(name)) {
             //if is in v1 ZK, leave it alone ...
@@ -100,9 +100,10 @@ public class WebhookManager {
             logger.debug("found existing v2 webhook {}", name);
             Collection<String> v2Servers = activeWebhooks.getV2Servers(name);
             if (v2Servers.isEmpty()) {
-                v2Servers = hubCluster.getRandomServers();
+                callOneRun(name, hubCluster.getRandomServers());
+            } else if (webhookChanged) {
+                callOneRun(name, v2Servers);
             }
-            callOneRun(name, v2Servers);
         } else {
             logger.debug("found new v2 webhook {}", name);
             callOneRun(name, hubCluster.getRandomServers());
@@ -176,8 +177,7 @@ public class WebhookManager {
     private class WebhookScheduledService extends AbstractScheduledService {
         @Override
         protected void runOneIteration() throws Exception {
-            //todo - gfm -  could this just check for empty locks ...
-            manageWebhooks();
+            manageWebhooks(false);
         }
 
         @Override
@@ -186,7 +186,7 @@ public class WebhookManager {
             this is only needed in the case where a hub server crashes, and we are not notified
             //todo - gfm - what we really want is to monitor the hub cluster group, only trigger on removal
              */
-            return Scheduler.newFixedRateSchedule(1, 2, TimeUnit.MINUTES);
+            return Scheduler.newFixedRateSchedule(1, 5, TimeUnit.MINUTES);
         }
     }
 }
