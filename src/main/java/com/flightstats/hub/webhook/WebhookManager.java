@@ -99,7 +99,6 @@ public class WebhookManager {
             return;
         }
         String name = daoWebhook.getName();
-
         if (activeWebhooks.getV1().contains(name)) {
             //if is in v1 ZK, leave it alone ...
             //todo - gfm - this can go away, eventually
