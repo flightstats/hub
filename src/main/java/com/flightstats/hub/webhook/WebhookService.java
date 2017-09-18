@@ -66,7 +66,7 @@ public class WebhookService {
             lastContentPath.initialize(webhook.getName(), webhook.getStartingKey(), WEBHOOK_LAST_COMPLETED);
         }
         webhookDao.upsert(webhook);
-        webhookManager.notifyWatchers();
+        webhookManager.notifyWatchers(webhook);
         return preExisting;
     }
 

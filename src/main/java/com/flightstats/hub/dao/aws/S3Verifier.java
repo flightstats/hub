@@ -2,10 +2,7 @@ package com.flightstats.hub.dao.aws;
 
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.cluster.CuratorLeader;
-import com.flightstats.hub.cluster.LastContentPath;
-import com.flightstats.hub.cluster.Leader;
-import com.flightstats.hub.cluster.Leadership;
+import com.flightstats.hub.cluster.*;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.QueryResult;
@@ -17,13 +14,14 @@ import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
-import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
+import org.apache.curator.framework.CuratorFramework;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.slf4j.Logger;
@@ -41,6 +39,7 @@ public class S3Verifier {
 
     static final String LAST_SINGLE_VERIFIED = "/S3VerifierSingleLastVerified/";
     private final static Logger logger = LoggerFactory.getLogger(S3Verifier.class);
+    public static final String LEADER_PATH = "/S3VerifierSingleService";
 
     private final int offsetMinutes = HubProperties.getProperty("s3Verifier.offsetMinutes", 15);
     private final int channelThreads = HubProperties.getProperty("s3Verifier.channelThreads", 3);
@@ -60,11 +59,14 @@ public class S3Verifier {
     private S3WriteQueue s3WriteQueue;
     @Inject
     private Client followClient;
+    @Inject
+    private ZooKeeperState zooKeeperState;
+    @Inject
+    private CuratorFramework curator;
 
     public S3Verifier() {
         if (HubProperties.getProperty("s3Verifier.run", true)) {
-            HubServices.register(new S3VerifierService("/S3VerifierSingleService", offsetMinutes, this::verifySingleChannels),
-                    HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
+            HubServices.register(new S3ScheduledVerifierService(), HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
         }
     }
 
@@ -201,37 +203,25 @@ public class S3Verifier {
         }
     }
 
-    private class S3VerifierService extends AbstractIdleService implements Leader {
+    private class S3ScheduledVerifierService extends AbstractScheduledService implements Lockable {
 
-        private String leaderPath;
-        private int minutes;
-        private Runnable runnable;
+        @Override
+        protected void runOneIteration() throws Exception {
+            CuratorLock curatorLock = new CuratorLock(curator, zooKeeperState);
+            curatorLock.runWithLock(this, LEADER_PATH, 1, TimeUnit.SECONDS);
+        }
 
-        @java.beans.ConstructorProperties({"leaderPath", "minutes", "runnable"})
-        public S3VerifierService(String leaderPath, int minutes, Runnable runnable) {
-            this.leaderPath = leaderPath;
-            this.minutes = minutes;
-            this.runnable = runnable;
+        protected Scheduler scheduler() {
+            return Scheduler.newFixedDelaySchedule(0, offsetMinutes, TimeUnit.MINUTES);
         }
 
         @Override
-        protected void startUp() throws Exception {
-            CuratorLeader curatorLeader = new CuratorLeader(leaderPath, this);
-            curatorLeader.start();
-        }
-
-        @Override
-        protected void shutDown() throws Exception {
-            s3WriteQueue.close();
-        }
-
-        @Override
-        public void takeLeadership(Leadership leadership) {
+        public void takeLeadership(Leadership leadership) throws Exception {
             logger.info("taking leadership");
             while (leadership.hasLeadership()) {
                 long start = System.currentTimeMillis();
-                runnable.run();
-                long sleep = TimeUnit.MINUTES.toMillis(minutes) - (System.currentTimeMillis() - start);
+                verifySingleChannels();
+                long sleep = TimeUnit.MINUTES.toMillis(offsetMinutes) - (System.currentTimeMillis() - start);
                 logger.debug("sleeping for {} ms", sleep);
                 Sleeper.sleep(Math.max(0, sleep));
                 logger.debug("waking up after sleep");

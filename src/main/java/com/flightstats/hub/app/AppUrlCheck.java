@@ -1,6 +1,7 @@
 package com.flightstats.hub.app;
 
 import com.flightstats.hub.cluster.Cluster;
+import com.flightstats.hub.rest.RestClient;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -16,11 +17,10 @@ class AppUrlCheck extends AbstractIdleService {
     private final static Logger logger = LoggerFactory.getLogger(AppUrlCheck.class);
 
     @Inject
-    @Named("SpokeCluster")
-    private Cluster spokeCuratorCluster;
+    @Named("HubCluster")
+    private Cluster cluster;
 
-    @Inject
-    private Client client;
+    private Client client = RestClient.createClient(1000, 1000, true, true);
 
     public AppUrlCheck() {
         HubServices.register(this);
@@ -28,9 +28,7 @@ class AppUrlCheck extends AbstractIdleService {
 
     @Override
     protected void startUp() throws Exception {
-        if (spokeCuratorCluster.getAllServers().isEmpty()) {
-            logger.info("no servers to test");
-        } else {
+        if (hasHealthyServers()) {
             String appUrl = HubProperties.getAppUrl();
             ClientResponse response = client.resource(appUrl).get(ClientResponse.class);
             logger.info("got response {}", response);
@@ -39,7 +37,25 @@ class AppUrlCheck extends AbstractIdleService {
                 logger.error(msg);
                 throw new RuntimeException(msg);
             }
+        } else {
+            logger.info("no servers to test");
         }
+    }
+
+    private boolean hasHealthyServers() {
+        for (String server : cluster.getAllServers()) {
+            String serverUri = HubHost.getScheme() + server;
+            if (!serverUri.equals(HubHost.getLocalHttpNameUri())) {
+                ClientResponse response = client.resource(serverUri + "/health").get(ClientResponse.class);
+                logger.info("got response {}", response);
+                if (response.getStatus() == 200) {
+                    return true;
+                }
+            } else {
+                logger.info("ignoring {}", serverUri);
+            }
+        }
+        return false;
     }
 
     @Override

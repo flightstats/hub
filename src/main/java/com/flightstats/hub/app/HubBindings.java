@@ -154,7 +154,6 @@ public class HubBindings extends AbstractModule {
         bind(ZooKeeperState.class).asEagerSingleton();
         bind(ReplicationGlobalManager.class).asEagerSingleton();
         bind(HubUtils.class).asEagerSingleton();
-        bind(CuratorLock.class).asEagerSingleton();
         bind(GCRunner.class).asEagerSingleton();
         bind(MetricsRunner.class).asEagerSingleton();
         bind(ChannelValidator.class).asEagerSingleton();
@@ -164,7 +163,6 @@ public class HubBindings extends AbstractModule {
         bind(WatchManager.class).asEagerSingleton();
         bind(MetricsService.class).to(DelegatingMetricsService.class).asEagerSingleton();
         bind(NtpMonitor.class).asEagerSingleton();
-        bind(Leaders.class).asEagerSingleton();
         bind(TimeService.class).asEagerSingleton();
         bind(ShutdownManager.class).asEagerSingleton();
         bind(FileSpokeStore.class).asEagerSingleton();
