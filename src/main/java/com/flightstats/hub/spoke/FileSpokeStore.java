@@ -23,6 +23,9 @@ import java.util.Collection;
  */
 public class FileSpokeStore {
 
+    public final static String SINGLE = "Single";
+    public final static String BATCH = "Batch";
+
     private final static Logger logger = LoggerFactory.getLogger(FileSpokeStore.class);
     private final String storagePath;
 

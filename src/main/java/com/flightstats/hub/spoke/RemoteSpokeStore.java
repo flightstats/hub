@@ -177,14 +177,14 @@ public class RemoteSpokeStore {
         return (int) Math.max(1, Math.ceil(size / 2.0));
     }
 
-    public Content get(String path, ContentKey key) {
+    public Content get(String fileStore, String path, ContentKey key) {
         Collection<String> servers = cluster.getRandomServers();
         for (String server : servers) {
             ClientResponse response = null;
             try {
                 setThread(path);
-                response = query_client.resource(HubHost.getScheme() + server + "/internal/spoke/payload/" + path)
-                        .get(ClientResponse.class);
+                String url = HubHost.getScheme() + server + "/internal/spoke/" + fileStore + "/" + path;
+                response = query_client.resource(url).get(ClientResponse.class);
                 logger.trace("server {} path {} response {}", server, path, response);
                 if (response.getStatus() == 200) {
                     byte[] entity = response.getEntity(byte[].class);

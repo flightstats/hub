@@ -1,6 +1,5 @@
 package com.flightstats.hub.spoke;
 
-
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.model.SingleTrace;
 import com.google.common.io.ByteStreams;
@@ -16,23 +15,36 @@ import javax.ws.rs.core.UriInfo;
 import java.io.*;
 import java.util.Arrays;
 
+// TODO (rdz): rename this class to InternalSpokeResource to be consistent with other internal resources
+
 @SuppressWarnings("WeakerAccess")
 @Path("/internal/spoke")
 public class SpokeInternalResource {
 
     private final static Logger logger = LoggerFactory.getLogger(SpokeInternalResource.class);
-    private static final FileSpokeStore spokeStore = HubProvider.getInstance(FileSpokeStore.class);
+    private static final FileSpokeStore singleSpokeStore = HubProvider.getInstance(FileSpokeStore.class, FileSpokeStore.SINGLE);
+    private static final FileSpokeStore batchSpokeStore = HubProvider.getInstance(FileSpokeStore.class, FileSpokeStore.BATCH);
     private static final RemoteSpokeStore remoteSpokeStore = HubProvider.getInstance(RemoteSpokeStore.class);
     @Context
     private UriInfo uriInfo;
 
-    @Path("/payload/{path:.+}")
+    @Path("/single/{path:.+}")
     @GET
-    public Response getPayload(@PathParam("path") String path) {
+    public Response getFromSinglePayloads(@PathParam("path") String path) {
+        return getFromStore(path, singleSpokeStore);
+    }
+
+    @Path("/batch/{path:.+}")
+    @GET
+    public Response getFromBatchPayloads(@PathParam("path") String path) {
+        return getFromStore(path, batchSpokeStore);
+    }
+
+    private Response getFromStore(String path, FileSpokeStore store) {
         try {
             Response.ResponseBuilder builder = Response.ok((StreamingOutput) os -> {
                 try (OutputStream output = new BufferedOutputStream(os)) {
-                    spokeStore.read(path, output);
+                    store.read(path, output);
                 } catch (NotFoundException e) {
                     logger.debug("not found {}", e.getMessage());
                 }
@@ -44,12 +56,22 @@ public class SpokeInternalResource {
         }
     }
 
-    @Path("/payload/{path:.+}")
+    @Path("/single/{path:.+}")
     @PUT
-    public Response putPayload(@PathParam("path") String path, InputStream input) {
+    public Response putIntoSinglePayloads(@PathParam("path") String path, InputStream input) {
+        return putIntoStore(singleSpokeStore, path, input);
+    }
+
+    @Path("/batch/{path:.+}")
+    @PUT
+    public Response putIntoBatchPayloads(@PathParam("path") String path, InputStream input) {
+        return putIntoStore(batchSpokeStore, path, input);
+    }
+
+    private Response putIntoStore(FileSpokeStore store, String path, InputStream input) {
         try {
             long start = System.currentTimeMillis();
-            if (spokeStore.insert(path, input)) {
+            if (store.insert(path, input)) {
                 long end = System.currentTimeMillis();
                 if ((end - start) > 4000) {
                     logger.info("slow write response {} {}", path, new DateTime(start));
@@ -69,6 +91,8 @@ public class SpokeInternalResource {
         }
     }
 
+    // TODO (rdz): should bulk keys be stored in their own FileSpokeStore instead of the singleSpokeStore, like batch data?
+
     @Path("/bulkKey/{channel}")
     @PUT
     public Response putBulk(@PathParam("channel") String channel, InputStream input) {
@@ -80,7 +104,7 @@ public class SpokeInternalResource {
                 String keyPath = new String(readByesFully(stream));
                 byte[] data = readByesFully(stream);
                 String itemPath = channel + "/" + keyPath;
-                if (!spokeStore.insert(itemPath, new ByteArrayInputStream(data))) {
+                if (!singleSpokeStore.insert(itemPath, new ByteArrayInputStream(data))) {
                     logger.warn("what happened?!?! {}", channel);
                     return Response
                             .status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -114,7 +138,7 @@ public class SpokeInternalResource {
         try {
             Response.ResponseBuilder builder = Response.ok((StreamingOutput) os -> {
                 BufferedOutputStream output = new BufferedOutputStream(os);
-                spokeStore.readKeysInBucket(path, output);
+                singleSpokeStore.readKeysInBucket(path, output);
                 output.flush();
             });
             return builder.build();
@@ -160,7 +184,7 @@ public class SpokeInternalResource {
     @DELETE
     public Response delete(@PathParam("path") String path) {
         try {
-            spokeStore.delete(path);
+            singleSpokeStore.delete(path);
             return Response.ok().build();
         } catch (Exception e) {
             logger.warn("unable to write " + path, e);
@@ -172,7 +196,7 @@ public class SpokeInternalResource {
     @GET
     public Response getLatest(@PathParam("channel") String channel, @PathParam("path") String path) {
         try {
-            String read = spokeStore.getLatest(channel, path);
+            String read = singleSpokeStore.getLatest(channel, path);
             if (read == null) {
                 return Response.status(Response.Status.NOT_FOUND).build();
             }
@@ -190,7 +214,7 @@ public class SpokeInternalResource {
         try {
             Response.ResponseBuilder builder = Response.ok((StreamingOutput) os -> {
                 BufferedOutputStream output = new BufferedOutputStream(os);
-                spokeStore.getNext(channel, startKey, count, output);
+                singleSpokeStore.getNext(channel, startKey, count, output);
                 output.flush();
             });
             return builder.build();

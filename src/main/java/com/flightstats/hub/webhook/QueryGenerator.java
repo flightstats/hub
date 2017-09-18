@@ -25,7 +25,7 @@ public class QueryGenerator {
             TimeUtil.Unit unit = getStepUnit(latestStableInChannel);
             Location location = Location.ALL;
             if (unit.equals(TimeUtil.Unit.SECONDS)) {
-                location = Location.CACHE;
+                location = Location.CACHE_SINGLE;
             } else if (unit.equals(TimeUtil.Unit.DAYS)) {
                 logger.info("long term query unit={} lastQueryTime={}", unit, lastQueryTime);
             }

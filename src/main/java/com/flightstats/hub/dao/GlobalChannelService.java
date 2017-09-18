@@ -30,8 +30,8 @@ public class GlobalChannelService implements ChannelService {
     @Inject
     private LocalChannelService localChannelService;
     @Inject
-    @Named(ContentDao.CACHE)
-    private ContentDao spokeContentDao;
+    @Named(ContentDao.SINGLE_CACHE)
+    private ContentDao spokeSingleContentDao;
 
     private final int spokeTtlMinutes = HubProperties.getSpokeTtlMinutes();
 
@@ -129,7 +129,7 @@ public class GlobalChannelService implements ChannelService {
                 () -> localChannelService.getLatest(query),
                 () -> {
                     ContentKey limitKey = localChannelService.getLatestLimit(channelName, query.isStable());
-                    Optional<ContentKey> latest = spokeContentDao.getLatest(channelName, limitKey, ActiveTraces.getLocal());
+                    Optional<ContentKey> latest = spokeSingleContentDao.getLatest(channelName, limitKey, ActiveTraces.getLocal());
                     if (latest.isPresent()) {
                         return latest;
                     }
@@ -161,7 +161,7 @@ public class GlobalChannelService implements ChannelService {
         return primaryAndSecondary(itemRequest.getChannel(),
                 () -> localChannelService.get(itemRequest),
                 () -> {
-                    Content read = spokeContentDao.get(itemRequest.getChannel(), itemRequest.getKey());
+                    Content read = spokeSingleContentDao.get(itemRequest.getChannel(), itemRequest.getKey());
                     if (read != null) {
                         return Optional.of(read);
                     }
@@ -178,14 +178,14 @@ public class GlobalChannelService implements ChannelService {
     public SortedSet<ContentKey> queryByTime(TimeQuery query) {
         return primaryAndSecondary(query.getChannelName(),
                 () -> localChannelService.queryByTime(query),
-                () -> query(query, localChannelService.queryByTime(query.withLocation(Location.CACHE))));
+                () -> query(query, localChannelService.queryByTime(query.withLocation(Location.CACHE_SINGLE))));
     }
 
     @Override
     public SortedSet<ContentKey> query(DirectionQuery query) {
         return primaryAndSecondary(query.getChannelName(),
                 () -> localChannelService.query(query),
-                () -> query(query, localChannelService.query(query.withLocation(Location.CACHE))));
+                () -> query(query, localChannelService.query(query.withLocation(Location.CACHE_SINGLE))));
     }
 
     private SortedSet<ContentKey> query(Query query, SortedSet<ContentKey> contentKeys) {

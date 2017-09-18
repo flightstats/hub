@@ -51,8 +51,8 @@ public class S3Verifier {
     @Inject
     private ChannelService channelService;
     @Inject
-    @Named(ContentDao.CACHE)
-    private ContentDao spokeContentDao;
+    @Named(ContentDao.SINGLE_CACHE)
+    private ContentDao spokeSingleContentDao;
     @Inject
     @Named(ContentDao.SINGLE_LONG_TERM)
     private ContentDao s3SingleContentDao;
@@ -152,7 +152,7 @@ public class S3Verifier {
         try {
             CountDownLatch latch = new CountDownLatch(2);
             runInQueryPool(ActiveTraces.getLocal(), latch, () -> {
-                SortedSet<ContentKey> spokeKeys = spokeContentDao.queryByTime(timeQuery);
+                SortedSet<ContentKey> spokeKeys = spokeSingleContentDao.queryByTime(timeQuery);
                 foundCacheKeys.addAll(spokeKeys);
                 queryResult.addKeys(spokeKeys);
             });

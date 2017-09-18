@@ -35,7 +35,7 @@ public class S3BatchResource {
                                            Collection<ContentKey> keys, String batchUrl) {
         ActiveTraces.getLocal().add("S3BatchResource.getAndWriteBatch", path);
         ClientResponse response = RestClient.defaultClient()
-                .resource(batchUrl + "&location=CACHE")
+                .resource(batchUrl + "&location=CACHE_SINGLE")
                 .accept("application/zip")
                 .get(ClientResponse.class);
         if (response.getStatus() != 200) {

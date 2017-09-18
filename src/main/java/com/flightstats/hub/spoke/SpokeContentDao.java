@@ -15,7 +15,6 @@ import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
@@ -27,12 +26,12 @@ import java.util.*;
  * It is called in-process on the originating Hub server, and this class will
  * call the registered Spoke servers in the cluster.
  */
-public class SpokeContentDao implements ContentDao {
+public abstract class SpokeContentDao implements ContentDao {
 
-    private final static Logger logger = LoggerFactory.getLogger(SpokeContentDao.class);
+    protected static Logger logger;
 
     @Inject
-    private RemoteSpokeStore spokeStore;
+    RemoteSpokeStore spokeStore;
 
     @Override
     public ContentKey insert(String channelName, Content content) throws Exception {
@@ -84,23 +83,8 @@ public class SpokeContentDao implements ContentDao {
         }
     }
 
-    private String getPath(String channelName, ContentKey key) {
+    protected String getPath(String channelName, ContentKey key) {
         return channelName + "/" + key.toUrl();
-    }
-
-    @Override
-    public Content get(String channelName, ContentKey key) {
-        String path = getPath(channelName, key);
-        Traces traces = ActiveTraces.getLocal();
-        traces.add("SpokeContentDao.read");
-        try {
-            return spokeStore.get(path, key);
-        } catch (Exception e) {
-            logger.warn("unable to get data: " + path, e);
-            return null;
-        } finally {
-            traces.add("SpokeContentDao.read completed");
-        }
     }
 
     @Override

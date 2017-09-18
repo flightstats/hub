@@ -7,8 +7,10 @@ import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.dao.*;
 import com.flightstats.hub.dao.aws.*;
 import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.spoke.FileSpokeStore;
 import com.flightstats.hub.spoke.RemoteSpokeStore;
-import com.flightstats.hub.spoke.SpokeContentDao;
+import com.flightstats.hub.spoke.SpokeBatchContentDao;
+import com.flightstats.hub.spoke.SpokeSingleContentDao;
 import com.flightstats.hub.spoke.SpokeTtlEnforcer;
 import com.flightstats.hub.webhook.Webhook;
 import com.google.inject.AbstractModule;
@@ -39,8 +41,11 @@ class ClusterHubBindings extends AbstractModule {
                 .to(ClusterContentService.class).asEagerSingleton();
         bind(RemoteSpokeStore.class).asEagerSingleton();
         bind(ContentDao.class)
-                .annotatedWith(Names.named(ContentDao.CACHE))
-                .to(SpokeContentDao.class).asEagerSingleton();
+                .annotatedWith(Names.named(ContentDao.SINGLE_CACHE))
+                .to(SpokeSingleContentDao.class).asEagerSingleton();
+        bind(ContentDao.class)
+                .annotatedWith(Names.named(ContentDao.BATCH_CACHE))
+                .to(SpokeBatchContentDao.class).asEagerSingleton();
         bind(ContentDao.class)
                 .annotatedWith(Names.named(ContentDao.SINGLE_LONG_TERM))
                 .to(S3SingleContentDao.class).asEagerSingleton();
@@ -57,6 +62,24 @@ class ClusterHubBindings extends AbstractModule {
         bind(SpokeTtlEnforcer.class).asEagerSingleton();
         bind(DocumentationDao.class).to(S3DocumentationDao.class).asEagerSingleton();
         bind(SpokeDecommissionManager.class).asEagerSingleton();
+    }
+
+    @Inject
+    @Singleton
+    @Provides
+    @Named(FileSpokeStore.SINGLE)
+    public static FileSpokeStore buildSingleSpokeStore() {
+        String storagePath = HubProperties.getSpokePath() + "/single";
+        return new FileSpokeStore(storagePath);
+    }
+
+    @Inject
+    @Singleton
+    @Provides
+    @Named(FileSpokeStore.BATCH)
+    public static FileSpokeStore buildBatchSpokeStore() {
+        String storagePath = HubProperties.getSpokePath() + "/batch";
+        return new FileSpokeStore(storagePath);
     }
 
     @Inject
