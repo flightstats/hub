@@ -5,7 +5,7 @@ var channelResource = channelUrl + "/" + channelName;
 
 describe(__filename, function () {
 
-    it('creates a channel with a valid TTL', function (done) {
+    it('creates a channel with keepForever', function (done) {
         var url = channelUrl;
         var headers = {'Content-Type': 'application/json'};
         var body = {'name': channelName, 'keepForever': true};
