@@ -158,10 +158,10 @@ public class ChannelValidator {
 
     private void validateTTL(ChannelConfig request, ChannelConfig oldConfig) throws InvalidRequestException {
         if (request.getKeepForever()) {
-            if (request.getTtlDays() == 0 && request.getMaxItems() == 0 && request.getMutableTime() == null) {
+            if (request.getTtlDays() == 0 && request.getMaxItems() == 0) {
                 return;
             } else {
-                throw new InvalidRequestException("{\"error\": \"keepForever is not compatible with ttlDays, maxItems or mutableTime. \"}");
+                throw new InvalidRequestException("{\"error\": \"keepForever is not compatible with ttlDays or maxItems \"}");
             }
         }
         if (request.getTtlDays() == 0 && request.getMaxItems() == 0 && request.getMutableTime() == null) {
