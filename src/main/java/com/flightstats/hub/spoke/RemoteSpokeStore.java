@@ -69,7 +69,7 @@ public class RemoteSpokeStore {
                 public void run() {
                     try {
                         ContentKey key = new ContentKey();
-                        if (insert(path + key.toUrl(), key.toUrl().getBytes(), server, traces, "payload", path)) {
+                        if (insert(path + key.toUrl(), key.toUrl().getBytes(), server, traces, "single", path)) {
                             quorumLatch.countDown();
                         } else {
                             traces.log(logger);
@@ -99,8 +99,8 @@ public class RemoteSpokeStore {
         for (String server : servers) {
             try {
                 logger.info("calling server {} path {}", server, path);
-                ClientResponse response = query_client.resource(HubHost.getScheme() + server + "/internal/spoke/test/" + path)
-                        .get(ClientResponse.class);
+                String url = HubHost.getScheme() + server + "/internal/spoke/test/" + path;
+                ClientResponse response = query_client.resource(url).get(ClientResponse.class);
                 if (response.getStatus() == 200) {
                     logger.info("success calling {}", response);
                 } else if (response.getStatus() == 404) {

@@ -23,7 +23,7 @@ public class SpokeContentDaoTest {
     @BeforeClass
     public static void setUpClass() throws Exception {
         Injector injector = Integration.startAwsHub();
-        util = new ContentDaoUtil(injector.getInstance(SpokeContentDao.class));
+        util = new ContentDaoUtil(injector.getInstance(SpokeSingleContentDao.class));
         CuratorFramework curator = injector.getInstance(CuratorFramework.class);
         Cluster cluster = HubBindings.buildSpokeCluster(curator, new SpokeDecommissionCluster(curator));
         for (int i = 0; i < 10; i++) {

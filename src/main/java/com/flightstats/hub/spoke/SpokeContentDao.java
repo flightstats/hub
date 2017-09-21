@@ -15,6 +15,7 @@ import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
@@ -28,17 +29,16 @@ import java.util.*;
  */
 public abstract class SpokeContentDao implements ContentDao {
 
-    protected static Logger logger;
+    private static Logger logger = LoggerFactory.getLogger(SpokeSingleContentDao.class);
 
     @Inject
-    RemoteSpokeStore spokeStore;
+    private RemoteSpokeStore spokeStore;
 
-    @Override
-    public ContentKey insert(String channelName, Content content) throws Exception {
+    protected ContentKey insertIntoStore(String fileStore, String channelName, Content content) throws Exception {
         ContentKey key = content.getContentKey().get();
         String path = getPath(channelName, key);
-        if (!spokeStore.insert(path, content.getData(), "payload", channelName)) {
-            throw new FailedWriteException("unable to write to spoke " + path);
+        if (!spokeStore.insert(path, content.getData(), fileStore, channelName)) {
+            throw new FailedWriteException("unable to write to spoke " + fileStore + " " + path);
         }
         return key;
     }
@@ -83,8 +83,22 @@ public abstract class SpokeContentDao implements ContentDao {
         }
     }
 
-    protected String getPath(String channelName, ContentKey key) {
+    private String getPath(String channelName, ContentKey key) {
         return channelName + "/" + key.toUrl();
+    }
+
+    protected Content getFromStore(String fileStore, String channelName, ContentKey key) {
+        String path = getPath(channelName, key);
+        Traces traces = ActiveTraces.getLocal();
+        traces.add("SpokeSingleContentDao.get");
+        try {
+            return spokeStore.get(fileStore, path, key);
+        } catch (Exception e) {
+            logger.warn("unable to get data: " + path, e);
+            return null;
+        } finally {
+            traces.add("SpokeSingleContentDao.get completed");
+        }
     }
 
     @Override
