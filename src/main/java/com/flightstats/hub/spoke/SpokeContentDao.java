@@ -29,7 +29,7 @@ import java.util.*;
  */
 public abstract class SpokeContentDao implements ContentDao {
 
-    private static Logger logger = LoggerFactory.getLogger(SpokeSingleContentDao.class);
+    private final static Logger logger = LoggerFactory.getLogger(SpokeContentDao.class);
 
     @Inject
     private RemoteSpokeStore spokeStore;
@@ -90,14 +90,14 @@ public abstract class SpokeContentDao implements ContentDao {
     protected Content getFromStore(String fileStore, String channelName, ContentKey key) {
         String path = getPath(channelName, key);
         Traces traces = ActiveTraces.getLocal();
-        traces.add("SpokeSingleContentDao.get");
+        traces.add("SpokeContentDao.get");
         try {
             return spokeStore.get(fileStore, path, key);
         } catch (Exception e) {
             logger.warn("unable to get data: " + path, e);
             return null;
         } finally {
-            traces.add("SpokeSingleContentDao.get completed");
+            traces.add("SpokeContentDao.get completed");
         }
     }
 
