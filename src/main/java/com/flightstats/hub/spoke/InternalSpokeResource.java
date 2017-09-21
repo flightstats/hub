@@ -15,13 +15,11 @@ import javax.ws.rs.core.UriInfo;
 import java.io.*;
 import java.util.Arrays;
 
-// TODO (rdz): rename this class to InternalSpokeResource to be consistent with other internal resources
-
 @SuppressWarnings("WeakerAccess")
 @Path("/internal/spoke")
-public class SpokeInternalResource {
+public class InternalSpokeResource {
 
-    private final static Logger logger = LoggerFactory.getLogger(SpokeInternalResource.class);
+    private final static Logger logger = LoggerFactory.getLogger(InternalSpokeResource.class);
     private static final FileSpokeStore singleSpokeStore = HubProvider.getInstance(FileSpokeStore.class, FileSpokeStore.SINGLE);
     private static final FileSpokeStore batchSpokeStore = HubProvider.getInstance(FileSpokeStore.class, FileSpokeStore.BATCH);
     private static final RemoteSpokeStore remoteSpokeStore = HubProvider.getInstance(RemoteSpokeStore.class);
