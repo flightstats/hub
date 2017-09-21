@@ -87,6 +87,9 @@ public class FileUtil {
         try {
             Path source = Paths.get(from);
             Path destination = Paths.get(to);
+            if (source.equals(destination)) {
+                logger.info("ignoring move request since the source and destination are the same");
+            }
             Files.move(source, destination, StandardCopyOption.ATOMIC_MOVE);
         } catch (IOException e) {
             logger.warn("unable to move {} to {}", from, to);
