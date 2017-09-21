@@ -26,6 +26,14 @@ public class InternalSpokeResource {
     @Context
     private UriInfo uriInfo;
 
+    // TODO (rdz): this entry point is only needed for migration. remove after fully migrated.
+
+    @Path("/payload/{path:.+}")
+    @GET
+    public Response getPayload(@PathParam("path") String path) {
+        return getFromStore(path, singleSpokeStore);
+    }
+
     @Path("/single/{path:.+}")
     @GET
     public Response getFromSinglePayloads(@PathParam("path") String path) {
@@ -52,6 +60,14 @@ public class InternalSpokeResource {
             logger.warn("unable to get " + path, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
         }
+    }
+
+    // TODO (rdz): this entry point is only needed for migration. remove after fully migrated.
+
+    @Path("/payload/{path:.+}")
+    @PUT
+    public Response putPayload(@PathParam("path") String path, InputStream input) {
+        return putIntoStore(singleSpokeStore, path, input);
     }
 
     @Path("/single/{path:.+}")
