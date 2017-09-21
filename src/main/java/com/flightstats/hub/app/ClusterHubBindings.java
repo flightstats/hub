@@ -9,6 +9,7 @@ import com.flightstats.hub.dao.aws.*;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.spoke.RemoteSpokeStore;
 import com.flightstats.hub.spoke.SpokeContentDao;
+import com.flightstats.hub.spoke.SpokeStoreEnforcer;
 import com.flightstats.hub.spoke.SpokeTtlEnforcer;
 import com.flightstats.hub.webhook.Webhook;
 import com.google.inject.AbstractModule;
@@ -57,6 +58,7 @@ class ClusterHubBindings extends AbstractModule {
         bind(SpokeTtlEnforcer.class).asEagerSingleton();
         bind(DocumentationDao.class).to(S3DocumentationDao.class).asEagerSingleton();
         bind(SpokeDecommissionManager.class).asEagerSingleton();
+        bind(SpokeStoreEnforcer.class).asEagerSingleton();
     }
 
     @Inject
