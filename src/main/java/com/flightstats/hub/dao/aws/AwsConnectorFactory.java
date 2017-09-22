@@ -123,7 +123,7 @@ public class AwsConnectorFactory {
 
         @Override
         public boolean shouldRetry(AmazonWebServiceRequest originalRequest, AmazonClientException exception, int retriesAttempted) {
-            logger.info("exception {} from request {} attempts {}", exception, originalRequest, retriesAttempted);
+            logger.warn("exception {} from request {} attempts {}", exception, originalRequest, retriesAttempted);
             return retryCondition.shouldRetry(originalRequest, exception, retriesAttempted);
         }
 
