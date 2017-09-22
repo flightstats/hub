@@ -93,17 +93,13 @@ public class WebhookManager {
 
     private void manageWebhook(Webhook daoWebhook, boolean webhookChanged) {
         String name = daoWebhook.getName();
-        if (activeWebhooks.getV1().contains(name)) {
-            //if is in v1 ZK, leave it alone ...
-            //todo - gfm - this can go away, eventually
-            logger.info("found v1 webhook {}", name);
-        } else if (activeWebhooks.getV2().contains(name)) {
+        if (activeWebhooks.getServers().contains(name)) {
             logger.debug("found existing v2 webhook {}", name);
-            Collection<String> v2Servers = activeWebhooks.getV2Servers(name);
-            if (v2Servers.isEmpty()) {
+            Collection<String> servers = activeWebhooks.getServers(name);
+            if (servers.isEmpty()) {
                 callOneRun(name, hubCluster.getRandomServers());
             } else if (webhookChanged) {
-                callOneRun(name, v2Servers);
+                callOneRun(name, servers);
             }
         } else {
             logger.debug("found new v2 webhook {}", name);
@@ -147,7 +143,7 @@ public class WebhookManager {
     }
 
     public void delete(String name) {
-        callAllDelete(name, activeWebhooks.getV2Servers(name));
+        callAllDelete(name, activeWebhooks.getServers(name));
         lastContentPath.delete(name, WebhookLeader.WEBHOOK_LAST_COMPLETED);
     }
 
