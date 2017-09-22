@@ -67,8 +67,7 @@ public class AwsConnectorFactory {
     }
 
     private ClientConfiguration getClientConfiguration(String name, boolean compress) {
-        RetryPolicy retryPolicy = new RetryPolicy(PredefinedRetryPolicies.DEFAULT_RETRY_CONDITION,
-                new HubBackoffStrategy(), 6, true);
+        RetryPolicy retryPolicy = new RetryPolicy(new HubRetryCondition(), new HubBackoffStrategy(), 6, true);
         ClientConfiguration configuration = new ClientConfiguration()
                 .withMaxConnections(HubProperties.getProperty(name + ".maxConnections", 50))
                 .withRetryPolicy(retryPolicy)
@@ -118,5 +117,16 @@ public class AwsConnectorFactory {
         }
     }
 
+    static class HubRetryCondition implements RetryPolicy.RetryCondition {
+
+        private final RetryPolicy.RetryCondition retryCondition = PredefinedRetryPolicies.DEFAULT_RETRY_CONDITION;
+
+        @Override
+        public boolean shouldRetry(AmazonWebServiceRequest originalRequest, AmazonClientException exception, int retriesAttempted) {
+            logger.info("exception {} from request {} attempts {}", exception, originalRequest, retriesAttempted);
+            return retryCondition.shouldRetry(originalRequest, exception, retriesAttempted);
+        }
+
+    }
 
 }
