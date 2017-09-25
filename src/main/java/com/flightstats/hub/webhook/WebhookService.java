@@ -42,6 +42,9 @@ public class WebhookService {
         webhook = webhook.withDefaults();
         webhookValidator.validate(webhook);
         Optional<Webhook> preExisting = get(webhook.getName());
+        if (webhook.isTagPrototype()) {
+            return upsertTagWebhook(webhook, preExisting);
+        }
         if (preExisting.isPresent()) {
             Webhook existing = preExisting.get();
             ContentPath newStartingKey = webhook.getStartingKey();
@@ -67,7 +70,13 @@ public class WebhookService {
         }
         webhookDao.upsert(webhook);
         webhookManager.notifyWatchers(webhook);
-        if (webhook.isTagPrototype()) TagWebhook.addTagWebhookInstances(webhook);
+        return preExisting;
+    }
+
+    public Optional<Webhook> upsertTagWebhook(Webhook webhook, Optional<Webhook> preExisting) {
+        webhookDao.upsert(webhook);
+//        webhookManager.notifyWatchers(webhook);
+        TagWebhook.addTagWebhookInstances(webhook);
         return preExisting;
     }
 

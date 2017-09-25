@@ -60,13 +60,13 @@ public class TagWebhook {
         Predicate<Webhook> withChannelName = new Predicate<Webhook>() {
             @Override
             public boolean apply(Webhook wh) {
-                return channelName.equals(wh.getTag());
+                return channelName.equals(wh.getChannelName());
             }
         };
         Predicate<Webhook> isManagedByTag = new Predicate<Webhook>() {
             @Override
             public boolean apply(Webhook wh) {
-                return channelName.equals(wh.getTag());
+                return wh.isManagedByTag();
             }
         };
         return FluentIterable.from(webhookSet)
