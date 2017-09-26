@@ -66,8 +66,6 @@ public class InternalClusterResource {
         for (String server : allServers) {
             ObjectNode node = cluster.addObject();
             node.put("server", server);
-            //todo - gfm - this isn't working
-            //node.put("name", InetAddress.getByName(ip).getHostName());
         }
     }
 
