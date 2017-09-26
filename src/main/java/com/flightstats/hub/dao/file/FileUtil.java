@@ -96,8 +96,8 @@ public class FileUtil {
     public static void mergeDirectories(String from, String to) throws IOException {
         logger.info("merging {} into {}", from, to);
 
-        Path source = Paths.get(from);
-        Path destination = Paths.get(to);
+        Path source = Paths.get(from).toAbsolutePath();
+        Path destination = Paths.get(to).toAbsolutePath();
 
         List<Path> paths = Files.walk(source).collect(Collectors.toList());
         for (int i = 0; i < paths.size(); ++i) {
