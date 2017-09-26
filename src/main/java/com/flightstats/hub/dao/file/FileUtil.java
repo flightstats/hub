@@ -12,11 +12,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class FileUtil {
 
@@ -72,7 +72,7 @@ public class FileUtil {
         return list;
     }
 
-    static boolean delete(String filepath) {
+    public static boolean delete(String filepath) {
         Path path = Paths.get(filepath);
         File file = path.toFile();
         return FileUtils.deleteQuietly(file);
@@ -83,20 +83,6 @@ public class FileUtil {
         return Files.exists(path);
     }
 
-    public static void move(String from, String to) throws IOException {
-        try {
-            Path source = Paths.get(from);
-            Path destination = Paths.get(to);
-            if (source.equals(destination)) {
-                logger.info("ignoring move request since the source and destination are the same");
-            }
-            Files.move(source, destination, StandardCopyOption.ATOMIC_MOVE);
-        } catch (IOException e) {
-            logger.warn("unable to move {} to {}", from, to);
-            throw e;
-        }
-    }
-
     public static void createDirectory(String directoryPath) throws IOException {
         try {
             Path path = Paths.get(directoryPath);
@@ -104,6 +90,34 @@ public class FileUtil {
         } catch (IOException e) {
             logger.warn("unable to create directory {}", directoryPath);
             throw e;
+        }
+    }
+
+    public static void mergeDirectories(String from, String to) throws IOException {
+        logger.info("merging {} into {}", from, to);
+
+        Path source = Paths.get(from);
+        Path destination = Paths.get(to);
+
+        List<Path> paths = Files.walk(source).collect(Collectors.toList());
+        for (int i = 0; i < paths.size(); ++i) {
+            Path path = paths.get(i);
+
+            if (!Files.exists(path)) {
+                logger.info("skipping, already moved {}", path);
+                continue;
+            }
+
+            Path relativePath = source.relativize(path);
+            Path proposedPath = new File(destination.toString(), relativePath.toString()).toPath();
+
+            if (Files.exists(proposedPath)) {
+                logger.info("skipping, already exists {}", proposedPath);
+                continue;
+            }
+
+            logger.info("moving {} to {}", path, proposedPath);
+            Files.move(path, proposedPath);
         }
     }
 }

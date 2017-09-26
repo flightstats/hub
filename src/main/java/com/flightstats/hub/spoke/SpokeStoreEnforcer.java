@@ -2,7 +2,9 @@ package com.flightstats.hub.spoke;
 
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
+import com.flightstats.hub.dao.file.FileUtil;
 import com.google.common.util.concurrent.AbstractIdleService;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,10 +12,6 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.Arrays;
-
-import static com.flightstats.hub.dao.file.FileUtil.createDirectory;
-import static com.flightstats.hub.dao.file.FileUtil.directoryExists;
-import static com.flightstats.hub.dao.file.FileUtil.move;
 
 @Singleton
 public class SpokeStoreEnforcer {
@@ -33,29 +31,32 @@ public class SpokeStoreEnforcer {
 
         @Override
         protected void startUp() throws Exception {
-            logger.info("verifying the spoke store exists");
-            if (directoryExists(spokePath)) {
-                logger.info("spoke store found {}", spokePath);
-            } else {
-                logger.info("looking for spoke stores at previous paths {}", previousSpokePaths);
-                createDirectory(spokePath);
-                Arrays.stream(previousSpokePaths.split(",")).forEach(this::migrate);
+            if (!FileUtil.directoryExists(spokePath)) {
+                logger.info("creating spoke store {}", spokePath);
+                FileUtil.createDirectory(spokePath);
+            }
+
+            if (!StringUtils.isEmpty(previousSpokePaths)) {
+                logger.info("consolidating spoke data from {}", previousSpokePaths);
+                Arrays.stream(previousSpokePaths.split(","))
+                        .map(String::trim)
+                        .forEach(this::migrate);
             }
         }
 
         private void migrate(String previousPath) {
-            if (directoryExists(previousPath)) {
+            if (FileUtil.directoryExists(previousPath)) {
                 long start = System.currentTimeMillis();
                 try {
-                    logger.info("moving files from {} to {}", previousPath, spokePath);
-                    move(previousPath, spokePath);
+                    FileUtil.mergeDirectories(previousPath, spokePath);
+                    FileUtil.delete(previousPath);
                 } catch (IOException e) {
                     logger.info("ignoring spoke store at {}", previousPath);
                 } finally {
                     logger.info("move completed in {} ms", (System.currentTimeMillis() - start));
                 }
             } else {
-                logger.info("no data found {}", previousPath);
+                logger.info("no data found at {}", previousPath);
             }
         }
 
