@@ -79,6 +79,7 @@ public class TagWebhook {
         Set<Webhook> managedWebHooks = allManagedWebhooksForChannel(webhookSet, channelConfig);
         if (managedWebHooks.isEmpty()) {
             Webhook newWHInstance = Webhook.instanceFromTagPrototype(wh, channelConfig);
+            logger.info("Adding TagWebhook instance for " + channelConfig.getName());
             webhookService.upsert(newWHInstance);
         }
     }
@@ -97,6 +98,7 @@ public class TagWebhook {
                 .toSet();
         Sets.SetView<Webhook> orphanedWebhooks = Sets.difference(managedWebHooks, nonOrphanWebhooks);
         for (Webhook orphan : orphanedWebhooks) {
+            logger.info("Deleting TagWebhook instance for channel " + orphan.getChannelName());
             webhookService.delete(orphan.getName());
         }
     }
@@ -129,6 +131,7 @@ public class TagWebhook {
     public static void addTagWebhookInstances(Webhook webhook) {
         Collection<ChannelConfig> channels = channelService.getChannels(webhook.getTag(), false);
         for (ChannelConfig channel : channels) {
+            logger.info("Adding TagWebhook instance for " + channel.getName());
             webhookService.upsert(Webhook.instanceFromTagPrototype(webhook, channel));
         }
     }
