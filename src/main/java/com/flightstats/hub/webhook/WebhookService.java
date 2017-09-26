@@ -92,6 +92,10 @@ public class WebhookService {
         return webhookDao.getAll(false);
     }
 
+    public Collection<Webhook> getAllCached() {
+        return webhookDao.getAll(true);
+    }
+
     WebhookStatus getStatus(Webhook webhook) {
         WebhookStatus.WebhookStatusBuilder builder = WebhookStatus.builder().webhook(webhook);
         String channel = webhook.getChannelName();

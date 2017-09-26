@@ -5,6 +5,7 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.replication.S3Batch;
 import com.flightstats.hub.util.HubUtils;
+import com.flightstats.hub.webhook.ActiveWebhooks;
 import com.flightstats.hub.webhook.Webhook;
 import com.flightstats.hub.webhook.WebhookService;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -28,6 +29,8 @@ public class S3BatchManager {
     private ChannelService channelService;
     @Inject
     private HubUtils hubUtils;
+    @Inject
+    private ActiveWebhooks activeWebhooks;
 
     @Inject
     public S3BatchManager() {
@@ -48,7 +51,7 @@ public class S3BatchManager {
 
     private void setupBatch() {
         Set<String> existingBatchGroups = new HashSet<>();
-        Iterable<Webhook> groups = webhookService.getAll();
+        Iterable<Webhook> groups = webhookService.getAllCached();
         for (Webhook webhook : groups) {
             if (S3Batch.isS3BatchCallback(webhook.getName())) {
                 existingBatchGroups.add(webhook.getName());
@@ -57,8 +60,10 @@ public class S3BatchManager {
         for (ChannelConfig channel : channelService.getChannels()) {
             S3Batch s3Batch = new S3Batch(channel, hubUtils);
             if (channel.isSingle()) {
-                logger.debug("turning off batch {}", channel.getDisplayName());
-                s3Batch.stop();
+                if (!activeWebhooks.getServers(channel.getName()).isEmpty()) {
+                    logger.debug("turning off batch webhook {}", channel.getDisplayName());
+                    s3Batch.stop();
+                }
             } else {
                 logger.info("batching channel {}", channel.getDisplayName());
                 s3Batch.start();
@@ -66,7 +71,7 @@ public class S3BatchManager {
             }
         }
         for (String groupName : existingBatchGroups) {
-            logger.info("stopping unused group {}", groupName);
+            logger.info("stopping unused batch webhook {}", groupName);
             webhookService.delete(groupName);
         }
     }

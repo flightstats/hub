@@ -133,6 +133,14 @@ public class ChannelValidatorTest {
     }
 
     @Test
+    public void testKeepForever() throws Exception {
+        validator.validate(getBuilder()
+                .name("mychan")
+                .keepForever(true)
+                .build(), null, false);
+    }
+
+    @Test
     public void testMutableTimeForward() throws Exception {
         ChannelConfig first = getBuilder().name("mychan").mutableTime(new DateTime().minusDays(2)).build();
         ChannelConfig second = first.toBuilder().mutableTime(new DateTime().minusDays(1)).build();

@@ -37,7 +37,7 @@ class VerifierTasks(TaskSet):
     def write_read(self):
         self.hubTasks.write_read()
 
-    @task(50)
+    @task(5)
     def change_parallel(self):
         self.hubTasks.change_parallel("verifier_test_2")
 
