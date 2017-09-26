@@ -46,14 +46,13 @@ public class SpokeStoreEnforcer {
 
         private void migrate(String previousPath) {
             if (FileUtil.directoryExists(previousPath)) {
-                long start = System.currentTimeMillis();
                 try {
+                    long start = System.currentTimeMillis();
                     FileUtil.mergeDirectories(previousPath, spokePath);
                     FileUtil.delete(previousPath);
+                    logger.info("move completed in {} ms", (System.currentTimeMillis() - start));
                 } catch (IOException e) {
                     logger.info("ignoring spoke store at {}", previousPath);
-                } finally {
-                    logger.info("move completed in {} ms", (System.currentTimeMillis() - start));
                 }
             } else {
                 logger.info("no data found at {}", previousPath);
