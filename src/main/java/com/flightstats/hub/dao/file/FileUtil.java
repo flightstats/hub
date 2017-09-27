@@ -86,7 +86,7 @@ public class FileUtil {
     public static void createDirectory(String directoryPath) throws IOException {
         try {
             Path path = Paths.get(directoryPath);
-            Files.createDirectory(path);
+            Files.createDirectories(path);
         } catch (IOException e) {
             logger.warn("unable to create directory {}", directoryPath);
             throw e;
