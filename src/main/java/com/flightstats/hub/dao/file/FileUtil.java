@@ -108,6 +108,11 @@ public class FileUtil {
                 continue;
             }
 
+            if (path.startsWith(destination)) {
+                logger.debug("skipping, is destination {}", path);
+                continue;
+            }
+
             Path relativePath = source.relativize(path);
             Path proposedPath = new File(destination.toString(), relativePath.toString()).toPath();
 
