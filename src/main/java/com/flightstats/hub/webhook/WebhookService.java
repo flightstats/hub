@@ -75,7 +75,7 @@ public class WebhookService {
 
     public Optional<Webhook> upsertTagWebhook(Webhook webhook, Optional<Webhook> preExisting) {
         webhookDao.upsert(webhook);
-//        webhookManager.notifyWatchers(webhook);
+        webhookManager.notifyWatchers(webhook);
         TagWebhook.addTagWebhookInstances(webhook);
         return preExisting;
     }

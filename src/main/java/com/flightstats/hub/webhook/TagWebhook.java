@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -37,16 +36,18 @@ public class TagWebhook {
     private static Set<Webhook> webhookPrototypesWithTag(String tag) {
         Set<Webhook> webhookSet = new HashSet<>(webhookDao.getAll(false));
 
-        Predicate<Webhook> withTagName = wh -> tag.equals(wh.getTag());
-        Predicate<Webhook> isTagWebhookPrototype = Webhook::isTagPrototype;
-        return webhookSet.stream().filter(withTagName).filter(isTagWebhookPrototype).collect(Collectors.toSet());
+        return webhookSet.stream()
+                .filter(wh -> tag.equals(wh.getTag()))
+                .filter(Webhook::isTagPrototype)
+                .collect(Collectors.toSet());
     }
 
     private static Set<Webhook> allManagedWebhooksForChannel(Set<Webhook> webhookSet, ChannelConfig channelConfig) {
         String channelName = channelConfig.getName();
-        Predicate<Webhook> withChannelName = wh -> channelName.equals(wh.getChannelName());
-        Predicate<Webhook> isManagedByTag = Webhook::isManagedByTag;
-        return webhookSet.stream().filter(withChannelName).filter(isManagedByTag).collect(Collectors.toSet());
+        return webhookSet.stream()
+                .filter(wh -> channelName.equals(wh.getChannelName()))
+                .filter(Webhook::isManagedByTag)
+                .collect(Collectors.toSet());
     }
 
     private static void ensureChannelHasAssociatedWebhook(Set<Webhook> webhookSet, Webhook wh, ChannelConfig channelConfig) {
@@ -61,8 +62,9 @@ public class TagWebhook {
     private static void ensureNoOrphans(Set<Webhook> webhookSet, ChannelConfig channelConfig) {
         Set<Webhook> managedWebHooks = allManagedWebhooksForChannel(webhookSet, channelConfig);
         Set<String> tags = channelConfig.getTags();
-        Predicate<Webhook> isWebhookTagMemberOfChannelTags = wh -> tags.contains(wh.getTag());
-        Set<Webhook> nonOrphanWebhooks = managedWebHooks.stream().filter(isWebhookTagMemberOfChannelTags).collect(Collectors.toSet());
+        Set<Webhook> nonOrphanWebhooks = managedWebHooks.stream()
+                .filter(wh -> tags.contains(wh.getTag()))
+                .collect(Collectors.toSet());
         Sets.SetView<Webhook> orphanedWebhooks = Sets.difference(managedWebHooks, nonOrphanWebhooks);
         for (Webhook orphan : orphanedWebhooks) {
             logger.info("Deleting TagWebhook instance for channel " + orphan.getChannelName());
