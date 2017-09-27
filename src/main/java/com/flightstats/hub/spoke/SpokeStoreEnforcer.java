@@ -52,7 +52,7 @@ public class SpokeStoreEnforcer {
                     FileUtil.delete(previousPath);
                     logger.info("move completed in {} ms", (System.currentTimeMillis() - start));
                 } catch (IOException e) {
-                    logger.info("ignoring spoke store at {}", previousPath);
+                    logger.info("ignoring spoke store at {}", previousPath, e);
                 }
             } else {
                 logger.info("no data found at {}", previousPath);
