@@ -104,7 +104,7 @@ public class FileUtil {
             Path path = paths.get(i);
 
             if (!Files.exists(path)) {
-                logger.info("skipping, already moved {}", path);
+                logger.debug("skipping, already moved {}", path);
                 continue;
             }
 
@@ -112,7 +112,7 @@ public class FileUtil {
             Path proposedPath = new File(destination.toString(), relativePath.toString()).toPath();
 
             if (Files.exists(proposedPath)) {
-                logger.info("skipping, already exists {}", proposedPath);
+                logger.debug("skipping, already exists {}", proposedPath);
                 continue;
             }
 
