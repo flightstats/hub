@@ -19,6 +19,10 @@ exports.randomChannelName = function randomChannelName() {
     return "TeSt_" + Math.random().toString().replace(".", "_");
 };
 
+exports.randomTag = function randomTagName() {
+    return "tag" + Math.random().toString().replace(".", "");
+};
+
 exports.getItem = function getItem(uri, callback) {
     request({uri: uri, encoding: null}, function (error, response, body) {
         expect(error).toBe(null);
@@ -42,6 +46,24 @@ exports.createChannel = function createChannel(channelName, url, description) {
         request.post({url: url,
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({ "name": channelName })},
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(response.statusCode).toBe(201);
+                done();
+            });
+    }, 10 * 1001);
+
+};
+
+exports.createChannelWithConfig = function createChannelWithConfig(channelName, config, url) {
+    url = url || channelUrl + "/" + channelName;
+    it("creates channel " + channelName + " at " + url, function (done) {
+        console.log('creating channel ' + config.name);
+        request.put({
+                url: url,
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(config)
+            },
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(response.statusCode).toBe(201);
