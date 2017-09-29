@@ -64,7 +64,7 @@ class ClusterHubBindings extends AbstractModule {
     @Provides
     @Named("ChannelConfig")
     public static Dao<ChannelConfig> buildChannelConfigDao(WatchManager watchManager, DynamoChannelConfigDao dao) {
-        return new CachedDao<>(dao, watchManager, "/channels/cache");
+        return new CachedLowerCaseDao<>(dao, watchManager, "/channels/cache");
     }
 
     @Inject
