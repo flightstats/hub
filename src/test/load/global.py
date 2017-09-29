@@ -97,7 +97,7 @@ class WebsiteTasks(TaskSet):
         satellite_group_url = self.satellite + "group/locust_" + self.channel
 
         logger.info("group channel " + self.channel + " parallel:" + str(parallel) + " url " + satellite_group_url)
-        self.client.delete(satellite_group_url, name="group")
+        self.client.delete(satellite_group_url, name="webhook")
         if self.number == 3:
             time.sleep(61)
             logger.info("slept on startup for channel 3, now creating callback")
@@ -123,7 +123,7 @@ class WebsiteTasks(TaskSet):
         self.client.put(satellite_group_url,
                         data=json.dumps(group),
                         headers={"Content-Type": "application/json"},
-                        name="group")
+                        name="webhook")
 
     @staticmethod
     def getUrlAfterChannel(href):
@@ -286,7 +286,7 @@ class WebsiteTasks(TaskSet):
         size = self.number * self.number * 300
         return ''.join(random.choice(chars) for x in range(size))
 
-    def verify_callback(self, obj, name="group"):
+    def verify_callback(self, obj, name="webhook"):
         groupCallbackLocks[self.channel]["lock"].acquire()
         items = len(obj[self.channel]["data"])
         if items > 500:
@@ -297,7 +297,7 @@ class WebsiteTasks(TaskSet):
 
     @task(10)
     def verify_callback_length(self):
-        self.verify_callback(groupCallbacks, "group")
+        self.verify_callback(groupCallbacks, "webhook")
         if groupCallbacks[self.channel]["heartbeat"]:
             heartbeats_ = groupCallbacks[self.channel]["heartbeats"]
             if len(heartbeats_) > 2:
@@ -325,11 +325,11 @@ class WebsiteTasks(TaskSet):
     def verify_parallel(channel, incoming_uri):
         if incoming_uri in groupCallbacks[channel]["data"]:
             (groupCallbacks[channel]["data"]).remove(incoming_uri)
-            events.request_success.fire(request_type="group", name="parallel", response_time=1,
+            events.request_success.fire(request_type="webhook", name="parallel", response_time=1,
                                         response_length=1)
         else:
             logger.info("missing parallel item " + str(incoming_uri))
-            events.request_failure.fire(request_type="group", name="parallel", response_time=1,
+            events.request_failure.fire(request_type="webhook", name="parallel", response_time=1,
                                         exception=-1)
 
     @web.app.route("/callback", methods=['GET'])
@@ -350,7 +350,7 @@ class WebsiteTasks(TaskSet):
                         shortHref = WebsiteTasks.getUrlAfterChannel(incoming_uri)
                         groupCallbackLocks[channel]["lock"].acquire()
                         if groupCallbacks[channel]["parallel"] == 1:
-                            WebsiteTasks.verify_ordered(channel, shortHref, groupCallbacks, "group")
+                            WebsiteTasks.verify_ordered(channel, shortHref, groupCallbacks, "webhook")
                         else:
                             WebsiteTasks.verify_parallel(channel, shortHref)
                     finally:

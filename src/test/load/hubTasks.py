@@ -102,13 +102,13 @@ class HubTasks:
         self.client.put(webhook_name(self.channel),
                         data=json.dumps(wh_config),
                         headers={"Content-Type": "application/json"},
-                        name="group")
+                        name="webhook")
 
     def start_webhook(self):
         config = self.webhook_config()
         logger.info(config)
         webhook = webhook_name(self.channel)
-        self.client.delete(webhook, name="group")
+        self.client.delete(webhook, name="webhook")
         logger.info("group channel " + config['webhook_channel'] + " parallel:" + str(config['parallel']))
         groupCallbacks[self.channel] = {
             "data": [],
@@ -170,10 +170,10 @@ class HubTasks:
         time.sleep(1)
 
         if it_works:
-            events.request_success.fire(request_type="group", name=name, response_time=1,
+            events.request_success.fire(request_type="webhook", name=name, response_time=1,
                                         response_length=1)
         else:
-            events.request_failure.fire(request_type="group", name=name, response_time=1,
+            events.request_failure.fire(request_type="webhook", name=name, response_time=1,
                                         exception=-1)
 
     def verify_cursor_update(self):
@@ -286,7 +286,7 @@ class HubTasks:
         self.client.put("/group/locust_" + channel,
                         data=json.dumps(group),
                         headers={"Content-Type": "application/json"},
-                        name="group")
+                        name="webhook")
 
     def write_read(self):
         self.read(self.write(), True)
@@ -405,7 +405,7 @@ class HubTasks:
         size = self.number * self.number * 300
         return ''.join(random.choice(chars) for x in range(size))
 
-    def verify_callback(self, obj, name="group", count=2000):
+    def verify_callback(self, obj, name="webhook", count=2000):
         groupCallbackLocks[self.channel]["lock"].acquire()
         items = len(obj[self.channel]["data"])
         if items > count:
@@ -418,7 +418,7 @@ class HubTasks:
         groupCallbackLocks[self.channel]["lock"].release()
 
     def verify_callback_length(self, count=2000):
-        self.verify_callback(groupCallbacks, "group", count)
+        self.verify_callback(groupCallbacks, "webhook", count)
         if self.user.has_websocket():
             if websockets[self.channel]["open"]:
                 self.verify_callback(websockets, "websocket")
@@ -453,15 +453,16 @@ class HubTasks:
     def verify_parallel(channel, incoming_uri):
         if incoming_uri in groupCallbacks[channel]["data"]:
             (groupCallbacks[channel]["data"]).remove(incoming_uri)
-            events.request_success.fire(request_type="group", name="parallel", response_time=1,
+            events.request_success.fire(request_type="webhook", name="parallel", response_time=1,
                                         response_length=1)
         else:
             logger.info("missing parallel item " + str(incoming_uri))
-            events.request_failure.fire(request_type="group", name="parallel", response_time=1,
+            events.request_failure.fire(request_type="webhook", name="parallel", response_time=1,
                                         exception=-1)
 
     @staticmethod
     def get_channels():
+        # todo - add errors to output
         return jsonify(items=groupCallbacks)
 
     @staticmethod
@@ -470,7 +471,7 @@ class HubTasks:
             incoming_json = request.get_json()
             if incoming_json['type'] == "item" or incoming_json['type'] == "items":
                 HubTasks.item(channel, incoming_json)
-            if incoming_json['type'] == "heartbeat" or incoming_json['type'] == "items":
+            if incoming_json['type'] == "heartbeat":
                 HubTasks.heartbeat(channel, incoming_json)
             return "ok"
         else:
@@ -489,7 +490,7 @@ class HubTasks:
                 shortHref = HubTasks.getShortPath(incoming_uri)
                 groupCallbackLocks[channel]["lock"].acquire()
                 if groupCallbacks[channel]["parallel"] == 1:
-                    HubTasks.verify_ordered(channel, shortHref, groupCallbacks, "group")
+                    HubTasks.verify_ordered(channel, shortHref, groupCallbacks, "webhook")
                 else:
                     HubTasks.verify_parallel(channel, shortHref)
             finally:
