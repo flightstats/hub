@@ -116,7 +116,8 @@ class HubTasks:
             "batch": config['batch'],
             "heartbeat": config['heartbeat'],
             "heartbeats": [],
-            "lastHeartbeat": ''
+            "lastHeartbeat": '',
+            "missing": []
         }
         webhookCallbackLocks[self.channel] = {
             "lock": threading.Lock(),
@@ -442,6 +443,7 @@ class HubTasks:
         else:
             events.request_failure.fire(request_type=name, name="ordered", response_time=1,
                                         exception=-1)
+            webhookCallbacks[channel]["missing"].append(str(incoming_uri))
             if incoming_uri in obj[channel]["data"]:
                 logger.info(name + " item in the wrong order " + str(incoming_uri) + " data " +
                             str(obj[channel]["data"]))
@@ -457,6 +459,7 @@ class HubTasks:
                                         response_length=1)
         else:
             logger.info("missing parallel item " + str(incoming_uri))
+            webhookCallbacks[channel]["missing"].append(str(incoming_uri))
             events.request_failure.fire(request_type="webhook", name="parallel", response_time=1,
                                         exception=-1)
 
