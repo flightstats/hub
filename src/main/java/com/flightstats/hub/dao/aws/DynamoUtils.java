@@ -34,13 +34,12 @@ public class DynamoUtils {
         return appName + "-" + environment + "-" + baseTableName;
     }
 
-    //todo - gfm - update for webhook
     void createAndUpdate(String tableName, String type, String keyName) {
         createAndUpdate(tableName, type, keyName, createTableRequest -> createTableRequest);
     }
 
-    void createAndUpdate(String tableName, String type, String keyName,
-                         Function<CreateTableRequest, CreateTableRequest> function) {
+    private void createAndUpdate(String tableName, String type, String keyName,
+                                 Function<CreateTableRequest, CreateTableRequest> function) {
         ProvisionedThroughput throughput = getProvisionedThroughput(type);
         logger.info("creating table {} ", tableName);
         CreateTableRequest request = new CreateTableRequest()
@@ -88,30 +87,6 @@ public class DynamoUtils {
             }
         } catch (ResourceNotFoundException e) {
             logger.warn("update presumes the table exists " + tableName, e);
-            throw new RuntimeException("unable to update table " + tableName);
-        }
-    }
-
-    //todo - gfm - not sure if this is needed
-    void addLowerCaseIndex(String tableName, String type) {
-        try {
-            ProvisionedThroughput throughput = getProvisionedThroughput(type);
-            CreateGlobalSecondaryIndexAction tempLowerCaseName = new CreateGlobalSecondaryIndexAction()
-                    .withIndexName(DynamoChannelConfigDao.INDEX_NAME)
-                    .withProvisionedThroughput(throughput)
-                    .withKeySchema(new KeySchemaElement().withAttributeName("lowerCaseName").withKeyType(KeyType.HASH))
-
-                    .withProjection(new Projection().withProjectionType(ProjectionType.ALL));
-            GlobalSecondaryIndexUpdate update = new GlobalSecondaryIndexUpdate().withCreate(tempLowerCaseName);
-            UpdateTableRequest tableRequest = new UpdateTableRequest()
-                    .withTableName(tableName)
-                    .withGlobalSecondaryIndexUpdates(update)
-                    .withAttributeDefinitions(new AttributeDefinition("lowerCaseName", ScalarAttributeType.S));
-            logger.info("updating table {}", tableRequest);
-            dbClient.updateTable(tableRequest);
-            waitForTableStatus(tableName, TableStatus.ACTIVE);
-        } catch (Exception e) {
-            logger.warn("not sure what happened " + tableName, e);
             throw new RuntimeException("unable to update table " + tableName);
         }
     }
