@@ -288,11 +288,12 @@ class WebhookLeader implements Lockable {
             return;
         }
         String name = webhook.getName();
+        logger.info("stopExecutor " + name);
         try {
             executorService.shutdown();
-            logger.debug("awating termination " + name);
+            logger.info("awating termination " + name);
             executorService.awaitTermination(webhook.getCallbackTimeoutSeconds() + 10, TimeUnit.SECONDS);
-            logger.debug("stopped Executor " + name);
+            logger.info("stopped Executor " + name);
         } catch (InterruptedException e) {
             logger.warn("unable to stop?" + name, e);
         }

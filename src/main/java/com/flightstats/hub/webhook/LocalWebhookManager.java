@@ -3,6 +3,7 @@ package com.flightstats.hub.webhook;
 import com.flightstats.hub.dao.Dao;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import de.jkeylockmanager.manager.KeyLockManager;
 import de.jkeylockmanager.manager.KeyLockManagers;
@@ -10,9 +11,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+@Singleton
 public class LocalWebhookManager {
 
     private static final Logger logger = LoggerFactory.getLogger(LocalWebhookManager.class);
@@ -60,8 +63,9 @@ public class LocalWebhookManager {
     }
 
     void stopAllLocal() {
-        logger.info("stop all");
-        for (String name : localLeaders.keySet()) {
+        Set<String> localKeys = localLeaders.keySet();
+        logger.info("stop all {}", localKeys);
+        for (String name : localKeys) {
             stopLocal(name, false);
         }
     }
