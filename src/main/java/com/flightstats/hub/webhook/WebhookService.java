@@ -113,6 +113,7 @@ public class WebhookService {
 
     public void delete(String name) {
         logger.info("deleting webhook " + name);
+        TagWebhook.deleteInstancesIfTagWebhook(name);
         webhookDao.delete(name);
         webhookManager.delete(name);
     }

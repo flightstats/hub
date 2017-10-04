@@ -96,6 +96,10 @@ public class WebhookResource {
         root.put("ttlMinutes", webhook.getTtlMinutes());
         root.put("maxWaitMinutes", webhook.getMaxWaitMinutes());
         root.put("callbackTimeoutSeconds", webhook.getCallbackTimeoutSeconds());
+        if (webhook.isTagPrototype()) {
+            root.put("tag", webhook.getTag());
+            root.put("isTagPrototype", webhook.isTagPrototype());
+        }
         addLatest(webhook, status, root, true);
         TimeLinkUtil.addTime(root, stable, "stableTime");
         ArrayNode inFlight = root.putArray("inFlight");

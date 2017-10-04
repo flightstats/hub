@@ -148,7 +148,8 @@ public class Webhook implements Comparable<Webhook>, NamedType {
 
     @JsonIgnore
     public boolean isTagPrototype() {
-        return tag != null && !tag.isEmpty() && !isManagedByTag();
+        boolean result = tag != null && !tag.isEmpty() && !isManagedByTag();
+        return result;
     }
 
     private static Optional<ContentPath> getPrevious(Optional<ContentPath> keyOptional, String channelUrl) {

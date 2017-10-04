@@ -5,6 +5,7 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.dao.LocalChannelService;
 import com.flightstats.hub.model.ChannelConfig;
+import com.google.common.base.Optional;
 import com.google.common.collect.Sets;
 import com.google.inject.TypeLiteral;
 import org.slf4j.Logger;
@@ -12,6 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -36,10 +38,19 @@ public class TagWebhook {
     private static Set<Webhook> webhookPrototypesWithTag(String tag) {
         Set<Webhook> webhookSet = new HashSet<>(webhookDao.getAll(false));
 
-        return webhookSet.stream()
-                .filter(wh -> tag.equals(wh.getTag()))
-                .filter(Webhook::isTagPrototype)
+        Set<Webhook> result = webhookSet.stream()
+                .filter(wh -> Objects.equals(tag, wh.getTag()) && wh.isTagPrototype())
                 .collect(Collectors.toSet());
+        return result;
+    }
+
+    private static Set<Webhook> webhookInstancesWithTag(String tag) {
+        Set<Webhook> webhookSet = new HashSet<>(webhookDao.getAll(false));
+
+        Set<Webhook> result = webhookSet.stream()
+                .filter(wh -> Objects.equals(tag, wh.getTag()) && !wh.isTagPrototype())
+                .collect(Collectors.toSet());
+        return result;
     }
 
     private static Set<Webhook> allManagedWebhooksForChannel(Set<Webhook> webhookSet, ChannelConfig channelConfig) {
@@ -73,8 +84,8 @@ public class TagWebhook {
     }
 
 
-    public static void updateTagWebhooks(ChannelConfig channelConfig) {
-        Set<Webhook> webhookSet = new HashSet<>(webhookDao.getAll(false));  // should I pass this in?
+    public static void updateTagWebhooksDoToChannelConfigChange(ChannelConfig channelConfig) {
+        Set<Webhook> webhookSet = new HashSet<>(webhookDao.getAll(false));
 
         Set<String> tags = channelConfig.getTags();
         for (String tag : tags) {
@@ -88,7 +99,7 @@ public class TagWebhook {
     }
 
     public static void deleteAllTagWebhooksForChannel(ChannelConfig channelConfig) {
-        Set<Webhook> webhookSet = new HashSet<>(webhookDao.getAll(false));  // should I pass this in?
+        Set<Webhook> webhookSet = new HashSet<>(webhookDao.getAll(false));
         Set<Webhook> managedWebHooks = allManagedWebhooksForChannel(webhookSet, channelConfig);
 
         for (Webhook wh : allManagedWebhooksForChannel(managedWebHooks, channelConfig)) {
@@ -102,6 +113,19 @@ public class TagWebhook {
         for (ChannelConfig channel : channels) {
             logger.info("Adding TagWebhook instance for " + channel.getName());
             webhookService.upsert(Webhook.instanceFromTagPrototype(webhook, channel));
+        }
+    }
+
+    public static void deleteInstancesIfTagWebhook(String webhookName) {
+        Optional<Webhook> webhookOptional = webhookService.get(webhookName);
+        if (!webhookOptional.isPresent()) return;
+        Webhook webhook = webhookOptional.get();
+        if (!webhook.isTagPrototype()) return;
+        logger.info("Deleting tag webhook instances for tag " + webhookName);
+
+        Set<Webhook> taggedWebhooks = webhookInstancesWithTag(webhook.getTag());
+        for (Webhook twh : taggedWebhooks) {
+            webhookService.delete(twh.getName());
         }
     }
 }
