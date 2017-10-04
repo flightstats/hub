@@ -59,7 +59,15 @@ class ClusterHubBindings extends AbstractModule {
         bind(S3BatchManager.class).asEagerSingleton();
         bind(S3Verifier.class).asEagerSingleton();
         bind(AppUrlCheck.class).asEagerSingleton();
-        bind(SpokeTtlEnforcer.class).asEagerSingleton();
+
+        bind(SpokeTtlEnforcer.class)
+                .annotatedWith(Names.named(FileSpokeStore.SINGLE))
+                .toInstance(new SpokeTtlEnforcer(HubProperties.getSpokePath() + "/single", HubProperties.getSpokeTtlMinutes()));
+
+        bind(SpokeTtlEnforcer.class)
+                .annotatedWith(Names.named(FileSpokeStore.BATCH))
+                .toInstance(new SpokeTtlEnforcer(HubProperties.getSpokePath() + "/batch", HubProperties.getSpokeTtlMinutes()));
+
         bind(DocumentationDao.class).to(S3DocumentationDao.class).asEagerSingleton();
         bind(SpokeDecommissionManager.class).asEagerSingleton();
     }

@@ -20,13 +20,15 @@ import java.util.function.Consumer;
 @Singleton
 public class SpokeTtlEnforcer {
     private final static Logger logger = LoggerFactory.getLogger(SpokeTtlEnforcer.class);
-    private final String storagePath = HubProperties.getSpokePath();
-    private final int ttlMinutes = HubProperties.getSpokeTtlMinutes() + 1;
+    private String storagePath;
+    private int ttlMinutes;
+
     @Inject
     private ChannelService channelService;
 
-    @Inject
-    public SpokeTtlEnforcer() {
+    public SpokeTtlEnforcer(String storagePath, int ttlMinutes) {
+        this.storagePath = storagePath;
+        this.ttlMinutes = ttlMinutes + 1;
         if (HubProperties.getProperty("spoke.enforceTTL", true)) {
             HubServices.register(new SpokeTtlEnforcerService());
         }
