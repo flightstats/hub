@@ -65,7 +65,7 @@ public class TagWebhook {
         Set<Webhook> managedWebHooks = allManagedWebhooksForChannel(webhookSet, channelConfig);
         if (managedWebHooks.isEmpty()) {
             Webhook newWHInstance = Webhook.instanceFromTagPrototype(wh, channelConfig);
-            logger.info("Adding TagWebhook instance for " + channelConfig.getName());
+            logger.info("TagWebHook: Adding TagWebhook instance for " + channelConfig.getName());
             webhookService.upsert(newWHInstance);
         }
     }
@@ -108,10 +108,10 @@ public class TagWebhook {
     }
 
     // Add new wh instances for new or updated tag webhook
-    static void addTagWebhookInstances(Webhook webhook) {
+    static void upsertTagWebhookInstances(Webhook webhook) {
         Collection<ChannelConfig> channels = channelService.getChannels(webhook.getTag(), false);
         for (ChannelConfig channel : channels) {
-            logger.info("Adding TagWebhook instance for " + channel.getName());
+            logger.info("TagWebHook: Adding TagWebhook instance for " + channel.getName());
             webhookService.upsert(Webhook.instanceFromTagPrototype(webhook, channel));
         }
     }
@@ -121,7 +121,7 @@ public class TagWebhook {
         if (!webhookOptional.isPresent()) return;
         Webhook webhook = webhookOptional.get();
         if (!webhook.isTagPrototype()) return;
-        logger.info("Deleting tag webhook instances for tag " + webhookName);
+        logger.info("TagWebHook: Deleting tag webhook instances for tag " + webhookName);
 
         Set<Webhook> taggedWebhooks = webhookInstancesWithTag(webhook.getTag());
         for (Webhook twh : taggedWebhooks) {
