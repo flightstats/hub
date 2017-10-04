@@ -17,7 +17,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * //todo - gfm - this is temporary, until all named cache items are case insensitive.
+ * //todo - gfm - this maybe temporary, until all named cache items are case insensitive.
  */
 public class CachedLowerCaseDao<T extends NamedType> implements Dao<T> {
 

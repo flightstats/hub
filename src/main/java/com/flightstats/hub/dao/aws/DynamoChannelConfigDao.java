@@ -73,7 +73,6 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
     }
 
     void initialize() throws InterruptedException {
-        //todo - gfm - inline code for now to see what works
         String tableName = getTableName();
         ProvisionedThroughput throughput = dynamoUtils.getProvisionedThroughput("channel");
         logger.info("creating table {} ", tableName);

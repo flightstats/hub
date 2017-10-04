@@ -75,8 +75,6 @@ public class WebhookManager {
             }
 
         });
-        //todo - gfm - once we are past v1 webhooks, we can replace watchManager with addRemovalListener
-        //hubCluster.addRemovalListener(event -> manageWebhooks());
         manageWebhooks(false);
     }
 
@@ -190,10 +188,6 @@ public class WebhookManager {
 
         @Override
         protected Scheduler scheduler() {
-            /*
-            this is only needed in the case where a hub server crashes, and we are not notified
-            //todo - gfm - what we really want is to monitor the hub cluster group, only trigger on removal
-             */
             return Scheduler.newFixedRateSchedule(1, 5, TimeUnit.MINUTES);
         }
     }
