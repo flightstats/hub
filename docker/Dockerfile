@@ -15,4 +15,6 @@ ADD hub /opt/hub
 ADD run /opt/hub/bin/run
 RUN chmod +x /opt/hub/bin/*
 
+USER nobody
+
 ENTRYPOINT ["/bin/bash", "/opt/hub/bin/run"]
