@@ -98,7 +98,7 @@ public class WebhookService {
 
     WebhookStatus getStatus(Webhook webhook) {
         WebhookStatus.WebhookStatusBuilder builder = WebhookStatus.builder().webhook(webhook);
-        if (!webhook.isTagPrototype()) return builder.build();
+        if (webhook.isTagPrototype()) return builder.build();
         String channel = webhook.getChannelName();
         try {
             Optional<ContentKey> lastKey = channelService.getLatest(channel, true);
