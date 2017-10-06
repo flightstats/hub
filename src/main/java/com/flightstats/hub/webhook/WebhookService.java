@@ -107,7 +107,7 @@ public class WebhookService {
         } catch (NoSuchChannelException e) {
             logger.info("no channel found for " + channel);
         }
-        webhookManager.getStatus(webhook, builder);
+        if (!webhook.isTagPrototype()) webhookManager.getStatus(webhook, builder);
         return builder.build();
     }
 
