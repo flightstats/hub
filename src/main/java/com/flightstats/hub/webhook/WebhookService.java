@@ -98,6 +98,7 @@ public class WebhookService {
 
     WebhookStatus getStatus(Webhook webhook) {
         WebhookStatus.WebhookStatusBuilder builder = WebhookStatus.builder().webhook(webhook);
+        if (!webhook.isTagPrototype()) return builder.build();
         String channel = webhook.getChannelName();
         try {
             Optional<ContentKey> lastKey = channelService.getLatest(channel, true);
@@ -107,7 +108,7 @@ public class WebhookService {
         } catch (NoSuchChannelException e) {
             logger.info("no channel found for " + channel);
         }
-        if (!webhook.isTagPrototype()) webhookManager.getStatus(webhook, builder);
+        webhookManager.getStatus(webhook, builder);
         return builder.build();
     }
 
