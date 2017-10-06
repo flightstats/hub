@@ -134,7 +134,8 @@ public class Webhook implements Comparable<Webhook>, NamedType {
                 builder.fastForwardable(root.get("fastForwardable").asBoolean());
             }
             if (root.has("tag")) {
-                builder.tag(root.get("tag").asText());
+                String t = root.get("tag").asText().isEmpty() ? null : root.get("tag").asText();
+                builder.tag(t);
             }
             if (root.has("managedByTag")) {
                 builder.managedByTag(root.get("managedByTag").asBoolean());

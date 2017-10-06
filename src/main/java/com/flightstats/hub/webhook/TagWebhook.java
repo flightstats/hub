@@ -125,6 +125,7 @@ public class TagWebhook {
 
         Set<Webhook> taggedWebhooks = webhookInstancesWithTag(webhook.getTag());
         for (Webhook twh : taggedWebhooks) {
+            logger.debug("Deleting TagWebhookInstance " + twh.getName());
             webhookService.delete(twh.getName());
         }
     }
