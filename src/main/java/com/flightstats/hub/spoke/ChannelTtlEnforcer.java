@@ -20,7 +20,7 @@ import java.util.function.Consumer;
 @Singleton
 public class ChannelTtlEnforcer {
     private final static Logger logger = LoggerFactory.getLogger(ChannelTtlEnforcer.class);
-    private final String storagePath = HubProperties.getSpokePath();
+    private final String spokePath = HubProperties.getSpokePath("single");
     @Inject
     private ChannelService channelService;
 
@@ -34,7 +34,7 @@ public class ChannelTtlEnforcer {
     private Consumer<ChannelConfig> handleCleanup() {
         return channel -> {
             if (channel.getTtlDays() > 0) {
-                String channelPath = storagePath + "/" + channel.getDisplayName();
+                String channelPath = spokePath + "/" + channel.getDisplayName();
                 DateTime channelTTL = TimeUtil.stable().minusDays((int) channel.getTtlDays());
                 for (int i = 0; i < 3; i++) {
                     Commander.run(new String[]{"rm", "-rf", channelPath + "/" + TimeUtil.days(channelTTL.minusDays(i))}, 1);
@@ -49,7 +49,7 @@ public class ChannelTtlEnforcer {
             try {
                 long start = System.currentTimeMillis();
                 logger.info("running channel cleanup");
-                TtlEnforcer.enforce(storagePath, channelService, handleCleanup());
+                TtlEnforcer.enforce(spokePath, channelService, handleCleanup());
                 logger.info("completed channel cleanup {}", (System.currentTimeMillis() - start));
             } catch (Exception e) {
                 logger.info("issue cleaning up channels in spoke", e);

@@ -62,11 +62,15 @@ class ClusterHubBindings extends AbstractModule {
 
         bind(SpokeTtlEnforcer.class)
                 .annotatedWith(Names.named(FileSpokeStore.SINGLE))
-                .toInstance(new SpokeTtlEnforcer(HubProperties.getSpokePath() + "/single", HubProperties.getSpokeTtlMinutes()));
+                .toInstance(new SpokeTtlEnforcer(
+                        HubProperties.getSpokePath("single"),
+                        HubProperties.getSpokeTtlMinutes("single")));
 
         bind(SpokeTtlEnforcer.class)
                 .annotatedWith(Names.named(FileSpokeStore.BATCH))
-                .toInstance(new SpokeTtlEnforcer(HubProperties.getSpokePath() + "/batch", HubProperties.getSpokeTtlMinutes()));
+                .toInstance(new SpokeTtlEnforcer(
+                        HubProperties.getSpokePath("batch"),
+                        HubProperties.getSpokeTtlMinutes("batch")));
 
         bind(DocumentationDao.class).to(S3DocumentationDao.class).asEagerSingleton();
         bind(SpokeDecommissionManager.class).asEagerSingleton();
@@ -77,8 +81,9 @@ class ClusterHubBindings extends AbstractModule {
     @Provides
     @Named(FileSpokeStore.SINGLE)
     public static FileSpokeStore buildSingleSpokeStore() {
-        String storagePath = HubProperties.getSpokePath() + "/single";
-        return new FileSpokeStore(storagePath);
+        String spokePath = HubProperties.getSpokePath("single");
+        int spokeTtlMinutes = HubProperties.getSpokeTtlMinutes("single");
+        return new FileSpokeStore(spokePath, spokeTtlMinutes);
     }
 
     @Inject
@@ -86,8 +91,9 @@ class ClusterHubBindings extends AbstractModule {
     @Provides
     @Named(FileSpokeStore.BATCH)
     public static FileSpokeStore buildBatchSpokeStore() {
-        String storagePath = HubProperties.getSpokePath() + "/batch";
-        return new FileSpokeStore(storagePath);
+        String spokePath = HubProperties.getSpokePath("batch");
+        int spokeTtlMinutes = HubProperties.getSpokeTtlMinutes("batch");
+        return new FileSpokeStore(spokePath, spokeTtlMinutes);
     }
 
     @Inject

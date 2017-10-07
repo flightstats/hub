@@ -69,7 +69,7 @@ public class RemoteSpokeStore {
                 public void run() {
                     try {
                         ContentKey key = new ContentKey();
-                        if (insert(path + key.toUrl(), key.toUrl().getBytes(), server, traces, "single", path)) {
+                        if (insert(path + key.toUrl(), key.toUrl().getBytes(), server, traces, "single", "payload", path)) {
                             quorumLatch.countDown();
                         } else {
                             traces.log(logger);
@@ -118,12 +118,12 @@ public class RemoteSpokeStore {
         return true;
     }
 
-    public boolean insert(String path, byte[] payload, String spokeApi, String channel) throws InterruptedException {
-        return insert(path, payload, cluster.getWriteServers(), ActiveTraces.getLocal(), spokeApi, channel);
+    public boolean insert(String path, byte[] payload, String spokeStore, String spokeApi, String channel) throws InterruptedException {
+        return insert(path, payload, cluster.getWriteServers(), ActiveTraces.getLocal(), spokeStore, spokeApi, channel);
     }
 
     private boolean insert(String path, byte[] payload, Collection<String> servers, Traces traces,
-                           String spokeApi, String channel) throws InterruptedException {
+                           String spokeStore, String spokeApi, String channel) throws InterruptedException {
         int quorum = getQuorum(servers.size());
         CountDownLatch quorumLatch = new CountDownLatch(quorum);
         AtomicBoolean firstComplete = new AtomicBoolean();
@@ -132,7 +132,7 @@ public class RemoteSpokeStore {
                 @Override
                 public void run() {
                     setThread(path);
-                    String uri = HubHost.getScheme() + server + "/internal/spoke/" + spokeApi + "/" + path;
+                    String uri = HubHost.getScheme() + server + "/internal/spoke/" + spokeStore + "/" + spokeApi + "/" + path;
                     traces.add(uri);
                     ClientResponse response = null;
                     try {
@@ -177,13 +177,13 @@ public class RemoteSpokeStore {
         return (int) Math.max(1, Math.ceil(size / 2.0));
     }
 
-    public Content get(String fileStore, String path, ContentKey key) {
+    public Content get(String spokeStore, String path, ContentKey key) {
         Collection<String> servers = cluster.getRandomServers();
         for (String server : servers) {
             ClientResponse response = null;
             try {
                 setThread(path);
-                String url = HubHost.getScheme() + server + "/internal/spoke/" + fileStore + "/" + path;
+                String url = HubHost.getScheme() + server + "/internal/spoke/" + spokeStore + "/payload/" + path;
                 response = query_client.resource(url).get(ClientResponse.class);
                 logger.trace("server {} path {} response {}", server, path, response);
                 if (response.getStatus() == 200) {
@@ -210,8 +210,8 @@ public class RemoteSpokeStore {
         return null;
     }
 
-    QueryResult readTimeBucket(String channel, String timePath) throws InterruptedException {
-        return getKeys("/internal/spoke/time/" + channel + "/" + timePath);
+    QueryResult readTimeBucket(String spokeStore, String channel, String timePath) throws InterruptedException {
+        return getKeys("/internal/spoke/" + spokeStore + "/time/" + channel + "/" + timePath);
     }
 
     SortedSet<ContentKey> getNext(String channel, int count, String startKey) throws InterruptedException {
@@ -309,7 +309,7 @@ public class RemoteSpokeStore {
         return Optional.of(orderedKeys.last());
     }
 
-    public boolean delete(String path) throws Exception {
+    public boolean delete(String spokeStore, String path) throws Exception {
         Collection<String> servers = cluster.getAllServers();
         int quorum = servers.size();
         CountDownLatch countDownLatch = new CountDownLatch(quorum);
@@ -320,7 +320,7 @@ public class RemoteSpokeStore {
                     ClientResponse response = null;
                     try {
                         setThread(path);
-                        response = query_client.resource(HubHost.getScheme() + server + "/internal/spoke/payload/" + path)
+                        response = query_client.resource(HubHost.getScheme() + server + "/internal/spoke/" + spokeStore + "/payload/" + path)
                                 .delete(ClientResponse.class);
                         if (response.getStatus() < 400) {
                             countDownLatch.countDown();

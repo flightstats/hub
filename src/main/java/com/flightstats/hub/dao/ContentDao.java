@@ -5,6 +5,7 @@ import com.flightstats.hub.model.*;
 import com.google.common.base.Optional;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.SortedSet;
 import java.util.function.Consumer;
 
@@ -38,6 +39,10 @@ public interface ContentDao {
 
     default void writeBatch(String channel, ContentPath path, Collection<ContentKey> keys, byte[] bytes) {
         throw new UnsupportedOperationException("writeBatch is not supported");
+    }
+
+    default Map<ContentKey, Content> readBatch(String channelName, ContentKey key) {
+        throw new UnsupportedOperationException("readBatch is not supported");
     }
 
     default boolean streamMinute(String channel, MinutePath path, boolean descending, Consumer<Content> callback) {

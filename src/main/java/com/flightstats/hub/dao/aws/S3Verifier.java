@@ -185,7 +185,7 @@ public class S3Verifier {
     }
 
     private MinutePath getSpokeTtlPath(DateTime now) {
-        return new MinutePath(now.minusMinutes(HubProperties.getSpokeTtlMinutes() - 2));
+        return new MinutePath(now.minusMinutes(HubProperties.getSpokeTtlMinutes("single") - 2));
     }
 
     class VerifierRange {

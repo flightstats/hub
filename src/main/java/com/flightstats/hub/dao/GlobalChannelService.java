@@ -33,8 +33,6 @@ public class GlobalChannelService implements ChannelService {
     @Named(ContentDao.SINGLE_CACHE)
     private ContentDao spokeSingleContentDao;
 
-    private final int spokeTtlMinutes = HubProperties.getSpokeTtlMinutes();
-
     public static <X> X handleGlobal(ChannelConfig channel, Supplier<X> standard, Supplier<X> satellite, Supplier<X> master) {
         if (channel.isGlobal()) {
             if (channel.isGlobalMaster()) {
@@ -197,7 +195,7 @@ public class GlobalChannelService implements ChannelService {
 
     private DateTime getSpokeCacheTime(Query query) {
         DateTime startTime = getLastUpdated(query.getChannelName(), MinutePath.NONE).getTime();
-        return startTime.minusMinutes(spokeTtlMinutes);
+        return startTime.minusMinutes(HubProperties.getSpokeTtlMinutes("single"));
     }
 
     @Override

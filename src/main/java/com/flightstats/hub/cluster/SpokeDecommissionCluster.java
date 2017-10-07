@@ -121,7 +121,7 @@ public class SpokeDecommissionCluster implements DecommissionCluster {
 
     long getDoNotRestartMinutes() throws Exception {
         DateTime creationTime = new DateTime(withinSpokeStat(getLocalhost()).getCtime(), DateTimeZone.UTC);
-        DateTime ttlDateTime = TimeUtil.now().minusMinutes(HubProperties.getSpokeTtlMinutes());
+        DateTime ttlDateTime = TimeUtil.now().minusMinutes(HubProperties.getSpokeTtlMinutes("single"));
         return new Duration(ttlDateTime, creationTime).getStandardMinutes();
     }
 

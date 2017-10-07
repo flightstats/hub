@@ -23,31 +23,89 @@ public class InternalSpokeResource {
     private static final FileSpokeStore singleSpokeStore = HubProvider.getInstance(FileSpokeStore.class, FileSpokeStore.SINGLE);
     private static final FileSpokeStore batchSpokeStore = HubProvider.getInstance(FileSpokeStore.class, FileSpokeStore.BATCH);
     private static final RemoteSpokeStore remoteSpokeStore = HubProvider.getInstance(RemoteSpokeStore.class);
+
     @Context
     private UriInfo uriInfo;
 
-    // TODO (rdz): this entry point is only needed for migration. remove after fully migrated.
+    // TODO: remove these after migrating
+    // ----------------------------------
 
+    @GET
     @Path("/payload/{path:.+}")
-    @GET
-    public Response getPayload(@PathParam("path") String path) {
-        return getFromStore(path, singleSpokeStore);
+    public Response oldGetPayloadMethod(@PathParam("path") String path) {
+        return getPayload("single", path);
     }
 
-    @Path("/single/{path:.+}")
-    @GET
-    public Response getFromSinglePayloads(@PathParam("path") String path) {
-        return getFromStore(path, singleSpokeStore);
+    @PUT
+    @Path("/payload/{path:.+}")
+    public Response oldPutPayloadMethod(@PathParam("path") String path, InputStream input) {
+        return putPayload("single", path, input);
     }
 
-    @Path("/batch/{path:.+}")
-    @GET
-    public Response getFromBatchPayloads(@PathParam("path") String path) {
-        return getFromStore(path, batchSpokeStore);
+    @PUT
+    @Path("/bulkKey/{channel}")
+    public Response oldPutBulkMethod(@PathParam("channel") String channel, InputStream input) {
+        return putBulk("single", channel, input);
     }
 
-    private Response getFromStore(String path, FileSpokeStore store) {
+    @GET
+    @Path("/time/{C}/{Y}/{M}/{day}")
+    public Response oldTimeBucketMethod(@PathParam("C") String C,
+                                        @PathParam("Y") String Y,
+                                        @PathParam("M") String M,
+                                        @PathParam("day") String day) {
+        return getTimeBucket("single", C, Y, M, day);
+    }
+
+    @GET
+    @Path("/time/{C}/{Y}/{M}/{D}/{hour}")
+    public Response oldTimeBucketMethod(@PathParam("C") String C,
+                                        @PathParam("Y") String Y,
+                                        @PathParam("M") String M,
+                                        @PathParam("D") String D,
+                                        @PathParam("hour") String hour) {
+        return getTimeBucket("single", C, Y, M, D, hour);
+    }
+
+
+    @GET
+    @Path("/time/{C}/{Y}/{M}/{D}/{h}/{minute}")
+    public Response oldTimeBucketMethod(@PathParam("C") String C,
+                                        @PathParam("Y") String Y,
+                                        @PathParam("M") String M,
+                                        @PathParam("D") String D,
+                                        @PathParam("h") String h,
+                                        @PathParam("minute") String minute) {
+        return getTimeBucket("single", C, Y, M, D, h, minute);
+    }
+
+
+    @GET
+    @Path("/time/{C}/{Y}/{M}/{D}/{h}/{m}/{second}")
+    public Response oldTimeBucketMethod(@PathParam("C") String C,
+                                        @PathParam("Y") String Y,
+                                        @PathParam("M") String M,
+                                        @PathParam("D") String D,
+                                        @PathParam("h") String h,
+                                        @PathParam("m") String m,
+                                        @PathParam("second") String second) {
+        return getTimeBucket("single", C, Y, M, D, h, m, second);
+    }
+
+    @DELETE
+    @Path("/payload/{path:.+}")
+    public Response oldDeleteMethod(@PathParam("path") String path) {
+        return delete("single", path);
+    }
+
+    // ----------------------------------
+
+    @GET
+    @Path("/{storeName}/payload/{path:.+}")
+    public Response getPayload(@PathParam("storeName") String storeName,
+                               @PathParam("path") String path) {
         try {
+            FileSpokeStore store = getSpokeStoreByName(storeName);
             Response.ResponseBuilder builder = Response.ok((StreamingOutput) os -> {
                 try (OutputStream output = new BufferedOutputStream(os)) {
                     store.read(path, output);
@@ -62,29 +120,14 @@ public class InternalSpokeResource {
         }
     }
 
-    // TODO (rdz): this entry point is only needed for migration. remove after fully migrated.
-
-    @Path("/payload/{path:.+}")
     @PUT
-    public Response putPayload(@PathParam("path") String path, InputStream input) {
-        return putIntoStore(singleSpokeStore, path, input);
-    }
-
-    @Path("/single/{path:.+}")
-    @PUT
-    public Response putIntoSinglePayloads(@PathParam("path") String path, InputStream input) {
-        return putIntoStore(singleSpokeStore, path, input);
-    }
-
-    @Path("/batch/{path:.+}")
-    @PUT
-    public Response putIntoBatchPayloads(@PathParam("path") String path, InputStream input) {
-        return putIntoStore(batchSpokeStore, path, input);
-    }
-
-    private Response putIntoStore(FileSpokeStore store, String path, InputStream input) {
+    @Path("/{storeName}/payload/{path:.+}")
+    public Response putPayload(@PathParam("storeName") String storeName,
+                               @PathParam("path") String path,
+                               InputStream input) {
         try {
             long start = System.currentTimeMillis();
+            FileSpokeStore store = getSpokeStoreByName(storeName);
             if (store.insert(path, input)) {
                 long end = System.currentTimeMillis();
                 if ((end - start) > 4000) {
@@ -105,20 +148,21 @@ public class InternalSpokeResource {
         }
     }
 
-    // TODO (rdz): should bulk keys be stored in their own FileSpokeStore instead of the singleSpokeStore, like batch data?
-
-    @Path("/bulkKey/{channel}")
+    @Path("{storeName}/bulkKey/{channel}")
     @PUT
-    public Response putBulk(@PathParam("channel") String channel, InputStream input) {
+    public Response putBulk(@PathParam("storeName") String storeName,
+                            @PathParam("channel") String channel,
+                            InputStream input) {
         try {
             long start = System.currentTimeMillis();
+            FileSpokeStore store = getSpokeStoreByName(storeName);
             ObjectInputStream stream = new ObjectInputStream(input);
             int items = stream.readInt();
             for (int i = 0; i < items; i++) {
                 String keyPath = new String(readByesFully(stream));
                 byte[] data = readByesFully(stream);
                 String itemPath = channel + "/" + keyPath;
-                if (!singleSpokeStore.insert(itemPath, new ByteArrayInputStream(data))) {
+                if (!store.insert(itemPath, new ByteArrayInputStream(data))) {
                     logger.warn("what happened?!?! {}", channel);
                     return Response
                             .status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -147,12 +191,12 @@ public class InternalSpokeResource {
         return data;
     }
 
-    private Response getResponse(String path) {
+    private Response getResponse(FileSpokeStore store, String path) {
         logger.trace("time {}", path);
         try {
             Response.ResponseBuilder builder = Response.ok((StreamingOutput) os -> {
                 BufferedOutputStream output = new BufferedOutputStream(os);
-                singleSpokeStore.readKeysInBucket(path, output);
+                store.readKeysInBucket(path, output);
                 output.flush();
             });
             return builder.build();
@@ -162,43 +206,74 @@ public class InternalSpokeResource {
         }
     }
 
-    @Path("/time/{C}/{Y}/{M}/{day}")
-    @GET
-    public Response getTimeBucket(@PathParam("C") String C, @PathParam("Y") String Y,
-                                  @PathParam("M") String M, @PathParam("day") String day) {
-        return getResponse(C + "/" + Y + "/" + M + "/" + day);
+    private FileSpokeStore getSpokeStoreByName(String name) {
+        switch (name) {
+            case "single":
+                return singleSpokeStore;
+            case "batch":
+                return batchSpokeStore;
+            default:
+                throw new IllegalArgumentException("unknown spoke store: " + name);
+        }
     }
 
-    @Path("/time/{C}/{Y}/{M}/{D}/{hour}")
     @GET
-    public Response getTimeBucket(@PathParam("C") String C, @PathParam("Y") String Y,
-                                  @PathParam("M") String M, @PathParam("D") String D,
+    @Path("/{storeName}/time/{C}/{Y}/{M}/{day}")
+    public Response getTimeBucket(@PathParam("storeName") String storeName,
+                                  @PathParam("C") String C,
+                                  @PathParam("Y") String Y,
+                                  @PathParam("M") String M,
+                                  @PathParam("day") String day) {
+        FileSpokeStore store = getSpokeStoreByName(storeName);
+        return getResponse(store, C + "/" + Y + "/" + M + "/" + day);
+    }
+
+    @GET
+    @Path("/{storeName}/time/{C}/{Y}/{M}/{D}/{hour}")
+    public Response getTimeBucket(@PathParam("storeName") String storeName,
+                                  @PathParam("C") String C,
+                                  @PathParam("Y") String Y,
+                                  @PathParam("M") String M,
+                                  @PathParam("D") String D,
                                   @PathParam("hour") String hour) {
-        return getResponse(C + "/" + Y + "/" + M + "/" + D + "/" + hour);
+        FileSpokeStore store = getSpokeStoreByName(storeName);
+        return getResponse(store, C + "/" + Y + "/" + M + "/" + D + "/" + hour);
     }
 
-    @Path("/time/{C}/{Y}/{M}/{D}/{h}/{minute}")
     @GET
-    public Response getTimeBucket(@PathParam("C") String C, @PathParam("Y") String Y,
-                                  @PathParam("M") String M, @PathParam("D") String D,
-                                  @PathParam("h") String h, @PathParam("minute") String minute) {
-        return getResponse(C + "/" + Y + "/" + M + "/" + D + "/" + h + "/" + minute);
+    @Path("/{storeName}/time/{C}/{Y}/{M}/{D}/{h}/{minute}")
+    public Response getTimeBucket(@PathParam("storeName") String storeName,
+                                  @PathParam("C") String C,
+                                  @PathParam("Y") String Y,
+                                  @PathParam("M") String M,
+                                  @PathParam("D") String D,
+                                  @PathParam("h") String h,
+                                  @PathParam("minute") String minute) {
+        FileSpokeStore store = getSpokeStoreByName(storeName);
+        return getResponse(store, C + "/" + Y + "/" + M + "/" + D + "/" + h + "/" + minute);
     }
 
-    @Path("/time/{C}/{Y}/{M}/{D}/{h}/{m}/{second}")
     @GET
-    public Response getTimeBucket(@PathParam("C") String C, @PathParam("Y") String Y,
-                                  @PathParam("M") String M, @PathParam("D") String D,
-                                  @PathParam("h") String h, @PathParam("m") String m,
+    @Path("/{storeName}/time/{C}/{Y}/{M}/{D}/{h}/{m}/{second}")
+    public Response getTimeBucket(@PathParam("storeName") String storeName,
+                                  @PathParam("C") String C,
+                                  @PathParam("Y") String Y,
+                                  @PathParam("M") String M,
+                                  @PathParam("D") String D,
+                                  @PathParam("h") String h,
+                                  @PathParam("m") String m,
                                   @PathParam("second") String second) {
-        return getResponse(C + "/" + Y + "/" + M + "/" + D + "/" + h + "/" + m + "/" + second);
+        FileSpokeStore store = getSpokeStoreByName(storeName);
+        return getResponse(store, C + "/" + Y + "/" + M + "/" + D + "/" + h + "/" + m + "/" + second);
     }
 
-    @Path("/payload/{path:.+}")
     @DELETE
-    public Response delete(@PathParam("path") String path) {
+    @Path("/{storeName}/payload/{path:.+}")
+    public Response delete(@PathParam("storeName") String storeName,
+                           @PathParam("path") String path) {
         try {
-            singleSpokeStore.delete(path);
+            FileSpokeStore store = getSpokeStoreByName(storeName);
+            store.delete(path);
             return Response.ok().build();
         } catch (Exception e) {
             logger.warn("unable to write " + path, e);

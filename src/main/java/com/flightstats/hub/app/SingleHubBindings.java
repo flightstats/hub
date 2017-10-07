@@ -8,7 +8,7 @@ import com.flightstats.hub.dao.file.FileWebhookDao;
 import com.flightstats.hub.dao.file.SingleContentService;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.spoke.ChannelTtlEnforcer;
-import com.flightstats.hub.spoke.SpokeContentDao;
+import com.flightstats.hub.spoke.SpokeSingleContentDao;
 import com.flightstats.hub.webhook.Webhook;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
@@ -24,7 +24,7 @@ class SingleHubBindings extends AbstractModule {
         bind(ChannelService.class).to(LocalChannelService.class).asEagerSingleton();
         bind(ContentDao.class)
                 .annotatedWith(Names.named(ContentDao.SINGLE_CACHE))
-                .to(SpokeContentDao.class).asEagerSingleton();
+                .to(SpokeSingleContentDao.class).asEagerSingleton();
         bind(ContentService.class)
                 .to(SingleContentService.class).asEagerSingleton();
         bind(ChannelTtlEnforcer.class).asEagerSingleton();

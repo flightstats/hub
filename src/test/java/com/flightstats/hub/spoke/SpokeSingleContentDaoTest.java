@@ -15,9 +15,9 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SpokeContentDaoTest {
+public class SpokeSingleContentDaoTest {
 
-    private final static Logger logger = LoggerFactory.getLogger(SpokeContentDaoTest.class);
+    private final static Logger logger = LoggerFactory.getLogger(SpokeSingleContentDaoTest.class);
     private static ContentDaoUtil util;
 
     @BeforeClass

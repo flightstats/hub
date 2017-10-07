@@ -23,8 +23,8 @@ public class HubProperties {
         return HubProperties.getProperty("app.encrypted", false);
     }
 
-    public static int getSpokeTtlMinutes() {
-        return getProperty("spoke.ttlMinutes", 60);
+    public static int getSpokeTtlMinutes(String spokeStore) {
+        return getProperty("spoke." + spokeStore + ".ttlMinutes", 60);
     }
 
     public static String getAppEnv() {
@@ -35,8 +35,8 @@ public class HubProperties {
         return HubProperties.getProperty("hub.protect.channels", true);
     }
 
-    public static String getSpokePath() {
-        return getProperty("spoke.path", "/spoke");
+    public static String getSpokePath(String spokeStore) {
+        return getProperty("spoke." + spokeStore + ".path", "/spoke/" + spokeStore);
     }
 
     public static long getLargePayload() {

@@ -41,7 +41,7 @@ public class ClusterContentService implements ContentService {
     private static final long largePayload = HubProperties.getLargePayload();
     private final boolean dropSomeWrites = HubProperties.getProperty("s3.dropSomeWrites", false);
     private static final int queryMergeMaxWaitMinutes = HubProperties.getProperty("query.merge.max.wait.minutes", 2);
-    private final int spokeTtlMinutes = HubProperties.getSpokeTtlMinutes();
+
     @Inject
     @Named(ContentDao.SINGLE_CACHE)
     private ContentDao spokeSingleContentDao;
@@ -140,15 +140,30 @@ public class ClusterContentService implements ContentService {
         } else if (channel.isBatch()) {
             content = spokeBatchContentDao.get(channelName, key);
             if (content == null) {
-                content = s3BatchContentDao.get(channelName, key);
+                content = getFromS3BatchAndWriteToSpokeBatch(channelName, key);
             }
         } else {
             content = s3SingleContentDao.get(channelName, key);
             if (content == null) {
-                content = s3BatchContentDao.get(channelName, key);
+                content = getFromS3BatchAndWriteToSpokeBatch(channelName, key);
             }
         }
         return checkForLargeIndex(channelName, content);
+    }
+
+    private Content getFromS3BatchAndWriteToSpokeBatch(String channelName, ContentKey key) {
+        Map<ContentKey, Content> map = s3BatchContentDao.readBatch(channelName, key);
+        Content content = map.get(key);
+
+        try {
+            for (Map.Entry<ContentKey, Content> entry : map.entrySet()) {
+                spokeBatchContentDao.insert(channelName, entry.getValue());
+            }
+        } catch (Exception e) {
+            logger.warn("unable to write to batch cache " + channelName + " " + key, e);
+        }
+
+        return content;
     }
 
     private Optional<Content> checkForLargeIndex(String channelName, Content content) {
@@ -167,7 +182,7 @@ public class ClusterContentService implements ContentService {
 
     private DateTime getSpokeTtlTime(String channelName) {
         DateTime startTime = channelService.getLastUpdated(channelName, new ContentKey(TimeUtil.now())).getTime();
-        return startTime.minusMinutes(spokeTtlMinutes);
+        return startTime.minusMinutes(HubProperties.getSpokeTtlMinutes("single"));
     }
 
     @Override
