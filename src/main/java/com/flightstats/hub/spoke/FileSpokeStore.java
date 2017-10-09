@@ -1,6 +1,5 @@
 package com.flightstats.hub.spoke;
 
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.MinutePath;
 import com.flightstats.hub.util.TimeUtil;
