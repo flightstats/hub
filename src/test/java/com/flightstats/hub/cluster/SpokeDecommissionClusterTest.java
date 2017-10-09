@@ -1,6 +1,7 @@
 package com.flightstats.hub.cluster;
 
 import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.test.Integration;
 import org.apache.curator.framework.CuratorFramework;
 import org.junit.After;
@@ -31,7 +32,7 @@ public class SpokeDecommissionClusterTest {
         assertTrue(cluster.withinSpokeExists());
         assertFalse(cluster.doNotRestartExists());
 
-        assertEquals(HubProperties.getSpokeTtlMinutes("single"), cluster.getDoNotRestartMinutes(), 1);
+        assertEquals(HubProperties.getSpokeTtlMinutes(SpokeStore.SINGLE), cluster.getDoNotRestartMinutes(), 1);
 
         cluster.doNotRestart();
         assertFalse(cluster.withinSpokeExists());

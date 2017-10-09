@@ -20,8 +20,8 @@ import java.util.Arrays;
 public class InternalSpokeResource {
 
     private final static Logger logger = LoggerFactory.getLogger(InternalSpokeResource.class);
-    private static final FileSpokeStore singleSpokeStore = HubProvider.getInstance(FileSpokeStore.class, FileSpokeStore.SINGLE);
-    private static final FileSpokeStore batchSpokeStore = HubProvider.getInstance(FileSpokeStore.class, FileSpokeStore.BATCH);
+    private static final FileSpokeStore singleSpokeStore = HubProvider.getInstance(FileSpokeStore.class, SpokeStore.SINGLE.name());
+    private static final FileSpokeStore batchSpokeStore = HubProvider.getInstance(FileSpokeStore.class, SpokeStore.BATCH.name());
     private static final RemoteSpokeStore remoteSpokeStore = HubProvider.getInstance(RemoteSpokeStore.class);
 
     @Context
@@ -207,10 +207,10 @@ public class InternalSpokeResource {
     }
 
     private FileSpokeStore getSpokeStoreByName(String name) {
-        switch (name) {
-            case "single":
+        switch (SpokeStore.valueOf(name)) {
+            case SINGLE:
                 return singleSpokeStore;
-            case "batch":
+            case BATCH:
                 return batchSpokeStore;
             default:
                 throw new IllegalArgumentException("unknown spoke store: " + name);

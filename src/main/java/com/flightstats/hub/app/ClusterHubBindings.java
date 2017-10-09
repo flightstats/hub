@@ -24,6 +24,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
+import static com.flightstats.hub.spoke.SpokeStore.BATCH;
+import static com.flightstats.hub.spoke.SpokeStore.SINGLE;
+
 class ClusterHubBindings extends AbstractModule {
     private final static Logger logger = LoggerFactory.getLogger(ClusterHubBindings.class);
 
@@ -61,39 +64,31 @@ class ClusterHubBindings extends AbstractModule {
         bind(AppUrlCheck.class).asEagerSingleton();
 
         bind(SpokeTtlEnforcer.class)
-                .annotatedWith(Names.named(FileSpokeStore.SINGLE))
+                .annotatedWith(Names.named(SINGLE.name()))
                 .toInstance(new SpokeTtlEnforcer(
-                        HubProperties.getSpokePath("single"),
-                        HubProperties.getSpokeTtlMinutes("single")));
+                        HubProperties.getSpokePath(SINGLE),
+                        HubProperties.getSpokeTtlMinutes(SINGLE)));
 
         bind(SpokeTtlEnforcer.class)
-                .annotatedWith(Names.named(FileSpokeStore.BATCH))
+                .annotatedWith(Names.named(BATCH.name()))
                 .toInstance(new SpokeTtlEnforcer(
-                        HubProperties.getSpokePath("batch"),
-                        HubProperties.getSpokeTtlMinutes("batch")));
+                        HubProperties.getSpokePath(BATCH),
+                        HubProperties.getSpokeTtlMinutes(BATCH)));
+
+        bind(FileSpokeStore.class)
+                .annotatedWith(Names.named(SINGLE.name()))
+                .toInstance(new FileSpokeStore(
+                        HubProperties.getSpokePath(SINGLE),
+                        HubProperties.getSpokeTtlMinutes(SINGLE)));
+
+        bind(FileSpokeStore.class)
+                .annotatedWith(Names.named(BATCH.name()))
+                .toInstance(new FileSpokeStore(
+                        HubProperties.getSpokePath(BATCH),
+                        HubProperties.getSpokeTtlMinutes(BATCH)));
 
         bind(DocumentationDao.class).to(S3DocumentationDao.class).asEagerSingleton();
         bind(SpokeDecommissionManager.class).asEagerSingleton();
-    }
-
-    @Inject
-    @Singleton
-    @Provides
-    @Named(FileSpokeStore.SINGLE)
-    public static FileSpokeStore buildSingleSpokeStore() {
-        String spokePath = HubProperties.getSpokePath("single");
-        int spokeTtlMinutes = HubProperties.getSpokeTtlMinutes("single");
-        return new FileSpokeStore(spokePath, spokeTtlMinutes);
-    }
-
-    @Inject
-    @Singleton
-    @Provides
-    @Named(FileSpokeStore.BATCH)
-    public static FileSpokeStore buildBatchSpokeStore() {
-        String spokePath = HubProperties.getSpokePath("batch");
-        int spokeTtlMinutes = HubProperties.getSpokeTtlMinutes("batch");
-        return new FileSpokeStore(spokePath, spokeTtlMinutes);
     }
 
     @Inject

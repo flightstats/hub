@@ -69,7 +69,7 @@ public class RemoteSpokeStore {
                 public void run() {
                     try {
                         ContentKey key = new ContentKey();
-                        if (insert(path + key.toUrl(), key.toUrl().getBytes(), server, traces, "single", "payload", path)) {
+                        if (insert(path + key.toUrl(), key.toUrl().getBytes(), server, traces, SpokeStore.SINGLE, "payload", path)) {
                             quorumLatch.countDown();
                         } else {
                             traces.log(logger);
@@ -118,12 +118,12 @@ public class RemoteSpokeStore {
         return true;
     }
 
-    public boolean insert(String path, byte[] payload, String spokeStore, String spokeApi, String channel) throws InterruptedException {
+    public boolean insert(String path, byte[] payload, SpokeStore spokeStore, String spokeApi, String channel) throws InterruptedException {
         return insert(path, payload, cluster.getWriteServers(), ActiveTraces.getLocal(), spokeStore, spokeApi, channel);
     }
 
     private boolean insert(String path, byte[] payload, Collection<String> servers, Traces traces,
-                           String spokeStore, String spokeApi, String channel) throws InterruptedException {
+                           SpokeStore spokeStore, String spokeApi, String channel) throws InterruptedException {
         int quorum = getQuorum(servers.size());
         CountDownLatch quorumLatch = new CountDownLatch(quorum);
         AtomicBoolean firstComplete = new AtomicBoolean();
@@ -132,7 +132,7 @@ public class RemoteSpokeStore {
                 @Override
                 public void run() {
                     setThread(path);
-                    String uri = HubHost.getScheme() + server + "/internal/spoke/" + spokeStore + "/" + spokeApi + "/" + path;
+                    String uri = HubHost.getScheme() + server + "/internal/spoke/" + spokeStore.name() + "/" + spokeApi + "/" + path;
                     traces.add(uri);
                     ClientResponse response = null;
                     try {
@@ -177,7 +177,7 @@ public class RemoteSpokeStore {
         return (int) Math.max(1, Math.ceil(size / 2.0));
     }
 
-    public Content get(String spokeStore, String path, ContentKey key) {
+    public Content get(SpokeStore spokeStore, String path, ContentKey key) {
         Collection<String> servers = cluster.getRandomServers();
         for (String server : servers) {
             ClientResponse response = null;
@@ -210,7 +210,7 @@ public class RemoteSpokeStore {
         return null;
     }
 
-    QueryResult readTimeBucket(String spokeStore, String channel, String timePath) throws InterruptedException {
+    QueryResult readTimeBucket(SpokeStore spokeStore, String channel, String timePath) throws InterruptedException {
         return getKeys("/internal/spoke/" + spokeStore + "/time/" + channel + "/" + timePath);
     }
 
@@ -309,7 +309,7 @@ public class RemoteSpokeStore {
         return Optional.of(orderedKeys.last());
     }
 
-    public boolean delete(String spokeStore, String path) throws Exception {
+    public boolean delete(SpokeStore spokeStore, String path) throws Exception {
         Collection<String> servers = cluster.getAllServers();
         int quorum = servers.size();
         CountDownLatch countDownLatch = new CountDownLatch(quorum);

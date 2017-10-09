@@ -1,5 +1,6 @@
 package com.flightstats.hub.app;
 
+import com.flightstats.hub.spoke.SpokeStore;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -23,7 +24,7 @@ public class HubProperties {
         return HubProperties.getProperty("app.encrypted", false);
     }
 
-    public static int getSpokeTtlMinutes(String spokeStore) {
+    public static int getSpokeTtlMinutes(SpokeStore spokeStore) {
         return getProperty("spoke." + spokeStore + ".ttlMinutes", 60);
     }
 
@@ -35,7 +36,7 @@ public class HubProperties {
         return HubProperties.getProperty("hub.protect.channels", true);
     }
 
-    public static String getSpokePath(String spokeStore) {
+    public static String getSpokePath(SpokeStore spokeStore) {
         return getProperty("spoke." + spokeStore + ".path", "/spoke/" + spokeStore);
     }
 

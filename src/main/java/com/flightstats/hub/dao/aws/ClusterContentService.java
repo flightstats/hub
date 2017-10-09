@@ -9,6 +9,7 @@ import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.replication.S3Batch;
+import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.TimeUtil;
@@ -182,7 +183,7 @@ public class ClusterContentService implements ContentService {
 
     private DateTime getSpokeTtlTime(String channelName) {
         DateTime startTime = channelService.getLastUpdated(channelName, new ContentKey(TimeUtil.now())).getTime();
-        return startTime.minusMinutes(HubProperties.getSpokeTtlMinutes("single"));
+        return startTime.minusMinutes(HubProperties.getSpokeTtlMinutes(SpokeStore.SINGLE));
     }
 
     @Override

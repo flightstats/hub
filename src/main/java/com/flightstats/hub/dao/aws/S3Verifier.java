@@ -10,6 +10,7 @@ import com.flightstats.hub.exception.FailedQueryException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
+import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
@@ -185,7 +186,7 @@ public class S3Verifier {
     }
 
     private MinutePath getSpokeTtlPath(DateTime now) {
-        return new MinutePath(now.minusMinutes(HubProperties.getSpokeTtlMinutes("single") - 2));
+        return new MinutePath(now.minusMinutes(HubProperties.getSpokeTtlMinutes(SpokeStore.SINGLE) - 2));
     }
 
     class VerifierRange {
