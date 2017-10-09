@@ -128,4 +128,16 @@ public class WebhookTest {
         assertFalse(withDefaultsB.isChanged(withDefaultsB));
     }
 
+    @Test
+    public void testIsTagPrototype() throws Exception {
+        Webhook withDefaultsA = this.webhook.withDefaults();
+        assertFalse(withDefaultsA.isTagPrototype());
+        Webhook twh = Webhook.builder().name("name")
+                .channelUrl("http://hubA")
+                .callbackUrl("url")
+                .tag("twh")
+                .build().withDefaults();
+        assertTrue(twh.isTagPrototype());
+    }
+
 }
