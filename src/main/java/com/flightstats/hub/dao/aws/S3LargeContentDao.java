@@ -188,9 +188,6 @@ public class S3LargeContentDao implements ContentDao {
             S3Object object = s3Client.getObject(s3BucketName.getS3BucketName(), getS3ContentKey(channelName, key, false));
             ObjectMetadata metadata = object.getObjectMetadata();
             Map<String, String> userData = metadata.getUserMetadata();
-            /*if (userData.containsKey("compressed")) {
-                //todo - gfm -
-            }*/
             Content.Builder builder = Content.builder();
             String type = userData.get("type");
             if (!type.equals("none")) {

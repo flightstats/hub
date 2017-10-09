@@ -10,6 +10,7 @@ import com.flightstats.hub.cluster.Watcher;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.rest.RestClient;
+import com.flightstats.hub.util.HubUtils;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
@@ -74,8 +75,6 @@ public class WebhookManager {
             }
 
         });
-        //todo - gfm - once we are past v1 webhooks, we can replace watchManager with addRemovalListener
-        //hubCluster.addRemovalListener(event -> manageWebhooks());
         manageWebhooks(false);
     }
 
@@ -92,17 +91,13 @@ public class WebhookManager {
 
     private void manageWebhook(Webhook daoWebhook, boolean webhookChanged) {
         String name = daoWebhook.getName();
-        if (activeWebhooks.getV1().contains(name)) {
-            //if is in v1 ZK, leave it alone ...
-            //todo - gfm - this can go away, eventually
-            logger.info("found v1 webhook {}", name);
-        } else if (activeWebhooks.getV2().contains(name)) {
+        if (activeWebhooks.getServers().contains(name)) {
             logger.debug("found existing v2 webhook {}", name);
-            Collection<String> v2Servers = activeWebhooks.getV2Servers(name);
-            if (v2Servers.isEmpty()) {
+            Collection<String> servers = activeWebhooks.getServers(name);
+            if (servers.isEmpty()) {
                 callOneRun(name, hubCluster.getRandomServers());
             } else if (webhookChanged) {
-                callOneRun(name, v2Servers);
+                callOneRun(name, servers);
             }
         } else {
             logger.debug("found new v2 webhook {}", name);
@@ -112,29 +107,33 @@ public class WebhookManager {
 
     private void callAllDelete(String name, Collection<String> servers) {
         for (String server : servers) {
-            String url = HubHost.getScheme() + server + "/internal/webhook/delete/" + name;
-            logger.info("calling {}", url);
-            ClientResponse response = client.resource(url).put(ClientResponse.class);
-            if (response.getStatus() == 200) {
-                logger.debug("success {}", response);
-            } else {
-                logger.warn("unexpected response {}", response);
-            }
+            call(HubHost.getScheme() + server + "/internal/webhook/delete/" + name);
         }
     }
 
     private void callOneRun(String name, Collection<String> servers) {
         for (String server : servers) {
-            String url = HubHost.getScheme() + server + "/internal/webhook/run/" + name;
+            if (call(HubHost.getScheme() + server + "/internal/webhook/run/" + name)) break;
+        }
+    }
+
+    private boolean call(String url) {
+        ClientResponse response = null;
+        try {
             logger.info("calling {}", url);
-            ClientResponse response = client.resource(url).put(ClientResponse.class);
+            response = client.resource(url).put(ClientResponse.class);
             if (response.getStatus() == 200) {
                 logger.debug("success {}", response);
-                break;
+                return true;
             } else {
                 logger.warn("unexpected response {}", response);
             }
+        } catch (Exception e) {
+            logger.warn("unable to call " + url, e);
+        } finally {
+            HubUtils.close(response);
         }
+        return false;
     }
 
     private void notifyWatchers() {
@@ -142,7 +141,7 @@ public class WebhookManager {
     }
 
     public void delete(String name) {
-        callAllDelete(name, activeWebhooks.getV2Servers(name));
+        callAllDelete(name, activeWebhooks.getServers(name));
         lastContentPath.delete(name, WebhookLeader.WEBHOOK_LAST_COMPLETED);
     }
 
@@ -182,10 +181,6 @@ public class WebhookManager {
 
         @Override
         protected Scheduler scheduler() {
-            /*
-            this is only needed in the case where a hub server crashes, and we are not notified
-            //todo - gfm - what we really want is to monitor the hub cluster group, only trigger on removal
-             */
             return Scheduler.newFixedRateSchedule(1, 5, TimeUnit.MINUTES);
         }
     }

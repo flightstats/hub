@@ -20,26 +20,20 @@ import java.util.stream.Collectors;
 public class ActiveWebhooks {
 
     private static final Logger logger = LoggerFactory.getLogger(ActiveWebhooks.class);
-    private static final String V2_LEADER = "/WebhookLeader";
-    private static final String V1_LEADER = "/GroupLeader";
+    private static final String WEBHOOK_LEADER = "/WebhookLeader";
     private final CuratorFramework curator;
 
-    //todo - gfm - v1Webhooks can go away eventually
-    private PathChildrenCache v1Webhooks;
-    private PathChildrenCache v2Webhooks;
+    private PathChildrenCache webhooks;
 
     @Inject
     public ActiveWebhooks(CuratorFramework curator) throws Exception {
         this.curator = curator;
-        v1Webhooks = new PathChildrenCache(curator, V1_LEADER, true);
-        v1Webhooks.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
 
-        v2Webhooks = new PathChildrenCache(curator, V2_LEADER, true);
-        v2Webhooks.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
+        webhooks = new PathChildrenCache(curator, WEBHOOK_LEADER, true);
+        webhooks.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
 
         logger.info("cleaning...");
-        cleanupEmpty(v1Webhooks, "");
-        cleanupEmpty(v2Webhooks, "/leases", "/locks");
+        cleanupEmpty(webhooks, "/leases", "/locks");
     }
 
     private void cleanupEmpty(PathChildrenCache webhooks, String... trailingPath) throws Exception {
@@ -71,15 +65,11 @@ public class ActiveWebhooks {
                 .collect(Collectors.toSet());
     }
 
-    Set<String> getV1() {
-        return get(v1Webhooks);
+    public Set<String> getServers() {
+        return get(webhooks);
     }
 
-    Set<String> getV2() {
-        return get(v2Webhooks);
-    }
-
-    Set<String> getV2Servers(String name) {
+    public Set<String> getServers(String name) {
         Set<String> servers = new HashSet<>();
         try {
             addAll(name, servers, "leases");
@@ -93,7 +83,7 @@ public class ActiveWebhooks {
     }
 
     private void addAll(String name, Set<String> servers, String zkName) throws Exception {
-        String path = V2_LEADER + "/" + name + "/" + zkName;
+        String path = WEBHOOK_LEADER + "/" + name + "/" + zkName;
         List<String> leases = curator.getChildren().forPath(path);
         for (String lease : leases) {
             byte[] bytes = curator.getData().forPath(path + "/" + lease);
