@@ -44,7 +44,7 @@ public class Webhook implements Comparable<Webhook>, NamedType {
     private final boolean managedByTag; // webhooks with this bit set were created by a tag prototype and will be automatically
     // created and deleted when a channel has the webhook "tag" added or removed.
 
-    @java.beans.ConstructorProperties({"callbackUrl", "channelUrl", "parallelCalls", "name", "startingKey", "batch", "heartbeat", "paused", "ttlMinutes", "maxWaitMinutes", "callbackTimeoutSeconds"})
+    @java.beans.ConstructorProperties({"callbackUrl", "channelUrl", "parallelCalls", "name", "startingKey", "batch", "heartbeat", "paused", "ttlMinutes", "maxWaitMinutes", "callbackTimeoutSeconds", "tag", "managedByTag"})
     private Webhook(String callbackUrl, String channelUrl, Integer parallelCalls, String name, ContentPath startingKey, String batch, boolean heartbeat, boolean paused, Integer ttlMinutes, Integer maxWaitMinutes, Integer callbackTimeoutSeconds, boolean fastForwardable, String tag, boolean managedByTag) {
         this.callbackUrl = callbackUrl;
         this.channelUrl = channelUrl;
@@ -135,6 +135,7 @@ public class Webhook implements Comparable<Webhook>, NamedType {
             }
             if (root.has("tag")) {
                 String t = root.get("tag").asText().isEmpty() ? null : root.get("tag").asText();
+                logger.debug("TagWebhook tag: " + t);
                 builder.tag(t);
             }
             if (root.has("managedByTag")) {
@@ -374,6 +375,8 @@ public class Webhook implements Comparable<Webhook>, NamedType {
         result = result * PRIME + ($maxWaitMinutes == null ? 43 : $maxWaitMinutes.hashCode());
         final Object $callbackTimeoutSeconds = this.getCallbackTimeoutSeconds();
         result = result * PRIME + ($callbackTimeoutSeconds == null ? 43 : $callbackTimeoutSeconds.hashCode());
+        final Object $tag = this.getTag();
+        result = result * PRIME + ($tag == null ? 43 : $tag.hashCode());
         return result;
     }
 
@@ -392,7 +395,9 @@ public class Webhook implements Comparable<Webhook>, NamedType {
                 + ", paused=" + this.isPaused()
                 + ", ttlMinutes=" + this.getTtlMinutes()
                 + ", maxWaitMinutes=" + this.getMaxWaitMinutes()
-                + ", callbackTimeoutSeconds=" + this.getCallbackTimeoutSeconds() + ")";
+                + ", callbackTimeoutSeconds=" + this.getCallbackTimeoutSeconds()
+                + ", tag=" + this.getTag()
+                + ")";
     }
 
     public Webhook withParallelCalls(Integer parallelCalls) {
