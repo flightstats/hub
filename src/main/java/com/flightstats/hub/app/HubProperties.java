@@ -37,7 +37,10 @@ public class HubProperties {
     }
 
     public static String getSpokePath(SpokeStore spokeStore) {
-        return getProperty("spoke." + spokeStore + ".path", "/spoke/" + spokeStore);
+        String property = "spoke." + spokeStore + ".path";
+        String fallbackProperty = "spoke.path";
+        String defaultPath = "/spoke/" + spokeStore;
+        return getProperty(property, getProperty(fallbackProperty, defaultPath));
     }
 
     public static long getLargePayload() {
