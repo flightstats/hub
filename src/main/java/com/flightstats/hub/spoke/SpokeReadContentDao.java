@@ -1,5 +1,6 @@
 package com.flightstats.hub.spoke;
 
+import com.flightstats.hub.cluster.CuratorCluster;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.QueryResult;
 import com.flightstats.hub.exception.FailedQueryException;
@@ -26,11 +27,14 @@ public class SpokeReadContentDao implements ContentDao {
     @Inject
     private RemoteSpokeStore spokeStore;
 
+    @Inject
+    private CuratorCluster cluster;
+
     @Override
     public ContentKey insert(String channelName, Content content) throws Exception {
         ContentKey key = content.getContentKey().get();
         String path = getPath(channelName, key);
-        if (!spokeStore.insert(path, content.getData(), SpokeStore.READ, "payload", channelName)) {
+        if (!spokeStore.insert(path, content.getData(), cluster.getLocalServer(), ActiveTraces.getLocal(), SpokeStore.READ, "payload", channelName)) {
             throw new FailedWriteException("unable to write to spoke " + path);
         }
         return key;

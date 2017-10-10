@@ -122,7 +122,7 @@ public class RemoteSpokeStore {
         return insert(path, payload, cluster.getWriteServers(), ActiveTraces.getLocal(), spokeStore, spokeApi, channel);
     }
 
-    private boolean insert(String path, byte[] payload, Collection<String> servers, Traces traces,
+    public boolean insert(String path, byte[] payload, Collection<String> servers, Traces traces,
                            SpokeStore spokeStore, String spokeApi, String channel) throws InterruptedException {
         int quorum = getQuorum(servers.size());
         CountDownLatch quorumLatch = new CountDownLatch(quorum);
