@@ -4,7 +4,7 @@ import com.flightstats.hub.dao.ContentDaoUtil;
 import com.flightstats.hub.model.BulkContent;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.spoke.SpokeSingleContentDao;
+import com.flightstats.hub.spoke.SpokeWriteContentDao;
 import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.StringUtils;
 import com.google.inject.Injector;
@@ -24,13 +24,13 @@ public class SpokeS3SingleContentDaoTest {
     private final static Logger logger = LoggerFactory.getLogger(SpokeS3SingleContentDaoTest.class);
 
     private static S3SingleContentDao s3SingleContentDao;
-    private static SpokeSingleContentDao spokeSingleContentDao;
+    private static SpokeWriteContentDao spokeWriteContentDao;
 
     @BeforeClass
     public static void setUpClass() throws Exception {
         Injector injector = Integration.startAwsHub();
         s3SingleContentDao = injector.getInstance(S3SingleContentDao.class);
-        spokeSingleContentDao = injector.getInstance(SpokeSingleContentDao.class);
+        spokeWriteContentDao = injector.getInstance(SpokeWriteContentDao.class);
     }
 
     @Test
@@ -44,8 +44,8 @@ public class SpokeS3SingleContentDaoTest {
                 .build();
         firstContent.packageStream();
 
-        ContentKey key = spokeSingleContentDao.insert(channel, firstContent);
-        Content spokeContent = spokeSingleContentDao.get(channel, key);
+        ContentKey key = spokeWriteContentDao.insert(channel, firstContent);
+        Content spokeContent = spokeWriteContentDao.get(channel, key);
         logger.info("spoke {}", spokeContent);
         spokeContent.packageStream();
         ContentKey s3Key = s3SingleContentDao.insert(channel, spokeContent);
@@ -62,12 +62,12 @@ public class SpokeS3SingleContentDaoTest {
         BulkContent bulkContent = BulkContent.builder().channel(channel).isNew(false).build();
         bulkContent.getItems().addAll(items);
 
-        SortedSet<ContentKey> bulkInserted = spokeSingleContentDao.insert(bulkContent);
+        SortedSet<ContentKey> bulkInserted = spokeWriteContentDao.insert(bulkContent);
         logger.info("spoke  inserted {}", bulkInserted);
 
         Content firstContent = items.get(0);
         ContentKey firstKey = firstContent.getContentKey().get();
-        Content spokeContent = spokeSingleContentDao.get(channel, firstKey);
+        Content spokeContent = spokeWriteContentDao.get(channel, firstKey);
         spokeContent.packageStream();
         ContentKey s3Key = s3SingleContentDao.insert(channel, spokeContent);
         assertEquals(firstKey, s3Key);

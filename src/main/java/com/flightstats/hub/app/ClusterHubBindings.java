@@ -9,8 +9,8 @@ import com.flightstats.hub.dao.aws.*;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.spoke.FileSpokeStore;
 import com.flightstats.hub.spoke.RemoteSpokeStore;
-import com.flightstats.hub.spoke.SpokeBatchContentDao;
-import com.flightstats.hub.spoke.SpokeSingleContentDao;
+import com.flightstats.hub.spoke.SpokeReadContentDao;
+import com.flightstats.hub.spoke.SpokeWriteContentDao;
 import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.spoke.SpokeTtlEnforcer;
 import com.flightstats.hub.webhook.Webhook;
@@ -43,10 +43,10 @@ class ClusterHubBindings extends AbstractModule {
         bind(RemoteSpokeStore.class).asEagerSingleton();
         bind(ContentDao.class)
                 .annotatedWith(Names.named(ContentDao.WRITE_CACHE))
-                .to(SpokeSingleContentDao.class).asEagerSingleton();
+                .to(SpokeWriteContentDao.class).asEagerSingleton();
         bind(ContentDao.class)
                 .annotatedWith(Names.named(ContentDao.READ_CACHE))
-                .to(SpokeBatchContentDao.class).asEagerSingleton();
+                .to(SpokeReadContentDao.class).asEagerSingleton();
         bind(ContentDao.class)
                 .annotatedWith(Names.named(ContentDao.SINGLE_LONG_TERM))
                 .to(S3SingleContentDao.class).asEagerSingleton();

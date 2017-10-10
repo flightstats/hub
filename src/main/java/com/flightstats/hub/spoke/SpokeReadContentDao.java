@@ -19,9 +19,9 @@ import javax.inject.Inject;
 import java.util.Collections;
 import java.util.SortedSet;
 
-public class SpokeBatchContentDao implements ContentDao {
+public class SpokeReadContentDao implements ContentDao {
 
-    private final static Logger logger = LoggerFactory.getLogger(SpokeBatchContentDao.class);
+    private final static Logger logger = LoggerFactory.getLogger(SpokeReadContentDao.class);
 
     @Inject
     private RemoteSpokeStore spokeStore;
@@ -44,21 +44,21 @@ public class SpokeBatchContentDao implements ContentDao {
     public Content get(String channelName, ContentKey key) {
         String path = getPath(channelName, key);
         Traces traces = ActiveTraces.getLocal();
-        traces.add("SpokeBatchContentDao.read");
+        traces.add("SpokeReadContentDao.read");
         try {
             return spokeStore.get(SpokeStore.READ, path, key);
         } catch (Exception e) {
             logger.warn("unable to get data: " + path, e);
             return null;
         } finally {
-            traces.add("SpokeBatchContentDao.read completed");
+            traces.add("SpokeReadContentDao.read completed");
         }
     }
 
     @Override
     public SortedSet<ContentKey> queryByTime(TimeQuery query) {
         logger.trace("query by time {} ", query);
-        ActiveTraces.getLocal().add("SpokeBatchContentDao.queryByTime", query);
+        ActiveTraces.getLocal().add("SpokeReadContentDao.queryByTime", query);
         SortedSet<ContentKey> contentKeys;
         if (query.getLimitKey() == null) {
             contentKeys = queryByTimeKeys(query);
@@ -69,7 +69,7 @@ public class SpokeBatchContentDao implements ContentDao {
                 contentKeys.addAll(queryByTimeKeys(query));
             }
         }
-        ActiveTraces.getLocal().add("SpokeBatchContentDao.queryByTime completed", contentKeys);
+        ActiveTraces.getLocal().add("SpokeReadContentDao.queryByTime completed", contentKeys);
         return contentKeys;
     }
 
@@ -99,7 +99,7 @@ public class SpokeBatchContentDao implements ContentDao {
 
     @Override
     public SortedSet<ContentKey> query(DirectionQuery query) {
-        throw new NotImplementedException("SpokeBatchContentDao.query not implemented");
+        throw new NotImplementedException("SpokeReadContentDao.query not implemented");
     }
 
     @Override
@@ -118,12 +118,12 @@ public class SpokeBatchContentDao implements ContentDao {
 
     @Override
     public Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces) {
-        throw new NotImplementedException("SpokeBatchContentDao.getLatest not implemented");
+        throw new NotImplementedException("SpokeReadContentDao.getLatest not implemented");
     }
 
     @Override
     public void deleteBefore(String channelName, ContentKey limitKey) {
-        throw new NotImplementedException("SpokeBatchContentDao.deleteBefore not implemented");
+        throw new NotImplementedException("SpokeReadContentDao.deleteBefore not implemented");
     }
 
 }

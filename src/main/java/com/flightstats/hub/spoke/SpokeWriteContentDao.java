@@ -27,9 +27,9 @@ import java.util.*;
  * It is called in-process on the originating Hub server, and this class will
  * call the registered Spoke servers in the cluster.
  */
-public class SpokeSingleContentDao implements ContentDao {
+public class SpokeWriteContentDao implements ContentDao {
 
-    private final static Logger logger = LoggerFactory.getLogger(SpokeSingleContentDao.class);
+    private final static Logger logger = LoggerFactory.getLogger(SpokeWriteContentDao.class);
 
     @Inject
     private RemoteSpokeStore spokeStore;
@@ -47,7 +47,7 @@ public class SpokeSingleContentDao implements ContentDao {
     @Override
     public SortedSet<ContentKey> insert(BulkContent bulkContent) throws Exception {
         Traces traces = ActiveTraces.getLocal();
-        traces.add("SpokeSingleContentDao.writeBulk");
+        traces.add("SpokeWriteContentDao.writeBulk");
         String channelName = bulkContent.getChannel();
         try {
             SortedSet<ContentKey> keys = new TreeSet<>();
@@ -66,19 +66,19 @@ public class SpokeSingleContentDao implements ContentDao {
                 keys.add(content.getContentKey().get());
             }
             stream.flush();
-            traces.add("SpokeSingleContentDao.writeBulk marshalled");
+            traces.add("SpokeWriteContentDao.writeBulk marshalled");
 
             logger.trace("writing items {} to channel {}", items.size(), channelName);
             if (!spokeStore.insert(channelName, baos.toByteArray(), SpokeStore.WRITE, "bulkKey", channelName)) {
                 throw new FailedWriteException("unable to write bulk to spoke " + channelName);
             }
-            traces.add("SpokeSingleContentDao.writeBulk completed", keys);
+            traces.add("SpokeWriteContentDao.writeBulk completed", keys);
             return keys;
         } catch (ContentTooLargeException e) {
             logger.info("content too large for channel " + channelName);
             throw e;
         } catch (Exception e) {
-            traces.add("SpokeSingleContentDao", "error", e.getMessage());
+            traces.add("SpokeWriteContentDao", "error", e.getMessage());
             logger.error("unable to write " + channelName, e);
             throw e;
         }
@@ -92,14 +92,14 @@ public class SpokeSingleContentDao implements ContentDao {
     public Content get(String channelName, ContentKey key) {
         String path = getPath(channelName, key);
         Traces traces = ActiveTraces.getLocal();
-        traces.add("SpokeSingleContentDao.read");
+        traces.add("SpokeWriteContentDao.read");
         try {
             return spokeStore.get(SpokeStore.WRITE, path, key);
         } catch (Exception e) {
             logger.warn("unable to get data: " + path, e);
             return null;
         } finally {
-            traces.add("SpokeSingleContentDao.read completed");
+            traces.add("SpokeWriteContentDao.read completed");
         }
     }
 
@@ -107,10 +107,10 @@ public class SpokeSingleContentDao implements ContentDao {
     public Optional<ContentKey> getLatest(String channel, ContentKey limitKey, Traces traces) {
         String path = getPath(channel, limitKey);
         logger.trace("latest {} {}", channel, path);
-        traces.add("SpokeSingleContentDao.latest", channel, path);
+        traces.add("SpokeWriteContentDao.latest", channel, path);
         try {
             Optional<ContentKey> key = spokeStore.getLatest(channel, path, traces);
-            traces.add("SpokeSingleContentDao.latest", key);
+            traces.add("SpokeWriteContentDao.latest", key);
             return key;
         } catch (Exception e) {
             logger.warn("what happened? " + channel, e);
@@ -126,7 +126,7 @@ public class SpokeSingleContentDao implements ContentDao {
     @Override
     public SortedSet<ContentKey> queryByTime(TimeQuery query) {
         logger.trace("query by time {} ", query);
-        ActiveTraces.getLocal().add("SpokeSingleContentDao.queryByTime", query);
+        ActiveTraces.getLocal().add("SpokeWriteContentDao.queryByTime", query);
         SortedSet<ContentKey> contentKeys;
         if (query.getLimitKey() == null) {
             contentKeys = queryByTimeKeys(query);
@@ -137,7 +137,7 @@ public class SpokeSingleContentDao implements ContentDao {
                 contentKeys.addAll(queryByTimeKeys(query));
             }
         }
-        ActiveTraces.getLocal().add("SpokeSingleContentDao.queryByTime completed", contentKeys);
+        ActiveTraces.getLocal().add("SpokeWriteContentDao.queryByTime completed", contentKeys);
         return contentKeys;
     }
 
@@ -179,7 +179,7 @@ public class SpokeSingleContentDao implements ContentDao {
                 spokeTtlTime = query.getChannelStable().minusMinutes(ttlMinutes * 2);
             }
         }
-        ActiveTraces.getLocal().add("SpokeSingleContentDao.query ", query, spokeTtlTime);
+        ActiveTraces.getLocal().add("SpokeWriteContentDao.query ", query, spokeTtlTime);
         SortedSet<ContentKey> contentKeys = Collections.emptySortedSet();
         if (query.isNext()) {
             try {
@@ -204,7 +204,7 @@ public class SpokeSingleContentDao implements ContentDao {
                 startTime = startTime.minusHours(1);
             }
         }
-        ActiveTraces.getLocal().add("SpokeSingleContentDao.query completed", contentKeys);
+        ActiveTraces.getLocal().add("SpokeWriteContentDao.query completed", contentKeys);
         return contentKeys;
     }
 
