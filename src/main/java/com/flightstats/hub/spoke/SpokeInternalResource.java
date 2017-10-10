@@ -17,9 +17,9 @@ import java.util.Arrays;
 
 @SuppressWarnings("WeakerAccess")
 @Path("/internal/spoke")
-public class InternalSpokeResource {
+public class SpokeInternalResource {
 
-    private final static Logger logger = LoggerFactory.getLogger(InternalSpokeResource.class);
+    private final static Logger logger = LoggerFactory.getLogger(SpokeInternalResource.class);
     private static final FileSpokeStore writeSpokeStore = HubProvider.getInstance(FileSpokeStore.class, SpokeStore.WRITE.name());
     private static final FileSpokeStore readSpokeStore = HubProvider.getInstance(FileSpokeStore.class, SpokeStore.READ.name());
     private static final RemoteSpokeStore remoteSpokeStore = HubProvider.getInstance(RemoteSpokeStore.class);
