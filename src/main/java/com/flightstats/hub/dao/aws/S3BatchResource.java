@@ -39,8 +39,19 @@ public class S3BatchResource {
                 .accept("application/zip")
                 .get(ClientResponse.class);
         if (response.getStatus() != 200) {
-            logger.warn("unable to get data for {} {}", channel, response);
-            return false;
+            // TODO: uncomment the following code and delete the temp code after deploy is complete
+            // logger.warn("unable to get data for {} {}", channel, response);
+            // return false;
+            // -- temp start
+            response  = RestClient.defaultClient()
+                    .resource(batchUrl + "&location=CACHE")
+                    .accept("application/zip")
+                    .get(ClientResponse.class);
+            if (response.getStatus() != 200) {
+                logger.warn("unable to get data for {} {}", channel, response);
+                return false;
+            }
+            // -- temp end
         }
         ActiveTraces.getLocal().add("S3BatchResource.getAndWriteBatch got response");
         byte[] bytes = response.getEntity(byte[].class);
