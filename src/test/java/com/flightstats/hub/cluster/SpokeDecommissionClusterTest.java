@@ -32,7 +32,7 @@ public class SpokeDecommissionClusterTest {
         assertTrue(cluster.withinSpokeExists());
         assertFalse(cluster.doNotRestartExists());
 
-        assertEquals(HubProperties.getSpokeTtlMinutes(SpokeStore.SINGLE), cluster.getDoNotRestartMinutes(), 1);
+        assertEquals(HubProperties.getSpokeTtlMinutes(SpokeStore.WRITE), cluster.getDoNotRestartMinutes(), 1);
 
         cluster.doNotRestart();
         assertFalse(cluster.withinSpokeExists());

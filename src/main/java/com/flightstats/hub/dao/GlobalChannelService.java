@@ -31,8 +31,8 @@ public class GlobalChannelService implements ChannelService {
     @Inject
     private LocalChannelService localChannelService;
     @Inject
-    @Named(ContentDao.SINGLE_CACHE)
-    private ContentDao spokeSingleContentDao;
+    @Named(ContentDao.WRITE_CACHE)
+    private ContentDao spokeWriteContentDao;
 
     public static <X> X handleGlobal(ChannelConfig channel, Supplier<X> standard, Supplier<X> satellite, Supplier<X> master) {
         if (channel.isGlobal()) {
@@ -128,7 +128,7 @@ public class GlobalChannelService implements ChannelService {
                 () -> localChannelService.getLatest(query),
                 () -> {
                     ContentKey limitKey = localChannelService.getLatestLimit(channelName, query.isStable());
-                    Optional<ContentKey> latest = spokeSingleContentDao.getLatest(channelName, limitKey, ActiveTraces.getLocal());
+                    Optional<ContentKey> latest = spokeWriteContentDao.getLatest(channelName, limitKey, ActiveTraces.getLocal());
                     if (latest.isPresent()) {
                         return latest;
                     }
@@ -160,7 +160,7 @@ public class GlobalChannelService implements ChannelService {
         return primaryAndSecondary(itemRequest.getChannel(),
                 () -> localChannelService.get(itemRequest),
                 () -> {
-                    Content read = spokeSingleContentDao.get(itemRequest.getChannel(), itemRequest.getKey());
+                    Content read = spokeWriteContentDao.get(itemRequest.getChannel(), itemRequest.getKey());
                     if (read != null) {
                         return Optional.of(read);
                     }
@@ -177,14 +177,14 @@ public class GlobalChannelService implements ChannelService {
     public SortedSet<ContentKey> queryByTime(TimeQuery query) {
         return primaryAndSecondary(query.getChannelName(),
                 () -> localChannelService.queryByTime(query),
-                () -> query(query, localChannelService.queryByTime(query.withLocation(Location.CACHE_SINGLE))));
+                () -> query(query, localChannelService.queryByTime(query.withLocation(Location.CACHE_WRITE))));
     }
 
     @Override
     public SortedSet<ContentKey> query(DirectionQuery query) {
         return primaryAndSecondary(query.getChannelName(),
                 () -> localChannelService.query(query),
-                () -> query(query, localChannelService.query(query.withLocation(Location.CACHE_SINGLE))));
+                () -> query(query, localChannelService.query(query.withLocation(Location.CACHE_WRITE))));
     }
 
     private SortedSet<ContentKey> query(Query query, SortedSet<ContentKey> contentKeys) {
@@ -196,7 +196,7 @@ public class GlobalChannelService implements ChannelService {
 
     private DateTime getSpokeCacheTime(Query query) {
         DateTime startTime = getLastUpdated(query.getChannelName(), MinutePath.NONE).getTime();
-        return startTime.minusMinutes(HubProperties.getSpokeTtlMinutes(SpokeStore.SINGLE));
+        return startTime.minusMinutes(HubProperties.getSpokeTtlMinutes(SpokeStore.WRITE));
     }
 
     @Override

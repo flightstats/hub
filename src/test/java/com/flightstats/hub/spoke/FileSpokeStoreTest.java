@@ -27,7 +27,7 @@ public class FileSpokeStoreTest {
     private final static Logger logger = LoggerFactory.getLogger(FileSpokeStoreTest.class);
     private String tempDir;
     private FileSpokeStore spokeStore;
-    private static final int ttlMinutes = HubProperties.getSpokeTtlMinutes(SpokeStore.SINGLE);
+    private static final int ttlMinutes = HubProperties.getSpokeTtlMinutes(SpokeStore.WRITE);
 
     @Before
     public void setUp() throws Exception {

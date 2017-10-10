@@ -51,7 +51,7 @@ public class S3Verifier {
     @Inject
     private ChannelService channelService;
     @Inject
-    @Named(ContentDao.SINGLE_CACHE)
+    @Named(ContentDao.WRITE_CACHE)
     private ContentDao spokeSingleContentDao;
     @Inject
     @Named(ContentDao.SINGLE_LONG_TERM)
@@ -186,7 +186,7 @@ public class S3Verifier {
     }
 
     private MinutePath getSpokeTtlPath(DateTime now) {
-        return new MinutePath(now.minusMinutes(HubProperties.getSpokeTtlMinutes(SpokeStore.SINGLE) - 2));
+        return new MinutePath(now.minusMinutes(HubProperties.getSpokeTtlMinutes(SpokeStore.WRITE) - 2));
     }
 
     class VerifierRange {

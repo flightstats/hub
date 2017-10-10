@@ -33,7 +33,7 @@ public class S3WriteQueue {
     private ExecutorService executorService = Executors.newFixedThreadPool(THREADS,
             new ThreadFactoryBuilder().setNameFormat("S3WriteQueue-%d").build());
     @Inject
-    @Named(ContentDao.SINGLE_CACHE)
+    @Named(ContentDao.WRITE_CACHE)
     private ContentDao spokeSingleContentDao;
     @Inject
     @Named(ContentDao.SINGLE_LONG_TERM)

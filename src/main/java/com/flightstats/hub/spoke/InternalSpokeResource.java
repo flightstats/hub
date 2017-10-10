@@ -20,8 +20,8 @@ import java.util.Arrays;
 public class InternalSpokeResource {
 
     private final static Logger logger = LoggerFactory.getLogger(InternalSpokeResource.class);
-    private static final FileSpokeStore singleSpokeStore = HubProvider.getInstance(FileSpokeStore.class, SpokeStore.SINGLE.name());
-    private static final FileSpokeStore batchSpokeStore = HubProvider.getInstance(FileSpokeStore.class, SpokeStore.BATCH.name());
+    private static final FileSpokeStore writeSpokeStore = HubProvider.getInstance(FileSpokeStore.class, SpokeStore.WRITE.name());
+    private static final FileSpokeStore readSpokeStore = HubProvider.getInstance(FileSpokeStore.class, SpokeStore.READ.name());
     private static final RemoteSpokeStore remoteSpokeStore = HubProvider.getInstance(RemoteSpokeStore.class);
 
     @Context
@@ -208,10 +208,10 @@ public class InternalSpokeResource {
 
     private FileSpokeStore getSpokeStoreByName(String name) {
         switch (SpokeStore.valueOf(name)) {
-            case SINGLE:
-                return singleSpokeStore;
-            case BATCH:
-                return batchSpokeStore;
+            case WRITE:
+                return writeSpokeStore;
+            case READ:
+                return readSpokeStore;
             default:
                 throw new IllegalArgumentException("unknown spoke store: " + name);
         }
@@ -285,7 +285,7 @@ public class InternalSpokeResource {
     @GET
     public Response getLatest(@PathParam("channel") String channel, @PathParam("path") String path) {
         try {
-            String read = singleSpokeStore.getLatest(channel, path);
+            String read = writeSpokeStore.getLatest(channel, path);
             if (read == null) {
                 return Response.status(Response.Status.NOT_FOUND).build();
             }
@@ -303,7 +303,7 @@ public class InternalSpokeResource {
         try {
             Response.ResponseBuilder builder = Response.ok((StreamingOutput) os -> {
                 BufferedOutputStream output = new BufferedOutputStream(os);
-                singleSpokeStore.getNext(channel, startKey, count, output);
+                writeSpokeStore.getNext(channel, startKey, count, output);
                 output.flush();
             });
             return builder.build();

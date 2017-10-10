@@ -3,8 +3,8 @@ package com.flightstats.hub.model;
 public enum Location {
     ALL,
     CACHE,
-    CACHE_SINGLE,
-    CACHE_BATCH,
+    CACHE_WRITE,
+    CACHE_READ,
     LONG_TERM,
     LONG_TERM_SINGLE,
     LONG_TERM_BATCH;

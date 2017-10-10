@@ -11,6 +11,7 @@ import com.flightstats.hub.spoke.FileSpokeStore;
 import com.flightstats.hub.spoke.RemoteSpokeStore;
 import com.flightstats.hub.spoke.SpokeBatchContentDao;
 import com.flightstats.hub.spoke.SpokeSingleContentDao;
+import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.spoke.SpokeTtlEnforcer;
 import com.flightstats.hub.webhook.Webhook;
 import com.google.inject.AbstractModule;
@@ -23,9 +24,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-
-import static com.flightstats.hub.spoke.SpokeStore.BATCH;
-import static com.flightstats.hub.spoke.SpokeStore.SINGLE;
 
 class ClusterHubBindings extends AbstractModule {
     private final static Logger logger = LoggerFactory.getLogger(ClusterHubBindings.class);
@@ -44,10 +42,10 @@ class ClusterHubBindings extends AbstractModule {
                 .to(ClusterContentService.class).asEagerSingleton();
         bind(RemoteSpokeStore.class).asEagerSingleton();
         bind(ContentDao.class)
-                .annotatedWith(Names.named(ContentDao.SINGLE_CACHE))
+                .annotatedWith(Names.named(ContentDao.WRITE_CACHE))
                 .to(SpokeSingleContentDao.class).asEagerSingleton();
         bind(ContentDao.class)
-                .annotatedWith(Names.named(ContentDao.BATCH_CACHE))
+                .annotatedWith(Names.named(ContentDao.READ_CACHE))
                 .to(SpokeBatchContentDao.class).asEagerSingleton();
         bind(ContentDao.class)
                 .annotatedWith(Names.named(ContentDao.SINGLE_LONG_TERM))
@@ -64,28 +62,28 @@ class ClusterHubBindings extends AbstractModule {
         bind(AppUrlCheck.class).asEagerSingleton();
 
         bind(SpokeTtlEnforcer.class)
-                .annotatedWith(Names.named(SINGLE.name()))
+                .annotatedWith(Names.named(SpokeStore.WRITE.name()))
                 .toInstance(new SpokeTtlEnforcer(
-                        HubProperties.getSpokePath(SINGLE),
-                        HubProperties.getSpokeTtlMinutes(SINGLE)));
+                        HubProperties.getSpokePath(SpokeStore.WRITE),
+                        HubProperties.getSpokeTtlMinutes(SpokeStore.WRITE)));
 
         bind(SpokeTtlEnforcer.class)
-                .annotatedWith(Names.named(BATCH.name()))
+                .annotatedWith(Names.named(SpokeStore.READ.name()))
                 .toInstance(new SpokeTtlEnforcer(
-                        HubProperties.getSpokePath(BATCH),
-                        HubProperties.getSpokeTtlMinutes(BATCH)));
+                        HubProperties.getSpokePath(SpokeStore.READ),
+                        HubProperties.getSpokeTtlMinutes(SpokeStore.READ)));
 
         bind(FileSpokeStore.class)
-                .annotatedWith(Names.named(SINGLE.name()))
+                .annotatedWith(Names.named(SpokeStore.WRITE.name()))
                 .toInstance(new FileSpokeStore(
-                        HubProperties.getSpokePath(SINGLE),
-                        HubProperties.getSpokeTtlMinutes(SINGLE)));
+                        HubProperties.getSpokePath(SpokeStore.WRITE),
+                        HubProperties.getSpokeTtlMinutes(SpokeStore.WRITE)));
 
         bind(FileSpokeStore.class)
-                .annotatedWith(Names.named(BATCH.name()))
+                .annotatedWith(Names.named(SpokeStore.READ.name()))
                 .toInstance(new FileSpokeStore(
-                        HubProperties.getSpokePath(BATCH),
-                        HubProperties.getSpokeTtlMinutes(BATCH)));
+                        HubProperties.getSpokePath(SpokeStore.READ),
+                        HubProperties.getSpokeTtlMinutes(SpokeStore.READ)));
 
         bind(DocumentationDao.class).to(S3DocumentationDao.class).asEagerSingleton();
         bind(SpokeDecommissionManager.class).asEagerSingleton();

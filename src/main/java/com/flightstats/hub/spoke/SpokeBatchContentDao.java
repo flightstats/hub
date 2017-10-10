@@ -30,7 +30,7 @@ public class SpokeBatchContentDao implements ContentDao {
     public ContentKey insert(String channelName, Content content) throws Exception {
         ContentKey key = content.getContentKey().get();
         String path = getPath(channelName, key);
-        if (!spokeStore.insert(path, content.getData(), SpokeStore.BATCH, "payload", channelName)) {
+        if (!spokeStore.insert(path, content.getData(), SpokeStore.READ, "payload", channelName)) {
             throw new FailedWriteException("unable to write to spoke " + path);
         }
         return key;
@@ -46,7 +46,7 @@ public class SpokeBatchContentDao implements ContentDao {
         Traces traces = ActiveTraces.getLocal();
         traces.add("SpokeBatchContentDao.read");
         try {
-            return spokeStore.get(SpokeStore.BATCH, path, key);
+            return spokeStore.get(SpokeStore.READ, path, key);
         } catch (Exception e) {
             logger.warn("unable to get data: " + path, e);
             return null;
@@ -76,10 +76,10 @@ public class SpokeBatchContentDao implements ContentDao {
     private SortedSet<ContentKey> queryByTimeKeys(TimeQuery query) {
         try {
             String timePath = query.getUnit().format(query.getStartTime());
-            QueryResult queryResult = spokeStore.readTimeBucket(SpokeStore.BATCH, query.getChannelName(), timePath);
+            QueryResult queryResult = spokeStore.readTimeBucket(SpokeStore.READ, query.getChannelName(), timePath);
             ActiveTraces.getLocal().add("spoke query result", queryResult);
             if (!queryResult.hadSuccess()) {
-                QueryResult retryResult = spokeStore.readTimeBucket(SpokeStore.BATCH, query.getChannelName(), timePath);
+                QueryResult retryResult = spokeStore.readTimeBucket(SpokeStore.READ, query.getChannelName(), timePath);
                 ActiveTraces.getLocal().add("spoke query retryResult", retryResult);
                 if (!retryResult.hadSuccess()) {
                     ActiveTraces.getLocal().log(logger);
@@ -105,7 +105,7 @@ public class SpokeBatchContentDao implements ContentDao {
     @Override
     public void delete(String channelName) {
         try {
-            spokeStore.delete(SpokeStore.BATCH, channelName);
+            spokeStore.delete(SpokeStore.READ, channelName);
         } catch (Exception e) {
             logger.warn("unable to delete " + channelName, e);
         }

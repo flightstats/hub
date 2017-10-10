@@ -11,9 +11,9 @@ import java.util.function.Consumer;
 
 public interface ContentDao {
 
-    String SINGLE_CACHE = "SingleCache";
+    String WRITE_CACHE = "WriteCache";
+    String READ_CACHE = "ReadCache";
     String SINGLE_LONG_TERM = "LongTerm";
-    String BATCH_CACHE = "BatchCache";
     String BATCH_LONG_TERM = "BatchLongTerm";
     String LARGE_PAYLOAD = "LargePayload";
 

@@ -20,7 +20,7 @@ import java.util.function.Consumer;
 @Singleton
 public class ChannelTtlEnforcer {
     private final static Logger logger = LoggerFactory.getLogger(ChannelTtlEnforcer.class);
-    private final String spokePath = HubProperties.getSpokePath(SpokeStore.SINGLE);
+    private final String spokePath = HubProperties.getSpokePath(SpokeStore.WRITE);
     @Inject
     private ChannelService channelService;
 

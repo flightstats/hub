@@ -69,7 +69,7 @@ public class RemoteSpokeStore {
                 public void run() {
                     try {
                         ContentKey key = new ContentKey();
-                        if (insert(path + key.toUrl(), key.toUrl().getBytes(), server, traces, SpokeStore.SINGLE, "payload", path)) {
+                        if (insert(path + key.toUrl(), key.toUrl().getBytes(), server, traces, SpokeStore.WRITE, "payload", path)) {
                             quorumLatch.countDown();
                         } else {
                             traces.log(logger);
