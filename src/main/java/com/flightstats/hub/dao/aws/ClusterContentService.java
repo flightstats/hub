@@ -28,6 +28,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -139,17 +140,27 @@ public class ClusterContentService implements ContentService {
         if (channel.isSingle()) {
             content = s3SingleContentDao.get(channelName, key);
         } else if (channel.isBatch()) {
-            content = spokeReadContentDao.get(channelName, key);
-            if (content == null) {
-                content = getFromS3BatchAndWriteToSpokeBatch(channelName, key);
-            }
+            content = getFromOrderedProviders(channelName, key, Arrays.asList(
+                    spokeReadContentDao::get,
+                    this::getFromS3BatchAndWriteToSpokeBatch));
         } else {
-            content = s3SingleContentDao.get(channelName, key);
-            if (content == null) {
-                content = getFromS3BatchAndWriteToSpokeBatch(channelName, key);
-            }
+            content = getFromOrderedProviders(channelName, key, Arrays.asList(
+                    s3SingleContentDao::get,
+                    spokeReadContentDao::get,
+                    this::getFromS3BatchAndWriteToSpokeBatch));
         }
         return checkForLargeIndex(channelName, content);
+    }
+
+    private Content getFromOrderedProviders(String channelName, ContentKey key, List<BiFunction<String, ContentKey, Content>> providers) {
+        for (BiFunction<String, ContentKey, Content> provider : providers) {
+            Content content = provider.apply(channelName, key);
+            if (content != null) {
+                return content;
+            }
+        }
+
+        return null;
     }
 
     private Content getFromS3BatchAndWriteToSpokeBatch(String channelName, ContentKey key) {
