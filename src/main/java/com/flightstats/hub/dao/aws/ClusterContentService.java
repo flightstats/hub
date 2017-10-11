@@ -168,9 +168,7 @@ public class ClusterContentService implements ContentService {
         Content content = map.get(key);
 
         try {
-            for (Map.Entry<ContentKey, Content> entry : map.entrySet()) {
-                spokeReadContentDao.insert(channelName, entry.getValue());
-            }
+            spokeReadContentDao.insert(BulkContent.fromMap(map));
         } catch (Exception e) {
             logger.warn("unable to write to batch cache " + channelName + " " + key, e);
         }

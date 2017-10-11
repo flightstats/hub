@@ -3,6 +3,7 @@ package com.flightstats.hub.model;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 
 public class BulkContent {
@@ -21,6 +22,14 @@ public class BulkContent {
         this.contentType = contentType;
         this.channel = channel;
         this.masterKey = masterKey;
+    }
+
+    public static BulkContent fromMap(Map<ContentKey, Content> map) {
+        BulkContent bulkContent = BulkContent.builder().build();
+        for (Map.Entry<ContentKey, Content> entry : map.entrySet()) {
+            bulkContent.getItems().add(entry.getValue());
+        }
+        return bulkContent;
     }
 
     public static BulkContentBuilder builder() {
