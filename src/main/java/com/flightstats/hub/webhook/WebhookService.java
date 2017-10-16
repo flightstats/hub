@@ -99,10 +99,7 @@ public class WebhookService {
     WebhookStatus getStatus(Webhook webhook) {
         WebhookStatus.WebhookStatusBuilder builder = WebhookStatus.builder().webhook(webhook);
         if (webhook.isTagPrototype()) {
-            logger.debug(webhook.getName() + " is tag prototype " + webhook.getTag() + webhook.isManagedByTag());
             return builder.build();
-        } else {
-            logger.debug(webhook.getName() + " is NOT tag prototype " + webhook.getTag() + webhook.isManagedByTag());
         }
         String channel = webhook.getChannelName();
         try {

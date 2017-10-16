@@ -18,7 +18,6 @@ describe(testName, function () {
         channelUrl : 'http://different/channel/notHere'
     };
 
-    // This is ok because even though the channel URL's are different, the "channelName" is the same
     utils.putWebhook(webhookName, webhookConfig2, 200, testName);
 
     var webhookConfig3 = {
@@ -26,7 +25,6 @@ describe(testName, function () {
         channelUrl: 'http://different/channel/not_Here'
     };
 
-    // the "_" changes the actual channel name - which causes the rejection
     utils.putWebhook(webhookName, webhookConfig3, 409, testName);
 
     utils.deleteWebhook(webhookName);
