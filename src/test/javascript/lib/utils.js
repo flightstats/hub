@@ -480,6 +480,12 @@ exports.itSleeps = function itSleeps(millis) {
     });
 };
 
+exports.itMessages = function itSleeps(msg) {
+    it(msg || "", function (done) {
+        done();
+    });
+};
+
 exports.getPort = function getPort() {
     var port = callbackPort++;
     console.log('using port', port);

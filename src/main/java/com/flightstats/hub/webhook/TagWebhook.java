@@ -54,10 +54,9 @@ public class TagWebhook {
     }
 
     private static Set<Webhook> allManagedWebhooksForChannel(Set<Webhook> webhookSet, ChannelConfig channelConfig) {
-        String channelName = channelConfig.getName();
+        String channelName = channelConfig.getName().toLowerCase();
         return webhookSet.stream()
-                .filter(wh -> channelName.equals(wh.getChannelName()))
-                .filter(Webhook::isManagedByTag)
+                .filter(wh -> Objects.equals(channelName, wh.getChannelName().toLowerCase()) && wh.isManagedByTag())
                 .collect(Collectors.toSet());
     }
 

@@ -48,8 +48,9 @@ describe(testName, function () {
         'name': channelName1,
         'tags': [],
     }
+    utils.itMessages("expecting " + instance1 + " to be deleted due to removal of tag");
     utils.createChannelWithConfig(channelName1, channel1noTag);
-    utils.itSleeps(1000);
+    utils.itSleeps(10000);
     // the webhook associated with channelName1 should go away because of the removed tag
     utils.getWebhook(instance1, webhookConfig, 404);
 
