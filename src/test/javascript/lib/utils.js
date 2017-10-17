@@ -19,6 +19,12 @@ exports.randomChannelName = function randomChannelName() {
     return "TeSt_" + Math.random().toString().replace(".", "_");
 };
 
+exports.randomNumberBetweenInclusive = function randomNumberBetweenInclusive(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+};
+
 exports.getItem = function getItem(uri, callback) {
     request({uri: uri, encoding: null}, function (error, response, body) {
         expect(error).toBe(null);
