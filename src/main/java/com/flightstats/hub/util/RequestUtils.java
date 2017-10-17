@@ -41,12 +41,19 @@ public class RequestUtils {
         return tag;
     }
 
-    public static boolean isValidChannelUrl(String url) {
+    private static boolean isValidTopicUrl(String url, String topic) {
         try {
             URI uri = new URI(url);
-            return uri.getPath().contains("/channel/");
+            return uri.getPath().contains("/" + topic + "/");
         } catch (URISyntaxException e) {
             return false;
         }
+    }
+    public static boolean isValidChannelUrl(String url) {
+        return isValidTopicUrl(url, "channel");
+    }
+
+    public static boolean isValidTagUrl(String url) {
+        return isValidTopicUrl(url, "tag");
     }
 }

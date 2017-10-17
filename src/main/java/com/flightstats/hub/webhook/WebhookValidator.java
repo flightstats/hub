@@ -35,7 +35,7 @@ public class WebhookValidator {
                 throw new InvalidRequestException("{\"error\": \"Invalid channelUrl\"}");
             }
         } else { // if tag is not empty, the webhook config will be treated as a prototype - thus channel URL will be ignored
-            if (!RequestUtils.isValidChannelUrl(webhook.getTagUrl())) {
+            if (!RequestUtils.isValidTagUrl(webhook.getTagUrl())) {
                 throw new InvalidRequestException("{\"error\": \"Invalid tagUrl\"}");
             }
             if (StringUtils.isEmpty(webhook.getChannelUrl())) {
