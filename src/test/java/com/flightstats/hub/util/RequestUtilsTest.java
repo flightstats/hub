@@ -80,4 +80,18 @@ public class RequestUtilsTest {
         assertFalse(isValidChannelUrl("http://location:8080/chann/foobar"));
         assertFalse(isValidChannelUrl("not a url"));
     }
+
+    @Test
+    public void testGetHost() {
+        String host1 = "http://stuff.com";
+        String host2 = "http://stuff.com:99";
+
+        assertEquals(host1, getHost(host1));
+        assertEquals(host2, getHost(host2));
+        assertEquals(host1, getHost(host1 + "/"));
+        assertEquals(host2, getHost(host2 + "/"));
+        assertEquals(host1, getHost(host1 + "/abc/def"));
+        assertEquals(host2, getHost(host2 + "/abc/def"));
+
+    }
 }

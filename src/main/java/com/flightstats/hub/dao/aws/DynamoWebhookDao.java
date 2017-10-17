@@ -42,6 +42,10 @@ public class DynamoWebhookDao implements Dao<Webhook> {
         item.put("ttlMinutes", new AttributeValue().withN(String.valueOf(webhook.getTtlMinutes())));
         item.put("maxWaitMinutes", new AttributeValue().withN(String.valueOf(webhook.getMaxWaitMinutes())));
         item.put("callbackTimeoutSeconds", new AttributeValue().withN(String.valueOf(webhook.getCallbackTimeoutSeconds())));
+        if (!Objects.isNull(webhook.getTagUrl()) && !webhook.getTagUrl().isEmpty()) {
+            item.put("tag", new AttributeValue(webhook.getTagUrl()));
+        }
+        item.put("managedByTag", new AttributeValue().withBOOL(webhook.isManagedByTag()));
         dbClient.putItem(getTableName(), item);
     }
 
@@ -78,6 +82,9 @@ public class DynamoWebhookDao implements Dao<Webhook> {
         if (item.containsKey("heartbeat")) {
             builder.heartbeat(item.get("heartbeat").getBOOL());
         }
+        if (item.containsKey("managedByTag")) {
+            builder.managedByTag(item.get("managedByTag").getBOOL());
+        }
         if (item.containsKey("ttlMinutes")) {
             builder.ttlMinutes(Integer.valueOf(item.get("ttlMinutes").getN()));
         }
@@ -86,6 +93,9 @@ public class DynamoWebhookDao implements Dao<Webhook> {
         }
         if (item.containsKey("callbackTimeoutSeconds")) {
             builder.callbackTimeoutSeconds(Integer.valueOf(item.get("callbackTimeoutSeconds").getN()));
+        }
+        if (item.containsKey("tag")) {
+            builder.tag(item.get("tag").getS());
         }
         return builder.build().withDefaults();
     }
