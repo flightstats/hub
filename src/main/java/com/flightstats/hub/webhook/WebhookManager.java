@@ -90,7 +90,7 @@ public class WebhookManager {
     }
 
     private void manageWebhook(Webhook daoWebhook, boolean webhookChanged) {
-        if (daoWebhook.getTag() != null && !daoWebhook.getTag().isEmpty()) {
+        if (daoWebhook.getTagUrl() != null && !daoWebhook.getTagUrl().isEmpty()) {
             // tag webhooks are not processed like normal webhooks.
             // they are used as prototype definitions for new webhooks added
             // automatically when a new/existing channel is assigned a tag that is

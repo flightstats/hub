@@ -5,12 +5,27 @@ import org.apache.commons.lang3.StringUtils;
 import javax.ws.rs.container.ContainerRequestContext;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class RequestUtils {
+
+    static final Pattern hostNamePattern = Pattern.compile("(^.*\\:\\/\\/[^\\/]*)(\\/.*)?");
 
     public static String getChannelName(String url) {
         String after = StringUtils.substringAfter(url, "/channel/");
         return StringUtils.removeEnd(after, "/");
+    }
+
+    public static String getHost(String url) {
+        String result = "";
+        try {
+            Matcher m = hostNamePattern.matcher(url);
+            m.find();
+            result = m.group(1);
+        } catch (Exception e) {
+        }
+        return result;
     }
 
     public static String getChannelName(ContainerRequestContext request) {

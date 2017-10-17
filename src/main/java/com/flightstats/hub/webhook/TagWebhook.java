@@ -73,7 +73,7 @@ public class TagWebhook {
         Set<Webhook> managedWebHooks = allManagedWebhooksForChannel(webhookSet, channelConfig);
         Set<String> tags = channelConfig.getTags();
         Set<Webhook> nonOrphanWebhooks = managedWebHooks.stream()
-                .filter(wh -> tags.contains(wh.getTag()))
+                .filter(wh -> tags.contains(wh.getTagUrl()))
                 .collect(Collectors.toSet());
         Sets.SetView<Webhook> orphanedWebhooks = Sets.difference(managedWebHooks, nonOrphanWebhooks);
         for (Webhook orphan : orphanedWebhooks) {

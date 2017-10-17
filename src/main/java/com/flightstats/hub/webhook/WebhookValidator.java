@@ -30,12 +30,18 @@ public class WebhookValidator {
         } catch (URISyntaxException e) {
             throw new InvalidRequestException("{\"error\": \"Invalid callbackUrl\"}");
         }
-        if (webhook.getTag() == null || webhook.getTag().isEmpty()) {
+        if (StringUtils.isEmpty(webhook.getTagUrl())) {
             if (!RequestUtils.isValidChannelUrl(webhook.getChannelUrl())) {
                 throw new InvalidRequestException("{\"error\": \"Invalid channelUrl\"}");
             }
-        } // if tag is not empty, the webhook config will be treated as a prototype - thus channel URL will be ignored
-
+        } else { // if tag is not empty, the webhook config will be treated as a prototype - thus channel URL will be ignored
+            if (!RequestUtils.isValidChannelUrl(webhook.getTagUrl())) {
+                throw new InvalidRequestException("{\"error\": \"Invalid tagUrl\"}");
+            }
+            if (StringUtils.isEmpty(webhook.getChannelUrl())) {
+                throw new InvalidRequestException("{\"error\": \"Either tagUrl or channelUrl should be defined, but not both\"}");
+            }
+        }
         webhook = webhook.withBatch(StringUtils.upperCase(webhook.getBatch()));
         if (!Webhook.MINUTE.equals(webhook.getBatch())
                 && !Webhook.SECOND.equals(webhook.getBatch())

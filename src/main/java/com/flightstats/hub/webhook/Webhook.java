@@ -40,12 +40,12 @@ public class Webhook implements Comparable<Webhook>, NamedType {
     private final Integer maxWaitMinutes;
     private final Integer callbackTimeoutSeconds;
     private final boolean fastForwardable;
-    private final String tag;  // webhooks with tag defined are prototype webhook definitions
-    private final boolean managedByTag; // webhooks with this bit set were created by a tag prototype and will be automatically
-    // created and deleted when a channel has the webhook "tag" added or removed.
+    private final String tagUrl;  // webhooks with tagUrl defined are prototype webhook definitions
+    private final boolean managedByTag; // webhooks with this bit set were created by a tagUrl prototype and will be automatically
+    // created and deleted when a channel has the webhook "tagUrl" added or removed.
 
     @java.beans.ConstructorProperties({"callbackUrl", "channelUrl", "parallelCalls", "name", "startingKey", "batch", "heartbeat", "paused", "ttlMinutes", "maxWaitMinutes", "callbackTimeoutSeconds", "tag", "managedByTag"})
-    private Webhook(String callbackUrl, String channelUrl, Integer parallelCalls, String name, ContentPath startingKey, String batch, boolean heartbeat, boolean paused, Integer ttlMinutes, Integer maxWaitMinutes, Integer callbackTimeoutSeconds, boolean fastForwardable, String tag, boolean managedByTag) {
+    private Webhook(String callbackUrl, String channelUrl, Integer parallelCalls, String name, ContentPath startingKey, String batch, boolean heartbeat, boolean paused, Integer ttlMinutes, Integer maxWaitMinutes, Integer callbackTimeoutSeconds, boolean fastForwardable, String tagUrl, boolean managedByTag) {
         this.callbackUrl = callbackUrl;
         this.channelUrl = channelUrl;
         this.parallelCalls = parallelCalls;
@@ -58,7 +58,7 @@ public class Webhook implements Comparable<Webhook>, NamedType {
         this.maxWaitMinutes = maxWaitMinutes;
         this.callbackTimeoutSeconds = callbackTimeoutSeconds;
         this.fastForwardable = fastForwardable;
-        this.tag = tag;
+        this.tagUrl = tagUrl;
         this.managedByTag = managedByTag;
     }
 
@@ -78,7 +78,7 @@ public class Webhook implements Comparable<Webhook>, NamedType {
                     .callbackTimeoutSeconds(existing.callbackTimeoutSeconds)
                     .heartbeat(existing.heartbeat)
                     .fastForwardable(existing.fastForwardable)
-                    .tag(existing.tag)
+                    .tag(existing.tagUrl)
                     .managedByTag(existing.managedByTag);
         }
         try {
@@ -133,9 +133,8 @@ public class Webhook implements Comparable<Webhook>, NamedType {
             if (root.has("fastForwardable")) {
                 builder.fastForwardable(root.get("fastForwardable").asBoolean());
             }
-            if (root.has("tag")) {
-                String t = root.get("tag").asText().isEmpty() ? null : root.get("tag").asText();
-                logger.debug("TagWebhook tag: " + t);
+            if (root.has("tagUrl")) {
+                String t = root.get("tagUrl").asText().isEmpty() ? null : root.get("tagUrl").asText();
                 builder.tag(t);
             }
             if (root.has("managedByTag")) {
@@ -150,7 +149,7 @@ public class Webhook implements Comparable<Webhook>, NamedType {
 
     @JsonIgnore
     public boolean isTagPrototype() {
-        boolean result = tag != null && !tag.isEmpty() && !isManagedByTag();
+        boolean result = tagUrl != null && !tagUrl.isEmpty() && !isManagedByTag();
         return result;
     }
 
@@ -176,9 +175,9 @@ public class Webhook implements Comparable<Webhook>, NamedType {
     }
 
     public static Webhook instanceFromTagPrototype(Webhook whp, ChannelConfig channel) {
-        String channenUrl = whp.getChannelUrl() + "/channel/" + channel.getName();
+        String channenUrl = RequestUtils.getHost(whp.getTagUrl()) + "/channel/" + channel.getName();
         String whName = "TAGWH_" + whp.getTag() + "_" + channel.getName();
-        Webhook instance = new Webhook(whp.callbackUrl, channenUrl, whp.parallelCalls, whName, null, whp.batch, whp.heartbeat, whp.paused, whp.ttlMinutes, whp.maxWaitMinutes, whp.callbackTimeoutSeconds, whp.fastForwardable, whp.tag, true);
+        Webhook instance = new Webhook(whp.callbackUrl, channenUrl, whp.parallelCalls, whName, null, whp.batch, whp.heartbeat, whp.paused, whp.ttlMinutes, whp.maxWaitMinutes, whp.callbackTimeoutSeconds, whp.fastForwardable, whp.tagUrl, true);
         return instance;
     }
 
@@ -275,8 +274,12 @@ public class Webhook implements Comparable<Webhook>, NamedType {
         return this.name;
     }
 
+    public String getTagUrl() {
+        return this.tagUrl;
+    }
+
     public String getTag() {
-        return this.tag;
+        return RequestUtils.getChannelName(this.tagUrl);
     }
 
     public String getBatch() {
@@ -327,8 +330,8 @@ public class Webhook implements Comparable<Webhook>, NamedType {
         final Object this$name = this.getName();
         final Object other$name = other.getName();
         if (this$name == null ? other$name != null : !this$name.equals(other$name)) return false;
-        final Object this$tag = this.getTag();
-        final Object other$tag = other.getTag();
+        final Object this$tag = this.getTagUrl();
+        final Object other$tag = other.getTagUrl();
         if (this$tag == null ? other$tag != null : !this$tag.equals(other$tag)) return false;
         final Object this$batch = this.getBatch();
         final Object other$batch = other.getBatch();
@@ -375,7 +378,7 @@ public class Webhook implements Comparable<Webhook>, NamedType {
         result = result * PRIME + ($maxWaitMinutes == null ? 43 : $maxWaitMinutes.hashCode());
         final Object $callbackTimeoutSeconds = this.getCallbackTimeoutSeconds();
         result = result * PRIME + ($callbackTimeoutSeconds == null ? 43 : $callbackTimeoutSeconds.hashCode());
-        final Object $tag = this.getTag();
+        final Object $tag = this.getTagUrl();
         result = result * PRIME + ($tag == null ? 43 : $tag.hashCode());
         return result;
     }
@@ -396,48 +399,48 @@ public class Webhook implements Comparable<Webhook>, NamedType {
                 + ", ttlMinutes=" + this.getTtlMinutes()
                 + ", maxWaitMinutes=" + this.getMaxWaitMinutes()
                 + ", callbackTimeoutSeconds=" + this.getCallbackTimeoutSeconds()
-                + ", tag=" + this.getTag()
+                + ", tag=" + this.getTagUrl()
                 + ")";
     }
 
     public Webhook withParallelCalls(Integer parallelCalls) {
-        return this.parallelCalls == parallelCalls ? this : new Webhook(this.callbackUrl, this.channelUrl, parallelCalls, this.name, this.startingKey, this.batch, this.heartbeat, this.paused, this.ttlMinutes, this.maxWaitMinutes, this.callbackTimeoutSeconds, this.fastForwardable, this.tag, this.managedByTag);
+        return this.parallelCalls == parallelCalls ? this : new Webhook(this.callbackUrl, this.channelUrl, parallelCalls, this.name, this.startingKey, this.batch, this.heartbeat, this.paused, this.ttlMinutes, this.maxWaitMinutes, this.callbackTimeoutSeconds, this.fastForwardable, this.tagUrl, this.managedByTag);
     }
 
     public Webhook withName(String name) {
-        return this.name == name ? this : new Webhook(this.callbackUrl, this.channelUrl, this.parallelCalls, name, this.startingKey, this.batch, this.heartbeat, this.paused, this.ttlMinutes, this.maxWaitMinutes, this.callbackTimeoutSeconds, this.fastForwardable, this.tag, this.managedByTag);
+        return this.name == name ? this : new Webhook(this.callbackUrl, this.channelUrl, this.parallelCalls, name, this.startingKey, this.batch, this.heartbeat, this.paused, this.ttlMinutes, this.maxWaitMinutes, this.callbackTimeoutSeconds, this.fastForwardable, this.tagUrl, this.managedByTag);
     }
 
     public Webhook withStartingKey(ContentPath startingKey) {
-        return this.startingKey == startingKey ? this : new Webhook(this.callbackUrl, this.channelUrl, this.parallelCalls, this.name, startingKey, this.batch, this.heartbeat, this.paused, this.ttlMinutes, this.maxWaitMinutes, this.callbackTimeoutSeconds, this.fastForwardable, this.tag, this.managedByTag);
+        return this.startingKey == startingKey ? this : new Webhook(this.callbackUrl, this.channelUrl, this.parallelCalls, this.name, startingKey, this.batch, this.heartbeat, this.paused, this.ttlMinutes, this.maxWaitMinutes, this.callbackTimeoutSeconds, this.fastForwardable, this.tagUrl, this.managedByTag);
     }
 
     public Webhook withBatch(String batch) {
-        return this.batch == batch ? this : new Webhook(this.callbackUrl, this.channelUrl, this.parallelCalls, this.name, this.startingKey, batch, this.heartbeat, this.paused, this.ttlMinutes, this.maxWaitMinutes, this.callbackTimeoutSeconds, this.fastForwardable, this.tag, this.managedByTag);
+        return this.batch == batch ? this : new Webhook(this.callbackUrl, this.channelUrl, this.parallelCalls, this.name, this.startingKey, batch, this.heartbeat, this.paused, this.ttlMinutes, this.maxWaitMinutes, this.callbackTimeoutSeconds, this.fastForwardable, this.tagUrl, this.managedByTag);
     }
 
     public Webhook withHeartbeat(boolean heartbeat) {
-        return this.heartbeat == heartbeat ? this : new Webhook(this.callbackUrl, this.channelUrl, this.parallelCalls, this.name, this.startingKey, this.batch, heartbeat, this.paused, this.ttlMinutes, this.maxWaitMinutes, this.callbackTimeoutSeconds, this.fastForwardable, this.tag, this.managedByTag);
+        return this.heartbeat == heartbeat ? this : new Webhook(this.callbackUrl, this.channelUrl, this.parallelCalls, this.name, this.startingKey, this.batch, heartbeat, this.paused, this.ttlMinutes, this.maxWaitMinutes, this.callbackTimeoutSeconds, this.fastForwardable, this.tagUrl, this.managedByTag);
     }
 
     public Webhook withPaused(boolean paused) {
-        return this.paused == paused ? this : new Webhook(this.callbackUrl, this.channelUrl, this.parallelCalls, this.name, this.startingKey, this.batch, this.heartbeat, paused, this.ttlMinutes, this.maxWaitMinutes, this.callbackTimeoutSeconds, this.fastForwardable, this.tag, this.managedByTag);
+        return this.paused == paused ? this : new Webhook(this.callbackUrl, this.channelUrl, this.parallelCalls, this.name, this.startingKey, this.batch, this.heartbeat, paused, this.ttlMinutes, this.maxWaitMinutes, this.callbackTimeoutSeconds, this.fastForwardable, this.tagUrl, this.managedByTag);
     }
 
     public Webhook withTtlMinutes(Integer ttlMinutes) {
-        return this.ttlMinutes == ttlMinutes ? this : new Webhook(this.callbackUrl, this.channelUrl, this.parallelCalls, this.name, this.startingKey, this.batch, this.heartbeat, this.paused, ttlMinutes, this.maxWaitMinutes, this.callbackTimeoutSeconds, this.fastForwardable, this.tag, this.managedByTag);
+        return this.ttlMinutes == ttlMinutes ? this : new Webhook(this.callbackUrl, this.channelUrl, this.parallelCalls, this.name, this.startingKey, this.batch, this.heartbeat, this.paused, ttlMinutes, this.maxWaitMinutes, this.callbackTimeoutSeconds, this.fastForwardable, this.tagUrl, this.managedByTag);
     }
 
     public Webhook withMaxWaitMinutes(Integer maxWaitMinutes) {
-        return this.maxWaitMinutes == maxWaitMinutes ? this : new Webhook(this.callbackUrl, this.channelUrl, this.parallelCalls, this.name, this.startingKey, this.batch, this.heartbeat, this.paused, this.ttlMinutes, maxWaitMinutes, this.callbackTimeoutSeconds, this.fastForwardable, this.tag, this.managedByTag);
+        return this.maxWaitMinutes == maxWaitMinutes ? this : new Webhook(this.callbackUrl, this.channelUrl, this.parallelCalls, this.name, this.startingKey, this.batch, this.heartbeat, this.paused, this.ttlMinutes, maxWaitMinutes, this.callbackTimeoutSeconds, this.fastForwardable, this.tagUrl, this.managedByTag);
     }
 
     public Webhook withCallbackTimeoutSeconds(Integer callbackTimeoutSeconds) {
-        return this.callbackTimeoutSeconds == callbackTimeoutSeconds ? this : new Webhook(this.callbackUrl, this.channelUrl, this.parallelCalls, this.name, this.startingKey, this.batch, this.heartbeat, this.paused, this.ttlMinutes, this.maxWaitMinutes, callbackTimeoutSeconds, this.fastForwardable, this.tag, this.managedByTag);
+        return this.callbackTimeoutSeconds == callbackTimeoutSeconds ? this : new Webhook(this.callbackUrl, this.channelUrl, this.parallelCalls, this.name, this.startingKey, this.batch, this.heartbeat, this.paused, this.ttlMinutes, this.maxWaitMinutes, callbackTimeoutSeconds, this.fastForwardable, this.tagUrl, this.managedByTag);
     }
 
     public Webhook withFastForwardable(boolean fastForwardable) {
-        return this.fastForwardable == fastForwardable ? this : new Webhook(this.callbackUrl, this.channelUrl, this.parallelCalls, this.name, this.startingKey, this.batch, this.heartbeat, this.paused, this.ttlMinutes, this.maxWaitMinutes, callbackTimeoutSeconds, this.fastForwardable, this.tag, this.managedByTag);
+        return this.fastForwardable == fastForwardable ? this : new Webhook(this.callbackUrl, this.channelUrl, this.parallelCalls, this.name, this.startingKey, this.batch, this.heartbeat, this.paused, this.ttlMinutes, this.maxWaitMinutes, callbackTimeoutSeconds, this.fastForwardable, this.tagUrl, this.managedByTag);
     }
 
     public static class WebhookBuilder {

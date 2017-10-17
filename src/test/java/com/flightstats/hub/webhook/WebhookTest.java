@@ -32,7 +32,7 @@ public class WebhookTest {
                 .tag("allTheThings")
                 .callbackUrl("end").build();
         Webhook webhook = Webhook.fromJson(aWebhook.toJson());
-        assertEquals("allTheThings", webhook.getTag());
+        assertEquals("allTheThings", webhook.getTagUrl());
     }
 
     @Test

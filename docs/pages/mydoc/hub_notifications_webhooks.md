@@ -162,9 +162,9 @@ Tag Webhooks are a way to automate the creation and deletion of webhooks for cha
 
 You create a Tag Webhook the same way as you would create a normal Webhook with two configuration exceptions:
 
-* `tag`: add the tag that the Tag Webhook is targetting
+* `tagUrl`: add fully qualified tag url (e.g. `http://hub.com/tag/{tagName}`)
+* `channelUrl`: Don't include a channelUrl.  Webhooks will accept either a tagUrl (for tag webhooks) or a channelUrl (for normal webhooks) but not both.
 
-* `channelUrl`: Instead of specifying a full channel url, you must put the base url for the hub as accessed by the webhook client.
 
 #### Deleting a Tag Webhook
 
