@@ -325,4 +325,8 @@ class WebhookLeader implements Lockable {
     public Webhook getWebhook() {
         return webhook;
     }
+
+    boolean hasLeadership() {
+        return leadership.hasLeadership();
+    }
 }

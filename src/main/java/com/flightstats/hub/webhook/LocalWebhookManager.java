@@ -43,7 +43,8 @@ public class LocalWebhookManager {
             logger.info("checking for change {}", name);
             WebhookLeader webhookLeader = localLeaders.get(name);
             Webhook runningWebhook = webhookLeader.getWebhook();
-            if (!runningWebhook.isChanged(daoWebhook)) {
+            if (webhookLeader.hasLeadership() && !runningWebhook.isChanged(daoWebhook)) {
+                logger.trace("webhook unchanged {} to {}", runningWebhook, daoWebhook);
                 return true;
             }
             logger.info("webhook has changed {} to {}", runningWebhook, daoWebhook);
