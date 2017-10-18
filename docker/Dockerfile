@@ -2,7 +2,7 @@ FROM openjdk:8
 
 RUN apt-get update && apt-get install -y bash ntp curl && \
     mkdir -p /mnt/log && \
-    mkdir -p /mnt/spoke/write
+    mkdir -p /mnt/spoke/write \
     mkdir -p /mnt/spoke/read
 
 ENV MIN_HEAP=1g \
