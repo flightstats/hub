@@ -1,5 +1,6 @@
 package com.flightstats.hub.cluster;
 
+import com.google.inject.Inject;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.locks.InterProcessSemaphoreMutex;
 import org.slf4j.Logger;
@@ -25,6 +26,11 @@ public class CuratorLock {
     private final ExecutorService singleThreadExecutor;
     private final Leadership leadershipV2;
     private InterProcessSemaphoreMutex mutex;
+
+    @Inject
+    public CuratorLock(CuratorFramework curator, ZooKeeperState zooKeeperState) {
+        this(curator, zooKeeperState, null);
+    }
 
     public CuratorLock(CuratorFramework curator, ZooKeeperState zooKeeperState, String lockPath) {
         this.curator = curator;
