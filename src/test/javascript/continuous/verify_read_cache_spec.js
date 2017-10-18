@@ -53,14 +53,14 @@ describe(__filename, () => {
         itemURL = getRandomURI(urisToChooseFrom);
         timeURL = getTimeURIFromItemURI(itemURL);
         console.log('trying to get usable data (first attempt)');
-        utils.httpGet(`${timeURL}?location=CACHE`)
+        utils.httpGet(`${timeURL}?location=CACHE_READ`)
             .then(utils.followRedirectIfPresent)
             .then(response => {
                 if (response.body._links.uris.includes(itemURL)) {
                     itemURL = getUniqueURI(urisToChooseFrom, itemURL);
                     timeURL = getTimeURIFromItemURI(itemURL);
                     console.log('trying to get usable data (second attempt)');
-                    return utils.httpGet(`${itemURL}?location=CACHE`)
+                    return utils.httpGet(`${itemURL}?location=CACHE_READ`)
                         .then(utils.followRedirectIfPresent);
                 } else {
                     console.log('itemURL:', itemURL);
@@ -73,7 +73,7 @@ describe(__filename, () => {
                     itemURL = getUniqueURI(urisToChooseFrom, itemURL);
                     timeURL = getTimeURIFromItemURI(itemURL);
                     console.log('trying to get usable data (third attempt)');
-                    return utils.httpGet(`${itemURL}?location=CACHE`)
+                    return utils.httpGet(`${itemURL}?location=CACHE_READ`)
                         .then(utils.followRedirectIfPresent);
                 } else {
                     console.log('itemURL:', itemURL);
@@ -95,7 +95,7 @@ describe(__filename, () => {
 
     it('receives a list without our item from the read cache', (done) => {
         expect(timeURL).toBeDefined();
-        let uri = `${timeURL}?location=CACHE`;
+        let uri = `${timeURL}?location=CACHE_READ`;
         utils.httpGet(uri)
             .then(utils.followRedirectIfPresent)
             .then(response => expect(response.body._links.uris).not.toContain(uri))
@@ -113,7 +113,7 @@ describe(__filename, () => {
 
     it('receives a list with our item from the read cache', (done) => {
         expect(timeURL).toBeDefined();
-        let uri = `${timeURL}?location=CACHE`;
+        let uri = `${timeURL}?location=CACHE_READ`;
         utils.httpGet(uri)
             .then(utils.followRedirectIfPresent)
             .then(response => expect(response.body._links.uris).toContain(uri))
