@@ -57,7 +57,8 @@ public class S3Config {
         logger.info("starting work");
         Iterable<ChannelConfig> channels = channelConfigDao.getAll(false);
         S3ConfigLockable lockable = new S3ConfigLockable(channels);
-        curatorLock.runWithLock(lockable, "/S3ConfigLock", 1, TimeUnit.MINUTES);
+        curatorLock.setLockPath("/S3ConfigLock");
+        curatorLock.runWithLock(lockable, 1, TimeUnit.MINUTES);
     }
 
     private class S3ConfigInit extends AbstractScheduledService {

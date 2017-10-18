@@ -16,6 +16,11 @@ public class CuratorLock {
     private final static Logger logger = LoggerFactory.getLogger(CuratorLock.class);
 
     private final CuratorFramework curator;
+
+    public void setLockPath(String lockPath) {
+        this.lockPath = lockPath;
+    }
+
     private String lockPath;
     private final ExecutorService singleThreadExecutor;
     private final Leadership leadershipV2;
