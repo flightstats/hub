@@ -78,8 +78,8 @@ class WebhookLeader implements Lockable {
             logger.info("not starting paused webhook " + webhook);
             return false;
         } else {
-            curatorLock = new CuratorLock(curator, zooKeeperState);
-            return curatorLock.runWithLock(this, getLeaderPath(), 1, TimeUnit.SECONDS);
+            curatorLock = new CuratorLock(curator, zooKeeperState, getLeaderPath());
+            return curatorLock.runWithLock(this, 1, TimeUnit.SECONDS);
         }
     }
 
