@@ -16,7 +16,7 @@ public class LeadershipV2 implements Leadership {
     }
 
     public boolean hasLeadership() {
-        logger.info("hasLeadership : shouldKeepWorking() {} , hasLeadership.get() {}", zooKeeperState.shouldKeepWorking(), hasLeadership.get());
+        logger.trace("hasLeadership : shouldKeepWorking() {} , hasLeadership.get() {}", zooKeeperState.shouldKeepWorking(), hasLeadership.get());
         return zooKeeperState.shouldKeepWorking() && hasLeadership.get();
     }
 
@@ -26,7 +26,7 @@ public class LeadershipV2 implements Leadership {
 
     public void setLeadership(boolean leadership) {
         hasLeadership.set(leadership);
-        logger.info("setLeadership : shouldKeepWorking() {} , hasLeadership.get() {}", zooKeeperState.shouldKeepWorking(), hasLeadership.get());
+        logger.trace("setLeadership : shouldKeepWorking() {} , hasLeadership.get() {}", zooKeeperState.shouldKeepWorking(), hasLeadership.get());
     }
 
 }
