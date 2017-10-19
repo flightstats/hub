@@ -95,33 +95,70 @@ public class WebhookManager {
             logger.debug("found existing v2 webhook {}", name);
             Collection<String> servers = activeWebhooks.getServers(name);
             if (servers.isEmpty()) {
-                callOneRun(name, hubCluster.getRandomServers());
+                callOneRun(name, getOrderedServers());
             } else if (webhookChanged) {
                 callOneRun(name, servers);
             }
         } else {
             logger.debug("found new v2 webhook {}", name);
-            callOneRun(name, hubCluster.getRandomServers());
+            callOneRun(name, getOrderedServers());
         }
+    }
+
+    /**
+     * We want this to return this list in order from fewest to most
+     */
+    private Collection<String> getOrderedServers() {
+        TreeMap<Integer, String> orderedServers = new TreeMap<>();
+        List<String> servers = hubCluster.getRandomServers();
+        for (String server : servers) {
+            int count = get(server + "/internal/webhook/count");
+            orderedServers.put(count, server);
+        }
+        if (orderedServers.isEmpty()) {
+            return servers;
+        }
+        return orderedServers.values();
+    }
+
+    private int get(String url) {
+        ClientResponse response = null;
+        String hubUrl = HubHost.getScheme() + url;
+        try {
+            logger.info("calling {}", hubUrl);
+            response = client.resource(hubUrl).get(ClientResponse.class);
+            if (response.getStatus() == 200) {
+                logger.debug("success {}", response);
+                return Integer.parseInt(response.getEntity(String.class));
+            } else {
+                logger.warn("unexpected response {}", response);
+            }
+        } catch (Exception e) {
+            logger.warn("unable to get " + hubUrl, e);
+        } finally {
+            HubUtils.close(response);
+        }
+        return 0;
     }
 
     private void callAllDelete(String name, Collection<String> servers) {
         for (String server : servers) {
-            call(HubHost.getScheme() + server + "/internal/webhook/delete/" + name);
+            put(server + "/internal/webhook/delete/" + name);
         }
     }
 
     private void callOneRun(String name, Collection<String> servers) {
         for (String server : servers) {
-            if (call(HubHost.getScheme() + server + "/internal/webhook/run/" + name)) break;
+            if (put(server + "/internal/webhook/run/" + name)) break;
         }
     }
 
-    private boolean call(String url) {
+    private boolean put(String url) {
+        String hubUrl = HubHost.getScheme() + url;
         ClientResponse response = null;
         try {
-            logger.info("calling {}", url);
-            response = client.resource(url).put(ClientResponse.class);
+            logger.info("calling {}", hubUrl);
+            response = client.resource(hubUrl).put(ClientResponse.class);
             if (response.getStatus() == 200) {
                 logger.debug("success {}", response);
                 return true;
@@ -129,7 +166,7 @@ public class WebhookManager {
                 logger.warn("unexpected response {}", response);
             }
         } catch (Exception e) {
-            logger.warn("unable to call " + url, e);
+            logger.warn("unable to put " + hubUrl, e);
         } finally {
             HubUtils.close(response);
         }

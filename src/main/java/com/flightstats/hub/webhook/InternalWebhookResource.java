@@ -144,4 +144,10 @@ public class InternalWebhookResource {
         return Response.ok().build();
     }
 
+    @GET
+    @Path("/count")
+    public Response count() {
+        return Response.ok(LOCAL_WEBHOOK_MANAGER.getCount()).build();
+    }
+
 }

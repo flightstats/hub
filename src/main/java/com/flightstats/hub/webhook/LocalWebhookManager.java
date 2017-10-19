@@ -90,4 +90,8 @@ public class LocalWebhookManager {
             localLeaders.remove(name);
         }
     }
+
+    int getCount() {
+        return localLeaders.size();
+    }
 }
