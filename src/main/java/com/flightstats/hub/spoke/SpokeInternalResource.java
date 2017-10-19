@@ -39,13 +39,13 @@ public class SpokeInternalResource {
     @PUT
     @Path("/payload/{path:.+}")
     public Response oldPutPayloadMethod(@PathParam("path") String path, InputStream input) {
-        return putPayload("single", path, input);
+        return putPayload(SpokeStore.WRITE.name(), path, input);
     }
 
     @PUT
     @Path("/bulkKey/{channel}")
     public Response oldPutBulkMethod(@PathParam("channel") String channel, InputStream input) {
-        return putBulk("single", channel, input);
+        return putBulk(SpokeStore.WRITE.name(), channel, input);
     }
 
     @GET
@@ -54,7 +54,7 @@ public class SpokeInternalResource {
                                         @PathParam("Y") String Y,
                                         @PathParam("M") String M,
                                         @PathParam("day") String day) {
-        return getTimeBucket("single", C, Y, M, day);
+        return getTimeBucket(SpokeStore.WRITE.name(), C, Y, M, day);
     }
 
     @GET
@@ -64,7 +64,7 @@ public class SpokeInternalResource {
                                         @PathParam("M") String M,
                                         @PathParam("D") String D,
                                         @PathParam("hour") String hour) {
-        return getTimeBucket("single", C, Y, M, D, hour);
+        return getTimeBucket(SpokeStore.WRITE.name(), C, Y, M, D, hour);
     }
 
 
@@ -76,7 +76,7 @@ public class SpokeInternalResource {
                                         @PathParam("D") String D,
                                         @PathParam("h") String h,
                                         @PathParam("minute") String minute) {
-        return getTimeBucket("single", C, Y, M, D, h, minute);
+        return getTimeBucket(SpokeStore.WRITE.name(), C, Y, M, D, h, minute);
     }
 
 
@@ -89,7 +89,7 @@ public class SpokeInternalResource {
                                         @PathParam("h") String h,
                                         @PathParam("m") String m,
                                         @PathParam("second") String second) {
-        return getTimeBucket("single", C, Y, M, D, h, m, second);
+        return getTimeBucket(SpokeStore.WRITE.name(), C, Y, M, D, h, m, second);
     }
 
     @DELETE
@@ -207,7 +207,7 @@ public class SpokeInternalResource {
     }
 
     private FileSpokeStore getSpokeStoreByName(String name) {
-        switch (SpokeStore.valueOf(name)) {
+        switch (SpokeStore.valueOf(name.toUpperCase())) {
             case WRITE:
                 return writeSpokeStore;
             case READ:
