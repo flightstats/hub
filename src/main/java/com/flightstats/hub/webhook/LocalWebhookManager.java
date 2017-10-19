@@ -1,6 +1,7 @@
 package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.dao.Dao;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
@@ -13,6 +14,8 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
@@ -63,12 +66,20 @@ public class LocalWebhookManager {
         return hasLeadership;
     }
 
-    void stopAllLocal() {
+    void stopAllLocal() throws InterruptedException {
+        ExecutorService pool = Executors.newFixedThreadPool(20,
+                new ThreadFactoryBuilder().setNameFormat("LocalWebhookManager.stopAll-%d").build());
         Set<String> localKeys = localLeaders.keySet();
         logger.info("stop all {}", localKeys);
         for (String name : localKeys) {
-            stopLocal(name, false);
+            pool.submit(() -> {
+                stopLocal(name, false);
+            });
         }
+        logger.info("stop all shutdown");
+        pool.shutdown();
+        boolean awaitTermination = pool.awaitTermination(5, TimeUnit.MINUTES);
+        logger.info("stop all awaitTermination", awaitTermination);
     }
 
     void stopLocal(String name, boolean delete) {
