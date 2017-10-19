@@ -34,7 +34,7 @@ var verify = function (parse) {
 describe(testName, function () {
 
     utils.putWebhook(webhookName, webhookConfig, 201, testName);
-    utils.getWebhook(webhookName, webhookConfig, 200, verify)
+    utils.getWebhook(webhookName, webhookConfig, 200, verify);
 
     utils.createChannelWithConfig(channelName1, channel1);
     utils.createChannelWithConfig(channelName2, channel2);

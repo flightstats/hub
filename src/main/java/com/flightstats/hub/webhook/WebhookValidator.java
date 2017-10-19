@@ -38,7 +38,7 @@ public class WebhookValidator {
             if (!RequestUtils.isValidTagUrl(webhook.getTagUrl())) {
                 throw new InvalidRequestException("{\"error\": \"Invalid tagUrl\"}");
             }
-            if (StringUtils.isEmpty(webhook.getChannelUrl())) {
+            if (!StringUtils.isEmpty(webhook.getChannelUrl())) {
                 throw new InvalidRequestException("{\"error\": \"Either tagUrl or channelUrl should be defined, but not both\"}");
             }
         }

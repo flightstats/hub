@@ -24,6 +24,13 @@ public class RequestUtilsTest {
     }
 
     @Test
+    public void testGetTagFromString() {
+        assertEquals("foobar", getTag("http://location:8080/tag/foobar"));
+        assertEquals("foobar", getTag("http://location:8080/tag/foobar/"));
+        assertEquals("foobar", getTag("http://hub.prod/tag/foobar/"));
+    }
+
+    @Test
     public void testGetChannelNameFromRequest() {
         MultivaluedMap<String, String> emptyMap = new MultivaluedHashMap<>();
         MultivaluedMap<String, String> parameters = new MultivaluedHashMap<>();

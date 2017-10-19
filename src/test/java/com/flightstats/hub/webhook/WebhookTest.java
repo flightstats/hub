@@ -28,11 +28,13 @@ public class WebhookTest {
 
     @Test
     public void testTag() throws Exception {
+        String tagUrl = "http://hub/tag/allTheThings";
         Webhook aWebhook = Webhook.builder()
-                .tag("allTheThings")
+                .tagUrl(tagUrl)
                 .callbackUrl("end").build();
         Webhook webhook = Webhook.fromJson(aWebhook.toJson());
-        assertEquals("allTheThings", webhook.getTagUrl());
+        assertEquals("allTheThings", webhook.getTag());
+        assertEquals(tagUrl, webhook.getTagUrl());
     }
 
     @Test
@@ -133,9 +135,8 @@ public class WebhookTest {
         Webhook withDefaultsA = this.webhook.withDefaults();
         assertFalse(withDefaultsA.isTagPrototype());
         Webhook twh = Webhook.builder().name("name")
-                .channelUrl("http://hubA")
                 .callbackUrl("url")
-                .tag("twh")
+                .tagUrl("http://hub.com/tag/twh")
                 .build().withDefaults();
         assertTrue(twh.isTagPrototype());
     }

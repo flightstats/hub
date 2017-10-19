@@ -12,9 +12,17 @@ public class RequestUtils {
 
     static final Pattern hostNamePattern = Pattern.compile("(^.*\\:\\/\\/[^\\/]*)(\\/.*)?");
 
-    public static String getChannelName(String url) {
-        String after = StringUtils.substringAfter(url, "/channel/");
+    private static String getTopicParamFromUrl(String url, String topic) {
+        String after = StringUtils.substringAfter(url, "/" + topic + "/");
         return StringUtils.removeEnd(after, "/");
+    }
+
+    public static String getChannelName(String url) {
+        return getTopicParamFromUrl(url, "channel");
+    }
+
+    public static String getTag(String url) {
+        return getTopicParamFromUrl(url, "tag");
     }
 
     public static String getHost(String url) {
