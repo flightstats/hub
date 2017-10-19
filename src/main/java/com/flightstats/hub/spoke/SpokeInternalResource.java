@@ -207,7 +207,7 @@ public class SpokeInternalResource {
     }
 
     private FileSpokeStore getSpokeStoreByName(String name) {
-        switch (SpokeStore.valueOf(name.toUpperCase())) {
+        switch (SpokeStore.from(name)) {
             case WRITE:
                 return writeSpokeStore;
             case READ:

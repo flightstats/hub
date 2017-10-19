@@ -133,7 +133,7 @@ public class RemoteSpokeStore {
                 @Override
                 public void run() {
                     setThread(path);
-                    String uri = HubHost.getScheme() + server + "/internal/spoke/" + spokeStore.name() + "/" + spokeApi + "/" + path;
+                    String uri = HubHost.getScheme() + server + "/internal/spoke/" + spokeStore + "/" + spokeApi + "/" + path;
                     traces.add(uri);
                     ClientResponse response = null;
                     try {
