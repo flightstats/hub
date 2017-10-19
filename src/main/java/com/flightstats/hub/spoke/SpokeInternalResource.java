@@ -33,7 +33,7 @@ public class SpokeInternalResource {
     @GET
     @Path("/payload/{path:.+}")
     public Response oldGetPayloadMethod(@PathParam("path") String path) {
-        return getPayload("single", path);
+        return getPayload(SpokeStore.WRITE.name(), path);
     }
 
     @PUT
@@ -95,7 +95,7 @@ public class SpokeInternalResource {
     @DELETE
     @Path("/payload/{path:.+}")
     public Response oldDeleteMethod(@PathParam("path") String path) {
-        return delete("single", path);
+        return delete(SpokeStore.WRITE.name(), path);
     }
 
     // ----------------------------------
