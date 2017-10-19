@@ -3,6 +3,7 @@ package com.flightstats.hub.spoke;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.cluster.Cluster;
 import com.flightstats.hub.cluster.CuratorCluster;
 import com.flightstats.hub.dao.ContentKeyUtil;
 import com.flightstats.hub.dao.ContentMarshaller;
@@ -91,7 +92,7 @@ public class RemoteSpokeStore {
 
     boolean testAll() throws UnknownHostException {
         Collection<String> servers = cluster.getRandomServers();
-        servers.addAll(cluster.getLocalServer());
+        servers.addAll(Cluster.getLocalServer());
         logger.info("*********************************************");
         logger.info("testing servers {}", servers);
         logger.info("*********************************************");

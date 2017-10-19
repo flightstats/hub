@@ -1,6 +1,6 @@
 package com.flightstats.hub.spoke;
 
-import com.flightstats.hub.cluster.CuratorCluster;
+import com.flightstats.hub.cluster.Cluster;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.QueryResult;
 import com.flightstats.hub.exception.ContentTooLargeException;
@@ -8,11 +8,7 @@ import com.flightstats.hub.exception.FailedQueryException;
 import com.flightstats.hub.exception.FailedWriteException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
-import com.flightstats.hub.model.BulkContent;
-import com.flightstats.hub.model.Content;
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.DirectionQuery;
-import com.flightstats.hub.model.TimeQuery;
+import com.flightstats.hub.model.*;
 import com.google.common.base.Optional;
 import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
@@ -32,9 +28,6 @@ public class SpokeReadContentDao implements ContentDao {
 
     @Inject
     private RemoteSpokeStore spokeStore;
-
-    @Inject
-    private CuratorCluster cluster;
 
     @Override
     public ContentKey insert(String channelName, Content content) throws Exception {
@@ -66,7 +59,7 @@ public class SpokeReadContentDao implements ContentDao {
             traces.add("SpokeReadContentDao.writeBulk marshalled");
 
             logger.trace("writing items {} to channel {}", items.size(), channelName);
-            if (!spokeStore.insert(channelName, baos.toByteArray(), cluster.getLocalServer(), ActiveTraces.getLocal(), SpokeStore.WRITE, "bulkKey", channelName)) {
+            if (!spokeStore.insert(channelName, baos.toByteArray(), Cluster.getLocalServer(), ActiveTraces.getLocal(), SpokeStore.WRITE, "bulkKey", channelName)) {
                 throw new FailedWriteException("unable to write bulk to spoke " + channelName);
             }
             traces.add("SpokeReadContentDao.writeBulk completed", keys);

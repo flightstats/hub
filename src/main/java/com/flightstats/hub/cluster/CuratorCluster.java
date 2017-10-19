@@ -78,13 +78,6 @@ public class CuratorCluster implements Cluster {
         return fullPath;
     }
 
-    @Override
-    public Collection<String> getLocalServer() throws UnknownHostException {
-        List<String> server = new ArrayList<>();
-        server.add(Cluster.getHost(false));
-        return server;
-    }
-
     public List<String> getWriteServers() {
         List<String> servers = decommissionCluster.filter(getAllServers());
         if (servers.size() <= WRITE_FACTOR) {
