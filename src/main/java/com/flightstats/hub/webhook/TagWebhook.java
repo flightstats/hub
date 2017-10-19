@@ -8,6 +8,7 @@ import com.flightstats.hub.model.ChannelConfig;
 import com.google.common.base.Optional;
 import com.google.common.collect.Sets;
 import com.google.inject.TypeLiteral;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,7 +36,7 @@ public class TagWebhook {
             new TypeLiteral<Dao<Webhook>>() {
             }, "Webhook");
 
-    private static Set<Webhook> webhookPrototypesWithTag(String tag) {
+    static Set<Webhook> webhookPrototypesWithTag(String tag) {
         Set<Webhook> webhookSet = new HashSet<>(webhookDao.getAll(false));
 
         Set<Webhook> result = webhookSet.stream()
@@ -44,7 +45,7 @@ public class TagWebhook {
         return result;
     }
 
-    private static Set<Webhook> webhookInstancesWithTag(String tag) {
+    static Set<Webhook> webhookInstancesWithTag(String tag) {
         Set<Webhook> webhookSet = new HashSet<>(webhookDao.getAll(false));
 
         Set<Webhook> result = webhookSet.stream()
@@ -53,14 +54,14 @@ public class TagWebhook {
         return result;
     }
 
-    private static Set<Webhook> allManagedWebhooksForChannel(Set<Webhook> webhookSet, ChannelConfig channelConfig) {
+    static Set<Webhook> allManagedWebhooksForChannel(Set<Webhook> webhookSet, ChannelConfig channelConfig) {
         String channelName = channelConfig.getName().toLowerCase();
         return webhookSet.stream()
-                .filter(wh -> Objects.equals(channelName, wh.getChannelName().toLowerCase()) && wh.isManagedByTag())
+                .filter(wh -> !StringUtils.isEmpty(wh.getChannelUrl()) && Objects.equals(channelName, wh.getChannelName().toLowerCase()) && wh.isManagedByTag())
                 .collect(Collectors.toSet());
     }
 
-    private static void ensureChannelHasAssociatedWebhook(Set<Webhook> webhookSet, Webhook wh, ChannelConfig channelConfig) {
+    static void ensureChannelHasAssociatedWebhook(Set<Webhook> webhookSet, Webhook wh, ChannelConfig channelConfig) {
         Set<Webhook> managedWebHooks = allManagedWebhooksForChannel(webhookSet, channelConfig);
         if (managedWebHooks.isEmpty()) {
             Webhook newWHInstance = Webhook.instanceFromTagPrototype(wh, channelConfig);
@@ -69,7 +70,7 @@ public class TagWebhook {
         }
     }
 
-    private static void ensureNoOrphans(Set<Webhook> webhookSet, ChannelConfig channelConfig) {
+    static void ensureNoOrphans(Set<Webhook> webhookSet, ChannelConfig channelConfig) {
         Set<Webhook> managedWebHooks = allManagedWebhooksForChannel(webhookSet, channelConfig);
         Set<String> tags = channelConfig.getTags();
         Set<Webhook> nonOrphanWebhooks = managedWebHooks.stream()

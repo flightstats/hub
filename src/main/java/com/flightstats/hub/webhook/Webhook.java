@@ -444,6 +444,14 @@ public class Webhook implements Comparable<Webhook>, NamedType {
         return this.fastForwardable == fastForwardable ? this : new Webhook(this.callbackUrl, this.channelUrl, this.parallelCalls, this.name, this.startingKey, this.batch, this.heartbeat, this.paused, this.ttlMinutes, this.maxWaitMinutes, callbackTimeoutSeconds, this.fastForwardable, this.tagUrl, this.tag);
     }
 
+    public Webhook withTag(String tag) {
+        return this.tag == tag ? this : new Webhook(this.callbackUrl, this.channelUrl, this.parallelCalls, this.name, this.startingKey, this.batch, this.heartbeat, this.paused, this.ttlMinutes, this.maxWaitMinutes, callbackTimeoutSeconds, this.fastForwardable, this.tagUrl, tag);
+    }
+
+    public Webhook withTagUrl(String tagUrl) {
+        return this.tagUrl == tagUrl ? this : new Webhook(this.callbackUrl, this.channelUrl, this.parallelCalls, this.name, this.startingKey, this.batch, this.heartbeat, this.paused, this.ttlMinutes, this.maxWaitMinutes, callbackTimeoutSeconds, this.fastForwardable, tagUrl, this.tag);
+    }
+
     public static class WebhookBuilder {
         private String callbackUrl;
         private String channelUrl;
