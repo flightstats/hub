@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 
 import static com.flightstats.hub.app.HubServices.register;
 
@@ -113,11 +112,8 @@ public class WebhookManager {
         TreeMap<Integer, String> orderedServers = new TreeMap<>();
         List<String> servers = hubCluster.getRandomServers();
         for (String server : servers) {
-            call(server + "/internal/webhook/count", (response -> {
-                int count = Integer.parseInt(response.getEntity(String.class));
-                logger.info("server " + server + "has " + count);
-                orderedServers.put(count, server);
-            }));
+            int count = get(server + "/internal/webhook/count");
+            orderedServers.put(count, server);
         }
         if (orderedServers.isEmpty()) {
             return servers;
@@ -125,19 +121,7 @@ public class WebhookManager {
         return orderedServers.values();
     }
 
-    private void callAllDelete(String name, Collection<String> servers) {
-        for (String server : servers) {
-            call(server + "/internal/webhook/delete/" + name);
-        }
-    }
-
-    private void callOneRun(String name, Collection<String> servers) {
-        for (String server : servers) {
-            if (call(server + "/internal/webhook/run/" + name)) break;
-        }
-    }
-
-    private boolean call(String url, Consumer<ClientResponse> responseConsumer) {
+    private int get(String url) {
         ClientResponse response = null;
         String hubUrl = HubHost.getScheme() + url;
         try {
@@ -145,22 +129,48 @@ public class WebhookManager {
             response = client.resource(hubUrl).put(ClientResponse.class);
             if (response.getStatus() == 200) {
                 logger.debug("success {}", response);
-                responseConsumer.accept(response);
+                return Integer.parseInt(response.getEntity(String.class));
+            } else {
+                logger.warn("unexpected response {}", response);
+            }
+        } catch (Exception e) {
+            logger.warn("unable to get " + hubUrl, e);
+        } finally {
+            HubUtils.close(response);
+        }
+        return 0;
+    }
+
+    private void callAllDelete(String name, Collection<String> servers) {
+        for (String server : servers) {
+            put(server + "/internal/webhook/delete/" + name);
+        }
+    }
+
+    private void callOneRun(String name, Collection<String> servers) {
+        for (String server : servers) {
+            if (put(server + "/internal/webhook/run/" + name)) break;
+        }
+    }
+
+    private boolean put(String url) {
+        String hubUrl = HubHost.getScheme() + url;
+        ClientResponse response = null;
+        try {
+            logger.info("calling {}", hubUrl);
+            response = client.resource(hubUrl).put(ClientResponse.class);
+            if (response.getStatus() == 200) {
+                logger.debug("success {}", response);
                 return true;
             } else {
                 logger.warn("unexpected response {}", response);
             }
         } catch (Exception e) {
-            logger.warn("unable to call " + hubUrl, e);
+            logger.warn("unable to put " + hubUrl, e);
         } finally {
             HubUtils.close(response);
         }
         return false;
-    }
-
-    private boolean call(String url) {
-        return call(url, (response) -> {
-        });
     }
 
     private void notifyWatchers() {
