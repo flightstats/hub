@@ -17,18 +17,29 @@ public class CuratorLock {
     private final static Logger logger = LoggerFactory.getLogger(CuratorLock.class);
 
     private final CuratorFramework curator;
+
+    public void setLockPath(String lockPath) {
+        this.lockPath = lockPath;
+    }
+
+    private String lockPath;
     private final ExecutorService singleThreadExecutor;
     private final Leadership leadershipV2;
     private InterProcessSemaphoreMutex mutex;
 
     @Inject
     public CuratorLock(CuratorFramework curator, ZooKeeperState zooKeeperState) {
+        this(curator, zooKeeperState, null);
+    }
+
+    public CuratorLock(CuratorFramework curator, ZooKeeperState zooKeeperState, String lockPath) {
         this.curator = curator;
+        this.lockPath = lockPath;
         singleThreadExecutor = Executors.newSingleThreadExecutor();
         leadershipV2 = new LeadershipV2(zooKeeperState);
     }
 
-    public boolean runWithLock(Lockable lockable, String lockPath, long time, TimeUnit timeUnit) {
+    public boolean runWithLock(Lockable lockable, long time, TimeUnit timeUnit) {
         mutex = new InterProcessSemaphoreMutex(curator, lockPath);
         try {
             logger.debug("attempting acquire {}", lockPath);
@@ -41,6 +52,8 @@ public class CuratorLock {
                     } catch (Exception e) {
                         logger.warn("we lost the lock " + lockPath, e);
                         leadershipV2.setLeadership(false);
+                    } finally {
+                        release();
                     }
                 });
                 return true;
@@ -68,7 +81,7 @@ public class CuratorLock {
         try {
             singleThreadExecutor.awaitTermination(1, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
-            logger.info("InterruptedException", e);
+            logger.info("InterruptedException for " + lockPath, e);
         }
     }
 
@@ -76,7 +89,7 @@ public class CuratorLock {
         try {
             mutex.release();
         } catch (Exception e) {
-            logger.warn("issue releasing mutex", e);
+            logger.warn("issue releasing mutex for " + lockPath, e);
         }
     }
 
