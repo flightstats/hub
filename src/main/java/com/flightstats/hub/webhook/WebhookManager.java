@@ -126,7 +126,7 @@ public class WebhookManager {
         String hubUrl = HubHost.getScheme() + url;
         try {
             logger.info("calling {}", hubUrl);
-            response = client.resource(hubUrl).put(ClientResponse.class);
+            response = client.resource(hubUrl).get(ClientResponse.class);
             if (response.getStatus() == 200) {
                 logger.debug("success {}", response);
                 return Integer.parseInt(response.getEntity(String.class));
