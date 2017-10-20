@@ -48,8 +48,8 @@ public class DynamoWebhookDao implements Dao<Webhook> {
         if (!StringUtils.isEmpty(webhook.getTagUrl())) {
             item.put("tagUrl", new AttributeValue(webhook.getTagUrl()));
         }
-        if (!StringUtils.isEmpty(webhook.getTag())) {
-            item.put("tag", new AttributeValue(webhook.getTag()));
+        if (!StringUtils.isEmpty(webhook.getManagedByTag())) {
+            item.put("tag", new AttributeValue(webhook.getManagedByTag()));
         }
         dbClient.putItem(getTableName(), item);
     }

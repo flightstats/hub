@@ -49,7 +49,7 @@ public class TagWebhook {
         Set<Webhook> webhookSet = new HashSet<>(webhookDao.getAll(false));
 
         Set<Webhook> result = webhookSet.stream()
-                .filter(wh -> !wh.isTagPrototype() && Objects.equals(tag, wh.getTag()))
+                .filter(wh -> !wh.isTagPrototype() && Objects.equals(tag, wh.getManagedByTag()))
                 .collect(Collectors.toSet());
         return result;
     }
@@ -74,7 +74,7 @@ public class TagWebhook {
         Set<Webhook> managedWebHooks = allManagedWebhooksForChannel(webhookSet, channelConfig);
         Set<String> tags = channelConfig.getTags();
         Set<Webhook> nonOrphanWebhooks = managedWebHooks.stream()
-                .filter(wh -> tags.contains(wh.getTag()))
+                .filter(wh -> tags.contains(wh.getManagedByTag()))
                 .collect(Collectors.toSet());
         Sets.SetView<Webhook> orphanedWebhooks = Sets.difference(managedWebHooks, nonOrphanWebhooks);
         for (Webhook orphan : orphanedWebhooks) {
