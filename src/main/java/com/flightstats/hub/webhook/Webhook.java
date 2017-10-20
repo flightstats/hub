@@ -176,8 +176,8 @@ public class Webhook implements Comparable<Webhook>, NamedType {
 
     public static Webhook instanceFromTagPrototype(Webhook whp, ChannelConfig channel) {
         String channenUrl = RequestUtils.getHost(whp.getTagUrl()) + "/channel/" + channel.getName();
-        String whName = "TAGWH_" + whp.getTag() + "_" + channel.getName();
-        Webhook instance = new Webhook(whp.callbackUrl, channenUrl, whp.parallelCalls, whName, null, whp.batch, whp.heartbeat, whp.paused, whp.ttlMinutes, whp.maxWaitMinutes, whp.callbackTimeoutSeconds, whp.fastForwardable, whp.tagUrl, whp.tag);
+        String whName = "TAGWH_" + whp.getTagFromTagUrl() + "_" + channel.getName();
+        Webhook instance = new Webhook(whp.callbackUrl, channenUrl, whp.parallelCalls, whName, null, whp.batch, whp.heartbeat, whp.paused, whp.ttlMinutes, whp.maxWaitMinutes, whp.callbackTimeoutSeconds, whp.fastForwardable, null, whp.getTagFromTagUrl());
         return instance;
     }
 
@@ -278,8 +278,12 @@ public class Webhook implements Comparable<Webhook>, NamedType {
         return this.tagUrl;
     }
 
+    public String getTagFromTagUrl() {
+        return RequestUtils.getTag(this.getTagUrl());
+    }
+
     public String getTag() {
-        return StringUtils.isEmpty(tagUrl) ? tag : RequestUtils.getTag(getTagUrl());
+        return tag;
     }
 
     public boolean isManagedByTag() {

@@ -46,7 +46,7 @@ describe(testName, function () {
     // //update the channel to remove tag (and as side effect remove it's tag webhook instance)
     var channel1noTag = {
         'name': channelName1,
-        'tags': [],
+        'tags': []
     }
     utils.itMessages("expecting " + instance1 + " to be deleted due to removal of tag");
     utils.createChannelWithConfig(channelName1, channel1noTag);
