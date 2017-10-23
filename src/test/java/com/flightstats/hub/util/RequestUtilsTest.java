@@ -24,6 +24,13 @@ public class RequestUtilsTest {
     }
 
     @Test
+    public void testGetTagFromString() {
+        assertEquals("foobar", getTag("http://location:8080/tag/foobar"));
+        assertEquals("foobar", getTag("http://location:8080/tag/foobar/"));
+        assertEquals("foobar", getTag("http://hub.prod/tag/foobar/"));
+    }
+
+    @Test
     public void testGetChannelNameFromRequest() {
         MultivaluedMap<String, String> emptyMap = new MultivaluedHashMap<>();
         MultivaluedMap<String, String> parameters = new MultivaluedHashMap<>();
@@ -79,5 +86,19 @@ public class RequestUtilsTest {
         assertTrue(isValidChannelUrl("http://location:8080/channel/foobar"));
         assertFalse(isValidChannelUrl("http://location:8080/chann/foobar"));
         assertFalse(isValidChannelUrl("not a url"));
+    }
+
+    @Test
+    public void testGetHost() {
+        String host1 = "http://stuff.com";
+        String host2 = "http://stuff.com:99";
+
+        assertEquals(host1, getHost(host1));
+        assertEquals(host2, getHost(host2));
+        assertEquals(host1, getHost(host1 + "/"));
+        assertEquals(host2, getHost(host2 + "/"));
+        assertEquals(host1, getHost(host1 + "/abc/def"));
+        assertEquals(host2, getHost(host2 + "/abc/def"));
+
     }
 }

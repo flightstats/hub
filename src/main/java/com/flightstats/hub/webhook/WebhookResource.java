@@ -88,7 +88,6 @@ public class WebhookResource {
         addSelfLink(root, uriInfo);
         root.put("name", webhook.getName());
         root.put("callbackUrl", webhook.getCallbackUrl());
-        root.put("channelUrl", webhook.getChannelUrl());
         root.put("parallelCalls", webhook.getParallelCalls());
         root.put("paused", webhook.isPaused());
         root.put("batch", webhook.getBatch());
@@ -96,13 +95,19 @@ public class WebhookResource {
         root.put("ttlMinutes", webhook.getTtlMinutes());
         root.put("maxWaitMinutes", webhook.getMaxWaitMinutes());
         root.put("callbackTimeoutSeconds", webhook.getCallbackTimeoutSeconds());
-        addLatest(webhook, status, root, true);
-        TimeLinkUtil.addTime(root, stable, "stableTime");
-        ArrayNode inFlight = root.putArray("inFlight");
-        for (ContentPath contentPath : status.getInFlight()) {
-            inFlight.add(webhook.getChannelUrl() + "/" + contentPath.toUrl());
+        if (webhook.isTagPrototype()) {
+            root.put("tagUrl", webhook.getTagUrl());
+            root.put("isTagPrototype", webhook.isTagPrototype());
+        } else {
+            root.put("channelUrl", webhook.getChannelUrl());
+            addLatest(webhook, status, root, true);
+            TimeLinkUtil.addTime(root, stable, "stableTime");
+            ArrayNode inFlight = root.putArray("inFlight");
+            for (ContentPath contentPath : status.getInFlight()) {
+                inFlight.add(webhook.getChannelUrl() + "/" + contentPath.toUrl());
+            }
+            addErrors(status, root);
         }
-        addErrors(status, root);
         return Response.ok(root).build();
     }
 

@@ -7,6 +7,7 @@ import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.webhook.Webhook;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +35,9 @@ public class DynamoWebhookDao implements Dao<Webhook> {
         Map<String, AttributeValue> item = new HashMap<>();
         item.put("name", new AttributeValue(webhook.getName()));
         item.put("callbackUrl", new AttributeValue(webhook.getCallbackUrl()));
-        item.put("channelUrl", new AttributeValue(webhook.getChannelUrl()));
+        if (!StringUtils.isEmpty(webhook.getChannelUrl())) {
+            item.put("channelUrl", new AttributeValue(webhook.getChannelUrl()));
+        }
         item.put("parallelCalls", new AttributeValue().withN(String.valueOf(webhook.getParallelCalls())));
         item.put("paused", new AttributeValue().withBOOL(webhook.isPaused()));
         item.put("batch", new AttributeValue(webhook.getBatch()));
@@ -42,6 +45,12 @@ public class DynamoWebhookDao implements Dao<Webhook> {
         item.put("ttlMinutes", new AttributeValue().withN(String.valueOf(webhook.getTtlMinutes())));
         item.put("maxWaitMinutes", new AttributeValue().withN(String.valueOf(webhook.getMaxWaitMinutes())));
         item.put("callbackTimeoutSeconds", new AttributeValue().withN(String.valueOf(webhook.getCallbackTimeoutSeconds())));
+        if (!StringUtils.isEmpty(webhook.getTagUrl())) {
+            item.put("tagUrl", new AttributeValue(webhook.getTagUrl()));
+        }
+        if (!StringUtils.isEmpty(webhook.getManagedByTag())) {
+            item.put("tag", new AttributeValue(webhook.getManagedByTag()));
+        }
         dbClient.putItem(getTableName(), item);
     }
 
@@ -64,8 +73,10 @@ public class DynamoWebhookDao implements Dao<Webhook> {
     private Webhook mapItem(Map<String, AttributeValue> item) {
         Webhook.WebhookBuilder builder = Webhook.builder()
                 .name(item.get("name").getS())
-                .callbackUrl(item.get("callbackUrl").getS())
-                .channelUrl(item.get("channelUrl").getS());
+                .callbackUrl(item.get("callbackUrl").getS());
+        if (item.containsKey("channelUrl")) {
+            builder.channelUrl(item.get("channelUrl").getS());
+        }
         if (item.containsKey("parallelCalls")) {
             builder.parallelCalls(Integer.valueOf(item.get("parallelCalls").getN()));
         }
@@ -78,6 +89,9 @@ public class DynamoWebhookDao implements Dao<Webhook> {
         if (item.containsKey("heartbeat")) {
             builder.heartbeat(item.get("heartbeat").getBOOL());
         }
+        if (item.containsKey("tag")) {
+            builder.tag(item.get("tag").getS());
+        }
         if (item.containsKey("ttlMinutes")) {
             builder.ttlMinutes(Integer.valueOf(item.get("ttlMinutes").getN()));
         }
@@ -86,6 +100,9 @@ public class DynamoWebhookDao implements Dao<Webhook> {
         }
         if (item.containsKey("callbackTimeoutSeconds")) {
             builder.callbackTimeoutSeconds(Integer.valueOf(item.get("callbackTimeoutSeconds").getN()));
+        }
+        if (item.containsKey("tagUrl")) {
+            builder.tagUrl(item.get("tagUrl").getS());
         }
         return builder.build().withDefaults();
     }

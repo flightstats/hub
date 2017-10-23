@@ -88,6 +88,8 @@ public class CuratorLock {
     private void release() {
         try {
             mutex.release();
+        } catch (IllegalStateException e) {
+            logger.info("illegal state " + lockPath + " " + e.getMessage());
         } catch (Exception e) {
             logger.warn("issue releasing mutex for " + lockPath, e);
         }
