@@ -19,7 +19,7 @@ describe(__filename, function () {
 
     it('creates a channel', (done) => {
         let headers = {'Content-Type': 'application/json'};
-        let body = {"mutableTime": moment().toISOString()};
+        let body = {"mutableTime": moment().subtract(1, 'minute').toISOString()};
         utils.httpPut(channelResource, headers, body)
             .then(response => expect(response.statusCode).toEqual(201))
             .catch(error => expect(error).toBeNull())
