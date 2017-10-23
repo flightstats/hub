@@ -42,6 +42,9 @@ public class WebhookService {
         webhook = webhook.withDefaults();
         webhookValidator.validate(webhook);
         Optional<Webhook> preExisting = get(webhook.getName());
+        if (webhook.isTagPrototype()) {
+            return upsertTagWebhook(webhook, preExisting);
+        }
         if (preExisting.isPresent()) {
             Webhook existing = preExisting.get();
             ContentPath newStartingKey = webhook.getStartingKey();
@@ -70,6 +73,13 @@ public class WebhookService {
         return preExisting;
     }
 
+    public Optional<Webhook> upsertTagWebhook(Webhook webhook, Optional<Webhook> preExisting) {
+        webhookDao.upsert(webhook);
+        webhookManager.notifyWatchers(webhook);
+        TagWebhook.upsertTagWebhookInstances(webhook);
+        return preExisting;
+    }
+
     public Optional<Webhook> get(String name) {
         return Optional.fromNullable(webhookDao.get(name));
     }
@@ -88,6 +98,9 @@ public class WebhookService {
 
     WebhookStatus getStatus(Webhook webhook) {
         WebhookStatus.WebhookStatusBuilder builder = WebhookStatus.builder().webhook(webhook);
+        if (webhook.isTagPrototype()) {
+            return builder.build();
+        }
         String channel = webhook.getChannelName();
         try {
             Optional<ContentKey> lastKey = channelService.getLatest(channel, true);
@@ -103,6 +116,7 @@ public class WebhookService {
 
     public void delete(String name) {
         logger.info("deleting webhook " + name);
+        TagWebhook.deleteInstancesIfTagWebhook(name);
         webhookDao.delete(name);
         webhookManager.delete(name);
     }

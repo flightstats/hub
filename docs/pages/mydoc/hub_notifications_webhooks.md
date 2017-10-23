@@ -154,4 +154,21 @@ An example MINUTE heartbeat :
 }
 ```
 
+## Tag webhooks
+
+Tag Webhooks are a way to automate the creation and deletion of webhooks for channels that have a specific tag.  It is useful if you have several channels that emit to the same webhook client.  If a Tag Webhook is defined, all channels containing a the specified tag, will have a webhook automatically created based on the Tag Webhook "prototype" configuration.  Removing a tag from the channel will also remove the associated Tag Webhook instance associated with that channel.  Likewise, adding a tag to a new or existing channel will create an associated webhook if the tag has a Tag Webhook defined for it.
+
+#### Creating a Tag Webhook 
+
+You create a Tag Webhook the same way as you would create a normal Webhook with two configuration exceptions:
+
+* `tagUrl`: add fully qualified tag url (e.g. `http://hub.com/tag/{tagName}`)
+* `channelUrl`: Don't include a channelUrl.  Webhooks will accept either a tagUrl (for tag webhooks) or a channelUrl (for normal webhooks) but not both.
+
+
+#### Deleting a Tag Webhook
+
+You delete a tag webhook as you would a normal webhook, but note that when you delete a tag webhook, all actual "instances" of the Tag Webhook will be automatically deleted as well.
+ 
+
 {% include links.html %}

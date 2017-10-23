@@ -90,6 +90,13 @@ public class WebhookManager {
     }
 
     private void manageWebhook(Webhook daoWebhook, boolean webhookChanged) {
+        if (daoWebhook.getTagUrl() != null && !daoWebhook.getTagUrl().isEmpty()) {
+            // tag webhooks are not processed like normal webhooks.
+            // they are used as prototype definitions for new webhooks added
+            // automatically when a new/existing channel is assigned a tag that is
+            // associated with a tag webhook
+            return;
+        }
         String name = daoWebhook.getName();
         if (activeWebhooks.getServers().contains(name)) {
             logger.debug("found existing v2 webhook {}", name);
