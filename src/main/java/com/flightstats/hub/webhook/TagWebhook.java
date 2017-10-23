@@ -11,7 +11,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -111,7 +114,7 @@ public class TagWebhook {
     }
 
     static void deleteInstancesIfTagWebhook(String webhookName) {
-        Optional<Webhook> webhookOptional = webhookService.get(webhookName);
+        com.google.common.base.Optional<Webhook> webhookOptional = webhookService.get(webhookName);
         if (!webhookOptional.isPresent()) return;
         Webhook webhook = webhookOptional.get();
         if (!webhook.isTagPrototype()) return;
