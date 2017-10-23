@@ -59,7 +59,7 @@ public class SpokeReadContentDao implements ContentDao {
             traces.add("SpokeReadContentDao.writeBulk marshalled");
 
             logger.trace("writing items {} to channel {}", items.size(), channelName);
-            if (!spokeStore.insert(channelName, baos.toByteArray(), Cluster.getLocalServer(), ActiveTraces.getLocal(), SpokeStore.WRITE, "bulkKey", channelName)) {
+            if (!spokeStore.newInsert(channelName, baos.toByteArray(), Cluster.getLocalServer(), ActiveTraces.getLocal(), SpokeStore.WRITE, "bulkKey", channelName)) {
                 throw new FailedWriteException("unable to write bulk to spoke " + channelName);
             }
             traces.add("SpokeReadContentDao.writeBulk completed", keys);

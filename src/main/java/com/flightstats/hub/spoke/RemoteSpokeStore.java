@@ -70,7 +70,9 @@ public class RemoteSpokeStore {
                 public void run() {
                     try {
                         ContentKey key = new ContentKey();
-                        if (insert(path + key.toUrl(), key.toUrl().getBytes(), server, traces, SpokeStore.WRITE, "payload", path)) {
+                        // TODO: replace line 75 with line 74
+//                        if (insert(path + key.toUrl(), key.toUrl().getBytes(), server, traces, SpokeStore.WRITE, "payload", path)) {
+                        if (insert(path + key.toUrl(), key.toUrl().getBytes(), server, traces, "payload", path)) {
                             quorumLatch.countDown();
                         } else {
                             traces.log(logger);
@@ -119,11 +121,58 @@ public class RemoteSpokeStore {
         return true;
     }
 
+    // TODO: pass 'spokeStore' to the insert() call below
+
     public boolean insert(String path, byte[] payload, SpokeStore spokeStore, String spokeApi, String channel) throws InterruptedException {
-        return insert(path, payload, cluster.getWriteServers(), ActiveTraces.getLocal(), spokeStore, spokeApi, channel);
+        return insert(path, payload, cluster.getWriteServers(), ActiveTraces.getLocal(), spokeApi, channel);
     }
 
-    public boolean insert(String path, byte[] payload, Collection<String> servers, Traces traces,
+    // TODO: remove the private method below
+
+    private boolean insert(String path, byte[] payload, Collection<String> servers, Traces traces,
+                           String spokeApi, String channel) throws InterruptedException {
+        int quorum = getQuorum(servers.size());
+        CountDownLatch quorumLatch = new CountDownLatch(quorum);
+        AtomicBoolean firstComplete = new AtomicBoolean();
+        for (final String server : servers) {
+            executorService.submit(new Runnable() {
+                @Override
+                public void run() {
+                    setThread(path);
+                    String uri = HubHost.getScheme() + server + "/internal/spoke/" + spokeApi + "/" + path;
+                    traces.add(uri);
+                    ClientResponse response = null;
+                    try {
+                        response = write_client.resource(uri).put(ClientResponse.class, payload);
+                        traces.add(server, response.getEntity(String.class));
+                        if (response.getStatus() == 201) {
+                            if (firstComplete.compareAndSet(false, true)) {
+                                metricsService.time(channel, "heisenberg", traces.getStart());
+                            }
+                            quorumLatch.countDown();
+                            logger.trace("server {} path {} response {}", server, path, response);
+                        } else {
+                            logger.info("write failed: server {} path {} response {}", server, path, response);
+                        }
+                    } catch (Exception e) {
+                        traces.add(server, e.getMessage());
+                        logger.warn("write failed: " + server + " " + path, e);
+                    } finally {
+                        HubUtils.close(response);
+                        resetThread();
+                    }
+
+                }
+            });
+        }
+        quorumLatch.await(stableSeconds, TimeUnit.SECONDS);
+        metricsService.time(channel, "consistent", traces.getStart());
+        return quorumLatch.getCount() != quorum;
+    }
+
+    // TODO: rename the below method to 'insert'
+
+    public boolean newInsert(String path, byte[] payload, Collection<String> servers, Traces traces,
                            SpokeStore spokeStore, String spokeApi, String channel) throws InterruptedException {
         int quorum = getQuorum(servers.size());
         CountDownLatch quorumLatch = new CountDownLatch(quorum);
