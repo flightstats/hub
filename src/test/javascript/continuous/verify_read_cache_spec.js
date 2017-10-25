@@ -93,30 +93,62 @@ describe(__filename, () => {
             .finally(done);
     });
 
-    it('receives a list without our item from the read cache', (done) => {
+    it('receives a list without our item from the write cache', (done) => {
         expect(timeURL).toBeDefined();
-        let uri = `${timeURL}?location=CACHE_READ`;
-        utils.httpGet(uri)
+        utils.httpGet(`${timeURL}?location=CACHE_WRITE`)
             .then(utils.followRedirectIfPresent)
-            .then(response => expect(response.body._links.uris).not.toContain(uri))
+            .then(response => expect(response.body._links.uris).not.toContain(itemURL))
             .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
+    it('receives a list without our item from the read cache', (done) => {
+        expect(timeURL).toBeDefined();
+        utils.httpGet(`${timeURL}?location=CACHE_READ`)
+            .then(utils.followRedirectIfPresent)
+            .then(response => expect(response.body._links.uris).not.toContain(itemURL))
+            .catch(error => expect(error).toBeNull())
+            .finally(done);
+    });
+
+    let itemPayload;
+
     it('gets the item from default sources', (done) => {
         expect(itemURL).toBeDefined();
         utils.httpGet(itemURL)
-            .then(response => expect(response.statusCode).toEqual(200))
+            .then(response => {
+                expect(response.statusCode).toEqual(200);
+                itemPayload = response.body;
+            })
+            .catch(error => expect(error).toBeNull())
+            .finally(done);
+    });
+
+    it('receives a list without our item from the write cache still', (done) => {
+        expect(timeURL).toBeDefined();
+        utils.httpGet(`${timeURL}?location=CACHE_WRITE`)
+            .then(utils.followRedirectIfPresent)
+            .then(response => expect(response.body._links.uris).not.toContain(itemURL))
             .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
     it('receives a list with our item from the read cache', (done) => {
         expect(timeURL).toBeDefined();
-        let uri = `${timeURL}?location=CACHE_READ`;
-        utils.httpGet(uri)
+        utils.httpGet(`${timeURL}?location=CACHE_READ`)
             .then(utils.followRedirectIfPresent)
-            .then(response => expect(response.body._links.uris).toContain(uri))
+            .then(response => expect(response.body._links.uris).toContain(itemURL))
+            .catch(error => expect(error).toBeNull())
+            .finally(done);
+    });
+
+    it('verifies the item from read cache matches the item from S3', (done) => {
+        expect(itemPayload).toBeDefined();
+        utils.httpGet(itemURL)
+            .then(response => {
+                expect(response.statusCode).toEqual(200);
+                expect(response.body).toEqual(itemPayload);
+            })
             .catch(error => expect(error).toBeNull())
             .finally(done);
     });
