@@ -10,8 +10,8 @@ describe(__filename, () => {
     // this test makes a few assumptions:
     //
     //  - there is a channel named "batch_test_1" on the hub you run this against
-    //  - that channel has data in it older than spokeTTL
-    //  - can find an item, not already in the read cache, in 3 attempts
+    //  - that channel has data in it older than spokeTTLMinutes
+    //  - we can find an item, not already in the read cache, in 3 attempts
     //
     // if one of the above assumptions is not true the entire spec is skipped
 
@@ -26,13 +26,14 @@ describe(__filename, () => {
             .finally(done);
     });
 
-    let spokeTTL;
+    let spokeTTLMinutes;
 
-    it('gets the spokeTTL for the cluster', (done) => {
+    it('gets the spokeTTLMinutes for the cluster', (done) => {
         utils.httpGet(`${hubUrlBase}/internal/properties`)
             .then(response => {
                 expect(response.statusCode).toEqual(200);
-                spokeTTL = response.body.properties['spoke.ttlMinutes'];
+                spokeTTLMinutes = response.body.properties['spoke.ttlMinutes'];
+                console.log('spokeTTLMinutes:', spokeTTLMinutes);
             })
             .catch(error => expect(error).toBeNull())
             .finally(done);
@@ -41,9 +42,9 @@ describe(__filename, () => {
     let urisToChooseFrom;
 
     it('has data old enough to use', (done) => {
-        expect(spokeTTL).toBeDefined();
-        let timeInThePast = moment().utc().subtract(spokeTTL + 1, 'minutes');
-        let timePath = timeInThePast.format('YYYY/MM/DD/HH');
+        expect(spokeTTLMinutes).toBeDefined();
+        let timeInThePast = moment().utc().subtract(spokeTTLMinutes + 1, 'minutes');
+        let timePath = timeInThePast.format('YYYY/MM/DD/HH/mm');
         let url = `${channelResource}/${timePath}`;
         utils.httpGet(url)
             .then(response => {
@@ -110,7 +111,11 @@ describe(__filename, () => {
         expect(timeURL).toBeDefined();
         utils.httpGet(`${timeURL}?location=CACHE_WRITE`)
             .then(utils.followRedirectIfPresent)
-            .then(response => expect(response.body._links.uris).not.toContain(itemURL))
+            .then(response => {
+                let uris = response.body._links.uris;
+                console.log('uris:', uris);
+                expect(uris).not.toContain(itemURL);
+            })
             .catch(error => expect(error).toBeNull())
             .finally(done);
     });
@@ -119,7 +124,11 @@ describe(__filename, () => {
         expect(timeURL).toBeDefined();
         utils.httpGet(`${timeURL}?location=CACHE_READ`)
             .then(utils.followRedirectIfPresent)
-            .then(response => expect(response.body._links.uris).not.toContain(itemURL))
+            .then(response => {
+                let uris = response.body._links.uris;
+                console.log('uris:', uris);
+                expect(uris).not.toContain(itemURL);
+            })
             .catch(error => expect(error).toBeNull())
             .finally(done);
     });
@@ -141,7 +150,11 @@ describe(__filename, () => {
         expect(timeURL).toBeDefined();
         utils.httpGet(`${timeURL}?location=CACHE_WRITE`)
             .then(utils.followRedirectIfPresent)
-            .then(response => expect(response.body._links.uris).not.toContain(itemURL))
+            .then(response => {
+                let uris = response.body._links.uris;
+                console.log('uris:', uris);
+                expect(uris).not.toContain(itemURL);
+            })
             .catch(error => expect(error).toBeNull())
             .finally(done);
     });
@@ -150,7 +163,11 @@ describe(__filename, () => {
         expect(timeURL).toBeDefined();
         utils.httpGet(`${timeURL}?location=CACHE_READ`)
             .then(utils.followRedirectIfPresent)
-            .then(response => expect(response.body._links.uris).toContain(itemURL))
+            .then(response => {
+                let uris = response.body._links.uris;
+                console.log('uris:', uris);
+                expect(uris).toContain(itemURL);
+            })
             .catch(error => expect(error).toBeNull())
             .finally(done);
     });
@@ -175,7 +192,8 @@ const getRandomURI = (uris) => {
 
 const getTimeURIFromItemURI = (itemURI) => {
     let hashIndex = itemURI.lastIndexOf('/');
-    return itemURI.slice(0, hashIndex);
+    let msIndex = itemURI.lastIndexOf('/', hashIndex - 1);
+    return itemURI.slice(0, msIndex);
 };
 
 const getUniqueURI = (urisToChooseFrom, ...alreadyUsedURIs) => {
