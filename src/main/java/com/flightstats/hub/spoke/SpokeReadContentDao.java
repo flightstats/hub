@@ -143,10 +143,7 @@ public class SpokeReadContentDao implements ContentDao {
     @Override
     public void delete(String channelName) {
         try {
-            long start = System.currentTimeMillis();
             spokeStore.newDelete(SpokeStore.READ, channelName);
-            long elapsed = System.currentTimeMillis() - start;
-            logger.debug("SpokeReadContentDao.delete({}) took {} ms", channelName, elapsed);
         } catch (Exception e) {
             logger.warn("unable to delete " + channelName, e);
         }

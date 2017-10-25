@@ -452,7 +452,6 @@ public class RemoteSpokeStore {
             executorService.submit(new Runnable() {
                 @Override
                 public void run() {
-                    long start = System.currentTimeMillis();
                     ClientResponse response = null;
                     try {
                         setThread(path);
@@ -467,8 +466,6 @@ public class RemoteSpokeStore {
                     } finally {
                         HubUtils.close(response);
                         resetThread();
-                        long elapsed = System.currentTimeMillis() - start;
-                        logger.debug("RemoteSpokeStore.newDelete {} took {} ms", path, elapsed);
                     }
                 }
             });
