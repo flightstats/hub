@@ -457,6 +457,13 @@ public class RemoteSpokeStore {
                         setThread(path);
                         response = query_client.resource(HubHost.getScheme() + server + "/internal/spoke/" + spokeStore + "/payload/" + path)
                                 .delete(ClientResponse.class);
+
+                        // TODO: remove this conditional block below
+
+                        if (response.getStatus() == 404) {
+                            response = query_client.resource(HubHost.getScheme() + server + "/internal/spoke/payload/" + path).delete(ClientResponse.class);
+                        }
+
                         if (response.getStatus() < 400) {
                             countDownLatch.countDown();
                         }
