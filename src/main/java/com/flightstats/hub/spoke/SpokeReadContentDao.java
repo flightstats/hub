@@ -59,7 +59,7 @@ public class SpokeReadContentDao implements ContentDao {
             traces.add("SpokeReadContentDao.writeBulk marshalled");
 
             logger.trace("writing items {} to channel {}", items.size(), channelName);
-            if (!spokeStore.newInsert(channelName, baos.toByteArray(), Cluster.getLocalServer(), ActiveTraces.getLocal(), SpokeStore.WRITE, "bulkKey", channelName)) {
+            if (!spokeStore.newInsert(SpokeStore.WRITE, channelName, baos.toByteArray(), Cluster.getLocalServer(), ActiveTraces.getLocal(), "bulkKey", channelName)) {
                 throw new FailedWriteException("unable to write bulk to spoke " + channelName);
             }
             traces.add("SpokeReadContentDao.writeBulk completed", keys);
@@ -84,7 +84,7 @@ public class SpokeReadContentDao implements ContentDao {
         Traces traces = ActiveTraces.getLocal();
         traces.add("SpokeReadContentDao.read");
         try {
-            return spokeStore.get(SpokeStore.READ, path, key);
+            return spokeStore.newGet(SpokeStore.READ, path, key);
         } catch (Exception e) {
             logger.warn("unable to get data: " + path, e);
             return null;
@@ -114,10 +114,10 @@ public class SpokeReadContentDao implements ContentDao {
     private SortedSet<ContentKey> queryByTimeKeys(TimeQuery query) {
         try {
             String timePath = query.getUnit().format(query.getStartTime());
-            QueryResult queryResult = spokeStore.readTimeBucket(SpokeStore.READ, query.getChannelName(), timePath);
+            QueryResult queryResult = spokeStore.newReadTimeBucket(SpokeStore.READ, query.getChannelName(), timePath);
             ActiveTraces.getLocal().add("spoke query result", queryResult);
             if (!queryResult.hadSuccess()) {
-                QueryResult retryResult = spokeStore.readTimeBucket(SpokeStore.READ, query.getChannelName(), timePath);
+                QueryResult retryResult = spokeStore.newReadTimeBucket(SpokeStore.READ, query.getChannelName(), timePath);
                 ActiveTraces.getLocal().add("spoke query retryResult", retryResult);
                 if (!retryResult.hadSuccess()) {
                     ActiveTraces.getLocal().log(logger);
@@ -143,7 +143,7 @@ public class SpokeReadContentDao implements ContentDao {
     @Override
     public void delete(String channelName) {
         try {
-            spokeStore.delete(SpokeStore.READ, channelName);
+            spokeStore.newDelete(SpokeStore.READ, channelName);
         } catch (Exception e) {
             logger.warn("unable to delete " + channelName, e);
         }
