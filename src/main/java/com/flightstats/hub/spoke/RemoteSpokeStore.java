@@ -455,8 +455,11 @@ public class RemoteSpokeStore {
                     ClientResponse response = null;
                     try {
                         setThread(path);
+                        long start = System.currentTimeMillis();
                         response = query_client.resource(HubHost.getScheme() + server + "/internal/spoke/" + spokeStore + "/payload/" + path)
                                 .delete(ClientResponse.class);
+                        long elapsed = System.currentTimeMillis() - start;
+                        logger.debug("RemoteSpokeStore.newDelete {} took {} ms", path, elapsed);
                         if (response.getStatus() < 400) {
                             countDownLatch.countDown();
                         }
