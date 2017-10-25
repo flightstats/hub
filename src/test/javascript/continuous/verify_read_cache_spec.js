@@ -2,15 +2,15 @@ require('../integration_config');
 
 const moment = require('moment');
 
-const spokeTTL = 6; // hours
 const channelName = 'batch_test_1';
 const channelResource = `${channelUrl}/${channelName}`;
 
 describe(__filename, () => {
 
     // this test makes a few assumptions:
+    //
     //  - there is a channel named "batch_test_1" on the hub you run this against
-    //  - that channel has data in it older than spokeTTL (6 hours as of this writing)
+    //  - that channel has data in it older than spokeTTL
     //  - can find an item, not already in the read cache, in 3 attempts
     //
     // if one of the above assumptions is not true the entire spec is skipped
@@ -26,10 +26,23 @@ describe(__filename, () => {
             .finally(done);
     });
 
+    let spokeTTL;
+
+    it('gets the spokeTTL for the cluster', (done) => {
+        utils.httpGet(`${hubUrlBase}/internal/properties`)
+            .then(response => {
+                expect(response.statusCode).toEqual(200);
+                spokeTTL = response.body.properties['spoke.ttlMinutes'];
+            })
+            .catch(error => expect(error).toBeNull())
+            .finally(done);
+    });
+
     let urisToChooseFrom;
 
     it('has data old enough to use', (done) => {
-        let timeInThePast = moment().utc().subtract(spokeTTL + 1, 'hours');
+        expect(spokeTTL).toBeDefined();
+        let timeInThePast = moment().utc().subtract(spokeTTL + 1, 'minutes');
         let timePath = timeInThePast.format('YYYY/MM/DD/HH');
         let url = `${channelResource}/${timePath}`;
         utils.httpGet(url)
