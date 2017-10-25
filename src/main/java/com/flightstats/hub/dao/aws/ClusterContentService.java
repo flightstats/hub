@@ -145,8 +145,8 @@ public class ClusterContentService implements ContentService {
                     this::getFromS3BatchAndWriteToSpokeBatch));
         } else {
             content = getFromOrderedProviders(channelName, key, Arrays.asList(
-                    s3SingleContentDao::get,
                     spokeReadContentDao::get,
+                    s3SingleContentDao::get,
                     this::getFromS3BatchAndWriteToSpokeBatch));
         }
         return checkForLargeIndex(channelName, content);
