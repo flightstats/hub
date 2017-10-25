@@ -211,7 +211,10 @@ public class SpokeWriteContentDao implements ContentDao {
     @Override
     public void delete(String channelName) {
         try {
+            long start = System.currentTimeMillis();
             spokeStore.delete(channelName);
+            long elapsed = System.currentTimeMillis() - start;
+            logger.debug("SpokeWriteContentDao.delete({}) took {} ms", channelName, elapsed);
         } catch (Exception e) {
             logger.warn("unable to delete " + channelName, e);
         }
