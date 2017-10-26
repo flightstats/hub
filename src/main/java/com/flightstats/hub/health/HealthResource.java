@@ -3,6 +3,7 @@ package com.flightstats.hub.health;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubMain;
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.app.HubVersion;
 import com.flightstats.hub.channel.LinkBuilder;
@@ -36,6 +37,7 @@ public class HealthResource {
         rootNode.put("healthy", healthStatus.isHealthy());
         rootNode.put("description", healthStatus.getDescription());
         rootNode.put("version", hubVersion.getVersion());
+        rootNode.put("readOnly", HubProperties.isReadOnly());
         DateTime startTime = HubMain.getStartTime();
         rootNode.put("startTime", startTime.toString());
         rootNode.put("upTimeHours", new Duration(startTime, TimeUtil.now()).getStandardHours());
