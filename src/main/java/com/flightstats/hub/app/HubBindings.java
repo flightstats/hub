@@ -99,7 +99,7 @@ public class HubBindings extends AbstractModule {
     @Singleton
     @Provides
     public static Cluster buildHubCluster(CuratorFramework curator) throws Exception {
-        return new CuratorCluster(curator, "/HubCluster", true, new DecommissionCluster() {
+        return new CuratorCluster(curator, "/HubCluster", true, false, new DecommissionCluster() {
         });
     }
 
@@ -114,7 +114,7 @@ public class HubBindings extends AbstractModule {
     @Singleton
     @Provides
     public static Cluster buildSpokeCluster(CuratorFramework curator, SpokeDecommissionCluster spokeDecommissionCluster) throws Exception {
-        return new CuratorCluster(curator, "/SpokeCluster", false, spokeDecommissionCluster);
+        return new CuratorCluster(curator, "/SpokeCluster", false, true, spokeDecommissionCluster);
     }
 
     @Named("SpokeCuratorCluster")
