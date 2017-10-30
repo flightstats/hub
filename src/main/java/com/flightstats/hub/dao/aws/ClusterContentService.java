@@ -28,7 +28,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -140,35 +139,29 @@ public class ClusterContentService implements ContentService {
         if (channel.isSingle()) {
             content = s3SingleContentDao.get(channelName, key);
         } else if (channel.isBatch()) {
-            content = getFromOrderedProviders(channelName, key, Arrays.asList(
-                    spokeReadContentDao::get,
-                    this::getFromS3BatchAndWriteToSpokeBatch));
+            content = spokeReadContentDao.get(channelName, key);
+            if (content == null) {
+                content = getFromS3BatchAndWriteToSpokeBatch(channelName, key);
+            }
         } else {
-            content = getFromOrderedProviders(channelName, key, Arrays.asList(
-                    spokeReadContentDao::get,
-                    s3SingleContentDao::get,
-                    this::getFromS3BatchAndWriteToSpokeBatch));
+            content = spokeReadContentDao.get(channelName, key);
+            if (content == null) {
+                content = s3SingleContentDao.get(channelName, key);
+            }
+            if (content == null) {
+                content = getFromS3BatchAndWriteToSpokeBatch(channelName, key);
+            }
         }
         return checkForLargeIndex(channelName, content);
     }
 
-    private Content getFromOrderedProviders(String channelName, ContentKey key, List<BiFunction<String, ContentKey, Content>> providers) {
-        for (BiFunction<String, ContentKey, Content> provider : providers) {
-            Content content = provider.apply(channelName, key);
-            if (content != null) {
-                return content;
-            }
-        }
-
-        return null;
-    }
-
     private Content getFromS3BatchAndWriteToSpokeBatch(String channelName, ContentKey key) {
         Map<ContentKey, Content> map = s3BatchContentDao.readBatch(channelName, key);
-        Content content = map.get(key);
+        Content content = Content.copy(map.get(key));
 
         try {
-            spokeReadContentDao.insert(BulkContent.fromMap(map));
+            BulkContent bulkContent = BulkContent.fromMap(map);
+            spokeReadContentDao.insert(bulkContent);
         } catch (Exception e) {
             logger.warn("unable to write to batch cache " + channelName + " " + key, e);
         }
