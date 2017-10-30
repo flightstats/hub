@@ -10,11 +10,18 @@ import java.io.File;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Properties;
 
 public class HubProperties {
     private final static Logger logger = LoggerFactory.getLogger(HubProperties.class);
     private static Properties properties = new Properties();
+
+    public static boolean isReadOnly() {
+        String readOnlyNodes = HubProperties.getProperty("hub.read.only", "");
+        return Arrays.asList(readOnlyNodes.split(","))
+                .contains(HubHost.getLocalName());
+    }
 
     public static String getAppUrl() {
         return StringUtils.appendIfMissing(HubProperties.getProperty("app.url", ""), "/");

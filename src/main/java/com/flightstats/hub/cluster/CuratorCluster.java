@@ -28,16 +28,18 @@ public class CuratorCluster implements Cluster {
     private final CuratorFramework curator;
     private final String clusterPath;
     private final boolean useName;
+    private boolean checkReadOnly;
     private DecommissionCluster decommissionCluster;
     private final PathChildrenCache clusterCache;
     private String fullPath;
 
     @Inject
     public CuratorCluster(CuratorFramework curator, String clusterPath, boolean useName,
-                          DecommissionCluster decommissionCluster) throws Exception {
+                          boolean checkReadOnly, DecommissionCluster decommissionCluster) throws Exception {
         this.curator = curator;
         this.clusterPath = clusterPath;
         this.useName = useName;
+        this.checkReadOnly = checkReadOnly;
         this.decommissionCluster = decommissionCluster;
         clusterCache = new PathChildrenCache(curator, clusterPath, true);
         clusterCache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
@@ -61,6 +63,10 @@ public class CuratorCluster implements Cluster {
     }
 
     public void register() throws UnknownHostException {
+        if (checkReadOnly && HubProperties.isReadOnly()) {
+            logger.info("this hub is read only, not registering");
+            return;
+        }
         String host = Cluster.getHost(useName);
         try {
             logger.info("registering host {} {}", host, clusterPath);
