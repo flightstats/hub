@@ -28,16 +28,19 @@ public class RequestUriFilter implements ContainerRequestFilter {
         if (headers.containsKey("X-Forwarded-Host")
                 || headers.containsKey("X-Forwarded-Proto")) {
             String host = getHost(request);
-            int port = getPort(request, host);
-            String scheme = getScheme(request);
+            int port = -1;
+            if (host.contains(":")) {
+                port = Integer.parseInt(StringUtils.substringAfter(host, ":"));
+                host = StringUtils.substringBefore(host, ":");
+            }
             URI baseUri = uriInfo.getBaseUriBuilder()
-                    .scheme(scheme)
                     .host(host)
+                    .scheme(getScheme(request))
                     .port(port)
                     .build();
             URI requestUri = uriInfo.getRequestUriBuilder()
-                    .scheme(scheme)
                     .host(host)
+                    .scheme(getScheme(request))
                     .port(port)
                     .build();
             request.setRequestUri(baseUri, requestUri);
@@ -58,17 +61,6 @@ public class RequestUriFilter implements ContainerRequestFilter {
             host = StringUtils.substringBefore(host, ",");
         }
         return host;
-    }
-
-    private int getPort(ContainerRequestContext request, String host) {
-        String port = request.getHeaderString("X-Forwarded-Port");
-        if (StringUtils.isNotBlank(port)) {
-            return Integer.parseInt(port);
-        }
-        if (host.contains(":")) {
-            return Integer.parseInt(host.split(":")[1]);
-        }
-        return -1;
     }
 
     private String getScheme(ContainerRequestContext request) {
