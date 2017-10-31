@@ -27,15 +27,21 @@ public class RequestUriFilter implements ContainerRequestFilter {
         UriInfo uriInfo = request.getUriInfo();
         if (headers.containsKey("X-Forwarded-Host")
                 || headers.containsKey("X-Forwarded-Proto")) {
+            String host = getHost(request);
+            int port = -1;
+            if (host.contains(":")) {
+                port = Integer.parseInt(StringUtils.substringAfter(host, ":"));
+                host = StringUtils.substringBefore(host, ":");
+            }
             URI baseUri = uriInfo.getBaseUriBuilder()
-                    .host(getHost(request))
+                    .host(host)
                     .scheme(getScheme(request))
-                    .port(-1)
+                    .port(port)
                     .build();
             URI requestUri = uriInfo.getRequestUriBuilder()
-                    .host(getHost(request))
+                    .host(host)
                     .scheme(getScheme(request))
-                    .port(-1)
+                    .port(port)
                     .build();
             request.setRequestUri(baseUri, requestUri);
             logger.trace("new request URI {}", request.getUriInfo().getRequestUri());

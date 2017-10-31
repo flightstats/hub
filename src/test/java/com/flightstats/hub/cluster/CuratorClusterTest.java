@@ -27,7 +27,7 @@ public class CuratorClusterTest {
     @Test
     public void testPath() throws Exception {
         logger.info("starting testPath");
-        CuratorCluster cluster = new CuratorCluster(curator, "/SpokeCluster", false, new SpokeDecommissionCluster(curator));
+        CuratorCluster cluster = new CuratorCluster(curator, "/SpokeCluster", false, true, new SpokeDecommissionCluster(curator));
 
         Collection<String> servers = cluster.getAllServers();
         assertNotNull(servers);
