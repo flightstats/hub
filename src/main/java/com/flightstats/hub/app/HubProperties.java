@@ -32,7 +32,10 @@ public class HubProperties {
     }
 
     public static int getSpokeTtlMinutes(SpokeStore spokeStore) {
-        return getProperty("spoke." + spokeStore + ".ttlMinutes", 60);
+        String property = "spoke." + spokeStore + ".ttlMinutes";
+        String fallbackProperty = "spoke.ttlMinutes";
+        int defaultTTL = 60;
+        return getProperty(property, getProperty(fallbackProperty, defaultTTL));
     }
 
     public static String getAppEnv() {
