@@ -69,7 +69,7 @@ public class LocalWebhookManager {
     }
 
     void stopAllLocal() throws InterruptedException {
-        runAndWait("LocalWebhookManager.stopAll", localLeaders.keySet(), (name) -> stopLocal(name, true));
+        runAndWait("LocalWebhookManager.stopAll", localLeaders.keySet(), (name) -> stopLocal(name, false));
     }
 
     static void runAndWait(String name, Collection<String> keys, Consumer<String> consumer) {

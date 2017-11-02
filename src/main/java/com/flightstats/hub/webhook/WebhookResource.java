@@ -167,11 +167,11 @@ public class WebhookResource {
     static Response deleter(String name) {
         Optional<Webhook> webhookOptional = webhookService.get(name);
         logger.info("delete webhook {}", name);
-        webhookService.delete(name);
         if (!webhookOptional.isPresent()) {
             logger.info("webhook not found for delete {} ", name);
             return Response.status(Response.Status.NOT_FOUND).build();
         }
+        webhookService.delete(name);
         return Response.status(Response.Status.ACCEPTED).build();
     }
 
