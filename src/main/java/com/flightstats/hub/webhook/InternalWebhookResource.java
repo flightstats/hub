@@ -111,7 +111,7 @@ public class InternalWebhookResource {
                 node.put("href", constructWebhookURI(webhook).toString());
                 node.put("callbackUrl", webhook.getCallbackUrl());
                 node.put("channelUrl", webhook.getChannelUrl());
-                WebhookResource.addLatest(webhook, status, node, false);
+                WebhookResource.addLatest(status, node, false);
                 WebhookResource.addErrors(status, node);
             }
         });

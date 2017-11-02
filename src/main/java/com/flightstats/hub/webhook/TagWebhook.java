@@ -44,7 +44,7 @@ public class TagWebhook {
                 .collect(Collectors.toSet());
     }
 
-    private static Set<Webhook> webhookInstancesWithTag(String tag) {
+    static Set<Webhook> webhookInstancesWithTag(String tag) {
         Set<Webhook> webhookSet = new HashSet<>(webhookDao.getAll(false));
 
         return webhookSet.stream()
