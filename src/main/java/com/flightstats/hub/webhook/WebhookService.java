@@ -73,7 +73,7 @@ public class WebhookService {
         return preExisting;
     }
 
-    public Optional<Webhook> upsertTagWebhook(Webhook webhook, Optional<Webhook> preExisting) {
+    private Optional<Webhook> upsertTagWebhook(Webhook webhook, Optional<Webhook> preExisting) {
         webhookDao.upsert(webhook);
         webhookManager.notifyWatchers(webhook);
         TagWebhook.upsertTagWebhookInstances(webhook);
@@ -121,7 +121,7 @@ public class WebhookService {
         webhookManager.delete(name);
     }
 
-    public void updateCursor(Webhook webhook, ContentPath item) {
+    void updateCursor(Webhook webhook, ContentPath item) {
         this.delete(webhook.getName());
         try // wait a few seconds? TODO - something more intelligent?
             {
@@ -131,6 +131,5 @@ public class WebhookService {
                 Thread.currentThread().interrupt();
             }
         this.upsert(webhook.withStartingKey(item));
-        return;
     }
 }
