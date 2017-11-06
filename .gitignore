@@ -4,7 +4,6 @@
 build/
 .gradle/
 *_local.properties
-hub_test_credentials.properties
 integration_config_local.js
 .idea/
 __init__.py
