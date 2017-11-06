@@ -12,7 +12,6 @@ import com.flightstats.hub.metrics.MetricsRunner;
 import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.replication.ReplicationGlobalManager;
 import com.flightstats.hub.rest.*;
-import com.flightstats.hub.spoke.FileSpokeStore;
 import com.flightstats.hub.spoke.GCRunner;
 import com.flightstats.hub.spoke.SpokeClusterRegister;
 import com.flightstats.hub.spoke.SpokeFinalCheck;
