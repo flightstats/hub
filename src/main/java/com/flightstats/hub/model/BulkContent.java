@@ -23,7 +23,12 @@ public class BulkContent {
         this.contentType = contentType;
         this.channel = channel;
         this.masterKey = masterKey;
-        this.items = items;
+
+        if (items == null) {
+            this.items = new ArrayList<>();
+        } else {
+            this.items = items;
+        }
     }
 
     public static BulkContent fromMap(String channelName, Map<ContentKey, Content> map) {
