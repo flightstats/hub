@@ -24,9 +24,6 @@ class SingleHubBindings extends AbstractModule {
     @Override
     protected void configure() {
         bind(ChannelService.class).to(LocalChannelService.class).asEagerSingleton();
-        bind(ContentDao.class)
-                .annotatedWith(Names.named(ContentDao.WRITE_CACHE))
-                .to(SpokeWriteContentDao.class).asEagerSingleton();
         bind(ContentService.class)
                 .to(SingleContentService.class).asEagerSingleton();
         bind(ChannelTtlEnforcer.class).asEagerSingleton();
@@ -37,12 +34,6 @@ class SingleHubBindings extends AbstractModule {
                 .toInstance(new FileSpokeStore(
                         HubProperties.getSpokePath(SpokeStore.WRITE),
                         HubProperties.getSpokeTtlMinutes(SpokeStore.WRITE)));
-
-        bind(FileSpokeStore.class)
-                .annotatedWith(Names.named(SpokeStore.READ.name()))
-                .toInstance(new FileSpokeStore(
-                        HubProperties.getSpokePath(SpokeStore.READ),
-                        HubProperties.getSpokeTtlMinutes(SpokeStore.READ)));
     }
 
     @Inject
