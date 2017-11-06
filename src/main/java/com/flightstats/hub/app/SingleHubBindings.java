@@ -8,31 +8,21 @@ import com.flightstats.hub.dao.file.FileWebhookDao;
 import com.flightstats.hub.dao.file.SingleContentService;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.spoke.ChannelTtlEnforcer;
-import com.flightstats.hub.spoke.FileSpokeStore;
-import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.webhook.Webhook;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
-import com.google.inject.name.Names;
 
 class SingleHubBindings extends AbstractModule {
 
     @Override
     protected void configure() {
         bind(ChannelService.class).to(LocalChannelService.class).asEagerSingleton();
-        bind(ContentService.class)
-                .to(SingleContentService.class).asEagerSingleton();
-        bind(ChannelTtlEnforcer.class).asEagerSingleton();
+        bind(ContentService.class).to(SingleContentService.class).asEagerSingleton();
         bind(DocumentationDao.class).to(FileDocumentationDao.class).asEagerSingleton();
-
-        bind(FileSpokeStore.class)
-                .annotatedWith(Names.named(SpokeStore.WRITE.name()))
-                .toInstance(new FileSpokeStore(
-                        HubProperties.getSpokePath(SpokeStore.WRITE),
-                        HubProperties.getSpokeTtlMinutes(SpokeStore.WRITE)));
+        bind(ChannelTtlEnforcer.class).asEagerSingleton();
     }
 
     @Inject
