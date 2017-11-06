@@ -20,8 +20,8 @@ import java.util.function.Consumer;
 @Singleton
 public class SpokeTtlEnforcer {
     private final static Logger logger = LoggerFactory.getLogger(SpokeTtlEnforcer.class);
-    private String storagePath;
-    private int ttlMinutes;
+    private final String storagePath;
+    private final int ttlMinutes;
 
     @Inject
     private ChannelService channelService;
