@@ -5,6 +5,7 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.dao.LocalChannelService;
 import com.flightstats.hub.model.ChannelConfig;
+import com.google.common.base.Optional;
 import com.google.common.collect.Sets;
 import com.google.inject.TypeLiteral;
 import org.apache.commons.lang3.StringUtils;
@@ -43,7 +44,7 @@ public class TagWebhook {
                 .collect(Collectors.toSet());
     }
 
-    private static Set<Webhook> webhookInstancesWithTag(String tag) {
+    static Set<Webhook> webhookInstancesWithTag(String tag) {
         Set<Webhook> webhookSet = new HashSet<>(webhookDao.getAll(false));
 
         return webhookSet.stream()
@@ -114,16 +115,16 @@ public class TagWebhook {
     }
 
     static void deleteInstancesIfTagWebhook(String webhookName) {
-        com.google.common.base.Optional<Webhook> webhookOptional = webhookService.get(webhookName);
+        Optional<Webhook> webhookOptional = webhookService.get(webhookName);
         if (!webhookOptional.isPresent()) return;
         Webhook webhook = webhookOptional.get();
         if (!webhook.isTagPrototype()) return;
         logger.info("TagWebHook: Deleting tag webhook instances for tag " + webhookName);
 
-        Set<Webhook> taggedWebhooks = webhookInstancesWithTag(webhook.getTagFromTagUrl());
-        for (Webhook twh : taggedWebhooks) {
-            logger.debug("Deleting TagWebhookInstance " + twh.getName());
-            webhookService.delete(twh.getName());
-        }
+        Set<String> names = webhookInstancesWithTag(webhook.getTagFromTagUrl()).stream()
+                .map((Webhook::getName))
+                .collect(Collectors.toSet());
+
+        LocalWebhookManager.runAndWait("TagWebhook.deleteAll", names, webhookService::delete);
     }
 }

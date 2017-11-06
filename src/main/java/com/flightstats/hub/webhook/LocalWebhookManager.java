@@ -1,6 +1,7 @@
 package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.dao.Dao;
+import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -11,12 +12,13 @@ import de.jkeylockmanager.manager.KeyLockManagers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 @Singleton
 public class LocalWebhookManager {
@@ -67,19 +69,27 @@ public class LocalWebhookManager {
     }
 
     void stopAllLocal() throws InterruptedException {
+        runAndWait("LocalWebhookManager.stopAll", localLeaders.keySet(), (name) -> stopLocal(name, false));
+    }
+
+    static void runAndWait(String name, Collection<String> keys, Consumer<String> consumer) {
         ExecutorService pool = Executors.newFixedThreadPool(20,
-                new ThreadFactoryBuilder().setNameFormat("LocalWebhookManager.stopAll-%d").build());
-        Set<String> localKeys = localLeaders.keySet();
-        logger.info("stop all {}", localKeys);
-        for (String name : localKeys) {
+                new ThreadFactoryBuilder().setNameFormat(name + "-%d").build());
+        logger.info("{}", keys);
+        for (String key : keys) {
             pool.submit(() -> {
-                stopLocal(name, false);
+                consumer.accept(key);
             });
         }
-        logger.info("stop all shutdown");
+        logger.info("accepted all ");
         pool.shutdown();
-        boolean awaitTermination = pool.awaitTermination(5, TimeUnit.MINUTES);
-        logger.info("stop all awaitTermination", awaitTermination);
+        try {
+            boolean awaitTermination = pool.awaitTermination(5, TimeUnit.MINUTES);
+            logger.info("awaitTermination", awaitTermination);
+        } catch (InterruptedException e) {
+            logger.warn("interuppted", e);
+            throw new RuntimeInterruptedException(e);
+        }
     }
 
     void stopLocal(String name, boolean delete) {

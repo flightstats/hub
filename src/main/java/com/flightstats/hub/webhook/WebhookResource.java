@@ -20,7 +20,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.util.Collection;
+import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.BiConsumer;
 
 /**
  * WebhookResource represents all of the interactions for Webhook Management.
@@ -45,7 +47,7 @@ public class WebhookResource {
     static Response getWebhooks(String listName, UriInfo uriInfo) {
         try {
             ObjectNode root = mapper.createObjectNode();
-            ObjectNode links = addSelfLink(root, uriInfo);
+            ObjectNode links = addSelfLink(root, uriInfo, false);
             ArrayNode arrayNode = links.putArray(listName);
             Collection<Webhook> webhooks = new TreeSet<>(webhookService.getAll());
             for (Webhook webhook : webhooks) {
@@ -60,10 +62,15 @@ public class WebhookResource {
         }
     }
 
-    private static ObjectNode addSelfLink(ObjectNode root, UriInfo uriInfo) {
+    private static ObjectNode addSelfLink(ObjectNode root, UriInfo uriInfo, boolean includeChildren) {
         ObjectNode links = root.putObject("_links");
-        ObjectNode self = links.putObject("self");
-        self.put("href", uriInfo.getRequestUri().toString());
+        ObjectNode self2 = links.putObject("self");
+        String uri = uriInfo.getRequestUri().toString();
+        self2.put("href", uri);
+        if (includeChildren) {
+            links.putObject("errors").put("href", uri + "/errors");
+            links.putObject("lastCompleted").put("href", uri + "/lastCompleted");
+        }
         return links;
     }
 
@@ -74,7 +81,7 @@ public class WebhookResource {
         return get(name, uriInfo);
     }
 
-    static Response get(String name, UriInfo uriInfo) {
+    static Response getStatus(String name, boolean includeChildren, UriInfo uriInfo, BiConsumer<WebhookStatus, ObjectNode> biConsumer) {
         Optional<Webhook> webhookOptional = webhookService.get(name);
         if (!webhookOptional.isPresent()) {
             logger.info("webhook not found {} ", name);
@@ -83,39 +90,47 @@ public class WebhookResource {
         logger.info("get webhook {} ", name);
         Webhook webhook = webhookOptional.get();
         WebhookStatus status = webhookService.getStatus(webhook);
-        DateTime stable = TimeUtil.stable();
         ObjectNode root = mapper.createObjectNode();
-        addSelfLink(root, uriInfo);
-        root.put("name", webhook.getName());
-        root.put("callbackUrl", webhook.getCallbackUrl());
-        root.put("parallelCalls", webhook.getParallelCalls());
-        root.put("paused", webhook.isPaused());
-        root.put("batch", webhook.getBatch());
-        root.put("heartbeat", webhook.isHeartbeat());
-        root.put("ttlMinutes", webhook.getTtlMinutes());
-        root.put("maxWaitMinutes", webhook.getMaxWaitMinutes());
-        root.put("callbackTimeoutSeconds", webhook.getCallbackTimeoutSeconds());
-        if (webhook.isTagPrototype()) {
-            root.put("tagUrl", webhook.getTagUrl());
-            root.put("isTagPrototype", webhook.isTagPrototype());
-        } else {
-            root.put("channelUrl", webhook.getChannelUrl());
-            addLatest(webhook, status, root, true);
-            TimeLinkUtil.addTime(root, stable, "stableTime");
-            ArrayNode inFlight = root.putArray("inFlight");
-            for (ContentPath contentPath : status.getInFlight()) {
-                inFlight.add(webhook.getChannelUrl() + "/" + contentPath.toUrl());
-            }
-            addErrors(status, root);
-        }
+        addSelfLink(root, uriInfo, includeChildren);
+        biConsumer.accept(status, root);
         return Response.ok(root).build();
+    }
+
+    static Response get(String name, UriInfo uriInfo) {
+        return getStatus(name, true, uriInfo, ((status, root) -> {
+            Webhook webhook = status.getWebhook();
+            DateTime stable = TimeUtil.stable();
+            root.put("name", webhook.getName());
+            root.put("callbackUrl", webhook.getCallbackUrl());
+            root.put("parallelCalls", webhook.getParallelCalls());
+            root.put("paused", webhook.isPaused());
+            root.put("batch", webhook.getBatch());
+            root.put("heartbeat", webhook.isHeartbeat());
+            root.put("ttlMinutes", webhook.getTtlMinutes());
+            root.put("maxWaitMinutes", webhook.getMaxWaitMinutes());
+            root.put("callbackTimeoutSeconds", webhook.getCallbackTimeoutSeconds());
+            if (webhook.isTagPrototype()) {
+                root.put("tagUrl", webhook.getTagUrl());
+                root.put("isTagPrototype", webhook.isTagPrototype());
+            } else {
+                root.put("channelUrl", webhook.getChannelUrl());
+                addLatest(status, root, true);
+                TimeLinkUtil.addTime(root, stable, "stableTime");
+                ArrayNode inFlight = root.putArray("inFlight");
+                for (ContentPath contentPath : status.getInFlight()) {
+                    inFlight.add(webhook.getChannelUrl() + "/" + contentPath.toUrl());
+                }
+                addErrors(status, root);
+            }
+        }));
     }
 
     static void addErrors(WebhookStatus status, ObjectNode root) {
         status.getErrors().forEach(root.putArray("errors")::add);
     }
 
-    static void addLatest(Webhook webhook, WebhookStatus status, ObjectNode root, boolean includeLegacy) {
+    static void addLatest(WebhookStatus status, ObjectNode root, boolean includeLegacy) {
+        Webhook webhook = status.getWebhook();
         if (status.getChannelLatest() == null) {
             root.put("channelLatest", "");
         } else {
@@ -136,6 +151,56 @@ public class WebhookResource {
         Linked.Builder<Webhook> builder = Linked.linked(webhook);
         builder.withLink("self", uriInfo.getRequestUri());
         return builder.build();
+    }
+
+    @Path("/{name}/errors")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getErrors(@PathParam("name") String name) {
+        return getStatus(name, false, uriInfo, ((status, root) -> {
+            Webhook webhook = status.getWebhook();
+            ArrayNode errorsNode = root.putArray("errors");
+            if (webhook.isTagPrototype()) {
+                String tag = RequestUtils.getTag(webhook.getTagUrl());
+                Set<Webhook> tagWebhooks = TagWebhook.webhookInstancesWithTag(tag);
+                for (Webhook tagWebhook : tagWebhooks) {
+                    addError(webhookService.getStatus(tagWebhook), errorsNode);
+                }
+            } else {
+                addError(status, errorsNode);
+            }
+        }));
+    }
+
+    private void addError(WebhookStatus status, ArrayNode nodes) {
+        ObjectNode oneNode = nodes.addObject();
+        oneNode.put("name", status.getWebhook().getName());
+        addErrors(status, oneNode);
+    }
+
+    @Path("/{name}/lastCompleted")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getLastCompleted(@PathParam("name") String name) {
+        return getStatus(name, false, uriInfo, ((status, root) -> {
+            Webhook webhook = status.getWebhook();
+            ArrayNode lastCompleted = root.putArray("lastCompleted");
+            if (webhook.isTagPrototype()) {
+                String tag = RequestUtils.getTag(webhook.getTagUrl());
+                Set<Webhook> tagWebhooks = TagWebhook.webhookInstancesWithTag(tag);
+                for (Webhook tagWebhook : tagWebhooks) {
+                    addLatest(webhookService.getStatus(tagWebhook), lastCompleted);
+                }
+            } else {
+                addLatest(status, lastCompleted);
+            }
+        }));
+    }
+
+    private void addLatest(WebhookStatus status, ArrayNode nodes) {
+        ObjectNode oneNode = nodes.addObject();
+        oneNode.put("name", status.getWebhook().getName());
+        addLatest(status, oneNode, false);
     }
 
     @Path("/{name}")
@@ -167,11 +232,11 @@ public class WebhookResource {
     static Response deleter(String name) {
         Optional<Webhook> webhookOptional = webhookService.get(name);
         logger.info("delete webhook {}", name);
-        webhookService.delete(name);
         if (!webhookOptional.isPresent()) {
             logger.info("webhook not found for delete {} ", name);
             return Response.status(Response.Status.NOT_FOUND).build();
         }
+        webhookService.delete(name);
         return Response.status(Response.Status.ACCEPTED).build();
     }
 
