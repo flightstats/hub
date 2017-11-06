@@ -2,9 +2,11 @@ require('../integration_config');
 
 var request = require('request');
 var channelName = utils.randomChannelName();
+var jsonBody = JSON.stringify({ "name": channelName});
 var channelResource = channelUrl + "/" + channelName;
+var testName = "channel_deletion_basic_spec";
 
-describe(__filename, function () {
+describe(testName, function () {
     utils.createChannel(channelName);
 
     it("deletes channel " + channelName, function (done) {
