@@ -23,6 +23,7 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -156,17 +157,24 @@ public class ClusterContentService implements ContentService {
     }
 
     private Content getFromS3BatchAndWriteToSpokeBatch(String channelName, ContentKey key) {
-        Map<ContentKey, Content> map = s3BatchContentDao.readBatch(channelName, key);
-        Content content = Content.copy(map.get(key));
+        try {
+            Map<ContentKey, Content> map = s3BatchContentDao.readBatch(channelName, key);
+            Content content = Content.copy(map.get(key));
+            cacheBatch(channelName, map);
+            return content;
+        } catch (IOException e) {
+            logger.warn("unable to get batch from long term storage", e);
+            return null;
+        }
+    }
 
+    private void cacheBatch(String channelName, Map<ContentKey, Content> map) {
         try {
             BulkContent bulkContent = BulkContent.fromMap(channelName, map);
             spokeReadContentDao.insert(bulkContent);
         } catch (Exception e) {
-            logger.warn("unable to write to batch cache " + channelName + " " + key, e);
+            logger.warn("unable to cache batch", e);
         }
-
-        return content;
     }
 
     private Optional<Content> checkForLargeIndex(String channelName, Content content) {

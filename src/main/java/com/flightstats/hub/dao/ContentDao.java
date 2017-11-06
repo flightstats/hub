@@ -4,6 +4,7 @@ import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
 import com.google.common.base.Optional;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.SortedSet;
@@ -41,7 +42,7 @@ public interface ContentDao {
         throw new UnsupportedOperationException("writeBatch is not supported");
     }
 
-    default Map<ContentKey, Content> readBatch(String channelName, ContentKey key) {
+    default Map<ContentKey, Content> readBatch(String channelName, ContentKey key) throws IOException {
         throw new UnsupportedOperationException("readBatch is not supported");
     }
 

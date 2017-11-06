@@ -96,14 +96,9 @@ public class S3BatchContentDao implements ContentDao {
     }
 
     @Override
-    public Map<ContentKey, Content> readBatch(String channelName, ContentKey key) {
-        try {
-            MinutePath minutePath = new MinutePath(key.getTime());
-            return mapMinute(channelName, minutePath);
-        } catch (IOException e) {
-            logger.warn("unable to read batch " + channelName + " " + key, e);
-            return null;
-        }
+    public Map<ContentKey, Content> readBatch(String channelName, ContentKey key) throws IOException {
+        MinutePath minutePath = new MinutePath(key.getTime());
+        return mapMinute(channelName, minutePath);
     }
 
     private Map<ContentKey, Content> mapMinute(String channel, MinutePath minutePath) throws IOException {
