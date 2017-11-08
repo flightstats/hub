@@ -8,7 +8,7 @@ RUN apk add --no-cache \
     su-exec
 
 ENV ZOO_USER=zookeeper \
-    ZOO_UID=2000
+    ZOO_UID=2000 \
     ZOO_CONF_DIR=/conf \
     ZOO_DATA_DIR=/data \
     ZOO_DATA_LOG_DIR=/datalog \
@@ -30,6 +30,7 @@ RUN set -ex; \
         gnupg; \
     wget -q "http://www.apache.org/dist/zookeeper/$DISTRO_NAME/$DISTRO_NAME.tar.gz"; \
     wget -q "http://www.apache.org/dist/zookeeper/$DISTRO_NAME/$DISTRO_NAME.tar.gz.asc"; \
+    # GPG Verification is disabled as the file is actually just a tar archive.
     # export GNUPGHOME="$(mktemp -d)"; \
     # gpg --keyserver ha.pool.sks-keyservers.net --recv-key "$GPG_KEY" || \
     # gpg --keyserver pgp.mit.edu --recv-keys "$GPG_KEY" || \
