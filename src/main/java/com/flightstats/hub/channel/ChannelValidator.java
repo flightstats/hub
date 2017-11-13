@@ -14,12 +14,9 @@ import org.apache.commons.lang3.StringUtils;
 
 public class ChannelValidator {
     public static final String VALID_NAME = "^[a-zA-Z0-9_-]+$";
-    private final ChannelService channelService;
 
     @Inject
-    public ChannelValidator(ChannelService channelService) {
-        this.channelService = channelService;
-    }
+    private ChannelService channelService;
 
     public void validate(ChannelConfig config, ChannelConfig oldConfig, boolean isLocalHost) throws InvalidRequestException, ConflictException {
         Optional<String> channelNameOptional = Optional.absent();
