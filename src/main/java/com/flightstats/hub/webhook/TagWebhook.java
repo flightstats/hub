@@ -3,7 +3,6 @@ package com.flightstats.hub.webhook;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Dao;
-import com.flightstats.hub.dao.LocalChannelService;
 import com.flightstats.hub.model.ChannelConfig;
 import com.google.common.base.Optional;
 import com.google.common.collect.Sets;
@@ -31,7 +30,7 @@ import java.util.stream.Collectors;
 public class TagWebhook {
     private final static Logger logger = LoggerFactory.getLogger(WebhookResource.class);
     private final static WebhookService webhookService = HubProvider.getInstance(WebhookService.class);
-    private final static ChannelService channelService = HubProvider.getInstance(LocalChannelService.class);
+    private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
     private final static Dao<Webhook> webhookDao = HubProvider.getInstance(
             new TypeLiteral<Dao<Webhook>>() {
             }, "Webhook");

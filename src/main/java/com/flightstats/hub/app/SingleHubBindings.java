@@ -21,7 +21,6 @@ class SingleHubBindings extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(ChannelService.class).to(LocalChannelService.class).asEagerSingleton();
         bind(ContentDao.class)
                 .annotatedWith(Names.named(ContentDao.CACHE))
                 .to(SpokeContentDao.class).asEagerSingleton();

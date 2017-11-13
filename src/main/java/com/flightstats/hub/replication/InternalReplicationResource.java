@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.cluster.LastContentPath;
-import com.flightstats.hub.dao.LocalChannelService;
+import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.rest.RestClient;
@@ -25,7 +25,7 @@ public class InternalReplicationResource {
     private final static Logger logger = LoggerFactory.getLogger(InternalReplicationResource.class);
 
     private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private static final LocalChannelService localChannelService = HubProvider.getInstance(LocalChannelService.class);
+    private static final ChannelService channelService = HubProvider.getInstance(ChannelService.class);
     private static final LastContentPath lastReplicated = HubProvider.getInstance(LastContentPath.class);
     private static final HubUtils hubUtils = HubProvider.getInstance(HubUtils.class);
 
@@ -50,7 +50,7 @@ public class InternalReplicationResource {
                     }
                 }
             }
-            lastReplicated.updateIncrease(path, channel, LocalChannelService.REPLICATED_LAST_UPDATED);
+            lastReplicated.updateIncrease(path, channel, ChannelService.REPLICATED_LAST_UPDATED);
             logger.trace("handled {} {} ", channel, uris);
             return Response.ok().build();
         } catch (Exception e) {
@@ -70,7 +70,7 @@ public class InternalReplicationResource {
                     try {
                         Content content = hubUtils.createContent(uri, response, false);
                         content.replicated();
-                        ContentKey inserted = localChannelService.insert(channel, content);
+                        ContentKey inserted = channelService.insert(channel, content);
                         if (inserted == null) {
                             logger.warn("unable to process {} {}", channel, uri);
                             return null;
@@ -128,7 +128,7 @@ public class InternalReplicationResource {
                     .channel(channel)
                     .isNew(false)
                     .build();
-            localChannelService.insert(bulkContent);
+            channelService.insert(bulkContent);
         } finally {
             HubUtils.close(response);
         }
