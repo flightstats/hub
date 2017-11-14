@@ -7,6 +7,7 @@ import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.GlobalConfig;
 import com.flightstats.hub.util.TimeUtil;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
@@ -17,6 +18,14 @@ public class ChannelValidator {
 
     @Inject
     private ChannelService channelService;
+
+    // required for Guice
+    ChannelValidator() {}
+
+    @VisibleForTesting
+    ChannelValidator(ChannelService channelService) {
+        this.channelService = channelService;
+    }
 
     public void validate(ChannelConfig config, ChannelConfig oldConfig, boolean isLocalHost) throws InvalidRequestException, ConflictException {
         Optional<String> channelNameOptional = Optional.absent();
