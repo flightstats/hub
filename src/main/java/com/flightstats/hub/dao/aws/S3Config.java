@@ -1,7 +1,7 @@
 package com.flightstats.hub.dao.aws;
 
-import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.BucketLifecycleConfiguration;
+import com.amazonaws.services.s3.model.SetBucketLifecycleConfigurationRequest;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.CuratorLock;
@@ -28,16 +28,14 @@ import java.util.concurrent.TimeUnit;
 public class S3Config {
     private final static Logger logger = LoggerFactory.getLogger(S3Config.class);
 
-    private final AmazonS3 s3Client;
     private final CuratorLock curatorLock;
     private final Dao<ChannelConfig> channelConfigDao;
     private final String s3BucketName;
     private ChannelService channelService;
 
     @Inject
-    public S3Config(AmazonS3 s3Client, S3BucketName s3BucketName, CuratorLock curatorLock,
+    public S3Config(S3BucketName s3BucketName, CuratorLock curatorLock,
                     @Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao, ChannelService channelService) {
-        this.s3Client = s3Client;
         this.curatorLock = curatorLock;
         this.channelConfigDao = channelConfigDao;
         this.channelService = channelService;
@@ -154,7 +152,8 @@ public class S3Config {
 
             if (!rules.isEmpty()) {
                 BucketLifecycleConfiguration lifecycleConfig = new BucketLifecycleConfiguration(rules);
-                s3Client.setBucketLifecycleConfiguration(s3BucketName, lifecycleConfig);
+                SetBucketLifecycleConfigurationRequest request = new SetBucketLifecycleConfigurationRequest(s3BucketName, lifecycleConfig);
+                S3ClientWithMetrics.setBucketLifecycleConfiguration(request);
             }
             ActiveTraces.end();
         }

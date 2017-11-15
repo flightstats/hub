@@ -1,8 +1,8 @@
 package com.flightstats.hub.dao.aws;
 
-import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.DeleteObjectRequest;
+import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
@@ -24,15 +24,14 @@ public class S3DocumentationDao implements DocumentationDao {
     private final static Logger logger = LoggerFactory.getLogger(S3DocumentationDao.class);
 
     @Inject
-    private AmazonS3 s3Client;
-    @Inject
     private S3BucketName s3BucketName;
 
     @Override
     public String get(String channel) {
         logger.trace("getting documentation for channel {}", channel);
         String key = buildS3Key(channel);
-        try (S3Object object = s3Client.getObject(s3BucketName.getS3BucketName(), key)) {
+        GetObjectRequest request = new GetObjectRequest(s3BucketName.getS3BucketName(), key);
+        try (S3Object object = S3ClientWithMetrics.getObject(request)) {
             byte[] bytes = ByteStreams.toByteArray(object.getObjectContent());
             return (isCompressed(object)) ? new String(decompress(bytes)) : new String(bytes);
         } catch (AmazonS3Exception e) {
@@ -80,7 +79,7 @@ public class S3DocumentationDao implements DocumentationDao {
             metadata.setContentType("text/plain");
             metadata.setContentLength(bytes.length);
             PutObjectRequest request = new PutObjectRequest(bucket, key, stream, metadata);
-            s3Client.putObject(request);
+            S3ClientWithMetrics.putObject(request);
             return true;
         } catch (AmazonS3Exception e) {
             logger.error("unable to write to " + key, e);
@@ -95,7 +94,7 @@ public class S3DocumentationDao implements DocumentationDao {
         logger.trace("deleting documentation for {}", channel);
         try {
             DeleteObjectRequest request = new DeleteObjectRequest(bucket, key);
-            s3Client.deleteObject(request);
+            S3ClientWithMetrics.deleteObject(request);
             return true;
         } catch (AmazonS3Exception e) {
             logger.error("unable to delete " + key, e);

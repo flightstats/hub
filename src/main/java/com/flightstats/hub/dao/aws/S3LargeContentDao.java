@@ -80,7 +80,7 @@ public class S3LargeContentDao implements ContentDao {
         try {
             ObjectMetadata metadata = S3SingleContentDao.createObjectMetadata(content, useEncrypted);
             InitiateMultipartUploadRequest initRequest = new InitiateMultipartUploadRequest(name, s3Key, metadata);
-            InitiateMultipartUploadResult initResponse = s3Client.initiateMultipartUpload(initRequest);
+            InitiateMultipartUploadResult initResponse = S3ClientWithMetrics.initiateMultipartUpload(initRequest);
             uploadId = initResponse.getUploadId();
             ChunkOutputStream outputStream = new ChunkOutputStream(content.getThreads(), chunk -> {
                 try {
@@ -94,7 +94,7 @@ public class S3LargeContentDao implements ContentDao {
                             .withPartNumber(chunk.getCount())
                             .withInputStream(bais)
                             .withPartSize(bytes.length);
-                    UploadPartResult uploadPart = s3Client.uploadPart(uploadRequest);
+                    UploadPartResult uploadPart = S3ClientWithMetrics.uploadPart(uploadRequest);
                     partETags.add(uploadPart.getPartETag());
                     logger.info("wrote chunk {} {} {}", s3Key, chunk.getCount(), bytes.length);
                     return "ok";
@@ -110,7 +110,7 @@ public class S3LargeContentDao implements ContentDao {
             logger.info("before complete key {} with {} parts", s3Key, partETags.size());
             outputStream.close();
             CompleteMultipartUploadRequest compRequest = new CompleteMultipartUploadRequest(name, s3Key, uploadId, partETags);
-            s3Client.completeMultipartUpload(compRequest);
+            S3ClientWithMetrics.completeMultipartUpload(compRequest);
             S3ResponseMetadata completedMetaData = s3Client.getCachedResponseMetadata(compRequest);
             logger.info("completed key {} request id {} with {} parts", s3Key, completedMetaData.getRequestId(), partETags.size());
             completed = true;
@@ -131,7 +131,8 @@ public class S3LargeContentDao implements ContentDao {
                     delete(channelName, key);
                 } else {
                     logger.warn("aborting multipart " + channelName + " " + key, e);
-                    s3Client.abortMultipartUpload(new AbortMultipartUploadRequest(name, s3Key, uploadId));
+                    AbortMultipartUploadRequest request = new AbortMultipartUploadRequest(name, s3Key, uploadId);
+                    S3ClientWithMetrics.abortMultipartUpload(request);
                 }
             }
             throw new RuntimeException(e);
@@ -142,7 +143,7 @@ public class S3LargeContentDao implements ContentDao {
 
     private long getLength(String s3Key, String name) throws IOException {
         GetObjectRequest request = new GetObjectRequest(name, s3Key);
-        try (S3Object object = s3Client.getObject(request)) {
+        try (S3Object object = S3ClientWithMetrics.getObject(request)) {
             ObjectMetadata metadata = object.getObjectMetadata();
             long contentLength = metadata.getContentLength();
             S3ResponseMetadata responseMetadata = s3Client.getCachedResponseMetadata(request);
@@ -158,7 +159,8 @@ public class S3LargeContentDao implements ContentDao {
     @Override
     public void delete(String channelName, ContentKey key) {
         String s3ContentKey = getS3ContentKey(channelName, key, false);
-        s3Client.deleteObject(s3BucketName.getS3BucketName(), s3ContentKey);
+        DeleteObjectRequest request = new DeleteObjectRequest(s3BucketName.getS3BucketName(), s3ContentKey);
+        S3ClientWithMetrics.deleteObject(request);
         ActiveTraces.getLocal().add("S3largeContentDao.deleted", s3ContentKey);
     }
 
@@ -185,7 +187,8 @@ public class S3LargeContentDao implements ContentDao {
     private Content getS3Object(String channelName, ContentKey key) throws IOException {
         long start = System.currentTimeMillis();
         try {
-            S3Object object = s3Client.getObject(s3BucketName.getS3BucketName(), getS3ContentKey(channelName, key, false));
+            GetObjectRequest request = new GetObjectRequest(s3BucketName.getS3BucketName(), getS3ContentKey(channelName, key, false));
+            S3Object object = S3ClientWithMetrics.getObject(request);
             ObjectMetadata metadata = object.getObjectMetadata();
             Map<String, String> userData = metadata.getUserMetadata();
             Content.Builder builder = Content.builder();

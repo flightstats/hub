@@ -70,7 +70,7 @@ class S3Util {
         ListObjectsRequest request = new ListObjectsRequest();
         request.withBucketName(s3BucketName);
         request.withPrefix(channelPath);
-        ObjectListing listing = s3Client.listObjects(request);
+        ObjectListing listing = S3ClientWithMetrics.listObjects(request);
         List<DeleteObjectsRequest.KeyVersion> keys = new ArrayList<>();
         for (S3ObjectSummary objectSummary : listing.getObjectSummaries()) {
             ContentPath contentKey = ContentPath.fromUrl(StringUtils.substringAfter(objectSummary.getKey(), channelPath)).get();
@@ -84,7 +84,7 @@ class S3Util {
         DeleteObjectsRequest multiObjectDeleteRequest = new DeleteObjectsRequest(s3BucketName);
         multiObjectDeleteRequest.setKeys(keys);
         try {
-            s3Client.deleteObjects(multiObjectDeleteRequest);
+            S3ClientWithMetrics.deleteObjects(multiObjectDeleteRequest);
             logger.info("deleting more from " + channelPath + " deleted " + keys.size());
             ActiveTraces.getLocal().add("S3Util.internalDelete", channelPath, keys.size());
         } catch (MultiObjectDeleteException e) {

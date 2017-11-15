@@ -131,7 +131,8 @@ public class S3BatchContentDao implements ContentDao {
         ActiveTraces.getLocal().add("S3BatchContentDao.getZipInputStream");
         long start = System.currentTimeMillis();
         try {
-            S3Object object = s3Client.getObject(s3BucketName.getS3BucketName(), getS3BatchItemsKey(channel, minutePath));
+            GetObjectRequest request = new GetObjectRequest(s3BucketName.getS3BucketName(), getS3BatchItemsKey(channel, minutePath));
+            S3Object object = S3ClientWithMetrics.getObject(request);
             return new ZipInputStream(new BufferedInputStream(object.getObjectContent()));
         } finally {
             metricsService.time(channel, "s3.get", start, "type:batch");
@@ -249,7 +250,8 @@ public class S3BatchContentDao implements ContentDao {
 
     private void getKeysForMinute(String channel, MinutePath minutePath, Traces traces, Consumer<JsonNode> itemNodeConsumer) {
         long start = System.currentTimeMillis();
-        try (S3Object object = s3Client.getObject(s3BucketName.getS3BucketName(), getS3BatchIndexKey(channel, minutePath))) {
+        GetObjectRequest request = new GetObjectRequest(s3BucketName.getS3BucketName(), getS3BatchIndexKey(channel, minutePath));
+        try (S3Object object = S3ClientWithMetrics.getObject(request)) {
             byte[] bytes = ByteStreams.toByteArray(object.getObjectContent());
             JsonNode root = mapper.readTree(bytes);
             JsonNode items = root.get("items");
@@ -330,7 +332,7 @@ public class S3BatchContentDao implements ContentDao {
         SortedSet<MinutePath> paths = new TreeSet<>();
         traces.add("S3BatchContentDao.listMinutePaths ", request.getPrefix(), request.getMarker(), iterate);
         long start = System.currentTimeMillis();
-        ObjectListing listing = s3Client.listObjects(request);
+        ObjectListing listing = S3ClientWithMetrics.listObjects(request);
         metricsService.time(channel, "s3.list", start, "type:batch");
         List<S3ObjectSummary> summaries = listing.getObjectSummaries();
         for (S3ObjectSummary summary : summaries) {
@@ -425,7 +427,7 @@ public class S3BatchContentDao implements ContentDao {
                 metadata.setSSEAlgorithm(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
             }
             PutObjectRequest request = new PutObjectRequest(s3BucketName.getS3BucketName(), batchIndexKey, stream, metadata);
-            s3Client.putObject(request);
+            S3ClientWithMetrics.putObject(request);
         } finally {
             metricsService.time(channel, "s3.put", start, bytes.length, "type:batch");
         }
