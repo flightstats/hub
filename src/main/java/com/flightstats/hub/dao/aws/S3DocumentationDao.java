@@ -27,14 +27,14 @@ public class S3DocumentationDao implements DocumentationDao {
     private S3BucketName s3BucketName;
 
     @Inject
-    private S3ClientWithMetrics s3ClientWithMetrics;
+    private HubS3Client s3Client;
 
     @Override
     public String get(String channel) {
         logger.trace("getting documentation for channel {}", channel);
         String key = buildS3Key(channel);
         GetObjectRequest request = new GetObjectRequest(s3BucketName.getS3BucketName(), key);
-        try (S3Object object = s3ClientWithMetrics.getObject(request)) {
+        try (S3Object object = s3Client.getObject(request)) {
             byte[] bytes = ByteStreams.toByteArray(object.getObjectContent());
             return (isCompressed(object)) ? new String(decompress(bytes)) : new String(bytes);
         } catch (AmazonS3Exception e) {
@@ -82,7 +82,7 @@ public class S3DocumentationDao implements DocumentationDao {
             metadata.setContentType("text/plain");
             metadata.setContentLength(bytes.length);
             PutObjectRequest request = new PutObjectRequest(bucket, key, stream, metadata);
-            s3ClientWithMetrics.putObject(request);
+            s3Client.putObject(request);
             return true;
         } catch (AmazonS3Exception e) {
             logger.error("unable to write to " + key, e);
@@ -97,7 +97,7 @@ public class S3DocumentationDao implements DocumentationDao {
         logger.trace("deleting documentation for {}", channel);
         try {
             DeleteObjectRequest request = new DeleteObjectRequest(bucket, key);
-            s3ClientWithMetrics.deleteObject(request);
+            s3Client.deleteObject(request);
             return true;
         } catch (AmazonS3Exception e) {
             logger.error("unable to delete " + key, e);

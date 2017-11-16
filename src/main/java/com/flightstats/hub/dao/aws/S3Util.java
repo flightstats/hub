@@ -1,6 +1,5 @@
 package com.flightstats.hub.dao.aws;
 
-import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentKeyUtil;
@@ -23,16 +22,6 @@ import java.util.TreeSet;
 class S3Util {
 
     private final static Logger logger = LoggerFactory.getLogger(S3Util.class);
-
-    public static void initialize(String s3BucketName, AmazonS3 s3Client) {
-        logger.info("checking if bucket exists " + s3BucketName);
-        if (s3Client.doesBucketExist(s3BucketName)) {
-            logger.info("bucket exists " + s3BucketName);
-            return;
-        }
-        logger.error("EXITING! unable to find bucket " + s3BucketName);
-        throw new RuntimeException("unable to find bucket " + s3BucketName);
-    }
 
     static SortedSet<ContentKey> queryPrevious(DirectionQuery query, ContentDao dao) {
         DateTime endTime = query.getStartKey().getTime();
@@ -59,14 +48,14 @@ class S3Util {
         return keys;
     }
 
-    public static void delete(String channelPath, ContentKey limitKey, String s3BucketName, S3ClientWithMetrics s3Client) {
+    public static void delete(String channelPath, ContentKey limitKey, String s3BucketName, HubS3Client s3Client) {
         //noinspection StatementWithEmptyBody
         while (internalDelete(channelPath, limitKey, s3BucketName, s3Client)) {
         }
         internalDelete(channelPath, limitKey, s3BucketName, s3Client);
     }
 
-    private static boolean internalDelete(String channelPath, ContentKey limitKey, String s3BucketName, S3ClientWithMetrics s3Client) {
+    private static boolean internalDelete(String channelPath, ContentKey limitKey, String s3BucketName, HubS3Client s3Client) {
         ListObjectsRequest request = new ListObjectsRequest();
         request.withBucketName(s3BucketName);
         request.withPrefix(channelPath);

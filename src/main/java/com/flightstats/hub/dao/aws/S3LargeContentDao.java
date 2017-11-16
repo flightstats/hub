@@ -1,6 +1,5 @@
 package com.flightstats.hub.dao.aws;
 
-import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.S3ResponseMetadata;
 import com.amazonaws.services.s3.model.*;
 import com.flightstats.hub.app.HubProperties;
@@ -39,14 +38,12 @@ public class S3LargeContentDao implements ContentDao {
     @Inject
     private MetricsService metricsService;
     @Inject
-    private AmazonS3 s3Client;
-    @Inject
-    private S3ClientWithMetrics s3ClientWithMetrics;
+    private HubS3Client s3Client;
     @Inject
     private S3BucketName s3BucketName;
 
     @java.beans.ConstructorProperties({"metricsService", "s3Client", "s3BucketName"})
-    public S3LargeContentDao(MetricsService metricsService, AmazonS3 s3Client, S3BucketName s3BucketName) {
+    public S3LargeContentDao(MetricsService metricsService, HubS3Client s3Client, S3BucketName s3BucketName) {
         this.metricsService = metricsService;
         this.s3Client = s3Client;
         this.s3BucketName = s3BucketName;
@@ -60,7 +57,7 @@ public class S3LargeContentDao implements ContentDao {
     }
 
     public void initialize() {
-        S3Util.initialize(s3BucketName.getS3BucketName(), s3Client);
+        s3Client.initialize();
     }
 
     @Override
@@ -82,7 +79,7 @@ public class S3LargeContentDao implements ContentDao {
         try {
             ObjectMetadata metadata = S3SingleContentDao.createObjectMetadata(content, useEncrypted);
             InitiateMultipartUploadRequest initRequest = new InitiateMultipartUploadRequest(name, s3Key, metadata);
-            InitiateMultipartUploadResult initResponse = s3ClientWithMetrics.initiateMultipartUpload(initRequest);
+            InitiateMultipartUploadResult initResponse = s3Client.initiateMultipartUpload(initRequest);
             uploadId = initResponse.getUploadId();
             ChunkOutputStream outputStream = new ChunkOutputStream(content.getThreads(), chunk -> {
                 try {
@@ -96,7 +93,7 @@ public class S3LargeContentDao implements ContentDao {
                             .withPartNumber(chunk.getCount())
                             .withInputStream(bais)
                             .withPartSize(bytes.length);
-                    UploadPartResult uploadPart = s3ClientWithMetrics.uploadPart(uploadRequest);
+                    UploadPartResult uploadPart = s3Client.uploadPart(uploadRequest);
                     partETags.add(uploadPart.getPartETag());
                     logger.info("wrote chunk {} {} {}", s3Key, chunk.getCount(), bytes.length);
                     return "ok";
@@ -112,7 +109,7 @@ public class S3LargeContentDao implements ContentDao {
             logger.info("before complete key {} with {} parts", s3Key, partETags.size());
             outputStream.close();
             CompleteMultipartUploadRequest compRequest = new CompleteMultipartUploadRequest(name, s3Key, uploadId, partETags);
-            s3ClientWithMetrics.completeMultipartUpload(compRequest);
+            s3Client.completeMultipartUpload(compRequest);
             S3ResponseMetadata completedMetaData = s3Client.getCachedResponseMetadata(compRequest);
             logger.info("completed key {} request id {} with {} parts", s3Key, completedMetaData.getRequestId(), partETags.size());
             completed = true;
@@ -134,7 +131,7 @@ public class S3LargeContentDao implements ContentDao {
                 } else {
                     logger.warn("aborting multipart " + channelName + " " + key, e);
                     AbortMultipartUploadRequest request = new AbortMultipartUploadRequest(name, s3Key, uploadId);
-                    s3ClientWithMetrics.abortMultipartUpload(request);
+                    s3Client.abortMultipartUpload(request);
                 }
             }
             throw new RuntimeException(e);
@@ -145,7 +142,7 @@ public class S3LargeContentDao implements ContentDao {
 
     private long getLength(String s3Key, String name) throws IOException {
         GetObjectRequest request = new GetObjectRequest(name, s3Key);
-        try (S3Object object = s3ClientWithMetrics.getObject(request)) {
+        try (S3Object object = s3Client.getObject(request)) {
             ObjectMetadata metadata = object.getObjectMetadata();
             long contentLength = metadata.getContentLength();
             S3ResponseMetadata responseMetadata = s3Client.getCachedResponseMetadata(request);
@@ -162,7 +159,7 @@ public class S3LargeContentDao implements ContentDao {
     public void delete(String channelName, ContentKey key) {
         String s3ContentKey = getS3ContentKey(channelName, key, false);
         DeleteObjectRequest request = new DeleteObjectRequest(s3BucketName.getS3BucketName(), s3ContentKey);
-        s3ClientWithMetrics.deleteObject(request);
+        s3Client.deleteObject(request);
         ActiveTraces.getLocal().add("S3largeContentDao.deleted", s3ContentKey);
     }
 
@@ -190,7 +187,7 @@ public class S3LargeContentDao implements ContentDao {
         long start = System.currentTimeMillis();
         try {
             GetObjectRequest request = new GetObjectRequest(s3BucketName.getS3BucketName(), getS3ContentKey(channelName, key, false));
-            S3Object object = s3ClientWithMetrics.getObject(request);
+            S3Object object = s3Client.getObject(request);
             ObjectMetadata metadata = object.getObjectMetadata();
             Map<String, String> userData = metadata.getUserMetadata();
             Content.Builder builder = Content.builder();
@@ -231,7 +228,7 @@ public class S3LargeContentDao implements ContentDao {
     @Override
     public void deleteBefore(String channel, ContentKey limitKey) {
         try {
-            S3Util.delete(channel + "/large/", limitKey, s3BucketName.getS3BucketName(), s3ClientWithMetrics);
+            S3Util.delete(channel + "/large/", limitKey, s3BucketName.getS3BucketName(), s3Client);
             logger.info("completed deletion of " + channel);
         } catch (Exception e) {
             logger.warn("unable to delete " + channel + " in " + s3BucketName.getS3BucketName(), e);
@@ -258,7 +255,7 @@ public class S3LargeContentDao implements ContentDao {
 
     public static class S3LargeContentDaoBuilder {
         private MetricsService metricsService;
-        private AmazonS3 s3Client;
+        private HubS3Client s3Client;
         private S3BucketName s3BucketName;
 
         S3LargeContentDaoBuilder() {
@@ -269,7 +266,7 @@ public class S3LargeContentDao implements ContentDao {
             return this;
         }
 
-        public S3LargeContentDao.S3LargeContentDaoBuilder s3Client(AmazonS3 s3Client) {
+        public S3LargeContentDao.S3LargeContentDaoBuilder s3Client(HubS3Client s3Client) {
             this.s3Client = s3Client;
             return this;
         }

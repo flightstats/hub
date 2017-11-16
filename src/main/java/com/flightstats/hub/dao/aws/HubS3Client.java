@@ -2,6 +2,7 @@ package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.SdkClientException;
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.S3ResponseMetadata;
 import com.amazonaws.services.s3.model.AbortMultipartUploadRequest;
 import com.amazonaws.services.s3.model.CompleteMultipartUploadRequest;
 import com.amazonaws.services.s3.model.CompleteMultipartUploadResult;
@@ -21,18 +22,36 @@ import com.amazonaws.services.s3.model.UploadPartRequest;
 import com.amazonaws.services.s3.model.UploadPartResult;
 import com.flightstats.hub.metrics.MetricsService;
 import com.google.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class S3ClientWithMetrics {
+public class HubS3Client {
+
+    private final static Logger logger = LoggerFactory.getLogger(HubS3Client.class);
 
     @Inject
     private AmazonS3 s3Client;
 
     @Inject
     private MetricsService metricsService;
+
+    @Inject
+    private S3BucketName s3BucketName;
+
+    public void initialize() {
+        String bucketName = s3BucketName.getS3BucketName();
+        logger.info("checking if bucket exists " + bucketName);
+        if (s3Client.doesBucketExist(bucketName)) {
+            logger.info("bucket exists " + bucketName);
+            return;
+        }
+        logger.error("EXITING! unable to find bucket " + bucketName);
+        throw new RuntimeException("unable to find bucket " + bucketName);
+    }
 
     InitiateMultipartUploadResult initiateMultipartUpload(InitiateMultipartUploadRequest request) {
         try {
@@ -129,5 +148,13 @@ public class S3ClientWithMetrics {
             metricsService.count("s3.error", 1, "exception:" + e.getClass().getCanonicalName(), "method:setBucketLifecycleConfiguration", "bucket:" + request.getBucketName());
             throw e;
         }
+    }
+
+    S3ResponseMetadata getCachedResponseMetadata(CompleteMultipartUploadRequest request) {
+        return s3Client.getCachedResponseMetadata(request);
+    }
+
+    S3ResponseMetadata getCachedResponseMetadata(GetObjectRequest request) {
+        return s3Client.getCachedResponseMetadata(request);
     }
 }
