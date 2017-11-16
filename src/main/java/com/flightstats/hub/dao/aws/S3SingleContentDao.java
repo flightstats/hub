@@ -41,6 +41,8 @@ public class S3SingleContentDao implements ContentDao {
     @Inject
     private AmazonS3 s3Client;
     @Inject
+    private S3ClientWithMetrics s3ClientWithMetrics;
+    @Inject
     private S3BucketName s3BucketName;
 
     @java.beans.ConstructorProperties({"metricsService", "s3Client", "s3BucketName"})
@@ -92,7 +94,7 @@ public class S3SingleContentDao implements ContentDao {
             InputStream stream = new ByteArrayInputStream(bytes);
             metadata.setContentLength(length);
             PutObjectRequest request = new PutObjectRequest(s3BucketName.getS3BucketName(), s3Key, stream, metadata);
-            S3ClientWithMetrics.putObject(request);
+            s3ClientWithMetrics.putObject(request);
             return key;
         } catch (Exception e) {
             logger.warn("unable to write item to S3 " + channelName + " " + key, e);
@@ -107,7 +109,7 @@ public class S3SingleContentDao implements ContentDao {
     public void delete(String channelName, ContentKey key) {
         String s3ContentKey = getS3ContentKey(channelName, key);
         DeleteObjectRequest request = new DeleteObjectRequest(s3BucketName.getS3BucketName(), s3ContentKey);
-        S3ClientWithMetrics.deleteObject(request);
+        s3ClientWithMetrics.deleteObject(request);
         ActiveTraces.getLocal().add("S3SingleContentDao.deleted", s3ContentKey);
     }
 
@@ -134,7 +136,7 @@ public class S3SingleContentDao implements ContentDao {
     private Content getS3Object(String channelName, ContentKey key) throws IOException {
         long start = System.currentTimeMillis();
         GetObjectRequest request = new GetObjectRequest(s3BucketName.getS3BucketName(), getS3ContentKey(channelName, key));
-        try (S3Object object = S3ClientWithMetrics.getObject(request)) {
+        try (S3Object object = s3ClientWithMetrics.getObject(request)) {
             byte[] bytes = ByteStreams.toByteArray(object.getObjectContent());
             ObjectMetadata metadata = object.getObjectMetadata();
             Map<String, String> userData = metadata.getUserMetadata();
@@ -204,7 +206,7 @@ public class S3SingleContentDao implements ContentDao {
 
     private ObjectListing getObjectListing(ListObjectsRequest request, String channel) {
         long start = System.currentTimeMillis();
-        ObjectListing objects = S3ClientWithMetrics.listObjects(request);
+        ObjectListing objects = s3ClientWithMetrics.listObjects(request);
         metricsService.time(channel, "s3.list", start, "type:single");
         return objects;
     }
@@ -264,7 +266,7 @@ public class S3SingleContentDao implements ContentDao {
     @Override
     public void deleteBefore(String channel, ContentKey limitKey) {
         try {
-            S3Util.delete(channel + "/", limitKey, s3BucketName.getS3BucketName(), s3Client);
+            S3Util.delete(channel + "/", limitKey, s3BucketName.getS3BucketName(), s3ClientWithMetrics);
             logger.info("completed deletion of " + channel);
         } catch (Exception e) {
             logger.warn("unable to delete " + channel + " in " + s3BucketName.getS3BucketName(), e);

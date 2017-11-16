@@ -57,6 +57,7 @@ class ClusterHubBindings extends AbstractModule {
         bind(SpokeTtlEnforcer.class).asEagerSingleton();
         bind(DocumentationDao.class).to(S3DocumentationDao.class).asEagerSingleton();
         bind(SpokeDecommissionManager.class).asEagerSingleton();
+        bind(S3ClientWithMetrics.class).asEagerSingleton();
     }
 
     @Inject

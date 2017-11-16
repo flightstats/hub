@@ -49,6 +49,8 @@ public class S3BatchContentDao implements ContentDao {
     @Inject
     private AmazonS3 s3Client;
     @Inject
+    private S3ClientWithMetrics s3ClientWithMetrics;
+    @Inject
     private S3BucketName s3BucketName;
     @Inject
     private MetricsService metricsService;
@@ -132,7 +134,7 @@ public class S3BatchContentDao implements ContentDao {
         long start = System.currentTimeMillis();
         try {
             GetObjectRequest request = new GetObjectRequest(s3BucketName.getS3BucketName(), getS3BatchItemsKey(channel, minutePath));
-            S3Object object = S3ClientWithMetrics.getObject(request);
+            S3Object object = s3ClientWithMetrics.getObject(request);
             return new ZipInputStream(new BufferedInputStream(object.getObjectContent()));
         } finally {
             metricsService.time(channel, "s3.get", start, "type:batch");
@@ -251,7 +253,7 @@ public class S3BatchContentDao implements ContentDao {
     private void getKeysForMinute(String channel, MinutePath minutePath, Traces traces, Consumer<JsonNode> itemNodeConsumer) {
         long start = System.currentTimeMillis();
         GetObjectRequest request = new GetObjectRequest(s3BucketName.getS3BucketName(), getS3BatchIndexKey(channel, minutePath));
-        try (S3Object object = S3ClientWithMetrics.getObject(request)) {
+        try (S3Object object = s3ClientWithMetrics.getObject(request)) {
             byte[] bytes = ByteStreams.toByteArray(object.getObjectContent());
             JsonNode root = mapper.readTree(bytes);
             JsonNode items = root.get("items");
@@ -332,7 +334,7 @@ public class S3BatchContentDao implements ContentDao {
         SortedSet<MinutePath> paths = new TreeSet<>();
         traces.add("S3BatchContentDao.listMinutePaths ", request.getPrefix(), request.getMarker(), iterate);
         long start = System.currentTimeMillis();
-        ObjectListing listing = S3ClientWithMetrics.listObjects(request);
+        ObjectListing listing = s3ClientWithMetrics.listObjects(request);
         metricsService.time(channel, "s3.list", start, "type:batch");
         List<S3ObjectSummary> summaries = listing.getObjectSummaries();
         for (S3ObjectSummary summary : summaries) {
@@ -354,8 +356,8 @@ public class S3BatchContentDao implements ContentDao {
     @Override
     public void deleteBefore(String channel, ContentKey limitKey) {
         try {
-            S3Util.delete(channel + BATCH_ITEMS, limitKey, s3BucketName.getS3BucketName(), s3Client);
-            S3Util.delete(channel + BATCH_INDEX, limitKey, s3BucketName.getS3BucketName(), s3Client);
+            S3Util.delete(channel + BATCH_ITEMS, limitKey, s3BucketName.getS3BucketName(), s3ClientWithMetrics);
+            S3Util.delete(channel + BATCH_INDEX, limitKey, s3BucketName.getS3BucketName(), s3ClientWithMetrics);
             logger.info("completed deleteBefore of " + channel);
         } catch (Exception e) {
             logger.warn("unable to delete " + channel + " in " + s3BucketName.getS3BucketName(), e);
@@ -427,7 +429,7 @@ public class S3BatchContentDao implements ContentDao {
                 metadata.setSSEAlgorithm(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
             }
             PutObjectRequest request = new PutObjectRequest(s3BucketName.getS3BucketName(), batchIndexKey, stream, metadata);
-            S3ClientWithMetrics.putObject(request);
+            s3ClientWithMetrics.putObject(request);
         } finally {
             metricsService.time(channel, "s3.put", start, bytes.length, "type:batch");
         }

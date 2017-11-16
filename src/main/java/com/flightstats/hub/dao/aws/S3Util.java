@@ -59,18 +59,18 @@ class S3Util {
         return keys;
     }
 
-    public static void delete(String channelPath, ContentKey limitKey, String s3BucketName, AmazonS3 s3Client) {
+    public static void delete(String channelPath, ContentKey limitKey, String s3BucketName, S3ClientWithMetrics s3Client) {
         //noinspection StatementWithEmptyBody
         while (internalDelete(channelPath, limitKey, s3BucketName, s3Client)) {
         }
         internalDelete(channelPath, limitKey, s3BucketName, s3Client);
     }
 
-    private static boolean internalDelete(String channelPath, ContentKey limitKey, String s3BucketName, AmazonS3 s3Client) {
+    private static boolean internalDelete(String channelPath, ContentKey limitKey, String s3BucketName, S3ClientWithMetrics s3Client) {
         ListObjectsRequest request = new ListObjectsRequest();
         request.withBucketName(s3BucketName);
         request.withPrefix(channelPath);
-        ObjectListing listing = S3ClientWithMetrics.listObjects(request);
+        ObjectListing listing = s3Client.listObjects(request);
         List<DeleteObjectsRequest.KeyVersion> keys = new ArrayList<>();
         for (S3ObjectSummary objectSummary : listing.getObjectSummaries()) {
             ContentPath contentKey = ContentPath.fromUrl(StringUtils.substringAfter(objectSummary.getKey(), channelPath)).get();
@@ -84,7 +84,7 @@ class S3Util {
         DeleteObjectsRequest multiObjectDeleteRequest = new DeleteObjectsRequest(s3BucketName);
         multiObjectDeleteRequest.setKeys(keys);
         try {
-            S3ClientWithMetrics.deleteObjects(multiObjectDeleteRequest);
+            s3Client.deleteObjects(multiObjectDeleteRequest);
             logger.info("deleting more from " + channelPath + " deleted " + keys.size());
             ActiveTraces.getLocal().add("S3Util.internalDelete", channelPath, keys.size());
         } catch (MultiObjectDeleteException e) {

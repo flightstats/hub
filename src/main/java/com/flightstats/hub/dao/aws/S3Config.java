@@ -32,10 +32,12 @@ public class S3Config {
     private final Dao<ChannelConfig> channelConfigDao;
     private final String s3BucketName;
     private ChannelService channelService;
+    private final S3ClientWithMetrics s3ClientWithMetrics;
 
     @Inject
-    public S3Config(S3BucketName s3BucketName, CuratorLock curatorLock,
+    public S3Config(S3ClientWithMetrics s3ClientWithMetrics, S3BucketName s3BucketName, CuratorLock curatorLock,
                     @Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao, ChannelService channelService) {
+        this.s3ClientWithMetrics = s3ClientWithMetrics;
         this.curatorLock = curatorLock;
         this.channelConfigDao = channelConfigDao;
         this.channelService = channelService;
@@ -153,7 +155,7 @@ public class S3Config {
             if (!rules.isEmpty()) {
                 BucketLifecycleConfiguration lifecycleConfig = new BucketLifecycleConfiguration(rules);
                 SetBucketLifecycleConfigurationRequest request = new SetBucketLifecycleConfigurationRequest(s3BucketName, lifecycleConfig);
-                S3ClientWithMetrics.setBucketLifecycleConfiguration(request);
+                s3ClientWithMetrics.setBucketLifecycleConfiguration(request);
             }
             ActiveTraces.end();
         }

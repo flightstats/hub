@@ -26,15 +26,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-class S3ClientWithMetrics {
+public class S3ClientWithMetrics {
 
     @Inject
-    private static AmazonS3 s3Client;
+    private AmazonS3 s3Client;
 
     @Inject
-    private static MetricsService metricsService;
+    private MetricsService metricsService;
 
-    static InitiateMultipartUploadResult initiateMultipartUpload(InitiateMultipartUploadRequest request) {
+    InitiateMultipartUploadResult initiateMultipartUpload(InitiateMultipartUploadRequest request) {
         try {
             return s3Client.initiateMultipartUpload(request);
         } catch (SdkClientException e) {
@@ -43,7 +43,7 @@ class S3ClientWithMetrics {
         }
     }
 
-    static UploadPartResult uploadPart(UploadPartRequest request) {
+    UploadPartResult uploadPart(UploadPartRequest request) {
         try {
             return s3Client.uploadPart(request);
         } catch (SdkClientException e) {
@@ -52,7 +52,7 @@ class S3ClientWithMetrics {
         }
     }
 
-    static CompleteMultipartUploadResult completeMultipartUpload(CompleteMultipartUploadRequest request) {
+    CompleteMultipartUploadResult completeMultipartUpload(CompleteMultipartUploadRequest request) {
         try {
             return s3Client.completeMultipartUpload(request);
         } catch (SdkClientException e) {
@@ -61,7 +61,7 @@ class S3ClientWithMetrics {
         }
     }
 
-    static void abortMultipartUpload(AbortMultipartUploadRequest request) {
+    void abortMultipartUpload(AbortMultipartUploadRequest request) {
         try {
             s3Client.abortMultipartUpload(request);
         } catch (SdkClientException e) {
@@ -70,7 +70,7 @@ class S3ClientWithMetrics {
         }
     }
 
-    static S3Object getObject(GetObjectRequest request) {
+    S3Object getObject(GetObjectRequest request) {
         try {
             return s3Client.getObject(request);
         } catch (SdkClientException e) {
@@ -79,7 +79,7 @@ class S3ClientWithMetrics {
         }
     }
 
-    static void deleteObject(DeleteObjectRequest request) {
+    void deleteObject(DeleteObjectRequest request) {
         try {
             s3Client.deleteObject(request);
         } catch (SdkClientException e) {
@@ -88,7 +88,7 @@ class S3ClientWithMetrics {
         }
     }
 
-    static DeleteObjectsResult deleteObjects(DeleteObjectsRequest request) {
+    DeleteObjectsResult deleteObjects(DeleteObjectsRequest request) {
         try {
             return s3Client.deleteObjects(request);
         } catch (SdkClientException e) {
@@ -104,7 +104,7 @@ class S3ClientWithMetrics {
         }
     }
 
-    static ObjectListing listObjects(ListObjectsRequest request) {
+    ObjectListing listObjects(ListObjectsRequest request) {
         try {
             return s3Client.listObjects(request);
         } catch (SdkClientException e) {
@@ -113,7 +113,7 @@ class S3ClientWithMetrics {
         }
     }
 
-    static PutObjectResult putObject(PutObjectRequest request) {
+    PutObjectResult putObject(PutObjectRequest request) {
         try {
             return s3Client.putObject(request);
         } catch (SdkClientException e) {
@@ -122,7 +122,7 @@ class S3ClientWithMetrics {
         }
     }
 
-    static void setBucketLifecycleConfiguration(SetBucketLifecycleConfigurationRequest request) {
+    void setBucketLifecycleConfiguration(SetBucketLifecycleConfigurationRequest request) {
         try {
             s3Client.setBucketLifecycleConfiguration(request);
         } catch (SdkClientException e) {
