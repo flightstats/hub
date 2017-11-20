@@ -1,6 +1,5 @@
 package com.flightstats.hub.dao.aws;
 
-import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDao;
@@ -39,12 +38,12 @@ public class S3SingleContentDao implements ContentDao {
     @Inject
     private MetricsService metricsService;
     @Inject
-    private AmazonS3 s3Client;
+    private HubS3Client s3Client;
     @Inject
     private S3BucketName s3BucketName;
 
     @java.beans.ConstructorProperties({"metricsService", "s3Client", "s3BucketName"})
-    public S3SingleContentDao(MetricsService metricsService, AmazonS3 s3Client, S3BucketName s3BucketName) {
+    public S3SingleContentDao(MetricsService metricsService, HubS3Client s3Client, S3BucketName s3BucketName) {
         this.metricsService = metricsService;
         this.s3Client = s3Client;
         this.s3BucketName = s3BucketName;
@@ -58,7 +57,7 @@ public class S3SingleContentDao implements ContentDao {
     }
 
     public void initialize() {
-        S3Util.initialize(s3BucketName.getS3BucketName(), s3Client);
+        s3Client.initialize();
     }
 
     @Override
@@ -106,7 +105,8 @@ public class S3SingleContentDao implements ContentDao {
     @Override
     public void delete(String channelName, ContentKey key) {
         String s3ContentKey = getS3ContentKey(channelName, key);
-        s3Client.deleteObject(s3BucketName.getS3BucketName(), s3ContentKey);
+        DeleteObjectRequest request = new DeleteObjectRequest(s3BucketName.getS3BucketName(), s3ContentKey);
+        s3Client.deleteObject(request);
         ActiveTraces.getLocal().add("S3SingleContentDao.deleted", s3ContentKey);
     }
 
@@ -132,7 +132,8 @@ public class S3SingleContentDao implements ContentDao {
 
     private Content getS3Object(String channelName, ContentKey key) throws IOException {
         long start = System.currentTimeMillis();
-        try (S3Object object = s3Client.getObject(s3BucketName.getS3BucketName(), getS3ContentKey(channelName, key))) {
+        GetObjectRequest request = new GetObjectRequest(s3BucketName.getS3BucketName(), getS3ContentKey(channelName, key));
+        try (S3Object object = s3Client.getObject(request)) {
             byte[] bytes = ByteStreams.toByteArray(object.getObjectContent());
             ObjectMetadata metadata = object.getObjectMetadata();
             Map<String, String> userData = metadata.getUserMetadata();
@@ -289,7 +290,7 @@ public class S3SingleContentDao implements ContentDao {
 
     public static class S3SingleContentDaoBuilder {
         private MetricsService metricsService;
-        private AmazonS3 s3Client;
+        private HubS3Client s3Client;
         private S3BucketName s3BucketName;
 
         S3SingleContentDaoBuilder() {
@@ -300,7 +301,7 @@ public class S3SingleContentDao implements ContentDao {
             return this;
         }
 
-        public S3SingleContentDao.S3SingleContentDaoBuilder s3Client(AmazonS3 s3Client) {
+        public S3SingleContentDao.S3SingleContentDaoBuilder s3Client(HubS3Client s3Client) {
             this.s3Client = s3Client;
             return this;
         }
