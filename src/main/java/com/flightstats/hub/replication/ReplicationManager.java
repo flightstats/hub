@@ -5,6 +5,7 @@ import com.flightstats.hub.cluster.Watcher;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.BuiltInTag;
 import com.flightstats.hub.model.ChannelConfig;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
@@ -31,7 +32,10 @@ public class ReplicationManager {
     private final static Logger logger = LoggerFactory.getLogger(ReplicationManager.class);
     private static final String REPLICATOR_WATCHER_PATH = "/replicator/watcher";
 
+    @Inject
     private ChannelService channelService;
+
+    @Inject
     private WatchManager watchManager;
 
     private final Map<String, ChannelReplicator> channelReplicatorMap = new HashMap<>();
@@ -41,11 +45,15 @@ public class ReplicationManager {
     private final ExecutorService executorPool = Executors.newFixedThreadPool(40,
             new ThreadFactoryBuilder().setNameFormat("ReplicationManager-%d").build());
 
-    @Inject
-    public ReplicationManager(ChannelService channelService, WatchManager watchManager) {
+    public ReplicationManager() {
+        register(new ReplicationService(), TYPE.AFTER_HEALTHY_START, TYPE.PRE_STOP);
+    }
+
+    @VisibleForTesting
+    ReplicationManager(ChannelService channelService, WatchManager watchManager) {
+        this();
         this.channelService = channelService;
         this.watchManager = watchManager;
-        register(new ReplicationService(), TYPE.AFTER_HEALTHY_START, TYPE.PRE_STOP);
     }
 
     private void startManager() {
