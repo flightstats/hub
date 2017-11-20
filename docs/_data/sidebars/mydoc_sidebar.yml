@@ -93,10 +93,6 @@ entries:
       url: /hub_channels_replication.html
       output: web, pdf
 
-    - title: Global Channels
-      url: /hub_channels_global.html
-      output: web, pdf
-
     - title: Historical Channels
       url: /hub_channels_historical.html
       output: web, pdf

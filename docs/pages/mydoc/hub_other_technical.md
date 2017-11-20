@@ -47,7 +47,7 @@ The union of all items found are then filtered based on the request criteria.
 ## Callbacks
 
 [Webhook](hub_notifications_webhooks.html), [Websocket](hub_notifications_websocket.html), [Events](hub_notifications_events.html), 
-[Replication](hub_channels_replication.html) and [Global Replication](hub_channels_global.html) are built on the query interface, 
+and [Replication](hub_channels_replication.html) are built on the query interface, 
 and presume that items are written within 'app.stable_seconds' (default 5 seconds) of the key being assigned.
 All of our deployments to EC2 have been able to meet this timing requirement easily.
 
@@ -81,7 +81,6 @@ If `protect` is true:
 * `tags` can not be removed
 * `maxItems` and `ttlDays` can not decrease
 * `replicationSource` can not change
-* `global` can only have satellites added
 * `protect` can not be reset from `true`
 * channel can not be deleted
 
