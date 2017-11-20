@@ -2,7 +2,6 @@ utils = require('./lib/utils.js');
 ip = require('ip');
 
 hubDomain = process.env.hubDomain;
-satelliteDomain = process.env.satelliteDomain;
 runEncrypted = process.env.runEncrypted || false;
 callbackPort = runEncrypted = process.env.callbackPort || 8888;
 
@@ -22,12 +21,6 @@ if (hubDomain !== undefined && hubDomain.startsWith('http')) {
     hubUrlBase = 'http://' + hubDomain;
 }
 
-if (satelliteDomain !== undefined && satelliteDomain.startsWith('http')) {
-    satelliteUrl = satelliteDomain;
-} else {
-    satelliteUrl = 'http://' + satelliteDomain;
-}
-
 channelUrl = hubUrlBase + '/channel';
 callbackDomain = 'http://' + ipAddress;
 stableOffset = 5;
@@ -35,7 +28,6 @@ stableOffset = 5;
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 60 * 1000;
 
 console.log("hubDomain " + hubDomain);
-console.log("satelliteDomain " + satelliteDomain);
 console.log("runEncrypted " + runEncrypted);
 console.log("callbackDomain " + callbackDomain);
 console.log("default timeout " + jasmine.DEFAULT_TIMEOUT_INTERVAL + "ms");
