@@ -11,6 +11,7 @@ import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.metrics.MetricsService.Insert;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
+import com.flightstats.hub.replication.ReplicationManager;
 import com.flightstats.hub.time.TimeService;
 import com.flightstats.hub.util.TimeUtil;
 import com.flightstats.hub.webhook.TagWebhook;
@@ -44,6 +45,8 @@ public class ChannelService {
     @Inject
     private ChannelValidator channelValidator;
     @Inject
+    private ReplicationManager replicationManager;
+    @Inject
     private LastContentPath lastContentPath;
     @Inject
     private InFlightService inFlightService;
@@ -66,6 +69,13 @@ public class ChannelService {
     }
 
     private void notify(ChannelConfig newConfig, ChannelConfig oldConfig) {
+        if (newConfig.isReplicating()) {
+            replicationManager.notifyWatchers();
+        } else if (oldConfig != null) {
+            if (oldConfig.isReplicating()) {
+                replicationManager.notifyWatchers();
+            }
+        }
         if (newConfig.isHistorical()) {
             if (oldConfig == null || !oldConfig.isHistorical()) {
                 ContentKey lastKey = ContentKey.lastKey(newConfig.getMutableTime());
@@ -373,6 +383,7 @@ public class ChannelService {
         contentService.delete(channelConfig.getDisplayName());
         channelConfigDao.delete(channelConfig.getDisplayName());
         if (channelConfig.isReplicating()) {
+            replicationManager.notifyWatchers();
             lastContentPath.delete(channelName, REPLICATED_LAST_UPDATED);
         }
         lastContentPath.delete(channelName, HISTORICAL_EARLIEST);
