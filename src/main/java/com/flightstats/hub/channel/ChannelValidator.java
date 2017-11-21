@@ -5,8 +5,8 @@ import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.exception.ForbiddenRequestException;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.model.ChannelConfig;
-import com.flightstats.hub.model.GlobalConfig;
 import com.flightstats.hub.util.TimeUtil;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
@@ -14,10 +14,15 @@ import org.apache.commons.lang3.StringUtils;
 
 public class ChannelValidator {
     public static final String VALID_NAME = "^[a-zA-Z0-9_-]+$";
-    private final ChannelService channelService;
 
     @Inject
-    public ChannelValidator(ChannelService channelService) {
+    private ChannelService channelService;
+
+    // required for Guice
+    ChannelValidator() {}
+
+    @VisibleForTesting
+    ChannelValidator(ChannelService channelService) {
         this.channelService = channelService;
     }
 
@@ -40,7 +45,6 @@ public class ChannelValidator {
         validateDescription(config);
         validateTags(config);
         validateStorage(config);
-        validateGlobal(config);
         if (config.isProtect()) {
             ensurePropertyNotBlank("Owner", config.getOwner());
         }
@@ -83,51 +87,7 @@ public class ChannelValidator {
                     && !config.getReplicationSource().equals(oldConfig.getReplicationSource())) {
                 throw new ForbiddenRequestException("{\"error\": \"A channels replication source is not allowed to change in this environment\"}");
             }
-            if (config.isGlobal()) {
-                if (oldConfig.isGlobal()) {
-                    GlobalConfig configGlobal = config.getGlobal();
-                    GlobalConfig oldConfigGlobal = oldConfig.getGlobal();
-                    if (!StringUtils.equals(configGlobal.getMaster(), oldConfigGlobal.getMaster())) {
-                        throw new ForbiddenRequestException("{\"error\": \"A channels global master is not allowed to change in this environment\"}");
-                    }
-                    if (!configGlobal.getSatellites().containsAll(oldConfigGlobal.getSatellites())) {
-                        throw new ForbiddenRequestException("{\"error\": \"A channels global satellites are not allowed to be removed in this environment\"}");
-                    }
-                }
-            } else {
-                if (oldConfig.isGlobal()) {
-                    throw new ForbiddenRequestException("{\"error\": \"A channels global configuration is not allowed to be removed in this environment\"}");
-                }
-            }
         }
-    }
-
-    private void validateGlobal(ChannelConfig config) {
-        if (config.isGlobal()) {
-            GlobalConfig global = config.getGlobal();
-            String master = global.getMaster();
-            if (master == null) {
-                throw new InvalidRequestException("{\"error\": \"A Master must exist\"}");
-            }
-            if (global.getSatellites().isEmpty()) {
-                throw new InvalidRequestException("{\"error\": \"At least one Satellite must exist\"}");
-            }
-            if (global.getSatellites().contains(master)) {
-                throw new InvalidRequestException("{\"error\": \"A Master can not also be a Satellite\"}");
-            }
-            if (!startsWithHttp(master)) {
-                throw new InvalidRequestException("{\"error\": \"A Master must start with http or https\"}");
-            }
-            for (String satellite : global.getSatellites()) {
-                if (!startsWithHttp(satellite)) {
-                    throw new InvalidRequestException("{\"error\": \"Satellites must start with http or https\"}");
-                }
-            }
-        }
-    }
-
-    private boolean startsWithHttp(String master) {
-        return master.startsWith("http://") || master.startsWith("https://");
     }
 
     private void validateStorage(ChannelConfig config) {

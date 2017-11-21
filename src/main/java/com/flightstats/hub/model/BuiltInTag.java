@@ -1,7 +1,7 @@
 package com.flightstats.hub.model;
 
 public enum BuiltInTag {
-    REPLICATED, GLOBAL, HISTORICAL;
+    REPLICATED, HISTORICAL;
 
     public String toString() {
         return this.name().toLowerCase();

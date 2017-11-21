@@ -259,10 +259,6 @@ HTTP/1.1 200 OK
                 "name": "coffee"
             },
             {
-                "href": "http://hub.pdx.dev.flightstats.io/tag/global",
-                "name": "global"
-            },
-            {
                 "href": "http://hub.pdx.dev.flightstats.io/tag/replicated",
                 "name": "replicated"
             },
@@ -291,7 +287,6 @@ GET http://hub/channel/spella/2015/06/24/19/48/17/000/abc/next/10?tag=coffee
 ### Other Channel APIs 
 
 * [Replication](hub_channels_replication.html)
-* [Global](hub_channels_global.html)
 * [Historical](hub_channels_historical)
 
 ## Notifications

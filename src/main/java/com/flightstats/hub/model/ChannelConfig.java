@@ -43,13 +43,12 @@ public class ChannelConfig implements Serializable, NamedType {
     private Set<String> tags;
     private String replicationSource;
     private String storage;
-    private GlobalConfig global;
     private boolean protect;
     private DateTime mutableTime;
     private boolean allowZeroBytes;
 
     private ChannelConfig(String name, String owner, Date creationDate, long ttlDays, long maxItems, boolean keepForever, String description,
-                          Set<String> tags, String replicationSource, String storage, GlobalConfig global,
+                          Set<String> tags, String replicationSource, String storage,
                           boolean protect, DateTime mutableTime, boolean allowZeroBytes, String displayName) {
         this.name = StringUtils.trim(name);
         this.displayName = StringUtils.defaultIfBlank(StringUtils.trim(displayName), this.name);
@@ -78,14 +77,7 @@ public class ChannelConfig implements Serializable, NamedType {
             this.storage = StringUtils.upperCase(storage);
         }
 
-        if (global != null) {
-            this.global = global.cleanup();
-        } else {
-            this.global = null;
-        }
-
         addTagIf(!isBlank(replicationSource), REPLICATED);
-        addTagIf(isGlobal(), GLOBAL);
         addTagIf(isHistorical(), HISTORICAL);
 
         if (HubProperties.isProtected()) {
@@ -134,7 +126,6 @@ public class ChannelConfig implements Serializable, NamedType {
         if (rootNode.has("tags")) builder.tags(getSet(rootNode.get("tags")));
         if (rootNode.has("replicationSource")) builder.replicationSource(getString(rootNode.get("replicationSource")));
         if (rootNode.has("storage")) builder.storage(getString(rootNode.get("storage")));
-        if (rootNode.has("global")) builder.global(GlobalConfig.parseJson(rootNode.get("global")));
         if (rootNode.has("protect")) builder.protect(rootNode.get("protect").asBoolean());
         if (rootNode.has("mutableTime")) {
             builder.mutableTime(HubDateTimeTypeAdapter.deserialize(rootNode.get("mutableTime").asText()));
@@ -178,20 +169,8 @@ public class ChannelConfig implements Serializable, NamedType {
         return TimeUtil.getEarliestTime(ttlDays);
     }
 
-    public boolean isGlobal() {
-        return global != null;
-    }
-
-    public boolean isGlobalMaster() {
-        return isGlobal() && global.isMaster();
-    }
-
-    public boolean isGlobalSatellite() {
-        return isGlobal() && !global.isMaster();
-    }
-
     public boolean isReplicating() {
-        return StringUtils.isNotBlank(replicationSource) || isGlobalSatellite();
+        return StringUtils.isNotBlank(replicationSource);
     }
 
     public boolean isLive() {
@@ -258,10 +237,6 @@ public class ChannelConfig implements Serializable, NamedType {
         return this.storage;
     }
 
-    public GlobalConfig getGlobal() {
-        return this.global;
-    }
-
     public boolean isProtect() {
         return this.protect;
     }
@@ -313,9 +288,6 @@ public class ChannelConfig implements Serializable, NamedType {
         final Object this$storage = this.getStorage();
         final Object other$storage = other.getStorage();
         if (this$storage == null ? other$storage != null : !this$storage.equals(other$storage)) return false;
-        final Object this$global = this.getGlobal();
-        final Object other$global = other.getGlobal();
-        if (this$global == null ? other$global != null : !this$global.equals(other$global)) return false;
         if (this.isProtect() != other.isProtect()) return false;
         final Object this$mutableTime = this.getMutableTime();
         final Object other$mutableTime = other.getMutableTime();
@@ -348,8 +320,6 @@ public class ChannelConfig implements Serializable, NamedType {
         result = result * PRIME + ($replicationSource == null ? 43 : $replicationSource.hashCode());
         final Object $storage = this.getStorage();
         result = result * PRIME + ($storage == null ? 43 : $storage.hashCode());
-        final Object $global = this.getGlobal();
-        result = result * PRIME + ($global == null ? 43 : $global.hashCode());
         result = result * PRIME + (this.isProtect() ? 79 : 97);
         final Object $mutableTime = this.getMutableTime();
         result = result * PRIME + ($mutableTime == null ? 43 : $mutableTime.hashCode());
@@ -358,7 +328,7 @@ public class ChannelConfig implements Serializable, NamedType {
     }
 
     public String toString() {
-        return "com.flightstats.hub.model.ChannelConfig(name=" + this.getName() + ", owner=" + this.getOwner() + ", creationDate=" + this.getCreationDate() + ", ttlDays=" + this.getTtlDays() + ", maxItems=" + this.getMaxItems() + ", description=" + this.getDescription() + ", tags=" + this.getTags() + ", replicationSource=" + this.getReplicationSource() + ", storage=" + this.getStorage() + ", global=" + this.getGlobal() + ", protect=" + this.isProtect() + ", mutableTime=" + this.getMutableTime() + ", allowZeroBytes=" + this.isAllowZeroBytes() + ")";
+        return "com.flightstats.hub.model.ChannelConfig(name=" + this.getName() + ", owner=" + this.getOwner() + ", creationDate=" + this.getCreationDate() + ", ttlDays=" + this.getTtlDays() + ", maxItems=" + this.getMaxItems() + ", description=" + this.getDescription() + ", tags=" + this.getTags() + ", replicationSource=" + this.getReplicationSource() + ", storage=" + this.getStorage() + ", protect=" + this.isProtect() + ", mutableTime=" + this.getMutableTime() + ", allowZeroBytes=" + this.isAllowZeroBytes() + ")";
     }
 
     public ChannelConfigBuilder toBuilder() {
@@ -379,7 +349,6 @@ public class ChannelConfig implements Serializable, NamedType {
         private boolean keepForever = false;
         private long ttlDays;
         private long maxItems;
-        private GlobalConfig global;
         private DateTime mutableTime;
         private String displayName;
 
@@ -399,7 +368,6 @@ public class ChannelConfig implements Serializable, NamedType {
             keepForever(config.getKeepForever());
             ttlDays(config.getTtlDays());
             maxItems(config.getMaxItems());
-            global(config.getGlobal());
             mutableTime(config.getMutableTime());
             displayName(config.getDisplayName());
         }
@@ -466,11 +434,6 @@ public class ChannelConfig implements Serializable, NamedType {
             return this;
         }
 
-        public ChannelConfigBuilder global(GlobalConfig global) {
-            this.global = global;
-            return this;
-        }
-
         public ChannelConfigBuilder protect(boolean protect) {
             this.protect = protect;
             return this;
@@ -487,7 +450,7 @@ public class ChannelConfig implements Serializable, NamedType {
         }
 
         public ChannelConfig build() {
-            return new ChannelConfig(name, owner, creationDate, ttlDays, maxItems, keepForever, description, tags, replicationSource, storage, global, protect, mutableTime, allowZeroBytes, displayName);
+            return new ChannelConfig(name, owner, creationDate, ttlDays, maxItems, keepForever, description, tags, replicationSource, storage, protect, mutableTime, allowZeroBytes, displayName);
         }
 
     }
