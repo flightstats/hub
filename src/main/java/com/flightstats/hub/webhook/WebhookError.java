@@ -1,5 +1,9 @@
 package com.flightstats.hub.webhook;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.model.Content;
 import com.flightstats.hub.util.StringUtils;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Inject;
@@ -22,10 +26,12 @@ class WebhookError {
     private static final int MAX_SIZE = 10;
 
     private final CuratorFramework curator;
+    private final ChannelService channelService;
 
     @Inject
-    public WebhookError(CuratorFramework curator) {
+    public WebhookError(CuratorFramework curator, ChannelService channelService) {
         this.curator = curator;
+        this.channelService = channelService;
     }
 
     public void add(String webhook, String error) {
@@ -91,6 +97,31 @@ class WebhookError {
 
     public List<String> get(String webhook) {
         return limitChildren(webhook);
+    }
+
+    public void publish(Webhook webhook) {
+        // get errors for last failure from Zookeeper
+
+        String channelName = webhook.getErrorChannelUrl();
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode payload = objectMapper.createObjectNode();
+        payload.put("webhook", url);
+        payload.put("failedItem", url);
+        payload.put("attemptCount", number);
+        payload.put("lastAttempt", timestamp);
+        payload.put("lastError", message);
+        byte[] bytes = payload.toString().getBytes();
+        Content content = Content.builder()
+                .withContentType("application/json")
+                .withContentLength((long) bytes.length)
+                .withData(bytes)
+                .build();
+
+        try {
+            channelService.insert(channelName, content);
+        } catch (Exception e) {
+            logger.warn("unable to publish errors for " + webhook.getName(), e);
+        }
     }
 
     private static class Error {

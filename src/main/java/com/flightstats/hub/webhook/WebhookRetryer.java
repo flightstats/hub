@@ -31,6 +31,7 @@ class WebhookRetryer {
                             logger.info("got throwable trying to call client back ", throwable);
                         }
                         if (throwable instanceof ItemExpiredException) {
+                            webhookError.publish(webhook);
                             return false;
                         }
                     }
