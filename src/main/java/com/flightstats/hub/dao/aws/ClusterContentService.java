@@ -146,10 +146,10 @@ public class ClusterContentService implements ContentService {
         } else {
             content = spokeReadContentDao.get(channelName, key);
             if (content == null) {
-                content = s3SingleContentDao.get(channelName, key);
+                content = getFromS3BatchAndStoreInReadCache(channelName, key);
             }
             if (content == null) {
-                content = getFromS3BatchAndStoreInReadCache(channelName, key);
+                content = s3SingleContentDao.get(channelName, key);
             }
         }
         return checkForLargeIndex(channelName, content);
