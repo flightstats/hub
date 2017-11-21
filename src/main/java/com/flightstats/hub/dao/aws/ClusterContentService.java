@@ -141,7 +141,7 @@ public class ClusterContentService implements ContentService {
         } else if (channel.isBatch()) {
             content = spokeReadContentDao.get(channelName, key);
             if (content == null) {
-                content = getFromS3BatchAndWriteToSpokeBatch(channelName, key);
+                content = getFromS3BatchAndStoreInReadCache(channelName, key);
             }
         } else {
             content = spokeReadContentDao.get(channelName, key);
@@ -149,17 +149,17 @@ public class ClusterContentService implements ContentService {
                 content = s3SingleContentDao.get(channelName, key);
             }
             if (content == null) {
-                content = getFromS3BatchAndWriteToSpokeBatch(channelName, key);
+                content = getFromS3BatchAndStoreInReadCache(channelName, key);
             }
         }
         return checkForLargeIndex(channelName, content);
     }
 
-    private Content getFromS3BatchAndWriteToSpokeBatch(String channelName, ContentKey key) {
+    private Content getFromS3BatchAndStoreInReadCache(String channelName, ContentKey key) {
         try {
             Map<ContentKey, Content> map = s3BatchContentDao.readBatch(channelName, key);
             Content content = Content.copy(map.get(key));
-            cacheBatch(channelName, map);
+            storeBatchInReadCache(channelName, map);
             return content;
         } catch (IOException e) {
             logger.warn("unable to get batch from long term storage", e);
@@ -167,7 +167,7 @@ public class ClusterContentService implements ContentService {
         }
     }
 
-    private void cacheBatch(String channelName, Map<ContentKey, Content> map) {
+    private void storeBatchInReadCache(String channelName, Map<ContentKey, Content> map) {
         try {
             BulkContent bulkContent = BulkContent.fromMap(channelName, map);
             spokeReadContentDao.insert(bulkContent);

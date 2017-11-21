@@ -34,7 +34,7 @@ public class S3WriteQueue {
             new ThreadFactoryBuilder().setNameFormat("S3WriteQueue-%d").build());
     @Inject
     @Named(ContentDao.WRITE_CACHE)
-    private ContentDao spokeSingleContentDao;
+    private ContentDao spokeWriteContentDao;
     @Inject
     @Named(ContentDao.SINGLE_LONG_TERM)
     private ContentDao s3SingleContentDao;
@@ -73,7 +73,7 @@ public class S3WriteQueue {
             ActiveTraces.start("S3WriteQueue.writeContent", key);
             try {
                 logger.trace("writing {}", key.getContentKey());
-                Content content = spokeSingleContentDao.get(key.getChannel(), key.getContentKey());
+                Content content = spokeWriteContentDao.get(key.getChannel(), key.getContentKey());
                 content.packageStream();
                 if (content.getData() == null) {
                     throw new FailedReadException("unable to read " + key.toString());
