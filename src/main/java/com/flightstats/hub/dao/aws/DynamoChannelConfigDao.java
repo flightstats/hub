@@ -5,7 +5,6 @@ import com.amazonaws.services.dynamodbv2.model.*;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
-import com.flightstats.hub.model.GlobalConfig;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
@@ -59,12 +58,6 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
         }
         if (StringUtils.isNotEmpty(config.getStorage())) {
             item.put("storage", new AttributeValue(config.getStorage()));
-        }
-        if (config.isGlobal()) {
-            GlobalConfig global = config.getGlobal();
-            item.put("master", new AttributeValue(global.getMaster()));
-            item.put("satellites", new AttributeValue().withSS(global.getSatellites()));
-            item.put("isMaster", new AttributeValue().withBOOL(global.isMaster()));
         }
         PutItemRequest putItemRequest = new PutItemRequest()
                 .withTableName(getTableName())
@@ -148,13 +141,6 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
         }
         if (item.containsKey("storage")) {
             builder.storage(item.get("storage").getS());
-        }
-        if (item.containsKey("master")) {
-            GlobalConfig global = new GlobalConfig();
-            global.setMaster(item.get("master").getS());
-            global.addSatellites(item.get("satellites").getSS());
-            global.setIsMaster(item.get("isMaster").getBOOL());
-            builder.global(global);
         }
         if (item.containsKey("protect")) {
             builder.protect(item.get("protect").getBOOL());

@@ -22,7 +22,6 @@ If `protect` is true:
 * `owner` can not change 
 * `replicationSource` can not change
 * `storage` can only be changed to `BOTH`
-* `global` can only have satellites added
 * channel can not be deleted
 
 Instead, the changes need to be made from the localhost of a hub server in the cluster.

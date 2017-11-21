@@ -24,7 +24,7 @@ class SingleHubBindings extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(ChannelService.class).to(LocalChannelService.class).asEagerSingleton();
+        bind(ChannelService.class).asEagerSingleton();
         bind(ContentService.class).to(SingleContentService.class).asEagerSingleton();
         bind(DocumentationDao.class).to(FileDocumentationDao.class).asEagerSingleton();
         bind(ChannelTtlEnforcer.class).asEagerSingleton();

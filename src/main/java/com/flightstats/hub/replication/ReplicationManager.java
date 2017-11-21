@@ -5,6 +5,7 @@ import com.flightstats.hub.cluster.Watcher;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.BuiltInTag;
 import com.flightstats.hub.model.ChannelConfig;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
@@ -27,35 +28,41 @@ import static com.flightstats.hub.app.HubServices.TYPE;
 import static com.flightstats.hub.app.HubServices.register;
 
 @Singleton
-public class ReplicationGlobalManager {
-    private final static Logger logger = LoggerFactory.getLogger(ReplicationGlobalManager.class);
+public class ReplicationManager {
+    private final static Logger logger = LoggerFactory.getLogger(ReplicationManager.class);
     private static final String REPLICATOR_WATCHER_PATH = "/replicator/watcher";
 
+    @Inject
     private ChannelService channelService;
+
+    @Inject
     private WatchManager watchManager;
 
     private final Map<String, ChannelReplicator> channelReplicatorMap = new HashMap<>();
-    private final Map<String, GlobalReplicator> globalReplicatorMap = new HashMap<>();
     private final AtomicBoolean stopped = new AtomicBoolean();
     private final ExecutorService executor = Executors.newSingleThreadExecutor(
-            new ThreadFactoryBuilder().setNameFormat("ReplicationGlobalManager").build());
+            new ThreadFactoryBuilder().setNameFormat("ReplicationManager").build());
     private final ExecutorService executorPool = Executors.newFixedThreadPool(40,
-            new ThreadFactoryBuilder().setNameFormat("ReplicationGlobalManager-%d").build());
+            new ThreadFactoryBuilder().setNameFormat("ReplicationManager-%d").build());
 
-    @Inject
-    public ReplicationGlobalManager(ChannelService channelService, WatchManager watchManager) {
+    public ReplicationManager() {
+        register(new ReplicationService(), TYPE.AFTER_HEALTHY_START, TYPE.PRE_STOP);
+    }
+
+    @VisibleForTesting
+    ReplicationManager(ChannelService channelService, WatchManager watchManager) {
+        this();
         this.channelService = channelService;
         this.watchManager = watchManager;
-        register(new ReplicationGlobalService(), TYPE.AFTER_HEALTHY_START, TYPE.PRE_STOP);
     }
 
     private void startManager() {
         logger.info("starting");
-        ReplicationGlobalManager manager = this;
+        ReplicationManager manager = this;
         watchManager.register(new Watcher() {
             @Override
             public void callback(CuratorEvent event) {
-                executor.submit(manager::globalAndChannels);
+                executor.submit(manager::manageChannels);
             }
 
             @Override
@@ -64,59 +71,18 @@ public class ReplicationGlobalManager {
             }
         });
         ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(
-                new ThreadFactoryBuilder().setNameFormat("ReplicationGlobalManager-hourly").build());
-        scheduledExecutorService.scheduleAtFixedRate(manager::globalAndChannels, 0, 1, TimeUnit.HOURS);
+                new ThreadFactoryBuilder().setNameFormat("ReplicationManager-hourly").build());
+        scheduledExecutorService.scheduleAtFixedRate(manager::manageChannels, 0, 1, TimeUnit.HOURS);
     }
 
-    private void globalAndChannels() {
+    private void manageChannels() {
         if (stopped.get()) {
             logger.info("replication stopped");
             return;
         }
-        logger.info("starting checks for replication and global");
-        replicateGlobal();
+        logger.info("starting checks for replication");
         replicateChannels();
-        logger.info("completed checks for replication and global");
-    }
-
-    private synchronized void replicateGlobal() {
-        Set<String> replicators = new HashSet<>();
-        Iterable<ChannelConfig> globalChannels = channelService.getChannels(BuiltInTag.GLOBAL.toString(), false);
-        logger.info("replicating global channels {}", globalChannels);
-        for (ChannelConfig channel : globalChannels) {
-            logger.info("replicating global channel {}", channel);
-            if (channel.isGlobalMaster()) {
-                try {
-                    processGlobal(replicators, channel);
-                } catch (Exception e) {
-                    logger.warn("unable to do global replication" + channel, e);
-                }
-            }
-        }
-        executorPool.submit(() -> stopAndRemove(replicators, globalReplicatorMap));
-        logger.info("completed global");
-    }
-
-    private void processGlobal(Set<String> replicators, ChannelConfig channel) {
-        for (String satellite : channel.getGlobal().getSatellites()) {
-            logger.info("creating satellite {} {}", satellite, channel.getDisplayName());
-            GlobalReplicator replicator = new GlobalReplicator(channel, satellite);
-            String replicatorKey = replicator.getKey();
-            replicators.add(replicatorKey);
-            if (globalReplicatorMap.containsKey(replicatorKey)) {
-                globalReplicatorMap.get(replicatorKey).start();
-            } else {
-                executorPool.submit(() -> {
-                    try {
-                        globalReplicatorMap.put(replicatorKey, replicator);
-                        replicator.start();
-                    } catch (Exception e) {
-                        globalReplicatorMap.remove(replicatorKey);
-                        logger.warn("unexpected global issue " + replicatorKey + " " + channel, e);
-                    }
-                });
-            }
-        }
+        logger.info("completed checks for replication");
     }
 
     private synchronized void replicateChannels() {
@@ -189,7 +155,7 @@ public class ReplicationGlobalManager {
         watchManager.notifyWatcher(REPLICATOR_WATCHER_PATH);
     }
 
-    private class ReplicationGlobalService extends AbstractIdleService {
+    private class ReplicationService extends AbstractIdleService {
 
         @Override
         protected void startUp() throws Exception {

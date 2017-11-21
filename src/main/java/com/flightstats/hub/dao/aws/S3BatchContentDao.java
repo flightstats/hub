@@ -1,6 +1,5 @@
 package com.flightstats.hub.dao.aws;
 
-import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -47,14 +46,14 @@ public class S3BatchContentDao implements ContentDao {
     private final boolean useEncrypted = HubProperties.isAppEncrypted();
     private final int s3MaxQueryItems = HubProperties.getProperty("s3.maxQueryItems", 1000);
     @Inject
-    private AmazonS3 s3Client;
+    private HubS3Client s3Client;
     @Inject
     private S3BucketName s3BucketName;
     @Inject
     private MetricsService metricsService;
 
     @java.beans.ConstructorProperties({"s3Client", "s3BucketName", "metricsService"})
-    public S3BatchContentDao(AmazonS3 s3Client, S3BucketName s3BucketName, MetricsService metricsService) {
+    public S3BatchContentDao(HubS3Client s3Client, S3BucketName s3BucketName, MetricsService metricsService) {
         this.s3Client = s3Client;
         this.s3BucketName = s3BucketName;
         this.metricsService = metricsService;
@@ -136,7 +135,8 @@ public class S3BatchContentDao implements ContentDao {
         ActiveTraces.getLocal().add("S3BatchContentDao.getZipInputStream");
         long start = System.currentTimeMillis();
         try {
-            S3Object object = s3Client.getObject(s3BucketName.getS3BucketName(), getS3BatchItemsKey(channel, minutePath));
+            GetObjectRequest request = new GetObjectRequest(s3BucketName.getS3BucketName(), getS3BatchItemsKey(channel, minutePath));
+            S3Object object = s3Client.getObject(request);
             return new ZipInputStream(new BufferedInputStream(object.getObjectContent()));
         } finally {
             metricsService.time(channel, "s3.get", start, "type:batch");
@@ -254,7 +254,8 @@ public class S3BatchContentDao implements ContentDao {
 
     private void getKeysForMinute(String channel, MinutePath minutePath, Traces traces, Consumer<JsonNode> itemNodeConsumer) {
         long start = System.currentTimeMillis();
-        try (S3Object object = s3Client.getObject(s3BucketName.getS3BucketName(), getS3BatchIndexKey(channel, minutePath))) {
+        GetObjectRequest request = new GetObjectRequest(s3BucketName.getS3BucketName(), getS3BatchIndexKey(channel, minutePath));
+        try (S3Object object = s3Client.getObject(request)) {
             byte[] bytes = ByteStreams.toByteArray(object.getObjectContent());
             JsonNode root = mapper.readTree(bytes);
             JsonNode items = root.get("items");
@@ -378,7 +379,7 @@ public class S3BatchContentDao implements ContentDao {
 
     @Override
     public void initialize() {
-        S3Util.initialize(s3BucketName.getS3BucketName(), s3Client);
+        s3Client.initialize();
     }
 
     @Override
@@ -445,14 +446,14 @@ public class S3BatchContentDao implements ContentDao {
     }
 
     public static class S3BatchContentDaoBuilder {
-        private AmazonS3 s3Client;
+        private HubS3Client s3Client;
         private S3BucketName s3BucketName;
         private MetricsService metricsService;
 
         S3BatchContentDaoBuilder() {
         }
 
-        public S3BatchContentDao.S3BatchContentDaoBuilder s3Client(AmazonS3 s3Client) {
+        public S3BatchContentDao.S3BatchContentDaoBuilder s3Client(HubS3Client s3Client) {
             this.s3Client = s3Client;
             return this;
         }
