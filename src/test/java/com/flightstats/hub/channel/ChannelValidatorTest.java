@@ -6,13 +6,11 @@ import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.exception.ForbiddenRequestException;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.model.ChannelConfig;
-import com.flightstats.hub.model.GlobalConfig;
 import com.google.common.base.Strings;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -231,12 +229,6 @@ public class ChannelValidatorTest {
     }
 
     @Test
-    public void testGlobalTag() {
-        ChannelConfig config = getBuilder().global(new GlobalConfig()).build();
-        assertTrue(config.getTags().contains("global"));
-    }
-
-    @Test
     public void testOwner() throws Exception {
         validator.validate(getBuilder().name("A").owner(Strings.repeat("A", 48)).build(), null, false);
     }
@@ -256,63 +248,6 @@ public class ChannelValidatorTest {
     @Test(expected = InvalidRequestException.class)
     public void testInvalidStorage() {
         validator.validate(getBuilder().name("storage").storage("stuff").build(), null, false);
-    }
-
-    @Test
-    public void testGlobal() {
-        GlobalConfig globalConfig = getGlobalConfig();
-        validator.validate(getBuilder()
-                .name("global")
-                .global(globalConfig).build(), null, false);
-    }
-
-    @Test(expected = InvalidRequestException.class)
-    public void testNoSatellite() {
-        GlobalConfig globalConfig = new GlobalConfig();
-        globalConfig.setMaster("http://master");
-        validator.validate(getBuilder()
-                .name("global")
-                .global(globalConfig).build(), null, false);
-    }
-
-    @Test(expected = InvalidRequestException.class)
-    public void testNoMaster() {
-        GlobalConfig globalConfig = new GlobalConfig();
-        globalConfig.addSatellite("http://master");
-        validator.validate(getBuilder()
-                .name("global")
-                .global(globalConfig).build(), null, false);
-    }
-
-    @Test(expected = InvalidRequestException.class)
-    public void testSatelliteSame() {
-        GlobalConfig globalConfig = new GlobalConfig();
-        globalConfig.setMaster("http://master");
-        globalConfig.addSatellite("http://master/");
-        validator.validate(getBuilder()
-                .name("global")
-                .global(globalConfig).build(), null, false);
-    }
-
-    @Test(expected = InvalidRequestException.class)
-    public void testMasterUrl() throws MalformedURLException {
-        GlobalConfig globalConfig = new GlobalConfig();
-        globalConfig.setMaster("http:/master");
-        globalConfig.addSatellite("http://satellite");
-        validator.validate(getBuilder()
-                .name("global")
-                .global(globalConfig).build(), null, false);
-    }
-
-    @Test(expected = InvalidRequestException.class)
-    public void testSatelliteUrl() throws MalformedURLException {
-        GlobalConfig globalConfig = new GlobalConfig();
-        globalConfig.setMaster("http:/master");
-        globalConfig.addSatellite("http://satellite");
-        globalConfig.addSatellite("ftp://satellite2");
-        validator.validate(getBuilder()
-                .name("global")
-                .global(globalConfig).build(), null, false);
     }
 
     @Test
@@ -373,34 +308,6 @@ public class ChannelValidatorTest {
     }
 
     @Test
-    public void testGlobalLossSatellite() throws Exception {
-        HubProperties.setProperty("hub.protect.channels", "true");
-        GlobalConfig twoSatellites = getGlobalConfig();
-        twoSatellites.addSatellite("http://satellite2");
-        ChannelConfig two = getBuilder().name("testGlobalLoss").global(twoSatellites).build();
-        GlobalConfig globalConfigOld = getGlobalConfig();
-        ChannelConfig one = getBuilder().name("testGlobalLoss").global(globalConfigOld).build();
-        ChannelConfig none = getBuilder().name("testGlobalLoss").global(null).build();
-        validator.validate(two, one, false);
-        validateError(one, two);
-        validateError(none, one);
-    }
-
-    @Test
-    public void testGlobalLossMaster() throws Exception {
-        HubProperties.setProperty("hub.protect.channels", "true");
-        GlobalConfig globalConfigOld = getGlobalConfig();
-        ChannelConfig master = getBuilder().name("testGlobalLoss").global(globalConfigOld).build();
-        ChannelConfig none = getBuilder().name("testGlobalLoss").global(null).build();
-        GlobalConfig globalConfig = getGlobalConfig();
-        globalConfig.setMaster("http://master2");
-        ChannelConfig other = getBuilder().name("testGlobalLoss").global(globalConfig).build();
-        validator.validate(master, none, false);
-        validateError(none, master);
-        validateError(other, master);
-    }
-
-    @Test
     public void testDataLossChange() throws Exception {
         HubProperties.setProperty("hub.protect.channels", "false");
         ChannelConfig dataLoss = getBuilder().name("testDataLossChange").protect(false).build();
@@ -411,14 +318,6 @@ public class ChannelValidatorTest {
         validator.validate(dataLoss, noLoss, true);
 
     }
-
-    private GlobalConfig getGlobalConfig() {
-        GlobalConfig twoSatellites = new GlobalConfig();
-        twoSatellites.setMaster("http://master");
-        twoSatellites.addSatellite("http://satellite");
-        return twoSatellites;
-    }
-
 
     private void validateError(ChannelConfig config, ChannelConfig oldConfig) {
         try {

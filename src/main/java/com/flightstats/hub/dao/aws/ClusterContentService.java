@@ -84,7 +84,6 @@ public class ClusterContentService implements ContentService {
                 s3SingleWrite(channelName, key, content.isForceWrite());
                 return null;
             };
-            GlobalChannelService.handleGlobal(channel, local, () -> null, local);
         }
         return key;
     }

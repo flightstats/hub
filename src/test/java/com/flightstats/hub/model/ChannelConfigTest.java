@@ -37,7 +37,6 @@ public class ChannelConfigTest {
         assertTrue(config.getTags().isEmpty());
         assertEquals("", config.getReplicationSource());
         assertEquals("SINGLE", config.getStorage());
-        assertEquals(null, config.getGlobal());
         assertEquals(null, config.getMutableTime());
         assertTrue(config.isAllowZeroBytes());
     }
@@ -166,28 +165,6 @@ public class ChannelConfigTest {
         ChannelConfig updated = ChannelConfig.updateFromJson(config, config2.toJson());
         assertEquals(0, updated.getMaxItems());
         assertEquals(0, updated.getTtlDays());
-    }
-
-    @Test
-    public void testGlobalCopy() throws IOException {
-        GlobalConfig globalConfig = new GlobalConfig();
-        globalConfig.setMaster("master");
-        globalConfig.addSatellites(Arrays.asList("sat1", "sat2"));
-        ChannelConfig config = ChannelConfig.builder().global(globalConfig).build();
-        ChannelConfig copy = config.toBuilder().build();
-        assertEquals(globalConfig, copy.getGlobal());
-        assertTrue(config.equals(copy));
-
-        ChannelConfig fromJson = ChannelConfig.createFromJson(config.toJson());
-        assertEquals(globalConfig, fromJson.getGlobal());
-
-        GlobalConfig changedGlobal = new GlobalConfig();
-        changedGlobal.setMaster("sat1");
-        changedGlobal.addSatellites(Arrays.asList("master", "sat2", "sat3"));
-        ChannelConfig changedChannel = ChannelConfig.builder().global(changedGlobal).build();
-
-        ChannelConfig updated = ChannelConfig.updateFromJson(config, changedChannel.toJson());
-        assertEquals(changedGlobal, updated.getGlobal());
     }
 
     @Test

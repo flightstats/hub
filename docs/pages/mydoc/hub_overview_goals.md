@@ -54,7 +54,6 @@ todo talk about Spoke and both S3 versions, as well as the local version.
 
 The modular design has allowed us to more easily add additional features. 
  
-* [Global-Hub](Global-Hub)
 * [Historical-Channel](Historical-Channel)
 
 ## Loose Coupling

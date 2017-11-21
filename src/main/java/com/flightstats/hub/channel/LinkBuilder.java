@@ -44,12 +44,6 @@ public class LinkBuilder {
         root.put("allowZeroBytes", config.isAllowZeroBytes());
         root.put("creationDate", TimeUtil.FORMATTER.print(new DateTime(config.getCreationDate())));
         root.put("description", config.getDescription());
-        if (config.isGlobal()) {
-            ObjectNode global = root.putObject("global");
-            global.put("master", config.getGlobal().getMaster());
-            ArrayNode satellites = global.putArray("satellites");
-            config.getGlobal().getSatellites().forEach(satellites::add);
-        }
         root.put("maxItems", config.getMaxItems());
         if (config.getMutableTime() != null) {
             root.put("mutableTime", TimeUtil.FORMATTER.print(config.getMutableTime()));
