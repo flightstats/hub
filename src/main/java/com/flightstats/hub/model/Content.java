@@ -188,6 +188,27 @@ public class Content implements Serializable {
         this.size = size;
     }
 
+    public static Content copy(Content content) {
+        Builder contentBuilder = Content.builder();
+
+        if (content.getContentType().isPresent()) {
+            contentBuilder.withContentType(content.getContentType().get());
+        }
+
+        if (content.getContentKey().isPresent()) {
+            contentBuilder.withContentKey(content.getContentKey().get());
+        }
+
+        contentBuilder.withData(content.getData());
+        contentBuilder.withContentLength(content.getContentLength());
+        contentBuilder.withSize(content.getSize());
+        contentBuilder.withForceWrite(content.isForceWrite());
+        contentBuilder.withLarge(content.isLarge());
+        contentBuilder.withThreads(content.getThreads());
+
+        return contentBuilder.build();
+    }
+
     public static class Builder {
         private Optional<String> contentType = Optional.absent();
         private long contentLength = 0;

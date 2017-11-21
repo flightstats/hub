@@ -91,8 +91,13 @@ public class S3BatchContentDao implements ContentDao {
 
     private Content getS3Object(String channel, ContentKey key) throws IOException {
         logger.trace("S3BatchContentDao.getS3Object {} {}", channel, key);
+        return readBatch(channel, key).get(key);
+    }
+
+    @Override
+    public Map<ContentKey, Content> readBatch(String channelName, ContentKey key) throws IOException {
         MinutePath minutePath = new MinutePath(key.getTime());
-        return mapMinute(channel, minutePath).get(key);
+        return mapMinute(channelName, minutePath);
     }
 
     private Map<ContentKey, Content> mapMinute(String channel, MinutePath minutePath) throws IOException {

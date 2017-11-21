@@ -27,13 +27,13 @@ public class FileSpokeStoreTest {
     private final static Logger logger = LoggerFactory.getLogger(FileSpokeStoreTest.class);
     private String tempDir;
     private FileSpokeStore spokeStore;
-    private static final int ttlMinutes = HubProperties.getProperty("spoke.ttlMinutes", 60);
+    private static final int ttlMinutes = HubProperties.getSpokeTtlMinutes(SpokeStore.WRITE);
 
     @Before
     public void setUp() throws Exception {
         tempDir = Files.createTempDir().getPath();
-        HubProperties.setProperty("spoke.path", tempDir);
-        spokeStore = new FileSpokeStore();
+        HubProperties.setProperty("spoke.write.path", tempDir);
+        spokeStore = new FileSpokeStore(tempDir, ttlMinutes);
     }
 
     @Test

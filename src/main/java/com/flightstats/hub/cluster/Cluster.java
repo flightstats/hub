@@ -12,7 +12,11 @@ public interface Cluster {
     /**
      * @return the localhost's server
      */
-    Collection<String> getLocalServer() throws UnknownHostException;
+    static Collection<String> getLocalServer() throws UnknownHostException {
+        List<String> server = new ArrayList<>();
+        server.add(Cluster.getHost(false));
+        return server;
+    }
 
     /**
      * @return All servers in the cluster

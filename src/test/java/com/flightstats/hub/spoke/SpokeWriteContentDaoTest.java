@@ -15,15 +15,15 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SpokeContentDaoTest {
+public class SpokeWriteContentDaoTest {
 
-    private final static Logger logger = LoggerFactory.getLogger(SpokeContentDaoTest.class);
+    private final static Logger logger = LoggerFactory.getLogger(SpokeWriteContentDaoTest.class);
     private static ContentDaoUtil util;
 
     @BeforeClass
     public static void setUpClass() throws Exception {
         Injector injector = Integration.startAwsHub();
-        util = new ContentDaoUtil(injector.getInstance(SpokeContentDao.class));
+        util = new ContentDaoUtil(injector.getInstance(SpokeWriteContentDao.class));
         CuratorFramework curator = injector.getInstance(CuratorFramework.class);
         Cluster cluster = HubBindings.buildSpokeCluster(curator, new SpokeDecommissionCluster(curator));
         for (int i = 0; i < 10; i++) {

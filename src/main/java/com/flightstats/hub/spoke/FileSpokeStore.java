@@ -1,6 +1,5 @@
 package com.flightstats.hub.spoke;
 
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.MinutePath;
 import com.flightstats.hub.util.TimeUtil;
@@ -24,15 +23,13 @@ import java.util.Collection;
 public class FileSpokeStore {
 
     private final static Logger logger = LoggerFactory.getLogger(FileSpokeStore.class);
-    private final String storagePath;
+    private final String spokePath;
+    private final int spokeTtlMinutes;
 
-    public FileSpokeStore() {
-        this(HubProperties.getSpokePath());
-    }
-
-    public FileSpokeStore(String storagePath) {
-        this.storagePath = StringUtils.appendIfMissing(storagePath, "/");
-        logger.info("starting with storage path " + this.storagePath);
+    public FileSpokeStore(String spokePath, int spokeTtlMinutes) {
+        this.spokePath = StringUtils.appendIfMissing(spokePath, "/");
+        this.spokeTtlMinutes = spokeTtlMinutes;
+        logger.info("starting with storage path " + this.spokePath);
         if (!insert("hub-startup/" + new ContentKey().toUrl(), ("" + System.currentTimeMillis()).getBytes())) {
             throw new RuntimeException("unable to create startup file");
         }
@@ -96,7 +93,7 @@ public class FileSpokeStore {
     }
 
     public boolean delete(String path) throws Exception {
-        FileUtils.deleteDirectory(new File(storagePath + path));
+        FileUtils.deleteDirectory(new File(spokePath + path));
         return true;
     }
 
@@ -110,19 +107,19 @@ public class FileSpokeStore {
     File spokeFilePathPart(String urlPathPart) {
         String[] split = StringUtils.split(urlPathPart, "/");
         if (split.length >= 7 && split.length <= 8)
-            return new File(storagePath + split[0] + "/" + split[1] + "/" + split[2] + "/" + split[3] + "/" + split[4]
+            return new File(spokePath + split[0] + "/" + split[1] + "/" + split[2] + "/" + split[3] + "/" + split[4]
                     + "/" + split[5]);
         if (split.length < 7)
-            return new File(storagePath + urlPathPart);
-        return new File(storagePath + split[0] + "/" + split[1] + "/" + split[2] + "/" + split[3] + "/" + split[4]
+            return new File(spokePath + urlPathPart);
+        return new File(spokePath + split[0] + "/" + split[1] + "/" + split[2] + "/" + split[3] + "/" + split[4]
                 + "/" + split[5] + "/" + split[6] + split[7] + split[8]);
     }
 
 
     //Given a File, return a key part (full key, or time path part)
     String spokeKeyFromPath(String path) {
-        if (path.contains(storagePath))
-            path = path.substring(storagePath.length());
+        if (path.contains(spokePath))
+            path = path.substring(spokePath.length());
 
         // file or directory?
         int i = path.lastIndexOf("/");
@@ -190,7 +187,7 @@ public class FileSpokeStore {
     private String getLatest(String channel, String limitPath, DateTime hourToSearch) {
         logger.trace("latest {} {} {}", channel, limitPath, hourToSearch);
         String hoursPath = TimeUtil.hours(hourToSearch);
-        String fullHoursPath = storagePath + channel + "/" + hoursPath;
+        String fullHoursPath = spokePath + channel + "/" + hoursPath;
         String[] minutes = new File(fullHoursPath).list();
         if (minutes == null) {
             minutes = new String[0];
@@ -209,8 +206,7 @@ public class FileSpokeStore {
                 }
             }
         }
-        int ttlMinutes = HubProperties.getSpokeTtlMinutes();
-        DateTime ttlTime = TimeUtil.now().minusMinutes(ttlMinutes);
+        DateTime ttlTime = TimeUtil.now().minusMinutes(spokeTtlMinutes);
         DateTime previous = hourToSearch.minusHours(1).withMinuteOfHour(59).withSecondOfMinute(59).withMillisOfSecond(999);
         if (previous.isBefore(ttlTime)) {
             logger.debug("no latest found for {} {} ", channel, limitPath);
@@ -224,7 +220,7 @@ public class FileSpokeStore {
      */
     public void getNext(String channel, String startKey, int count, OutputStream output) throws IOException {
         DateTime now = TimeUtil.now();
-        String channelPath = storagePath + channel + "/";
+        String channelPath = spokePath + channel + "/";
         logger.trace("next {} {} {}", channel, startKey, now);
         ContentKey start = ContentKey.fromUrl(startKey).get();
         int found = 0;
@@ -266,7 +262,7 @@ public class FileSpokeStore {
 
     private void recurseDelete(String path, String[] limitPath, int count, String channel) {
         logger.trace("recurse delete {} {}", path, count);
-        String pathname = storagePath + path;
+        String pathname = spokePath + path;
         String[] items = new File(pathname).list();
         if (items == null) {
             logger.trace("path not found {}", pathname);
@@ -283,8 +279,8 @@ public class FileSpokeStore {
                 if (count < 4) {
                     recurseDelete(path + "/" + item, limitPath, count + 1, channel);
                 } else {
-                    logger.info("deleting {}", storagePath + "/" + current);
-                    FileUtils.deleteQuietly(new File(storagePath + "/" + current));
+                    logger.info("deleting {}", spokePath + "/" + current);
+                    FileUtils.deleteQuietly(new File(spokePath + "/" + current));
                 }
             }
         }
