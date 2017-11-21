@@ -7,15 +7,20 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.cluster.*;
 import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.health.HubHealthCheck;
 import com.flightstats.hub.metrics.DelegatingMetricsService;
 import com.flightstats.hub.metrics.MetricsRunner;
 import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.replication.ReplicationManager;
 import com.flightstats.hub.rest.*;
+import com.flightstats.hub.spoke.FileSpokeStore;
 import com.flightstats.hub.spoke.GCRunner;
 import com.flightstats.hub.spoke.SpokeClusterRegister;
 import com.flightstats.hub.spoke.SpokeFinalCheck;
+import com.flightstats.hub.spoke.SpokeReadContentDao;
+import com.flightstats.hub.spoke.SpokeStore;
+import com.flightstats.hub.spoke.SpokeWriteContentDao;
 import com.flightstats.hub.time.NtpMonitor;
 import com.flightstats.hub.time.TimeService;
 import com.flightstats.hub.util.HubUtils;
@@ -169,6 +174,25 @@ public class HubBindings extends AbstractModule {
         bind(FinalCheck.class).to(SpokeFinalCheck.class).asEagerSingleton();
         bind(InFlightService.class).asEagerSingleton();
         bind(ChannelService.class).asEagerSingleton();
+
+        bind(ContentDao.class)
+                .annotatedWith(Names.named(ContentDao.WRITE_CACHE))
+                .to(SpokeWriteContentDao.class).asEagerSingleton();
+        bind(ContentDao.class)
+                .annotatedWith(Names.named(ContentDao.READ_CACHE))
+                .to(SpokeReadContentDao.class).asEagerSingleton();
+
+        bind(FileSpokeStore.class)
+                .annotatedWith(Names.named(SpokeStore.WRITE.name()))
+                .toInstance(new FileSpokeStore(
+                        HubProperties.getSpokePath(SpokeStore.WRITE),
+                        HubProperties.getSpokeTtlMinutes(SpokeStore.WRITE)));
+
+        bind(FileSpokeStore.class)
+                .annotatedWith(Names.named(SpokeStore.READ.name()))
+                .toInstance(new FileSpokeStore(
+                        HubProperties.getSpokePath(SpokeStore.READ),
+                        HubProperties.getSpokeTtlMinutes(SpokeStore.READ)));
     }
 
 }

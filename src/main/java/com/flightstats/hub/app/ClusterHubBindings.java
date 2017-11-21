@@ -38,12 +38,6 @@ class ClusterHubBindings extends AbstractModule {
                 .to(ClusterContentService.class).asEagerSingleton();
         bind(RemoteSpokeStore.class).asEagerSingleton();
         bind(ContentDao.class)
-                .annotatedWith(Names.named(ContentDao.WRITE_CACHE))
-                .to(SpokeWriteContentDao.class).asEagerSingleton();
-        bind(ContentDao.class)
-                .annotatedWith(Names.named(ContentDao.READ_CACHE))
-                .to(SpokeReadContentDao.class).asEagerSingleton();
-        bind(ContentDao.class)
                 .annotatedWith(Names.named(ContentDao.SINGLE_LONG_TERM))
                 .to(S3SingleContentDao.class).asEagerSingleton();
         bind(ContentDao.class)
@@ -66,18 +60,6 @@ class ClusterHubBindings extends AbstractModule {
         bind(SpokeTtlEnforcer.class)
                 .annotatedWith(Names.named(SpokeStore.READ.name()))
                 .toInstance(new SpokeTtlEnforcer(
-                        HubProperties.getSpokePath(SpokeStore.READ),
-                        HubProperties.getSpokeTtlMinutes(SpokeStore.READ)));
-
-        bind(FileSpokeStore.class)
-                .annotatedWith(Names.named(SpokeStore.WRITE.name()))
-                .toInstance(new FileSpokeStore(
-                        HubProperties.getSpokePath(SpokeStore.WRITE),
-                        HubProperties.getSpokeTtlMinutes(SpokeStore.WRITE)));
-
-        bind(FileSpokeStore.class)
-                .annotatedWith(Names.named(SpokeStore.READ.name()))
-                .toInstance(new FileSpokeStore(
                         HubProperties.getSpokePath(SpokeStore.READ),
                         HubProperties.getSpokeTtlMinutes(SpokeStore.READ)));
 

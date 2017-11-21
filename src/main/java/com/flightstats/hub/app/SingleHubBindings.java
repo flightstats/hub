@@ -27,24 +27,6 @@ class SingleHubBindings extends AbstractModule {
         bind(ContentService.class).to(SingleContentService.class).asEagerSingleton();
         bind(DocumentationDao.class).to(FileDocumentationDao.class).asEagerSingleton();
         bind(ChannelTtlEnforcer.class).asEagerSingleton();
-
-        bind(ContentDao.class)
-                .annotatedWith(Names.named(ContentDao.WRITE_CACHE))
-                .to(SpokeWriteContentDao.class).asEagerSingleton();
-        bind(ContentDao.class)
-                .annotatedWith(Names.named(ContentDao.READ_CACHE))
-                .to(SpokeReadContentDao.class).asEagerSingleton();
-
-        bind(FileSpokeStore.class)
-                .annotatedWith(Names.named(SpokeStore.WRITE.name()))
-                .toInstance(new FileSpokeStore(
-                        HubProperties.getSpokePath(SpokeStore.WRITE),
-                        HubProperties.getSpokeTtlMinutes(SpokeStore.WRITE)));
-        bind(FileSpokeStore.class)
-                .annotatedWith(Names.named(SpokeStore.READ.name()))
-                .toInstance(new FileSpokeStore(
-                        HubProperties.getSpokePath(SpokeStore.READ),
-                        HubProperties.getSpokeTtlMinutes(SpokeStore.READ)));
     }
 
     @Inject
