@@ -4,7 +4,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 
 public class BulkContent {
@@ -34,7 +33,7 @@ public class BulkContent {
     public static BulkContent fromMap(String channelName, Map<ContentKey, Content> map) {
         return BulkContent.builder()
                 .channel(channelName)
-                .items(map.values().stream().collect(Collectors.toList()))
+                .items(new ArrayList<>(map.values()))
                 .build();
     }
 
