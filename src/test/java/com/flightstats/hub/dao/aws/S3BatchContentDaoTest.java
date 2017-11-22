@@ -1,5 +1,6 @@
 package com.flightstats.hub.dao.aws;
 
+import com.amazonaws.services.s3.AmazonS3;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.channel.ZipBulkBuilder;
 import com.flightstats.hub.dao.ContentDaoUtil;
@@ -33,9 +34,12 @@ public class S3BatchContentDaoTest {
     public static void setUpClass() throws Exception {
         HubProperties.loadProperties("useDefault");
         HubProperties.setProperty("s3.maxQueryItems", "5");
+        S3BucketName s3BucketName = new S3BucketName("local", "hub-v2");
+        AmazonS3 s3Client = new AwsConnectorFactory().getS3Client();
+        HubS3Client hubS3Client = new HubS3Client(s3BucketName, s3Client, new NoOpMetricsService());
         contentDao = S3BatchContentDao.builder()
-                .s3Client(new AwsConnectorFactory().getS3Client())
-                .s3BucketName(new S3BucketName("local", "hub-v2"))
+                .s3Client(hubS3Client)
+                .s3BucketName(s3BucketName)
                 .metricsService(new NoOpMetricsService())
                 .build();
     }
