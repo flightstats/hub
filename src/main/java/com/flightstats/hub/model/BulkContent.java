@@ -3,6 +3,7 @@ package com.flightstats.hub.model;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 
 public class BulkContent {
@@ -11,16 +12,29 @@ public class BulkContent {
     private final InputStream stream;
     private final String contentType;
     private final String channel;
-    private final List<Content> items = new ArrayList<>();
+    private final List<Content> items;
     private ContentKey masterKey;
 
-    @java.beans.ConstructorProperties({"isNew", "stream", "contentType", "channel", "masterKey"})
-    BulkContent(boolean isNew, InputStream stream, String contentType, String channel, ContentKey masterKey) {
+    @java.beans.ConstructorProperties({"isNew", "stream", "contentType", "channel", "masterKey", "items"})
+    BulkContent(boolean isNew, InputStream stream, String contentType, String channel, ContentKey masterKey, List<Content> items) {
         this.isNew = isNew;
         this.stream = stream;
         this.contentType = contentType;
         this.channel = channel;
         this.masterKey = masterKey;
+
+        if (items == null) {
+            this.items = new ArrayList<>();
+        } else {
+            this.items = items;
+        }
+    }
+
+    public static BulkContent fromMap(String channelName, Map<ContentKey, Content> map) {
+        return BulkContent.builder()
+                .channel(channelName)
+                .items(new ArrayList<>(map.values()))
+                .build();
     }
 
     public static BulkContentBuilder builder() {
@@ -65,7 +79,7 @@ public class BulkContent {
     }
 
     public BulkContent withChannel(String channel) {
-        return this.channel == channel ? this : new BulkContent(this.isNew, this.stream, this.contentType, channel, this.masterKey);
+        return this.channel == channel ? this : new BulkContent(this.isNew, this.stream, this.contentType, channel, this.masterKey, this.items);
     }
 
     public static class BulkContentBuilder {
@@ -74,6 +88,7 @@ public class BulkContent {
         private String contentType;
         private String channel;
         private ContentKey masterKey;
+        private List<Content> items = new ArrayList<>();
 
         BulkContentBuilder() {
         }
@@ -103,12 +118,17 @@ public class BulkContent {
             return this;
         }
 
+        public BulkContent.BulkContentBuilder items(List<Content> items) {
+            this.items = items;
+            return this;
+        }
+
         public BulkContent build() {
-            return new BulkContent(isNew, stream, contentType, channel, masterKey);
+            return new BulkContent(isNew, stream, contentType, channel, masterKey, items);
         }
 
         public String toString() {
-            return "com.flightstats.hub.model.BulkContent.BulkContentBuilder(isNew=" + this.isNew + ", stream=" + this.stream + ", contentType=" + this.contentType + ", channel=" + this.channel + ", masterKey=" + this.masterKey + ")";
+            return "com.flightstats.hub.model.BulkContent.BulkContentBuilder(isNew=" + this.isNew + ", stream=" + this.stream + ", contentType=" + this.contentType + ", channel=" + this.channel + ", masterKey=" + this.masterKey + ", items=" + this.items.size() + ")";
         }
     }
 }

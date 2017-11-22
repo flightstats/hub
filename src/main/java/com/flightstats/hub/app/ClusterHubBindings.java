@@ -7,8 +7,11 @@ import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.dao.*;
 import com.flightstats.hub.dao.aws.*;
 import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.spoke.FileSpokeStore;
 import com.flightstats.hub.spoke.RemoteSpokeStore;
-import com.flightstats.hub.spoke.SpokeContentDao;
+import com.flightstats.hub.spoke.SpokeReadContentDao;
+import com.flightstats.hub.spoke.SpokeWriteContentDao;
+import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.spoke.SpokeTtlEnforcer;
 import com.flightstats.hub.webhook.Webhook;
 import com.google.inject.AbstractModule;
@@ -35,9 +38,6 @@ class ClusterHubBindings extends AbstractModule {
                 .to(ClusterContentService.class).asEagerSingleton();
         bind(RemoteSpokeStore.class).asEagerSingleton();
         bind(ContentDao.class)
-                .annotatedWith(Names.named(ContentDao.CACHE))
-                .to(SpokeContentDao.class).asEagerSingleton();
-        bind(ContentDao.class)
                 .annotatedWith(Names.named(ContentDao.SINGLE_LONG_TERM))
                 .to(S3SingleContentDao.class).asEagerSingleton();
         bind(ContentDao.class)
@@ -50,7 +50,19 @@ class ClusterHubBindings extends AbstractModule {
         bind(S3BatchManager.class).asEagerSingleton();
         bind(S3Verifier.class).asEagerSingleton();
         bind(AppUrlCheck.class).asEagerSingleton();
-        bind(SpokeTtlEnforcer.class).asEagerSingleton();
+
+        bind(SpokeTtlEnforcer.class)
+                .annotatedWith(Names.named(SpokeStore.WRITE.name()))
+                .toInstance(new SpokeTtlEnforcer(
+                        HubProperties.getSpokePath(SpokeStore.WRITE),
+                        HubProperties.getSpokeTtlMinutes(SpokeStore.WRITE)));
+
+        bind(SpokeTtlEnforcer.class)
+                .annotatedWith(Names.named(SpokeStore.READ.name()))
+                .toInstance(new SpokeTtlEnforcer(
+                        HubProperties.getSpokePath(SpokeStore.READ),
+                        HubProperties.getSpokeTtlMinutes(SpokeStore.READ)));
+
         bind(DocumentationDao.class).to(S3DocumentationDao.class).asEagerSingleton();
         bind(SpokeDecommissionManager.class).asEagerSingleton();
         bind(HubS3Client.class).asEagerSingleton();

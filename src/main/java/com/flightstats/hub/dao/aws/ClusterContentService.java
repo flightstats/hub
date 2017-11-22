@@ -9,6 +9,7 @@ import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.replication.S3Batch;
+import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.TimeUtil;
@@ -22,6 +23,7 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -41,13 +43,16 @@ public class ClusterContentService implements ContentService {
     private static final long largePayload = HubProperties.getLargePayload();
     private final boolean dropSomeWrites = HubProperties.getProperty("s3.dropSomeWrites", false);
     private static final int queryMergeMaxWaitMinutes = HubProperties.getProperty("query.merge.max.wait.minutes", 2);
-    private final int spokeTtlMinutes = HubProperties.getSpokeTtlMinutes();
+
     @Inject
-    @Named(ContentDao.CACHE)
-    private ContentDao spokeContentDao;
+    @Named(ContentDao.WRITE_CACHE)
+    private ContentDao spokeWriteContentDao;
     @Inject
     @Named(ContentDao.SINGLE_LONG_TERM)
     private ContentDao s3SingleContentDao;
+    @Inject
+    @Named(ContentDao.READ_CACHE)
+    private ContentDao spokeReadContentDao;
     @Inject
     @Named(ContentDao.BATCH_LONG_TERM)
     private ContentDao s3BatchContentDao;
@@ -77,7 +82,7 @@ public class ClusterContentService implements ContentService {
             s3LargePayloadContentDao.insert(channelName, content);
             spokeContent = createIndex(content);
         }
-        ContentKey key = spokeContentDao.insert(channelName, spokeContent);
+        ContentKey key = spokeWriteContentDao.insert(channelName, spokeContent);
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
         if (channel.isSingle() || channel.isBoth()) {
             Supplier<Void> local = () -> {
@@ -99,7 +104,7 @@ public class ClusterContentService implements ContentService {
     @Override
     public Collection<ContentKey> insert(BulkContent bulkContent) throws Exception {
         String channelName = bulkContent.getChannel();
-        SortedSet<ContentKey> keys = spokeContentDao.insert(bulkContent);
+        SortedSet<ContentKey> keys = spokeWriteContentDao.insert(bulkContent);
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
         if (channel.isSingle() || channel.isBoth()) {
             for (ContentKey key : keys) {
@@ -124,7 +129,7 @@ public class ClusterContentService implements ContentService {
         logger.trace("fetching {} from channel {} ", key.toString(), channelName);
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
         if (!remoteOnly && key.getTime().isAfter(getSpokeTtlTime(channelName))) {
-            Content content = spokeContentDao.get(channelName, key);
+            Content content = spokeWriteContentDao.get(channelName, key);
             if (content != null) {
                 logger.trace("returning from spoke {} {}", key.toString(), channelName);
                 return checkForLargeIndex(channelName, content);
@@ -134,14 +139,41 @@ public class ClusterContentService implements ContentService {
         if (channel.isSingle()) {
             content = s3SingleContentDao.get(channelName, key);
         } else if (channel.isBatch()) {
-            content = s3BatchContentDao.get(channelName, key);
-        } else {
-            content = s3SingleContentDao.get(channelName, key);
+            content = spokeReadContentDao.get(channelName, key);
             if (content == null) {
-                content = s3BatchContentDao.get(channelName, key);
+                content = getFromS3BatchAndStoreInReadCache(channelName, key);
+            }
+        } else {
+            content = spokeReadContentDao.get(channelName, key);
+            if (content == null) {
+                content = getFromS3BatchAndStoreInReadCache(channelName, key);
+            }
+            if (content == null) {
+                content = s3SingleContentDao.get(channelName, key);
             }
         }
         return checkForLargeIndex(channelName, content);
+    }
+
+    private Content getFromS3BatchAndStoreInReadCache(String channelName, ContentKey key) {
+        try {
+            Map<ContentKey, Content> map = s3BatchContentDao.readBatch(channelName, key);
+            Content content = Content.copy(map.get(key));
+            storeBatchInReadCache(channelName, map);
+            return content;
+        } catch (IOException e) {
+            logger.warn("unable to get batch from long term storage", e);
+            return null;
+        }
+    }
+
+    private void storeBatchInReadCache(String channelName, Map<ContentKey, Content> map) {
+        try {
+            BulkContent bulkContent = BulkContent.fromMap(channelName, map);
+            spokeReadContentDao.insert(bulkContent);
+        } catch (Exception e) {
+            logger.warn("unable to cache batch", e);
+        }
     }
 
     private Optional<Content> checkForLargeIndex(String channelName, Content content) {
@@ -160,7 +192,7 @@ public class ClusterContentService implements ContentService {
 
     private DateTime getSpokeTtlTime(String channelName) {
         DateTime startTime = channelService.getLastUpdated(channelName, new ContentKey(TimeUtil.now())).getTime();
-        return startTime.minusMinutes(spokeTtlMinutes);
+        return startTime.minusMinutes(HubProperties.getSpokeTtlMinutes(SpokeStore.WRITE));
     }
 
     @Override
@@ -211,7 +243,12 @@ public class ClusterContentService implements ContentService {
     private Collection<ContentKey> handleQuery(Query query, Function<ContentDao, SortedSet<ContentKey>> daoQuery) {
         List<ContentDao> daos = new ArrayList<>();
         if (query.getLocation().equals(Location.CACHE)) {
-            daos.add(spokeContentDao);
+            daos.add(spokeWriteContentDao);
+            daos.add(spokeReadContentDao);
+        } else if (query.getLocation().equals(Location.CACHE_WRITE)) {
+            daos.add(spokeWriteContentDao);
+        } else if (query.getLocation().equals(Location.CACHE_READ)) {
+            daos.add(spokeReadContentDao);
         } else if (query.getLocation().equals(Location.LONG_TERM)) {
             daos.add(s3SingleContentDao);
             daos.add(s3BatchContentDao);
@@ -220,7 +257,7 @@ public class ClusterContentService implements ContentService {
         } else if (query.getLocation().equals(Location.LONG_TERM_BATCH)) {
             daos.add(s3BatchContentDao);
         } else {
-            daos.add(spokeContentDao);
+            daos.add(spokeWriteContentDao);
             ChannelConfig channel = channelService.getCachedChannelConfig(query.getChannelName());
             DateTime spokeTtlTime = getSpokeTtlTime(query.getChannelName());
             if (channel.isHistorical() && channel.getMutableTime().isAfter(spokeTtlTime)) {
@@ -288,7 +325,7 @@ public class ClusterContentService implements ContentService {
         String channel = latestQuery.getChannelName();
         final ChannelConfig cachedChannelConfig = channelService.getCachedChannelConfig(channel);
         DateTime cacheTtlTime = getSpokeTtlTime(channel);
-        Optional<ContentKey> latest = spokeContentDao.getLatest(channel, latestQuery.getStartKey(), ActiveTraces.getLocal());
+        Optional<ContentKey> latest = spokeWriteContentDao.getLatest(channel, latestQuery.getStartKey(), ActiveTraces.getLocal());
         if (latest.isPresent()) {
             ActiveTraces.getLocal().add("found spoke latest", channel, latest);
             lastContentPath.delete(channel, CHANNEL_LATEST_UPDATED);
@@ -337,7 +374,8 @@ public class ClusterContentService implements ContentService {
     @Override
     public void delete(String channelName) {
         logger.info("deleting channel " + channelName);
-        spokeContentDao.delete(channelName);
+        spokeWriteContentDao.delete(channelName);
+        spokeReadContentDao.delete(channelName);
         s3SingleContentDao.delete(channelName);
         s3BatchContentDao.delete(channelName);
         s3LargePayloadContentDao.delete(channelName);
@@ -411,7 +449,8 @@ public class ClusterContentService implements ContentService {
     private class SpokeS3ContentServiceInit extends AbstractIdleService {
         @Override
         protected void startUp() throws Exception {
-            spokeContentDao.initialize();
+            spokeWriteContentDao.initialize();
+            spokeReadContentDao.initialize();
             s3SingleContentDao.initialize();
             s3BatchContentDao.initialize();
         }

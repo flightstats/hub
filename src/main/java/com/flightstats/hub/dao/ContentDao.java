@@ -4,13 +4,16 @@ import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
 import com.google.common.base.Optional;
 
+import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
 import java.util.SortedSet;
 import java.util.function.Consumer;
 
 public interface ContentDao {
 
-    String CACHE = "Cache";
+    String WRITE_CACHE = "WriteCache";
+    String READ_CACHE = "ReadCache";
     String SINGLE_LONG_TERM = "LongTerm";
     String BATCH_LONG_TERM = "BatchLongTerm";
     String LARGE_PAYLOAD = "LargePayload";
@@ -37,6 +40,10 @@ public interface ContentDao {
 
     default void writeBatch(String channel, ContentPath path, Collection<ContentKey> keys, byte[] bytes) {
         throw new UnsupportedOperationException("writeBatch is not supported");
+    }
+
+    default Map<ContentKey, Content> readBatch(String channelName, ContentKey key) throws IOException {
+        throw new UnsupportedOperationException("readBatch is not supported");
     }
 
     default boolean streamMinute(String channel, MinutePath path, boolean descending, Consumer<Content> callback) {

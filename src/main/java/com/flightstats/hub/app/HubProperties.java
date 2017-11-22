@@ -1,5 +1,6 @@
 package com.flightstats.hub.app;
 
+import com.flightstats.hub.spoke.SpokeStore;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -30,8 +31,11 @@ public class HubProperties {
         return HubProperties.getProperty("app.encrypted", false);
     }
 
-    public static int getSpokeTtlMinutes() {
-        return getProperty("spoke.ttlMinutes", 60);
+    public static int getSpokeTtlMinutes(SpokeStore spokeStore) {
+        String property = "spoke." + spokeStore + ".ttlMinutes";
+        String fallbackProperty = "spoke.ttlMinutes";
+        int defaultTTL = 60;
+        return getProperty(property, getProperty(fallbackProperty, defaultTTL));
     }
 
     public static String getAppEnv() {
@@ -42,8 +46,11 @@ public class HubProperties {
         return HubProperties.getProperty("hub.protect.channels", true);
     }
 
-    public static String getSpokePath() {
-        return getProperty("spoke.path", "/spoke");
+    public static String getSpokePath(SpokeStore spokeStore) {
+        String property = "spoke." + spokeStore + ".path";
+        String fallbackProperty = "spoke.path";
+        String defaultPath = "/spoke/" + spokeStore;
+        return getProperty(property, getProperty(fallbackProperty, defaultPath));
     }
 
     public static long getLargePayload() {

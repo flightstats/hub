@@ -10,6 +10,7 @@ import com.flightstats.hub.exception.FailedQueryException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
+import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
@@ -50,8 +51,8 @@ public class S3Verifier {
     @Inject
     private ChannelService channelService;
     @Inject
-    @Named(ContentDao.CACHE)
-    private ContentDao spokeContentDao;
+    @Named(ContentDao.WRITE_CACHE)
+    private ContentDao spokeWriteContentDao;
     @Inject
     @Named(ContentDao.SINGLE_LONG_TERM)
     private ContentDao s3SingleContentDao;
@@ -154,7 +155,7 @@ public class S3Verifier {
         try {
             CountDownLatch latch = new CountDownLatch(2);
             runInQueryPool(ActiveTraces.getLocal(), latch, () -> {
-                SortedSet<ContentKey> spokeKeys = spokeContentDao.queryByTime(timeQuery);
+                SortedSet<ContentKey> spokeKeys = spokeWriteContentDao.queryByTime(timeQuery);
                 foundCacheKeys.addAll(spokeKeys);
                 queryResult.addKeys(spokeKeys);
             });
@@ -185,7 +186,7 @@ public class S3Verifier {
     }
 
     private MinutePath getSpokeTtlPath(DateTime now) {
-        return new MinutePath(now.minusMinutes(HubProperties.getSpokeTtlMinutes() - 2));
+        return new MinutePath(now.minusMinutes(HubProperties.getSpokeTtlMinutes(SpokeStore.WRITE) - 2));
     }
 
     class VerifierRange {
