@@ -73,6 +73,15 @@ public class DynamoUtils {
         }
     }
 
+    void removeGSI(String tableName, String gsiName) {
+        UpdateTableRequest updateTableRequest = new UpdateTableRequest()
+                .withTableName(tableName)
+                .withGlobalSecondaryIndexUpdates(new GlobalSecondaryIndexUpdate()
+                        .withDelete(new DeleteGlobalSecondaryIndexAction().withIndexName(gsiName)));
+        dbClient.updateTable(updateTableRequest);
+        waitForTableStatus(tableName, TableStatus.ACTIVE);
+    }
+
     void updateTable(String tableName, ProvisionedThroughput throughput) {
         try {
             TableDescription tableDescription = waitForTableStatus(tableName, TableStatus.ACTIVE);
