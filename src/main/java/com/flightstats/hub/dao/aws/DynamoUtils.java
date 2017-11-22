@@ -74,12 +74,16 @@ public class DynamoUtils {
     }
 
     void removeGSI(String tableName, String gsiName) {
-        UpdateTableRequest updateTableRequest = new UpdateTableRequest()
-                .withTableName(tableName)
-                .withGlobalSecondaryIndexUpdates(new GlobalSecondaryIndexUpdate()
-                        .withDelete(new DeleteGlobalSecondaryIndexAction().withIndexName(gsiName)));
-        dbClient.updateTable(updateTableRequest);
-        waitForTableStatus(tableName, TableStatus.ACTIVE);
+        try {
+            UpdateTableRequest updateTableRequest = new UpdateTableRequest()
+                    .withTableName(tableName)
+                    .withGlobalSecondaryIndexUpdates(new GlobalSecondaryIndexUpdate()
+                            .withDelete(new DeleteGlobalSecondaryIndexAction().withIndexName(gsiName)));
+            dbClient.updateTable(updateTableRequest);
+            waitForTableStatus(tableName, TableStatus.ACTIVE);
+        } catch (ResourceNotFoundException e) {
+            logger.info("gsi " + gsiName + " not found in table " + tableName);
+        }
     }
 
     void updateTable(String tableName, ProvisionedThroughput throughput) {
