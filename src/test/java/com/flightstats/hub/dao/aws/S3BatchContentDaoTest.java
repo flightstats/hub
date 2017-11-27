@@ -1,14 +1,14 @@
 package com.flightstats.hub.dao.aws;
 
-import com.amazonaws.services.s3.AmazonS3;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.channel.ZipBulkBuilder;
 import com.flightstats.hub.dao.ContentDaoUtil;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.metrics.NoOpMetricsService;
 import com.flightstats.hub.model.*;
+import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.StringUtils;
 import com.flightstats.hub.util.TimeUtil;
+import com.google.inject.Injector;
 import org.joda.time.DateTime;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -34,14 +34,8 @@ public class S3BatchContentDaoTest {
     public static void setUpClass() throws Exception {
         HubProperties.loadProperties("useDefault");
         HubProperties.setProperty("s3.maxQueryItems", "5");
-        S3BucketName s3BucketName = new S3BucketName("local", "hub-v2");
-        AmazonS3 s3Client = new AwsConnectorFactory().getS3Client();
-        HubS3Client hubS3Client = new HubS3Client(s3BucketName, s3Client, new NoOpMetricsService());
-        contentDao = S3BatchContentDao.builder()
-                .s3Client(hubS3Client)
-                .s3BucketName(s3BucketName)
-                .metricsService(new NoOpMetricsService())
-                .build();
+        Injector injector = Integration.startAwsHub();
+        contentDao = injector.getInstance(S3BatchContentDao.class);
     }
 
     @Test

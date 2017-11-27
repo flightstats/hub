@@ -52,20 +52,6 @@ public class S3BatchContentDao implements ContentDao {
     @Inject
     private MetricsService metricsService;
 
-    @java.beans.ConstructorProperties({"s3Client", "s3BucketName", "metricsService"})
-    public S3BatchContentDao(HubS3Client s3Client, S3BucketName s3BucketName, MetricsService metricsService) {
-        this.s3Client = s3Client;
-        this.s3BucketName = s3BucketName;
-        this.metricsService = metricsService;
-    }
-
-    public S3BatchContentDao() {
-    }
-
-    public static S3BatchContentDaoBuilder builder() {
-        return new S3BatchContentDaoBuilder();
-    }
-
     @Override
     public ContentKey insert(String channelName, Content content) throws Exception {
         throw new UnsupportedOperationException("single writes are not supported");
@@ -445,35 +431,4 @@ public class S3BatchContentDao implements ContentDao {
         return channel + BATCH_INDEX + path.toUrl();
     }
 
-    public static class S3BatchContentDaoBuilder {
-        private HubS3Client s3Client;
-        private S3BucketName s3BucketName;
-        private MetricsService metricsService;
-
-        S3BatchContentDaoBuilder() {
-        }
-
-        public S3BatchContentDao.S3BatchContentDaoBuilder s3Client(HubS3Client s3Client) {
-            this.s3Client = s3Client;
-            return this;
-        }
-
-        public S3BatchContentDao.S3BatchContentDaoBuilder s3BucketName(S3BucketName s3BucketName) {
-            this.s3BucketName = s3BucketName;
-            return this;
-        }
-
-        public S3BatchContentDao.S3BatchContentDaoBuilder metricsService(MetricsService metricsService) {
-            this.metricsService = metricsService;
-            return this;
-        }
-
-        public S3BatchContentDao build() {
-            return new S3BatchContentDao(s3Client, s3BucketName, metricsService);
-        }
-
-        public String toString() {
-            return "com.flightstats.hub.dao.aws.S3BatchContentDao.S3BatchContentDaoBuilder(s3Client=" + this.s3Client + ", s3BucketName=" + this.s3BucketName + ", metricsService=" + this.metricsService + ")";
-        }
-    }
 }
