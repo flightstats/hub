@@ -17,7 +17,6 @@ import java.util.*;
 
 public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
     private final static Logger logger = LoggerFactory.getLogger(DynamoChannelConfigDao.class);
-    public static final String INDEX_NAME = "tempLowerCaseName";
 
     @Inject
     private AmazonDynamoDB dbClient;
@@ -34,7 +33,6 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
         Map<String, AttributeValue> item = new HashMap<>();
         item.put("key", new AttributeValue(config.getName().toLowerCase()));
         item.put("displayName", new AttributeValue(config.getDisplayName()));
-        item.put("lowerCaseName", new AttributeValue(config.getLowerCaseName()));
         item.put("date", new AttributeValue().withN(String.valueOf(config.getCreationDate().getTime())));
         item.put("keepForever", new AttributeValue().withBOOL(config.getKeepForever()));
         item.put("ttlDays", new AttributeValue().withN(String.valueOf(config.getTtlDays())));
@@ -71,24 +69,17 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
         logger.info("creating table {} ", tableName);
         List<AttributeDefinition> attributes = new ArrayList<>();
         attributes.add(new AttributeDefinition("key", ScalarAttributeType.S));
-        attributes.add(new AttributeDefinition("lowerCaseName", ScalarAttributeType.S));
-
-        GlobalSecondaryIndex globalSecondaryIndex = new GlobalSecondaryIndex();
-        globalSecondaryIndex
-                .withIndexName(INDEX_NAME)
-                .withProvisionedThroughput(throughput)
-                .withKeySchema(new KeySchemaElement().withAttributeName("lowerCaseName").withKeyType(KeyType.HASH))
-                .withProjection(new Projection().withProjectionType(ProjectionType.ALL));
 
         CreateTableRequest request = new CreateTableRequest()
                 .withTableName(tableName)
                 .withAttributeDefinitions(attributes)
                 .withKeySchema(new KeySchemaElement("key", KeyType.HASH))
-                .withGlobalSecondaryIndexes(globalSecondaryIndex)
                 .withProvisionedThroughput(throughput);
 
         dynamoUtils.createTable(request);
         dynamoUtils.updateTable(tableName, throughput);
+        //todo - this can be removed once it has run everywhere.
+        dynamoUtils.removeGSI(tableName, "tempLowerCaseName");
 
     }
 
@@ -113,11 +104,10 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
     }
 
     private ChannelConfig mapItem(Map<String, AttributeValue> item) {
-        String displayName = item.get("displayName").getS();
         ChannelConfig.ChannelConfigBuilder builder = ChannelConfig.builder()
                 .creationDate(new Date(Long.parseLong(item.get("date").getN())))
-                .name(displayName.toLowerCase())
-                .displayName(displayName);
+                .name(item.get("key").getS())
+                .displayName(item.get("displayName").getS());
         if (item.get("ttlDays") != null) {
             builder.ttlDays(Long.parseLong(item.get("ttlDays").getN()));
         }

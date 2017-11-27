@@ -66,7 +66,7 @@ public class SpokeWriteContentDaoTest {
 
     @Test
     public void testDirectionQuery() throws Exception {
-        HubProperties.setProperty("spoke.ttlMinutes", "240");
+        HubProperties.setProperty("spoke.write.ttlMinutes", "240");
         util.testDirectionQueryTTL();
     }
 
