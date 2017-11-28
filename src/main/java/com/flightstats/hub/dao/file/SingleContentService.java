@@ -1,6 +1,5 @@
 package com.flightstats.hub.dao.file;
 
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentKeyUtil;
 import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.dao.ContentService;
@@ -9,9 +8,10 @@ import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.spoke.FileSpokeStore;
-import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,13 +28,9 @@ import java.util.function.Consumer;
 public class SingleContentService implements ContentService {
     private final static Logger logger = LoggerFactory.getLogger(SingleContentService.class);
 
-    private final FileSpokeStore fileSpokeStore;
-
-    public SingleContentService() {
-        String contentPath = FileUtil.getContentPath();
-        logger.info("using {}", contentPath);
-        fileSpokeStore = new FileSpokeStore(contentPath, HubProperties.getSpokeTtlMinutes(SpokeStore.WRITE));
-    }
+    @Inject
+    @Named("WRITE") //this isn't great, but java ¯\_(ツ)_/¯
+    private FileSpokeStore fileSpokeStore;
 
     @Override
     public ContentKey insert(String channelName, Content content) throws Exception {
