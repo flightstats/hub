@@ -17,7 +17,7 @@ public class TimeQueryTest {
     public void testOutsideOfCache() {
         DateTime start = TimeUtil.now();
         TimeQuery query = TimeQuery.builder().startTime(start).build();
-        assertFalse(query.outsideOfCache(start));
+        assertTrue(query.outsideOfCache(start));
         assertTrue(query.outsideOfCache(start.plusMillis(1)));
         assertFalse(query.outsideOfCache(start.minusMillis(1)));
     }

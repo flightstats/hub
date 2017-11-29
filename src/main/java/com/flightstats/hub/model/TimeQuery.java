@@ -55,7 +55,7 @@ public class TimeQuery implements Query {
     }
 
     public boolean outsideOfCache(DateTime cacheTime) {
-        return startTime.isBefore(cacheTime);
+        return startTime.isBefore(cacheTime) || startTime.isEqual(cacheTime);
     }
 
     public String getUrlPath() {
