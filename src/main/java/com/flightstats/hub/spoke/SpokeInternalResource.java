@@ -27,6 +27,79 @@ public class SpokeInternalResource {
     @Context
     private UriInfo uriInfo;
 
+    // TODO: remove these after migrating
+    // ----------------------------------
+
+    @GET
+    @Path("/payload/{path:.+}")
+    public Response oldGetPayloadMethod(@PathParam("path") String path) {
+        return getPayload(SpokeStore.WRITE.name(), path);
+    }
+
+    @PUT
+    @Path("/payload/{path:.+}")
+    public Response oldPutPayloadMethod(@PathParam("path") String path, InputStream input) {
+        return putPayload(SpokeStore.WRITE.name(), path, input);
+    }
+
+    @PUT
+    @Path("/bulkKey/{channel}")
+    public Response oldPutBulkMethod(@PathParam("channel") String channel, InputStream input) {
+        return putBulk(SpokeStore.WRITE.name(), channel, input);
+    }
+
+    @GET
+    @Path("/time/{C}/{Y}/{M}/{day}")
+    public Response oldTimeBucketMethod(@PathParam("C") String C,
+                                        @PathParam("Y") String Y,
+                                        @PathParam("M") String M,
+                                        @PathParam("day") String day) {
+        return getTimeBucket(SpokeStore.WRITE.name(), C, Y, M, day);
+    }
+
+    @GET
+    @Path("/time/{C}/{Y}/{M}/{D}/{hour}")
+    public Response oldTimeBucketMethod(@PathParam("C") String C,
+                                        @PathParam("Y") String Y,
+                                        @PathParam("M") String M,
+                                        @PathParam("D") String D,
+                                        @PathParam("hour") String hour) {
+        return getTimeBucket(SpokeStore.WRITE.name(), C, Y, M, D, hour);
+    }
+
+
+    @GET
+    @Path("/time/{C}/{Y}/{M}/{D}/{h}/{minute}")
+    public Response oldTimeBucketMethod(@PathParam("C") String C,
+                                        @PathParam("Y") String Y,
+                                        @PathParam("M") String M,
+                                        @PathParam("D") String D,
+                                        @PathParam("h") String h,
+                                        @PathParam("minute") String minute) {
+        return getTimeBucket(SpokeStore.WRITE.name(), C, Y, M, D, h, minute);
+    }
+
+
+    @GET
+    @Path("/time/{C}/{Y}/{M}/{D}/{h}/{m}/{second}")
+    public Response oldTimeBucketMethod(@PathParam("C") String C,
+                                        @PathParam("Y") String Y,
+                                        @PathParam("M") String M,
+                                        @PathParam("D") String D,
+                                        @PathParam("h") String h,
+                                        @PathParam("m") String m,
+                                        @PathParam("second") String second) {
+        return getTimeBucket(SpokeStore.WRITE.name(), C, Y, M, D, h, m, second);
+    }
+
+    @DELETE
+    @Path("/payload/{path:.+}")
+    public Response oldDeleteMethod(@PathParam("path") String path) {
+        return delete(SpokeStore.WRITE.name(), path);
+    }
+
+    // ----------------------------------
+
     @GET
     @Path("/{storeName}/payload/{path:.+}")
     public Response getPayload(@PathParam("storeName") String storeName,
