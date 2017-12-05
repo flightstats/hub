@@ -317,7 +317,14 @@ public class ChannelService {
         query = query.withChannelName(getDisplayName(query.getChannelName()));
         query = configureQuery(query);
         List<ContentKey> keys = new ArrayList<>(contentService.queryDirection(query));
+
         SortedSet<ContentKey> contentKeys = ContentKeyUtil.filter(keys, query);
+        if (query.isInclusive()) {
+            if (!contentKeys.isEmpty()) {
+                contentKeys.remove(contentKeys.last());
+            }
+            contentKeys.add(query.getStartKey());
+        }
         ActiveTraces.getLocal().add("ChannelService.query", contentKeys);
         return contentKeys;
     }
