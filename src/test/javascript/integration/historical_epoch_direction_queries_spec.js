@@ -99,6 +99,8 @@ describe(testName, function () {
 
     utils.putChannel(channel, false, channelBodyChange, testName);
 
+    utils.itRefreshesChannels();
+
     it('queries next 7 Immutable after change ' + next7, function (done) {
         utils.getQuery(channelURL + next7 + '&epoch=IMMUTABLE', 200, items.slice(2), done);
     }, 3 * 60 * 1000);
