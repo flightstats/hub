@@ -5,9 +5,9 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubProvider;
+import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.dao.ItemRequest;
-import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.events.ContentOutput;
 import com.flightstats.hub.events.EventsService;
 import com.flightstats.hub.exception.ConflictException;
@@ -391,6 +391,7 @@ public class ChannelContentResource {
                                       @QueryParam("batch") @DefaultValue("false") boolean batch,
                                       @QueryParam("bulk") @DefaultValue("false") boolean bulk,
                                       @QueryParam("order") @DefaultValue(Order.DEFAULT) String order,
+                                      @QueryParam("inclusive") @DefaultValue("false") boolean inclusive,
                                       @QueryParam("tag") String tag,
                                       @HeaderParam("Accept") String accept) {
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
@@ -402,6 +403,7 @@ public class ChannelContentResource {
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
                 .startKey(key)
+                .inclusive(inclusive)
                 .next(next)
                 .stable(stable)
                 .location(Location.valueOf(location))

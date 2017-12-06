@@ -10,49 +10,95 @@ var testName = __filename;
 describe(testName, function () {
     utils.createChannel(channelName);
 
-    it('adds items and traverses next links', function (done) {
-        var values = [];
-        var items = [];
-        utils.postItemQ(channelResource)
-            .then(function (value) {
-                values.push(value);
-                items.push(value.body._links.self.href);
-                return utils.getQ(value.body._links.self.href, 200);
+    var items = [];
+    var headers = {'Content-Type': 'application/json'};
+    var body = {'name': channelName};
+
+    function postOneItem(done) {
+        utils.httpPost(channelResource, headers, body)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(201);
+                items.push(response.body._links.self.href);
             })
-            .then(function (value) {
-                return utils.getQ(items[0] + '/next', 404);
+            .catch(function (error) {
+                expect(error).toBeNull();
             })
-            .then(function (value) {
-                return utils.getQ(items[0] + '/next/2', 200);
+            .finally(done);
+    }
+
+    it('posts item', function (done) {
+        postOneItem(done);
+    });
+
+    it('gets 404 from /next ', function (done) {
+        utils.httpGet(items[0] + '/next', headers, body)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(404);
             })
-            .then(function (value) {
-                expect(value.body._links.uris.length).toBe(0);
-                return utils.postItemQ(channelResource);
+            .catch(function (error) {
+                expect(error).toBeNull();
             })
-            .then(function (value) {
-                items.push(value.body._links.self.href);
-                return utils.postItemQ(channelResource);
+            .finally(done);
+    });
+
+    it('gets empty list from /next/2 ', function (done) {
+        utils.httpGet(items[0] + '/next/2', headers, body)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(200);
+                expect(response.body._links.uris.length).toBe(0);
             })
-            .then(function (value) {
-                items.push(value.body._links.self.href);
-                return utils.getQ(items[0] + '/next', 200);
+            .catch(function (error) {
+                expect(error).toBeNull();
             })
-            .then(function (value) {
-                expect(value.response.request.href).toBe(items[1]);
-                return utils.getQ(items[0] + '/next/2', 200, true);
+            .finally(done);
+    });
+
+    it('posts item', function (done) {
+        postOneItem(done);
+    });
+
+    it('posts item', function (done) {
+        postOneItem(done);
+    });
+
+    it('gets item from /next ', function (done) {
+        utils.httpGet(items[0] + '/next?stable=false', headers, body)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(303);
+                expect(response.headers.location).toBe(items[1]);
             })
-            .then(function (value) {
-                expect(value.body._links.uris.length).toBe(0);
-                expect(value.body._links.next).toBeUndefined();
-                return utils.getQ(items[0] + '/next/2', 200);
+            .catch(function (error) {
+                expect(error).toBeNull();
             })
-            .then(function (value) {
-                expect(value.body._links.uris.length).toBe(2);
-                expect(value.body._links.uris[0]).toBe(items[1]);
-                expect(value.body._links.uris[1]).toBe(items[2]);
-                expect(value.body._links.next.href).toBe(items[2] + '/next/2?stable=false');
-                done();
+            .finally(done);
+    });
+
+    it('gets items from /next/2 ', function (done) {
+        utils.httpGet(items[0] + '/next/2?stable=false', headers, body)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(200);
+                expect(response.body._links.uris.length).toBe(2);
+                expect(response.body._links.uris[0]).toBe(items[1]);
+                expect(response.body._links.uris[1]).toBe(items[2]);
             })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .finally(done);
+    });
+
+    it('gets inclusive items from /next/2 ', function (done) {
+        utils.httpGet(items[0] + '/next/2?stable=false&inclusive=true', headers, body)
+            .then(function (response) {
+                expect(response.statusCode).toEqual(200);
+                expect(response.body._links.uris.length).toBe(2);
+                expect(response.body._links.uris[0]).toBe(items[0]);
+                expect(response.body._links.uris[1]).toBe(items[1]);
+            })
+            .catch(function (error) {
+                expect(error).toBeNull();
+            })
+            .finally(done);
     });
 
 });
