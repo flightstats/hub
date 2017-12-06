@@ -321,7 +321,11 @@ public class ChannelService {
         SortedSet<ContentKey> contentKeys = ContentKeyUtil.filter(keys, query);
         if (query.isInclusive()) {
             if (!contentKeys.isEmpty()) {
-                contentKeys.remove(contentKeys.last());
+                if (query.isNext()) {
+                    contentKeys.remove(contentKeys.last());
+                } else {
+                    contentKeys.remove(contentKeys.first());
+                }
             }
             contentKeys.add(query.getStartKey());
         }

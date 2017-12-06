@@ -66,7 +66,6 @@ describe(testName, function () {
             .then(function (response) {
                 expect(response.statusCode).toEqual(303);
                 expect(response.headers.location).toBe(items[1]);
-                // expect(response.body._links.uris[0]).toBe(items[1]);
             })
             .catch(function (error) {
                 expect(error).toBeNull();
