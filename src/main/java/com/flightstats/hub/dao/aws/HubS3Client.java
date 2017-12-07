@@ -152,11 +152,15 @@ public class HubS3Client {
 
     @VisibleForTesting
     protected void countError(SdkClientException exception, AmazonWebServiceRequest request, String method, List<String> extraTags) {
-        S3ResponseMetadata metadata = getCachedResponseMetadata(request);
         List<String> tags = new ArrayList<>();
         tags.add("exception:" + exception.getClass().getCanonicalName());
-        tags.add("requestId:" + metadata.getRequestId());
         tags.add("method:" + method);
+
+        S3ResponseMetadata metadata = s3Client.getCachedResponseMetadata(request);
+        if (metadata != null) {
+            tags.add("requestId:" + metadata.getRequestId());
+        }
+
         tags.addAll(extraTags);
         metricsService.count("s3.error", 1, toStringArray(tags));
     }
