@@ -2,9 +2,10 @@ package com.flightstats.hub.dao.aws;
 
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDaoUtil;
-import com.flightstats.hub.metrics.NoOpMetricsService;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.test.Integration;
+import com.google.inject.Injector;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -22,11 +23,8 @@ public class S3SingleContentDaoTest {
     @BeforeClass
     public static void setUpClass() throws Exception {
         HubProperties.loadProperties("useDefault");
-        s3SingleContentDao = S3SingleContentDao.builder()
-                .s3Client(new AwsConnectorFactory().getS3Client())
-                .s3BucketName(new S3BucketName("local", "hub-v2"))
-                .metricsService(new NoOpMetricsService())
-                .build();
+        Injector injector = Integration.startAwsHub();
+        s3SingleContentDao = injector.getInstance(S3SingleContentDao.class);
         util = new ContentDaoUtil(s3SingleContentDao);
     }
 

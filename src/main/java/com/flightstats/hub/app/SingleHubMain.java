@@ -37,6 +37,7 @@ public class SingleHubMain {
         setProperty("hub.protect.channels", "false");
         setProperty("app.runNtpMonitor", "false");
         setProperty("data_dog.enable", "false");
+        setProperty("app.large.payload.MB", "10000");
         HubMain.start();
     }
 
