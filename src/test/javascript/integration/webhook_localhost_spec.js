@@ -27,7 +27,7 @@ describe(__filename, function () {
                 expect(response.statusCode).toEqual(200);
                 let hubType = response.body.properties['hub.type'];
                 if (hubType !== undefined) {
-                    isClustered = response.body.properties['hub.type'] == 'aws';
+                    isClustered = hubType === 'aws';
                 }
                 console.log('isClustered:', isClustered);
             })
