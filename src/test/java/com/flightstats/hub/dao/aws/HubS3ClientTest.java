@@ -37,8 +37,8 @@ public class HubS3ClientTest {
                 "s3.error",
                 1,
                 "exception:com.amazonaws.services.s3.model.AmazonS3Exception",
-                "requestId:" + requestId,
                 "method:fauxMethod",
+                "requestId:" + requestId,
                 "foo:bar"
         );
     }
