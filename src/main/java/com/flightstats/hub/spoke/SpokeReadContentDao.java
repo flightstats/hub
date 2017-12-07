@@ -3,9 +3,7 @@ package com.flightstats.hub.spoke;
 import com.flightstats.hub.cluster.Cluster;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.QueryResult;
-import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.exception.FailedQueryException;
-import com.flightstats.hub.exception.FailedWriteException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
@@ -15,12 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectOutputStream;
 import java.util.Collections;
-import java.util.List;
 import java.util.SortedSet;
-import java.util.TreeSet;
 
 public class SpokeReadContentDao implements ContentDao {
 
@@ -36,42 +30,10 @@ public class SpokeReadContentDao implements ContentDao {
 
     @Override
     public SortedSet<ContentKey> insert(BulkContent bulkContent) throws Exception {
-        Traces traces = ActiveTraces.getLocal();
-        traces.add("SpokeReadContentDao.writeBulk");
-        String channelName = bulkContent.getChannel();
-        try {
-            SortedSet<ContentKey> keys = new TreeSet<>();
-            List<Content> items = bulkContent.getItems();
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ObjectOutputStream stream = new ObjectOutputStream(baos);
-            stream.writeInt(items.size());
-            logger.debug("writing {} items to master {}", items.size(), bulkContent.getMasterKey());
-            for (Content content : items) {
-                content.packageStream();
-                String itemKey = content.getContentKey().get().toUrl();
-                stream.writeInt(itemKey.length());
-                stream.write(itemKey.getBytes());
-                stream.writeInt(content.getData().length);
-                stream.write(content.getData());
-                keys.add(content.getContentKey().get());
-            }
-            stream.flush();
-            traces.add("SpokeReadContentDao.writeBulk marshalled");
-
-            logger.trace("writing items {} to channel {}", items.size(), channelName);
-            if (!spokeStore.insert(SpokeStore.READ, channelName, baos.toByteArray(), Cluster.getLocalServer(), ActiveTraces.getLocal(), "bulkKey", channelName)) {
-                throw new FailedWriteException("unable to write bulk to spoke " + channelName);
-            }
-            traces.add("SpokeReadContentDao.writeBulk completed", keys);
-            return keys;
-        } catch (ContentTooLargeException e) {
-            logger.info("content too large for channel " + channelName);
-            throw e;
-        } catch (Exception e) {
-            traces.add("SpokeReadContentDao", "error", e.getMessage());
-            logger.error("unable to write " + channelName, e);
-            throw e;
-        }
+        return SpokeContentDao.insert(bulkContent, (baos) -> {
+            String channel = bulkContent.getChannel();
+            return spokeStore.insert(SpokeStore.READ, channel, baos.toByteArray(), Cluster.getLocalServer(), ActiveTraces.getLocal(), "bulkKey", channel);
+        });
     }
 
     private String getPath(String channelName, ContentKey key) {
