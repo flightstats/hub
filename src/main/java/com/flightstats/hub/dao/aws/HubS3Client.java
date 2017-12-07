@@ -156,7 +156,7 @@ public class HubS3Client {
         tags.add("exception:" + exception.getClass().getCanonicalName());
         tags.add("method:" + method);
 
-        S3ResponseMetadata metadata = s3Client.getCachedResponseMetadata(request);
+        S3ResponseMetadata metadata = getCachedResponseMetadata(request);
         if (metadata != null) {
             tags.add("requestId:" + metadata.getRequestId());
         }
