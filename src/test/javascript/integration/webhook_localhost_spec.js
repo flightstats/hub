@@ -5,70 +5,56 @@ var http = require('http');
 var channelName = utils.randomChannelName();
 var webhookName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
-var testName = __filename;
-
-var MINUTE = 60 * 1000
-
+var webhookResource = utils.getWebhookUrl() + "/" + webhookName;
 
 /**
  * This should:
  *
  * 1 - create a channel
- * 2 - create a webhook on that channel with a localhost endpointA
+ * 2 - create a webhook pointing at localhost
+ * 3a - webhook creation should fail with a clustered hub
+ * 3b - webhook creation should succeed with a single hub
  */
 
-describe(testName, function () {
+describe(__filename, function () {
 
-    var portB = utils.getPort();
+    let isClustered = false;
 
-    var itemsB = [];
-    var postedItem;
-    var badConfig = {
-        callbackUrl: 'http://localhost:8080/nothing',
-        channelUrl: channelResource
-    };
-    var webhookConfigB = {
-        callbackUrl: callbackDomain + ':' + portB + '/',
-        channelUrl: channelResource
-    };
+    it('determines if this is a single or clustered hub', (done) => {
+        let url = `${hubUrlBase}/internal/properties`;
+        utils.httpGet(url)
+            .then(response => {
+                expect(response.statusCode).toEqual(200);
+                isClustered = response.body.properties['hub.type'] == 'aws';
+                console.log('isClustered:', isClustered);
+            })
+            .catch(error => expect(error).toBeNull())
+            .finally(done);
+    });
 
-    utils.createChannel(channelName, false, testName);
+    it('creates a channel', (done) => {
+        utils.httpPut(channelResource)
+            .then(response => expect(response.statusCode).toEqual(201))
+            .catch(error => expect(error).toBeNull())
+            .finally(done);
+    });
 
-    var MINUTE = 60 * 1000;
-    var execute = true;
-
-    it("checks the hub for large item suport", function (done) {
-        request.get({
-                url: hubUrlBase + '/internal/properties'
-            },
-            function (err, response, body) {
-                expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
-                var parse = utils.parseJson(response, testName);
-                console.log(response.body);
-                var hubType = parse['properties']['hub.type'];
-                execute = hubType === 'aws';
-                console.log(hubType, 'execute', execute);
-                done();
-            });
-    }, 5 * MINUTE);
-
-    it("executes large item suport", function (done) {
-        if (execute) {
-            var webhookResource = utils.getWebhookUrl() + "/" + webhookName;
-            request.put({
-                    url: webhookResource,
-                    headers: {"Content-Type": "application/json"},
-                    body: JSON.stringify(badConfig)
-                },
-                function (err, response, body) {
-                    expect(err).toBeNull();
-                    expect(response.statusCode).toBe(400);
-                    done();
-                });
-        } else {
-            done();
-        }
-    }, 5 * MINUTE);
+    it('creates a webhook pointing at localhost', (done) => {
+        let headers = {'Content-Type': 'application/json'};
+        let body = {
+            callbackUrl: 'http://localhost:8080/nothing',
+            channelUrl: channelResource
+        };
+        utils.httpPut(webhookResource, headers, body)
+            .then(response => {
+                if (isClustered) {
+                    expect(response.statusCode).toEqual(400)
+                } else {
+                    expect(response.statusCode).toEqual(201);
+                }
+            })
+            .catch(error => expect(error).toBeNull())
+            .finally(done);
+    });
 
 });

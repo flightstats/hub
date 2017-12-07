@@ -20,7 +20,6 @@ import java.util.zip.ZipOutputStream;
 public class ContentMarshaller {
 
     private static final ObjectMapper mapper = new ObjectMapper();
-    private static final int maxBytes = HubProperties.getProperty("app.maxPayloadSizeMB", 40) * 1024 * 1024;
 
     public static byte[] toBytes(Content content) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -31,9 +30,6 @@ public class ContentMarshaller {
         zipOut.write(meta.getBytes());
         zipOut.putNextEntry(new ZipEntry("payload"));
         long bytesCopied = ByteStreams.copy(content.getStream(), zipOut);
-        if (bytesCopied > maxBytes) {
-            throw new ContentTooLargeException("max payload size is " + maxBytes + " bytes");
-        }
         content.setSize(bytesCopied);
         zipOut.setComment("" + bytesCopied);
         zipOut.close();
