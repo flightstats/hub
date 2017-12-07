@@ -82,8 +82,11 @@ public class SingleContentService implements ContentService {
 
     @Override
     public void get(StreamResults streamResults) {
-        SortedSet<ContentKey> keys = streamResults.getKeys();
+        List<ContentKey> keys = new ArrayList<>(streamResults.getKeys());
         Consumer<Content> callback = streamResults.getCallback();
+        if (streamResults.isDescending()) {
+            Collections.reverse(keys);
+        }
         for (ContentKey key : keys) {
             Optional<Content> contentOptional = get(streamResults.getChannel(), key, false);
             if (contentOptional.isPresent()) {

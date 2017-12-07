@@ -51,6 +51,12 @@ Here's how you could do this with curl:
 curl -i -X POST --header "Content-type: text/plain" --data 'your content here' http://hub/channel/stumptown
 ```
 
+Here's how you could insert a ZIP file with curl:
+
+```bash
+curl -X POST -H "Content-Type: application/zip" --data-binary @coffee.zip http://hub/channel/stumptown
+```
+
 ## bulk insert content into channel {#bulk}
 
 If your data source will be writing a lot of data per second - or have very large spikes of data in a short amount of time,

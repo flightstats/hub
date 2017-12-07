@@ -231,17 +231,17 @@ exports.httpPatch = function httpPatch(url, headers, body) {
 };
 
 exports.isSendingJSON = function contentIsJSON(headers) {
-    var hasHeaders = headers !== undefined;
+    if (headers === undefined) return false;
     var hasContentType = 'content-type' in headers;
     var contentTypeIsJSON = headers['content-type'] === 'application/json';
-    return hasHeaders && hasContentType && contentTypeIsJSON;
+    return hasContentType && contentTypeIsJSON;
 };
 
 exports.isReceivingJSON = function responseShouldBeJSON(headers) {
-    var hasHeaders = headers !== undefined;
+    if (headers === undefined) return false;
     let hasAcceptHeader = 'accept' in headers;
     let acceptIsJSON = headers['accept'] == 'application/json';
-    return hasHeaders && hasAcceptHeader && acceptIsJSON;
+    return hasAcceptHeader && acceptIsJSON;
 };
 
 exports.isSendingOrReceivingJSON = function isSendingOrReceivingJSON(headers) {

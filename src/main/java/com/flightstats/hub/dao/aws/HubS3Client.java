@@ -1,15 +1,19 @@
 package com.flightstats.hub.dao.aws;
 
+import com.amazonaws.AmazonWebServiceRequest;
 import com.amazonaws.SdkClientException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.S3ResponseMetadata;
 import com.amazonaws.services.s3.model.*;
 import com.flightstats.hub.metrics.MetricsService;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -50,7 +54,7 @@ public class HubS3Client {
         try {
             return s3Client.initiateMultipartUpload(request);
         } catch (SdkClientException e) {
-            metricsService.count("s3.error", 1, "exception:" + e.getClass().getCanonicalName(), "method:initiateMultipartUpload", "bucket:" + request.getBucketName(), "key:" + request.getKey());
+            countError(e, request, "initiateMultipartUpload", Arrays.asList("bucket:" + request.getBucketName(), "key:" + request.getKey()));
             throw e;
         }
     }
@@ -59,7 +63,7 @@ public class HubS3Client {
         try {
             return s3Client.uploadPart(request);
         } catch (SdkClientException e) {
-            metricsService.count("s3.error", 1, "exception:" + e.getClass().getCanonicalName(), "method:uploadPart", "bucket:" + request.getBucketName(), "key:" + request.getKey());
+            countError(e, request, "uploadPart", Arrays.asList("bucket:" + request.getBucketName(), "key:" + request.getKey()));
             throw e;
         }
     }
@@ -68,7 +72,7 @@ public class HubS3Client {
         try {
             return s3Client.completeMultipartUpload(request);
         } catch (SdkClientException e) {
-            metricsService.count("s3.error", 1, "exception:" + e.getClass().getCanonicalName(), "method:completeMultipartUpload", "bucket:" + request.getBucketName(), "key:" + request.getKey());
+            countError(e, request, "completeMultipartUpload", Arrays.asList("bucket:" + request.getBucketName(), "key:" + request.getKey()));
             throw e;
         }
     }
@@ -77,7 +81,7 @@ public class HubS3Client {
         try {
             s3Client.abortMultipartUpload(request);
         } catch (SdkClientException e) {
-            metricsService.count("s3.error", 1, "exception:" + e.getClass().getCanonicalName(), "method:abortMultipartUpload", "bucket:" + request.getBucketName(), "key:" + request.getKey());
+            countError(e, request, "abortMultipartUpload", Arrays.asList("bucket:" + request.getBucketName(), "key:" + request.getKey()));
             throw e;
         }
     }
@@ -86,7 +90,7 @@ public class HubS3Client {
         try {
             return s3Client.getObject(request);
         } catch (SdkClientException e) {
-            metricsService.count("s3.error", 1, "exception:" + e.getClass().getCanonicalName(), "method:getObject", "bucket:" + request.getBucketName(), "key:" + request.getKey());
+            countError(e, request, "getObject", Arrays.asList("bucket:" + request.getBucketName(), "key:" + request.getKey()));
             throw e;
         }
     }
@@ -95,7 +99,7 @@ public class HubS3Client {
         try {
             s3Client.deleteObject(request);
         } catch (SdkClientException e) {
-            metricsService.count("s3.error", 1, "exception:" + e.getClass().getCanonicalName(), "method:deleteObject", "bucket:" + request.getBucketName(), "key:" + request.getKey());
+            countError(e, request, "deleteObject", Arrays.asList("bucket:" + request.getBucketName(), "key:" + request.getKey()));
             throw e;
         }
     }
@@ -105,13 +109,12 @@ public class HubS3Client {
             return s3Client.deleteObjects(request);
         } catch (SdkClientException e) {
             List<String> tags = new ArrayList<>();
-            tags.add("exception:" + e.getClass().getCanonicalName());
-            tags.add("method:deleteObjects");
             tags.add("bucket:" + request.getBucketName());
-            List<DeleteObjectsRequest.KeyVersion> keyVersions = request.getKeys();
-            List<String> keys = keyVersions.stream().map(DeleteObjectsRequest.KeyVersion::getKey).collect(Collectors.toList());
+            List<String> keys = request.getKeys().stream()
+                    .map((keyVersion) -> "key:" + keyVersion.getKey())
+                    .collect(Collectors.toList());
             tags.addAll(keys);
-            metricsService.count("s3.error", 1, tags.stream().toArray(String[]::new));
+            countError(e, request, "deleteObjects", tags);
             throw e;
         }
     }
@@ -120,7 +123,7 @@ public class HubS3Client {
         try {
             return s3Client.listObjects(request);
         } catch (SdkClientException e) {
-            metricsService.count("s3.error", 1, "exception:" + e.getClass().getCanonicalName(), "method:listObjects", "bucket:" + request.getBucketName(), "key:" + request.getPrefix());
+            countError(e, request, "listObjects", Arrays.asList("bucket:" + request.getBucketName(), "key:" + request.getPrefix()));
             throw e;
         }
     }
@@ -129,7 +132,7 @@ public class HubS3Client {
         try {
             return s3Client.putObject(request);
         } catch (SdkClientException e) {
-            metricsService.count("s3.error", 1, "exception:" + e.getClass().getCanonicalName(), "method:putObject", "bucket:" + request.getBucketName(), "key:" + request.getKey());
+            countError(e, request, "putObject", Arrays.asList("bucket:" + request.getBucketName(), "key:" + request.getKey()));
             throw e;
         }
     }
@@ -138,16 +141,31 @@ public class HubS3Client {
         try {
             s3Client.setBucketLifecycleConfiguration(request);
         } catch (SdkClientException e) {
-            metricsService.count("s3.error", 1, "exception:" + e.getClass().getCanonicalName(), "method:setBucketLifecycleConfiguration", "bucket:" + request.getBucketName());
+            countError(e, request, "setBucketLifecycleConfiguration", Collections.singletonList("bucket:" + request.getBucketName()));
             throw e;
         }
     }
 
-    S3ResponseMetadata getCachedResponseMetadata(CompleteMultipartUploadRequest request) {
+    S3ResponseMetadata getCachedResponseMetadata(AmazonWebServiceRequest request) {
         return s3Client.getCachedResponseMetadata(request);
     }
 
-    S3ResponseMetadata getCachedResponseMetadata(GetObjectRequest request) {
-        return s3Client.getCachedResponseMetadata(request);
+    @VisibleForTesting
+    protected void countError(SdkClientException exception, AmazonWebServiceRequest request, String method, List<String> extraTags) {
+        List<String> tags = new ArrayList<>();
+        tags.add("exception:" + exception.getClass().getCanonicalName());
+        tags.add("method:" + method);
+
+        S3ResponseMetadata metadata = getCachedResponseMetadata(request);
+        if (metadata != null) {
+            tags.add("requestId:" + metadata.getRequestId());
+        }
+
+        tags.addAll(extraTags);
+        metricsService.count("s3.error", 1, toStringArray(tags));
+    }
+
+    private static String[] toStringArray(List<String> list) {
+        return list.toArray(new String[0]);
     }
 }
