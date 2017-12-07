@@ -2,7 +2,6 @@ package com.flightstats.hub.cluster;
 
 import com.flightstats.hub.app.HubHost;
 
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -12,7 +11,7 @@ public interface Cluster {
     /**
      * @return the localhost's server
      */
-    static Collection<String> getLocalServer() throws UnknownHostException {
+    static Collection<String> getLocalServer() {
         List<String> server = new ArrayList<>();
         server.add(Cluster.getHost(false));
         return server;
