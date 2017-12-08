@@ -44,7 +44,9 @@ describe(__filename, () => {
         let payload = {
             channelUrl: dataChannelURL,
             callbackUrl: callbackServerURL,
-            errorChannelUrl: errorChannelURL
+            errorChannelUrl: errorChannelURL,
+            callbackTimeoutSeconds: 10,
+            maxAttempts: 1 // todo: replace with the correct property name once #986 is complete
         };
         utils.httpPut(webhookURL, headers, payload)
             .then(response => expect(response.statusCode).toEqual(201))
@@ -94,8 +96,11 @@ describe(__filename, () => {
     });
 
     it('waits for the webhook to give up', (done) => {
-        // todo: figure out how to do this :)
-        // giveUpTime = moment.utc();
+        let tenSeconds = 10 * 1000;
+        setTimeout(() => {
+            giveUpTime = moment.utc();
+            done();
+        }, tenSeconds);
     });
 
     it('verifies an error was posted to the error channel', (done) => {
@@ -106,8 +111,7 @@ describe(__filename, () => {
                 expect(response.statusCode).toEqual(200);
                 expect(response.body.itemURL).toEqual(postedItems[1]);
                 expect(response.body.webhookURL).toEqual(webhookURL);
-                // todo: figure out how many retries are expected
-                expect(response.body.retryCount).toEqual(1);
+                expect(response.body.attempts).toEqual(1);
                 expect(moment(response.body.lastAttemptTime)).toBeGreaterThan(postedTime);
                 expect(moment(response.body.lastAttemptTime)).toBeLessThan(giveUpTime);
                 // todo: figure out what error we'll get
