@@ -17,6 +17,7 @@ describe(__filename, () => {
     let callbackItems = [];
     let postedItems = [];
     let postedTime;
+    let giveUpTime;
 
     it('creates a data channel', (done) => {
         utils.httpPut(dataChannelURL)
@@ -86,6 +87,7 @@ describe(__filename, () => {
             .then(response => {
                 expect(response.statusCode).toEqual(201);
                 postedItems.push(response.body._links.self.href);
+                postedTime = moment.utc();
             })
             .catch(error => expect(error).toBeNull())
             .finally(done);
@@ -93,10 +95,12 @@ describe(__filename, () => {
 
     it('waits for the webhook to give up', (done) => {
         // todo: figure out how to do this :)
+        // giveUpTime = moment.utc();
     });
 
     it('verifies an error was posted to the error channel', (done) => {
         expect(postedTime).toBeDefined();
+        expect(giveUpTime).toBeDefined();
         utils.httpGet(`${errorChannelURL}/latest`)
             .then(response => {
                 expect(response.statusCode).toEqual(200);
@@ -105,7 +109,7 @@ describe(__filename, () => {
                 // todo: figure out how many retries are expected
                 expect(response.body.retryCount).toEqual(1);
                 expect(moment(response.body.lastAttemptTime)).toBeGreaterThan(postedTime);
-                expect(moment(response.body.lastAttemptTime)).toBeLessThan(moment.utc());
+                expect(moment(response.body.lastAttemptTime)).toBeLessThan(giveUpTime);
                 // todo: figure out what error we'll get
                 expect(response.body.lastAttemptError).toEqual('blah');
             })
