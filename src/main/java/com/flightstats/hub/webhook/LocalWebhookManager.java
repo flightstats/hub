@@ -1,5 +1,6 @@
 package com.flightstats.hub.webhook;
 
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -73,7 +74,7 @@ public class LocalWebhookManager {
     }
 
     static void runAndWait(String name, Collection<String> keys, Consumer<String> consumer) {
-        ExecutorService pool = Executors.newFixedThreadPool(20,
+        ExecutorService pool = Executors.newFixedThreadPool(HubProperties.getProperty("webhook.shutdown.threads", 100),
                 new ThreadFactoryBuilder().setNameFormat(name + "-%d").build());
         logger.info("{}", keys);
         for (String key : keys) {
