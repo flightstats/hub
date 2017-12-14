@@ -3,9 +3,9 @@ package com.flightstats.hub.model;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.metrics.ActiveTraces;
+import com.flightstats.hub.util.HubUtils;
 import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
-import org.apache.commons.io.IOUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -137,7 +137,7 @@ public class Content implements Serializable {
     }
 
     public void close() {
-        IOUtils.closeQuietly(stream);
+        HubUtils.closeQuietly(stream);
     }
 
     public Optional<String> getContentType() {
