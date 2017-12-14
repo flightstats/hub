@@ -42,7 +42,7 @@ public class HubS3Client {
     public void initialize() {
         String bucketName = s3BucketName.getS3BucketName();
         logger.info("checking if bucket exists " + bucketName);
-        if (s3Client.doesBucketExist(bucketName)) {
+        if (s3Client.doesBucketExistV2(bucketName)) {
             logger.info("bucket exists " + bucketName);
             return;
         }

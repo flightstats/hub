@@ -31,18 +31,13 @@ class AwsUtils {
              * between the device time and the server time to set the clock skew
              * and then retry the request.
              */
-            if (RetryUtils.isClockSkewError(ase)) return true;
+            if (RetryUtils.isClockSkewError(exception)) return true;
         }
 
         return false;
     }
 
     static boolean isAwsThrottling(AmazonClientException exception) {
-        if (exception instanceof AmazonServiceException) {
-            AmazonServiceException ase = (AmazonServiceException) exception;
-
-            return RetryUtils.isThrottlingException(ase);
-        }
-        return false;
+        return RetryUtils.isThrottlingException(exception);
     }
 }

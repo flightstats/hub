@@ -3,7 +3,7 @@ package com.flightstats.hub.events;
 import com.flightstats.hub.channel.LinkBuilder;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
-import org.apache.commons.io.IOUtils;
+import com.flightstats.hub.util.HubUtils;
 import org.glassfish.jersey.media.sse.EventOutput;
 import org.glassfish.jersey.media.sse.OutboundEvent;
 
@@ -41,7 +41,7 @@ public class ContentOutput implements Closeable {
 
     @Override
     public void close() throws IOException {
-        IOUtils.closeQuietly(eventOutput);
+        HubUtils.closeQuietly(eventOutput);
     }
 
     public String getChannel() {

@@ -1,7 +1,7 @@
 package com.flightstats.hub.app;
 
 import com.flightstats.hub.spoke.SpokeStore;
-import org.apache.commons.io.IOUtils;
+import com.flightstats.hub.util.HubUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -170,7 +170,7 @@ public class HubProperties {
                 throw new RuntimeException(message, e);
             }
         } finally {
-            IOUtils.closeQuietly(inputStream);
+            HubUtils.closeQuietly(inputStream);
         }
         return properties;
     }
