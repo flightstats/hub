@@ -51,6 +51,7 @@ public class DynamoWebhookDao implements Dao<Webhook> {
         if (!StringUtils.isEmpty(webhook.getManagedByTag())) {
             item.put("tag", new AttributeValue(webhook.getManagedByTag()));
         }
+        //todo - gfm - set maxAttempts
         dbClient.putItem(getTableName(), item);
     }
 
