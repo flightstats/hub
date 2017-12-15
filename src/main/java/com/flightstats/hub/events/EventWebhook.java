@@ -3,10 +3,10 @@ package com.flightstats.hub.events;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubProvider;
+import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.StringUtils;
 import com.flightstats.hub.webhook.Webhook;
 import com.flightstats.hub.webhook.WebhookService;
-import org.apache.commons.io.IOUtils;
 
 class EventWebhook {
 
@@ -47,7 +47,7 @@ class EventWebhook {
     }
 
     public void stop() {
-        IOUtils.closeQuietly(contentOutput);
+        HubUtils.closeQuietly(contentOutput);
         webhookService.delete(getGroupName());
     }
 

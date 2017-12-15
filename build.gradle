@@ -59,7 +59,6 @@ dependencies {
 
     compile 'org.eclipse.jetty.aggregate:jetty-all:9.2.22.v20170606'
 
-    //todo update from 2.22.1 -> 2.25.1 seems fine
     compile 'org.glassfish.jersey.containers:jersey-container-jetty-http:2.25.1'
     compile 'org.glassfish.jersey.core:jersey-common:2.25.1'
     compile 'org.glassfish.jersey.media:jersey-media-sse:2.25.1'
@@ -67,38 +66,47 @@ dependencies {
     compile 'com.sun.jersey:jersey-client:1.19.4'
     compile 'com.sun.jersey:jersey-core:1.19.4'
 
-    compile 'com.fasterxml.jackson.core:jackson-core:2.8.9'
-    compile 'com.fasterxml.jackson.core:jackson-annotations:2.8.9'
-    compile 'com.fasterxml.jackson.core:jackson-databind:2.8.9'
-    compile 'com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.8.9'
-    compile 'com.fasterxml.jackson.datatype:jackson-datatype-guava:2.8.9'
+    compile 'com.fasterxml.jackson.core:jackson-core:2.9.3'
+    compile 'com.fasterxml.jackson.core:jackson-annotations:2.9.3'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.9.3'
+    compile 'com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.9.3'
+    compile 'com.fasterxml.jackson.datatype:jackson-datatype-guava:2.9.3'
 
     compile 'com.google.inject:guice:4.1.0'
     compile 'com.google.inject.extensions:guice-servlet:4.1.0'
-    compile 'com.google.guava:guava:22.0'
+    compile 'com.google.guava:guava:23.5-jre'
     compile 'com.diffplug.durian:durian:3.4.0'
     compile 'joda-time:joda-time:2.9.9'
 
-    compile 'ch.qos.logback:logback-core:1.2.2'
-    compile 'ch.qos.logback:logback-classic:1.2.2'
+    compile 'ch.qos.logback:logback-core:1.2.3'
+    compile 'ch.qos.logback:logback-classic:1.2.3'
     compile 'org.slf4j:jul-to-slf4j:1.7.25'
     compile 'org.slf4j:log4j-over-slf4j:1.7.25'
     compile 'org.slf4j:jcl-over-slf4j:1.7.25'
 
     compile 'de.danielbechler:java-object-diff:0.94'
 
-    compile 'com.amazonaws:aws-java-sdk:1.11.189'
-    compile 'org.apache.curator:curator-recipes:2.12.0'
-    testCompile 'org.apache.curator:curator-test:2.12.0'
-    testCompile 'org.testng:testng:6.11'
+    compile 'com.amazonaws:aws-java-sdk:1.11.248'
 
-    compile 'org.apache.commons:commons-lang3:3.6'
-    compile group: 'org.apache.commons', name: 'commons-text', version: '1.1'
-    compile 'commons-io:commons-io:2.5'
+    //todo https://curator.apache.org/zk-compatibility.html
+    //Curator 4.0 supports ZooKeeper 3.4.x ensembles in a soft-compatibility mode. To use this mode you must exclude ZooKeeper when adding Curator to your dependency management tool.
+    //You must add a dependency on ZooKeeper 3.4.x also.
+    compile('org.apache.curator:curator-recipes:4.0.0') {
+        exclude group: 'org.apache.zookeeper', module: 'zookeeper'
+    }
+    compile('org.apache.zookeeper:zookeeper:3.4.11')
+    //todo curator-test 4.0.0 has a compile issue with QuorumPeerConfig
+    testCompile ('org.apache.curator:curator-test:2.12.0') {
+        exclude group: 'org.apache.zookeeper', module: 'zookeeper'
+    }
+
+    compile 'org.apache.commons:commons-lang3:3.7'
+    compile group: 'org.apache.commons', name: 'commons-text', version: '1.2'
+    compile 'commons-io:commons-io:2.6'
     compile('com.github.rholder:guava-retrying:2.0.0') {
         exclude group: 'com.google.guava'
     }
-    compile 'com.google.code.gson:gson:2.8.1'
+    compile 'com.google.code.gson:gson:2.8.2'
 
     compile 'de.jkeylockmanager:jkeylockmanager:2.1.0'
 
@@ -109,14 +117,15 @@ dependencies {
 
      */
 
-    compile 'org.projectlombok:lombok:1.16.12'
-    compile 'com.datadoghq:java-dogstatsd-client:2.3'
+    compile 'org.projectlombok:lombok:1.16.18'
+    compile 'com.datadoghq:java-dogstatsd-client:2.4'
 
-    compile 'com.atlassian.commonmark:commonmark:0.9.0'
+    compile 'com.atlassian.commonmark:commonmark:0.10.0'
 
-    testCompile 'com.sparkjava:spark-core:2.3'
+    testCompile 'com.sparkjava:spark-core:2.7.1'
     testCompile 'junit:junit:4.+'
     testCompile "org.mockito:mockito-all:1.+"
+    testCompile 'org.testng:testng:6.+'
 }
 
 

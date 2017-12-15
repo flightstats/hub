@@ -48,7 +48,7 @@ public class ChunkOutputStream extends OutputStream {
         if (chunk.hasData()) {
             sendChunk(chunk);
         }
-        ListenableFuture<String> allFutures = Futures.whenAllSucceed(futures).call(() -> "ok");
+        ListenableFuture<String> allFutures = Futures.whenAllSucceed(futures).call(() -> "ok", MoreExecutors.directExecutor());
         try {
             allFutures.get();
         } catch (InterruptedException e) {
