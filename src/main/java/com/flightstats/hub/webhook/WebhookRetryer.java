@@ -63,7 +63,7 @@ class WebhookRetryer {
                 })
                 .withWaitStrategy(WaitStrategies.exponentialWait(1000, webhook.getMaxWaitMinutes(), TimeUnit.MINUTES))
                 .withStopStrategy(failedAttempt -> {
-                    if (failedAttempt.getAttemptNumber() >= webhook.getMaxAttempts()) {
+                    if (webhook.getMaxAttempts() > 0 && failedAttempt.getAttemptNumber() >= webhook.getMaxAttempts()) {
                         throw new ItemExpiredException("has reached max attempts (" + webhook.getMaxAttempts() + ")");
                     }
                     return !leadership.hasLeadership() || webhook.isPaused();
