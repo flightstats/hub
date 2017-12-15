@@ -91,7 +91,7 @@ public class DynamoWebhookDao implements Dao<Webhook> {
             builder.heartbeat(item.get("heartbeat").getBOOL());
         }
         if (item.containsKey("tag")) {
-            builder.tag(item.get("tag").getS());
+            builder.managedByTag(item.get("tag").getS());
         }
         if (item.containsKey("ttlMinutes")) {
             builder.ttlMinutes(Integer.valueOf(item.get("ttlMinutes").getN()));
