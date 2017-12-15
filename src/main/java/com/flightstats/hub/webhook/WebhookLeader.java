@@ -234,7 +234,8 @@ class WebhookLeader implements Lockable {
         try {
             ActiveTraces.setLocal(traces);
             ChannelConfig channelConfig = channelService.getCachedChannelConfig(channelName);
-            checkExpiration(contentPath, channelConfig, webhook);
+            WebhookStatus status = webhookService.getStatus(webhook);
+            checkExpiration(contentPath, channelConfig, webhook, status);
             if (!leadership.hasLeadership()) {
                 logger.debug("not leader {} {} {}", webhook.getCallbackUrl(), webhook.getName(), contentPath);
                 return null;
@@ -256,7 +257,7 @@ class WebhookLeader implements Lockable {
         }
     }
 
-    static void checkExpiration(ContentPath contentPath, ChannelConfig channelConfig, Webhook webhook) {
+    static void checkExpiration(ContentPath contentPath, ChannelConfig channelConfig, Webhook webhook, WebhookStatus status) {
         if (webhook.getTtlMinutes() > 0) {
             DateTime ttlTime = TimeUtil.now().minusMinutes(webhook.getTtlMinutes());
             if (contentPath.getTime().isBefore(ttlTime)) {
@@ -265,6 +266,12 @@ class WebhookLeader implements Lockable {
         }
         if (contentPath.getTime().isBefore(channelConfig.getTtlTime())) {
             throw new ItemExpiredException(contentPath.toUrl() + " is before channel ttl " + channelConfig.getTtlTime());
+        }
+        if (webhook.getMaxAttempts() > 0) {
+            long recordedAttempts = status.getErrors().stream().filter(error -> error.contains(contentPath.toUrl())).count();
+            if (recordedAttempts >= webhook.getMaxAttempts()) {
+                throw new ItemExpiredException("has reached max attempts (" + webhook.getMaxAttempts() + ")");
+            }
         }
     }
 

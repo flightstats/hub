@@ -104,6 +104,9 @@ public class DynamoWebhookDao implements Dao<Webhook> {
         if (item.containsKey("tagUrl")) {
             builder.tagUrl(item.get("tagUrl").getS());
         }
+        if (item.containsKey("maxAttempts")) {
+            builder.maxAttempts(Integer.valueOf(item.get("maxAttempts").getN()));
+        }
         return builder.build().withDefaults();
     }
 
