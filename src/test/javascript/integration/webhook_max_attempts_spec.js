@@ -33,6 +33,7 @@ describe(__filename, () => {
         utils.httpGet(webhookResource)
             .then(response => {
                 expect(response.statusCode).toEqual(200);
+                console.log('maxAttempts:', response.body.maxAttempts);
                 expect(response.body.maxAttempts).toEqual(0);
             })
             .catch(error => expect(error).toBeNull())
@@ -45,6 +46,7 @@ describe(__filename, () => {
         utils.httpPut(webhookResource, headers, payload)
             .then(response => {
                 expect(response.statusCode).toEqual(200);
+                console.log('maxAttempts:', response.body.maxAttempts);
                 expect(response.body.maxAttempts).toEqual(1);
             })
             .catch(error => expect(error).toBeNull())
