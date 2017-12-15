@@ -21,7 +21,11 @@ verify that webhook has no inFlight
 
 describe(__filename, () => {
 
-    let postedItem;
+    let callbackServer;
+    let callbackServerPort = utils.getPort();
+    let callbackServerURL = `${callbackDomain}:${callbackServerPort}/`;
+    let postedItems = [];
+    let callbackItems = [];
 
     it('creates a channel', (done) => {
         utils.httpPut(channelResource)
@@ -30,11 +34,18 @@ describe(__filename, () => {
             .finally(done);
     });
 
-    it('create a webhook', (done) => {
+    it('creates a callback server', (done) => {
+        callbackServer = utils.startHttpServer(callbackServerPort, (request, response) => {
+            callbackItems.push(request);
+            response.statusCode = 400;
+        }, done);
+    });
+
+    it('creates a webhook', (done) => {
         let headers = {'Content-Type': 'application/json'};
         let payload = {
             channelUrl: channelResource,
-            callbackUrl: 'http://not.a.real.server/',
+            callbackUrl: callbackServerURL,
             callbackTimeoutSeconds: 1
         };
         utils.httpPut(webhookResource, headers, payload)
@@ -74,15 +85,23 @@ describe(__filename, () => {
             .then(response => {
                 expect(response.statusCode).toEqual(201);
                 let itemURL = response.body._links.self.href;
-                postedItem = itemURL;
+                postedItems.push(itemURL);
                 console.log('itemURL:', itemURL);
             })
             .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
+    it('waits for the callback server to receive the data', (done) => {
+        utils.waitForData(callbackItems, postedItems, done);
+    });
+
     it('waits for the webhook to give up', (done) => {
-        setTimeout(done, 15 * 1000);
+        setTimeout(done, 5 * 1000);
+    });
+
+    it('verifies we received the item only once', () => {
+        expect(callbackItems.length).toEqual(1);
     });
 
     it('verifies the webhook gave up after 1 attempt', (done) => {
@@ -93,12 +112,18 @@ describe(__filename, () => {
                 expect(response.body.lastCompleted).toEqual(response.body.channelLatest);
                 expect(response.body.inFlight.length).toEqual(0);
                 expect(response.body.errors.length).toEqual(2);
-                let contentKey = postedItem.replace(`${channelResource}/`, '');
-                expect(response.body.errors[0]).toContain(`${contentKey} java.net.UnknownHostException: not.a.real.server`);
+                let contentKey = postedItems[0].replace(`${channelResource}/`, '');
+                expect(response.body.errors[0]).toContain(contentKey);
+                expect(response.body.errors[0]).toContain('400 Bad Request');
                 expect(response.body.errors[1]).toContain(`${contentKey} has reached max attempts (1)`);
             })
             .catch(error => expect(error).toBeNull())
             .finally(done);
+    });
+
+    it('closes the callback server', function (done) {
+        expect(callbackServer).toBeDefined();
+        utils.closeServer(callbackServer, done);
     });
 
 });
