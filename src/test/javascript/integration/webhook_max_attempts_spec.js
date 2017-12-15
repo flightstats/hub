@@ -66,7 +66,7 @@ describe(__filename, () => {
     });
 
     it('waits for the webhook to give up', (done) => {
-        setTimeout(done, 10 * 1000);
+        setTimeout(done, 15 * 1000);
     });
 
     it('verifies the webhook gave up after 1 attempt', (done) => {
