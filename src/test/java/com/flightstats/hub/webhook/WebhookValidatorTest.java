@@ -97,6 +97,12 @@ public class WebhookValidatorTest {
     }
 
     @Test(expected = InvalidRequestException.class)
+    public void testInvalidSingleHeartbeat() throws Exception {
+        webhook = webhook.withBatch("SINGLE").withHeartbeat(true).withName("blah").withCallbackTimeoutSeconds(10);
+        webhookValidator.validate(webhook);
+    }
+
+    @Test(expected = InvalidRequestException.class)
     public void testInvalidCallbackTimeout() throws Exception {
         webhook = webhook.withCallbackTimeoutSeconds(10 * 1000).withBatch("SINGLE").withName("blah");
         webhookValidator.validate(webhook);

@@ -48,6 +48,9 @@ public class WebhookValidator {
                 && !Webhook.SINGLE.equals(webhook.getBatch())) {
             throw new InvalidRequestException("{\"error\": \"Allowed values for batch are 'SINGLE', 'SECOND' and 'MINUTE'\"}");
         }
+        if (webhook.isHeartbeat() && Webhook.SINGLE.equals(webhook.getBatch())) {
+            throw new InvalidRequestException("{\"error\": \"SINGLE webhooks can not have a heartbeat'\"}");
+        }
         isValidCallbackTimeoutSeconds(webhook.getCallbackTimeoutSeconds());
         if (HubProperties.getProperty("hub.type", "aws").equals("aws")) {
             if (webhook.getCallbackUrl().toLowerCase().contains("localhost")) {
