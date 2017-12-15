@@ -237,8 +237,7 @@ class WebhookLeader implements Lockable {
         try {
             ActiveTraces.setLocal(traces);
             ChannelConfig channelConfig = channelService.getCachedChannelConfig(channelName);
-            WebhookStatus status = webhookService.getStatus(webhook);
-            checkExpiration(contentPath, channelConfig, webhook, status);
+            checkExpiration(contentPath, channelConfig, webhook);
             if (!leadership.hasLeadership()) {
                 logger.debug("not leader {} {} {}", webhook.getCallbackUrl(), webhook.getName(), contentPath);
                 return null;
@@ -260,7 +259,7 @@ class WebhookLeader implements Lockable {
         }
     }
 
-    static void checkExpiration(ContentPath contentPath, ChannelConfig channelConfig, Webhook webhook, WebhookStatus status) {
+    static void checkExpiration(ContentPath contentPath, ChannelConfig channelConfig, Webhook webhook) {
         if (webhook.getTtlMinutes() > 0) {
             DateTime ttlTime = TimeUtil.now().minusMinutes(webhook.getTtlMinutes());
             if (contentPath.getTime().isBefore(ttlTime)) {
