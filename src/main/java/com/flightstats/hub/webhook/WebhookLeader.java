@@ -172,6 +172,9 @@ class WebhookLeader implements Lockable {
                     makeTimedCall(contentPath, webhookStrategy.createResponse(contentPath));
                     completeCall(contentPath);
                     logger.trace("completed {} call to {} ", contentPath, webhook.getName());
+                } catch (ItemExpiredException e) {
+                    webhookError.add(webhook.getName(), contentPath.toUrl() + " " + e.getMessage());
+                    completeCall(contentPath);
                 } catch (RetryException e) {
                     logger.info("exception sending {} to {} {} ", contentPath, webhook.getName(), e.getMessage());
                 } catch (ExecutionException e) {
@@ -266,12 +269,6 @@ class WebhookLeader implements Lockable {
         }
         if (contentPath.getTime().isBefore(channelConfig.getTtlTime())) {
             throw new ItemExpiredException(contentPath.toUrl() + " is before channel ttl " + channelConfig.getTtlTime());
-        }
-        if (webhook.getMaxAttempts() > 0) {
-            long recordedAttempts = status.getErrors().stream().filter(error -> error.contains(contentPath.toUrl())).count();
-            if (recordedAttempts >= webhook.getMaxAttempts()) {
-                throw new ItemExpiredException("has reached max attempts (" + webhook.getMaxAttempts() + ")");
-            }
         }
     }
 
