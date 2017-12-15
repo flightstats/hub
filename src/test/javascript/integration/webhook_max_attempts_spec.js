@@ -17,8 +17,8 @@ post an item to the channel
 verify that the item was sent
 verify that webhook still has 'initial' as lastCompleted
 verify that webhook has no inFlight
-
  */
+
 describe(__filename, () => {
 
     let postedItem;
@@ -67,7 +67,7 @@ describe(__filename, () => {
             .finally(done);
     });
 
-    /*it('posts an item to our channel', (done) => {
+    it('posts an item to our channel', (done) => {
         let headers = {'Content-Type': 'text/plain'};
         let payload = moment().utc().toISOString();
         utils.httpPost(channelResource, headers, payload)
@@ -99,6 +99,6 @@ describe(__filename, () => {
             })
             .catch(error => expect(error).toBeNull())
             .finally(done);
-    });*/
+    });
 
 });
