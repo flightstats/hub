@@ -2,7 +2,6 @@ package com.flightstats.hub.filter;
 
 import com.google.common.base.Joiner;
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.jetty.servlets.GzipFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,7 +13,6 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -25,8 +23,6 @@ import java.util.List;
 public final class EventsEncodingFilter implements ContainerResponseFilter {
 
     private final static Logger logger = LoggerFactory.getLogger(EventsEncodingFilter.class);
-
-    private List<String> removedEncodings = Arrays.asList(GzipFilter.GZIP, GzipFilter.DEFLATE);
 
     @Override
     public void filter(ContainerRequestContext request, ContainerResponseContext response) throws IOException {
@@ -45,7 +41,7 @@ public final class EventsEncodingFilter implements ContainerResponseFilter {
                 List<String> innerEncoding = new ArrayList<>();
                 for (String token : encoding.split(",")) {
                     token = token.trim();
-                    if (!removedEncodings.contains(token)) {
+                    if (!FilterUtils.removedEncodings.contains(token)) {
                         innerEncoding.add(token);
                     }
                 }

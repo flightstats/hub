@@ -37,27 +37,16 @@ configurations {
     all*.exclude(group: 'org.slf4j', module: 'slf4j-log4j12')
     all*.exclude(group: 'org.slf4j', module: 'slf4j-simple')
     all*.exclude(group: 'javax.ws.rs', module: 'jsr311-api')
-    //prevent transitive dependencies from overriding org.eclipse.jetty.aggregate
-    all*.exclude(group: 'org.eclipse.jetty')
-    all*.exclude(group: 'org.eclipse.jetty.websocket')
     all*.exclude(module: 'log4j')
     integrationTests
 }
 
 dependencies {
 
-
-    /*
-    version 9.3.6 of jetty causes some issues with jersey 2.22.1
-    try:
-        9.2.22.v20170606
-            works with 2.25.1
-        9.4.6.v20170531
-            compile issues with 2.25.1
-        9.3.20.v20170531
-     */
-
-    compile 'org.eclipse.jetty.aggregate:jetty-all:9.2.22.v20170606'
+    compile 'org.eclipse.jetty:jetty-server:9.4.8.v20171121'
+    compile 'org.eclipse.jetty:jetty-servlet:9.4.8.v20171121'
+    compile 'org.eclipse.jetty:jetty-servlets:9.4.8.v20171121'
+    compile 'org.eclipse.jetty.websocket:javax-websocket-server-impl:9.4.8.v20171121'
 
     compile 'org.glassfish.jersey.containers:jersey-container-jetty-http:2.25.1'
     compile 'org.glassfish.jersey.core:jersey-common:2.25.1'
