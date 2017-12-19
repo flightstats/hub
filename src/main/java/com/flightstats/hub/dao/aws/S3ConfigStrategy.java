@@ -1,6 +1,8 @@
 package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.services.s3.model.BucketLifecycleConfiguration;
+import com.amazonaws.services.s3.model.lifecycle.LifecycleFilter;
+import com.amazonaws.services.s3.model.lifecycle.LifecyclePrefixPredicate;
 import com.flightstats.hub.model.ChannelConfig;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.joda.time.DateTime;
@@ -75,7 +77,7 @@ class S3ConfigStrategy {
     private static BucketLifecycleConfiguration.Rule createRule(ChannelConfig config, String postfix) {
         String id = config.getDisplayName() + postfix;
         return new BucketLifecycleConfiguration.Rule()
-                .withPrefix(id + "/")
+                .withFilter(new LifecycleFilter(new LifecyclePrefixPredicate(id + "/")))
                 .withId(id)
                 .withExpirationInDays((int) config.getTtlDays())
                 .withStatus(BucketLifecycleConfiguration.ENABLED);
