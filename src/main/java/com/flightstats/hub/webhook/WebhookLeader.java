@@ -172,6 +172,9 @@ class WebhookLeader implements Lockable {
                     makeTimedCall(contentPath, webhookStrategy.createResponse(contentPath));
                     completeCall(contentPath);
                     logger.trace("completed {} call to {} ", contentPath, webhook.getName());
+                } catch (ItemExpiredException e) {
+                    webhookError.add(webhook.getName(), contentPath.toUrl() + " " + e.getMessage());
+                    completeCall(contentPath);
                 } catch (RetryException e) {
                     logger.info("exception sending {} to {} {} ", contentPath, webhook.getName(), e.getMessage());
                 } catch (ExecutionException e) {

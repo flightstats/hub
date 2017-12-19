@@ -525,15 +525,13 @@ exports.startServer = function startServer(server, port, callback, done) {
         });
 
         request.on('end', function () {
-            if (callback) callback(incoming);
+            if (callback) callback(incoming, response);
+            response.end();
         });
-
-        response.writeHead(200);
-        response.end();
     });
 
     server.on('listening', function () {
-        console.log('server listening on port', port);
+        console.log(`server listening at ${callbackDomain}:${port}/`);
         done();
     });
 

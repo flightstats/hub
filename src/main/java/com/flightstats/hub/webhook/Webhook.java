@@ -62,7 +62,8 @@ public class Webhook implements Comparable<Webhook>, NamedType {
     @Wither
     private final String managedByTag;  // webhooks with tag set were created by a tag webhook prototype and will be automatically
     // created and deleted when a channel has the webhook "tagUrl" added or removed.
-
+    @Wither
+    private final Integer maxAttempts;
 
     static Webhook fromJson(String json, Optional<Webhook> webhookOptional) {
         WebhookBuilder builder = Webhook.builder();
@@ -81,7 +82,8 @@ public class Webhook implements Comparable<Webhook>, NamedType {
                     .heartbeat(existing.heartbeat)
                     .fastForwardable(existing.fastForwardable)
                     .tagUrl(existing.tagUrl)
-                    .managedByTag(existing.managedByTag);
+                    .managedByTag(existing.managedByTag)
+                    .maxAttempts(existing.maxAttempts);
         }
         try {
             JsonNode root = mapper.readTree(json);
@@ -142,6 +144,9 @@ public class Webhook implements Comparable<Webhook>, NamedType {
             if (root.has("tag")) {
                 builder.managedByTag(root.get("tag").asText());
             }
+            if (root.has("maxAttempts")) {
+                builder.maxAttempts(root.get("maxAttempts").intValue());
+            }
         } catch (IOException e) {
             logger.warn("unable to parse json" + json, e);
             throw new InvalidRequestException(e.getMessage());
@@ -157,7 +162,6 @@ public class Webhook implements Comparable<Webhook>, NamedType {
     String getTagFromTagUrl() {
         return RequestUtils.getTag(this.getTagUrl());
     }
-
 
     boolean isManagedByTag() {
         return !StringUtils.isEmpty(managedByTag);
@@ -187,7 +191,7 @@ public class Webhook implements Comparable<Webhook>, NamedType {
     static Webhook instanceFromTagPrototype(Webhook whp, ChannelConfig channel) {
         String channenUrl = RequestUtils.getHost(whp.getTagUrl()) + "/channel/" + channel.getName();
         String whName = "TAGWH_" + whp.getTagFromTagUrl() + "_" + channel.getName();
-        return new Webhook(whp.callbackUrl, channenUrl, whp.parallelCalls, whName, null, whp.batch, whp.heartbeat, whp.paused, whp.ttlMinutes, whp.maxWaitMinutes, whp.callbackTimeoutSeconds, whp.fastForwardable, null, whp.getTagFromTagUrl());
+        return new Webhook(whp.callbackUrl, channenUrl, whp.parallelCalls, whName, null, whp.batch, whp.heartbeat, whp.paused, whp.ttlMinutes, whp.maxWaitMinutes, whp.callbackTimeoutSeconds, whp.fastForwardable, null, whp.getTagFromTagUrl(), whp.maxAttempts);
     }
 
     public static Webhook fromJson(String json) {
@@ -235,6 +239,9 @@ public class Webhook implements Comparable<Webhook>, NamedType {
         }
         if (callbackTimeoutSeconds == null) {
             webhook = webhook.withCallbackTimeoutSeconds(HubProperties.getCallbackTimeoutDefault());
+        }
+        if (maxAttempts == null) {
+            webhook = webhook.withMaxAttempts(0);
         }
         return webhook;
     }
