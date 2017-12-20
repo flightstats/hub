@@ -45,17 +45,19 @@ class ShutdownLock {
         }
     }
 
-    private static String getLockData() throws Exception {
+    static String getLockData() throws Exception {
         byte[] bytes = curator.getData().forPath(PATH);
         return new String(bytes);
     }
 
-    private static void resetLock() throws Exception {
+    static boolean resetLock() throws Exception {
         try {
             logger.info("resetting lock " + PATH);
             curator.delete().forPath(PATH);
+            return true;
         } catch (KeeperException.NoNodeException e) {
             logger.info("node not found for ..." + PATH);
+            return false;
         }
     }
 }

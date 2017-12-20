@@ -32,7 +32,7 @@ public class InternalShutdownResource {
         root.put("description", DESCRIPTION);
         root.put("directions", "Make HTTP POSTs to links below to take the desired action");
         try {
-            root.put("shutdownLock", getManager().getLockData());
+            root.put("shutdownLock", ShutdownLock.getLockData());
         } catch (Exception e) {
             root.put("shutdownLock", "none");
         }
@@ -52,7 +52,7 @@ public class InternalShutdownResource {
     @POST
     @Path("resetLock")
     public Response resetLock(@Context UriInfo uriInfo) throws Exception {
-        return LocalHostOnly.getResponse(uriInfo, () -> getManager().resetLock());
+        return LocalHostOnly.getResponse(uriInfo, ShutdownLock::resetLock);
     }
 
     private static ShutdownManager getManager() {
