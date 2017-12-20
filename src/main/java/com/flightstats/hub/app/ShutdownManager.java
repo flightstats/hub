@@ -5,8 +5,6 @@ import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.util.Sleeper;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Singleton;
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,16 +29,7 @@ public class ShutdownManager {
 
         @Override
         protected void startUp() throws Exception {
-            try {
-                String foundIpAddress = getLockData();
-                logger.info("found shutdown lock {} local {}", foundIpAddress, HubHost.getLocalAddress());
-                if (HubHost.getLocalAddress().equals(foundIpAddress)) {
-                    logger.info("deleting shutdown lock {} local {}", foundIpAddress, HubHost.getLocalAddress());
-                    resetLock();
-                }
-            } catch (KeeperException.NoNodeException e) {
-                logger.info("node not found for ..." + PATH);
-            }
+            ShutdownLock.clearLock();
         }
 
         @Override
@@ -58,7 +47,7 @@ public class ShutdownManager {
             return true;
         }
         if (useLock) {
-            waitForLock();
+            ShutdownLock.waitForLock();
         }
         getMetricsService().event("Hub Restart Shutdown", "shutting down", "restart", "shutdown");
 
@@ -88,42 +77,4 @@ public class ShutdownManager {
         return HubProvider.getInstance(MetricsService.class);
     }
 
-
-    public String getLockData() throws Exception {
-        byte[] bytes = getCurator().getData().forPath(PATH);
-        return new String(bytes);
-    }
-
-    public boolean resetLock() throws Exception {
-        try {
-            logger.info("resetting lock " + PATH);
-            getCurator().delete().forPath(PATH);
-            return true;
-        } catch (KeeperException.NoNodeException e) {
-            logger.info("node not found for ..." + PATH);
-            return false;
-        }
-    }
-
-    private CuratorFramework getCurator() {
-        return HubProvider.getInstance(CuratorFramework.class);
-    }
-
-    private void waitForLock() throws Exception {
-        while (true) {
-            try {
-                String lockData = getLockData();
-                logger.info("waiting for shutdown lock {}", lockData);
-                Sleeper.sleep(1000);
-            } catch (KeeperException.NoNodeException e) {
-                logger.info("creating shutdown lock");
-                try {
-                    getCurator().create().forPath(PATH, HubHost.getLocalAddress().getBytes());
-                    return;
-                } catch (Exception e1) {
-                    logger.info("why did this fail?", e1);
-                }
-            }
-        }
-    }
 }
