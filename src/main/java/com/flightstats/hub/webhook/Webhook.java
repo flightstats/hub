@@ -98,8 +98,8 @@ public class Webhook implements Comparable<Webhook>, NamedType {
                 if (keyOptional.isPresent()) {
                     builder.startingKey(keyOptional.get());
                 }
-            } else if (root.has("lastCompletedCallback")) {
-                Optional<ContentPath> keyOptional = ContentPath.fromFullUrl(root.get("lastCompletedCallback").asText());
+            } else if (root.has("lastCompleted")) {
+                Optional<ContentPath> keyOptional = ContentPath.fromFullUrl(root.get("lastCompleted").asText());
                 if (keyOptional.isPresent()) {
                     builder.startingKey(keyOptional.get());
                 }

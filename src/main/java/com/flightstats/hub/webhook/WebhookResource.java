@@ -115,7 +115,7 @@ public class WebhookResource {
                 root.put("isTagPrototype", webhook.isTagPrototype());
             } else {
                 root.put("channelUrl", webhook.getChannelUrl());
-                addLatest(status, root, true);
+                addLatest(status, root);
                 TimeLinkUtil.addTime(root, stable, "stableTime");
                 ArrayNode inFlight = root.putArray("inFlight");
                 for (ContentPath contentPath : status.getInFlight()) {
@@ -130,7 +130,7 @@ public class WebhookResource {
         status.getErrors().forEach(root.putArray("errors")::add);
     }
 
-    static void addLatest(WebhookStatus status, ObjectNode root, boolean includeLegacy) {
+    static void addLatest(WebhookStatus status, ObjectNode root) {
         Webhook webhook = status.getWebhook();
         if (status.getChannelLatest() == null) {
             root.put("channelLatest", "");
@@ -142,9 +142,6 @@ public class WebhookResource {
         } else {
             String lastCompleted = webhook.getChannelUrl() + "/" + status.getLastCompleted().toUrl();
             root.put("lastCompleted", lastCompleted);
-            if (includeLegacy) {
-                root.put("lastCompletedCallback", lastCompleted);
-            }
         }
     }
 
@@ -201,7 +198,7 @@ public class WebhookResource {
     private void addLatest(WebhookStatus status, ArrayNode nodes) {
         ObjectNode oneNode = nodes.addObject();
         oneNode.put("name", status.getWebhook().getName());
-        addLatest(status, oneNode, false);
+        addLatest(status, oneNode);
     }
 
     @Path("/{name}")
