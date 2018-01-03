@@ -87,6 +87,7 @@ describe(__filename, () => {
     });
 
     it('verifies we received the item only once', () => {
+        console.log('callbackItems:', callbackItems);
         expect(callbackItems.length).toEqual(1);
     });
 
