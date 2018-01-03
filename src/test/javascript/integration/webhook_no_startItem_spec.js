@@ -32,8 +32,8 @@ describe(testName, function () {
                     var parse = utils.parseJson(response, channelName);
                     expect(parse._links.self.href).toBe(gUrl);
                     if (typeof webhookConfig !== "undefined") {
-                        console.log("lastCompletedCallback: " + webhookConfig.lastCompletedCallback);
-                        var lastComp = JSON.parse(response.body).lastCompletedCallback;
+                        console.log("lastCompleted: " + webhookConfig.lastCompleted);
+                        var lastComp = JSON.parse(response.body).lastCompleted;
                         console.log("lastComp: " + lastComp);
                         expect(lastComp.indexOf("initial") > -1, true);
                         expect(parse.callbackUrl).toBe(webhookConfig.callbackUrl);

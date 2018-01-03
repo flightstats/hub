@@ -92,7 +92,7 @@ describe(testName, function () {
                     expect(parse.channelUrl).toBe(webhookConfig.channelUrl);
                     expect(parse.transactional).toBe(webhookConfig.transactional);
                     expect(parse.name).toBe(webhookName);
-                    expect(parse.lastCompletedCallback).toBe(postedItems[3]);
+                    expect(parse.lastCompleted).toBe(postedItems[3]);
                 }
                 done();
         });
