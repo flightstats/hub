@@ -3,13 +3,14 @@ require('../integration_config');
 const moment = require('moment');
 
 const channelResource = `${channelUrl}/${utils.randomChannelName()}`;
-const webhookResource = `${utils.getWebhookUrl()}/${utils.randomChannelName()}`;
+const webhookName = utils.randomChannelName();
+const webhookResource = `${utils.getWebhookUrl()}/${webhookName}`;
 
 describe(__filename, () => {
 
     let callbackServer;
     let callbackServerPort = utils.getPort();
-    let callbackServerURL = `${callbackDomain}:${callbackServerPort}/`;
+    let callbackServerURL = `${callbackDomain}:${callbackServerPort}/${webhookName}`;
     let postedItems = [];
     let callbackItems = [];
 
