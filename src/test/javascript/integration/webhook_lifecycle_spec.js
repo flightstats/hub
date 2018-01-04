@@ -35,7 +35,8 @@ describe(testName, function () {
     it('starts a callback server', function (done) {
         callbackServer = utils.startHttpServer(port, function (string) {
             console.log('incoming:', string);
-            callbackItems.push(string);
+            let json = JSON.parse(string);
+            json.uris.forEach(uri => callbackItems.push(uri));
         }, done);
     });
 
@@ -80,9 +81,7 @@ describe(testName, function () {
         expect(callbackItems.length).toBe(4);
         expect(postedItems.length).toBe(4);
         for (var i = 0; i < callbackItems.length; i++) {
-            var parse = JSON.parse(callbackItems[i]);
-            expect(parse.uris[0]).toBe(postedItems[i]);
-            expect(parse.name).toBe(webhookName);
+            expect(callbackItems[i]).toBe(postedItems[i]);
         }
     });
 
