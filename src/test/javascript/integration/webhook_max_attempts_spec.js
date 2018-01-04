@@ -3,13 +3,14 @@ require('../integration_config');
 const moment = require('moment');
 
 const channelResource = `${channelUrl}/${utils.randomChannelName()}`;
-const webhookResource = `${utils.getWebhookUrl()}/${utils.randomChannelName()}`;
+const webhookName = utils.randomChannelName();
+const webhookResource = `${utils.getWebhookUrl()}/${webhookName}`;
 
 describe(__filename, () => {
 
     let callbackServer;
     let callbackServerPort = utils.getPort();
-    let callbackServerURL = `${callbackDomain}:${callbackServerPort}/`;
+    let callbackServerURL = `${callbackDomain}:${callbackServerPort}/${webhookName}`;
     let postedItems = [];
     let callbackItems = [];
 
@@ -22,7 +23,9 @@ describe(__filename, () => {
 
     it('creates a callback server', (done) => {
         callbackServer = utils.startHttpServer(callbackServerPort, (request, response) => {
-            callbackItems.push(request);
+            let json = JSON.parse(request);
+            console.log('callback server received item:', json);
+            json.uris.forEach(uri => callbackItems.push(uri));
             response.statusCode = 400;
         }, done);
     });
@@ -87,6 +90,7 @@ describe(__filename, () => {
     });
 
     it('verifies we received the item only once', () => {
+        console.log('callbackItems:', callbackItems);
         expect(callbackItems.length).toEqual(1);
     });
 
