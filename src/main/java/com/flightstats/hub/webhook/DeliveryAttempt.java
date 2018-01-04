@@ -14,5 +14,5 @@ class DeliveryAttempt {
     ContentPath contentPath;
     String payload;
     @Setter
-    ClientResponse response;
+    int statusCode;
 }

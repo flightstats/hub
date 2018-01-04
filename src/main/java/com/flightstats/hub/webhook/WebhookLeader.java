@@ -192,10 +192,10 @@ class WebhookLeader implements Lockable {
     }
 
     private boolean isSuccessfulDelivery(DeliveryAttempt attempt) {
-        boolean isSuccessResponse = attempt.getResponse().getStatus() >= 200 && attempt.getResponse().getStatus() < 300;
-        boolean isRedirectResponse = attempt.getResponse().getStatus() >= 300 && attempt.getResponse().getStatus() < 400;
+        boolean isSuccessResponse = attempt.getStatusCode() >= 200 && attempt.getStatusCode() < 300;
+        boolean isRedirectResponse = attempt.getStatusCode() >= 300 && attempt.getStatusCode() < 400;
         if (isSuccessResponse || isRedirectResponse) {
-            logger.debug("{} {} successful delivery (http {})", attempt.getWebhook().getName(), attempt.getContentPath().toUrl(), attempt.getResponse().getStatus());
+            logger.debug("{} {} successful delivery (http {})", attempt.getWebhook().getName(), attempt.getContentPath().toUrl(), attempt.getStatusCode());
             return true;
         } else {
             return false;

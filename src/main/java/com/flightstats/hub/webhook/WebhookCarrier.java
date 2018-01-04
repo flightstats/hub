@@ -58,47 +58,48 @@ class WebhookCarrier {
                     .payload(body.toString())
                     .build();
 
-            try {
-                if (shouldStopBefore(attempt)) {
-                    logger.debug("{} {} stopping delivery before attempt #{}", attempt.getWebhook().getName(), attempt.getContentPath().toUrl(), attempt.getNumber());
-                    isRetrying = false;
-                    continue;
-                }
+            if (shouldStopBefore(attempt)) {
+                logger.debug("{} {} stopping delivery before attempt #{}", attempt.getWebhook().getName(), attempt.getContentPath().toUrl(), attempt.getNumber());
+                isRetrying = false;
+                continue;
+            }
 
-                String payload = body.toString();
-                logger.debug("{} {} delivery attempt #{} {} {}", attempt.getWebhook().getName(), attempt.getContentPath().toUrl(), attempt.getNumber(), webhook.getCallbackUrl(), payload);
-                ClientResponse response = httpClient.resource(webhook.getCallbackUrl())
+            String payload = body.toString();
+            logger.debug("{} {} delivery attempt #{} {} {}", attempt.getWebhook().getName(), attempt.getContentPath().toUrl(), attempt.getNumber(), webhook.getCallbackUrl(), payload);
+            ClientResponse response = null;
+            try {
+                response = httpClient.resource(attempt.getWebhook().getCallbackUrl())
                         .type(MediaType.APPLICATION_JSON_TYPE)
                         .post(ClientResponse.class, payload);
-                attempt.setResponse(response);
-                response.close();
-
-                if (shouldStopAfter(attempt)) {
-                    logger.debug("{} {} stopping delivery after attempt #{}", attempt.getWebhook().getName(), attempt.getContentPath().toUrl(), attempt.getNumber());
-                    isRetrying = false;
-                    continue;
-                }
-
-                long exponentialMultiplier = 1000;
-                long maximumSleepTimeMS = TimeUnit.MINUTES.toMillis(attempt.getWebhook().getMaxWaitMinutes());
-                long sleepTimeMS = calculateSleepTimeMS(attempt, exponentialMultiplier, maximumSleepTimeMS);
-                logger.debug("{} {} waiting {} seconds until retrying", attempt.getWebhook().getName(), attempt.getContentPath().toUrl(), TimeUnit.MILLISECONDS.toSeconds(sleepTimeMS));
-                Thread.sleep(sleepTimeMS);
-
+                attempt.setStatusCode(response.getStatus());
             } catch (ClientHandlerException e) {
                 String message = String.format("%s %s %s", new DateTime(), contentPath, e.getMessage());
                 logger.debug(webhook.getName() + message, e);
                 webhookError.add(webhook.getName(), message);
                 isRetrying = false;
+            } finally {
+                if (response != null) {
+                    response.close();
+                }
+            }
 
+            if (shouldStopAfter(attempt)) {
+                logger.debug("{} {} stopping delivery after attempt #{}", attempt.getWebhook().getName(), attempt.getContentPath().toUrl(), attempt.getNumber());
+                isRetrying = false;
+                continue;
+            }
+
+            try {
+                long exponentialMultiplier = 1000;
+                long maximumSleepTimeMS = TimeUnit.MINUTES.toMillis(attempt.getWebhook().getMaxWaitMinutes());
+                long sleepTimeMS = calculateSleepTimeMS(attempt, exponentialMultiplier, maximumSleepTimeMS);
+                logger.debug("{} {} waiting {} seconds until retrying", attempt.getWebhook().getName(), attempt.getContentPath().toUrl(), TimeUnit.MILLISECONDS.toSeconds(sleepTimeMS));
+                Thread.sleep(sleepTimeMS);
             } catch (InterruptedException e) {
                 String message = String.format("%s %s delivery halted due to interruption", attempt.getWebhook().getName(), attempt.getContentPath().toUrl());
                 logger.debug(message, e);
                 Thread.currentThread().interrupt();
                 isRetrying = false;
-
-            } finally {
-                logger.debug("{} {} no longer attempting delivery", attempt.getWebhook().getName(), attempt.getContentPath().toUrl());
             }
         }
     }
