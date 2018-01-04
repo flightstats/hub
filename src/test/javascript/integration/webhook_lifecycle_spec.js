@@ -40,7 +40,8 @@ describe(testName, function () {
         if (!createdChannel) return done.fail('channel not created in before block');
         callbackServer = utils.startHttpServer(port, function (string) {
             console.log('incoming:', string);
-            callbackItems.push(string);
+            let json = JSON.parse(string);
+            json.uris.forEach(uri => callbackItems.push(uri));
         }, done);
     });
 
