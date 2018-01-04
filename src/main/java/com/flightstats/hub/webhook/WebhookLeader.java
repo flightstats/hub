@@ -269,17 +269,19 @@ class WebhookLeader implements Lockable {
     }
 
     private void makeTimedCall(ContentPath contentPath, ObjectNode body) throws Exception {
-        metricsService.time("webhook", webhook.getName(), makeCall(contentPath, body));
+        metricsService.time("webhook", webhook.getName(), () -> {
+            makeCall(contentPath, body);
+            return null;
+        });
     }
 
-    private <T> T makeCall(ContentPath contentPath, ObjectNode body) throws ExecutionException, RetryException {
+    private void makeCall(ContentPath contentPath, ObjectNode body) throws ExecutionException, RetryException {
         Traces traces = ActiveTraces.getLocal();
         traces.add("WebhookLeader.makeCall start");
         RecurringTrace recurringTrace = new RecurringTrace("WebhookLeader.makeCall start");
         traces.add(recurringTrace);
         carrier.send(webhook, contentPath, body);
         recurringTrace.update("WebhookLeader.makeCall completed");
-        return null;
     }
 
     void exit(boolean delete) {
