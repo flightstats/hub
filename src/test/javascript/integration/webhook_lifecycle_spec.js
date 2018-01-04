@@ -34,6 +34,7 @@ describe(testName, function () {
 
     it('starts a callback server', function (done) {
         callbackServer = utils.startHttpServer(port, function (string) {
+            console.log('incoming:', string);
             callbackItems.push(string);
         }, done);
     });
@@ -41,19 +42,27 @@ describe(testName, function () {
     it('inserts items', function (done) {
         utils.postItemQ(channelResource)
             .then(function (value) {
-                postedItems.push(value.body._links.self.href);
+                let itemURI = value.body._links.self.href;
+                console.log('itemURI:', itemURI);
+                postedItems.push(itemURI);
                 return utils.postItemQ(channelResource);
             })
             .then(function (value) {
-                postedItems.push(value.body._links.self.href);
+                let itemURI = value.body._links.self.href;
+                console.log('itemURI:', itemURI);
+                postedItems.push(itemURI);
                 return utils.postItemQ(channelResource);
             })
             .then(function (value) {
-                postedItems.push(value.body._links.self.href);
+                let itemURI = value.body._links.self.href;
+                console.log('itemURI:', itemURI);
+                postedItems.push(itemURI);
                 return utils.postItemQ(channelResource);
             })
             .then(function (value) {
-                postedItems.push(value.body._links.self.href);
+                let itemURI = value.body._links.self.href;
+                console.log('itemURI:', itemURI);
+                postedItems.push(itemURI);
                 done();
             });
     });
