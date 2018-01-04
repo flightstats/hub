@@ -39,6 +39,7 @@ describe(testName, function () {
     it('starts a callback server', function (done) {
         if (!createdChannel) return done.fail('channel not created in before block');
         callbackServer = utils.startHttpServer(port, function (string) {
+            console.log('incoming:', string);
             callbackItems.push(string);
         }, done);
     });
@@ -47,19 +48,23 @@ describe(testName, function () {
         if (!createdChannel) return done.fail('channel not created in before block');
         utils.postItemQ(channelResource)
             .then(function (value) {
-                postedItems.push(fromObjectPath(['body', '_links', 'self', 'href'], value));
+                let itemURI = fromObjectPath(['body', '_links', 'self', 'href'], value);
+                postedItems.push(itemURI);
                 return utils.postItemQ(channelResource);
             })
             .then(function (value) {
-                postedItems.push(fromObjectPath(['body', '_links', 'self', 'href'], value));
+                let itemURI = fromObjectPath(['body', '_links', 'self', 'href'], value);
+                postedItems.push(itemURI);
                 return utils.postItemQ(channelResource);
             })
             .then(function (value) {
-                postedItems.push(fromObjectPath(['body', '_links', 'self', 'href'], value));
+                let itemURI = fromObjectPath(['body', '_links', 'self', 'href'], value);
+                postedItems.push(itemURI);
                 return utils.postItemQ(channelResource);
             })
             .then(function (value) {
-                postedItems.push(fromObjectPath(['body', '_links', 'self', 'href'], value));
+                let itemURI = fromObjectPath(['body', '_links', 'self', 'href'], value);
+                postedItems.push(itemURI);
                 done();
             });
     });
