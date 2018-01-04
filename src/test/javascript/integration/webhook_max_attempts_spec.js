@@ -22,7 +22,8 @@ describe(__filename, () => {
 
     it('creates a callback server', (done) => {
         callbackServer = utils.startHttpServer(callbackServerPort, (request, response) => {
-            callbackItems.push(request);
+            let json = JSON.parse(request);
+            callbackItems.extend(json.uris);
             response.statusCode = 400;
         }, done);
     });

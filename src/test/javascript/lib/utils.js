@@ -587,14 +587,24 @@ exports.waitForData = function waitForData(actual, expected, done) {
     expect(actual).isPrototypeOf(Array);
     expect(expected).isPrototypeOf(Array);
     setTimeout(function () {
-        if (actual.length !== expected.length) {
-            waitForData(actual, expected, done);
-        } else {
+        if (arrayEquals(actual, expected)) {
             console.log('expected:', expected);
             console.log('actual:', actual);
             done();
+        } else {
+            waitForData(actual, expected, done);
         }
     }, 500);
+};
+
+exports.arrayEquals = function arrayEquals(a, b) {
+    if (a === b) return true;
+    if (a == null || b == null) return false;
+    if (a.length != b.length) return false;
+    for (let i = 0; i < a.length; ++i) {
+        if (a[i] !== b[i]) return false;
+    }
+    return true;
 };
 
 exports.isRedirect = function isRedirect(response) {
