@@ -587,12 +587,12 @@ exports.waitForData = function waitForData(actual, expected, done) {
     expect(actual).isPrototypeOf(Array);
     expect(expected).isPrototypeOf(Array);
     setTimeout(function () {
-        if (utils.arrayEquals(actual, expected)) {
+        if (actual.length !== expected.length) {
+            waitForData(actual, expected, done);
+        } else {
             console.log('expected:', expected);
             console.log('actual:', actual);
             done();
-        } else {
-            waitForData(actual, expected, done);
         }
     }, 500);
 };
