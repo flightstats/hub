@@ -587,7 +587,7 @@ exports.waitForData = function waitForData(actual, expected, done) {
     expect(actual).isPrototypeOf(Array);
     expect(expected).isPrototypeOf(Array);
     setTimeout(function () {
-        if (arrayEquals(actual, expected)) {
+        if (utils.arrayEquals(actual, expected)) {
             console.log('expected:', expected);
             console.log('actual:', actual);
             done();
