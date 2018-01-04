@@ -3,6 +3,7 @@ package com.flightstats.hub.webhook;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.rest.RestClient;
+import com.flightstats.hub.util.HubUtils;
 import com.google.inject.Inject;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientHandlerException;
@@ -78,9 +79,7 @@ class WebhookCarrier {
                 webhookError.add(webhook.getName(), message);
                 isRetrying = false;
             } finally {
-                if (response != null) {
-                    response.close();
-                }
+                HubUtils.close(response);
             }
 
             if (shouldStopAfter(attempt)) {
