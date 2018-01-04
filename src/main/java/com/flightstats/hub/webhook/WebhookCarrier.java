@@ -32,6 +32,11 @@ class WebhookCarrier {
     private List<Predicate<DeliveryAttempt>> stopBeforeIfs = new ArrayList<>();
     private List<Predicate<DeliveryAttempt>> stopAfterIfs = new ArrayList<>();
 
+    @Inject
+    WebhookCarrier() {
+        // no-args constructor for Guice
+    }
+
     @Builder
     WebhookCarrier(@Singular List<Predicate<DeliveryAttempt>> stopBeforeIfs,
                    @Singular List<Predicate<DeliveryAttempt>> stopAfterIfs,
@@ -45,22 +50,23 @@ class WebhookCarrier {
         int attemptNumber = 0;
         boolean isRetrying = true;
         while (isRetrying) {
+
+            DeliveryAttempt attempt = DeliveryAttempt.builder()
+                    .number(++attemptNumber)
+                    .webhook(webhook)
+                    .contentPath(contentPath)
+                    .payload(body.toString())
+                    .build();
+
             try {
-
-                DeliveryAttempt attempt = DeliveryAttempt.builder()
-                        .number(attemptNumber++)
-                        .webhook(webhook)
-                        .contentPath(contentPath)
-                        .payload(body.toString())
-                        .build();
-
                 if (shouldStopBefore(attempt)) {
+                    logger.debug("{} {} stopping delivery before attempt #{}", attempt.getWebhook().getName(), attempt.getContentPath().toUrl(), attempt.getNumber());
                     isRetrying = false;
                     continue;
                 }
 
                 String payload = body.toString();
-                logger.debug("calling {} {} {}", webhook.getCallbackUrl(), contentPath, payload);
+                logger.debug("{} {} delivery attempt #{} {} {}", attempt.getWebhook().getName(), attempt.getContentPath().toUrl(), attempt.getNumber(), webhook.getCallbackUrl(), payload);
                 ClientResponse response = httpClient.resource(webhook.getCallbackUrl())
                         .type(MediaType.APPLICATION_JSON_TYPE)
                         .post(ClientResponse.class, payload);
@@ -68,6 +74,7 @@ class WebhookCarrier {
                 response.close();
 
                 if (shouldStopAfter(attempt)) {
+                    logger.debug("{} {} stopping delivery after attempt #{}", attempt.getWebhook().getName(), attempt.getContentPath().toUrl(), attempt.getNumber());
                     isRetrying = false;
                     continue;
                 }
@@ -80,26 +87,30 @@ class WebhookCarrier {
 
             } catch (ClientHandlerException e) {
                 String message = String.format("%s %s %s", new DateTime(), contentPath, e.getMessage());
-                logger.debug(webhook.getName(), message);
+                logger.debug(webhook.getName() + message, e);
                 webhookError.add(webhook.getName(), message);
                 isRetrying = false;
 
             } catch (InterruptedException e) {
-                logger.debug("delivery halted due to interruption", e);
+                String message = String.format("%s %s delivery halted due to interruption", attempt.getWebhook().getName(), attempt.getContentPath().toUrl());
+                logger.debug(message, e);
                 Thread.currentThread().interrupt();
                 isRetrying = false;
+
+            } finally {
+                logger.debug("{} {} no longer attempting delivery", attempt.getWebhook().getName(), attempt.getContentPath().toUrl());
             }
         }
     }
 
     private boolean shouldStopBefore(DeliveryAttempt attempt) {
         long stopBeforeCount = stopBeforeIfs.stream().filter(predicate -> predicate.test(attempt)).count();
-        return stopBeforeCount == 0;
+        return stopBeforeCount != 0;
     }
 
     private boolean shouldStopAfter(DeliveryAttempt attempt) {
         long stopAfterCount = stopAfterIfs.stream().filter(predicate -> predicate.test(attempt)).count();
-        return stopAfterCount == 0;
+        return stopAfterCount != 0;
     }
 
     private long calculateSleepTimeMS(DeliveryAttempt attempt, long multiplier, long maximumSleepTimeMS) {
