@@ -9,31 +9,28 @@ import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.model.RecurringTrace;
-import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
 import com.github.rholder.retry.RetryException;
-import com.github.rholder.retry.Retryer;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
 import org.apache.curator.framework.CuratorFramework;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.core.MediaType;
 import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 class WebhookLeader implements Lockable {
+
+    final static String WEBHOOK_LAST_COMPLETED = "/GroupLastCompleted/";
+
     private final static Logger logger = LoggerFactory.getLogger(WebhookLeader.class);
-    static final String WEBHOOK_LAST_COMPLETED = "/GroupLastCompleted/";
-    public static final String LEADER_PATH = "/WebhookLeader";
+    private final static String LEADER_PATH = "/WebhookLeader";
 
     private final AtomicBoolean deleteOnExit = new AtomicBoolean();
 
@@ -59,8 +56,7 @@ class WebhookLeader implements Lockable {
     private ExecutorService executorService;
     private Semaphore semaphore;
     private Leadership leadership;
-    private Retryer<ClientResponse> retryer;
-    private Client client;
+    private WebhookCarrier carrier;
 
     private WebhookStrategy webhookStrategy;
     private AtomicReference<ContentPath> lastUpdated = new AtomicReference<>();
@@ -99,10 +95,17 @@ class WebhookLeader implements Lockable {
             return;
         }
         logger.info("taking leadership {} {}", webhook, leadership.hasLeadership());
-        client = RestClient.createClient(60, webhook.getCallbackTimeoutSeconds(), true, false);
         executorService = Executors.newCachedThreadPool();
         semaphore = new Semaphore(webhook.getParallelCalls());
-        retryer = WebhookRetryer.buildRetryer(webhook, webhookError, leadership);
+        carrier = WebhookCarrier.builder()
+                .timeoutSeconds(webhook.getCallbackTimeoutSeconds())
+                .stopBeforeIf(this::doesNotHaveLeadership)
+                .stopBeforeIf(this::webhookIsPaused)
+                .stopBeforeIf(this::webhookTTLExceeded)
+                .stopBeforeIf(this::channelTTLExceeded)
+                .stopBeforeIf(this::maxAttemptsReached)
+                .stopAfterIf(this::isSuccessfulDelivery)
+                .build();
         webhookStrategy = WebhookStrategy.getStrategy(webhook, lastContentPath, channelService);
         try {
             ContentPath lastCompletedPath = webhookStrategy.getStartingPath();
@@ -133,7 +136,69 @@ class WebhookLeader implements Lockable {
             logger.info("stopped last completed at {} {}", webhookStrategy.getLastCompleted(), webhook.getName());
             webhookStrategy = null;
             executorService = null;
-            client = null;
+        }
+    }
+
+    private boolean doesNotHaveLeadership(DeliveryAttempt attempt) {
+        if (!leadership.hasLeadership()) {
+            logger.debug("{} {} not the leader", webhook.getName(), attempt.getContentPath());
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private boolean webhookTTLExceeded(DeliveryAttempt attempt) {
+        if (webhook.getTtlMinutes() > 0) {
+            DateTime ttlTime = TimeUtil.now().minusMinutes(webhook.getTtlMinutes());
+            if (attempt.getContentPath().getTime().isBefore(ttlTime)) {
+                String message = String.format("%s is before %s", attempt.getContentPath().toUrl(), ttlTime);
+                logger.debug(webhook.getName(), message);
+                webhookError.add(webhook.getName(), message);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean channelTTLExceeded(DeliveryAttempt attempt) {
+        ChannelConfig channelConfig = channelService.getCachedChannelConfig(webhook.getChannelName());
+        if (attempt.getContentPath().getTime().isBefore(channelConfig.getTtlTime())) {
+            String message = String.format("%s is before channel ttl %s", attempt.getContentPath().toUrl(), channelConfig.getTtlTime());
+            logger.debug(webhook.getName(), message);
+            webhookError.add(webhook.getName(), message);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private boolean maxAttemptsReached(DeliveryAttempt attempt) {
+        if (webhook.getMaxAttempts() > 0 && attempt.number >= webhook.getMaxAttempts()) {
+            logger.debug("{} {} max attempts reached", webhook.getName(), attempt.getContentPath().toUrl());
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private boolean webhookIsPaused(DeliveryAttempt attempt) {
+        if (webhook.isPaused()) {
+            logger.debug("{} {} webhook paused", webhook.getName(), attempt.getContentPath().toUrl());
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private boolean isSuccessfulDelivery(DeliveryAttempt attempt) {
+        boolean isSuccessResponse = attempt.getResponse().getStatus() >= 200 && attempt.getResponse().getStatus() < 300;
+        boolean isRedirectResponse = attempt.getResponse().getStatus() >= 300 && attempt.getResponse().getStatus() < 400;
+        if (isSuccessResponse || isRedirectResponse) {
+            logger.debug("{} {} successful delivery (http {})", attempt.getWebhook().getName(), attempt.getContentPath().toUrl(), attempt.getResponse().getStatus());
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -160,38 +225,24 @@ class WebhookLeader implements Lockable {
         semaphore.acquire();
         logger.trace("sending {} to {}", contentPath, webhook.getName());
         String parentName = Thread.currentThread().getName();
-        executorService.submit(new Callable<Object>() {
-            @Override
-            public Object call() throws Exception {
-                String workerName = Thread.currentThread().getName();
-                Thread.currentThread().setName(workerName + "|" + parentName);
-                ActiveTraces.start("WebhookLeader.send", webhook, contentPath);
-                webhookInProcess.add(webhook.getName(), contentPath);
-                try {
-                    metricsService.time("webhook.delta", contentPath.getTime().getMillis(), "name:" + webhook.getName());
-                    makeTimedCall(contentPath, webhookStrategy.createResponse(contentPath));
-                    completeCall(contentPath);
-                    logger.trace("completed {} call to {} ", contentPath, webhook.getName());
-                } catch (ItemExpiredException e) {
-                    webhookError.add(webhook.getName(), contentPath.toUrl() + " " + e.getMessage());
-                    completeCall(contentPath);
-                } catch (RetryException e) {
-                    logger.info("exception sending {} to {} {} ", contentPath, webhook.getName(), e.getMessage());
-                } catch (ExecutionException e) {
-                    Throwable cause = e.getCause();
-                    if (cause instanceof ItemExpiredException) {
-                        logger.info("stopped trying {} to {} {} ", contentPath, webhook.getName(), cause.getMessage());
-                        completeCall(contentPath);
-                    }
-                } catch (Exception e) {
-                    logger.warn("exception sending " + contentPath + " to " + webhook.getName(), e);
-                } finally {
-                    semaphore.release();
-                    ActiveTraces.end();
-                    Thread.currentThread().setName(workerName);
-                }
-                return null;
+        executorService.submit(() -> {
+            String workerName = Thread.currentThread().getName();
+            Thread.currentThread().setName(workerName + "|" + parentName);
+            ActiveTraces.start("WebhookLeader.send", webhook, contentPath);
+            webhookInProcess.add(webhook.getName(), contentPath);
+            try {
+                metricsService.time("webhook.delta", contentPath.getTime().getMillis(), "name:" + webhook.getName());
+                makeTimedCall(contentPath, webhookStrategy.createResponse(contentPath));
+                completeCall(contentPath);
+                logger.trace("completed {} call to {} ", contentPath, webhook.getName());
+            } catch (Exception e) {
+                logger.warn("exception sending " + contentPath + " to " + webhook.getName(), e);
+            } finally {
+                semaphore.release();
+                ActiveTraces.end();
+                Thread.currentThread().setName(workerName);
             }
+            return null;
         });
     }
 
@@ -218,57 +269,17 @@ class WebhookLeader implements Lockable {
     }
 
     private void makeTimedCall(ContentPath contentPath, ObjectNode body) throws Exception {
-        metricsService.time("webhook", webhook.getName(),
-                () -> {
-                    makeCall(contentPath, body);
-                    return null;
-                });
+        metricsService.time("webhook", webhook.getName(), makeCall(contentPath, body));
     }
 
-    private void makeCall(ContentPath contentPath, ObjectNode body) throws ExecutionException, RetryException {
+    private <T> T makeCall(ContentPath contentPath, ObjectNode body) throws ExecutionException, RetryException {
         Traces traces = ActiveTraces.getLocal();
         traces.add("WebhookLeader.makeCall start");
         RecurringTrace recurringTrace = new RecurringTrace("WebhookLeader.makeCall start");
         traces.add(recurringTrace);
-        retryer.call(() -> getClientResponse(contentPath, body, traces, recurringTrace));
-    }
-
-    private ClientResponse getClientResponse(ContentPath contentPath, ObjectNode body, Traces traces, RecurringTrace recurringTrace) {
-        try {
-            ActiveTraces.setLocal(traces);
-            ChannelConfig channelConfig = channelService.getCachedChannelConfig(channelName);
-            checkExpiration(contentPath, channelConfig, webhook);
-            if (!leadership.hasLeadership()) {
-                logger.debug("not leader {} {} {}", webhook.getCallbackUrl(), webhook.getName(), contentPath);
-                return null;
-            }
-            String entity = body.toString();
-            logger.debug("calling {} {} {}", webhook.getCallbackUrl(), contentPath, entity);
-            ClientResponse clientResponse = client.resource(webhook.getCallbackUrl())
-                    .type(MediaType.APPLICATION_JSON_TYPE)
-                    .post(ClientResponse.class, entity);
-            if (clientResponse.getStatus() < 400) {
-                recurringTrace.update("WebhookLeader.makeCall completed", clientResponse);
-            } else {
-                webhookError.add(webhook.getName(), new DateTime() + " " + contentPath + " " + clientResponse);
-            }
-            return clientResponse;
-        } catch (Exception e) {
-            webhookError.add(webhook.getName(), new DateTime() + " " + contentPath + " " + e.getMessage());
-            throw e;
-        }
-    }
-
-    static void checkExpiration(ContentPath contentPath, ChannelConfig channelConfig, Webhook webhook) {
-        if (webhook.getTtlMinutes() > 0) {
-            DateTime ttlTime = TimeUtil.now().minusMinutes(webhook.getTtlMinutes());
-            if (contentPath.getTime().isBefore(ttlTime)) {
-                throw new ItemExpiredException(contentPath.toUrl() + " is before " + ttlTime);
-            }
-        }
-        if (contentPath.getTime().isBefore(channelConfig.getTtlTime())) {
-            throw new ItemExpiredException(contentPath.toUrl() + " is before channel ttl " + channelConfig.getTtlTime());
-        }
+        carrier.send(webhook, contentPath, body);
+        recurringTrace.update("WebhookLeader.makeCall completed");
+        return null;
     }
 
     void exit(boolean delete) {
