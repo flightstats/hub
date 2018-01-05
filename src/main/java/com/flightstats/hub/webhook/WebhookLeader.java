@@ -174,7 +174,7 @@ class WebhookLeader implements Lockable {
     }
 
     private boolean maxAttemptsReached(DeliveryAttempt attempt) {
-        if (webhook.getMaxAttempts() > 0 && attempt.number >= webhook.getMaxAttempts()) {
+        if (webhook.getMaxAttempts() > 0 && attempt.number > webhook.getMaxAttempts()) {
             logger.debug("{} {} max attempts reached", webhook.getName(), attempt.getContentPath().toUrl());
             return true;
         } else {
