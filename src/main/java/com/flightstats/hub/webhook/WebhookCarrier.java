@@ -1,6 +1,7 @@
 package com.flightstats.hub.webhook;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.metrics.DataDog;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.HubUtils;
@@ -8,6 +9,7 @@ import com.google.inject.Inject;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
+import com.timgroup.statsd.StatsDClient;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 import lombok.Singular;
@@ -25,6 +27,7 @@ import java.util.function.Predicate;
 class WebhookCarrier {
 
     private final static Logger logger = LoggerFactory.getLogger(WebhookLeader.class);
+    private final static StatsDClient statsd = DataDog.statsd;
     private final static int CONNECT_TIMEOUT_SECONDS = 60;
 
     private Client httpClient;
@@ -73,6 +76,7 @@ class WebhookCarrier {
             } catch (ClientHandlerException e) {
                 logger.debug(webhook.getName() + " " + contentPath + " " + e.getMessage(), e);
                 webhookError.add(webhook.getName(), new DateTime() + " " + contentPath + " " + e.getMessage());
+                statsd.incrementCounter("webhook.errors", "name:" + webhook.getName(), "status:500");
                 isRetrying = false;
             } finally {
                 HubUtils.close(response);
@@ -93,6 +97,7 @@ class WebhookCarrier {
             } catch (InterruptedException e) {
                 String message = String.format("%s %s delivery halted due to interruption", attempt.getWebhook().getName(), attempt.getContentPath().toUrl());
                 logger.debug(message, e);
+                statsd.incrementCounter("webhook.errors", "name:" + webhook.getName(), "status:500");
                 Thread.currentThread().interrupt();
                 isRetrying = false;
             }
@@ -114,4 +119,5 @@ class WebhookCarrier {
         long exponentialSleepTimeMS = Math.round(multiplier * result);
         return exponentialSleepTimeMS < maximumSleepTimeMS ? exponentialSleepTimeMS : maximumSleepTimeMS;
     }
+
 }

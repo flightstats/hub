@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.cluster.*;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.metrics.ActiveTraces;
+import com.flightstats.hub.metrics.DataDog;
 import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.ChannelConfig;
@@ -14,6 +15,7 @@ import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
+import com.timgroup.statsd.StatsDClient;
 import org.apache.curator.framework.CuratorFramework;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -30,6 +32,7 @@ class WebhookLeader implements Lockable {
     final static String WEBHOOK_LAST_COMPLETED = "/GroupLastCompleted/";
 
     private final static Logger logger = LoggerFactory.getLogger(WebhookLeader.class);
+    private final static StatsDClient statsd = DataDog.statsd;
     private final static String LEADER_PATH = "/WebhookLeader";
 
     private final AtomicBoolean deleteOnExit = new AtomicBoolean();
@@ -204,6 +207,7 @@ class WebhookLeader implements Lockable {
             logger.debug("{} {} unsuccessful delivery (http {})", attempt.getWebhook().getName(), attempt.getContentPath().toUrl(), attempt.getStatusCode());
             String clientResponse = String.format("POST %s returned a response status of %s %s", attempt.getWebhook().getCallbackUrl(), attempt.getStatusCode(), Response.Status.fromStatusCode(attempt.getStatusCode()));
             webhookError.add(attempt.getWebhook().getName(), new DateTime() + " " + attempt.getContentPath() + " " + clientResponse);
+            statsd.incrementCounter("webhook.errors", "name:" + attempt.getWebhook().getName(), "status:" + attempt.getStatusCode());
             return false;
         }
     }
