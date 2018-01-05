@@ -24,7 +24,7 @@ describe(__filename, () => {
     it('creates a callback server', (done) => {
         callbackServer = utils.startHttpServer(callbackServerPort, (request, response) => {
             let json = JSON.parse(request);
-            console.log('callback server received item:', json);
+            console.log('incoming:', json);
             json.uris.forEach(uri => callbackItems.push(uri));
             response.statusCode = 400;
         }, done);
@@ -104,8 +104,9 @@ describe(__filename, () => {
                 expect(response.body.errors.length).toEqual(2);
                 let contentKey = postedItems[0].replace(`${channelResource}/`, '');
                 expect(response.body.errors[0]).toContain(contentKey);
-                expect(response.body.errors[0]).toContain('400 Bad Request');
-                expect(response.body.errors[1]).toContain(`${contentKey} has reached max attempts (1)`);
+                expect(response.body.errors[0]).toContain('returned a response status of 400 Bad Request');
+                expect(response.body.errors[1]).toContain(contentKey);
+                expect(response.body.errors[1]).toContain('max attempts reached (1)');
             })
             .catch(error => expect(error).toBeNull())
             .finally(done);
