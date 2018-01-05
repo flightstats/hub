@@ -9,6 +9,7 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.Singular;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
+@NoArgsConstructor
 class WebhookCarrier {
 
     private final static Logger logger = LoggerFactory.getLogger(WebhookLeader.class);
@@ -32,11 +34,6 @@ class WebhookCarrier {
 
     private List<Predicate<DeliveryAttempt>> stopBeforeIfs = new ArrayList<>();
     private List<Predicate<DeliveryAttempt>> stopAfterIfs = new ArrayList<>();
-
-    @Inject
-    WebhookCarrier() {
-        // no-args constructor for Guice
-    }
 
     @Builder
     WebhookCarrier(@Singular List<Predicate<DeliveryAttempt>> stopBeforeIfs,
