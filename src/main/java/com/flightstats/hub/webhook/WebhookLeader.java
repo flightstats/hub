@@ -20,6 +20,7 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.core.Response;
 import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -201,6 +202,8 @@ class WebhookLeader implements Lockable {
             logger.debug("{} {} successful delivery (http {})", attempt.getWebhook().getName(), attempt.getContentPath().toUrl(), attempt.getStatusCode());
             return true;
         } else {
+            logger.debug("{} {} unsuccessful delivery (http {})", attempt.getWebhook().getName(), attempt.getContentPath().toUrl(), attempt.getStatusCode());
+            webhookError.add(attempt.getWebhook().getName(), new DateTime() + " " + attempt.getContentPath() + " " + Response.Status.fromStatusCode(attempt.getStatusCode()));
             return false;
         }
     }
