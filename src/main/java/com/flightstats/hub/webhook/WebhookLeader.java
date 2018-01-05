@@ -12,7 +12,6 @@ import com.flightstats.hub.model.RecurringTrace;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
-import com.github.rholder.retry.RetryException;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.apache.curator.framework.CuratorFramework;
@@ -282,7 +281,7 @@ class WebhookLeader implements Lockable {
         });
     }
 
-    private void makeCall(ContentPath contentPath, ObjectNode body) throws ExecutionException, RetryException {
+    private void makeCall(ContentPath contentPath, ObjectNode body) throws ExecutionException {
         Traces traces = ActiveTraces.getLocal();
         traces.add("WebhookLeader.makeCall start");
         RecurringTrace recurringTrace = new RecurringTrace("WebhookLeader.makeCall start");
