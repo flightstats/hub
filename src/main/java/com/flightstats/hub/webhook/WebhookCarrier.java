@@ -74,9 +74,8 @@ class WebhookCarrier {
                         .post(ClientResponse.class, payload);
                 attempt.setStatusCode(response.getStatus());
             } catch (ClientHandlerException e) {
-                String message = String.format("%s %s %s", new DateTime(), contentPath, e.getMessage());
-                logger.debug(webhook.getName() + message, e);
-                webhookError.add(webhook.getName(), message);
+                logger.debug(webhook.getName() + " " + contentPath + " " + e.getMessage(), e);
+                webhookError.add(webhook.getName(), new DateTime() + " " + contentPath + " " + e.getMessage());
                 isRetrying = false;
             } finally {
                 HubUtils.close(response);
