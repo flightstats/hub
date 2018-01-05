@@ -100,18 +100,18 @@ class WebhookCarrier {
     }
 
     private boolean shouldStopBefore(DeliveryAttempt attempt) {
-        long stopBeforeCount = stopBeforeIfs.stream().filter(predicate -> predicate.test(attempt)).count();
-        return stopBeforeCount != 0;
+        long reasonsToStop = stopBeforeIfs.stream().filter(predicate -> predicate.test(attempt)).count();
+        return reasonsToStop != 0;
     }
 
     private boolean shouldStopAfter(DeliveryAttempt attempt) {
-        long stopAfterCount = stopAfterIfs.stream().filter(predicate -> predicate.test(attempt)).count();
-        return stopAfterCount != 0;
+        long reasonsToStop = stopAfterIfs.stream().filter(predicate -> predicate.test(attempt)).count();
+        return reasonsToStop != 0;
     }
 
     private long calculateSleepTimeMS(DeliveryAttempt attempt, long multiplier, long maximumSleepTimeMS) {
-        double exp = Math.pow(2, attempt.getNumber());
-        long exponentialSleepTimeMS = Math.round(multiplier * exp);
+        double result = Math.pow(2, attempt.getNumber());
+        long exponentialSleepTimeMS = Math.round(multiplier * result);
         return exponentialSleepTimeMS < maximumSleepTimeMS ? exponentialSleepTimeMS : maximumSleepTimeMS;
     }
 }
