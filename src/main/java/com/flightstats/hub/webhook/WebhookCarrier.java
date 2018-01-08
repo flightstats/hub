@@ -1,6 +1,7 @@
 package com.flightstats.hub.webhook;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.metrics.DataDog;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.rest.RestClient;
@@ -11,7 +12,6 @@ import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
 import com.timgroup.statsd.StatsDClient;
 import lombok.Builder;
-import lombok.NoArgsConstructor;
 import lombok.Singular;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
-@NoArgsConstructor
 class WebhookCarrier {
 
     private final static Logger logger = LoggerFactory.getLogger(WebhookLeader.class);
@@ -42,6 +41,7 @@ class WebhookCarrier {
     WebhookCarrier(@Singular List<Predicate<DeliveryAttempt>> stopBeforeIfs,
                    @Singular List<Predicate<DeliveryAttempt>> stopAfterIfs,
                    int timeoutSeconds) {
+        this.webhookError = HubProvider.getInstance(WebhookError.class);
         this.stopBeforeIfs = stopBeforeIfs;
         this.stopAfterIfs = stopAfterIfs;
         this.httpClient = RestClient.createClient(CONNECT_TIMEOUT_SECONDS, timeoutSeconds, true, false);
