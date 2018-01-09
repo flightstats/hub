@@ -59,7 +59,7 @@ class WebhookLeader implements Lockable {
     private ExecutorService executorService;
     private Semaphore semaphore;
     private Leadership leadership;
-    private WebhookCarrier carrier;
+    private WebhookRetryer carrier;
 
     private WebhookStrategy webhookStrategy;
     private AtomicReference<ContentPath> lastUpdated = new AtomicReference<>();
@@ -100,7 +100,7 @@ class WebhookLeader implements Lockable {
         logger.info("taking leadership {} {}", webhook, leadership.hasLeadership());
         executorService = Executors.newCachedThreadPool();
         semaphore = new Semaphore(webhook.getParallelCalls());
-        carrier = WebhookCarrier.builder()
+        carrier = WebhookRetryer.builder()
                 .timeoutSeconds(webhook.getCallbackTimeoutSeconds())
                 .stopBeforeIf(this::doesNotHaveLeadership)
                 .stopBeforeIf(this::webhookIsPaused)

@@ -23,7 +23,11 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
-class WebhookCarrier {
+/**
+ *  This class is responsible for trying to deliver a payload
+ *  until a set of configurable criteria is met.
+ */
+class WebhookRetryer {
 
     private final static Logger logger = LoggerFactory.getLogger(WebhookLeader.class);
     private final static StatsDClient statsd = DataDog.statsd;
@@ -38,7 +42,7 @@ class WebhookCarrier {
     private List<Predicate<DeliveryAttempt>> stopAfterIfs = new ArrayList<>();
 
     @Builder
-    WebhookCarrier(@Singular List<Predicate<DeliveryAttempt>> stopBeforeIfs,
+    WebhookRetryer(@Singular List<Predicate<DeliveryAttempt>> stopBeforeIfs,
                    @Singular List<Predicate<DeliveryAttempt>> stopAfterIfs,
                    int timeoutSeconds) {
         this.webhookError = HubProvider.getInstance(WebhookError.class);
