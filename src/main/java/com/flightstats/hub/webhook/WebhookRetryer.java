@@ -33,19 +33,16 @@ class WebhookRetryer {
     private final static StatsDClient statsd = DataDog.statsd;
     private final static int CONNECT_TIMEOUT_SECONDS = 60;
 
-    private Client httpClient;
-
-    @Inject
-    private WebhookError webhookError;
-
     private List<Predicate<DeliveryAttempt>> stopBeforeIfs = new ArrayList<>();
     private List<Predicate<DeliveryAttempt>> stopAfterIfs = new ArrayList<>();
+    private WebhookError webhookError = HubProvider.getInstance(WebhookError.class);
+
+    private Client httpClient;
 
     @Builder
     WebhookRetryer(@Singular List<Predicate<DeliveryAttempt>> stopBeforeIfs,
                    @Singular List<Predicate<DeliveryAttempt>> stopAfterIfs,
                    int timeoutSeconds) {
-        this.webhookError = HubProvider.getInstance(WebhookError.class);
         this.stopBeforeIfs = stopBeforeIfs;
         this.stopAfterIfs = stopAfterIfs;
         this.httpClient = RestClient.createClient(CONNECT_TIMEOUT_SECONDS, timeoutSeconds, true, false);
