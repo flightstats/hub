@@ -158,9 +158,13 @@ public class ClusterContentService implements ContentService {
     private Content getFromS3BatchAndStoreInReadCache(String channelName, ContentKey key) {
         try {
             Map<ContentKey, Content> map = s3BatchContentDao.readBatch(channelName, key);
-            Content content = Content.copy(map.get(key));
+            Content content = map.get(key);
+            if (content == null) {
+                return null;
+            }
+            Content copy = Content.copy(content);
             storeBatchInReadCache(channelName, map);
-            return content;
+            return copy;
         } catch (IOException e) {
             logger.warn("unable to get batch from long term storage", e);
             return null;
