@@ -3,6 +3,7 @@ var http = require('http');
 var https = require('https');
 var fs = require('fs');
 var request = require('request');
+var moment = require('moment');
 
 /**
  * Monkey patching Promise.prototype.finally until its officially supported
@@ -617,4 +618,43 @@ exports.followRedirectIfPresent = function followRedirectIfPresent(response) {
     } else {
         return response;
     }
+};
+
+/**
+ * This function will query the url every second and execute the clause callback
+ * until either the timeout is reached or the clause callback returns true.
+ *
+ * @param {string} url HTTP endpoint to query
+ * @param {function} clause function that is run against each response
+ * @param {number} [timeoutMS=30000] when to give up
+ * @returns {Promise}
+ */
+exports.httpGetUntil = function httpGetUntil(url, clause, timeoutMS) {
+    let started = moment().utc();
+    let timeout = moment().utc().add(timeoutMS, 'ms');
+
+    return new Promise((resolve, reject) => {
+        function loop() {
+            let now = moment.utc();
+            if (now.isSameOrAfter(timeout)) {
+                reject('timed out: ' + now.diff(started) + 'ms');
+            }
+
+            utils.httpGet(url)
+                .then(response => {
+                    if (clause(response)) {
+                        resolve(response);
+                    } else {
+                        setTimeout(loop, 1000);
+                    }
+                })
+                .catch(error => reject(error));
+        }
+
+        loop();
+    });
+};
+
+exports.noop = function noop() {
+    // do nothing
 };
