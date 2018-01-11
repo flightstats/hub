@@ -29,7 +29,7 @@ import java.util.function.Predicate;
  */
 class WebhookRetryer {
 
-    private final static Logger logger = LoggerFactory.getLogger(WebhookLeader.class);
+    private final static Logger logger = LoggerFactory.getLogger(WebhookRetryer.class);
     private final static StatsDClient statsd = DataDog.statsd;
     private final static int CONNECT_TIMEOUT_SECONDS = 60;
 
@@ -78,7 +78,7 @@ class WebhookRetryer {
                 logger.debug(webhook.getName() + " " + contentPath + " " + e.getMessage(), e);
                 webhookError.add(webhook.getName(), new DateTime() + " " + contentPath + " " + e.getMessage());
                 statsd.incrementCounter("webhook.errors", "name:" + webhook.getName(), "status:500");
-                isRetrying = false;
+                attempt.setStatusCode(500);
             } finally {
                 HubUtils.close(response);
             }
