@@ -5,6 +5,7 @@ import com.flightstats.hub.app.InFlightService;
 import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.aws.MultiPartParser;
+import com.flightstats.hub.dao.aws.S3BatchWriter;
 import com.flightstats.hub.exception.*;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.MetricsService;
@@ -398,6 +399,7 @@ public class ChannelService {
             lastContentPath.delete(channelName, REPLICATED_LAST_UPDATED);
         }
         lastContentPath.delete(channelName, HISTORICAL_EARLIEST);
+        lastContentPath.delete(channelName, S3BatchWriter.S3_BATCH_WRITER);
         TagWebhook.deleteAllTagWebhooksForChannel(channelConfig);
         return true;
     }

@@ -37,12 +37,12 @@ public class S3BatchWriter {
 
     //todo - gfm - this delete can go away once deployed everywhere
     private static final String LAST_BATCH_VERIFIED_OLD = "/S3VerifierBatchLastVerified/";
-    private static final String S3_BATCH_WRITER = "/S3BatchWriter/";
+    public static final String S3_BATCH_WRITER = "/S3BatchWriter/";
     private static final String LEADER_PATH = "/S3BatchWriterLeader";
 
     private final int offsetMinutes = HubProperties.getProperty("s3BatchWriter.offsetMinutes", 1);
     private final int lagMinutes = HubProperties.getProperty("s3BatchWriter.lagMinutes", 10);
-    //todo - gfm - can we make this scale dynamically according to the load?
+    //todo - gfm - can we make threads scale dynamically according to the load?
     private final int channelThreads = HubProperties.getProperty("s3BatchWriter.channelThreads", 3);
     private final ExecutorService channelThreadPool = Executors.newFixedThreadPool(channelThreads, new ThreadFactoryBuilder().setNameFormat("S3BatchWriterChannel-%d").build());
     @Inject
