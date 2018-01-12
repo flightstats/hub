@@ -384,7 +384,7 @@ public class ClusterContentService implements ContentService {
         s3BatchContentDao.delete(channelName);
         s3LargePayloadContentDao.delete(channelName);
         lastContentPath.delete(channelName, CHANNEL_LATEST_UPDATED);
-        lastContentPath.delete(channelName, S3Verifier.LAST_SINGLE_VERIFIED);
+        lastContentPath.delete(channelName, S3SingleVerifier.LAST_SINGLE_VERIFIED);
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
         if (!channel.isSingle()) {
             new S3Batch(channel, hubUtils).stop();
