@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -48,8 +49,9 @@ class WebhookRetryer {
         this.httpClient = RestClient.createClient(CONNECT_TIMEOUT_SECONDS, timeoutSeconds, true, false);
     }
 
-    void send(Webhook webhook, ContentPath contentPath, ObjectNode body) {
+    boolean send(Webhook webhook, ContentPath contentPath, ObjectNode body) {
         int attemptNumber = 0;
+        boolean isSuccessful = false;
         boolean isRetrying = true;
         while (isRetrying) {
 
@@ -89,6 +91,12 @@ class WebhookRetryer {
                 continue;
             }
 
+            if (isSuccessful(attempt)) {
+                isRetrying = false;
+                isSuccessful = true;
+                continue;
+            }
+
             try {
                 long exponentialMultiplier = 1000;
                 long maximumSleepTimeMS = TimeUnit.MINUTES.toMillis(attempt.getWebhook().getMaxWaitMinutes());
@@ -102,7 +110,10 @@ class WebhookRetryer {
                 Thread.currentThread().interrupt();
                 isRetrying = false;
             }
+
         }
+
+        return isSuccessful;
     }
 
     private boolean shouldStopBefore(DeliveryAttempt attempt) {
@@ -113,6 +124,21 @@ class WebhookRetryer {
     private boolean shouldStopAfter(DeliveryAttempt attempt) {
         long reasonsToStop = stopAfterIfs.stream().filter(predicate -> predicate.test(attempt)).count();
         return reasonsToStop != 0;
+    }
+
+    private boolean isSuccessful(DeliveryAttempt attempt) {
+        boolean isSuccessResponse = attempt.getStatusCode() >= 200 && attempt.getStatusCode() < 300;
+        boolean isRedirectResponse = attempt.getStatusCode() >= 300 && attempt.getStatusCode() < 400;
+        if (isSuccessResponse || isRedirectResponse) {
+            logger.debug("{} {} successful delivery (http {})", attempt.getWebhook().getName(), attempt.getContentPath().toUrl(), attempt.getStatusCode());
+            return true;
+        } else {
+            logger.debug("{} {} unsuccessful delivery (http {})", attempt.getWebhook().getName(), attempt.getContentPath().toUrl(), attempt.getStatusCode());
+            String clientResponse = String.format("POST %s returned a response status of %s %s", attempt.getWebhook().getCallbackUrl(), attempt.getStatusCode(), Response.Status.fromStatusCode(attempt.getStatusCode()));
+            webhookError.add(attempt.getWebhook().getName(), new DateTime() + " " + attempt.getContentPath() + " " + clientResponse);
+            statsd.incrementCounter("webhook.errors", "name:" + attempt.getWebhook().getName(), "status:" + attempt.getStatusCode());
+            return false;
+        }
     }
 
     private long calculateSleepTimeMS(DeliveryAttempt attempt, long multiplier, long maximumSleepTimeMS) {
