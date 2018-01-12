@@ -15,4 +15,6 @@ class DeliveryAttempt {
     String payload;
     @Setter
     int statusCode;
+    @Setter
+    Exception exception;
 }

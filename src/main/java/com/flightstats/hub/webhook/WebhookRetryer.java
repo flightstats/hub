@@ -76,10 +76,7 @@ class WebhookRetryer {
                         .post(ClientResponse.class, payload);
                 attempt.setStatusCode(response.getStatus());
             } catch (ClientHandlerException e) {
-                logger.debug(webhook.getName() + " " + contentPath + " " + e.getMessage(), e);
-                webhookError.add(webhook.getName(), new DateTime() + " " + contentPath + " " + e.getMessage());
-                statsd.incrementCounter("webhook.errors", "name:" + webhook.getName(), "status:500");
-                attempt.setStatusCode(500);
+                attempt.setException(e);
             } finally {
                 HubUtils.close(response);
             }
@@ -90,10 +87,16 @@ class WebhookRetryer {
                 continue;
             }
 
+            String requestResult = determineResult(attempt);
+            logger.debug("{} {} to {} response {}", attempt.getWebhook().getName(), attempt.getContentPath().toUrl(), attempt.getWebhook().getCallbackUrl(), requestResult);
+
             if (isSuccessful(attempt)) {
                 isRetrying = false;
                 isSuccessful = true;
                 continue;
+            } else {
+                webhookError.add(attempt.getWebhook().getName(), new DateTime() + " " + attempt.getContentPath() + " " + requestResult);
+                statsd.incrementCounter("webhook.errors", "name:" + attempt.getWebhook().getName(), "status:" + attempt.getStatusCode());
             }
 
             try {
@@ -103,7 +106,7 @@ class WebhookRetryer {
                 logger.debug("{} {} waiting {} seconds until retrying", attempt.getWebhook().getName(), attempt.getContentPath().toUrl(), TimeUnit.MILLISECONDS.toSeconds(sleepTimeMS));
                 Thread.sleep(sleepTimeMS);
             } catch (InterruptedException e) {
-                String message = String.format("%s %s delivery halted due to interruption", attempt.getWebhook().getName(), attempt.getContentPath().toUrl());
+                String message = String.format("%s %s to %s interrupted", attempt.getWebhook().getName(), attempt.getContentPath().toUrl(), attempt.getWebhook().getCallbackUrl());
                 logger.debug(message, e);
                 statsd.incrementCounter("webhook.errors", "name:" + webhook.getName(), "status:500");
                 Thread.currentThread().interrupt();
@@ -125,19 +128,18 @@ class WebhookRetryer {
         return reasonsToStop != 0;
     }
 
+    private String determineResult(DeliveryAttempt attempt) {
+        if (attempt.getException() == null) {
+            return String.format("%s %s", attempt.getStatusCode(), Response.Status.fromStatusCode(attempt.getStatusCode()));
+        } else {
+            return attempt.getException().getMessage();
+        }
+    }
+
     private boolean isSuccessful(DeliveryAttempt attempt) {
         boolean isSuccessResponse = attempt.getStatusCode() >= 200 && attempt.getStatusCode() < 300;
         boolean isRedirectResponse = attempt.getStatusCode() >= 300 && attempt.getStatusCode() < 400;
-        if (isSuccessResponse || isRedirectResponse) {
-            logger.debug("{} {} successful delivery (http {})", attempt.getWebhook().getName(), attempt.getContentPath().toUrl(), attempt.getStatusCode());
-            return true;
-        } else {
-            logger.debug("{} {} unsuccessful delivery (http {})", attempt.getWebhook().getName(), attempt.getContentPath().toUrl(), attempt.getStatusCode());
-            String clientResponse = String.format("POST %s returned a response status of %s %s", attempt.getWebhook().getCallbackUrl(), attempt.getStatusCode(), Response.Status.fromStatusCode(attempt.getStatusCode()));
-            webhookError.add(attempt.getWebhook().getName(), new DateTime() + " " + attempt.getContentPath() + " " + clientResponse);
-            statsd.incrementCounter("webhook.errors", "name:" + attempt.getWebhook().getName(), "status:" + attempt.getStatusCode());
-            return false;
-        }
+        return isSuccessResponse || isRedirectResponse;
     }
 
     private long calculateSleepTimeMS(DeliveryAttempt attempt, long multiplier, long maximumSleepTimeMS) {
