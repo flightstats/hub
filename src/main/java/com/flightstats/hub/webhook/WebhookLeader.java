@@ -21,7 +21,6 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.core.Response;
 import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -107,7 +106,6 @@ class WebhookLeader implements Lockable {
                 .stopBeforeIf(this::webhookTTLExceeded)
                 .stopBeforeIf(this::channelTTLExceeded)
                 .stopBeforeIf(this::maxAttemptsReached)
-                .stopAfterIf(this::isSuccessfulDelivery)
                 .build();
         webhookStrategy = WebhookStrategy.getStrategy(webhook, lastContentPath, channelService);
         try {
@@ -197,21 +195,6 @@ class WebhookLeader implements Lockable {
         }
     }
 
-    private boolean isSuccessfulDelivery(DeliveryAttempt attempt) {
-        boolean isSuccessResponse = attempt.getStatusCode() >= 200 && attempt.getStatusCode() < 300;
-        boolean isRedirectResponse = attempt.getStatusCode() >= 300 && attempt.getStatusCode() < 400;
-        if (isSuccessResponse || isRedirectResponse) {
-            logger.debug("{} {} successful delivery (http {})", attempt.getWebhook().getName(), attempt.getContentPath().toUrl(), attempt.getStatusCode());
-            return true;
-        } else {
-            logger.debug("{} {} unsuccessful delivery (http {})", attempt.getWebhook().getName(), attempt.getContentPath().toUrl(), attempt.getStatusCode());
-            String clientResponse = String.format("POST %s returned a response status of %s %s", attempt.getWebhook().getCallbackUrl(), attempt.getStatusCode(), Response.Status.fromStatusCode(attempt.getStatusCode()));
-            webhookError.add(attempt.getWebhook().getName(), new DateTime() + " " + attempt.getContentPath() + " " + clientResponse);
-            statsd.incrementCounter("webhook.errors", "name:" + attempt.getWebhook().getName(), "status:" + attempt.getStatusCode());
-            return false;
-        }
-    }
-
     private void sendInProcess(ContentPath lastCompletedPath) throws InterruptedException {
         Set<ContentPath> inProcessSet = webhookInProcess.getSet(webhook.getName(), lastCompletedPath);
         logger.debug("sending in process {} to {}", inProcessSet, webhook.getName());
@@ -242,9 +225,11 @@ class WebhookLeader implements Lockable {
             webhookInProcess.add(webhook.getName(), contentPath);
             try {
                 metricsService.time("webhook.delta", contentPath.getTime().getMillis(), "name:" + webhook.getName());
-                makeTimedCall(contentPath, webhookStrategy.createResponse(contentPath));
-                completeCall(contentPath);
-                logger.trace("completed {} call to {} ", contentPath, webhook.getName());
+                boolean wasSuccessful = makeCall(contentPath, webhookStrategy.createResponse(contentPath));
+                if (wasSuccessful) {
+                    completeCall(contentPath);
+                    logger.trace("completed {} call to {} ", contentPath, webhook.getName());
+                }
             } catch (Exception e) {
                 logger.warn("exception sending " + contentPath + " to " + webhook.getName(), e);
             } finally {
@@ -278,20 +263,16 @@ class WebhookLeader implements Lockable {
         webhookInProcess.remove(webhook.getName(), contentPath);
     }
 
-    private void makeTimedCall(ContentPath contentPath, ObjectNode body) throws Exception {
-        metricsService.time("webhook", webhook.getName(), () -> {
-            makeCall(contentPath, body);
-            return null;
-        });
-    }
-
-    private void makeCall(ContentPath contentPath, ObjectNode body) throws ExecutionException {
+    private boolean makeCall(ContentPath contentPath, ObjectNode body) {
         Traces traces = ActiveTraces.getLocal();
         traces.add("WebhookLeader.makeCall start");
         RecurringTrace recurringTrace = new RecurringTrace("WebhookLeader.makeCall start");
         traces.add(recurringTrace);
-        carrier.send(webhook, contentPath, body);
+        long start = System.currentTimeMillis();
+        boolean wasSuccessful = carrier.send(webhook, contentPath, body);
+        metricsService.time("webhook", start, "name:" + webhook.getName());
         recurringTrace.update("WebhookLeader.makeCall completed");
+        return wasSuccessful;
     }
 
     void exit(boolean delete) {
