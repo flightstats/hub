@@ -45,7 +45,7 @@ public class RegulatedExecutor {
         double ratio = currentState.getRatio();
         logger.info("{} ran {} items with {} threads.  ratio {}",
                 config.getName(), currentState.futures.size(), currentThreads, ratio);
-        int newThreads = (int) Math.ceil(ratio * currentThreads);
+        int newThreads = Math.max(1, (int) Math.ceil(ratio * currentThreads));
         if (newThreads != currentThreads) {
             logger.info("changing pool from {} to {}", currentThreads, newThreads);
             currentThreads = newThreads;
@@ -84,6 +84,7 @@ public class RegulatedExecutor {
         double getRatio() {
             double goalMillis = (double) config.getTimeUnit().getDuration().getMillis() *
                     config.getTimeValue() * config.getPercentUtilization() / 100;
+            logger.info("gaol {} actual {}", goalMillis, getExecutionTime());
             return (double) getExecutionTime() / goalMillis;
         }
 

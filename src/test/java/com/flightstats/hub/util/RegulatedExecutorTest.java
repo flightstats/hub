@@ -78,4 +78,22 @@ public class RegulatedExecutorTest {
         assertTrue(executor.getCurrentThreads() >= 2);
     }
 
+    //todo - gfm - -1] com.flightstats.hub.util.RegulatedExecutor - gaol 54000.0 actual 13027
+
+    @Test
+    public void testZeroPool() {
+        RegulatedConfig config = RegulatedConfig.builder().name("testZeroPool")
+                .startThreads(1)
+                .maxThreads(10)
+                .percentUtilization(54)
+                .timeUnit(TimeUtil.Unit.MILLIS)
+                .timeValue(100)
+                .build();
+        RegulatedExecutor executor = new RegulatedExecutor(config);
+
+        executor.runAsync(() -> Sleeper.sleep(10));
+        executor.join();
+        assertTrue(executor.getCurrentThreads() <= 2);
+        assertTrue(executor.getCurrentThreads() >= 1);
+    }
 }
