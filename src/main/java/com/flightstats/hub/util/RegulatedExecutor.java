@@ -43,11 +43,11 @@ public class RegulatedExecutor {
         CompletableFuture.allOf(currentState.getArray()).join();
         currentState.end();
         double ratio = currentState.getRatio();
-        logger.debug("{} ran {} items with {} threads.  ratio {}",
+        logger.info("{} ran {} items with {} threads.  ratio {}",
                 config.getName(), currentState.futures.size(), currentThreads, ratio);
         int newThreads = (int) Math.ceil(ratio * currentThreads);
         if (newThreads != currentThreads) {
-            logger.debug("changing pool from {} to {}", currentThreads, newThreads);
+            logger.info("changing pool from {} to {}", currentThreads, newThreads);
             currentThreads = newThreads;
             executor.shutdown();
             createExecutor();
@@ -84,7 +84,6 @@ public class RegulatedExecutor {
         double getRatio() {
             double goalMillis = (double) config.getTimeUnit().getDuration().getMillis() *
                     config.getTimeValue() * config.getPercentUtilization() / 100;
-            logger.info("gaol {} actual {}", goalMillis, getExecutionTime());
             return (double) getExecutionTime() / goalMillis;
         }
 
