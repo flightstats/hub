@@ -8,14 +8,11 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.replication.S3Batch;
-import com.flightstats.hub.util.HubUtils;
-import com.flightstats.hub.util.Sleeper;
-import com.flightstats.hub.util.TimeUtil;
+import com.flightstats.hub.util.*;
 import com.flightstats.hub.webhook.Webhook;
 import com.flightstats.hub.webhook.WebhookService;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.AbstractScheduledService;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -26,8 +23,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.SortedSet;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
@@ -42,9 +37,15 @@ public class S3BatchWriter {
 
     private final int offsetMinutes = HubProperties.getProperty("s3BatchWriter.offsetMinutes", 1);
     private final int lagMinutes = HubProperties.getProperty("s3BatchWriter.lagMinutes", 10);
-    //todo - gfm - can we make threads scale dynamically according to the load?
-    private final int channelThreads = HubProperties.getProperty("s3BatchWriter.channelThreads", 3);
-    private final ExecutorService channelThreadPool = Executors.newFixedThreadPool(channelThreads, new ThreadFactoryBuilder().setNameFormat("S3BatchWriterChannel-%d").build());
+
+    private final RegulatedConfig regulatedConfig = RegulatedConfig.builder()
+            .startThreads(HubProperties.getProperty("s3BatchWriter.channelThreads", 3))
+            .maxThreads(30)
+            .name("S3BatchWriter")
+            .build();
+
+    private RegulatedExecutor regulatedExecutor = new RegulatedExecutor(regulatedConfig);
+
     @Inject
     private LastContentPath lastContentPath;
     @Inject
@@ -75,7 +76,7 @@ public class S3BatchWriter {
             Iterable<ChannelConfig> channels = channelService.getChannels();
             for (ChannelConfig channel : channels) {
                 if (channel.isBatch() || channel.isBoth()) {
-                    channelThreadPool.submit(() -> {
+                    regulatedExecutor.runAsync(() -> {
                         String name = Thread.currentThread().getName();
                         Thread.currentThread().setName(name + "|" + channel.getDisplayName());
                         String url = HubProperties.getAppUrl() + "internal/s3BatchWriter/" + channel.getDisplayName();
@@ -89,8 +90,11 @@ public class S3BatchWriter {
                             Thread.currentThread().setName(name);
                         }
                     });
+
                 }
             }
+            regulatedExecutor.join();
+
             logger.info("Completed Writing Batch S3 data");
         } catch (Exception e) {
             logger.error("Error: ", e);
