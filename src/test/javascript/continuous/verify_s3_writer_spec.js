@@ -107,8 +107,10 @@ describe(testName, function () {
         console.log('now', moment.utc().format(minute_format));
         console.log('startOffset', startOffset);
         console.log('endOffset', endOffset);
-        for (var i = startOffset; i <= endOffset; i++) {
-            channels.forEach(function (channel) {
+
+        channels.forEach(function (channel) {
+            for (var i = startOffset; i <= endOffset; i++) {
+                console.log('channel.start', channel.start.format(minute_format));
                 var start = channel.start.subtract(i, 'minutes');
                 var formatted = start.format(minute_format);
                 if (channel.name.toLowerCase().startsWith('test')
@@ -124,8 +126,9 @@ describe(testName, function () {
                         add(rootUrl, channel.storage);
                     }
                 }
-            });
-        }
+            }
+        });
+
     }, timeout);
 
 
