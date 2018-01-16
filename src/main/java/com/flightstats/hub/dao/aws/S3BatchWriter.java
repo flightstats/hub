@@ -136,7 +136,7 @@ public class S3BatchWriter {
             lastWritten = new MinutePath(lastWritten.getTime().plusMinutes(1));
             logger.debug("{} processing {}", channelName, lastWritten);
             TimeQuery timeQuery = TimeQuery.builder().channelName(channelName)
-                    .startTime(lagTime.getTime())
+                    .startTime(lastWritten.getTime())
                     .stable(true)
                     .unit(TimeUtil.Unit.MINUTES)
                     .location(Location.CACHE_WRITE)
