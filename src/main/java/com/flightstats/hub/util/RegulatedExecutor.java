@@ -26,12 +26,12 @@ public class RegulatedExecutor {
     public RegulatedExecutor(RegulatedConfig config) {
         this.config = config;
         currentThreads = config.getStartThreads();
-        executor = createExecutor();
+        createExecutor();
         currentState = new RegulatedExecutorState();
     }
 
-    private ExecutorService createExecutor() {
-        return Executors.newFixedThreadPool(currentThreads, new ThreadFactoryBuilder()
+    private void createExecutor() {
+        executor = Executors.newFixedThreadPool(currentThreads, new ThreadFactoryBuilder()
                 .setNameFormat("S3BatchWriterChannel-%d").build());
     }
 
