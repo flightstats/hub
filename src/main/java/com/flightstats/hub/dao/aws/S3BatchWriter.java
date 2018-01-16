@@ -77,6 +77,8 @@ public class S3BatchWriter {
     private void writeBatchChannels() {
         try {
             logger.info("Writing Batch S3 data");
+            metricsService.gauge("s3batch.threads", regulatedExecutor.getCurrentThreads());
+            DateTime start = TimeUtil.now();
             Iterable<ChannelConfig> channels = channelService.getChannels();
             for (ChannelConfig channel : channels) {
                 if (channel.isBatch() || channel.isBoth()) {
@@ -98,7 +100,7 @@ public class S3BatchWriter {
                 }
             }
             regulatedExecutor.join();
-
+            metricsService.time("s3batch.total", start.getMillis());
             logger.info("Completed Writing Batch S3 data");
         } catch (Exception e) {
             logger.error("Error: ", e);

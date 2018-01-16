@@ -111,7 +111,7 @@ public class RegulatedExecutor {
 
     }
 
-    int getCurrentThreads() {
+    public int getCurrentThreads() {
         return currentThreads;
     }
 }
