@@ -33,24 +33,24 @@ class WebhookRetryer {
     private final static StatsDClient statsd = DataDog.statsd;
     private final static int CONNECT_TIMEOUT_SECONDS = 60;
 
-    private List<Predicate<DeliveryAttempt>> stopBeforeIfs = new ArrayList<>();
-    private List<Predicate<DeliveryAttempt>> stopAfterIfs = new ArrayList<>();
+    private List<Predicate<DeliveryAttempt>> giveUpIfs = new ArrayList<>();
+    private List<Predicate<DeliveryAttempt>> tryLaterIfs = new ArrayList<>();
     private WebhookError webhookError = HubProvider.getInstance(WebhookError.class);
 
     private Client httpClient;
 
     @Builder
-    WebhookRetryer(@Singular List<Predicate<DeliveryAttempt>> stopBeforeIfs,
-                   @Singular List<Predicate<DeliveryAttempt>> stopAfterIfs,
+    WebhookRetryer(@Singular List<Predicate<DeliveryAttempt>> giveUpIfs,
+                   @Singular List<Predicate<DeliveryAttempt>> tryLaterIfs,
                    int timeoutSeconds) {
-        this.stopBeforeIfs = stopBeforeIfs;
-        this.stopAfterIfs = stopAfterIfs;
+        this.giveUpIfs = giveUpIfs;
+        this.tryLaterIfs = tryLaterIfs;
         this.httpClient = RestClient.createClient(CONNECT_TIMEOUT_SECONDS, timeoutSeconds, true, false);
     }
 
     boolean send(Webhook webhook, ContentPath contentPath, ObjectNode body) {
         int attemptNumber = 0;
-        boolean isSuccessful = false;
+        boolean isGivingUpOnItem = false;
         boolean isRetrying = true;
         while (isRetrying) {
 
@@ -61,9 +61,14 @@ class WebhookRetryer {
                     .payload(body.toString())
                     .build();
 
-            if (shouldStopBefore(attempt)) {
+
+            boolean shouldGiveUp = shouldGiveUp(attempt);
+            boolean shouldTryLater = shouldTryLater(attempt);
+
+            if (shouldGiveUp || shouldTryLater) {
                 logger.debug("{} {} stopping delivery before attempt #{}", attempt.getWebhook().getName(), attempt.getContentPath().toUrl(), attempt.getNumber());
                 isRetrying = false;
+                isGivingUpOnItem = shouldGiveUp;
                 continue;
             }
 
@@ -81,18 +86,12 @@ class WebhookRetryer {
                 HubUtils.close(response);
             }
 
-            if (shouldStopAfter(attempt)) {
-                logger.debug("{} {} stopping delivery after attempt #{}", attempt.getWebhook().getName(), attempt.getContentPath().toUrl(), attempt.getNumber());
-                isRetrying = false;
-                continue;
-            }
-
             String requestResult = determineResult(attempt);
             logger.debug("{} {} to {} response {}", attempt.getWebhook().getName(), attempt.getContentPath().toUrl(), attempt.getWebhook().getCallbackUrl(), requestResult);
 
             if (isSuccessful(attempt)) {
                 isRetrying = false;
-                isSuccessful = true;
+                isGivingUpOnItem = true;
                 continue;
             } else {
                 webhookError.add(attempt.getWebhook().getName(), new DateTime() + " " + attempt.getContentPath() + " " + requestResult);
@@ -112,19 +111,18 @@ class WebhookRetryer {
                 Thread.currentThread().interrupt();
                 isRetrying = false;
             }
-
         }
 
-        return isSuccessful;
+        return isGivingUpOnItem;
     }
 
-    private boolean shouldStopBefore(DeliveryAttempt attempt) {
-        long reasonsToStop = stopBeforeIfs.stream().filter(predicate -> predicate.test(attempt)).count();
+    private boolean shouldGiveUp(DeliveryAttempt attempt) {
+        long reasonsToStop = giveUpIfs.stream().filter(predicate -> predicate.test(attempt)).count();
         return reasonsToStop != 0;
     }
 
-    private boolean shouldStopAfter(DeliveryAttempt attempt) {
-        long reasonsToStop = stopAfterIfs.stream().filter(predicate -> predicate.test(attempt)).count();
+    private boolean shouldTryLater(DeliveryAttempt attempt) {
+        long reasonsToStop = tryLaterIfs.stream().filter(predicate -> predicate.test(attempt)).count();
         return reasonsToStop != 0;
     }
 

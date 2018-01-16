@@ -1,21 +1,16 @@
 package com.flightstats.hub.webhook;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.cluster.*;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.metrics.DataDog;
 import com.flightstats.hub.metrics.MetricsService;
-import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ContentPath;
-import com.flightstats.hub.model.RecurringTrace;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
-import com.timgroup.statsd.StatsDClient;
 import org.apache.curator.framework.CuratorFramework;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -31,7 +26,6 @@ class WebhookLeader implements Lockable {
     final static String WEBHOOK_LAST_COMPLETED = "/GroupLastCompleted/";
 
     private final static Logger logger = LoggerFactory.getLogger(WebhookLeader.class);
-    private final static StatsDClient statsd = DataDog.statsd;
     private final static String LEADER_PATH = "/WebhookLeader";
 
     private final AtomicBoolean deleteOnExit = new AtomicBoolean();
@@ -101,11 +95,11 @@ class WebhookLeader implements Lockable {
         semaphore = new Semaphore(webhook.getParallelCalls());
         carrier = WebhookRetryer.builder()
                 .timeoutSeconds(webhook.getCallbackTimeoutSeconds())
-                .stopBeforeIf(this::doesNotHaveLeadership)
-                .stopBeforeIf(this::webhookIsPaused)
-                .stopBeforeIf(this::webhookTTLExceeded)
-                .stopBeforeIf(this::channelTTLExceeded)
-                .stopBeforeIf(this::maxAttemptsReached)
+                .tryLaterIf(this::doesNotHaveLeadership)
+                .tryLaterIf(this::webhookIsPaused)
+                .giveUpIf(this::webhookTTLExceeded)
+                .giveUpIf(this::channelTTLExceeded)
+                .giveUpIf(this::maxAttemptsReached)
                 .build();
         webhookStrategy = WebhookStrategy.getStrategy(webhook, lastContentPath, channelService);
         try {
@@ -225,11 +219,23 @@ class WebhookLeader implements Lockable {
             webhookInProcess.add(webhook.getName(), contentPath);
             try {
                 metricsService.time("webhook.delta", contentPath.getTime().getMillis(), "name:" + webhook.getName());
-                boolean wasSuccessful = makeCall(contentPath, webhookStrategy.createResponse(contentPath));
-                if (wasSuccessful) {
-                    completeCall(contentPath);
-                    logger.trace("completed {} call to {} ", contentPath, webhook.getName());
+//                Traces traces = ActiveTraces.getLocal();
+//                traces.add("WebhookLeader.makeCall start");
+//                RecurringTrace recurringTrace = new RecurringTrace("WebhookLeader.makeCall start");
+//                traces.add(recurringTrace);
+                long start = System.currentTimeMillis();
+                boolean done = carrier.send(webhook, contentPath, webhookStrategy.createResponse(contentPath));
+                metricsService.time("webhook", start, "name:" + webhook.getName());
+//                recurringTrace.update("WebhookLeader.makeCall completed");
+                if (done) {
+                    if (increaseLastUpdated(contentPath)) {
+                        if (!deleteOnExit.get()) {
+                            lastContentPath.updateIncrease(contentPath, webhook.getName(), WEBHOOK_LAST_COMPLETED);
+                        }
+                    }
                 }
+                webhookInProcess.remove(webhook.getName(), contentPath);
+//                logger.trace("completed {} call to {} ", contentPath, webhook.getName());
             } catch (Exception e) {
                 logger.warn("exception sending " + contentPath + " to " + webhook.getName(), e);
             } finally {
@@ -252,27 +258,6 @@ class WebhookLeader implements Lockable {
             return existingPath;
         });
         return changed.get();
-    }
-
-    private void completeCall(ContentPath contentPath) {
-        if (increaseLastUpdated(contentPath)) {
-            if (!deleteOnExit.get()) {
-                lastContentPath.updateIncrease(contentPath, webhook.getName(), WEBHOOK_LAST_COMPLETED);
-            }
-        }
-        webhookInProcess.remove(webhook.getName(), contentPath);
-    }
-
-    private boolean makeCall(ContentPath contentPath, ObjectNode body) {
-        Traces traces = ActiveTraces.getLocal();
-        traces.add("WebhookLeader.makeCall start");
-        RecurringTrace recurringTrace = new RecurringTrace("WebhookLeader.makeCall start");
-        traces.add(recurringTrace);
-        long start = System.currentTimeMillis();
-        boolean wasSuccessful = carrier.send(webhook, contentPath, body);
-        metricsService.time("webhook", start, "name:" + webhook.getName());
-        recurringTrace.update("WebhookLeader.makeCall completed");
-        return wasSuccessful;
     }
 
     void exit(boolean delete) {
