@@ -6,6 +6,7 @@ import com.flightstats.hub.channel.ZipBulkBuilder;
 import com.flightstats.hub.cluster.*;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
+import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.replication.S3Batch;
 import com.flightstats.hub.util.*;
@@ -19,6 +20,7 @@ import com.google.inject.name.Named;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import org.apache.curator.framework.CuratorFramework;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +54,8 @@ public class S3BatchWriter {
     private ChannelService channelService;
     @Inject
     private WebhookService webhookService;
+    @Inject
+    private MetricsService metricsService;
 
     @Inject
     @Named(ContentDao.BATCH_LONG_TERM)
@@ -107,7 +111,8 @@ public class S3BatchWriter {
             return;
         }
 
-        MinutePath lagTime = new MinutePath(TimeUtil.now().minusMinutes(lagMinutes));
+        DateTime start = TimeUtil.now();
+        MinutePath lagTime = new MinutePath(start.minusMinutes(lagMinutes));
         logger.info("{} starting at {}", channelName, lagTime);
         String webhookName = S3Batch.getGroupName(channelName);
         Optional<Webhook> webhook = webhookService.get(webhookName);
@@ -148,8 +153,10 @@ public class S3BatchWriter {
                 s3BatchContentDao.writeBatch(channelName, lastWritten, keys, bytes);
             }
             lastContentPath.updateIncrease(lastWritten, channelName, S3_BATCH_WRITER);
+            metricsService.time("s3batch.delta", lastWritten.getTime().getMillis(), "channelName:" + channelName);
             logger.debug("{} updated {} with {} keys", channelName, lastWritten, keys.size());
         }
+        metricsService.time("s3batch.processing", start.getMillis(), "channelName:" + channelName);
     }
 
     private class S3BatchWriterService extends AbstractScheduledService implements Lockable {
