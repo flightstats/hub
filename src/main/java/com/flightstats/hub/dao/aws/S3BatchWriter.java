@@ -142,10 +142,12 @@ public class S3BatchWriter {
                     .location(Location.CACHE_WRITE)
                     .build();
             SortedSet<ContentKey> keys = channelService.queryByTime(timeQuery);
-            byte[] bytes = ZipBulkBuilder.build(keys, channelName, channelService, false);
-            s3BatchContentDao.writeBatch(channelName, lastWritten, keys, bytes);
+            if (keys.size() > 0) {
+                byte[] bytes = ZipBulkBuilder.build(keys, channelName, channelService, false);
+                s3BatchContentDao.writeBatch(channelName, lastWritten, keys, bytes);
+            }
             lastContentPath.updateIncrease(lastWritten, channelName, S3_BATCH_WRITER);
-            logger.debug("{} updated {}", channelName, lastWritten);
+            logger.debug("{} updated {} with {} keys", channelName, lastWritten, keys.size());
         }
     }
 
