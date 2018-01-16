@@ -252,7 +252,7 @@ public class ChannelService {
         if (itemRequest.getKey().getTime().isBefore(limitTime)) {
             return Optional.absent();
         }
-        return contentService.get(itemRequest.getChannel(), itemRequest.getKey(), itemRequest.isRemoteOnly());
+        return contentService.get(itemRequest.getChannel(), itemRequest.getKey(), itemRequest.isRemoteOnly(), false);
     }
 
     public ChannelConfig getChannelConfig(String channelName, boolean allowChannelCache) {

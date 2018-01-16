@@ -31,15 +31,15 @@ public class ZipBulkBuilder {
 
     public static Response build(SortedSet<ContentKey> keys, String channel,
                                  ChannelService channelService, boolean descending, Consumer<Response.ResponseBuilder> headerBuilder) {
-        return write(getConsumer(keys, channel, channelService, descending, ActiveTraces.getLocal()), headerBuilder);
+        return write(getConsumer(keys, channel, channelService, descending, ActiveTraces.getLocal(), false), headerBuilder);
     }
 
-    public static byte[] build(SortedSet<ContentKey> keys, String channel, ChannelService channelService, boolean descending) {
-        return write(getConsumer(keys, channel, channelService, descending, ActiveTraces.getLocal()));
+    public static byte[] build(SortedSet<ContentKey> keys, String channel, ChannelService channelService, boolean descending, boolean skipLarge) {
+        return write(getConsumer(keys, channel, channelService, descending, ActiveTraces.getLocal(), skipLarge));
     }
 
     private static Consumer<ZipOutputStream> getConsumer(SortedSet<ContentKey> keys, String channel,
-                                                         ChannelService channelService, boolean descending, Traces traces) {
+                                                         ChannelService channelService, boolean descending, Traces traces, boolean skipLarge) {
         return (ZipOutputStream output) -> {
             ActiveTraces.setLocal(traces);
             channelService.get(StreamResults.builder()
@@ -47,6 +47,7 @@ public class ZipBulkBuilder {
                     .keys(keys)
                     .callback(content -> createZipEntry(output, content))
                     .descending(descending)
+                    .skipLarge(skipLarge)
                     .build()
             );
         };

@@ -125,7 +125,7 @@ public class ClusterContentService implements ContentService {
     }
 
     @Override
-    public Optional<Content> get(String channelName, ContentKey key, boolean remoteOnly) {
+    public Optional<Content> get(String channelName, ContentKey key, boolean remoteOnly, boolean skipLarge) {
         logger.trace("fetching {} from channel {} ", key.toString(), channelName);
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
         if (!remoteOnly && key.getTime().isAfter(getSpokeTtlTime(channelName))) {
@@ -152,7 +152,13 @@ public class ClusterContentService implements ContentService {
                 content = s3SingleContentDao.get(channelName, key);
             }
         }
-        return checkForLargeIndex(channelName, content);
+        if (content == null) {
+            return Optional.absent();
+        }
+        if (!skipLarge) {
+            return checkForLargeIndex(channelName, content);
+        }
+        return Optional.of(content);
     }
 
     private Content getFromS3BatchAndStoreInReadCache(String channelName, ContentKey key) {
@@ -212,22 +218,22 @@ public class ClusterContentService implements ContentService {
         for (MinutePath minutePath : minutePaths) {
             if (minutePath.getTime().isAfter(spokeTtlTime)
                     || channel.isSingle()) {
-                getValues(channelName, streamResults.getCallback(), minutePath, streamResults.isDescending());
+                getValues(channelName, streamResults.getCallback(), minutePath, streamResults.isDescending(), streamResults.isSkipLarge());
             } else {
                 if (!s3BatchContentDao.streamMinute(channelName, minutePath, streamResults.isDescending(), callback)) {
-                    getValues(channelName, callback, minutePath, streamResults.isDescending());
+                    getValues(channelName, callback, minutePath, streamResults.isDescending(), streamResults.isSkipLarge());
                 }
             }
         }
     }
 
-    private void getValues(String channelName, Consumer<Content> callback, ContentPathKeys contentPathKeys, boolean descending) {
+    private void getValues(String channelName, Consumer<Content> callback, ContentPathKeys contentPathKeys, boolean descending, boolean skipLarge) {
         List<ContentKey> keys = new ArrayList<>(contentPathKeys.getKeys());
         if (descending) {
             Collections.reverse(keys);
         }
         for (ContentKey contentKey : keys) {
-            Optional<Content> contentOptional = get(channelName, contentKey, false);
+            Optional<Content> contentOptional = get(channelName, contentKey, false, skipLarge);
             if (contentOptional.isPresent()) {
                 callback.accept(contentOptional.get());
             }
