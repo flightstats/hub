@@ -143,6 +143,7 @@ public class S3BatchWriter {
                     .build();
             SortedSet<ContentKey> keys = channelService.queryByTime(timeQuery);
             if (keys.size() > 0) {
+                logger.debug("updating {} lastWritten {} first {} last {}", channelName, lastWritten, keys.first(), keys.last());
                 byte[] bytes = ZipBulkBuilder.build(keys, channelName, channelService, false);
                 s3BatchContentDao.writeBatch(channelName, lastWritten, keys, bytes);
             }
