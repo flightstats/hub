@@ -86,7 +86,10 @@ describe(__filename, () => {
     });
 
     it('waits for the webhook to give up', (done) => {
-        setTimeout(done, 5 * 1000);
+        let timeoutMS = 5 * 1000;
+        utils.httpGetUntil(webhookResource, (response) => response.body.errors.filter(e => e.includes('max attempts reached')).length > 0, timeoutMS)
+            .catch(error => expect(error).toBeNull())
+            .finally(done);
     });
 
     it('verifies we received the item only once', () => {
@@ -104,7 +107,7 @@ describe(__filename, () => {
                 expect(response.body.errors.length).toEqual(2);
                 let contentKey = postedItems[0].replace(`${channelResource}/`, '');
                 expect(response.body.errors[0]).toContain(contentKey);
-                expect(response.body.errors[0]).toContain('returned a response status of 400 Bad Request');
+                expect(response.body.errors[0]).toContain('400 Bad Request');
                 expect(response.body.errors[1]).toContain(contentKey);
                 expect(response.body.errors[1]).toContain('max attempts reached (1)');
             })
