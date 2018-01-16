@@ -20,6 +20,8 @@ public class RegulatedExecutor {
     private RegulatedConfig config;
 
     private int currentThreads;
+    private int currentSleep = 0;
+
     private ExecutorService executor;
     private RegulatedExecutorState currentState;
 
@@ -36,6 +38,9 @@ public class RegulatedExecutor {
     }
 
     public void runAsync(Runnable runnable) {
+        if (currentSleep > 0) {
+            Sleeper.sleep(currentSleep);
+        }
         currentState.add(CompletableFuture.runAsync(runnable, executor));
     }
 
@@ -43,8 +48,9 @@ public class RegulatedExecutor {
         CompletableFuture.allOf(currentState.getArray()).join();
         currentState.end();
         double ratio = currentState.getRatio();
+        int items = currentState.futures.size();
         logger.info("{} ran {} items with {} threads.  ratio {}",
-                config.getName(), currentState.futures.size(), currentThreads, ratio);
+                config.getName(), items, currentThreads, ratio);
         int newThreads = Math.max(1, (int) Math.ceil(ratio * currentThreads));
         if (newThreads != currentThreads) {
             logger.info("changing pool from {} to {}", currentThreads, newThreads);
@@ -52,6 +58,14 @@ public class RegulatedExecutor {
             executor.shutdown();
             createExecutor();
             //todo - gfm - is there a way to resize executor w/o recreating?
+        }
+        if (newThreads == 1) {
+            double extraSleep = currentState.getDifference() / items;
+            currentSleep += extraSleep;
+            logger.info("adding {} for total sleep ", extraSleep, currentSleep);
+
+        } else {
+            currentSleep = 0;
         }
         currentState = new RegulatedExecutorState();
     }
@@ -82,10 +96,17 @@ public class RegulatedExecutor {
         }
 
         double getRatio() {
-            double goalMillis = (double) config.getTimeUnit().getDuration().getMillis() *
+            logger.info("gaol {} actual {}", getGoalMillis(), getExecutionTime());
+            return (double) getExecutionTime() / getGoalMillis();
+        }
+
+        private double getGoalMillis() {
+            return (double) config.getTimeUnit().getDuration().getMillis() *
                     config.getTimeValue() * config.getPercentUtilization() / 100;
-            logger.info("gaol {} actual {}", goalMillis, getExecutionTime());
-            return (double) getExecutionTime() / goalMillis;
+        }
+
+        double getDifference() {
+            return getGoalMillis() - getExecutionTime();
         }
 
     }
