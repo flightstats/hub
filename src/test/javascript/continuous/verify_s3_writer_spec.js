@@ -109,9 +109,10 @@ describe(testName, function () {
         console.log('endOffset', endOffset);
 
         channels.forEach(function (channel) {
+            channel.start.subtract(startOffset, 'minutes');
             for (var i = startOffset; i <= endOffset; i++) {
-                console.log('channel.start' + channel.href, channel.start.format(minute_format));
-                var start = channel.start.subtract(i, 'minutes');
+                console.log('channel.start ' + channel.href, channel.start.format(minute_format));
+                channel.start.subtract(1, 'minutes');
                 var formatted = start.format(minute_format);
                 if (channel.name.toLowerCase().startsWith('test')
                     || channel.name.startsWith('verifyMaxItems')
