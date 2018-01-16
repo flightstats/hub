@@ -51,7 +51,7 @@ public class RegulatedExecutor {
         int items = currentState.futures.size();
         logger.info("{} ran {} items with {} threads.  ratio {}",
                 config.getName(), items, currentThreads, ratio);
-        int newThreads = Math.max(1, (int) Math.ceil(ratio * currentThreads));
+        int newThreads = Math.min(50, Math.max(1, (int) Math.ceil(ratio * currentThreads)));
         if (newThreads != currentThreads) {
             logger.info("changing pool from {} to {}", currentThreads, newThreads);
             currentThreads = newThreads;
