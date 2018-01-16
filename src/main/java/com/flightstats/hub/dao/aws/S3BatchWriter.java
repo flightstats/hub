@@ -108,21 +108,22 @@ public class S3BatchWriter {
         }
 
         MinutePath lagTime = new MinutePath(TimeUtil.now().minusMinutes(lagMinutes));
+        logger.info("{} starting at {}", channelName, lagTime);
         String webhookName = S3Batch.getGroupName(channelName);
         Optional<Webhook> webhook = webhookService.get(webhookName);
 
         ContentPath lastWritten = lastContentPath.getOrNull(channelName, S3_BATCH_WRITER);
         if (lastWritten == null) {
-            logger.info("no last written");
+            logger.info("no last written {}", channelName);
             if (webhook.isPresent()) {
                 lastWritten = webhookService.getStatus(webhook.get()).getLastCompleted();
             } else {
                 lastWritten = lagTime;
             }
-            logger.info("initialize last written to {}", lastWritten);
+            logger.info("{} initialize last written to {}", lastWritten);
             lastContentPath.initialize(channelName, lastWritten, S3_BATCH_WRITER);
         } else {
-            logger.info("existing last written to {}", lastWritten);
+            logger.info("{} existing last written to {}", channelName, lastWritten);
         }
 
         lastContentPath.delete(channelName, LAST_BATCH_VERIFIED_OLD);
@@ -133,7 +134,7 @@ public class S3BatchWriter {
 
         while (lastWritten.getTime().isBefore(lagTime.getTime())) {
             lastWritten = new MinutePath(lastWritten.getTime().plusMinutes(1));
-            logger.debug("processing {}", lastWritten);
+            logger.debug("{} processing {}", channelName, lastWritten);
             TimeQuery timeQuery = TimeQuery.builder().channelName(channelName)
                     .startTime(lagTime.getTime())
                     .stable(true)
@@ -144,7 +145,7 @@ public class S3BatchWriter {
             byte[] bytes = ZipBulkBuilder.build(keys, channelName, channelService, false);
             s3BatchContentDao.writeBatch(channelName, lastWritten, keys, bytes);
             lastContentPath.updateIncrease(lastWritten, channelName, S3_BATCH_WRITER);
-            logger.debug("updated {}", lastWritten);
+            logger.debug("{} updated {}", channelName, lastWritten);
         }
     }
 
