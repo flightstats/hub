@@ -110,7 +110,7 @@ describe(testName, function () {
 
         channels.forEach(function (channel) {
             for (var i = startOffset; i <= endOffset; i++) {
-                console.log('channel.start', channel.start.format(minute_format));
+                console.log('channel.start' + channel.href, channel.start.format(minute_format));
                 var start = channel.start.subtract(i, 'minutes');
                 var formatted = start.format(minute_format);
                 if (channel.name.toLowerCase().startsWith('test')
