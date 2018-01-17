@@ -6,6 +6,7 @@ import com.flightstats.hub.metrics.DataDog;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.HubUtils;
+import com.google.common.annotations.VisibleForTesting;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
@@ -35,16 +36,25 @@ class WebhookRetryer {
 
     private List<Predicate<DeliveryAttempt>> giveUpIfs = new ArrayList<>();
     private List<Predicate<DeliveryAttempt>> tryLaterIfs = new ArrayList<>();
-    private WebhookError webhookError = HubProvider.getInstance(WebhookError.class);
 
+    private WebhookError webhookError;
     private Client httpClient;
 
     @Builder
     WebhookRetryer(@Singular List<Predicate<DeliveryAttempt>> giveUpIfs,
                    @Singular List<Predicate<DeliveryAttempt>> tryLaterIfs,
                    int timeoutSeconds) {
+        this(giveUpIfs, tryLaterIfs, timeoutSeconds, HubProvider.getInstance(WebhookError.class));
+    }
+
+    @VisibleForTesting
+    WebhookRetryer(List<Predicate<DeliveryAttempt>> giveUpIfs,
+                   List<Predicate<DeliveryAttempt>> tryLaterIfs,
+                   int timeoutSeconds,
+                   WebhookError webhookError) {
         this.giveUpIfs = giveUpIfs;
         this.tryLaterIfs = tryLaterIfs;
+        this.webhookError = webhookError;
         this.httpClient = RestClient.createClient(CONNECT_TIMEOUT_SECONDS, timeoutSeconds, true, false);
     }
 
@@ -116,31 +126,36 @@ class WebhookRetryer {
         return isGivingUpOnItem;
     }
 
-    private boolean shouldGiveUp(DeliveryAttempt attempt) {
+    @VisibleForTesting
+    boolean shouldGiveUp(DeliveryAttempt attempt) {
         long reasonsToStop = giveUpIfs.stream().filter(predicate -> predicate.test(attempt)).count();
         return reasonsToStop != 0;
     }
 
-    private boolean shouldTryLater(DeliveryAttempt attempt) {
+    @VisibleForTesting
+    boolean shouldTryLater(DeliveryAttempt attempt) {
         long reasonsToStop = tryLaterIfs.stream().filter(predicate -> predicate.test(attempt)).count();
         return reasonsToStop != 0;
     }
 
-    private String determineResult(DeliveryAttempt attempt) {
+    @VisibleForTesting
+    String determineResult(DeliveryAttempt attempt) {
         if (attempt.getException() == null) {
             return String.format("%s %s", attempt.getStatusCode(), Response.Status.fromStatusCode(attempt.getStatusCode()));
         } else {
-            return attempt.getException().getMessage();
+            return String.format("%s: %s", attempt.getException().getClass().getCanonicalName(), attempt.getException().getMessage());
         }
     }
 
-    private boolean isSuccessful(DeliveryAttempt attempt) {
+    @VisibleForTesting
+    boolean isSuccessful(DeliveryAttempt attempt) {
         boolean isSuccessResponse = attempt.getStatusCode() >= 200 && attempt.getStatusCode() < 300;
         boolean isRedirectResponse = attempt.getStatusCode() >= 300 && attempt.getStatusCode() < 400;
         return isSuccessResponse || isRedirectResponse;
     }
 
-    private long calculateSleepTimeMS(DeliveryAttempt attempt, long multiplier, long maximumSleepTimeMS) {
+    @VisibleForTesting
+    long calculateSleepTimeMS(DeliveryAttempt attempt, long multiplier, long maximumSleepTimeMS) {
         double result = Math.pow(2, attempt.getNumber());
         long exponentialSleepTimeMS = Math.round(multiplier * result);
         return exponentialSleepTimeMS < maximumSleepTimeMS ? exponentialSleepTimeMS : maximumSleepTimeMS;
