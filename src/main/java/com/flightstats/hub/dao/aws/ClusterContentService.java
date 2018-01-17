@@ -132,7 +132,7 @@ public class ClusterContentService implements ContentService {
             Content content = spokeWriteContentDao.get(channelName, key);
             if (content != null) {
                 logger.trace("returning from spoke {} {}", key.toString(), channelName);
-                return checkForLargeIndex(channelName, content);
+                return checkForLargeIndex(channelName, content, skipLarge);
             }
         }
         Content content;
@@ -152,13 +152,7 @@ public class ClusterContentService implements ContentService {
                 content = s3SingleContentDao.get(channelName, key);
             }
         }
-        if (content == null) {
-            return Optional.absent();
-        }
-        if (!skipLarge) {
-            return checkForLargeIndex(channelName, content);
-        }
-        return Optional.of(content);
+        return checkForLargeIndex(channelName, content, skipLarge);
     }
 
     private Content getFromS3BatchAndStoreInReadCache(String channelName, ContentKey key) {
@@ -186,11 +180,14 @@ public class ClusterContentService implements ContentService {
         }
     }
 
-    private Optional<Content> checkForLargeIndex(String channelName, Content content) {
+    private Optional<Content> checkForLargeIndex(String channelName, Content content, boolean skipLarge) {
         if (content == null) {
             return Optional.absent();
         }
         if (content.isIndexForLarge()) {
+            if (skipLarge) {
+                return Optional.of(content);
+            }
             ContentKey indexKey = content.getContentKey().get();
             Content largeMeta = fromIndex(content);
             content = s3LargePayloadContentDao.get(channelName, largeMeta.getContentKey().get());
