@@ -15,11 +15,13 @@ describe(__filename, () => {
     //
     // if one of the above assumptions is not true the entire spec is skipped
 
+    let shouldSkipRemainingTests = false;
+
     it(`has a channel named "${channelName}"`, (done) => {
         utils.httpGet(channelResource)
             .then(response => {
                 if (response.statusCode !== 200) {
-                    pending();
+                    shouldSkipRemainingTests = true;
                 }
             })
             .catch(error => expect(error).toBeNull())
@@ -29,6 +31,7 @@ describe(__filename, () => {
     let spokeTTLMinutes;
 
     it('gets the spokeTTLMinutes for the cluster', (done) => {
+        if (shouldSkipRemainingTests) pending();
         utils.httpGet(`${hubUrlBase}/internal/properties`)
             .then(response => {
                 expect(response.statusCode).toEqual(200);
@@ -42,6 +45,7 @@ describe(__filename, () => {
     let urisToChooseFrom;
 
     it('has data old enough to use', (done) => {
+        if (shouldSkipRemainingTests) pending();
         expect(spokeTTLMinutes).toBeDefined();
         let timeInThePast = moment().utc().subtract(spokeTTLMinutes + 1, 'minutes');
         let timePath = timeInThePast.format('YYYY/MM/DD/HH/mm');
@@ -49,7 +53,8 @@ describe(__filename, () => {
         utils.httpGet(url)
             .then(response => {
                 if (response.body._links.uris.length === 0) {
-                    pending('no data old enough');
+                    shouldSkipRemainingTests = true;
+                    console.log('no data old enough');
                 }
                 urisToChooseFrom = response.body._links.uris;
             })
@@ -61,6 +66,7 @@ describe(__filename, () => {
     let timeURL;
 
     it('tries to get data to use for verification', (done) => {
+        if (shouldSkipRemainingTests) pending();
         expect(urisToChooseFrom).toBeDefined();
         expect(Array.isArray(urisToChooseFrom)).toBeTruthy();
         expect(urisToChooseFrom.length).toBeGreaterThan(0);
@@ -97,7 +103,8 @@ describe(__filename, () => {
             .then(response => {
                 if (response === undefined) return;
                 if (response.body._links.uris.includes(itemURL)) {
-                    pending('giving up on finding usable data');
+                    shouldSkipRemainingTests = true;
+                    console.log('giving up on finding usable data');
                 } else {
                     console.log('itemURL:', itemURL);
                     console.log('timeURL:', timeURL);
@@ -108,6 +115,7 @@ describe(__filename, () => {
     });
 
     it('receives a list without our item from the write cache', (done) => {
+        if (shouldSkipRemainingTests) pending();
         expect(timeURL).toBeDefined();
         utils.httpGet(`${timeURL}?location=CACHE_WRITE`)
             .then(utils.followRedirectIfPresent)
@@ -121,6 +129,7 @@ describe(__filename, () => {
     });
 
     it('receives a list without our item from the read cache', (done) => {
+        if (shouldSkipRemainingTests) pending();
         expect(timeURL).toBeDefined();
         utils.httpGet(`${timeURL}?location=CACHE_READ`)
             .then(utils.followRedirectIfPresent)
@@ -136,6 +145,7 @@ describe(__filename, () => {
     let itemPayload;
 
     it('gets the item from default sources', (done) => {
+        if (shouldSkipRemainingTests) pending();
         expect(itemURL).toBeDefined();
         utils.httpGet(itemURL)
             .then(response => {
@@ -147,6 +157,7 @@ describe(__filename, () => {
     });
 
     it('receives a list without our item from the write cache still', (done) => {
+        if (shouldSkipRemainingTests) pending();
         expect(timeURL).toBeDefined();
         utils.httpGet(`${timeURL}?location=CACHE_WRITE`)
             .then(utils.followRedirectIfPresent)
@@ -160,6 +171,7 @@ describe(__filename, () => {
     });
 
     it('receives a list with our item from the read cache', (done) => {
+        if (shouldSkipRemainingTests) pending();
         expect(timeURL).toBeDefined();
         utils.httpGet(`${timeURL}?location=CACHE_READ`)
             .then(utils.followRedirectIfPresent)
@@ -173,6 +185,7 @@ describe(__filename, () => {
     });
 
     it('verifies the item from read cache matches the item from S3', (done) => {
+        if (shouldSkipRemainingTests) pending();
         expect(itemPayload).toBeDefined();
         utils.httpGet(itemURL)
             .then(response => {
