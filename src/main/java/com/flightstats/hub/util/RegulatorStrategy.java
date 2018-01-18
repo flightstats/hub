@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
-public class RegulatorStrategy {
+class RegulatorStrategy {
 
     private static final Logger logger = LoggerFactory.getLogger(RegulatorStrategy.class);
 
@@ -16,14 +16,14 @@ public class RegulatorStrategy {
         if (state.getThreads() == 1) {
             if (state.getRatio() >= 1) {
                 long sleepTime = state.getSize() * state.getSleep();
-                long runTime = state.getExecutionTime() - sleepTime;
+                long runTime = state.getEnd() - state.getStart() - sleepTime;
                 if (runTime > state.getGoalMillis()) {
                     setThreads(state, builder, (double) runTime / state.getGoalMillis());
                 } else {
                     builder.sleepTime((state.getGoalMillis() - runTime) / state.getSize());
                 }
             } else {
-                long difference = state.getGoalMillis() - state.getExecutionTime();
+                long difference = state.getGoalMillis() - (state.getEnd() - state.getStart());
                 long additionalSleep = difference / state.getSize();
                 builder.sleepTime(state.getSleep() + additionalSleep);
             }

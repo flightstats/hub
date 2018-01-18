@@ -1,5 +1,6 @@
 package com.flightstats.hub.util;
 
+import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +13,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
 @Setter
+@Getter
 class ExecutorState {
 
     private static final Logger logger = LoggerFactory.getLogger(ExecutorState.class);
@@ -60,40 +62,18 @@ class ExecutorState {
         };
     }
 
-    long getExecutionTime() {
-        return end - start;
-    }
-
     private CompletableFuture[] getArray() {
         return futures.toArray(new CompletableFuture[futures.size()]);
     }
 
     double getRatio() {
-        logger.info("goal {} actual {}", goalMillis, getExecutionTime());
-        return (double) getExecutionTime() / goalMillis;
+        long executionTime = end - start;
+        logger.info("goal {} actual {}", goalMillis, executionTime);
+        return (double) executionTime / goalMillis;
     }
 
     int getSize() {
         return results.size();
     }
 
-    public int getThreads() {
-        return threads;
-    }
-
-    public long getSleep() {
-        return sleep;
-    }
-
-    long getGoalMillis() {
-        return goalMillis;
-    }
-
-    public long getEnd() {
-        return end;
-    }
-
-    public Map<String, Long> getResults() {
-        return results;
-    }
 }
