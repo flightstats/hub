@@ -218,9 +218,9 @@ class WebhookLeader implements Lockable {
             try {
                 metricsService.time("webhook.delta", contentPath.getTime().getMillis(), "name:" + webhook.getName());
                 long start = System.currentTimeMillis();
-                boolean done = retryer.send(webhook, contentPath, webhookStrategy.createResponse(contentPath));
+                boolean shouldGoToNextItem = retryer.send(webhook, contentPath, webhookStrategy.createResponse(contentPath));
                 metricsService.time("webhook", start, "name:" + webhook.getName());
-                if (done) {
+                if (shouldGoToNextItem) {
                     if (increaseLastUpdated(contentPath)) {
                         if (!deleteOnExit.get()) {
                             lastContentPath.updateIncrease(contentPath, webhook.getName(), WEBHOOK_LAST_COMPLETED);
