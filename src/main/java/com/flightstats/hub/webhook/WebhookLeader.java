@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicReference;
 class WebhookLeader implements Lockable {
     private final static Logger logger = LoggerFactory.getLogger(WebhookLeader.class);
     static final String WEBHOOK_LAST_COMPLETED = "/GroupLastCompleted/";
-    public final static String LEADER_PATH = "/WebhookLeader";
+    public static final String LEADER_PATH = "/WebhookLeader";
 
     private final AtomicBoolean deleteOnExit = new AtomicBoolean();
 
