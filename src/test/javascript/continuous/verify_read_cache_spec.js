@@ -43,10 +43,14 @@ describe(__filename, () => {
 
     it('has data old enough to use', (done) => {
         expect(spokeTTLMinutes).toBeDefined();
-        let timeInThePast = moment().utc().subtract(spokeTTLMinutes + 1, 'minutes');
+        const utc = moment().utc();
+        console.log('utc:', utc);
+        let timeInThePast = utc.subtract(spokeTTLMinutes + 1, 'minutes');
         console.log('timeInThePast:', timeInThePast);
+        console.log('spokeTTLMinutes:', spokeTTLMinutes);
         let timePath = timeInThePast.format('YYYY/MM/DD/HH/mm');
         let url = `${channelResource}/${timePath}`;
+        console.log('timePath:', timePath);
         utils.httpGet(url)
             .then(response => {
                 if (response.body._links.uris.length === 0) {
