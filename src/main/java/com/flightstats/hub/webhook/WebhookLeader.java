@@ -22,11 +22,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 class WebhookLeader implements Lockable {
-
-    final static String WEBHOOK_LAST_COMPLETED = "/GroupLastCompleted/";
-
     private final static Logger logger = LoggerFactory.getLogger(WebhookLeader.class);
-    private final static String LEADER_PATH = "/WebhookLeader";
+    static final String WEBHOOK_LAST_COMPLETED = "/GroupLastCompleted/";
+    public final static String LEADER_PATH = "/WebhookLeader";
 
     private final AtomicBoolean deleteOnExit = new AtomicBoolean();
 
