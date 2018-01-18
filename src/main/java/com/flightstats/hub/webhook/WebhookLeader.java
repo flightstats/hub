@@ -50,7 +50,7 @@ class WebhookLeader implements Lockable {
     private ExecutorService executorService;
     private Semaphore semaphore;
     private Leadership leadership;
-    private WebhookRetryer carrier;
+    private WebhookRetryer retryer;
 
     private WebhookStrategy webhookStrategy;
     private AtomicReference<ContentPath> lastUpdated = new AtomicReference<>();
@@ -91,7 +91,7 @@ class WebhookLeader implements Lockable {
         logger.info("taking leadership {} {}", webhook, leadership.hasLeadership());
         executorService = Executors.newCachedThreadPool();
         semaphore = new Semaphore(webhook.getParallelCalls());
-        carrier = WebhookRetryer.builder()
+        retryer = WebhookRetryer.builder()
                 .readTimeoutSeconds(webhook.getCallbackTimeoutSeconds())
                 .tryLaterIf(this::doesNotHaveLeadership)
                 .tryLaterIf(this::webhookIsPaused)
@@ -218,7 +218,7 @@ class WebhookLeader implements Lockable {
             try {
                 metricsService.time("webhook.delta", contentPath.getTime().getMillis(), "name:" + webhook.getName());
                 long start = System.currentTimeMillis();
-                boolean done = carrier.send(webhook, contentPath, webhookStrategy.createResponse(contentPath));
+                boolean done = retryer.send(webhook, contentPath, webhookStrategy.createResponse(contentPath));
                 metricsService.time("webhook", start, "name:" + webhook.getName());
                 if (done) {
                     if (increaseLastUpdated(contentPath)) {
