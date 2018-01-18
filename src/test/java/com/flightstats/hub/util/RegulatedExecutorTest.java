@@ -55,7 +55,7 @@ public class RegulatedExecutorTest {
             executor.runAsync("" + i, () -> Sleeper.sleep(10));
         }
         executor.join();
-        assertTrue(executor.getCurrentThreads() <= 2);
+        assertTrue(executor.getCurrentThreads() <= 3);
         assertTrue(executor.getCurrentThreads() >= 1);
     }
 
