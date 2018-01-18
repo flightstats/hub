@@ -94,7 +94,7 @@ class WebhookLeader implements Lockable {
         executorService = Executors.newCachedThreadPool();
         semaphore = new Semaphore(webhook.getParallelCalls());
         carrier = WebhookRetryer.builder()
-                .timeoutSeconds(webhook.getCallbackTimeoutSeconds())
+                .readTimeoutSeconds(webhook.getCallbackTimeoutSeconds())
                 .tryLaterIf(this::doesNotHaveLeadership)
                 .tryLaterIf(this::webhookIsPaused)
                 .giveUpIf(this::webhookTTLExceeded)
