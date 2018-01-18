@@ -58,7 +58,6 @@ public class RegulatedExecutor {
             currentThreads = newThreads;
             executor.shutdown();
             createExecutor();
-            //todo - gfm - is there a way to resize executor w/o recreating?
         }
         currentSleep = results.getSleepTime();
         createCurrentState();
