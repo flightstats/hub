@@ -72,7 +72,7 @@ class WebhookRetryer {
         traces.add(recurringTrace);
 
         int attemptNumber = 0;
-        boolean isGivingUpOnItem = false;
+        boolean isDoneWithItem = false;
         boolean isRetrying = true;
         while (isRetrying) {
 
@@ -90,7 +90,7 @@ class WebhookRetryer {
             if (shouldGiveUp || shouldTryLater) {
                 logger.debug("{} {} stopping delivery before attempt #{}", attempt.getWebhook().getName(), attempt.getContentPath().toUrl(), attempt.getNumber());
                 isRetrying = false;
-                isGivingUpOnItem = shouldGiveUp;
+                isDoneWithItem = shouldGiveUp;
                 continue;
             }
 
@@ -114,7 +114,7 @@ class WebhookRetryer {
 
             if (isSuccessful(attempt)) {
                 isRetrying = false;
-                isGivingUpOnItem = true;
+                isDoneWithItem = true;
                 continue;
             } else {
                 webhookError.add(attempt.getWebhook().getName(), new DateTime() + " " + attempt.getContentPath() + " " + requestResult);
@@ -137,19 +137,19 @@ class WebhookRetryer {
         }
 
         recurringTrace.update("WebhookRetryer.send completed");
-        return isGivingUpOnItem;
+        return isDoneWithItem;
     }
 
     @VisibleForTesting
     boolean shouldGiveUp(DeliveryAttempt attempt) {
-        long reasonsToStop = giveUpIfs.stream().filter(predicate -> predicate.test(attempt)).count();
-        return reasonsToStop != 0;
+        long reasonsToGiveUp = giveUpIfs.stream().filter(predicate -> predicate.test(attempt)).count();
+        return reasonsToGiveUp != 0;
     }
 
     @VisibleForTesting
     boolean shouldTryLater(DeliveryAttempt attempt) {
-        long reasonsToStop = tryLaterIfs.stream().filter(predicate -> predicate.test(attempt)).count();
-        return reasonsToStop != 0;
+        long reasonsToTryLater = tryLaterIfs.stream().filter(predicate -> predicate.test(attempt)).count();
+        return reasonsToTryLater != 0;
     }
 
     @VisibleForTesting
