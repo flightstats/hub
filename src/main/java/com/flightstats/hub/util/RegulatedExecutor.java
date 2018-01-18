@@ -4,9 +4,6 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -20,16 +17,22 @@ public class RegulatedExecutor {
     private RegulatedConfig config;
 
     private int currentThreads;
-    private int currentSleep = 0;
+    private long currentSleep = 0;
 
     private ExecutorService executor;
-    private RegulatedExecutorState currentState;
+    private ExecutorState currentState;
+    private RegulatorResults results;
 
     public RegulatedExecutor(RegulatedConfig config) {
         this.config = config;
         currentThreads = config.getStartThreads();
+        results = RegulatorResults.builder().threads(currentThreads).sleepTime(currentSleep).build();
         createExecutor();
-        currentState = new RegulatedExecutorState();
+        createCurrentState();
+    }
+
+    private void createCurrentState() {
+        currentState = new ExecutorState(getGoalMillis(), currentThreads, currentSleep);
     }
 
     private void createExecutor() {
@@ -37,21 +40,19 @@ public class RegulatedExecutor {
                 .setNameFormat("S3BatchWriterChannel-%d").build());
     }
 
-    public void runAsync(Runnable runnable) {
+    public void runAsync(String name, Runnable runnable) {
         if (currentSleep > 0) {
             Sleeper.sleep(currentSleep);
         }
-        currentState.add(CompletableFuture.runAsync(runnable, executor));
+        currentState.runAsync(name, runnable, results.isSlowChannel(name), executor);
     }
 
     public void join() {
-        CompletableFuture.allOf(currentState.getArray()).join();
-        currentState.end();
-        double ratio = currentState.getRatio();
-        int items = currentState.futures.size();
-        logger.info("{} ran {} items with {} threads.  ratio {}",
-                config.getName(), items, currentThreads, ratio);
-        int newThreads = Math.min(50, Math.max(1, (int) Math.ceil(ratio * currentThreads)));
+
+        currentState.join();
+
+        results = RegulatorStrategy.calculate(currentState);
+        int newThreads = results.getThreads();
         if (newThreads != currentThreads) {
             logger.info("changing pool from {} to {}", currentThreads, newThreads);
             currentThreads = newThreads;
@@ -59,59 +60,16 @@ public class RegulatedExecutor {
             createExecutor();
             //todo - gfm - is there a way to resize executor w/o recreating?
         }
-        if (newThreads == 1) {
-            double extraSleep = currentState.getDifference() / items;
-            currentSleep += extraSleep;
-            logger.info("adding {} for total sleep ", extraSleep, currentSleep);
-
-        } else {
-            currentSleep = 0;
-        }
-        currentState = new RegulatedExecutorState();
-    }
-
-    class RegulatedExecutorState {
-
-        List<CompletableFuture> futures = new ArrayList<>();
-        long start;
-        long end;
-
-        void end() {
-            end = System.currentTimeMillis();
-        }
-
-        long getExecutionTime() {
-            return end - start;
-        }
-
-        void add(CompletableFuture future) {
-            if (start == 0) {
-                start = System.currentTimeMillis();
-            }
-            futures.add(future);
-        }
-
-        CompletableFuture[] getArray() {
-            return futures.toArray(new CompletableFuture[futures.size()]);
-        }
-
-        double getRatio() {
-            logger.info("gaol {} actual {}", getGoalMillis(), getExecutionTime());
-            return (double) getExecutionTime() / getGoalMillis();
-        }
-
-        private double getGoalMillis() {
-            return (double) config.getTimeUnit().getDuration().getMillis() *
-                    config.getTimeValue() * config.getPercentUtilization() / 100;
-        }
-
-        double getDifference() {
-            return getGoalMillis() - getExecutionTime();
-        }
-
+        currentSleep = results.getSleepTime();
+        createCurrentState();
     }
 
     public int getCurrentThreads() {
         return currentThreads;
+    }
+
+    private long getGoalMillis() {
+        return (long) ((double) config.getTimeUnit().getDuration().getMillis() *
+                config.getTimeValue() * config.getPercentUtilization() / 100);
     }
 }

@@ -16,7 +16,7 @@ public class RegulatedExecutorTest {
                 .timeValue(100)
                 .build();
         RegulatedExecutor executor = new RegulatedExecutor(config);
-        executor.runAsync(() -> Sleeper.sleep(50));
+        executor.runAsync("zero", () -> Sleeper.sleep(50));
         executor.join();
         assertTrue(executor.getCurrentThreads() <= 2);
         assertTrue(executor.getCurrentThreads() >= 1);
@@ -33,7 +33,7 @@ public class RegulatedExecutorTest {
                 .build();
         RegulatedExecutor executor = new RegulatedExecutor(config);
         for (int i = 0; i < 5; i++) {
-            executor.runAsync(() -> Sleeper.sleep(50));
+            executor.runAsync("" + i, () -> Sleeper.sleep(50));
         }
         executor.join();
         assertTrue(executor.getCurrentThreads() <= 6);
@@ -52,7 +52,7 @@ public class RegulatedExecutorTest {
         RegulatedExecutor executor = new RegulatedExecutor(config);
 
         for (int i = 0; i < 5; i++) {
-            executor.runAsync(() -> Sleeper.sleep(10));
+            executor.runAsync("" + i, () -> Sleeper.sleep(10));
         }
         executor.join();
         assertTrue(executor.getCurrentThreads() <= 2);
@@ -71,14 +71,12 @@ public class RegulatedExecutorTest {
         RegulatedExecutor executor = new RegulatedExecutor(config);
 
         for (int i = 0; i < 5; i++) {
-            executor.runAsync(() -> Sleeper.sleep(20));
+            executor.runAsync("" + i, () -> Sleeper.sleep(20));
         }
         executor.join();
         assertTrue(executor.getCurrentThreads() <= 4);
         assertTrue(executor.getCurrentThreads() >= 2);
     }
-
-    //todo - gfm - -1] com.flightstats.hub.util.RegulatedExecutor - gaol 54000.0 actual 13027
 
     @Test
     public void testZeroPool() {
@@ -91,7 +89,7 @@ public class RegulatedExecutorTest {
                 .build();
         RegulatedExecutor executor = new RegulatedExecutor(config);
 
-        executor.runAsync(() -> Sleeper.sleep(10));
+        executor.runAsync("zero", () -> Sleeper.sleep(10));
         executor.join();
         assertTrue(executor.getCurrentThreads() <= 2);
         assertTrue(executor.getCurrentThreads() >= 1);

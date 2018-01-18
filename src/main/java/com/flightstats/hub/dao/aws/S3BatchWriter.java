@@ -82,7 +82,7 @@ public class S3BatchWriter {
             Iterable<ChannelConfig> channels = channelService.getChannels();
             for (ChannelConfig channel : channels) {
                 if (channel.isBatch() || channel.isBoth()) {
-                    regulatedExecutor.runAsync(() -> {
+                    regulatedExecutor.runAsync(channel.getName(), () -> {
                         String name = Thread.currentThread().getName();
                         Thread.currentThread().setName(name + "|" + channel.getDisplayName());
                         String url = HubProperties.getAppUrl() + "internal/s3BatchWriter/" + channel.getDisplayName();
