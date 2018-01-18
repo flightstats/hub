@@ -165,7 +165,7 @@ class WebhookRetryer {
     long calculateSleepTimeMS(DeliveryAttempt attempt, long multiplier, long maximumSleepTimeMS) {
         double result = Math.pow(2, attempt.getNumber());
         long exponentialSleepTimeMS = Math.round(multiplier * result);
-        return exponentialSleepTimeMS < maximumSleepTimeMS ? exponentialSleepTimeMS : maximumSleepTimeMS;
+        return Math.min(exponentialSleepTimeMS, maximumSleepTimeMS);
     }
 
 }
