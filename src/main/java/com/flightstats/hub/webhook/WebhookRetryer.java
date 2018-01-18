@@ -2,8 +2,11 @@ package com.flightstats.hub.webhook;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProvider;
+import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.DataDog;
+import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.ContentPath;
+import com.flightstats.hub.model.RecurringTrace;
 import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.HubUtils;
 import com.google.common.annotations.VisibleForTesting;
@@ -59,6 +62,11 @@ class WebhookRetryer {
     }
 
     boolean send(Webhook webhook, ContentPath contentPath, ObjectNode body) {
+        Traces traces = ActiveTraces.getLocal();
+        traces.add("WebhookRetryer.send start");
+        RecurringTrace recurringTrace = new RecurringTrace("WebhookRetryer.send start");
+        traces.add(recurringTrace);
+
         int attemptNumber = 0;
         boolean isGivingUpOnItem = false;
         boolean isRetrying = true;
@@ -98,6 +106,7 @@ class WebhookRetryer {
 
             String requestResult = determineResult(attempt);
             logger.debug("{} {} to {} response {}", attempt.getWebhook().getName(), attempt.getContentPath().toUrl(), attempt.getWebhook().getCallbackUrl(), requestResult);
+            recurringTrace.update("WebhookLeader.send", "attempt " + attempt.getNumber(), ": " + requestResult);
 
             if (isSuccessful(attempt)) {
                 isRetrying = false;
@@ -123,6 +132,7 @@ class WebhookRetryer {
             }
         }
 
+        recurringTrace.update("WebhookRetryer.send completed");
         return isGivingUpOnItem;
     }
 

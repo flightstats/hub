@@ -219,14 +219,9 @@ class WebhookLeader implements Lockable {
             webhookInProcess.add(webhook.getName(), contentPath);
             try {
                 metricsService.time("webhook.delta", contentPath.getTime().getMillis(), "name:" + webhook.getName());
-//                Traces traces = ActiveTraces.getLocal();
-//                traces.add("WebhookLeader.makeCall start");
-//                RecurringTrace recurringTrace = new RecurringTrace("WebhookLeader.makeCall start");
-//                traces.add(recurringTrace);
                 long start = System.currentTimeMillis();
                 boolean done = carrier.send(webhook, contentPath, webhookStrategy.createResponse(contentPath));
                 metricsService.time("webhook", start, "name:" + webhook.getName());
-//                recurringTrace.update("WebhookLeader.makeCall completed");
                 if (done) {
                     if (increaseLastUpdated(contentPath)) {
                         if (!deleteOnExit.get()) {
@@ -235,7 +230,7 @@ class WebhookLeader implements Lockable {
                     }
                 }
                 webhookInProcess.remove(webhook.getName(), contentPath);
-//                logger.trace("completed {} call to {} ", contentPath, webhook.getName());
+                logger.trace("done sending {} to {} ", contentPath, webhook.getName());
             } catch (Exception e) {
                 logger.warn("exception sending " + contentPath + " to " + webhook.getName(), e);
             } finally {
