@@ -112,7 +112,7 @@ class WebhookRetryer {
             logger.debug("{} {} to {} response {}", attempt.getWebhook().getName(), attempt.getContentPath().toUrl(), attempt.getWebhook().getCallbackUrl(), requestResult);
             recurringTrace.update("WebhookLeader.send", "attempt " + attempt.getNumber(), ": " + requestResult);
 
-            if (isSuccessful(attempt)) {
+            if (attempt.getStatusCode() < 400) {
                 isRetrying = false;
                 isDoneWithItem = true;
                 continue;
@@ -159,13 +159,6 @@ class WebhookRetryer {
         } else {
             return String.format("%s: %s", attempt.getException().getClass().getCanonicalName(), attempt.getException().getMessage());
         }
-    }
-
-    @VisibleForTesting
-    boolean isSuccessful(DeliveryAttempt attempt) {
-        boolean isSuccessResponse = attempt.getStatusCode() >= 200 && attempt.getStatusCode() < 300;
-        boolean isRedirectResponse = attempt.getStatusCode() >= 300 && attempt.getStatusCode() < 400;
-        return isSuccessResponse || isRedirectResponse;
     }
 
     @VisibleForTesting

@@ -46,14 +46,6 @@ public class WebhookRetryerTest {
     }
 
     @Test
-    public void testIsSuccessful() {
-        WebhookRetryer retryer = new WebhookRetryer(giveUpIfs, tryLaterIfs, connectTimeoutSeconds, readTimeoutSeconds, webhookError);
-        assertTrue(retryer.isSuccessful(DeliveryAttempt.builder().statusCode(200).build()));
-        assertTrue(retryer.isSuccessful(DeliveryAttempt.builder().statusCode(201).build()));
-        assertTrue(retryer.isSuccessful(DeliveryAttempt.builder().statusCode(303).build()));
-    }
-
-    @Test
     public void calculateSleepTimeMS() {
         WebhookRetryer retryer = new WebhookRetryer(giveUpIfs, tryLaterIfs, connectTimeoutSeconds, readTimeoutSeconds, webhookError);
         assertEquals(2000, retryer.calculateSleepTimeMS(DeliveryAttempt.builder().number(1).build(), 1000, 10000));
