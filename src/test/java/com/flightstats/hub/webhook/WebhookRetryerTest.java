@@ -12,63 +12,42 @@ import static org.mockito.Mockito.mock;
 
 public class WebhookRetryerTest {
 
+    private List<Predicate<DeliveryAttempt>> giveUpIfs = new ArrayList<>();
+    private List<Predicate<DeliveryAttempt>> tryLaterIfs = new ArrayList<>();
+    private int connectTimeoutSeconds = 10;
+    private int readTimeoutSeconds = 10;
+    private WebhookError webhookError = mock(WebhookError.class);
+
     @Test
     public void testShouldGiveUpIf() {
-        List<Predicate<DeliveryAttempt>> giveUpIfs = new ArrayList<>();
         giveUpIfs.add(attempt -> true);
-        List<Predicate<DeliveryAttempt>> tryLaterIfs = new ArrayList<>();
-        int timeoutSeconds = 10;
-        WebhookError webhookError = mock(WebhookError.class);
-        WebhookRetryer retryer = new WebhookRetryer(giveUpIfs, tryLaterIfs, timeoutSeconds, webhookError);
-        DeliveryAttempt attempt = DeliveryAttempt.builder().build();
-
-        assertTrue(retryer.shouldGiveUp(attempt));
+        WebhookRetryer retryer = new WebhookRetryer(giveUpIfs, tryLaterIfs, connectTimeoutSeconds, readTimeoutSeconds, webhookError);
+        assertTrue(retryer.shouldGiveUp(DeliveryAttempt.builder().build()));
     }
 
     @Test
     public void testShouldTryLaterIf() {
-        List<Predicate<DeliveryAttempt>> giveUpIfs = new ArrayList<>();
-        List<Predicate<DeliveryAttempt>> tryLaterIfs = new ArrayList<>();
         tryLaterIfs.add(attempt -> true);
-        int timeoutSeconds = 10;
-        WebhookError webhookError = mock(WebhookError.class);
-        WebhookRetryer retryer = new WebhookRetryer(giveUpIfs, tryLaterIfs, timeoutSeconds, webhookError);
-        DeliveryAttempt attempt = DeliveryAttempt.builder().build();
-
-        assertTrue(retryer.shouldTryLater(attempt));
+        WebhookRetryer retryer = new WebhookRetryer(giveUpIfs, tryLaterIfs, connectTimeoutSeconds, readTimeoutSeconds, webhookError);
+        assertTrue(retryer.shouldTryLater(DeliveryAttempt.builder().build()));
     }
 
     @Test
     public void testDetermineResultFromStatusCode() {
-        List<Predicate<DeliveryAttempt>> giveUpIfs = new ArrayList<>();
-        List<Predicate<DeliveryAttempt>> tryLaterIfs = new ArrayList<>();
-        int timeoutSeconds = 10;
-        WebhookError webhookError = mock(WebhookError.class);
-        WebhookRetryer retryer = new WebhookRetryer(giveUpIfs, tryLaterIfs, timeoutSeconds, webhookError);
-
+        WebhookRetryer retryer = new WebhookRetryer(giveUpIfs, tryLaterIfs, connectTimeoutSeconds, readTimeoutSeconds, webhookError);
         assertEquals("200 OK", retryer.determineResult(DeliveryAttempt.builder().statusCode(200).build()));
         assertEquals("400 Bad Request", retryer.determineResult(DeliveryAttempt.builder().statusCode(400).build()));
     }
 
     @Test
     public void testDetermineResultFromException() {
-        List<Predicate<DeliveryAttempt>> giveUpIfs = new ArrayList<>();
-        List<Predicate<DeliveryAttempt>> tryLaterIfs = new ArrayList<>();
-        int timeoutSeconds = 10;
-        WebhookError webhookError = mock(WebhookError.class);
-        WebhookRetryer retryer = new WebhookRetryer(giveUpIfs, tryLaterIfs, timeoutSeconds, webhookError);
-
+        WebhookRetryer retryer = new WebhookRetryer(giveUpIfs, tryLaterIfs, connectTimeoutSeconds, readTimeoutSeconds, webhookError);
         assertEquals("java.lang.NullPointerException: something", retryer.determineResult(DeliveryAttempt.builder().exception(new NullPointerException("something")).build()));
     }
 
     @Test
     public void testIsSuccessful() {
-        List<Predicate<DeliveryAttempt>> giveUpIfs = new ArrayList<>();
-        List<Predicate<DeliveryAttempt>> tryLaterIfs = new ArrayList<>();
-        int timeoutSeconds = 10;
-        WebhookError webhookError = mock(WebhookError.class);
-        WebhookRetryer retryer = new WebhookRetryer(giveUpIfs, tryLaterIfs, timeoutSeconds, webhookError);
-
+        WebhookRetryer retryer = new WebhookRetryer(giveUpIfs, tryLaterIfs, connectTimeoutSeconds, readTimeoutSeconds, webhookError);
         assertTrue(retryer.isSuccessful(DeliveryAttempt.builder().statusCode(200).build()));
         assertTrue(retryer.isSuccessful(DeliveryAttempt.builder().statusCode(201).build()));
         assertTrue(retryer.isSuccessful(DeliveryAttempt.builder().statusCode(303).build()));
@@ -76,12 +55,7 @@ public class WebhookRetryerTest {
 
     @Test
     public void calculateSleepTimeMS() {
-        List<Predicate<DeliveryAttempt>> giveUpIfs = new ArrayList<>();
-        List<Predicate<DeliveryAttempt>> tryLaterIfs = new ArrayList<>();
-        int timeoutSeconds = 10;
-        WebhookError webhookError = mock(WebhookError.class);
-        WebhookRetryer retryer = new WebhookRetryer(giveUpIfs, tryLaterIfs, timeoutSeconds, webhookError);
-
+        WebhookRetryer retryer = new WebhookRetryer(giveUpIfs, tryLaterIfs, connectTimeoutSeconds, readTimeoutSeconds, webhookError);
         assertEquals(2000, retryer.calculateSleepTimeMS(DeliveryAttempt.builder().number(1).build(), 1000, 10000));
         assertEquals(4000, retryer.calculateSleepTimeMS(DeliveryAttempt.builder().number(2).build(), 1000, 10000));
         assertEquals(8000, retryer.calculateSleepTimeMS(DeliveryAttempt.builder().number(3).build(), 1000, 10000));
