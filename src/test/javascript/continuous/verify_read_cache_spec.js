@@ -35,7 +35,7 @@ describe(__filename, () => {
         utils.httpGet(`${hubUrlBase}/internal/properties`)
             .then(response => {
                 expect(response.statusCode).toEqual(200);
-                spokeTTLMinutes = response.body.properties['spoke.write.ttlMinutes'];
+                spokeTTLMinutes = parseInt(response.body.properties['spoke.write.ttlMinutes'], 10);
                 console.log('spokeTTLMinutes:', spokeTTLMinutes);
             })
             .catch(error => expect(error).toBeNull())

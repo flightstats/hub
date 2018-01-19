@@ -13,7 +13,7 @@ public interface ContentService {
 
     boolean historicalInsert(String channelName, Content content) throws Exception;
 
-    Optional<Content> get(String channelName, ContentKey key, boolean cached);
+    Optional<Content> get(String channelName, ContentKey key, boolean cached, boolean skipLarge);
 
     void get(StreamResults streamResults);
 
