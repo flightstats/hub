@@ -14,7 +14,7 @@ class DeliveryAttempt {
     ContentPath contentPath;
     String payload;
     @Setter
-    int statusCode;
+    Integer statusCode;
     @Setter
     Exception exception;
 }
