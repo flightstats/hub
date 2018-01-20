@@ -125,14 +125,14 @@ public class ClusterContentService implements ContentService {
     }
 
     @Override
-    public Optional<Content> get(String channelName, ContentKey key, boolean remoteOnly) {
+    public Optional<Content> get(String channelName, ContentKey key, boolean remoteOnly, boolean skipLarge) {
         logger.trace("fetching {} from channel {} ", key.toString(), channelName);
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
         if (!remoteOnly && key.getTime().isAfter(getSpokeTtlTime(channelName))) {
             Content content = spokeWriteContentDao.get(channelName, key);
             if (content != null) {
                 logger.trace("returning from spoke {} {}", key.toString(), channelName);
-                return checkForLargeIndex(channelName, content);
+                return checkForLargeIndex(channelName, content, skipLarge);
             }
         }
         Content content;
@@ -152,7 +152,7 @@ public class ClusterContentService implements ContentService {
                 content = s3SingleContentDao.get(channelName, key);
             }
         }
-        return checkForLargeIndex(channelName, content);
+        return checkForLargeIndex(channelName, content, skipLarge);
     }
 
     private Content getFromS3BatchAndStoreInReadCache(String channelName, ContentKey key) {
@@ -180,11 +180,14 @@ public class ClusterContentService implements ContentService {
         }
     }
 
-    private Optional<Content> checkForLargeIndex(String channelName, Content content) {
+    private Optional<Content> checkForLargeIndex(String channelName, Content content, boolean skipLarge) {
         if (content == null) {
             return Optional.absent();
         }
         if (content.isIndexForLarge()) {
+            if (skipLarge) {
+                return Optional.of(content);
+            }
             ContentKey indexKey = content.getContentKey().get();
             Content largeMeta = fromIndex(content);
             content = s3LargePayloadContentDao.get(channelName, largeMeta.getContentKey().get());
@@ -212,22 +215,22 @@ public class ClusterContentService implements ContentService {
         for (MinutePath minutePath : minutePaths) {
             if (minutePath.getTime().isAfter(spokeTtlTime)
                     || channel.isSingle()) {
-                getValues(channelName, streamResults.getCallback(), minutePath, streamResults.isDescending());
+                getValues(channelName, streamResults.getCallback(), minutePath, streamResults.isDescending(), streamResults.isSkipLarge());
             } else {
                 if (!s3BatchContentDao.streamMinute(channelName, minutePath, streamResults.isDescending(), callback)) {
-                    getValues(channelName, callback, minutePath, streamResults.isDescending());
+                    getValues(channelName, callback, minutePath, streamResults.isDescending(), streamResults.isSkipLarge());
                 }
             }
         }
     }
 
-    private void getValues(String channelName, Consumer<Content> callback, ContentPathKeys contentPathKeys, boolean descending) {
+    private void getValues(String channelName, Consumer<Content> callback, ContentPathKeys contentPathKeys, boolean descending, boolean skipLarge) {
         List<ContentKey> keys = new ArrayList<>(contentPathKeys.getKeys());
         if (descending) {
             Collections.reverse(keys);
         }
         for (ContentKey contentKey : keys) {
-            Optional<Content> contentOptional = get(channelName, contentKey, false);
+            Optional<Content> contentOptional = get(channelName, contentKey, false, skipLarge);
             if (contentOptional.isPresent()) {
                 callback.accept(contentOptional.get());
             }
@@ -384,7 +387,7 @@ public class ClusterContentService implements ContentService {
         s3BatchContentDao.delete(channelName);
         s3LargePayloadContentDao.delete(channelName);
         lastContentPath.delete(channelName, CHANNEL_LATEST_UPDATED);
-        lastContentPath.delete(channelName, S3Verifier.LAST_SINGLE_VERIFIED);
+        lastContentPath.delete(channelName, S3SingleVerifier.LAST_SINGLE_VERIFIED);
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
         if (!channel.isSingle()) {
             new S3Batch(channel, hubUtils).stop();

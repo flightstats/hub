@@ -11,17 +11,17 @@ import javax.ws.rs.core.Response;
 
 import static javax.ws.rs.core.Response.ok;
 
-@Path("/internal/s3Verifier")
-public class InternalS3VerifierResource {
+@Path("/internal/s3BatchWriter")
+public class InternalS3BatchWriterResource {
 
-    private final static Logger logger = LoggerFactory.getLogger(InternalS3VerifierResource.class);
-    private static final S3SingleVerifier s3Verifier = HubProvider.getInstance(S3SingleVerifier.class);
+    private final static Logger logger = LoggerFactory.getLogger(InternalS3BatchWriterResource.class);
+    private static final S3BatchWriter s3BatchWriter = HubProvider.getInstance(S3BatchWriter.class);
 
     @POST
     @Path("/{channel}")
     public Response post(@PathParam("channel") String channel) {
         try {
-            s3Verifier.verifyChannel(channel);
+            s3BatchWriter.writeChannel(channel);
             return ok().build();
         } catch (Exception e) {
             logger.warn("unable to complete verification of " + channel, e);
