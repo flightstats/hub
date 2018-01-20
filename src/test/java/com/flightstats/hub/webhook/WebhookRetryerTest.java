@@ -42,7 +42,7 @@ public class WebhookRetryerTest {
     @Test
     public void testDetermineResultFromException() {
         WebhookRetryer retryer = new WebhookRetryer(giveUpIfs, tryLaterIfs, connectTimeoutSeconds, readTimeoutSeconds, webhookError);
-        assertEquals("java.lang.NullPointerException: something", retryer.determineResult(DeliveryAttempt.builder().exception(new NullPointerException("something")).build()));
+        assertEquals("something", retryer.determineResult(DeliveryAttempt.builder().exception(new NullPointerException("something")).build()));
     }
 
     @Test
