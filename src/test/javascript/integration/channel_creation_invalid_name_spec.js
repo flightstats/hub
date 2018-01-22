@@ -11,7 +11,6 @@ describe(__filename, function () {
             .then(function (response) {
                 expect(response.statusCode).toEqual(400);
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 

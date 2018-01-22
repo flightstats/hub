@@ -14,9 +14,6 @@ describe(__filename, function () {
             .then(function (response) {
                 expect(response.statusCode).toEqual(201);
             })
-            .catch(function (error) {
-                expect(error).toBeNull();
-            })
             .finally(done);
     });
 
@@ -30,9 +27,6 @@ describe(__filename, function () {
                     return obj.href;
                 });
                 expect(channelURLs).toContain(channelResource);
-            })
-            .catch(function (error) {
-                expect(error).toBeNull();
             })
             .finally(done);
     });

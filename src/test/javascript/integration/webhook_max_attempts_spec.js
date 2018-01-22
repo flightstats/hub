@@ -17,7 +17,6 @@ describe(__filename, () => {
     it('creates a channel', (done) => {
         utils.httpPut(channelResource)
             .then(response => expect(response.statusCode).toEqual(201))
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -39,7 +38,6 @@ describe(__filename, () => {
         };
         utils.httpPut(webhookResource, headers, payload)
             .then(response => expect(response.statusCode).toEqual(201))
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -50,7 +48,6 @@ describe(__filename, () => {
                 console.log('maxAttempts:', response.body.maxAttempts);
                 expect(response.body.maxAttempts).toEqual(0);
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -63,7 +60,6 @@ describe(__filename, () => {
                 console.log('maxAttempts:', response.body.maxAttempts);
                 expect(response.body.maxAttempts).toEqual(1);
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -77,7 +73,6 @@ describe(__filename, () => {
                 postedItems.push(itemURL);
                 console.log('itemURL:', itemURL);
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -86,7 +81,9 @@ describe(__filename, () => {
     });
 
     it('waits for the webhook to give up', (done) => {
-        setTimeout(done, 5 * 1000);
+        let timeoutMS = 5 * 1000;
+        utils.httpGetUntil(webhookResource, (response) => response.body.errors.filter(e => e.includes('max attempts reached')).length > 0, timeoutMS)
+            .finally(done);
     });
 
     it('verifies we received the item only once', () => {
@@ -107,7 +104,6 @@ describe(__filename, () => {
                 expect(response.body.errors[0]).toContain('400 Bad Request');
                 expect(response.body.errors[1]).toContain(`${contentKey} has reached max attempts (1)`);
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 

@@ -42,7 +42,6 @@ describe(__filename, () => {
             .then(response => {
                 expect(response.statusCode).toEqual(201);
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -56,7 +55,6 @@ describe(__filename, () => {
                 firstItemURL = response.body._links.self.href;
                 postedItems.push(firstItemURL);
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -70,7 +68,6 @@ describe(__filename, () => {
                 var json = response.body;
                 maxCursor = json.lastCompleted;
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -84,7 +81,6 @@ describe(__filename, () => {
             .then(response => {
                 expect(response.statusCode).toBeLessThan(300);
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -97,7 +93,6 @@ describe(__filename, () => {
                 expect(json.lastCompleted).toBeLessThan(maxCursor);
                 minCursor = json.lastCompleted;
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -111,7 +106,6 @@ describe(__filename, () => {
             .then(response => {
                 expect(response.statusCode).toBeLessThan(300);
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -124,7 +118,6 @@ describe(__filename, () => {
                 expect(json.lastCompleted).toBeGreaterThan(minCursor);
                 minCursor = json.lastCompleted;
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 

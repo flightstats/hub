@@ -44,7 +44,6 @@ describe(testName, function () {
                     items.push(value.body._links.self.href);
                     expect(items.length).toBe(expected);
                 })
-                .catch(error => expect(error).toBeNull())
                 .finally(done);
         });
     }

@@ -15,7 +15,6 @@ describe(__filename, function () {
             .then(function (response) {
                 expect(response.statusCode).toEqual(201);
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -33,7 +32,6 @@ describe(__filename, function () {
                 expect(response.body._links.channel.href).toEqual(channelResource);
                 itemURL = response.body._links.self.href;
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -45,7 +43,6 @@ describe(__filename, function () {
             .then(function (response) {
                 expect(response.statusCode).toEqual(406);
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 

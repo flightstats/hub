@@ -24,7 +24,6 @@ describe(__filename, () => {
                     shouldSkipRemainingTests = true;
                 }
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -38,7 +37,6 @@ describe(__filename, () => {
                 spokeTTLMinutes = response.body.properties['spoke.write.ttlMinutes'];
                 console.log('spokeTTLMinutes:', spokeTTLMinutes);
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -58,7 +56,6 @@ describe(__filename, () => {
                 }
                 urisToChooseFrom = response.body._links.uris;
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -110,7 +107,6 @@ describe(__filename, () => {
                     console.log('timeURL:', timeURL);
                 }
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -124,7 +120,6 @@ describe(__filename, () => {
                 console.log('uris:', uris);
                 expect(uris).not.toContain(itemURL);
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -138,7 +133,6 @@ describe(__filename, () => {
                 console.log('uris:', uris);
                 expect(uris).not.toContain(itemURL);
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -152,7 +146,6 @@ describe(__filename, () => {
                 expect(response.statusCode).toEqual(200);
                 itemPayload = response.body;
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -166,7 +159,6 @@ describe(__filename, () => {
                 console.log('uris:', uris);
                 expect(uris).not.toContain(itemURL);
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -180,7 +172,6 @@ describe(__filename, () => {
                 console.log('uris:', uris);
                 expect(uris).toContain(itemURL);
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -192,7 +183,6 @@ describe(__filename, () => {
                 expect(response.statusCode).toEqual(200);
                 expect(response.body).toEqual(itemPayload);
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 

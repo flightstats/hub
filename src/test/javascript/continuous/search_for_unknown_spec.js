@@ -49,7 +49,7 @@ describe(testName, function () {
                         });
                         callback();
                     })
-                    .catch(error => expect(error).toBeNull())
+                    .catch(error => callback(error))
             }, function (err) {
                 done(err);
             });

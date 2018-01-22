@@ -10,9 +10,6 @@ describe(__filename, function () {
             .then(function (response) {
                 expect(response.statusCode).toEqual(404);
             })
-            .catch(function (error) {
-                expect(error).toBeNull();
-            })
             .finally(done);
     });
 
@@ -33,9 +30,6 @@ describe(__filename, function () {
                 expect(response.body.replicationSource).toEqual('');
                 expect(response.body.storage).toEqual('SINGLE');
             })
-            .catch(function (error) {
-                expect(error).toBeNull();
-            })
             .finally(done);
     });
 
@@ -43,9 +37,6 @@ describe(__filename, function () {
         utils.httpGet(channelResource)
             .then(function (response) {
                 expect(response.statusCode).toEqual(200);
-            })
-            .catch(function (error) {
-                expect(error).toBeNull();
             })
             .finally(done);
     });
