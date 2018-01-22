@@ -37,9 +37,7 @@ describe(testName, function () {
                     }
                 });
             })
-            .catch(error => {
-                expect(error).toBeNull();
-            })
+            .catch(error => expect(error).toBeNull())
             .finally(done);
     }, timeout);
 
@@ -57,9 +55,7 @@ describe(testName, function () {
                         }
                         callback();
                     })
-                    .catch(error => {
-                        expect(error).toBeNull();
-                    });
+                    .catch(error => expect(error).toBeNull())
             }, function (err) {
                 done(err);
             });
@@ -87,9 +83,7 @@ describe(testName, function () {
                         }
                         callback();
                     })
-                    .catch(error => {
-                        expect(error).toBeNull();
-                    });
+                    .catch(error => expect(error).toBeNull())
             }, function (err) {
                 done(err);
             });
@@ -145,9 +139,7 @@ describe(testName, function () {
                                         callback(null, res.body._links.uris);
                                     }
                                 })
-                                .catch(error => {
-                                    expect(error).toBeNull();
-                                });
+                                .catch(error => expect(error).toBeNull())
                         },
                         function (callback) {
                             utils.httpGet(channelTime.compare, headers)
@@ -159,9 +151,7 @@ describe(testName, function () {
                                         callback(null, res.body._links.uris);
                                     }
                                 })
-                                .catch(error => {
-                                    expect(error).toBeNull();
-                                });
+                                .catch(error => expect(error).toBeNull())
                         }
                     ],
                     function (err, results) {

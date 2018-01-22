@@ -16,9 +16,7 @@ describe(__filename, function () {
                 expect(response.headers['content-type']).toEqual('application/json');
                 expect(response.headers['location']).toEqual(channelResource);
             })
-            .catch(function (error) {
-                expect(error).toBeNull();
-            })
+            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 

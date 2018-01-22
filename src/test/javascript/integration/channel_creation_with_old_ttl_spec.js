@@ -13,9 +13,7 @@ describe(__filename, function () {
             .then(function (response) {
                 expect(response.statusCode).toEqual(201);
             })
-            .catch(function (error) {
-                expect(error).toBeNull();
-            })
+            .catch(error => expect(error).toBeNull())
             .finally(done);
     })
 });

@@ -34,9 +34,7 @@ describe(testName, function () {
                 expect(response.body.channelUrl).toBe(webhookConfig.channelUrl);
                 expect(response.body.name).toBe(webhookName1);
             })
-            .catch(function (error) {
-                expect(error).toBeNull();
-            })
+            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
     
@@ -55,9 +53,7 @@ describe(testName, function () {
                 expect(response.body.channelUrl).toBe(webhookConfig.channelUrl);
                 expect(response.body.name).toBe(webhookName2);
             })
-            .catch(function (error) {
-                expect(error).toBeNull();
-            })
+            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -75,9 +71,7 @@ describe(testName, function () {
                     .map(function (item) { return item.href })
                     .filter(function (href) { return href == firstWebhookURL || href == secondWebhookURL });
             })
-            .catch(function (error) {
-                expect(error).toBeNull();
-            })
+            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
