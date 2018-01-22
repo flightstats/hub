@@ -49,9 +49,7 @@ describe(testName, function () {
                         });
                         callback();
                     })
-                    .catch(error => {
-                        expect(error).toBeNull();
-                    });
+                    .catch(error => expect(error).toBeNull())
             }, function (err) {
                 done(err);
             });
