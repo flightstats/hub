@@ -10,7 +10,6 @@ describe(__filename, function () {
             .then(function (response) {
                 expect(response.statusCode).toEqual(404);
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -25,7 +24,6 @@ describe(__filename, function () {
                 expect(response.headers['content-type']).toEqual('application/json');
                 expect(response.body.ttlDays).toEqual(120);
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -37,7 +35,6 @@ describe(__filename, function () {
                 expect(response.body.name).toEqual(channelName);
                 expect(response.body.ttlDays).toEqual(120);
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 

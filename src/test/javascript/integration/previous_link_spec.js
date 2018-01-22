@@ -21,7 +21,6 @@ describe(testName, function () {
                 expect(response.statusCode).toEqual(201);
                 items.push(response.body._links.self.href);
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     }
 
@@ -34,7 +33,6 @@ describe(testName, function () {
             .then(function (response) {
                 expect(response.statusCode).toEqual(404);
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -44,7 +42,6 @@ describe(testName, function () {
                 expect(response.statusCode).toEqual(200);
                 expect(response.body._links.uris.length).toBe(0);
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -62,7 +59,6 @@ describe(testName, function () {
                 expect(response.statusCode).toEqual(303);
                 expect(response.headers.location).toBe(items[1]);
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -74,7 +70,6 @@ describe(testName, function () {
                 expect(response.body._links.uris[0]).toBe(items[0]);
                 expect(response.body._links.uris[1]).toBe(items[1]);
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -86,7 +81,6 @@ describe(testName, function () {
                 expect(response.body._links.uris[0]).toBe(items[1]);
                 expect(response.body._links.uris[1]).toBe(items[2]);
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 

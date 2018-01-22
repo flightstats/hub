@@ -26,7 +26,6 @@ describe(testName, function () {
                     expect(item.num_failures).toBe(0);
                 });
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     }, timeout);
 
@@ -35,7 +34,6 @@ describe(testName, function () {
             .then(response => {
                 expect(response.statusCode).toBe(200);
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     }, timeout);
 

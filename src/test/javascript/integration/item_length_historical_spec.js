@@ -22,7 +22,6 @@ describe(__filename, function () {
         let body = {"mutableTime": moment().subtract(1, 'minute').toISOString()};
         utils.httpPut(channelResource, headers, body)
             .then(response => expect(response.statusCode).toEqual(201))
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 

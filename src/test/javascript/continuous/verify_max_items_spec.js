@@ -27,7 +27,6 @@ describe(testName, function () {
             .then(res => {
                 console.log('created', res.body);
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -39,7 +38,6 @@ describe(testName, function () {
                 expect(res.statusCode).toBe(200);
                 expect(res.body._links.uris.length).toBe(maxItems);
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
 
     });

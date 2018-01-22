@@ -29,9 +29,6 @@ describe(__filename, function () {
             .then(function (response) {
                 expect(response.statusCode).toEqual(200);
             })
-            .catch(function (error) {
-                expect(error).toBeNull();
-            })
             .finally(done);
     });
 
@@ -41,9 +38,6 @@ describe(__filename, function () {
         utils.httpGet(url)
             .then(function (response) {
                 expect(response.statusCode).toEqual(200);
-            })
-            .catch(function (error) {
-                expect(error).toBeNull();
             })
             .finally(done);
     });

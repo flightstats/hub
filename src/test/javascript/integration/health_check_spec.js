@@ -11,9 +11,6 @@ describe(__filename, function () {
                 expect(response.headers['content-type']).toEqual('application/json');
                 expect(response.body.healthy).toEqual(true);
             })
-            .catch(function (error) {
-                expect(error).toBeNull();
-            })
             .finally(done);
     });
 

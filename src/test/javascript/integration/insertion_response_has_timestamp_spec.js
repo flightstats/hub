@@ -15,7 +15,6 @@ describe(__filename, function () {
             .then(function (response) {
                 expect(response.statusCode).toEqual(201);
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -31,7 +30,6 @@ describe(__filename, function () {
                 expect(response.body._links.channel.href).toEqual(channelResource);
                 expect(response.body.timestamp).toMatch(/^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d\.\d\d\dZ$/);
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
