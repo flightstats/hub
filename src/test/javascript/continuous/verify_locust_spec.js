@@ -15,7 +15,9 @@ const locustURL = `http://${process.env.locustUrl}`;
 
 describe(__filename, () => {
 
-    it('verify no failures have been reported', (done) => {
+    let totalFailures;
+
+    it('get the current stats', (done) => {
         utils.httpGet(`${locustURL}/stats/requests`, {'Accept': 'application/json'})
             .then(response => {
                 expect(response.statusCode).toBe(200);
@@ -27,13 +29,15 @@ describe(__filename, () => {
                 console.log('requests/sec:', response.body.total_rps);
                 console.log();
                 console.table(response.body.stats);
-
-                let totalFailures = response.body.stats.reduce((output, stat) => output + stat.num_failures, 0);
-                console.log('total failures:', totalFailures);
-
-                expect(totalFailures).toBe(0);
+                totalFailures = response.body.stats.reduce((output, stat) => output + stat.num_failures, 0);
             })
             .finally(done);
+    });
+
+    it('verifies there are no failures', () => {
+        console.log('total failures:', totalFailures);
+        expect(totalFailures).toBeDefined();
+        expect(totalFailures).toBe(0);
     });
 
     it('resets stats', (done) => {
