@@ -4,7 +4,6 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentKeyUtil;
 import com.flightstats.hub.dao.QueryResult;
-import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.exception.FailedQueryException;
 import com.flightstats.hub.exception.FailedWriteException;
 import com.flightstats.hub.metrics.ActiveTraces;
@@ -17,9 +16,10 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectOutputStream;
-import java.util.*;
+import java.util.Collections;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  * This is the entry point in the Hub's storage system, Spoke.
@@ -46,42 +46,10 @@ public class SpokeWriteContentDao implements ContentDao {
 
     @Override
     public SortedSet<ContentKey> insert(BulkContent bulkContent) throws Exception {
-        Traces traces = ActiveTraces.getLocal();
-        traces.add("SpokeWriteContentDao.writeBulk");
-        String channelName = bulkContent.getChannel();
-        try {
-            SortedSet<ContentKey> keys = new TreeSet<>();
-            List<Content> items = bulkContent.getItems();
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ObjectOutputStream stream = new ObjectOutputStream(baos);
-            stream.writeInt(items.size());
-            logger.debug("writing {} items to master {}", items.size(), bulkContent.getMasterKey());
-            for (Content content : items) {
-                content.packageStream();
-                String itemKey = content.getContentKey().get().toUrl();
-                stream.writeInt(itemKey.length());
-                stream.write(itemKey.getBytes());
-                stream.writeInt(content.getData().length);
-                stream.write(content.getData());
-                keys.add(content.getContentKey().get());
-            }
-            stream.flush();
-            traces.add("SpokeWriteContentDao.writeBulk marshalled");
-
-            logger.trace("writing items {} to channel {}", items.size(), channelName);
-            if (!spokeStore.insert(SpokeStore.WRITE, channelName, baos.toByteArray(), "bulkKey", channelName)) {
-                throw new FailedWriteException("unable to write bulk to spoke " + channelName);
-            }
-            traces.add("SpokeWriteContentDao.writeBulk completed", keys);
-            return keys;
-        } catch (ContentTooLargeException e) {
-            logger.info("content too large for channel " + channelName);
-            throw e;
-        } catch (Exception e) {
-            traces.add("SpokeWriteContentDao", "error", e.getMessage());
-            logger.error("unable to write " + channelName, e);
-            throw e;
-        }
+        return SpokeContentDao.insert(bulkContent, (baos) -> {
+            String channel = bulkContent.getChannel();
+            return spokeStore.insert(SpokeStore.WRITE, channel, baos.toByteArray(), "bulkKey", channel);
+        });
     }
 
     private String getPath(String channelName, ContentKey key) {
