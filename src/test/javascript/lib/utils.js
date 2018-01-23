@@ -13,7 +13,7 @@ var moment = require('moment');
 Promise.prototype.finally = function (callback) {
     const res = () => this;
     const fin = () => Promise.resolve(callback()).then(res);
-    return this.then(fin, fin);
+    return this.then(fin, fin).catch(() => {});
 };
 
 exports.randomChannelName = function randomChannelName() {
