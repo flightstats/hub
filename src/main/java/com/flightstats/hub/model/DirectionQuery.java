@@ -22,7 +22,7 @@ public class DirectionQuery implements Query {
      */
     @Wither
     private ContentKey startKey;
-    private boolean inclusive = false;
+    private boolean inclusive;
     @Wither
     private final int count;
     @Wither

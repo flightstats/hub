@@ -43,7 +43,6 @@ describe(__filename, () => {
                 expect(response.statusCode).toEqual(201);
                 postedItems.push(response.body._links.self.href);
             })
-            .catch(error => expect(error).toBeNull())
             .finally(() => {
                 console.log('postedItems:', postedItems);
                 expect(postedItems.constructor).toBe(Array);
@@ -56,7 +55,6 @@ describe(__filename, () => {
         let order = trimWordRandomly('ascending');
         utils.httpGet(`${channelResource}/latest/4?stable=false&order=${order}`)
             .then(expectURIsInAscendingOrder)
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -64,7 +62,6 @@ describe(__filename, () => {
         let order = 'baloney';
         utils.httpGet(`${channelResource}/latest/4?stable=false&order=${order}`)
             .then(expectURIsInAscendingOrder)
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -73,7 +70,6 @@ describe(__filename, () => {
         let order = trimWordRandomly('descending');
         utils.httpGet(`${channelResource}/earliest/4?stable=false&order=${order}`)
             .then(expectURIsInDescendingOrder)
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -81,7 +77,6 @@ describe(__filename, () => {
         let order = trimWordRandomly('descending');
         utils.httpGet(`${channelResource}/latest/4?stable=false&order=${order}`)
             .then(expectURIsInDescendingOrder)
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -90,7 +85,6 @@ describe(__filename, () => {
         let order = trimWordRandomly('descending');
         utils.httpGet(`${channelResource}/${oneMinuteAgo}/A/next/4?stable=false&order=${order}`)
             .then(expectURIsInDescendingOrder)
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -99,7 +93,6 @@ describe(__filename, () => {
         let order = trimWordRandomly('descending');
         utils.httpGet(`${channelResource}/${oneMinuteInTheFuture}/A/previous/4?stable=false&order=${order}`)
             .then(expectURIsInDescendingOrder)
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -108,7 +101,6 @@ describe(__filename, () => {
         let order = trimWordRandomly('descending');
         utils.httpGet(`${channelResource}/${now}?stable=false&order=${order}`)
             .then(expectURIsInDescendingOrder)
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -138,7 +130,6 @@ describe(__filename, () => {
                 expect(second).toBeLessThan(third);
                 expect(third).toBeLessThan(fourth);
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 

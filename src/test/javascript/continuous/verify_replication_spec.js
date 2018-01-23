@@ -49,9 +49,6 @@ describe(testName, function () {
                 });
                 expect(replicatedChannelUrls.length).not.toBe(0);
             })
-            .catch(error => {
-                expect(error).toBeNull();
-            })
             .finally(done);
     });
 
@@ -80,9 +77,7 @@ describe(testName, function () {
                             callback(res.error);
                         }
                     })
-                    .catch(error => {
-                        expect(error).toBeNull();
-                    });
+                    .catch(error => callback(error))
             }, function (err) {
                 done(err);
             });
@@ -108,9 +103,7 @@ describe(testName, function () {
                     console.log('found dest second ', channels[channel][0]);
                     callback(res.error);
                 })
-                .catch(error => {
-                    expect(error).toBeNull();
-                });
+                .catch(error => callback(error))
         }, function (err) {
             done(err);
         });
@@ -138,9 +131,7 @@ describe(testName, function () {
                     expect(channels[channel].length).toBe(uris.length);
                     callback(res.error);
                 })
-                .catch(error => {
-                    expect(error).toBeNull();
-                });
+                .catch(error => callback(error))
         }, function (err) {
             done(err);
         });

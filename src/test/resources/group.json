@@ -8,7 +8,7 @@
   "callbackUrl": "http://parsers/parser",
   "channelUrl": "http://hub/channel/provider",
   "parallelCalls": 1,
-  "lastCompletedCallback": "http://hub/channel/provider_srilankan/2015/05/28/17/00/42/376/ABC",
+  "lastCompleted": "http://hub/channel/provider_srilankan/2015/05/28/17/00/42/376/ABC",
   "channelLatest": "http://hub/channel/provider_srilankan/2015/05/28/17/06/42/376/zYSn90",
   "inFlight": [],
   "errors": [

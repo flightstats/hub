@@ -16,7 +16,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.io.IOException;
 
 @SuppressWarnings("WeakerAccess")
 @Path("/internal/health")
@@ -45,7 +44,7 @@ public class InternalHealthResource {
             String string = response.getEntity(String.class);
             JsonNode jsonNode = mapper.readTree(string);
             root.set(link, jsonNode);
-        } catch (IOException e) {
+        } catch (Exception e) {
             root.put(link, "unable to get response " + e.getMessage());
         } finally {
             HubUtils.close(response);

@@ -100,7 +100,14 @@ public class WebhookManager {
         String name = daoWebhook.getName();
         if (activeWebhooks.getServers().contains(name)) {
             logger.debug("found existing v2 webhook {}", name);
-            Collection<String> servers = activeWebhooks.getServers(name);
+            List<String> servers = new ArrayList<>(activeWebhooks.getServers(name));
+            if (servers.size() >= 2) {
+                logger.warn("found multiple servers! {}", servers);
+                Collections.shuffle(servers);
+                for (int i = 1; i < servers.size(); i++) {
+                    callOneDelete(name, servers.get(i));
+                }
+            }
             if (servers.isEmpty()) {
                 callOneRun(name, getOrderedServers());
             } else if (webhookChanged) {
@@ -150,8 +157,12 @@ public class WebhookManager {
 
     private void callAllDelete(String name, Collection<String> servers) {
         for (String server : servers) {
-            put(server + "/internal/webhook/delete/" + name);
+            callOneDelete(name, server);
         }
+    }
+
+    private void callOneDelete(String name, String server) {
+        put(server + "/internal/webhook/delete/" + name);
     }
 
     private void callOneRun(String name, Collection<String> servers) {

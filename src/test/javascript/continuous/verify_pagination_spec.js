@@ -45,9 +45,6 @@ describe(testName, function () {
                 expect(channel.millis).toBeGreaterThan(1435865512097);
                 console.log('channel', channel);
             })
-            .catch(error => {
-                expect(error).toBeNull();
-            })
             .finally(done);
     }, 60 * 1000);
 
@@ -59,9 +56,6 @@ describe(testName, function () {
                 expect(res.statusCode).toBe(200);
                 uris = res.body._links.uris;
                 console.log('length', uris.length);
-            })
-            .catch(error => {
-                expect(error).toBeNull();
             })
             .finally(done);
     }, 60 * 1000);
@@ -99,9 +93,6 @@ describe(testName, function () {
                 console.log('res.headers.location', res.headers.location);
                 assign(res.headers.location);
             })
-            .catch(error => {
-                expect(error).toBeNull();
-            })
             .finally(done);
     }
 
@@ -113,9 +104,6 @@ describe(testName, function () {
                 for (var i = 0; i < uris.length; i++) {
                     expect(res.body._links.uris[i]).toBe(uris[i]);
                 }
-            })
-            .catch(error => {
-                expect(error).toBeNull();
             })
             .finally(done);
     }
@@ -131,9 +119,6 @@ describe(testName, function () {
                 var earliestTime = moment(timeUrlSegments + ' +0000', '/YYYY/MM/DD/HH/mm/ss/SSS Z');
                 expect(earliestTime.isAfter(time)).toBe(true);
                 expect(earliestTime.isBefore(time.add(1, 'hours'))).toBe(true);
-            })
-            .catch(error => {
-                expect(error).toBeNull();
             })
             .finally(done);
     }, 60 * 1000);

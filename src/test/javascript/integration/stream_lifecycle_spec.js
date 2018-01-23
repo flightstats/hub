@@ -31,9 +31,6 @@ xdescribe(testName, function () {
                 expect(response.statusCode).toBe(200);
                 console.log('body', body);
             })
-            .catch(function (error) {
-                expect(error).toBeNull();
-            })
             .finally(done);
     });
 

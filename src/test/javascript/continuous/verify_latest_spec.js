@@ -34,9 +34,6 @@ describe(testName, function () {
                 zkChannels = res.body.children;
                 console.log('body', res.body);
             })
-            .catch(error => {
-                expect(error).toBeNull();
-            })
             .finally(done);
     }, MINUTE);
 
@@ -60,9 +57,7 @@ describe(testName, function () {
                         }
                         callback();
                     })
-                    .catch(error => {
-                        expect(error).toBeNull();
-                    });
+                    .catch(error => callback(error))
             }, function (err) {
                 done(err);
             });
@@ -90,9 +85,7 @@ describe(testName, function () {
                         }
                         callback();
                     })
-                    .catch(error => {
-                        expect(error).toBeNull();
-                    });
+                    .catch(error => callback(error))
             }, function (err) {
                 done(err);
             });
@@ -111,9 +104,7 @@ describe(testName, function () {
                             expect(res.body.data.string).toBe(NONE);
                             callback();
                         })
-                        .catch(error => {
-                            expect(error).toBeNull();
-                        });
+                        .catch(error => callback(error))
                 } else {
                     expect(item.latestKey).toBeDefined();
                     if (item.latestKey !== item.zkKey) {
@@ -128,9 +119,7 @@ describe(testName, function () {
                                 }
                                 callback();
                             })
-                            .catch(error => {
-                                expect(error).toBeNull();
-                            });
+                            .catch(error => callback(error))
                     } else {
                         expect(item.zkKey).toBe(item.latestKey);
                         var withinSpokeWindow = isWithinSpokeWindow(item.latestKey);

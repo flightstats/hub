@@ -8,7 +8,7 @@
   "callbackUrl": "http://parsers/parser",
   "channelUrl": "http://hub/channel/provider",
   "parallelCalls": 1,
-  "lastCompletedCallback": "",
+  "lastCompleted": "",
   "channelLatest": "",
   "inFlight": [],
   "errors": []

@@ -37,9 +37,6 @@ describe(testName, function () {
                     }
                 });
             })
-            .catch(error => {
-                expect(error).toBeNull();
-            })
             .finally(done);
     }, timeout);
 
@@ -57,9 +54,7 @@ describe(testName, function () {
                         }
                         callback();
                     })
-                    .catch(error => {
-                        expect(error).toBeNull();
-                    });
+                    .catch(error => callback(error))
             }, function (err) {
                 done(err);
             });
@@ -87,9 +82,7 @@ describe(testName, function () {
                         }
                         callback();
                     })
-                    .catch(error => {
-                        expect(error).toBeNull();
-                    });
+                    .catch(error => callback(error))
             }, function (err) {
                 done(err);
             });
@@ -107,9 +100,12 @@ describe(testName, function () {
         console.log('now', moment.utc().format(minute_format));
         console.log('startOffset', startOffset);
         console.log('endOffset', endOffset);
-        for (var i = startOffset; i <= endOffset; i++) {
-            channels.forEach(function (channel) {
-                var start = channel.start.subtract(i, 'minutes');
+
+        channels.forEach(function (channel) {
+            channel.start.subtract(startOffset, 'minutes');
+            for (var i = startOffset; i <= endOffset; i++) {
+                console.log('channel.start ' + channel.href, channel.start.format(minute_format));
+                var start = channel.start.subtract(1, 'minutes');
                 var formatted = start.format(minute_format);
                 if (channel.name.toLowerCase().startsWith('test')
                     || channel.name.startsWith('verifyMaxItems')
@@ -124,8 +120,9 @@ describe(testName, function () {
                         add(rootUrl, channel.storage);
                     }
                 }
-            });
-        }
+            }
+        });
+
     }, timeout);
 
 
@@ -145,9 +142,7 @@ describe(testName, function () {
                                         callback(null, res.body._links.uris);
                                     }
                                 })
-                                .catch(error => {
-                                    expect(error).toBeNull();
-                                });
+                                .catch(error => callback(error))
                         },
                         function (callback) {
                             utils.httpGet(channelTime.compare, headers)
@@ -159,9 +154,7 @@ describe(testName, function () {
                                         callback(null, res.body._links.uris);
                                     }
                                 })
-                                .catch(error => {
-                                    expect(error).toBeNull();
-                                });
+                                .catch(error => callback(error))
                         }
                     ],
                     function (err, results) {
