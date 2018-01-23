@@ -246,22 +246,22 @@ public class ChannelContentResource {
         SortedSet<ContentPath> keys = new TreeSet<>();
         DateTime stableTime = TimeUtil.stable();
         DateTime startTime = new DateTime(year, month, day, hour, minute, second, 999, DateTimeZone.UTC);
-        //todo - gfm - what to do if the start time is far in the future?
-        DateTime pointer = startTime;
         boolean next = direction.startsWith("n");
         if (next) {
-            while (pointer.isBefore(stableTime) && keys.size() < count) {
-                keys.add(new SecondPath(pointer));
-                pointer = pointer.plusSeconds(1);
+            while (startTime.isBefore(stableTime) && keys.size() < count) {
+                keys.add(new SecondPath(startTime));
+                startTime = startTime.plusSeconds(1);
             }
         } else {
-            pointer = pointer.minusSeconds(1);
+            if (startTime.isAfter(stableTime)) {
+                startTime = stableTime;
+            }
+            startTime = startTime.minusSeconds(1);
             while (keys.size() < count) {
-                keys.add(new SecondPath(pointer));
-                pointer = pointer.minusSeconds(1);
+                keys.add(new SecondPath(startTime));
+                startTime = startTime.minusSeconds(1);
             }
         }
-
         //todo - gfm - can the following code be factored out with getTimeQueryResponse ?
         ObjectNode root = mapper.createObjectNode();
         ObjectNode links = root.putObject("_links");
