@@ -18,6 +18,7 @@ import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.metrics.NewRelicIgnoreTransaction;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.rest.Linked;
+import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
 import com.sun.jersey.core.header.MediaTypes;
@@ -223,6 +224,81 @@ public class ChannelContentResource {
             }
             return Response.ok(root).build();
         }
+    }
+
+    @Path("/{h}/{m}/{second}/{direction:[n|p].*}/{count}")
+    @Produces({MediaType.APPLICATION_JSON})
+    @GET
+    public Response getDirectionalSecond(@PathParam("channel") String channel,
+                                         @PathParam("Y") int year,
+                                         @PathParam("M") int month,
+                                         @PathParam("D") int day,
+                                         @PathParam("h") int hour,
+                                         @PathParam("m") int minute,
+                                         @PathParam("second") int second,
+                                         @PathParam("count") int count,
+                                         @PathParam("direction") String direction,
+                                         @QueryParam("location") @DefaultValue(Location.DEFAULT) String location,
+                                         @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
+                                         @QueryParam("trace") @DefaultValue("false") boolean trace,
+                                         @QueryParam("stable") @DefaultValue("true") boolean stable,
+                                         @QueryParam("order") @DefaultValue(Order.DEFAULT) String order) {
+        SortedSet<ContentPath> keys = new TreeSet<>();
+        DateTime stableTime = TimeUtil.stable();
+        DateTime startTime = new DateTime(year, month, day, hour, minute, second, 999, DateTimeZone.UTC);
+        //todo - gfm - what to do if the start time is far in the future?
+        DateTime pointer = startTime;
+        boolean next = direction.startsWith("n");
+        if (next) {
+            while (pointer.isBefore(stableTime) && keys.size() < count) {
+                keys.add(new SecondPath(pointer));
+                pointer = pointer.plusSeconds(1);
+            }
+        } else {
+            pointer = pointer.minusSeconds(1);
+            while (keys.size() < count) {
+                keys.add(new SecondPath(pointer));
+                pointer = pointer.minusSeconds(1);
+            }
+        }
+
+        //todo - gfm - can the following code be factored out with getTimeQueryResponse ?
+        ObjectNode root = mapper.createObjectNode();
+        ObjectNode links = root.putObject("_links");
+        ObjectNode self = links.putObject("self");
+        self.put("href", uriInfo.getRequestUri().toString());
+        if (keys.size() == count) {
+            URI uri = LinkBuilder.uriBuilder(channel, uriInfo)
+                    .path(Unit.SECONDS.format(keys.last().getTime()))
+                    .path("next")
+                    .path("" + count)
+                    .build();
+            links.putObject("next").put("href", uri.toString());
+        }
+        if (!keys.isEmpty()) {
+            URI uri = LinkBuilder.uriBuilder(channel, uriInfo)
+                    .path(Unit.SECONDS.format(keys.first().getTime()))
+                    .path("previous")
+                    .path("" + count)
+                    .build();
+            links.putObject("previous").put("href", uri.toString());
+        }
+
+        ArrayNode ids = links.putArray("uris");
+        URI channelUri = LinkBuilder.buildChannelUri(channel, uriInfo);
+
+        ArrayList<ContentPath> list = new ArrayList<>(keys);
+        if (Order.isDescending(order)) {
+            Collections.reverse(list);
+        }
+        for (ContentPath path : list) {
+            URI uri = LinkBuilder.buildItemUri(path, channelUri);
+            ids.add(uri.toString());
+        }
+        if (trace) {
+            ActiveTraces.getLocal().output(root);
+        }
+        return Response.ok(root).build();
     }
 
     @Path("/{h}/{m}/{s}/{ms}/{hash}")
