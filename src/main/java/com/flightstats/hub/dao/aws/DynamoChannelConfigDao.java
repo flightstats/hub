@@ -78,9 +78,6 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
 
         dynamoUtils.createTable(request);
         dynamoUtils.updateTable(tableName, throughput);
-        //todo - this can be removed once it has run everywhere.
-        dynamoUtils.removeGSI(tableName, "tempLowerCaseName");
-
     }
 
     @Override
