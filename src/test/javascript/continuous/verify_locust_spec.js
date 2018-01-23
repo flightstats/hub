@@ -29,6 +29,7 @@ describe(__filename, () => {
                 console.log('requests/sec:', response.body.total_rps);
                 console.log();
                 console.table(response.body.stats);
+                console.table(response.body.errors);
                 totalFailures = response.body.stats.reduce((output, stat) => output + stat.num_failures, 0);
             })
             .finally(done);
