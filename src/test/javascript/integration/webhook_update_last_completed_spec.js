@@ -29,11 +29,6 @@ var webhookConfig = {
 };
 
 
-// this function will be available in the utils lib soon
-const expectNoErrors = (error) => {
-    expect(error).toBeNull();
-};
-
 describe(__filename, () => {
     it('runs a callback server', (done) => {
         callbackServer = utils.startHttpServer(callbackPort, (message) => {
@@ -47,7 +42,6 @@ describe(__filename, () => {
             .then(response => {
                 expect(response.statusCode).toEqual(201);
             })
-            .catch(expectNoErrors)
             .finally(done);
     });
 
@@ -60,9 +54,6 @@ describe(__filename, () => {
                 expect(response.statusCode).toEqual(201);
                 firstItemURL = response.body._links.self.href;
                 postedItems.push(firstItemURL);
-            })
-            .catch(function (error) {
-                expect(error).toBeNull();
             })
             .finally(done);
     });
@@ -77,7 +68,6 @@ describe(__filename, () => {
                 var json = response.body;
                 maxCursor = json.lastCompleted;
             })
-            .catch(expectNoErrors)
             .finally(done);
     });
 
@@ -91,7 +81,6 @@ describe(__filename, () => {
             .then(response => {
                 expect(response.statusCode).toBeLessThan(300);
             })
-            .catch(expectNoErrors)
             .finally(done);
     });
 
@@ -104,7 +93,6 @@ describe(__filename, () => {
                 expect(json.lastCompleted).toBeLessThan(maxCursor);
                 minCursor = json.lastCompleted;
             })
-            .catch(expectNoErrors)
             .finally(done);
     });
 
@@ -118,7 +106,6 @@ describe(__filename, () => {
             .then(response => {
                 expect(response.statusCode).toBeLessThan(300);
             })
-            .catch(expectNoErrors)
             .finally(done);
     });
 
@@ -131,7 +118,6 @@ describe(__filename, () => {
                 expect(json.lastCompleted).toBeGreaterThan(minCursor);
                 minCursor = json.lastCompleted;
             })
-            .catch(expectNoErrors)
             .finally(done);
     });
 

@@ -61,9 +61,6 @@ describe(testName, function () {
                 expect(response.body.channelUrl).toBe(channelResource);
                 expect(response.body.name).toBe(webhookName);
             })
-            .catch(function (error) {
-                expect(error).toBeNull();
-            })
             .finally(done);
     });
 

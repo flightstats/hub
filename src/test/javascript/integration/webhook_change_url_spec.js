@@ -29,7 +29,6 @@ describe(__filename, () => {
     it('creates a channel', (done) => {
         utils.httpPut(channelResource)
             .then(response => expect(response.statusCode).toEqual(201))
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -44,7 +43,6 @@ describe(__filename, () => {
                 expect(response.statusCode).toEqual(201);
                 console.log('callbackURL:', response.body.callbackUrl);
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -58,7 +56,6 @@ describe(__filename, () => {
                 postedItems.push(itemURL);
                 console.log('itemURL:', itemURL);
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -73,7 +70,6 @@ describe(__filename, () => {
                 expect(response.body.errors.length).toEqual(1);
                 expect(response.body.errors[0]).toContain('java.net.UnknownHostException');
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -97,7 +93,6 @@ describe(__filename, () => {
                 expect(response.statusCode).toEqual(200);
                 console.log('callbackURL:', response.body.callbackUrl);
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 
@@ -111,7 +106,6 @@ describe(__filename, () => {
                 postedItems.push(itemURL);
                 console.log('itemURL:', itemURL);
             })
-            .catch(error => expect(error).toBeNull())
             .finally(done);
     });
 

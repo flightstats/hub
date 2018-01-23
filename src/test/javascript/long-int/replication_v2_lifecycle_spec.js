@@ -43,11 +43,8 @@ describe(testName, function () {
                 .then(function (value) {
                     items.push(value.body._links.self.href);
                     expect(items.length).toBe(expected);
-                    done();
                 })
-                .catch(function (error) {
-                    console.log('error', error);
-                })
+                .finally(done);
         });
     }
 

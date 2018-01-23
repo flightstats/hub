@@ -16,9 +16,6 @@ describe(__filename, function () {
                 expect(response.statusCode).toEqual(201);
                 earliestURL = response.body._links.earliest.href;
             })
-            .catch(function (error) {
-                expect(error).toBeNull();
-            })
             .finally(done);
     });
 
@@ -26,9 +23,6 @@ describe(__filename, function () {
         utils.httpGet(earliestURL)
             .then(function (response) {
                 expect(response.statusCode).toEqual(404);
-            })
-            .catch(function (error) {
-                expect(error).toBeNull();
             })
             .finally(done);
     });
