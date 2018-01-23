@@ -28,8 +28,10 @@ describe(__filename, () => {
                 console.log('failures:', Math.round(response.body.fail_ratio * 100) + '%');
                 console.log('requests/sec:', response.body.total_rps);
                 console.log();
-                console.table(response.body.stats);
-                console.table(response.body.errors);
+
+                console.table('stats', sort(response.body.stats, sortByStatKeys));
+                console.table('errors', sort(response.body.errors, sortByErrorKeys));
+
                 totalFailures = response.body.stats.reduce((output, stat) => output + stat.num_failures, 0);
             })
             .finally(done);
@@ -48,3 +50,35 @@ describe(__filename, () => {
     });
 
 });
+
+function sort(arrayOfObjects, comparator) {
+    return arrayOfObjects.map(object => {
+       let sortedObject = {};
+        Object.keys(object)
+            .sort(comparator)
+            .forEach(key => sortedObject[key] = object[key]);
+        return sortedObject;
+    });
+}
+
+function sortByStatKeys(a, b) {
+    if (a === 'method') return -1;
+    if (b === 'method') return 1;
+    if (a === 'name') return -1;
+    if (b === 'name') return 1;
+    if (a === 'num_requests') return -1;
+    if (b === 'num_requests') return 1;
+    if (a === 'num_failures') return -1;
+    if (b === 'num_failures') return 1;
+    return 0;
+}
+
+function sortByErrorKeys(a, b) {
+    if (a === 'method') return -1;
+    if (b === 'method') return 1;
+    if (a === 'name') return -1;
+    if (b === 'name') return 1;
+    if (a === 'occurences') return -1;
+    if (b === 'occurences') return 1;
+    return 0;
+}
