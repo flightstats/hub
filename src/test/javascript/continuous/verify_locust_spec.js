@@ -1,40 +1,45 @@
 require('../integration_config.js');
-var async = require('async');
-var moment = require('moment');
-var testName = __filename;
-var locustUrl = process.env.locustUrl;
-locustUrl = 'http://' + locustUrl + '/stats';
-console.log(locustUrl);
 
-var timeout = 5 * 60 * 1000;
+const async = require('async');
+const moment = require('moment');
+const MonkeyPatchingConsole = require('console.table');
+
 /**
- * This should get the results from a running locust install and logs results to the console
- * http://locustUrl/stats/requests
- * it should also reset the stats.
- * http://locustUrl/stats/reset
+ * - get stats from a locust instance
+ * - log stats to console
+ * - verify no failures
+ * - reset the stats
  */
-describe(testName, function () {
 
-    var results;
+const locustURL = `http://${process.env.locustUrl}`;
 
-    it('loads results', function (done) {
-        utils.httpGet(`${locustUrl}/requests`, {'Accept': 'application/json'})
-            .then(response => {
-                console.log('response:', response.body);
-                response.body.stats.forEach(function (item) {
-                    console.log(`item ${item.name} ${item.num_failures}`);
-                    expect(item.num_failures).toBe(0);
-                });
-            })
-            .finally(done);
-    }, timeout);
+describe(__filename, () => {
 
-    it('resets stats', function (done) {
-        utils.httpGet(`${locustUrl}/reset`)
+    it('verify no failures have been reported', (done) => {
+        utils.httpGet(`${locustURL}/stats/requests`, {'Accept': 'application/json'})
             .then(response => {
                 expect(response.statusCode).toBe(200);
+                console.log();
+                console.log('locust:', locustURL);
+                console.log('state:', response.body.state);
+                console.log('users:', response.body.user_count);
+                console.log('failures:', Math.round(response.body.fail_ratio * 100) + '%');
+                console.log('requests/sec:', response.body.total_rps);
+                console.log();
+                console.table(response.body.stats);
+
+                let totalFailures = response.body.stats.reduce((output, stat) => output + stat.num_failures, 0);
+                console.log('total failures:', totalFailures);
+
+                expect(totalFailures).toBe(0);
             })
             .finally(done);
-    }, timeout);
+    });
+
+    it('resets stats', (done) => {
+        utils.httpGet(`${locustURL}/stats/reset`)
+            .then(response => expect(response.statusCode).toBe(200))
+            .finally(done);
+    });
 
 });
