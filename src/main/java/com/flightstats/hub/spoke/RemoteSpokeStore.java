@@ -15,6 +15,7 @@ import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.HubUtils;
+import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
@@ -119,12 +120,12 @@ public class RemoteSpokeStore {
         return true;
     }
 
-    public boolean insert(SpokeStore spokeStore, String path, byte[] payload, String spokeApi, String channel) throws InterruptedException {
+    public boolean insert(SpokeStore spokeStore, String path, byte[] payload, String spokeApi, String channel) {
         return insert(spokeStore, path, payload, cluster.getWriteServers(), ActiveTraces.getLocal(), spokeApi, channel);
     }
 
     public boolean insert(SpokeStore spokeStore, String path, byte[] payload, Collection<String> servers, Traces traces,
-                          String spokeApi, String channel) throws InterruptedException {
+                          String spokeApi, String channel) {
         int quorum = getQuorum(servers.size());
         CountDownLatch quorumLatch = new CountDownLatch(quorum);
         AtomicBoolean firstComplete = new AtomicBoolean();
@@ -159,7 +160,11 @@ public class RemoteSpokeStore {
                 }
             });
         }
-        quorumLatch.await(stableSeconds, TimeUnit.SECONDS);
+        try {
+            quorumLatch.await(stableSeconds, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            throw new RuntimeInterruptedException(e);
+        }
         metricsService.time(channel, "consistent", traces.getStart());
         return quorumLatch.getCount() != quorum;
     }

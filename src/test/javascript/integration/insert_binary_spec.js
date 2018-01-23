@@ -14,9 +14,6 @@ describe(__filename, function () {
             .then(function (response) {
                 expect(response.statusCode).toEqual(201);
             })
-            .catch(function (error) {
-                expect(error).toBeNull();
-            })
             .finally(done);
     });
 
@@ -31,9 +28,6 @@ describe(__filename, function () {
             .then(function (response) {
                 expect(response.statusCode).toEqual(200);
                 imageData = response.body;
-            })
-            .catch(function (error) {
-                expect(error).toBeNull();
             })
             .finally(done);
     });
@@ -51,9 +45,6 @@ describe(__filename, function () {
                 expect(response.body._links.channel.href).toEqual(channelResource);
                 itemURL = response.body._links.self.href;
             })
-            .catch(function (error) {
-                expect(error).toBeNull();
-            })
             .finally(done);
     });
 
@@ -66,9 +57,6 @@ describe(__filename, function () {
             .then(function (response) {
                 expect(response.statusCode).toEqual(200);
                 expect(response.body.length).toEqual(imageData.length);
-            })
-            .catch(function (error) {
-                expect(error).toBeNull();
             })
             .finally(done);
     });

@@ -3,6 +3,7 @@ var http = require('http');
 var https = require('https');
 var fs = require('fs');
 var request = require('request');
+var moment = require('moment');
 
 /**
  * Monkey patching Promise.prototype.finally until its officially supported
@@ -12,7 +13,7 @@ var request = require('request');
 Promise.prototype.finally = function (callback) {
     const res = () => this;
     const fin = () => Promise.resolve(callback()).then(res);
-    return this.then(fin, fin);
+    return this.then(fin, fin).catch(() => {});
 };
 
 exports.randomChannelName = function randomChannelName() {
@@ -525,15 +526,13 @@ exports.startServer = function startServer(server, port, callback, done) {
         });
 
         request.on('end', function () {
-            if (callback) callback(incoming);
+            if (callback) callback(incoming, response);
+            response.end();
         });
-
-        response.writeHead(200);
-        response.end();
     });
 
     server.on('listening', function () {
-        console.log('server listening on port', port);
+        console.log(`server listening at ${callbackDomain}:${port}/`);
         done();
     });
 
@@ -599,6 +598,16 @@ exports.waitForData = function waitForData(actual, expected, done) {
     }, 500);
 };
 
+exports.arrayEquals = function arrayEquals(a, b) {
+    if (a === b) return true;
+    if (a == null || b == null) return false;
+    if (a.length != b.length) return false;
+    for (let i = 0; i < a.length; ++i) {
+        if (a[i] !== b[i]) return false;
+    }
+    return true;
+};
+
 exports.isRedirect = function isRedirect(response) {
     return response.statusCode >= 300 && response.statusCode <= 399;
 };
@@ -609,4 +618,43 @@ exports.followRedirectIfPresent = function followRedirectIfPresent(response) {
     } else {
         return response;
     }
+};
+
+/**
+ * This function will query the url every second and execute the clause callback
+ * until either the timeout is reached or the clause callback returns true.
+ *
+ * @param {string} url HTTP endpoint to query
+ * @param {function} clause function that is run against each response
+ * @param {number} [timeoutMS=30000] when to give up
+ * @returns {Promise}
+ */
+exports.httpGetUntil = function httpGetUntil(url, clause, timeoutMS) {
+    let started = moment().utc();
+    let timeout = moment().utc().add(timeoutMS, 'ms');
+
+    return new Promise((resolve, reject) => {
+        function loop() {
+            let now = moment.utc();
+            if (now.isSameOrAfter(timeout)) {
+                reject('timed out: ' + now.diff(started) + 'ms');
+            }
+
+            utils.httpGet(url)
+                .then(response => {
+                    if (clause(response)) {
+                        resolve(response);
+                    } else {
+                        setTimeout(loop, 1000);
+                    }
+                })
+                .catch(error => reject(error));
+        }
+
+        loop();
+    });
+};
+
+exports.noop = function noop() {
+    // do nothing
 };

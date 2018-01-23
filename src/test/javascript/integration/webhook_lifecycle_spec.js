@@ -34,26 +34,36 @@ describe(testName, function () {
 
     it('starts a callback server', function (done) {
         callbackServer = utils.startHttpServer(port, function (string) {
-            callbackItems.push(string);
+            console.log('incoming:', string);
+            let json = JSON.parse(string);
+            json.uris.forEach(uri => callbackItems.push(uri));
         }, done);
     });
 
     it('inserts items', function (done) {
         utils.postItemQ(channelResource)
             .then(function (value) {
-                postedItems.push(value.body._links.self.href);
+                let itemURI = value.body._links.self.href;
+                console.log('itemURI:', itemURI);
+                postedItems.push(itemURI);
                 return utils.postItemQ(channelResource);
             })
             .then(function (value) {
-                postedItems.push(value.body._links.self.href);
+                let itemURI = value.body._links.self.href;
+                console.log('itemURI:', itemURI);
+                postedItems.push(itemURI);
                 return utils.postItemQ(channelResource);
             })
             .then(function (value) {
-                postedItems.push(value.body._links.self.href);
+                let itemURI = value.body._links.self.href;
+                console.log('itemURI:', itemURI);
+                postedItems.push(itemURI);
                 return utils.postItemQ(channelResource);
             })
             .then(function (value) {
-                postedItems.push(value.body._links.self.href);
+                let itemURI = value.body._links.self.href;
+                console.log('itemURI:', itemURI);
+                postedItems.push(itemURI);
                 done();
             });
     });
@@ -71,9 +81,7 @@ describe(testName, function () {
         expect(callbackItems.length).toBe(4);
         expect(postedItems.length).toBe(4);
         for (var i = 0; i < callbackItems.length; i++) {
-            var parse = JSON.parse(callbackItems[i]);
-            expect(parse.uris[0]).toBe(postedItems[i]);
-            expect(parse.name).toBe(webhookName);
+            expect(callbackItems[i]).toBe(postedItems[i]);
         }
     });
 
@@ -92,7 +100,7 @@ describe(testName, function () {
                     expect(parse.channelUrl).toBe(webhookConfig.channelUrl);
                     expect(parse.transactional).toBe(webhookConfig.transactional);
                     expect(parse.name).toBe(webhookName);
-                    expect(parse.lastCompletedCallback).toBe(postedItems[3]);
+                    expect(parse.lastCompleted).toBe(postedItems[3]);
                 }
                 done();
         });

@@ -17,9 +17,6 @@ describe(__filename, function () {
                 expect(response.body.ttlDays).toEqual(0);
                 expect(response.body.keepForever).toEqual(true);
             })
-            .catch(function (error) {
-                expect(error).toBeNull();
-            })
             .finally(done);
     });
 
@@ -31,9 +28,6 @@ describe(__filename, function () {
                 expect(response.body.name).toEqual(channelName);
                 expect(response.body.ttlDays).toEqual(0);
                 expect(response.body.keepForever).toEqual(true);
-            })
-            .catch(function (error) {
-                expect(error).toBeNull();
             })
             .finally(done);
     });
