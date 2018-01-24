@@ -5,10 +5,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.model.ChannelConfig;
-import com.flightstats.hub.model.ChannelContentKey;
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.*;
 import com.flightstats.hub.rest.HalLink;
 import com.flightstats.hub.rest.Linked;
 import com.flightstats.hub.util.TimeUtil;
@@ -29,7 +26,7 @@ public class LinkBuilder {
         return uriInfo.getBaseUriBuilder().path("channel").path(channelName).build();
     }
 
-    public static URI buildItemUri(ContentKey key, URI channelUri) {
+    public static URI buildItemUri(ContentPath key, URI channelUri) {
         return buildItemUri(key.toUrl(), channelUri);
     }
 
