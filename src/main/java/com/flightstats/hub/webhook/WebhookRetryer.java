@@ -83,14 +83,17 @@ class WebhookRetryer {
                     .payload(body.toString())
                     .build();
 
-
             boolean shouldGiveUp = shouldGiveUp(attempt);
             boolean shouldTryLater = shouldTryLater(attempt);
 
             if (shouldGiveUp || shouldTryLater) {
                 logger.debug("{} {} stopping delivery before attempt #{}", attempt.getWebhook().getName(), attempt.getContentPath().toUrl(), attempt.getNumber());
                 isRetrying = false;
-                isDoneWithItem = shouldGiveUp;
+                if (shouldGiveUp) {
+                    isDoneWithItem = true;
+                    webhookError.publishToErrorChannel(attempt);
+                }
+
                 continue;
             }
 

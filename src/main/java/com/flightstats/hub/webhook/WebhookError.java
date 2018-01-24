@@ -2,6 +2,7 @@ package com.flightstats.hub.webhook;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.util.StringUtils;
@@ -99,18 +100,36 @@ class WebhookError {
         return limitChildren(webhook);
     }
 
-    public void publish(Webhook webhook) {
-        // get errors for last failure from Zookeeper
+    void publishToErrorChannel(DeliveryAttempt attempt) {
+        String errorChannelURL = attempt.getWebhook().getErrorChannelUrl();
+        if (errorChannelURL == null) return;
+        String errorChannelName = errorChannelURL.substring(errorChannelURL.lastIndexOf("/"));
 
-        String channelName = webhook.getErrorChannelUrl();
+        List<String> errors = get(attempt.getWebhook().getName());
+        if (errors.size() < 1) {
+            logger.debug("no errors found for", attempt.getWebhook().getName());
+            return;
+        }
+
+        String lastError = errors.get(errors.size() - 1);
+        int firstSpace = lastError.indexOf(" ");
+        int secondSpace = lastError.indexOf(" ", firstSpace + 1);
+        String lastErrorTime = lastError.substring(0, firstSpace);
+        String lastErrorMessage = lastError.substring(secondSpace + 1);
+
         ObjectMapper objectMapper = new ObjectMapper();
-        ObjectNode payload = objectMapper.createObjectNode();
-        payload.put("webhook", url);
-        payload.put("failedItem", url);
-        payload.put("attemptCount", number);
-        payload.put("lastAttempt", timestamp);
-        payload.put("lastError", message);
-        byte[] bytes = payload.toString().getBytes();
+        ObjectNode root = objectMapper.createObjectNode();
+//        ObjectNode links = root.putObject("_links");
+//        ObjectNode self = links.putObject("self");
+        // todo: get the error channel item uri
+//        self.put("href", uriInfo.getRequestUri().toString());
+
+        root.put("webhook", HubProperties.getAppUrl() + "webhook/" + attempt.getWebhook().getName());
+        root.put("failedItem", attempt.getWebhook().getChannelUrl() + "/" + attempt.getContentPath().toUrl());
+        root.put("numberOfAttempts", attempt.getNumber() - 1);
+        root.put("lastAttemptTime", lastErrorTime);
+        root.put("lastAttemptError", lastErrorMessage);
+        byte[] bytes = root.toString().getBytes();
         Content content = Content.builder()
                 .withContentType("application/json")
                 .withContentLength((long) bytes.length)
@@ -118,9 +137,9 @@ class WebhookError {
                 .build();
 
         try {
-            channelService.insert(channelName, content);
+            channelService.insert(errorChannelName, content);
         } catch (Exception e) {
-            logger.warn("unable to publish errors for " + webhook.getName(), e);
+            logger.warn("unable to publish errors for " + attempt.getWebhook().getName(), e);
         }
     }
 
