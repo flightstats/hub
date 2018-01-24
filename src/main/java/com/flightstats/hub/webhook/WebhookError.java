@@ -119,11 +119,6 @@ class WebhookError {
 
         ObjectMapper objectMapper = new ObjectMapper();
         ObjectNode root = objectMapper.createObjectNode();
-//        ObjectNode links = root.putObject("_links");
-//        ObjectNode self = links.putObject("self");
-        // todo: get the error channel item uri
-//        self.put("href", uriInfo.getRequestUri().toString());
-
         root.put("webhook", HubProperties.getAppUrl() + "webhook/" + attempt.getWebhook().getName());
         root.put("failedItem", attempt.getWebhook().getChannelUrl() + "/" + attempt.getContentPath().toUrl());
         root.put("numberOfAttempts", attempt.getNumber() - 1);
