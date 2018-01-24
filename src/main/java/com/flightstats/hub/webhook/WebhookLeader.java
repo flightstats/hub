@@ -145,7 +145,7 @@ class WebhookLeader implements Lockable {
         if (webhook.getTtlMinutes() > 0) {
             DateTime ttlTime = TimeUtil.now().minusMinutes(webhook.getTtlMinutes());
             if (attempt.getContentPath().getTime().isBefore(ttlTime)) {
-                String message = String.format("%s is before %s", attempt.getContentPath().toUrl(), ttlTime);
+                String message = String.format("%s is before webhook ttl %s", attempt.getContentPath().toUrl(), ttlTime);
                 logger.debug(webhook.getName(), message);
                 webhookError.add(webhook.getName(), new DateTime() + " " + message);
                 return true;
