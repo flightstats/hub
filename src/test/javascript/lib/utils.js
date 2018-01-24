@@ -627,9 +627,10 @@ exports.followRedirectIfPresent = function followRedirectIfPresent(response) {
  * @param {string} url HTTP endpoint to query
  * @param {function} clause function that is run against each response
  * @param {number} [timeoutMS=30000] when to give up
+ * @param {number} [delayMS=1000] how long to wait between attempts
  * @returns {Promise}
  */
-exports.httpGetUntil = function httpGetUntil(url, clause, timeoutMS) {
+exports.httpGetUntil = function httpGetUntil(url, clause, timeoutMS, delayMS) {
     let started = moment().utc();
     let timeout = moment().utc().add(timeoutMS || 30000, 'ms');
 
@@ -645,7 +646,7 @@ exports.httpGetUntil = function httpGetUntil(url, clause, timeoutMS) {
                     if (clause(response)) {
                         resolve(response);
                     } else {
-                        setTimeout(loop, 1000);
+                        setTimeout(loop, delayMS || 1000);
                     }
                 })
                 .catch(error => reject(error));
