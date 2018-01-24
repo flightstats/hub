@@ -631,7 +631,7 @@ exports.followRedirectIfPresent = function followRedirectIfPresent(response) {
  */
 exports.httpGetUntil = function httpGetUntil(url, clause, timeoutMS) {
     let started = moment().utc();
-    let timeout = moment().utc().add(timeoutMS, 'ms');
+    let timeout = moment().utc().add(timeoutMS || 30000, 'ms');
 
     return new Promise((resolve, reject) => {
         function loop() {
