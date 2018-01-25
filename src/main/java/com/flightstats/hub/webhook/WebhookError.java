@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import static com.flightstats.hub.util.RequestUtils.getChannelName;
+
 @Singleton
 class WebhookError {
     private final static Logger logger = LoggerFactory.getLogger(WebhookError.class);
@@ -101,9 +103,7 @@ class WebhookError {
     }
 
     void publishToErrorChannel(DeliveryAttempt attempt) {
-        String errorChannelURL = attempt.getWebhook().getErrorChannelUrl();
-        if (errorChannelURL == null) return;
-        String errorChannelName = errorChannelURL.substring(errorChannelURL.lastIndexOf("/"));
+        if (attempt.getWebhook().getErrorChannelUrl() == null) return;
 
         List<String> errors = get(attempt.getWebhook().getName());
         if (errors.size() < 1) {
@@ -111,20 +111,8 @@ class WebhookError {
             return;
         }
 
-        String lastError = errors.get(errors.size() - 1);
-        int firstSpace = lastError.indexOf(" ");
-        int secondSpace = lastError.indexOf(" ", firstSpace + 1);
-        String lastErrorTime = lastError.substring(0, firstSpace);
-        String lastErrorMessage = lastError.substring(secondSpace + 1);
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        ObjectNode root = objectMapper.createObjectNode();
-        root.put("webhook", HubHost.getLocalHttpNameUri() + "/webhook/" + attempt.getWebhook().getName());
-        root.put("failedItem", attempt.getWebhook().getChannelUrl() + "/" + attempt.getContentPath().toUrl());
-        root.put("numberOfAttempts", attempt.getNumber() - 1);
-        root.put("lastAttemptTime", lastErrorTime);
-        root.put("lastAttemptError", lastErrorMessage);
-        byte[] bytes = root.toString().getBytes();
+        String error = errors.get(errors.size() - 1);
+        byte[] bytes = buildPayload(attempt, error);
         Content content = Content.builder()
                 .withContentType("application/json")
                 .withContentLength((long) bytes.length)
@@ -132,10 +120,31 @@ class WebhookError {
                 .build();
 
         try {
-            channelService.insert(errorChannelName, content);
+            channelService.insert(getChannelName(attempt.getWebhook().getErrorChannelUrl()), content);
         } catch (Exception e) {
             logger.warn("unable to publish errors for " + attempt.getWebhook().getName(), e);
         }
+    }
+
+    private byte[] buildPayload(DeliveryAttempt attempt, String error) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode root = objectMapper.createObjectNode();
+        root.put("webhook", HubHost.getLocalHttpNameUri() + "/webhook/" + attempt.getWebhook().getName());
+        root.put("failedItem", attempt.getWebhook().getChannelUrl() + "/" + attempt.getContentPath().toUrl());
+        root.put("numberOfAttempts", attempt.getNumber() - 1);
+        root.put("lastAttemptTime", extractTimestamp(error));
+        root.put("lastAttemptError", extractMessage(error));
+        return root.toString().getBytes();
+    }
+
+    private String extractTimestamp(String error) {
+        return error.substring(0, error.indexOf(" "));
+    }
+
+    private String extractMessage(String error) {
+        int firstSpace = error.indexOf(" ");
+        int secondSpace = error.indexOf(" ", firstSpace + 1);
+        return error.substring(secondSpace + 1);
     }
 
     private static class Error {
