@@ -97,9 +97,8 @@ describe(__filename, () => {
     let giveUpTime;
 
     it('waits for the webhook to give up', (done) => {
-        let timeoutMS = 10 * 1000;
         let clause = (response) => response.body.errors.filter(e => e.includes('max attempts reached')).length > 0;
-        utils.httpGetUntil(webhookURL, clause, timeoutMS)
+        utils.httpGetUntil(webhookURL, clause)
             .then(response => {
                 giveUpTime = moment.utc();
                 console.log('giveUpTime:', giveUpTime.toISOString());
@@ -111,9 +110,8 @@ describe(__filename, () => {
     it('verifies an error was posted to the error channel', (done) => {
         expect(postedTime).toBeDefined();
         expect(giveUpTime).toBeDefined();
-        let timeoutMS = 10 * 1000;
         let clause = (response) => response.statusCode === 303;
-        utils.httpGetUntil(`${errorChannelURL}/latest`, clause, timeoutMS)
+        utils.httpGetUntil(`${errorChannelURL}/latest`, clause)
             .then(utils.followRedirectIfPresent)
             .then(response => {
                 console.log(response.body);
@@ -124,6 +122,7 @@ describe(__filename, () => {
                 expect(moment(response.body.lastAttemptTime)).toBeLessThan(giveUpTime);
                 expect(response.body.lastAttemptError).toEqual("max attempts reached (1)");
             })
+            .catch(error => done.fail(error))
             .finally(done);
     });
 
