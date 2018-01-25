@@ -13,19 +13,13 @@ class RegulatorStrategy {
         RegulatorResults.RegulatorResultsBuilder builder = RegulatorResults.builder()
                 .threads(state.getThreads())
                 .sleepTime(state.getSleep());
-        if (state.getThreads() == 1) {
-            if (state.getRatio() >= 1) {
-                long sleepTime = state.getSize() * state.getSleep();
-                long runTime = state.getEnd() - state.getStart() - sleepTime;
-                if (runTime > state.getGoalMillis()) {
-                    setThreads(state, builder, (double) runTime / state.getGoalMillis());
-                } else {
-                    builder.sleepTime((state.getGoalMillis() - runTime) / state.getSize());
-                }
+        if (state.getThreads() == 1 && state.getRatio() >= 1) {
+            long sleepTime = state.getSize() * state.getSleep();
+            long runTime = state.getEnd() - state.getStart() - sleepTime;
+            if (runTime > state.getGoalMillis()) {
+                setThreads(state, builder, (double) runTime / state.getGoalMillis());
             } else {
-                long difference = state.getGoalMillis() - (state.getEnd() - state.getStart());
-                long additionalSleep = difference / state.getSize();
-                builder.sleepTime(state.getSleep() + additionalSleep);
+                builder.sleepTime((state.getGoalMillis() - runTime) / state.getSize());
             }
         } else {
             setThreads(state, builder, state.getRatio());
@@ -44,6 +38,9 @@ class RegulatorStrategy {
     private static void setThreads(ExecutorState state, RegulatorResults.RegulatorResultsBuilder builder, double ratio) {
         int threads = (int) Math.ceil(ratio * state.getThreads());
         builder.threads(threads);
-        builder.sleepTime(0);
+        double factor = (double) threads / state.getSize();
+        double additionalSleep = ((state.getGoalMillis() - (state.getEnd() - state.getStart())) * factor);
+        long newSleep = (long) Math.max(0, state.getSleep() + additionalSleep);
+        builder.sleepTime(newSleep);
     }
 }
