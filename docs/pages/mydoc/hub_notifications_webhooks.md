@@ -46,6 +46,19 @@ delete the callback first.
 * `maxAttempts` is optional and defaults to 0. If maxAttempts is zero, the webhook will always retry a failed item.  
 If maxAttempts is greater than zero, the hub will only make that many attempts for a failed item. 
 
+* `errorChannelUrl` is optional and defaults to nothing.
+If errorChannelUrl is defined, and the webhook gives up on delivery of an item, the Hub will attempt to publish a JSON payload with details on the failure.
+
+    ```json
+    {
+        "webhook": "http://hub/webhook/coffeeDelivery",
+        "failedItem": "http://hub/channel/stumptown/2015/02/06/22/28/43/239/s03ub2",
+        "numberOfAttempts": 10,
+        "lastAttemptTime": "2018-01-25T18:33:17.880Z",
+        "lastAttemptError": "java.net.SocketTimeoutException: Read timed out"
+    }
+    ```
+
 ## List existing webhooks {#list}
 
 `GET http://hub/webhook`
