@@ -115,8 +115,9 @@ describe(__filename, () => {
             .then(utils.followRedirectIfPresent)
             .then(response => {
                 console.log(response.body);
-                expect(response.body.webhook).toEqual(webhookURL);
-                expect(response.body.failedItem).toEqual(postedItems[1]);
+                expect(response.body.webhookUrl).toEqual(webhookURL);
+                expect(response.body.failedItemUrl).toEqual(postedItems[1]);
+                expect(response.body.callbackUrl).toEqual(callbackServerURL);
                 expect(response.body.numberOfAttempts).toEqual(1);
                 expect(moment(response.body.lastAttemptTime)).toBeGreaterThan(postedTime);
                 expect(moment(response.body.lastAttemptTime)).toBeLessThan(giveUpTime);

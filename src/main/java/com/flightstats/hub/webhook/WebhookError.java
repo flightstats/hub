@@ -129,8 +129,9 @@ class WebhookError {
     private byte[] buildPayload(DeliveryAttempt attempt, String error) {
         ObjectMapper objectMapper = new ObjectMapper();
         ObjectNode root = objectMapper.createObjectNode();
-        root.put("webhook", HubHost.getLocalHttpNameUri() + "/webhook/" + attempt.getWebhook().getName());
-        root.put("failedItem", attempt.getWebhook().getChannelUrl() + "/" + attempt.getContentPath().toUrl());
+        root.put("webhookUrl", HubHost.getLocalHttpNameUri() + "/webhook/" + attempt.getWebhook().getName());
+        root.put("failedItemUrl", attempt.getWebhook().getChannelUrl() + "/" + attempt.getContentPath().toUrl());
+        root.put("callbackUrl", attempt.getWebhook().getCallbackUrl());
         root.put("numberOfAttempts", attempt.getNumber() - 1);
         root.put("lastAttemptTime", extractTimestamp(error));
         root.put("lastAttemptError", extractMessage(error));

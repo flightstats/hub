@@ -51,8 +51,9 @@ If errorChannelUrl is defined, and the webhook gives up on delivery of an item, 
 
     ```json
     {
-        "webhook": "http://hub/webhook/coffeeDelivery",
-        "failedItem": "http://hub/channel/stumptown/2015/02/06/22/28/43/239/s03ub2",
+        "webhookUrl": "http://hub/webhook/coffeeDelivery",
+        "failedItemUrl": "http://hub/channel/stumptown/2015/02/06/22/28/43/239/s03ub2",
+        "callbackUrl": "http://client/path/callback",
         "numberOfAttempts": 10,
         "lastAttemptTime": "2018-01-25T18:33:17.880Z",
         "lastAttemptError": "java.net.SocketTimeoutException: Read timed out"
