@@ -43,6 +43,9 @@ delete the callback first.
 
 * `ttlMinutes` is optional and defaults to 0.  If ttlMinutes is greater than 0, the hub will not attempt to send an item which is older than the ttl.
 
+* `maxAttempts` is optional and defaults to 0. If maxAttempts is zero, the webhook will always retry a failed item.  
+If maxAttempts is greater than zero, the hub will only make that many attempts for a failed item. 
+
 ## List existing webhooks {#list}
 
 `GET http://hub/webhook`
