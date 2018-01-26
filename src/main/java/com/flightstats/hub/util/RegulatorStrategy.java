@@ -1,5 +1,6 @@
 package com.flightstats.hub.util;
 
+import com.flightstats.hub.app.HubProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +37,8 @@ class RegulatorStrategy {
     }
 
     private static void setThreads(ExecutorState state, RegulatorResults.RegulatorResultsBuilder builder, double ratio) {
-        int threads = (int) Math.ceil(ratio * state.getThreads());
+        int maxThreads = HubProperties.getProperty("RegulatorStrategy.maxThreads", 20);
+        int threads = Math.min(maxThreads, (int) Math.ceil(ratio * state.getThreads()));
         builder.threads(threads);
         double factor = (double) threads / state.getSize();
         double additionalSleep = ((state.getGoalMillis() - (state.getEnd() - state.getStart())) * factor);
