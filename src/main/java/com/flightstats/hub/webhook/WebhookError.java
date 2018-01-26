@@ -2,7 +2,7 @@ package com.flightstats.hub.webhook;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.util.StringUtils;
@@ -129,7 +129,7 @@ class WebhookError {
     private byte[] buildPayload(DeliveryAttempt attempt, String error) {
         ObjectMapper objectMapper = new ObjectMapper();
         ObjectNode root = objectMapper.createObjectNode();
-        root.put("webhookUrl", HubProperties.getAppUrl() + "/webhook/" + attempt.getWebhook().getName());
+        root.put("webhookUrl", HubHost.getLocalNamePort() + "/webhook/" + attempt.getWebhook().getName());
         root.put("failedItemUrl", attempt.getWebhook().getChannelUrl() + "/" + attempt.getContentPath().toUrl());
         root.put("callbackUrl", attempt.getWebhook().getCallbackUrl());
         root.put("numberOfAttempts", attempt.getNumber() - 1);
