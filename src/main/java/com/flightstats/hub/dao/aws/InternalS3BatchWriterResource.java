@@ -15,13 +15,13 @@ import static javax.ws.rs.core.Response.ok;
 public class InternalS3BatchWriterResource {
 
     private final static Logger logger = LoggerFactory.getLogger(InternalS3BatchWriterResource.class);
-    private static final S3BatchWriter s3BatchWriter = HubProvider.getInstance(S3BatchWriter.class);
+    private static final S3BatchProcessor s3BatchProcessor = HubProvider.getInstance(S3BatchProcessor.class);
 
     @POST
     @Path("/{channel}")
     public Response post(@PathParam("channel") String channel) {
         try {
-            s3BatchWriter.writeChannel(channel);
+            s3BatchProcessor.writeChannel(channel);
             return ok().build();
         } catch (Exception e) {
             logger.warn("unable to complete verification of " + channel, e);
