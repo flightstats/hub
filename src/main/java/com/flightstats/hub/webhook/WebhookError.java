@@ -2,9 +2,9 @@ package com.flightstats.hub.webhook;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.Content;
+import com.flightstats.hub.util.RequestUtils;
 import com.flightstats.hub.util.StringUtils;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Inject;
@@ -129,13 +129,19 @@ class WebhookError {
     private byte[] buildPayload(DeliveryAttempt attempt, String error) {
         ObjectMapper objectMapper = new ObjectMapper();
         ObjectNode root = objectMapper.createObjectNode();
-        root.put("webhookUrl", HubHost.getLocalNamePort() + "/webhook/" + attempt.getWebhook().getName());
+        root.put("webhookUrl", buildWebhookUrl(attempt));
         root.put("failedItemUrl", attempt.getWebhook().getChannelUrl() + "/" + attempt.getContentPath().toUrl());
         root.put("callbackUrl", attempt.getWebhook().getCallbackUrl());
         root.put("numberOfAttempts", attempt.getNumber() - 1);
         root.put("lastAttemptTime", extractTimestamp(error));
         root.put("lastAttemptError", extractMessage(error));
         return root.toString().getBytes();
+    }
+
+    private String buildWebhookUrl(DeliveryAttempt attempt) {
+        // todo - workaround for HubHost.getLocalNamePort and HubProperties.getAppUrl not returning usable URLs for dockerized single hub
+        String host = RequestUtils.getHost(attempt.getWebhook().getChannelUrl());
+        return host + "/webhook/" + attempt.getWebhook().getName();
     }
 
     private String extractTimestamp(String error) {
