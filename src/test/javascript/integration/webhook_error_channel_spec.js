@@ -23,12 +23,6 @@ describe(__filename, () => {
             .finally(done);
     });
 
-    it('creates an error channel', (done) => {
-        utils.httpPut(errorChannelURL)
-            .then(response => expect(response.statusCode).toEqual(201))
-            .finally(done);
-    });
-
     it('creates a callback server', (done) => {
         callbackServer = utils.startHttpServer(callbackServerPort, (request) => {
             let json = JSON.parse(request);
@@ -48,6 +42,18 @@ describe(__filename, () => {
         };
         utils.httpPut(webhookURL, headers, payload)
             .then(response => expect(response.statusCode).toEqual(201))
+            .finally(done);
+    });
+
+    it('verifies the error channel was created', (done) => {
+        utils.httpGet(`${hubUrlBase}/channel`)
+            .then(response => {
+                expect(response.body._links).toBeDefined();
+                expect(response.body._links.channels).toBeDefined();
+                let channels = response.body._links.channels;
+                let channelURL = channels.find(channel => channel.href === errorChannelURL);
+                expect(channelURL).toBeDefined();
+            })
             .finally(done);
     });
 
