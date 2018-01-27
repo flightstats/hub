@@ -46,6 +46,7 @@ public class DynamoWebhookDao implements Dao<Webhook> {
         item.put("maxWaitMinutes", new AttributeValue().withN(String.valueOf(webhook.getMaxWaitMinutes())));
         item.put("callbackTimeoutSeconds", new AttributeValue().withN(String.valueOf(webhook.getCallbackTimeoutSeconds())));
         item.put("maxAttempts", new AttributeValue().withN(String.valueOf(webhook.getMaxAttempts())));
+        item.put("errorChannelUrl", new AttributeValue().withN(String.valueOf(webhook.getErrorChannelUrl())));
         if (!StringUtils.isEmpty(webhook.getTagUrl())) {
             item.put("tagUrl", new AttributeValue(webhook.getTagUrl()));
         }
