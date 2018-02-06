@@ -46,6 +46,9 @@ public class DynamoWebhookDao implements Dao<Webhook> {
         item.put("maxWaitMinutes", new AttributeValue().withN(String.valueOf(webhook.getMaxWaitMinutes())));
         item.put("callbackTimeoutSeconds", new AttributeValue().withN(String.valueOf(webhook.getCallbackTimeoutSeconds())));
         item.put("maxAttempts", new AttributeValue().withN(String.valueOf(webhook.getMaxAttempts())));
+        if (!StringUtils.isEmpty(webhook.getErrorChannelUrl())) {
+            item.put("errorChannelUrl", new AttributeValue(webhook.getErrorChannelUrl()));
+        }
         if (!StringUtils.isEmpty(webhook.getTagUrl())) {
             item.put("tagUrl", new AttributeValue(webhook.getTagUrl()));
         }
@@ -107,6 +110,9 @@ public class DynamoWebhookDao implements Dao<Webhook> {
         }
         if (item.containsKey("maxAttempts")) {
             builder.maxAttempts(Integer.valueOf(item.get("maxAttempts").getN()));
+        }
+        if (item.containsKey("errorChannelUrl")) {
+            builder.errorChannelUrl(item.get("errorChannelUrl").getS());
         }
         return builder.build().withDefaults();
     }

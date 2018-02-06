@@ -110,6 +110,7 @@ public class WebhookResource {
             root.put("maxWaitMinutes", webhook.getMaxWaitMinutes());
             root.put("callbackTimeoutSeconds", webhook.getCallbackTimeoutSeconds());
             root.put("maxAttempts", webhook.getMaxAttempts());
+            root.put("errorChannelUrl", webhook.getErrorChannelUrl());
             if (webhook.isTagPrototype()) {
                 root.put("tagUrl", webhook.getTagUrl());
                 root.put("isTagPrototype", webhook.isTagPrototype());
