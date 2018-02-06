@@ -23,6 +23,17 @@ import java.util.TreeMap;
 
 import static com.flightstats.hub.util.RequestUtils.getChannelName;
 
+/**
+ * This class is responsible for creation and management of webhook error strings.
+ *
+ * Format: "{timestamp} {contentKey} {message}"
+ *
+ * Example: "2018-01-02T03:04:05.006Z 2018/01/02/03/04/05/006/abcdef 400 Bad Request"
+ *  - timestamp: 2018-01-02T03:04:05.006Z
+ *  - contentKey: 2018/01/02/03/04/05/006/abcdef
+ *  - message: 400 Bad Request
+ */
+
 @Singleton
 class WebhookError {
     private final static Logger logger = LoggerFactory.getLogger(WebhookError.class);
