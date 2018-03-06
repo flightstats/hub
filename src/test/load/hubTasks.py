@@ -432,6 +432,7 @@ class HubTasks:
 
     @staticmethod
     def verify_ordered(channel, incoming_uri, obj, name):
+        logger.info("verified_ordered - channel:{0}, incoming_uri:{1}, obj:{2}, name:{3}", channel, incoming_uri, obj, name)
         if skip_verify_ordered:
             logger.debug("skipping verify_order")
             return
