@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 from flask import request, jsonify
 from locust import events
 
-logger = logging.getLogger('stdout')
+logger = logging.getLogger(__name__)
 
 webhookCallbacks = {}
 webhookCallbackLocks = {}
@@ -208,20 +208,20 @@ class HubTasks:
         return url.split("/channel/", 1)[1]
 
     def on_message(self, ws, message):
-        logger.debug("ws %s", message)
-        shortHref = HubTasks.getShortPath(message)
-        HubTasks.verify_ordered(self.channel, shortHref, websockets, "websocket")
+        logger.info('websocket | ' + self.channel + ' | message: ' + message)
+        content_key = HubTasks.getShortPath(message)
+        HubTasks.verify_ordered(self.channel, content_key, websockets, "websocket")
 
     def on_close(self, ws):
-        logger.info("closing ws %s", self.channel)
+        logger.info('websocket | ' + self.channel + ' | closing')
         websockets[self.channel]["open"] = False
 
     def on_error(self, ws, error):
-        logger.info("error ws %s", self.channel)
+        logger.info('websocket | ' + self.channel + ' | error: ' + error)
         websockets[self.channel]["open"] = False
 
     def _load_metadata(self):
-        print("Fetching channel metadata...")
+        logger.info("Fetching channel metadata...")
         r, c = self._http.request(self.client.base_url + "/channel/" + self.channel, 'GET')
         return json.loads(c)
 
@@ -432,7 +432,6 @@ class HubTasks:
 
     @staticmethod
     def verify_ordered(channel, incoming_uri, obj, name):
-        logger.info("verified_ordered - channel:{0}, incoming_uri:{1}, obj:{2}, name:{3}", channel, incoming_uri, obj, name)
         if skip_verify_ordered:
             logger.debug("skipping verify_order")
             return
