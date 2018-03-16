@@ -1,0 +1,4 @@
+locustio
+pyzmq
+websocket-client
+httplib2
