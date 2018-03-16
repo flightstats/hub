@@ -99,7 +99,9 @@ class HubTasks:
             "heartbeat": config['heartbeat']
         }
         wh_config.update(overrides)
-        self.client.put(webhook_name(self.channel),
+        uri = webhook_name(self.channel)
+        logger.info('PUT ' + uri + ' ' + json.dumps(wh_config))
+        self.client.put(uri,
                         data=json.dumps(wh_config),
                         headers={"Content-Type": "application/json"},
                         name="webhook")
@@ -438,30 +440,26 @@ class HubTasks:
 
         if obj[channel]["data"][0] == incoming_uri:
             (obj[channel]["data"]).remove(incoming_uri)
-            events.request_success.fire(request_type=name, name="ordered", response_time=1,
-                                        response_length=1)
+            events.request_success.fire(request_type=name, name="ordered", response_time=1, response_length=1)
         else:
-            events.request_failure.fire(request_type=name, name="ordered", response_time=1,
-                                        exception=-1)
             webhookCallbacks[channel]["missing"].append(str(incoming_uri))
             if incoming_uri in obj[channel]["data"]:
-                logger.info(name + " item in the wrong order " + str(incoming_uri) + " data " +
-                            str(obj[channel]["data"]))
+                events.request_failure.fire(request_type=name, name="ordered", response_time=1, exception='item in wrong order')
+                logger.info('item in wrong order: ' + incoming_uri + ' in ' + json.dumps(obj[channel]['data']))
                 (obj[channel]["data"]).remove(incoming_uri)
             else:
-                logger.info("missing item " + str(incoming_uri))
+                events.request_failure.fire(request_type=name, name="ordered", response_time=1, exception='item missing')
+                logger.info('item missing: ' + incoming_uri + ' in ' + json.dumps(obj[channel]['data']))
 
     @staticmethod
     def verify_parallel(channel, incoming_uri):
         if incoming_uri in webhookCallbacks[channel]["data"]:
             (webhookCallbacks[channel]["data"]).remove(incoming_uri)
-            events.request_success.fire(request_type="webhook", name="parallel", response_time=1,
-                                        response_length=1)
+            events.request_success.fire(request_type="webhook", name="parallel", response_time=1, response_length=1)
         else:
             logger.info("missing parallel item " + str(incoming_uri))
             webhookCallbacks[channel]["missing"].append(str(incoming_uri))
-            events.request_failure.fire(request_type="webhook", name="parallel", response_time=1,
-                                        exception=-1)
+            events.request_failure.fire(request_type="webhook", name="parallel", response_time=1, exception='item missing')
 
     @staticmethod
     def get_channels():

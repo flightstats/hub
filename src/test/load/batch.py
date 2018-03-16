@@ -77,6 +77,7 @@ class VerifierTasks(TaskSet):
 
     @web.app.route("/callback/<channel>", methods=['GET', 'POST'])
     def callback(channel):
+        print(request.method + ' /callback/' + channel + ' - ' + request.get_data())
         return HubTasks.callback(channel)
 
 
