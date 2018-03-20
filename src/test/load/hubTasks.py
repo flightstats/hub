@@ -206,12 +206,15 @@ class HubTasks:
         thread.start_new_thread(ws.run_forever, ())
 
     @staticmethod
-    def getShortPath(url):
-        return url.split("/channel/", 1)[1]
+    def get_content_key(url):
+        url_components = url.split("/channel/", 1)
+        if not len(url_components) == 2:
+            raise 'Unable to determine content key for "' + url + '"'
+        return url_components[1]
 
     def on_message(self, ws, message):
         logger.info('websocket | ' + self.channel + ' | message: ' + message)
-        content_key = HubTasks.getShortPath(message)
+        content_key = HubTasks.get_content_key(message)
         HubTasks.verify_ordered(self.channel, content_key, websockets, "websocket")
 
     def on_close(self, ws):
@@ -262,11 +265,11 @@ class HubTasks:
         return href
 
     def append_href(self, href, obj=webhookCallbacks):
-        shortHref = HubTasks.getShortPath(href)
+        content_key = HubTasks.get_content_key(href)
         try:
             webhookCallbackLocks[self.channel]["lock"].acquire()
-            obj[self.channel]["data"].append(shortHref)
-            logger.debug('wrote %s', shortHref)
+            obj[self.channel]["data"].append(content_key)
+            logger.debug('wrote %s', content_key)
         finally:
             webhookCallbackLocks[self.channel]["lock"].release()
 
@@ -488,12 +491,12 @@ class HubTasks:
                 logger.info("incoming uri before locust tests started " + str(incoming_uri))
                 return
             try:
-                shortHref = HubTasks.getShortPath(incoming_uri)
+                content_key = HubTasks.get_content_key(incoming_uri)
                 webhookCallbackLocks[channel]["lock"].acquire()
                 if webhookCallbacks[channel]["parallel"] == 1:
-                    HubTasks.verify_ordered(channel, shortHref, webhookCallbacks, "webhook")
+                    HubTasks.verify_ordered(channel, content_key, webhookCallbacks, "webhook")
                 else:
-                    HubTasks.verify_parallel(channel, shortHref)
+                    HubTasks.verify_parallel(channel, content_key)
             finally:
                 webhookCallbackLocks[channel]["lock"].release()
 
