@@ -271,7 +271,6 @@ class HubTasks:
         try:
             webhookCallbackLocks[self.channel]["lock"].acquire()
             obj[self.channel]["data"].append(content_key)
-            logger.debug(obj[self.channel]['data'])
         finally:
             webhookCallbackLocks[self.channel]["lock"].release()
 
