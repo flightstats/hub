@@ -1,6 +1,7 @@
 # locust.py
 
 from locust import HttpLocust, TaskSet, task, web
+from flask import request
 
 from hubTasks import HubTasks
 from hubUser import HubUser
