@@ -13,6 +13,7 @@ from flask import request, jsonify
 from locust import events
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 webhookCallbacks = {}
 webhookCallbackLocks = {}
