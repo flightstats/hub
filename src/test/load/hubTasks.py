@@ -51,7 +51,6 @@ class HubTasks:
         webhookConfig['host'] = HubTasks.host
         webhookConfig['ip'] = socket.gethostbyname(socket.getfqdn())
         logger.info('webhookConfig %s', webhookConfig)
-        print webhookConfig
 
         HubTasks.channelNum += 1
         self.number = HubTasks.channelNum
@@ -200,7 +199,7 @@ class HubTasks:
         self._http = httplib2.Http()
         meta = self._load_metadata()
         self.ws_uri = meta['_links']['ws']['href']
-        print self.ws_uri
+        logger.info(self.ws_uri)
         ws = websocket.WebSocketApp(self.ws_uri,
                                     on_message=self.on_message,
                                     on_close=self.on_close,
