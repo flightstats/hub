@@ -443,7 +443,7 @@ class HubTasks:
             return
 
         if not obj or not obj[channel] or not obj[channel]['data'] or not obj[channel]['data'][0]:
-            raise AssertionError(obj)
+            raise AssertionError(name, channel, incoming_uri, obj)
 
         if obj[channel]["data"][0] == incoming_uri:
             (obj[channel]["data"]).remove(incoming_uri)
