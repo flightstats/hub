@@ -1,10 +1,13 @@
 # locust.py
 
+import logging
 from locust import HttpLocust, TaskSet, task, web
 from flask import request
 
 from hubTasks import HubTasks
 from hubUser import HubUser
+
+logger = logging.getLogger(__name__)
 
 
 class BatchUser(HubUser):
@@ -74,11 +77,12 @@ class VerifierTasks(TaskSet):
 
     @web.app.route("/callback", methods=['GET'])
     def get_channels():
+        logger.info(request.remote_addr + ' | ' + request.method + ' | /callback')
         return HubTasks.get_channels()
 
     @web.app.route("/callback/<channel>", methods=['GET', 'POST'])
     def callback(channel):
-        print(request.method + ' /callback/' + channel + ' - ' + request.get_data().strip())
+        logger.info(request.remote_addr + ' | ' + request.method + ' | /callback/' + channel + ' | ' + request.get_data().strip())
         return HubTasks.callback(channel)
 
 
