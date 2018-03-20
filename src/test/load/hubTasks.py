@@ -448,6 +448,9 @@ class HubTasks:
             (obj[channel]["data"]).remove(incoming_uri)
             events.request_success.fire(request_type=name, name="ordered", response_time=1, response_length=1)
         else:
+            if not webhookCallbacks or not webhookCallbacks[channel] or not webhookCallbacks[channel]["missing"]:
+                raise AssertionError(webhookCallbacks)
+
             webhookCallbacks[channel]["missing"].append(str(incoming_uri))
             if incoming_uri in obj[channel]["data"]:
                 events.request_failure.fire(request_type=name, name="ordered", response_time=1, exception='item in wrong order')
