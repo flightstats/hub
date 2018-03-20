@@ -13,7 +13,7 @@ from flask import request, jsonify
 from locust import events
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 webhookCallbacks = {}
 webhookCallbackLocks = {}
@@ -214,18 +214,22 @@ class HubTasks:
             raise ValueError('Unable to determine content key for "' + url + '"')
         return url_components[1]
 
+    def on_open(self, ws):
+        logger.info('websocket | ' + self.channel + ' | opened')
+        websockets[self.channel]['open'] = True
+
+    def on_close(self, ws):
+        logger.info('websocket | ' + self.channel + ' | closed')
+        websockets[self.channel]['open'] = False
+
     def on_message(self, ws, message):
-        logger.info('websocket | ' + self.channel + ' | message: ' + message)
+        logger.debug('websocket | ' + self.channel + ' | message: ' + message)
         content_key = HubTasks.get_content_key(message)
         HubTasks.verify_ordered(self.channel, content_key, websockets, "websocket")
 
-    def on_close(self, ws):
-        logger.info('websocket | ' + self.channel + ' | closing')
-        websockets[self.channel]["open"] = False
-
     def on_error(self, ws, error):
-        logger.info('websocket | ' + self.channel + ' | error: ' + error)
-        websockets[self.channel]["open"] = False
+        logger.error('websocket | ' + self.channel + ' | error: ' + error)
+        websockets[self.channel]['open'] = False
 
     def _load_metadata(self):
         logger.info("Fetching channel metadata...")
