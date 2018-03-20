@@ -267,10 +267,11 @@ class HubTasks:
 
     def append_href(self, href, obj=webhookCallbacks):
         content_key = HubTasks.get_content_key(href)
+        logger.debug('Appending content key: ' + content_key)
         try:
             webhookCallbackLocks[self.channel]["lock"].acquire()
             obj[self.channel]["data"].append(content_key)
-            logger.debug('wrote %s', content_key)
+            logger.debug(obj[self.channel]['data'])
         finally:
             webhookCallbackLocks[self.channel]["lock"].release()
 
