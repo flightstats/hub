@@ -209,7 +209,7 @@ class HubTasks:
     def get_content_key(url):
         url_components = url.split("/channel/", 1)
         if not len(url_components) == 2:
-            raise 'Unable to determine content key for "' + url + '"'
+            raise ValueError('Unable to determine content key for "' + url + '"')
         return url_components[1]
 
     def on_message(self, ws, message):
@@ -440,6 +440,9 @@ class HubTasks:
         if skip_verify_ordered:
             logger.debug("skipping verify_order")
             return
+
+        if not obj or not obj[channel] or not obj[channel]['data'] or not obj[channel]['data'][0]:
+            raise AssertionError(obj)
 
         if obj[channel]["data"][0] == incoming_uri:
             (obj[channel]["data"]).remove(incoming_uri)
