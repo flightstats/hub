@@ -555,14 +555,14 @@ def ensure_store_exists(store):
 
 def ensure_store_channel_exists(store, channel):
     ensure_store_exists(store)
-    if not store[channel]:
+    if channel not in store:
         raise ValueError('no store[' + channel + '] found', store)
 
 
 def ensure_store_channel_property_exists(store, channel, prop):
     ensure_store_exists(store)
     ensure_store_channel_exists(store, channel)
-    if not store[channel][prop]:
+    if prop not in store[channel]:
         raise ValueError('no store[' + channel + '][' + prop + '] found', store[channel])
 
 
