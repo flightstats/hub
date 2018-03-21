@@ -227,7 +227,7 @@ class HubTasks:
         HubTasks.verify_ordered(self.channel, content_key, websockets, "websocket")
 
     def on_error(self, ws, error):
-        logger.error('websocket | ' + self.channel + ' | error: ' + error)
+        logger.error('websocket | ' + self.channel + ' | error: ' + str(error))
         websockets[self.channel]['open'] = False
 
     def _load_metadata(self):
