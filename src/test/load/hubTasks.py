@@ -447,15 +447,13 @@ class HubTasks:
             logger.debug("skipping verify_order")
             return
 
-        ensure_store_has_data(obj, channel)
-
+        ensure_store_channel_property_has_values(obj, channel, 'data')
         if obj[channel]["data"][0] == incoming_uri:
             (obj[channel]["data"]).remove(incoming_uri)
             events.request_success.fire(request_type=name, name="ordered", response_time=1, response_length=1)
         else:
 
-            ensure_store_has_missing(obj, channel)
-
+            ensure_store_channel_property_exists(obj, channel, 'missing')
             webhookCallbacks[channel]["missing"].append(str(incoming_uri))
             if incoming_uri in obj[channel]["data"]:
                 events.request_failure.fire(request_type=name, name="ordered", response_time=1, exception='item in wrong order')
@@ -513,6 +511,7 @@ class HubTasks:
 
     @staticmethod
     def heartbeat(channel, incoming_json):
+        ensure_store_channel_property_exists(webhookCallbacks, channel, 'heartbeat')
         if not webhookCallbacks[channel]["heartbeat"]:
             return
         heartbeats_ = webhookCallbacks[channel]["heartbeats"]
@@ -548,21 +547,26 @@ def get_lock_by_store_name(store_name, channel):
         raise ValueError(store_name)
 
 
-def ensure_store_has_data(store, channel):
+def ensure_store_exists(store):
     if not store:
         raise ValueError('no store found')
-    elif not store[channel]:
-        raise ValueError('no store found for ' + channel)
-    elif not store[channel]['data']:
-        raise ValueError('no "data" property found for ' + channel, store[channel])
-    elif len(store[channel]['data']) < 1:
-        raise ValueError('no data found for ' + channel, store[channel])
 
 
-def ensure_store_has_missing(store, channel):
-    if not store:
-        raise ValueError('no store found')
-    elif not store[channel]:
-        raise ValueError('no store found for ' + channel)
-    elif not store[channel]['missing']:
-        raise ValueError('no "missing" property found for ' + channel, store[channel])
+def ensure_store_channel_exists(store, channel):
+    if not store[channel]:
+        raise ValueError('no store[' + channel + '] found')
+
+
+def ensure_store_channel_property_exists(store, channel, prop):
+    ensure_store_exists(store)
+    ensure_store_channel_exists(store, channel)
+    if not store[channel][prop]:
+        raise ValueError('no store[' + channel + '][' + prop + '] found')
+
+
+def ensure_store_channel_property_has_values(store, channel, prop):
+    ensure_store_exists(store)
+    ensure_store_channel_exists(store, channel)
+    ensure_store_channel_property_exists(store, channel, prop)
+    if len(store[channel][prop]) < 1:
+        raise ValueError('no values for store[' + channel + '][' + prop + '] found')
