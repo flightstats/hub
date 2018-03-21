@@ -60,6 +60,7 @@ class HubTasks:
         self.channel = self.user.name() + str(self.number)
         self.count = 0
         payload = {"name": self.channel, "ttlDays": "3", "tags": ["load", "test", "DDT"], "owner": "DDT"}
+        logger.info('webhook: ' + json.dumps(payload))
         self.user.start_channel(payload, self)
         self.client.put("/channel/" + self.channel,
                         data=json.dumps(payload),
@@ -110,7 +111,6 @@ class HubTasks:
     def start_webhook(self):
         logger.info('starting webhook')
         config = self.webhook_config()
-        logger.info('webhook config: ' + json.dumps(config))
         webhook = webhook_name(self.channel)
         self.client.delete(webhook, name="webhook")
         webhookCallbacks[self.channel] = {
