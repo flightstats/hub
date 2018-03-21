@@ -123,7 +123,7 @@ class HubTasks:
             "missing": []
         }
         webhookCallbackLocks[self.channel] = threading.Lock()
-        logger.info('webhook store: ' + json.dumps(webhookCallbacks[self.channel]))
+        logger.info('webhook store for "' + self.channel + '": ' + json.dumps(webhookCallbacks[self.channel]))
         self.upsert_webhook()
 
     def get_webhook_config(self):
@@ -195,7 +195,7 @@ class HubTasks:
             "open": True
         }
         websocketLocks[self.channel] = threading.Lock()
-        logger.info('websocket store: ' + json.dumps(websockets[self.channel]))
+        logger.info('websocket store for "' + self.channel + '": ' + json.dumps(websockets[self.channel]))
 
         self._http = httplib2.Http()
         meta = self._load_metadata()
