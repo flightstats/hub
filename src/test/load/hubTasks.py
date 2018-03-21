@@ -553,6 +553,7 @@ def ensure_store_exists(store):
 
 
 def ensure_store_channel_exists(store, channel):
+    ensure_store_exists(store)
     if not store[channel]:
         raise ValueError('no store[' + channel + '] found')
 
