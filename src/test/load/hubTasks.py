@@ -108,11 +108,11 @@ class HubTasks:
                         name="webhook")
 
     def start_webhook(self):
+        logger.info('starting webhook')
         config = self.webhook_config()
-        logger.info(config)
+        logger.info('webhook config: ' + json.dumps(config))
         webhook = webhook_name(self.channel)
         self.client.delete(webhook, name="webhook")
-        logger.info("group channel " + config['webhook_channel'] + " parallel:" + str(config['parallel']))
         webhookCallbacks[self.channel] = {
             "data": [],
             "parallel": config['parallel'],
@@ -123,8 +123,8 @@ class HubTasks:
             "missing": []
         }
         webhookCallbackLocks[self.channel] = threading.Lock()
+        logger.info('store:', webhookCallbacks[self.channel])
         self.upsert_webhook()
-
 
     def get_webhook_config(self):
         json = (self.client.get(webhook_name(self.channel), name="webhook_config")).json()
