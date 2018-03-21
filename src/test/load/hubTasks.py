@@ -511,9 +511,9 @@ class HubTasks:
 
     @staticmethod
     def heartbeat(channel, incoming_json):
-        ensure_store_channel_property_exists(webhookCallbacks, channel, 'heartbeat')
         if not webhookCallbacks[channel]["heartbeat"]:
             return
+        ensure_store_channel_property_exists(webhookCallbacks, channel, 'heartbeats')
         heartbeats_ = webhookCallbacks[channel]["heartbeats"]
         id_ = incoming_json['id']
         if id_ == heartbeats_[0]:
