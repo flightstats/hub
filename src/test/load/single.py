@@ -64,12 +64,12 @@ class VerifierTasks(TaskSet):
 
     @web.app.route("/callback", methods=['GET'])
     def get_channels():
-        logger.info(request.remote_addr + ' | ' + request.method + ' | /callback')
+        logger.debug(request.remote_addr + ' | ' + request.method + ' | /callback')
         return HubTasks.get_channels()
 
     @web.app.route("/callback/<channel>", methods=['GET', 'POST'])
     def callback(channel):
-        logger.info(request.remote_addr + ' | ' + request.method + ' | /callback/' + channel + ' | ' + request.get_data().strip())
+        logger.debug(request.remote_addr + ' | ' + request.method + ' | /callback/' + channel + ' | ' + request.get_data().strip())
         return HubTasks.callback(channel)
 
 
