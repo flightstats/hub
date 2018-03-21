@@ -458,11 +458,11 @@ class HubTasks:
             webhookCallbacks[channel]["missing"].append(str(incoming_uri))
             if incoming_uri in obj[channel]["data"]:
                 events.request_failure.fire(request_type=name, name="ordered", response_time=1, exception='item in wrong order')
-                logger.info('item in wrong order: ' + incoming_uri + ' in ' + json.dumps(obj[channel]['data']))
+                logger.info('item in wrong order: ' + incoming_uri)
                 (obj[channel]["data"]).remove(incoming_uri)
             else:
                 events.request_failure.fire(request_type=name, name="ordered", response_time=1, exception='item missing')
-                logger.info('item missing: ' + incoming_uri + ' in ' + json.dumps(obj[channel]['data']))
+                logger.info('item missing: ' + incoming_uri)
 
     @staticmethod
     def verify_parallel(channel, incoming_uri):
