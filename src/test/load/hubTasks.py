@@ -447,15 +447,14 @@ class HubTasks:
             logger.debug("skipping verify_order")
             return
 
-        if not obj or not obj[channel] or not obj[channel]['data'] or not obj[channel]['data'][0]:
-            raise AssertionError(name, channel, incoming_uri, obj)
+        ensure_store_has_data(obj, channel)
 
         if obj[channel]["data"][0] == incoming_uri:
             (obj[channel]["data"]).remove(incoming_uri)
             events.request_success.fire(request_type=name, name="ordered", response_time=1, response_length=1)
         else:
-            if not webhookCallbacks or not webhookCallbacks[channel] or not webhookCallbacks[channel]["missing"]:
-                raise AssertionError(webhookCallbacks)
+
+            ensure_store_has_missing(obj, channel)
 
             webhookCallbacks[channel]["missing"].append(str(incoming_uri))
             if incoming_uri in obj[channel]["data"]:
@@ -547,3 +546,23 @@ def get_lock_by_store_name(store_name, channel):
         return webhookCallbackLocks[channel]
     else:
         raise ValueError(store_name)
+
+
+def ensure_store_has_data(store, channel):
+    if not store:
+        raise ValueError('no store found')
+    elif not store[channel]:
+        raise ValueError('no store found for ' + channel)
+    elif not store[channel]['data']:
+        raise ValueError('no "data" property found for ' + channel, store[channel])
+    elif len(store[channel]['data']) < 1:
+        raise ValueError('no data found for ' + channel, store[channel])
+
+
+def ensure_store_has_missing(store, channel):
+    if not store:
+        raise ValueError('no store found')
+    elif not store[channel]:
+        raise ValueError('no store found for ' + channel)
+    elif not store[channel]['missing']:
+        raise ValueError('no "missing" property found for ' + channel, store[channel])
