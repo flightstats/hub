@@ -212,7 +212,7 @@ class HubTasks:
                         "open": True,
                         "start": datetime.now()
                     }
-                    logger.info('websocket store for "' + channel + '": ' + json.dumps(websockets[channel], indent=0, sort_keys=False, default=str))
+                    logger.info('websocket store for "' + channel + '": ' + json.dumps(websockets[channel], default=str))
                     ws.run_forever()
                 except WebSocketException:
                     logger.exception('WebSocket client was meant to run forever but was stopped.')
@@ -547,7 +547,7 @@ class HubTasks:
 
     @staticmethod
     def get_store(name):
-        return json.dumps(get_store_by_name(name), indent=2, sort_keys=False, default=str)
+        return json.dumps(get_store_by_name(name), indent=2, default=str)
 
 
 def get_store_by_name(name):
