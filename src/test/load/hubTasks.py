@@ -191,14 +191,6 @@ class HubTasks:
         self.perform_cursor_update(update_to_yesterday, update_to_now, "upsertWebhook")
 
     def start_websocket(self):
-        websockets[self.channel] = {
-            "data": [],
-            "missing": [],
-            "open": True
-        }
-        websocketLocks[self.channel] = threading.Lock()
-        logger.info('websocket store for "' + self.channel + '": ' + json.dumps(websockets[self.channel]))
-
         self._http = httplib2.Http()
         meta = self._load_metadata()
         self.ws_uri = meta['_links']['ws']['href']
@@ -208,10 +200,18 @@ class HubTasks:
                                     on_message=self.on_message,
                                     on_close=self.on_close,
                                     on_error=self.on_error)
+        channel = self.channel
 
         def restart_websocket_server_on_close():
             while True:
                 try:
+                    websocketLocks[channel] = threading.Lock()
+                    websockets[channel] = {
+                        "data": [],
+                        "missing": [],
+                        "open": True
+                    }
+                    logger.info('websocket store for "' + channel + '": ' + json.dumps(websockets[channel]))
                     ws.run_forever()
                 except WebSocketException:
                     logger.exception('WebSocket client was meant to run forever but was stopped.')
@@ -466,15 +466,15 @@ class HubTasks:
             events.request_success.fire(request_type=name, name="ordered", response_time=1, response_length=1)
         else:
 
-            ensure_store_channel_property_exists(obj, channel, 'missing')
             webhookCallbacks[channel]["missing"].append(str(incoming_uri))
+            ensure_store_channel_property_exists(obj, channel, 'missing')
             if incoming_uri in obj[channel]["data"]:
                 events.request_failure.fire(request_type=name, name="ordered", response_time=1, exception='item in wrong order')
-                logger.info('item in wrong order: ' + incoming_uri)
+                logger.info(name + ' item in wrong order: ' + incoming_uri)
                 (obj[channel]["data"]).remove(incoming_uri)
             else:
                 events.request_failure.fire(request_type=name, name="ordered", response_time=1, exception='item missing')
-                logger.info('item missing: ' + incoming_uri)
+                logger.info(name + ' item missing: ' + incoming_uri)
 
     @staticmethod
     def verify_parallel(channel, incoming_uri):
