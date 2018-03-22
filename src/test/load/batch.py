@@ -86,6 +86,10 @@ class VerifierTasks(TaskSet):
         logger.debug(request.remote_addr + ' | ' + request.method + ' | /callback/' + channel + ' | ' + request.get_data().strip())
         return HubTasks.callback(channel)
 
+    @web.app.route('/store/<name>', methods=['GET'])
+    def get_store(name):
+        return HubTasks.get_store(name)
+
 
 class WebsiteUser(HttpLocust):
     task_set = VerifierTasks

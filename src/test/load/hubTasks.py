@@ -545,6 +545,10 @@ class HubTasks:
             events.request_failure.fire(request_type="heartbeats", name="order", response_time=1, exception=-1)
         webhookCallbacks[channel]["lastHeartbeat"] = id_
 
+    @staticmethod
+    def get_store(name):
+        return get_store_by_name(name)
+
 
 def get_store_by_name(name):
     if name == 'websocket':
