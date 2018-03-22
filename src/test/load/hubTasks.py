@@ -121,7 +121,7 @@ class HubTasks:
             "heartbeat": config['heartbeat'],
             "heartbeats": [],
             "lastHeartbeat": '',
-            "missing": []
+            "unknown": []
         }
         webhookCallbackLocks[self.channel] = threading.Lock()
         logger.info('webhook store for "' + self.channel + '": ' + json.dumps(webhookCallbacks[self.channel]))
@@ -208,7 +208,7 @@ class HubTasks:
                     websocketLocks[channel] = threading.Lock()
                     websockets[channel] = {
                         "data": [],
-                        "missing": [],
+                        "unknown": [],
                         "open": True,
                         "start": datetime.now()
                     }
@@ -469,16 +469,16 @@ class HubTasks:
             (obj[channel]["data"]).remove(incoming_uri)
             events.request_success.fire(request_type=name, name="ordered", response_time=1, response_length=1)
         else:
-
-            webhookCallbacks[channel]["missing"].append(str(incoming_uri))
-            ensure_store_channel_property_exists(obj, channel, 'missing')
+            logger.info(name + ' | expected ' + obj[channel['data'][0] + ' to be ' + incoming_uri])
             if incoming_uri in obj[channel]["data"]:
                 events.request_failure.fire(request_type=name, name="ordered", response_time=1, exception='item in wrong order')
-                logger.info(name + ' item in wrong order: ' + incoming_uri)
+                logger.info(name + ' | ordered | item in wrong order: ' + incoming_uri + ' | found at ' + obj[channel]['data'].index(incoming_uri))
                 (obj[channel]["data"]).remove(incoming_uri)
             else:
-                events.request_failure.fire(request_type=name, name="ordered", response_time=1, exception='item missing')
-                logger.info(name + ' item missing: ' + incoming_uri)
+                ensure_store_channel_property_exists(obj, channel, 'unknown')
+                obj[channel]["unknown"].append(str(incoming_uri))
+                events.request_failure.fire(request_type=name, name="ordered", response_time=1, exception='item unknown')
+                logger.info(name + ' | ordered | item unknown: ' + incoming_uri)
 
     @staticmethod
     def verify_parallel(channel, incoming_uri):
@@ -486,9 +486,9 @@ class HubTasks:
             (webhookCallbacks[channel]["data"]).remove(incoming_uri)
             events.request_success.fire(request_type="webhook", name="parallel", response_time=1, response_length=1)
         else:
-            logger.info("missing parallel item " + str(incoming_uri))
-            webhookCallbacks[channel]["missing"].append(str(incoming_uri))
-            events.request_failure.fire(request_type="webhook", name="parallel", response_time=1, exception='item missing')
+            logger.info('webhook | parallel | item unknown: ' + incoming_uri)
+            webhookCallbacks[channel]["unknown"].append(str(incoming_uri))
+            events.request_failure.fire(request_type="webhook", name="parallel", response_time=1, exception='item unknown')
 
     @staticmethod
     def get_channels():
