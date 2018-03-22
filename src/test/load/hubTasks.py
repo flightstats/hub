@@ -547,7 +547,7 @@ class HubTasks:
 
     @staticmethod
     def get_store(name):
-        return get_store_by_name(name)
+        return json.dumps(get_store_by_name(name), indent=2, sort_keys=False, default=str)
 
 
 def get_store_by_name(name):
