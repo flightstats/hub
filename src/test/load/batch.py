@@ -2,7 +2,7 @@
 
 import logging
 from locust import HttpLocust, TaskSet, task, web
-from flask import request
+from flask import request, Response
 
 from hubTasks import HubTasks
 from hubUser import HubUser
@@ -88,7 +88,7 @@ class VerifierTasks(TaskSet):
 
     @web.app.route('/store/<name>', methods=['GET'])
     def get_store(name):
-        return HubTasks.get_store(name)
+        return Response(HubTasks.get_store(name), mimetype='application/json')
 
 
 class WebsiteUser(HttpLocust):
