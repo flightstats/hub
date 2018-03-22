@@ -209,7 +209,8 @@ class HubTasks:
                     websockets[channel] = {
                         "data": [],
                         "missing": [],
-                        "open": True
+                        "open": True,
+                        "start": datetime.now()
                     }
                     logger.info('websocket store for "' + channel + '": ' + json.dumps(websockets[channel]))
                     ws.run_forever()
@@ -237,6 +238,10 @@ class HubTasks:
     def on_message(self, ws, message):
         logger.debug('websocket | ' + self.channel + ' | message: ' + message)
         content_key = HubTasks.get_content_key(message)
+        timestamp = get_item_timestamp(content_key)
+        if timestamp < websockets[self.channel]['start']:
+            logger.info('item before start time: ' + content_key)
+            return
         HubTasks.verify_ordered(self.channel, content_key, websockets, "websocket")
 
     def on_error(self, ws, error):
@@ -584,3 +589,17 @@ def ensure_store_channel_property_has_values(store, channel, prop):
     ensure_store_channel_property_exists(store, channel, prop)
     if len(store[channel][prop]) < 1:
         raise ValueError('no values for store[' + channel + '][' + prop + '] found')
+
+
+def get_item_timestamp(content_key):
+    logger.info('content key: ' + content_key)
+    components = content_key.split('/')
+    logger.info('components: ' + json.dumps(components))
+    year = components[1]
+    month = components[2]
+    day = components[3]
+    hour = components[4]
+    minute = components[5]
+    second = components[6]
+    millisecond = components[7]
+    return datetime(year, month, day, hour, minute, second, millisecond)
