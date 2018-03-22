@@ -435,23 +435,22 @@ class HubTasks:
         size = self.number * self.number * 300
         return ''.join(random.choice(chars) for x in range(size))
 
-    def verify_callback(self, obj, name="webhook", count=2000):
-        webhookCallbackLocks[self.channel].acquire()
+    def verify_callback(self, obj, lock_store, name="webhook", count=2000):
+        lock_store[self.channel].acquire()
+        ensure_store_channel_property_exists(obj, self.channel, 'data')
         items = len(obj[self.channel]["data"])
         if items > count:
-            events.request_failure.fire(request_type=name, name="length", response_time=1,
-                                        exception=-1)
+            events.request_failure.fire(request_type=name, name="length", response_time=1, exception=-1)
             logger.info(name + " too many items in " + self.channel + " " + str(items))
         else:
-            events.request_success.fire(request_type=name, name="length", response_time=1,
-                                        response_length=1)
-        webhookCallbackLocks[self.channel].release()
+            events.request_success.fire(request_type=name, name="length", response_time=1, response_length=1)
+        lock_store[self.channel].release()
 
     def verify_callback_length(self, count=2000):
-        self.verify_callback(webhookCallbacks, "webhook", count)
+        self.verify_callback(webhookCallbacks, webhookCallbackLocks, "webhook", count)
         if self.user.has_websocket():
             if websockets[self.channel]["open"]:
-                self.verify_callback(websockets, "websocket")
+                self.verify_callback(websockets, websocketLocks, "websocket")
         if webhookCallbacks[self.channel]["heartbeat"]:
             heartbeats_ = webhookCallbacks[self.channel]["heartbeats"]
             if len(heartbeats_) > 2:
