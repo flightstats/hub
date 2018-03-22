@@ -567,14 +567,14 @@ def ensure_store_exists(store):
 def ensure_store_channel_exists(store, channel):
     ensure_store_exists(store)
     if channel not in store:
-        raise ValueError('no store[' + channel + '] found', store)
+        raise ValueError('no store[' + channel + '] found')
 
 
 def ensure_store_channel_property_exists(store, channel, prop):
     ensure_store_exists(store)
     ensure_store_channel_exists(store, channel)
     if prop not in store[channel]:
-        raise ValueError('no store[' + channel + '][' + prop + '] found', store[channel])
+        raise ValueError('no store[' + channel + '][' + prop + '] found')
 
 
 def ensure_store_channel_property_has_values(store, channel, prop):
@@ -582,4 +582,4 @@ def ensure_store_channel_property_has_values(store, channel, prop):
     ensure_store_channel_exists(store, channel)
     ensure_store_channel_property_exists(store, channel, prop)
     if len(store[channel][prop]) < 1:
-        raise ValueError('no values for store[' + channel + '][' + prop + '] found', store[channel][prop])
+        raise ValueError('no values for store[' + channel + '][' + prop + '] found')
