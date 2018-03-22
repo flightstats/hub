@@ -212,7 +212,7 @@ class HubTasks:
                         "open": True,
                         "start": datetime.now()
                     }
-                    logger.info('websocket store for "' + channel + '": ' + json.dumps(websockets[channel]))
+                    logger.info('websocket store for "' + channel + '": ' + json.dumps(websockets[channel], indent=0, sort_keys=False, default=str))
                     ws.run_forever()
                 except WebSocketException:
                     logger.exception('WebSocket client was meant to run forever but was stopped.')
