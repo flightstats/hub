@@ -595,14 +595,12 @@ def ensure_store_channel_property_has_values(store, channel, prop):
 
 
 def get_item_timestamp(content_key):
-    logger.info('content key: ' + content_key)
     components = content_key.split('/')
-    logger.info('components: ' + json.dumps(components))
-    year = components[1]
-    month = components[2]
-    day = components[3]
-    hour = components[4]
-    minute = components[5]
-    second = components[6]
-    millisecond = components[7]
+    year = int(components[1])
+    month = int(components[2])
+    day = int(components[3])
+    hour = int(components[4])
+    minute = int(components[5])
+    second = int(components[6])
+    millisecond = int(components[7])
     return datetime(year, month, day, hour, minute, second, millisecond)
