@@ -11,6 +11,7 @@ import websocket
 from datetime import datetime, timedelta
 from flask import request, jsonify
 from locust import events
+from websocket import WebSocketException
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -205,7 +206,16 @@ class HubTasks:
                                     on_message=self.on_message,
                                     on_close=self.on_close,
                                     on_error=self.on_error)
-        thread.start_new_thread(ws.run_forever, ())
+
+        def restart_websocket_server_on_close():
+            while True:
+                try:
+                    ws.run_forever()
+                except WebSocketException:
+                    logger.exception('WebSocket client was meant to run forever but was stopped.')
+                    pass
+
+        thread.start_new_thread(restart_websocket_server_on_close, ())
 
     @staticmethod
     def get_content_key(url):
