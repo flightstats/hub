@@ -193,6 +193,7 @@ class HubTasks:
     def start_websocket(self):
         websockets[self.channel] = {
             "data": [],
+            "missing": [],
             "open": True
         }
         websocketLocks[self.channel] = threading.Lock()
