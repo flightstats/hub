@@ -203,6 +203,7 @@ class HubTasks:
         self.ws_uri = meta['_links']['ws']['href']
         logger.info(self.ws_uri)
         ws = websocket.WebSocketApp(self.ws_uri,
+                                    on_open=self.on_open,
                                     on_message=self.on_message,
                                     on_close=self.on_close,
                                     on_error=self.on_error)
