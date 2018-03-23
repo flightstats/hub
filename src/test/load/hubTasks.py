@@ -472,7 +472,7 @@ class HubTasks:
             logger.info(name + ' | expected ' + obj[channel]['data'][0] + ' to be ' + incoming_uri)
             if incoming_uri in obj[channel]["data"]:
                 events.request_failure.fire(request_type=name, name="ordered", response_time=1, exception='item in wrong order')
-                logger.info(name + ' | ordered | item in wrong order: ' + incoming_uri + ' | found at ' + obj[channel]['data'].index(incoming_uri))
+                logger.info(name + ' | ordered | item in wrong order: ' + incoming_uri + ' | found at ' + str(obj[channel]['data'].index(incoming_uri)))
                 (obj[channel]["data"]).remove(incoming_uri)
             else:
                 ensure_store_channel_property_exists(obj, channel, 'unknown')
