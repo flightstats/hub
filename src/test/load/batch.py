@@ -51,7 +51,11 @@ class VerifierTasks(TaskSet):
             if postResponse.status_code != 201:
                 postResponse.failure("Got wrong response on post: " + str(postResponse.status_code))
 
-        links = postResponse.json()
+        try:
+            links = postResponse.json()
+        except ValueError:
+            logger.info('invalid response: ' + postResponse.text)
+            raise
 
         uris = links['_links']['uris']
         for uri in uris:
