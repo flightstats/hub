@@ -115,16 +115,17 @@ class HubTasks:
         webhook = webhook_name(self.channel)
         self.client.delete(webhook, name="webhook")
         webhookCallbacks[self.channel] = {
+            "start": datetime.now(),
             "data": [],
             "parallel": config['parallel'],
             "batch": config['batch'],
             "heartbeat": config['heartbeat'],
             "heartbeats": [],
             "lastHeartbeat": '',
-            "unknown": []
+            "unknown": [],
         }
         webhookCallbackLocks[self.channel] = threading.Lock()
-        logger.info('webhook store for "' + self.channel + '": ' + json.dumps(webhookCallbacks[self.channel]))
+        logger.info('webhook store for "' + self.channel + '": ' + json.dumps(webhookCallbacks[self.channel], default=str))
         self.upsert_webhook()
 
     def get_webhook_config(self):
@@ -518,6 +519,11 @@ class HubTasks:
                 return
             try:
                 content_key = HubTasks.get_content_key(incoming_uri)
+                timestamp = get_item_timestamp(content_key)
+                if timestamp < webhookCallbacks[channel]['start']:
+                    logger.info('item before start time: ' + content_key)
+                    return
+
                 webhookCallbackLocks[channel].acquire()
                 if webhookCallbacks[channel]["parallel"] == 1:
                     HubTasks.verify_ordered(channel, content_key, webhookCallbacks, "webhook")
