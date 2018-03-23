@@ -603,4 +603,4 @@ def get_item_timestamp(content_key):
     minute = int(components[5])
     second = int(components[6])
     millisecond = int(components[7])
-    return datetime(year, month, day, hour, minute, second, millisecond)
+    return datetime(year, month, day, hour, minute, second, millisecond * 1000)
