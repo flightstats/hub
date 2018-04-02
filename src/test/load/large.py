@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import random
 import string
@@ -6,6 +7,8 @@ from locust import HttpLocust, TaskSet, task, web
 
 from hubTasks import HubTasks
 from hubUser import HubUser
+
+logger = logging.getLogger(__name__)
 
 
 class LargeUser(HubUser):
@@ -76,18 +79,18 @@ class LargeTasks(TaskSet):
                                 fd.write(chunk)
                     get_size = os.stat(inputFile).st_size
                     if get_size == expected_size:
-                        print "Got expected size on get: " + str(get_size) + " " + uri
+                        logger.info("Got expected size on get: " + str(get_size) + " " + uri)
                     else:
                         getResponse.failure("Got wrong size on get: " + str(get_size) + " " + uri)
 
     def create_large(self, tasks):
         large_file_name = self.large_file_name(self.hubTasks.number, 'out')
         if os.path.isfile(large_file_name):
-            print "using existing file " + large_file_name + " bytes=" + str(os.stat(large_file_name).st_size)
+            logger.info("using existing file " + large_file_name + " bytes=" + str(os.stat(large_file_name).st_size))
             return
         if tasks.number == 1:
             target = open(large_file_name, 'w')
-            print "writing file " + large_file_name
+            logger.info("writing file " + large_file_name)
             target.truncate(0)
             chars = string.ascii_uppercase + string.digits
             size = 50 * 1024
@@ -95,7 +98,7 @@ class LargeTasks(TaskSet):
                 target.write(''.join(random.choice(chars) for i in range(size)))
                 target.flush()
 
-            print "closing " + large_file_name
+            logger.info("closing " + large_file_name)
             target.close()
         elif tasks.number == 2:
             os.system("cat /mnt/large1.out /mnt/large1.out > /mnt/large2.out")
