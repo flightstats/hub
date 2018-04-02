@@ -530,7 +530,10 @@ class HubTasks:
                 else:
                     HubTasks.verify_parallel(channel, content_key)
             finally:
-                webhookCallbackLocks[channel].release()
+                if not webhookCallbackLocks[channel].locked():
+                    logger.warning('no lock to release: webhookLocks[' + channel + ']')
+                else:
+                    webhookCallbackLocks[channel].release()
 
     @staticmethod
     def heartbeat(channel, incoming_json):
