@@ -1,4 +1,3 @@
-# locust.py
 import json
 import os
 import random
@@ -8,8 +7,6 @@ from locust import HttpLocust, TaskSet, task, web
 from hubTasks import HubTasks
 from hubUser import HubUser
 
-
-# locust -f large.py --host=http://localhost:8080
 
 class LargeUser(HubUser):
     def name(self):
@@ -21,18 +18,21 @@ class LargeUser(HubUser):
     def start_webhook(self, config):
         if config['number'] == 1:
             config['webhook_channel'] = config['channel'] + "_replicated"
-            replicationSource = config['host'] + "/channel/" + config['channel']
-            config['client'].put("/channel/" + config['webhook_channel'],
-                                 data=json.dumps({"name": config['webhook_channel'], "ttlDays": "3",
-                                                  "replicationSource": replicationSource}),
-                                 headers={"Content-Type": "application/json"},
-                                 name="replication")
+            url = "/channel/" + config['webhook_channel']
+            headers = {"Content-Type": "application/json"}
+            channel_config = {
+                "name": config['webhook_channel'],
+                "ttlDays": "3",
+                "replicationSource": config['host'] + "/channel/" + config['channel']
+            }
+            config['client'].put(url, data=json.dumps(channel_config), headers=headers, name="replication")
 
     def has_webhook(self):
         return True
 
     def has_websocket(self):
         return False
+
 
 class LargeTasks(TaskSet):
     hubTasks = None
