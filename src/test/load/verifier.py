@@ -2,7 +2,7 @@
 import logging
 import json
 from locust import HttpLocust, TaskSet, task, web
-from flask import request
+from flask import request, Response
 
 from hubTasks import HubTasks
 from hubUser import HubUser
@@ -91,13 +91,17 @@ class VerifierTasks(TaskSet):
 
     @web.app.route("/callback", methods=['GET'])
     def get_channels():
-        logger.info(request.remote_addr + ' | ' + request.method + ' | /callback')
+        logger.debug(request.remote_addr + ' | ' + request.method + ' | /callback')
         return HubTasks.get_channels()
 
     @web.app.route("/callback/<channel>", methods=['GET', 'POST'])
     def callback(channel):
-        logger.info(request.remote_addr + ' | ' + request.method + ' | /callback/' + channel + ' | ' + request.get_data().strip())
+        logger.debug(request.remote_addr + ' | ' + request.method + ' | /callback/' + channel + ' | ' + request.get_data().strip())
         return HubTasks.callback(channel)
+
+    @web.app.route('/store/<name>', methods=['GET'])
+    def get_store(name):
+        return Response(HubTasks.get_store(name), mimetype='application/json')
 
 
 class WebsiteUser(HttpLocust):
