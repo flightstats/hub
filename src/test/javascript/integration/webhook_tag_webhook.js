@@ -1,63 +1,93 @@
 require('../integration_config');
 
-var request = require('request');
-var http = require('http');
-var testName = __filename;
-var tag = utils.randomTag();
-var webhookName = tag;
-var webhookConfig = {
-    'callbackUrl': 'http://nothing/callback',
-    'tagUrl': hubUrlBase + '/tag/' + tag
-};
+let tag = utils.randomTag();
+let tagURL = `${hubUrlBase}/tag/${tag}`;
+let tagWebhookPrototypeURL = `${utils.getWebhookUrl()}/TAGWHPROTO_${tag}`;
 
-var channelName1 = utils.randomChannelName();
-var channelName2 = utils.randomChannelName();
+let channelOneName = utils.randomChannelName();
+let channelOneURL = `${channelUrl}/${channelOneName}`;
+let channelOneWebhookURL = `${utils.getWebhookUrl()}/TAGWH_${tag}_${channelOneName}`;
 
-var channel1 = {
-    'tags': [tag],
-    'name': channelName1
-}
+let channelTwoName = utils.randomChannelName();
+let channelTwoURL = `${channelUrl}/${channelTwoName}`;
+let channelTwoWebhookURL = `${utils.getWebhookUrl()}/TAGWH_${tag}_${channelTwoName}`;
 
-var channel2 = {
-    'tags': [tag],
-    'name': channelName2
-}
+let acceptJSON = {'Content-Type': 'application/json'};
 
-var instancePrefix = 'TAGWH_' + tag;
-var instance1 = instancePrefix + "_" + channelName1;
-var instance2 = instancePrefix + "_" + channelName1;
+describe(__filename, function () {
 
-var verify = function (parse) {
-    return true;
-}
+  it('creates a tag webhook prototype', (done) => {
+    let config = {
+      'callbackUrl': 'http://nothing/callback',
+      'tagUrl': tagURL
+    };
+    utils.httpPut(tagWebhookPrototypeURL, acceptJSON, config)
+      .then(response => expect(response.statusCode).toEqual(201))
+      .finally(done);
+  });
 
-describe(testName, function () {
+  it('verifies the tag webhook prototype exists', (done) => {
+    utils.httpGet(tagWebhookPrototypeURL)
+      .then(response => expect(response.statusCode).toEqual(200))
+      .finally(done);
+  });
 
-    utils.putWebhook(webhookName, webhookConfig, 201, testName);
-    utils.getWebhook(webhookName, webhookConfig, 200, verify);
+  it(`creates channel one with tag ${tag}`, (done) => {
+    let config = {'tags': [tag]};
+    utils.httpPut(channelOneURL, acceptJSON, config)
+      .then(response => expect(response.statusCode).toEqual(201))
+      .finally(done);
+  });
 
-    utils.createChannelWithConfig(channelName1, channel1);
-    utils.createChannelWithConfig(channelName2, channel2);
-    utils.itSleeps(1000);
-    // look for 2 webhooks to be created
-    utils.getWebhook(instance1, webhookConfig, 200, verify);
-    utils.getWebhook(instance2, webhookConfig, 200, verify);
+  it(`creates channel two with tag ${tag}`, (done) => {
+    let config = {'tags': [tag]};
+    utils.httpPut(channelTwoURL, acceptJSON, config)
+      .then(response => expect(response.statusCode).toEqual(201))
+      .finally(done);
+  });
 
-    // //update the channel to remove tag (and as side effect remove it's tag webhook instance)
-    var channel1noTag = {
-        'name': channelName1,
-        'tags': []
-    }
-    utils.itMessages("expecting " + instance1 + " to be deleted due to removal of tag");
-    utils.createChannelWithConfig(channelName1, channel1noTag);
-    utils.itSleeps(10000);
-    // the webhook associated with channelName1 should go away because of the removed tag
-    utils.getWebhook(instance1, webhookConfig, 404);
+  utils.itSleeps(1000);
 
-    // delete webhook (and as side effect remove remaining webhook
-    utils.deleteWebhook(webhookName);
-    utils.itSleeps(1000);
-    utils.getWebhook(instance2, webhookConfig, 404);
+  it('verifies a webhook for channel one exists', (done) => {
+    utils.httpGet(channelOneWebhookURL)
+      .then(response => expect(response.statusCode).toEqual(200))
+      .finally(done);
+  });
+
+  it('verifies a webhook for channel two exists', (done) => {
+    utils.httpGet(channelTwoWebhookURL)
+      .then(response => expect(response.statusCode).toEqual(200))
+      .finally(done);
+  });
+
+  it('removes the tag from channel one', (done) => {
+    let config = {'tags': []};
+    utils.httpPut(channelOneURL, acceptJSON, config)
+      .then(response => expect(response.statusCode).toEqual(201))
+      .finally(done);
+  });
+
+  utils.itSleeps(1000);
+
+  it('verifies the webhook created for channel one is removed', (done) => {
+    utils.httpGet(channelOneWebhookURL)
+      .then(response => expect(response.statusCode).toEqual(404))
+      .finally(done);
+  });
+
+  it('removes the tag webhook prototype', (done) => {
+    utils.httpDelete(tagWebhookPrototypeURL)
+      .then(response => expect(response.statusCode).toEqual(202))
+      .finally(done);
+  });
+
+  utils.itSleeps(1000);
+
+  it('verifies the webhook created for channel two is removed', (done) => {
+    utils.httpGet(channelTwoWebhookURL)
+      .then(response => expect(response.statusCode).toEqual(404))
+      .finally(done);
+  });
 
 });
 
