@@ -270,7 +270,12 @@ class HubTasks:
         return self.user.channel_post_url(self.channel)
 
     def parse_write(self, postResponse):
-        links = postResponse.json()
+        try:
+            links = postResponse.json()
+        except ValueError:
+            logger.warning('invalid response: ' + postResponse.status_code + ' ' + postResponse.text)
+            raise
+
         self.count += 1
         href = links['_links']['self']['href']
         if self.user.has_webhook():

@@ -54,7 +54,7 @@ class VerifierTasks(TaskSet):
         try:
             links = postResponse.json()
         except ValueError:
-            logger.info('invalid response: ' + postResponse.text)
+            logger.warning('invalid response: ' + postResponse.status_code + ' ' + postResponse.text)
             raise
 
         uris = links['_links']['uris']
