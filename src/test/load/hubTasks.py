@@ -16,8 +16,8 @@ from websocket import WebSocketException
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-webhookCallbacks = {}
-webhookCallbackLocks = {}
+webhooks = {}
+webhookLocks = {}
 webhookConfig = {}
 websockets = {}
 websocketLocks = {}
@@ -114,7 +114,7 @@ class HubTasks:
         config = self.webhook_config()
         webhook = webhook_name(self.channel)
         self.client.delete(webhook, name="webhook")
-        webhookCallbacks[self.channel] = {
+        webhooks[self.channel] = {
             "start": datetime.now(),
             "data": [],
             "parallel": config['parallel'],
@@ -124,8 +124,8 @@ class HubTasks:
             "lastHeartbeat": '',
             "unknown": [],
         }
-        webhookCallbackLocks[self.channel] = threading.Lock()
-        logger.info('webhook store for "' + self.channel + '": ' + json.dumps(webhookCallbacks[self.channel], default=str))
+        webhookLocks[self.channel] = threading.Lock()
+        logger.info('webhook store for "' + self.channel + '": ' + json.dumps(webhooks[self.channel], default=str))
         self.upsert_webhook()
 
     def get_webhook_config(self):
@@ -222,10 +222,10 @@ class HubTasks:
         thread.start_new_thread(restart_websocket_server_on_close, ())
 
     @staticmethod
-    def get_content_key(url):
+    def get_short_path(url):
         url_components = url.split("/channel/", 1)
         if not len(url_components) == 2:
-            raise ValueError('Unable to determine content key for "' + url + '"')
+            raise ValueError('Unable to determine short path for "' + url + '"')
         return url_components[1]
 
     def on_open(self, ws):
@@ -238,7 +238,7 @@ class HubTasks:
 
     def on_message(self, ws, message):
         logger.debug('websocket | ' + self.channel + ' | message: ' + message)
-        content_key = HubTasks.get_content_key(message)
+        content_key = HubTasks.get_short_path(message)
         timestamp = get_item_timestamp(content_key)
         if timestamp < websockets[self.channel]['start']:
             logger.info('item before start time: ' + content_key)
@@ -280,21 +280,21 @@ class HubTasks:
         href = links['_links']['self']['href']
         if self.user.has_webhook():
             self.append_href(href, 'webhook')
-            if webhookCallbacks[self.channel]["heartbeat"]:
-                if webhookCallbacks[self.channel]["batch"] == "MINUTE":
+            if webhooks[self.channel]["heartbeat"]:
+                if webhooks[self.channel]["batch"] == "MINUTE":
                     id = href[-30:-14]
                 else:
                     id = href[-30:-11]
-                if id not in webhookCallbacks[self.channel]["heartbeats"]:
+                if id not in webhooks[self.channel]["heartbeats"]:
                     logger.info("adding heartbeat " + id)
-                    webhookCallbacks[self.channel]["heartbeats"].append(id)
+                    webhooks[self.channel]["heartbeats"].append(id)
         if self.user.has_websocket():
             if websockets[self.channel]["open"]:
                 self.append_href(href, 'websocket')
         return href
 
     def append_href(self, href, store_name):
-        content_key = HubTasks.get_content_key(href)
+        content_key = HubTasks.get_short_path(href)
         store = get_store_by_name(store_name)
         lock = get_lock_by_store_name(store_name, self.channel)
         try:
@@ -453,12 +453,12 @@ class HubTasks:
         lock_store[self.channel].release()
 
     def verify_callback_length(self, count=2000):
-        self.verify_callback(webhookCallbacks, webhookCallbackLocks, "webhook", count)
+        self.verify_callback(webhooks, webhookLocks, "webhook", count)
         if self.user.has_websocket():
             if websockets[self.channel]["open"]:
                 self.verify_callback(websockets, websocketLocks, "websocket")
-        if webhookCallbacks[self.channel]["heartbeat"]:
-            heartbeats_ = webhookCallbacks[self.channel]["heartbeats"]
+        if webhooks[self.channel]["heartbeat"]:
+            heartbeats_ = webhooks[self.channel]["heartbeats"]
             if len(heartbeats_) > 2:
                 events.request_failure.fire(request_type="heartbeats", name="length", response_time=1,
                                             exception=-1)
@@ -488,18 +488,18 @@ class HubTasks:
 
     @staticmethod
     def verify_parallel(channel, incoming_uri):
-        if incoming_uri in webhookCallbacks[channel]["data"]:
-            (webhookCallbacks[channel]["data"]).remove(incoming_uri)
+        if incoming_uri in webhooks[channel]["data"]:
+            (webhooks[channel]["data"]).remove(incoming_uri)
             events.request_success.fire(request_type="webhook", name="parallel", response_time=1, response_length=1)
         else:
             logger.info('webhook | parallel | item unknown: ' + incoming_uri)
-            webhookCallbacks[channel]["unknown"].append(str(incoming_uri))
+            webhooks[channel]["unknown"].append(str(incoming_uri))
             events.request_failure.fire(request_type="webhook", name="parallel", response_time=1, exception='item unknown')
 
     @staticmethod
     def get_channels():
         # todo - add errors to output
-        return jsonify(items=webhookCallbacks)
+        return jsonify(items=webhooks)
 
     @staticmethod
     def callback(channel):
@@ -511,7 +511,7 @@ class HubTasks:
                 HubTasks.heartbeat(channel, incoming_json)
             return "ok"
         else:
-            return jsonify(items=webhookCallbacks[channel]["data"])
+            return jsonify(items=webhooks[channel]["data"])
 
     @staticmethod
     def item(channel, incoming_json):
@@ -519,45 +519,45 @@ class HubTasks:
         for incoming_uri in incoming_json['uris']:
             if "_replicated" in incoming_uri:
                 incoming_uri = incoming_uri.replace("_replicated", "")
-            if channel not in webhookCallbacks:
+            if channel not in webhooks:
                 logger.info("incoming uri before locust tests started " + str(incoming_uri))
                 return
             try:
-                content_key = HubTasks.get_content_key(incoming_uri)
+                content_key = HubTasks.get_short_path(incoming_uri)
                 timestamp = get_item_timestamp(content_key)
-                if timestamp < webhookCallbacks[channel]['start']:
+                if timestamp < webhooks[channel]['start']:
                     logger.info('item before start time: ' + content_key)
                     return
 
-                webhookCallbackLocks[channel].acquire()
-                if webhookCallbacks[channel]["parallel"] == 1:
-                    HubTasks.verify_ordered(channel, content_key, webhookCallbacks, "webhook")
+                webhookLocks[channel].acquire()
+                if webhooks[channel]["parallel"] == 1:
+                    HubTasks.verify_ordered(channel, content_key, webhooks, "webhook")
                 else:
                     HubTasks.verify_parallel(channel, content_key)
             finally:
-                if not webhookCallbackLocks[channel].locked():
+                if not webhookLocks[channel].locked():
                     logger.warning('no lock to release: webhookLocks[' + channel + ']')
                 else:
-                    webhookCallbackLocks[channel].release()
+                    webhookLocks[channel].release()
 
     @staticmethod
     def heartbeat(channel, incoming_json):
-        if not webhookCallbacks[channel]["heartbeat"]:
+        if not webhooks[channel]["heartbeat"]:
             return
-        ensure_store_channel_property_exists(webhookCallbacks, channel, 'heartbeats')
-        heartbeats_ = webhookCallbacks[channel]["heartbeats"]
+        ensure_store_channel_property_exists(webhooks, channel, 'heartbeats')
+        heartbeats_ = webhooks[channel]["heartbeats"]
         id_ = incoming_json['id']
         if id_ == heartbeats_[0]:
             heartbeats_.remove(id_)
             events.request_success.fire(request_type="heartbeats", name="order", response_time=1, response_length=1)
-        elif id_ != webhookCallbacks[channel]["lastHeartbeat"]:
+        elif id_ != webhooks[channel]["lastHeartbeat"]:
             if id_ in heartbeats_:
                 heartbeats_.remove(id_)
             events.request_success.fire(request_type="heartbeats", name="order", response_time=1, response_length=1)
         else:
             logger.info("heartbeat order failure. id = " + id_ + " array=" + str(heartbeats_))
             events.request_failure.fire(request_type="heartbeats", name="order", response_time=1, exception=-1)
-        webhookCallbacks[channel]["lastHeartbeat"] = id_
+        webhooks[channel]["lastHeartbeat"] = id_
 
     @staticmethod
     def get_store(name):
@@ -568,7 +568,7 @@ def get_store_by_name(name):
     if name == 'websocket':
         return websockets
     elif name == 'webhook':
-        return webhookCallbacks
+        return webhooks
     else:
         raise ValueError(name)
 
@@ -577,7 +577,7 @@ def get_lock_by_store_name(store_name, channel):
     if store_name == 'websocket':
         return websocketLocks[channel]
     elif store_name == 'webhook':
-        return webhookCallbackLocks[channel]
+        return webhookLocks[channel]
     else:
         raise ValueError(store_name)
 
