@@ -17,10 +17,8 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 webhooks = {}
-webhookLocks = {}
 webhookConfig = {}
 websockets = {}
-websocketLocks = {}
 skip_verify_ordered = False
 
 
@@ -123,8 +121,8 @@ class HubTasks:
             "heartbeats": [],
             "lastHeartbeat": '',
             "unknown": [],
+            "lock": threading.Lock()
         }
-        webhookLocks[self.channel] = threading.Lock()
         logger.info('webhook store for "' + self.channel + '": ' + json.dumps(webhooks[self.channel], default=str))
         self.upsert_webhook()
 
@@ -206,12 +204,12 @@ class HubTasks:
         def restart_websocket_server_on_close():
             while True:
                 try:
-                    websocketLocks[channel] = threading.Lock()
                     websockets[channel] = {
                         "data": [],
                         "unknown": [],
                         "open": True,
-                        "start": datetime.now()
+                        "start": datetime.now(),
+                        "lock": threading.Lock()
                     }
                     logger.info('websocket store for "' + channel + '": ' + json.dumps(websockets[channel], default=str))
                     ws.run_forever()
@@ -293,15 +291,13 @@ class HubTasks:
                 self.append_href(href, 'websocket')
         return href
 
-    def append_href(self, href, store_name):
+    def append_href(self, href, store=webhooks):
         content_key = HubTasks.get_short_path(href)
-        store = get_store_by_name(store_name)
-        lock = get_lock_by_store_name(store_name, self.channel)
         try:
-            lock.acquire()
+            store[self.channel]['lock'].acquire()
             store[self.channel]["data"].append(content_key)
         finally:
-            lock.release()
+            store[self.channel]['lock'].release()
 
     def read(self, uri, verify=False):
         checkCount = self.count - 1
@@ -441,21 +437,21 @@ class HubTasks:
         size = self.number * self.number * 300
         return ''.join(random.choice(chars) for x in range(size))
 
-    def verify_callback(self, obj, lock_store, name="webhook", count=2000):
-        lock_store[self.channel].acquire()
-        items = len(obj[self.channel]["data"])
+    def verify_callback(self, store, name="webhook", count=2000):
+        store[self.channel]['lock'].acquire()
+        items = len(store[self.channel]["data"])
         if items > count:
             events.request_failure.fire(request_type=name, name="length", response_time=1, exception=-1)
             logger.info(name + " too many items in " + self.channel + " " + str(items))
         else:
             events.request_success.fire(request_type=name, name="length", response_time=1, response_length=1)
-        lock_store[self.channel].release()
+        store[self.channel]['lock'].release()
 
     def verify_callback_length(self, count=2000):
-        self.verify_callback(webhooks, webhookLocks, "webhook", count)
+        self.verify_callback(webhooks, "webhook", count)
         if self.user.has_websocket():
             if websockets[self.channel]["open"]:
-                self.verify_callback(websockets, websocketLocks, "websocket")
+                self.verify_callback(websockets, "websocket")
         if webhooks[self.channel]["heartbeat"]:
             heartbeats_ = webhooks[self.channel]["heartbeats"]
             if len(heartbeats_) > 2:
@@ -526,16 +522,16 @@ class HubTasks:
                     logger.info('item before start time: ' + content_key)
                     return
 
-                webhookLocks[channel].acquire()
+                webhooks[channel]['lock'].acquire()
                 if webhooks[channel]["parallel"] == 1:
                     HubTasks.verify_ordered(channel, content_key, webhooks, "webhook")
                 else:
                     HubTasks.verify_parallel(channel, content_key)
             finally:
-                if not webhookLocks[channel].locked():
-                    logger.warning('no lock to release: webhookLocks[' + channel + ']')
+                if not webhooks[channel]['lock'].locked():
+                    logger.warning('no webhook lock to release for: ' + channel)
                 else:
-                    webhookLocks[channel].release()
+                    webhooks[channel]['lock'].release()
 
     @staticmethod
     def heartbeat(channel, incoming_json):
@@ -556,26 +552,12 @@ class HubTasks:
         webhooks[channel]["lastHeartbeat"] = id_
 
     @staticmethod
-    def get_store(name):
-        return json.dumps(get_store_by_name(name), indent=2, default=str)
+    def get_webhook_store():
+        return json.dumps(webhooks, indent=2, default=str)
 
-
-def get_store_by_name(name):
-    if name == 'websocket':
-        return websockets
-    elif name == 'webhook':
-        return webhooks
-    else:
-        raise ValueError(name)
-
-
-def get_lock_by_store_name(store_name, channel):
-    if store_name == 'websocket':
-        return websocketLocks[channel]
-    elif store_name == 'webhook':
-        return webhookLocks[channel]
-    else:
-        raise ValueError(store_name)
+    @staticmethod
+    def get_websocket_store():
+        return json.dumps(websockets, indent=2, default=str)
 
 
 def get_item_timestamp(content_key):
