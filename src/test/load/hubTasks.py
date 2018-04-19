@@ -443,7 +443,6 @@ class HubTasks:
 
     def verify_callback(self, obj, lock_store, name="webhook", count=2000):
         lock_store[self.channel].acquire()
-        ensure_store_channel_property_exists(obj, self.channel, 'data')
         items = len(obj[self.channel]["data"])
         if items > count:
             events.request_failure.fire(request_type=name, name="length", response_time=1, exception=-1)
@@ -470,7 +469,6 @@ class HubTasks:
             logger.debug("skipping verify_order")
             return
 
-        ensure_store_channel_property_has_values(obj, channel, 'data')
         if obj[channel]["data"][0] == incoming_uri:
             (obj[channel]["data"]).remove(incoming_uri)
             events.request_success.fire(request_type=name, name="ordered", response_time=1, response_length=1)
@@ -481,7 +479,6 @@ class HubTasks:
                 logger.info(name + ' | ordered | item in wrong order: ' + incoming_uri + ' | found at ' + str(obj[channel]['data'].index(incoming_uri)))
                 (obj[channel]["data"]).remove(incoming_uri)
             else:
-                ensure_store_channel_property_exists(obj, channel, 'unknown')
                 obj[channel]["unknown"].append(str(incoming_uri))
                 events.request_failure.fire(request_type=name, name="ordered", response_time=1, exception='item unknown')
                 logger.info(name + ' | ordered | item unknown: ' + incoming_uri)
@@ -544,7 +541,6 @@ class HubTasks:
     def heartbeat(channel, incoming_json):
         if not webhooks[channel]["heartbeat"]:
             return
-        ensure_store_channel_property_exists(webhooks, channel, 'heartbeats')
         heartbeats_ = webhooks[channel]["heartbeats"]
         id_ = incoming_json['id']
         if id_ == heartbeats_[0]:
@@ -580,32 +576,6 @@ def get_lock_by_store_name(store_name, channel):
         return webhookLocks[channel]
     else:
         raise ValueError(store_name)
-
-
-def ensure_store_exists(store):
-    if not store:
-        raise ValueError('no store found')
-
-
-def ensure_store_channel_exists(store, channel):
-    ensure_store_exists(store)
-    if channel not in store:
-        raise ValueError('no store[' + channel + '] found')
-
-
-def ensure_store_channel_property_exists(store, channel, prop):
-    ensure_store_exists(store)
-    ensure_store_channel_exists(store, channel)
-    if prop not in store[channel]:
-        raise ValueError('no store[' + channel + '][' + prop + '] found')
-
-
-def ensure_store_channel_property_has_values(store, channel, prop):
-    ensure_store_exists(store)
-    ensure_store_channel_exists(store, channel)
-    ensure_store_channel_property_exists(store, channel, prop)
-    if len(store[channel][prop]) < 1:
-        raise ValueError('no values for store[' + channel + '][' + prop + '] found')
 
 
 def get_item_timestamp(content_key):
