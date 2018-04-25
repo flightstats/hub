@@ -1,46 +1,37 @@
 require('../integration_config.js');
-var async = require('async');
-var moment = require('moment');
-var testName = __filename;
-var locustUrl = process.env.locustUrl;
-locustUrl = 'http://' + locustUrl + '/stats';
-console.log(locustUrl);
+require('console.table');
+let locustURL = `http://${process.env.locustUrl}`;
+console.log(locustURL);
 
-var timeout = 5 * 60 * 1000;
 /**
- * This should get the results from a running locust install and logs results to the console
- * http://locustUrl/stats/requests
- * it should also reset the stats.
- * http://locustUrl/stats/reset
+ * - Pull down the current stats from a running Locust host
+ * - Log the stats
+ * - Verify there are no failures
+ * - Reset the stats
  */
-describe(testName, function () {
 
-    var results;
+describe(__filename, () => {
 
-    it('loads results', function (done) {
-        utils.httpGet(`${locustUrl}/requests`, {'Accept': 'application/json'})
-            .then(response => {
-                console.log('response:', response.body);
-                response.body.stats.forEach(function (item) {
-                    console.log(`item ${item.name} ${item.num_failures}`);
-                    expect(item.num_failures).toBe(0);
-                });
-            })
-            .catch(error => {
-                expect(error).toBeNull();
-            })
-            .finally(done);
-    }, timeout);
+  it('loads results', (done) => {
+    utils.httpGet(`${locustURL}/stats/requests`, {'Accept': 'application/json'})
+      .then(response => {
+        console.table(response.body.stats);
+        console.table(response.body.errors);
 
-    it('resets stats', function (done) {
-        utils.httpGet(`${locustUrl}/reset`)
-            .then(response => {
-                expect(response.statusCode).toBe(200);
-            })
-            .catch(error => {
-                expect(error).toBeNull();
-            })
-            .finally(done);
-    }, timeout);
+        let failedItems = response.body.stats.filter(item => item.num_failures > 0);
+        failedItems.forEach(item => {
+          console.log('failures:', item.type, item.name, item._num_failures);
+        });
+
+        expect(failedItems.length).toEqual(0);
+      })
+      .finally(done);
+  });
+
+  it('resets stats', (done) => {
+    utils.httpGet(`${locustURL}/stats/reset`)
+      .then(response => expect(response.statusCode).toBe(200))
+      .finally(done);
+  });
 
 });
