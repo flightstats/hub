@@ -59,8 +59,8 @@ class VerifierTasks(TaskSet):
 
         uris = links['_links']['uris']
         for uri in uris:
-            self.hubTasks.append_href(uri, 'websocket')
-            self.hubTasks.append_href(uri, 'webhook')
+            self.hubTasks.append_href(uri, 'websockets')
+            self.hubTasks.append_href(uri, 'webhooks')
         # todo add read functionality
         return uris
 

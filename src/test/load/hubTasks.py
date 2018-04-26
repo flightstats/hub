@@ -272,7 +272,7 @@ class HubTasks:
         self.count += 1
         href = links['_links']['self']['href']
         if self.user.has_webhook():
-            self.append_href(href, webhooks)
+            self.append_href(href, 'webhooks')
             if webhooks[self.channel]["heartbeat"]:
                 if webhooks[self.channel]["batch"] == "MINUTE":
                     id = href[-30:-14]
@@ -283,10 +283,11 @@ class HubTasks:
                     webhooks[self.channel]["heartbeats"].append(id)
         if self.user.has_websocket():
             if websockets[self.channel]["open"]:
-                self.append_href(href, websockets)
+                self.append_href(href, 'websockets')
         return href
 
-    def append_href(self, href, store=webhooks):
+    def append_href(self, href, store_name='webhooks'):
+        store = get_store_by_name(store_name)
         short_href = HubTasks.get_short_path(href)
         try:
             store[self.channel]['lock'].acquire()
@@ -575,3 +576,12 @@ def get_response_as_json(response):
 
 def abbreviate(array):
     return '[' + array[0] + ' ... ' + array[len(array) - 1] + ']'
+
+
+def get_store_by_name(name):
+    if name == 'webhooks':
+        return webhooks
+    elif name == 'websockets':
+        return websockets
+    else:
+        raise ValueError(name)
