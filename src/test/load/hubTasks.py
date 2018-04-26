@@ -285,7 +285,7 @@ class HubTasks:
                     webhooks[self.channel]["heartbeats"].append(id)
         if self.user.has_websocket():
             if websockets[self.channel]["open"]:
-                self.append_href(href, 'websocket')
+                self.append_href(href, websockets)
         return href
 
     def append_href(self, href, store=webhooks):
