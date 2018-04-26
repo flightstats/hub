@@ -173,11 +173,10 @@ class HubTasks:
         time.sleep(1)
 
         if it_works:
-            events.request_success.fire(request_type="webhook", name=name, response_time=1,
-                                        response_length=1)
+            events.request_success.fire(request_type="webhook", name=name, response_time=1, response_length=1)
         else:
-            events.request_failure.fire(request_type="webhook", name=name, response_time=1,
-                                        exception=-1)
+            events.request_failure.fire(request_type="webhook", name=name, response_time=1, exception='incorrect cursor position')
+            logger.info(name + ' | webhook | incorrect cursor position: ' + new_latest + ' > ' + old_latest)
 
     def verify_cursor_update(self):
         update_to_yesterday = lambda: self.update_webhook_cursor(False)
@@ -338,12 +337,10 @@ class HubTasks:
         query_slice = query_items[-items:]
         total_time = int((time.time() - start_time) * 1000)
         if cmp(query_slice, posted_items) == 0:
-            events.request_success.fire(request_type="sequential", name="compare", response_time=total_time,
-                                        response_length=items)
+            events.request_success.fire(request_type="sequential", name="compare", response_time=total_time, response_length=items)
         else:
-            logger.info("expected " + ", ".join(posted_items) + " found " + ", ".join(query_slice))
-            events.request_failure.fire(request_type="sequential", name="compare", response_time=total_time
-                                        , exception=-1)
+            events.request_failure.fire(request_type="sequential", name="compare", response_time=total_time, exception='incorrect sequential items')
+            logger.info('sequential | compare | incorrect items: ' + abbreviate(query_slice) + ' instead of ' + abbreviate(posted_items))
 
     def latest(self):
         self.client.get('/channel/' + self.channel + '/latest', name="latest")
@@ -381,28 +378,20 @@ class HubTasks:
         next_json = get_response_as_json(next_response)
         next_uris = next_json['_links']['uris']
         if cmp(next_uris, items[1:]) == 0:
-            events.request_success.fire(request_type="next", name="compare", response_time=1,
-                                        response_length=len(items))
+            events.request_success.fire(request_type="next", name="compare", response_time=1, response_length=len(items))
         else:
-            logger.info(nextUrl + " next " + ", ".join(items[1:]) + " found " + ", ".join(next_uris))
-            logger.info(" first " + json.dumps(first_json['trace']) + " second " + json.dumps(second_json['trace']))
-            logger.info(" next " + json.dumps(next_json['trace']))
-            events.request_failure.fire(request_type="next", name="compare", response_time=1
-                                        , exception=-1)
+            events.request_failure.fire(request_type="next", name="compare", response_time=1, exception='incorrect next items')
+            logger.info('next | compare | incorrect items: ' + abbreviate(next_uris) + ' instead of ' + abbreviate(items[1:]))
 
         previousUrl = items[-1] + "/previous/" + numItems + "?stable=false"
         previous_response = self.client.get(previousUrl, name="previous")
         previous_json = get_response_as_json(previous_response)
         previous_uris = previous_json['_links']['uris']
         if cmp(previous_uris, items[:-1]) == 0:
-            events.request_success.fire(request_type="previous", name="compare", response_time=1,
-                                        response_length=len(items))
+            events.request_success.fire(request_type="previous", name="compare", response_time=1, response_length=len(items))
         else:
-            logger.info(previousUrl + " previous " + ", ".join(items[:-1]) + " found " + ", ".join(previous_uris))
-            logger.info(" first " + json.dumps(first_json['trace']) + " second " + json.dumps(second_json['trace']))
-            logger.info(" previous " + json.dumps(previous_json['trace']))
-            events.request_failure.fire(request_type="previous", name="compare", response_time=1
-                                        , exception=-1)
+            events.request_failure.fire(request_type="previous", name="compare", response_time=1, exception='incorrect previous items')
+            logger.info('previous | compare | incorrect items: ' + abbreviate(previous_uris) + ' instead of ' + abbreviate(items[:-1]))
 
     def second_query(self):
         results_response = self.client.get(self.time_path("second"), name="time_second")
@@ -447,8 +436,8 @@ class HubTasks:
         store[self.channel]['lock'].acquire()
         items = len(store[self.channel]["data"])
         if items > count:
-            events.request_failure.fire(request_type=name, name="length", response_time=1, exception=-1)
-            logger.info(name + " too many items in " + self.channel + " " + str(items))
+            events.request_failure.fire(request_type=name, name="length", response_time=1, exception='too many items')
+            logger.info(name + ' | length | too many items: ' + self.channel + ' ' + str(items))
         else:
             events.request_success.fire(request_type=name, name="length", response_time=1, response_length=1)
         store[self.channel]['lock'].release()
@@ -461,9 +450,8 @@ class HubTasks:
         if webhooks[self.channel]["heartbeat"]:
             heartbeats_ = webhooks[self.channel]["heartbeats"]
             if len(heartbeats_) > 2:
-                events.request_failure.fire(request_type="heartbeats", name="length", response_time=1,
-                                            exception=-1)
-                logger.info(" too many heartbeats in " + self.channel + " " + str(heartbeats_))
+                events.request_failure.fire(request_type="heartbeats", name="length", response_time=1, exception='too many heartbeats')
+                logger.info('hearbeats | length | too many heartbeats: ' + self.channel + ' ' + str(heartbeats_))
 
     @staticmethod
     def verify_ordered(channel, incoming_uri, obj, name):
@@ -553,8 +541,8 @@ class HubTasks:
                 heartbeats_.remove(id_)
             events.request_success.fire(request_type="heartbeats", name="order", response_time=1, response_length=1)
         else:
-            logger.info("heartbeat order failure. id = " + id_ + " array=" + str(heartbeats_))
-            events.request_failure.fire(request_type="heartbeats", name="order", response_time=1, exception=-1)
+            events.request_failure.fire(request_type="heartbeats", name="order", response_time=1, exception='heartbeat in wrong order')
+            logger.info('heartbeats | order | heartbeat in wrong order: ' + id_ + ' | found at ' + str(heartbeats_.index(id_)))
         webhooks[channel]["lastHeartbeat"] = id_
 
     @staticmethod
@@ -584,3 +572,7 @@ def get_response_as_json(response):
     except ValueError:
         logger.warning('invalid response: ' + response.status_code + ' ' + response.text)
         raise
+
+
+def abbreviate(array):
+    return '[' + array[0] + ' ... ' + array[len(array) - 1] + ']'
