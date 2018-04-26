@@ -26,10 +26,11 @@ describe(__filename, () => {
         console.log('requests/sec:', response.body.total_rps);
         console.log();
 
-        console.table('stats', sort(response.body.stats, sortByStatKeys));
+        let statsSansTotal = response.body.stats.filter(s => s.name !== 'Total');
+        console.table('stats', sort(statsSansTotal, sortByStatKeys));
         console.table('errors', sort(response.body.errors, sortByErrorKeys));
 
-        stats = response.body.stats;
+        stats = statsSansTotal;
       })
       .finally(done);
   });
