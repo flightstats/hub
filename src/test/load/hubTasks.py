@@ -237,12 +237,12 @@ class HubTasks:
 
     def on_message(self, ws, message):
         logger.debug('websocket | ' + self.channel + ' | message: ' + message)
-        content_key = HubTasks.get_short_path(message)
-        timestamp = get_item_timestamp(content_key)
+        short_href = HubTasks.get_short_path(message)
+        timestamp = get_item_timestamp(short_href)
         if timestamp < websockets[self.channel]['start']:
-            logger.info('item before start time: ' + content_key)
+            logger.info('item before start time: ' + short_href)
             return
-        HubTasks.verify_ordered(self.channel, content_key, websockets, "websocket")
+        HubTasks.verify_ordered(self.channel, short_href, websockets, "websocket")
 
     def on_error(self, ws, error):
         logger.error('websocket | ' + self.channel + ' | error: ' + str(error))
@@ -289,10 +289,10 @@ class HubTasks:
         return href
 
     def append_href(self, href, store=webhooks):
-        content_key = HubTasks.get_short_path(href)
+        short_href = HubTasks.get_short_path(href)
         try:
             store[self.channel]['lock'].acquire()
-            store[self.channel]["data"].append(content_key)
+            store[self.channel]["data"].append(short_href)
         finally:
             store[self.channel]['lock'].release()
 
