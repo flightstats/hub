@@ -272,7 +272,7 @@ class HubTasks:
         self.count += 1
         href = links['_links']['self']['href']
         if self.user.has_webhook():
-            self.append_href(href, 'webhook')
+            self.append_href(href, webhooks)
             if webhooks[self.channel]["heartbeat"]:
                 if webhooks[self.channel]["batch"] == "MINUTE":
                     id = href[-30:-14]
