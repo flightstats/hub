@@ -35,8 +35,10 @@ def key_from_time(dt, unit="second"):
                    }
     return key_options[unit]
 
+
 def webhook_name(channel):
     return "/webhook/locust_" + str(channel)
+
 
 class HubTasks:
     host = None
@@ -128,8 +130,7 @@ class HubTasks:
 
     def get_webhook_config(self):
         response = self.client.get(webhook_name(self.channel), name="webhook_config")
-        json = get_response_as_json(response)
-        return json
+        return get_response_as_json(response)
 
     def get_webhook_last_completed(self):
         config = self.get_webhook_config()
@@ -141,8 +142,6 @@ class HubTasks:
 
     def channel_url_from_time(self, time, unit="second"):
         return self.host + "/channel/" + self.channel + "/" + key_from_time(time, unit)
-
-        # update webhook cursor to now "current=True" or 1 day in the past
 
     def update_webhook_cursor(self, current=True):
         if current:
@@ -267,8 +266,8 @@ class HubTasks:
     def get_channel_url(self):
         return self.user.channel_post_url(self.channel)
 
-    def parse_write(self, postResponse):
-        links = get_response_as_json(postResponse)
+    def parse_write(self, response):
+        links = get_response_as_json(response)
 
         self.count += 1
         href = links['_links']['self']['href']
@@ -296,14 +295,14 @@ class HubTasks:
             store[self.channel]['lock'].release()
 
     def read(self, uri, verify=False):
-        checkCount = self.count - 1
-        with self.client.get(uri, catch_response=True, name="get_payload") as postResponse:
-            if postResponse.status_code != 200:
-                postResponse.failure("Got wrong response on get: " + str(postResponse.status_code) + " " + uri)
+        check_count = self.count - 1
+        with self.client.get(uri, catch_response=True, name="get_payload") as response:
+            if response.status_code != 200:
+                response.failure("Got wrong response on get: " + str(response.status_code) + " " + uri)
             elif verify:
-                if str(checkCount) not in postResponse.content:
-                    logger.info("wrong response " + uri + " " + postResponse.content)
-                    postResponse.failure("Got wrong checkCount on get: " + str(postResponse.status_code) + " " + uri)
+                if str(check_count) not in response.content:
+                    logger.info("wrong response " + uri + " " + response.content)
+                    response.failure("Got wrong check_count on get: " + str(response.status_code) + " " + uri)
 
     def change_parallel(self, channel):
         group = {
@@ -372,9 +371,9 @@ class HubTasks:
         second_json = get_response_as_json(second_response)
         items.extend(second_json['_links']['uris'])
         items.extend(first_json['_links']['uris'])
-        numItems = str(len(items) - 1)
-        nextUrl = items[0] + "/next/" + numItems + "?stable=false"
-        next_response = self.client.get(nextUrl, name="next")
+        num_items = str(len(items) - 1)
+        next_url = items[0] + "/next/" + num_items + "?stable=false"
+        next_response = self.client.get(next_url, name="next")
         next_json = get_response_as_json(next_response)
         next_uris = next_json['_links']['uris']
         if cmp(next_uris, items[1:]) == 0:
@@ -383,8 +382,8 @@ class HubTasks:
             events.request_failure.fire(request_type="next", name="compare", response_time=1, exception='incorrect next items')
             logger.info('next | compare | incorrect items: ' + abbreviate(next_uris) + ' instead of ' + abbreviate(items[1:]))
 
-        previousUrl = items[-1] + "/previous/" + numItems + "?stable=false"
-        previous_response = self.client.get(previousUrl, name="previous")
+        previous_url = items[-1] + "/previous/" + num_items + "?stable=false"
+        previous_response = self.client.get(previous_url, name="previous")
         previous_json = get_response_as_json(previous_response)
         previous_uris = previous_json['_links']['uris']
         if cmp(previous_uris, items[:-1]) == 0:
@@ -418,11 +417,11 @@ class HubTasks:
 
     def next_10(self):
         utcnow = datetime.utcnow()
-        self.doNext(utcnow + timedelta(minutes=-1))
-        self.doNext(utcnow + timedelta(hours=-1))
-        self.doNext(utcnow + timedelta(days=-1))
+        self.do_next(utcnow + timedelta(minutes=-1))
+        self.do_next(utcnow + timedelta(hours=-1))
+        self.do_next(utcnow + timedelta(days=-1))
 
-    def doNext(self, time):
+    def do_next(self, time):
         path = "/channel/" + self.channel + time.strftime("/%Y/%m/%d/%H/%M/%S/000") + "/A/next/10"
         with self.client.get(path, catch_response=True, name="next") as postResponse:
             if postResponse.status_code != 200:
