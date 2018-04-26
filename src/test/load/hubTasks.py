@@ -127,7 +127,8 @@ class HubTasks:
         self.upsert_webhook()
 
     def get_webhook_config(self):
-        json = (self.client.get(webhook_name(self.channel), name="webhook_config")).json()
+        response = self.client.get(webhook_name(self.channel), name="webhook_config")
+        json = get_response_as_json(response)
         return json
 
     def get_webhook_last_completed(self):
@@ -268,11 +269,7 @@ class HubTasks:
         return self.user.channel_post_url(self.channel)
 
     def parse_write(self, postResponse):
-        try:
-            links = postResponse.json()
-        except ValueError:
-            logger.warning('invalid response: ' + postResponse.status_code + ' ' + postResponse.text)
-            raise
+        links = get_response_as_json(postResponse)
 
         self.count += 1
         href = links['_links']['self']['href']
@@ -330,10 +327,12 @@ class HubTasks:
         items = 20
         for x in range(0, items):
             posted_items.append(self.write())
-        initial = (self.client.get(self.time_path("minute"), name="time_minute")).json()
+        minute_response = self.client.get(self.time_path("minute"), name="time_minute")
+        initial = get_response_as_json(minute_response)
 
         if len(initial['_links']['uris']) < items:
-            previous = (self.client.get(initial['_links']['previous']['href'], name="time_minute")).json()
+            previous_response = self.client.get(initial['_links']['previous']['href'], name="time_minute")
+            previous = get_response_as_json(previous_response)
             query_items.extend(previous['_links']['uris'])
         query_items.extend(initial['_links']['uris'])
         query_slice = query_items[-items:]
@@ -370,42 +369,48 @@ class HubTasks:
     def next_previous(self):
         items = []
         url = self.time_path("minute")
-        first = (self.client.get(url, name="time_minute")).json()
-        second = (self.client.get(first['_links']['previous']['href'], name="time_minute")).json()
-        items.extend(second['_links']['uris'])
-        items.extend(first['_links']['uris'])
+        first_response = self.client.get(url, name="time_minute")
+        first_json = get_response_as_json(first_response)
+        second_response = self.client.get(first_json['_links']['previous']['href'], name="time_minute")
+        second_json = get_response_as_json(second_response)
+        items.extend(second_json['_links']['uris'])
+        items.extend(first_json['_links']['uris'])
         numItems = str(len(items) - 1)
         nextUrl = items[0] + "/next/" + numItems + "?stable=false"
-        next_json = (self.client.get(nextUrl, name="next")).json()
+        next_response = self.client.get(nextUrl, name="next")
+        next_json = get_response_as_json(next_response)
         next_uris = next_json['_links']['uris']
         if cmp(next_uris, items[1:]) == 0:
             events.request_success.fire(request_type="next", name="compare", response_time=1,
                                         response_length=len(items))
         else:
             logger.info(nextUrl + " next " + ", ".join(items[1:]) + " found " + ", ".join(next_uris))
-            logger.info(" first " + json.dumps(first['trace']) + " second " + json.dumps(second['trace']))
+            logger.info(" first " + json.dumps(first_json['trace']) + " second " + json.dumps(second_json['trace']))
             logger.info(" next " + json.dumps(next_json['trace']))
             events.request_failure.fire(request_type="next", name="compare", response_time=1
                                         , exception=-1)
 
         previousUrl = items[-1] + "/previous/" + numItems + "?stable=false"
-        previous_json = (self.client.get(previousUrl, name="previous")).json()
+        previous_response = self.client.get(previousUrl, name="previous")
+        previous_json = get_response_as_json(previous_response)
         previous_uris = previous_json['_links']['uris']
         if cmp(previous_uris, items[:-1]) == 0:
             events.request_success.fire(request_type="previous", name="compare", response_time=1,
                                         response_length=len(items))
         else:
             logger.info(previousUrl + " previous " + ", ".join(items[:-1]) + " found " + ", ".join(previous_uris))
-            logger.info(" first " + json.dumps(first['trace']) + " second " + json.dumps(second['trace']))
+            logger.info(" first " + json.dumps(first_json['trace']) + " second " + json.dumps(second_json['trace']))
             logger.info(" previous " + json.dumps(previous_json['trace']))
             events.request_failure.fire(request_type="previous", name="compare", response_time=1
                                         , exception=-1)
 
     def second_query(self):
-        results = self.client.get(self.time_path("second"), name="time_second").json()
+        results_response = self.client.get(self.time_path("second"), name="time_second")
+        results_json = get_response_as_json(results_response)
         items = 60
         for x in range(0, items):
-            results = self.client.get(results['_links']['previous']['href'], name="time_second").json()
+            results_response = self.client.get(results_json['_links']['previous']['href'], name="time_second")
+            results_json = get_response_as_json(results_response)
 
     def time_path(self, unit="second"):
         return "/channel/" + self.channel + self.user.time_path(unit) + "?stable=false"
@@ -415,7 +420,8 @@ class HubTasks:
         with self.client.get(path, catch_response=True, name="time_" + time_unit) as postResponse:
             if postResponse.status_code != 200:
                 postResponse.failure("Got wrong response on get: " + str(postResponse.status_code))
-        links = postResponse.json()
+
+        links = get_response_as_json(postResponse)
         uris = links['_links']['uris']
         if len(uris) > 0:
             for uri in uris:
@@ -570,3 +576,11 @@ def get_item_timestamp(content_key):
     second = int(components[6])
     millisecond = int(components[7])
     return datetime(year, month, day, hour, minute, second, millisecond * 1000)
+
+
+def get_response_as_json(response):
+    try:
+        return response.json()
+    except ValueError:
+        logger.warning('invalid response: ' + response.status_code + ' ' + response.text)
+        raise
