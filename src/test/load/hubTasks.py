@@ -326,14 +326,14 @@ class HubTasks:
         items = 20
         for x in range(0, items):
             posted_items.append(self.write())
-        minute_response = self.client.get(self.time_path("minute"), name="time_minute")
-        initial = get_response_as_json(minute_response)
+        initial_response = self.client.get(self.time_path("minute"), name="time_minute")
+        initial_json = get_response_as_json(initial_response)
 
-        if len(initial['_links']['uris']) < items:
-            previous_response = self.client.get(initial['_links']['previous']['href'], name="time_minute")
-            previous = get_response_as_json(previous_response)
-            query_items.extend(previous['_links']['uris'])
-        query_items.extend(initial['_links']['uris'])
+        if len(initial_json['_links']['uris']) < items:
+            previous_response = self.client.get(initial_json['_links']['previous']['href'], name="time_minute")
+            previous_json = get_response_as_json(previous_response)
+            query_items.extend(previous_json['_links']['uris'])
+        query_items.extend(initial_json['_links']['uris'])
         query_slice = query_items[-items:]
         total_time = int((time.time() - start_time) * 1000)
         if cmp(query_slice, posted_items) == 0:
@@ -544,14 +544,6 @@ class HubTasks:
             events.request_failure.fire(request_type="heartbeats", name="order", response_time=1, exception='heartbeat in wrong order')
             logger.info('heartbeats | order | heartbeat in wrong order: ' + id_ + ' | found at ' + str(heartbeats_.index(id_)))
         webhooks[channel]["lastHeartbeat"] = id_
-
-    @staticmethod
-    def get_webhook_store():
-        return json.dumps(webhooks, indent=2, default=str)
-
-    @staticmethod
-    def get_websocket_store():
-        return json.dumps(websockets, indent=2, default=str)
 
     @staticmethod
     def get_store(name):
