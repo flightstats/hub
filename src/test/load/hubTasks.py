@@ -553,6 +553,10 @@ class HubTasks:
     def get_websocket_store():
         return json.dumps(websockets, indent=2, default=str)
 
+    @staticmethod
+    def get_store(name):
+        return get_store_by_name(name)
+
 
 def get_item_timestamp(content_key):
     components = content_key.split('/')
