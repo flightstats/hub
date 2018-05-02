@@ -566,7 +566,7 @@ def get_response_as_json(response):
     try:
         return response.json()
     except ValueError:
-        logger.warning('invalid response: ' + response.status_code + ' ' + response.text)
+        logger.warning('invalid response: ' + str(response.status_code) + ' ' + response.text)
         raise
 
 
