@@ -198,19 +198,10 @@ class HubTasks:
                                     on_message=self.on_message,
                                     on_close=self.on_close,
                                     on_error=self.on_error)
-        channel = self.channel
 
         def restart_websocket_server_on_close():
             while True:
                 try:
-                    websockets[channel] = {
-                        "data": [],
-                        "unknown": [],
-                        "open": True,
-                        "start": datetime.now(),
-                        "lock": threading.Lock()
-                    }
-                    logger.info('websocket store for "' + channel + '": ' + json.dumps(websockets[channel], default=str))
                     ws.run_forever()
                 except WebSocketException:
                     logger.exception('WebSocket client was meant to run forever but was stopped.')
@@ -227,7 +218,8 @@ class HubTasks:
 
     def on_open(self, ws):
         logger.info('websocket | ' + self.channel + ' | opened')
-        websockets[self.channel]['open'] = True
+        websockets[self.channel] = build_new_websocket_store()
+        logger.info('websocket store for "' + self.channel + '": ' + json.dumps(websockets[self.channel], default=str))
 
     def on_close(self, ws):
         logger.info('websocket | ' + self.channel + ' | closed')
@@ -581,3 +573,13 @@ def get_store_by_name(name):
         return websockets
     else:
         raise ValueError(name)
+
+
+def build_new_websocket_store():
+    return {
+        "data": [],
+        "unknown": [],
+        "open": True,
+        "start": datetime.now(),
+        "lock": threading.Lock()
+    }
