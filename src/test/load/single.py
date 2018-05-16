@@ -7,7 +7,7 @@ from hubTasks import HubTasks
 from hubUser import HubUser
 from log import setup_logging
 
-setup_logging()
+setup_logging(logging.DEBUG, '/mnt/single.log')
 logger = logging.getLogger(__name__)
 
 
