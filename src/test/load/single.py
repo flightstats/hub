@@ -66,12 +66,14 @@ class VerifierTasks(TaskSet):
 
     @web.app.route("/callback", methods=['GET'])
     def get_channels():
-        logger.debug(request.remote_addr + ' | ' + request.method + ' | /callback')
+        ip_address = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+        logger.debug(ip_address + ' | ' + request.method + ' | /callback')
         return HubTasks.get_channels()
 
     @web.app.route("/callback/<channel>", methods=['GET', 'POST'])
     def callback(channel):
-        logger.debug(request.remote_addr + ' | ' + request.method + ' | /callback/' + channel + ' | ' + request.get_data().strip())
+        ip_address = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+        logger.debug(ip_address + ' | ' + request.method + ' | /callback/' + channel + ' | ' + request.get_data().strip())
         return HubTasks.callback(channel)
 
     @web.app.route('/store/<name>', methods=['GET'])
