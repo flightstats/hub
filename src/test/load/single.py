@@ -5,7 +5,9 @@ from locust import HttpLocust, TaskSet, task, web
 from flask import request, Response
 from hubTasks import HubTasks
 from hubUser import HubUser
+from log import setup_logging
 
+setup_logging()
 logger = logging.getLogger(__name__)
 
 
