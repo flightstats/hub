@@ -1,5 +1,3 @@
-# locust.py
-
 import logging
 from locust import HttpLocust, TaskSet, task, web
 from flask import request, Response
