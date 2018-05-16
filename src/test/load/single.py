@@ -6,6 +6,7 @@ from flask import request, Response
 from hubTasks import HubTasks
 from hubUser import HubUser
 from log import setup_logging
+import utils
 
 setup_logging(logging.DEBUG, '/mnt/single.log')
 logger = logging.getLogger(__name__)
@@ -66,14 +67,12 @@ class VerifierTasks(TaskSet):
 
     @web.app.route("/callback", methods=['GET'])
     def get_channels():
-        ip_address = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
-        logger.debug(ip_address + ' | ' + request.method + ' | /callback')
+        logger.debug(utils.get_client_address(request) + ' | ' + request.method + ' | /callback')
         return HubTasks.get_channels()
 
     @web.app.route("/callback/<channel>", methods=['GET', 'POST'])
     def callback(channel):
-        ip_address = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
-        logger.debug(ip_address + ' | ' + request.method + ' | /callback/' + channel + ' | ' + request.get_data().strip())
+        logger.debug(utils.get_client_address(request) + ' | ' + request.method + ' | /callback/' + channel + ' | ' + request.get_data().strip())
         return HubTasks.callback(channel)
 
     @web.app.route('/store/<name>', methods=['GET'])

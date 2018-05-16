@@ -2,3 +2,4 @@ locustio
 pyzmq
 websocket-client
 httplib2
+ipaddress
