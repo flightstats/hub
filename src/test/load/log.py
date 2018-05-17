@@ -40,7 +40,7 @@ class CompressedTimedRotatingFileHandler(TimedRotatingFileHandler):
 
     def find_most_recent_uncompressed_log(self):
         dir_name, base_name = os.path.split(self.baseFilename)
-        uncompressed_files = [filename for filename in os.listdir(dir_name) if filename.endswith('.log')]
+        uncompressed_files = [filename for filename in os.listdir(dir_name) if not filename.endswith('.log') and not filename.endswith('.gz')]
         uncompressed_files.sort()
         uncompressed_files.reverse()
         return uncompressed_files[0]
