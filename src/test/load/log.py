@@ -31,7 +31,7 @@ class CompressedTimedRotatingFileHandler(TimedRotatingFileHandler):
     def doRollover(self):
         TimedRotatingFileHandler.doRollover(self)
         dfn_uncompressed = self.find_most_recent_uncompressed_log()
-        dfn_compressed = '{}.gzip'.format(dfn_uncompressed)
+        dfn_compressed = '{}.gz'.format(dfn_uncompressed)
         if os.path.exists(dfn_compressed):
             os.remove(dfn_compressed)
         with open(dfn_uncompressed, 'rb') as f_in, gzip.open(dfn_compressed, 'wb') as f_out:
