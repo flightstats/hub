@@ -520,7 +520,7 @@ class HubTasks:
 
     @staticmethod
     def heartbeat(channel, incoming_json):
-        if not webhooks[channel] and not webhooks[channel]["heartbeat"]:
+        if channel not in webhooks:
             return
         heartbeats_ = webhooks[channel]["heartbeats"]
         id_ = incoming_json['id']
