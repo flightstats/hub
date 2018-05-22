@@ -6,17 +6,21 @@ import shutil
 from logging.handlers import TimedRotatingFileHandler
 
 
-def setup_logging(level=logging.INFO, filename='unnamed.log'):
+def setup_logging(level=logging.INFO, name='unnamed', extension='log'):
     root_logger = logging.getLogger()
     root_logger.setLevel(level)
 
     log_format = '%(asctime)s [%(levelname)s] %(name)s : %(message)s'
     formatter = logging.Formatter(log_format, '%Y-%m-%d %H:%M:%S')
-    root_logger.addHandler(create_file_handler(formatter, filename))
+    relative_filename = '{}.{}'.format(name, extension)
+    absolute_filename = os.path.join('/mnt/log', relative_filename)
+    root_logger.addHandler(create_file_handler(formatter, absolute_filename))
 
     # squelch some 3rd party logging
     urllib_logger = logging.getLogger('urllib3.connectionpool')
     urllib_logger.setLevel(logging.WARNING)
+
+    return logging.getLogger(name)
 
 
 def create_file_handler(formatter, filename):
