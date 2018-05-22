@@ -23,6 +23,8 @@ RUN pip install -r requirements.txt
 
 COPY . /locust
 
+RUN mkdir -p /mnt/log
+
 EXPOSE 8089 5557 5558
 
 ENTRYPOINT ["/usr/local/bin/locust"]
