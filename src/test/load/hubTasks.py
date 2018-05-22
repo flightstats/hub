@@ -521,10 +521,13 @@ class HubTasks:
     @staticmethod
     def heartbeat(channel, incoming_json):
         if channel not in webhooks:
+            logger.warning('no webhook store for: ' + channel)
             return
+
         heartbeats_ = webhooks[channel]["heartbeats"]
         id_ = incoming_json['id']
-        if id_ == heartbeats_[0]:
+
+        if len(heartbeats_) > 0 and id_ == heartbeats_[0]:
             heartbeats_.remove(id_)
             events.request_success.fire(request_type="heartbeats", name="order", response_time=1, response_length=1)
         elif id_ != webhooks[channel]["lastHeartbeat"]:
@@ -534,6 +537,7 @@ class HubTasks:
         else:
             events.request_failure.fire(request_type="heartbeats", name="order", response_time=1, exception='heartbeat in wrong order')
             logger.error('heartbeats | order | heartbeat in wrong order: ' + id_ + ' | found at ' + str(heartbeats_.index(id_)))
+
         webhooks[channel]["lastHeartbeat"] = id_
 
     @staticmethod
