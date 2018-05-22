@@ -19,7 +19,7 @@ def setup_logging(level=logging.INFO, log_file='/mnt/locust.log'):
 
 
 def create_file_handler(formatter, log_file):
-    handler = CompressedTimedRotatingFileHandler(log_file, when='M', interval=1, backupCount=7, encoding='utf-8', utc=True)
+    handler = CompressedTimedRotatingFileHandler(log_file, when='midnight', interval=1, backupCount=7, encoding='utf-8', utc=True)
     handler.setFormatter(formatter)
     return handler
 
