@@ -262,6 +262,7 @@ class HubTasks:
 
         self.count += 1
         href = links['_links']['self']['href']
+        logger.debug('item POSTed: ' + href)
         if self.user.has_webhook():
             self.append_href(href, 'webhooks')
             if webhooks[self.channel]["heartbeat"]:
