@@ -73,6 +73,7 @@ class LargeTasks(TaskSet):
                                      + self.hubTasks.get_channel_url())
             else:
                 uri = postResponse.json()['_links']['self']['href']
+                logger.debug('item POSTed: ' + uri)
                 with self.client.get(uri, stream=True, catch_response=True, name="get_payload") as getResponse:
                     if getResponse.status_code != 200:
                         getResponse.failure("Got wrong response on get: " + str(getResponse.status_code) + " " + uri)

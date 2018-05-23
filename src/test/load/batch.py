@@ -2,7 +2,7 @@ import logging
 from locust import HttpLocust, TaskSet, task, web
 from flask import request, Response
 
-from hubTasks import HubTasks
+from hubTasks import HubTasks, get_response_as_json
 from hubUser import HubUser
 from log import setup_logging
 import utils
@@ -52,11 +52,8 @@ class VerifierTasks(TaskSet):
             if postResponse.status_code != 201:
                 postResponse.failure("Got wrong response on post: " + str(postResponse.status_code))
 
-        try:
-            links = postResponse.json()
-        except ValueError:
-            logger.warning('invalid response: ' + postResponse.status_code + ' ' + postResponse.text)
-            raise
+        links = get_response_as_json(postResponse)
+        logger.debug('item POSTed: ' + links['_links']['self']['href'])
 
         uris = links['_links']['uris']
         for uri in uris:
