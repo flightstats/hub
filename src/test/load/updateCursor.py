@@ -8,7 +8,7 @@ from hubUser import HubUser
 from log import setup_logging
 import utils
 
-setup_logging(logging.DEBUG, '/mnt/log/updateCursor.log')
+setup_logging('/mnt/log/updateCursor.log')
 logger = logging.getLogger(__name__)
 
 

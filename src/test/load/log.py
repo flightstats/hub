@@ -4,9 +4,9 @@ import sys
 from lumberjack.handlers import GzippedTimedRotatingFileHandler
 
 
-def setup_logging(level=logging.INFO, filename='unnamed.log'):
+def setup_logging(filename='unnamed.log'):
     root_logger = logging.getLogger()
-    root_logger.setLevel(level)
+    root_logger.setLevel(logging.NOTSET)
 
     log_format = '%(asctime)s [%(levelname)s] %(name)s : %(message)s'
     formatter = logging.Formatter(log_format, '%Y-%m-%d %H:%M:%S')
@@ -22,6 +22,7 @@ def setup_logging(level=logging.INFO, filename='unnamed.log'):
 def create_file_handler(formatter, filename):
     handler = GzippedTimedRotatingFileHandler(filename, when='midnight', interval=1, backupCount=7, encoding='utf-8', utc=True)
     handler.setFormatter(formatter)
+    handler.setLevel(logging.DEBUG)
     return handler
 
 

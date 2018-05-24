@@ -7,7 +7,7 @@ from hubUser import HubUser
 from log import setup_logging
 import utils
 
-setup_logging(logging.DEBUG, '/mnt/log/batch.log')
+setup_logging('/mnt/log/batch.log')
 logger = logging.getLogger(__name__)
 
 
