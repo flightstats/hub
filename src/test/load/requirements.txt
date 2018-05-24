@@ -3,3 +3,4 @@ pyzmq
 websocket-client
 httplib2
 ipaddress
+git+git://github.com/Exide/lumberjack@master#egg=lumberjack
