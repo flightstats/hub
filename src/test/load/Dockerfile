@@ -15,6 +15,7 @@ RUN apt-get install -y python-dev
 RUN apt-get install -y python-pip
 RUN apt-get install -y libevent-dev
 RUN apt-get install -y curl
+RUN apt-get install -y git
 
 RUN mkdir /locust
 WORKDIR /locust
