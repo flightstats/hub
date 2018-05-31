@@ -7,7 +7,7 @@ import string
 import thread
 import threading
 import time
-import websocket
+from websocket import WebSocketApp
 from datetime import datetime, timedelta
 from flask import request, jsonify
 from locust import events
@@ -187,26 +187,30 @@ class HubTasks:
         update_to_now = lambda: self.upsert_webhook(overrides={"startItem": self.channel_url_from_time(datetime.now())})
         self.perform_cursor_update(update_to_yesterday, update_to_now, "upsertWebhook")
 
+    def get_websocket_uri(self):
+        channel_uri = '{}/channel/{}'.format(self.client.base_url, self.channel)
+        if websockets[self.channel]['last_item']:
+            return channel_uri + websockets[self.channel]['last_item'] + '/ws'
+        else:
+            return channel_uri + '/ws'
+
+    def create_websocket(self):
+        uri = self.get_websocket_uri()
+        headers = None
+        logger.info('creating websocket: ' + uri)
+        return WebSocketApp(uri, headers, self.on_open, self.on_message, self.on_error, self.on_close)
+
+    def restart_websocket_server_on_close(self):
+        while True:
+            try:
+                ws = self.create_websocket()
+                ws.run_forever()
+            except WebSocketException:
+                logger.exception('WebSocket client was meant to run forever but was stopped.')
+                pass
+
     def start_websocket(self):
-        self._http = httplib2.Http()
-        meta = self._load_metadata()
-        self.ws_uri = meta['_links']['ws']['href']
-        logger.info(self.ws_uri)
-        ws = websocket.WebSocketApp(self.ws_uri,
-                                    on_open=self.on_open,
-                                    on_message=self.on_message,
-                                    on_close=self.on_close,
-                                    on_error=self.on_error)
-
-        def restart_websocket_server_on_close():
-            while True:
-                try:
-                    ws.run_forever()
-                except WebSocketException:
-                    logger.exception('WebSocket client was meant to run forever but was stopped.')
-                    pass
-
-        thread.start_new_thread(restart_websocket_server_on_close, ())
+        thread.start_new_thread(self.restart_websocket_server_on_close, ())
 
     @staticmethod
     def get_short_path(url):
@@ -232,15 +236,11 @@ class HubTasks:
             logger.info('item before start time: ' + short_href)
             return
         HubTasks.verify_ordered(self.channel, short_href, websockets, "websocket")
+        websockets[self.channel]['last_item'] = short_href
 
     def on_error(self, ws, error):
         logger.error('websocket | ' + self.channel + ' | error: ' + str(error))
         websockets[self.channel]['open'] = False
-
-    def _load_metadata(self):
-        logger.info("Fetching channel metadata...")
-        r, c = self._http.request(self.client.base_url + "/channel/" + self.channel, 'GET')
-        return json.loads(c)
 
     def write(self):
         payload = {"name": self.payload, "count": self.count}
@@ -585,5 +585,6 @@ def build_new_websocket_store():
         "unknown": [],
         "open": True,
         "start": datetime.now(),
-        "lock": threading.Lock()
+        "lock": threading.Lock(),
+        "last_item": None
     }
