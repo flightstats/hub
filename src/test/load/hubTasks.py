@@ -189,7 +189,7 @@ class HubTasks:
 
     def get_websocket_uri(self):
         channel_uri = '{}/channel/{}'.format(self.client.base_url, self.channel)
-        if websockets[self.channel]['last_item']:
+        if self.channel in websockets and websockets[self.channel]['last_item']:
             return channel_uri + websockets[self.channel]['last_item'] + '/ws'
         else:
             return channel_uri + '/ws'
