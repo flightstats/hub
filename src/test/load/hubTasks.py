@@ -227,7 +227,8 @@ class HubTasks:
 
     def on_close(self, ws):
         logger.info('websocket | ' + self.channel + ' | closed')
-        websockets[self.channel]['open'] = False
+        if self.channel in websockets:
+            websockets[self.channel]['open'] = False
 
     def on_message(self, ws, message):
         logger.debug('websocket | ' + self.channel + ' | message: ' + message)
@@ -241,7 +242,8 @@ class HubTasks:
 
     def on_error(self, ws, error):
         logger.error('websocket | ' + self.channel + ' | error: ' + str(error))
-        websockets[self.channel]['open'] = False
+        if self.channel in websockets:
+            websockets[self.channel]['open'] = False
 
     def write(self):
         payload = {"name": self.payload, "count": self.count}
