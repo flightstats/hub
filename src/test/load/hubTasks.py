@@ -1,4 +1,3 @@
-import httplib2
 import json
 import logging
 import random
@@ -7,6 +6,7 @@ import string
 import thread
 import threading
 import time
+from urlparse import urlparse
 from websocket import WebSocketApp
 from datetime import datetime, timedelta
 from flask import request, jsonify
@@ -188,11 +188,12 @@ class HubTasks:
         self.perform_cursor_update(update_to_yesterday, update_to_now, "upsertWebhook")
 
     def get_websocket_uri(self):
-        channel_uri = '{}/channel/{}'.format(self.client.base_url, self.channel)
+        channel_resource = urlparse(self.client.base_url + '/channel/')
+        websocket_uri = 'ws://' + channel_resource.netloc + channel_resource.path
         if self.channel in websockets and websockets[self.channel]['last_item']:
-            return channel_uri + websockets[self.channel]['last_item'] + '/ws'
+            return websocket_uri + websockets[self.channel]['last_item'] + '/ws'
         else:
-            return channel_uri + '/ws'
+            return websocket_uri + self.channel + '/ws'
 
     def create_websocket(self):
         uri = self.get_websocket_uri()
