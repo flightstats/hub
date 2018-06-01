@@ -189,7 +189,7 @@ class HubTasks:
 
     def get_websocket_uri(self):
         hub_http_url = urlparse(self.client.base_url)
-        hub_ws_url = hub_http_url.geturl().replace(hub_http_url.scheme, 'ws')
+        hub_ws_url = hub_http_url._replace(scheme='ws').geturl()
         if self.channel in websockets and websockets[self.channel]['last_item']:
             return hub_ws_url + '/' + websockets[self.channel]['last_item'] + '/ws'
         else:
