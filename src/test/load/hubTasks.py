@@ -190,12 +190,13 @@ class HubTasks:
         self.perform_cursor_update(update_to_yesterday, update_to_now, "upsertWebhook")
 
     def get_websocket_url(self):
-        channel_url = self.client.base_url + '/channel'
+        hub_channel_resource = self.client.base_url + '/channel'
         if self.channel in websockets and len(websockets[self.channel]['data']) > 0:
-            next_expected_item = channel_url + '/' + websockets[self.channel]['data'][0]
+            next_expected_item = hub_channel_resource + '/' + websockets[self.channel]['data'][0]
             start_item = get_previous_url(next_expected_item)
             return convert_http_to_ws_url(start_item)
         else:
+            channel_url = hub_channel_resource + '/' + self.channel
             return convert_http_to_ws_url(channel_url)
 
     def open_websocket(self):
