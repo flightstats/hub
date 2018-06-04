@@ -187,7 +187,7 @@ class HubTasks:
         update_to_now = lambda: self.upsert_webhook(overrides={"startItem": self.channel_url_from_time(datetime.now())})
         self.perform_cursor_update(update_to_yesterday, update_to_now, "upsertWebhook")
 
-    def get_websocket_uri(self):
+    def get_websocket_url(self):
         hub_http_url = urlparse(self.client.base_url)
         hub_ws_url = hub_http_url._replace(scheme='ws').geturl()
         if self.channel in websockets and websockets[self.channel]['last_item']:
@@ -195,19 +195,19 @@ class HubTasks:
         else:
             return hub_ws_url + '/channel/' + self.channel + '/ws'
 
-    def create_websocket(self):
-        uri = self.get_websocket_uri()
+    def open_websocket(self):
+        url = self.get_websocket_url()
         headers = None
-        logger.info('creating websocket: ' + uri)
-        return WebSocketApp(uri, headers, self.on_open, self.on_message, self.on_error, self.on_close)
+        logger.info('opening websocket: ' + url)
+        return WebSocketApp(url, headers, self.on_open, self.on_message, self.on_error, self.on_close)
 
     def restart_websocket_server_on_close(self):
         while True:
             try:
-                ws = self.create_websocket()
+                ws = self.open_websocket()
                 ws.run_forever()
-            except WebSocketException:
-                logger.exception('WebSocket client was meant to run forever but was stopped.')
+            except WebSocketException as e:
+                logger.exception(e)
                 pass
 
     def start_websocket(self):
