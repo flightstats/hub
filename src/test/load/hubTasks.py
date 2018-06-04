@@ -7,6 +7,8 @@ import thread
 import threading
 import time
 from urlparse import urlparse
+
+import requests
 from websocket import WebSocketApp
 from datetime import datetime, timedelta
 from flask import request, jsonify
@@ -188,12 +190,13 @@ class HubTasks:
         self.perform_cursor_update(update_to_yesterday, update_to_now, "upsertWebhook")
 
     def get_websocket_url(self):
-        hub_http_url = urlparse(self.client.base_url)
-        hub_ws_url = hub_http_url._replace(scheme='ws').geturl()
-        if self.channel in websockets and websockets[self.channel]['last_item']:
-            return hub_ws_url + '/channel/' + websockets[self.channel]['last_item'] + '/ws'
+        channel_url = self.client.base_url + '/channel'
+        if self.channel in websockets and len(websockets[self.channel]['data']) > 0:
+            next_expected_item = channel_url + '/' + websockets[self.channel]['data'][0]
+            start_item = get_previous_url(next_expected_item)
+            return convert_http_to_ws_url(start_item)
         else:
-            return hub_ws_url + '/channel/' + self.channel + '/ws'
+            return convert_http_to_ws_url(channel_url)
 
     def open_websocket(self):
         url = self.get_websocket_url()
@@ -222,8 +225,18 @@ class HubTasks:
 
     def on_open(self, ws):
         logger.info('websocket | ' + self.channel + ' | opened')
-        websockets[self.channel] = build_new_websocket_store()
-        logger.info('websocket store for "' + self.channel + '": ' + json.dumps(websockets[self.channel], default=str))
+        if self.channel not in websockets:
+            start_time = datetime.now()
+            logger.info('creating new websocket store for ' + self.channel + ' at ' + start_time.isoformat())
+            websockets[self.channel] = {
+                "data": [],
+                "unknown": [],
+                "open": True,
+                "start": start_time,
+                "lock": threading.Lock()
+            }
+        else:
+            websockets[self.channel]['open'] = True
 
     def on_close(self, ws):
         logger.info('websocket | ' + self.channel + ' | closed')
@@ -238,7 +251,6 @@ class HubTasks:
             logger.info('item before start time: ' + short_href)
             return
         HubTasks.verify_ordered(self.channel, short_href, websockets, "websocket")
-        websockets[self.channel]['last_item'] = short_href
 
     def on_error(self, ws, error):
         logger.error('websocket | ' + self.channel + ' | error: ' + str(error))
@@ -582,12 +594,17 @@ def get_store_by_name(name):
         raise ValueError(name)
 
 
-def build_new_websocket_store():
-    return {
-        "data": [],
-        "unknown": [],
-        "open": True,
-        "start": datetime.now(),
-        "lock": threading.Lock(),
-        "last_item": None
-    }
+def get_previous_url(url):
+    response = requests.get(url + '/previous/1')
+    response.raise_for_status()
+    content = response.json()
+    uris = content['_links']['uris']
+    if len(uris) == 0:
+        return None
+    else:
+        return uris[0]
+
+
+def convert_http_to_ws_url(http_url):
+    http_url = urlparse(http_url)
+    return http_url._replace(scheme='ws').geturl() + '/ws'
