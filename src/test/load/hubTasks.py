@@ -262,7 +262,7 @@ class HubTasks:
         url = self.get_channel_url()
         headers = {"Content-Type": "application/json"}
         payload = json.dumps({"name": self.payload, "count": self.count})
-        response = self.http_post(url, headers=headers, payload=payload, catch_response=True, name="payload")
+        response = self.http_post(url, headers=headers, data=payload, catch_response=True, name="payload")
 
         if response.status_code != 201:
             response.failure('{} {}'.format(response.status_code, url))
