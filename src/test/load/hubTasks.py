@@ -259,16 +259,15 @@ class HubTasks:
             websockets[self.channel]['open'] = False
 
     def write(self):
-        payload = {"name": self.payload, "count": self.count}
-        with self.client.post(self.get_channel_url(),
-                              data=(json.dumps(payload)),
-                              headers={"Content-Type": "application/json"},
-                              catch_response=True,
-                              name="post_payload") as postResponse:
-            if postResponse.status_code != 201:
-                postResponse.failure("Got wrong response on post: " + str(postResponse.status_code))
+        url = self.get_channel_url()
+        headers = {"Content-Type": "application/json"}
+        payload = json.dumps({"name": self.payload, "count": self.count})
+        response = self.http_post(url, headers=headers, payload=payload, catch_response=True, name="payload")
 
-        return self.parse_write(postResponse)
+        if response.status_code != 201:
+            response.failure('{} {}'.format(response.status_code, url))
+
+        return self.parse_write(response)
 
     def get_channel_url(self):
         return self.user.channel_post_url(self.channel)
@@ -303,15 +302,20 @@ class HubTasks:
         finally:
             store[self.channel]['lock'].release()
 
-    def read(self, uri, verify=False):
-        check_count = self.count - 1
-        with self.client.get(uri, catch_response=True, name="get_payload") as response:
-            if response.status_code != 200:
-                response.failure("Got wrong response on get: " + str(response.status_code) + " " + uri)
-            elif verify:
-                if str(check_count) not in response.content:
-                    logger.error("wrong response " + uri + " " + response.content)
-                    response.failure("Got wrong check_count on get: " + str(response.status_code) + " " + uri)
+    def read(self, url, verify=False):
+        response = self.http_get(url, catch_response=True, name="payload")
+
+        if response.status_code != 200:
+            response.failure('{} {}'.format(response.status_code, url))
+
+        if verify:
+            content = get_response_as_json(response)
+            actual = content['count']
+            expected = self.count - 1
+            if actual != expected:
+                message = 'actual {}, expected {} - {}'.format(expected, actual, url)
+                logger.error(message)
+                response.failure(message)
 
     def change_parallel(self, channel):
         group = {
@@ -560,6 +564,38 @@ class HubTasks:
     @staticmethod
     def get_store(name):
         return get_store_by_name(name)
+
+    def http_get(self, url, headers=None, **kwargs):
+        displayable_headers = headers if headers else {}
+        logger.debug('GET > {} {}'.format(url, displayable_headers))
+        response = self.client.get(url, headers=headers, **kwargs)
+        status_message = requests.status_codes.codes.get(response.status_code)
+        logger.debug('GET < {} {} {}'.format(url, response.status_code, status_message))
+        return response
+
+    def http_put(self, url, data, headers=None, **kwargs):
+        displayable_headers = headers if headers else {}
+        logger.debug('PUT > {} {} {}'.format(url, displayable_headers, data[:20]))
+        response = self.client.put(url, headers=headers, data=data, **kwargs)
+        status_message = requests.status_codes.codes.get(response.status_code)
+        logger.debug('PUT < {} {} {}'.format(url, response.status_code, status_message))
+        return response
+
+    def http_post(self, url, data, headers=None, **kwargs):
+        displayable_headers = headers if headers else {}
+        logger.debug('POST > {} {} {}'.format(url, displayable_headers, data[:20]))
+        response = self.client.post(url, headers=headers, data=data, **kwargs)
+        status_message = requests.status_codes.codes.get(response.status_code)
+        logger.debug('POST < {} {} {}'.format(url, response.status_code, status_message))
+        return response
+
+    def http_delete(self, url, headers=None, **kwargs):
+        displayable_headers = headers if headers else {}
+        logger.debug('DELETE > {} {}'.format(url, displayable_headers))
+        response = self.client.delete(url, headers=headers, **kwargs)
+        status_message = requests.status_codes.codes.get(response.status_code)
+        logger.debug('DELETE < {} {} {}'.format(url, response.status_code, status_message))
+        return response
 
 
 def get_item_timestamp(content_key):
