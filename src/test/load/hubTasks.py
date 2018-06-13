@@ -9,6 +9,7 @@ import time
 from urlparse import urlparse
 
 import requests
+from datadog import statsd
 from websocket import WebSocketApp
 from datetime import datetime, timedelta
 from flask import request, jsonify
@@ -245,13 +246,15 @@ class HubTasks:
             websockets[self.channel]['open'] = False
 
     def on_message(self, ws, message):
+        start = datetime.now()
         logger.debug('websocket | ' + self.channel + ' | message: ' + message)
         short_href = HubTasks.get_short_path(message)
         timestamp = get_item_timestamp(short_href)
         if timestamp < websockets[self.channel]['start']:
             logger.info('item before start time: ' + short_href)
-            return
-        HubTasks.verify_ordered(self.channel, short_href, websockets, "websocket")
+        else:
+            HubTasks.verify_ordered(self.channel, short_href, websockets, "websocket")
+        statsd.timing('websocket.on_message', datetime.now() - start, tags=['channel:'+self.channel])
 
     def on_error(self, ws, error):
         logger.error('websocket | ' + self.channel + ' | error: ' + str(error))
