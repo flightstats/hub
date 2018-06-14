@@ -9,7 +9,7 @@ import time
 from urlparse import urlparse
 
 import requests
-from datadog import statsd
+from datadog import dogstatsd
 from websocket import WebSocketApp
 from datetime import datetime, timedelta
 from flask import request, jsonify
@@ -254,7 +254,7 @@ class HubTasks:
             logger.info('item before start time: ' + short_href)
         else:
             HubTasks.verify_ordered(self.channel, short_href, websockets, "websocket")
-        statsd.timing('websocket.on_message', datetime.now() - start, tags=['channel:'+self.channel])
+        dogstatsd.timing('websocket.on_message', datetime.now() - start, tags=['channel:'+self.channel])
 
     def on_error(self, ws, error):
         logger.error('websocket | ' + self.channel + ' | error: ' + str(error))
