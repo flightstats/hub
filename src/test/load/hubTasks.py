@@ -254,7 +254,8 @@ class HubTasks:
             logger.info('item before start time: ' + short_href)
         else:
             HubTasks.verify_ordered(self.channel, short_href, websockets, "websocket")
-        statsd.timing('hub.locust.websocket.on_message.time', datetime.now() - start, tags=['channel:'+self.channel])
+        elapsed = (datetime.now() - start).total_seconds() * 1000
+        statsd.timing('hub.locust.websocket.on_message.time', elapsed, tags=['channel:'+self.channel])
 
     def on_error(self, ws, error):
         logger.error('websocket | ' + self.channel + ' | error: ' + str(error))
