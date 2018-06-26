@@ -618,3 +618,39 @@ exports.followRedirectIfPresent = function followRedirectIfPresent(response) {
         return response;
     }
 };
+
+/**
+ * This function will query the url every second and execute the clause callback
+ * until either the timeout is reached or the clause callback returns true.
+ *
+ * @param {string} url HTTP endpoint to query
+ * @param {function} clause function that is run against each response
+ * @param {number} [timeoutMS=30000] when to give up
+ * @param {number} [delayMS=1000] how long to wait between attempts
+ * @returns {Promise}
+ */
+exports.httpGetUntil = function httpGetUntil(url, clause, timeoutMS, delayMS) {
+    let started = moment().utc();
+    let timeout = moment().utc().add(timeoutMS || 30000, 'ms');
+
+    return new Promise((resolve, reject) => {
+        function loop() {
+            let now = moment.utc();
+            if (now.isSameOrAfter(timeout)) {
+                reject('timed out: ' + now.diff(started) + 'ms');
+            }
+
+            utils.httpGet(url)
+                .then(response => {
+                    if (clause(response)) {
+                        resolve(response);
+                    } else {
+                        setTimeout(loop, delayMS || 1000);
+                    }
+                })
+                .catch(error => reject(error));
+        }
+
+        loop();
+    });
+};
