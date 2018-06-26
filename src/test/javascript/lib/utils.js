@@ -3,6 +3,7 @@ var http = require('http');
 var https = require('https');
 var fs = require('fs');
 var request = require('request');
+const moment = require('moment');
 
 /**
  * Monkey patching Promise.prototype.finally until its officially supported
