@@ -31,7 +31,6 @@ public class S3WriteQueue {
 
     private static final int THREADS = HubProperties.getProperty("s3.writeQueueThreads", 20);
     private static final int QUEUE_SIZE = HubProperties.getProperty("s3.writeQueueSize", 40000);
-    private static final MetricsService metricsService = HubProvider.getInstance(MetricsService.class);
     private Retryer<Void> retryer = buildRetryer();
     private BlockingQueue<ChannelContentKey> keys = new LinkedBlockingQueue<>(QUEUE_SIZE);
     private ExecutorService executorService = Executors.newFixedThreadPool(THREADS,
@@ -43,8 +42,12 @@ public class S3WriteQueue {
     @Named(ContentDao.SINGLE_LONG_TERM)
     private ContentDao s3SingleContentDao;
 
+    private MetricsService metricsService;
+
     @Inject
-    private S3WriteQueue() throws InterruptedException {
+    private S3WriteQueue(MetricsService metricsService) throws InterruptedException {
+        this.metricsService = metricsService;
+
         logger.info("queue size {}", QUEUE_SIZE);
         metricsService.gauge("s3.writeQueue.total", QUEUE_SIZE);
         for (int i = 0; i < THREADS; i++) {
