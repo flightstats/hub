@@ -45,6 +45,11 @@ class DataDogMetricsService implements MetricsService {
     }
 
     @Override
+    public void increment(String name, String... tags) {
+        statsd.increment(name, tags);
+    }
+
+    @Override
     public void gauge(String name, double value, String... tags) {
         statsd.gauge(name, value, tags);
     }

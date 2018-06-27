@@ -5,6 +5,7 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.exception.FailedReadException;
 import com.flightstats.hub.metrics.ActiveTraces;
+import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.util.Sleeper;
@@ -28,8 +29,9 @@ public class S3WriteQueue {
     private final static Logger logger = LoggerFactory.getLogger(S3WriteQueue.class);
 
     private static final int THREADS = HubProperties.getProperty("s3.writeQueueThreads", 20);
+    private static final int QUEUE_SIZE = HubProperties.getProperty("s3.writeQueueSize", 40000);
     private Retryer<Void> retryer = buildRetryer();
-    private BlockingQueue<ChannelContentKey> keys = new LinkedBlockingQueue<>(HubProperties.getProperty("s3.writeQueueSize", 40000));
+    private BlockingQueue<ChannelContentKey> keys = new LinkedBlockingQueue<>(QUEUE_SIZE);
     private ExecutorService executorService = Executors.newFixedThreadPool(THREADS,
             new ThreadFactoryBuilder().setNameFormat("S3WriteQueue-%d").build());
     @Inject
@@ -38,10 +40,12 @@ public class S3WriteQueue {
     @Inject
     @Named(ContentDao.SINGLE_LONG_TERM)
     private ContentDao s3SingleContentDao;
-
+    @Inject
+    private MetricsService metricsService;
 
     @Inject
     private S3WriteQueue() throws InterruptedException {
+        metricsService.gauge("s3.writeQueue.limit", QUEUE_SIZE);
         for (int i = 0; i < THREADS; i++) {
             executorService.submit(() -> {
                 try {
@@ -59,6 +63,7 @@ public class S3WriteQueue {
     private void write() throws InterruptedException {
         try {
             ChannelContentKey key = keys.poll(5, TimeUnit.SECONDS);
+            metricsService.gauge("s3.writeQueue.used", keys.size());
             retryer.call(() -> {
                 writeContent(key);
                 return null;
@@ -87,8 +92,11 @@ public class S3WriteQueue {
 
     public void add(ChannelContentKey key) {
         boolean value = keys.offer(key);
-        if (!value) {
+        if (value) {
+            metricsService.gauge("s3.writeQueue.used", keys.size());
+        } else {
             logger.warn("Add to queue failed - out of queue space. key= {}", key);
+            metricsService.increment("s3.writeQueue.dropped");
         }
     }
 
