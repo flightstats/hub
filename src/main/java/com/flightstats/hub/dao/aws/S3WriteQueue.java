@@ -2,6 +2,7 @@ package com.flightstats.hub.dao.aws;
 
 
 import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.exception.FailedReadException;
 import com.flightstats.hub.metrics.ActiveTraces;
@@ -30,6 +31,7 @@ public class S3WriteQueue {
 
     private static final int THREADS = HubProperties.getProperty("s3.writeQueueThreads", 20);
     private static final int QUEUE_SIZE = HubProperties.getProperty("s3.writeQueueSize", 40000);
+    private static final MetricsService metricsService = HubProvider.getInstance(MetricsService.class);
     private Retryer<Void> retryer = buildRetryer();
     private BlockingQueue<ChannelContentKey> keys = new LinkedBlockingQueue<>(QUEUE_SIZE);
     private ExecutorService executorService = Executors.newFixedThreadPool(THREADS,
@@ -41,13 +43,10 @@ public class S3WriteQueue {
     @Named(ContentDao.SINGLE_LONG_TERM)
     private ContentDao s3SingleContentDao;
 
-    private MetricsService metricsService;
-
     @Inject
-    private S3WriteQueue(MetricsService metricsService) throws InterruptedException {
+    private S3WriteQueue() throws InterruptedException {
         logger.info("queue size {}", QUEUE_SIZE);
-        this.metricsService = metricsService;
-        this.metricsService.gauge("s3.writeQueue.total", QUEUE_SIZE);
+        metricsService.gauge("s3.writeQueue.total", QUEUE_SIZE);
         for (int i = 0; i < THREADS; i++) {
             executorService.submit(() -> {
                 try {
