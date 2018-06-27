@@ -40,11 +40,12 @@ public class S3WriteQueue {
     @Inject
     @Named(ContentDao.SINGLE_LONG_TERM)
     private ContentDao s3SingleContentDao;
-    @Inject
+
     private MetricsService metricsService;
 
     @Inject
-    private S3WriteQueue() throws InterruptedException {
+    private S3WriteQueue(MetricsService metricsService) throws InterruptedException {
+        this.metricsService = metricsService;
         metricsService.gauge("s3.writeQueue.limit", QUEUE_SIZE);
         for (int i = 0; i < THREADS; i++) {
             executorService.submit(() -> {
