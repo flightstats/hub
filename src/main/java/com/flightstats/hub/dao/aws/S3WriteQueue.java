@@ -45,6 +45,7 @@ public class S3WriteQueue {
 
     @Inject
     private S3WriteQueue(MetricsService metricsService) throws InterruptedException {
+        logger.info("queue size {}", QUEUE_SIZE);
         this.metricsService = metricsService;
         this.metricsService.gauge("s3.writeQueue.total", QUEUE_SIZE);
         for (int i = 0; i < THREADS; i++) {
