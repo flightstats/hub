@@ -3,6 +3,8 @@ package com.flightstats.hub.app;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.flightstats.hub.filter.CORSFilter;
 import com.flightstats.hub.filter.StreamEncodingFilter;
+import com.flightstats.hub.metrics.MetricsService;
+import com.flightstats.hub.spoke.SpokeStore;
 import com.google.inject.Guice;
 import com.google.inject.Module;
 import org.glassfish.jersey.message.DeflateEncoder;
@@ -83,6 +85,13 @@ public class HubMain {
         HubJettyServer server = new HubJettyServer();
         server.start(resourceConfig);
         logger.info("Hub server has been started.");
+
+        MetricsService metricsService = HubProvider.getInstance(MetricsService.class);
+        metricsService.gauge("s3.writeQueue.total", HubProperties.getS3WriteQueueSize());
+        metricsService.gauge("s3.writeQueue.threads", HubProperties.getS3WriteQueueThreads());
+        metricsService.gauge("spoke.write.ttl", HubProperties.getSpokeTtlMinutes(SpokeStore.WRITE));
+        metricsService.gauge("spoke.read.ttl", HubProperties.getSpokeTtlMinutes(SpokeStore.READ));
+
         HubServices.start(HubServices.TYPE.PERFORM_HEALTH_CHECK);
         logger.info("completed initial post start");
         HubServices.start(HubServices.TYPE.AFTER_HEALTHY_START);
