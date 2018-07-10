@@ -1,4 +1,11 @@
 require('../integration_config');
+const {
+  getProp,
+  getStatusCode,
+  fromObjectPath,
+} = require('../lib/helpers');
+
+const getSelfLink = fromObjectPath(['_links', 'self', 'href']);
 
 var request = require('request');
 var channelName = utils.randomChannelName();
@@ -17,19 +24,20 @@ describe(testName, function () {
     utils.putChannel(channelName, function (response, body) {
         var parse = utils.parseJson(response, testName);
         returnedBody = parse;
-
-        expect(parse._links.self.href).toEqual(channelResource);
-        expect(parse.ttlDays).toEqual(120);
-        expect(parse.description).toEqual('');
-        expect(parse.tags.length).toEqual(2);
-        expect(parse.storage).toEqual('SINGLE');
-        expect(parse.protect).toEqual(false);
+        const selfLink = getSelfLink(parse);
+        expect(selfLink).toEqual(channelResource);
+        expect(getProp('ttlDays', parse)).toEqual(120);
+        expect(getProp('description', parse)).toEqual('');
+        expect((getProp('tags', parse) || '').length).toEqual(2);
+        expect(getProp('storage', parse)).toEqual('SINGLE');
+        expect(getProp('protect', parse)).toEqual(false);
     }, {tags: ['one', 'two']});
 
     utils.putChannel(channelName, function (response, body) {
         var parse = utils.parseJson(response, testName);
-        expect(parse._links.self.href).toEqual(channelResource);
-        expect(parse.protect).toEqual(true);
+        const selfLink = getSelfLink(parse);
+        expect(selfLink).toEqual(channelResource);
+        expect(getProp('protect', parse)).toEqual(true);
 
     }, {protect: true, owner: 'someone'});
 
@@ -42,9 +50,10 @@ describe(testName, function () {
 
     utils.putChannel(channelName, function (response, body) {
         var parse = utils.parseJson(response, testName);
-        expect(parse._links.self.href).toEqual(channelResource);
-        expect(parse.tags.length).toEqual(3);
-        expect(parse.storage).toEqual('BOTH');
+        const selfLink = getSelfLink(parse);
+        expect(selfLink).toEqual(channelResource);
+        expect((getProp('tags', parse) || '').length).toEqual(3);
+        expect(getProp('storage', parse)).toEqual('BOTH');
 
     }, {storage: 'BOTH', tags: ['one', 'two', 'three']}, 'storage and tags', 201);
 
@@ -52,10 +61,8 @@ describe(testName, function () {
         request.del({url: channelResource},
             function (err, response, body) {
                 console.log('body', body);
-                expect(response.statusCode).toBe(403);
+                expect(getStatusCode(response)).toBe(403);
                 done();
             });
     });
 });
-
-
