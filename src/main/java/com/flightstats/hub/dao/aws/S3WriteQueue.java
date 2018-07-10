@@ -2,9 +2,11 @@ package com.flightstats.hub.dao.aws;
 
 
 import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.exception.FailedReadException;
 import com.flightstats.hub.metrics.ActiveTraces;
+import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.util.Sleeper;
@@ -16,9 +18,13 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.Interval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.concurrent.*;
 
 @SuppressWarnings("WeakerAccess")
@@ -27,9 +33,10 @@ public class S3WriteQueue {
 
     private final static Logger logger = LoggerFactory.getLogger(S3WriteQueue.class);
 
-    private static final int THREADS = HubProperties.getProperty("s3.writeQueueThreads", 20);
+    private static final int THREADS = HubProperties.getS3WriteQueueThreads();
+    private static final int QUEUE_SIZE = HubProperties.getS3WriteQueueSize();
     private Retryer<Void> retryer = buildRetryer();
-    private BlockingQueue<ChannelContentKey> keys = new LinkedBlockingQueue<>(HubProperties.getProperty("s3.writeQueueSize", 40000));
+    private BlockingQueue<ChannelContentKey> keys = new LinkedBlockingQueue<>(QUEUE_SIZE);
     private ExecutorService executorService = Executors.newFixedThreadPool(THREADS,
             new ThreadFactoryBuilder().setNameFormat("S3WriteQueue-%d").build());
     @Inject
@@ -38,10 +45,12 @@ public class S3WriteQueue {
     @Inject
     @Named(ContentDao.SINGLE_LONG_TERM)
     private ContentDao s3SingleContentDao;
-
+    @Inject
+    private MetricsService metricsService;
 
     @Inject
     private S3WriteQueue() throws InterruptedException {
+        logger.info("queue size {}", QUEUE_SIZE);
         for (int i = 0; i < THREADS; i++) {
             executorService.submit(() -> {
                 try {
@@ -59,6 +68,10 @@ public class S3WriteQueue {
     private void write() throws InterruptedException {
         try {
             ChannelContentKey key = keys.poll(5, TimeUnit.SECONDS);
+            if (key != null) {
+                metricsService.gauge("s3.writeQueue.used", keys.size());
+                metricsService.gauge("s3.writeQueue.oldest", getOldest());
+            }
             retryer.call(() -> {
                 writeContent(key);
                 return null;
@@ -87,8 +100,26 @@ public class S3WriteQueue {
 
     public void add(ChannelContentKey key) {
         boolean value = keys.offer(key);
-        if (!value) {
+        if (value) {
+            metricsService.gauge("s3.writeQueue.used", keys.size());
+            metricsService.gauge("s3.writeQueue.oldest", getOldest());
+        } else {
             logger.warn("Add to queue failed - out of queue space. key= {}", key);
+            metricsService.increment("s3.writeQueue.dropped");
+        }
+    }
+
+    private long getOldest() {
+        ChannelContentKey[] array = keys.toArray(new ChannelContentKey[0]);
+        Arrays.sort(array);
+        if (array.length > 1) {
+            ChannelContentKey oldest = array[array.length - 1];
+            DateTime then = oldest.getContentKey().getTime();
+            DateTime now = DateTime.now(DateTimeZone.UTC);
+            Interval delta = new Interval(then, now);
+            return delta.toDurationMillis();
+        } else {
+            return 0;
         }
     }
 
