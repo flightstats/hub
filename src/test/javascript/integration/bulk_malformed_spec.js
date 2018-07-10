@@ -1,4 +1,8 @@
 require('../integration_config');
+const {
+  getResponseBody,
+  getStatusCode,
+} = require('../lib/helpers');
 
 var request = require('request');
 var channelName = utils.randomChannelName();
@@ -15,10 +19,6 @@ describe(testName, function () {
 
     utils.putChannel(channelName, false, {"name": channelName, "ttlDays": 1, "tags": ["bulk"]});
 
-    post_malheur('--abcdefg--');
-
-    post_malheur('--abcdefg\r\n' + '--abcdefg--');
-
     function post_malheur(payload) {
         it("posts malformed item to " + channelResource, function (done) {
             request.post({
@@ -28,11 +28,15 @@ describe(testName, function () {
                 },
                 function (err, response, body) {
                     expect(err).toBeNull();
-                    expect(response.statusCode).toBe(400);
-                    console.log(response.body);
+                    expect(getStatusCode(response)).toBe(400);
+                    console.log(getResponseBody(response));
                     done();
                 });
         });
     }
+
+    post_malheur('--abcdefg--');
+
+    post_malheur('--abcdefg\r\n' + '--abcdefg--');
 
 });
