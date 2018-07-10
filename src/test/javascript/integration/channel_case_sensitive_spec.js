@@ -1,4 +1,9 @@
 require('../integration_config');
+const {
+  fromObjectPath,
+  getStatusCode,
+  getUris,
+} = require('../lib/helpers');
 
 var request = require('request');
 var moment = require('moment');
@@ -20,7 +25,7 @@ describe(testName, function () {
             },
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(201);
+                expect(getStatusCode(response)).toBe(201);
                 done();
             });
     });
@@ -29,13 +34,14 @@ describe(testName, function () {
 
     function getUrl(url, done) {
         done = done || function () {
-            };
+          // do nothing;
+        };
         request.get({url: url},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
-                if (body.indexOf('{"data":') === -1) {
-                    var substring = url;
+                expect(getStatusCode(response)).toBe(200);
+                if (!body || body.indexOf('{"data":') === -1) {
+                    var substring = url || '';
                     if (url.indexOf("?") > 0) {
                         substring = url.substring(0, url.indexOf("?"));
                     }
@@ -68,7 +74,7 @@ describe(testName, function () {
     it('posts item', function (done) {
         utils.postItemQ(upperCase + '?forceWrite=true')
             .then(function (value) {
-                posted = value.response.headers.location;
+                posted = fromObjectPath(['response', 'headers', 'location'], value);
                 console.log('posted', posted);
                 done();
             });
@@ -81,6 +87,11 @@ describe(testName, function () {
 
     utils.addItem(lowerCase + '?forceWrite=true', 201);
 
+    /*
+      TODO: let's refactor out relying on globals set in one it block then
+      required for another arbitrary test to pass
+      I would prefer use of before hooks for maintainability and readability
+    */
     var uris;
 
     function getTwo(channelUrl, path, done) {
@@ -89,9 +100,9 @@ describe(testName, function () {
         request.get({url: url},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
+                expect(getStatusCode(response)).toBe(200);
                 var parsed = utils.parseJson(response, 'time hour');
-                uris = parsed._links.uris;
+                uris = getUris(parsed) || [];
                 if (uris.length !== 2) {
                     //console.log('parsed', parsed);
                 }
@@ -163,4 +174,3 @@ describe(testName, function () {
 
 
 });
-
