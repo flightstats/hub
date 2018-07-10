@@ -1,10 +1,11 @@
 const { fromObjectPath, getProp } = require('./functional');
-const { getResponseBody, getStatusCode, getUris } = require('./getters');
+const { getResponseBody, getSelfLink, getStatusCode, getUris } = require('./getters');
 
 module.exports = {
   fromObjectPath,
   getProp,
   getResponseBody,
+  getSelfLink,
   getStatusCode,
   getUris,
 };

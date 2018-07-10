@@ -5,3 +5,4 @@ const { fromObjectPath, getProp } = require('./functional');
 module.exports.getStatusCode = getProp('statusCode'); // ~ function(obj) => obj.statusCode || null;
 module.exports.getUris = fromObjectPath(['_links', 'uris']); // ~ function(obj) => obj._links.uris || null;
 module.exports.getResponseBody = getProp('body'); // ~ function(obj) => obj.body || null;
+module.exports.getSelfLink = fromObjectPath(['_links', 'self', 'href']);

@@ -1,8 +1,8 @@
 require('../integration_config');
 const {
-  fromObjectPath,
   getProp,
   getResponseBody,
+  getSelfLink,
   getStatusCode,
 } = require('../lib/helpers');
 
@@ -32,7 +32,7 @@ describe(__filename, function () {
               expect(getStatusCode(response)).toEqual(201);
               const [contentType, location] = ['content-type', 'location']
                 .map(key => getProp(key, responseHeaders));
-              const selfLink = fromObjectPath(['_links', 'self', 'href'], responseBody);
+              const selfLink = getSelfLink( responseBody);
               const [
                 name,
                 ttlDays,

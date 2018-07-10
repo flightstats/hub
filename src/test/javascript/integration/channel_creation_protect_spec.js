@@ -1,11 +1,10 @@
 require('../integration_config');
 const {
   getProp,
+  getSelfLink,
   getStatusCode,
   fromObjectPath,
 } = require('../lib/helpers');
-
-const getSelfLink = fromObjectPath(['_links', 'self', 'href']);
 
 var request = require('request');
 var channelName = utils.randomChannelName();
