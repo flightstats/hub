@@ -1,4 +1,5 @@
 require('../integration_config');
+const { getResponseBody, getStatusCode } = require('../lib/helpers');
 
 var request = require('request');
 var http = require('http');
@@ -19,9 +20,10 @@ describe("creates malformed" + testName, function () {
             },
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(400);
-                console.log(response.body);
-                expect(response.body).toContain('xpect');
+                expect(getStatusCode(response)).toBe(400);
+                const responseBody = getResponseBody(response);
+                console.log(responseBody);
+                expect(responseBody).toContain('xpect');
                 done();
             });
     });
