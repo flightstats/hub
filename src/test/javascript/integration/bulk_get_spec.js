@@ -6,7 +6,7 @@ const {
   getUris,
 } = require('../lib/helpers');
 
-// TODO: let's (pun intended) use const and, uh ... let
+// TODO: let (pun intended) us plan to use const and, uh ... let
 var request = require('request');
 var channelName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
@@ -20,7 +20,7 @@ var testName = __filename;
 describe(testName, function () {
     /*
       TODO: is this an it block ? if it is more than a helper,
-      the logic can stay abstracted but let's put the assertion in the actual test file
+      the logic can stay abstracted but I'm thinking to put the assertion in the actual test file
     */
     utils.putChannel(channelName, false, {"name": channelName, "ttlDays": 1, "tags": ["bulk"]}, testName);
 
@@ -81,8 +81,8 @@ describe(testName, function () {
     });
 
     /*
-      TODO: stack traces of assertion failures all lead back to here even when this is called in 5 arbitrary tests
-      better logging of where the failure originated would make this far more usable
+      TODO: stack traces of assertion failures all lead back to here even when this is called in multiple tests,
+      I'm thinking better logging of where the failure originated would make this far more usable
     */
     function getQ(url, param, verifyFunction, accept) {
         return new Promise((resolve, reject) => {
