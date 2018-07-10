@@ -1,4 +1,6 @@
 require('../integration_config');
+const { getStatusCode } = require('../lib/helpers');
+
 
 var channelName = utils.randomChannelName();
 
@@ -11,7 +13,7 @@ describe(__filename, function () {
 
         utils.httpPost(url, headers, body)
             .then(function (response) {
-                expect(response.statusCode).toEqual(400);
+                expect(getStatusCode(response)).toEqual(400);
             })
             .finally(done);
     });
