@@ -1,7 +1,7 @@
 require('../integration_config');
 const {
-  fromObjectPath,
-  getProp,
+    fromObjectPath,
+    getProp,
 } = require('../lib/helpers');
 
 var request = require('request');
@@ -11,7 +11,6 @@ var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
 
 describe(testName, function () {
-
     var startTime = moment.utc().subtract(1, 'minute');
 
     console.log('channel url', channelResource);
@@ -79,7 +78,6 @@ describe(testName, function () {
             });
     });
 
-
     it("verifies get upper case " + upperCase, function (done) {
         getUrl(posted, done);
     });
@@ -100,11 +98,11 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
-                var parsed = utils.parseJson(response, 'time hour');
-                uris = fromObjectPath(['_links', 'uris'], response) || [];
-                if (uris.length !== 2) {
-                    //console.log('parsed', parsed);
-                }
+                var parse = utils.parseJson(response, 'time hour');
+                uris = fromObjectPath(['_links', 'uris'], parse) || [];
+                // if (uris.length !== 2) {
+                // console.log('parsed', parsed);
+                // }
                 expect(uris.length).toBe(2);
 
                 if (uris.length >= 2) {

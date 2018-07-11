@@ -40,7 +40,7 @@ describe(testName, function () {
         'Content-Type: text/plain\r\n' +
         ' \r\n' +
         'message four\r\n' +
-        '--abcdefg--'
+        '--abcdefg--';
 
     var items = [];
     var location = '';
@@ -71,8 +71,8 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
-                console.log(body);
-                const uris = fromObjectPath(['_links', 'uris']) || [];
+                console.log('verify location response body: ', body);
+                const uris = fromObjectPath(['_links', 'uris'], body) || [];
                 expect(uris.length).toBe(4);
                 done();
             });

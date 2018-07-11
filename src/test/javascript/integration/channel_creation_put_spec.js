@@ -36,13 +36,12 @@ describe(testName, function () {
 
     utils.putChannel(channelName, function (response, body) {
         var parse = utils.parseJson(response, testName);
-        const getParsedProp = getParsedPropFunc(parse);
         expect(fromObjectPath(['_links', 'self', 'href'], parse)).toEqual(channelResource);
+        const getParsedProp = getParsedPropFunc(parse);
         expect(getParsedProp('ttlDays')).toEqual(newConfig.ttlDays);
         expect(getParsedProp('description')).toEqual(newConfig.description);
         expect(getParsedProp('tags')).toEqual(newConfig.tags);
         expect(getParsedProp('creationDate')).toEqual(returnedBody.creationDate);
     }, newConfig);
-
 
 });
