@@ -1,9 +1,7 @@
 require('../integration_config');
 const {
+  fromObjectPath,
   getProp,
-  getResponseBody,
-  getSelfLink,
-  getStatusCode,
 } = require('../lib/helpers');
 
 const channelName = utils.randomChannelName();
@@ -14,7 +12,7 @@ describe(__filename, function () {
     it('verifies the channel doesn\'t exist', function (done) {
         utils.httpGet(channelResource)
             .then(function (response) {
-                expect(getStatusCode(response)).toEqual(404);
+                expect(getProp('statusCode', response)).toEqual(404);
             })
             .finally(done);
     });
@@ -27,11 +25,11 @@ describe(__filename, function () {
         utils.httpPost(uri, headers, body)
             .then(function (response) {
                 const headers = getProp('headers', response);
-                const responseBody = getResponseBody(response);
-                expect(getStatusCode(response)).toEqual(201);
+                const responseBody = getProp('body', response);
+                expect(getProp('statusCode', response)).toEqual(201);
                 const [contentType, location] = ['content-type', 'location']
                   .map(key => getProp(key, headers));
-                const selfLink = getSelfLink(responseBody);
+                const selfLink = fromObjectPath(['_links', 'self', 'href'], responseBody);
                 const [
                   name,
                   ttlDays,
@@ -55,7 +53,7 @@ describe(__filename, function () {
     it('verifies the channel does exist', function (done) {
         utils.httpGet(channelResource)
             .then(function (response) {
-                expect(getStatusCode(response)).toEqual(200);
+                expect(getProp('statusCode', response)).toEqual(200);
             })
             .finally(done);
     });

@@ -1,7 +1,7 @@
 require('../integration_config');
 const {
   fromObjectPath,
-  getStatusCode,
+  getProp,
 } = require('../lib/helpers');
 
 var channelName = utils.randomChannelName();
@@ -12,7 +12,7 @@ describe(__filename, function () {
     it('verifies the channel doesn\'t exist yet', function (done) {
         utils.httpGet(channelResource)
             .then(function (response) {
-                expect(getStatusCode(response)).toEqual(404);
+                expect(getProp('statusCode', response)).toEqual(404);
             })
             .finally(done);
     });
@@ -24,7 +24,7 @@ describe(__filename, function () {
 
         utils.httpPost(url, headers, body)
             .then(function (response) {
-                expect(getStatusCode(response)).toEqual(201);
+                expect(getProp('statusCode', response)).toEqual(201);
             })
             .finally(done);
     });
@@ -34,7 +34,7 @@ describe(__filename, function () {
             .then(function (response) {
                 const contentType = fromObjectPath(['headers', 'content-type'], response);
                 const name = fromObjectPath(['body', 'name'], response);
-                expect(getStatusCode(response)).toEqual(200);
+                expect(getProp('statusCode', response)).toEqual(200);
                 expect(contentType).toEqual('application/json');
                 expect(name).toEqual(channelName);
             })

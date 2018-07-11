@@ -3,8 +3,6 @@ const request = require('request');
 const {
   fromObjectPath,
   getProp,
-  getResponseBody,
-  getStatusCode,
 } = require('../lib/helpers');
 
 var channelName = utils.randomChannelName();
@@ -51,12 +49,12 @@ describe(testName, function () {
             },
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(getStatusCode(response)).toBe(201);
+                expect(getProp('statusCode', response)).toBe(201);
                 location = fromObjectPath(['headers', 'location'], response);
                 console.log('location', location);
                 expect(location).toBeDefined();
                 var parse = utils.parseJson(response, testName);
-                console.log(getResponseBody(response));
+                console.log(getProp('body', response));
                 done();
             });
     });
@@ -65,7 +63,7 @@ describe(testName, function () {
         request.get({url: location},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(getStatusCode(response)).toBe(200);
+                expect(getProp('statusCode', response)).toBe(200);
                 console.log('verifies content callback body', body);
                 const headers = getProp('headers', response);
                 console.log(headers);

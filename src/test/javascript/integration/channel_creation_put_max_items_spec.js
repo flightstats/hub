@@ -1,5 +1,5 @@
 require('../integration_config');
-const { getProp, getSelfLink } = require('../lib/helpers');
+const { fromObjectPath, getProp } = require('../lib/helpers');
 
 var request = require('request');
 var channelName = utils.randomChannelName();
@@ -24,7 +24,7 @@ describe(testName, function () {
         var parse = utils.parseJson(response, testName);
         returnedBody = parse;
         const getParsedProp = prop => getProp(prop, parse);
-        expect(getSelfLink(parse)).toEqual(channelResource);
+        expect(fromObjectPath(['_links', 'self', 'href'], parse)).toEqual(channelResource);
         expect(getParsedProp('ttlDays')).toEqual(120);
         expect(getParsedProp('maxItems')).toEqual(0);
         expect(getParsedProp('replicationSource')).toEqual('');
@@ -38,7 +38,7 @@ describe(testName, function () {
     utils.putChannel(channelName, function (response, body) {
         var parse = utils.parseJson(response, testName);
         const getParsedProp = prop => getProp(prop, parse);
-        expect(getSelfLink(parse)).toEqual(channelResource);
+        expect(fromObjectPath(['_links', 'self', 'href'], parse)).toEqual(channelResource);
         expect(getParsedProp('ttlDays')).toEqual(0);
         expect(getParsedProp('maxItems')).toEqual(100);
     }, newConfig);

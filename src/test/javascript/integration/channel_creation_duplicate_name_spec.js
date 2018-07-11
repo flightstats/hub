@@ -1,5 +1,5 @@
 require('../integration_config');
-const { getStatusCode } = require('../lib/helpers');
+const { getProp } = require('../lib/helpers');
 
 var channelName = utils.randomChannelName();
 var channelResource = channelUrl + '/' + channelName;
@@ -9,7 +9,7 @@ describe(__filename, function () {
 	it('verifies the channel doesn\'t exist yet', function (done) {
 		utils.httpGet(channelResource)
 			.then(function (response) {
-				expect(getStatusCode(response)).toEqual(404);
+				expect(getProp('statusCode', response)).toEqual(404);
 			})
 			.finally(done);
 	});
@@ -21,7 +21,7 @@ describe(__filename, function () {
 
 		utils.httpPost(url, headers, body)
 			.then(function (response) {
-				expect(getStatusCode(response)).toEqual(201);
+				expect(getProp('statusCode', response)).toEqual(201);
 			})
 			.finally(done);
 	});
@@ -33,7 +33,7 @@ describe(__filename, function () {
 
 		utils.httpPost(url, headers, body)
 			.then(function (response) {
-				expect(getStatusCode(response)).toEqual(409);
+				expect(getProp('statusCode', response)).toEqual(409);
 			})
 			.finally(done);
 	});

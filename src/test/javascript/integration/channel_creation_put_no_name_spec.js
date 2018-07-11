@@ -1,5 +1,5 @@
 require('../integration_config');
-const { getProp, getSelfLink } = require('../lib/helpers');
+const { fromObjectPath, getProp } = require('../lib/helpers');
 
 const getParsedPropFunc = parsed => prop => getProp(prop, parsed);
 
@@ -21,7 +21,7 @@ describe(testName, function () {
     utils.putChannel(channelName, function (response, body) {
         var parse = utils.parseJson(response, testName);
         returnedBody = parse;
-        expect(getSelfLink(parse)).toEqual(channelResource);
+        expect(fromObjectPath(['_links', 'self', 'href'], parse)).toEqual(channelResource);
         // getParsedProp(prop) safely returns parse.prop || null
         const getParsedProp = getParsedPropFunc(parse);
         expect(getParsedProp('ttlDays')).toEqual(120);
@@ -38,7 +38,7 @@ describe(testName, function () {
 
     utils.putChannel(channelName, function (response, body) {
         var parse = utils.parseJson(response, testName);
-        expect(getSelfLink(parse)).toEqual(channelResource);
+        expect(fromObjectPath(['_links', 'self', 'href'], parse)).toEqual(channelResource);
         const getParsedProp = getParsedPropFunc(parse);
         expect(getParsedProp('ttlDays')).toEqual(newConfig.ttlDays);
         expect(getParsedProp('description')).toEqual(newConfig.description);

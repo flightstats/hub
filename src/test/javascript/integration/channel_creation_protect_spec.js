@@ -1,8 +1,6 @@
 require('../integration_config');
 const {
   getProp,
-  getSelfLink,
-  getStatusCode,
   fromObjectPath,
 } = require('../lib/helpers');
 
@@ -23,7 +21,7 @@ describe(testName, function () {
     utils.putChannel(channelName, function (response, body) {
         var parse = utils.parseJson(response, testName);
         returnedBody = parse;
-        const selfLink = getSelfLink(parse);
+        const selfLink = fromObjectPath(['_links', 'self', 'href'], parse);
         expect(selfLink).toEqual(channelResource);
         expect(getProp('ttlDays', parse)).toEqual(120);
         expect(getProp('description', parse)).toEqual('');
@@ -34,7 +32,7 @@ describe(testName, function () {
 
     utils.putChannel(channelName, function (response, body) {
         var parse = utils.parseJson(response, testName);
-        const selfLink = getSelfLink(parse);
+        const selfLink = fromObjectPath(['_links', 'self', 'href'], parse);
         expect(selfLink).toEqual(channelResource);
         expect(getProp('protect', parse)).toEqual(true);
 
@@ -49,7 +47,7 @@ describe(testName, function () {
 
     utils.putChannel(channelName, function (response, body) {
         var parse = utils.parseJson(response, testName);
-        const selfLink = getSelfLink(parse);
+        const selfLink = fromObjectPath(['_links', 'self', 'href'], parse);
         expect(selfLink).toEqual(channelResource);
         expect((getProp('tags', parse) || '').length).toEqual(3);
         expect(getProp('storage', parse)).toEqual('BOTH');
@@ -60,7 +58,7 @@ describe(testName, function () {
         request.del({url: channelResource},
             function (err, response, body) {
                 console.log('body', body);
-                expect(getStatusCode(response)).toBe(403);
+                expect(getProp('statusCode', response)).toBe(403);
                 done();
             });
     });

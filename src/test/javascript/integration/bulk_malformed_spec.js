@@ -1,7 +1,7 @@
 require('../integration_config');
 const {
-  getResponseBody,
-  getStatusCode,
+
+  getProp,
 } = require('../lib/helpers');
 
 var request = require('request');
@@ -28,8 +28,8 @@ describe(testName, function () {
                 },
                 function (err, response, body) {
                     expect(err).toBeNull();
-                    expect(getStatusCode(response)).toBe(400);
-                    console.log(getResponseBody(response));
+                    expect(getProp('statusCode', response)).toBe(400);
+                    console.log(getProp('body', response));
                     done();
                 });
         });

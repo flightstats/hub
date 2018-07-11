@@ -1,9 +1,7 @@
 require('../integration_config');
 const {
   fromObjectPath,
-  getResponseBody,
-  getStatusCode,
-  getUris,
+  getProp,
 } = require('../lib/helpers');
 
 // TODO: let (pun intended) us plan to use const and, uh ... let
@@ -55,13 +53,13 @@ describe(testName, function () {
             },
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(getStatusCode(response)).toBe(201);
+                expect(getProp('statusCode', response)).toBe(201);
                 location = fromObjectPath(['headers', 'location'], response);
                 expect(location).toBeDefined();
                 var parse = utils.parseJson(response, testName);
-                const responseBody = getResponseBody(response);
+                const responseBody = getProp('body', response);
                 console.log(responseBody);
-                const uris = getUris(parse) || [];
+                const uris = fromObjectPath(['_links', 'uris']) || [];
                 expect(uris.length).toBe(4);
                 items = uris;
                 done();
@@ -72,9 +70,9 @@ describe(testName, function () {
         request.get({url: location, json: true},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(getStatusCode(response)).toBe(200);
+                expect(getProp('statusCode', response)).toBe(200);
                 console.log(body);
-                const uris = getUris(body) || [];
+                const uris = fromObjectPath(['_links', 'uris']) || [];
                 expect(uris.length).toBe(4);
                 done();
             });
@@ -92,8 +90,8 @@ describe(testName, function () {
                 headers: {Accept: accept}
             }, (err, response, body) => {
                 expect(err).toBeNull();
-                console.log("url " + url + param + " status=" + getStatusCode(response));
-                expect(getStatusCode(response)).toBe(200);
+                console.log("url " + url + param + " status=" + getProp('statusCode', response));
+                expect(getProp('statusCode', response)).toBe(200);
                 verifyFunction(response, param);
                 resolve({response: response, body: body});
             });
@@ -102,7 +100,7 @@ describe(testName, function () {
 
     function standardVerify(response) {
         for (var i = 0; i < items.length; i++) {
-            const body = getResponseBody(response) || [];
+            const body = getProp('body', response) || [];
             expect(body.indexOf(items[i]) > 0).toBe(true);
         }
     }
@@ -171,7 +169,7 @@ describe(testName, function () {
     it("gets next items " + channelName, function (done) {
         getAll(items[0] + '/next/10', done, function (response, param) {
             for (var i = 1; i < items.length; i++) {
-                var responseBody = getResponseBody(response) || [];
+                var responseBody = getProp('body', response) || [];
                 expect(responseBody.indexOf(items[i]) > 0).toBe(true);
             }
             var linkHeader = fromObjectPath(['headers', 'link'], response);
@@ -184,7 +182,7 @@ describe(testName, function () {
     it("gets previous items " + channelName, function (done) {
         getAll(items[3] + '/previous/10', done, function (response, param) {
             for (var i = 0; i < items.length - 1; i++) {
-                var responseBody = getResponseBody(response) || [];
+                var responseBody = getProp('body', response) || [];
                 expect(responseBody.indexOf(items[i]) > 0).toBe(true);
             }
             var linkHeader = fromObjectPath(['headers', 'link'], response);

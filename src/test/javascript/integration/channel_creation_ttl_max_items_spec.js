@@ -1,5 +1,5 @@
 require('../integration_config');
-const { getStatusCode } = require('../lib/helpers');
+const { getProp } = require('../lib/helpers');
 
 var request = require('request');
 var channelName = utils.randomChannelName();
@@ -19,7 +19,7 @@ describe(testName, function () {
             },
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(getStatusCode(response)).toBe(400);
+                expect(getProp('statusCode', response)).toBe(400);
                 done();
             });
     });

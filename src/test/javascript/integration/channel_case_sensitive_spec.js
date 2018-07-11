@@ -1,8 +1,7 @@
 require('../integration_config');
 const {
   fromObjectPath,
-  getStatusCode,
-  getUris,
+  getProp,
 } = require('../lib/helpers');
 
 var request = require('request');
@@ -25,7 +24,7 @@ describe(testName, function () {
             },
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(getStatusCode(response)).toBe(201);
+                expect(getProp('statusCode', response)).toBe(201);
                 done();
             });
     });
@@ -39,7 +38,7 @@ describe(testName, function () {
         request.get({url: url},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(getStatusCode(response)).toBe(200);
+                expect(getProp('statusCode', response)).toBe(200);
                 if (!body || body.indexOf('{"data":') === -1) {
                     var substring = url || '';
                     if (url.indexOf("?") > 0) {
@@ -100,9 +99,9 @@ describe(testName, function () {
         request.get({url: url},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(getStatusCode(response)).toBe(200);
+                expect(getProp('statusCode', response)).toBe(200);
                 var parsed = utils.parseJson(response, 'time hour');
-                uris = getUris(parsed) || [];
+                uris = fromObjectPath(['_links', 'uris']) || [];
                 if (uris.length !== 2) {
                     //console.log('parsed', parsed);
                 }
