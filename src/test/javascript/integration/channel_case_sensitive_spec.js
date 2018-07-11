@@ -101,7 +101,7 @@ describe(testName, function () {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
                 var parsed = utils.parseJson(response, 'time hour');
-                uris = fromObjectPath(['_links', 'uris']) || [];
+                uris = fromObjectPath(['_links', 'uris'], response) || [];
                 if (uris.length !== 2) {
                     //console.log('parsed', parsed);
                 }

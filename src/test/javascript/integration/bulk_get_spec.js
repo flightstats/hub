@@ -59,7 +59,7 @@ describe(testName, function () {
                 var parse = utils.parseJson(response, testName);
                 const responseBody = getProp('body', response);
                 console.log(responseBody);
-                const uris = fromObjectPath(['_links', 'uris']) || [];
+                const uris = fromObjectPath(['_links', 'uris'], parse) || [];
                 expect(uris.length).toBe(4);
                 items = uris;
                 done();
@@ -134,7 +134,7 @@ describe(testName, function () {
     }
 
     function sliceFromEnd(chars) {
-        return items[0].slice(0, items[0].length - chars);
+        return (items[0] || '').slice(0, (items[0] || '').length - chars);
     }
 
     var timeout = 60 * 1000 * 3;
