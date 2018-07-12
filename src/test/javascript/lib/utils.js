@@ -111,7 +111,7 @@ exports.httpGet = function httpGet(url, headers, isBinary) {
                         console.warn('Response header says the content is JSON but it couldn\'t be parsed');
                     }
                 }
-    
+
                 resolve(response);
             }
         });
@@ -148,7 +148,7 @@ exports.httpPost = function httpPost(url, headers, body) {
                         console.warn('Response header says the content is JSON but it couldn\'t be parsed');
                     }
                 }
-    
+
                 resolve(response);
             }
         });
@@ -158,13 +158,13 @@ exports.httpPost = function httpPost(url, headers, body) {
 exports.httpPut = function httpPut(url, headers, body) {
     if (headers)
         headers = utils.keysToLowerCase(headers);
-    
+
     var options = {
         url: url,
         headers: headers || {},
         body: body || ''
     };
-    
+
     if (utils.isSendingOrReceivingJSON(headers)) {
         options.json = true;
     }
@@ -187,7 +187,7 @@ exports.httpPut = function httpPut(url, headers, body) {
 exports.httpDelete = function httpDelete(url, headers) {
     if (headers)
         headers = utils.keysToLowerCase(headers);
-    
+
     var options = {
         url: url,
         headers: headers || {}
@@ -339,7 +339,7 @@ function postItemQwithPayload(url, headers, body) {
         headers: headers || {},
         body: body
     };
-    
+
     if ('Content-Type' in options.headers && options.headers['Content-Type'] === 'application/json') {
         options = Object.assign({}, options, {json: true});
     }

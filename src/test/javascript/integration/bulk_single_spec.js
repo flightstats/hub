@@ -1,6 +1,10 @@
 require('../integration_config');
+const request = require('request');
+const {
+  fromObjectPath,
+  getProp,
+} = require('../lib/helpers');
 
-var request = require('request');
 var channelName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
@@ -34,7 +38,7 @@ describe(testName, function () {
         'message four\r\n' +
         '--abcdefg--'
 
-    var items = [];
+    // var items = []; // TODO: is this expected to be used or is it a copy/paste artifact?
     var location = '';
 
     it("post multipart item to " + channelName, function (done) {
@@ -45,12 +49,12 @@ describe(testName, function () {
             },
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(201);
-                location = response.headers.location;
+                expect(getProp('statusCode', response)).toBe(201);
+                location = fromObjectPath(['headers', 'location'], response);
                 console.log('location', location);
-                expect(response.headers.location).toBeDefined();
+                expect(location).toBeDefined();
                 var parse = utils.parseJson(response, testName);
-                console.log(response.body);
+                console.log(getProp('body', response));
                 done();
             });
     });
@@ -59,10 +63,12 @@ describe(testName, function () {
         request.get({url: location},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
-                console.log(body);
-                console.log(response.headers);
-                expect(response.headers['content-type']).toBe('multipart/mixed;boundary=abcdefg');
+                expect(getProp('statusCode', response)).toBe(200);
+                console.log('verifies content callback body', body);
+                const headers = getProp('headers', response);
+                console.log(headers);
+                const contentType = getProp('content-type', headers);
+                expect(contentType).toBe('multipart/mixed;boundary=abcdefg');
                 expect(body).toBe(multipart);
                 done();
             });

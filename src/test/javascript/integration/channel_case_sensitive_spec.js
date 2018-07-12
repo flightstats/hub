@@ -1,4 +1,8 @@
 require('../integration_config');
+const {
+    fromObjectPath,
+    getProp,
+} = require('../lib/helpers');
 
 var request = require('request');
 var moment = require('moment');
@@ -7,7 +11,6 @@ var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
 
 describe(testName, function () {
-
     var startTime = moment.utc().subtract(1, 'minute');
 
     console.log('channel url', channelResource);
@@ -20,7 +23,7 @@ describe(testName, function () {
             },
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(201);
+                expect(getProp('statusCode', response)).toBe(201);
                 done();
             });
     });
@@ -29,13 +32,14 @@ describe(testName, function () {
 
     function getUrl(url, done) {
         done = done || function () {
-            };
+          // do nothing;
+        };
         request.get({url: url},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
-                if (body.indexOf('{"data":') === -1) {
-                    var substring = url;
+                expect(getProp('statusCode', response)).toBe(200);
+                if (!body || body.indexOf('{"data":') === -1) {
+                    var substring = url || '';
                     if (url.indexOf("?") > 0) {
                         substring = url.substring(0, url.indexOf("?"));
                     }
@@ -68,12 +72,11 @@ describe(testName, function () {
     it('posts item', function (done) {
         utils.postItemQ(upperCase + '?forceWrite=true')
             .then(function (value) {
-                posted = value.response.headers.location;
+                posted = fromObjectPath(['response', 'headers', 'location'], value);
                 console.log('posted', posted);
                 done();
             });
     });
-
 
     it("verifies get upper case " + upperCase, function (done) {
         getUrl(posted, done);
@@ -81,6 +84,11 @@ describe(testName, function () {
 
     utils.addItem(lowerCase + '?forceWrite=true', 201);
 
+    /*
+      TODO: let's refactor out relying on globals set in one it block then
+      required for another arbitrary test to pass
+      I would prefer use of before hooks for maintainability and readability
+    */
     var uris;
 
     function getTwo(channelUrl, path, done) {
@@ -89,12 +97,12 @@ describe(testName, function () {
         request.get({url: url},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
-                var parsed = utils.parseJson(response, 'time hour');
-                uris = parsed._links.uris;
-                if (uris.length !== 2) {
-                    //console.log('parsed', parsed);
-                }
+                expect(getProp('statusCode', response)).toBe(200);
+                var parse = utils.parseJson(response, 'time hour');
+                uris = fromObjectPath(['_links', 'uris'], parse) || [];
+                // if (uris.length !== 2) {
+                // console.log('parsed', parsed);
+                // }
                 expect(uris.length).toBe(2);
 
                 if (uris.length >= 2) {
@@ -163,4 +171,3 @@ describe(testName, function () {
 
 
 });
-

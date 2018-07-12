@@ -1,10 +1,14 @@
 require('../integration_config');
+const {
+  fromObjectPath,
+  getProp,
+} = require('../lib/helpers');
 
+// TODO: let (pun intended) us plan to use const and, uh ... let
 var request = require('request');
 var channelName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
-
 
 /**
  * create a channel
@@ -12,7 +16,10 @@ var testName = __filename;
  * stream items back with bulk API from all query endpoints, using bulk & batch params
  */
 describe(testName, function () {
-
+    /*
+      TODO: is this an it block ? if it is more than a helper,
+      the logic can stay abstracted but I'm thinking to put the assertion in the actual test file
+    */
     utils.putChannel(channelName, false, {"name": channelName, "ttlDays": 1, "tags": ["bulk"]}, testName);
 
     var multipart =
@@ -33,7 +40,7 @@ describe(testName, function () {
         'Content-Type: text/plain\r\n' +
         ' \r\n' +
         'message four\r\n' +
-        '--abcdefg--'
+        '--abcdefg--';
 
     var items = [];
     var location = '';
@@ -46,13 +53,15 @@ describe(testName, function () {
             },
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(201);
-                location = response.headers.location;
-                expect(response.headers.location).toBeDefined();
+                expect(getProp('statusCode', response)).toBe(201);
+                location = fromObjectPath(['headers', 'location'], response);
+                expect(location).toBeDefined();
                 var parse = utils.parseJson(response, testName);
-                console.log(response.body);
-                expect(parse._links.uris.length).toBe(4);
-                items = parse._links.uris;
+                const responseBody = getProp('body', response);
+                console.log(responseBody);
+                const uris = fromObjectPath(['_links', 'uris'], parse) || [];
+                expect(uris.length).toBe(4);
+                items = uris;
                 done();
             });
     });
@@ -61,13 +70,18 @@ describe(testName, function () {
         request.get({url: location, json: true},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
-                console.log(body);
-                expect(body._links.uris.length).toBe(4);
+                expect(getProp('statusCode', response)).toBe(200);
+                console.log('verify location response body: ', body);
+                const uris = fromObjectPath(['_links', 'uris'], body) || [];
+                expect(uris.length).toBe(4);
                 done();
             });
     });
 
+    /*
+      TODO: stack traces of assertion failures all lead back to here even when this is called in multiple tests,
+      I'm thinking better logging of where the failure originated would make this far more usable
+    */
     function getQ(url, param, verifyFunction, accept) {
         return new Promise((resolve, reject) => {
             request.get({
@@ -76,8 +90,8 @@ describe(testName, function () {
                 headers: {Accept: accept}
             }, (err, response, body) => {
                 expect(err).toBeNull();
-                console.log("url " + url + param + " status=" + response.statusCode);
-                expect(response.statusCode).toBe(200);
+                console.log("url " + url + param + " status=" + getProp('statusCode', response));
+                expect(getProp('statusCode', response)).toBe(200);
                 verifyFunction(response, param);
                 resolve({response: response, body: body});
             });
@@ -86,13 +100,14 @@ describe(testName, function () {
 
     function standardVerify(response) {
         for (var i = 0; i < items.length; i++) {
-            expect(response.body.indexOf(items[i]) > 0).toBe(true);
+            const body = getProp('body', response) || [];
+            expect(body.indexOf(items[i]) > 0).toBe(true);
         }
     }
 
     function timeVerify(response, param) {
         standardVerify(response);
-        var linkHeader = response.headers['link'];
+        var linkHeader = fromObjectPath(['headers', 'link'], response);
         expect(linkHeader).toBeDefined();
         expect(linkHeader).toContain('?stable=false' + param);
         expect(linkHeader).toContain('previous');
@@ -119,7 +134,7 @@ describe(testName, function () {
     }
 
     function sliceFromEnd(chars) {
-        return items[0].slice(0, items[0].length - chars);
+        return (items[0] || '').slice(0, (items[0] || '').length - chars);
     }
 
     var timeout = 60 * 1000 * 3;
@@ -154,9 +169,10 @@ describe(testName, function () {
     it("gets next items " + channelName, function (done) {
         getAll(items[0] + '/next/10', done, function (response, param) {
             for (var i = 1; i < items.length; i++) {
-                expect(response.body.indexOf(items[i]) > 0).toBe(true);
+                var responseBody = getProp('body', response) || [];
+                expect(responseBody.indexOf(items[i]) > 0).toBe(true);
             }
-            var linkHeader = response.headers['link'];
+            var linkHeader = fromObjectPath(['headers', 'link'], response);
             expect(linkHeader).toBeDefined();
             expect(linkHeader).toContain(items[1] + '/previous/10?stable=false' + param);
             expect(linkHeader).toContain(items[3] + '/next/10?stable=false' + param);
@@ -166,9 +182,10 @@ describe(testName, function () {
     it("gets previous items " + channelName, function (done) {
         getAll(items[3] + '/previous/10', done, function (response, param) {
             for (var i = 0; i < items.length - 1; i++) {
-                expect(response.body.indexOf(items[i]) > 0).toBe(true);
+                var responseBody = getProp('body', response) || [];
+                expect(responseBody.indexOf(items[i]) > 0).toBe(true);
             }
-            var linkHeader = response.headers['link'];
+            var linkHeader = fromObjectPath(['headers', 'link'], response);
             expect(linkHeader).toBeDefined();
             expect(linkHeader).toContain(items[0] + '/previous/10?stable=false' + param);
             expect(linkHeader).toContain(items[2] + '/next/10?stable=false' + param);
