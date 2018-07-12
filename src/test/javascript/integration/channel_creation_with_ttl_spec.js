@@ -4,7 +4,6 @@ var channelName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 
 describe(__filename, function () {
-
     it('verifies the channel doesn\'t exist yet', function (done) {
         utils.httpGet(channelResource)
             .then(function (response) {
@@ -37,5 +36,4 @@ describe(__filename, function () {
             })
             .finally(done);
     });
-
 });
