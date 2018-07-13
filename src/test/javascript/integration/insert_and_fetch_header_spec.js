@@ -1,4 +1,8 @@
 require('../integration_config');
+const {
+    fromObjectPath,
+    getProp,
+} = require('../lib/helpers');
 
 var request = require('request');
 var channelName = utils.randomChannelName();
@@ -12,7 +16,7 @@ describe(testName, function () {
 
         utils.postItemQ(channelResource)
             .then(function (value) {
-                var url = value.body._links.self.href;
+                const url = fromObjectPath(['body', '_links', 'self', 'href'], value);
                 var options = {
                     url: url,
                     headers: {
@@ -22,13 +26,10 @@ describe(testName, function () {
                 request.get(options,
                     function (err, response, body) {
                         expect(err).toBeNull();
-                        expect(response.statusCode).toBe(200);
+                        expect(getProp('statusCode', response)).toBe(200);
                         done();
                     });
-
-
-            })
+            });
     });
 
 });
-

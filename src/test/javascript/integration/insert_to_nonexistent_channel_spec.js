@@ -1,4 +1,5 @@
 require('../integration_config');
+const { getProp } = require('../lib/helpers');
 
 var channelName = '123_you_aint_gunna_find_me';
 var channelResource = channelUrl + "/" + channelName;
@@ -13,10 +14,9 @@ describe(__filename, function () {
 
         utils.httpPost(url, headers, body)
             .then(function (response) {
-                expect(response.statusCode).toEqual(404);
+                expect(getProp('statusCode', response)).toEqual(404);
             })
             .finally(done);
     });
-
 
 });

@@ -1,7 +1,10 @@
 require('../integration_config');
+const {
+    fromObjectPath,
+    getProp,
+} = require('../lib/helpers');
 
 var request = require('request');
-var moment = require('moment');
 var testName = __filename;
 var internalTimeUrl = hubUrlBase + '/internal/time'
 
@@ -20,42 +23,43 @@ describe(testName, function () {
         request.get({url: internalTimeUrl, json: true},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
+                expect(getProp('statusCode', response)).toBe(200);
                 console.log('body', body);
-                links = body._links;
-                servers = body.servers;
+                links = getProp('_links', body) || {};
+                servers = getProp('servers', body) || [];
                 console.log('links', links);
                 done();
-            })
+            });
     });
 
     it('gets internal time', function (done) {
         request.get({url: links.local.href, json: true},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
+                expect(getProp('statusCode', response)).toBe(200);
                 expect(body).toBeGreaterThan(millis);
                 done();
-            })
+            });
     });
 
     it('gets external time', function (done) {
         var expected = 200;
-        if (servers.length == 1) {
+        if (servers.length === 1) {
             expected = 500;
         }
-        request.get({url: links.remote.href, json: true},
+        const remoteLink = fromObjectPath(['remote', 'href'], links);
+        request.get({url: remoteLink, json: true},
             function (err, response, body) {
                 expect(err).toBeNull();
-                console.log('response.statusCode ' + response.statusCode);
-                expect(response.statusCode).toBe(expected);
-                if (response.statusCode == 200) {
+                const statusCode = getProp('statusCode', response);
+                console.log('response.statusCode ' + statusCode);
+                expect(statusCode).toBe(expected);
+                if (statusCode === 200) {
                     console.log('body', body);
                     expect(body).toBeGreaterThan(millis);
                 }
                 done();
-            })
+            });
     });
 
 });
-

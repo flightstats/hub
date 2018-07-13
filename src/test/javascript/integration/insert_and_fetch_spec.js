@@ -1,4 +1,8 @@
 require('../integration_config');
+const {
+    fromObjectPath,
+    getProp,
+} = require('../lib/helpers');
 
 var channelName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
@@ -13,7 +17,7 @@ describe(__filename, function () {
 
         utils.httpPost(url, headers, body)
             .then(function (response) {
-                expect(response.statusCode).toEqual(201);
+                expect(getProp('statusCode', response)).toEqual(201);
             })
             .finally(done);
     });
@@ -27,10 +31,13 @@ describe(__filename, function () {
 
         utils.httpPost(url, headers, body)
             .then(function (response) {
-                expect(response.statusCode).toEqual(201);
-                expect(response.headers['content-type']).toEqual('application/json');
-                expect(response.body._links.channel.href).toEqual(channelResource);
-                itemURL = response.body._links.self.href;
+                expect(getProp('statusCode', response)).toEqual(201);
+                const contentType = fromObjectPath(['headers', 'content-type'], response);
+                const links = fromObjectPath(['body', '_links'], response) || {};
+                const { channel = {}, self = {} } = links;
+                expect(contentType).toEqual('application/json');
+                expect(channel.href).toEqual(channelResource);
+                itemURL = self.href;
             })
             .finally(done);
     });
@@ -38,10 +45,12 @@ describe(__filename, function () {
     it('verifies the item was inserted successfully', function (done) {
         utils.httpGet(itemURL)
             .then(function (response) {
-                expect(response.statusCode).toEqual(200);
-                expect(response.headers['content-type']).toEqual('text/plain');
-                expect(response.headers['user']).toBeUndefined();
-                expect(response.body).toContain(messageText);
+                expect(getProp('statusCode', response)).toEqual(200);
+                const contentType = fromObjectPath(['headers', 'content-type'], response);
+                const user = fromObjectPath(['headers', 'user'], response);
+                expect(contentType).toEqual('text/plain');
+                expect(user).toBeUndefined();
+                expect(getProp('body', response)).toContain(messageText);
             })
             .finally(done);
     });
