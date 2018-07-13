@@ -1,4 +1,8 @@
 require('../integration_config');
+const {
+    fromObjectPath,
+    getProp,
+} = require('../lib/helpers');
 
 var channelName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
@@ -13,7 +17,7 @@ describe(__filename, function () {
 
         utils.httpPost(url, headers, body)
             .then(function (response) {
-                expect(response.statusCode).toEqual(201);
+                expect(getProp('statusCode', response)).toEqual(201);
             })
             .finally(done);
     });
@@ -25,7 +29,7 @@ describe(__filename, function () {
 
         utils.httpPost(url, headers, body)
             .then(function (response) {
-                expect(response.statusCode).toEqual(201);
+                expect(getProp('statusCode', response)).toEqual(201);
             })
             .finally(done);
     });
@@ -36,11 +40,15 @@ describe(__filename, function () {
         utils.httpGet(url)
             .then(utils.followRedirectIfPresent)
             .then(function (response) {
-                expect(response.statusCode).toEqual(200);
-                expect(response.headers['content-type']).toEqual('application/json');
-                expect(response.body._links.latest.href).toEqual(channelResource + '/latest');
-                expect(response.body.name).toEqual(channelName);
-                expect(response.body.ttlDays).toEqual(120);
+                expect(getProp('statusCode', response)).toEqual(200);
+                const contentType = fromObjectPath(['headers', 'content-type'], response);
+                const latestLInk = fromObjectPath(['body', '_links', 'latest', 'href'], response);
+                const name = fromObjectPath(['body', 'name'], response);
+                const ttlDays = fromObjectPath(['body', 'ttlDays'], response);
+                expect(contentType).toEqual('application/json');
+                expect(latestLInk).toEqual(channelResource + '/latest');
+                expect(name).toEqual(channelName);
+                expect(ttlDays).toEqual(120);
             })
             .finally(done);
     });

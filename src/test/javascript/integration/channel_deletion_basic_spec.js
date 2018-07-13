@@ -1,4 +1,5 @@
 require('../integration_config');
+const { getProp } = require('../lib/helpers');
 
 var request = require('request');
 var channelName = utils.randomChannelName();
@@ -12,19 +13,17 @@ describe(__filename, function () {
             function (err, response, body) {
                 console.log('body', body);
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(202);
+                expect(getProp('statusCode', response)).toBe(202);
                 done();
             });
-
     }, 65000);
 
     it("gets deleted channel " + channelName, function (done) {
         request.get({url: channelResource + '?cached=false'},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(404);
+                expect(getProp('statusCode', response)).toBe(404);
                 done();
             });
     });
-
 });
