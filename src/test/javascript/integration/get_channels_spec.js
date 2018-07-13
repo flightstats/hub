@@ -1,4 +1,8 @@
 require('../integration_config');
+const {
+    fromObjectPath,
+    getProp,
+} = require('../lib/helpers');
 
 var channelName = utils.randomChannelName();
 var channelResource = channelUrl + '/' + channelName;
@@ -12,7 +16,7 @@ describe(__filename, function () {
 
         utils.httpPost(url, headers, body)
             .then(function (response) {
-                expect(response.statusCode).toEqual(201);
+                expect(getProp('statusCode', response)).toEqual(201);
             })
             .finally(done);
     });
@@ -20,11 +24,14 @@ describe(__filename, function () {
     it('fetches the list of channels', function (done) {
         utils.httpGet(channelUrl)
             .then(function (response) {
-                expect(response.statusCode).toEqual(200);
-                expect(response.headers['content-type']).toEqual('application/json');
-                expect(response.body._links.self.href).toEqual(channelUrl);
-                var channelURLs = response.body._links.channels.map(function (obj) {
-                    return obj.href;
+                expect(getProp('statusCode', response)).toEqual(200);
+                const contentType = fromObjectPath(['headers', 'content-type'], response);
+                const links = fromObjectPath(['body', '_links'], response) || {};
+                const { channels = [], self = {} } = links;
+                expect(contentType).toEqual('application/json');
+                expect(self.href).toEqual(channelUrl);
+                var channelURLs = channels.map(function (obj) {
+                    return getProp('href', obj) || '';
                 });
                 expect(channelURLs).toContain(channelResource);
             })
