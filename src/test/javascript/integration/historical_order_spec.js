@@ -1,16 +1,9 @@
 require('../integration_config');
 
-var request = require('request');
-var http = require('http');
-var parse = require('parse-link-header');
 var channel = utils.randomChannelName();
 var moment = require('moment');
 
 var testName = __filename;
-var channelBody = {
-    historical: true,
-    ttlDays: 365
-};
 /**
  * This should:
  * Create a historical channel

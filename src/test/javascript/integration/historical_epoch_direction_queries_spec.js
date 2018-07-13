@@ -1,14 +1,10 @@
 require('../integration_config');
+const { fromObjectPath } = require('../lib/helpers');
 
-var request = require('request');
-var http = require('http');
-var parse = require('parse-link-header');
 var channel = utils.randomChannelName();
 var moment = require('moment');
-
 var tag = Math.random().toString().replace(".", "");
 var testName = __filename;
-
 
 /**
  * This should:
@@ -45,15 +41,15 @@ describe(testName, function () {
     it('posts historical items to ' + channel, function (done) {
         utils.postItemQ(getFormattedUrl(earliestTime))
             .then(function (value) {
-                items.push(value.response.headers.location)
+                items.push(fromObjectPath(['response', 'headers', 'location'], value))
                 return utils.postItemQ(getFormattedUrl(earliestTime.add(1, 'years')));
             })
-            .then(function (value) {
-                items.push(value.response.headers.location)
+            .then(function (value1) {
+                items.push(fromObjectPath(['response', 'headers', 'location'], value1))
                 return utils.postItemQ(getFormattedUrl(earliestTime.add(6, 'months')));
             })
-            .then(function (value) {
-                items.push(value.response.headers.location)
+            .then(function (value2) {
+                items.push(fromObjectPath(['response', 'headers', 'location'], value2))
                 done();
             })
         ;
@@ -62,15 +58,15 @@ describe(testName, function () {
     it('posts live items to ' + channel, function (done) {
         utils.postItemQ(channelURL)
             .then(function (value) {
-                items.push(value.response.headers.location)
+                items.push(fromObjectPath(['response', 'headers', 'location'], value))
                 return utils.postItemQ(channelURL);
             })
-            .then(function (value) {
-                items.push(value.response.headers.location)
+            .then(function (value1) {
+                items.push(fromObjectPath(['response', 'headers', 'location'], value1))
                 return utils.postItemQ(channelURL);
             })
-            .then(function (value) {
-                items.push(value.response.headers.location)
+            .then(function (value2) {
+                items.push(fromObjectPath(['response', 'headers', 'location'], value2))
                 console.log('items', items);
                 done();
             })

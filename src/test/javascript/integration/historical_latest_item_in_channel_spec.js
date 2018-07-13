@@ -1,11 +1,10 @@
 require('../integration_config');
+const { fromObjectPath } = require('../lib/helpers');
 
-var request = require('request');
 var channel = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channel;
 var testName = __filename;
 var moment = require('moment');
-
 
 /**
  * create a channel
@@ -31,11 +30,11 @@ describe(testName, function () {
         var historicalItem2 = channelResource + mutableTime.format('/YYYY/MM/DD/HH/mm/ss/SSS');
         utils.postItemQ(historicalItem1)
             .then(function (value) {
-                items.push(value.response.headers.location);
+                items.push(fromObjectPath(['response', 'headers', 'location'], value));
                 return utils.postItemQ(historicalItem2);
             })
-            .then(function (value) {
-                items.push(value.response.headers.location);
+            .then(function (value1) {
+                items.push(fromObjectPath(['response', 'headers', 'location'], value1));
                 done();
             });
     });
@@ -57,8 +56,9 @@ describe(testName, function () {
     it('posts item now', function (done) {
         utils.postItemQ(channelResource)
             .then(function (value) {
-                latest = value.response.headers.location;
-                items.push(value.response.headers.location);
+                const location = fromObjectPath(['response', 'headers', 'location'], value);
+                latest = location;
+                items.push(location);
                 done();
             });
     });
