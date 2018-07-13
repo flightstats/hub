@@ -1,7 +1,8 @@
 require('../integration_config');
-
-const request = require('request');
-
+const {
+    fromObjectPath,
+    getProp,
+} = require('../lib/helpers');
 /**
  * POST a large item, GET it, and verify the "X-Item-Length"
  * header is present with the correct value
@@ -20,10 +21,14 @@ describe(__filename, function () {
     it('posts a large item', function (done) {
         utils.postItemQwithPayload(channelEndpoint, itemHeaders, itemContent)
             .then(function (result) {
-                expect(function () {
-                    var json = JSON.parse(result.body);
-                    itemURL = json._links.self.href;
-                }).not.toThrow();
+                try {
+                    const json = JSON.parse(getProp('body', result));
+                    itemURL = fromObjectPath(['_links', 'self', 'href'], json);
+                    expect(itemURL).toBeDefined();
+                } catch (ex) {
+                    expect(ex).toBeNull();
+                    console.log('error parsing json: ', ex);
+                }
                 done();
             });
     });
@@ -32,10 +37,11 @@ describe(__filename, function () {
         expect(itemURL !== undefined).toBe(true);
         utils.getItem(itemURL, function (headers, body) {
             console.log('headers:', headers);
-            expect('x-item-length' in headers).toBe(true);
+            const xItemLength = getProp('x-item-length', headers);
+            expect(!!xItemLength).toBe(true);
             var bytes = itemSize - 1; // not sure why the -1 is needed. stole this from insert_and_fetch_large_spec.js
-            expect(headers['x-item-length']).toBe(bytes.toString());
-            //expect(body.toString()).toEqual(itemContent);
+            expect(xItemLength).toBe(bytes.toString());
+            // expect(body.toString()).toEqual(itemContent);
             done();
         });
     }, 5 * 60 * 1000);
