@@ -1,4 +1,8 @@
 require('../integration_config');
+const {
+    fromObjectPath,
+    getProp,
+} = require('../lib/helpers');
 
 describe(__filename, function () {
 
@@ -7,9 +11,11 @@ describe(__filename, function () {
 
         utils.httpGet(url)
             .then(function (response) {
-                expect(response.statusCode).toEqual(200);
-                expect(response.headers['content-type']).toEqual('application/json');
-                expect(response.body.healthy).toEqual(true);
+                const contentType = fromObjectPath(['headers', 'content-type'], response);
+                const healthy = fromObjectPath(['body', 'healthy'], response);
+                expect(getProp('statusCode', response)).toEqual(200);
+                expect(contentType).toEqual('application/json');
+                expect(healthy).toEqual(true);
             })
             .finally(done);
     });
