@@ -1,4 +1,8 @@
 require('../integration_config');
+const {
+    fromObjectPath,
+    getProp,
+} = require('../lib/helpers');
 
 var channelName = utils.randomChannelName();
 
@@ -13,16 +17,17 @@ describe(__filename, function () {
 
         utils.httpPost(url, headers, body)
             .then(function (response) {
-                expect(response.statusCode).toEqual(201);
-                earliestURL = response.body._links.earliest.href;
+                expect(getProp('statusCode', response)).toEqual(201);
+                earliestURL = fromObjectPath(['body', '_links', 'earliest', 'href'], response);
             })
             .finally(done);
     });
 
     it('verifies the earliest endpoint returns 404 on an empty channel', function (done) {
+        if (!earliestURL) return done.fail('required earliestURL not defined by last test');
         utils.httpGet(earliestURL)
             .then(function (response) {
-                expect(response.statusCode).toEqual(404);
+                expect(getProp('statusCode', response)).toEqual(404);
             })
             .finally(done);
     });

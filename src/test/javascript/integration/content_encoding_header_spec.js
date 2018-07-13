@@ -1,7 +1,7 @@
 require('../integration_config');
 const {
-  fromObjectPath,
-  getProp,
+    fromObjectPath,
+    getProp,
 } = require('../lib/helpers');
 
 var channelName = utils.randomChannelName();
