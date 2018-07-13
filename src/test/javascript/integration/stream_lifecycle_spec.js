@@ -1,7 +1,5 @@
 require('../integration_config');
-
-var request = require('request');
-var http = require('http');
+const { getProp } = require('../lib/helpers');
 var channelName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
@@ -28,8 +26,8 @@ xdescribe(testName, function () {
 
         utils.httpGet(url, headers)
             .then(function (response) {
-                expect(response.statusCode).toBe(200);
-                console.log('body', body);
+                expect(getProp('statusCode', response)).toBe(200);
+                // console.log('body', body);
             })
             .finally(done);
     });
