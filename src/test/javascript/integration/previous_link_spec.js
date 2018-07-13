@@ -1,9 +1,10 @@
 require('../integration_config');
+const {
+    fromObjectPath,
+    getProp,
+} = require('../lib/helpers');
 
-var request = require('request');
-var http = require('http');
 var channelName = utils.randomChannelName();
-var groupName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
 
@@ -18,8 +19,9 @@ describe(testName, function () {
     function postOneItem(done) {
         utils.httpPost(channelResource, headers, body)
             .then(function (response) {
-                expect(response.statusCode).toEqual(201);
-                items.push(response.body._links.self.href);
+                expect(getProp('statusCode', response)).toEqual(201);
+                const href = fromObjectPath(['body', '_links', 'self', 'href'], response);
+                items.push(href);
             })
             .finally(done);
     }
@@ -31,7 +33,7 @@ describe(testName, function () {
     it('gets 404 from /previous ', function (done) {
         utils.httpGet(items[0] + '/previous', headers, body)
             .then(function (response) {
-                expect(response.statusCode).toEqual(404);
+                expect(getProp('statusCode', response)).toEqual(404);
             })
             .finally(done);
     });
@@ -39,8 +41,10 @@ describe(testName, function () {
     it('gets empty list from /previous/2 ', function (done) {
         utils.httpGet(items[0] + '/previous/2', headers, body)
             .then(function (response) {
-                expect(response.statusCode).toEqual(200);
-                expect(response.body._links.uris.length).toBe(0);
+                expect(getProp('statusCode', response)).toEqual(200);
+                const uris = fromObjectPath(['body', '_links', 'uris'], response);
+                const urisLength = !!uris && uris.length === 0;
+                expect(urisLength).toBe(true);
             })
             .finally(done);
     });
@@ -56,8 +60,9 @@ describe(testName, function () {
     it('gets item from /previous ', function (done) {
         utils.httpGet(items[2] + '/previous?stable=false', headers, body)
             .then(function (response) {
-                expect(response.statusCode).toEqual(303);
-                expect(response.headers.location).toBe(items[1]);
+                expect(getProp('statusCode', response)).toEqual(303);
+                const location = fromObjectPath(['headers', 'location'], response);
+                expect(location).toBe(items[1]);
             })
             .finally(done);
     });
@@ -65,10 +70,11 @@ describe(testName, function () {
     it('gets items from /previous/2 ', function (done) {
         utils.httpGet(items[2] + '/previous/2?stable=false', headers, body)
             .then(function (response) {
-                expect(response.statusCode).toEqual(200);
-                expect(response.body._links.uris.length).toBe(2);
-                expect(response.body._links.uris[0]).toBe(items[0]);
-                expect(response.body._links.uris[1]).toBe(items[1]);
+                expect(getProp('statusCode', response)).toEqual(200);
+                const uris = fromObjectPath(['body', '_links', 'uris'], response) || [];
+                expect(uris.length).toBe(2);
+                expect(uris[0]).toBe(items[0]);
+                expect(uris[1]).toBe(items[1]);
             })
             .finally(done);
     });
@@ -76,13 +82,13 @@ describe(testName, function () {
     it('gets inclusive items from /previous/2 ', function (done) {
         utils.httpGet(items[2] + '/previous/2?stable=false&inclusive=true', headers, body)
             .then(function (response) {
-                expect(response.statusCode).toEqual(200);
-                expect(response.body._links.uris.length).toBe(2);
-                expect(response.body._links.uris[0]).toBe(items[1]);
-                expect(response.body._links.uris[1]).toBe(items[2]);
+                expect(getProp('statusCode', response)).toEqual(200);
+                const uris = fromObjectPath(['body', '_links', 'uris'], response) || [];
+                expect(uris.length).toBe(2);
+                expect(uris[0]).toBe(items[1]);
+                expect(uris[1]).toBe(items[2]);
             })
             .finally(done);
     });
 
 });
-

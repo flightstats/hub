@@ -1,9 +1,10 @@
 require('../integration_config');
+const {
+    fromObjectPath,
+    getProp,
+} = require('../lib/helpers');
 
-var request = require('request');
-var http = require('http');
 var channelName = utils.randomChannelName();
-var groupName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
 
@@ -13,20 +14,22 @@ describe(testName, function () {
     console.log('channelName', channelName);
 
     it('adds item and checks relative links', function (done) {
-        var item_href;
+        var itemHref;
         utils.postItemQ(channelResource)
             .then(function (value) {
-                item_href = value.body._links.self.href;
-                console.log('item_link', item_href);
-                return utils.getQ(item_href + '/next/10');
+                itemHref = fromObjectPath(['body', '_links', 'self', 'href'], value);
+                console.log('item_link', itemHref);
+                return utils.getQ(itemHref + '/next/10');
             })
             .then(function (value) {
-                expect(value.body._links.uris.length).toBe(0);
-                expect(value.body._links.previous).not.toBeUndefined();
-                expect(value.body._links.previous.href).toBe(item_href + '/previous/10?stable=false');
+                const links = fromObjectPath(['body', '_links'], value) || {};
+                const { previous = {}, uris } = links;
+                const urisLength = uris && uris.length === 0;
+                expect(urisLength).toBe(true);
+                expect(previous.href).toBeDefined();
+                expect(previous.href).toBe(itemHref + '/previous/10?stable=false');
                 done();
-            })
+            });
     });
 
 });
-
