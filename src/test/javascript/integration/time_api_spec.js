@@ -1,4 +1,8 @@
 require('../integration_config');
+const {
+    fromObjectPath,
+    getProp,
+} = require('../lib/helpers');
 
 var request = require('request');
 var moment = require('moment');
@@ -18,24 +22,29 @@ describe(testName, function () {
 
     function verifyLinks(body, url, time, params) {
         params = params || '';
-        if (body._links) {
-            expect(body._links.self.href).toBe(url + params);
-            expect(body._links.second.template).toBe(url + '/{year}/{month}/{day}/{hour}/{minute}/{second}{?stable}');
-            expect(body._links.second.redirect).toBe(url + '/second' + params);
+        if (body && body._links) {
+            const selfLink = fromObjectPath(['_links', 'self', 'href'], body);
+            const minute = fromObjectPath(['_links', 'minute'], body) || {};
+            const second = fromObjectPath(['_links', 'second'], body) || {};
+            const hour = fromObjectPath(['_links', 'hour'], body) || {};
+            const day = fromObjectPath(['_links', 'day'], body) || {};
+            expect(selfLink).toBe(url + params);
+            expect(second.template).toBe(url + '/{year}/{month}/{day}/{hour}/{minute}/{second}{?stable}');
+            expect(second.redirect).toBe(url + '/second' + params);
 
-            expect(body._links.minute.href).toBe(channelResource + time.format('/YYYY/MM/DD/HH/mm') + params);
-            expect(body._links.minute.template).toBe(url + '/{year}/{month}/{day}/{hour}/{minute}{?stable}');
-            expect(body._links.minute.redirect).toBe(url + '/minute' + params);
+            expect(minute.href).toBe(channelResource + time.format('/YYYY/MM/DD/HH/mm') + params);
+            expect(minute.template).toBe(url + '/{year}/{month}/{day}/{hour}/{minute}{?stable}');
+            expect(minute.redirect).toBe(url + '/minute' + params);
 
-            expect(body._links.hour.href).toBe(channelResource + time.format('/YYYY/MM/DD/HH') + params);
-            expect(body._links.hour.template).toBe(url + '/{year}/{month}/{day}/{hour}{?stable}');
-            expect(body._links.hour.redirect).toBe(url + '/hour' + params);
+            expect(hour.href).toBe(channelResource + time.format('/YYYY/MM/DD/HH') + params);
+            expect(hour.template).toBe(url + '/{year}/{month}/{day}/{hour}{?stable}');
+            expect(hour.redirect).toBe(url + '/hour' + params);
 
-            expect(body._links.day.href).toBe(channelResource + time.format('/YYYY/MM/DD') + params);
-            expect(body._links.day.template).toBe(url + '/{year}/{month}/{day}{?stable}');
-            expect(body._links.day.redirect).toBe(url + '/day' + params);
+            expect(day.href).toBe(channelResource + time.format('/YYYY/MM/DD') + params);
+            expect(day.template).toBe(url + '/{year}/{month}/{day}{?stable}');
+            expect(day.redirect).toBe(url + '/day' + params);
         } else {
-            expect(body._links).toBe(true);
+            expect(!!body && !!body._links).toBe(true);
         }
     }
 
@@ -44,8 +53,9 @@ describe(testName, function () {
         request.get({url : url, json : true},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
-                verifyLinks(body, url, moment(body.stable.millis).utc());
+                expect(getProp('statusCode', response)).toBe(200);
+                const millis = fromObjectPath(['stable', 'millis'], body);
+                verifyLinks(body, url, moment(millis).utc());
                 done();
             })
     });
@@ -56,8 +66,9 @@ describe(testName, function () {
         request.get({url : url + params, json : true},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
-                verifyLinks(body, url, moment(body.stable.millis).utc(), params);
+                expect(getProp('statusCode', response)).toBe(200);
+                const millis = fromObjectPath(['stable', 'millis'], body);
+                verifyLinks(body, url, moment(millis).utc(), params);
                 done();
             })
     });
@@ -69,12 +80,11 @@ describe(testName, function () {
             function (err, response, body) {
                 var time = moment().utc();
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
-                verifyLinks(body, url, moment(body.now.millis).utc(), params);
+                expect(getProp('statusCode', response)).toBe(200);
+                const millis = fromObjectPath(['now', 'millis'], body);
+                verifyLinks(body, url, moment(millis).utc(), params);
                 done();
             })
     });
 
-
 });
-

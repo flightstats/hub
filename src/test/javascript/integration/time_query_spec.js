@@ -1,9 +1,10 @@
 require('../integration_config');
-
+const {
+    fromObjectPath,
+    getProp,
+} = require('../lib/helpers');
 var request = require('request');
-var http = require('http');
 var channelName = utils.randomChannelName();
-var groupName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
 
@@ -21,14 +22,12 @@ describe(testName, function () {
         request.get({url : channelResource + '/time/minute?stable=false', json : true},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
-                if (body._links) {
-                    expect(body._links.uris.length).toBe(0);
-                } else {
-                    expect(body).toBe(true);
-                }
+                expect(getProp('statusCode', response)).toBe(200);
+                const uris = fromObjectPath(['_links', 'uris'], body);
+                const urisLength = !!uris && uris.length === 0;
+                expect(urisLength).toBe(true);
                 done();
-            })
+            });
     });
 
     for (var i = 0; i < 4; i++) {
@@ -36,16 +35,18 @@ describe(testName, function () {
     }
 
     function callTime(url, items, calls, done) {
-        request.get({url : url, json : true},
+        request.get({url: url, json: true},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
+                expect(getProp('statusCode', response)).toBe(200);
                 calls++;
-                items = items.concat(body._links.uris);
-                if (items.length == 4) {
+                const uris = fromObjectPath(['_links', 'uris'], body);
+                const prevLink = fromObjectPath(['_links', 'previous', 'href'], body);
+                items = items.concat(uris);
+                if (items.length === 4) {
                     done();
                 } else if (calls < 10) {
-                    callTime(body._links.previous.href, items, calls, done);
+                    callTime(prevLink, items, calls, done);
                 } else {
                     done('unable to find 4 items in ' + calls + ' calls');
                 }
@@ -69,4 +70,3 @@ describe(testName, function () {
     });
 
 });
-
