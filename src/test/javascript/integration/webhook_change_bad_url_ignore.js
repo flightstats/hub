@@ -1,7 +1,5 @@
 require('../integration_config');
-
-var request = require('request');
-var http = require('http');
+const { getProp, fromObjectPath } = require('../lib/helpers');
 var channelName = utils.randomChannelName();
 var webhookName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
@@ -51,26 +49,28 @@ describe(testName, function () {
             receivedItems.push(string);
         }, done);
     });
-    
+
     var itemURL;
-    
+
     it('posts and item', function (done) {
         utils.postItemQ(channelResource)
             .then(function (value) {
-                itemURL = value.body._links.self.href;
+                itemURL = fromObjectPath(['body', '_links', 'self', 'href'], value);
                 done();
             });
     });
-    
+
     it('waits for data', function (done) {
-       utils.waitForData(receivedItems, [itemURL], done); 
+        utils.waitForData(receivedItems, [itemURL], done);
     });
-    
+
     it('verifies we got the item through the callback', function () {
         expect(receivedItems.length).toBe(1);
-        expect(receivedItems).toContain(itemURL);
+        const receivedItem = receivedItems.find(item => item.includes(item));
+        expect(receivedItem).toBeDefined();
+        expect(receivedItem).toContain(itemURL);
     });
-    
+
     it('closes the callback server', function (done) {
         expect(callbackServer).toBeDefined();
         utils.closeServer(callbackServer, done);

@@ -1,9 +1,7 @@
 // bc -- this test does not run reliably due to what appears to be timing issues.
-
+const { fromObjectPath, getProp } = require('../lib/helpers');
 require('../integration_config');
 
-var request = require('request');
-var http = require('http');
 var channelName = utils.randomChannelName();
 var webhookName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
@@ -42,8 +40,9 @@ describe(testName, function () {
     var postedItems = [];
 
     function addPostedItem(value) {
-        postedItems.push(value.body._links.self.href);
-        console.log('value.body._links.self.href', value.body._links.self.href)
+        const selfLink = fromObjectPath(['body', '_links', 'self', 'href'], value);
+        postedItems.push(selfLink);
+        console.log('value.body._links.self.href', selfLink);
     }
 
     var channel = utils.createChannel(channelName);
@@ -51,7 +50,7 @@ describe(testName, function () {
     var webhook = utils.putWebhook(webhookName, webhookConfig, 201, testName);
 
     var callbackServer;
-    
+
     it('starts a callback server', function (done) {
         callbackServer = utils.startHttpServer(port, function (string) {
             callbackItems.push(string);
@@ -73,7 +72,7 @@ describe(testName, function () {
     it('waits for data', function (done) {
         utils.waitForData(callbackItems, postedItems, done);
     }, 15 * 1000);
-    
+
     utils.itSleeps(2000);
 
     it('expects 2 items collected', function () {
@@ -84,7 +83,7 @@ describe(testName, function () {
     webhook = utils.putWebhook(webhookName, webhookConfigPaused, 200, testName);
 
     utils.itSleeps(2000);
-    
+
     it('posts items to paused ' + webhookName, function (done) {
         utils.postItemQ(channelResource)
             .then(function (value) {
@@ -96,7 +95,7 @@ describe(testName, function () {
                 done();
             });
     }, 3000);
-    
+
     utils.itSleeps(500);
 
     // we added another 2 to a paused web hook.  should still be 2
@@ -104,17 +103,16 @@ describe(testName, function () {
         expect(callbackItems.length).toBe(2);
     });
 
-
     console.log("###### resuming web hook");
     webhook = utils.putWebhook(webhookName, webhookConfig, 200, testName);
-    
+
     utils.itSleeps(2000);
-    
+
     it('closes the callback server', function (done) {
         expect(callbackServer).toBeDefined();
         utils.closeServer(callbackServer, done);
     });
-    
+
     it('verifies posted items were received', function () {
         expect(callbackItems.length).toBe(4);
         expect(postedItems.length).toBe(4);
@@ -128,4 +126,3 @@ describe(testName, function () {
     utils.deleteWebhook(webhookName);
 
 });
-

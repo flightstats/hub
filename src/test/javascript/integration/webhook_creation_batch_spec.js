@@ -1,7 +1,5 @@
 require('../integration_config');
 
-var request = require('request');
-var http = require('http');
 var webhookName = utils.randomChannelName();
 var testName = __filename;
 var webhookConfig = {
@@ -29,4 +27,3 @@ describe(testName, function () {
 
     utils.getWebhook(webhookName, webhookConfig2, 404);
 });
-
