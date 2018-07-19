@@ -1,5 +1,5 @@
 require('../integration_config');
-
+const { fromObjectPath, getProp } = require('../lib/helpers');
 var WebSocket = require('ws');
 
 var channelName = utils.randomChannelName();
@@ -14,9 +14,9 @@ describe(__filename, function () {
     it('posts item to channel', function (done) {
         utils.postItemQ(channelResource)
             .then(function (result) {
-                var itemURL = result.response.headers.location;
-                console.log('posted:', itemURL);
-                startingItem = itemURL;
+                const location = fromObjectPath(['response', 'headers', 'location'], result);
+                console.log('posted:', location);
+                startingItem = location;
                 done();
             });
     });
@@ -25,7 +25,7 @@ describe(__filename, function () {
 
     it('builds websocket url', function () {
         expect(startingItem).toBeDefined();
-        wsURL = startingItem.replace('http', 'ws') + '/ws'
+        wsURL = (startingItem || '').replace('http', 'ws') + '/ws';
     });
 
     var webSocket;
@@ -36,8 +36,9 @@ describe(__filename, function () {
 
         webSocket = new WebSocket(wsURL);
         webSocket.onmessage = function (message) {
-            console.log('received:', message.data);
-            receivedMessages.push(message.data);
+            const data = getProp('data', message);
+            console.log('received:', data);
+            receivedMessages.push(data);
         };
 
         webSocket.on('open', function () {
@@ -51,9 +52,9 @@ describe(__filename, function () {
     it('posts item to channel', function (done) {
         utils.postItemQ(channelResource)
             .then(function (result) {
-                var itemURL = result.response.headers.location;
-                console.log('posted:', itemURL);
-                postedItem = itemURL;
+                const location = fromObjectPath(['response', 'headers', 'location'], result);
+                console.log('posted:', location);
+                postedItem = location;
                 done();
             });
     });

@@ -22,10 +22,16 @@ describe(__filename, () => {
 
     it('creates a callback server', (done) => {
         callbackServer = utils.startHttpServer(callbackServerPort, (request, response) => {
-            let json = JSON.parse(request);
-            console.log('callback server received item:', json);
-            json.uris.forEach(uri => callbackItems.push(uri));
-            getProp('statusCode', response) = 400;
+            let json = {};
+            try {
+                json = JSON.parse(request) || {};
+                console.log('callback server received item:', json);
+            } catch (ex) {
+                console.log(`error parsing json: ${ex}`);
+            }
+            const uris = getProp('uris', json) || [];
+            callbackItems.push(...uris);
+            // response.statusCode = 400;
         }, done);
     });
 
@@ -46,8 +52,8 @@ describe(__filename, () => {
             .then(response => {
                 expect(getProp('statusCode', response)).toEqual(200);
                 const maxAttempts = fromObjectPath(['body', 'maxAttempts'], response);
-                console.log('maxAttempts:', response.body.maxAttempts);
-                expect(response.body.maxAttempts).toEqual(0);
+                console.log('maxAttempts:', maxAttempts);
+                expect(maxAttempts).toEqual(0);
             })
             .finally(done);
     });
@@ -71,7 +77,7 @@ describe(__filename, () => {
         utils.httpPost(channelResource, headers, payload)
             .then(response => {
                 expect(getProp('statusCode', response)).toEqual(201);
-                let itemURL = _links.self.href;
+                const itemURL = fromObjectPath(['body', '_links', 'self', 'href'], response);
                 postedItems.push(itemURL);
                 console.log('itemURL:', itemURL);
             })
@@ -84,11 +90,14 @@ describe(__filename, () => {
 
     it('waits for the webhook to give up', (done) => {
         let timeoutMS = 5 * 1000;
-        utils.httpGetUntil(webhookResource, (response) =>
-            (fromObjectPath(['body', 'errors'], response) || [])
-                .filter(e =>
-                      (e && (e.includes('max attempts reached')).length > 0)), timeoutMS)
-            .finally(done);
+        const getUntilCallback = response => (fromObjectPath(['body', 'errors'], response) || [])
+            .filter(e => e && e.includes('max attempts reached'))
+            .length > 0;
+        utils.httpGetUntil(
+            webhookResource,
+            getUntilCallback,
+            timeoutMS
+        ).finally(done);
     });
 
     it('verifies we received the item only once', () => {
@@ -103,16 +112,16 @@ describe(__filename, () => {
                 const body = getProp('body', response) || {};
                 console.log(body);
                 const {
-                  channelLatest,
-                  errors = [],
-                  inFlight = [],
-                  lastCompleted,
+                    channelLatest,
+                    errors = [],
+                    inFlight = [],
+                    lastCompleted,
                 } = body;
                 expect(lastCompleted).toEqual(channelLatest);
                 expect(body.inFlight).toBeDefined();
                 expect(inFlight.length).toEqual(0);
                 expect(errors.length).toEqual(2);
-                let contentKey = postedItems[0].replace(`${channelResource}/`, '');
+                let contentKey = (postedItems[0] || '').replace(`${channelResource}/`, '');
                 expect(errors[0]).toContain(contentKey);
                 expect(errors[0]).toContain('400 Bad Request');
                 expect(errors[1]).toContain(`${contentKey} has reached max attempts (1)`);

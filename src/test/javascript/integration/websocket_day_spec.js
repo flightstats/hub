@@ -1,12 +1,11 @@
 require('../integration_config');
-
+const { fromObjectPath, getProp } = require('../lib/helpers');
 var WebSocket = require('ws');
 
 var channelName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 
 describe(__filename, function () {
-    
     utils.createChannel(channelName, null, 'websocket testing');
 
     var startingItem;
@@ -14,7 +13,8 @@ describe(__filename, function () {
     it('posts item to channel', function (done) {
         utils.postItemQ(channelResource)
             .then(function (result) {
-                var itemURL = result.response.headers.location;
+                const location = fromObjectPath(['response', 'headers', 'location'], result);
+                var itemURL = location;
                 console.log('posted:', itemURL);
                 startingItem = itemURL;
                 done();
@@ -22,15 +22,15 @@ describe(__filename, function () {
     });
 
     var wsURL;
-    
+
     it('builds websocket url', function () {
         expect(startingItem).toBeDefined();
-        var itemPathComponents = startingItem.split('/');
+        var itemPathComponents = (startingItem || '').split('/');
         var itemYear = itemPathComponents[5];
         var itemMonth = itemPathComponents[6];
         var itemDay = itemPathComponents[7];
         var dayURL = channelResource + '/' + itemYear + '/' + itemMonth + '/' + itemDay;
-        wsURL = dayURL.replace('http', 'ws') + '/ws'
+        wsURL = dayURL.replace('http', 'ws') + '/ws';
     });
 
     var webSocket;
@@ -41,8 +41,9 @@ describe(__filename, function () {
 
         webSocket = new WebSocket(wsURL);
         webSocket.onmessage = function (message) {
-            console.log('received:', message.data);
-            receivedMessages.push(message.data);
+            const data = getProp('data', message);
+            console.log('received:', data);
+            receivedMessages.push(data);
         };
 
         webSocket.on('open', function () {
@@ -56,7 +57,8 @@ describe(__filename, function () {
     it('posts item to channel', function (done) {
         utils.postItemQ(channelResource)
             .then(function (result) {
-                var itemURL = result.response.headers.location;
+                const location = fromObjectPath(['response', 'headers', 'location'], result);
+                var itemURL = location;
                 console.log('posted:', itemURL);
                 postedItem = itemURL;
                 done();

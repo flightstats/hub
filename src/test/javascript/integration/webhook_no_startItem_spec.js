@@ -1,5 +1,5 @@
 require('../integration_config');
-
+const { fromObjectPath, getProp } = require('../lib/helpers');
 var request = require('request');
 var channelName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
@@ -18,40 +18,47 @@ describe(testName, function () {
     utils.putWebhook(channelName, webhookConfig, 201, testName);
 
     utils.itSleeps(10000);
-    
+
     it('gets webhook ' + channelName, function (done) {
         request.get({
-                url: gUrl,
-                headers: {"Content-Type": "application/json"}
-            },
-            function (err, response, body) {
-                expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
+            url: gUrl,
+            headers: {"Content-Type": "application/json"}
+        },
+        function (err, response, body) {
+            expect(err).toBeNull();
+            expect(getProp('statusCode', response)).toBe(200);
 
-                if (response.statusCode < 400) {
-                    var parse = utils.parseJson(response, channelName);
-                    expect(parse._links.self.href).toBe(gUrl);
-                    if (typeof webhookConfig !== "undefined") {
-                        console.log("lastCompleted: " + webhookConfig.lastCompleted);
-                        var lastComp = JSON.parse(response.body).lastCompleted;
-                        console.log("lastComp: " + lastComp);
-                        expect(lastComp.indexOf("initial") > -1, true);
-                        expect(parse.callbackUrl).toBe(webhookConfig.callbackUrl);
-                        expect(parse.channelUrl).toBe(webhookConfig.channelUrl);
-                        expect(parse.transactional).toBe(webhookConfig.transactional);
-                        expect(parse.name).toBe(channelName);
-                        expect(parse.batch).toBe(webhookConfig.batch);
-                        if (webhookConfig.ttlMinutes) {
-                            expect(parse.ttlMinutes).toBe(webhookConfig.ttlMinutes);
-                        }
-                        if (webhookConfig.maxWaitMinutes) {
-                            expect(parse.maxWaitMinutes).toBe(webhookConfig.maxWaitMinutes);
-                        }
+            if (response.statusCode < 400) {
+                var parse = utils.parseJson(response, channelName);
+                const selfLink = fromObjectPath(['_links', 'self', 'href'], parse);
+                expect(selfLink).toBe(gUrl);
+                if (typeof webhookConfig !== "undefined") {
+                    console.log("lastCompleted: " + webhookConfig.lastCompleted);
+                    let lastComp = '';
+                    try {
+                        const body = getProp('body', response);
+                        const bodyParse = JSON.parse(body);
+                        lastComp = getProp('lastCompleted', bodyParse) || '';
+                    } catch (ex) {
+                        console.log(`error parsing response body, ${ex}`);
+                    }
+                    console.log("lastComp: " + lastComp);
+                    expect((lastComp || '').indexOf("initial") > -1, true);
+                    expect(getProp('callbackUrl', parse)).toBe(webhookConfig.callbackUrl);
+                    expect(getProp('channelUrl', parse)).toBe(webhookConfig.channelUrl);
+                    expect(getProp('transactional', parse)).toBe(webhookConfig.transactional);
+                    expect(getProp('name', parse)).toBe(channelName);
+                    expect(getProp('batch', parse)).toBe(webhookConfig.batch);
+                    if (webhookConfig.ttlMinutes) {
+                        expect(getProp('ttlMinutes', parse)).toBe(webhookConfig.ttlMinutes);
+                    }
+                    if (webhookConfig.maxWaitMinutes) {
+                        expect(getProp('maxWaitMinutes', parse)).toBe(webhookConfig.maxWaitMinutes);
                     }
                 }
-                done();
-            });
+            }
+            done();
+        });
     });
 
 });
-

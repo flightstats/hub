@@ -28,7 +28,6 @@ var webhookConfig = {
     heartbeat: true
 };
 
-
 describe(__filename, () => {
     it('runs a callback server', (done) => {
         callbackServer = utils.startHttpServer(callbackPort, (message) => {
@@ -58,7 +57,6 @@ describe(__filename, () => {
             .finally(done);
     });
 
-
     utils.itSleeps(5000);
 
     // Check the latest on the webhook
@@ -73,10 +71,9 @@ describe(__filename, () => {
 
     it('moves the cursor backward', (done) => {
         var y = moment().subtract(1, 'day');
-        var formatted = y.format("YYYY/MM/DD/HH/mm/ss")
+        var formatted = y.format("YYYY/MM/DD/HH/mm/ss");
         var url = channelResource + "/" + formatted;
-        console.log("backward cursor ", url)
-        var item = {'item': url};
+        console.log("backward cursor ", url);
         utils.httpPut(webhookURL + "/updateCursor", contentTypePlain, url)
             .then(response => {
                 expect(response.statusCode).toBeLessThan(300);

@@ -77,7 +77,7 @@ describe(testName, function () {
         let uriB;
         try {
             const itemA = JSON.parse(callbackItems[0]);
-            const itemB = JSON.parse(callbackItems[0]);
+            const itemB = JSON.parse(callbackItems[1]);
             const urisA = getProp('uris', itemA);
             const urisB = getProp('uris', itemB);
             uriA = urisA && urisA[0];

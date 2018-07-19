@@ -7,7 +7,6 @@ var testName = __filename;
 var port = utils.getPort();
 var callbackUrl = callbackDomain + ':' + port + '/';
 
-
 /**
  * This should:
  *
@@ -23,7 +22,7 @@ describe(testName, function () {
 
     utils.itSleeps(1000);
     var postedItems = [];
-    var firstItem;
+    // var firstItem;
 
     function addPostedItem(value) {
         postedItems.push(fromObjectPath(['body', '_links', 'self', 'href'], value));
@@ -33,7 +32,7 @@ describe(testName, function () {
     it('posts initial items ' + channelResource, function (done) {
         utils.postItemQ(channelResource)
             .then(function (value) {
-                firstItem = fromObjectPath(['body', '_links', 'self', 'href'], value);
+                // firstItem = fromObjectPath(['body', '_links', 'self', 'href'], value);
                 return utils.postItemQ(channelResource);
             })
             .then(function (value) {

@@ -97,13 +97,13 @@ describe(testName, function () {
             if (typeof webhookConfig !== "undefined") {
                 expect(getProp('callbackUrl', parse)).toBe(webhookConfig.callbackUrl);
                 expect(getProp('channelUrl', parse)).toBe(webhookConfig.channelUrl);
-                expect(getProp('transactional', parse)).toBe(webhookConfig.transactional);
+                // expect(getProp('transactional', parse)).toBe(webhookConfig.transactional);
                 expect(getProp('name', parse)).toBe(webhookName);
                 expect(getProp('lastCompleted', parse)).toBe(postedItems[3]);
             }
             done();
         });
 
-    })
+    });
 
 });
