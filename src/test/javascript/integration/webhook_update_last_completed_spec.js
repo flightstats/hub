@@ -1,8 +1,8 @@
 require('../integration_config');
+const { getProp, fromObjectPath } = require('../lib/helpers');
 var moment = require('moment');
 
 const channelName = utils.randomChannelName();
-// const channelURL = `http://${hubDomain}/channel/${channelName}`;
 const channelResource = channelUrl + "/" + channelName;
 
 const webhookName = utils.randomChannelName();
@@ -12,10 +12,10 @@ const contentTypeJSON = {'Content-Type': 'application/json'};
 const contentTypePlain = {'Content-Type': 'text/plain'};
 
 let callbackServer;
-let callbackPort = utils.getPort();
-let callbackURL = `${callbackDomain}:${callbackPort}`;
-let callbackMessages = [];
-let postedItems = [];
+const callbackPort = utils.getPort();
+const callbackURL = `${callbackDomain}:${callbackPort}`;
+const callbackMessages = [];
+const postedItems = [];
 
 let maxCursor = null;
 let minCursor = null;
@@ -39,7 +39,7 @@ describe(__filename, () => {
         var body = {'name': channelName};
         utils.httpPost(channelUrl, contentTypeJSON, body)
             .then(response => {
-                expect(response.statusCode).toEqual(201);
+                expect(getProp('statusCode', response)).toEqual(201);
             })
             .finally(done);
     });
@@ -50,8 +50,8 @@ describe(__filename, () => {
     it('inserts the first item', (done) => {
         utils.httpPost(channelResource, contentTypePlain, "a test " + Date.now())
             .then(response => {
-                expect(response.statusCode).toEqual(201);
-                firstItemURL = response.body._links.self.href;
+                expect(getProp('statusCode', response)).toEqual(201);
+                firstItemURL = fromObjectPath(['body', '_links', 'self', 'href'], response);
                 postedItems.push(firstItemURL);
             })
             .finally(done);
@@ -63,8 +63,7 @@ describe(__filename, () => {
     it('sets maxItem', (done) => {
         utils.httpGet(webhookURL, contentTypeJSON, false)
             .then(response => {
-                var json = response.body;
-                maxCursor = json.lastCompleted;
+                maxCursor = fromObjectPath(['body', 'lastCompleted'], response);
             })
             .finally(done);
     });
@@ -76,7 +75,7 @@ describe(__filename, () => {
         console.log("backward cursor ", url);
         utils.httpPut(webhookURL + "/updateCursor", contentTypePlain, url)
             .then(response => {
-                expect(response.statusCode).toBeLessThan(300);
+                expect(getProp('statusCode', response)).toBeLessThan(300);
             })
             .finally(done);
     });
@@ -86,22 +85,22 @@ describe(__filename, () => {
     it('checks to see if latest is before "maxCursor"', (done) => {
         utils.httpGet(webhookURL, contentTypeJSON, false)
             .then(response => {
-                var json = response.body;
-                expect(json.lastCompleted).toBeLessThan(maxCursor);
-                minCursor = json.lastCompleted;
+                const lastCompleted = fromObjectPath(['body', 'lastCompleted'], response);
+                expect(lastCompleted).toBeLessThan(maxCursor);
+                minCursor = lastCompleted;
             })
             .finally(done);
     });
 
     it('moves the cursor forward', (done) => {
         var y = moment().subtract(1, 'hour');
-        var formatted = y.format("YYYY/MM/DD/HH/mm/ss")
+        var formatted = y.format("YYYY/MM/DD/HH/mm/ss");
         var url = channelResource + "/" + formatted;
-        console.log("forward cursor ", url)
-        var item = {'item': url};
+        console.log("forward cursor ", url);
+        // var item = { 'item': url };
         utils.httpPut(webhookURL + "/updateCursor", contentTypePlain, url)
             .then(response => {
-                expect(response.statusCode).toBeLessThan(300);
+                expect(getProp('statusCode', response)).toBeLessThan(300);
             })
             .finally(done);
     });
@@ -111,23 +110,22 @@ describe(__filename, () => {
     it('checks to see if latest is after "minCursor"', (done) => {
         utils.httpGet(webhookURL, contentTypeJSON, false)
             .then(response => {
-                var json = response.body;
-                expect(json.lastCompleted).toBeGreaterThan(minCursor);
-                minCursor = json.lastCompleted;
+                const lastCompleted = fromObjectPath(['body', 'lastCompleted'], response);
+                expect(lastCompleted).toBeGreaterThan(minCursor);
+                minCursor = lastCompleted;
             })
             .finally(done);
     });
-
 
     it('closes the callback server', (done) => {
         expect(callbackServer).toBeDefined();
 
         callbackServer.close(() => {
             console.log("closed server....");
-            done()
+            done();
         });
         setImmediate(function () {
-            callbackServer.emit('close')
+            callbackServer.emit('close');
         });
     });
 

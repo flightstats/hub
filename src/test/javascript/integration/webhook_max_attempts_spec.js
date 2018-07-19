@@ -31,7 +31,8 @@ describe(__filename, () => {
             }
             const uris = getProp('uris', json) || [];
             callbackItems.push(...uris);
-            // response.statusCode = 400;
+            console.log('callbackItems', callbackItems);
+            response.statusCode = 400;
         }, done);
     });
 
@@ -90,9 +91,10 @@ describe(__filename, () => {
 
     it('waits for the webhook to give up', (done) => {
         let timeoutMS = 5 * 1000;
-        const getUntilCallback = response => (fromObjectPath(['body', 'errors'], response) || [])
-            .filter(e => e && e.includes('max attempts reached'))
-            .length > 0;
+        const getUntilCallback = (response) => {
+            const errorsArray = fromObjectPath(['body', 'errors'], response) || [];
+            return errorsArray.some(err => (err || '').includes('has reached max'));
+        };
         utils.httpGetUntil(
             webhookResource,
             getUntilCallback,

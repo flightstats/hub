@@ -46,7 +46,7 @@ describe(testName, function () {
                     expect((lastComp || '').indexOf("initial") > -1, true);
                     expect(getProp('callbackUrl', parse)).toBe(webhookConfig.callbackUrl);
                     expect(getProp('channelUrl', parse)).toBe(webhookConfig.channelUrl);
-                    expect(getProp('transactional', parse)).toBe(webhookConfig.transactional);
+                    expect(getProp('transactional', parse)).toBe(null);
                     expect(getProp('name', parse)).toBe(channelName);
                     expect(getProp('batch', parse)).toBe(webhookConfig.batch);
                     if (webhookConfig.ttlMinutes) {
