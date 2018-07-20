@@ -3,6 +3,7 @@ const axios = require('axios');
 
 module.exports.getHubItem = async (uri) => {
     try {
+        console.log(`fetching hub item at: ${uri}`);
         const result = await axios.get(uri, { responseEncoding: null });
         return result || {};
     } catch (ex) {
