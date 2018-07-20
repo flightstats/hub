@@ -42,6 +42,7 @@ describe(testName, function () {
                 try {
                     parse = JSON.parse(body) || body;
                 } catch (ex) {
+                    parse = {};
                     console.log('error parsing json, ', ex);
                 }
                 if (parse.includes && parse.includes('{"data":')) {
