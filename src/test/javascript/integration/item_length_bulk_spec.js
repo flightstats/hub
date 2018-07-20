@@ -1,6 +1,7 @@
 require('../integration_config');
 const {
     fromObjectPath,
+    getHubItem,
     getProp,
 } = require('../lib/helpers');
 /**
@@ -43,29 +44,34 @@ describe(__filename, function () {
             });
     });
 
-    it('verifies first item has correct length info', function (done) {
-        utils.getItem(itemURLs[0], function (headers, body) {
-            const xItemLength = getProp('x-item-length', headers);
+    it('verifies first item has correct length info', async () => {
+        try {
+            const result = await getHubItem(itemURLs[0]);
+            expect(getProp('status', result)).toBe(200);
+            const xItemLength = fromObjectPath(['headers', 'x-item-length'], result);
             expect(!!xItemLength).toBe(true);
             // TODO: new Buffer is deprecated
             var bytes = new Buffer(itemOneContent, 'utf-8').length;
             expect(xItemLength).toBe(bytes.toString());
-            const responseBody = body && body.toString();
-            expect(responseBody).toEqual(itemOneContent);
-            done();
-        });
+            const data = getProp('data', result) || {};
+            expect(JSON.stringify(data)).toEqual(itemOneContent);
+        } catch (ex) {
+            expect(ex).toBeNull();
+        }
     });
 
-    it('verifies second item has correct length info', function (done) {
-        utils.getItem(itemURLs[1], function (headers, body) {
-            const xItemLength = getProp('x-item-length', headers);
+    it('verifies second item has correct length info', async () => {
+        try {
+            const result = await getHubItem(itemURLs[1]);
+            const xItemLength = fromObjectPath(['headers', 'x-item-length'], result);
             expect(!!xItemLength).toBe(true);
             // TODO: new Buffer is deprecated
             var bytes = new Buffer(itemTwoContent, 'utf-8').length;
             expect(xItemLength).toBe(bytes.toString());
-            const responseBody = body && body.toString();
-            expect(responseBody).toEqual(itemTwoContent);
-            done();
-        });
+            const data = getProp('data', result) || {};
+            expect(data).toEqual(itemTwoContent);
+        } catch (ex) {
+            expect(ex).toBeNull();
+        }
     });
 });

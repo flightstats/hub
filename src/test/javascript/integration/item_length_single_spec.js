@@ -1,6 +1,7 @@
 require('../integration_config');
 const {
     fromObjectPath,
+    getHubItem,
     getProp,
 } = require('../lib/helpers');
 /**
@@ -32,17 +33,19 @@ describe(__filename, function () {
             });
     });
 
-    it('verifies item has correct length info', function (done) {
+    it('verifies item has correct length info', async () => {
         expect(itemURL !== undefined).toBe(true);
-        utils.getItem(itemURL, function (headers, body) {
-            const xItemLength = getProp('x-item-length', headers);
-            expect(!!xItemLength).toBe(true);
-            // TODO: new Buffer is deprecated
-            var bytes = new Buffer(itemContent, 'utf-8').length;
-            expect(xItemLength).toBe(bytes.toString());
-            const responseBody = body && body.toString();
-            expect(responseBody).toEqual(itemContent);
-            done();
-        });
+        if (!itemURL) {
+            expect(itemURL).toBeDefined();
+            return false;
+        }
+        const result = await getHubItem(itemURL);
+        const xItemLength = fromObjectPath(['headers', 'x-item-length'], result);
+        expect(xItemLength).toBeDefined();
+        // TODO: new Buffer is deprecated
+        var bytes = new Buffer(itemContent, 'utf-8').length;
+        expect(xItemLength).toBe(bytes.toString());
+        const data = getProp('data', result);
+        expect(data).toEqual(itemContent);
     });
 });

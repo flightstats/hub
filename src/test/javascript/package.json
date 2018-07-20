@@ -17,5 +17,8 @@
     "parse-link-header": "^1.0.1",
     "request": "^2.87.0",
     "ws": "^5.2.2"
+  },
+  "devDependencies": {
+    "axios": "^0.18.0"
   }
 }

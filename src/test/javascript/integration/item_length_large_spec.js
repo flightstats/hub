@@ -1,6 +1,7 @@
 require('../integration_config');
 const {
     fromObjectPath,
+    getHubItem,
     getProp,
 } = require('../lib/helpers');
 /**
@@ -33,17 +34,16 @@ describe(__filename, function () {
             });
     });
 
-    it('verifies item has correct length info', function (done) {
-        expect(itemURL !== undefined).toBe(true);
-        utils.getItem(itemURL, function (headers, body) {
-            console.log('headers:', headers);
-            const xItemLength = getProp('x-item-length', headers);
-            expect(!!xItemLength).toBe(true);
-            var bytes = itemSize - 1; // not sure why the -1 is needed. stole this from insert_and_fetch_large_spec.js
-            expect(xItemLength).toBe(bytes.toString());
-            // expect(body.toString()).toEqual(itemContent);
-            done();
-        });
+    it('verifies item has correct length info', async () => {
+        if (!itemURL) {
+            expect(itemURL).toBeDefined();
+            return false;
+        }
+        const result = await getHubItem(itemURL);
+        console.log('headers', getProp('headers', result));
+        const xItemLength = fromObjectPath(['headers', 'x-item-length'], result);
+        const bytes = itemSize - 1; // not sure why the -1 is needed. stole this from insert_and_fetch_large_spec.js
+        expect(xItemLength).toBe(bytes.toString());
     }, 5 * 60 * 1000);
 
 });
