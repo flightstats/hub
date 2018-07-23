@@ -1,12 +1,12 @@
 require('../integration_config');
-const { fromObjectPath, getProp } = require('../lib/helpers');
+const { createChannel, fromObjectPath, getProp } = require('../lib/helpers');
 var channelName = utils.randomChannelName();
 var webhookName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
 var port = utils.getPort();
 var callbackUrl = callbackDomain + ':' + port + '/';
-
+let createdChannel = false;
 /**
  * This should:
  *
@@ -18,18 +18,25 @@ var callbackUrl = callbackDomain + ':' + port + '/';
  * 5 - verify that the item are returned within delta time, excluding items posted in 2.
  */
 describe(testName, function () {
-    utils.createChannel(channelName, false, testName);
+    beforeAll(async () => {
+        const channel = await createChannel(channelName, false, testName);
+        if (getProp('status', channel) === 201) {
+            createdChannel = true;
+            console.log(`created channel for ${__filename}`);
+        }
+    });
 
     utils.itSleeps(1000);
     var postedItems = [];
     var firstItem;
 
-    function addPostedItem(value) {
+    function addPostedItem (value) {
         postedItems.push(fromObjectPath(['body', '_links', 'self', 'href'], value));
         console.log('postedItems', postedItems);
     }
 
     it('posts initial items ' + channelResource, function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         utils.postItemQ(channelResource)
             .then(function (value) {
                 firstItem = fromObjectPath(['body', '_links', 'self', 'href'], value);
@@ -42,12 +49,13 @@ describe(testName, function () {
     });
 
     it('creates a webhook', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         var url = utils.getWebhookUrl() + '/' + webhookName;
         var headers = {'Content-Type': 'application/json'};
         var body = {
             callbackUrl: callbackUrl,
             channelUrl: channelResource,
-            startItem: firstItem
+            startItem: firstItem,
         };
 
         utils.httpPut(url, headers, body)
@@ -67,6 +75,7 @@ describe(testName, function () {
     var callbackItems = [];
 
     it('starts a callback server', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         callbackServer = utils.startHttpServer(port, function (string) {
             console.log('called webhook ' + webhookName + ' ' + string);
             callbackItems.push(string);
@@ -74,6 +83,7 @@ describe(testName, function () {
     });
 
     it('inserts items', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         utils.postItemQ(channelResource)
             .then(function (value) {
                 addPostedItem(value);
@@ -94,15 +104,18 @@ describe(testName, function () {
     });
 
     it('waits for data', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         utils.waitForData(callbackItems, postedItems, done);
     });
 
     it('closes the first callback server', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         expect(callbackServer).toBeDefined();
         utils.closeServer(callbackServer, done);
     });
 
     it('verifies we got what we expected through the callback', function () {
+        if (!createdChannel) return fail('channel not created in before block');
         expect(callbackItems.length).toBe(5);
         expect(postedItems.length).toBe(5);
         for (var i = 0; i < callbackItems.length; i++) {
@@ -118,5 +131,4 @@ describe(testName, function () {
             expect(name).toBe(webhookName);
         }
     });
-
 });

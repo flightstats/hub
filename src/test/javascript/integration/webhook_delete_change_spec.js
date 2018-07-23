@@ -1,10 +1,10 @@
 require('../integration_config');
-const { getProp, fromObjectPath } = require('../lib/helpers');
+const { createChannel, getProp, fromObjectPath } = require('../lib/helpers');
 var channelName = utils.randomChannelName();
 var webhookName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
-;
+let createdChannel = false;
 
 /**
  * This should:
@@ -32,24 +32,32 @@ describe(testName, function () {
     var postedItemsB = [];
     var webhookConfigA = {
         callbackUrl: callbackDomain + ':' + portA + '/',
-        channelUrl: channelResource
+        channelUrl: channelResource,
     };
     var webhookConfigB = {
         callbackUrl: callbackDomain + ':' + portB + '/',
-        channelUrl: channelResource
+        channelUrl: channelResource,
     };
 
-    utils.createChannel(channelName, false, testName);
+    beforeAll(async () => {
+        const channel = await createChannel(channelName, false, __filename);
+        if (getProp('status', channel) === 201) {
+            createdChannel = true;
+            console.log(`created channel for ${__filename}`);
+        }
+    });
 
     utils.putWebhook(webhookName, webhookConfigA, 201, testName);
 
     it('starts the first callback server', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         callbackServerA = utils.startHttpServer(portA, function (string) {
             callbackItemsA.push(string);
         }, done);
     });
 
     it('posts the first item', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         utils.postItemQ(channelResource)
             .then(function (value) {
                 postedItemsA.push(fromObjectPath(['body', '_links', 'self', 'href'], value));
@@ -58,6 +66,7 @@ describe(testName, function () {
     });
 
     it('waits for data', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         utils.waitForData(callbackItemsA, postedItemsA, done);
     });
 
@@ -68,12 +77,14 @@ describe(testName, function () {
     utils.putWebhook(webhookName, webhookConfigB, 201, testName);
 
     it('starts the second callback server', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         callbackServerB = utils.startHttpServer(portB, function (string) {
             callbackItemsB.push(string);
         }, done);
     });
 
     it('posts the second item', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         utils.postItemQ(channelResource)
             .then(function (value) {
                 postedItemsB.push(fromObjectPath(['body', '_links', 'self', 'href'], value));
@@ -82,10 +93,12 @@ describe(testName, function () {
     });
 
     it('waits for data', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         utils.waitForData(callbackItemsB, postedItemsB, done);
     });
 
     it('verifies we got what we expected through the callback', function () {
+        if (!createdChannel) return done.fail('channel not created in before block');
         expect(callbackItemsA.length).toBe(1);
         expect(callbackItemsB.length).toBe(1);
         let uriA;
@@ -105,11 +118,13 @@ describe(testName, function () {
     });
 
     it('closes the first callback server', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         expect(callbackServerA).toBeDefined();
         utils.closeServer(callbackServerA, done);
     });
 
     it('closes the second callback server', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         expect(callbackServerB).toBeDefined();
         utils.closeServer(callbackServerB, done);
     });

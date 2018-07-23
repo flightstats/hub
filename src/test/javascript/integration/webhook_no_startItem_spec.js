@@ -1,5 +1,5 @@
 require('../integration_config');
-const { fromObjectPath, getProp } = require('../lib/helpers');
+const { createChannel, fromObjectPath, getProp } = require('../lib/helpers');
 var request = require('request');
 var channelName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
@@ -10,19 +10,28 @@ var webhookConfig = {
     channelUrl: 'http://nothing/channel/' + channelName,
     batch: 'SINGLE',
     parallelCalls: 1,
-    paused: false
-}
+    paused: false,
+};
+let createdChannel = false;
 
 describe(testName, function () {
-    utils.createChannel(channelName, channelUrl, testName);
+    beforeAll(async () => {
+        const channel = await createChannel(channelName, channelUrl, testName);
+        if (getProp('status', channel) === 201) {
+            createdChannel = true;
+            console.log(`created channel for ${__filename}`);
+        }
+    });
+
     utils.putWebhook(channelName, webhookConfig, 201, testName);
 
     utils.itSleeps(10000);
 
     it('gets webhook ' + channelName, function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         request.get({
             url: gUrl,
-            headers: {"Content-Type": "application/json"}
+            headers: {"Content-Type": "application/json"},
         },
         function (err, response, body) {
             expect(err).toBeNull();
@@ -60,5 +69,4 @@ describe(testName, function () {
             done();
         });
     });
-
 });
