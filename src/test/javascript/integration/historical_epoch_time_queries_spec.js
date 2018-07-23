@@ -1,14 +1,15 @@
 require('../integration_config');
+const {
+    fromObjectPath,
+    getProp,
+} = require('../lib/helpers');
 
 var request = require('request');
-var http = require('http');
-var parse = require('parse-link-header');
 var channel = utils.randomChannelName();
 var moment = require('moment');
 
 var tag = Math.random().toString().replace(".", "");
 var testName = __filename;
-
 
 /**
  * This should:
@@ -36,7 +37,7 @@ describe(testName, function () {
     it('posts historical item to ' + channel, function (done) {
         utils.postItemQ(pointInThePastURL)
             .then(function (value) {
-                historicalLocation = value.response.headers.location;
+                historicalLocation = fromObjectPath(['response', 'headers', 'location'], value);
                 done();
             });
     });
@@ -45,7 +46,7 @@ describe(testName, function () {
         request.get({url: historicalLocation},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
+                expect(getProp('statusCode', response)).toBe(200);
                 done();
             });
     });
@@ -56,8 +57,8 @@ describe(testName, function () {
     it('posts live item to ' + channel, function (done) {
         utils.postItemQ(channelURL)
             .then(function (value) {
-                liveLocation = value.response.headers.location;
-                liveTime = moment(liveLocation.substring(channelURL.length), '/YYYY/MM/DD/HH/mm/ss/SSS');
+                liveLocation = fromObjectPath(['response', 'headers', 'location'], value);
+                liveTime = moment((liveLocation || '').substring(channelURL.length), '/YYYY/MM/DD/HH/mm/ss/SSS');
                 done();
             });
     });
@@ -66,7 +67,7 @@ describe(testName, function () {
         request.get({url: liveLocation},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
+                expect(getProp('statusCode', response)).toBe(200);
                 done();
             });
     });
@@ -76,10 +77,11 @@ describe(testName, function () {
         request.get({url: url, json: true},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
-                var uris = body._links.uris;
+                expect(getProp('statusCode', response)).toBe(200);
+                const uris = fromObjectPath(['_links', 'uris'], body) || [];
                 expect(uris.length).toBe(expected.length);
                 for (var i = 0; i < uris.length; i++) {
+                    expect(expected[i]).toBeDefined();
                     expect(uris[i]).toBe(expected[i]);
                 }
                 done();
@@ -87,11 +89,11 @@ describe(testName, function () {
     }
 
     function queryTimes(format, done) {
-        var liveQuery = liveTime.format(format);
-        var mutableQuery = mutableTime.format(format);
+        var liveQuery = liveTime && liveTime.format(format);
+        var mutableQuery = mutableTime && mutableTime.format(format);
 
         var queryAll = done;
-        if (liveQuery === mutableQuery) {
+        if (liveQuery && (liveQuery === mutableQuery)) {
             queryAll = function () {
                 timeQuery(mutableQuery + '?epoch=ALL&trace=true&stable=false', [historicalLocation, liveLocation], done);
             };
@@ -101,7 +103,6 @@ describe(testName, function () {
             timeQuery(mutableQuery + '?epoch=MUTABLE&trace=true&stable=false', [historicalLocation], queryAll);
         };
         timeQuery(liveQuery + '?epoch=IMMUTABLE&trace=true&stable=false', [liveLocation], queryMutable);
-
     }
 
     it('mutable item by day', function (done) {
@@ -123,6 +124,5 @@ describe(testName, function () {
     it('mutable item by millis', function (done) {
         queryTimes('/YYYY/MM/DD/HH/mm/ss/SSS', done);
     });
-
 
 });

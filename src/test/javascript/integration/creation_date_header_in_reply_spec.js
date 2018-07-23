@@ -1,4 +1,8 @@
 require('../integration_config');
+const {
+    fromObjectPath,
+    getProp,
+} = require('../lib/helpers');
 
 var channelName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
@@ -13,7 +17,7 @@ describe(__filename, function () {
 
         utils.httpPost(url, headers, body)
             .then(function (response) {
-                expect(response.statusCode).toEqual(201);
+                expect(getProp('statusCode', response)).toEqual(201);
             })
             .finally(done);
     });
@@ -27,17 +31,20 @@ describe(__filename, function () {
 
         utils.httpPost(url, headers, body)
             .then(function (response) {
-                expect(response.statusCode).toEqual(201);
-                itemURL = response.body._links.self.href;
+                expect(getProp('statusCode', response)).toEqual(201);
+                const selfLink = fromObjectPath(['body', '_links', 'self', 'href'], response);
+                itemURL = selfLink;
             })
             .finally(done);
     });
 
     it('verifies the creation-date header is returned', function (done) {
+        if (!itemURL) return done.fail('itemURL failed initialization in previous test');
         utils.httpGet(itemURL)
             .then(function (response) {
-                expect(response.statusCode).toEqual(200);
-                expect(response.headers['creation-date']).toContain('T');
+                expect(getProp('statusCode', response)).toEqual(200);
+                const creationDate = fromObjectPath(['headers', 'creation-date'], response);
+                expect(creationDate).toContain('T');
             })
             .finally(done);
     });

@@ -1,7 +1,5 @@
 require('../integration_config');
-
-var request = require('request');
-var http = require('http');
+const { getProp, fromObjectPath } = require('../lib/helpers');
 var channelName = utils.randomChannelName();
 var webhookName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
@@ -24,8 +22,9 @@ describe(__filename, function () {
         let url = `${hubUrlBase}/internal/properties`;
         utils.httpGet(url)
             .then(response => {
-                expect(response.statusCode).toEqual(200);
-                let hubType = response.body.properties['hub.type'];
+                expect(getProp('statusCode', response)).toEqual(200);
+                const properties = fromObjectPath(['body', 'properties'], response) || {};
+                const hubType = properties['hub.type'];
                 if (hubType !== undefined) {
                     isClustered = hubType === 'aws';
                 }
@@ -36,7 +35,7 @@ describe(__filename, function () {
 
     it('creates a channel', (done) => {
         utils.httpPut(channelResource)
-            .then(response => expect(response.statusCode).toEqual(201))
+            .then(response => expect(getProp('statusCode', response)).toEqual(201))
             .finally(done);
     });
 
@@ -48,10 +47,11 @@ describe(__filename, function () {
         };
         utils.httpPut(webhookResource, headers, body)
             .then(response => {
+                const statusCode = getProp('statusCode', response);
                 if (isClustered) {
-                    expect(response.statusCode).toEqual(400)
+                    expect(statusCode).toEqual(400);
                 } else {
-                    expect(response.statusCode).toEqual(201);
+                    expect(statusCode).toEqual(201);
                 }
             })
             .finally(done);

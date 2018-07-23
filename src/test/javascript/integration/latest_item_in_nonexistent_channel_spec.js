@@ -1,5 +1,5 @@
 require('../integration_config');
-
+const { getProp } = require('../lib/helpers');
 var channelName = utils.randomChannelName();
 var channelResource = channelUrl + '/' + channelName;
 
@@ -10,7 +10,7 @@ describe(__filename, function () {
 
         utils.httpGet(url)
             .then(function (response) {
-                expect(response.statusCode).toEqual(404);
+                expect(getProp('statusCode', response)).toEqual(404);
             })
             .finally(done);
     });

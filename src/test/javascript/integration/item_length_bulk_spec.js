@@ -1,5 +1,8 @@
 require('../integration_config');
-
+const {
+    fromObjectPath,
+    getProp,
+} = require('../lib/helpers');
 /**
  * POST bulk items, GET each one, and verify the "X-Item-Length"
  * header is present with the correct values
@@ -26,10 +29,15 @@ describe(__filename, function () {
     it('posts items in bulk', function (done) {
         utils.postItemQwithPayload(channelEndpoint, bulkHeaders, bulkContent)
             .then(function (result) {
-                expect(function () {
-                    var json = JSON.parse(result.body);
-                    itemURLs = json._links.uris;
-                }).not.toThrow();
+                let json = {};
+                try {
+                    json = JSON.parse(result.body);
+                } catch (ex) {
+                    console.log('error parsing json: ', ex);
+                }
+                const uris = fromObjectPath(['_links', 'uris'], json);
+                expect(uris).toBeDefined();
+                itemURLs = fromObjectPath(['_links', 'uris'], json) || [];
                 expect(itemURLs.length).toBe(2);
                 done();
             });
@@ -37,20 +45,26 @@ describe(__filename, function () {
 
     it('verifies first item has correct length info', function (done) {
         utils.getItem(itemURLs[0], function (headers, body) {
-            expect('x-item-length' in headers).toBe(true);
+            const xItemLength = getProp('x-item-length', headers);
+            expect(!!xItemLength).toBe(true);
+            // TODO: new Buffer is deprecated
             var bytes = new Buffer(itemOneContent, 'utf-8').length;
-            expect(headers['x-item-length']).toBe(bytes.toString());
-            expect(body.toString()).toEqual(itemOneContent);
+            expect(xItemLength).toBe(bytes.toString());
+            const responseBody = body && body.toString();
+            expect(responseBody).toEqual(itemOneContent);
             done();
         });
     });
 
     it('verifies second item has correct length info', function (done) {
         utils.getItem(itemURLs[1], function (headers, body) {
-            expect('x-item-length' in headers).toBe(true);
+            const xItemLength = getProp('x-item-length', headers);
+            expect(!!xItemLength).toBe(true);
+            // TODO: new Buffer is deprecated
             var bytes = new Buffer(itemTwoContent, 'utf-8').length;
-            expect(headers['x-item-length']).toBe(bytes.toString());
-            expect(body.toString()).toEqual(itemTwoContent);
+            expect(xItemLength).toBe(bytes.toString());
+            const responseBody = body && body.toString();
+            expect(responseBody).toEqual(itemTwoContent);
             done();
         });
     });

@@ -1,5 +1,8 @@
 require('../integration_config');
-
+const {
+    fromObjectPath,
+    getProp,
+} = require('../lib/helpers');
 const moment = require('moment');
 
 /**
@@ -21,17 +24,21 @@ describe(__filename, function () {
         let headers = {'Content-Type': 'application/json'};
         let body = {"mutableTime": moment().subtract(1, 'minute').toISOString()};
         utils.httpPut(channelResource, headers, body)
-            .then(response => expect(response.statusCode).toEqual(201))
+            .then(response => expect(getProp('statusCode', response)).toEqual(201))
             .finally(done);
     });
 
     it('posts a historical item', function (done) {
         utils.postItemQwithPayload(historicalEndpoint, itemHeaders, itemContent)
             .then(function (result) {
-                expect(function () {
-                    var json = JSON.parse(result.body);
-                    itemURL = json._links.self.href;
-                }).not.toThrow();
+                try {
+                    const json = JSON.parse(getProp('body', result));
+                    itemURL = fromObjectPath(['_links', 'self', 'href'], json);
+                    expect(itemURL).toBeDefined();
+                } catch (ex) {
+                    expect(ex).toBeNull();
+                    console.log('error parsing json: ', ex);
+                }
                 done();
             });
     });
@@ -39,10 +46,13 @@ describe(__filename, function () {
     it('verifies item has correct length info', function (done) {
         expect(itemURL !== undefined).toBe(true);
         utils.getItem(itemURL, function (headers, body) {
-            expect('x-item-length' in headers).toBe(true);
+            const xItemLength = getProp('x-item-length', headers);
+            expect(!!xItemLength).toBe(true);
+            // TODO: new Buffer is deprecated
             var bytes = new Buffer(itemContent, 'utf-8').length;
-            expect(headers['x-item-length']).toBe(bytes.toString());
-            expect(body.toString()).toEqual(itemContent);
+            expect(xItemLength).toBe(bytes.toString());
+            const responseBody = body && body.toString();
+            expect(responseBody).toEqual(itemContent);
             done();
         });
     });

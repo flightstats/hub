@@ -1,7 +1,7 @@
 require('../integration_config');
 const {
-  fromObjectPath,
-  getProp,
+    fromObjectPath,
+    getProp,
 } = require('../lib/helpers');
 
 // TODO: let (pun intended) us plan to use const and, uh ... let
@@ -47,23 +47,23 @@ describe(testName, function () {
 
     it("batches items to " + channelName, function (done) {
         request.post({
-                url: channelResource + '/bulk',
-                headers: {'Content-Type': "multipart/mixed; boundary=abcdefg"},
-                body: multipart
-            },
-            function (err, response, body) {
-                expect(err).toBeNull();
-                expect(getProp('statusCode', response)).toBe(201);
-                location = fromObjectPath(['headers', 'location'], response);
-                expect(location).toBeDefined();
-                var parse = utils.parseJson(response, testName);
-                const responseBody = getProp('body', response);
-                console.log(responseBody);
-                const uris = fromObjectPath(['_links', 'uris'], parse) || [];
-                expect(uris.length).toBe(4);
-                items = uris;
-                done();
-            });
+            url: channelResource + '/bulk',
+            headers: {'Content-Type': "multipart/mixed; boundary=abcdefg"},
+            body: multipart
+        },
+        function (err, response, body) {
+            expect(err).toBeNull();
+            expect(getProp('statusCode', response)).toBe(201);
+            location = fromObjectPath(['headers', 'location'], response);
+            expect(location).toBeDefined();
+            var parse = utils.parseJson(response, testName);
+            const responseBody = getProp('body', response);
+            console.log(responseBody);
+            const uris = fromObjectPath(['_links', 'uris'], parse) || [];
+            expect(uris.length).toBe(4);
+            items = uris;
+            done();
+        });
     });
 
     it("verifies location " + channelName, function (done) {

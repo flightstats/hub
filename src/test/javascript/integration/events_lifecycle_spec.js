@@ -1,10 +1,14 @@
 require('../integration_config');
+const {
+    fromObjectPath,
+    getProp,
+} = require('../lib/helpers');
 
-var request = require('request');
+// var request = require('request'); // TODO: unused?
 var EventSource = require('eventsource');
-var http = require('http');
+// var http = require('http');  // TODO: unused?
 var channelName = utils.randomChannelName();
-var groupName = utils.randomChannelName();
+// var groupName = utils.randomChannelName(); // TODO: unused?
 var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
 
@@ -29,16 +33,16 @@ describe(testName, function () {
 
         source.addEventListener('application/json', function (e) {
             console.log('message', e);
-            events.push(e.lastEventId);
+            events.push(getProp('lastEventId', e));
         }, false);
 
         source.addEventListener('open', function (e) {
             console.log('opened');
         }, false);
     });
-    
+
     utils.itSleeps(1000);
-    
+
     it('posts items', function (done) {
         utils.postItemQ(channelResource)
             .then(function (value) {
@@ -57,10 +61,11 @@ describe(testName, function () {
                 addPostedItem(value);
                 done();
             });
-        
+
         function addPostedItem(value) {
-            console.log('posted ', value.body._links.self.href);
-            postedItems.push(value.body._links.self.href);
+            const selfLink = fromObjectPath(['body', '_links', 'self', 'href'], value);
+            console.log('posted ', selfLink);
+            postedItems.push(selfLink);
         }
 
     }, 10 * 1000);
@@ -75,7 +80,6 @@ describe(testName, function () {
             expect(postedItems[i]).toBe(events[i]);
         }
 
-    })
+    });
 
 });
-

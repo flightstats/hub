@@ -1,14 +1,11 @@
 require('../integration_config');
-
-var request = require('request');
-var http = require('http');
+const { fromObjectPath, getProp } = require('../lib/helpers');
 var channelName = utils.randomChannelName();
 var webhookName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
 var port = utils.getPort();
 var callbackUrl = callbackDomain + ':' + port + '/';
-
 
 /**
  * This should:
@@ -25,17 +22,17 @@ describe(testName, function () {
 
     utils.itSleeps(1000);
     var postedItems = [];
-    var firstItem;
+    // var firstItem;
 
     function addPostedItem(value) {
-        postedItems.push(value.body._links.self.href);
+        postedItems.push(fromObjectPath(['body', '_links', 'self', 'href'], value));
         console.log('postedItems', postedItems);
     }
 
     it('posts initial items ' + channelResource, function (done) {
         utils.postItemQ(channelResource)
             .then(function (value) {
-                firstItem = value.body._links.self.href;
+                // firstItem = fromObjectPath(['body', '_links', 'self', 'href'], value);
                 return utils.postItemQ(channelResource);
             })
             .then(function (value) {
@@ -43,7 +40,7 @@ describe(testName, function () {
                 done();
             });
     });
-    
+
     utils.itSleeps(6000);
 
     utils.putWebhook(webhookName, {
@@ -95,9 +92,16 @@ describe(testName, function () {
         expect(callbackItems.length).toBe(5);
         expect(postedItems.length).toBe(5);
         for (var i = 0; i < callbackItems.length; i++) {
-            var parse = JSON.parse(callbackItems[i]);
-            expect(parse.uris[0]).toBe(postedItems[i]);
-            expect(parse.name).toBe(webhookName);
+            let parse = {};
+            try {
+                parse = JSON.parse(callbackItems[i]);
+            } catch (ex) {
+                expect(`failed to parse json, ${callbackItems[i]}, ${ex}`).toBeNull();
+            }
+            const uris = getProp('uris', parse) || [];
+            const name = getProp('name', parse);
+            expect(uris[0]).toBe(postedItems[i]);
+            expect(name).toBe(webhookName);
         }
     });
 

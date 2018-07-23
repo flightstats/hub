@@ -1,4 +1,5 @@
 require('../integration_config');
+const { getProp } = require('../lib/helpers');
 
 var providerResource = hubUrlBase + "/provider/bulk";
 var channelName = utils.randomChannelName();
@@ -27,9 +28,19 @@ describe(__filename, function () {
 
         utils.httpPost(url, headers, body)
             .then(function (response) {
-                expect(response.statusCode).toEqual(200);
+                console.log('response.statusCode', response.statusCode);
+                expect(getProp('statusCode', response)).toEqual(200);
             })
             .finally(done);
+    });
+
+    it('waits', (done) => {
+        const wait = setTimeout(() => {
+            // just waiting a sec
+        }, 900);
+        clearTimeout(wait);
+        expect(true).toBe(true);
+        done();
     });
 
     it('verifies the bulk value was inserted', function (done) {
@@ -37,7 +48,7 @@ describe(__filename, function () {
 
         utils.httpGet(url)
             .then(function (response) {
-                expect(response.statusCode).toEqual(200);
+                expect(getProp('statusCode', response)).toEqual(200);
             })
             .finally(done);
     });

@@ -1,16 +1,13 @@
 require('../integration_config');
-
-var request = require('request');
-var http = require('http');
+const { getProp, fromObjectPath } = require('../lib/helpers');
 var webhookName1 = utils.randomChannelName();
 var webhookName2 = utils.randomChannelName();
 var webhookUrl = utils.getWebhookUrl();
 var testName = __filename;
 var webhookConfig = {
-    callbackUrl : 'http://nothing/callback',
-    channelUrl : 'http://nothing/channel/notHere'
+    callbackUrl: 'http://nothing/callback',
+    channelUrl: 'http://nothing/channel/notHere'
 };
-
 /**
  * This should:
  *
@@ -20,25 +17,27 @@ var webhookConfig = {
 describe(testName, function () {
 
     var firstWebhookURL = webhookUrl + '/' + webhookName1;
-    
+
     it('creates the first webhook', function (done) {
         var url = firstWebhookURL;
         var headers = {'Content-Type': 'application/json'};
         var body = webhookConfig;
-        
+
         utils.httpPut(url, headers, body)
             .then(function (response) {
-                expect(response.statusCode).toEqual(201);
-                expect(response.headers.location).toBe(firstWebhookURL);
-                expect(response.body.callbackUrl).toBe(webhookConfig.callbackUrl);
-                expect(response.body.channelUrl).toBe(webhookConfig.channelUrl);
-                expect(response.body.name).toBe(webhookName1);
+                const location = fromObjectPath(['headers', 'location'], response);
+                const body = getProp('body', response) || {};
+                expect(getProp('statusCode', response)).toEqual(201);
+                expect(location).toBe(firstWebhookURL);
+                expect(body.callbackUrl).toBe(webhookConfig.callbackUrl);
+                expect(body.channelUrl).toBe(webhookConfig.channelUrl);
+                expect(body.name).toBe(webhookName1);
             })
             .finally(done);
     });
-    
+
     var secondWebhookURL = webhookUrl + '/' + webhookName2;
-    
+
     it('creates the second webhook', function (done) {
         var url = secondWebhookURL;
         var headers = {'Content-Type': 'application/json'};
@@ -46,11 +45,13 @@ describe(testName, function () {
 
         utils.httpPut(url, headers, body)
             .then(function (response) {
-                expect(response.statusCode).toEqual(201);
-                expect(response.headers.location).toBe(secondWebhookURL);
-                expect(response.body.callbackUrl).toBe(webhookConfig.callbackUrl);
-                expect(response.body.channelUrl).toBe(webhookConfig.channelUrl);
-                expect(response.body.name).toBe(webhookName2);
+                const location = fromObjectPath(['headers', 'location'], response);
+                const body = getProp('body', response) || {};
+                expect(getProp('statusCode', response)).toEqual(201);
+                expect(location).toBe(secondWebhookURL);
+                expect(body.callbackUrl).toBe(webhookConfig.callbackUrl);
+                expect(body.channelUrl).toBe(webhookConfig.channelUrl);
+                expect(body.name).toBe(webhookName2);
             })
             .finally(done);
     });
@@ -63,11 +64,17 @@ describe(testName, function () {
 
         utils.httpGet(url, headers)
             .then(function (response) {
-                expect(response.statusCode).toBe(200);
-                expect(response.body._links.self.href).toEqual(webhookUrl);
-                foundURLs = (response.body._links.groups || response.body._links.webhooks)
-                    .map(function (item) { return item.href })
-                    .filter(function (href) { return href == firstWebhookURL || href == secondWebhookURL });
+                expect(getProp('statusCode', response)).toBe(200);
+                const selfLink = fromObjectPath(['body', '_links', 'self', 'href'], response);
+                const groups = fromObjectPath(['body', '_links', 'groups'], response);
+                const webhooks = fromObjectPath(['body', '_links', 'webhooks'], response);
+                expect(selfLink).toEqual(webhookUrl);
+                foundURLs = (groups || webhooks)
+                    .map(item => getProp('href', item))
+                    .filter(href =>
+                        [firstWebhookURL, secondWebhookURL]
+                            .some(val =>
+                                val === href));
             })
             .finally(done);
     });
@@ -82,4 +89,3 @@ describe(testName, function () {
     utils.deleteWebhook(webhookName2);
 
 });
-

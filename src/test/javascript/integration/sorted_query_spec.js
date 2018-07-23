@@ -1,7 +1,8 @@
 require('../integration_config');
-
-var request = require('request');
-var http = require('http');
+const {
+    fromObjectPath,
+    getProp,
+} = require('../lib/helpers');
 var moment = require('moment');
 var channelName = utils.randomChannelName();
 var channelResource = `${channelUrl}/${channelName}`;
@@ -15,7 +16,27 @@ var channelResource = `${channelUrl}/${channelName}`;
  *
  */
 
+function trimWordRandomly(word) {
+    if (!word && word.length) return '';
+    let trimLocation = Math.floor(Math.random() * (word.length - 2)) + 2;
+    return word.slice(0, trimLocation);
+}
+
 describe(__filename, () => {
+    function expectURIsInAscendingOrder(response) {
+        expect(getProp('statusCode', response)).toBe(200);
+        const uris = fromObjectPath(['body', '_links', 'uris'], response);
+        console.log('uris:', uris);
+        expect(uris).toEqual(postedItems);
+    }
+
+    function expectURIsInDescendingOrder(response) {
+        expect(getProp('statusCode', response)).toBe(200);
+        const uris = fromObjectPath(['body', '_links', 'uris'], response);
+        console.log('uris:', uris);
+        let reversedItems = postedItems.slice().reverse();
+        expect(uris).toEqual(reversedItems);
+    }
 
     let postedItems = [];
 
@@ -25,23 +46,27 @@ describe(__filename, () => {
         let headers = {'Content-Type': 'plain/text'};
         utils.httpPost(channelResource, headers, moment.utc().toISOString())
             .then(response => {
-                expect(response.statusCode).toEqual(201);
-                postedItems.push(response.body._links.self.href);
-                return utils.httpPost(channelResource, headers, moment.utc().toISOString())
+                expect(getProp('statusCode', response)).toEqual(201);
+                const selfLink = fromObjectPath(['body', '_links', 'self', 'href'], response);
+                postedItems.push(selfLink);
+                return utils.httpPost(channelResource, headers, moment.utc().toISOString());
             })
             .then(response => {
-                expect(response.statusCode).toEqual(201);
-                postedItems.push(response.body._links.self.href);
-                return utils.httpPost(channelResource, headers, moment.utc().toISOString())
+                expect(getProp('statusCode', response)).toEqual(201);
+                const selfLink = fromObjectPath(['body', '_links', 'self', 'href'], response);
+                postedItems.push(selfLink);
+                return utils.httpPost(channelResource, headers, moment.utc().toISOString());
             })
             .then(response => {
-                expect(response.statusCode).toEqual(201);
-                postedItems.push(response.body._links.self.href);
-                return utils.httpPost(channelResource, headers, moment.utc().toISOString())
+                expect(getProp('statusCode', response)).toEqual(201);
+                const selfLink = fromObjectPath(['body', '_links', 'self', 'href'], response);
+                postedItems.push(selfLink);
+                return utils.httpPost(channelResource, headers, moment.utc().toISOString());
             })
             .then(response => {
-                expect(response.statusCode).toEqual(201);
-                postedItems.push(response.body._links.self.href);
+                expect(getProp('statusCode', response)).toEqual(201);
+                const selfLink = fromObjectPath(['body', '_links', 'self', 'href'], response);
+                postedItems.push(selfLink);
             })
             .finally(() => {
                 console.log('postedItems:', postedItems);
@@ -110,14 +135,14 @@ describe(__filename, () => {
         let url = `${channelResource}/${oneMinuteAgo}/A/next/4?stable=false&order=${order}&bulk=true`;
         utils.httpGet(url)
             .then(response => {
-                expect(response.statusCode).toBe(200);
-                console.log(response.body);
-
+                expect(getProp('statusCode', response)).toBe(200);
+                const body = getProp('body', response) || [];
+                console.log(body);
                 let descendingItems = postedItems.slice().reverse();
-                let first = response.body.indexOf(descendingItems[0]);
-                let second = response.body.indexOf(descendingItems[1]);
-                let third = response.body.indexOf(descendingItems[2]);
-                let fourth = response.body.indexOf(descendingItems[3]);
+                let first = body.indexOf(descendingItems[0]);
+                let second = body.indexOf(descendingItems[1]);
+                let third = body.indexOf(descendingItems[2]);
+                let fourth = body.indexOf(descendingItems[3]);
 
                 // all the items should be present
                 expect(first).not.toEqual(-1);
@@ -133,24 +158,4 @@ describe(__filename, () => {
             .finally(done);
     });
 
-    function expectURIsInAscendingOrder(response) {
-        expect(response.statusCode).toBe(200);
-        let uris = response.body._links.uris;
-        console.log('uris:', uris);
-        expect(uris).toEqual(postedItems);
-    }
-
-    function expectURIsInDescendingOrder(response) {
-        expect(response.statusCode).toBe(200);
-        let uris = response.body._links.uris;
-        console.log('uris:', uris);
-        let reversedItems = postedItems.slice().reverse();
-        expect(uris).toEqual(reversedItems);
-    }
-
 });
-
-function trimWordRandomly(word) {
-    let trimLocation = Math.floor(Math.random() * (word.length - 2)) + 2;
-    return word.slice(0, trimLocation);
-}

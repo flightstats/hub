@@ -1,5 +1,8 @@
 require('../integration_config');
-
+const {
+    fromObjectPath,
+    getProp,
+} = require('../lib/helpers');
 var channelName = utils.randomChannelName();
 var providerResource = hubUrlBase + "/provider";
 var channelResource = channelUrl + "/" + channelName;
@@ -17,7 +20,7 @@ describe(__filename, function () {
 
         utils.httpPost(url, headers, body)
             .then(function (response) {
-                expect(response.statusCode).toEqual(200);
+                expect(getProp('statusCode', response)).toEqual(200);
             })
             .finally(done);
     });
@@ -28,9 +31,10 @@ describe(__filename, function () {
         utils.httpGet(url)
             .then(utils.followRedirectIfPresent)
             .then(function (response) {
-                expect(response.statusCode).toEqual(200);
-                expect(response.headers['content-type']).toEqual('text/plain');
-                expect(response.body).toContain(messageText);
+                const contentType = fromObjectPath(['headers', 'content-type'], response);
+                expect(getProp('statusCode', response)).toEqual(200);
+                expect(contentType).toEqual('text/plain');
+                expect(getProp('body', response)).toContain(messageText);
             })
             .finally(done);
     });

@@ -1,14 +1,11 @@
 require('../integration_config');
-
-var request = require('request');
-var http = require('http');
+const { fromObjectPath, getProp } = require('../lib/helpers');
 var channelName = utils.randomChannelName();
 var webhookName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
 var port = utils.getPort();
 var callbackUrl = callbackDomain + ':' + port + '/';
-
 
 /**
  * This should:
@@ -28,14 +25,14 @@ describe(testName, function () {
     var firstItem;
 
     function addPostedItem(value) {
-        postedItems.push(value.body._links.self.href);
+        postedItems.push(fromObjectPath(['body', '_links', 'self', 'href'], value));
         console.log('postedItems', postedItems);
     }
 
     it('posts initial items ' + channelResource, function (done) {
         utils.postItemQ(channelResource)
             .then(function (value) {
-                firstItem = value.body._links.self.href;
+                firstItem = fromObjectPath(['body', '_links', 'self', 'href'], value);
                 return utils.postItemQ(channelResource);
             })
             .then(function (value) {
@@ -55,11 +52,13 @@ describe(testName, function () {
 
         utils.httpPut(url, headers, body)
             .then(function (response) {
-                expect(response.statusCode).toBe(201);
-                expect(response.headers.location).toBe(url);
-                expect(response.body.callbackUrl).toBe(callbackUrl);
-                expect(response.body.channelUrl).toBe(channelResource);
-                expect(response.body.name).toBe(webhookName);
+                const body = getProp('body', response) || {};
+                const location = fromObjectPath(['headers', 'location'], response);
+                expect(getProp('statusCode', response)).toBe(201);
+                expect(location).toBe(url);
+                expect(body.callbackUrl).toBe(callbackUrl);
+                expect(body.channelUrl).toBe(channelResource);
+                expect(body.name).toBe(webhookName);
             })
             .finally(done);
     });
@@ -73,7 +72,7 @@ describe(testName, function () {
             callbackItems.push(string);
         }, done);
     });
-    
+
     it('inserts items', function (done) {
         utils.postItemQ(channelResource)
             .then(function (value) {
@@ -102,14 +101,21 @@ describe(testName, function () {
         expect(callbackServer).toBeDefined();
         utils.closeServer(callbackServer, done);
     });
-    
+
     it('verifies we got what we expected through the callback', function () {
         expect(callbackItems.length).toBe(5);
         expect(postedItems.length).toBe(5);
         for (var i = 0; i < callbackItems.length; i++) {
-            var parse = JSON.parse(callbackItems[i]);
-            expect(parse.uris[0]).toBe(postedItems[i]);
-            expect(parse.name).toBe(webhookName);
+            let parse = {};
+            try {
+                parse = JSON.parse(callbackItems[i]);
+            } catch (ex) {
+                expect(`failed to parse json, ${callbackItems[i]}, ${ex}`).toBeNull();
+            }
+            const uris = getProp('uris', parse) || [];
+            const name = getProp('name', parse);
+            expect(uris[0]).toBe(postedItems[i]);
+            expect(name).toBe(webhookName);
         }
     });
 

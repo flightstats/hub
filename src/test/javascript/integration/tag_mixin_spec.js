@@ -1,7 +1,9 @@
 require('../integration_config');
-
+const {
+    fromObjectPath,
+    getProp,
+} = require('../lib/helpers');
 var request = require('request');
-var http = require('http');
 var parse = require('parse-link-header');
 var channelA = utils.randomChannelName();
 var channelB = utils.randomChannelName();
@@ -24,7 +26,7 @@ var channelBody = {
  *
  */
 describe(testName, function () {
-    
+
     utils.putChannel(channelA, false, channelBody, testName);
 
     utils.putChannel(channelB, false, channelBody, testName);
@@ -43,34 +45,29 @@ describe(testName, function () {
 
     it('gets tag hour ' + tag, function (done) {
         var url = tagUrl + '/time/hour?stable=false&trace=true';
-        console.log('calling tag hour ', url)
+        console.log('calling tag hour ', url);
         request.get({
-                url: url,
-                headers: {"Content-Type": "application/json"}
-            },
-            function (err, response, body) {
-                expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
-                if (response.statusCode == 200) {
-                    body = utils.parseJson(response, testName);
-                    console.log('parsed tag body', body);
-                    if (body._links) {
-                        uris = body._links.uris;
-                        expect(uris.length).toBe(3);
-                        if (uris.length == 3) {
-                            expect(uris[0]).toContain(channelA);
-                            expect(uris[1]).toContain(channelB);
-                            expect(uris[2]).toContain(channelA);
-                        } else {
-                            console.log('failing test, not enough uris');
-                            expect(false).toBe(true);
-                        }
-                    }
-                } else {
-                    console.log('failing test, can\'t get uris . status=' + response.statusCode);
-                }
-                done();
-            });
+            url: url,
+            headers: {"Content-Type": "application/json"}
+        },
+        function (err, response, body) {
+            expect(err).toBeNull();
+            const statusCode = getProp('statusCode', response);
+            expect(statusCode).toBe(200);
+            if (statusCode === 200) {
+                body = utils.parseJson(response, testName);
+                console.log('parsed tag body', body);
+                const links = getProp('_links', body);
+                uris = getProp('uris', links) || [];
+                expect(uris.length).toBe(3);
+                expect(uris[0]).toContain(channelA);
+                expect(uris[1]).toContain(channelB);
+                expect(uris[2]).toContain(channelA);
+            } else {
+                console.log('failing test, can\'t get uris . status=' + statusCode);
+            }
+            done();
+        });
     }, 2 * 60001);
 
     var parsedLinks;
@@ -83,56 +80,64 @@ describe(testName, function () {
         url = url.trim();
         console.log(' traverse ' + url + ' ' + testName);
         request.get({
-                url: url
-            },
-            function (err, response, body) {
-                expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
-                if (response.statusCode == 200) {
-                    body = utils.parseJson(response, testName);
-                    parsedLinks = parse(response.headers.link);
-                    var item = linkStripParams(uris[index]);
-                    if (parsedLinks) {
-                        expect(parsedLinks.previous.url).toContain(item + '/previous?tag=' + tag)
-                        expect(parsedLinks.next.url).toContain(item + '/next?tag=' + tag)
-                    } else {
-                        expect(parsedLinks).toBe(true);
-                    }
+            url: url
+        },
+        function (err, response, body) {
+            expect(err).toBeNull();
+            expect(getProp('statusCode', response)).toBe(200);
+            if (getProp('statusCode', response) === 200) {
+                body = utils.parseJson(response, testName);
+                const links = fromObjectPath(['headers', 'link'], response) || '{}';
+                parsedLinks = parse(links);
+                var item = uris[index] && linkStripParams(uris[index]);
+                if (parsedLinks) {
+                    const prevUrl = fromObjectPath(['previous', 'url'], parsedLinks);
+                    const nextUrl = fromObjectPath(['next', 'url'], parsedLinks);
+                    expect(prevUrl).toContain(item + '/previous?tag=' + tag);
+                    expect(nextUrl).toContain(item + '/next?tag=' + tag);
+                } else {
+                    expect(parsedLinks).toBe(true);
                 }
-                done();
-            });
+            }
+            done();
+        });
     }
 
     it('gets last link ', function (done) {
         traverse(uris[2] + '&stable=false', 2, done);
-    }, 60002)
+    }, 60002);
 
     it('gets previous link ', function (done) {
-        traverse(parsedLinks.previous.url, 1, done);
-    }, 60003)
+        const prevUrl = fromObjectPath(['previous', 'url'], parsedLinks);
+        traverse(prevUrl, 1, done);
+    }, 60003);
 
     it('gets 2nd previous link ', function (done) {
-        traverse(parsedLinks.previous.url, 0, done);
-    }, 60004)
+        const prevUrl = fromObjectPath(['previous', 'url'], parsedLinks);
+        traverse(prevUrl, 0, done);
+    }, 60004);
 
     it('gets first link ', function (done) {
         traverse(uris[0], 0, done);
-    }, 60005)
+    }, 60005);
 
     it('gets next link ', function (done) {
-        traverse(parsedLinks.next.url + '&stable=false', 1, done);
-    }, 60006)
+        const nextUrl = fromObjectPath(['next', 'url'], parsedLinks);
+        traverse(nextUrl + '&stable=false', 1, done);
+    }, 60006);
 
     it('gets 2nd next link ', function (done) {
-        traverse(parsedLinks.next.url + '&stable=false', 2, done);
-    }, 60007)
+        const nextUrl = fromObjectPath(['next', 'url'], parsedLinks);
+        traverse(nextUrl + '&stable=false', 2, done);
+    }, 60007);
 
     it("gets latest unstable in tag ", function (done) {
         request.get({url: tagUrl + '/latest?stable=false', followRedirect: false},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(303);
-                expect(response.headers.location).toBe(uris[2]);
+                expect(getProp('statusCode', response)).toBe(303);
+                const location = fromObjectPath(['headers', 'location'], response);
+                expect(location).toBe(uris[2]);
                 done();
             });
     }, 60008);
@@ -141,16 +146,13 @@ describe(testName, function () {
         request.get({url: tagUrl + '/latest/10?stable=false'},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
+                expect(getProp('statusCode', response)).toBe(200);
                 var parsed = utils.parseJson(response, testName);
-                if (parsed._links) {
-                    expect(parsed._links.uris.length).toBe(3);
-                    uris.forEach(function (uri, index) {
-                        expect(parsed._links.uris[index]).toBe(uri);
-                    });
-                } else {
-                    expect(parsed._links).toBe(true);
-                }
+                const currentUris = fromObjectPath(['_links', 'uris'], parsed) || [];
+                expect(currentUris.length).toBe(3);
+                currentUris.forEach(function (uri, index) {
+                    expect(uris[index]).toBe(uri);
+                });
 
                 done();
             });
@@ -160,8 +162,9 @@ describe(testName, function () {
         request.get({url: tagUrl + '/earliest?stable=false&trace=true', followRedirect: false},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(303);
-                expect(response.headers.location).toBe(uris[0]);
+                expect(getProp('statusCode', response)).toBe(303);
+                const location = fromObjectPath(['headers', 'location'], response);
+                expect(location).toBe(uris[0]);
                 done();
             });
     }, 60010);
@@ -171,17 +174,14 @@ describe(testName, function () {
         request.get({url: url},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
+                expect(getProp('statusCode', response)).toBe(200);
                 var parsed = utils.parseJson(response, testName);
-                if (parsed._links && parsed._links.uris.length == 2) {
-                    expect(parsed._links.uris.length).toBe(2);
-                    parsed._links.uris.forEach(function (uri, index) {
-                        console.log('found ', uri);
-                        expect(uri).toBe(uris[index + 1]);
-                    });
-                } else {
-                    expect(parsed._links).toBe(true);
-                }
+                const currentUris = fromObjectPath(['_links', 'uris'], parsed) || [];
+                expect(currentUris.length).toBe(2);
+                currentUris.forEach(function (uri, index) {
+                    console.log('found ', uri);
+                    expect(uri).toBe(uris[index + 1]);
+                });
                 done();
             });
     }, 60011);
@@ -192,17 +192,14 @@ describe(testName, function () {
         request.get({url: url},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
+                expect(getProp('statusCode', response)).toBe(200);
                 var parsed = utils.parseJson(response, testName);
-                if (parsed._links && parsed._links.uris.length == 2) {
-                    expect(parsed._links.uris.length).toBe(2);
-                    parsed._links.uris.forEach(function (uri, index) {
-                        console.log('found ', uri);
-                        expect(uri).toBe(uris[index]);
-                    });
-                } else {
-                    expect(parsed._links).toBe(true);
-                }
+                const currentUris = fromObjectPath(['_links', 'uris'], parsed) || [];
+                expect(currentUris.length).toBe(2);
+                currentUris.forEach(function (uri, index) {
+                    console.log('found ', uri);
+                    expect(uri).toBe(uris[index]);
+                });
 
                 done();
             });
@@ -214,17 +211,14 @@ describe(testName, function () {
         request.get({url: url},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
+                expect(getProp('statusCode', response)).toBe(200);
                 var parsed = utils.parseJson(response, testName);
-                if (parsed._links && parsed._links.uris.length == 2) {
-                    expect(parsed._links.uris.length).toBe(2);
-                    parsed._links.uris.forEach(function (uri, index) {
-                        console.log('found ', uri);
-                        expect(uri).toBe(uris[index + 1]);
-                    });
-                } else {
-                    expect(parsed._links).toBe(true);
-                }
+                const currentUris = fromObjectPath(['_links', 'uris'], parsed) || [];
+                expect(currentUris.length).toBe(2);
+                currentUris.forEach(function (uri, index) {
+                    console.log('found ', uri);
+                    expect(uri).toBe(uris[index + 1]);
+                });
                 done();
             });
     }, 60013);
@@ -234,17 +228,14 @@ describe(testName, function () {
         request.get({url: url},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
+                expect(getProp('statusCode', response)).toBe(200);
                 var parsed = utils.parseJson(response, testName);
-                if (parsed._links && parsed._links.uris.length == 2) {
-                    expect(parsed._links.uris.length).toBe(2);
-                    parsed._links.uris.forEach(function (uri, index) {
-                        console.log('found ', uri);
-                        expect(uri).toBe(uris[index]);
-                    });
-                } else {
-                    expect(parsed._links).toBe(true);
-                }
+                const currentUris = fromObjectPath(['_links', 'uris'], parsed) || [];
+                expect(currentUris.length).toBe(2);
+                currentUris.forEach(function (uri, index) {
+                    console.log('found ', uri);
+                    expect(uri).toBe(uris[index]);
+                });
 
                 done();
             });
@@ -255,8 +246,9 @@ describe(testName, function () {
         request.get({url: url, followRedirect: false},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(303);
-                expect(response.headers.location).toBe(uris[2]);
+                const location = fromObjectPath(['headers', 'location'], response);
+                expect(getProp('statusCode', response)).toBe(303);
+                expect(location).toBe(uris[2]);
                 done();
             });
     }, 60015);
@@ -266,17 +258,14 @@ describe(testName, function () {
         request.get({url: url, followRedirect: false},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
+                expect(getProp('statusCode', response)).toBe(200);
                 var parsed = utils.parseJson(response, testName);
-                if (parsed._links && parsed._links.uris.length == 3) {
-                    expect(parsed._links.uris.length).toBe(3);
-                    parsed._links.uris.forEach(function (uri, index) {
-                        console.log('found ', uri);
-                        expect(uri).toBe(uris[index]);
-                    });
-                } else {
-                    expect(parsed._links).toBe(true);
-                }
+                const currentUris = fromObjectPath(['_links', 'uris'], parsed) || [];
+                expect(currentUris.length).toBe(3);
+                currentUris.forEach(function (uri, index) {
+                    console.log('found ', uri);
+                    expect(uri).toBe(uris[index]);
+                });
                 done();
             });
     }, 60016);
@@ -286,8 +275,9 @@ describe(testName, function () {
         request.get({url: url, followRedirect: false},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(303);
-                expect(response.headers.location).toBe(uris[0]);
+                expect(getProp('statusCode', response)).toBe(303);
+                const location = fromObjectPath(['headers', 'location'], response);
+                expect(location).toBe(uris[0]);
                 done();
             });
     }, 60017);
@@ -297,17 +287,14 @@ describe(testName, function () {
         request.get({url: url, followRedirect: false},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
+                expect(getProp('statusCode', response)).toBe(200);
                 var parsed = utils.parseJson(response, testName);
-                if (parsed._links && parsed._links.uris.length == 3) {
-                    expect(parsed._links.uris.length).toBe(3);
-                    parsed._links.uris.forEach(function (uri, index) {
-                        console.log('found ', uri);
-                        expect(uri).toBe(uris[index]);
-                    });
-                } else {
-                    expect(parsed._links).toBe(true);
-                }
+                const currentUris = fromObjectPath(['_links', 'uris'], parsed) || [];
+                expect(currentUris.length).toBe(3);
+                currentUris.forEach(function (uri, index) {
+                    console.log('found ', uri);
+                    expect(uri).toBe(uris[index]);
+                });
                 done();
             });
     }, 60018);
@@ -317,22 +304,17 @@ describe(testName, function () {
         request.get({url: url},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
+                expect(getProp('statusCode', response)).toBe(200);
                 var parsed = utils.parseJson(response, testName);
                 console.log('parsed', parsed);
-                if (parsed._links && parsed._links.uris.length == 3) {
-                    expect(parsed._links.uris.length).toBe(3);
-                    parsed._links.uris.forEach(function (uri, index) {
-                        console.log('found ', uri);
-                        expect(uri).toBe(uris[index]);
-                    });
-                } else {
-                    expect(parsed._links).toBe(true);
-                }
+                const currentUris = fromObjectPath(['_links', 'uris'], parsed) || [];
+                expect(currentUris.length).toBe(3);
+                currentUris.forEach(function (uri, index) {
+                    console.log('found ', uri);
+                    expect(uri).toBe(uris[index]);
+                });
                 done();
             });
     }, 60019);
 
-
 });
-

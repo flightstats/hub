@@ -1,5 +1,5 @@
 require('../integration_config');
-
+const { fromObjectPath, getProp } = require('../lib/helpers');
 var WebSocket = require('ws');
 
 var channelName = utils.randomChannelName();
@@ -18,8 +18,9 @@ describe(__filename, function () {
 
         webSocket = new WebSocket(wsURL);
         webSocket.onmessage = function (message) {
-            console.log('received:', message.data);
-            receivedMessages.push(message.data);
+            const data = getProp('data', message);
+            console.log('received:', data);
+            receivedMessages.push(data);
         };
 
         webSocket.on('open', function () {
@@ -33,8 +34,9 @@ describe(__filename, function () {
     it('posts item to channel', function (done) {
         utils.postItemQ(channelResource)
             .then(function (result) {
-                console.log('posted:', result.response.headers.location);
-                itemURLs.push(result.response.headers.location);
+                const location = fromObjectPath(['response', 'headers', 'location'], result);
+                console.log('posted:', location);
+                itemURLs.push(location);
                 done();
             });
     });

@@ -1,7 +1,5 @@
 require('../integration_config');
-
-var request = require('request');
-var http = require('http');
+const { getProp, fromObjectPath } = require('../lib/helpers');
 var channelName = utils.randomChannelName();
 var webhookName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
@@ -9,8 +7,8 @@ var testName = __filename;
 var port = utils.getPort();
 var callbackUrl = callbackDomain + ':' + port + '/';
 var webhookConfig = {
-    callbackUrl : callbackUrl,
-    channelUrl : channelResource
+    callbackUrl: callbackUrl,
+    channelUrl: channelResource
 };
 
 /**
@@ -44,7 +42,7 @@ describe(testName, function () {
     it('inserts an item', function (done) {
         utils.postItemQ(channelResource)
             .then(function (value) {
-                postedItems.push(value.body._links.self.href);
+                postedItems.push(fromObjectPath(['body', '_links', 'self', 'href'], value));
                 done();
             });
     });
@@ -52,7 +50,7 @@ describe(testName, function () {
     it('waits for data', function (done) {
         utils.waitForData(callbackItems, postedItems, done);
     });
-    
+
     utils.deleteWebhook(webhookName);
 
     utils.addItem(channelResource);
@@ -64,7 +62,7 @@ describe(testName, function () {
     it('inserts an item', function (done) {
         utils.postItemQ(channelResource)
             .then(function (value) {
-                postedItems.push(value.body._links.self.href);
+                postedItems.push(fromObjectPath(['body', '_links', 'self', 'href'], value));
                 done();
             });
     });
@@ -75,8 +73,20 @@ describe(testName, function () {
 
     it('verifies we got what we expected through the callback', function () {
         expect(callbackItems.length).toBe(2);
-        expect(JSON.parse(callbackItems[0]).uris[0]).toBe(postedItems[0]);
-        expect(JSON.parse(callbackItems[1]).uris[0]).toBe(postedItems[1]);
+        let uriA;
+        let uriB;
+        try {
+            const itemA = JSON.parse(callbackItems[0]);
+            const itemB = JSON.parse(callbackItems[1]);
+            const urisA = getProp('uris', itemA);
+            const urisB = getProp('uris', itemB);
+            uriA = urisA && urisA[0];
+            uriB = urisB && urisB[0];
+        } catch (ex) {
+            expect(`failed to parse json, ${ex}`).toBeNull();
+        }
+        expect(uriA).toBe(postedItems[0]);
+        expect(uriB).toBe(postedItems[1]);
     });
 
     it('closes the callback server', function (done) {
@@ -85,4 +95,3 @@ describe(testName, function () {
     });
 
 });
-

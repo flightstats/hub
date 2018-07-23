@@ -1,4 +1,8 @@
 require('../integration_config');
+const {
+    fromObjectPath,
+    getProp,
+} = require('../lib/helpers');
 
 var request = require('request');
 var channelName = utils.randomChannelName();
@@ -22,7 +26,7 @@ describe(testName, function () {
     it('posts item', function (done) {
         utils.postItemQ(channelResource)
             .then(function (value) {
-                posted = value.response.headers.location;
+                posted = fromObjectPath(['response', 'headers', 'location'], value);
                 done();
             });
     });
@@ -33,7 +37,7 @@ describe(testName, function () {
         request.get({url: channelResource + '/earliest', followRedirect: false},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(404);
+                expect(getProp('statusCode', response)).toBe(404);
                 done();
             });
     });
@@ -42,8 +46,11 @@ describe(testName, function () {
         request.get({url: channelResource + '/earliest?stable=false', followRedirect: false},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(303);
-                expect(response.headers.location).toBe(posted);
+                expect(getProp('statusCode', response)).toBe(303);
+                const location = fromObjectPath(['headers', 'location'], response);
+                expect(location).toBeDefined();
+                expect(posted).toBeDefined();
+                expect(location).toBe(posted);
                 done();
             });
     });
@@ -52,15 +59,18 @@ describe(testName, function () {
         request.get({url: channelResource + '/earliest/10?stable=false', followRedirect: false},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
+                expect(getProp('statusCode', response)).toBe(200);
                 var parsed = utils.parseJson(response, testName);
-                if (parsed._links) {
-                    expect(parsed._links.uris.length).toBe(2);
-                    expect(parsed._links.uris[0]).toBe(posted);
-                    expect(parsed._links.next).toBeDefined();
-                    expect(parsed._links.previous).not.toBeDefined();
+                const links = getProp('_links', parsed);
+                if (links) {
+                    const { next, previous, uris = [] } = links;
+                    expect(uris.length).toBe(2);
+                    expect(posted).toBeDefined();
+                    expect(uris[0]).toBe(posted);
+                    expect(next).toBeDefined();
+                    expect(previous).not.toBeDefined();
                 } else {
-                    expect(parsed._links).toBe(true);
+                    expect(links).toBe(true);
                 }
                 done();
             });

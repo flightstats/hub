@@ -1,14 +1,11 @@
 require('../integration_config');
+const { getProp } = require('../lib/helpers');
 
-var request = require('request');
-var http = require('http');
-var parse = require('parse-link-header');
 var channel = utils.randomChannelName();
 var moment = require('moment');
 
 var tag = Math.random().toString().replace(".", "");
 var testName = __filename;
-
 
 /**
  * This should:
@@ -29,16 +26,16 @@ describe(testName, function () {
 
     utils.putChannel(channel, function (response, body) {
         var parse = utils.parseJson(response, testName);
-        expect(parse.ttlDays).toBe(0);
-        expect(parse.maxItems).toBe(0);
-        expect(parse.mutableTime).toBe(expected);
+        expect(getProp('ttlDays', parse)).toBe(0);
+        expect(getProp('maxItems', parse)).toBe(0);
+        expect(getProp('mutableTime', parse)).toBe(expected);
     }, channelBody, testName);
 
     utils.getChannel(channel, function (response) {
         var parse = utils.parseJson(response, testName);
-        expect(parse.ttlDays).toBe(0);
-        expect(parse.maxItems).toBe(0);
-        expect(parse.mutableTime).toBe(mutableTime + '.000Z');
+        expect(getProp('ttlDays', parse)).toBe(0);
+        expect(getProp('maxItems', parse)).toBe(0);
+        expect(getProp('mutableTime', parse)).toBe(mutableTime + '.000Z');
 
     }, testName)
 });
