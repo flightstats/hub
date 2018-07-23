@@ -5,9 +5,11 @@ const {
     randomTagName,
 } = require('./random-values');
 const {
+    createChannel,
     getHubItem,
 } = require('./hub-client');
 module.exports = {
+    createChannel,
     fromObjectPath,
     getProp,
     getHubItem,

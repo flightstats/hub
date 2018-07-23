@@ -1,5 +1,6 @@
 require('../integration_config');
 const {
+    createChannel,
     fromObjectPath,
     getProp,
 } = require('../lib/helpers');
@@ -7,7 +8,7 @@ var request = require('request');
 var channelName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
-
+let createdChannel = false;
 /**
  * This should:
  *
@@ -16,10 +17,16 @@ var testName = __filename;
  * 3 - verify that records are returned via time query
  */
 describe(testName, function () {
-    utils.createChannel(channelName);
-
+    beforeAll(async () => {
+        const channel = await createChannel(channelName);
+        if (getProp('status', channel) === 201) {
+            createdChannel = true;
+            console.log(`created channel for ${__filename}`);
+        }
+    });
     it('queries before insertion', function (done) {
-        request.get({url : channelResource + '/time/minute?stable=false', json : true},
+        if (!createdChannel) return done.fail('channel not created in before block');
+        request.get({url: channelResource + '/time/minute?stable=false', json: true},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
@@ -30,11 +37,14 @@ describe(testName, function () {
             });
     });
 
-    for (var i = 0; i < 4; i++) {
-        utils.addItem(channelResource);
+    if (createdChannel) {
+        for (var i = 0; i < 4; i++) {
+            utils.addItem(channelResource);
+        }
     }
 
-    function callTime(url, items, calls, done) {
+    function callTime (url, items, calls, done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         request.get({url: url, json: true},
             function (err, response, body) {
                 expect(err).toBeNull();
@@ -68,5 +78,4 @@ describe(testName, function () {
     it('gets items from channel day', function (done) {
         callTime(channelResource + '/time/day?stable=false', [], 0, done);
     });
-
 });

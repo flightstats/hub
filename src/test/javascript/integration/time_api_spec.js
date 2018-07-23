@@ -1,5 +1,6 @@
 require('../integration_config');
 const {
+    createChannel,
     fromObjectPath,
     getProp,
 } = require('../lib/helpers');
@@ -9,7 +10,7 @@ var moment = require('moment');
 var channelName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
-
+let createdChannel = false;
 /**
  * This should:
  *
@@ -18,9 +19,15 @@ var testName = __filename;
  * 3 - verify that verify templates are correct
  */
 describe(testName, function () {
-    utils.createChannel(channelName);
+    beforeAll(async () => {
+        const channel = await createChannel(channelName);
+        if (getProp('status', channel) === 201) {
+            createdChannel = true;
+            console.log(`created channel for ${__filename}`);
+        }
+    });
 
-    function verifyLinks(body, url, time, params) {
+    function verifyLinks (body, url, time, params) {
         params = params || '';
         if (body && body._links) {
             const selfLink = fromObjectPath(['_links', 'self', 'href'], body);
@@ -49,42 +56,43 @@ describe(testName, function () {
     }
 
     it('gets stable time links', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         var url = channelResource + '/time';
-        request.get({url : url, json : true},
+        request.get({url: url, json: true},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
                 const millis = fromObjectPath(['stable', 'millis'], body);
                 verifyLinks(body, url, moment(millis).utc());
                 done();
-            })
+            });
     });
 
     it('gets stable param time links', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         var url = channelResource + '/time';
         var params = '?stable=true';
-        request.get({url : url + params, json : true},
+        request.get({url: url + params, json: true},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
                 const millis = fromObjectPath(['stable', 'millis'], body);
                 verifyLinks(body, url, moment(millis).utc(), params);
                 done();
-            })
+            });
     });
 
     it('gets unstable time links', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         var url = channelResource + '/time';
         var params = '?stable=false';
-        request.get({url : url + params, json : true},
+        request.get({url: url + params, json: true},
             function (err, response, body) {
-                var time = moment().utc();
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
                 const millis = fromObjectPath(['now', 'millis'], body);
                 verifyLinks(body, url, moment(millis).utc(), params);
                 done();
-            })
+            });
     });
-
 });

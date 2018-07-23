@@ -52,8 +52,8 @@ describe(__filename, function () {
         const result = await getHubItem(itemURL);
         const xItemLength = fromObjectPath(['headers', 'x-item-length'], result);
         expect(xItemLength).toBeDefined();
-        // TODO: new Buffer is deprecated
-        var bytes = new Buffer(itemContent, 'utf-8').length;
+        var bytes = (Buffer.from(itemContent) || '').length;
+        expect(xItemLength).toBe(bytes.toString());
         const data = getProp('data', result);
         expect(data).toEqual(itemContent);
     });

@@ -1,5 +1,6 @@
 require('../integration_config');
 const {
+    createChannel,
     fromObjectPath,
     getHubItem,
     getProp,
@@ -15,10 +16,18 @@ describe(__filename, function () {
     var itemHeaders = {'Content-Type': 'text/plain'};
     var itemContent = 'this string has normal letters, and unicode characters like "\u03B1"';
     var itemURL;
+    let createdChannel = false;
 
-    utils.createChannel(channelName, null, 'single inserts');
+    beforeAll(async () => {
+        const channel = await createChannel(channelName, null, 'single inserts');
+        if (getProp('status', channel) === 201) {
+            createdChannel = true;
+            console.log(`created channel for ${__filename}`);
+        }
+    });
 
     it('posts a single item', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         utils.postItemQwithPayload(channelEndpoint, itemHeaders, itemContent)
             .then(function (result) {
                 try {
@@ -34,7 +43,6 @@ describe(__filename, function () {
     });
 
     it('verifies item has correct length info', async () => {
-        expect(itemURL !== undefined).toBe(true);
         if (!itemURL) {
             expect(itemURL).toBeDefined();
             return false;
@@ -42,8 +50,7 @@ describe(__filename, function () {
         const result = await getHubItem(itemURL);
         const xItemLength = fromObjectPath(['headers', 'x-item-length'], result);
         expect(xItemLength).toBeDefined();
-        // TODO: new Buffer is deprecated
-        var bytes = new Buffer(itemContent, 'utf-8').length;
+        var bytes = Buffer.from(itemContent).length;
         expect(xItemLength).toBe(bytes.toString());
         const data = getProp('data', result);
         expect(data).toEqual(itemContent);

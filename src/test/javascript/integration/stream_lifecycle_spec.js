@@ -1,5 +1,5 @@
 require('../integration_config');
-const { getProp } = require('../lib/helpers');
+const { createChannel, getProp } = require('../lib/helpers');
 var channelName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
@@ -14,13 +14,20 @@ var testName = __filename;
  */
 
 xdescribe(testName, function () {
-
     var callbackItems = [];
     var postedItems = [];
+    let createdChannel = false;
 
-    utils.createChannel(channelName, false, testName);
+    beforeAll(async () => {
+        const channel = await createChannel(channelName, false, testName);
+        if (getProp('status', channel) === 201) {
+            createdChannel = true;
+            console.log(`created channel for ${__filename}`);
+        }
+    });
 
     it('opens a stream', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         var url = channelResource + '/stream';
         var headers = {"Content-Type": "application/json"};
 
@@ -33,6 +40,7 @@ xdescribe(testName, function () {
     });
 
     it('inserts multiple items', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         utils.postItemQ(channelResource)
             .then(function (value) {
                 postedItems.push(value);
@@ -53,11 +61,12 @@ xdescribe(testName, function () {
     });
 
     it('waits for the data', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         utils.waitForData(callbackItems, postedItems, done);
     });
 
     it('verifies we got the correct number of items', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         expect(callbackItems.length).toEqual(4);
     });
-
 });

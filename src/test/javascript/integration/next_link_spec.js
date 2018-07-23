@@ -1,5 +1,6 @@
 require('../integration_config');
 const {
+    createChannel,
     fromObjectPath,
     getProp,
 } = require('../lib/helpers');
@@ -7,28 +8,36 @@ const {
 var channelName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
+let createdChannel = false;
 
 describe(testName, function () {
-    utils.createChannel(channelName);
+    beforeAll(async () => {
+        const channel = await createChannel(channelName);
+        if (getProp('status', channel)) {
+            createdChannel = true;
+            console.log(`created channel for ${__filename}`);
+        }
+    });
 
     var items = [];
     var headers = {'Content-Type': 'application/json'};
     var body = {'name': channelName};
 
-    function postOneItem(done) {
+    function postOneItem (done) {
         utils.httpPost(channelResource, headers, body)
             .then(function (response) {
                 expect(getProp('statusCode', response)).toEqual(201);
-                items.push(response.body._links.self.href);
+                const selfLink = fromObjectPath(['body', '_links', 'self', 'href'], response);
+                items.push(selfLink);
             })
             .finally(done);
     }
-
     it('posts item', function (done) {
         postOneItem(done);
     });
 
     it('gets 404 from /next ', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         utils.httpGet(items[0] + '/next', headers, body)
             .then(function (response) {
                 expect(getProp('statusCode', response)).toEqual(404);
@@ -37,6 +46,7 @@ describe(testName, function () {
     });
 
     it('gets empty list from /next/2 ', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         utils.httpGet(items[0] + '/next/2', headers, body)
             .then(function (response) {
                 expect(getProp('statusCode', response)).toEqual(200);
@@ -48,14 +58,17 @@ describe(testName, function () {
     });
 
     it('posts item', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         postOneItem(done);
     });
 
     it('posts item', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         postOneItem(done);
     });
 
     it('gets item from /next ', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         utils.httpGet(items[0] + '/next?stable=false', headers, body)
             .then(function (response) {
                 expect(getProp('statusCode', response)).toEqual(303);
@@ -66,6 +79,7 @@ describe(testName, function () {
     });
 
     it('gets items from /next/2 ', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         utils.httpGet(items[0] + '/next/2?stable=false', headers, body)
             .then(function (response) {
                 expect(getProp('statusCode', response)).toEqual(200);
@@ -78,6 +92,7 @@ describe(testName, function () {
     });
 
     it('gets inclusive items from /next/2 ', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         utils.httpGet(items[0] + '/next/2?stable=false&inclusive=true', headers, body)
             .then(function (response) {
                 expect(getProp('statusCode', response)).toEqual(200);
@@ -88,5 +103,4 @@ describe(testName, function () {
             })
             .finally(done);
     });
-
 });

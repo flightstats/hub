@@ -1,5 +1,6 @@
 require('../integration_config');
 const {
+    createChannel,
     fromObjectPath,
     getHubItem,
     getProp,
@@ -16,10 +17,18 @@ describe(__filename, function () {
     var itemSize = 41 * 1024 * 1024;
     var itemContent = Array(itemSize).join('a');
     var itemURL;
+    let createdChannel = false;
 
-    utils.createChannel(channelName, null, 'large inserts');
+    beforeAll(async () => {
+        const channel = await createChannel(channelName, null, 'large inserts');
+        if (getProp('status', channel) === 201) {
+            createdChannel = true;
+            console.log(`created channel for ${__filename}`);
+        }
+    });
 
     it('posts a large item', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         utils.postItemQwithPayload(channelEndpoint, itemHeaders, itemContent)
             .then(function (result) {
                 try {

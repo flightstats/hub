@@ -1,11 +1,13 @@
 require('../integration_config');
 const {
+    createChannel,
     fromObjectPath,
     getProp,
 } = require('../lib/helpers');
 var moment = require('moment');
 var channelName = utils.randomChannelName();
 var channelResource = `${channelUrl}/${channelName}`;
+let createdChannel = false;
 
 /**
  * This should:
@@ -16,21 +18,21 @@ var channelResource = `${channelUrl}/${channelName}`;
  *
  */
 
-function trimWordRandomly(word) {
+function trimWordRandomly (word) {
     if (!word && word.length) return '';
     let trimLocation = Math.floor(Math.random() * (word.length - 2)) + 2;
     return word.slice(0, trimLocation);
 }
 
 describe(__filename, () => {
-    function expectURIsInAscendingOrder(response) {
+    function expectURIsInAscendingOrder (response) {
         expect(getProp('statusCode', response)).toBe(200);
         const uris = fromObjectPath(['body', '_links', 'uris'], response);
         console.log('uris:', uris);
         expect(uris).toEqual(postedItems);
     }
 
-    function expectURIsInDescendingOrder(response) {
+    function expectURIsInDescendingOrder (response) {
         expect(getProp('statusCode', response)).toBe(200);
         const uris = fromObjectPath(['body', '_links', 'uris'], response);
         console.log('uris:', uris);
@@ -39,10 +41,16 @@ describe(__filename, () => {
     }
 
     let postedItems = [];
-
-    utils.createChannel(channelName);
+    beforeAll(async () => {
+        const channel = await createChannel(channelName);
+        if (getProp('status', channel) === 201) {
+            createdChannel = true;
+            console.log(`created channel for ${__filename}`);
+        }
+    });
 
     it('posts four items', (done) => {
+        if (!createdChannel) return done.fail('channel not created in before block');
         let headers = {'Content-Type': 'plain/text'};
         utils.httpPost(channelResource, headers, moment.utc().toISOString())
             .then(response => {
@@ -77,6 +85,7 @@ describe(__filename, () => {
     });
 
     it('gets latest ascending items', (done) => {
+        if (!createdChannel) return done.fail('channel not created in before block');
         let order = trimWordRandomly('ascending');
         utils.httpGet(`${channelResource}/latest/4?stable=false&order=${order}`)
             .then(expectURIsInAscendingOrder)
@@ -84,6 +93,7 @@ describe(__filename, () => {
     });
 
     it('gets latest baloney order items', (done) => {
+        if (!createdChannel) return done.fail('channel not created in before block');
         let order = 'baloney';
         utils.httpGet(`${channelResource}/latest/4?stable=false&order=${order}`)
             .then(expectURIsInAscendingOrder)
@@ -92,6 +102,7 @@ describe(__filename, () => {
 
     it('gets descending earliest', (done) => {
         // secondDo(`${channelResource}/earliest/4?stable=false&order=desc`, descendingItems, done);
+        if (!createdChannel) return done.fail('channel not created in before block');
         let order = trimWordRandomly('descending');
         utils.httpGet(`${channelResource}/earliest/4?stable=false&order=${order}`)
             .then(expectURIsInDescendingOrder)
@@ -99,6 +110,7 @@ describe(__filename, () => {
     });
 
     it('gets descending latest', (done) => {
+        if (!createdChannel) return done.fail('channel not created in before block');
         let order = trimWordRandomly('descending');
         utils.httpGet(`${channelResource}/latest/4?stable=false&order=${order}`)
             .then(expectURIsInDescendingOrder)
@@ -106,6 +118,7 @@ describe(__filename, () => {
     });
 
     it('gets descending next', (done) => {
+        if (!createdChannel) return done.fail('channel not created in before block');
         let oneMinuteAgo = moment.utc().subtract(1, 'minute').format('YYYY/MM/DD/HH/mm/ss/SSS');
         let order = trimWordRandomly('descending');
         utils.httpGet(`${channelResource}/${oneMinuteAgo}/A/next/4?stable=false&order=${order}`)
@@ -114,6 +127,7 @@ describe(__filename, () => {
     });
 
     it('gets descending previous', (done) => {
+        if (!createdChannel) return done.fail('channel not created in before block');
         let oneMinuteInTheFuture = moment.utc().add(1, 'minute').format('YYYY/MM/DD/HH/mm/ss/SSS');
         let order = trimWordRandomly('descending');
         utils.httpGet(`${channelResource}/${oneMinuteInTheFuture}/A/previous/4?stable=false&order=${order}`)
@@ -122,6 +136,7 @@ describe(__filename, () => {
     });
 
     it('gets descending hour', (done) => {
+        if (!createdChannel) return done.fail('channel not created in before block');
         let now = moment.utc().format('YYYY/MM/DD/HH');
         let order = trimWordRandomly('descending');
         utils.httpGet(`${channelResource}/${now}?stable=false&order=${order}`)
@@ -130,6 +145,7 @@ describe(__filename, () => {
     });
 
     it('bulk get', (done) => {
+        if (!createdChannel) return done.fail('channel not created in before block');
         let oneMinuteAgo = moment.utc().subtract(1, 'minute').format('YYYY/MM/DD/HH/mm/ss/SSS');
         let order = trimWordRandomly('descending');
         let url = `${channelResource}/${oneMinuteAgo}/A/next/4?stable=false&order=${order}&bulk=true`;
@@ -157,5 +173,4 @@ describe(__filename, () => {
             })
             .finally(done);
     });
-
 });

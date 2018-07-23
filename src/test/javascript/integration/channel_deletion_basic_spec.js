@@ -1,14 +1,22 @@
 require('../integration_config');
-const { getProp } = require('../lib/helpers');
+const { createChannel, getProp } = require('../lib/helpers');
 
 var request = require('request');
 var channelName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
+let channelCreated = false;
 
 describe(__filename, function () {
-    utils.createChannel(channelName);
+    beforeAll(async () => {
+        const result = await createChannel(channelName);
+        if (getProp('status', result) === 201) {
+            console.log(`created channel for ${channelName}`);
+            channelCreated = true;
+        }
+    });
 
     it("deletes channel " + channelName, function (done) {
+        if (!channelCreated) return done.fail('channel not created in before block');
         request.del({url: channelResource},
             function (err, response, body) {
                 console.log('body', body);
@@ -19,6 +27,7 @@ describe(__filename, function () {
     }, 65000);
 
     it("gets deleted channel " + channelName, function (done) {
+        if (!channelCreated) return done.fail('channel not created in before block');
         request.get({url: channelResource + '?cached=false'},
             function (err, response, body) {
                 expect(err).toBeNull();
