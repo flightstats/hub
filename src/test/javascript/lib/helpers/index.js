@@ -7,12 +7,14 @@ const {
 const {
     createChannel,
     getHubItem,
+    hubClientGet,
 } = require('./hub-client');
 module.exports = {
     createChannel,
     fromObjectPath,
     getProp,
     getHubItem,
+    hubClientGet,
     randomChannelName,
     randomNumberBetweenInclusive,
     randomTagName,

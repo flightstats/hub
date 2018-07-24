@@ -1,41 +1,34 @@
 require('../integration_config');
-const { getProp } = require('../lib/helpers');
+const { getProp, hubClientGet } = require('../lib/helpers');
 
 var channelName = utils.randomChannelName();
 var channelResource = channelUrl + '/' + channelName;
 
-describe(__filename, function () {
+describe(__filename, () => {
+    it('verifies the channel doesn\'t exist yet', async () => {
+        const response = await hubClientGet(channelResource);
+        expect(getProp('status', response)).toEqual(404);
+    });
 
-	it('verifies the channel doesn\'t exist yet', function (done) {
-		utils.httpGet(channelResource)
-			.then(function (response) {
-				expect(getProp('statusCode', response)).toEqual(404);
-			})
-			.finally(done);
-	});
+    it('creates the channel', function (done) {
+        var url = channelUrl;
+        var headers = {'Content-Type': 'application/json'};
+        var body = {'name': channelName};
 
-	it('creates the channel', function (done) {
-		var url = channelUrl;
-		var headers = {'Content-Type': 'application/json'};
-		var body = {'name': channelName};
+        utils.httpPost(url, headers, body)
+            .then(function (response) {
+                expect(getProp('statusCode', response)).toEqual(201);
+            }).finally(done);
+    });
 
-		utils.httpPost(url, headers, body)
-			.then(function (response) {
-				expect(getProp('statusCode', response)).toEqual(201);
-			})
-			.finally(done);
-	});
+    it('verifies creating a channel with an existing name returns an error', function (done) {
+        var url = channelUrl;
+        var headers = {'Content-Type': 'application/json'};
+        var body = { name: channelName };
 
-	it('verifies creating a channel with an existing name returns an error', function (done) {
-		var url = channelUrl;
-		var headers = {'Content-Type': 'application/json'};
-		var body = {'name': channelName};
-
-		utils.httpPost(url, headers, body)
-			.then(function (response) {
-				expect(getProp('statusCode', response)).toEqual(409);
-			})
-			.finally(done);
-	});
-
+        utils.httpPost(url, headers, body)
+            .then(function (response) {
+                expect(getProp('statusCode', response)).toEqual(409);
+            }).finally(done);
+    });
 });
