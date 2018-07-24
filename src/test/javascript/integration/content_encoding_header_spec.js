@@ -1,5 +1,6 @@
 require('../integration_config');
 const {
+    hubClientGet,
     fromObjectPath,
     getProp,
 } = require('../lib/helpers');
@@ -9,7 +10,6 @@ var channelResource = channelUrl + "/" + channelName;
 var messageText = "Testing that the Content-Encoding header is returned";
 
 describe(__filename, function () {
-
     it('creates a channel', function (done) {
         var url = channelUrl;
         var headers = {'Content-Type': 'application/json'};
@@ -34,19 +34,11 @@ describe(__filename, function () {
             .finally(done);
     });
 
-    it('verifies the Content-Encoding header is returned', function (done) {
-        var url = channelResource;
-        var headers = {'accept-encoding': 'gzip'};
-
-        utils.httpGet(url, headers)
-            .then(function (response) {
-                const contentEncoding = fromObjectPath(
-                    ['headers', 'content-encoding'],
-                    response
-                );
-                expect(contentEncoding).toEqual('gzip');
-            })
-            .finally(done);
+    it('verifies the Content-Encoding header is returned', async () => {
+        const headers = { 'accept-encoding': 'gzip' };
+        const response = await hubClientGet(channelResource, headers);
+        console.log('response', response);
+        const contentEncoding = fromObjectPath(['headers', 'content-encoding'], response);
+        expect(contentEncoding).toEqual('gzip');
     });
-
 });

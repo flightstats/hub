@@ -11,7 +11,7 @@ var channelResource = channelUrl + "/" + channelName;
 describe(__filename, function () {
     it('verifies the channel doesn\'t exist yet', async () => {
         const response = await hubClientGet(channelResource);
-        expect(getProp('status', response)).toEqual(404);
+        expect(getProp('statusCode', response)).toEqual(404);
     });
 
     it('creates a channel with maxItems set', function (done) {
@@ -48,6 +48,6 @@ describe(__filename, function () {
 
     it('verifies the channel does exist', async () => {
         const response = await hubClientGet(channelResource);
-        expect(getProp('status', response)).toEqual(200);
+        expect(getProp('statusCode', response)).toEqual(200);
     });
 });

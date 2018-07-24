@@ -1,27 +1,16 @@
-const axios = require('axios');
-const { getProp } = require('./functional');
+const rp = require('request-promise-native');
+const { fromObjectPath, getProp } = require('./functional');
 
-module.exports.getHubItem = async (uri) => {
-    try {
-        console.log(`fetching hub item at: ${uri}`);
-        const result = await axios.get(uri, { responseEncoding: null });
-        return result || {};
-    } catch (ex) {
-        console.log('got error ', uri, ex);
-        return {};
-    }
-};
-
-module.exports.createChannel = async (channelName, url, description) => {
+const createChannel = async (channelName, url, description) => {
     const defaultDescription = description || 'none';
     const defaultUrl = url || channelUrl;
     console.log('channelUrl', defaultUrl);
     console.log(`creating channel ${channelName} for ${defaultDescription}`);
     try {
-        const result = await axios({
+        const result = await rp({
             method: 'POST',
             url: defaultUrl,
-            data: { name: channelName },
+            body: { name: channelName },
             headers: {"Content-Type": "application/json"},
         });
         return result || {};
@@ -31,13 +20,15 @@ module.exports.createChannel = async (channelName, url, description) => {
     }
 };
 
-module.exports.hubClientGet = async (url, headers, isBinary) => {
-    const formattedHeaders = headers ? utils.keysToLowerCase(headers) : {};
+const hubClientGet = async (url, headers = {}, isBinary) => {
+    const formattedHeaders = utils.keysToLowerCase(headers);
     const options = {
         method: 'GET',
-        url: url,
+        url,
         headers: formattedHeaders,
         followRedirect: false,
+        resolveWithFullResponse: true,
+        json: true,
     };
 
     if (isBinary) {
@@ -45,14 +36,43 @@ module.exports.hubClientGet = async (url, headers, isBinary) => {
     }
 
     try {
-        console.log('GET >', url, formattedHeaders);
-        const result = await axios(options);
-        console.log('GET <', url, getProp('status', result));
+        console.log('GET >', url, headers || {});
+        const result = await rp(options);
+        console.log('GET <', url, getProp('statusCode', result));
         return result || {};
     } catch (ex) {
         console.log(`error in hubClientGet: url:: ${url} ::: ${ex}`);
         const response = getProp('response', ex) || {};
-        console.log('GET <', url, getProp('status', response.status));
+        console.log('GET <', url, getProp('statusCode', response.status));
         return response;
     }
+};
+
+const followRedirectIfPresent = async (response) => {
+    const statusCode = getProp('statusCode', response);
+    const location = fromObjectPath(['headers', 'location'], response);
+    const redirectCode = statusCode >= 300 && statusCode <= 399;
+    if (redirectCode && !!location) {
+        await hubClientGet(location);
+    } else {
+        return response;
+    }
+};
+
+const getHubItem = async (uri) => {
+    try {
+        console.log(`fetching hub item at: ${uri}`);
+        const result = await rp(uri, { responseEncoding: null });
+        return result || {};
+    } catch (ex) {
+        console.log('got error ', uri, ex);
+        return {};
+    }
+};
+
+module.exports = {
+    createChannel,
+    followRedirectIfPresent,
+    getHubItem,
+    hubClientGet,
 };

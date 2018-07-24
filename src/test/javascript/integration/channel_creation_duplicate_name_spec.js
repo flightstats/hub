@@ -7,7 +7,7 @@ var channelResource = channelUrl + '/' + channelName;
 describe(__filename, () => {
     it('verifies the channel doesn\'t exist yet', async () => {
         const response = await hubClientGet(channelResource);
-        expect(getProp('status', response)).toEqual(404);
+        expect(getProp('statusCode', response)).toEqual(404);
     });
 
     it('creates the channel', function (done) {

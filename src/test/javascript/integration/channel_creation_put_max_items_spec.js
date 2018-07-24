@@ -1,12 +1,9 @@
 require('../integration_config');
 const { fromObjectPath, getProp } = require('../lib/helpers');
 
-var request = require('request');
 var channelName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
-
-
 /**
  * create a channel via put
  * verify that it exists
@@ -14,15 +11,12 @@ var testName = __filename;
  * verify that the new config exists
  */
 describe(testName, function () {
-    var returnedBody;
-
     var firstConfig = {
         ttlDays: 120,
     };
 
     utils.putChannel(channelName, function (response, body) {
         var parse = utils.parseJson(response, testName);
-        returnedBody = parse;
         const getParsedProp = prop => getProp(prop, parse);
         expect(fromObjectPath(['_links', 'self', 'href'], parse)).toEqual(channelResource);
         expect(getParsedProp('ttlDays')).toEqual(120);
@@ -42,6 +36,4 @@ describe(testName, function () {
         expect(getParsedProp('ttlDays')).toEqual(0);
         expect(getParsedProp('maxItems')).toEqual(100);
     }, newConfig);
-
-
 });

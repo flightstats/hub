@@ -1,7 +1,9 @@
 require('../integration_config');
 const {
+    followRedirectIfPresent,
     fromObjectPath,
     getProp,
+    hubClientGet,
 } = require('../lib/helpers');
 
 var channelName = utils.randomChannelName();
@@ -33,22 +35,18 @@ describe(__filename, function () {
             .finally(done);
     });
 
-    it('verifies the channel metadata is accurate', function (done) {
-        var url = channelResource + '/';
-
-        utils.httpGet(url)
-            .then(utils.followRedirectIfPresent)
-            .then(function (response) {
-                const contentType = fromObjectPath(['headers', 'content-type'], response);
-                const latestLInk = fromObjectPath(['body', '_links', 'latest', 'href'], response);
-                const name = fromObjectPath(['body', 'name'], response);
-                const ttlDays = fromObjectPath(['body', 'ttlDays'], response);
-                expect(getProp('statusCode', response)).toEqual(200);
-                expect(contentType).toEqual('application/json');
-                expect(latestLInk).toEqual(channelResource + '/latest');
-                expect(name).toEqual(channelName);
-                expect(ttlDays).toEqual(120);
-            })
-            .finally(done);
+    it('verifies the channel metadata is accurate', async () => {
+        var url = `${channelResource}/`;
+        const res = await hubClientGet(url);
+        const response = await followRedirectIfPresent(res);
+        const contentType = fromObjectPath(['headers', 'content-type'], response);
+        const latestLInk = fromObjectPath(['body', '_links', 'latest', 'href'], response);
+        const name = fromObjectPath(['body', 'name'], response);
+        const ttlDays = fromObjectPath(['body', 'ttlDays'], response);
+        expect(getProp('statusCode', response)).toEqual(200);
+        expect(contentType).toEqual('application/json');
+        expect(latestLInk).toEqual(`${channelResource}/latest`);
+        expect(name).toEqual(channelName);
+        expect(ttlDays).toEqual(120);
     });
 });

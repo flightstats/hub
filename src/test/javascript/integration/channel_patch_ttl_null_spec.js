@@ -1,5 +1,6 @@
 require('../integration_config');
 const {
+    hubClientGet,
     fromObjectPath,
     getProp,
 } = require('../lib/helpers');
@@ -8,13 +9,9 @@ var channelName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 
 describe(__filename, function () {
-
-    it('verifies the channel doesn\'t exist yet', function (done) {
-        utils.httpGet(channelResource)
-            .then(function (response) {
-                expect(getProp('statusCode', response)).toEqual(404);
-            })
-            .finally(done);
+    it('verifies the channel doesn\'t exist yet', async () => {
+        const response = await hubClientGet(channelResource);
+        expect(getProp('status', response)).toEqual(404);
     });
 
     it('creates the channel', function (done) {
@@ -44,5 +41,4 @@ describe(__filename, function () {
             })
             .finally(done);
     });
-
 });
