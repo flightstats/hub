@@ -1,13 +1,17 @@
 const rp = require('request-promise-native');
 // const { getProp } = require('./functional');
 
-module.exports.getHubItem = async (uri) => {
+module.exports.getHubItem = async (url) => {
     try {
-        console.log(`fetching hub item at: ${uri}`);
-        const result = await rp(uri, { encoding: null });
+        console.log(`fetching hub item at: ${url}`);
+        const result = await rp({
+            url,
+            encoding: null,
+            resolveWithFullResponse: true,
+        });
         return result || {};
     } catch (ex) {
-        console.log('got error ', uri, ex);
+        console.log('got error ', url, ex);
         return {};
     }
 };
@@ -20,9 +24,11 @@ module.exports.createChannel = async (channelName, url, description) => {
     try {
         const result = await rp({
             method: 'POST',
+            resolveWithFullResponse: true,
             url: defaultUrl,
             body: { name: channelName },
             headers: {"Content-Type": "application/json"},
+            json: true,
         });
         return result || {};
     } catch (ex) {

@@ -14,7 +14,7 @@ let createdChannel = false;
 describe(testName, function () {
     beforeAll(async () => {
         const channel = await createChannel(channelName);
-        if (getProp('status', channel) === 201) {
+        if (getProp('statusCode', channel) === 201) {
             createdChannel = true;
         }
     });

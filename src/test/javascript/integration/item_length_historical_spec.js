@@ -52,9 +52,9 @@ describe(__filename, function () {
         const result = await getHubItem(itemURL);
         const xItemLength = fromObjectPath(['headers', 'x-item-length'], result);
         expect(xItemLength).toBeDefined();
-        var bytes = (Buffer.from(itemContent) || '').length;
+        const bytes = (Buffer.from(itemContent) || '').length;
         expect(xItemLength).toBe(bytes.toString());
         const data = getProp('body', result);
-        expect(data).toEqual(itemContent);
+        expect(`${data}`).toEqual(itemContent);
     });
 });

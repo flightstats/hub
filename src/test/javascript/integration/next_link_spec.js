@@ -13,7 +13,7 @@ let createdChannel = false;
 describe(testName, function () {
     beforeAll(async () => {
         const channel = await createChannel(channelName);
-        if (getProp('status', channel)) {
+        if (getProp('statusCode', channel)) {
             createdChannel = true;
             console.log(`created channel for ${__filename}`);
         }

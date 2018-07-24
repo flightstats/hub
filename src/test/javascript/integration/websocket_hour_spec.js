@@ -9,7 +9,7 @@ let createdChannel = false;
 describe(__filename, function () {
     beforeAll(async () => {
         const channel = await createChannel(channelName, null, 'websocket testing');
-        if (getProp('status', channel) === 201) {
+        if (getProp('statusCode', channel) === 201) {
             createdChannel = true;
             console.log(`created channel for ${__filename}`);
         }
@@ -39,7 +39,7 @@ describe(__filename, function () {
         var itemDay = itemPathComponents[7];
         var itemHour = itemPathComponents[8];
         var hourURL = channelResource + '/' + itemYear + '/' + itemMonth + '/' + itemDay + '/' + itemHour;
-        wsURL = hourURL.replace('http', 'ws') + '/ws'
+        wsURL = hourURL.replace('http', 'ws') + '/ws';
     });
 
     var webSocket;
