@@ -22,13 +22,15 @@ const createChannel = async (channelName, url, description) => {
 
 const hubClientGet = async (url, headers = {}, isBinary) => {
     const formattedHeaders = utils.keysToLowerCase(headers);
+    const json = !!formattedHeaders['content-type'] &&
+        !!formattedHeaders['content-type'].includes('json');
     const options = {
         method: 'GET',
         url,
         headers: formattedHeaders,
         followRedirect: false,
         resolveWithFullResponse: true,
-        json: true,
+        json,
     };
 
     if (isBinary) {

@@ -52,7 +52,7 @@ describe(__filename, function () {
         expect(xItemLength).toBeDefined();
         var bytes = Buffer.from(itemContent).length;
         expect(xItemLength).toBe(bytes.toString());
-        const data = getProp('data', result);
+        const data = getProp('body', result);
         expect(data).toEqual(itemContent);
     });
 });

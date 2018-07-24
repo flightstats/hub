@@ -2,6 +2,7 @@ require('../integration_config');
 const {
     fromObjectPath,
     getProp,
+    hubClientGet,
 } = require('../lib/helpers');
 
 var channelName = utils.randomChannelName();
@@ -38,15 +39,12 @@ describe(__filename, function () {
             .finally(done);
     });
 
-    it('verifies the creation-date header is returned', function (done) {
-        if (!itemURL) return done.fail('itemURL failed initialization in previous test');
-        utils.httpGet(itemURL)
-            .then(function (response) {
-                expect(getProp('statusCode', response)).toEqual(200);
-                const creationDate = fromObjectPath(['headers', 'creation-date'], response);
-                expect(creationDate).toContain('T');
-            })
-            .finally(done);
+    it('verifies the creation-date header is returned', async () => {
+        if (!itemURL) return fail('itemURL failed initialization in previous test');
+        const response = await hubClientGet(itemURL);
+        expect(getProp('statusCode', response)).toEqual(200);
+        console.log('response', response.headers);
+        const creationDate = fromObjectPath(['headers', 'creation-date'], response);
+        expect(creationDate).toContain('T');
     });
-
 });
