@@ -29,7 +29,7 @@ describe(__filename, function () {
 
     beforeAll(async () => {
         const channel = await createChannel(channelName, null, 'bulk inserts');
-        if (getProp('status', channel) === 201) {
+        if (getProp('statusCode', channel) === 201) {
             console.log(`created channel for ${__filename}`);
             createdChannel = true;
         }
@@ -57,12 +57,12 @@ describe(__filename, function () {
         if (!createdChannel) return fail('channel not created in before block');
         try {
             const result = await getHubItem(itemURLs[0]);
-            expect(getProp('status', result)).toBe(200);
+            expect(getProp('statusCode', result)).toBe(200);
             const xItemLength = fromObjectPath(['headers', 'x-item-length'], result);
             expect(!!xItemLength).toBe(true);
             var bytes = Buffer.from(itemOneContent).length;
             expect(xItemLength).toBe(bytes.toString());
-            const data = getProp('data', result) || {};
+            const data = getProp('body', result) || {};
             expect(JSON.stringify(data)).toEqual(itemOneContent);
         } catch (ex) {
             expect(ex).toBeNull();
@@ -78,7 +78,7 @@ describe(__filename, function () {
             // TODO: new Buffer is deprecated
             var bytes = Buffer.from(itemTwoContent).length;
             expect(xItemLength).toBe(bytes.toString());
-            const data = getProp('data', result) || {};
+            const data = getProp('body', result) || {};
             expect(data).toEqual(itemTwoContent);
         } catch (ex) {
             expect(ex).toBeNull();

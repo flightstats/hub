@@ -34,7 +34,7 @@ const hubClientGet = async (url, headers = {}, isBinary) => {
     };
 
     if (isBinary) {
-        options.responseEncoding = null;
+        options.encoding = null;
     }
 
     try {
@@ -64,7 +64,7 @@ const followRedirectIfPresent = async (response) => {
 const getHubItem = async (uri) => {
     try {
         console.log(`fetching hub item at: ${uri}`);
-        const result = await rp(uri, { responseEncoding: null });
+        const result = await rp(uri, { encoding: null });
         return result || {};
     } catch (ex) {
         console.log('got error ', uri, ex);
