@@ -20,7 +20,7 @@ describe(__filename, function () {
 
     beforeAll(async () => {
         const channel = await createChannel(channelName, null, 'single inserts');
-        if (getProp('status', channel) === 201) {
+        if (getProp('statusCode', channel) === 201) {
             createdChannel = true;
             console.log(`created channel for ${__filename}`);
         }
@@ -52,7 +52,7 @@ describe(__filename, function () {
         expect(xItemLength).toBeDefined();
         var bytes = Buffer.from(itemContent).length;
         expect(xItemLength).toBe(bytes.toString());
-        const data = getProp('data', result);
+        const data = getProp('body', result);
         expect(data).toEqual(itemContent);
     });
 });

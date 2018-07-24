@@ -1,10 +1,10 @@
-const axios = require('axios');
+const rp = require('request-promise-native');
 // const { getProp } = require('./functional');
 
 module.exports.getHubItem = async (uri) => {
     try {
         console.log(`fetching hub item at: ${uri}`);
-        const result = await axios.get(uri, { responseEncoding: null });
+        const result = await rp(uri, { encoding: null });
         return result || {};
     } catch (ex) {
         console.log('got error ', uri, ex);
@@ -18,10 +18,10 @@ module.exports.createChannel = async (channelName, url, description) => {
     console.log('channelUrl', defaultUrl);
     console.log(`creating channel ${channelName} for ${defaultDescription}`);
     try {
-        const result = await axios({
+        const result = await rp({
             method: 'POST',
             url: defaultUrl,
-            data: { name: channelName },
+            body: { name: channelName },
             headers: {"Content-Type": "application/json"},
         });
         return result || {};
