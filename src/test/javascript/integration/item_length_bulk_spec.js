@@ -1,6 +1,8 @@
 require('../integration_config');
 const {
+    createChannel,
     fromObjectPath,
+    getHubItem,
     getProp,
 } = require('../lib/helpers');
 /**
@@ -23,15 +25,23 @@ describe(__filename, function () {
         '\r\n' + itemTwoContent + '\r\n' +
         '--oxoxoxo--';
     var itemURLs = [];
+    let createdChannel = false;
 
-    utils.createChannel(channelName, null, 'bulk inserts');
+    beforeAll(async () => {
+        const channel = await createChannel(channelName, null, 'bulk inserts');
+        if (getProp('statusCode', channel) === 201) {
+            console.log(`created channel for ${__filename}`);
+            createdChannel = true;
+        }
+    });
 
     it('posts items in bulk', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         utils.postItemQwithPayload(channelEndpoint, bulkHeaders, bulkContent)
             .then(function (result) {
                 let json = {};
                 try {
-                    json = JSON.parse(result.body);
+                    json = JSON.parse(getProp('body', result));
                 } catch (ex) {
                     console.log('error parsing json: ', ex);
                 }
@@ -43,29 +53,35 @@ describe(__filename, function () {
             });
     });
 
-    it('verifies first item has correct length info', function (done) {
-        utils.getItem(itemURLs[0], function (headers, body) {
-            const xItemLength = getProp('x-item-length', headers);
+    it('verifies first item has correct length info', async () => {
+        if (!createdChannel) return fail('channel not created in before block');
+        try {
+            const result = await getHubItem(itemURLs[0]);
+            expect(getProp('statusCode', result)).toBe(200);
+            const xItemLength = fromObjectPath(['headers', 'x-item-length'], result);
             expect(!!xItemLength).toBe(true);
-            // TODO: new Buffer is deprecated
-            var bytes = new Buffer(itemOneContent, 'utf-8').length;
+            var bytes = Buffer.from(itemOneContent).length;
             expect(xItemLength).toBe(bytes.toString());
-            const responseBody = body && body.toString();
-            expect(responseBody).toEqual(itemOneContent);
-            done();
-        });
+            const data = getProp('body', result) || {};
+            expect(`${data}`).toEqual(itemOneContent);
+        } catch (ex) {
+            expect(ex).toBeNull();
+        }
     });
 
-    it('verifies second item has correct length info', function (done) {
-        utils.getItem(itemURLs[1], function (headers, body) {
-            const xItemLength = getProp('x-item-length', headers);
+    it('verifies second item has correct length info', async () => {
+        if (!createdChannel) return fail('channel not created in before block');
+        try {
+            const result = await getHubItem(itemURLs[1]);
+            const xItemLength = fromObjectPath(['headers', 'x-item-length'], result);
             expect(!!xItemLength).toBe(true);
             // TODO: new Buffer is deprecated
-            var bytes = new Buffer(itemTwoContent, 'utf-8').length;
+            var bytes = Buffer.from(itemTwoContent).length;
             expect(xItemLength).toBe(bytes.toString());
-            const responseBody = body && body.toString();
-            expect(responseBody).toEqual(itemTwoContent);
-            done();
-        });
+            const data = getProp('body', result) || {};
+            expect(`${data}`).toEqual(itemTwoContent);
+        } catch (ex) {
+            expect(ex).toBeNull();
+        }
     });
 });

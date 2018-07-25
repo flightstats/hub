@@ -1,6 +1,8 @@
 require('../integration_config');
 const {
+    createChannel,
     fromObjectPath,
+    getHubItem,
     getProp,
 } = require('../lib/helpers');
 /**
@@ -14,10 +16,18 @@ describe(__filename, function () {
     var itemHeaders = {'Content-Type': 'text/plain'};
     var itemContent = 'this string has normal letters, and unicode characters like "\u03B1"';
     var itemURL;
+    let createdChannel = false;
 
-    utils.createChannel(channelName, null, 'single inserts');
+    beforeAll(async () => {
+        const channel = await createChannel(channelName, null, 'single inserts');
+        if (getProp('statusCode', channel) === 201) {
+            createdChannel = true;
+            console.log(`created channel for ${__filename}`);
+        }
+    });
 
     it('posts a single item', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         utils.postItemQwithPayload(channelEndpoint, itemHeaders, itemContent)
             .then(function (result) {
                 try {
@@ -32,17 +42,17 @@ describe(__filename, function () {
             });
     });
 
-    it('verifies item has correct length info', function (done) {
-        expect(itemURL !== undefined).toBe(true);
-        utils.getItem(itemURL, function (headers, body) {
-            const xItemLength = getProp('x-item-length', headers);
-            expect(!!xItemLength).toBe(true);
-            // TODO: new Buffer is deprecated
-            var bytes = new Buffer(itemContent, 'utf-8').length;
-            expect(xItemLength).toBe(bytes.toString());
-            const responseBody = body && body.toString();
-            expect(responseBody).toEqual(itemContent);
-            done();
-        });
+    it('verifies item has correct length info', async () => {
+        if (!itemURL) {
+            expect(itemURL).toBeDefined();
+            return false;
+        }
+        const result = await getHubItem(itemURL);
+        const xItemLength = fromObjectPath(['headers', 'x-item-length'], result);
+        expect(xItemLength).toBeDefined();
+        var bytes = Buffer.from(itemContent).length;
+        expect(xItemLength).toBe(bytes.toString());
+        const data = getProp('body', result);
+        expect(`${data}`).toEqual(itemContent);
     });
 });

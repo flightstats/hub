@@ -1,10 +1,10 @@
 require('../integration_config');
-const { getProp } = require('../lib/helpers');
+const { createChannel, getProp } = require('../lib/helpers');
 var request = require('request');
 var channelName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
-
+let createdChannel = false;
 /**
  * This should:
  *
@@ -13,9 +13,16 @@ var testName = __filename;
  * 3 - verify that records are returned via time query
  */
 describe(testName, function () {
-    utils.createChannel(channelName);
+    beforeAll(async () => {
+        const channel = await createChannel(channelName);
+        if (getProp('statusCode', channel) === 201) {
+            createdChannel = true;
+            console.log(`created channel for ${__filename}`);
+        }
+    });
 
-    function expect400(url, done) {
+    function expect400 (url, done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         request.get({url: url, json: true},
             function (err, response, body) {
                 expect(err).toBeNull();
@@ -72,5 +79,4 @@ describe(testName, function () {
     it('queries month 13', function (done) {
         expect400(channelResource + '/2015/13/02', done);
     });
-
 });

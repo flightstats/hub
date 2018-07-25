@@ -1,17 +1,24 @@
 require('../integration_config');
-const { fromObjectPath, getProp } = require('../lib/helpers');
+const { createChannel, fromObjectPath, getProp } = require('../lib/helpers');
 var WebSocket = require('ws');
 
 var channelName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
+let createdChannel = false;
 
 describe(__filename, function () {
-
-    utils.createChannel(channelName, null, 'websocket testing');
+    beforeAll(async () => {
+        const channel = await createChannel(channelName, null, 'websocket testing');
+        if (getProp('statusCode', channel) === 201) {
+            createdChannel = true;
+            console.log(`created channel for ${__filename}`);
+        }
+    });
 
     var startingItem;
 
     it('posts item to channel', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         utils.postItemQ(channelResource)
             .then(function (result) {
                 const location = fromObjectPath(['response', 'headers', 'location'], result);
@@ -24,6 +31,7 @@ describe(__filename, function () {
     var wsURL;
 
     it('builds websocket url', function () {
+        if (!createdChannel) return fail('channel not created in before block');
         expect(startingItem).toBeDefined();
         wsURL = (startingItem || '').replace('http', 'ws') + '/ws';
     });
@@ -33,7 +41,7 @@ describe(__filename, function () {
 
     it('opens websocket', function (done) {
         expect(wsURL).toBeDefined();
-
+        if (!createdChannel) return done.fail('channel not created in before block');
         webSocket = new WebSocket(wsURL);
         webSocket.onmessage = function (message) {
             const data = getProp('data', message);
@@ -50,6 +58,7 @@ describe(__filename, function () {
     var postedItem;
 
     it('posts item to channel', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         utils.postItemQ(channelResource)
             .then(function (result) {
                 const location = fromObjectPath(['response', 'headers', 'location'], result);
@@ -60,15 +69,18 @@ describe(__filename, function () {
     });
 
     it('waits for data', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         utils.waitForData(receivedMessages, [postedItem], done);
     });
 
     it('verifies the correct data was received', function () {
+        if (!createdChannel) return fail('channel not created in before block');
         expect(receivedMessages.length).toEqual(1);
         expect(receivedMessages).toContain(postedItem);
     });
 
     it('closes websocket', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         webSocket.onclose = function () {
             console.log('closed:', wsURL);
             done();
@@ -76,5 +88,4 @@ describe(__filename, function () {
 
         webSocket.close();
     });
-
 });

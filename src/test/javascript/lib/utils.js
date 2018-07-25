@@ -51,13 +51,13 @@ exports.createChannel = function createChannel(channelName, url, description) {
     it("creates channel " + channelName + " at " + url, function (done) {
         console.log('creating channel ' + channelName + ' for ' + description);
         request.post({url: url,
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({ "name": channelName })},
-            function (err, response, body) {
-                expect(err).toBeNull();
-                expect(response.statusCode).toBe(201);
-                done();
-            });
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({ "name": channelName })},
+        function (err, response, body) {
+            expect(err).toBeNull();
+            expect(response.statusCode).toBe(201);
+            done();
+        });
     }, 10 * 1001);
 
 };

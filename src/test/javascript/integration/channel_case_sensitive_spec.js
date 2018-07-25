@@ -49,7 +49,7 @@ describe(testName, function () {
                     // it's still a string
                     try {
                         const dataBody = JSON.parse(parse);
-                        expect(getProp('data', dataBody)).toBeDefined();
+                        expect(getProp('body', dataBody)).toBeDefined();
                     } catch (ex) {
                         expect(ex).toBeNull();
                     }

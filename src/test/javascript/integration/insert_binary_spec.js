@@ -41,8 +41,7 @@ describe(__filename, function () {
     it('inserts an image into the channel', function (done) {
         var url = channelResource;
         var headers = {'Content-Type': 'image/jpeg'};
-        // TODO: "new Buffer()" is deprecated, update this
-        var body = new Buffer(imageData, 'binary');
+        var body = Buffer.from(imageData, 'binary');
 
         utils.httpPost(url, headers, body)
             .then(function (response) {

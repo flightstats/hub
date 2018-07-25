@@ -1,5 +1,6 @@
 require('../integration_config');
 const {
+    createChannel,
     fromObjectPath,
     getProp,
 } = require('../lib/helpers');
@@ -7,14 +8,22 @@ const {
 var channelName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
 var testName = __filename;
+let createdChannel = false;
 
 describe(testName, function () {
-    utils.createChannel(channelName);
+    beforeAll(async () => {
+        const channel = await createChannel(channelName);
+        if (getProp('statusCode', channel) === 201) {
+            createdChannel = true;
+            console.log(`created channel for ${__filename}`);
+        }
+    });
 
     console.log('channelName', channelName);
 
     it('adds item and checks relative links', function (done) {
         var itemHref;
+        if (!createdChannel) return done.fail('channel not created in before block');
         utils.postItemQ(channelResource)
             .then(function (value) {
                 itemHref = fromObjectPath(['body', '_links', 'self', 'href'], value);
