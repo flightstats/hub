@@ -7,10 +7,9 @@ var channelResource = channelUrl + "/" + channelName;
 describe(__filename, function () {
 
     it('creates a channel with no information', function (done) {
-        var url = channelResource;
-        var headers = {'Content-Type': 'application/json'};
-        var body = '';
-
+        const url = channelResource;
+        const headers = {'Content-Type': 'application/json'};
+        const body = {}; // equiv to body = '' in request js which now requires min empty object as body arg when json = true.
         utils.httpPut(url, headers, body)
             .then(function (response) {
                 expect(getProp('statusCode', response)).toEqual(201);
