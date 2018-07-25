@@ -1,6 +1,9 @@
 const rp = require('request-promise-native');
 const { fromObjectPath, getProp } = require('./functional');
 
+const isRedirect = statusCode => !!statusCode &&
+    (statusCode >= 300 && statusCode <= 399);
+
 const createChannel = async (channelName, url, description) => {
     const defaultDescription = description || 'none';
     const defaultUrl = url || channelUrl;
@@ -42,9 +45,10 @@ const hubClientGet = async (url, headers = {}, isBinary) => {
     try {
         console.log('GET >', url, headers || {});
         const result = await rp(options);
-        if (json) {
+        const body = getProp('body', result);
+        if (json && body) {
             try {
-                result.body = JSON.parse(getProp('body', result)) || {};
+                result.body = JSON.parse(body) || {};
             } catch (ex) {
                 console.log('parsing json error ', ex);
             }
@@ -52,19 +56,27 @@ const hubClientGet = async (url, headers = {}, isBinary) => {
         console.log('GET <', url, getProp('statusCode', result));
         return result || {};
     } catch (ex) {
-        console.log(`error in hubClientGet: url:: ${url} ::: ${ex}`);
         const response = getProp('response', ex) || {};
-        console.log('GET <', url, getProp('statusCode', response.status));
+        const statusCode = getProp('statusCode', response);
+        if (isRedirect(statusCode)) {
+            console.log('<REDIRECT> <', url, statusCode);
+            return response;
+        }
+        console.log(`error in hubClientGet: url:: ${url} ::: ${ex}`);
+        console.log('GET <', url, statusCode);
         return response;
     }
 };
 
-const followRedirectIfPresent = async (response) => {
+const followRedirectIfPresent = async (response, headers = {}) => {
     const statusCode = getProp('statusCode', response);
     const location = fromObjectPath(['headers', 'location'], response);
-    const redirectCode = statusCode >= 300 && statusCode <= 399;
+    console.log('statusCode', statusCode);
+    const redirectCode = isRedirect(statusCode);
+    console.log('location', location);
     if (redirectCode && !!location) {
-        await hubClientGet(location);
+        const newResponse = await hubClientGet(location, headers);
+        return newResponse;
     } else {
         return response;
     }

@@ -29,7 +29,7 @@ describe(__filename, function () {
     });
 
     it('verifies the channel does exist', async () => {
-        const response = await hubClientGet(channelResource);
+        const response = await hubClientGet(channelResource, headers);
         expect(getProp('statusCode', response)).toEqual(200);
         const contentType = fromObjectPath(['headers', 'content-type'], response);
         expect(contentType).toEqual('application/json');

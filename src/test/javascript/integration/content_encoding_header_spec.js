@@ -6,7 +6,7 @@ const {
 } = require('../lib/helpers');
 
 var channelName = utils.randomChannelName();
-var channelResource = channelUrl + "/" + channelName;
+const channelResource = `${channelUrl}/${channelName}`;
 var messageText = "Testing that the Content-Encoding header is returned";
 
 describe(__filename, function () {

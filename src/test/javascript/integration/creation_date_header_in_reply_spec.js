@@ -6,7 +6,7 @@ const {
 } = require('../lib/helpers');
 
 var channelName = utils.randomChannelName();
-var channelResource = channelUrl + "/" + channelName;
+const channelResource = `${channelUrl}/${channelName}`;
 var messageText = "there's a snake in my boot!";
 
 describe(__filename, function () {

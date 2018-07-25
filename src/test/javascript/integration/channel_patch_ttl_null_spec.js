@@ -6,7 +6,7 @@ const {
 } = require('../lib/helpers');
 
 var channelName = utils.randomChannelName();
-var channelResource = channelUrl + "/" + channelName;
+const channelResource = `${channelUrl}/${channelName}`;
 
 describe(__filename, function () {
     it('verifies the channel doesn\'t exist yet', async () => {

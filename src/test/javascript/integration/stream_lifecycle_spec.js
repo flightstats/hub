@@ -1,8 +1,7 @@
 require('../integration_config');
-const { createChannel, getProp } = require('../lib/helpers');
-var channelName = utils.randomChannelName();
-var channelResource = channelUrl + "/" + channelName;
-var testName = __filename;
+const { createChannel, getProp, hubClientGet } = require('../lib/helpers');
+const channelName = utils.randomChannelName();
+const channelResource = `${channelUrl}/${channelName}`;
 
 /**
  * This should:
@@ -13,30 +12,27 @@ var testName = __filename;
  * 4 - verify that the item payloads are returned within delta time
  */
 
-xdescribe(testName, function () {
-    var callbackItems = [];
-    var postedItems = [];
+xdescribe(__filename, function () {
+    const callbackItems = [];
+    const postedItems = [];
     let createdChannel = false;
 
     beforeAll(async () => {
-        const channel = await createChannel(channelName, false, testName);
+        const channel = await createChannel(channelName, false, __filename);
         if (getProp('statusCode', channel) === 201) {
             createdChannel = true;
             console.log(`created channel for ${__filename}`);
         }
     });
 
-    it('opens a stream', function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        var url = channelResource + '/stream';
-        var headers = {"Content-Type": "application/json"};
+    it('opens a stream', async () => {
+        if (!createdChannel) return fail('channel not created in before block');
+        const url = `${channelResource}/stream`;
+        const headers = { "Content-Type": "application/json" };
 
-        utils.httpGet(url, headers)
-            .then(function (response) {
-                expect(getProp('statusCode', response)).toBe(200);
-                // console.log('body', body);
-            })
-            .finally(done);
+        const response = await hubClientGet(url, headers);
+        expect(getProp('statusCode', response)).toBe(200);
+        // console.log('body', body);
     });
 
     it('inserts multiple items', function (done) {

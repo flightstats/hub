@@ -6,17 +6,16 @@ const {
     hubClientGet,
 } = require('../lib/helpers');
 
-var channelName = utils.randomChannelName();
-var channelResource = channelUrl + "/" + channelName;
-var messageText = "MY SUPER TEST CASE: this & <that>. " + Math.random().toString();
-
+const channelName = utils.randomChannelName();
+const channelResource = channelUrl + "/" + channelName;
+const messageText = "MY SUPER TEST CASE: this & <that>. " + Math.random().toString();
+const defaultHeaders = { 'Content-Type': 'application/json' };
 describe(__filename, function () {
     it('creates a channel', function (done) {
         var url = channelUrl;
-        var headers = {'Content-Type': 'application/json'};
         var body = {'name': channelName};
 
-        utils.httpPost(url, headers, body)
+        utils.httpPost(url, defaultHeaders, body)
             .then(function (response) {
                 expect(getProp('statusCode', response)).toEqual(201);
             })
@@ -36,9 +35,9 @@ describe(__filename, function () {
     });
 
     it('verifies the channel metadata is accurate', async () => {
-        var url = `${channelResource}/`;
-        const res = await hubClientGet(url);
-        const response = await followRedirectIfPresent(res);
+        const url = `${channelResource}/`;
+        const res = await hubClientGet(url, defaultHeaders);
+        const response = await followRedirectIfPresent(res, defaultHeaders);
         const contentType = fromObjectPath(['headers', 'content-type'], response);
         const latestLInk = fromObjectPath(['body', '_links', 'latest', 'href'], response);
         const name = fromObjectPath(['body', 'name'], response);

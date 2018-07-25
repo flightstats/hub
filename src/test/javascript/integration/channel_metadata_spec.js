@@ -7,7 +7,7 @@ const {
 } = require('../lib/helpers');
 
 var channelName = utils.randomChannelName();
-var channelResource = channelUrl + "/" + channelName;
+const channelResource = `${channelUrl}/${channelName}`;
 var messageText = "MY SUPER TEST CASE: this & <that>. " + Math.random().toString();
 
 describe(__filename, function () {
@@ -39,7 +39,7 @@ describe(__filename, function () {
         const headers = { 'Content-Type': 'application/json' };
         const url = `${channelResource}/`;
         const res = await hubClientGet(url, headers);
-        const response = await followRedirectIfPresent(res);
+        const response = await followRedirectIfPresent(res, headers);
         expect(getProp('statusCode', response)).toEqual(200);
         const contentType = fromObjectPath(['headers', 'content-type'], response);
         const latestLInk = fromObjectPath(['body', '_links', 'latest', 'href'], response);
