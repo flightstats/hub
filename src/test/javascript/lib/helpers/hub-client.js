@@ -68,6 +68,43 @@ const hubClientGet = async (url, headers = {}, isBinary) => {
     }
 };
 
+const hubClientPost = async (url, headers = {}, body = '') => {
+    const formattedHeaders = utils.keysToLowerCase(headers);
+    const json = !!formattedHeaders['content-type'] &&
+        !!formattedHeaders['content-type'].includes('json');
+    const options = {
+        method: 'POST',
+        url,
+        headers: formattedHeaders,
+        body,
+        resolveWithFullResponse: true,
+        json,
+    };
+    const bytes = (options.json) ? JSON.stringify(body).length : body.length;
+    console.log('POST >', url, headers, bytes);
+    try {
+        const response = await rp(options);
+        const responseBody = getProp('body', response);
+        const statusCode = getProp('statusCode', response);
+        console.log('POST <', url, statusCode);
+        if (!json && responseBody) {
+            try {
+                response.body = JSON.parse(body);
+            } catch (error) {
+                response.body = body;
+                console.warn('Response header says the content is JSON but it couldn\'t be parsed');
+            }
+        }
+        return response;
+    } catch (ex) {
+        const response = getProp('response', ex) || {};
+        const statusCode = getProp('statusCode', response);
+        console.log(`error in hubClientGet: url:: ${url} ::: ${ex}`);
+        console.log('GET <', url, statusCode);
+        return response;
+    }
+};
+
 const followRedirectIfPresent = async (response, headers = {}) => {
     const statusCode = getProp('statusCode', response);
     const location = fromObjectPath(['headers', 'location'], response);
@@ -102,4 +139,5 @@ module.exports = {
     followRedirectIfPresent,
     getHubItem,
     hubClientGet,
+    hubClientPost,
 };
