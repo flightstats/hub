@@ -15,21 +15,19 @@ const channelTwoWebhookURL = `${utils.getWebhookUrl()}/TAGWH_${tag}_${channelTwo
 const acceptJSON = { "Content-Type": "application/json" };
 
 describe(__filename, function () {
-
     it('creates a tag webhook prototype', (done) => {
         const config = {
             "callbackUrl": "http://nothing/callback",
-            "tagUrl": tagURL
+            "tagUrl": tagURL,
         };
         utils.httpPut(tagWebhookPrototypeURL, acceptJSON, config)
             .then(response => expect(getProp('statusCode', response)).toEqual(201))
             .finally(done);
     });
 
-    it('verifies the tag webhook prototype exists', (done) => {
-        utils.httpGet(tagWebhookPrototypeURL)
-            .then(response => expect(getProp('statusCode', response)).toEqual(200))
-            .finally(done);
+    it('verifies the tag webhook prototype exists', async () => {
+        const response = await hubClientGet(tagWebhookPrototypeURL);
+        expect(getProp('statusCode', response)).toEqual(200);
     });
 
     it(`creates channel one with tag ${tag}`, (done) => {
@@ -84,5 +82,4 @@ describe(__filename, function () {
         const response = await hubClientGet(channelTwoWebhookURL);
         expect(getProp('statusCode', response)).toEqual(404);
     });
-
 });
