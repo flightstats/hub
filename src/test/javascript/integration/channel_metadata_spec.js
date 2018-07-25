@@ -36,8 +36,9 @@ describe(__filename, function () {
     });
 
     it('verifies the channel metadata is accurate', async () => {
+        const headers = { 'Content-Type': 'application/json' };
         const url = `${channelResource}/`;
-        const res = await hubClientGet(url);
+        const res = await hubClientGet(url, headers);
         const response = await followRedirectIfPresent(res);
         expect(getProp('statusCode', response)).toEqual(200);
         const contentType = fromObjectPath(['headers', 'content-type'], response);

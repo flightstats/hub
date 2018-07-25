@@ -45,9 +45,9 @@ describe(__filename, function () {
     it('verifies the correct content-type is returned', async () => {
         if (!itemURL) return fail('itemURL failed initialization in previous test');
         const response = await hubClientGet(itemURL);
-        expect(getProp('status', response)).toEqual(200);
+        expect(getProp('statusCode', response)).toEqual(200);
         const contentType = fromObjectPath(['headers', 'content-type'], response);
         expect(contentType).toEqual('application/fractals');
-        expect(getProp('data', response)).toContain(messageText);
+        expect(getProp('body', response)).toContain(messageText);
     });
 });

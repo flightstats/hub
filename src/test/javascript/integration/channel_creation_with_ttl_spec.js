@@ -4,9 +4,9 @@ const {
     getProp,
     hubClientGet,
 } = require('../lib/helpers');
-var channelName = utils.randomChannelName();
-var channelResource = channelUrl + "/" + channelName;
-
+const channelName = utils.randomChannelName();
+const channelResource = channelUrl + "/" + channelName;
+const headers = { 'Content-Type': 'application/json' };
 describe(__filename, function () {
     it('verifies the channel doesn\'t exist yet', async () => {
         const response = await hubClientGet(channelResource);
@@ -15,7 +15,6 @@ describe(__filename, function () {
 
     it('creates a channel with a valid TTL', function (done) {
         var url = channelUrl;
-        var headers = {'Content-Type': 'application/json'};
         var body = {'name': channelName, 'ttlMillis': 30000};
 
         utils.httpPost(url, headers, body)

@@ -7,7 +7,7 @@ const {
 
 var channelName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
-
+const headers = {'Content-Type': 'application/json'};
 describe(__filename, function () {
     it('verifies the channel doesn\'t exist yet', async () => {
         const response = await hubClientGet(channelResource);
@@ -16,7 +16,6 @@ describe(__filename, function () {
 
     it('creates a channel with an owner', function (done) {
         var url = channelUrl;
-        var headers = {'Content-Type': 'application/json'};
         var body = {'name': channelName, 'owner': 'pwned'};
 
         utils.httpPost(url, headers, body)
@@ -31,7 +30,7 @@ describe(__filename, function () {
     });
 
     it('verifies the channel does exist', async () => {
-        const response = await hubClientGet(channelResource);
+        const response = await hubClientGet(channelResource, headers);
         const contentType = fromObjectPath(['headers', 'content-type'], response);
         const name = fromObjectPath(['body', 'name'], response);
         const owner = fromObjectPath(['body', 'owner'], response);

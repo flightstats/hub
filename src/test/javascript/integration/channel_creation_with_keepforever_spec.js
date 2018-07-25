@@ -7,11 +7,10 @@ const {
 
 var channelName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
-
+const headers = {'Content-Type': 'application/json'};
 describe(__filename, function () {
     it('creates a channel with keepForever', function (done) {
         var url = channelUrl;
-        var headers = {'Content-Type': 'application/json'};
         var body = {'name': channelName, 'keepForever': true};
 
         utils.httpPost(url, headers, body)
@@ -28,7 +27,7 @@ describe(__filename, function () {
     });
 
     it('verifies the channel does exist', async () => {
-        const response = await hubClientGet(channelResource);
+        const response = await hubClientGet(channelResource, headers);
         const contentType = fromObjectPath(['headers', 'content-type'], response);
         const ttlDays = fromObjectPath(['body', 'ttlDays'], response);
         const keepForever = fromObjectPath(['body', 'keepForever'], response);

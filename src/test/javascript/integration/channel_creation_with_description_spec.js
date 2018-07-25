@@ -7,7 +7,7 @@ const {
 
 var channelName = utils.randomChannelName();
 var channelResource = channelUrl + "/" + channelName;
-
+const headers = { 'Content-Type': 'application/json' };
 describe(__filename, function () {
     it('verifies the channel doesn\'t exist yet', async () => {
         const response = await hubClientGet(channelResource);
@@ -16,7 +16,6 @@ describe(__filename, function () {
 
     it('creates a channel with a description', function (done) {
         var url = channelUrl;
-        var headers = {'Content-Type': 'application/json'};
         var body = {'name': channelName, 'description': 'describe me'};
 
         utils.httpPost(url, headers, body)
@@ -29,7 +28,7 @@ describe(__filename, function () {
     });
 
     it('verifies the channel does exist', async () => {
-        const response = await hubClientGet(channelResource);
+        const response = await hubClientGet(channelResource, headers);
         expect(getProp('statusCode', response)).toEqual(200);
         const description = fromObjectPath(['body', 'description'], response);
         const name = fromObjectPath(['body', 'name'], response);

@@ -53,6 +53,6 @@ describe(__filename, function () {
         var bytes = Buffer.from(itemContent).length;
         expect(xItemLength).toBe(bytes.toString());
         const data = getProp('body', result);
-        expect(data).toEqual(itemContent);
+        expect(`${data}`).toEqual(itemContent);
     });
 });

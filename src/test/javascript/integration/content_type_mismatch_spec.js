@@ -46,6 +46,6 @@ describe(__filename, function () {
         if (!itemURL) return fail('itemURL failed initialization in previous test');
         const headers = { 'Accept': 'application/json' };
         const response = await hubClientGet(itemURL, headers);
-        expect(getProp('status', response)).toEqual(406);
+        expect(getProp('statusCode', response)).toEqual(406);
     });
 });

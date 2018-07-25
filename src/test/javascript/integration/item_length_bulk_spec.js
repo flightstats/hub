@@ -63,7 +63,7 @@ describe(__filename, function () {
             var bytes = Buffer.from(itemOneContent).length;
             expect(xItemLength).toBe(bytes.toString());
             const data = getProp('body', result) || {};
-            expect(JSON.stringify(data)).toEqual(itemOneContent);
+            expect(`${data}`).toEqual(itemOneContent);
         } catch (ex) {
             expect(ex).toBeNull();
         }
@@ -79,7 +79,7 @@ describe(__filename, function () {
             var bytes = Buffer.from(itemTwoContent).length;
             expect(xItemLength).toBe(bytes.toString());
             const data = getProp('body', result) || {};
-            expect(data).toEqual(itemTwoContent);
+            expect(`${data}`).toEqual(itemTwoContent);
         } catch (ex) {
             expect(ex).toBeNull();
         }
