@@ -96,8 +96,44 @@ const hubClientPost = async (url, headers = {}, body = '') => {
     } catch (ex) {
         const response = getProp('response', ex) || {};
         const statusCode = getProp('statusCode', response);
-        console.log(`error in hubClientGet: url:: ${url} ::: ${ex}`);
-        console.log('GET <', url, statusCode);
+        console.log(`error in hubClientPost: url:: ${url} ::: ${ex}`);
+        console.log('POST <', url, statusCode);
+        return response;
+    }
+};
+
+const hubClientPut = async (url, headers = {}, body = '') => {
+    const formattedHeaders = utils.keysToLowerCase(headers);
+    const json = !!formattedHeaders['content-type'] &&
+        !!formattedHeaders['content-type'].includes('json');
+
+    const options = {
+        url,
+        method: 'PUT',
+        headers: formattedHeaders || {},
+        body,
+        resolveWithFullResponse: true,
+        json,
+    };
+
+    const bytes = json ? JSON.stringify(body).length : body.length;
+    console.log('PUT >', url, headers, bytes);
+    try {
+        const response = await rp(options);
+        const responseBody = getProp('body', response);
+        const statusCode = getProp('statusCode', response);
+        console.log('PUT <', url, statusCode);
+        try {
+            response.body = JSON.parse(responseBody) || {};
+        } catch (error) {
+            response.body = responseBody || {};
+        }
+        return response;
+    } catch (ex) {
+        const response = getProp('response', ex) || {};
+        const statusCode = getProp('statusCode', response);
+        console.log(`error in hubClientPut: url:: ${url} ::: ${ex}`);
+        console.log('PUT <', url, statusCode);
         return response;
     }
 };
@@ -137,4 +173,5 @@ module.exports = {
     getHubItem,
     hubClientGet,
     hubClientPost,
+    hubClientPut,
 };

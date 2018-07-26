@@ -1,5 +1,11 @@
 require('../integration_config');
-const { getProp, fromObjectPath, hubClientGet, hubClientPost } = require('../lib/helpers');
+const {
+    getProp,
+    fromObjectPath,
+    hubClientGet,
+    hubClientPost,
+    hubClientPut,
+} = require('../lib/helpers');
 const moment = require('moment');
 
 const channelName = utils.randomChannelName();
@@ -56,16 +62,13 @@ describe(__filename, () => {
         maxCursor = fromObjectPath(['body', 'lastCompleted'], response);
     });
 
-    it('moves the cursor backward', (done) => {
+    it('moves the cursor backward', async () => {
         const y = moment().subtract(1, 'day');
         const formatted = y.format("YYYY/MM/DD/HH/mm/ss");
         const url = channelResource + "/" + formatted;
         console.log("backward cursor ", url);
-        utils.httpPut(webhookURL + "/updateCursor", contentTypePlain, url)
-            .then(response => {
-                expect(getProp('statusCode', response)).toBeLessThan(300);
-            })
-            .finally(done);
+        const response = await hubClientPut(webhookURL + "/updateCursor", contentTypePlain, url);
+        expect(getProp('statusCode', response)).toBeLessThan(300);
     });
 
     utils.itSleeps(5000);
@@ -77,17 +80,14 @@ describe(__filename, () => {
         minCursor = lastCompleted;
     });
 
-    it('moves the cursor forward', (done) => {
+    it('moves the cursor forward', async () => {
         const y = moment().subtract(1, 'hour');
         const formatted = y.format("YYYY/MM/DD/HH/mm/ss");
         const url = channelResource + "/" + formatted;
         console.log("forward cursor ", url);
         // const item = { 'item': url };
-        utils.httpPut(webhookURL + "/updateCursor", contentTypePlain, url)
-            .then(response => {
-                expect(getProp('statusCode', response)).toBeLessThan(300);
-            })
-            .finally(done);
+        const response = await hubClientPut(webhookURL + "/updateCursor", contentTypePlain, url);
+        expect(getProp('statusCode', response)).toBeLessThan(300);
     });
 
     utils.itSleeps(5000);

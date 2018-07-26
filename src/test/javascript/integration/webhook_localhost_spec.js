@@ -1,5 +1,5 @@
 require('../integration_config');
-const { getProp, fromObjectPath, hubClientGet } = require('../lib/helpers');
+const { getProp, fromObjectPath, hubClientGet, hubClientPut } = require('../lib/helpers');
 const channelResource = `${channelUrl}/${utils.randomChannelName()}`;
 const webhookResource = `${utils.getWebhookUrl()}/${utils.randomChannelName()}`;
 
@@ -27,26 +27,19 @@ describe(__filename, function () {
         console.log('isClustered:', isClustered);
     });
 
-    it('creates a channel', (done) => {
-        utils.httpPut(channelResource)
-            .then(response => expect(getProp('statusCode', response)).toEqual(201))
-            .finally(done);
+    it('creates a channel', async () => {
+        const response = await hubClientPut(channelResource);
+        expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    it('creates a webhook pointing at localhost', (done) => {
+    it('creates a webhook pointing at localhost', async () => {
         const body = {
             callbackUrl: 'http://localhost:8080/nothing',
             channelUrl: channelResource,
         };
-        utils.httpPut(webhookResource, headers, body)
-            .then(response => {
-                const statusCode = getProp('statusCode', response);
-                if (isClustered) {
-                    expect(statusCode).toEqual(400);
-                } else {
-                    expect(statusCode).toEqual(201);
-                }
-            })
-            .finally(done);
+        const response = await hubClientPut(webhookResource, headers, body);
+        const statusCode = getProp('statusCode', response);
+        const expected = isClustered ? 400 : 201;
+        expect(statusCode).toEqual(expected);
     });
 });
