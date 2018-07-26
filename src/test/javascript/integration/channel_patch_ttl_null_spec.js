@@ -3,33 +3,27 @@ const {
     hubClientGet,
     fromObjectPath,
     getProp,
+    hubClientPost,
 } = require('../lib/helpers');
 
-var channelName = utils.randomChannelName();
+const channelName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
-
+const headers = { 'Content-Type': 'application/json' };
 describe(__filename, function () {
     it('verifies the channel doesn\'t exist yet', async () => {
         const response = await hubClientGet(channelResource);
         expect(getProp('statusCode', response)).toEqual(404);
     });
 
-    it('creates the channel', function (done) {
-        var url = channelUrl;
-        var headers = {'Content-Type': 'application/json'};
-        var body = {'name': channelName, 'ttlMillis': null};
-
-        utils.httpPost(url, headers, body)
-            .then(function (response) {
-                expect(getProp('statusCode', response)).toEqual(201);
-            })
-            .finally(done);
+    it('creates the channel', async () => {
+        const body = { 'name': channelName, 'ttlMillis': null };
+        const response = await hubClientPost(channelUrl, headers, body);
+        expect(getProp('statusCode', response)).toEqual(201);
     });
 
     it('updates the channel TTL', function (done) {
-        var url = channelResource;
-        var headers = {'Content-Type': 'application/json'};
-        var body = {'ttlMillis': null};
+        const url = channelResource;
+        const body = {'ttlMillis': null};
 
         utils.httpPatch(url, headers, body)
             .then(function (response) {
