@@ -14,10 +14,10 @@ var webhookResource = `${utils.getWebhookUrl()}/${utils.randomChannelName()}`;
 
 describe(__filename, function () {
     let isClustered = true;
-
+    const headers = { 'Content-Type': 'application/json' };
     it('determines if this is a single or clustered hub', async () => {
         const url = `${hubUrlBase}/internal/properties`;
-        const response = await hubClientGet(url);
+        const response = await hubClientGet(url, headers);
         expect(getProp('statusCode', response)).toEqual(200);
         const properties = fromObjectPath(['body', 'properties'], response) || {};
         const hubType = properties['hub.type'];
@@ -34,8 +34,7 @@ describe(__filename, function () {
     });
 
     it('creates a webhook pointing at localhost', (done) => {
-        let headers = {'Content-Type': 'application/json'};
-        let body = {
+        const body = {
             callbackUrl: 'http://localhost:8080/nothing',
             channelUrl: channelResource,
         };
