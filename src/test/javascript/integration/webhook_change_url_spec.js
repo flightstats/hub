@@ -3,6 +3,7 @@ const {
     fromObjectPath,
     getProp,
     hubClientPost,
+    hubClientPut,
 } = require('../lib/helpers');
 const moment = require('moment');
 
@@ -29,24 +30,20 @@ describe(__filename, () => {
     const postedItems = [];
     const callbackItems = [];
 
-    it('creates a channel', (done) => {
-        utils.httpPut(channelResource)
-            .then(response => expect(getProp('statusCode', response)).toEqual(201))
-            .finally(done);
+    it('creates a channel', async () => {
+        const response = await hubClientPut(channelResource);
+        expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    it('creates a webhook', (done) => {
+    it('creates a webhook', async () => {
         const headers = { 'Content-Type': 'application/json' };
         const payload = {
             channelUrl: channelResource,
             callbackUrl: 'http://nothing:8080/nothing',
         };
-        utils.httpPut(webhookResource, headers, payload)
-            .then(response => {
-                expect(getProp('statusCode', response)).toEqual(201);
-                console.log('callbackURL:', fromObjectPath(['body', 'callbackUrl'], response));
-            })
-            .finally(done);
+        const response = await hubClientPut(webhookResource, headers, payload);
+        expect(getProp('statusCode', response)).toEqual(201);
+        console.log('callbackURL:', fromObjectPath(['body', 'callbackUrl'], response));
     });
 
     it('posts an item to our channel', async () => {
@@ -68,18 +65,15 @@ describe(__filename, () => {
         }, done);
     });
 
-    it('updates the webhook\'s callbackURL', (done) => {
+    it('updates the webhook\'s callbackURL', async () => {
         const headers = { 'Content-Type': 'application/json' };
         const payload = {
             channelUrl: channelResource,
             callbackUrl: callbackServerURL,
         };
-        utils.httpPut(webhookResource, headers, payload)
-            .then(response => {
-                expect(getProp('statusCode', response)).toEqual(200);
-                console.log('callbackURL:', fromObjectPath(['body', 'callbackUrl'], response));
-            })
-            .finally(done);
+        const response = await hubClientPut(webhookResource, headers, payload);
+        expect(getProp('statusCode', response)).toEqual(200);
+        console.log('callbackURL:', fromObjectPath(['body', 'callbackUrl'], response));
     });
 
     it('posts an item to our channel', async () => {
