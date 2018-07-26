@@ -5,6 +5,7 @@ const moment = require('moment');
 const channelResource = `${channelUrl}/${utils.randomChannelName()}`;
 const webhookName = utils.randomChannelName();
 const webhookResource = `${utils.getWebhookUrl()}/${webhookName}`;
+const headers = { 'Content-Type': 'application/json' };
 
 describe(__filename, () => {
     let callbackServer;
@@ -36,8 +37,7 @@ describe(__filename, () => {
     });
 
     it('creates a webhook', (done) => {
-        let headers = {'Content-Type': 'application/json'};
-        let payload = {
+        const payload = {
             channelUrl: channelResource,
             callbackUrl: callbackServerURL,
             callbackTimeoutSeconds: 1,
@@ -48,7 +48,7 @@ describe(__filename, () => {
     });
 
     it('verify default max attempts is 0', async () => {
-        const response = await hubClientGet(webhookResource);
+        const response = await hubClientGet(webhookResource, headers);
         expect(getProp('statusCode', response)).toEqual(200);
         const maxAttempts = fromObjectPath(['body', 'maxAttempts'], response);
         console.log('maxAttempts:', maxAttempts);
@@ -56,7 +56,6 @@ describe(__filename, () => {
     });
 
     it('updates the max attempts to 1', (done) => {
-        let headers = {'Content-Type': 'application/json'};
         let payload = {maxAttempts: 1};
         utils.httpPut(webhookResource, headers, payload)
             .then(response => {
@@ -104,7 +103,7 @@ describe(__filename, () => {
     });
 
     it('verifies the webhook gave up after 1 attempt', async () => {
-        const response = await hubClientGet(webhookResource);
+        const response = await hubClientGet(webhookResource, headers);
         expect(getProp('statusCode', response)).toEqual(200);
         const body = getProp('body', response) || {};
         console.log(body);
