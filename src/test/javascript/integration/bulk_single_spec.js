@@ -1,14 +1,13 @@
 require('../integration_config');
 const request = require('request');
 const {
-  fromObjectPath,
-  getProp,
+    fromObjectPath,
+    getProp,
 } = require('../lib/helpers');
 
 var channelName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
 var testName = __filename;
-
 
 /**
  * create a channel

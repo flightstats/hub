@@ -87,13 +87,10 @@ const hubClientPost = async (url, headers = {}, body = '') => {
         const responseBody = getProp('body', response);
         const statusCode = getProp('statusCode', response);
         console.log('POST <', url, statusCode);
-        if (!json && responseBody) {
-            try {
-                response.body = JSON.parse(body);
-            } catch (error) {
-                response.body = body;
-                console.warn('Response header says the content is JSON but it couldn\'t be parsed');
-            }
+        try {
+            response.body = JSON.parse(responseBody) || {};
+        } catch (error) {
+            response.body = responseBody || {};
         }
         return response;
     } catch (ex) {
