@@ -1,7 +1,7 @@
 require('../integration_config');
 const { getProp, fromObjectPath, hubClientGet } = require('../lib/helpers');
 const channelResource = `${channelUrl}/${utils.randomChannelName()}`;
-var webhookResource = `${utils.getWebhookUrl()}/${utils.randomChannelName()}`;
+const webhookResource = `${utils.getWebhookUrl()}/${utils.randomChannelName()}`;
 
 /**
  * This should:
