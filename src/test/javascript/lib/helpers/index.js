@@ -10,6 +10,7 @@ const {
     getHubItem,
     hubClientDelete,
     hubClientGet,
+    hubClientPatch,
     hubClientPost,
     hubClientPut,
 } = require('./hub-client');
@@ -21,6 +22,7 @@ module.exports = {
     getHubItem,
     hubClientDelete,
     hubClientGet,
+    hubClientPatch,
     hubClientPost,
     hubClientPut,
     randomChannelName,

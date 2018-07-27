@@ -3,6 +3,7 @@ const {
     hubClientGet,
     fromObjectPath,
     getProp,
+    hubClientPatch,
     hubClientPost,
 } = require('../lib/helpers');
 
@@ -21,18 +22,13 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    it('updates the channel TTL', function (done) {
-        const url = channelResource;
-        const body = {'ttlMillis': null};
-
-        utils.httpPatch(url, headers, body)
-            .then(function (response) {
-                expect(getProp('statusCode', response)).toEqual(200);
-                const contentType = fromObjectPath(['headers', 'content-type'], response);
-                const name = fromObjectPath(['body', 'name'], response);
-                expect(contentType).toEqual('application/json');
-                expect(name).toEqual(channelName);
-            })
-            .finally(done);
+    it('updates the channel TTL', async () => {
+        const body = { ttlMillis: null };
+        const response = await hubClientPatch(channelResource, headers, body);
+        expect(getProp('statusCode', response)).toEqual(200);
+        const contentType = fromObjectPath(['headers', 'content-type'], response);
+        const name = fromObjectPath(['body', 'name'], response);
+        expect(contentType).toEqual('application/json');
+        expect(name).toEqual(channelName);
     });
 });

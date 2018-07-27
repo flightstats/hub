@@ -49,6 +49,40 @@ const hubClientDelete = async (url, headers = {}) => {
     }
 };
 
+const hubClientUpdates = async (url, headers = {}, body = '', method) => {
+    const formattedHeaders = utils.keysToLowerCase(headers);
+    const json = !!formattedHeaders['content-type'] &&
+        !!formattedHeaders['content-type'].includes('json');
+    const options = {
+        method,
+        url,
+        headers: formattedHeaders,
+        body,
+        resolveWithFullResponse: true,
+        json,
+    };
+    const bytes = (options.json) ? JSON.stringify(body).length : body.length;
+    console.log(`${method} >`, url, headers, bytes);
+    try {
+        const response = await rp(options);
+        const responseBody = getProp('body', response);
+        const statusCode = getProp('statusCode', response);
+        console.log(`${method} <`, url, statusCode);
+        try {
+            response.body = JSON.parse(responseBody) || {};
+        } catch (error) {
+            response.body = responseBody || {};
+        }
+        return response;
+    } catch (ex) {
+        const response = getProp('response', ex) || {};
+        const statusCode = getProp('statusCode', response);
+        console.log(`error in hubClient: url:: ${url} ::: ${ex}`);
+        console.log(`${method} <`, url, statusCode);
+        return response;
+    }
+};
+
 const hubClientGet = async (url, headers = {}, isBinary) => {
     const formattedHeaders = utils.keysToLowerCase(headers);
     const json = !!formattedHeaders['content-type'] &&
@@ -92,74 +126,19 @@ const hubClientGet = async (url, headers = {}, isBinary) => {
     }
 };
 
+const hubClientPatch = async (url, headers = {}, body = '') => {
+    const response = await hubClientUpdates(url, headers, body, 'PATCH');
+    return response;
+};
+
 const hubClientPost = async (url, headers = {}, body = '') => {
-    const formattedHeaders = utils.keysToLowerCase(headers);
-    const json = !!formattedHeaders['content-type'] &&
-        !!formattedHeaders['content-type'].includes('json');
-    const options = {
-        method: 'POST',
-        url,
-        headers: formattedHeaders,
-        body,
-        resolveWithFullResponse: true,
-        json,
-    };
-    const bytes = (options.json) ? JSON.stringify(body).length : body.length;
-    console.log('POST >', url, headers, bytes);
-    try {
-        const response = await rp(options);
-        const responseBody = getProp('body', response);
-        const statusCode = getProp('statusCode', response);
-        console.log('POST <', url, statusCode);
-        try {
-            response.body = JSON.parse(responseBody) || {};
-        } catch (error) {
-            response.body = responseBody || {};
-        }
-        return response;
-    } catch (ex) {
-        const response = getProp('response', ex) || {};
-        const statusCode = getProp('statusCode', response);
-        console.log(`error in hubClientPost: url:: ${url} ::: ${ex}`);
-        console.log('POST <', url, statusCode);
-        return response;
-    }
+    const response = await hubClientUpdates(url, headers, body, 'POST');
+    return response;
 };
 
 const hubClientPut = async (url, headers = {}, body = '') => {
-    const formattedHeaders = utils.keysToLowerCase(headers);
-    const json = !!formattedHeaders['content-type'] &&
-        !!formattedHeaders['content-type'].includes('json');
-
-    const options = {
-        url,
-        method: 'PUT',
-        headers: formattedHeaders || {},
-        body,
-        resolveWithFullResponse: true,
-        json,
-    };
-
-    const bytes = json ? JSON.stringify(body).length : body.length;
-    console.log('PUT >', url, headers, bytes);
-    try {
-        const response = await rp(options);
-        const responseBody = getProp('body', response);
-        const statusCode = getProp('statusCode', response);
-        console.log('PUT <', url, statusCode);
-        try {
-            response.body = JSON.parse(responseBody) || {};
-        } catch (error) {
-            response.body = responseBody || {};
-        }
-        return response;
-    } catch (ex) {
-        const response = getProp('response', ex) || {};
-        const statusCode = getProp('statusCode', response);
-        console.log(`error in hubClientPut: url:: ${url} ::: ${ex}`);
-        console.log('PUT <', url, statusCode);
-        return response;
-    }
+    const response = await hubClientUpdates(url, headers, body, 'PUT');
+    return response;
 };
 
 const followRedirectIfPresent = async (response, headers = {}) => {
@@ -197,6 +176,7 @@ module.exports = {
     getHubItem,
     hubClientDelete,
     hubClientGet,
+    hubClientPatch,
     hubClientPost,
     hubClientPut,
 };
