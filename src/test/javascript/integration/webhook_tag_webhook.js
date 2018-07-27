@@ -1,5 +1,10 @@
 require('../integration_config');
-const { getProp, hubClientGet, hubClientPut } = require('../lib/helpers');
+const {
+    getProp,
+    hubClientGet,
+    hubClientPut,
+    hubClientDelete,
+} = require('../lib/helpers');
 const tag = utils.randomTag();
 const tagURL = `${hubUrlBase}/tag/${tag}`;
 const tagWebhookPrototypeURL = `${utils.getWebhookUrl()}/TAGWHPROTO_${tag}`;
@@ -66,10 +71,9 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(404);
     });
 
-    it('removes the tag webhook prototype', (done) => {
-        utils.httpDelete(tagWebhookPrototypeURL)
-            .then(response => expect(getProp('statusCode', response)).toEqual(202))
-            .finally(done);
+    it('removes the tag webhook prototype', async () => {
+        const response = await hubClientDelete(tagWebhookPrototypeURL);
+        expect(getProp('statusCode', response)).toEqual(202);
     });
 
     utils.itSleeps(1000);
