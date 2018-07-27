@@ -25,6 +25,30 @@ const createChannel = async (channelName, url, description) => {
     }
 };
 
+const hubClientDelete = async (url, headers = {}) => {
+    const formattedHeaders = utils.keysToLowerCase(headers);
+    const options = {
+        url,
+        method: 'DELETE',
+        headers: formattedHeaders,
+        resolveWithFullResponse: true,
+    };
+
+    console.log('DELETE >', url, formattedHeaders);
+    try {
+        const response = await rp(options);
+        const statusCode = getProp('statusCode', response);
+        console.log('DELETE <', url, statusCode);
+        return response || {};
+    } catch (ex) {
+        const response = getProp('response', ex) || {};
+        console.log(`error in hubClientGet: url:: ${url} ::: ${ex}`);
+        const statusCode = getProp('statusCode', response);
+        console.log('DELETE <', url, statusCode);
+        return response;
+    }
+};
+
 const hubClientGet = async (url, headers = {}, isBinary) => {
     const formattedHeaders = utils.keysToLowerCase(headers);
     const json = !!formattedHeaders['content-type'] &&
@@ -171,6 +195,7 @@ module.exports = {
     createChannel,
     followRedirectIfPresent,
     getHubItem,
+    hubClientDelete,
     hubClientGet,
     hubClientPost,
     hubClientPut,
