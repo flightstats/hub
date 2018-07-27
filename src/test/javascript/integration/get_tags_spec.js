@@ -25,7 +25,7 @@ var channelBody = {
  *
  */
 describe(testName, function () {
-    function getAndMatch(url, nodeName, name, done) {
+    function getAndMatch (url, nodeName, name, done) {
         name = name || tag;
         console.log('calling', url);
         request.get(url,
