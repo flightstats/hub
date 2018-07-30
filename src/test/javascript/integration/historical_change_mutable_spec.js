@@ -1,10 +1,8 @@
 require('../integration_config');
-const { fromObjectPath } = require('../lib/helpers');
+const { getProp, fromObjectPath, hubClientPut } = require('../lib/helpers');
 
-var channel = utils.randomChannelName();
-var moment = require('moment');
-
-var testName = __filename;
+const channel = utils.randomChannelName();
+const moment = require('moment');
 
 /**
  * This should:
@@ -14,19 +12,21 @@ var testName = __filename;
  * Move the mutableTime before the oldest item
  * query latest with epochs
  */
-describe(testName, function () {
+const mutableTime = moment.utc().subtract(1, 'day');
+const headers = { 'Content-Type': 'application/json' };
+const channelBody = {
+    mutableTime: mutableTime.format('YYYY-MM-DDTHH:mm:ss.SSS'),
+    tags: ["test"],
+};
 
-    var mutableTime = moment.utc().subtract(1, 'day');
+describe(__filename, function () {
+    it('creates a channel with mutableTime', async () => {
+        const response = await hubClientPut(`${channelUrl}/${channel}`, headers, channelBody);
+        expect(getProp('statusCode', response)).toEqual(201);
+    });
 
-    var channelBody = {
-        mutableTime: mutableTime.format('YYYY-MM-DDTHH:mm:ss.SSS'),
-        tags: ["test"]
-    };
-
-    utils.putChannel(channel, false, channelBody, testName);
-
-    var channelURL = hubUrlBase + '/channel/' + channel;
-    var historicalLocations = [];
+    const channelURL = `${hubUrlBase}/channel/${channel}`;
+    const historicalLocations = [];
 
     it('posts historical item to ' + channel, function (done) {
         utils.postItemQ(channelURL + '/' + moment(mutableTime).subtract(1, 'hour').format('YYYY/MM/DD/HH/mm/ss/SSS'))
@@ -44,12 +44,15 @@ describe(testName, function () {
             });
     });
 
-    var channelBodyChange = {
+    const channelBodyChange = {
         mutableTime: moment(mutableTime).subtract(1, 'day').format('YYYY-MM-DDTHH:mm:ss.SSS'),
-        tags: ["test"]
+        tags: ["test"],
     };
 
-    utils.putChannel(channel, false, channelBodyChange, testName);
+    it('change the mutableTime backward', async () => {
+        const response = await hubClientPut(`${channelUrl}/${channel}`, headers, channelBodyChange);
+        expect(getProp('statusCode', response)).toEqual(201);
+    });
 
     utils.itRefreshesChannels();
 
@@ -60,5 +63,4 @@ describe(testName, function () {
     it('queries mutable items', function (done) {
         utils.getQuery(channelURL + '/latest/2?trace=true&epoch=MUTABLE', 404, false, done);
     });
-
 });
