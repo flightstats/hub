@@ -7,7 +7,7 @@ const {
 var request = require('request');
 var moment = require('moment');
 var channelName = utils.randomChannelName() + '_AbCdE';
-var channelResource = channelUrl + "/" + channelName;
+const channelResource = `${channelUrl}/${channelName}`;
 var testName = __filename;
 
 describe(testName, function () {

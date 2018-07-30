@@ -3,7 +3,7 @@ const { createChannel, fromObjectPath, getProp } = require('../lib/helpers');
 var WebSocket = require('ws');
 
 var channelName = utils.randomChannelName();
-var channelResource = channelUrl + "/" + channelName;
+const channelResource = `${channelUrl}/${channelName}`;
 let createdChannel = false;
 
 describe(__filename, function () {

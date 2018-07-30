@@ -1,10 +1,9 @@
 require('../integration_config');
-const { getProp, fromObjectPath } = require('../lib/helpers');
-var moment = require('moment');
+const { getProp, fromObjectPath, hubClientGet } = require('../lib/helpers');
+const moment = require('moment');
 
 const channelName = utils.randomChannelName();
-const channelResource = channelUrl + "/" + channelName;
-
+const channelResource = `${channelUrl}/${channelName}`;
 const webhookName = utils.randomChannelName();
 const webhookURL = `http://${hubDomain}/webhook/${webhookName}`;
 
@@ -13,7 +12,6 @@ const contentTypePlain = {'Content-Type': 'text/plain'};
 
 let callbackServer;
 const callbackPort = utils.getPort();
-const callbackURL = `${callbackDomain}:${callbackPort}`;
 const callbackMessages = [];
 const postedItems = [];
 
@@ -21,11 +19,11 @@ let maxCursor = null;
 let minCursor = null;
 
 var webhookConfig = {
-    callbackUrl: callbackURL,
+    callbackUrl: `${callbackDomain}:${callbackPort}`,
     channelUrl: channelResource,
     parallelCalls: 1,
     batch: 'SECOND',
-    heartbeat: true
+    heartbeat: true,
 };
 
 describe(__filename, () => {
@@ -60,12 +58,9 @@ describe(__filename, () => {
     utils.itSleeps(5000);
 
     // Check the latest on the webhook
-    it('sets maxItem', (done) => {
-        utils.httpGet(webhookURL, contentTypeJSON, false)
-            .then(response => {
-                maxCursor = fromObjectPath(['body', 'lastCompleted'], response);
-            })
-            .finally(done);
+    it('sets maxItem', async () => {
+        const response = await hubClientGet(webhookURL, contentTypeJSON);
+        maxCursor = fromObjectPath(['body', 'lastCompleted'], response);
     });
 
     it('moves the cursor backward', (done) => {
@@ -82,14 +77,11 @@ describe(__filename, () => {
 
     utils.itSleeps(5000);
 
-    it('checks to see if latest is before "maxCursor"', (done) => {
-        utils.httpGet(webhookURL, contentTypeJSON, false)
-            .then(response => {
-                const lastCompleted = fromObjectPath(['body', 'lastCompleted'], response);
-                expect(lastCompleted).toBeLessThan(maxCursor);
-                minCursor = lastCompleted;
-            })
-            .finally(done);
+    it('checks to see if latest is before "maxCursor"', async () => {
+        const response = await hubClientGet(webhookURL, contentTypeJSON, false);
+        const lastCompleted = fromObjectPath(['body', 'lastCompleted'], response);
+        expect(lastCompleted).toBeLessThan(maxCursor);
+        minCursor = lastCompleted;
     });
 
     it('moves the cursor forward', (done) => {
@@ -107,14 +99,11 @@ describe(__filename, () => {
 
     utils.itSleeps(5000);
 
-    it('checks to see if latest is after "minCursor"', (done) => {
-        utils.httpGet(webhookURL, contentTypeJSON, false)
-            .then(response => {
-                const lastCompleted = fromObjectPath(['body', 'lastCompleted'], response);
-                expect(lastCompleted).toBeGreaterThan(minCursor);
-                minCursor = lastCompleted;
-            })
-            .finally(done);
+    it('checks to see if latest is after "minCursor"', async () => {
+        const response = await hubClientGet(webhookURL, contentTypeJSON, false);
+        const lastCompleted = fromObjectPath(['body', 'lastCompleted'], response);
+        expect(lastCompleted).toBeGreaterThan(minCursor);
+        minCursor = lastCompleted;
     });
 
     it('closes the callback server', (done) => {
@@ -128,5 +117,4 @@ describe(__filename, () => {
             callbackServer.emit('close');
         });
     });
-
 });

@@ -3,7 +3,7 @@ require('../integration_config');
 
 var request = require('request');
 var channelName = "destination";
-var channelResource = channelUrl + "/" + channelName;
+const channelResource = `${channelUrl}/${channelName}`;
 var testName = __filename;
 var webhookurl = "http://hub.iad.dev.flightstats.io/webhook/Repl_hub_ucs_dev_destination";
 var webhookName = "Repl_hub_ucs_dev_destination";

@@ -4,7 +4,6 @@ const { getProp } = require('../lib/helpers');
 var channelName = utils.randomChannelName();
 
 describe(__filename, function () {
-
     it('creates a channel with an invalid description', function (done) {
         var url = channelUrl;
         var headers = {'Content-Type': 'application/json'};
@@ -16,5 +15,4 @@ describe(__filename, function () {
             })
             .finally(done);
     });
-
 });

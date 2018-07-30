@@ -5,7 +5,7 @@ var request = require('request');
 // var http = require('http'); // TODO: not used?
 var channelName = utils.randomChannelName();
 // var groupName = utils.randomChannelName();  // TODO: not used?
-var channelResource = channelUrl + "/" + channelName;
+const channelResource = `${channelUrl}/${channelName}`;
 var testName = __filename;
 
 /**

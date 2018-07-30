@@ -1,12 +1,11 @@
 require('../integration_config');
-const { getProp, fromObjectPath } = require('../lib/helpers');
-var webhookName1 = utils.randomChannelName();
-var webhookName2 = utils.randomChannelName();
-var webhookUrl = utils.getWebhookUrl();
-var testName = __filename;
-var webhookConfig = {
+const { getProp, fromObjectPath, hubClientGet } = require('../lib/helpers');
+const webhookName1 = utils.randomChannelName();
+const webhookName2 = utils.randomChannelName();
+const webhookUrl = utils.getWebhookUrl();
+const webhookConfig = {
     callbackUrl: 'http://nothing/callback',
-    channelUrl: 'http://nothing/channel/notHere'
+    channelUrl: 'http://nothing/channel/notHere',
 };
 /**
  * This should:
@@ -14,16 +13,12 @@ var webhookConfig = {
  * 1 - create webhooks
  * 2 - make sure they exist
  */
-describe(testName, function () {
-
-    var firstWebhookURL = webhookUrl + '/' + webhookName1;
+const headers = { 'Content-Type': 'application/json' };
+describe(__filename, function () {
+    const firstWebhookURL = `${webhookUrl}/${webhookName1}`;
 
     it('creates the first webhook', function (done) {
-        var url = firstWebhookURL;
-        var headers = {'Content-Type': 'application/json'};
-        var body = webhookConfig;
-
-        utils.httpPut(url, headers, body)
+        utils.httpPut(firstWebhookURL, headers, webhookConfig)
             .then(function (response) {
                 const location = fromObjectPath(['headers', 'location'], response);
                 const body = getProp('body', response) || {};
@@ -39,11 +34,7 @@ describe(testName, function () {
     var secondWebhookURL = webhookUrl + '/' + webhookName2;
 
     it('creates the second webhook', function (done) {
-        var url = secondWebhookURL;
-        var headers = {'Content-Type': 'application/json'};
-        var body = webhookConfig;
-
-        utils.httpPut(url, headers, body)
+        utils.httpPut(secondWebhookURL, headers, webhookConfig)
             .then(function (response) {
                 const location = fromObjectPath(['headers', 'location'], response);
                 const body = getProp('body', response) || {};
@@ -56,27 +47,21 @@ describe(testName, function () {
             .finally(done);
     });
 
-    var foundURLs = [];
+    let foundURLs = [];
 
-    it('gets a list of the webhooks', function (done) {
-        var url = webhookUrl;
-        var headers = {'Content-Type': 'application/json'};
-
-        utils.httpGet(url, headers)
-            .then(function (response) {
-                expect(getProp('statusCode', response)).toBe(200);
-                const selfLink = fromObjectPath(['body', '_links', 'self', 'href'], response);
-                const groups = fromObjectPath(['body', '_links', 'groups'], response);
-                const webhooks = fromObjectPath(['body', '_links', 'webhooks'], response);
-                expect(selfLink).toEqual(webhookUrl);
-                foundURLs = (groups || webhooks)
-                    .map(item => getProp('href', item))
-                    .filter(href =>
-                        [firstWebhookURL, secondWebhookURL]
-                            .some(val =>
-                                val === href));
-            })
-            .finally(done);
+    it('gets a list of the webhooks', async () => {
+        const response = await hubClientGet(webhookUrl, headers);
+        expect(getProp('statusCode', response)).toBe(200);
+        const selfLink = fromObjectPath(['body', '_links', 'self', 'href'], response);
+        const groups = fromObjectPath(['body', '_links', 'groups'], response);
+        const webhooks = fromObjectPath(['body', '_links', 'webhooks'], response);
+        expect(selfLink).toEqual(webhookUrl);
+        foundURLs = (groups || webhooks)
+            .map(item => getProp('href', item))
+            .filter(href =>
+                [firstWebhookURL, secondWebhookURL]
+                    .some(val =>
+                        val === href));
     });
 
     it('verifies we found the correct URLs', function () {
@@ -87,5 +72,4 @@ describe(testName, function () {
 
     utils.deleteWebhook(webhookName1);
     utils.deleteWebhook(webhookName2);
-
 });

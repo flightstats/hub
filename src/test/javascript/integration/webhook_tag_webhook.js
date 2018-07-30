@@ -1,5 +1,5 @@
 require('../integration_config');
-const { getProp } = require('../lib/helpers');
+const { getProp, hubClientGet } = require('../lib/helpers');
 const tag = utils.randomTag();
 const tagURL = `${hubUrlBase}/tag/${tag}`;
 const tagWebhookPrototypeURL = `${utils.getWebhookUrl()}/TAGWHPROTO_${tag}`;
@@ -15,21 +15,19 @@ const channelTwoWebhookURL = `${utils.getWebhookUrl()}/TAGWH_${tag}_${channelTwo
 const acceptJSON = { "Content-Type": "application/json" };
 
 describe(__filename, function () {
-
     it('creates a tag webhook prototype', (done) => {
         const config = {
             "callbackUrl": "http://nothing/callback",
-            "tagUrl": tagURL
+            "tagUrl": tagURL,
         };
         utils.httpPut(tagWebhookPrototypeURL, acceptJSON, config)
             .then(response => expect(getProp('statusCode', response)).toEqual(201))
             .finally(done);
     });
 
-    it('verifies the tag webhook prototype exists', (done) => {
-        utils.httpGet(tagWebhookPrototypeURL)
-            .then(response => expect(getProp('statusCode', response)).toEqual(200))
-            .finally(done);
+    it('verifies the tag webhook prototype exists', async () => {
+        const response = await hubClientGet(tagWebhookPrototypeURL);
+        expect(getProp('statusCode', response)).toEqual(200);
     });
 
     it(`creates channel one with tag ${tag}`, (done) => {
@@ -48,16 +46,14 @@ describe(__filename, function () {
 
     utils.itSleeps(1000);
 
-    it('verifies a webhook for channel one exists', (done) => {
-        utils.httpGet(channelOneWebhookURL)
-            .then(response => expect(getProp('statusCode', response)).toEqual(200))
-            .finally(done);
+    it('verifies a webhook for channel one exists', async () => {
+        const response = await hubClientGet(channelOneWebhookURL);
+        expect(getProp('statusCode', response)).toEqual(200);
     });
 
-    it('verifies a webhook for channel two exists', (done) => {
-        utils.httpGet(channelTwoWebhookURL)
-            .then(response => expect(getProp('statusCode', response)).toEqual(200))
-            .finally(done);
+    it('verifies a webhook for channel two exists', async () => {
+        const response = await hubClientGet(channelTwoWebhookURL);
+        expect(getProp('statusCode', response)).toEqual(200);
     });
 
     it('removes the tag from channel one', (done) => {
@@ -69,10 +65,9 @@ describe(__filename, function () {
 
     utils.itSleeps(1000);
 
-    it('verifies the webhook created for channel one is removed', (done) => {
-        utils.httpGet(channelOneWebhookURL)
-            .then(response => expect(getProp('statusCode', response)).toEqual(404))
-            .finally(done);
+    it('verifies the webhook created for channel one is removed', async () => {
+        const response = await hubClientGet(channelOneWebhookURL);
+        expect(getProp('statusCode', response)).toEqual(404);
     });
 
     it('removes the tag webhook prototype', (done) => {
@@ -83,10 +78,8 @@ describe(__filename, function () {
 
     utils.itSleeps(1000);
 
-    it('verifies the webhook created for channel two is removed', (done) => {
-        utils.httpGet(channelTwoWebhookURL)
-            .then(response => expect(getProp('statusCode', response)).toEqual(404))
-            .finally(done);
+    it('verifies the webhook created for channel two is removed', async () => {
+        const response = await hubClientGet(channelTwoWebhookURL);
+        expect(getProp('statusCode', response)).toEqual(404);
     });
-
 });

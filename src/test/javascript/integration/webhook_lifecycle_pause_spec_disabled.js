@@ -4,7 +4,7 @@ require('../integration_config');
 
 var channelName = utils.randomChannelName();
 var webhookName = utils.randomChannelName();
-var channelResource = channelUrl + "/" + channelName;
+const channelResource = `${channelUrl}/${channelName}`;
 var testName = __filename;
 var port = utils.getPort();
 var callbackUrl = callbackDomain + ':' + port + '/';

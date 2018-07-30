@@ -1,18 +1,18 @@
 require('../integration_config');
-const { fromObjectPath, getProp } = require('../lib/helpers');
+const { fromObjectPath, getProp, hubClientGet } = require('../lib/helpers');
 const moment = require('moment');
 
 const channelResource = `${channelUrl}/${utils.randomChannelName()}`;
 const webhookName = utils.randomChannelName();
 const webhookResource = `${utils.getWebhookUrl()}/${webhookName}`;
+const headers = { 'Content-Type': 'application/json' };
 
 describe(__filename, () => {
-
     let callbackServer;
-    let callbackServerPort = utils.getPort();
-    let callbackServerURL = `${callbackDomain}:${callbackServerPort}/${webhookName}`;
-    let postedItems = [];
-    let callbackItems = [];
+    const callbackServerPort = utils.getPort();
+    const callbackServerURL = `${callbackDomain}:${callbackServerPort}/${webhookName}`;
+    const postedItems = [];
+    const callbackItems = [];
 
     it('creates a channel', (done) => {
         utils.httpPut(channelResource)
@@ -37,30 +37,25 @@ describe(__filename, () => {
     });
 
     it('creates a webhook', (done) => {
-        let headers = {'Content-Type': 'application/json'};
-        let payload = {
+        const payload = {
             channelUrl: channelResource,
             callbackUrl: callbackServerURL,
-            callbackTimeoutSeconds: 1
+            callbackTimeoutSeconds: 1,
         };
         utils.httpPut(webhookResource, headers, payload)
             .then(response => expect(getProp('statusCode', response)).toEqual(201))
             .finally(done);
     });
 
-    it('verify default max attempts is 0', (done) => {
-        utils.httpGet(webhookResource)
-            .then(response => {
-                expect(getProp('statusCode', response)).toEqual(200);
-                const maxAttempts = fromObjectPath(['body', 'maxAttempts'], response);
-                console.log('maxAttempts:', maxAttempts);
-                expect(maxAttempts).toEqual(0);
-            })
-            .finally(done);
+    it('verify default max attempts is 0', async () => {
+        const response = await hubClientGet(webhookResource, headers);
+        expect(getProp('statusCode', response)).toEqual(200);
+        const maxAttempts = fromObjectPath(['body', 'maxAttempts'], response);
+        console.log('maxAttempts:', maxAttempts);
+        expect(maxAttempts).toEqual(0);
     });
 
     it('updates the max attempts to 1', (done) => {
-        let headers = {'Content-Type': 'application/json'};
         let payload = {maxAttempts: 1};
         utils.httpPut(webhookResource, headers, payload)
             .then(response => {
@@ -107,33 +102,29 @@ describe(__filename, () => {
         expect(callbackItems.length).toEqual(1);
     });
 
-    it('verifies the webhook gave up after 1 attempt', (done) => {
-        utils.httpGet(webhookResource)
-            .then(response => {
-                expect(getProp('statusCode', response)).toEqual(200);
-                const body = getProp('body', response) || {};
-                console.log(body);
-                const {
-                    channelLatest,
-                    errors = [],
-                    inFlight = [],
-                    lastCompleted,
-                } = body;
-                expect(lastCompleted).toEqual(channelLatest);
-                expect(body.inFlight).toBeDefined();
-                expect(inFlight.length).toEqual(0);
-                expect(errors.length).toEqual(2);
-                let contentKey = (postedItems[0] || '').replace(`${channelResource}/`, '');
-                expect(errors[0]).toContain(contentKey);
-                expect(errors[0]).toContain('400 Bad Request');
-                expect(errors[1]).toContain(`${contentKey} has reached max attempts (1)`);
-            })
-            .finally(done);
+    it('verifies the webhook gave up after 1 attempt', async () => {
+        const response = await hubClientGet(webhookResource, headers);
+        expect(getProp('statusCode', response)).toEqual(200);
+        const body = getProp('body', response) || {};
+        console.log(body);
+        const {
+            channelLatest,
+            errors = [],
+            inFlight = [],
+            lastCompleted,
+        } = body;
+        expect(lastCompleted).toEqual(channelLatest);
+        expect(body.inFlight).toBeDefined();
+        expect(inFlight.length).toEqual(0);
+        expect(errors.length).toEqual(2);
+        let contentKey = (postedItems[0] || '').replace(`${channelResource}/`, '');
+        expect(errors[0]).toContain(contentKey);
+        expect(errors[0]).toContain('400 Bad Request');
+        expect(errors[1]).toContain(`${contentKey} has reached max attempts (1)`);
     });
 
     it('closes the callback server', function (done) {
         expect(callbackServer).toBeDefined();
         utils.closeServer(callbackServer, done);
     });
-
 });

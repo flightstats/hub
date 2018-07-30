@@ -6,7 +6,7 @@ const {
 } = require('../lib/helpers');
 
 var channelName = utils.randomChannelName();
-var channelResource = channelUrl + "/" + channelName;
+const channelResource = `${channelUrl}/${channelName}`;
 var testName = __filename;
 let createdChannel = false;
 

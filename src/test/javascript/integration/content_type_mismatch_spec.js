@@ -2,14 +2,14 @@ require('../integration_config');
 const {
     fromObjectPath,
     getProp,
+    hubClientGet,
 } = require('../lib/helpers');
 
 var channelName = utils.randomChannelName();
-var channelResource = channelUrl + "/" + channelName;
+const channelResource = `${channelUrl}/${channelName}`;
 var messageText = "MY SUPER TEST CASE: this & <that>. " + Math.random().toString();
 
 describe(__filename, function () {
-
     it('creates a channel', function (done) {
         var url = channelUrl;
         var headers = {'Content-Type': 'application/json'};
@@ -42,16 +42,10 @@ describe(__filename, function () {
             .finally(done);
     });
 
-    it('verifies an error is returned when content-type doesn\'t match the accept header', function (done) {
-        if (!itemURL) return done.fail('itemURL failed initialization in previous test');
-        var url = itemURL;
-        var headers = {'Accept': 'application/json'};
-
-        utils.httpGet(url, headers)
-            .then(function (response) {
-                expect(getProp('statusCode', response)).toEqual(406);
-            })
-            .finally(done);
+    it('verifies an error is returned when content-type doesn\'t match the accept header', async () => {
+        if (!itemURL) return fail('itemURL failed initialization in previous test');
+        const headers = { 'Accept': 'application/json' };
+        const response = await hubClientGet(itemURL, headers);
+        expect(getProp('statusCode', response)).toEqual(406);
     });
-
 });

@@ -9,7 +9,7 @@ var testName = __filename;
 describe("creates malformed" + testName, function () {
 
     var channelUrl = hubUrlBase + '/channel';
-    var channelResource = channelUrl + "/" + channelName;
+    const channelResource = `${channelUrl}/${channelName}`;
 
     it('creates channel ' + channelName, function (done) {
         console.log('creating channel ' + channelName + ' for ' + testName);

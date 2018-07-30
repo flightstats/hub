@@ -1,20 +1,17 @@
 require('../integration_config');
 const {
-  fromObjectPath,
-  getProp,
+    fromObjectPath,
+    getProp,
+    hubClientGet,
 } = require('../lib/helpers');
 
 const channelName = utils.randomChannelName();
 const channelResource = channelUrl + "/" + channelName;
 
 describe(__filename, function () {
-
-    it('verifies the channel doesn\'t exist', function (done) {
-        utils.httpGet(channelResource)
-            .then(function (response) {
-                expect(getProp('statusCode', response)).toEqual(404);
-            })
-            .finally(done);
+    it('verifies the channel doesn\'t exist', async () => {
+        const response = await hubClientGet(channelResource);
+        expect(getProp('statusCode', response)).toEqual(404);
     });
 
     it('creates the channel', function (done) {
@@ -28,16 +25,16 @@ describe(__filename, function () {
                 const responseBody = getProp('body', response);
                 expect(getProp('statusCode', response)).toEqual(201);
                 const [contentType, location] = ['content-type', 'location']
-                  .map(key => getProp(key, headers));
+                    .map(key => getProp(key, headers));
                 const selfLink = fromObjectPath(['_links', 'self', 'href'], responseBody);
                 const [
-                  name,
-                  ttlDays,
-                  description,
-                  replicationSource,
-                  storage,
+                    name,
+                    ttlDays,
+                    description,
+                    replicationSource,
+                    storage,
                 ] = ['name', 'ttlDays', 'description', 'replicationSource', 'storage']
-                  .map(key => getProp(key, responseBody));
+                    .map(key => getProp(key, responseBody));
                 expect(contentType).toEqual('application/json');
                 expect(location).toEqual(channelResource);
                 expect(selfLink).toEqual(channelResource);
@@ -50,12 +47,8 @@ describe(__filename, function () {
             .finally(done);
     });
 
-    it('verifies the channel does exist', function (done) {
-        utils.httpGet(channelResource)
-            .then(function (response) {
-                expect(getProp('statusCode', response)).toEqual(200);
-            })
-            .finally(done);
+    it('verifies the channel does exist', async () => {
+        const response = await hubClientGet(channelResource);
+        expect(getProp('statusCode', response)).toEqual(200);
     });
-
 });

@@ -2,7 +2,7 @@ require('../integration_config');
 const { getProp } = require('../lib/helpers');
 
 var channelName = "no_way_jose90928280xFF";
-var channelResource = channelUrl + "/" + channelName;
+const channelResource = `${channelUrl}/${channelName}`;
 
 describe(__filename, function () {
     it('gets channel metadata for a nonexistent channel', function (done) {

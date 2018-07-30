@@ -3,11 +3,13 @@ const {
     createChannel,
     fromObjectPath,
     getProp,
+    hubClientGet,
 } = require('../lib/helpers');
-var moment = require('moment');
-var channelName = utils.randomChannelName();
-var channelResource = `${channelUrl}/${channelName}`;
+const moment = require('moment');
+const channelName = utils.randomChannelName();
+const channelResource = `${channelUrl}/${channelName}`;
 let createdChannel = false;
+const headers = { 'Content-Type': 'application/json' };
 
 /**
  * This should:
@@ -19,8 +21,8 @@ let createdChannel = false;
  */
 
 function trimWordRandomly (word) {
-    if (!word && word.length) return '';
-    let trimLocation = Math.floor(Math.random() * (word.length - 2)) + 2;
+    if (!word) return '';
+    const trimLocation = Math.floor(Math.random() * (word.length - 2)) + 2;
     return word.slice(0, trimLocation);
 }
 
@@ -84,93 +86,83 @@ describe(__filename, () => {
             });
     });
 
-    it('gets latest ascending items', (done) => {
-        if (!createdChannel) return done.fail('channel not created in before block');
+    it('gets latest ascending items', async () => {
+        if (!createdChannel) return fail('channel not created in before block');
         let order = trimWordRandomly('ascending');
-        utils.httpGet(`${channelResource}/latest/4?stable=false&order=${order}`)
-            .then(expectURIsInAscendingOrder)
-            .finally(done);
+        const response = await hubClientGet(`${channelResource}/latest/4?stable=false&order=${order}`, headers);
+        expectURIsInAscendingOrder(response);
     });
 
-    it('gets latest baloney order items', (done) => {
-        if (!createdChannel) return done.fail('channel not created in before block');
+    it('gets latest baloney order items', async () => {
+        if (!createdChannel) return fail('channel not created in before block');
         let order = 'baloney';
-        utils.httpGet(`${channelResource}/latest/4?stable=false&order=${order}`)
-            .then(expectURIsInAscendingOrder)
-            .finally(done);
+        const response = await hubClientGet(`${channelResource}/latest/4?stable=false&order=${order}`, headers);
+        expectURIsInAscendingOrder(response);
     });
 
-    it('gets descending earliest', (done) => {
-        // secondDo(`${channelResource}/earliest/4?stable=false&order=desc`, descendingItems, done);
-        if (!createdChannel) return done.fail('channel not created in before block');
+    // secondDo(`${channelResource}/earliest/4?stable=false&order=desc`, descendingItems, done);
+    it('gets descending earliest', async () => {
+        if (!createdChannel) return fail('channel not created in before block');
         let order = trimWordRandomly('descending');
-        utils.httpGet(`${channelResource}/earliest/4?stable=false&order=${order}`)
-            .then(expectURIsInDescendingOrder)
-            .finally(done);
+        const response = await hubClientGet(`${channelResource}/earliest/4?stable=false&order=${order}`, headers);
+        expectURIsInDescendingOrder(response);
     });
 
-    it('gets descending latest', (done) => {
-        if (!createdChannel) return done.fail('channel not created in before block');
+    it('gets descending latest', async () => {
+        if (!createdChannel) return fail('channel not created in before block');
         let order = trimWordRandomly('descending');
-        utils.httpGet(`${channelResource}/latest/4?stable=false&order=${order}`)
-            .then(expectURIsInDescendingOrder)
-            .finally(done);
+        const response = await hubClientGet(`${channelResource}/latest/4?stable=false&order=${order}`, headers);
+        expectURIsInDescendingOrder(response);
     });
 
-    it('gets descending next', (done) => {
-        if (!createdChannel) return done.fail('channel not created in before block');
+    it('gets descending next', async () => {
+        if (!createdChannel) return fail('channel not created in before block');
         let oneMinuteAgo = moment.utc().subtract(1, 'minute').format('YYYY/MM/DD/HH/mm/ss/SSS');
         let order = trimWordRandomly('descending');
-        utils.httpGet(`${channelResource}/${oneMinuteAgo}/A/next/4?stable=false&order=${order}`)
-            .then(expectURIsInDescendingOrder)
-            .finally(done);
+        const response = await hubClientGet(`${channelResource}/${oneMinuteAgo}/A/next/4?stable=false&order=${order}`, headers);
+        expectURIsInDescendingOrder(response);
     });
 
-    it('gets descending previous', (done) => {
-        if (!createdChannel) return done.fail('channel not created in before block');
+    it('gets descending previous', async () => {
+        if (!createdChannel) return fail('channel not created in before block');
         let oneMinuteInTheFuture = moment.utc().add(1, 'minute').format('YYYY/MM/DD/HH/mm/ss/SSS');
         let order = trimWordRandomly('descending');
-        utils.httpGet(`${channelResource}/${oneMinuteInTheFuture}/A/previous/4?stable=false&order=${order}`)
-            .then(expectURIsInDescendingOrder)
-            .finally(done);
+        const response = await hubClientGet(`${channelResource}/${oneMinuteInTheFuture}/A/previous/4?stable=false&order=${order}`, headers);
+        expectURIsInDescendingOrder(response);
     });
 
-    it('gets descending hour', (done) => {
-        if (!createdChannel) return done.fail('channel not created in before block');
+    it('gets descending hour', async () => {
+        if (!createdChannel) return fail('channel not created in before block');
         let now = moment.utc().format('YYYY/MM/DD/HH');
         let order = trimWordRandomly('descending');
-        utils.httpGet(`${channelResource}/${now}?stable=false&order=${order}`)
-            .then(expectURIsInDescendingOrder)
-            .finally(done);
+        const response = await hubClientGet(`${channelResource}/${now}?stable=false&order=${order}`, headers);
+        expectURIsInDescendingOrder(response);
     });
 
-    it('bulk get', (done) => {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        let oneMinuteAgo = moment.utc().subtract(1, 'minute').format('YYYY/MM/DD/HH/mm/ss/SSS');
-        let order = trimWordRandomly('descending');
-        let url = `${channelResource}/${oneMinuteAgo}/A/next/4?stable=false&order=${order}&bulk=true`;
-        utils.httpGet(url)
-            .then(response => {
-                expect(getProp('statusCode', response)).toBe(200);
-                const body = getProp('body', response) || [];
-                console.log(body);
-                let descendingItems = postedItems.slice().reverse();
-                let first = body.indexOf(descendingItems[0]);
-                let second = body.indexOf(descendingItems[1]);
-                let third = body.indexOf(descendingItems[2]);
-                let fourth = body.indexOf(descendingItems[3]);
+    it('bulk get', async () => {
+        if (!createdChannel) return fail('channel not created in before block');
+        const oneMinuteAgo = moment.utc().subtract(1, 'minute').format('YYYY/MM/DD/HH/mm/ss/SSS');
+        const order = trimWordRandomly('descending');
+        const url = `${channelResource}/${oneMinuteAgo}/A/next/4?stable=false&order=${order}&bulk=true`;
+        const response = await hubClientGet(url);
+        expect(getProp('statusCode', response)).toBe(200);
+        const body = getProp('body', response) || [];
+        // console.log(body);
+        const descendingItems = postedItems.slice().reverse();
+        const first = body.indexOf(descendingItems[0]);
+        const second = body.indexOf(descendingItems[1]);
+        const third = body.indexOf(descendingItems[2]);
+        const fourth = body.indexOf(descendingItems[3]);
 
-                // all the items should be present
-                expect(first).not.toEqual(-1);
-                expect(second).not.toEqual(-1);
-                expect(third).not.toEqual(-1);
-                expect(fourth).not.toEqual(-1);
+        // all the items should be present
+        expect(first).not.toEqual(-1);
+        expect(second).not.toEqual(-1);
+        expect(third).not.toEqual(-1);
+        expect(fourth).not.toEqual(-1);
 
-                // they should be in the correct order
-                expect(first).toBeLessThan(second);
-                expect(second).toBeLessThan(third);
-                expect(third).toBeLessThan(fourth);
-            })
-            .finally(done);
+        // they should be in the correct order
+        expect(first).toBeLessThan(second);
+        expect(second).toBeLessThan(third);
+        expect(third).toBeLessThan(fourth);
     });
 });

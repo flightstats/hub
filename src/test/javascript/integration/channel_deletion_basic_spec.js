@@ -3,7 +3,7 @@ const { createChannel, getProp } = require('../lib/helpers');
 
 var request = require('request');
 var channelName = utils.randomChannelName();
-var channelResource = channelUrl + "/" + channelName;
+const channelResource = `${channelUrl}/${channelName}`;
 let channelCreated = false;
 
 describe(__filename, function () {

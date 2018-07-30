@@ -2,7 +2,7 @@ require('../integration_config');
 const { createChannel, getProp, fromObjectPath } = require('../lib/helpers');
 var channelName = utils.randomChannelName();
 var webhookName = utils.randomChannelName();
-var channelResource = channelUrl + "/" + channelName;
+const channelResource = `${channelUrl}/${channelName}`;
 var testName = __filename;
 let createdChannel = false;
 /**
