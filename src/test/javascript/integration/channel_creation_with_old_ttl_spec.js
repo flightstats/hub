@@ -1,18 +1,14 @@
 require('../integration_config');
-const { getProp } = require('../lib/helpers');
-
-var channelName = utils.randomChannelName();
+const { getProp, hubClientPost } = require('../lib/helpers');
 
 describe(__filename, function () {
-    it('creates a channel with an old TTL', function (done) {
-        var url = channelUrl;
-        var headers = {'Content-Type': 'application/json'};
-        var body = {'name': channelName, 'ttlMillis': 0};
-
-        utils.httpPost(url, headers, body)
-            .then(function (response) {
-                expect(getProp('statusCode', response)).toEqual(201);
-            })
-            .finally(done);
+    it('creates a channel with an old TTL', async () => {
+        const headers = { 'Content-Type': 'application/json' };
+        const body = {
+            'name': utils.randomChannelName(),
+            'ttlMillis': 0,
+        };
+        const response = await hubClientPost(channelUrl, headers, body);
+        expect(getProp('statusCode', response)).toEqual(201);
     });
 });
