@@ -1,45 +1,46 @@
 require('../integration_config');
-const { getProp } = require('../lib/helpers');
+const { getProp, hubClientPut } = require('../lib/helpers');
 
-var channel = utils.randomChannelName();
-var moment = require('moment');
-
-var tag = Math.random().toString().replace(".", "");
-var testName = __filename;
-
+const channel = utils.randomChannelName();
+const moment = require('moment');
+const tag = Math.random().toString().replace(".", "");
+const headers = { 'Content-Type': 'application/json' };
 /**
  * This should:
  * Create a channel without mutableTime
  * Change that channel to have a mutableTime
  *
  */
-describe(testName, function () {
+const url = `${channelUrl}/${channel}`;
+describe(__filename, function () {
+    it('creates a channel (no mutableTime)', async () => {
+        const response = await hubClientPut(url, headers, { ttlDays: 20 });
+        expect(getProp('statusCode', response)).toEqual(201);
+    });
 
-    utils.putChannel(channel, false, {ttlDays: 20}, testName, 201);
+    const mutableTime = moment.utc().subtract(1, 'hours').format('YYYY-MM-DDTHH:mm:ss');
+    const expected = `${mutableTime}.000Z`;
 
-    var mutableTime = moment.utc().subtract(1, 'hours').format('YYYY-MM-DDTHH:mm:ss');
-    const expected = mutableTime + '.000Z';
-
-    var channelBody = {
+    const channelBody = {
         ttlDays: 0,
         mutableTime: mutableTime,
-        tags: [tag, "test"]
+        tags: [tag, "test"],
     };
 
-    utils.putChannel(channel, function (response, body) {
-        var parse = utils.parseJson(response, testName);
-        expect(getProp('ttlDays', parse)).toBe(0);
-        expect(getProp('maxItems', parse)).toBe(0);
-        expect(getProp('mutableTime', parse)).toBe(expected);
-    }, channelBody, testName);
+    it('updates the channel to have a mutabelTime', async () => {
+        const response = await hubClientPut(url, headers, channelBody);
+        const body = getProp('body', response);
+        expect(getProp('ttlDays', body)).toBe(0);
+        expect(getProp('maxItems', body)).toBe(0);
+        expect(getProp('mutableTime', body)).toBe(expected);
+    });
 
     utils.itRefreshesChannels();
 
     utils.getChannel(channel, function (response) {
-        var parse = utils.parseJson(response, testName);
+        const parse = utils.parseJson(response, __filename);
         expect(getProp('ttlDays', parse)).toBe(0);
         expect(getProp('maxItems', parse)).toBe(0);
-        expect(getProp('mutableTime', parse)).toBe(mutableTime + '.000Z');
-
-    }, testName)
+        expect(getProp('mutableTime', parse)).toBe(expected);
+    }, __filename);
 });
