@@ -12,6 +12,7 @@ const {
     hubClientGet,
     hubClientPatch,
     hubClientPost,
+    hubClientPostTestItem,
     hubClientPut,
 } = require('./hub-client');
 module.exports = {
@@ -24,6 +25,7 @@ module.exports = {
     hubClientGet,
     hubClientPatch,
     hubClientPost,
+    hubClientPostTestItem,
     hubClientPut,
     randomChannelName,
     randomNumberBetweenInclusive,

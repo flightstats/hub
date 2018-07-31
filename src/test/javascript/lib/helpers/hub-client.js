@@ -141,6 +141,19 @@ const hubClientPut = async (url, headers = {}, body = '') => {
     return response;
 };
 
+const defaultData = JSON.stringify({ data: Date.now() });
+const hubClientPostTestItem = async (url, body = defaultData) => {
+    const headers = {
+        'Content-Type': 'application/json',
+        user: 'somebody',
+    };
+    const response = await hubClientPost(url, headers, body);
+    if (getProp('statusCode', response) < 400) {
+        console.log(`posted data to: ${fromObjectPath(['headers', 'location'], response)}`);
+    }
+    return response || {};
+};
+
 const followRedirectIfPresent = async (response, headers = {}) => {
     const statusCode = getProp('statusCode', response);
     const location = fromObjectPath(['headers', 'location'], response);
@@ -178,5 +191,6 @@ module.exports = {
     hubClientGet,
     hubClientPatch,
     hubClientPost,
+    hubClientPostTestItem,
     hubClientPut,
 };
