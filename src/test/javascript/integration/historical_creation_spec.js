@@ -36,11 +36,4 @@ describe(__filename, function () {
         expect(getProp('maxItems', body)).toBe(0);
         expect(getProp('mutableTime', body)).toBe(expected);
     });
-
-    utils.getChannel(channel, function (response) {
-        const parse = utils.parseJson(response, __filename);
-        expect(getProp('ttlDays', parse)).toBe(0);
-        expect(getProp('maxItems', parse)).toBe(0);
-        expect(getProp('mutableTime', parse)).toBe(expected);
-    }, __filename);
 });
