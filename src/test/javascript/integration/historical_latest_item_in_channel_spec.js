@@ -4,7 +4,6 @@ const { getProp, fromObjectPath, hubClientPut } = require('../lib/helpers');
 const channel = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channel}`;
 const headers = { 'Content-Type': 'application/json' };
-const testName = __filename;
 const moment = require('moment');
 const mutableTime = moment.utc().subtract(1, 'minute');
 const items = [];
@@ -19,7 +18,7 @@ let latest = null;
  * gets the item back out with latest
  * get both items back out with latest/10
  */
-describe(testName, function () {
+describe(__filename, function () {
     beforeAll(async () => {
         const response = await hubClientPut(channelResource, headers, channelBody);
         expect(getProp('statusCode', response)).toEqual(201);

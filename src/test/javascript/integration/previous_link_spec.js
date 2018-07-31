@@ -4,18 +4,21 @@ const {
     getProp,
     hubClientGet,
     hubClientPost,
+    hubClientPut,
 } = require('../lib/helpers');
 
 const channelName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
+const items = [];
+const headers = { 'Content-Type': 'application/json' };
+const body = { 'name': channelName };
 
 describe(__filename, function () {
-    utils.putChannel(channelName, function () {
-    }, { "name": channelName, ttlDays: 1 });
+    beforeAll(async () => {
+        const response = await hubClientPut(channelResource, headers, { name: channelName, ttlDays: 1 });
+        expect(getProp('statusCode', response)).toEqual(201);
+    });
 
-    const items = [];
-    const headers = { 'Content-Type': 'application/json' };
-    const body = { 'name': channelName };
     const postOneItem = async () => {
         const response = await hubClientPost(channelResource, headers, body);
         expect(getProp('statusCode', response)).toEqual(201);

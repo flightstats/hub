@@ -2,21 +2,24 @@ require('../integration_config');
 const {
     fromObjectPath,
     getProp,
+    hubClientPut,
 } = require('../lib/helpers');
 
-var request = require('request');
-var channelName = utils.randomChannelName();
+const request = require('request');
+const channelName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
-var testName = __filename;
+const headers = { 'Content-Type': 'application/json' };
 
 /**
  * create a channel
  * post two items
  * stream both items back with bulk
  */
-describe(testName, function () {
-
-    utils.putChannel(channelName, false, {"name": channelName, "ttlDays": 1});
+describe(__filename, function () {
+    beforeAll(async () => {
+        const response = await hubClientPut(channelResource, headers, { name: channelName, ttlDays: 1 });
+        expect(getProp('statusCode', response)).toEqual(201);
+    });
 
     utils.addItem(channelResource, 201);
 
@@ -33,7 +36,7 @@ describe(testName, function () {
         request.get({
             url: channelResource + '/latest/10?stable=false&batch=true',
             followRedirect: false,
-            headers: {Accept: "multipart/mixed"}
+            headers: { Accept: "multipart/mixed" },
         },
         function (err, response, body) {
             expect(err).toBeNull();
