@@ -1,11 +1,11 @@
 require('../integration_config');
 const moment = require('moment');
-const { getProp, hubClientPut } = require('../lib/helpers');
+const { getProp, hubClientGet, hubClientPut } = require('../lib/helpers');
 
 const channel = utils.randomChannelName();
 const tag = Math.random().toString().replace(".", "");
 const headers = { 'Content-Type': 'application/json' };
-const url = `${channelUrl}/${channel}`;
+const channelResource = `${channelUrl}/${channel}`;
 /**
  * This should:
  * Create a channel with mutableTime
@@ -21,8 +21,16 @@ describe(__filename, function () {
         tags: [tag, "test"],
     };
     it('creates a channel with mutableTime', async () => {
-        const response = await hubClientPut(url, headers, channelBody);
+        const response = await hubClientPut(channelResource, headers, channelBody);
         expect(getProp('statusCode', response)).toEqual(201);
+        const body = getProp('body', response);
+        expect(getProp('ttlDays', body)).toBe(0);
+        expect(getProp('maxItems', body)).toBe(0);
+        expect(getProp('mutableTime', body)).toBe(expected);
+    });
+
+    it('verify mutabelTime returned from GET method on channel', async () => {
+        const response = await hubClientGet(channelResource, headers);
         const body = getProp('body', response);
         expect(getProp('ttlDays', body)).toBe(0);
         expect(getProp('maxItems', body)).toBe(0);

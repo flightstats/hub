@@ -1,5 +1,5 @@
 require('../integration_config');
-const { getProp, hubClientPut } = require('../lib/helpers');
+const { getProp, hubClientGet, hubClientPut } = require('../lib/helpers');
 
 const channel = utils.randomChannelName();
 const moment = require('moment');
@@ -11,10 +11,10 @@ const headers = { 'Content-Type': 'application/json' };
  * Change that channel to have a mutableTime
  *
  */
-const url = `${channelUrl}/${channel}`;
+const channelResource = `${channelUrl}/${channel}`;
 describe(__filename, function () {
     it('creates a channel (no mutableTime)', async () => {
-        const response = await hubClientPut(url, headers, { ttlDays: 20 });
+        const response = await hubClientPut(channelResource, headers, { ttlDays: 20 });
         expect(getProp('statusCode', response)).toEqual(201);
     });
 
@@ -28,7 +28,7 @@ describe(__filename, function () {
     };
 
     it('updates the channel to have a mutabelTime', async () => {
-        const response = await hubClientPut(url, headers, channelBody);
+        const response = await hubClientPut(channelResource, headers, channelBody);
         const body = getProp('body', response);
         expect(getProp('ttlDays', body)).toBe(0);
         expect(getProp('maxItems', body)).toBe(0);
@@ -37,10 +37,11 @@ describe(__filename, function () {
 
     utils.itRefreshesChannels();
 
-    utils.getChannel(channel, function (response) {
-        const parse = utils.parseJson(response, __filename);
-        expect(getProp('ttlDays', parse)).toBe(0);
-        expect(getProp('maxItems', parse)).toBe(0);
-        expect(getProp('mutableTime', parse)).toBe(expected);
-    }, __filename);
+    it('verifies the mutabelTime time change after channel refresh', async () => {
+        const response = await hubClientGet(channelResource, headers);
+        const body = getProp('body', response);
+        expect(getProp('ttlDays', body)).toBe(0);
+        expect(getProp('maxItems', body)).toBe(0);
+        expect(getProp('mutableTime', body)).toBe(expected);
+    });
 });
