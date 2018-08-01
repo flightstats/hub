@@ -1,8 +1,10 @@
 require('../integration_config');
+const moment = require('moment');
 const {
     fromObjectPath,
     getProp,
     hubClientPut,
+    hubClientPostTestItem,
 } = require('../lib/helpers');
 
 const request = require('request');
@@ -21,15 +23,14 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    utils.addItem(channelResource, 201);
+    it('posts an item successfully to a channel', async () => {
+        const response = await hubClientPostTestItem(channelResource);
+        expect(getProp('statusCode', response)).toEqual(201);
+    });
 
-    it('posts item', function (done) {
-        utils.postItemQ(channelResource)
-            .then(function (value) {
-                const location = fromObjectPath(['response', 'headers', 'location'], value);
-                console.log('location: ', location);
-                done();
-            });
+    it('posts a second item successfully to a channel', async () => {
+        const response = await hubClientPostTestItem(channelResource);
+        expect(getProp('statusCode', response)).toEqual(201);
     });
 
     it("gets multipart items ", function (done) {
@@ -37,13 +38,17 @@ describe(__filename, function () {
             url: channelResource + '/latest/10?stable=false&batch=true',
             followRedirect: false,
             headers: { Accept: "multipart/mixed" },
-        },
-        function (err, response, body) {
+        }, function (err, response, body) {
             expect(err).toBeNull();
             expect(getProp('statusCode', response)).toBe(200);
-            // todo - gfm - 8/19/15 - parse multipart
-            console.log("headers", getProp('headers', response));
-            console.log("body", getProp('body', response));
+            expect(fromObjectPath(['headers', 'content-type'], response)).toContain('multipart/mixed');
+            const responseBody = getProp('body', response);
+            expect(responseBody).toContain('\\"data\\"');
+            /* eslint-disable no-useless-escape */
+            const bodyMatch = responseBody.match(/(?![\\\"data\\\":])(\d*)(?=})/gm);
+            /* eslint-enable no-useless-escape */
+            const firstMatch = bodyMatch && bodyMatch[0];
+            expect(firstMatch).toBeDefined();
             done();
         });
     });
