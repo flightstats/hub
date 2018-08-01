@@ -1,6 +1,10 @@
 require('../integration_config');
 const moment = require('moment');
-const { getProp, hubClientPut } = require('../lib/helpers');
+const {
+    getProp,
+    hubClientPut,
+    hubClientPostTestItem,
+} = require('../lib/helpers');
 
 const channel = utils.randomChannelName();
 const tag = Math.random().toString().replace(".", "");
@@ -11,7 +15,7 @@ const channelBody = {
 };
 const channelResource = `${channelUrl}/${channel}`;
 const headers = { 'Content-Type': 'application/json' };
-const pointInThePastURL = `${channelResource}/${mutableTime.add(1, 'minute').format('YYYY/MM/DD/HH/mm/ss/SSS')}`;
+const afterMutableTimeUrl = `${channelResource}/${mutableTime.add(1, 'minute').format('YYYY/MM/DD/HH/mm/ss/SSS')}`;
 /**
  * This should:
  * Create a channel with mutableTime
@@ -23,5 +27,8 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    utils.addItem(pointInThePastURL, 400);
+    it('returns a 400 for item posted after the mutableTime', async () => {
+        const response = await hubClientPostTestItem(afterMutableTimeUrl);
+        expect(getProp('statusCode', response)).toEqual(400);
+    });
 });

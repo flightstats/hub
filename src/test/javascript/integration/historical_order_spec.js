@@ -1,6 +1,10 @@
 require('../integration_config');
 const moment = require('moment');
-const { getProp, hubClientPut } = require('../lib/helpers');
+const {
+    getProp,
+    hubClientPut,
+    hubClientPostTestItem,
+} = require('../lib/helpers');
 
 const channel = utils.randomChannelName();
 const mutableTime = moment.utc().subtract(1, 'minute');
@@ -22,7 +26,13 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    utils.addItem(`${channelResource}/2016/06/01/12/00/00/000`, 201);
+    it('posts an item successfully to a histrocal channel', async () => {
+        const response = await hubClientPostTestItem(`${channelResource}/2016/06/01/12/00/00/000`);
+        expect(getProp('statusCode', response)).toEqual(201);
+    });
 
-    utils.addItem(`${channelResource}/2016/06/01/11/00/00/000`, 201);
+    it('posts a histrocal item before the first successfully to a histrocal channel', async () => {
+        const response = await hubClientPostTestItem(`${channelResource}/2016/06/01/11/00/00/000`);
+        expect(getProp('statusCode', response)).toEqual(201);
+    });
 });

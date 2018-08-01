@@ -3,6 +3,7 @@ const {
     fromObjectPath,
     getProp,
     hubClientPut,
+    hubClientPostTestItem,
 } = require('../lib/helpers');
 
 const headers = { 'Content-Type': 'application/json' };
@@ -25,16 +26,18 @@ describe(__filename, function () {
         }
     });
 
-    it('posts item', function (done) {
-        if (!channelCreated) return done.fail('channel not created in before block');
-        utils.postItemQ(channelResource)
-            .then(function (value) {
-                posted = fromObjectPath(['response', 'headers', 'location'], value);
-                done();
-            });
+    it('posts item', async () => {
+        if (!channelCreated) return fail('channel not created in before block');
+        const response = await hubClientPostTestItem(channelResource);
+        expect(getProp('statusCode', response)).toEqual(201);
+        posted = fromObjectPath(['headers', 'location'], response);
     });
 
-    utils.addItem(channelResource, 201);
+    it('posts another item', async () => {
+        if (!channelCreated) return fail('channel not created in before block');
+        const response = await hubClientPostTestItem(channelResource);
+        expect(getProp('statusCode', response)).toEqual(201);
+    });
 
     it("gets earliest stable in channel ", function (done) {
         if (!channelCreated) return done.fail('channel not created in before block');
