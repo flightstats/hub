@@ -2,6 +2,7 @@ package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.model.*;
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
@@ -174,7 +175,8 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
     }
 
     private String getTableName() {
-        return dynamoUtils.getTableName("channelMetaData");
+        String legacyTableName = dynamoUtils.getLegacyTableName("channelMetaData");
+        return HubProperties.getProperty("dynamo.table_name.channel_configs", legacyTableName);
     }
 
     private class DynamoChannelConfigurationDaoInit extends AbstractIdleService {
