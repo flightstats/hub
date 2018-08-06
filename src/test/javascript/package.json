@@ -19,5 +19,7 @@
     "request-promise-native": "^1.0.5",
     "ws": "^5.2.2"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "ava": "^1.0.0-beta.6"
+  }
 }

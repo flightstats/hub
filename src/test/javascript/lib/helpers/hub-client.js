@@ -1,5 +1,6 @@
 const rp = require('request-promise-native');
 const { fromObjectPath, getProp } = require('./functional');
+const { keysToLowerCase } = require('./formatters');
 
 const isRedirect = statusCode => !!statusCode &&
     (statusCode >= 300 && statusCode <= 399);
@@ -25,8 +26,66 @@ const createChannel = async (channelName, url, description) => {
     }
 };
 
+const hubClientDelete = async (url, headers = {}) => {
+    const formattedHeaders = keysToLowerCase(headers);
+    const options = {
+        url,
+        method: 'DELETE',
+        headers: formattedHeaders,
+        resolveWithFullResponse: true,
+    };
+
+    console.log('DELETE >', url, formattedHeaders);
+    try {
+        const response = await rp(options);
+        const statusCode = getProp('statusCode', response);
+        console.log('DELETE <', url, statusCode);
+        return response || {};
+    } catch (ex) {
+        const response = getProp('response', ex) || {};
+        console.log(`error in hubClientGet: url:: ${url} ::: ${ex}`);
+        const statusCode = getProp('statusCode', response);
+        console.log('DELETE <', url, statusCode);
+        return response;
+    }
+};
+
+const hubClientUpdates = async (url, headers = {}, body = '', method) => {
+    const formattedHeaders = keysToLowerCase(headers);
+    const json = !!formattedHeaders['content-type'] &&
+        !!formattedHeaders['content-type'].includes('json');
+    const options = {
+        method,
+        url,
+        headers: formattedHeaders,
+        body,
+        resolveWithFullResponse: true,
+        json,
+    };
+    const bytes = (options.json) ? JSON.stringify(body).length : body.length;
+    console.log(`${method} >`, url, headers, bytes);
+    try {
+        const response = await rp(options);
+        const responseBody = getProp('body', response);
+        const statusCode = getProp('statusCode', response);
+        console.log(`${method} <`, url, statusCode);
+        try {
+            response.body = JSON.parse(responseBody) || {};
+        } catch (error) {
+            response.body = responseBody || {};
+        }
+        return response;
+    } catch (ex) {
+        const response = getProp('response', ex) || {};
+        const statusCode = getProp('statusCode', response);
+        console.log(`error in hubClient: url:: ${url} ::: ${ex}`);
+        console.log(`${method} <`, url, statusCode);
+        return response;
+    }
+};
+
 const hubClientGet = async (url, headers = {}, isBinary) => {
-    const formattedHeaders = utils.keysToLowerCase(headers);
+    const formattedHeaders = keysToLowerCase(headers);
     const json = !!formattedHeaders['content-type'] &&
         !!formattedHeaders['content-type'].includes('json');
     const options = {
@@ -101,5 +160,7 @@ module.exports = {
     createChannel,
     followRedirectIfPresent,
     getHubItem,
+    hubClientDelete,
     hubClientGet,
+    hubClientUpdates,
 };
