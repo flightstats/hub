@@ -1,9 +1,9 @@
 require('../integration_config');
-const request = require('request');
 const {
-    fromObjectPath,
     getProp,
+    hubClientGet,
     hubClientPut,
+    hubClientPostTestItem,
 } = require('../lib/helpers');
 
 const channelName = utils.randomChannelName();
@@ -21,30 +21,18 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    utils.addItem(channelResource, 201);
+    it('posts items to the channel', async () => {
+        const response1 = await hubClientPostTestItem(channelResource);
+        expect(getProp('statusCode', response1)).toEqual(201);
 
-    it('posts item', function (done) {
-        utils.postItemQ(channelResource)
-            .then(function (value) {
-                const location = fromObjectPath(['response', 'headers', 'location'], value);
-                console.log('location: ', location);
-                done();
-            });
+        const response2 = await hubClientPostTestItem(channelResource);
+        expect(getProp('statusCode', response2)).toEqual(201);
     });
 
-    it("gets zip items ", function (done) {
-        request.get({
-            url: channelResource + '/latest/10?stable=false&batch=true',
-            followRedirect: false,
-            headers: { Accept: "application/zip" },
-        },
-        function (err, response, body) {
-            expect(err).toBeNull();
-            expect(getProp('statusCode', response)).toBe(200);
-            // todo - gfm - 8/19/15 - parse zip
-            console.log("headers", getProp('headers', response));
-            console.log("body", getProp('body', response));
-            done();
-        });
+    it('gets zip items ', async () => {
+        const response = await hubClientGet(`${channelResource}/latest/10?stable=false&batch=true`, { Accept: 'application/zip' });
+        expect(getProp('statusCode', response)).toBe(200);
+        // todo - gfm - 8/19/15 - parse zip
+        expect(getProp('body', response)).toBeDefined();
     });
 });
