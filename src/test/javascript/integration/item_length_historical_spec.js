@@ -3,6 +3,7 @@ const {
     fromObjectPath,
     getHubItem,
     getProp,
+    hubClientPut,
 } = require('../lib/helpers');
 const moment = require('moment');
 
@@ -12,21 +13,20 @@ const moment = require('moment');
  */
 
 describe(__filename, function () {
-    var oneDayAgo = moment().subtract(1, 'days');
-    var pathPattern = 'YYYY/MM/DD/HH/mm/ss/SSS';
-    var channelName = utils.randomChannelName();
-    var channelResource = `${channelUrl}/${channelName}`;
-    var historicalEndpoint = `${channelResource}/${oneDayAgo.format(pathPattern)}`;
-    var itemHeaders = {'Content-Type': 'text/plain'};
-    var itemContent = 'this is a string for checking length on historical inserts';
-    var itemURL;
+    const oneDayAgo = moment().subtract(1, 'days');
+    const pathPattern = 'YYYY/MM/DD/HH/mm/ss/SSS';
+    const channelName = utils.randomChannelName();
+    const channelResource = `${channelUrl}/${channelName}`;
+    const historicalEndpoint = `${channelResource}/${oneDayAgo.format(pathPattern)}`;
+    const itemHeaders = { 'Content-Type': 'text/plain' };
+    const itemContent = 'this is a string for checking length on historical inserts';
+    let itemURL;
 
-    it('creates a channel', (done) => {
-        let headers = {'Content-Type': 'application/json'};
-        let body = {"mutableTime": moment().subtract(1, 'minute').toISOString()};
-        utils.httpPut(channelResource, headers, body)
-            .then(response => expect(getProp('statusCode', response)).toEqual(201))
-            .finally(done);
+    it('creates a channel', async () => {
+        const headers = { 'Content-Type': 'application/json' };
+        const body = { mutableTime: moment().subtract(1, 'minute').toISOString() };
+        const response = await hubClientPut(channelResource, headers, body);
+        expect(getProp('statusCode', response)).toEqual(201);
     });
 
     it('posts a historical item', function (done) {

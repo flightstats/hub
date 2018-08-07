@@ -1,5 +1,10 @@
 require('../integration_config');
-const { getProp, hubClientGet } = require('../lib/helpers');
+const {
+    getProp,
+    hubClientGet,
+    hubClientPut,
+    hubClientDelete,
+} = require('../lib/helpers');
 const tag = utils.randomTag();
 const tagURL = `${hubUrlBase}/tag/${tag}`;
 const tagWebhookPrototypeURL = `${utils.getWebhookUrl()}/TAGWHPROTO_${tag}`;
@@ -15,14 +20,13 @@ const channelTwoWebhookURL = `${utils.getWebhookUrl()}/TAGWH_${tag}_${channelTwo
 const acceptJSON = { "Content-Type": "application/json" };
 
 describe(__filename, function () {
-    it('creates a tag webhook prototype', (done) => {
+    it('creates a tag webhook prototype', async () => {
         const config = {
             "callbackUrl": "http://nothing/callback",
             "tagUrl": tagURL,
         };
-        utils.httpPut(tagWebhookPrototypeURL, acceptJSON, config)
-            .then(response => expect(getProp('statusCode', response)).toEqual(201))
-            .finally(done);
+        const response = await hubClientPut(tagWebhookPrototypeURL, acceptJSON, config);
+        expect(getProp('statusCode', response)).toEqual(201);
     });
 
     it('verifies the tag webhook prototype exists', async () => {
@@ -30,18 +34,16 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(200);
     });
 
-    it(`creates channel one with tag ${tag}`, (done) => {
+    it(`creates channel one with tag ${tag}`, async () => {
         const config = { "tags": [tag] };
-        utils.httpPut(channelOneURL, acceptJSON, config)
-            .then(response => expect(getProp('statusCode', response)).toEqual(201))
-            .finally(done);
+        const response = await hubClientPut(channelOneURL, acceptJSON, config);
+        expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    it(`creates channel two with tag ${tag}`, (done) => {
+    it(`creates channel two with tag ${tag}`, async () => {
         const config = { "tags": [tag] };
-        utils.httpPut(channelTwoURL, acceptJSON, config)
-            .then(response => expect(getProp('statusCode', response)).toEqual(201))
-            .finally(done);
+        const response = await hubClientPut(channelTwoURL, acceptJSON, config);
+        expect(getProp('statusCode', response)).toEqual(201);
     });
 
     utils.itSleeps(1000);
@@ -56,11 +58,10 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(200);
     });
 
-    it('removes the tag from channel one', (done) => {
+    it('removes the tag from channel one', async () => {
         const config = { "tags": [] };
-        utils.httpPut(channelOneURL, acceptJSON, config)
-            .then(response => expect(getProp('statusCode', response)).toEqual(201))
-            .finally(done);
+        const response = await hubClientPut(channelOneURL, acceptJSON, config);
+        expect(getProp('statusCode', response)).toEqual(201);
     });
 
     utils.itSleeps(1000);
@@ -70,10 +71,9 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(404);
     });
 
-    it('removes the tag webhook prototype', (done) => {
-        utils.httpDelete(tagWebhookPrototypeURL)
-            .then(response => expect(getProp('statusCode', response)).toEqual(202))
-            .finally(done);
+    it('removes the tag webhook prototype', async () => {
+        const response = await hubClientDelete(tagWebhookPrototypeURL);
+        expect(getProp('statusCode', response)).toEqual(202);
     });
 
     utils.itSleeps(1000);

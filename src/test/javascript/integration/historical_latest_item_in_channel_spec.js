@@ -1,33 +1,32 @@
 require('../integration_config');
-const { fromObjectPath } = require('../lib/helpers');
+const { getProp, fromObjectPath, hubClientPut } = require('../lib/helpers');
 
-var channel = utils.randomChannelName();
-var channelResource = channelUrl + "/" + channel;
-var testName = __filename;
-var moment = require('moment');
-
+const channel = utils.randomChannelName();
+const channelResource = `${channelUrl}/${channel}`;
+const headers = { 'Content-Type': 'application/json' };
+const moment = require('moment');
+const mutableTime = moment.utc().subtract(1, 'minute');
+const items = [];
+const channelBody = {
+    mutableTime: mutableTime.format('YYYY-MM-DDTHH:mm:ss.SSS'),
+    tags: ["test"],
+};
+let latest = null;
 /**
  * create a channel
  * post 2 items
  * gets the item back out with latest
  * get both items back out with latest/10
  */
-describe(testName, function () {
-
-    var mutableTime = moment.utc().subtract(1, 'minute');
-
-    var channelBody = {
-        mutableTime: mutableTime.format('YYYY-MM-DDTHH:mm:ss.SSS'),
-        tags: ["test"]
-    };
-
-    utils.putChannel(channel, false, channelBody, testName);
-
-    var items = [];
+describe(__filename, function () {
+    beforeAll(async () => {
+        const response = await hubClientPut(channelResource, headers, channelBody);
+        expect(getProp('statusCode', response)).toEqual(201);
+    });
 
     it('posts two historical items', function (done) {
-        var historicalItem1 = channelResource + moment(mutableTime).subtract(2, 'minute').format('/YYYY/MM/DD/HH/mm/ss/SSS');
-        var historicalItem2 = channelResource + mutableTime.format('/YYYY/MM/DD/HH/mm/ss/SSS');
+        const historicalItem1 = `${channelResource}${moment(mutableTime).subtract(2, 'minute').format('/YYYY/MM/DD/HH/mm/ss/SSS')}`;
+        const historicalItem2 = `${channelResource}${mutableTime.format('/YYYY/MM/DD/HH/mm/ss/SSS')}`;
         utils.postItemQ(historicalItem1)
             .then(function (value) {
                 items.push(fromObjectPath(['response', 'headers', 'location'], value));
@@ -50,8 +49,6 @@ describe(testName, function () {
     it("gets latest Mutable in channel ", function (done) {
         utils.getLocation(channelResource + '/latest?epoch=MUTABLE', 303, items[1], done);
     });
-
-    var latest;
 
     it('posts item now', function (done) {
         utils.postItemQ(channelResource)
