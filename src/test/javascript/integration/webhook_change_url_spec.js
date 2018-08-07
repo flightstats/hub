@@ -70,7 +70,7 @@ describe(__filename, () => {
                 console.log(body);
                 const {
                     lastCompleted,
-                    inFlight = []
+                    inFlight = [],
                     errors = []
                 } = body;
                 expect(lastCompleted).toContain('initial');
