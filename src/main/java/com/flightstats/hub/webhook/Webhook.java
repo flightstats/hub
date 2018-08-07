@@ -64,6 +64,8 @@ public class Webhook implements Comparable<Webhook>, NamedType {
     // created and deleted when a channel has the webhook "tagUrl" added or removed.
     @Wither
     private final Integer maxAttempts;
+    @Wither
+    private final String errorChannelUrl;
 
     static Webhook fromJson(String json, Optional<Webhook> webhookOptional) {
         WebhookBuilder builder = Webhook.builder();
@@ -83,7 +85,8 @@ public class Webhook implements Comparable<Webhook>, NamedType {
                     .fastForwardable(existing.fastForwardable)
                     .tagUrl(existing.tagUrl)
                     .managedByTag(existing.managedByTag)
-                    .maxAttempts(existing.maxAttempts);
+                    .maxAttempts(existing.maxAttempts)
+                    .errorChannelUrl(existing.errorChannelUrl);
         }
         try {
             JsonNode root = mapper.readTree(json);
@@ -147,6 +150,9 @@ public class Webhook implements Comparable<Webhook>, NamedType {
             if (root.has("maxAttempts")) {
                 builder.maxAttempts(root.get("maxAttempts").intValue());
             }
+            if (root.has("errorChannelUrl")) {
+                builder.errorChannelUrl(root.get("errorChannelUrl").asText());
+            }
         } catch (IOException e) {
             logger.warn("unable to parse json" + json, e);
             throw new InvalidRequestException(e.getMessage());
@@ -191,7 +197,7 @@ public class Webhook implements Comparable<Webhook>, NamedType {
     static Webhook instanceFromTagPrototype(Webhook whp, ChannelConfig channel) {
         String channenUrl = RequestUtils.getHost(whp.getTagUrl()) + "/channel/" + channel.getName();
         String whName = "TAGWH_" + whp.getTagFromTagUrl() + "_" + channel.getName();
-        return new Webhook(whp.callbackUrl, channenUrl, whp.parallelCalls, whName, null, whp.batch, whp.heartbeat, whp.paused, whp.ttlMinutes, whp.maxWaitMinutes, whp.callbackTimeoutSeconds, whp.fastForwardable, null, whp.getTagFromTagUrl(), whp.maxAttempts);
+        return new Webhook(whp.callbackUrl, channenUrl, whp.parallelCalls, whName, null, whp.batch, whp.heartbeat, whp.paused, whp.ttlMinutes, whp.maxWaitMinutes, whp.callbackTimeoutSeconds, whp.fastForwardable, null, whp.getTagFromTagUrl(), whp.maxAttempts, whp.errorChannelUrl);
     }
 
     public static Webhook fromJson(String json) {
