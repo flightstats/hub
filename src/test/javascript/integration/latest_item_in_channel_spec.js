@@ -4,6 +4,7 @@ const {
     fromObjectPath,
     getProp,
     hubClientPut,
+    hubClientPostTestItem,
 } = require('../lib/helpers');
 
 const channelName = utils.randomChannelName();
@@ -22,15 +23,13 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    utils.addItem(channelResource, 201);
+    it('posts items to the channel', async () => {
+        const response1 = await hubClientPostTestItem(channelResource);
+        expect(getProp('statusCode', response1)).toEqual(201);
 
-    it('posts item', function (done) {
-        utils.postItemQ(channelResource)
-            .then(function (value) {
-                const location = fromObjectPath(['response', 'headers', 'location'], value);
-                posted = location;
-                done();
-            });
+        const response2 = await hubClientPostTestItem(channelResource);
+        expect(getProp('statusCode', response2)).toEqual(201);
+        posted = fromObjectPath(['headers', 'location'], response2);
     });
 
     it("gets latest stable in channel ", function (done) {
@@ -67,7 +66,10 @@ describe(__filename, function () {
     });
 
     utils.itSleeps(6000);
-    utils.addItem(channelResource, 201);
+    it('posts another item to the channel', async () => {
+        const response = await hubClientPostTestItem(channelResource);
+        expect(getProp('statusCode', response)).toEqual(201);
+    });
 
     it("gets latest stable in channel ", function (done) {
         request.get({url: `${channelResource}/latest?stable=true&trace=true`, followRedirect: false},

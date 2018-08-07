@@ -4,6 +4,7 @@ const parse = require('parse-link-header');
 const {
     fromObjectPath,
     getProp,
+    hubClientPostTestItem,
     hubClientPut,
 } = require('../lib/helpers');
 const channelA = utils.randomChannelName();
@@ -64,11 +65,16 @@ describe(__filename, function () {
             });
     };
 
-    utils.addItem(`${channelUrl}/${channelA}`, 201);
+    it('posts items to the channel', async () => {
+        const response1 = await hubClientPostTestItem(`${channelUrl}/${channelA}`);
+        expect(getProp('statusCode', response1)).toEqual(201);
 
-    utils.addItem(`${channelUrl}/${channelB}`, 201);
+        const response2 = await hubClientPostTestItem(`${channelUrl}/${channelB}`);
+        expect(getProp('statusCode', response2)).toEqual(201);
 
-    utils.addItem(`${channelUrl}/${channelA}`, 201);
+        const response3 = await hubClientPostTestItem(`${channelUrl}/${channelA}`);
+        expect(getProp('statusCode', response3)).toEqual(201);
+    });
 
     it(`gets tag hour ${tag}`, function (done) {
         const url = `${tagUrl}/time/hour?stable=false&trace=true'`;
