@@ -83,19 +83,9 @@ describe(testName, function () {
 
     it('verifies we got what we expected through the callback', function () {
         if (!createdChannel) return fail('channel not created in before block');
-        expect(callbackItems.length).toBe(4);
-        expect(postedItems.length).toBe(4);
+        expect(callbackItems.length).toEqual(postedItems.length);
         for (var i = 0; i < callbackItems.length; i++) {
-            let parse = {};
-            try {
-                parse = JSON.parse(callbackItems[i]);
-            } catch (ex) {
-                expect(`failed to parse json, ${callbackItems[i]}, ${ex}`).toBeNull();
-            }
-            const uris = getProp('uris', parse) || [];
-            const name = getProp('name', parse);
-            expect(uris[0]).toBe(postedItems[i]);
-            expect(name).toBe(webhookName);
+            expect(callbackItems[i]).toEqual(postedItems[i]);
         }
     });
 
