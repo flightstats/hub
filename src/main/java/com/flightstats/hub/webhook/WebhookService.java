@@ -5,8 +5,10 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.exception.NoSuchChannelException;
+import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentPath;
+import com.flightstats.hub.util.RequestUtils;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -68,9 +70,27 @@ public class WebhookService {
             logger.info("initializing {} with startingKey {}", webhook.getName(), webhook.getStartingKey());
             lastContentPath.initialize(webhook.getName(), webhook.getStartingKey(), WEBHOOK_LAST_COMPLETED);
         }
+
+        if (preExisting.isPresent()) {
+            if (webhook.getErrorChannelUrl() != null && !webhook.getErrorChannelUrl().equals(preExisting.get().getErrorChannelUrl())) {
+                createErrorChannel(webhook.getErrorChannelUrl());
+            }
+        } else {
+            if (webhook.getErrorChannelUrl() != null) {
+                createErrorChannel(webhook.getErrorChannelUrl());
+            }
+        }
+
         webhookDao.upsert(webhook);
         webhookManager.notifyWatchers(webhook);
         return preExisting;
+    }
+
+    private void createErrorChannel(String channelURL) {
+        String channelName = RequestUtils.getChannelName(channelURL);
+        if (!channelService.channelExists(channelName)) {
+            channelService.createChannel(ChannelConfig.builder().name(channelName).build());
+        }
     }
 
     private Optional<Webhook> upsertTagWebhook(Webhook webhook, Optional<Webhook> preExisting) {
