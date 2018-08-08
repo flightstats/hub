@@ -1,4 +1,5 @@
 require('../integration_config');
+const rp = require('request-promise-native');
 const {
     createChannel,
     fromObjectPath,
@@ -26,7 +27,7 @@ describe(__filename, function () {
         const response = await hubClientPostTestItem(channelResource);
         itemHref = fromObjectPath(['body', '_links', 'self', 'href'], response);
         if (!createdChannel) return fail('channel not created in before block');
-        const response2 = await hubClientGet(`${itemHref}/next/10`, headers);
+        const response2 = await hubClientGet(`${itemHref}/next/10?stable=false`, headers);
         const links = fromObjectPath(['body', '_links'], response2) || {};
         const { previous = {}, uris } = links;
         const urisLength = uris && uris.length === 0;
