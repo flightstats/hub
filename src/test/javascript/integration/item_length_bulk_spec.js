@@ -4,6 +4,7 @@ const {
     fromObjectPath,
     getHubItem,
     getProp,
+    hubClientPost,
 } = require('../lib/helpers');
 /**
  * POST bulk items, GET each one, and verify the "X-Item-Length"
@@ -11,20 +12,21 @@ const {
  */
 
 describe(__filename, function () {
-    var channelName = utils.randomChannelName();
-    var channelEndpoint = channelUrl + '/' + channelName + '/bulk';
-    var bulkHeaders = {'Content-Type': 'multipart/mixed; boundary=oxoxoxo'};
-    var itemOneContent = '{"foo":"bar"}';
-    var itemTwoContent = 'foo, bar?';
-    var bulkContent =
-        '--oxoxoxo\r\n' +
-        'Content-Type: application/json\r\n' +
-        '\r\n' + itemOneContent + '\r\n' +
-        '--oxoxoxo\r\n' +
-        'Content-Type: text/plain\r\n' +
-        '\r\n' + itemTwoContent + '\r\n' +
-        '--oxoxoxo--';
-    var itemURLs = [];
+    const channelName = utils.randomChannelName();
+    const channelEndpoint = `${channelUrl}/${channelName}/bulk`;
+    const bulkHeaders = { 'Content-Type': 'multipart/mixed; boundary=oxoxoxo' };
+    const itemOneContent = '{"foo":"bar"}';
+    const itemTwoContent = 'foo, bar?';
+    const bulkContent = [
+        '--oxoxoxo\r\n',
+        'Content-Type: application/json\r\n',
+        `\r\n${itemOneContent}\r\n`,
+        '--oxoxoxo\r\n',
+        'Content-Type: text/plain\r\n',
+        `\r\n${itemTwoContent}\r\n`,
+        '--oxoxoxo--',
+    ].join('');
+    let itemURLs = [];
     let createdChannel = false;
 
     beforeAll(async () => {
@@ -35,22 +37,15 @@ describe(__filename, function () {
         }
     });
 
-    it('posts items in bulk', function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        utils.postItemQwithPayload(channelEndpoint, bulkHeaders, bulkContent)
-            .then(function (result) {
-                let json = {};
-                try {
-                    json = JSON.parse(getProp('body', result));
-                } catch (ex) {
-                    console.log('error parsing json: ', ex);
-                }
-                const uris = fromObjectPath(['_links', 'uris'], json);
-                expect(uris).toBeDefined();
-                itemURLs = fromObjectPath(['_links', 'uris'], json) || [];
-                expect(itemURLs.length).toBe(2);
-                done();
-            });
+    it('posts items in bulk', async () => {
+        if (!createdChannel) return fail('channel not created in before block');
+        const response = await hubClientPost(channelEndpoint, bulkHeaders, bulkContent);
+        const body = getProp('body', response);
+        console.log('body', body);
+        const uris = fromObjectPath(['_links', 'uris'], body);
+        expect(uris).toBeDefined();
+        itemURLs = fromObjectPath(['_links', 'uris'], body) || [];
+        expect(itemURLs.length).toBe(2);
     });
 
     it('verifies first item has correct length info', async () => {
@@ -60,7 +55,7 @@ describe(__filename, function () {
             expect(getProp('statusCode', result)).toBe(200);
             const xItemLength = fromObjectPath(['headers', 'x-item-length'], result);
             expect(!!xItemLength).toBe(true);
-            var bytes = Buffer.from(itemOneContent).length;
+            const bytes = Buffer.from(itemOneContent).length;
             expect(xItemLength).toBe(bytes.toString());
             const data = getProp('body', result) || {};
             expect(`${data}`).toEqual(itemOneContent);
@@ -75,8 +70,7 @@ describe(__filename, function () {
             const result = await getHubItem(itemURLs[1]);
             const xItemLength = fromObjectPath(['headers', 'x-item-length'], result);
             expect(!!xItemLength).toBe(true);
-            // TODO: new Buffer is deprecated
-            var bytes = Buffer.from(itemTwoContent).length;
+            const bytes = Buffer.from(itemTwoContent).length;
             expect(xItemLength).toBe(bytes.toString());
             const data = getProp('body', result) || {};
             expect(`${data}`).toEqual(itemTwoContent);

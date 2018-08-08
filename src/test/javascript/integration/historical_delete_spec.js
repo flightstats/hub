@@ -3,6 +3,7 @@ const {
     fromObjectPath,
     getProp,
     hubClientPut,
+    hubClientPostTestItem,
 } = require('../lib/helpers');
 const request = require('request');
 const moment = require('moment');
@@ -16,6 +17,8 @@ const channelBody = {
 const headers = { 'Content-Type': 'application/json' };
 const url = `${channelUrl}/${channel}`;
 const pointInThePastURL = `${url}/${mutableTime.format('YYYY/MM/DD/HH/mm/ss/SSS')}`;
+let historicalLocation;
+let liveLocation;
 /**
  * This should:
  * Create a channel with mutableTime
@@ -32,16 +35,8 @@ describe(__filename, function () {
     beforeAll(async () => {
         const response = await hubClientPut(url, headers, channelBody);
         expect(getProp('statusCode', response)).toEqual(201);
-    });
-
-    let historicalLocation;
-
-    it('posts historical item to ' + channel, function (done) {
-        utils.postItemQ(pointInThePastURL)
-            .then(function (value) {
-                historicalLocation = fromObjectPath(['response', 'headers', 'location'], value);
-                done();
-            });
+        const response1 = await hubClientPostTestItem(pointInThePastURL);
+        historicalLocation = fromObjectPath(['headers', 'location'], response1);
     });
 
     it('deletes historical item ', function (done) {
@@ -63,14 +58,9 @@ describe(__filename, function () {
             });
     });
 
-    let liveLocation;
-
-    it(`posts live item to ${channel}`, function (done) {
-        utils.postItemQ(url)
-            .then(function (value) {
-                liveLocation = fromObjectPath(['response', 'headers', 'location'], value);
-                done();
-            });
+    it(`posts live item to ${channel}`, async () => {
+        const response = await hubClientPostTestItem(url);
+        liveLocation = fromObjectPath(['headers', 'location'], response);
     });
 
     it('deletes live item ', function (done) {
