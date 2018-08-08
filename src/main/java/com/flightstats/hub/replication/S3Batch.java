@@ -42,6 +42,10 @@ public class S3Batch {
         return S3_BATCH + HubProperties.getAppEnv() + "_" + channel.getDisplayName();
     }
 
+    public static String getGroupName(String channelName) {
+        return S3_BATCH + HubProperties.getAppEnv() + "_" + channelName;
+    }
+
     public ChannelConfig getChannel() {
         return channel;
     }

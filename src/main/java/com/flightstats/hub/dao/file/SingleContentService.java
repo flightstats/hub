@@ -67,7 +67,7 @@ public class SingleContentService implements ContentService {
     }
 
     @Override
-    public Optional<Content> get(String channelName, ContentKey key, boolean cached) {
+    public Optional<Content> get(String channelName, ContentKey key, boolean cached, boolean skipLarge) {
         String path = getPath(channelName, key);
         try {
             byte[] bytes = fileSpokeStore.read(path);
@@ -88,7 +88,7 @@ public class SingleContentService implements ContentService {
             Collections.reverse(keys);
         }
         for (ContentKey key : keys) {
-            Optional<Content> contentOptional = get(streamResults.getChannel(), key, false);
+            Optional<Content> contentOptional = get(streamResults.getChannel(), key, false, streamResults.isSkipLarge());
             if (contentOptional.isPresent()) {
                 callback.accept(contentOptional.get());
             }

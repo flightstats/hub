@@ -1,40 +1,39 @@
 require('../integration_config');
+const request = require('request');
 const {
     fromObjectPath,
     getProp,
+    hubClientPut,
+    hubClientPostTestItem,
 } = require('../lib/helpers');
 
-var request = require('request');
-var channelName = utils.randomChannelName();
+const channelName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
-var testName = __filename;
-
+const headers = { 'Content-Type': 'application/json' };
+let posted = null;
 /**
  * create a channel
  * post an item
  * does not get the item back out with latest - stable
  * get the item back out with latest - unstable
  */
-describe(testName, function () {
+describe(__filename, function () {
+    beforeAll(async () => {
+        const response = await hubClientPut(channelResource, headers, { name: channelName, ttlDays: 1 });
+        expect(getProp('statusCode', response)).toEqual(201);
+    });
 
-    utils.putChannel(channelName, function () {
-    }, {"name": channelName, "ttlDays": 1});
+    it('posts items to the channel', async () => {
+        const response1 = await hubClientPostTestItem(channelResource);
+        expect(getProp('statusCode', response1)).toEqual(201);
 
-    utils.addItem(channelResource, 201);
-
-    var posted;
-
-    it('posts item', function (done) {
-        utils.postItemQ(channelResource)
-            .then(function (value) {
-                const location = fromObjectPath(['response', 'headers', 'location'], value);
-                posted = location;
-                done();
-            });
+        const response2 = await hubClientPostTestItem(channelResource);
+        expect(getProp('statusCode', response2)).toEqual(201);
+        posted = fromObjectPath(['headers', 'location'], response2);
     });
 
     it("gets latest stable in channel ", function (done) {
-        request.get({url: channelResource + '/latest', followRedirect: false},
+        request.get({url: `${channelResource}/latest`, followRedirect: false},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(404);
@@ -43,7 +42,7 @@ describe(testName, function () {
     });
 
     it("gets latest unstable in channel ", function (done) {
-        request.get({url: channelResource + '/latest?stable=false', followRedirect: false},
+        request.get({url: `${channelResource}/latest?stable=false`, followRedirect: false},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(303);
@@ -54,11 +53,11 @@ describe(testName, function () {
     });
 
     it("gets latest N unstable in channel ", function (done) {
-        request.get({url: channelResource + '/latest/10?stable=false', followRedirect: false},
+        request.get({url: `${channelResource}/latest/10?stable=false`, followRedirect: false},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
-                var parsed = utils.parseJson(response, testName);
+                const parsed = utils.parseJson(response, __filename);
                 const uris = fromObjectPath(['_links', 'uris'], parsed) || [];
                 expect(uris.length).toBe(2);
                 expect(uris[1]).toBe(posted);
@@ -67,10 +66,13 @@ describe(testName, function () {
     });
 
     utils.itSleeps(6000);
-    utils.addItem(channelResource, 201);
+    it('posts another item to the channel', async () => {
+        const response = await hubClientPostTestItem(channelResource);
+        expect(getProp('statusCode', response)).toEqual(201);
+    });
 
     it("gets latest stable in channel ", function (done) {
-        request.get({url: channelResource + '/latest?stable=true&trace=true', followRedirect: false},
+        request.get({url: `${channelResource}/latest?stable=true&trace=true`, followRedirect: false},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(303);

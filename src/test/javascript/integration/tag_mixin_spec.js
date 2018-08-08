@@ -1,19 +1,24 @@
 require('../integration_config');
+const request = require('request');
+const parse = require('parse-link-header');
 const {
     fromObjectPath,
     getProp,
+    hubClientPostTestItem,
+    hubClientPut,
 } = require('../lib/helpers');
-var request = require('request');
-var parse = require('parse-link-header');
-var channelA = utils.randomChannelName();
-var channelB = utils.randomChannelName();
-var tag = Math.random().toString().replace(".", "");
-var testName = __filename;
-var channelBody = {
+const channelA = utils.randomChannelName();
+const channelB = utils.randomChannelName();
+const headers = { 'Content-Type': 'application/json' };
+const tag = Math.random().toString().replace(".", "");
+const channelBody = {
     tags: [tag, "test"],
-    ttlDays: 1
+    ttlDays: 1,
 };
-
+let uris = [];
+const tagUrl = `${hubUrlBase}/tag/${tag}`;
+let parsedLinks = null;
+const linkStripParams = uri => uri.substr(0, uri.indexOf('?'));
 /**
  * This should:
  * Create ChannelA with tag TagA
@@ -25,86 +30,78 @@ var channelBody = {
  * verify that tag time query can get data back out
  *
  */
-describe(testName, function () {
-
-    utils.putChannel(channelA, false, channelBody, testName);
-
-    utils.putChannel(channelB, false, channelBody, testName);
+describe(__filename, function () {
+    beforeAll(async () => {
+        const responseA = await hubClientPut(`${channelUrl}/${channelA}`, headers, channelBody);
+        const responseB = await hubClientPut(`${channelUrl}/${channelB}`, headers, channelBody);
+        expect(getProp('statusCode', responseA)).toEqual(201);
+        expect(getProp('statusCode', responseB)).toEqual(201);
+    });
 
     utils.itRefreshesChannels();
 
-    utils.addItem(channelUrl + '/' + channelA, 201);
+    const traverse = (uri, index, done) => {
+        const url = uri.trim();
+        console.log(` traverse ${url} ${__filename}`);
+        request.get({ url },
+            function (err, response, body) {
+                expect(err).toBeNull();
+                expect(getProp('statusCode', response)).toBe(200);
+                if (getProp('statusCode', response) === 200) {
+                    body = utils.parseJson(response, __filename);
+                    const links = fromObjectPath(['headers', 'link'], response) || '{}';
+                    parsedLinks = parse(links);
+                    const item = uris[index] && linkStripParams(uris[index]);
+                    if (parsedLinks) {
+                        const prevUrl = fromObjectPath(['previous', 'url'], parsedLinks);
+                        const nextUrl = fromObjectPath(['next', 'url'], parsedLinks);
+                        expect(prevUrl).toContain(`${item}/previous?tag=${tag}`);
+                        expect(nextUrl).toContain(`${item}/next?tag=${tag}`);
+                    } else {
+                        expect(parsedLinks).toBe(true);
+                    }
+                }
+                done();
+            });
+    };
 
-    utils.addItem(channelUrl + '/' + channelB, 201);
+    it('posts items to the channel', async () => {
+        const response1 = await hubClientPostTestItem(`${channelUrl}/${channelA}`);
+        expect(getProp('statusCode', response1)).toEqual(201);
 
-    utils.addItem(channelUrl + '/' + channelA, 201);
+        const response2 = await hubClientPostTestItem(`${channelUrl}/${channelB}`);
+        expect(getProp('statusCode', response2)).toEqual(201);
 
-    var uris = [];
+        const response3 = await hubClientPostTestItem(`${channelUrl}/${channelA}`);
+        expect(getProp('statusCode', response3)).toEqual(201);
+    });
 
-    var tagUrl = hubUrlBase + '/tag/' + tag;
-
-    it('gets tag hour ' + tag, function (done) {
-        var url = tagUrl + '/time/hour?stable=false&trace=true';
+    it(`gets tag hour ${tag}`, function (done) {
+        const url = `${tagUrl}/time/hour?stable=false&trace=true'`;
         console.log('calling tag hour ', url);
-        request.get({
-            url: url,
-            headers: {"Content-Type": "application/json"}
-        },
-        function (err, response, body) {
-            expect(err).toBeNull();
-            const statusCode = getProp('statusCode', response);
-            expect(statusCode).toBe(200);
-            if (statusCode === 200) {
-                body = utils.parseJson(response, testName);
-                console.log('parsed tag body', body);
-                const links = getProp('_links', body);
-                uris = getProp('uris', links) || [];
-                expect(uris.length).toBe(3);
-                expect(uris[0]).toContain(channelA);
-                expect(uris[1]).toContain(channelB);
-                expect(uris[2]).toContain(channelA);
-            } else {
-                console.log('failing test, can\'t get uris . status=' + statusCode);
-            }
-            done();
-        });
+        request.get({ url, headers },
+            function (err, response, body) {
+                expect(err).toBeNull();
+                const statusCode = getProp('statusCode', response);
+                expect(statusCode).toBe(200);
+                if (statusCode === 200) {
+                    body = utils.parseJson(response, __filename);
+                    console.log('parsed tag body', body);
+                    const links = getProp('_links', body);
+                    uris = getProp('uris', links) || [];
+                    expect(uris.length).toBe(3);
+                    expect(uris[0]).toContain(channelA);
+                    expect(uris[1]).toContain(channelB);
+                    expect(uris[2]).toContain(channelA);
+                } else {
+                    console.log(`failing test, can't get uris. status: ${statusCode}`);
+                }
+                done();
+            });
     }, 2 * 60001);
 
-    var parsedLinks;
-
-    function linkStripParams(uri) {
-        return uri.substr(0, uri.indexOf('?'));
-    }
-
-    function traverse(url, index, done) {
-        url = url.trim();
-        console.log(' traverse ' + url + ' ' + testName);
-        request.get({
-            url: url
-        },
-        function (err, response, body) {
-            expect(err).toBeNull();
-            expect(getProp('statusCode', response)).toBe(200);
-            if (getProp('statusCode', response) === 200) {
-                body = utils.parseJson(response, testName);
-                const links = fromObjectPath(['headers', 'link'], response) || '{}';
-                parsedLinks = parse(links);
-                var item = uris[index] && linkStripParams(uris[index]);
-                if (parsedLinks) {
-                    const prevUrl = fromObjectPath(['previous', 'url'], parsedLinks);
-                    const nextUrl = fromObjectPath(['next', 'url'], parsedLinks);
-                    expect(prevUrl).toContain(item + '/previous?tag=' + tag);
-                    expect(nextUrl).toContain(item + '/next?tag=' + tag);
-                } else {
-                    expect(parsedLinks).toBe(true);
-                }
-            }
-            done();
-        });
-    }
-
     it('gets last link ', function (done) {
-        traverse(uris[2] + '&stable=false', 2, done);
+        traverse(`${uris[2]}&stable=false`, 2, done);
     }, 60002);
 
     it('gets previous link ', function (done) {
@@ -123,16 +120,16 @@ describe(testName, function () {
 
     it('gets next link ', function (done) {
         const nextUrl = fromObjectPath(['next', 'url'], parsedLinks);
-        traverse(nextUrl + '&stable=false', 1, done);
+        traverse(`${nextUrl}&stable=false`, 1, done);
     }, 60006);
 
     it('gets 2nd next link ', function (done) {
         const nextUrl = fromObjectPath(['next', 'url'], parsedLinks);
-        traverse(nextUrl + '&stable=false', 2, done);
+        traverse(`${nextUrl}&stable=false`, 2, done);
     }, 60007);
 
     it("gets latest unstable in tag ", function (done) {
-        request.get({url: tagUrl + '/latest?stable=false', followRedirect: false},
+        request.get({url: `${tagUrl}/latest?stable=false`, followRedirect: false},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(303);
@@ -143,11 +140,11 @@ describe(testName, function () {
     }, 60008);
 
     it("gets latest N unstable in tag ", function (done) {
-        request.get({url: tagUrl + '/latest/10?stable=false'},
+        request.get({url: `${tagUrl}/latest/10?stable=false`},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
-                var parsed = utils.parseJson(response, testName);
+                const parsed = utils.parseJson(response, __filename);
                 const currentUris = fromObjectPath(['_links', 'uris'], parsed) || [];
                 expect(currentUris.length).toBe(3);
                 currentUris.forEach(function (uri, index) {
@@ -158,8 +155,8 @@ describe(testName, function () {
             });
     }, 60009);
 
-    it("gets earliest unstable in channel " + tag, function (done) {
-        request.get({url: tagUrl + '/earliest?stable=false&trace=true', followRedirect: false},
+    it(`gets earliest unstable in channel ${tag}`, function (done) {
+        request.get({url: `${tagUrl}/earliest?stable=false&trace=true`, followRedirect: false},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(303);
@@ -169,13 +166,13 @@ describe(testName, function () {
             });
     }, 60010);
 
-    it("next from item " + tag, function (done) {
-        var url = linkStripParams(uris[0]) + '/next/2?tag=' + tag + '&stable=false';
+    it(`next from item ${tag}`, function (done) {
+        const url = `${linkStripParams(uris[0])}/next/2?tag=${tag}&stable=false`;
         request.get({url: url},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
-                var parsed = utils.parseJson(response, testName);
+                const parsed = utils.parseJson(response, __filename);
                 const currentUris = fromObjectPath(['_links', 'uris'], parsed) || [];
                 expect(currentUris.length).toBe(2);
                 currentUris.forEach(function (uri, index) {
@@ -186,14 +183,15 @@ describe(testName, function () {
             });
     }, 60011);
 
-    it("previous from tag " + tag, function (done) {
-        var last = linkStripParams(uris[2]).substring(uris[2].indexOf(channelA) + channelA.length);
-        var url = tagUrl + last + '/previous/3?tag=' + tag + '&stable=false';
-        request.get({url: url},
+    it(`previous from tag ${tag}`, function (done) {
+        const substringLength = uris[2].indexOf(channelA) + channelA.length;
+        const last = linkStripParams(uris[2]).substring(substringLength);
+        const url = `${tagUrl}${last}/previous/3?tag=${tag}&stable=false`;
+        request.get({ url },
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
-                var parsed = utils.parseJson(response, testName);
+                const parsed = utils.parseJson(response, __filename);
                 const currentUris = fromObjectPath(['_links', 'uris'], parsed) || [];
                 expect(currentUris.length).toBe(2);
                 currentUris.forEach(function (uri, index) {
@@ -205,14 +203,15 @@ describe(testName, function () {
             });
     }, 60012);
 
-    it("next from tag " + tag, function (done) {
-        var last = linkStripParams(uris[0]).substring(uris[0].indexOf(channelA) + channelA.length);
-        var url = tagUrl + last + '/next/3?tag=' + tag + '&stable=false';
-        request.get({url: url},
+    it(`next from tag ${tag}`, function (done) {
+        const substringLength = uris[0].indexOf(channelA) + channelA.length;
+        const last = linkStripParams(uris[0]).substring(substringLength);
+        const url = `${tagUrl}${last}/next/3?tag=${tag}&stable=false`;
+        request.get({ url },
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
-                var parsed = utils.parseJson(response, testName);
+                const parsed = utils.parseJson(response, __filename);
                 const currentUris = fromObjectPath(['_links', 'uris'], parsed) || [];
                 expect(currentUris.length).toBe(2);
                 currentUris.forEach(function (uri, index) {
@@ -223,13 +222,13 @@ describe(testName, function () {
             });
     }, 60013);
 
-    it("previous from item " + tag, function (done) {
-        var url = linkStripParams(uris[2]) + '/previous/2?tag=' + tag + '&stable=false';
-        request.get({url: url},
+    it(`previous from item ${tag}`, function (done) {
+        const url = `${linkStripParams(uris[2])}/previous/2?tag=${tag}&stable=false`;
+        request.get({ url },
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
-                var parsed = utils.parseJson(response, testName);
+                const parsed = utils.parseJson(response, __filename);
                 const currentUris = fromObjectPath(['_links', 'uris'], parsed) || [];
                 expect(currentUris.length).toBe(2);
                 currentUris.forEach(function (uri, index) {
@@ -241,9 +240,9 @@ describe(testName, function () {
             });
     }, 60014);
 
-    it("latest from channel " + tag, function (done) {
-        var url = hubUrlBase + '/channel/' + channelB + '/latest?tag=' + tag + '&stable=false';
-        request.get({url: url, followRedirect: false},
+    it(`latest from channel ${tag}`, function (done) {
+        const url = `${hubUrlBase}/channel/${channelB}/latest?tag=${tag}&stable=false`;
+        request.get({ url, followRedirect: false },
             function (err, response, body) {
                 expect(err).toBeNull();
                 const location = fromObjectPath(['headers', 'location'], response);
@@ -253,13 +252,13 @@ describe(testName, function () {
             });
     }, 60015);
 
-    it("latest 3 from channel " + tag, function (done) {
-        var url = hubUrlBase + '/channel/' + channelA + '/latest/3?tag=' + tag + '&stable=false';
-        request.get({url: url, followRedirect: false},
+    it(`latest 3 from channel ${tag}`, function (done) {
+        const url = `${hubUrlBase}/channel/${channelA}/latest/3?tag=${tag}&stable=false`;
+        request.get({ url, followRedirect: false },
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
-                var parsed = utils.parseJson(response, testName);
+                const parsed = utils.parseJson(response, __filename);
                 const currentUris = fromObjectPath(['_links', 'uris'], parsed) || [];
                 expect(currentUris.length).toBe(3);
                 currentUris.forEach(function (uri, index) {
@@ -270,9 +269,9 @@ describe(testName, function () {
             });
     }, 60016);
 
-    it("earliest from channel " + tag, function (done) {
-        var url = hubUrlBase + '/channel/' + channelB + '/earliest?tag=' + tag + '&stable=false&trace=true';
-        request.get({url: url, followRedirect: false},
+    it(`earliest from channel ${tag}`, function (done) {
+        const url = `${hubUrlBase}/channel/${channelB}/earliest?tag=${tag}&stable=false&trace=true`;
+        request.get({ url, followRedirect: false },
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(303);
@@ -282,13 +281,13 @@ describe(testName, function () {
             });
     }, 60017);
 
-    it("earliest 3 from channel " + tag, function (done) {
-        var url = hubUrlBase + '/channel/' + channelA + '/earliest/3?tag=' + tag + '&stable=false&trace=true';
-        request.get({url: url, followRedirect: false},
+    it(`earliest 3 from channel ${tag}`, function (done) {
+        const url = `${hubUrlBase}/channel/${channelA}/earliest/3?tag=${tag}&stable=false&trace=true`;
+        request.get({ url, followRedirect: false },
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
-                var parsed = utils.parseJson(response, testName);
+                const parsed = utils.parseJson(response, __filename);
                 const currentUris = fromObjectPath(['_links', 'uris'], parsed) || [];
                 expect(currentUris.length).toBe(3);
                 currentUris.forEach(function (uri, index) {
@@ -299,13 +298,13 @@ describe(testName, function () {
             });
     }, 60018);
 
-    it("day query from channel " + tag, function (done) {
-        var url = hubUrlBase + '/channel/' + channelB + '/time/day?tag=' + tag + '&stable=false';
-        request.get({url: url},
+    it(`day query from channel ${tag}`, function (done) {
+        const url = `${hubUrlBase}/channel/${channelB}/time/day?tag=${tag}&stable=false`;
+        request.get({ url },
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
-                var parsed = utils.parseJson(response, testName);
+                const parsed = utils.parseJson(response, __filename);
                 console.log('parsed', parsed);
                 const currentUris = fromObjectPath(['_links', 'uris'], parsed) || [];
                 expect(currentUris.length).toBe(3);
@@ -316,5 +315,4 @@ describe(testName, function () {
                 done();
             });
     }, 60019);
-
 });

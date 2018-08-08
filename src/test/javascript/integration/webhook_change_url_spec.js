@@ -2,6 +2,8 @@ require('../integration_config');
 const {
     fromObjectPath,
     getProp,
+    hubClientPost,
+    hubClientPut,
 } = require('../lib/helpers');
 const moment = require('moment');
 
@@ -21,45 +23,37 @@ const webhookName = utils.randomChannelName();
 const webhookResource = `${utils.getWebhookUrl()}/${webhookName}`;
 
 describe(__filename, () => {
+    let callbackServer = null;
+    const callbackServerPort = utils.getPort();
+    const callbackServerURL = `${callbackDomain}:${callbackServerPort}/${webhookName}`;
 
-    let callbackServer;
-    let callbackServerPort = utils.getPort();
-    let callbackServerURL = `${callbackDomain}:${callbackServerPort}/${webhookName}`;
+    const postedItems = [];
+    const callbackItems = [];
 
-    let postedItems = [];
-    let callbackItems = [];
-
-    it('creates a channel', (done) => {
-        utils.httpPut(channelResource)
-            .then(response => expect(getProp('statusCode', response)).toEqual(201))
-            .finally(done);
+    it('creates a channel', async () => {
+        const response = await hubClientPut(channelResource);
+        expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    it('creates a webhook', (done) => {
-        let headers = {'Content-Type': 'application/json'};
-        let payload = {
+    it('creates a webhook', async () => {
+        const headers = { 'Content-Type': 'application/json' };
+        const payload = {
             channelUrl: channelResource,
-            callbackUrl: 'http://nothing:8080/nothing'
+            callbackUrl: 'http://nothing:8080/nothing',
         };
-        utils.httpPut(webhookResource, headers, payload)
-            .then(response => {
-                expect(getProp('statusCode', response)).toEqual(201);
-                console.log('callbackURL:', fromObjectPath(['body', 'callbackUrl'], response));
-            })
-            .finally(done);
+        const response = await hubClientPut(webhookResource, headers, payload);
+        expect(getProp('statusCode', response)).toEqual(201);
+        console.log('callbackURL:', fromObjectPath(['body', 'callbackUrl'], response));
     });
 
-    it('posts an item to our channel', (done) => {
-        let headers = {'Content-Type': 'text/plain'};
-        let payload = moment().utc().toISOString();
-        utils.httpPost(channelResource, headers, payload)
-            .then(response => {
-                expect(getProp('statusCode', response)).toEqual(201);
-                let itemURL = fromObjectPath(['body', '_links', 'self', 'href'], response);
-                postedItems.push(itemURL);
-                console.log('itemURL:', itemURL);
-            })
-            .finally(done);
+    it('posts an item to our channel', async () => {
+        const headers = { 'Content-Type': 'text/plain' };
+        const payload = moment().utc().toISOString();
+        const response = await hubClientPost(channelResource, headers, payload);
+        expect(getProp('statusCode', response)).toEqual(201);
+        const itemURL = fromObjectPath(['body', '_links', 'self', 'href'], response);
+        postedItems.push(itemURL);
+        console.log('itemURL:', itemURL);
     });
 
     it('verifies the correct delivery error was logged', (done) => {
@@ -91,31 +85,25 @@ describe(__filename, () => {
         }, done);
     });
 
-    it('updates the webhook\'s callbackURL', (done) => {
-        let headers = {'Content-Type': 'application/json'};
-        let payload = {
+    it('updates the webhook\'s callbackURL', async () => {
+        const headers = { 'Content-Type': 'application/json' };
+        const payload = {
             channelUrl: channelResource,
-            callbackUrl: callbackServerURL
+            callbackUrl: callbackServerURL,
         };
-        utils.httpPut(webhookResource, headers, payload)
-            .then(response => {
-                expect(getProp('statusCode', response)).toEqual(200);
-                console.log('callbackURL:', fromObjectPath(['body', 'callbackUrl'], response));
-            })
-            .finally(done);
+        const response = await hubClientPut(webhookResource, headers, payload);
+        expect(getProp('statusCode', response)).toEqual(200);
+        console.log('callbackURL:', fromObjectPath(['body', 'callbackUrl'], response));
     });
 
-    it('posts an item to our channel', (done) => {
-        const headers = {'Content-Type': 'text/plain'};
+    it('posts an item to our channel', async () => {
+        const headers = { 'Content-Type': 'text/plain' };
         const payload = moment().utc().toISOString();
-        utils.httpPost(channelResource, headers, payload)
-            .then(response => {
-                expect(getProp('statusCode', response)).toEqual(201);
-                const itemURL = fromObjectPath(['body', '_links', 'self', 'href'], response);
-                postedItems.push(itemURL);
-                console.log('itemURL:', itemURL);
-            })
-            .finally(done);
+        const response = await hubClientPost(channelResource, headers, payload);
+        expect(getProp('statusCode', response)).toEqual(201);
+        const itemURL = fromObjectPath(['body', '_links', 'self', 'href'], response);
+        postedItems.push(itemURL);
+        console.log('itemURL:', itemURL);
     });
 
     it('waits for the callback server to receive the data', (done) => {
@@ -132,5 +120,4 @@ describe(__filename, () => {
         expect(callbackServer).toBeDefined();
         utils.closeServer(callbackServer, done);
     });
-
 });

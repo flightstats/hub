@@ -17,5 +17,6 @@ public class StreamResults {
     private final SortedSet<ContentKey> keys;
     private final Consumer<Content> callback;
     private final boolean descending;
+    private final boolean skipLarge;
 
 }

@@ -116,7 +116,7 @@ public class WebhookService {
         return webhookDao.getAll(true);
     }
 
-    WebhookStatus getStatus(Webhook webhook) {
+    public WebhookStatus getStatus(Webhook webhook) {
         WebhookStatus.WebhookStatusBuilder builder = WebhookStatus.builder().webhook(webhook);
         if (webhook.isTagPrototype()) {
             return builder.build();
