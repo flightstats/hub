@@ -1,7 +1,7 @@
 utils = require('./lib/utils.js');
 ip = require('ip');
 
-hubDomain = process.env.hubDomain;
+hubDomain = global.hubDomain || process.env.hubDomain;
 runEncrypted = process.env.runEncrypted || false;
 callbackPort = runEncrypted = process.env.callbackPort || 8888;
 

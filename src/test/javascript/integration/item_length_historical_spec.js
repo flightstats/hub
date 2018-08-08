@@ -4,6 +4,7 @@ const {
     getHubItem,
     getProp,
     hubClientPut,
+    hubClientPost,
 } = require('../lib/helpers');
 const moment = require('moment');
 
@@ -29,19 +30,11 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    it('posts a historical item', function (done) {
-        utils.postItemQwithPayload(historicalEndpoint, itemHeaders, itemContent)
-            .then(function (result) {
-                try {
-                    const json = JSON.parse(getProp('body', result));
-                    itemURL = fromObjectPath(['_links', 'self', 'href'], json);
-                    expect(itemURL).toBeDefined();
-                } catch (ex) {
-                    expect(ex).toBeNull();
-                    console.log('error parsing json: ', ex);
-                }
-                done();
-            });
+    it('posts a historical item', async () => {
+        const response = await hubClientPost(historicalEndpoint, itemHeaders, itemContent);
+        const body = getProp('body', response);
+        itemURL = fromObjectPath(['_links', 'self', 'href'], body);
+        expect(itemURL).toBeDefined();
     });
 
     it('verifies item has correct length info', async () => {
