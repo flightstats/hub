@@ -88,7 +88,7 @@ describe(__filename, () => {
         let timeoutMS = 5 * 1000;
         const getUntilCallback = (response) => {
             const errorsArray = fromObjectPath(['body', 'errors'], response) || [];
-            return errorsArray.some(err => (err || '').includes('has reached max'));
+            return errorsArray.some(err => (err || '').includes('max attempts reached'));
         };
         utils.httpGetUntil(
             webhookResource,
@@ -120,7 +120,7 @@ describe(__filename, () => {
         let contentKey = (postedItems[0] || '').replace(`${channelResource}/`, '');
         expect(errors[0]).toContain(contentKey);
         expect(errors[0]).toContain('400 Bad Request');
-        expect(errors[1]).toContain(`${contentKey} has reached max attempts (1)`);
+        expect(errors[1]).toContain(`${contentKey} max attempts reached (1)`);
     });
 
     it('closes the callback server', function (done) {
