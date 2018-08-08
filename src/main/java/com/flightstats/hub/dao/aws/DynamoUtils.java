@@ -30,7 +30,7 @@ public class DynamoUtils {
         this.tableCreationWaitMinutes = HubProperties.getProperty("dynamo.table_creation_wait_minutes", 10);
     }
 
-    String getTableName(String baseTableName) {
+    String getLegacyTableName(String baseTableName) {
         return appName + "-" + environment + "-" + baseTableName;
     }
 

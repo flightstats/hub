@@ -16,7 +16,9 @@ import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.SortedSet;
 import java.util.function.Consumer;
 import java.util.zip.Deflater;
@@ -29,21 +31,30 @@ public class ZipBulkBuilder {
 
     public static Response build(SortedSet<ContentKey> keys, String channel,
                                  ChannelService channelService, boolean descending, Consumer<Response.ResponseBuilder> headerBuilder) {
-        Traces traces = ActiveTraces.getLocal();
-        return write((ZipOutputStream output) -> {
+        return write(getConsumer(keys, channel, channelService, descending, ActiveTraces.getLocal(), false), headerBuilder);
+    }
+
+    public static byte[] build(SortedSet<ContentKey> keys, String channel, ChannelService channelService, boolean descending, boolean skipLarge) {
+        return write(getConsumer(keys, channel, channelService, descending, ActiveTraces.getLocal(), skipLarge));
+    }
+
+    private static Consumer<ZipOutputStream> getConsumer(SortedSet<ContentKey> keys, String channel,
+                                                         ChannelService channelService, boolean descending, Traces traces, boolean skipLarge) {
+        return (ZipOutputStream output) -> {
             ActiveTraces.setLocal(traces);
             channelService.get(StreamResults.builder()
                     .channel(channel)
                     .keys(keys)
                     .callback(content -> createZipEntry(output, content))
                     .descending(descending)
+                    .skipLarge(skipLarge)
                     .build()
             );
-        }, headerBuilder);
+        };
     }
 
-    public static Response buildTag(String tag, SortedSet<ChannelContentKey> keys,
-                                    ChannelService channelService, Consumer<Response.ResponseBuilder> headerBuilder) {
+    static Response buildTag(String tag, SortedSet<ChannelContentKey> keys,
+                             ChannelService channelService, Consumer<Response.ResponseBuilder> headerBuilder) {
         Traces traces = ActiveTraces.getLocal();
         return write((ZipOutputStream output) -> {
             ActiveTraces.setLocal(traces);
@@ -53,20 +64,34 @@ public class ZipBulkBuilder {
         }, headerBuilder);
     }
 
-    private static Response write(final Consumer<ZipOutputStream> consumer,
-                                  Consumer<Response.ResponseBuilder> headerBuilder) {
+    private static byte[] write(Consumer<ZipOutputStream> consumer) {
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        handleOutput(consumer, os);
+        return os.toByteArray();
+    }
+
+    private static Response write(Consumer<ZipOutputStream> consumer, Consumer<Response.ResponseBuilder> headerBuilder) {
         Traces traces = ActiveTraces.getLocal();
         Response.ResponseBuilder builder = Response.ok((StreamingOutput) os -> {
             ActiveTraces.setLocal(traces);
+            handleOutput(consumer, os);
+        });
+        builder.type("application/zip");
+        headerBuilder.accept(builder);
+        return builder.build();
+    }
+
+    private static void handleOutput(Consumer<ZipOutputStream> consumer, OutputStream os) {
+        try {
             ZipOutputStream output = new ZipOutputStream(os);
             output.setLevel(Deflater.DEFAULT_COMPRESSION);
             consumer.accept(output);
             output.flush();
             output.close();
-        });
-        builder.type("application/zip");
-        headerBuilder.accept(builder);
-        return builder.build();
+        } catch (Exception e) {
+            logger.warn("issue with streaming bulk", e);
+            throw new RuntimeException(e);
+        }
     }
 
     private static void writeContent(ZipOutputStream output, ContentKey key, String channel,

@@ -56,6 +56,26 @@ describe(__filename, () => {
         console.log('itemURL:', itemURL);
     });
 
+    it('verifies the correct delivery error was logged', (done) => {
+        let timeoutMS = 10 * 1000;
+        utils.httpGetUntil(webhookResource, (response) => response.body.errors.length > 0, timeoutMS)
+            .then(response => {
+                const body = getProp('body', response) || {};
+                console.log(body);
+                const {
+                    lastCompleted,
+                    inFlight = [],
+                    errors = []
+                } = body;
+                expect(lastCompleted).toContain('initial');
+                expect(inFlight.length).toEqual(1);
+                expect(inFlight[0]).toEqual(postedItems[0]);
+                expect(errors.length).toEqual(1);
+                expect(errors[0]).toContain('java.net.UnknownHostException');
+            })
+            .finally(done);
+    });
+
     it('creates a callback server', (done) => {
         callbackServer = utils.startHttpServer(callbackServerPort, (request) => {
             const json = JSON.parse(request);
@@ -96,7 +116,7 @@ describe(__filename, () => {
         expect(callbackItems[1]).toEqual(postedItems[1]);
     });
 
-    it('closes the callback server', function (done) {
+    it('closes the callback server', (done) => {
         expect(callbackServer).toBeDefined();
         utils.closeServer(callbackServer, done);
     });

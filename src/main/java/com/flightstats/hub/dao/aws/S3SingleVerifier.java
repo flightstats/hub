@@ -8,6 +8,7 @@ import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.QueryResult;
 import com.flightstats.hub.exception.FailedQueryException;
 import com.flightstats.hub.metrics.ActiveTraces;
+import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.spoke.SpokeStore;
@@ -36,10 +37,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class S3Verifier {
+public class S3SingleVerifier {
 
     static final String LAST_SINGLE_VERIFIED = "/S3VerifierSingleLastVerified/";
-    private final static Logger logger = LoggerFactory.getLogger(S3Verifier.class);
+    private final static Logger logger = LoggerFactory.getLogger(S3SingleVerifier.class);
     public static final String LEADER_PATH = "/S3VerifierSingleService";
 
     private final int offsetMinutes = HubProperties.getProperty("s3Verifier.offsetMinutes", 15);
@@ -64,8 +65,10 @@ public class S3Verifier {
     private ZooKeeperState zooKeeperState;
     @Inject
     private CuratorFramework curator;
+    @Inject
+    private MetricsService metricsService;
 
-    public S3Verifier() {
+    public S3SingleVerifier() {
         if (HubProperties.getProperty("s3Verifier.run", true)) {
             HubServices.register(new S3ScheduledVerifierService(), HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
         }
@@ -131,6 +134,7 @@ public class S3Verifier {
         logger.debug("verifyChannel.starting {}", range);
         for (ContentKey key : keysToAdd) {
             logger.trace("found missing {} {}", channelName, key);
+            metricsService.increment("s3.verifier.missing");
             s3WriteQueue.add(new ChannelContentKey(channelName, key));
         }
         logger.debug("verifyChannel.completed {}", range);
@@ -200,7 +204,7 @@ public class S3Verifier {
         }
 
         public String toString() {
-            return "com.flightstats.hub.dao.aws.S3Verifier.VerifierRange(startPath=" + this.startPath + ", endPath=" + this.endPath + ", channel=" + this.channel + ")";
+            return "com.flightstats.hub.dao.aws.S3SingleVerifier.VerifierRange(startPath=" + this.startPath + ", endPath=" + this.endPath + ", channel=" + this.channel + ")";
         }
     }
 
