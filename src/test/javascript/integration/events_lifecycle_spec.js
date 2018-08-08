@@ -1,11 +1,13 @@
 require('../integration_config');
+const {
+    createChannel,
+    fromObjectPath,
+    getProp,
+} = require('../lib/helpers');
 
-var request = require('request');
 var EventSource = require('eventsource');
-var http = require('http');
 var channelName = utils.randomChannelName();
-var groupName = utils.randomChannelName();
-var channelResource = channelUrl + "/" + channelName;
+const channelResource = `${channelUrl}/${channelName}`;
 var testName = __filename;
 
 /**
@@ -19,27 +21,35 @@ var testName = __filename;
 describe(testName, function () {
     var events = [];
     var postedItems = [];
+    let createdChannel = false;
 
-    utils.createChannel(channelName, false, testName);
+    beforeAll(async () => {
+        const channel = await createChannel(channelName, false, testName);
+        if (getProp('statusCode', channel) === 201) {
+            console.log(`created channel for ${testName}`);
+            createdChannel = true;
+        }
+    });
 
     it('creates event source', function () {
-
+        if (!createdChannel) return fail('channel not created in before block');
         var source = new EventSource(channelResource + '/events',
             {headers: {'Accept-Encoding': 'gzip'}});
 
         source.addEventListener('application/json', function (e) {
             console.log('message', e);
-            events.push(e.lastEventId);
+            events.push(getProp('lastEventId', e));
         }, false);
 
         source.addEventListener('open', function (e) {
             console.log('opened');
         }, false);
     });
-    
+
     utils.itSleeps(1000);
-    
+
     it('posts items', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         utils.postItemQ(channelResource)
             .then(function (value) {
                 addPostedItem(value);
@@ -57,25 +67,27 @@ describe(testName, function () {
                 addPostedItem(value);
                 done();
             });
-        
+
         function addPostedItem(value) {
-            console.log('posted ', value.body._links.self.href);
-            postedItems.push(value.body._links.self.href);
+            const selfLink = fromObjectPath(['body', '_links', 'self', 'href'], value);
+            console.log('posted ', selfLink);
+            postedItems.push(selfLink);
         }
 
     }, 10 * 1000);
 
     it('waits for data', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         utils.waitForData(postedItems, events, done);
     });
 
     it('verifies events', function () {
         console.log('events:', events);
+        expect(postedItems.length).toBeGreaterThan(0);
         for (var i = 0; i < postedItems.length; i++) {
             expect(postedItems[i]).toBe(events[i]);
         }
 
-    })
+    });
 
 });
-

@@ -38,6 +38,11 @@ public class DelegatingMetricsService implements MetricsService {
     }
 
     @Override
+    public void increment(String name, String... tags) {
+        services.forEach((service) -> service.increment(name, tags));
+    }
+
+    @Override
     public void gauge(String name, double value, String... tags) {
         services.forEach((service) -> service.gauge(name, value, tags));
     }

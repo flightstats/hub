@@ -1,7 +1,12 @@
 require('../integration_config');
+const {
+    fromObjectPath,
+    getProp,
+    hubClientGet,
+} = require('../lib/helpers');
 
 var channelName = utils.randomChannelName();
-var channelResource = channelUrl + "/" + channelName;
+const channelResource = `${channelUrl}/${channelName}`;
 var messageText = "there's a snake in my boot!";
 
 describe(__filename, function () {
@@ -13,7 +18,7 @@ describe(__filename, function () {
 
         utils.httpPost(url, headers, body)
             .then(function (response) {
-                expect(response.statusCode).toEqual(201);
+                expect(getProp('statusCode', response)).toEqual(201);
             })
             .finally(done);
     });
@@ -27,19 +32,19 @@ describe(__filename, function () {
 
         utils.httpPost(url, headers, body)
             .then(function (response) {
-                expect(response.statusCode).toEqual(201);
-                itemURL = response.body._links.self.href;
+                expect(getProp('statusCode', response)).toEqual(201);
+                const selfLink = fromObjectPath(['body', '_links', 'self', 'href'], response);
+                itemURL = selfLink;
             })
             .finally(done);
     });
 
-    it('verifies the creation-date header is returned', function (done) {
-        utils.httpGet(itemURL)
-            .then(function (response) {
-                expect(response.statusCode).toEqual(200);
-                expect(response.headers['creation-date']).toContain('T');
-            })
-            .finally(done);
+    it('verifies the creation-date header is returned', async () => {
+        if (!itemURL) return fail('itemURL failed initialization in previous test');
+        const response = await hubClientGet(itemURL);
+        expect(getProp('statusCode', response)).toEqual(200);
+        console.log('response', response.headers);
+        const creationDate = fromObjectPath(['headers', 'creation-date'], response);
+        expect(creationDate).toContain('T');
     });
-
 });

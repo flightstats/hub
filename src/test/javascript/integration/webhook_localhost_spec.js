@@ -1,11 +1,7 @@
 require('../integration_config');
-
-var request = require('request');
-var http = require('http');
-var channelName = utils.randomChannelName();
-var webhookName = utils.randomChannelName();
-var channelResource = channelUrl + "/" + channelName;
-var webhookResource = utils.getWebhookUrl() + "/" + webhookName;
+const { getProp, fromObjectPath, hubClientGet } = require('../lib/helpers');
+const channelResource = `${channelUrl}/${utils.randomChannelName()}`;
+const webhookResource = `${utils.getWebhookUrl()}/${utils.randomChannelName()}`;
 
 /**
  * This should:
@@ -17,44 +13,40 @@ var webhookResource = utils.getWebhookUrl() + "/" + webhookName;
  */
 
 describe(__filename, function () {
-
     let isClustered = true;
-
-    it('determines if this is a single or clustered hub', (done) => {
-        let url = `${hubUrlBase}/internal/properties`;
-        utils.httpGet(url)
-            .then(response => {
-                expect(response.statusCode).toEqual(200);
-                let hubType = response.body.properties['hub.type'];
-                if (hubType !== undefined) {
-                    isClustered = hubType === 'aws';
-                }
-                console.log('isClustered:', isClustered);
-            })
-            .finally(done);
+    const headers = { 'Content-Type': 'application/json' };
+    it('determines if this is a single or clustered hub', async () => {
+        const url = `${hubUrlBase}/internal/properties`;
+        const response = await hubClientGet(url, headers);
+        expect(getProp('statusCode', response)).toEqual(200);
+        const properties = fromObjectPath(['body', 'properties'], response) || {};
+        const hubType = properties['hub.type'];
+        if (hubType !== undefined) {
+            isClustered = hubType === 'aws';
+        }
+        console.log('isClustered:', isClustered);
     });
 
     it('creates a channel', (done) => {
         utils.httpPut(channelResource)
-            .then(response => expect(response.statusCode).toEqual(201))
+            .then(response => expect(getProp('statusCode', response)).toEqual(201))
             .finally(done);
     });
 
     it('creates a webhook pointing at localhost', (done) => {
-        let headers = {'Content-Type': 'application/json'};
-        let body = {
+        const body = {
             callbackUrl: 'http://localhost:8080/nothing',
-            channelUrl: channelResource
+            channelUrl: channelResource,
         };
         utils.httpPut(webhookResource, headers, body)
             .then(response => {
+                const statusCode = getProp('statusCode', response);
                 if (isClustered) {
-                    expect(response.statusCode).toEqual(400)
+                    expect(statusCode).toEqual(400);
                 } else {
-                    expect(response.statusCode).toEqual(201);
+                    expect(statusCode).toEqual(201);
                 }
             })
             .finally(done);
     });
-
 });

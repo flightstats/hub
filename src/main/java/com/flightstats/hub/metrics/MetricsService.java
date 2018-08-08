@@ -16,6 +16,8 @@ public interface MetricsService {
 
     void count(String name, long value, String... tags);
 
+    void increment(String name, String... tags);
+
     void gauge(String name, double value, String... tags);
 
     void time(String name, long start, String... tags);

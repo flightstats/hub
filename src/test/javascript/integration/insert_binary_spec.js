@@ -1,64 +1,64 @@
 require('../integration_config');
+const {
+    fromObjectPath,
+    getProp,
+    hubClientGet,
+} = require('../lib/helpers');
 
-var channelName = utils.randomChannelName();
-var channelResource = channelUrl + "/" + channelName;
+const channelName = utils.randomChannelName();
+const channelResource = `${channelUrl}/${channelName}`;
 
 describe(__filename, function () {
-
     it('creates a channel', function (done) {
         var url = channelUrl;
         var headers = {'Content-Type': 'application/json'};
         var body = {'name': channelName};
-        
+
         utils.httpPost(url, headers, body)
             .then(function (response) {
-                expect(response.statusCode).toEqual(201);
+                expect(getProp('statusCode', response)).toEqual(201);
             })
             .finally(done);
     });
 
-    var imageData;
-    
-    it('downloads an image of a cat', function (done) {
-        var url = 'http://www.lolcats.com/images/u/08/32/lolcatsdotcombkf8azsotkiwu8z2.jpg';
-        var headers = {};
-        var isBinary = true;
+    let imageData;
 
-        utils.httpGet(url, headers, isBinary)
-            .then(function (response) {
-                expect(response.statusCode).toEqual(200);
-                imageData = response.body;
-            })
-            .finally(done);
+    it('downloads an image of a cat', async () => {
+        const url = 'http://www.lolcats.com/images/u/08/32/lolcatsdotcombkf8azsotkiwu8z2.jpg';
+        const headers = {};
+        const isBinary = true;
+
+        const response = await hubClientGet(url, headers, isBinary);
+        expect(getProp('statusCode', response)).toEqual(200);
+        imageData = getProp('body', response) || '';
     });
 
-    var itemURL;
+    let itemURL;
 
     it('inserts an image into the channel', function (done) {
         var url = channelResource;
         var headers = {'Content-Type': 'image/jpeg'};
-        var body = new Buffer(imageData, 'binary');
+        var body = Buffer.from(imageData, 'binary');
 
         utils.httpPost(url, headers, body)
             .then(function (response) {
-                expect(response.statusCode).toEqual(201);
-                expect(response.body._links.channel.href).toEqual(channelResource);
-                itemURL = response.body._links.self.href;
+                expect(getProp('statusCode', response)).toEqual(201);
+                const links = fromObjectPath(['body', '_links'], response) || {};
+                const { channel = {}, self = {} } = links;
+                expect(channel.href).toEqual(channelResource);
+                itemURL = self.href;
             })
             .finally(done);
     });
 
-    it('verifies the image data was inserted correctly', function (done) {
-        var url = itemURL;
-        var headers = {};
-        var isBinary = true;
+    it('verifies the image data was inserted correctly', async () => {
+        if (!itemURL) return fail('itemURL is not defined by previous test');
+        const headers = {};
+        const isBinary = true;
 
-        utils.httpGet(url, headers, isBinary)
-            .then(function (response) {
-                expect(response.statusCode).toEqual(200);
-                expect(response.body.length).toEqual(imageData.length);
-            })
-            .finally(done);
+        const response = await hubClientGet(itemURL, headers, isBinary);
+        const responseBody = getProp('body', response) || '';
+        expect(getProp('statusCode', response)).toEqual(200);
+        expect(responseBody.length).toEqual(imageData.length);
     });
-
 });

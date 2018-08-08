@@ -1,4 +1,5 @@
 require('../integration_config');
+const { getProp } = require('../lib/helpers');
 
 describe(__filename, function () {
 
@@ -9,7 +10,7 @@ describe(__filename, function () {
 
         utils.httpPost(url, headers, body)
             .then(function (response) {
-                expect(response.statusCode).toEqual(400);
+                expect(getProp('statusCode', response)).toEqual(400);
             })
             .finally(done);
     });

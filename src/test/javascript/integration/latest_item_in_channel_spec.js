@@ -1,10 +1,13 @@
 require('../integration_config');
+const {
+    fromObjectPath,
+    getProp,
+} = require('../lib/helpers');
 
 var request = require('request');
 var channelName = utils.randomChannelName();
-var channelResource = channelUrl + "/" + channelName;
+const channelResource = `${channelUrl}/${channelName}`;
 var testName = __filename;
-
 
 /**
  * create a channel
@@ -24,7 +27,8 @@ describe(testName, function () {
     it('posts item', function (done) {
         utils.postItemQ(channelResource)
             .then(function (value) {
-                posted = value.response.headers.location;
+                const location = fromObjectPath(['response', 'headers', 'location'], value);
+                posted = location;
                 done();
             });
     });
@@ -33,7 +37,7 @@ describe(testName, function () {
         request.get({url: channelResource + '/latest', followRedirect: false},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(404);
+                expect(getProp('statusCode', response)).toBe(404);
                 done();
             });
     });
@@ -42,8 +46,9 @@ describe(testName, function () {
         request.get({url: channelResource + '/latest?stable=false', followRedirect: false},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(303);
-                expect(response.headers.location).toBe(posted);
+                expect(getProp('statusCode', response)).toBe(303);
+                const location = fromObjectPath(['headers', 'location'], response);
+                expect(location).toBe(posted);
                 done();
             });
     });
@@ -52,12 +57,11 @@ describe(testName, function () {
         request.get({url: channelResource + '/latest/10?stable=false', followRedirect: false},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
+                expect(getProp('statusCode', response)).toBe(200);
                 var parsed = utils.parseJson(response, testName);
-                if (parsed._links) {
-                    expect(parsed._links.uris.length).toBe(2);
-                    expect(parsed._links.uris[1]).toBe(posted);
-                }
+                const uris = fromObjectPath(['_links', 'uris'], parsed) || [];
+                expect(uris.length).toBe(2);
+                expect(uris[1]).toBe(posted);
                 done();
             });
     });
@@ -69,8 +73,9 @@ describe(testName, function () {
         request.get({url: channelResource + '/latest?stable=true&trace=true', followRedirect: false},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(303);
-                expect(response.headers.location).toBe(posted);
+                expect(getProp('statusCode', response)).toBe(303);
+                const location = fromObjectPath(['headers', 'location'], response);
+                expect(location).toBe(posted);
                 done();
             });
     });

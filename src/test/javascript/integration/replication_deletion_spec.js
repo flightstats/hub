@@ -1,7 +1,11 @@
 require('../integration_config');
+const {
+    fromObjectPath,
+    getProp,
+} = require('../lib/helpers');
+
 var request = require('request');
 var testName = __filename;
-var channelName = utils.randomChannelName();
 
 /**
  * 1 - Create local channel with replicationSource to non-existent channel
@@ -18,30 +22,29 @@ describe(testName, function () {
 
     it('tries to add item to channel ' + channelName, function (done) {
         request.post({
-                url: localChannelUrl,
-                headers: {"Content-Type": "application/json", user: 'somebody'},
-                body: JSON.stringify({"data": Date.now()})
-            },
-            function (err, response, body) {
-                expect(err).toBeNull();
+            url: localChannelUrl,
+            headers: {"Content-Type": "application/json", user: 'somebody'},
+            body: JSON.stringify({"data": Date.now()})
+        },
+        function (err, response, body) {
+            expect(err).toBeNull();
 
-                console.log('body', body);
-
-                expect(response.headers['content-type']).toBe('application/json');
-                expect(response.statusCode).toBe(403);
-                expect(body).toBe(channelName + ' cannot modified while replicating');
-                done();
-            });
+            console.log('body', body);
+            const contentType = fromObjectPath(['headers', 'content-type'], response);
+            expect(contentType).toBe('application/json');
+            expect(getProp('statusCode', response)).toBe(403);
+            expect(body).toBe(channelName + ' cannot modified while replicating');
+            done();
+        });
     });
 
     it('tries to delete channel', function (done) {
-        request.del({url : localChannelUrl },
+        request.del({ url: localChannelUrl },
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(202);
+                expect(getProp('statusCode', response)).toBe(202);
                 done();
             });
     });
-
 
 });

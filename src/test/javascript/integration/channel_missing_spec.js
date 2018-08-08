@@ -1,10 +1,11 @@
 require('../integration_config');
+const { getProp } = require('../lib/helpers');
 
 var request = require('request');
-var http = require('http');
+// var http = require('http'); // TODO: not used?
 var channelName = utils.randomChannelName();
-var groupName = utils.randomChannelName();
-var channelResource = channelUrl + "/" + channelName;
+// var groupName = utils.randomChannelName();  // TODO: not used?
+const channelResource = `${channelUrl}/${channelName}`;
 var testName = __filename;
 
 /**
@@ -16,9 +17,9 @@ describe(testName, function () {
         request.get({url: url, json: true},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(404);
+                expect(getProp('statusCode', response)).toBe(404);
                 done();
-            })
+            });
     }
 
     it('queries day', function (done) {
@@ -82,4 +83,3 @@ describe(testName, function () {
     });
 
 });
-

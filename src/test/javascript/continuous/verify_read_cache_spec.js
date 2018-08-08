@@ -45,7 +45,7 @@ describe(__filename, () => {
     it('has data old enough to use', (done) => {
         if (shouldSkipRemainingTests) pending();
         expect(spokeTTLMinutes).toBeDefined();
-        let timeInThePast = moment().utc().subtract(spokeTTLMinutes + 1, 'minutes');
+        let timeInThePast = moment().utc().subtract(spokeTTLMinutes + 30, 'minutes');
         let timePath = timeInThePast.format('YYYY/MM/DD/HH/mm');
         let url = `${channelResource}/${timePath}`;
         utils.httpGet(url)

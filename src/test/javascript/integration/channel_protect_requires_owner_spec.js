@@ -1,6 +1,6 @@
 require('../integration_config');
 
-var request = require('request');
+// var request = require('request'); // TODO: unused?
 
 describe(__filename, function () {
 

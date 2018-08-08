@@ -1,5 +1,10 @@
 require('../integration_config');
-
+const {
+    createChannel,
+    fromObjectPath,
+    getHubItem,
+    getProp,
+} = require('../lib/helpers');
 /**
  * POST a single item, GET it, and verify the "X-Item-Length"
  * header is present with the correct value
@@ -11,28 +16,43 @@ describe(__filename, function () {
     var itemHeaders = {'Content-Type': 'text/plain'};
     var itemContent = 'this string has normal letters, and unicode characters like "\u03B1"';
     var itemURL;
+    let createdChannel = false;
 
-    utils.createChannel(channelName, null, 'single inserts');
+    beforeAll(async () => {
+        const channel = await createChannel(channelName, null, 'single inserts');
+        if (getProp('statusCode', channel) === 201) {
+            createdChannel = true;
+            console.log(`created channel for ${__filename}`);
+        }
+    });
 
     it('posts a single item', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         utils.postItemQwithPayload(channelEndpoint, itemHeaders, itemContent)
             .then(function (result) {
-                expect(function () {
-                    var json = JSON.parse(result.body);
-                    itemURL = json._links.self.href;
-                }).not.toThrow();
+                try {
+                    const json = JSON.parse(getProp('body', result));
+                    itemURL = fromObjectPath(['_links', 'self', 'href'], json);
+                    expect(itemURL).toBeDefined();
+                } catch (ex) {
+                    expect(ex).toBeNull();
+                    console.log('error parsing json: ', ex);
+                }
                 done();
             });
     });
 
-    it('verifies item has correct length info', function (done) {
-        expect(itemURL !== undefined).toBe(true);
-        utils.getItem(itemURL, function (headers, body) {
-            expect('x-item-length' in headers).toBe(true);
-            var bytes = new Buffer(itemContent, 'utf-8').length;
-            expect(headers['x-item-length']).toBe(bytes.toString());
-            expect(body.toString()).toEqual(itemContent);
-            done();
-        });
+    it('verifies item has correct length info', async () => {
+        if (!itemURL) {
+            expect(itemURL).toBeDefined();
+            return false;
+        }
+        const result = await getHubItem(itemURL);
+        const xItemLength = fromObjectPath(['headers', 'x-item-length'], result);
+        expect(xItemLength).toBeDefined();
+        var bytes = Buffer.from(itemContent).length;
+        expect(xItemLength).toBe(bytes.toString());
+        const data = getProp('body', result);
+        expect(`${data}`).toEqual(itemContent);
     });
 });

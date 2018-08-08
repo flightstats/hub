@@ -83,6 +83,7 @@ public class HubMain {
         HubJettyServer server = new HubJettyServer();
         server.start(resourceConfig);
         logger.info("Hub server has been started.");
+
         HubServices.start(HubServices.TYPE.PERFORM_HEALTH_CHECK);
         logger.info("completed initial post start");
         HubServices.start(HubServices.TYPE.AFTER_HEALTHY_START);

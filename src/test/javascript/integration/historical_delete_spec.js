@@ -1,13 +1,14 @@
 require('../integration_config');
+const {
+    fromObjectPath,
+    getProp,
+} = require('../lib/helpers');
 
 var request = require('request');
-var http = require('http');
-var parse = require('parse-link-header');
 var channel = utils.randomChannelName();
 var moment = require('moment');
 
 var testName = __filename;
-
 
 /**
  * This should:
@@ -40,7 +41,7 @@ describe(testName, function () {
     it('posts historical item to ' + channel, function (done) {
         utils.postItemQ(pointInThePastURL)
             .then(function (value) {
-                historicalLocation = value.response.headers.location;
+                historicalLocation = fromObjectPath(['response', 'headers', 'location'], value);
                 done();
             });
     });
@@ -50,7 +51,7 @@ describe(testName, function () {
         request.del({url: historicalLocation + '?trace=true'},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(204);
+                expect(getProp('statusCode', response)).toBe(204);
                 done();
             });
     });
@@ -59,7 +60,7 @@ describe(testName, function () {
         request.get({url: historicalLocation},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(404);
+                expect(getProp('statusCode', response)).toBe(404);
                 done();
             });
     });
@@ -69,7 +70,7 @@ describe(testName, function () {
     it('posts live item to ' + channel, function (done) {
         utils.postItemQ(channelURL)
             .then(function (value) {
-                liveLocation = value.response.headers.location;
+                liveLocation = fromObjectPath(['response', 'headers', 'location'], value);
                 done();
             });
     });
@@ -79,7 +80,7 @@ describe(testName, function () {
         request.del({url: liveLocation + '?trace=true'},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(405);
+                expect(getProp('statusCode', response)).toBe(405);
                 done();
             });
     });
@@ -88,7 +89,7 @@ describe(testName, function () {
         request.get({url: liveLocation},
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
+                expect(getProp('statusCode', response)).toBe(200);
                 done();
             });
     });

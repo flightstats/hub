@@ -1,8 +1,9 @@
 require('../integration_config');
+const { getProp } = require('../lib/helpers');
 
 var request = require('request');
 var channelName = utils.randomChannelName();
-var channelResource = channelUrl + "/" + channelName;
+const channelResource = `${channelUrl}/${channelName}`;
 var testName = __filename;
 
 describe(testName, function () {
@@ -18,7 +19,7 @@ describe(testName, function () {
             },
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(400);
+                expect(getProp('statusCode', response)).toBe(400);
                 done();
             });
     });

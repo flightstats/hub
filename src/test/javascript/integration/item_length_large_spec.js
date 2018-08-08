@@ -1,7 +1,10 @@
 require('../integration_config');
-
-const request = require('request');
-
+const {
+    createChannel,
+    fromObjectPath,
+    getHubItem,
+    getProp,
+} = require('../lib/helpers');
 /**
  * POST a large item, GET it, and verify the "X-Item-Length"
  * header is present with the correct value
@@ -14,30 +17,42 @@ describe(__filename, function () {
     var itemSize = 41 * 1024 * 1024;
     var itemContent = Array(itemSize).join('a');
     var itemURL;
+    let createdChannel = false;
 
-    utils.createChannel(channelName, null, 'large inserts');
+    beforeAll(async () => {
+        const channel = await createChannel(channelName, null, 'large inserts');
+        if (getProp('statusCode', channel) === 201) {
+            createdChannel = true;
+            console.log(`created channel for ${__filename}`);
+        }
+    });
 
     it('posts a large item', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         utils.postItemQwithPayload(channelEndpoint, itemHeaders, itemContent)
             .then(function (result) {
-                expect(function () {
-                    var json = JSON.parse(result.body);
-                    itemURL = json._links.self.href;
-                }).not.toThrow();
+                try {
+                    const json = JSON.parse(getProp('body', result));
+                    itemURL = fromObjectPath(['_links', 'self', 'href'], json);
+                    expect(itemURL).toBeDefined();
+                } catch (ex) {
+                    expect(ex).toBeNull();
+                    console.log('error parsing json: ', ex);
+                }
                 done();
             });
     });
 
-    it('verifies item has correct length info', function (done) {
-        expect(itemURL !== undefined).toBe(true);
-        utils.getItem(itemURL, function (headers, body) {
-            console.log('headers:', headers);
-            expect('x-item-length' in headers).toBe(true);
-            var bytes = itemSize - 1; // not sure why the -1 is needed. stole this from insert_and_fetch_large_spec.js
-            expect(headers['x-item-length']).toBe(bytes.toString());
-            //expect(body.toString()).toEqual(itemContent);
-            done();
-        });
+    it('verifies item has correct length info', async () => {
+        if (!itemURL) {
+            expect(itemURL).toBeDefined();
+            return false;
+        }
+        const result = await getHubItem(itemURL);
+        console.log('headers', getProp('headers', result));
+        const xItemLength = fromObjectPath(['headers', 'x-item-length'], result);
+        const bytes = itemSize - 1; // not sure why the -1 is needed. stole this from insert_and_fetch_large_spec.js
+        expect(xItemLength).toBe(bytes.toString());
     }, 5 * 60 * 1000);
 
 });

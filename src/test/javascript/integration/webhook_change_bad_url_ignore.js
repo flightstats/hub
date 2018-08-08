@@ -1,12 +1,10 @@
 require('../integration_config');
-
-var request = require('request');
-var http = require('http');
+const { createChannel, getProp, fromObjectPath } = require('../lib/helpers');
 var channelName = utils.randomChannelName();
 var webhookName = utils.randomChannelName();
-var channelResource = channelUrl + "/" + channelName;
+const channelResource = `${channelUrl}/${channelName}`;
 var testName = __filename;
-
+let createdChannel = false;
 /**
  * This is disabled for now.
  *
@@ -20,20 +18,23 @@ var testName = __filename;
  * 6 - post item - should see item at endPointB
  */
 describe(testName, function () {
-
     var callbackServer;
     var port = utils.getPort();
-
     var badConfig = {
         callbackUrl: 'http://localhost:8080/nothing',
-        channelUrl: channelResource
+        channelUrl: channelResource,
     };
     var goodConfig = {
         callbackUrl: callbackDomain + ':' + port + '/',
-        channelUrl: channelResource
+        channelUrl: channelResource,
     };
-
-    utils.createChannel(channelName, false, testName);
+    beforeAll(async () => {
+        const channel = await createChannel(channelName, false, testName);
+        if (getProp('statusCode', channel) === 201) {
+            createdChannel = true;
+            console.log(`created channel for ${__filename}`);
+        }
+    });
 
     utils.putWebhook(webhookName, badConfig, 201, testName);
 
@@ -46,33 +47,40 @@ describe(testName, function () {
     var receivedItems = [];
 
     it('starts a callback server', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         callbackServer = utils.startHttpServer(port, function (string) {
             console.log('called webhook ' + webhookName + ' ' + string);
             receivedItems.push(string);
         }, done);
     });
-    
+
     var itemURL;
-    
+
     it('posts and item', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         utils.postItemQ(channelResource)
             .then(function (value) {
-                itemURL = value.body._links.self.href;
+                itemURL = fromObjectPath(['body', '_links', 'self', 'href'], value);
                 done();
             });
     });
-    
+
     it('waits for data', function (done) {
-       utils.waitForData(receivedItems, [itemURL], done); 
+        if (!createdChannel) return done.fail('channel not created in before block');
+        utils.waitForData(receivedItems, [itemURL], done);
     });
-    
+
     it('verifies we got the item through the callback', function () {
+        if (!createdChannel) return fail('channel not created in before block');
         expect(receivedItems.length).toBe(1);
-        expect(receivedItems).toContain(itemURL);
+        const receivedItem = receivedItems.find(item => item.includes(item));
+        expect(receivedItem).toBeDefined();
+        expect(receivedItem).toContain(itemURL);
     });
-    
+
     it('closes the callback server', function (done) {
         expect(callbackServer).toBeDefined();
+        if (!createdChannel) return done.fail('channel not created in before block');
         utils.closeServer(callbackServer, done);
     });
 

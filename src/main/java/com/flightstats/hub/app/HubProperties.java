@@ -73,6 +73,14 @@ public class HubProperties {
         return getProperty("aws.signing_region", "us-east-1");
     }
 
+    public static int getS3WriteQueueSize() {
+        return getProperty("s3.writeQueueSize", 40000);
+    }
+
+    public static int getS3WriteQueueThreads() {
+        return getProperty("s3.writeQueueThreads", 20);
+    }
+
     static Properties getProperties() {
         return properties;
     }

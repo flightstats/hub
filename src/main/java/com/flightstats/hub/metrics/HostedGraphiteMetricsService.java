@@ -2,6 +2,7 @@ package com.flightstats.hub.metrics;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import org.apache.commons.lang3.NotImplementedException;
 
 @Singleton
 class HostedGraphiteMetricsService implements MetricsService {
@@ -25,6 +26,11 @@ class HostedGraphiteMetricsService implements MetricsService {
     @Override
     public void count(String name, long value, String... tags) {
         sender.send(name, value);
+    }
+
+    @Override
+    public void increment(String name, String... tags) {
+        throw new NotImplementedException("'increment' not implemented for hosted Graphite");
     }
 
     @Override

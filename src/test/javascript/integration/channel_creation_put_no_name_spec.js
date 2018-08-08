@@ -1,8 +1,11 @@
 require('../integration_config');
+const { fromObjectPath, getProp } = require('../lib/helpers');
+
+const getParsedPropFunc = parsed => prop => getProp(prop, parsed);
 
 var request = require('request');
 var channelName = utils.randomChannelName();
-var channelResource = channelUrl + "/" + channelName;
+const channelResource = `${channelUrl}/${channelName}`;
 var testName = __filename;
 
 
@@ -18,11 +21,13 @@ describe(testName, function () {
     utils.putChannel(channelName, function (response, body) {
         var parse = utils.parseJson(response, testName);
         returnedBody = parse;
-        expect(parse._links.self.href).toEqual(channelResource);
-        expect(parse.ttlDays).toEqual(120);
-        expect(parse.description).toEqual('');
-        expect(parse.tags.length).toEqual(0);
-        expect(parse.replicationSource).toEqual('');
+        expect(fromObjectPath(['_links', 'self', 'href'], parse)).toEqual(channelResource);
+        // getParsedProp(prop) safely returns parse.prop || null
+        const getParsedProp = getParsedPropFunc(parse);
+        expect(getParsedProp('ttlDays')).toEqual(120);
+        expect(getParsedProp('description')).toEqual('');
+        expect((getParsedProp('tags') || '').length).toEqual(0);
+        expect(getParsedProp('replicationSource')).toEqual('');
     }, {});
 
     var newConfig = {
@@ -33,11 +38,12 @@ describe(testName, function () {
 
     utils.putChannel(channelName, function (response, body) {
         var parse = utils.parseJson(response, testName);
-        expect(parse._links.self.href).toEqual(channelResource);
-        expect(parse.ttlDays).toEqual(newConfig.ttlDays);
-        expect(parse.description).toEqual(newConfig.description);
-        expect(parse.tags).toEqual(newConfig.tags);
-        expect(parse.creationDate).toEqual(returnedBody.creationDate);
+        expect(fromObjectPath(['_links', 'self', 'href'], parse)).toEqual(channelResource);
+        const getParsedProp = getParsedPropFunc(parse);
+        expect(getParsedProp('ttlDays')).toEqual(newConfig.ttlDays);
+        expect(getParsedProp('description')).toEqual(newConfig.description);
+        expect(getParsedProp('tags')).toEqual(newConfig.tags);
+        expect(getParsedProp('creationDate')).toEqual(returnedBody.creationDate);
     }, newConfig);
 
 

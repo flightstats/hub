@@ -1,15 +1,19 @@
-# locust.py
 import json
+import logging
 import os
 import random
 import string
 from locust import HttpLocust, TaskSet, task, web
+from flask import request, Response
 
 from hubTasks import HubTasks
 from hubUser import HubUser
+from log import setup_logging
+import utils
 
+setup_logging('/mnt/log/large.log')
+logger = logging.getLogger(__name__)
 
-# locust -f large.py --host=http://localhost:8080
 
 class LargeUser(HubUser):
     def name(self):
@@ -21,18 +25,21 @@ class LargeUser(HubUser):
     def start_webhook(self, config):
         if config['number'] == 1:
             config['webhook_channel'] = config['channel'] + "_replicated"
-            replicationSource = config['host'] + "/channel/" + config['channel']
-            config['client'].put("/channel/" + config['webhook_channel'],
-                                 data=json.dumps({"name": config['webhook_channel'], "ttlDays": "3",
-                                                  "replicationSource": replicationSource}),
-                                 headers={"Content-Type": "application/json"},
-                                 name="replication")
+            url = "/channel/" + config['webhook_channel']
+            headers = {"Content-Type": "application/json"}
+            channel_config = {
+                "name": config['webhook_channel'],
+                "ttlDays": "3",
+                "replicationSource": config['host'] + "/channel/" + config['channel']
+            }
+            config['client'].put(url, data=json.dumps(channel_config), headers=headers, name="replication")
 
     def has_webhook(self):
         return True
 
     def has_websocket(self):
         return False
+
 
 class LargeTasks(TaskSet):
     hubTasks = None
@@ -66,6 +73,7 @@ class LargeTasks(TaskSet):
                                      + self.hubTasks.get_channel_url())
             else:
                 uri = postResponse.json()['_links']['self']['href']
+                logger.debug('item POSTed: ' + uri)
                 with self.client.get(uri, stream=True, catch_response=True, name="get_payload") as getResponse:
                     if getResponse.status_code != 200:
                         getResponse.failure("Got wrong response on get: " + str(getResponse.status_code) + " " + uri)
@@ -76,18 +84,18 @@ class LargeTasks(TaskSet):
                                 fd.write(chunk)
                     get_size = os.stat(inputFile).st_size
                     if get_size == expected_size:
-                        print "Got expected size on get: " + str(get_size) + " " + uri
+                        logger.info("Got expected size on get: " + str(get_size) + " " + uri)
                     else:
                         getResponse.failure("Got wrong size on get: " + str(get_size) + " " + uri)
 
     def create_large(self, tasks):
         large_file_name = self.large_file_name(self.hubTasks.number, 'out')
         if os.path.isfile(large_file_name):
-            print "using existing file " + large_file_name + " bytes=" + str(os.stat(large_file_name).st_size)
+            logger.info("using existing file " + large_file_name + " bytes=" + str(os.stat(large_file_name).st_size))
             return
         if tasks.number == 1:
             target = open(large_file_name, 'w')
-            print "writing file " + large_file_name
+            logger.info("writing file " + large_file_name)
             target.truncate(0)
             chars = string.ascii_uppercase + string.digits
             size = 50 * 1024
@@ -95,7 +103,7 @@ class LargeTasks(TaskSet):
                 target.write(''.join(random.choice(chars) for i in range(size)))
                 target.flush()
 
-            print "closing " + large_file_name
+            logger.info("closing " + large_file_name)
             target.close()
         elif tasks.number == 2:
             os.system("cat /mnt/large1.out /mnt/large1.out > /mnt/large2.out")
@@ -108,11 +116,17 @@ class LargeTasks(TaskSet):
 
     @web.app.route("/callback", methods=['GET'])
     def get_channels():
+        logger.debug(utils.get_client_address(request) + ' | ' + request.method + ' | /callback')
         return HubTasks.get_channels()
 
     @web.app.route("/callback/<channel>", methods=['GET', 'POST'])
     def callback(channel):
+        logger.debug(utils.get_client_address(request) + ' | ' + request.method + ' | /callback/' + channel + ' | ' + request.get_data().strip())
         return HubTasks.callback(channel)
+
+    @web.app.route('/store/<name>', methods=['GET'])
+    def get_store(name):
+        return Response(HubTasks.get_store(name), mimetype='application/json')
 
 
 class WebsiteUser(HttpLocust):

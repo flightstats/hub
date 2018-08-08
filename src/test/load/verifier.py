@@ -1,9 +1,15 @@
-# locust.py
+import logging
 import json
 from locust import HttpLocust, TaskSet, task, web
+from flask import request, Response
 
 from hubTasks import HubTasks
 from hubUser import HubUser
+from log import setup_logging
+import utils
+
+setup_logging('/mnt/log/verifier.log')
+logger = logging.getLogger(__name__)
 
 
 class VerifierUser(HubUser):
@@ -87,11 +93,17 @@ class VerifierTasks(TaskSet):
 
     @web.app.route("/callback", methods=['GET'])
     def get_channels():
+        logger.debug(utils.get_client_address(request) + ' | ' + request.method + ' | /callback')
         return HubTasks.get_channels()
 
     @web.app.route("/callback/<channel>", methods=['GET', 'POST'])
     def callback(channel):
+        logger.debug(utils.get_client_address(request) + ' | ' + request.method + ' | /callback/' + channel + ' | ' + request.get_data().strip())
         return HubTasks.callback(channel)
+
+    @web.app.route('/store/<name>', methods=['GET'])
+    def get_store(name):
+        return Response(HubTasks.get_store(name), mimetype='application/json')
 
 
 class WebsiteUser(HttpLocust):

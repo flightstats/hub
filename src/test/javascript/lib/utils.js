@@ -3,7 +3,7 @@ var http = require('http');
 var https = require('https');
 var fs = require('fs');
 var request = require('request');
-var moment = require('moment');
+const moment = require('moment');
 
 /**
  * Monkey patching Promise.prototype.finally until its officially supported
@@ -51,13 +51,13 @@ exports.createChannel = function createChannel(channelName, url, description) {
     it("creates channel " + channelName + " at " + url, function (done) {
         console.log('creating channel ' + channelName + ' for ' + description);
         request.post({url: url,
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({ "name": channelName })},
-            function (err, response, body) {
-                expect(err).toBeNull();
-                expect(response.statusCode).toBe(201);
-                done();
-            });
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({ "name": channelName })},
+        function (err, response, body) {
+            expect(err).toBeNull();
+            expect(response.statusCode).toBe(201);
+            done();
+        });
     }, 10 * 1001);
 
 };
@@ -111,7 +111,7 @@ exports.httpGet = function httpGet(url, headers, isBinary) {
                         console.warn('Response header says the content is JSON but it couldn\'t be parsed');
                     }
                 }
-    
+
                 resolve(response);
             }
         });
@@ -148,7 +148,7 @@ exports.httpPost = function httpPost(url, headers, body) {
                         console.warn('Response header says the content is JSON but it couldn\'t be parsed');
                     }
                 }
-    
+
                 resolve(response);
             }
         });
@@ -158,13 +158,13 @@ exports.httpPost = function httpPost(url, headers, body) {
 exports.httpPut = function httpPut(url, headers, body) {
     if (headers)
         headers = utils.keysToLowerCase(headers);
-    
+
     var options = {
         url: url,
         headers: headers || {},
         body: body || ''
     };
-    
+
     if (utils.isSendingOrReceivingJSON(headers)) {
         options.json = true;
     }
@@ -187,7 +187,7 @@ exports.httpPut = function httpPut(url, headers, body) {
 exports.httpDelete = function httpDelete(url, headers) {
     if (headers)
         headers = utils.keysToLowerCase(headers);
-    
+
     var options = {
         url: url,
         headers: headers || {}
@@ -339,7 +339,7 @@ function postItemQwithPayload(url, headers, body) {
         headers: headers || {},
         body: body
     };
-    
+
     if ('Content-Type' in options.headers && options.headers['Content-Type'] === 'application/json') {
         options = Object.assign({}, options, {json: true});
     }
@@ -654,8 +654,4 @@ exports.httpGetUntil = function httpGetUntil(url, clause, timeoutMS, delayMS) {
 
         loop();
     });
-};
-
-exports.noop = function noop() {
-    // do nothing
 };

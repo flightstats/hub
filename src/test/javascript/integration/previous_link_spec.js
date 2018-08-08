@@ -1,25 +1,27 @@
 require('../integration_config');
+const {
+    fromObjectPath,
+    getProp,
+    hubClientGet,
+} = require('../lib/helpers');
 
-var request = require('request');
-var http = require('http');
-var channelName = utils.randomChannelName();
-var groupName = utils.randomChannelName();
-var channelResource = channelUrl + "/" + channelName;
-var testName = __filename;
+const channelName = utils.randomChannelName();
+const channelResource = `${channelUrl}/${channelName}`;
 
-describe(testName, function () {
+describe(__filename, function () {
     utils.putChannel(channelName, function () {
-    }, {"name": channelName, ttlDays: 1});
+    }, { "name": channelName, ttlDays: 1 });
 
-    var items = [];
-    var headers = {'Content-Type': 'application/json'};
-    var body = {'name': channelName};
+    const items = [];
+    const headers = { 'Content-Type': 'application/json' };
+    const body = { 'name': channelName };
 
-    function postOneItem(done) {
+    function postOneItem (done) {
         utils.httpPost(channelResource, headers, body)
             .then(function (response) {
-                expect(response.statusCode).toEqual(201);
-                items.push(response.body._links.self.href);
+                expect(getProp('statusCode', response)).toEqual(201);
+                const href = fromObjectPath(['body', '_links', 'self', 'href'], response);
+                items.push(href);
             })
             .finally(done);
     }
@@ -28,21 +30,17 @@ describe(testName, function () {
         postOneItem(done);
     });
 
-    it('gets 404 from /previous ', function (done) {
-        utils.httpGet(items[0] + '/previous', headers, body)
-            .then(function (response) {
-                expect(response.statusCode).toEqual(404);
-            })
-            .finally(done);
+    it('gets 404 from /previous ', async () => {
+        const response = await hubClientGet(`${items[0]}/previous`, headers, body);
+        expect(getProp('statusCode', response)).toEqual(404);
     });
 
-    it('gets empty list from /previous/2 ', function (done) {
-        utils.httpGet(items[0] + '/previous/2', headers, body)
-            .then(function (response) {
-                expect(response.statusCode).toEqual(200);
-                expect(response.body._links.uris.length).toBe(0);
-            })
-            .finally(done);
+    it('gets empty list from /previous/2 ', async () => {
+        const response = await hubClientGet(`${items[0]}/previous/2`, headers, body);
+        expect(getProp('statusCode', response)).toEqual(200);
+        const uris = fromObjectPath(['body', '_links', 'uris'], response);
+        const urisLength = !!uris && uris.length === 0;
+        expect(urisLength).toBe(true);
     });
 
     it('posts item', function (done) {
@@ -53,36 +51,28 @@ describe(testName, function () {
         postOneItem(done);
     });
 
-    it('gets item from /previous ', function (done) {
-        utils.httpGet(items[2] + '/previous?stable=false', headers, body)
-            .then(function (response) {
-                expect(response.statusCode).toEqual(303);
-                expect(response.headers.location).toBe(items[1]);
-            })
-            .finally(done);
+    it('gets item from /previous ', async () => {
+        const response = await hubClientGet(`${items[2]}/previous?stable=false`, headers, body);
+        expect(getProp('statusCode', response)).toEqual(303);
+        const location = fromObjectPath(['headers', 'location'], response);
+        expect(location).toBe(items[1]);
     });
 
-    it('gets items from /previous/2 ', function (done) {
-        utils.httpGet(items[2] + '/previous/2?stable=false', headers, body)
-            .then(function (response) {
-                expect(response.statusCode).toEqual(200);
-                expect(response.body._links.uris.length).toBe(2);
-                expect(response.body._links.uris[0]).toBe(items[0]);
-                expect(response.body._links.uris[1]).toBe(items[1]);
-            })
-            .finally(done);
+    it('gets items from /previous/2 ', async () => {
+        const response = await hubClientGet(`${items[2]}/previous/2?stable=false`, headers, body);
+        expect(getProp('statusCode', response)).toEqual(200);
+        const uris = fromObjectPath(['body', '_links', 'uris'], response) || [];
+        expect(uris.length).toBe(2);
+        expect(uris[0]).toBe(items[0]);
+        expect(uris[1]).toBe(items[1]);
     });
 
-    it('gets inclusive items from /previous/2 ', function (done) {
-        utils.httpGet(items[2] + '/previous/2?stable=false&inclusive=true', headers, body)
-            .then(function (response) {
-                expect(response.statusCode).toEqual(200);
-                expect(response.body._links.uris.length).toBe(2);
-                expect(response.body._links.uris[0]).toBe(items[1]);
-                expect(response.body._links.uris[1]).toBe(items[2]);
-            })
-            .finally(done);
+    it('gets inclusive items from /previous/2 ', async () => {
+        const response = await hubClientGet(`${items[2]}/previous/2?stable=false&inclusive=true`, headers, body);
+        expect(getProp('statusCode', response)).toEqual(200);
+        const uris = fromObjectPath(['body', '_links', 'uris'], response) || [];
+        expect(uris.length).toBe(2);
+        expect(uris[0]).toBe(items[1]);
+        expect(uris[1]).toBe(items[2]);
     });
-
 });
-

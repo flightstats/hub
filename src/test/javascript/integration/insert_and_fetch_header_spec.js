@@ -1,18 +1,29 @@
 require('../integration_config');
+const {
+    createChannel,
+    fromObjectPath,
+    getProp,
+} = require('../lib/helpers');
 
 var request = require('request');
 var channelName = utils.randomChannelName();
-var channelResource = channelUrl + "/" + channelName;
+const channelResource = `${channelUrl}/${channelName}`;
 var testName = __filename;
+let createdChannel = false;
 
 describe(testName, function () {
-    utils.createChannel(channelName);
+    beforeAll(async () => {
+        const channel = await createChannel(channelName);
+        if (getProp('statusCode', channel) === 201) {
+            createdChannel = true;
+        }
+    });
 
     it('checks accept header', function (done) {
-
+        if (!createdChannel) return done.fail('channel not created in before block');
         utils.postItemQ(channelResource)
             .then(function (value) {
-                var url = value.body._links.self.href;
+                const url = fromObjectPath(['body', '_links', 'self', 'href'], value);
                 var options = {
                     url: url,
                     headers: {
@@ -22,13 +33,10 @@ describe(testName, function () {
                 request.get(options,
                     function (err, response, body) {
                         expect(err).toBeNull();
-                        expect(response.statusCode).toBe(200);
+                        expect(getProp('statusCode', response)).toBe(200);
                         done();
                     });
-
-
-            })
+            });
     });
 
 });
-

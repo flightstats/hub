@@ -1,9 +1,14 @@
-# locust.py
-
+import logging
 from locust import HttpLocust, TaskSet, task, web
+from flask import request, Response
 
-from hubTasks import HubTasks
+from hubTasks import HubTasks, get_response_as_json
 from hubUser import HubUser
+from log import setup_logging
+import utils
+
+setup_logging('/mnt/log/batch.log')
+logger = logging.getLogger(__name__)
 
 
 class BatchUser(HubUser):
@@ -47,11 +52,13 @@ class VerifierTasks(TaskSet):
             if postResponse.status_code != 201:
                 postResponse.failure("Got wrong response on post: " + str(postResponse.status_code))
 
-        links = postResponse.json()
+        links = get_response_as_json(postResponse)
+        logger.debug('item POSTed: ' + links['_links']['self']['href'])
 
         uris = links['_links']['uris']
         for uri in uris:
-            self.hubTasks.append_href(uri)
+            self.hubTasks.append_href(uri, 'websockets')
+            self.hubTasks.append_href(uri, 'webhooks')
         # todo add read functionality
         return uris
 
@@ -73,11 +80,17 @@ class VerifierTasks(TaskSet):
 
     @web.app.route("/callback", methods=['GET'])
     def get_channels():
+        logger.debug(utils.get_client_address(request) + ' | ' + request.method + ' | /callback')
         return HubTasks.get_channels()
 
     @web.app.route("/callback/<channel>", methods=['GET', 'POST'])
     def callback(channel):
+        logger.debug(utils.get_client_address(request) + ' | ' + request.method + ' | /callback/' + channel + ' | ' + request.get_data().strip())
         return HubTasks.callback(channel)
+
+    @web.app.route('/store/<name>', methods=['GET'])
+    def get_store(name):
+        return Response(HubTasks.get_store(name), mimetype='application/json')
 
 
 class WebsiteUser(HttpLocust):

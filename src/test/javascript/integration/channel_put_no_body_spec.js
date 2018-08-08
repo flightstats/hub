@@ -1,18 +1,18 @@
 require('../integration_config');
+const { getProp } = require('../lib/helpers');
 
 var channelName = utils.randomChannelName();
-var channelResource = channelUrl + "/" + channelName;
+const channelResource = `${channelUrl}/${channelName}`;
 
 describe(__filename, function () {
 
     it('creates a channel with no information', function (done) {
-        var url = channelResource;
-        var headers = {'Content-Type': 'application/json'};
-        var body = '';
-
+        const url = channelResource;
+        const headers = {'Content-Type': 'application/json'};
+        const body = {}; // equiv to body = '' in request js which now requires min empty object as body arg when json = true.
         utils.httpPut(url, headers, body)
             .then(function (response) {
-                expect(response.statusCode).toEqual(201);
+                expect(getProp('statusCode', response)).toEqual(201);
             })
             .finally(done);
     });

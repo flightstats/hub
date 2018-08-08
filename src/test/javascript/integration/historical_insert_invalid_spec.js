@@ -1,14 +1,10 @@
 require('../integration_config');
 
-var request = require('request');
-var http = require('http');
-var parse = require('parse-link-header');
 var channel = utils.randomChannelName();
 var moment = require('moment');
 
 var tag = Math.random().toString().replace(".", "");
 var testName = __filename;
-
 
 /**
  * This should:
@@ -28,8 +24,6 @@ describe(testName, function () {
 
     var channelURL = hubUrlBase + '/channel/' + channel;
     var pointInThePastURL = channelURL + '/' + mutableTime.add(1, 'minute').format('YYYY/MM/DD/HH/mm/ss/SSS');
-
-    var historicalLocation;
 
     utils.addItem(pointInThePastURL, 400);
 

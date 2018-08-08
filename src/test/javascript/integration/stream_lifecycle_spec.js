@@ -1,10 +1,7 @@
 require('../integration_config');
-
-var request = require('request');
-var http = require('http');
-var channelName = utils.randomChannelName();
-var channelResource = channelUrl + "/" + channelName;
-var testName = __filename;
+const { createChannel, getProp, hubClientGet } = require('../lib/helpers');
+const channelName = utils.randomChannelName();
+const channelResource = `${channelUrl}/${channelName}`;
 
 /**
  * This should:
@@ -15,26 +12,31 @@ var testName = __filename;
  * 4 - verify that the item payloads are returned within delta time
  */
 
-xdescribe(testName, function () {
+xdescribe(__filename, function () {
+    const callbackItems = [];
+    const postedItems = [];
+    let createdChannel = false;
 
-    var callbackItems = [];
-    var postedItems = [];
+    beforeAll(async () => {
+        const channel = await createChannel(channelName, false, __filename);
+        if (getProp('statusCode', channel) === 201) {
+            createdChannel = true;
+            console.log(`created channel for ${__filename}`);
+        }
+    });
 
-    utils.createChannel(channelName, false, testName);
+    it('opens a stream', async () => {
+        if (!createdChannel) return fail('channel not created in before block');
+        const url = `${channelResource}/stream`;
+        const headers = { "Content-Type": "application/json" };
 
-    it('opens a stream', function (done) {
-        var url = channelResource + '/stream';
-        var headers = {"Content-Type": "application/json"};
-
-        utils.httpGet(url, headers)
-            .then(function (response) {
-                expect(response.statusCode).toBe(200);
-                console.log('body', body);
-            })
-            .finally(done);
+        const response = await hubClientGet(url, headers);
+        expect(getProp('statusCode', response)).toBe(200);
+        // console.log('body', body);
     });
 
     it('inserts multiple items', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         utils.postItemQ(channelResource)
             .then(function (value) {
                 postedItems.push(value);
@@ -55,11 +57,12 @@ xdescribe(testName, function () {
     });
 
     it('waits for the data', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         utils.waitForData(callbackItems, postedItems, done);
     });
 
     it('verifies we got the correct number of items', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
         expect(callbackItems.length).toEqual(4);
     });
-
 });

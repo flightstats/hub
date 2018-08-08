@@ -8,6 +8,7 @@ import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.QueryResult;
 import com.flightstats.hub.exception.FailedQueryException;
 import com.flightstats.hub.metrics.ActiveTraces;
+import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.spoke.SpokeStore;
@@ -64,6 +65,8 @@ public class S3SingleVerifier {
     private ZooKeeperState zooKeeperState;
     @Inject
     private CuratorFramework curator;
+    @Inject
+    private MetricsService metricsService;
 
     public S3SingleVerifier() {
         if (HubProperties.getProperty("s3Verifier.run", true)) {
@@ -131,6 +134,7 @@ public class S3SingleVerifier {
         logger.debug("verifyChannel.starting {}", range);
         for (ContentKey key : keysToAdd) {
             logger.trace("found missing {} {}", channelName, key);
+            metricsService.increment("s3.verifier.missing");
             s3WriteQueue.add(new ChannelContentKey(channelName, key));
         }
         logger.debug("verifyChannel.completed {}", range);

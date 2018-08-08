@@ -1,4 +1,5 @@
 require('../integration_config');
+const {  getProp } = require('../lib/helpers');
 
 var request = require('request');
 var http = require('http');
@@ -8,7 +9,7 @@ var testName = __filename;
 describe("creates malformed" + testName, function () {
 
     var channelUrl = hubUrlBase + '/channel';
-    var channelResource = channelUrl + "/" + channelName;
+    const channelResource = `${channelUrl}/${channelName}`;
 
     it('creates channel ' + channelName, function (done) {
         console.log('creating channel ' + channelName + ' for ' + testName);
@@ -19,9 +20,10 @@ describe("creates malformed" + testName, function () {
             },
             function (err, response, body) {
                 expect(err).toBeNull();
-                expect(response.statusCode).toBe(400);
-                console.log(response.body);
-                expect(response.body).toContain('xpect');
+                expect(getProp('statusCode', response)).toBe(400);
+                const responseBody = getProp('body', response);
+                console.log(responseBody);
+                expect(responseBody).toContain('xpect');
                 done();
             });
     });
