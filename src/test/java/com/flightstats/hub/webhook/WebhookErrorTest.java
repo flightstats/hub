@@ -1,5 +1,6 @@
 package com.flightstats.hub.webhook;
 
+import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.test.Integration;
 import org.apache.curator.framework.CuratorFramework;
 import org.junit.BeforeClass;
@@ -8,6 +9,7 @@ import org.junit.Test;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
 
 public class WebhookErrorTest {
 
@@ -15,8 +17,9 @@ public class WebhookErrorTest {
 
     @BeforeClass
     public static void setUpClass() throws Exception {
+        ChannelService channelService = mock(ChannelService.class);
         CuratorFramework curator = Integration.startZooKeeper();
-        webhookError = new WebhookError(curator);
+        webhookError = new WebhookError(curator, channelService);
     }
 
     @Test
