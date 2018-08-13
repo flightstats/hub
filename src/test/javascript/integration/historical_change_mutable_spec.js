@@ -1,15 +1,6 @@
 require('../integration_config');
 const moment = require('moment');
 const { getProp, fromObjectPath, hubClientPut, hubClientPostTestItem } = require('../lib/helpers');
-
-/**
- * This should:
- * Create a channel with mutableTime
- *
- * Put a historical item and one before that
- * Move the mutableTime before the oldest item
- * query latest with epochs
- */
 const channel = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channel}`;
 const mutableTime = moment.utc().subtract(1, 'day');
@@ -24,6 +15,14 @@ const channelBodyChange = {
 };
 const channelLocation = `${hubUrlBase}/channel/${channel}`;
 const historicalLocations = [];
+/**
+ * This should:
+ * Create a channel with mutableTime
+ *
+ * Put a historical item and one before that
+ * Move the mutableTime before the oldest item
+ * query latest with epochs
+ */
 
 describe(__filename, function () {
     it('creates a channel with mutableTime', async () => {

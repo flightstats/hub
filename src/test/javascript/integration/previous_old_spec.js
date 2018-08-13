@@ -1,6 +1,5 @@
 require('../integration_config');
 const {
-    followRedirectIfPresent,
     fromObjectPath,
     getProp,
     hubClientGet,
