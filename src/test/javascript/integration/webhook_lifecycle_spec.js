@@ -39,7 +39,9 @@ describe(testName, function () {
     it('starts a callback server', function (done) {
         if (!createdChannel) return done.fail('channel not created in before block');
         callbackServer = utils.startHttpServer(port, function (string) {
-            callbackItems.push(string);
+            console.log('incoming:', string);
+            let json = JSON.parse(string);
+            json.uris.forEach(uri => callbackItems.push(uri));
         }, done);
     });
 
@@ -47,19 +49,23 @@ describe(testName, function () {
         if (!createdChannel) return done.fail('channel not created in before block');
         utils.postItemQ(channelResource)
             .then(function (value) {
-                postedItems.push(fromObjectPath(['body', '_links', 'self', 'href'], value));
+                let itemURI = fromObjectPath(['body', '_links', 'self', 'href'], value);
+                postedItems.push(itemURI);
                 return utils.postItemQ(channelResource);
             })
             .then(function (value) {
-                postedItems.push(fromObjectPath(['body', '_links', 'self', 'href'], value));
+                let itemURI = fromObjectPath(['body', '_links', 'self', 'href'], value);
+                postedItems.push(itemURI);
                 return utils.postItemQ(channelResource);
             })
             .then(function (value) {
-                postedItems.push(fromObjectPath(['body', '_links', 'self', 'href'], value));
+                let itemURI = fromObjectPath(['body', '_links', 'self', 'href'], value);
+                postedItems.push(itemURI);
                 return utils.postItemQ(channelResource);
             })
             .then(function (value) {
-                postedItems.push(fromObjectPath(['body', '_links', 'self', 'href'], value));
+                let itemURI = fromObjectPath(['body', '_links', 'self', 'href'], value);
+                postedItems.push(itemURI);
                 done();
             });
     });
@@ -77,19 +83,9 @@ describe(testName, function () {
 
     it('verifies we got what we expected through the callback', function () {
         if (!createdChannel) return fail('channel not created in before block');
-        expect(callbackItems.length).toBe(4);
-        expect(postedItems.length).toBe(4);
+        expect(callbackItems.length).toEqual(postedItems.length);
         for (var i = 0; i < callbackItems.length; i++) {
-            let parse = {};
-            try {
-                parse = JSON.parse(callbackItems[i]);
-            } catch (ex) {
-                expect(`failed to parse json, ${callbackItems[i]}, ${ex}`).toBeNull();
-            }
-            const uris = getProp('uris', parse) || [];
-            const name = getProp('name', parse);
-            expect(uris[0]).toBe(postedItems[i]);
-            expect(name).toBe(webhookName);
+            expect(callbackItems[i]).toEqual(postedItems[i]);
         }
     });
 

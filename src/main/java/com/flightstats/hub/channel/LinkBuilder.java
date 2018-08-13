@@ -8,6 +8,7 @@ import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.rest.HalLink;
 import com.flightstats.hub.rest.Linked;
@@ -18,7 +19,11 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.SortedSet;
 import java.util.function.Consumer;
 
 public class LinkBuilder {
@@ -29,7 +34,7 @@ public class LinkBuilder {
         return uriInfo.getBaseUriBuilder().path("channel").path(channelName).build();
     }
 
-    public static URI buildItemUri(ContentKey key, URI channelUri) {
+    public static URI buildItemUri(ContentPath key, URI channelUri) {
         return buildItemUri(key.toUrl(), channelUri);
     }
 

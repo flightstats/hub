@@ -2,6 +2,7 @@ package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.model.*;
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.webhook.Webhook;
@@ -46,6 +47,9 @@ public class DynamoWebhookDao implements Dao<Webhook> {
         item.put("maxWaitMinutes", new AttributeValue().withN(String.valueOf(webhook.getMaxWaitMinutes())));
         item.put("callbackTimeoutSeconds", new AttributeValue().withN(String.valueOf(webhook.getCallbackTimeoutSeconds())));
         item.put("maxAttempts", new AttributeValue().withN(String.valueOf(webhook.getMaxAttempts())));
+        if (!StringUtils.isEmpty(webhook.getErrorChannelUrl())) {
+            item.put("errorChannelUrl", new AttributeValue(webhook.getErrorChannelUrl()));
+        }
         if (!StringUtils.isEmpty(webhook.getTagUrl())) {
             item.put("tagUrl", new AttributeValue(webhook.getTagUrl()));
         }
@@ -108,6 +112,9 @@ public class DynamoWebhookDao implements Dao<Webhook> {
         if (item.containsKey("maxAttempts")) {
             builder.maxAttempts(Integer.valueOf(item.get("maxAttempts").getN()));
         }
+        if (item.containsKey("errorChannelUrl")) {
+            builder.errorChannelUrl(item.get("errorChannelUrl").getS());
+        }
         return builder.build().withDefaults();
     }
 
@@ -141,7 +148,8 @@ public class DynamoWebhookDao implements Dao<Webhook> {
     }
 
     private String getTableName() {
-        return dynamoUtils.getTableName("GroupConfig");
+        String legacyTableName = dynamoUtils.getLegacyTableName("GroupConfig");
+        return HubProperties.getProperty("dynamo.table_name.webhook_configs", legacyTableName);
     }
 
     private class DynamoGroupDaoInit extends AbstractIdleService {
