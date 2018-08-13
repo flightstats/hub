@@ -1,5 +1,5 @@
 require('../integration_config');
-const { createChannel, fromObjectPath, getProp } = require('../lib/helpers');
+const { createChannel, fromObjectPath, getProp, hubClientPostTestItem } = require('../lib/helpers');
 var channelName = utils.randomChannelName();
 var webhookName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
@@ -35,17 +35,11 @@ describe(testName, function () {
         console.log('postedItems', postedItems);
     }
 
-    it('posts initial items ' + channelResource, function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        utils.postItemQ(channelResource)
-            .then(function (value) {
-                // firstItem = fromObjectPath(['body', '_links', 'self', 'href'], value);
-                return utils.postItemQ(channelResource);
-            })
-            .then(function (value) {
-                addPostedItem(value);
-                done();
-            });
+    it(`posts initial items  ${channelResource}`, async () => {
+        if (!createdChannel) return fail('channel not created in before block');
+        await hubClientPostTestItem(channelResource);
+        const response = await hubClientPostTestItem(channelResource);
+        addPostedItem(response);
     });
 
     utils.itSleeps(6000);
@@ -67,25 +61,14 @@ describe(testName, function () {
         }, done);
     });
 
-    it('inserts items', function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        utils.postItemQ(channelResource)
-            .then(function (value) {
-                addPostedItem(value);
-                return utils.postItemQ(channelResource);
-            })
-            .then(function (value) {
-                addPostedItem(value);
-                return utils.postItemQ(channelResource);
-            })
-            .then(function (value) {
-                addPostedItem(value);
-                return utils.postItemQ(channelResource);
-            })
-            .then(function (value) {
-                addPostedItem(value);
-                done();
-            });
+    it('inserts items', async () => {
+        if (!createdChannel) return fail('channel not created in before block');
+        const response0 = await hubClientPostTestItem(channelResource);
+        const response1 = await hubClientPostTestItem(channelResource);
+        const response2 = await hubClientPostTestItem(channelResource);
+        const response3 = await hubClientPostTestItem(channelResource);
+        [response0, response1, response2, response3]
+            .forEach(res => addPostedItem(res));
     });
 
     it('waits for data', function (done) {
