@@ -2,6 +2,7 @@ require('../integration_config');
 const {
     fromObjectPath,
     getProp,
+    getWebhookUrl,
     hubClientGet,
     hubClientPost,
     hubClientPut,
@@ -10,7 +11,7 @@ const moment = require('moment');
 
 const channelResource = `${channelUrl}/${utils.randomChannelName()}`;
 const webhookName = utils.randomChannelName();
-const webhookResource = `${utils.getWebhookUrl()}/${webhookName}`;
+const webhookResource = `${getWebhookUrl()}/${webhookName}`;
 const headers = { 'Content-Type': 'application/json' };
 
 describe(__filename, () => {

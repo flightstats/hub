@@ -1,11 +1,10 @@
 require('../integration_config');
-const { createChannel, fromObjectPath, getProp } = require('../lib/helpers');
-var request = require('request');
-var channelName = utils.randomChannelName();
-const channelResource = `${channelUrl}/${channelName}`;
-var gUrl = utils.getWebhookUrl() + "/" + channelName;
-var testName = __filename;
-var webhookConfig = {
+const { createChannel, fromObjectPath, getProp, getWebhookUrl } = require('../lib/helpers');
+const request = require('request');
+const channelName = utils.randomChannelName();
+const gUrl = `${getWebhookUrl()}/${channelName}`;
+const testName = __filename;
+const webhookConfig = {
     callbackUrl: 'http://nothing/callback',
     channelUrl: 'http://nothing/channel/' + channelName,
     batch: 'SINGLE',
@@ -35,10 +34,11 @@ describe(testName, function () {
         },
         function (err, response, body) {
             expect(err).toBeNull();
-            expect(getProp('statusCode', response)).toBe(200);
+            const statusCode = getProp('statusCode', response);
+            expect(statusCode).toBe(200);
 
-            if (response.statusCode < 400) {
-                var parse = utils.parseJson(response, channelName);
+            if (statusCode < 400) {
+                const parse = utils.parseJson(response, channelName);
                 const selfLink = fromObjectPath(['_links', 'self', 'href'], parse);
                 expect(selfLink).toBe(gUrl);
                 if (typeof webhookConfig !== "undefined") {

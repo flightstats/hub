@@ -15,11 +15,15 @@ const {
     hubClientPostTestItem,
     hubClientPut,
 } = require('./hub-client');
+const {
+    getWebhookUrl,
+} = require('./webhook');
 module.exports = {
     createChannel,
     followRedirectIfPresent,
     fromObjectPath,
     getProp,
+    getWebhookUrl,
     getHubItem,
     hubClientDelete,
     hubClientGet,

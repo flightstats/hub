@@ -1,8 +1,14 @@
 require('../integration_config');
-const { getProp, fromObjectPath, hubClientGet, hubClientPut } = require('../lib/helpers');
+const {
+    getProp,
+    getWebhookUrl,
+    fromObjectPath,
+    hubClientGet,
+    hubClientPut,
+} = require('../lib/helpers');
 const webhookName1 = utils.randomChannelName();
 const webhookName2 = utils.randomChannelName();
-const webhookUrl = utils.getWebhookUrl();
+const webhookUrl = getWebhookUrl();
 const webhookConfig = {
     callbackUrl: 'http://nothing/callback',
     channelUrl: 'http://nothing/channel/notHere',

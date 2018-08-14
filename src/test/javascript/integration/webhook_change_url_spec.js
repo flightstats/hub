@@ -3,6 +3,7 @@ const moment = require('moment');
 const {
     fromObjectPath,
     getProp,
+    getWebhookUrl,
     hubClientPost,
     hubClientPut,
 } = require('../lib/helpers');
@@ -20,7 +21,7 @@ const {
 
 const channelResource = `${channelUrl}/${utils.randomChannelName()}`;
 const webhookName = utils.randomChannelName();
-const webhookResource = `${utils.getWebhookUrl()}/${webhookName}`;
+const webhookResource = `${getWebhookUrl()}/${webhookName}`;
 
 describe(__filename, () => {
     let callbackServer = null;

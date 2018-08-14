@@ -1,21 +1,22 @@
 require('../integration_config');
 const {
     getProp,
+    getWebhookUrl,
     hubClientGet,
     hubClientPut,
     hubClientDelete,
 } = require('../lib/helpers');
 const tag = utils.randomTag();
 const tagURL = `${hubUrlBase}/tag/${tag}`;
-const tagWebhookPrototypeURL = `${utils.getWebhookUrl()}/TAGWHPROTO_${tag}`;
+const tagWebhookPrototypeURL = `${getWebhookUrl()}/TAGWHPROTO_${tag}`;
 
 const channelOneName = utils.randomChannelName();
 const channelOneURL = `${channelUrl}/${channelOneName}`;
-const channelOneWebhookURL = `${utils.getWebhookUrl()}/TAGWH_${tag}_${channelOneName}`;
+const channelOneWebhookURL = `${getWebhookUrl()}/TAGWH_${tag}_${channelOneName}`;
 
 const channelTwoName = utils.randomChannelName();
 const channelTwoURL = `${channelUrl}/${channelTwoName}`;
-const channelTwoWebhookURL = `${utils.getWebhookUrl()}/TAGWH_${tag}_${channelTwoName}`;
+const channelTwoWebhookURL = `${getWebhookUrl()}/TAGWH_${tag}_${channelTwoName}`;
 
 const acceptJSON = { "Content-Type": "application/json" };
 

@@ -3,6 +3,7 @@ const {
     createChannel,
     fromObjectPath,
     getProp,
+    getWebhookUrl,
     hubClientPut,
     hubClientPostTestItem,
 } = require('../lib/helpers');
@@ -52,7 +53,7 @@ describe(__filename, function () {
 
     it('creates a webhook', async () => {
         if (!createdChannel) return fail('channel not created in before block');
-        const url = `${utils.getWebhookUrl()}/${webhookName}`;
+        const url = `${getWebhookUrl()}/${webhookName}`;
         const headers = { 'Content-Type': 'application/json' };
         const body = {
             callbackUrl,
