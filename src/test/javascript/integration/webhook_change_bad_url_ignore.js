@@ -1,5 +1,6 @@
 require('../integration_config');
-const { createChannel,
+const {
+    createChannel,
     getProp,
     fromObjectPath,
     hubClientPostTestItem,

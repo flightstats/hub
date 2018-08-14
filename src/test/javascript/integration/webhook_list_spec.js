@@ -1,5 +1,6 @@
 require('../integration_config');
 const {
+    deleteWebhook,
     getProp,
     getWebhookUrl,
     fromObjectPath,
@@ -70,6 +71,10 @@ describe(__filename, function () {
         expect(foundURLs).toContain(secondWebhookURL);
     });
 
-    utils.deleteWebhook(webhookName1);
-    utils.deleteWebhook(webhookName2);
+    it('deletes the webhookConfigPaused', async () => {
+        const response1 = await deleteWebhook(webhookName1);
+        expect(getProp('statusCode', response1)).toBe(202);
+        const response12 = await deleteWebhook(webhookName2);
+        expect(getProp('statusCode', response12)).toBe(202);
+    });
 });

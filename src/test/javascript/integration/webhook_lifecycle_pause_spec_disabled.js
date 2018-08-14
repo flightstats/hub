@@ -1,6 +1,7 @@
 // bc -- this test does not run reliably due to what appears to be timing issues.
 const {
     createChannel,
+    deleteWebhook,
     fromObjectPath,
     getProp,
     hubClientPostTestItem,
@@ -140,5 +141,8 @@ describe(__filename, function () {
         // }
     });
 
-    utils.deleteWebhook(webhookName);
+    it('deletes the webhook', async () => {
+        const response = await deleteWebhook(webhookName);
+        expect(getProp('statusCode', response)).toBe(202);
+    });
 });

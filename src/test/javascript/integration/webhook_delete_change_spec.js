@@ -1,5 +1,7 @@
 require('../integration_config');
-const { createChannel,
+const {
+    createChannel,
+    deleteWebhook,
     getProp,
     fromObjectPath,
     hubClientPostTestItem,
@@ -71,7 +73,10 @@ describe(__filename, function () {
         utils.waitForData(callbackItemsA, postedItemsA, done);
     });
 
-    utils.deleteWebhook(webhookName);
+    it('deletes the webhook', async () => {
+        const response = await deleteWebhook(webhookName);
+        expect(getProp('statusCode', response)).toBe(202);
+    });
 
     utils.itSleeps(5000);
 

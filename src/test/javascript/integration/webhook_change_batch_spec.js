@@ -1,5 +1,9 @@
 require('../integration_config');
-const { getProp, putWebhook } = require('../lib/helpers');
+const {
+    deleteWebhook,
+    getProp,
+    putWebhook,
+} = require('../lib/helpers');
 
 const webhookName = utils.randomChannelName();
 const webhookConfig = {
@@ -24,5 +28,8 @@ describe(__filename, function () {
         expect(getProp('statusCode', result)).toEqual(200);
     });
 
-    utils.deleteWebhook(webhookName);
+    it('deletes the webhook', async () => {
+        const response = await deleteWebhook(webhookName);
+        expect(getProp('statusCode', response)).toBe(202);
+    });
 });

@@ -1,5 +1,7 @@
 require('../integration_config');
-const { createChannel,
+const {
+    createChannel,
+    deleteWebhook,
     getProp,
     fromObjectPath,
     hubClientPostTestItem,
@@ -16,7 +18,7 @@ const webhookConfig = {
 };
 let createdChannel = false;
 
-/**
+/*
  * This should:
  * TODO: I do not think this is exactly what this test actually does
  * 1 - create a channel
@@ -64,7 +66,10 @@ describe(__filename, function () {
         utils.waitForData(callbackItems, postedItems, done);
     });
 
-    utils.deleteWebhook(webhookName);
+    it('deletes the webhook', async () => {
+        const response = await deleteWebhook(webhookName);
+        expect(getProp('statusCode', response)).toBe(202);
+    });
 
     it('posts an item to the hub', async () => {
         const response = await hubClientPostTestItem(channelResource);

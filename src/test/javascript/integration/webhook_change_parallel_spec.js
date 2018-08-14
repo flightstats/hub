@@ -1,5 +1,9 @@
 require('../integration_config');
-const { getProp, putWebhook } = require('../lib/helpers');
+const {
+    getProp,
+    getWebhook,
+    putWebhook,
+} = require('../lib/helpers');
 
 const webhookName = utils.randomChannelName();
 const webhookConfigA = {
@@ -22,12 +26,30 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    utils.getWebhook(webhookName, webhookConfigA);
+    it('verifies the webhook', async () => {
+        const response = await getWebhook(webhookName, webhookConfigA);
+        expect(getProp('statusCode', response)).toEqual(200);
+        const body = getProp('body', response) || {};
+        expect(body.callbackUrl).toBe(webhookConfigA.callbackUrl);
+        expect(body.channelUrl).toBe(webhookConfigA.channelUrl);
+        expect(body.transactional).toBe(webhookConfigA.transactional);
+        expect(body.name).toBe(webhookName);
+        expect(body.batch).toBe(webhookConfigA.batch);
+    });
 
     it('creates another webhook', async () => {
         const response = await putWebhook(webhookName, webhookConfigB, 200, __filename);
         expect(getProp('statusCode', response)).toEqual(200);
     });
 
-    utils.getWebhook(webhookName, webhookConfigB);
+    it('verifies the webhook', async () => {
+        const response = await getWebhook(webhookName, webhookConfigB);
+        expect(getProp('statusCode', response)).toEqual(200);
+        const body = getProp('body', response) || {};
+        expect(body.callbackUrl).toBe(webhookConfigB.callbackUrl);
+        expect(body.channelUrl).toBe(webhookConfigB.channelUrl);
+        expect(body.transactional).toBe(webhookConfigB.transactional);
+        expect(body.name).toBe(webhookName);
+        expect(body.batch).toBe(webhookConfigB.batch);
+    });
 });
