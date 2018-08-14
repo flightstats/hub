@@ -2,7 +2,6 @@ package com.flightstats.hub.dao.aws;
 
 
 import com.flightstats.hub.app.HubProperties;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.exception.FailedReadException;
 import com.flightstats.hub.metrics.ActiveTraces;
@@ -24,7 +23,7 @@ import org.joda.time.Interval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
+import java.util.Optional;
 import java.util.concurrent.*;
 
 @SuppressWarnings("WeakerAccess")
@@ -110,25 +109,24 @@ public class S3WriteQueue {
     }
 
     private Long getOldest() {
-        ChannelContentKey[] array = keys.toArray(new ChannelContentKey[0]);
-        Arrays.sort(array);
-        if (array.length > 0) {
-            DateTime then = array[0].getContentKey().getTime();
-            DateTime now = DateTime.now(DateTimeZone.UTC);
-            try {
-                if (then.isBefore(now)) {
-                    Interval delta = new Interval(then, now);
-                    return delta.toDurationMillis();
-                } else {
-                    Interval delta = new Interval(now, then);
-                    return -delta.toDurationMillis();
-                }
-            } catch (IllegalArgumentException e) {
-                logger.warn("unable to determine the write queue's oldest item", e);
-                return null;
+        Optional<ChannelContentKey> potentialOldest = keys.stream().sorted().findFirst();
+        return potentialOldest.map(this::calculateOldestAge).orElse(0L);
+    }
+
+    private Long calculateOldestAge(ChannelContentKey oldest) {
+        DateTime then = oldest.getContentKey().getTime();
+        DateTime now = DateTime.now(DateTimeZone.UTC);
+        try {
+            if (then.isBefore(now)) {
+                Interval delta = new Interval(then, now);
+                return delta.toDurationMillis();
+            } else {
+                Interval delta = new Interval(now, then);
+                return -delta.toDurationMillis();
             }
-        } else {
-            return 0L;
+        } catch (IllegalArgumentException e) {
+            logger.warn("unable to calculate the oldest item's age", e);
+            return null;
         }
     }
 
