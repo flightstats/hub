@@ -17,6 +17,7 @@ const {
 } = require('./hub-client');
 const {
     getWebhookUrl,
+    putWebhook,
 } = require('./webhook');
 module.exports = {
     createChannel,
@@ -31,6 +32,7 @@ module.exports = {
     hubClientPost,
     hubClientPostTestItem,
     hubClientPut,
+    putWebhook,
     randomChannelName,
     randomNumberBetweenInclusive,
     randomTagName,
