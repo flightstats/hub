@@ -70,7 +70,7 @@ public class S3WriteQueue {
             ChannelContentKey key = keys.poll(5, TimeUnit.SECONDS);
             if (key != null) {
                 metricsService.gauge("s3.writeQueue.used", keys.size());
-                metricsService.gauge("s3.writeQueue.oldest", getOldest());
+                recordOldest();
             }
             retryer.call(() -> {
                 writeContent(key);
@@ -102,24 +102,40 @@ public class S3WriteQueue {
         boolean value = keys.offer(key);
         if (value) {
             metricsService.gauge("s3.writeQueue.used", keys.size());
-            metricsService.gauge("s3.writeQueue.oldest", getOldest());
+            recordOldest();
         } else {
             logger.warn("Add to queue failed - out of queue space. key= {}", key);
             metricsService.increment("s3.writeQueue.dropped");
         }
     }
 
-    private long getOldest() {
+    private Long getOldest() {
         ChannelContentKey[] array = keys.toArray(new ChannelContentKey[0]);
         Arrays.sort(array);
-        if (array.length > 1) {
-            ChannelContentKey oldest = array[array.length - 1];
-            DateTime then = oldest.getContentKey().getTime();
+        if (array.length != 0) {
+            DateTime then = array[0].getContentKey().getTime();
             DateTime now = DateTime.now(DateTimeZone.UTC);
-            Interval delta = new Interval(then, now);
-            return delta.toDurationMillis();
+            try {
+                if (then.isBefore(now)) {
+                    Interval delta = new Interval(then, now);
+                    return delta.toDurationMillis();
+                } else {
+                    Interval delta = new Interval(now, then);
+                    return -delta.toDurationMillis();
+                }
+            } catch (IllegalArgumentException e) {
+                logger.warn("unable to determine the write queue's oldest item", e);
+                return null;
+            }
         } else {
-            return 0;
+            return 0L;
+        }
+    }
+
+    private void recordOldest() {
+        Long oldest = getOldest();
+        if (null != oldest) {
+            metricsService.gauge("s3.writeQueue.oldest", oldest);
         }
     }
 
