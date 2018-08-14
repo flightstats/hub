@@ -1,29 +1,33 @@
 require('../integration_config');
+const { getProp, putWebhook } = require('../lib/helpers');
 
-var webhookName = utils.randomChannelName();
-var testName = __filename;
-var webhookConfigA = {
+const webhookName = utils.randomChannelName();
+const webhookConfigA = {
     callbackUrl: 'http://nothing/callback',
     channelUrl: 'http://nothing/channel/notHere',
     parallelCalls: 1,
-    batch: 'SINGLE'
+    batch: 'SINGLE',
 };
 
-var webhookConfigB = {
+const webhookConfigB = {
     callbackUrl: 'http://nothing/callback',
     channelUrl: 'http://nothing/channel/notHere',
     parallelCalls: 2,
-    batch: 'SINGLE'
+    batch: 'SINGLE',
 };
 
-describe(testName, function () {
-
-    utils.putWebhook(webhookName, webhookConfigA, 201, testName);
+describe(__filename, function () {
+    it('creates the webhook', async () => {
+        const response = await putWebhook(webhookName, webhookConfigA, 201, __filename);
+        expect(getProp('statusCode', response)).toEqual(201);
+    });
 
     utils.getWebhook(webhookName, webhookConfigA);
 
-    utils.putWebhook(webhookName, webhookConfigB, 200, testName);
+    it('creates another webhook', async () => {
+        const response = await putWebhook(webhookName, webhookConfigB, 200, __filename);
+        expect(getProp('statusCode', response)).toEqual(200);
+    });
 
     utils.getWebhook(webhookName, webhookConfigB);
-
 });

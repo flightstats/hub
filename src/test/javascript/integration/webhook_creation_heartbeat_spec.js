@@ -1,11 +1,11 @@
 require('../integration_config');
+const { getProp, putWebhook } = require('../lib/helpers');
 
 const webhookName = utils.randomChannelName();
-const testName = __filename;
 const webhookConfig = {
     callbackUrl: 'http://nothing/callback',
     channelUrl: 'http://nothing/channel/notHere',
-    heartbeat: false
+    heartbeat: false,
 };
 
 const webhookConfig2 = {
@@ -13,12 +13,14 @@ const webhookConfig2 = {
     channelUrl: 'http://nothing/channel/notHere',
     heartbeat: false,
     batch: 'SINGLE',
-    parallelCalls: 1
+    parallelCalls: 1,
 };
 
-describe(testName, function () {
-
-    utils.putWebhook(webhookName, webhookConfig, 201, testName);
+describe(__filename, function () {
+    it('creates the webhook', async () => {
+        const response = await putWebhook(webhookName, webhookConfig, 201, __filename);
+        expect(getProp('statusCode', response)).toEqual(201);
+    });
 
     utils.getWebhook(webhookName, webhookConfig2);
 

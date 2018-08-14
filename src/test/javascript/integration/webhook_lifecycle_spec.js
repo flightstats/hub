@@ -5,6 +5,7 @@ const {
     getProp,
     getWebhookUrl,
     hubClientPostTestItem,
+    putWebhook,
 } = require('../lib/helpers');
 const request = require('request');
 const channelName = utils.randomChannelName();
@@ -40,13 +41,16 @@ describe(testName, function () {
         }
     });
 
-    utils.putWebhook(webhookName, webhookConfig, 201, testName);
+    it('creates the webhook', async () => {
+        const response = await putWebhook(webhookName, webhookConfig, 201, testName);
+        expect(getProp('statusCode', response)).toEqual(201);
+    });
 
     it('starts a callback server', function (done) {
         if (!createdChannel) return done.fail('channel not created in before block');
         callbackServer = utils.startHttpServer(port, function (string) {
             console.log('incoming:', string);
-            let json = JSON.parse(string);
+            const json = JSON.parse(string);
             json.uris.forEach(uri => callbackItems.push(uri));
         }, done);
     });

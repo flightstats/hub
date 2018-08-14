@@ -4,6 +4,7 @@ const {
     fromObjectPath,
     getProp,
     hubClientPostTestItem,
+    putWebhook,
 } = require('../lib/helpers');
 require('../integration_config');
 
@@ -56,7 +57,10 @@ describe(__filename, function () {
         }
     });
 
-    utils.putWebhook(webhookName, webhookConfig, 201, __filename);
+    it('creates the webhook', async () => {
+        const response = await putWebhook(webhookName, webhookConfig, 201, __filename);
+        expect(getProp('statusCode', response)).toEqual(201);
+    });
 
     it('starts a callback server', function (done) {
         if (!createdChannel) return done.fail('channel not created in before block');
@@ -84,11 +88,13 @@ describe(__filename, function () {
     it('expects 2 items collected', function () {
         if (!createdChannel) return fail('channel not created in before block');
         expect(callbackItems.length).toBe(2);
-
-        console.log('###### pausing web hook');
     });
 
-    utils.putWebhook(webhookName, webhookConfigPaused, 200, __filename);
+    it('pauses the webhook', async () => {
+        console.log('###### pausing web hook');
+        const response = await putWebhook(webhookName, webhookConfigPaused, 200, __filename);
+        expect(getProp('statusCode', response)).toEqual(200);
+    });
 
     utils.itSleeps(2000);
 
@@ -106,11 +112,13 @@ describe(__filename, function () {
     it(`verfies number ${webhookName}`, function () {
         if (!createdChannel) return fail('channel not created in before block');
         expect(callbackItems.length).toBe(2);
-
-        console.log('###### resuming web hook');
     });
 
-    utils.putWebhook(webhookName, webhookConfig, 200, __filename);
+    it('unpauses the webhook', async () => {
+        console.log('###### resuming web hook');
+        const response = await putWebhook(webhookName, webhookConfig, 200, __filename);
+        expect(getProp('statusCode', response)).toEqual(200);
+    });
 
     // I upped this to 5s on 08/13/2018 so that it reliably passes in local envs
     utils.itSleeps(5000);
