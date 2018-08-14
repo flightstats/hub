@@ -4,6 +4,7 @@ const {
     fromObjectPath,
     getProp,
     hubClientGet,
+    hubClientPost,
 } = require('../lib/helpers');
 
 const channelName = utils.randomChannelName();
@@ -11,27 +12,16 @@ const channelResource = channelUrl + "/" + channelName;
 const messageText = "MY SUPER TEST CASE: this & <that>. " + Math.random().toString();
 const defaultHeaders = { 'Content-Type': 'application/json' };
 describe(__filename, function () {
-    it('creates a channel', function (done) {
-        var url = channelUrl;
-        var body = {'name': channelName};
-
-        utils.httpPost(url, defaultHeaders, body)
-            .then(function (response) {
-                expect(getProp('statusCode', response)).toEqual(201);
-            })
-            .finally(done);
+    it('creates a channel', async () => {
+        const body = { name: channelName };
+        const response = await hubClientPost(channelUrl, defaultHeaders, body);
+        expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    it('inserts an item into the channel', function (done) {
-        var url = channelResource;
-        var headers = {'Content-Type': 'text/plain'};
-        var body = messageText;
-
-        utils.httpPost(url, headers, body)
-            .then(function (response) {
-                expect(getProp('statusCode', response)).toEqual(201);
-            })
-            .finally(done);
+    it('inserts an item into the channel', async () => {
+        const headers = { 'Content-Type': 'text/plain' };
+        const response = await hubClientPost(channelResource, headers, messageText);
+        expect(getProp('statusCode', response)).toEqual(201);
     });
 
     it('verifies the channel metadata is accurate', async () => {

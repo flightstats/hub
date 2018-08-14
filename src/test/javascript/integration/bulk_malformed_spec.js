@@ -1,41 +1,46 @@
 require('../integration_config');
 const {
-
-  getProp,
+    getProp,
+    hubClientPost,
+    hubClientPut,
 } = require('../lib/helpers');
 
-var request = require('request');
-var channelName = utils.randomChannelName();
+const channelName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
-var testName = __filename;
-
+const resourceUrl = `${channelResource}/bulk`;
+const contentMultipart = { 'Content-Type': "multipart/mixed; boundary=abcdefg" };
+let channelCreated = false;
 /**
  * create a channel
  * post malformed bulk payload
  * get back an error
  */
-describe(testName, function () {
+describe(__filename, function () {
+    beforeAll(async () => {
+        const body = {
+            name: channelName,
+            ttlDays: 1,
+            tags: ['bulk'],
+        };
+        const url = `${channelUrl}/${channelName}`;
+        const headers = { 'Content-Type': 'application/json' };
+        const response = await hubClientPut(url, headers, body);
+        if (getProp('statusCode', response) === 201) {
+            channelCreated = true;
+        }
+    });
 
-    utils.putChannel(channelName, false, {"name": channelName, "ttlDays": 1, "tags": ["bulk"]});
+    it(`posts malformed item to ${channelResource} 1`, async () => {
+        if (!channelCreated) return fail('channel not created in before block');
+        const response = await hubClientPost(resourceUrl, contentMultipart, '--abcdefg--');
+        expect(response instanceof Error).toBe(false);
+        expect(getProp('statusCode', response)).toBe(400);
+    });
 
-    function post_malheur(payload) {
-        it("posts malformed item to " + channelResource, function (done) {
-            request.post({
-                    url: channelResource + '/bulk',
-                    headers: {'Content-Type': "multipart/mixed; boundary=abcdefg"},
-                    body: payload
-                },
-                function (err, response, body) {
-                    expect(err).toBeNull();
-                    expect(getProp('statusCode', response)).toBe(400);
-                    console.log(getProp('body', response));
-                    done();
-                });
-        });
-    }
-
-    post_malheur('--abcdefg--');
-
-    post_malheur('--abcdefg\r\n' + '--abcdefg--');
-
+    it(`posts malformed item to ${channelResource} 2`, async () => {
+        if (!channelCreated) return fail('channel not created in before block');
+        const response = await hubClientPost(resourceUrl, contentMultipart, '--abcdefg\r\n --abcdefg--');
+        expect(response instanceof Error).toBe(false);
+        expect(getProp('statusCode', response)).toBe(400);
+    });
 });

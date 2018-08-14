@@ -3,46 +3,32 @@ const {
     fromObjectPath,
     getProp,
     hubClientGet,
+    hubClientPost,
 } = require('../lib/helpers');
 
-var channelName = utils.randomChannelName();
+const channelName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
-var messageText = "MY SUPER TEST CASE: this & <that>. " + Math.random().toString();
+const messageText = `MY SUPER TEST CASE: this & <that>. ${Math.random()}`;
+let itemURL = null;
+let itemResponse = {};
 
 describe(__filename, function () {
-    it('creates a channel', function (done) {
-        var url = channelUrl;
-        var headers = {'Content-Type': 'application/json'};
-        var body = {'name': channelName};
-
-        utils.httpPost(url, headers, body)
-            .then(function (response) {
-                expect(getProp('statusCode', response)).toEqual(201);
-            })
-            .finally(done);
+    beforeAll(async () => {
+        // create the channel
+        const headers = { 'Content-Type': 'application/json' };
+        const body = { 'name': channelName };
+        const response = await hubClientPost(channelUrl, headers, body);
+        if (getProp('statusCode', response) === 201) {
+            // insert an item in the channel
+            itemResponse = await hubClientPost(channelResource, {}, messageText);
+            itemURL = fromObjectPath(['body', '_links', 'self', 'href'], itemResponse);
+        }
     });
 
-    var itemURL;
-
-    it('inserts and item', function (done) {
-        var url = channelResource;
-        var headers = {};
-        var body = messageText;
-
-        utils.httpPost(url, headers, body)
-            .then(function (response) {
-                expect(getProp('statusCode', response)).toEqual(201);
-                const links = fromObjectPath(['body', '_links'], response) || {};
-                const { channel = {}, self = {} } = links;
-                expect(channel.href).toEqual(channelResource);
-                /*
-                  TODO: I think that setting a variable in an it block of a test to use
-                  in the next test could possibly be better handled in a before block
-                  leaving all setup in one place and all assertions in the "it"s
-                */
-                itemURL = self.href;
-            })
-            .finally(done);
+    it('inserted and item', async () => {
+        expect(getProp('statusCode', itemResponse)).toEqual(201);
+        const channelLink = fromObjectPath(['body', '_links', 'channel', 'href'], itemResponse);
+        expect(channelLink).toEqual(channelResource);
     });
 
     it('verifies the correct Content-Type header is returned', async () => {

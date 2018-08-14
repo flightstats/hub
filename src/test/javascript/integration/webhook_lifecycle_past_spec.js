@@ -1,11 +1,15 @@
 require('../integration_config');
-const { createChannel, fromObjectPath, getProp } = require('../lib/helpers');
-var channelName = utils.randomChannelName();
-var webhookName = utils.randomChannelName();
+const {
+    createChannel,
+    fromObjectPath,
+    getProp,
+    hubClientPut,
+} = require('../lib/helpers');
+const channelName = utils.randomChannelName();
+const webhookName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
-var testName = __filename;
-var port = utils.getPort();
-var callbackUrl = callbackDomain + ':' + port + '/';
+const port = utils.getPort();
+const callbackUrl = `${callbackDomain}:${port}/`;
 let createdChannel = false;
 /**
  * This should:
@@ -17,9 +21,9 @@ let createdChannel = false;
  * 4 - post items into the channel
  * 5 - verify that the item are returned within delta time, excluding items posted in 2.
  */
-describe(testName, function () {
+describe(__filename, function () {
     beforeAll(async () => {
-        const channel = await createChannel(channelName, false, testName);
+        const channel = await createChannel(channelName, false, __filename);
         if (getProp('statusCode', channel) === 201) {
             createdChannel = true;
             console.log(`created channel for ${__filename}`);
@@ -27,8 +31,8 @@ describe(testName, function () {
     });
 
     utils.itSleeps(1000);
-    var postedItems = [];
-    var firstItem;
+    const postedItems = [];
+    let firstItem = null;
 
     function addPostedItem (value) {
         postedItems.push(fromObjectPath(['body', '_links', 'self', 'href'], value));
@@ -48,27 +52,24 @@ describe(testName, function () {
             });
     });
 
-    it('creates a webhook', function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        var url = utils.getWebhookUrl() + '/' + webhookName;
-        var headers = {'Content-Type': 'application/json'};
-        var body = {
-            callbackUrl: callbackUrl,
+    it('creates a webhook', async () => {
+        if (!createdChannel) return fail('channel not created in before block');
+        const url = `${utils.getWebhookUrl()}/${webhookName}`;
+        const headers = { 'Content-Type': 'application/json' };
+        const body = {
+            callbackUrl,
             channelUrl: channelResource,
             startItem: firstItem,
         };
 
-        utils.httpPut(url, headers, body)
-            .then(function (response) {
-                const body = getProp('body', response) || {};
-                const location = fromObjectPath(['headers', 'location'], response);
-                expect(getProp('statusCode', response)).toBe(201);
-                expect(location).toBe(url);
-                expect(body.callbackUrl).toBe(callbackUrl);
-                expect(body.channelUrl).toBe(channelResource);
-                expect(body.name).toBe(webhookName);
-            })
-            .finally(done);
+        const response = await hubClientPut(url, headers, body);
+        const responseBody = getProp('body', response) || {};
+        const location = fromObjectPath(['headers', 'location'], response);
+        expect(getProp('statusCode', response)).toBe(201);
+        expect(location).toBe(url);
+        expect(responseBody.callbackUrl).toBe(callbackUrl);
+        expect(responseBody.channelUrl).toBe(channelResource);
+        expect(responseBody.name).toBe(webhookName);
     });
 
     var callbackServer;

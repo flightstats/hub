@@ -3,6 +3,7 @@ const {
     fromObjectPath,
     getProp,
     hubClientGet,
+    hubClientPost,
 } = require('../lib/helpers');
 
 const channelName = utils.randomChannelName();
@@ -10,14 +11,12 @@ const channelResource = `${channelUrl}/${channelName}`;
 const headers = { 'Content-Type': 'application/json' };
 
 describe(__filename, function () {
-    it('creates a channel', function (done) {
+    beforeAll(async () => {
         const body = { 'name': channelName };
-
-        utils.httpPost(channelUrl, headers, body)
-            .then(function (response) {
-                expect(getProp('statusCode', response)).toEqual(201);
-            })
-            .finally(done);
+        const response = await hubClientPost(channelUrl, headers, body);
+        if (getProp('statusCode', response) === 201) {
+            console.log(`successfully created channel for ${__filename}`);
+        }
     });
 
     it('fetches the list of channels', async () => {

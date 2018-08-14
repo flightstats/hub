@@ -1,5 +1,5 @@
 require('../integration_config');
-const { getProp, hubClientGet } = require('../lib/helpers');
+const { getProp, hubClientGet, hubClientPost } = require('../lib/helpers');
 
 const providerResource = `${hubUrlBase}/provider/bulk`;
 const channelName = utils.randomChannelName();
@@ -18,29 +18,26 @@ const multipart = [
 ].join('');
 
 describe(__filename, function () {
-    it('inserts a bulk value into a provider channel', function (done) {
+    it('inserts a bulk value into a provider channel', async () => {
         const headers = {
             'channelName': channelName,
             'Content-Type': 'multipart/mixed; boundary=abcdefg',
         };
-        const body = multipart;
 
-        utils.httpPost(providerResource, headers, body)
-            .then(function (response) {
-                const statusCode = getProp('statusCode', response);
-                console.log('statusCode', statusCode);
-                expect(statusCode).toEqual(200);
-            })
-            .finally(done);
+        const response = await hubClientPost(providerResource, headers, multipart);
+        expect(getProp('statusCode', response)).toEqual(200);
     });
 
-    it('waits', (done) => {
-        const wait = setTimeout(() => {
-            // just waiting a sec
-        }, 900);
-        clearTimeout(wait);
+    it('waits', async () => {
+        const wait = () => new Promise((resolve) => {
+            const timer = setTimeout(() => {
+                // just waiting a sec
+            }, 1200);
+            clearTimeout(timer);
+            resolve(true);
+        });
+        await wait();
         expect(true).toBe(true);
-        done();
     });
 
     it('verifies the bulk value was inserted', async () => {

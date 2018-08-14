@@ -1,17 +1,20 @@
 require('../integration_config');
-const { getProp } = require('../lib/helpers');
-var request = require('request');
-var channelName = utils.randomChannelName();
+const { getProp, hubClientPut } = require('../lib/helpers');
+const request = require('request');
+
+const channelName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
-var testName = __filename;
+const headers = { 'Content-Type': 'application/json' };
 
-describe(testName, function () {
-    utils.putChannel(channelName, function () {
-    }, {"name": channelName, ttlDays: 1});
+describe(__filename, function () {
+    beforeAll(async () => {
+        const response = await hubClientPut(channelResource, headers, { name: channelName, ttlDays: 1 });
+        expect(getProp('statusCode', response)).toEqual(201);
+    });
 
-    it('gets latest ' + testName, function (done) {
+    it(`gets latest ${__filename}`, function (done) {
         request.get({
-            url: channelResource + '/latest?stable=false'
+            url: `${channelResource}/latest?stable=false`,
         },
         function (err, response, body) {
             expect(err).toBeNull();
@@ -19,5 +22,4 @@ describe(testName, function () {
             done();
         });
     }, 2 * 60001);
-
 });

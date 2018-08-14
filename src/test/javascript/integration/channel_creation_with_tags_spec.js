@@ -3,6 +3,7 @@ const {
     fromObjectPath,
     getProp,
     hubClientGet,
+    hubClientPost,
 } = require('../lib/helpers');
 
 const channelName = utils.randomChannelName();
@@ -15,19 +16,17 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(404);
     });
 
-    it('creates a channel with tags', function (done) {
-        var url = channelUrl;
-        var body = {'name': channelName, 'tags': ['foo-bar', 'bar', 'tag:z']};
-
-        utils.httpPost(url, headers, body)
-            .then(function (response) {
-                const contentType = fromObjectPath(['headers', 'content-type'], response);
-                const tags = fromObjectPath(['body', 'tags'], response);
-                expect(getProp('statusCode', response)).toEqual(201);
-                expect(contentType).toEqual('application/json');
-                expect(tags).toEqual(['bar', 'foo-bar', 'tag:z']);
-            })
-            .finally(done);
+    it('creates a channel with tags', async () => {
+        const body = {
+            'name': channelName,
+            'tags': ['foo-bar', 'bar', 'tag:z'],
+        };
+        const response = await hubClientPost(channelUrl, headers, body);
+        const contentType = fromObjectPath(['headers', 'content-type'], response);
+        const tags = fromObjectPath(['body', 'tags'], response);
+        expect(getProp('statusCode', response)).toEqual(201);
+        expect(contentType).toEqual('application/json');
+        expect(tags).toEqual(['bar', 'foo-bar', 'tag:z']);
     });
 
     it('verifies the channel does exist', async () => {

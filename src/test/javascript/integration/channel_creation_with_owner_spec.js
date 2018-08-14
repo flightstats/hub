@@ -3,30 +3,29 @@ const {
     fromObjectPath,
     getProp,
     hubClientGet,
+    hubClientPost,
 } = require('../lib/helpers');
 
 var channelName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
-const headers = {'Content-Type': 'application/json'};
+const headers = { 'Content-Type': 'application/json' };
 describe(__filename, function () {
     it('verifies the channel doesn\'t exist yet', async () => {
         const response = await hubClientGet(channelResource);
         expect(getProp('statusCode', response)).toEqual(404);
     });
 
-    it('creates a channel with an owner', function (done) {
-        var url = channelUrl;
-        var body = {'name': channelName, 'owner': 'pwned'};
-
-        utils.httpPost(url, headers, body)
-            .then(function (response) {
-                const contentType = fromObjectPath(['headers', 'content-type'], response);
-                const owner = fromObjectPath(['body', 'owner'], response);
-                expect(getProp('statusCode', response)).toEqual(201);
-                expect(contentType).toEqual('application/json');
-                expect(owner).toEqual('pwned');
-            })
-            .finally(done);
+    it('creates a channel with an owner', async () => {
+        const body = {
+            'name': channelName,
+            'owner': 'pwned',
+        };
+        const response = await hubClientPost(channelUrl, headers, body);
+        const contentType = fromObjectPath(['headers', 'content-type'], response);
+        const owner = fromObjectPath(['body', 'owner'], response);
+        expect(getProp('statusCode', response)).toEqual(201);
+        expect(contentType).toEqual('application/json');
+        expect(owner).toEqual('pwned');
     });
 
     it('verifies the channel does exist', async () => {

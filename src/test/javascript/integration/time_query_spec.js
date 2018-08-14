@@ -3,11 +3,11 @@ const {
     createChannel,
     fromObjectPath,
     getProp,
+    hubClientPostTestItem,
 } = require('../lib/helpers');
-var request = require('request');
-var channelName = utils.randomChannelName();
+const request = require('request');
+const channelName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
-var testName = __filename;
 let createdChannel = false;
 /**
  * This should:
@@ -16,7 +16,7 @@ let createdChannel = false;
  * 2 - post items into the channel
  * 3 - verify that records are returned via time query
  */
-describe(testName, function () {
+describe(__filename, function () {
     beforeAll(async () => {
         const channel = await createChannel(channelName);
         if (getProp('statusCode', channel) === 201) {
@@ -24,6 +24,7 @@ describe(testName, function () {
             console.log(`created channel for ${__filename}`);
         }
     });
+
     it('queries before insertion', function (done) {
         if (!createdChannel) return done.fail('channel not created in before block');
         request.get({url: channelResource + '/time/minute?stable=false', json: true},
@@ -37,15 +38,20 @@ describe(testName, function () {
             });
     });
 
-    if (createdChannel) {
-        for (var i = 0; i < 4; i++) {
-            utils.addItem(channelResource);
-        }
-    }
+    it('posts items to the channel', async () => {
+        const response1 = await hubClientPostTestItem(channelResource);
+        expect(getProp('statusCode', response1)).toEqual(201);
 
-    function callTime (url, items, calls, done) {
+        const response2 = await hubClientPostTestItem(channelResource);
+        expect(getProp('statusCode', response2)).toEqual(201);
+
+        const response3 = await hubClientPostTestItem(channelResource);
+        expect(getProp('statusCode', response3)).toEqual(201);
+    });
+
+    const callTime = (url, items, calls, done) => {
         if (!createdChannel) return done.fail('channel not created in before block');
-        request.get({url: url, json: true},
+        request.get({ url, json: true },
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
@@ -61,7 +67,7 @@ describe(testName, function () {
                     done('unable to find 4 items in ' + calls + ' calls');
                 }
             });
-    }
+    };
 
     it('gets items from channel second', function (done) {
         callTime(channelResource + '/time/second?stable=false', [], 0, done);

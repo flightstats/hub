@@ -3,6 +3,7 @@ const {
     fromObjectPath,
     getProp,
     hubClientGet,
+    hubClientPost,
 } = require('../lib/helpers');
 
 var channelName = utils.randomChannelName();
@@ -14,17 +15,15 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(404);
     });
 
-    it('creates a channel with a description', function (done) {
-        var url = channelUrl;
-        var body = {'name': channelName, 'description': 'describe me'};
-
-        utils.httpPost(url, headers, body)
-            .then(function (response) {
-                const description = fromObjectPath(['body', 'description'], response);
-                expect(getProp('statusCode', response)).toEqual(201);
-                expect(description).toEqual('describe me');
-            })
-            .finally(done);
+    it('creates a channel with a description', async () => {
+        const body = {
+            'name': channelName,
+            'description': 'describe me',
+        };
+        const response = await hubClientPost(channelUrl, headers, body);
+        const description = fromObjectPath(['body', 'description'], response);
+        expect(getProp('statusCode', response)).toEqual(201);
+        expect(description).toEqual('describe me');
     });
 
     it('verifies the channel does exist', async () => {

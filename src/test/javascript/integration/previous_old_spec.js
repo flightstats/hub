@@ -1,52 +1,66 @@
 require('../integration_config');
+const request = require('request');
+const moment = require('moment');
 const {
     fromObjectPath,
     getProp,
+    hubClientPut,
 } = require('../lib/helpers');
 
-var request = require('request');
-var moment = require('moment');
-var channelName = utils.randomChannelName();
+const channelName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
-var testName = __filename;
+const headers = { 'Content-Type': 'application/json' };
+const logTime = text => console.log(moment().format('h:mm:ss.SSS'), text);
 
-describe(testName, function () {
-    utils.putChannel(channelName, function () {
-    }, {"name": channelName, ttlDays: 1});
+describe(__filename, function () {
+    beforeAll(async () => {
+        const response = await hubClientPut(channelResource, headers, { name: channelName, ttlDays: 1 });
+        expect(getProp('statusCode', response)).toEqual(201);
+    });
 
-    function time(text) {
-        console.log(moment().format('h:mm:ss.SSS'), text);
-    }
+    const getItem = (url, status) => {
+        const statusCode = status || 200;
+        return new Promise((resolve, reject) => {
+            request.get({
+                url: url + '?stable=false',
+                json: true,
+            }, (err, response, body) => {
+                expect(err).toBeNull();
+                expect(getProp('statusCode', response)).toBe(statusCode);
+                resolve({response: response, body: body});
+            });
+        });
+    };
 
     it('adds items and traverses previous links', function (done) {
-        var values = [];
-        var items = [];
-        time('starting');
+        const values = [];
+        const items = [];
+        logTime('starting');
         utils.postItemQ(channelResource)
             .then(function (value) {
                 values.push(value);
                 const href = fromObjectPath(['body', '_links', 'self', 'href'], value);
                 items.push(href);
-                time('getting self');
+                logTime('getting self');
                 return getItem(href, 200, '0');
             })
             .then(function (value) {
-                time('getting previousA');
-                return getItem(items[0] + '/previous', 404, 'A');
+                logTime('getting previousA');
+                return getItem(`${items[0]}/previous`, 404, 'A');
             })
             .then(function (value) {
-                time('getting previousA2');
-                return getItem(items[0] + '/previous/2', 200, 'B');
+                logTime('getting previousA2');
+                return getItem(`${items[0]}/previous/2`, 200, 'B');
             })
             .then(function (value) {
-                time('posting1');
+                logTime('posting1');
                 const uris = fromObjectPath(['body', '_links', 'uris'], value);
                 const urisLength = !!uris && uris.length === 0;
                 expect(urisLength).toBe(true);
                 return utils.postItemQ(channelResource);
             })
             .then(function (value) {
-                time('posting2');
+                logTime('posting2');
                 const href = fromObjectPath(['body', '_links', 'self', 'href'], value);
                 items.push(href);
                 return utils.postItemQ(channelResource);
@@ -54,39 +68,24 @@ describe(testName, function () {
             .then(function (value) {
                 const href = fromObjectPath(['body', '_links', 'self', 'href'], value);
                 items.push(href);
-                time('getting previousB');
-                return getItem(items[2] + '/previous', 200, 'C');
+                logTime('getting previousB');
+                return getItem(`${items[2]}/previous`, 200, 'C');
             })
             .then(function (value) {
-                time('getting previousB2');
+                logTime('getting previousB2');
                 const href = fromObjectPath(['response', 'request', 'href'], value);
                 expect(href).toBe(items[1]);
-                return getItem(items[2] + '/previous/2', 200);
+                return getItem(`${items[2]}/previous/2`, 200);
             })
             .then(function (value) {
-                time('verifying');
+                logTime('verifying');
                 const href = fromObjectPath(['body', '_links', 'previous', 'href'], value);
                 const uris = fromObjectPath(['body', '_links', 'uris'], value) || [];
                 expect(uris.length).toBe(2);
                 expect(uris[0]).toBe(items[0]);
                 expect(uris[1]).toBe(items[1]);
-                expect(href).toBe(items[0] + '/previous/2?stable=false');
+                expect(href).toBe(`${items[0]}/previous/2?stable=false`);
                 done();
             });
     }, 2 * 60001);
-
-    function getItem(url, status) {
-        status = status || 200;
-        return new Promise((resolve, reject) => {
-            request.get({
-                url: url + '?stable=false',
-                json: true
-            }, (err, response, body) => {
-                expect(err).toBeNull();
-                expect(getProp('statusCode', response)).toBe(status);
-                resolve({response: response, body: body});
-            });
-        });
-    }
-
 });

@@ -1,5 +1,11 @@
 require('../integration_config');
-const { getProp, fromObjectPath, hubClientGet } = require('../lib/helpers');
+const {
+    getProp,
+    fromObjectPath,
+    hubClientGet,
+    hubClientPost,
+    hubClientPut,
+} = require('../lib/helpers');
 const moment = require('moment');
 
 const channelName = utils.randomChannelName();
@@ -7,8 +13,8 @@ const channelResource = `${channelUrl}/${channelName}`;
 const webhookName = utils.randomChannelName();
 const webhookURL = `http://${hubDomain}/webhook/${webhookName}`;
 
-const contentTypeJSON = {'Content-Type': 'application/json'};
-const contentTypePlain = {'Content-Type': 'text/plain'};
+const contentTypeJSON = { 'Content-Type': 'application/json' };
+const contentTypePlain = { 'Content-Type': 'text/plain' };
 
 let callbackServer;
 const callbackPort = utils.getPort();
@@ -17,8 +23,8 @@ const postedItems = [];
 
 let maxCursor = null;
 let minCursor = null;
-
-var webhookConfig = {
+let firstItemURL = null;
+const webhookConfig = {
     callbackUrl: `${callbackDomain}:${callbackPort}`,
     channelUrl: channelResource,
     parallelCalls: 1,
@@ -33,26 +39,19 @@ describe(__filename, () => {
         }, done);
     });
 
-    it('creates a channel', (done) => {
-        var body = {'name': channelName};
-        utils.httpPost(channelUrl, contentTypeJSON, body)
-            .then(response => {
-                expect(getProp('statusCode', response)).toEqual(201);
-            })
-            .finally(done);
+    it('creates a channel', async () => {
+        const body = { 'name': channelName };
+        const response = await hubClientPost(channelUrl, contentTypeJSON, body);
+        expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    utils.putWebhook(webhookName, webhookConfig, 201, webhookURL)
+    utils.putWebhook(webhookName, webhookConfig, 201, webhookURL);
 
-    let firstItemURL;
-    it('inserts the first item', (done) => {
-        utils.httpPost(channelResource, contentTypePlain, "a test " + Date.now())
-            .then(response => {
-                expect(getProp('statusCode', response)).toEqual(201);
-                firstItemURL = fromObjectPath(['body', '_links', 'self', 'href'], response);
-                postedItems.push(firstItemURL);
-            })
-            .finally(done);
+    it('inserts the first item', async () => {
+        const response = await hubClientPost(channelResource, contentTypePlain, "a test " + Date.now());
+        expect(getProp('statusCode', response)).toEqual(201);
+        firstItemURL = fromObjectPath(['body', '_links', 'self', 'href'], response);
+        postedItems.push(firstItemURL);
     });
 
     utils.itSleeps(5000);
@@ -63,16 +62,13 @@ describe(__filename, () => {
         maxCursor = fromObjectPath(['body', 'lastCompleted'], response);
     });
 
-    it('moves the cursor backward', (done) => {
-        var y = moment().subtract(1, 'day');
-        var formatted = y.format("YYYY/MM/DD/HH/mm/ss");
-        var url = channelResource + "/" + formatted;
+    it('moves the cursor backward', async () => {
+        const y = moment().subtract(1, 'day');
+        const formatted = y.format("YYYY/MM/DD/HH/mm/ss");
+        const url = channelResource + "/" + formatted;
         console.log("backward cursor ", url);
-        utils.httpPut(webhookURL + "/updateCursor", contentTypePlain, url)
-            .then(response => {
-                expect(getProp('statusCode', response)).toBeLessThan(300);
-            })
-            .finally(done);
+        const response = await hubClientPut(webhookURL + "/updateCursor", contentTypePlain, url);
+        expect(getProp('statusCode', response)).toBeLessThan(300);
     });
 
     utils.itSleeps(5000);
@@ -84,17 +80,14 @@ describe(__filename, () => {
         minCursor = lastCompleted;
     });
 
-    it('moves the cursor forward', (done) => {
-        var y = moment().subtract(1, 'hour');
-        var formatted = y.format("YYYY/MM/DD/HH/mm/ss");
-        var url = channelResource + "/" + formatted;
+    it('moves the cursor forward', async () => {
+        const y = moment().subtract(1, 'hour');
+        const formatted = y.format("YYYY/MM/DD/HH/mm/ss");
+        const url = channelResource + "/" + formatted;
         console.log("forward cursor ", url);
-        // var item = { 'item': url };
-        utils.httpPut(webhookURL + "/updateCursor", contentTypePlain, url)
-            .then(response => {
-                expect(getProp('statusCode', response)).toBeLessThan(300);
-            })
-            .finally(done);
+        // const item = { 'item': url };
+        const response = await hubClientPut(webhookURL + "/updateCursor", contentTypePlain, url);
+        expect(getProp('statusCode', response)).toBeLessThan(300);
     });
 
     utils.itSleeps(5000);

@@ -3,24 +3,20 @@ const {
     fromObjectPath,
     getProp,
     hubClientGet,
+    hubClientPost,
 } = require('../lib/helpers');
 
-var channelName = utils.randomChannelName();
+const channelName = utils.randomChannelName();
+let earliestURL = null;
 
 describe(__filename, function () {
-    var earliestURL;
-
-    it('creates a channel', function (done) {
-        var url = channelUrl;
-        var headers = {'Content-Type': 'application/json'};
-        var body = {'name': channelName};
-
-        utils.httpPost(url, headers, body)
-            .then(function (response) {
-                expect(getProp('statusCode', response)).toEqual(201);
-                earliestURL = fromObjectPath(['body', '_links', 'earliest', 'href'], response);
-            })
-            .finally(done);
+    beforeAll(async () => {
+        const headers = { 'Content-Type': 'application/json' };
+        const body = { 'name': channelName };
+        const response = await hubClientPost(channelUrl, headers, body);
+        if (getProp('statusCode', response) === 201) {
+            earliestURL = fromObjectPath(['body', '_links', 'earliest', 'href'], response);
+        }
     });
 
     it('verifies the earliest endpoint returns 404 on an empty channel', async () => {
@@ -28,5 +24,4 @@ describe(__filename, function () {
         const response = await hubClientGet(earliestURL);
         expect(getProp('statusCode', response)).toEqual(404);
     });
-
 });

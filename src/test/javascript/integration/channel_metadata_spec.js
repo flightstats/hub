@@ -4,42 +4,30 @@ const {
     fromObjectPath,
     getProp,
     hubClientGet,
+    hubClientPost,
 } = require('../lib/helpers');
 
-var channelName = utils.randomChannelName();
+const channelName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
-var messageText = "MY SUPER TEST CASE: this & <that>. " + Math.random().toString();
-
+const messageText = `MY SUPER TEST CASE: this & <that>. ${Math.random()}`;
+const defaultHeaders = { 'Content-Type': 'application/json' };
 describe(__filename, function () {
-    it('creates a channel', function (done) {
-        var url = channelUrl;
-        var headers = {'Content-Type': 'application/json'};
-        var body = {'name': channelName};
-
-        utils.httpPost(url, headers, body)
-            .then(function (response) {
-                expect(getProp('statusCode', response)).toEqual(201);
-            })
-            .finally(done);
+    it('creates a channel', async () => {
+        const body = { 'name': channelName };
+        const response = await hubClientPost(channelUrl, defaultHeaders, body);
+        expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    it('inserts an item into the channel', function (done) {
-        var url = channelResource;
-        var headers = {'Content-Type': 'text/plain'};
-        var body = messageText;
-
-        utils.httpPost(url, headers, body)
-            .then(function (response) {
-                expect(getProp('statusCode', response)).toEqual(201);
-            })
-            .finally(done);
+    it('inserts an item into the channel', async () => {
+        const headers = { 'Content-Type': 'text/plain' };
+        const response = await hubClientPost(channelResource, headers, messageText);
+        expect(getProp('statusCode', response)).toEqual(201);
     });
 
     it('verifies the channel metadata is accurate', async () => {
-        const headers = { 'Content-Type': 'application/json' };
         const url = `${channelResource}/`;
-        const res = await hubClientGet(url, headers);
-        const response = await followRedirectIfPresent(res, headers);
+        const res = await hubClientGet(url, defaultHeaders);
+        const response = await followRedirectIfPresent(res, defaultHeaders);
         expect(getProp('statusCode', response)).toEqual(200);
         const contentType = fromObjectPath(['headers', 'content-type'], response);
         const latestLInk = fromObjectPath(['body', '_links', 'latest', 'href'], response);
