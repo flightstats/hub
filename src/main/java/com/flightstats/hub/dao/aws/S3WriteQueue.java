@@ -112,7 +112,7 @@ public class S3WriteQueue {
     private Long getOldest() {
         ChannelContentKey[] array = keys.toArray(new ChannelContentKey[0]);
         Arrays.sort(array);
-        if (array.length != 0) {
+        if (array.length > 0) {
             DateTime then = array[0].getContentKey().getTime();
             DateTime now = DateTime.now(DateTimeZone.UTC);
             try {
