@@ -1,4 +1,5 @@
 require('../integration_config');
+const rp = require('request-promise-native');
 const { getProp, fromObjectPath, hubClientPut, hubClientPostTestItem } = require('../lib/helpers');
 const channel = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channel}`;
@@ -49,18 +50,53 @@ describe(__filename, function () {
     });
 
     it("gets latest in Immutable in channel - after now item", function (done) {
-        utils.getLocation(channelResource + '/latest?stable=false', 303, latest, done);
+        utils.getLocation(`${channelResource}/latest?stable=false`, 303, latest, done);
     });
 
     it("gets latest Mutable in channel - after now item ", function (done) {
-        utils.getLocation(channelResource + '/latest?epoch=MUTABLE&trace=true', 303, items[1], done);
+        utils.getLocation(`${channelResource}/latest?epoch=MUTABLE&trace=true`, 303, items[1], done);
     });
 
-    it("gets latest N Mutable in channel ", function (done) {
-        utils.getQuery(channelResource + '/latest/10?epoch=MUTABLE', 200, items.slice(0, 2), done);
+    it("gets latest N Mutable in channel ", async () => {
+        try {
+            const response = await rp({
+                method: 'GET',
+                headers,
+                url: `${channelResource}/latest/10?epoch=MUTABLE`,
+                resolveWithFullResponse: true,
+            });
+            expect(getProp('statusCode', response)).toBe(200);
+            const body = JSON.parse(getProp('body', response));
+            const uris = fromObjectPath(['_links', 'uris'], body) || [];
+            expect(uris.length).toBeGreaterThan(0);
+            const expected = items.slice(0, 2);
+            const actual = uris
+                .every((uri, index) => uri === expected[index]);
+            expect(actual).toBe(true);
+        } catch (ex) {
+            console.log('gets latest N Mutable in channel failed', ex && ex.message);
+            return fail(ex);
+        }
     });
 
-    it("gets latest N ALL in channel ", function (done) {
-        utils.getQuery(channelResource + '/latest/10?stable=false&epoch=ALL', 200, items, done);
+    it("gets latest N ALL in channel ", async () => {
+        try {
+            const response = await rp({
+                method: 'GET',
+                headers,
+                url: `${channelResource}/latest/10?stable=false&epoch=ALL`,
+                resolveWithFullResponse: true,
+            });
+            expect(getProp('statusCode', response)).toBe(200);
+            const body = JSON.parse(getProp('body', response));
+            const uris = fromObjectPath(['_links', 'uris'], body) || [];
+            expect(uris.length).toBeGreaterThan(0);
+            const actual = uris
+                .every((uri, index) => uri === items[index]);
+            expect(actual).toBe(true);
+        } catch (ex) {
+            console.log('gets latest N ALL in channel failed', ex && ex.message);
+            return fail(ex);
+        }
     });
 });
