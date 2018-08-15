@@ -1,14 +1,14 @@
 require('../integration_config');
+const EventSource = require('eventsource');
 const {
     createChannel,
     fromObjectPath,
     getProp,
+    hubClientPostTestItem,
 } = require('../lib/helpers');
 
-var EventSource = require('eventsource');
-var channelName = utils.randomChannelName();
+const channelName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
-var testName = __filename;
 
 /**
  * This should:
@@ -18,23 +18,25 @@ var testName = __filename;
  * 3 - post items to the channel
  * 4 - verify that the events are returned within delta time
  */
-describe(testName, function () {
-    var events = [];
-    var postedItems = [];
+describe(__filename, function () {
+    const events = [];
+    const postedItems = [];
     let createdChannel = false;
 
     beforeAll(async () => {
-        const channel = await createChannel(channelName, false, testName);
+        const channel = await createChannel(channelName, false, __filename);
         if (getProp('statusCode', channel) === 201) {
-            console.log(`created channel for ${testName}`);
+            console.log(`created channel for ${__filename}`);
             createdChannel = true;
         }
     });
 
     it('creates event source', function () {
         if (!createdChannel) return fail('channel not created in before block');
-        var source = new EventSource(channelResource + '/events',
-            {headers: {'Accept-Encoding': 'gzip'}});
+        const source = new EventSource(
+            `${channelResource}/events`,
+            { headers: { 'Accept-Encoding': 'gzip' } }
+        );
 
         source.addEventListener('application/json', function (e) {
             console.log('message', e);
@@ -48,32 +50,19 @@ describe(testName, function () {
 
     utils.itSleeps(1000);
 
-    it('posts items', function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        utils.postItemQ(channelResource)
-            .then(function (value) {
-                addPostedItem(value);
-                return utils.postItemQ(channelResource);
-            })
-            .then(function (value) {
-                addPostedItem(value);
-                return utils.postItemQ(channelResource);
-            })
-            .then(function (value) {
-                addPostedItem(value);
-                return utils.postItemQ(channelResource);
-            })
-            .then(function (value) {
-                addPostedItem(value);
-                done();
+    it('posts items sequentially', async () => {
+        if (!createdChannel) return fail('channel not created in before block');
+        const response1 = await hubClientPostTestItem(channelResource);
+        const response2 = await hubClientPostTestItem(channelResource);
+        const response3 = await hubClientPostTestItem(channelResource);
+        const response4 = await hubClientPostTestItem(channelResource);
+        const response5 = await hubClientPostTestItem(channelResource);
+        const actual = [response1, response2, response3, response4, response5]
+            .map(value => {
+                return fromObjectPath(['body', '_links', 'self', 'href'], value);
             });
-
-        function addPostedItem(value) {
-            const selfLink = fromObjectPath(['body', '_links', 'self', 'href'], value);
-            console.log('posted ', selfLink);
-            postedItems.push(selfLink);
-        }
-
+        expect(actual.length).toEqual(5);
+        postedItems.push(...actual);
     }, 10 * 1000);
 
     it('waits for data', function (done) {
@@ -81,13 +70,39 @@ describe(testName, function () {
         utils.waitForData(postedItems, events, done);
     });
 
-    it('verifies events', function () {
+    it('verifies events in sequence posted to channel', () => {
         console.log('events:', events);
         expect(postedItems.length).toBeGreaterThan(0);
-        for (var i = 0; i < postedItems.length; i++) {
-            expect(postedItems[i]).toBe(events[i]);
-        }
-
+        const actual = postedItems.every((item, index) => {
+            return item === events[index];
+        });
+        expect(actual).toBe(true);
     });
 
+    it('posts items in no particular order', async () => {
+        if (!createdChannel) return fail('channel not created in before block');
+        const postItem = () => hubClientPostTestItem(channelResource);
+        const responses = [1, 2, 3, 4, 5]
+            .map(i => postItem());
+        const response = await Promise.all(responses);
+        const actual = response.map(value => {
+            return fromObjectPath(['body', '_links', 'self', 'href'], value);
+        });
+        expect(actual.length).toEqual(5);
+        postedItems.push(...actual);
+    }, 10 * 1000);
+
+    it('waits for data', function (done) {
+        if (!createdChannel) return done.fail('channel not created in before block');
+        utils.waitForData(postedItems, events, done);
+    });
+
+    it('verifies events regardless of sequence posted to channel', () => {
+        console.log('events:', events);
+        expect(postedItems.length).toBeGreaterThan(0);
+        const actual = postedItems.every((item) => {
+            return !!events.includes(item);
+        });
+        expect(actual).toBe(true);
+    });
 });

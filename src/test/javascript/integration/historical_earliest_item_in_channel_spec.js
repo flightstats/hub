@@ -1,5 +1,5 @@
 require('../integration_config');
-const { getProp, fromObjectPath, hubClientPut } = require('../lib/helpers');
+const { getProp, fromObjectPath, hubClientPut, hubClientPostTestItem } = require('../lib/helpers');
 
 const channel = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channel}`;
@@ -24,20 +24,15 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    it('posts two historical items', function (done) {
+    it('posts two historical items', async () => {
         const historicalItem1 = `${channelResource}/2013/11/20/12/00/00/000`;
         const historicalItem2 = `${channelResource}/2013/11/20/12/01/00/000`;
-        utils.postItemQ(historicalItem1)
-            .then(function (value) {
-                const location = fromObjectPath(['response', 'headers', 'location'], value);
-                items.push(location);
-                return utils.postItemQ(historicalItem2);
-            })
-            .then(function (nextValue) {
-                const nextLocation = fromObjectPath(['response', 'headers', 'location'], nextValue);
-                items.push(nextLocation);
-                done();
-            });
+        const response1 = await hubClientPostTestItem(historicalItem1);
+        const location1 = fromObjectPath(['headers', 'location'], response1);
+        items.push(location1);
+        const response2 = await hubClientPostTestItem(historicalItem2);
+        const nextLocation = fromObjectPath(['headers', 'location'], response2);
+        items.push(nextLocation);
     });
 
     it("gets earliest in default Epoch in channel ", function (done) {
@@ -52,13 +47,10 @@ describe(__filename, function () {
         utils.getLocation(`${channelResource}/earliest?epoch=MUTABLE`, 303, items[0], done);
     });
 
-    it('posts item now', function (done) {
-        utils.postItemQ(channelResource)
-            .then(function (value) {
-                const location = fromObjectPath(['response', 'headers', 'location'], value);
-                items.push(location);
-                done();
-            });
+    it('posts item now', async () => {
+        const response = await hubClientPostTestItem(channelResource);
+        const location = fromObjectPath(['headers', 'location'], response);
+        items.push(location);
     });
 
     it("gets earliest Immutable in channel - after now item", function (done) {

@@ -4,6 +4,7 @@ const {
     fromObjectPath,
     getHubItem,
     getProp,
+    hubClientPost,
 } = require('../lib/helpers');
 /**
  * POST a single item, GET it, and verify the "X-Item-Length"
@@ -11,11 +12,11 @@ const {
  */
 
 describe(__filename, function () {
-    var channelName = utils.randomChannelName();
-    var channelEndpoint = channelUrl + '/' + channelName;
-    var itemHeaders = {'Content-Type': 'text/plain'};
-    var itemContent = 'this string has normal letters, and unicode characters like "\u03B1"';
-    var itemURL;
+    const channelName = utils.randomChannelName();
+    const channelEndpoint = channelUrl + '/' + channelName;
+    const itemHeaders = {'Content-Type': 'text/plain'};
+    const itemContent = 'this string has normal letters, and unicode characters like "\u03B1"';
+    let itemURL;
     let createdChannel = false;
 
     beforeAll(async () => {
@@ -26,20 +27,12 @@ describe(__filename, function () {
         }
     });
 
-    it('posts a single item', function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        utils.postItemQwithPayload(channelEndpoint, itemHeaders, itemContent)
-            .then(function (result) {
-                try {
-                    const json = JSON.parse(getProp('body', result));
-                    itemURL = fromObjectPath(['_links', 'self', 'href'], json);
-                    expect(itemURL).toBeDefined();
-                } catch (ex) {
-                    expect(ex).toBeNull();
-                    console.log('error parsing json: ', ex);
-                }
-                done();
-            });
+    it('posts a single item', async () => {
+        if (!createdChannel) return fail('channel not created in before block');
+        const response = await hubClientPost(channelEndpoint, itemHeaders, itemContent);
+        const body = getProp('body', response);
+        itemURL = fromObjectPath(['_links', 'self', 'href'], body);
+        expect(itemURL).toBeDefined();
     });
 
     it('verifies item has correct length info', async () => {

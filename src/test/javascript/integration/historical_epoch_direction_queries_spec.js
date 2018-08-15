@@ -1,5 +1,5 @@
 require('../integration_config');
-const { fromObjectPath, getProp, hubClientPut } = require('../lib/helpers');
+const { fromObjectPath, getProp, hubClientPut, hubClientPostTestItem } = require('../lib/helpers');
 
 const channel = utils.randomChannelName();
 const moment = require('moment');
@@ -38,39 +38,22 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    it('posts historical items to ' + channel, function (done) {
-        utils.postItemQ(getFormattedUrl(earliestTime))
-            .then(function (value) {
-                items.push(fromObjectPath(['response', 'headers', 'location'], value));
-                return utils.postItemQ(getFormattedUrl(earliestTime.add(1, 'years')));
-            })
-            .then(function (value1) {
-                items.push(fromObjectPath(['response', 'headers', 'location'], value1));
-                return utils.postItemQ(getFormattedUrl(earliestTime.add(6, 'months')));
-            })
-            .then(function (value2) {
-                items.push(fromObjectPath(['response', 'headers', 'location'], value2));
-                done();
-            })
-        ;
+    it(`posts historical items to  ${channel}`, async () => {
+        const response = await hubClientPostTestItem(getFormattedUrl(earliestTime));
+        items.push(fromObjectPath(['headers', 'location'], response));
+        const response1 = await hubClientPostTestItem(getFormattedUrl(earliestTime.add(1, 'years')));
+        items.push(fromObjectPath(['headers', 'location'], response1));
+        const response2 = await hubClientPostTestItem(getFormattedUrl(earliestTime.add(6, 'months')));
+        items.push(fromObjectPath(['headers', 'location'], response2));
     });
 
-    it('posts live items to ' + channel, function (done) {
-        utils.postItemQ(channelResource)
-            .then(function (value) {
-                items.push(fromObjectPath(['response', 'headers', 'location'], value));
-                return utils.postItemQ(channelResource);
-            })
-            .then(function (value1) {
-                items.push(fromObjectPath(['response', 'headers', 'location'], value1));
-                return utils.postItemQ(channelResource);
-            })
-            .then(function (value2) {
-                items.push(fromObjectPath(['response', 'headers', 'location'], value2));
-                console.log('items', items);
-                done();
-            })
-        ;
+    it(`posts live items to ${channel}`, async () => {
+        const response = await hubClientPostTestItem(channelResource);
+        items.push(fromObjectPath(['headers', 'location'], response));
+        const response1 = await hubClientPostTestItem(channelResource);
+        items.push(fromObjectPath(['headers', 'location'], response1));
+        const response2 = await hubClientPostTestItem(channelResource);
+        items.push(fromObjectPath(['headers', 'location'], response2));
     });
 
     it(`queries next 7 All ${next7}`, function (done) {

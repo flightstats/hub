@@ -1,11 +1,11 @@
 require('../integration_config');
+const moment = require('moment');
 const {
     fromObjectPath,
     getProp,
     hubClientPost,
     hubClientPut,
 } = require('../lib/helpers');
-const moment = require('moment');
 
 /**
  * This should:
@@ -65,7 +65,7 @@ describe(__filename, () => {
                 const {
                     lastCompleted,
                     inFlight = [],
-                    errors = []
+                    errors = [],
                 } = body;
                 expect(lastCompleted).toContain('initial');
                 expect(inFlight.length).toEqual(1);
@@ -81,7 +81,7 @@ describe(__filename, () => {
             const json = JSON.parse(request);
             console.log('incoming:', json);
             const uris = getProp('uris', json) || [];
-            uris.forEach(uri => callbackItems.push(uri));
+            callbackItems.push(...uris);
         }, done);
     });
 

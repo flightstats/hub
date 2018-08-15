@@ -1,6 +1,5 @@
 require('../integration_config');
-const { getProp, fromObjectPath, hubClientPut } = require('../lib/helpers');
-
+const { getProp, fromObjectPath, hubClientPut, hubClientPostTestItem } = require('../lib/helpers');
 const channel = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channel}`;
 const headers = { 'Content-Type': 'application/json' };
@@ -22,20 +21,13 @@ describe(__filename, function () {
     beforeAll(async () => {
         const response = await hubClientPut(channelResource, headers, channelBody);
         expect(getProp('statusCode', response)).toEqual(201);
-    });
-
-    it('posts two historical items', function (done) {
         const historicalItem1 = `${channelResource}${moment(mutableTime).subtract(2, 'minute').format('/YYYY/MM/DD/HH/mm/ss/SSS')}`;
         const historicalItem2 = `${channelResource}${mutableTime.format('/YYYY/MM/DD/HH/mm/ss/SSS')}`;
-        utils.postItemQ(historicalItem1)
-            .then(function (value) {
-                items.push(fromObjectPath(['response', 'headers', 'location'], value));
-                return utils.postItemQ(historicalItem2);
-            })
-            .then(function (value1) {
-                items.push(fromObjectPath(['response', 'headers', 'location'], value1));
-                done();
-            });
+        const response1 = await hubClientPostTestItem(historicalItem1);
+        const response2 = await hubClientPostTestItem(historicalItem2);
+        const actual = [response1, response2]
+            .map(res => fromObjectPath(['headers', 'location'], res));
+        items.push(...actual);
     });
 
     it("gets latest in default Epoch in channel ", function (done) {
@@ -50,14 +42,10 @@ describe(__filename, function () {
         utils.getLocation(channelResource + '/latest?epoch=MUTABLE', 303, items[1], done);
     });
 
-    it('posts item now', function (done) {
-        utils.postItemQ(channelResource)
-            .then(function (value) {
-                const location = fromObjectPath(['response', 'headers', 'location'], value);
-                latest = location;
-                items.push(location);
-                done();
-            });
+    it('posts item now', async () => {
+        const response = await hubClientPostTestItem(channelResource);
+        const latest = fromObjectPath(['headers', 'location'], response);
+        items.push(latest);
     });
 
     it("gets latest in Immutable in channel - after now item", function (done) {

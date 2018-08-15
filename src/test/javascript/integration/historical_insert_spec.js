@@ -5,6 +5,7 @@ const {
     fromObjectPath,
     getProp,
     hubClientPut,
+    hubClientPostTestItem,
 } = require('../lib/helpers');
 
 const mutableTime = moment.utc().subtract(1, 'minute');
@@ -32,12 +33,9 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    it(`posts historical item to ${channel}`, function (done) {
-        utils.postItemQ(pointInThePastURL)
-            .then(function (value) {
-                historicalLocation = fromObjectPath(['response', 'headers', 'location'], value);
-                done();
-            });
+    it(`posts historical item to ${channel}`, async () => {
+        const response = await hubClientPostTestItem(pointInThePastURL);
+        historicalLocation = fromObjectPath(['headers', 'location'], response);
     });
 
     it(`gets historical item from ${historicalLocation}`, function (done) {
@@ -49,12 +47,9 @@ describe(__filename, function () {
             });
     });
 
-    it(`posts live item to ${channel}`, function (done) {
-        utils.postItemQ(channelResource)
-            .then(function (value) {
-                liveLocation = fromObjectPath(['response', 'headers', 'location'], value);
-                done();
-            });
+    it(`posts live item to ${channel}`, async () => {
+        const response = await hubClientPostTestItem(channelResource);
+        liveLocation = fromObjectPath(['headers', 'location'], response);
     });
 
     it(`gets live item from ${liveLocation}`, function (done) {
@@ -66,13 +61,10 @@ describe(__filename, function () {
             });
     });
 
-    it(`posts historical item to ${channel}`, function (done) {
-        utils.postItemQ(pointInThePastURL + '/abcdefg')
-            .then(function (value) {
-                hashItem = fromObjectPath(['response', 'headers', 'location'], value);
-                expect(hashItem).toContain('/abcdefg');
-                done();
-            });
+    it(`posts historical item to ${channel}`, async () => {
+        const response = await hubClientPostTestItem(`${pointInThePastURL}/abcdefg`);
+        hashItem = fromObjectPath(['headers', 'location'], response);
+        expect(hashItem).toContain('/abcdefg');
     });
 
     it(`gets historical item from ${hashItem}`, function (done) {
