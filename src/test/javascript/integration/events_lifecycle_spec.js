@@ -6,6 +6,7 @@ const {
     getProp,
     hubClientPostTestItem,
     itSleeps,
+    waitForCondition,
 } = require('../lib/helpers');
 
 const channelName = utils.randomChannelName();
@@ -66,11 +67,8 @@ describe(__filename, function () {
             });
         expect(actual.length).toEqual(5);
         postedItems.push(...actual);
-    }, 10 * 1000);
-
-    it('waits for data', function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        utils.waitForData(postedItems, events, done);
+        const condition = () => (postedItems.length === events.length);
+        await waitForCondition(condition);
     });
 
     it('verifies events in sequence posted to channel', () => {
@@ -93,11 +91,8 @@ describe(__filename, function () {
         });
         expect(actual.length).toEqual(5);
         postedItems.push(...actual);
-    }, 10 * 1000);
-
-    it('waits for data', function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        utils.waitForData(postedItems, events, done);
+        const condition = () => (postedItems.length === events.length);
+        await waitForCondition(condition);
     });
 
     it('verifies events regardless of sequence posted to channel', () => {

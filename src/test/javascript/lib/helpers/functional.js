@@ -48,3 +48,22 @@ module.exports.itSleeps = (millis, message) => {
         }, millis);
     });
 };
+
+// the drubbings will continue until the condition are belong to us...
+module.exports.waitForCondition = async (conditionalFunc, timeout = 15000) => {
+    let time = 0;
+    if (typeof conditionalFunc !== 'function') return false;
+    if (conditionalFunc()) return true;
+    const resolver = () => new Promise((resolve) => {
+        const wait = setInterval(() => {
+            time += 500;
+            const timedOut = time >= timeout;
+            process.stdout.write('… … … … …');
+            if (conditionalFunc() || timedOut) {
+                clearInterval(wait);
+                return resolve(true);
+            }
+        }, 500);
+    });
+    await resolver();
+};

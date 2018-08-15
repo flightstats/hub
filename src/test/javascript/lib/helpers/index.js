@@ -1,4 +1,9 @@
-const { fromObjectPath, getProp, itSleeps } = require('./functional');
+const {
+    fromObjectPath,
+    getProp,
+    itSleeps,
+    waitForCondition,
+} = require('./functional');
 const {
     randomChannelName,
     randomNumberBetweenInclusive,
@@ -43,4 +48,5 @@ module.exports = {
     randomChannelName,
     randomNumberBetweenInclusive,
     randomTagName,
+    waitForCondition,
 };

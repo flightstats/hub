@@ -7,6 +7,7 @@ const {
     hubClientPostTestItem,
     itSleeps,
     putWebhook,
+    waitForCondition,
 } = require('../lib/helpers');
 const channelName = utils.randomChannelName();
 const webhookName = utils.randomChannelName();
@@ -18,7 +19,10 @@ const webhookConfig = {
     channelUrl: channelResource,
 };
 let createdChannel = false;
-
+let callbackServer = null;
+const callbackItems = [];
+const postedItems = [];
+const condition = () => (callbackItems.length === postedItems.length);
 /*
  * This should:
  * TODO: I do not think this is exactly what this test actually does
@@ -31,9 +35,6 @@ let createdChannel = false;
  * 7 - post item - should only see new item
  */
 describe(__filename, function () {
-    let callbackServer;
-    const callbackItems = [];
-    const postedItems = [];
     beforeAll(async () => {
         const channel = await createChannel(channelName, false, __filename);
         if (getProp('statusCode', channel) === 201) {
@@ -62,11 +63,7 @@ describe(__filename, function () {
         const response = await hubClientPostTestItem(channelResource);
         expect(getProp('statusCode', response)).toEqual(201);
         postedItems.push(fromObjectPath(['body', '_links', 'self', 'href'], response));
-    });
-
-    it('waits for data', function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        utils.waitForData(callbackItems, postedItems, done);
+        await waitForCondition(condition);
     });
 
     it('deletes the webhook', async () => {
@@ -92,11 +89,7 @@ describe(__filename, function () {
         const response = await hubClientPostTestItem(channelResource);
         expect(getProp('statusCode', response)).toEqual(201);
         postedItems.push(fromObjectPath(['body', '_links', 'self', 'href'], response));
-    });
-
-    it('waits for data', function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        utils.waitForData(callbackItems, postedItems, done);
+        await waitForCondition(condition);
     });
 
     it('verifies we got what we expected through the callback', function () {
