@@ -1,5 +1,11 @@
 require('../integration_config');
-const { fromObjectPath, getProp, hubClientPut, hubClientPostTestItem } = require('../lib/helpers');
+const {
+    fromObjectPath,
+    getProp,
+    hubClientChannelRefresh,
+    hubClientPut,
+    hubClientPostTestItem,
+} = require('../lib/helpers');
 
 const channel = utils.randomChannelName();
 const moment = require('moment');
@@ -73,7 +79,10 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    utils.itRefreshesChannels();
+    it('waits while the channel is refreshed', async () => {
+        const response = await hubClientChannelRefresh();
+        expect(getProp('statusCode', response)).toEqual(200);
+    });
 
     it(`queries next 7 Immutable after change ${next7}`, function (done) {
         utils.getQuery(`${channelResource}${next7}&epoch=IMMUTABLE`, 200, items.slice(2), done);

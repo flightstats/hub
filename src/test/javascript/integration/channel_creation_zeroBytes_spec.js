@@ -2,6 +2,7 @@ require('../integration_config');
 const {
     fromObjectPath,
     getProp,
+    hubClientChannelRefresh,
     hubClientPost,
     hubClientPut,
 } = require('../lib/helpers');
@@ -40,7 +41,10 @@ describe(__filename, function () {
         expect(allowZeroBytes).toEqual(false);
     });
 
-    utils.itRefreshesChannels();
+    it('waits while the channel is refreshed', async () => {
+        const response = await hubClientChannelRefresh();
+        expect(getProp('statusCode', response)).toEqual(200);
+    });
 
     it("fails to add zero byte item", async () => {
         const response = await hubClientPost(channelResource, { "Content-Type": "text/plain" });

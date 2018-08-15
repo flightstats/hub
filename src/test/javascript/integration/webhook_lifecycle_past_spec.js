@@ -6,6 +6,7 @@ const {
     getWebhookUrl,
     hubClientPut,
     hubClientPostTestItem,
+    itSleeps,
 } = require('../lib/helpers');
 const channelName = utils.randomChannelName();
 const webhookName = utils.randomChannelName();
@@ -41,7 +42,9 @@ describe(__filename, function () {
         }
     });
 
-    utils.itSleeps(1000);
+    it('waits 1000 ms', async () => {
+        await itSleeps(1000);
+    });
 
     it(`posts initial items ${channelResource}`, async () => {
         if (!createdChannel) return fail('channel not created in before block');

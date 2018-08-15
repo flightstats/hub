@@ -4,6 +4,7 @@ const parse = require('parse-link-header');
 const {
     fromObjectPath,
     getProp,
+    hubClientChannelRefresh,
     hubClientPostTestItem,
     hubClientPut,
 } = require('../lib/helpers');
@@ -36,9 +37,9 @@ describe(__filename, function () {
         const responseB = await hubClientPut(`${channelUrl}/${channelB}`, headers, channelBody);
         expect(getProp('statusCode', responseA)).toEqual(201);
         expect(getProp('statusCode', responseB)).toEqual(201);
+        const responseC = await hubClientChannelRefresh();
+        expect(getProp('statusCode', responseC)).toEqual(200);
     });
-
-    utils.itRefreshesChannels();
 
     const traverse = (uri, index, done) => {
         const url = uri.trim();

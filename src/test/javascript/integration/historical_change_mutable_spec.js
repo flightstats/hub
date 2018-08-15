@@ -1,6 +1,11 @@
 require('../integration_config');
 const moment = require('moment');
-const { getProp, fromObjectPath, hubClientPut, hubClientPostTestItem } = require('../lib/helpers');
+const { getProp,
+    fromObjectPath,
+    hubClientChannelRefresh,
+    hubClientPut,
+    hubClientPostTestItem,
+} = require('../lib/helpers');
 const channel = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channel}`;
 const mutableTime = moment.utc().subtract(1, 'day');
@@ -48,7 +53,10 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    utils.itRefreshesChannels();
+    it('waits while the channel is refreshed', async () => {
+        const response = await hubClientChannelRefresh();
+        expect(getProp('statusCode', response)).toEqual(200);
+    });
 
     it('queries both items', function (done) {
         utils.getQuery(`${channelLocation}/latest/2?trace=true`, 200, historicalLocations, done);
