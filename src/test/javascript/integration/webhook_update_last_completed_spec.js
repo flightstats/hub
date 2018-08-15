@@ -5,6 +5,7 @@ const {
     hubClientGet,
     hubClientPost,
     hubClientPut,
+    putWebhook,
 } = require('../lib/helpers');
 const moment = require('moment');
 
@@ -45,7 +46,10 @@ describe(__filename, () => {
         expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    utils.putWebhook(webhookName, webhookConfig, 201, webhookURL);
+    it('creates a webhook', async () => {
+        const response = await putWebhook(webhookName, webhookConfig, 201, webhookURL);
+        expect(getProp('statusCode', response)).toEqual(201);
+    });
 
     it('inserts the first item', async () => {
         const response = await hubClientPost(channelResource, contentTypePlain, "a test " + Date.now());

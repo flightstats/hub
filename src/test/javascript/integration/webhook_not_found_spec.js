@@ -1,12 +1,11 @@
 require('../integration_config');
-const { getProp } = require('../lib/helpers');
+const { getProp, getWebhookUrl } = require('../lib/helpers');
 var request = require('request');
 var webhookName = utils.randomChannelName();
-var webhookResource = utils.getWebhookUrl() + "/" + webhookName;
+var webhookResource = `${getWebhookUrl()}/${webhookName}`;
 var testName = __filename;
 
 describe(testName, function () {
-
     it('gets missing webhook ' + webhookName, function (done) {
         request.get({
             url: webhookResource,
@@ -17,5 +16,4 @@ describe(testName, function () {
             done();
         });
     });
-
 });

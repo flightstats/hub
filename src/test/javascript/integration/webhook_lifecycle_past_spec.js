@@ -3,7 +3,9 @@ const {
     createChannel,
     fromObjectPath,
     getProp,
+    getWebhookUrl,
     hubClientPut,
+    hubClientPostTestItem,
 } = require('../lib/helpers');
 const channelName = utils.randomChannelName();
 const webhookName = utils.randomChannelName();
@@ -11,6 +13,15 @@ const channelResource = `${channelUrl}/${channelName}`;
 const port = utils.getPort();
 const callbackUrl = `${callbackDomain}:${port}/`;
 let createdChannel = false;
+const postedItems = [];
+let firstItem = null;
+const addPostedItem = (value) => {
+    postedItems.push(fromObjectPath(['body', '_links', 'self', 'href'], value));
+    console.log('postedItems', postedItems);
+};
+let callbackServer;
+const callbackItems = [];
+
 /**
  * This should:
  *
@@ -31,30 +42,18 @@ describe(__filename, function () {
     });
 
     utils.itSleeps(1000);
-    const postedItems = [];
-    let firstItem = null;
 
-    function addPostedItem (value) {
-        postedItems.push(fromObjectPath(['body', '_links', 'self', 'href'], value));
-        console.log('postedItems', postedItems);
-    }
-
-    it('posts initial items ' + channelResource, function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        utils.postItemQ(channelResource)
-            .then(function (value) {
-                firstItem = fromObjectPath(['body', '_links', 'self', 'href'], value);
-                return utils.postItemQ(channelResource);
-            })
-            .then(function (value) {
-                addPostedItem(value);
-                done();
-            });
+    it(`posts initial items ${channelResource}`, async () => {
+        if (!createdChannel) return fail('channel not created in before block');
+        const response = await hubClientPostTestItem(channelResource);
+        firstItem = fromObjectPath(['body', '_links', 'self', 'href'], response);
+        const response1 = await hubClientPostTestItem(channelResource);
+        addPostedItem(response1);
     });
 
     it('creates a webhook', async () => {
         if (!createdChannel) return fail('channel not created in before block');
-        const url = `${utils.getWebhookUrl()}/${webhookName}`;
+        const url = `${getWebhookUrl()}/${webhookName}`;
         const headers = { 'Content-Type': 'application/json' };
         const body = {
             callbackUrl,
@@ -72,9 +71,6 @@ describe(__filename, function () {
         expect(responseBody.name).toBe(webhookName);
     });
 
-    var callbackServer;
-    var callbackItems = [];
-
     it('starts a callback server', function (done) {
         if (!createdChannel) return done.fail('channel not created in before block');
         callbackServer = utils.startHttpServer(port, function (string) {
@@ -83,25 +79,14 @@ describe(__filename, function () {
         }, done);
     });
 
-    it('inserts items', function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        utils.postItemQ(channelResource)
-            .then(function (value) {
-                addPostedItem(value);
-                return utils.postItemQ(channelResource);
-            })
-            .then(function (value) {
-                addPostedItem(value);
-                return utils.postItemQ(channelResource);
-            })
-            .then(function (value) {
-                addPostedItem(value);
-                return utils.postItemQ(channelResource);
-            })
-            .then(function (value) {
-                addPostedItem(value);
-                done();
-            });
+    it('inserts items', async () => {
+        if (!createdChannel) return fail('channel not created in before block');
+        const response0 = await hubClientPostTestItem(channelResource);
+        const response1 = await hubClientPostTestItem(channelResource);
+        const response2 = await hubClientPostTestItem(channelResource);
+        const response3 = await hubClientPostTestItem(channelResource);
+        [response0, response1, response2, response3]
+            .forEach(res => addPostedItem(res));
     });
 
     it('waits for data', function (done) {

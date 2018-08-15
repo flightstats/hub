@@ -1,25 +1,39 @@
 // bc -- this test does not run reliably due to what appears to be timing issues.
-const { createChannel, fromObjectPath, getProp } = require('../lib/helpers');
+const {
+    createChannel,
+    deleteWebhook,
+    fromObjectPath,
+    getProp,
+    hubClientPostTestItem,
+    putWebhook,
+} = require('../lib/helpers');
 require('../integration_config');
 
-var channelName = utils.randomChannelName();
-var webhookName = utils.randomChannelName();
+const channelName = utils.randomChannelName();
+const webhookName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
-var testName = __filename;
-var port = utils.getPort();
-var callbackUrl = callbackDomain + ':' + port + '/';
-var webhookConfig = {
+const port = utils.getPort();
+const callbackUrl = `${callbackDomain}:${port}/`;
+const webhookConfig = {
     callbackUrl: callbackUrl,
     channelUrl: channelResource,
     paused: false,
 };
 
-var webhookConfigPaused = {
+const webhookConfigPaused = {
     callbackUrl: callbackUrl,
     channelUrl: channelResource,
     paused: true,
 };
 let createdChannel = false;
+let callbackServer = null;
+const callbackItems = [];
+const postedItems = [];
+const addPostedItem = (value) => {
+    const selfLink = fromObjectPath(['body', '_links', 'self', 'href'], value);
+    postedItems.push(selfLink);
+    console.log('value.body._links.self.href', selfLink);
+};
 /**
  *
  * This should:
@@ -35,45 +49,34 @@ let createdChannel = false;
  * 9 - un-pause the webhook
  * 10 - verify that the records are returned within delta time
  */
-describe(testName, function () {
+describe(__filename, function () {
     beforeAll(async () => {
-        const channel = await createChannel(channelName, false, testName);
+        const channel = await createChannel(channelName, false, __filename);
         if (getProp('statusCode', channel) === 201) {
             createdChannel = true;
             console.log(`created channel for ${__filename}`);
         }
     });
-    var callbackItems = [];
-    var postedItems = [];
 
-    function addPostedItem (value) {
-        const selfLink = fromObjectPath(['body', '_links', 'self', 'href'], value);
-        postedItems.push(selfLink);
-        console.log('value.body._links.self.href', selfLink);
-    }
-
-    utils.putWebhook(webhookName, webhookConfig, 201, testName);
-
-    var callbackServer;
+    it('creates the webhook', async () => {
+        const response = await putWebhook(webhookName, webhookConfig, 201, __filename);
+        expect(getProp('statusCode', response)).toEqual(201);
+    });
 
     it('starts a callback server', function (done) {
         if (!createdChannel) return done.fail('channel not created in before block');
-        callbackServer = utils.startHttpServer(port, function (string) {
+        callbackServer = utils.startHttpServer(port, (string) => {
             callbackItems.push(string);
             console.log(callbackItems.length, 'called back', string);
         }, done);
     });
 
-    it('posts two items', function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        utils.postItemQ(channelResource)
-            .then(function (value) {
-                addPostedItem(value);
-                return utils.postItemQ(channelResource);
-            }).then(function (value) {
-                addPostedItem(value);
-                done();
-            });
+    it('posts two items', async () => {
+        if (!createdChannel) return fail('channel not created in before block');
+        const response0 = await hubClientPostTestItem(channelResource);
+        addPostedItem(response0);
+        const response1 = await hubClientPostTestItem(channelResource);
+        addPostedItem(response1);
     });
 
     it('waits for data', function (done) {
@@ -88,36 +91,38 @@ describe(testName, function () {
         expect(callbackItems.length).toBe(2);
     });
 
-    console.log("###### pausing web hook");
-    utils.putWebhook(webhookName, webhookConfigPaused, 200, testName);
+    it('pauses the webhook', async () => {
+        console.log('###### pausing web hook');
+        const response = await putWebhook(webhookName, webhookConfigPaused, 200, __filename);
+        expect(getProp('statusCode', response)).toEqual(200);
+    });
 
     utils.itSleeps(2000);
 
-    it('posts items to paused ' + webhookName, function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        utils.postItemQ(channelResource)
-            .then(function (value) {
-                addPostedItem(value);
-                return utils.postItemQ(channelResource);
-            })
-            .then(function (value) {
-                addPostedItem(value);
-                done();
-            });
+    it(`posts items to paused ${webhookName}`, async () => {
+        if (!createdChannel) return fail('channel not created in before block');
+        const response0 = await hubClientPostTestItem(channelResource);
+        addPostedItem(response0);
+        const response1 = await hubClientPostTestItem(channelResource);
+        addPostedItem(response1);
     }, 3000);
 
     utils.itSleeps(500);
 
     // we added another 2 to a paused web hook.  should still be 2
-    it('verfies number ' + webhookName, function () {
+    it(`verfies number ${webhookName}`, function () {
         if (!createdChannel) return fail('channel not created in before block');
         expect(callbackItems.length).toBe(2);
     });
 
-    console.log("###### resuming web hook");
-    utils.putWebhook(webhookName, webhookConfig, 200, testName);
+    it('unpauses the webhook', async () => {
+        console.log('###### resuming web hook');
+        const response = await putWebhook(webhookName, webhookConfig, 200, __filename);
+        expect(getProp('statusCode', response)).toEqual(200);
+    });
 
-    utils.itSleeps(2000);
+    // I upped this to 5s on 08/13/2018 so that it reliably passes in local envs
+    utils.itSleeps(5000);
 
     it('closes the callback server', function (done) {
         if (!createdChannel) return done.fail('channel not created in before block');
@@ -136,5 +141,8 @@ describe(testName, function () {
         // }
     });
 
-    utils.deleteWebhook(webhookName);
+    it('deletes the webhook', async () => {
+        const response = await deleteWebhook(webhookName);
+        expect(getProp('statusCode', response)).toBe(202);
+    });
 });
