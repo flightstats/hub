@@ -1,5 +1,12 @@
 require('../integration_config');
-const { createChannel, getProp, fromObjectPath, hubClientPostTestItem } = require('../lib/helpers');
+const {
+    createChannel,
+    deleteWebhook,
+    getProp,
+    fromObjectPath,
+    hubClientPostTestItem,
+    putWebhook,
+} = require('../lib/helpers');
 
 const channelName = utils.randomChannelName();
 const webhookName = utils.randomChannelName();
@@ -43,7 +50,10 @@ describe(__filename, function () {
         }
     });
 
-    utils.putWebhook(webhookName, webhookConfigA, 201, __filename);
+    it('creates the webhook', async () => {
+        const response = await putWebhook(webhookName, webhookConfigA, 201, __filename);
+        expect(getProp('statusCode', response)).toEqual(201);
+    });
 
     it('starts the first callback server', function (done) {
         if (!createdChannel) return done.fail('channel not created in before block');
@@ -63,11 +73,17 @@ describe(__filename, function () {
         utils.waitForData(callbackItemsA, postedItemsA, done);
     });
 
-    utils.deleteWebhook(webhookName);
+    it('deletes the webhook', async () => {
+        const response = await deleteWebhook(webhookName);
+        expect(getProp('statusCode', response)).toBe(202);
+    });
 
     utils.itSleeps(5000);
 
-    utils.putWebhook(webhookName, webhookConfigB, 201, __filename);
+    it('recreates the webhook', async () => {
+        const response = await putWebhook(webhookName, webhookConfigB, 201, __filename);
+        expect(getProp('statusCode', response)).toEqual(201);
+    });
 
     it('starts the second callback server', function (done) {
         if (!createdChannel) return done.fail('channel not created in before block');

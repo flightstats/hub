@@ -1,25 +1,35 @@
 require('../integration_config');
+const {
+    deleteWebhook,
+    getProp,
+    putWebhook,
+} = require('../lib/helpers');
 
-var webhookName = utils.randomChannelName();
-var testName = __filename;
-var webhookConfig = {
+const webhookName = utils.randomChannelName();
+const webhookConfig = {
     callbackUrl: 'http://nothing/callback',
     channelUrl: 'http://nothing/channel/notHere',
-    batch: 'SINGLE'
+    batch: 'SINGLE',
+};
+const webhookConfig2 = {
+    callbackUrl: 'http://nothing/callback',
+    channelUrl: 'http://nothing/channel/notHere',
+    batch: 'MINUTE',
 };
 
-describe(testName, function () {
+describe(__filename, function () {
+    it('create a webhook', async () => {
+        const result = await putWebhook(webhookName, webhookConfig, 201, __filename);
+        expect(getProp('statusCode', result)).toEqual(201);
+    });
 
-    utils.putWebhook(webhookName, webhookConfig, 201, testName);
+    it('change the webhook', async () => {
+        const result = await putWebhook(webhookName, webhookConfig2, 200, __filename);
+        expect(getProp('statusCode', result)).toEqual(200);
+    });
 
-    var webhookConfig2 = {
-        callbackUrl: 'http://nothing/callback',
-        channelUrl: 'http://nothing/channel/notHere',
-        batch: 'MINUTE'
-    };
-
-    utils.putWebhook(webhookName, webhookConfig2, 200, testName);
-
-    utils.deleteWebhook(webhookName);
-
+    it('deletes the webhook', async () => {
+        const response = await deleteWebhook(webhookName);
+        expect(getProp('statusCode', response)).toBe(202);
+    });
 });

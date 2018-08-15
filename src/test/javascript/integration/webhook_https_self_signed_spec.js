@@ -1,5 +1,10 @@
 require('../integration_config');
-const { createChannel, getProp, fromObjectPath, hubClientPostTestItem } = require('../lib/helpers');
+const { createChannel,
+    getProp,
+    fromObjectPath,
+    hubClientPostTestItem,
+    putWebhook,
+} = require('../lib/helpers');
 const channelName = utils.randomChannelName();
 const webhookName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
@@ -31,7 +36,10 @@ describe(__filename, function () {
         }
     });
 
-    utils.putWebhook(webhookName, webhookConfig, 201, __filename);
+    it('creates the webhook', async () => {
+        const response = await putWebhook(webhookName, webhookConfig, 201, __filename);
+        expect(getProp('statusCode', response)).toEqual(201);
+    });
 
     it('runs callback server', function (done) {
         if (!createdChannel) return done.fail('channel not created in before block');

@@ -1,72 +1,67 @@
 require('../integration_config');
-const { createChannel, fromObjectPath, getProp } = require('../lib/helpers');
-var request = require('request');
-var channelName = utils.randomChannelName();
-const channelResource = `${channelUrl}/${channelName}`;
-var gUrl = utils.getWebhookUrl() + "/" + channelName;
-var testName = __filename;
-var webhookConfig = {
+const rp = require('request-promise-native');
+const {
+    createChannel,
+    fromObjectPath,
+    getProp,
+    getWebhookUrl,
+    putWebhook,
+} = require('../lib/helpers');
+
+const channelName = utils.randomChannelName();
+const gUrl = `${getWebhookUrl()}/${channelName}`;
+const webhookConfig = {
     callbackUrl: 'http://nothing/callback',
-    channelUrl: 'http://nothing/channel/' + channelName,
+    channelUrl: `http://nothing/channel/${channelName}`,
     batch: 'SINGLE',
     parallelCalls: 1,
     paused: false,
 };
 let createdChannel = false;
 
-describe(testName, function () {
+describe(__filename, function () {
     beforeAll(async () => {
-        const channel = await createChannel(channelName, channelUrl, testName);
+        const channel = await createChannel(channelName, channelUrl, __filename);
         if (getProp('statusCode', channel) === 201) {
             createdChannel = true;
             console.log(`created channel for ${__filename}`);
         }
     });
 
-    utils.putWebhook(channelName, webhookConfig, 201, testName);
+    it('creates the webhook', async () => {
+        const response = await putWebhook(channelName, webhookConfig, 201, __filename);
+        expect(getProp('statusCode', response)).toEqual(201);
+    });
 
     utils.itSleeps(10000);
 
-    it('gets webhook ' + channelName, function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        request.get({
+    it(`gets webhook ${channelName}`, async () => {
+        if (!createdChannel) return fail('channel not created in before block');
+        const response = await rp({
+            method: 'GET',
             url: gUrl,
-            headers: {"Content-Type": "application/json"},
-        },
-        function (err, response, body) {
-            expect(err).toBeNull();
-            expect(getProp('statusCode', response)).toBe(200);
-
-            if (response.statusCode < 400) {
-                var parse = utils.parseJson(response, channelName);
-                const selfLink = fromObjectPath(['_links', 'self', 'href'], parse);
-                expect(selfLink).toBe(gUrl);
-                if (typeof webhookConfig !== "undefined") {
-                    console.log("lastCompleted: " + webhookConfig.lastCompleted);
-                    let lastComp = '';
-                    try {
-                        const body = getProp('body', response);
-                        const bodyParse = JSON.parse(body);
-                        lastComp = getProp('lastCompleted', bodyParse) || '';
-                    } catch (ex) {
-                        console.log(`error parsing response body, ${ex}`);
-                    }
-                    console.log("lastComp: " + lastComp);
-                    expect((lastComp || '').indexOf("initial") > -1, true);
-                    expect(getProp('callbackUrl', parse)).toBe(webhookConfig.callbackUrl);
-                    expect(getProp('channelUrl', parse)).toBe(webhookConfig.channelUrl);
-                    expect(getProp('transactional', parse)).toBe(null);
-                    expect(getProp('name', parse)).toBe(channelName);
-                    expect(getProp('batch', parse)).toBe(webhookConfig.batch);
-                    if (webhookConfig.ttlMinutes) {
-                        expect(getProp('ttlMinutes', parse)).toBe(webhookConfig.ttlMinutes);
-                    }
-                    if (webhookConfig.maxWaitMinutes) {
-                        expect(getProp('maxWaitMinutes', parse)).toBe(webhookConfig.maxWaitMinutes);
-                    }
-                }
-            }
-            done();
+            headers: { "Content-Type": "application/json" },
+            json: true,
+            resolveWithFullResponse: true,
         });
+        const statusCode = getProp('statusCode', response);
+        expect(statusCode).toBe(200);
+        const body = getProp('body', response);
+        const selfLink = fromObjectPath(['_links', 'self', 'href'], body);
+        expect(selfLink).toBe(gUrl);
+        const lastComp = getProp('lastCompleted', body) || '';
+        console.log(`lastComp: ${lastComp}`);
+        expect((lastComp || '').indexOf('initial') > -1, true);
+        expect(getProp('callbackUrl', body)).toBe(webhookConfig.callbackUrl);
+        expect(getProp('channelUrl', body)).toBe(webhookConfig.channelUrl);
+        expect(getProp('transactional', body)).toBe(null);
+        expect(getProp('name', body)).toBe(channelName);
+        expect(getProp('batch', body)).toBe(webhookConfig.batch);
+        // if (webhookConfig.ttlMinutes) {
+        //     expect(getProp('ttlMinutes', body)).toBe(webhookConfig.ttlMinutes);
+        // }
+        // if (webhookConfig.maxWaitMinutes) {
+        //     expect(getProp('maxWaitMinutes', body)).toBe(webhookConfig.maxWaitMinutes);
+        // }
     });
 });
