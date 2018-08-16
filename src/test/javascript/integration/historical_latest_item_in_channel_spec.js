@@ -1,10 +1,15 @@
 require('../integration_config');
 const rp = require('request-promise-native');
+const moment = require('moment');
 const { getProp, fromObjectPath, hubClientPut, hubClientPostTestItem } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
+
+const channelUrl = getChannelUrl();
 const channel = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channel}`;
 const headers = { 'Content-Type': 'application/json' };
-const moment = require('moment');
 const mutableTime = moment.utc().subtract(1, 'minute');
 const items = [];
 const channelBody = {

@@ -5,7 +5,11 @@ const {
     hubClientPut,
     hubClientPostTestItem,
 } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
+const channelUrl = getChannelUrl();
 const channel = utils.randomChannelName();
 const mutableTime = moment.utc().subtract(1, 'minute');
 const channelResource = `${channelUrl}/${channel}`;

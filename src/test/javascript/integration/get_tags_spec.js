@@ -6,8 +6,13 @@ const {
     hubClientGet,
     hubClientPut,
 } = require('../lib/helpers');
+const {
+    getChannelUrl,
+    getHubUrlBase,
+} = require('../lib/config');
 
-// const request = require('request');
+const channelUrl = getChannelUrl();
+const hubUrlBase = getHubUrlBase();
 const channel = utils.randomChannelName();
 const tag = Math.random().toString().replace(".", "");
 const testName = __filename;

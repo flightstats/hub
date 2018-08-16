@@ -1,22 +1,23 @@
 require('../integration_config');
 const { getProp } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
-var request = require('request');
-var channelName = utils.randomChannelName();
+const channelUrl = getChannelUrl();
+const request = require('request');
+const channelName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
-var testName = __filename;
 
-function verifyOptionals(parse) {
+function verifyOptionals (parse) {
     expect(getProp('owner', parse)).toBe('the man');
     expect(getProp('description', parse)).toBe('describe');
     expect(getProp('ttlDays', parse)).toBe(9);
     expect(getProp('tags', parse)).toContain('bar');
     expect(getProp('tags', parse)).toContain('foo-bar');
+};
 
-}
-
-describe(testName, function () {
-
+describe(__filename, function () {
     it("creates channel " + channelName + " at " + channelUrl, function (done) {
         request.put({
             url: channelResource,
@@ -26,13 +27,13 @@ describe(testName, function () {
                 description: 'describe',
                 owner: 'the man',
                 ttlDays: 9,
-                tags: ['bar', 'foo-bar']
-            })
+                tags: ['bar', 'foo-bar'],
+            }),
         },
         function (err, response, body) {
             expect(err).toBeNull();
             expect(getProp('statusCode', response)).toBe(201);
-            var parse = utils.parseJson(response, testName);
+            const parse = utils.parseJson(response, __filename);
             verifyOptionals(parse);
             done();
         });
@@ -42,12 +43,12 @@ describe(testName, function () {
         request.put({
             url: channelResource,
             headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({})
+            body: JSON.stringify({}),
         },
         function (err, response, body) {
             expect(err).toBeNull();
             expect(getProp('statusCode', response)).toBe(201);
-            var parse = utils.parseJson(response, testName);
+            const parse = utils.parseJson(response, __filename);
             verifyOptionals(parse);
             done();
         });
@@ -55,15 +56,14 @@ describe(testName, function () {
 
     it("put channel with no payload" + channelResource, function (done) {
         request.put({
-            url: channelResource
+            url: channelResource,
         },
         function (err, response, body) {
             expect(err).toBeNull();
             expect(getProp('statusCode', response)).toBe(201);
-            var parse = utils.parseJson(response, testName);
+            const parse = utils.parseJson(response, __filename);
             verifyOptionals(parse);
             done();
         });
     });
-
 });

@@ -1,11 +1,14 @@
 require('../integration_config');
+const request = require('request');
 const {
     createChannel,
     fromObjectPath,
     getProp,
     hubClientPostTestItem,
 } = require('../lib/helpers');
-const request = require('request');
+const { getChannelUrl } = require('../lib/config');
+
+const channelUrl = getChannelUrl();
 const channelName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
 let createdChannel = false;

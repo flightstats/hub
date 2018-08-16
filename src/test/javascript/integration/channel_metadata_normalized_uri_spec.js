@@ -6,11 +6,16 @@ const {
     hubClientGet,
     hubClientPost,
 } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
+const channelUrl = getChannelUrl();
 const channelName = utils.randomChannelName();
-const channelResource = channelUrl + "/" + channelName;
-const messageText = "MY SUPER TEST CASE: this & <that>. " + Math.random().toString();
+const channelResource = `${channelUrl}/${channelName}`;
+const messageText = `MY SUPER TEST CASE: this & <that>. ${Math.random().toString()}`;
 const defaultHeaders = { 'Content-Type': 'application/json' };
+
 describe(__filename, function () {
     it('creates a channel', async () => {
         const body = { name: channelName };

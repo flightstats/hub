@@ -1,34 +1,38 @@
 require('../integration_config');
+const request = require('request');
 const { getProp } = require('../lib/helpers');
-var request = require('request');
-var channelName = utils.randomChannelName();
+const {
+    getChannelUrl,
+} = require('../lib/config');
+
+const channelUrl = getChannelUrl();
+const channelName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
-var testName = __filename;
-var updateBody = {
+const updateBody = {
     "ttlDays": 2,
     description: 'next',
     "tags": ["foo", "bar", "tagz"],
-    replicationSource: 'http://hub/channel/nada'
+    replicationSource: 'http://hub/channel/nada',
 };
-function verifyOptionals(parse) {
+function verifyOptionals (parse) {
     expect(getProp('description', parse)).toBe('describe me');
     expect(getProp('ttlDays', parse)).toBe(9);
     expect(getProp('replicationSource', parse)).toBe('');
 }
 
-describe(testName, function () {
-    it("creates channel " + channelName + " at " + channelUrl, function (done) {
+describe(__filename, function () {
+    it(`creates channel {channelName} at {channelUrl}`, function (done) {
         request.post({url: channelUrl,
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({
                 name: channelName,
                 description: 'describe me',
-                ttlDays: 9
+                ttlDays: 9,
             })},
         function (err, response, body) {
             expect(err).toBeNull();
             expect(getProp('statusCode', response)).toBe(201);
-            var parse = utils.parseJson(response, testName + '_A');
+            const parse = utils.parseJson(response, `${__filename}_A`);
             verifyOptionals(parse);
             done();
         });
@@ -39,13 +43,13 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
-                var parse = utils.parseJson(response, testName + '_B');
+                const parse = utils.parseJson(response, `${__filename}_B`);
                 verifyOptionals(parse);
                 done();
             });
     });
 
-    function verifyPatched(parse) {
+    function verifyPatched (parse) {
         expect(getProp('ttlDays', parse)).toBe(2);
         expect(getProp('description', parse)).toBe('next');
         expect(getProp('replicationSource', parse)).toBe('http://hub/channel/nada');
@@ -64,7 +68,7 @@ describe(testName, function () {
         function (err, response, body) {
             expect(err).toBeNull();
             expect(getProp('statusCode', response)).toBe(200);
-            var parse = utils.parseJson(response, testName + '_C');
+            const parse = utils.parseJson(response, `${__filename}_C`);
             verifyPatched(parse);
             done();
         });
@@ -75,10 +79,9 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
-                var parse = utils.parseJson(response, testName + '_D');
+                const parse = utils.parseJson(response, `${__filename}_D`);
                 verifyPatched(parse);
                 done();
             });
     });
-
 });

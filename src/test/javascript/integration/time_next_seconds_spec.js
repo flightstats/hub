@@ -2,7 +2,9 @@ require('../integration_config');
 const request = require('request');
 const moment = require('moment');
 const { createChannel, getProp } = require('../lib/helpers');
+const { getChannelUrl } = require('../lib/config');
 
+const channelUrl = getChannelUrl();
 const channelName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
 let stableTime = null;
@@ -15,7 +17,7 @@ let currentTime = null;
  * 3 - subtract X seconds, call next/N
  */
 
-xdescribe(__filename, function () {
+describe(__filename, function () {
     beforeAll(async () => {
         const response = await createChannel(channelName);
         expect(getProp('statusCode', response)).toBe(201);

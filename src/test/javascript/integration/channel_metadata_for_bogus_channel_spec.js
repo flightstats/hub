@@ -1,6 +1,10 @@
 require('../integration_config');
 const { getProp, hubClientGet } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
+const channelUrl = getChannelUrl();
 const channelName = "no_way_jose90928280xFF";
 const channelResource = `${channelUrl}/${channelName}`;
 
