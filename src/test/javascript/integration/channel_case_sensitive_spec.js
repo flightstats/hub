@@ -8,9 +8,13 @@ const {
     hubClientPut,
     itSleeps,
 } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
 const headers = { 'Content-type': 'application/json' };
 const channelName = utils.randomChannelName() + '_AbCdE';
+const channelUrl = getChannelUrl();
 const channelResource = `${channelUrl}/${channelName}`;
 let posted = null;
 const lowerCase = `${channelUrl}/${channelName.toLowerCase()}`;

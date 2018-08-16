@@ -532,7 +532,7 @@ exports.startServer = function startServer(server, port, callback, done) {
     });
 
     server.on('listening', function () {
-        console.log(`server listening at ${callbackDomain}:${port}/`);
+        console.log(`server listening at ${getCallBackDomain()}:${port}/`);
         done();
     });
 
