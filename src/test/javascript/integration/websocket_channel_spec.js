@@ -1,5 +1,11 @@
 require('../integration_config');
-const { createChannel, fromObjectPath, getProp, hubClientPostTestItem } = require('../lib/helpers');
+const {
+    createChannel,
+    fromObjectPath,
+    getProp,
+    hubClientPostTestItem,
+    waitForCondition,
+} = require('../lib/helpers');
 const WebSocket = require('ws');
 
 const channelName = utils.randomChannelName();
@@ -42,11 +48,8 @@ describe(__filename, function () {
         const location = fromObjectPath(['headers', 'location'], response);
         console.log('posted:', location);
         itemURLs.push(location);
-    });
-
-    it('waits for data', function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        utils.waitForData(receivedMessages, itemURLs, done);
+        const condition = () => (receivedMessages.length === itemURLs.length);
+        await waitForCondition(condition);
     });
 
     it('verifies the correct data was received', function () {

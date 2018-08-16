@@ -6,6 +6,7 @@ const {
     hubClientGet,
     hubClientPost,
     hubClientPut,
+    waitForCondition,
 } = require('../lib/helpers');
 const moment = require('moment');
 
@@ -77,10 +78,8 @@ describe(__filename, () => {
         const itemURL = fromObjectPath(['body', '_links', 'self', 'href'], response);
         postedItems.push(itemURL);
         console.log('itemURL:', itemURL);
-    });
-
-    it('waits for the callback server to receive the data', (done) => {
-        utils.waitForData(callbackItems, postedItems, done);
+        const condition = () => (callbackItems.length === postedItems.length);
+        await waitForCondition(condition);
     });
 
     it('waits for the webhook to give up', (done) => {
