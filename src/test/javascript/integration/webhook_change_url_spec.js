@@ -8,7 +8,15 @@ const {
     hubClientPut,
     waitForCondition,
 } = require('../lib/helpers');
+const {
+    getCallBackDomain,
+    getCallBackPort,
+    getChannelUrl,
+} = require('../lib/config');
 
+const channelUrl = getChannelUrl();
+const port = getCallBackPort();
+const callbackDomain = getCallBackDomain();
 /**
  * This should:
  *
@@ -26,8 +34,7 @@ const webhookResource = `${getWebhookUrl()}/${webhookName}`;
 
 describe(__filename, () => {
     let callbackServer = null;
-    const callbackServerPort = utils.getPort();
-    const callbackServerURL = `${callbackDomain}:${callbackServerPort}/${webhookName}`;
+    const callbackServerURL = `${callbackDomain}:${port}/${webhookName}`;
 
     const postedItems = [];
     const callbackItems = [];
@@ -79,7 +86,7 @@ describe(__filename, () => {
     });
 
     it('creates a callback server', (done) => {
-        callbackServer = utils.startHttpServer(callbackServerPort, (request) => {
+        callbackServer = utils.startHttpServer(port, (request) => {
             const json = JSON.parse(request);
             console.log('incoming:', json);
             const uris = getProp('uris', json) || [];

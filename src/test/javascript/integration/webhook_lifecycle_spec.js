@@ -1,4 +1,5 @@
 require('../integration_config');
+const request = require('request');
 const {
     createChannel,
     fromObjectPath,
@@ -8,12 +9,18 @@ const {
     putWebhook,
     waitForCondition,
 } = require('../lib/helpers');
-const request = require('request');
+const {
+    getCallBackDomain,
+    getCallBackPort,
+    getChannelUrl,
+} = require('../lib/config');
+
+const channelUrl = getChannelUrl();
+const callbackDomain = getCallBackDomain();
+const port = getCallBackPort();
 const channelName = utils.randomChannelName();
 const webhookName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
-const testName = __filename;
-const port = utils.getPort();
 const callbackUrl = callbackDomain + ':' + port + '/';
 const webhookConfig = {
     callbackUrl: callbackUrl,
@@ -33,9 +40,9 @@ const postedItems = [];
  * 4 - post items into the channel
  * 5 - verify that the records are returned within delta time
  */
-describe(testName, function () {
+describe(__filename, function () {
     beforeAll(async () => {
-        const channel = await createChannel(channelName, false, testName);
+        const channel = await createChannel(channelName, false, __filename);
         if (getProp('statusCode', channel) === 201) {
             createdChannel = true;
             console.log(`created channel for ${__filename}`);
@@ -43,7 +50,7 @@ describe(testName, function () {
     });
 
     it('creates the webhook', async () => {
-        const response = await putWebhook(webhookName, webhookConfig, 201, testName);
+        const response = await putWebhook(webhookName, webhookConfig, 201, __filename);
         expect(getProp('statusCode', response)).toEqual(201);
     });
 
@@ -92,7 +99,7 @@ describe(testName, function () {
         function (err, response, body) {
             expect(err).toBeNull();
             expect(getProp('statusCode', response)).toBe(200);
-            const parse = utils.parseJson(response, testName);
+            const parse = utils.parseJson(response, __filename);
             const selfLink = fromObjectPath(['_links', 'self', 'href'], parse);
             expect(selfLink).toBe(webhookResource);
             if (typeof webhookConfig !== "undefined") {

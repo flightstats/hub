@@ -1,4 +1,5 @@
 require('../integration_config');
+const moment = require('moment');
 const {
     fromObjectPath,
     getProp,
@@ -8,27 +9,32 @@ const {
     hubClientPut,
     waitForCondition,
 } = require('../lib/helpers');
-const moment = require('moment');
+const {
+    getCallBackDomain,
+    getCallBackPort,
+    getChannelUrl,
+} = require('../lib/config');
 
-const channelResource = `${channelUrl}/${utils.randomChannelName()}`;
+const channelUrl = getChannelUrl();
+const callbackDomain = getCallBackDomain();
+const port = getCallBackPort();
 const webhookName = utils.randomChannelName();
+const callbackServerURL = `${callbackDomain}:${port}/${webhookName}`;
+const postedItems = [];
+const callbackItems = [];
+const channelResource = `${channelUrl}/${utils.randomChannelName()}`;
 const webhookResource = `${getWebhookUrl()}/${webhookName}`;
 const headers = { 'Content-Type': 'application/json' };
+let callbackServer = null;
 
 describe(__filename, () => {
-    let callbackServer;
-    const callbackServerPort = utils.getPort();
-    const callbackServerURL = `${callbackDomain}:${callbackServerPort}/${webhookName}`;
-    const postedItems = [];
-    const callbackItems = [];
-
     it('creates a channel', async () => {
         const response = await hubClientPut(channelResource);
         expect(getProp('statusCode', response)).toEqual(201);
     });
 
     it('creates a callback server', (done) => {
-        callbackServer = utils.startHttpServer(callbackServerPort, (request, response) => {
+        callbackServer = utils.startHttpServer(port, (request, response) => {
             let json = {};
             try {
                 json = JSON.parse(request) || {};

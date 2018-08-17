@@ -1,4 +1,5 @@
 require('../integration_config');
+const moment = require('moment');
 const {
     getProp,
     fromObjectPath,
@@ -8,18 +9,25 @@ const {
     itSleeps,
     putWebhook,
 } = require('../lib/helpers');
-const moment = require('moment');
+const {
+    getCallBackDomain,
+    getCallBackPort,
+    getChannelUrl,
+    getHubUrlBase,
+} = require('../lib/config');
 
+const channelUrl = getChannelUrl();
+const callbackDomain = getCallBackDomain();
+const port = getCallBackPort();
 const channelName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
 const webhookName = utils.randomChannelName();
-const webhookURL = `http://${hubDomain}/webhook/${webhookName}`;
+const webhookURL = `${getHubUrlBase()}/webhook/${webhookName}`;
 
 const contentTypeJSON = { 'Content-Type': 'application/json' };
 const contentTypePlain = { 'Content-Type': 'text/plain' };
 
 let callbackServer;
-const callbackPort = utils.getPort();
 const callbackMessages = [];
 const postedItems = [];
 
@@ -27,7 +35,7 @@ let maxCursor = null;
 let minCursor = null;
 let firstItemURL = null;
 const webhookConfig = {
-    callbackUrl: `${callbackDomain}:${callbackPort}`,
+    callbackUrl: `${callbackDomain}:${port}`,
     channelUrl: channelResource,
     parallelCalls: 1,
     batch: 'SECOND',
@@ -36,7 +44,7 @@ const webhookConfig = {
 
 describe(__filename, () => {
     it('runs a callback server', (done) => {
-        callbackServer = utils.startHttpServer(callbackPort, (message) => {
+        callbackServer = utils.startHttpServer(port, (message) => {
             callbackMessages.push(message);
         }, done);
     });

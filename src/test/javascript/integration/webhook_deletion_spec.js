@@ -9,10 +9,18 @@ const {
     putWebhook,
     waitForCondition,
 } = require('../lib/helpers');
+const {
+    getCallBackDomain,
+    getCallBackPort,
+    getChannelUrl,
+} = require('../lib/config');
+
+const channelUrl = getChannelUrl();
+const port = getCallBackPort();
+const callbackDomain = getCallBackDomain();
 const channelName = utils.randomChannelName();
 const webhookName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
-const port = utils.getPort();
 const callbackUrl = `${callbackDomain}:${port}/`;
 const webhookConfig = {
     callbackUrl: callbackUrl,

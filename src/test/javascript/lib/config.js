@@ -6,20 +6,20 @@ const timeoutInterval = 60 * 1000;
 jasmine.DEFAULT_TIMEOUT_INTERVAL = timeoutInterval;
 /* eslint-enable no-undef */
 
+// const getRunEncrypted = () => process.env.runEncrypted || false;
+
+const getCallBackPort = () => (process.env.callbackPort || 8888);
+
+const getIp = () => (process.env.ipAddress || ip.address());
+
 const getHubDomain = () => {
     const {
         hubDomain,
         isKube,
     } = process.env;
     if (isKube) return hubDomain;
-    return hubDomain || ip.address();
+    return hubDomain || getIp();
 };
-
-const getRunEncrypted = () => process.env.runEncrypted || false;
-
-const getCallBackPort = () => (process.env.callbackPort || 8888);
-
-const getIp = () => (process.env.ipAddress || ip.address());
 
 const getHubUrlBase = () => {
     const domain = getHubDomain();
@@ -30,17 +30,14 @@ const getChannelUrl = () => `${getHubUrlBase()}/channel`;
 
 const getCallBackDomain = () => `http://${getIp()}`;
 
-const STABLE_OFFSET = 5;
-
 console.log(`hubDomain:: ${getHubDomain()}`);
-console.log(`runEncrypted:: ${getRunEncrypted()}`);
+// console.log(`runEncrypted:: ${getRunEncrypted()}`);
 console.log(`getCallBackDomain():: ${getCallBackDomain()}`);
 console.log(`default timeout:: ${timeoutInterval}ms`);
 console.log(`callBackPort:: ${getCallBackPort()}`);
 console.log(`channelUrl:: ${getChannelUrl()}`);
 console.log(`hubUrlBase:: ${getHubUrlBase()}`);
 console.log(`ip address:: ${getIp()}`);
-console.log(`stable offset:: ${STABLE_OFFSET}`);
 
 module.exports = {
     getCallBackDomain,
@@ -48,7 +45,5 @@ module.exports = {
     getChannelUrl,
     getHubDomain,
     getHubUrlBase,
-    getIp,
-    getRunEncrypted,
-    STABLE_OFFSET,
+    // getRunEncrypted,
 };
