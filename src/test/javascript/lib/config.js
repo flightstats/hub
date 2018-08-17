@@ -1,25 +1,24 @@
 const ip = require('ip');
 
 const timeoutInterval = 60 * 1000;
+const {
+    callbackPort,
+    hubDomain,
+    ipAddress,
+    runEncrypted,
+} = process.env;
 /* eslint-disable no-undef */
 // linter understandably does not know that jasmine is defined
 jasmine.DEFAULT_TIMEOUT_INTERVAL = timeoutInterval;
 /* eslint-enable no-undef */
 
-// const getRunEncrypted = () => process.env.runEncrypted || false;
+const getRunEncrypted = () => runEncrypted || false;
 
-const getCallBackPort = () => (process.env.callbackPort || 8888);
+const getCallBackPort = () => (parseInt(callbackPort, 10) || 8888);
 
-const getIp = () => (process.env.ipAddress || ip.address());
+const getIp = () => (ipAddress || ip.address());
 
-const getHubDomain = () => {
-    const {
-        hubDomain,
-        isKube,
-    } = process.env;
-    if (isKube) return hubDomain;
-    return hubDomain || getIp();
-};
+const getHubDomain = () => hubDomain || getIp();
 
 const getHubUrlBase = () => {
     const domain = getHubDomain();
@@ -45,5 +44,5 @@ module.exports = {
     getChannelUrl,
     getHubDomain,
     getHubUrlBase,
-    // getRunEncrypted,
+    getRunEncrypted,
 };

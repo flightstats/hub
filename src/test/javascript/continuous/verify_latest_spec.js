@@ -1,14 +1,14 @@
 require('../integration_config');
-var request = require('request');
+const { getChannelUrl, getHubUrlBase } = require('../lib/config');
 var async = require('async');
 var moment = require('moment');
 var testName = __filename;
 var hubUrl = process.env.hubUrl;
 hubUrl = 'http://' + hubUrl;
 console.log(hubUrl);
-
 var MINUTE = 60 * 1000;
 const NONE = '1970/01/01/00/00/00/001/none';
+const channelUrl = getChannelUrl();
 
 /**
  * This should :
@@ -23,7 +23,7 @@ const NONE = '1970/01/01/00/00/00/001/none';
 
 describe(testName, function () {
 
-    var channelLastUpdated = hubUrlBase + '/internal/zookeeper/ChannelLatestUpdated';
+    var channelLastUpdated = getHubUrlBase() + '/internal/zookeeper/ChannelLatestUpdated';
 
     var zkChannels;
     it('1 - loads channels from ZooKeeper cache', function (done) {
@@ -43,7 +43,7 @@ describe(testName, function () {
             function (zkChannel, callback) {
                 console.log('get channel', zkChannel);
                 let headers = {'Accept': 'application/json'};
-                
+
                 utils.httpGet(zkChannel, headers)
                     .then(res => {
                         var name = zkChannel.substring(channelLastUpdated.length + 1);
@@ -70,7 +70,7 @@ describe(testName, function () {
                 console.log('get latest ', name);
                 let url = `${channelUrl}/${name}/latest?trace=true`;
                 let headers = {'Accept': 'application/json'};
-                
+
                 utils.httpGet(url, headers)
                     .then(res => {
                         if (res.statusCode === 404) {

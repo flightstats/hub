@@ -11,7 +11,6 @@ console.log(channelInput);
 var errorRate = parseFloat(process.env.errorRate || 0.95);
 console.log('errorRate', errorRate);
 
-
 var MINUTE = 60 * 1000;
 
 /**

@@ -1,9 +1,9 @@
 require('../integration_config');
 
 const moment = require('moment');
-
+const { getChannelUrl, getHubUrlBase } = require('../lib/config');
 const channelName = 'batch_test_1';
-const channelResource = `${channelUrl}/${channelName}`;
+const channelResource = `${getChannelUrl()}/${channelName}`;
 
 describe(__filename, () => {
 
@@ -31,7 +31,7 @@ describe(__filename, () => {
 
     it('gets the spokeTTLMinutes for the cluster', (done) => {
         if (shouldSkipRemainingTests) pending();
-        utils.httpGet(`${hubUrlBase}/internal/properties`)
+        utils.httpGet(`${getHubUrlBase()}/internal/properties`)
             .then(response => {
                 expect(response.statusCode).toEqual(200);
                 spokeTTLMinutes = response.body.properties['spoke.write.ttlMinutes'];

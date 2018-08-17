@@ -124,7 +124,7 @@ describe(__filename, function () {
             console.log('failed with exception: ', ex && ex.message);
             return fail(ex);
         }
-    });
+    }, 3 * 60 * 1000);
 
     it('updates the mutableTime value', async () => {
         const response = await hubClientPut(channelResource, headers, channelBodyChange);

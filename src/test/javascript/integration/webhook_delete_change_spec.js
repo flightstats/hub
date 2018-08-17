@@ -30,6 +30,8 @@ const callbackItemsA = [];
 const callbackItemsB = [];
 const postedItemsA = [];
 const postedItemsB = [];
+console.log('portA', portA);
+console.log('portB', portB);
 const webhookConfigA = {
     callbackUrl: `${callbackDomain}:${portA}/`,
     channelUrl: channelResource,
@@ -64,7 +66,7 @@ describe(__filename, function () {
     it('creates the webhook', async () => {
         const response = await putWebhook(webhookName, webhookConfigA, 201, __filename);
         expect(getProp('statusCode', response)).toEqual(201);
-    });
+    }, 2 * 60 * 1000);
 
     it('starts the first callback server', function (done) {
         if (!createdChannel) return done.fail('channel not created in before block');
@@ -94,7 +96,7 @@ describe(__filename, function () {
     it('recreates the webhook', async () => {
         const response = await putWebhook(webhookName, webhookConfigB, 201, __filename);
         expect(getProp('statusCode', response)).toEqual(201);
-    });
+    }, 2 * 60 * 1000);
 
     it('starts the second callback server', function (done) {
         if (!createdChannel) return done.fail('channel not created in before block');
