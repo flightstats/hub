@@ -23,8 +23,11 @@ import org.joda.time.Interval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Optional;
-import java.util.concurrent.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("WeakerAccess")
 @Singleton
@@ -69,7 +72,7 @@ public class S3WriteQueue {
             ChannelContentKey key = keys.poll(5, TimeUnit.SECONDS);
             if (key != null) {
                 metricsService.gauge("s3.writeQueue.used", keys.size());
-                recordOldest();
+                recordAge(key);
             }
             retryer.call(() -> {
                 writeContent(key);
@@ -101,20 +104,15 @@ public class S3WriteQueue {
         boolean value = keys.offer(key);
         if (value) {
             metricsService.gauge("s3.writeQueue.used", keys.size());
-            recordOldest();
+            recordAge(key);
         } else {
             logger.warn("Add to queue failed - out of queue space. key= {}", key);
             metricsService.increment("s3.writeQueue.dropped");
         }
     }
 
-    private Long getOldest() {
-        Optional<ChannelContentKey> potentialOldest = keys.stream().sorted().findFirst();
-        return potentialOldest.map(this::calculateOldestAge).orElse(0L);
-    }
-
-    private Long calculateOldestAge(ChannelContentKey oldest) {
-        DateTime then = oldest.getContentKey().getTime();
+    private Long calculateAgeMS(ChannelContentKey key) {
+        DateTime then = key.getContentKey().getTime();
         DateTime now = DateTime.now(DateTimeZone.UTC);
         try {
             if (then.isBefore(now)) {
@@ -125,15 +123,15 @@ public class S3WriteQueue {
                 return -delta.toDurationMillis();
             }
         } catch (IllegalArgumentException e) {
-            logger.warn("unable to calculate the oldest item's age", e);
+            logger.warn("unable to calculate the item's age", e);
             return null;
         }
     }
 
-    private void recordOldest() {
-        Long oldest = getOldest();
-        if (null != oldest) {
-            metricsService.gauge("s3.writeQueue.oldest", oldest);
+    private void recordAge(ChannelContentKey key) {
+        Long ageMS = calculateAgeMS(key);
+        if (ageMS != null) {
+            metricsService.count("s3.writeQueue.age", ageMS);
         }
     }
 
