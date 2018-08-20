@@ -72,7 +72,7 @@ public class S3WriteQueue {
             ChannelContentKey key = keys.poll(5, TimeUnit.SECONDS);
             if (key != null) {
                 metricsService.gauge("s3.writeQueue.used", keys.size());
-                recordAge(key);
+                countAge(key, "s3.writeQueue.age.removed");
             }
             retryer.call(() -> {
                 writeContent(key);
@@ -104,7 +104,7 @@ public class S3WriteQueue {
         boolean value = keys.offer(key);
         if (value) {
             metricsService.gauge("s3.writeQueue.used", keys.size());
-            recordAge(key);
+            countAge(key, "s3.writeQueue.age.added");
         } else {
             logger.warn("Add to queue failed - out of queue space. key= {}", key);
             metricsService.increment("s3.writeQueue.dropped");
@@ -128,10 +128,10 @@ public class S3WriteQueue {
         }
     }
 
-    private void recordAge(ChannelContentKey key) {
+    private void countAge(ChannelContentKey key, String metricName) {
         Long ageMS = calculateAgeMS(key);
         if (ageMS != null) {
-            metricsService.count("s3.writeQueue.age", ageMS);
+            metricsService.count(metricName, ageMS);
         }
     }
 
