@@ -5,6 +5,7 @@ const {
     hubClientGet,
     hubClientPut,
     hubClientDelete,
+    itSleeps,
 } = require('../lib/helpers');
 const tag = utils.randomTag();
 const tagURL = `${hubUrlBase}/tag/${tag}`;
@@ -47,7 +48,9 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    utils.itSleeps(1000);
+    it('waits 1000 ms', async () => {
+        await itSleeps(1000);
+    });
 
     it('verifies a webhook for channel one exists', async () => {
         const response = await hubClientGet(channelOneWebhookURL);
@@ -65,7 +68,9 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    utils.itSleeps(1000);
+    it('waits 1000 ms', async () => {
+        await itSleeps(1000);
+    });
 
     it('verifies the webhook created for channel one is removed', async () => {
         const response = await hubClientGet(channelOneWebhookURL);
@@ -77,7 +82,9 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(202);
     });
 
-    utils.itSleeps(1000);
+    it('waits 1000 ms', async () => {
+        await itSleeps(1000);
+    });
 
     it('verifies the webhook created for channel two is removed', async () => {
         const response = await hubClientGet(channelTwoWebhookURL);

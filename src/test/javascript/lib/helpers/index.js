@@ -1,4 +1,4 @@
-const { fromObjectPath, getProp } = require('./functional');
+const { fromObjectPath, getProp, itSleeps } = require('./functional');
 const {
     randomChannelName,
     randomNumberBetweenInclusive,
@@ -8,6 +8,7 @@ const {
     createChannel,
     followRedirectIfPresent,
     getHubItem,
+    hubClientChannelRefresh,
     hubClientDelete,
     hubClientGet,
     hubClientPatch,
@@ -30,12 +31,14 @@ module.exports = {
     getWebhook,
     getWebhookUrl,
     getHubItem,
+    hubClientChannelRefresh,
     hubClientDelete,
     hubClientGet,
     hubClientPatch,
     hubClientPost,
     hubClientPostTestItem,
     hubClientPut,
+    itSleeps,
     putWebhook,
     randomChannelName,
     randomNumberBetweenInclusive,

@@ -5,6 +5,7 @@ const {
     fromObjectPath,
     getProp,
     getWebhookUrl,
+    itSleeps,
     putWebhook,
 } = require('../lib/helpers');
 
@@ -33,7 +34,9 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    utils.itSleeps(10000);
+    it('waits 10000 ms', async () => {
+        await itSleeps(10000);
+    });
 
     it(`gets webhook ${channelName}`, async () => {
         if (!createdChannel) return fail('channel not created in before block');

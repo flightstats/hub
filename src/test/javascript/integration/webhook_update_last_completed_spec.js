@@ -5,6 +5,7 @@ const {
     hubClientGet,
     hubClientPost,
     hubClientPut,
+    itSleeps,
     putWebhook,
 } = require('../lib/helpers');
 const moment = require('moment');
@@ -58,7 +59,9 @@ describe(__filename, () => {
         postedItems.push(firstItemURL);
     });
 
-    utils.itSleeps(5000);
+    it('waits 5000 ms', async () => {
+        await itSleeps(5000);
+    });
 
     // Check the latest on the webhook
     it('sets maxItem', async () => {
@@ -75,7 +78,9 @@ describe(__filename, () => {
         expect(getProp('statusCode', response)).toBeLessThan(300);
     });
 
-    utils.itSleeps(5000);
+    it('waits 5000 ms', async () => {
+        await itSleeps(5000);
+    });
 
     it('checks to see if latest is before "maxCursor"', async () => {
         const response = await hubClientGet(webhookURL, contentTypeJSON, false);
@@ -94,7 +99,9 @@ describe(__filename, () => {
         expect(getProp('statusCode', response)).toBeLessThan(300);
     });
 
-    utils.itSleeps(5000);
+    it('waits 5000 ms', async () => {
+        await itSleeps(5000);
+    });
 
     it('checks to see if latest is after "minCursor"', async () => {
         const response = await hubClientGet(webhookURL, contentTypeJSON, false);

@@ -183,10 +183,26 @@ const getHubItem = async (url) => {
     }
 };
 
+const hubClientChannelRefresh = async () => {
+    try {
+        const response = await rp({
+            method: 'GET',
+            url: `${global.hubUrlBase}/internal/channel/refresh`,
+            resolveWithFullResponse: true,
+        });
+        console.log('refreshed channels');
+        return response || {};
+    } catch (ex) {
+        console.log('error refreshing hub channels ', ex && ex.message);
+        return ex || {};
+    }
+};
+
 module.exports = {
     createChannel,
     followRedirectIfPresent,
     getHubItem,
+    hubClientChannelRefresh,
     hubClientDelete,
     hubClientGet,
     hubClientPatch,

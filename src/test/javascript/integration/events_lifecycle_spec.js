@@ -5,6 +5,7 @@ const {
     fromObjectPath,
     getProp,
     hubClientPostTestItem,
+    itSleeps,
 } = require('../lib/helpers');
 
 const channelName = utils.randomChannelName();
@@ -48,7 +49,9 @@ describe(__filename, function () {
         }, false);
     });
 
-    utils.itSleeps(1000);
+    it('waits 1000 ms', async () => {
+        await itSleeps(1000);
+    });
 
     it('posts items sequentially', async () => {
         if (!createdChannel) return fail('channel not created in before block');

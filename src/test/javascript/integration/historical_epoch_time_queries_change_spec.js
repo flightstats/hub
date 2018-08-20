@@ -4,6 +4,7 @@ const moment = require('moment');
 const {
     fromObjectPath,
     getProp,
+    hubClientChannelRefresh,
     hubClientPut,
     hubClientPostTestItem,
 } = require('../lib/helpers');
@@ -67,16 +68,16 @@ describe(__filename, function () {
     beforeAll(async () => {
         const response = await hubClientPut(channelResource, headers, { ttlDays: 20 });
         expect(getProp('statusCode', response)).toEqual(201);
+        const response2 = await hubClientChannelRefresh();
+        expect(getProp('statusCode', response2)).toEqual(200);
     });
-
-    utils.itRefreshesChannels();
 
     it('updates the channel to mutableTime', async () => {
         const response = await hubClientPut(channelResource, headers, channelBody);
         expect(getProp('statusCode', response)).toEqual(201);
+        const response2 = await hubClientChannelRefresh();
+        expect(getProp('statusCode', response2)).toEqual(200);
     });
-
-    utils.itRefreshesChannels();
 
     it(`posts historical item to ${channel}`, async () => {
         const response = await hubClientPostTestItem(pointInThePastURL);

@@ -4,6 +4,7 @@ const {
     getProp,
     fromObjectPath,
     hubClientPostTestItem,
+    itSleeps,
     putWebhook,
 } = require('../lib/helpers');
 const channelName = utils.randomChannelName();
@@ -48,14 +49,18 @@ describe(__filename, function () {
         expect(getProp('statusCode', result)).toEqual(201);
     });
 
-    utils.itSleeps(2000);
+    it('waits 2000 ms', async () => {
+        await itSleeps(2000);
+    });
 
     it('create a group callback webhook with good config', async () => {
         const result = await putWebhook(webhookName, goodConfig, 200, __filename);
         expect(getProp('statusCode', result)).toEqual(200);
     });
 
-    utils.itSleeps(10000);
+    it('waits 10000 ms', async () => {
+        await itSleeps(10000);
+    });
 
     it('starts a callback server', function (done) {
         if (!createdChannel) return done.fail('channel not created in before block');

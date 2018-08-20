@@ -3,14 +3,14 @@ const { createChannel,
     fromObjectPath,
     getProp,
     hubClientPostTestItem,
+    itSleeps,
     putWebhook,
 } = require('../lib/helpers');
 const channelName = utils.randomChannelName();
 const webhookName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
-const testName = __filename;
 const port = utils.getPort();
-const callbackUrl = callbackDomain + ':' + port + '/';
+const callbackUrl = `${callbackDomain}:${port}/`;
 let createdChannel = false;
 const postedItems = [];
 let callbackServer = null;
@@ -25,16 +25,18 @@ const callbackItems = [];
  * 4 - post item into the channel
  * 5 - verify that the item are returned within delta time, incuding the second item posted in 2.
  */
-describe(testName, function () {
+describe(__filename, function () {
     beforeAll(async () => {
-        const channel = await createChannel(channelName, false, testName);
+        const channel = await createChannel(channelName, false, __filename);
         if (getProp('statusCode', channel) === 201) {
             createdChannel = true;
             console.log(`created channel for ${__filename}`);
         }
     });
 
-    utils.itSleeps(1000);
+    it('waits 1000 ms', async () => {
+        await itSleeps(1000);
+    });
 
     function addPostedItem (value) {
         postedItems.push(fromObjectPath(['body', '_links', 'self', 'href'], value));
@@ -48,7 +50,9 @@ describe(testName, function () {
         addPostedItem(response);
     });
 
-    utils.itSleeps(6000);
+    it('waits 6000 ms', async () => {
+        await itSleeps(6000);
+    });
 
     it('creates the webhook', async () => {
         const webhookConfig = {
@@ -62,8 +66,8 @@ describe(testName, function () {
 
     it('starts a callback server', function (done) {
         if (!createdChannel) return done.fail('channel not created in before block');
-        callbackServer = utils.startHttpServer(port, function (string) {
-            console.log('called webhook ' + webhookName + ' ' + string);
+        callbackServer = utils.startHttpServer(port, (string) => {
+            console.log(`called webhook ${webhookName} ${string}`);
             callbackItems.push(string);
         }, done);
     });

@@ -1,5 +1,9 @@
 require('../integration_config');
-const { getProp, hubClientGet, hubClientPut } = require('../lib/helpers');
+const { getProp,
+    hubClientChannelRefresh,
+    hubClientGet,
+    hubClientPut,
+} = require('../lib/helpers');
 
 const channel = utils.randomChannelName();
 const moment = require('moment');
@@ -35,7 +39,10 @@ describe(__filename, function () {
         expect(getProp('mutableTime', body)).toBe(expected);
     });
 
-    utils.itRefreshesChannels();
+    it('waits while the channel is refreshed', async () => {
+        const response = await hubClientChannelRefresh();
+        expect(getProp('statusCode', response)).toEqual(200);
+    });
 
     it('verifies the mutabelTime time change after channel refresh', async () => {
         const response = await hubClientGet(channelResource, headers);

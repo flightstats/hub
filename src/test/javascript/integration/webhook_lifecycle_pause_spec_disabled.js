@@ -5,6 +5,7 @@ const {
     fromObjectPath,
     getProp,
     hubClientPostTestItem,
+    itSleeps,
     putWebhook,
 } = require('../lib/helpers');
 require('../integration_config');
@@ -84,7 +85,9 @@ describe(__filename, function () {
         utils.waitForData(callbackItems, postedItems, done);
     }, 15 * 1000);
 
-    utils.itSleeps(2000);
+    it('waits 2000 ms', async () => {
+        await itSleeps(2000);
+    });
 
     it('expects 2 items collected', function () {
         if (!createdChannel) return fail('channel not created in before block');
@@ -97,7 +100,9 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(200);
     });
 
-    utils.itSleeps(2000);
+    it('waits 2000 ms', async () => {
+        await itSleeps(2000);
+    });
 
     it(`posts items to paused ${webhookName}`, async () => {
         if (!createdChannel) return fail('channel not created in before block');
@@ -107,7 +112,9 @@ describe(__filename, function () {
         addPostedItem(response1);
     }, 3000);
 
-    utils.itSleeps(500);
+    it('waits 500 ms', async () => {
+        await itSleeps(500);
+    });
 
     // we added another 2 to a paused web hook.  should still be 2
     it(`verfies number ${webhookName}`, function () {
@@ -122,7 +129,9 @@ describe(__filename, function () {
     });
 
     // I upped this to 5s on 08/13/2018 so that it reliably passes in local envs
-    utils.itSleeps(5000);
+    it('waits 5000 ms', async () => {
+        await itSleeps(5000);
+    });
 
     it('closes the callback server', function (done) {
         if (!createdChannel) return done.fail('channel not created in before block');

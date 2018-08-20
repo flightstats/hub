@@ -3,6 +3,7 @@ const {
     fromObjectPath,
     getProp,
     hubClientPut,
+    itSleeps,
 } = require('../lib/helpers');
 const channelName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
@@ -19,7 +20,9 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    utils.itSleeps(1000);
+    it('waits 1000 ms', async () => {
+        await itSleeps(1000);
+    });
 
     it(`fails with 403 posting item to ${channelName} replicated channel`, function (done) {
         request.post({

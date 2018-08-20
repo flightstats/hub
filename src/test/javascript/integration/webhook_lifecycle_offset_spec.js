@@ -3,6 +3,7 @@ const { createChannel,
     fromObjectPath,
     getProp,
     hubClientPostTestItem,
+    itSleeps,
     putWebhook,
 } = require('../lib/helpers');
 const channelName = utils.randomChannelName();
@@ -34,7 +35,10 @@ describe(__filename, function () {
             console.log(`created channel for ${__filename}`);
         }
     });
-    utils.itSleeps(1000);
+
+    it('waits 1000 ms', async () => {
+        await itSleeps(1000);
+    });
 
     it('posts 2 items to the channel', async () => {
         const response1 = await hubClientPostTestItem(channelResource);

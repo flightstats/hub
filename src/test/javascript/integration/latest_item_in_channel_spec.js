@@ -5,6 +5,7 @@ const {
     getProp,
     hubClientPut,
     hubClientPostTestItem,
+    itSleeps,
 } = require('../lib/helpers');
 
 const channelName = utils.randomChannelName();
@@ -65,7 +66,9 @@ describe(__filename, function () {
             });
     });
 
-    utils.itSleeps(6000);
+    it('waits 6000 ms', async () => {
+        await itSleeps(6000);
+    });
     it('posts another item to the channel', async () => {
         const response = await hubClientPostTestItem(channelResource);
         expect(getProp('statusCode', response)).toEqual(201);

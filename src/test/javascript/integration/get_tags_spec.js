@@ -2,6 +2,7 @@ require('../integration_config');
 const {
     fromObjectPath,
     getProp,
+    hubClientChannelRefresh,
     hubClientGet,
     hubClientPut,
 } = require('../lib/helpers');
@@ -45,7 +46,10 @@ describe(testName, function () {
         }
     });
 
-    utils.itRefreshesChannels();
+    it('waits while the channel is refreshed', async () => {
+        const response = await hubClientChannelRefresh();
+        expect(getProp('statusCode', response)).toEqual(200);
+    });
 
     it(`get all tags ${tag}`, async () => {
         if (!channelCreated) return fail('channel not created in before block');

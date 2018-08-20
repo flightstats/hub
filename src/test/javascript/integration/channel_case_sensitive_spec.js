@@ -6,6 +6,7 @@ const {
     hubClientGet,
     hubClientPostTestItem,
     hubClientPut,
+    itSleeps,
 } = require('../lib/helpers');
 
 const headers = { 'Content-type': 'application/json' };
@@ -88,7 +89,9 @@ describe(__filename, function () {
      */
 
     // this delay is to allow the item time for the S3 write.
-    utils.itSleeps(5000);
+    it('waits 5000 ms', async () => {
+        await itSleeps(5000);
+    });
 
     it(`gets latest 2 ${upperCase}`, async () => {
         await verifyTwoUrlsInData(upperCase, '/latest/2?stable=false');

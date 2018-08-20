@@ -5,6 +5,7 @@ const {
     getProp,
     fromObjectPath,
     hubClientPostTestItem,
+    itSleeps,
     putWebhook,
 } = require('../lib/helpers');
 
@@ -78,7 +79,9 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toBe(202);
     });
 
-    utils.itSleeps(5000);
+    it('waits 5000 ms', async () => {
+        await itSleeps(5000);
+    });
 
     it('recreates the webhook', async () => {
         const response = await putWebhook(webhookName, webhookConfigB, 201, __filename);
