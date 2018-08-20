@@ -1,5 +1,6 @@
 require('../integration_config');
 const {
+    closeServer,
     createChannel,
     deleteWebhook,
     getProp,
@@ -7,6 +8,7 @@ const {
     hubClientPostTestItem,
     itSleeps,
     putWebhook,
+    startServer,
     waitForCondition,
 } = require('../lib/helpers');
 const {
@@ -18,7 +20,6 @@ const {
 const channelUrl = getChannelUrl();
 const port = getCallBackPort();
 const callbackDomain = getCallBackDomain();
-
 const channelName = utils.randomChannelName();
 const webhookName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
@@ -68,11 +69,12 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(201);
     }, 2 * 60 * 1000);
 
-    it('starts the first callback server', function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        callbackServerA = utils.startHttpServer(portA, function (string) {
+    it('starts the first callback server', async () => {
+        if (!createdChannel) return fail('channel not created in before block');
+        const callback = (string) => {
             callbackItemsA.push(string);
-        }, done);
+        };
+        callbackServerA = await startServer(portA, callback);
     });
 
     it('posts the first item', async () => {
@@ -98,11 +100,12 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(201);
     }, 2 * 60 * 1000);
 
-    it('starts the second callback server', function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        callbackServerB = utils.startHttpServer(portB, function (string) {
+    it('starts the second callback server', async () => {
+        if (!createdChannel) return fail('channel not created in before block');
+        const callback = (string) => {
             callbackItemsB.push(string);
-        }, done);
+        };
+        callbackServerB = await startServer(portB, callback);
     });
 
     it('posts the second item', async () => {
@@ -134,15 +137,20 @@ describe(__filename, function () {
         expect(uriB).toBe(postedItemsB[0]);
     });
 
-    it('closes the first callback server', function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
+    it('closes the first callback server', async () => {
+        if (!createdChannel) return fail('channel not created in before block');
         expect(callbackServerA).toBeDefined();
-        utils.closeServer(callbackServerA, done);
+        await closeServer(callbackServerA);
     });
 
-    it('closes the second callback server', function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
+    it('closes the second callback server', async () => {
+        if (!createdChannel) return fail('channel not created in before block');
         expect(callbackServerB).toBeDefined();
-        utils.closeServer(callbackServerB, done);
+        await closeServer(callbackServerB);
+    });
+
+    it('deletes the webhook', async () => {
+        const response = await deleteWebhook(webhookName);
+        expect(getProp('statusCode', response)).toBe(202);
     });
 });

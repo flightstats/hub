@@ -2,6 +2,7 @@ require('../integration_config');
 const rp = require('request-promise-native');
 const {
     createChannel,
+    deleteWebhook,
     fromObjectPath,
     getProp,
     getWebhookUrl,
@@ -67,5 +68,10 @@ describe(__filename, function () {
         // if (webhookConfig.maxWaitMinutes) {
         //     expect(getProp('maxWaitMinutes', body)).toBe(webhookConfig.maxWaitMinutes);
         // }
+    });
+
+    it('deletes the webhook', async () => {
+        const response = await deleteWebhook(channelName);
+        expect(getProp('statusCode', response)).toBe(202);
     });
 });

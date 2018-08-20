@@ -1,6 +1,8 @@
 require('../integration_config');
 const moment = require('moment');
 const {
+    closeServer,
+    deleteWebhook,
     getProp,
     fromObjectPath,
     hubClientGet,
@@ -8,6 +10,7 @@ const {
     hubClientPut,
     itSleeps,
     putWebhook,
+    startServer,
 } = require('../lib/helpers');
 const {
     getCallBackDomain,
@@ -43,10 +46,11 @@ const webhookConfig = {
 };
 
 describe(__filename, () => {
-    it('runs a callback server', (done) => {
-        callbackServer = utils.startHttpServer(port, (message) => {
+    it('runs a callback server', async () => {
+        const callback = (message) => {
             callbackMessages.push(message);
-        }, done);
+        };
+        callbackServer = await startServer(port, callback);
     });
 
     it('creates a channel', async () => {
@@ -118,15 +122,13 @@ describe(__filename, () => {
         minCursor = lastCompleted;
     });
 
-    it('closes the callback server', (done) => {
+    it('closes the callback server', async () => {
         expect(callbackServer).toBeDefined();
+        await closeServer(callbackServer);
+    });
 
-        callbackServer.close(() => {
-            console.log("closed server....");
-            done();
-        });
-        setImmediate(function () {
-            callbackServer.emit('close');
-        });
+    it('deletes the webhook', async () => {
+        const response = await deleteWebhook(webhookName);
+        expect(getProp('statusCode', response)).toBe(202);
     });
 });

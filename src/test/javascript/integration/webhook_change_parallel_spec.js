@@ -1,5 +1,6 @@
 require('../integration_config');
 const {
+    deleteWebhook,
     getProp,
     getWebhook,
     putWebhook,
@@ -51,5 +52,10 @@ describe(__filename, function () {
         expect(body.transactional).toBe(webhookConfigB.transactional);
         expect(body.name).toBe(webhookName);
         expect(body.batch).toBe(webhookConfigB.batch);
+    });
+
+    it('deletes the webhook', async () => {
+        const response = await deleteWebhook(webhookName);
+        expect(getProp('statusCode', response)).toBe(202);
     });
 });

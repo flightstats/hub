@@ -1,12 +1,15 @@
 require('../integration_config');
 const moment = require('moment');
 const {
+    closeServer,
+    deleteWebhook,
     followRedirectIfPresent,
     fromObjectPath,
     getProp,
     hubClientGet,
     hubClientPost,
     hubClientPut,
+    startServer,
     waitForCondition,
 } = require('../lib/helpers');
 const {
@@ -37,17 +40,18 @@ describe(__filename, () => {
         expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    it('creates a callback server', (done) => {
-        callbackServer = utils.startHttpServer(port, (request) => {
+    it('creates a callback server', async () => {
+        const callback = (request) => {
             try {
                 const json = JSON.parse(request);
                 console.log('incoming:', json);
                 const uris = getProp('uris', json) || [];
                 callbackItems.push(...uris);
             } catch (ex) {
-                return done.fail(ex);
+                console.log('error in webhook test callback ', ex && ex.message);
             }
-        }, done);
+        };
+        callbackServer = await startServer(port, callback);
     });
 
     it('creates a webhook', async () => {
@@ -90,9 +94,9 @@ describe(__filename, () => {
         expect(getProp('statusCode', response2)).toEqual(404);
     });
 
-    it('kills the callback server', (done) => {
+    it('kills the callback server', async () => {
         expect(callbackServer).toBeDefined();
-        utils.closeServer(callbackServer, done);
+        await closeServer(callbackServer);
     });
 
     it('posts an item to the data channel', async () => {
@@ -141,5 +145,10 @@ describe(__filename, () => {
         } catch (error) {
             return fail(error);
         }
+    });
+
+    it('deletes the webhook', async () => {
+        const response = await deleteWebhook(webhookName);
+        expect(getProp('statusCode', response)).toBe(202);
     });
 });

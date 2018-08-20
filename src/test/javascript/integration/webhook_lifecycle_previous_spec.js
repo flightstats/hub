@@ -1,10 +1,14 @@
 require('../integration_config');
-const { createChannel,
+const {
+    closeServer,
+    createChannel,
+    deleteWebhook,
     fromObjectPath,
     getProp,
     hubClientPostTestItem,
     itSleeps,
     putWebhook,
+    startServer,
     waitForCondition,
 } = require('../lib/helpers');
 const {
@@ -73,12 +77,13 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    it('starts a callback server', function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        callbackServer = utils.startHttpServer(port, (string) => {
+    it('starts a callback server', async () => {
+        if (!createdChannel) return fail('channel not created in before block');
+        const callback = (string) => {
             console.log(`called webhook ${webhookName} ${string}`);
             callbackItems.push(string);
-        }, done);
+        };
+        callbackServer = await startServer(port, callback);
     });
 
     it('inserts items', async () => {
@@ -93,10 +98,10 @@ describe(__filename, function () {
         await waitForCondition(condition);
     });
 
-    it('closes the first callback server', function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
+    it('closes the first callback server', async () => {
+        if (!createdChannel) return fail('channel not created in before block');
         expect(callbackServer).toBeDefined();
-        utils.closeServer(callbackServer, done);
+        await closeServer(callbackServer);
     });
 
     it('verifies we got what we expected through the callback', function () {
@@ -115,5 +120,10 @@ describe(__filename, function () {
             expect(uris[0]).toBe(postedItems[i]);
             expect(name).toBe(webhookName);
         }
+    });
+
+    it('deletes the webhook', async () => {
+        const response = await deleteWebhook(webhookName);
+        expect(getProp('statusCode', response)).toBe(202);
     });
 });

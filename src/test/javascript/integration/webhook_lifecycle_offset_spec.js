@@ -1,10 +1,14 @@
 require('../integration_config');
-const { createChannel,
+const {
+    closeServer,
+    deleteWebhook,
+    createChannel,
     fromObjectPath,
     getProp,
     hubClientPostTestItem,
     itSleeps,
     putWebhook,
+    startServer,
     waitForCondition,
 } = require('../lib/helpers');
 const {
@@ -24,6 +28,9 @@ const webhookConfig = {
     callbackUrl: callbackUrl,
     channelUrl: channelResource,
 };
+const callbackItems = [];
+const postedItems = [];
+let callbackServer = null;
 let createdChannel = false;
 
 /**
@@ -61,16 +68,13 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    let callbackServer;
-    const callbackItems = [];
-    const postedItems = [];
-
-    it('runs callback server', function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        callbackServer = utils.startHttpServer(port, function (string) {
-            console.log('called webhook ' + webhookName + ' ' + string);
+    it('runs callback server', async () => {
+        if (!createdChannel) return fail('channel not created in before block');
+        const callback = (string) => {
+            console.log(`called webhook ${webhookName} ${string}`);
             callbackItems.push(string);
-        }, done);
+        };
+        callbackServer = await startServer(port, callback);
     });
 
     it('posts 4 items to the channel', async () => {
@@ -89,12 +93,6 @@ describe(__filename, function () {
         await waitForCondition(condition);
     });
 
-    it('closes the callback server', function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        expect(callbackServer).toBeDefined();
-        utils.closeServer(callbackServer, done);
-    });
-
     it('verifies we got what we expected through the callback', function () {
         if (!createdChannel) return fail('channel not created in before block');
         expect(callbackItems.length).toBe(4);
@@ -111,5 +109,16 @@ describe(__filename, function () {
             }
         });
         expect(actual).toBe(true);
+    });
+
+    it('closes the callback server', async () => {
+        if (!createdChannel) return fail('channel not created in before block');
+        expect(callbackServer).toBeDefined();
+        await closeServer(callbackServer);
+    });
+
+    it('deletes the webhook', async () => {
+        const response = await deleteWebhook(webhookName);
+        expect(getProp('statusCode', response)).toBe(202);
     });
 });

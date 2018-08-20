@@ -1,12 +1,15 @@
 require('../integration_config');
 const moment = require('moment');
 const {
+    closeServer,
+    deleteWebhook,
     fromObjectPath,
     getProp,
     getWebhookUrl,
     hubClientGet,
     hubClientPost,
     hubClientPut,
+    startServer,
     waitForCondition,
 } = require('../lib/helpers');
 const {
@@ -33,8 +36,8 @@ describe(__filename, () => {
         expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    it('creates a callback server', (done) => {
-        callbackServer = utils.startHttpServer(port, (request, response) => {
+    it('creates a callback server', async () => {
+        const callback = (request, response) => {
             let json = {};
             try {
                 json = JSON.parse(request) || {};
@@ -46,7 +49,8 @@ describe(__filename, () => {
             callbackItems.push(...uris);
             console.log('callbackItems', callbackItems);
             response.statusCode = 400;
-        }, done);
+        };
+        callbackServer = await startServer(port, callback);
     });
 
     it('creates a webhook', async () => {
@@ -126,8 +130,13 @@ describe(__filename, () => {
         expect(errors[1]).toContain(`${contentKey} max attempts reached (1)`);
     });
 
-    it('closes the callback server', function (done) {
+    it('closes the callback server', async () => {
         expect(callbackServer).toBeDefined();
-        utils.closeServer(callbackServer, done);
+        await closeServer(callbackServer);
+    });
+
+    it('deletes the webhook', async () => {
+        const response = await deleteWebhook(webhookName);
+        expect(getProp('statusCode', response)).toBe(202);
     });
 });

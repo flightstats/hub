@@ -6,7 +6,7 @@ const webhookName = utils.randomChannelName();
 const webhookResource = `${getWebhookUrl()}/${webhookName}`;
 
 describe(__filename, function () {
-    it('gets missing webhook ' + webhookName, function (done) {
+    it(`gets missing webhook ${webhookName}`, function (done) {
         request.get({
             url: webhookResource,
             headers: { "Content-Type": "application/json" } },
