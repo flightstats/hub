@@ -24,9 +24,9 @@ const callbackDomain = getCallBackDomain();
 const port = getCallBackPort();
 const channelName = utils.randomChannelName();
 const webhookName = utils.randomChannelName();
-const webhookPath = `/${randomString(5)}`;
+const callbackPath = `/${randomString(5)}`;
 const channelResource = `${channelUrl}/${channelName}`;
-const callbackUrl = `${callbackDomain}:${port}${webhookPath}`;
+const callbackUrl = `${callbackDomain}:${port}${callbackPath}`;
 let createdChannel = false;
 const postedItems = [];
 let firstItem = null;
@@ -94,7 +94,7 @@ describe(__filename, function () {
             console.log('called webhook ', webhookName, string);
             callbackItems.push(string);
         };
-        callbackServer = await startServer(port, callback, webhookPath);
+        callbackServer = await startServer(port, callback, callbackPath);
     });
 
     it('inserts items', async () => {

@@ -9,6 +9,8 @@ const {
     hubClientGet,
     hubClientPost,
     hubClientPut,
+    itSleeps,
+    randomString,
     startServer,
     waitForCondition,
 } = require('../lib/helpers');
@@ -21,43 +23,38 @@ const {
 const hubUrlBase = getHubUrlBase();
 const callbackDomain = getCallBackDomain();
 const port = getCallBackPort();
-const dataChannelName = utils.randomChannelName();
-const dataChannelURL = `${hubUrlBase}/channel/${dataChannelName}`;
+const channelName = utils.randomChannelName();
+const channelResource = `${hubUrlBase}/channel/${channelName}`;
 const errorChannelName = utils.randomChannelName();
 const errorChannelURL = `${hubUrlBase}/channel/${errorChannelName}`;
-const callbackServerURL = `${callbackDomain}:${port}`;
+const callbackPath = `/${randomString(5)}`;
+const callbackServerURL = `${callbackDomain}:${port}${callbackPath}`;
 const webhookName = utils.randomChannelName();
 const webhookURL = `${hubUrlBase}/webhook/${webhookName}`;
 let callbackServer;
-let callbackItems = [];
-let postedItems = [];
+const callbackItems = [];
+const postedItems = [];
 let postedTime = null;
 let giveUpTime = null;
 
 describe(__filename, () => {
     beforeAll(async () => {
-        const response = await hubClientPut(dataChannelURL);
+        const response = await hubClientPut(channelResource);
         expect(getProp('statusCode', response)).toEqual(201);
     });
 
     it('creates a callback server', async () => {
-        const callback = (request) => {
-            try {
-                const json = JSON.parse(request);
-                console.log('incoming:', json);
-                const uris = getProp('uris', json) || [];
-                callbackItems.push(...uris);
-            } catch (ex) {
-                console.log('error in webhook test callback ', ex && ex.message);
-            }
+        const callback = (str) => {
+            console.log('calling callback with ', str);
+            callbackItems.push(str);
         };
-        callbackServer = await startServer(port, callback);
+        callbackServer = await startServer(port, callback, callbackPath);
     });
 
     it('creates a webhook', async () => {
         const headers = { 'Content-Type': 'application/json' };
         const payload = {
-            channelUrl: dataChannelURL,
+            channelUrl: channelResource,
             callbackUrl: callbackServerURL,
             errorChannelUrl: errorChannelURL,
             callbackTimeoutSeconds: 10,
@@ -72,14 +69,14 @@ describe(__filename, () => {
         const response = await hubClientGet(`${hubUrlBase}/channel`, headers);
         const channels = fromObjectPath(['body', '_links', 'channels'], response) || [];
         expect(channels.length).toBeGreaterThan(0);
-        const channelURL = channels.find(channel => getProp('href', channel) === errorChannelURL);
-        expect(channelURL).toBeDefined();
+        const channelResource = channels.find(channel => getProp('href', channel) === errorChannelURL);
+        expect(channelResource).toBeDefined();
     });
 
     it('posts an item to the data channel', async () => {
         const headers = { 'Content-Type': 'text/plain' };
         const payload = moment.utc().toISOString();
-        const response = await hubClientPost(dataChannelURL, headers, payload);
+        const response = await hubClientPost(channelResource, headers, payload);
 
         expect(getProp('statusCode', response)).toEqual(201);
         const itemURL = fromObjectPath(['body', '_links', 'self', 'href'], response);
@@ -97,12 +94,14 @@ describe(__filename, () => {
     it('kills the callback server', async () => {
         expect(callbackServer).toBeDefined();
         await closeServer(callbackServer);
+        // it takes some time for the server to actually die
+        await itSleeps(10000);
     });
 
     it('posts an item to the data channel', async () => {
         const headers = { 'Content-Type': 'text/plain' };
         const payload = moment.utc().toISOString();
-        const response = await hubClientPost(dataChannelURL, headers, payload);
+        const response = await hubClientPost(channelResource, headers, payload);
 
         expect(getProp('statusCode', response)).toEqual(201);
         const itemURL = fromObjectPath(['body', '_links', 'self', 'href'], response);
@@ -113,6 +112,7 @@ describe(__filename, () => {
 
     it('waits for the webhook to give up', async () => {
         const clause = (response) => {
+            console.log('response.body', response.body.errors);
             const errors = fromObjectPath(['body', 'errors'], response) || [];
             return errors.some(e => e && e.includes('max attempts reached'));
         };
@@ -122,19 +122,21 @@ describe(__filename, () => {
             console.log('giveUpTime:', giveUpTime.toISOString());
         } catch (error) {
             return fail(error);
-        }
+        };
     });
 
     it('verifies an error was posted to the error channel', async () => {
         expect(postedTime).toBeDefined();
         expect(giveUpTime).toBeDefined();
-        const clause = res => (getProp('statusCode', res) === 303);
+        const clause = res => {
+            console.log('res', res.statusCode);
+            return (getProp('statusCode', res) === 303);
+        };
         try {
             const originalRes = await utils.httpGetUntil(`${errorChannelURL}/latest`, clause);
             const headers = { 'Content-Type': 'application/json' };
             const response = await followRedirectIfPresent(originalRes, headers);
             const body = getProp('body', response) || {};
-            console.log('body: ', body);
             expect(body.webhookUrl).toEqual(webhookURL);
             expect(body.failedItemUrl).toEqual(postedItems[1]);
             expect(body.callbackUrl).toEqual(callbackServerURL);

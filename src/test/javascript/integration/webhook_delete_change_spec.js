@@ -8,6 +8,7 @@ const {
     hubClientPostTestItem,
     itSleeps,
     putWebhook,
+    randomString,
     startServer,
     waitForCondition,
 } = require('../lib/helpers');
@@ -20,6 +21,7 @@ const {
 const channelUrl = getChannelUrl();
 const port = getCallBackPort();
 const callbackDomain = getCallBackDomain();
+const callbackPath = `/${randomString(5)}`;
 const channelName = utils.randomChannelName();
 const webhookName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
@@ -34,11 +36,11 @@ const postedItemsB = [];
 console.log('portA', portA);
 console.log('portB', portB);
 const webhookConfigA = {
-    callbackUrl: `${callbackDomain}:${portA}/`,
+    callbackUrl: `${callbackDomain}:${portA}${callbackPath}`,
     channelUrl: channelResource,
 };
 const webhookConfigB = {
-    callbackUrl: `${callbackDomain}:${portB}/`,
+    callbackUrl: `${callbackDomain}:${portB}${callbackPath}`,
     channelUrl: channelResource,
 };
 let createdChannel = false;
@@ -74,7 +76,7 @@ describe(__filename, function () {
         const callback = (string) => {
             callbackItemsA.push(string);
         };
-        callbackServerA = await startServer(portA, callback);
+        callbackServerA = await startServer(portA, callback, callbackPath);
     });
 
     it('posts the first item', async () => {
@@ -105,7 +107,7 @@ describe(__filename, function () {
         const callback = (string) => {
             callbackItemsB.push(string);
         };
-        callbackServerB = await startServer(portB, callback);
+        callbackServerB = await startServer(portB, callback, callbackPath);
     });
 
     it('posts the second item', async () => {
@@ -121,20 +123,8 @@ describe(__filename, function () {
         if (!createdChannel) return fail('channel not created in before block');
         expect(callbackItemsA.length).toBe(1);
         expect(callbackItemsB.length).toBe(1);
-        let uriA;
-        let uriB;
-        try {
-            const itemA = JSON.parse(callbackItemsA[0]);
-            const itemB = JSON.parse(callbackItemsB[0]);
-            const urisA = getProp('uris', itemA);
-            const urisB = getProp('uris', itemB);
-            uriA = urisA && urisA[0];
-            uriB = urisB && urisB[0];
-        } catch (ex) {
-            expect(`failed to parse json, ${ex}`).toBeNull();
-        }
-        expect(uriA).toBe(postedItemsA[0]);
-        expect(uriB).toBe(postedItemsB[0]);
+        expect(callbackItemsA[0]).toBe(postedItemsA[0]);
+        expect(callbackItemsB[0]).toBe(postedItemsB[0]);
     });
 
     it('closes the first callback server', async () => {

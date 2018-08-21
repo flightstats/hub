@@ -9,6 +9,7 @@ const {
     hubClientGet,
     hubClientPost,
     hubClientPut,
+    randomString,
     startServer,
     waitForCondition,
 } = require('../lib/helpers');
@@ -22,7 +23,8 @@ const channelUrl = getChannelUrl();
 const callbackDomain = getCallBackDomain();
 const port = getCallBackPort();
 const webhookName = utils.randomChannelName();
-const callbackServerURL = `${callbackDomain}:${port}/${webhookName}`;
+const callbackPath = `/${randomString(5)}`;
+const callbackServerURL = `${callbackDomain}:${port}${callbackPath}`;
 const postedItems = [];
 const callbackItems = [];
 const channelResource = `${channelUrl}/${utils.randomChannelName()}`;
@@ -37,20 +39,12 @@ describe(__filename, () => {
     });
 
     it('creates a callback server', async () => {
-        const callback = (request, response) => {
-            let json = {};
-            try {
-                json = JSON.parse(request) || {};
-                console.log('callback server received item:', json);
-            } catch (ex) {
-                console.log(`error parsing json: ${ex}`);
-            }
-            const uris = getProp('uris', json) || [];
-            callbackItems.push(...uris);
+        const callback = (str, response) => {
+            callbackItems.push(str);
             console.log('callbackItems', callbackItems);
             response.statusCode = 400;
         };
-        callbackServer = await startServer(port, callback);
+        callbackServer = await startServer(port, callback, callbackPath);
     });
 
     it('creates a webhook', async () => {

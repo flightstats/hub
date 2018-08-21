@@ -10,6 +10,7 @@ const {
     hubClientPut,
     itSleeps,
     putWebhook,
+    randomString,
     startServer,
 } = require('../lib/helpers');
 const {
@@ -26,7 +27,7 @@ const channelName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
 const webhookName = utils.randomChannelName();
 const webhookURL = `${getHubUrlBase()}/webhook/${webhookName}`;
-
+const callbackPath = `/${randomString(5)}`;
 const contentTypeJSON = { 'Content-Type': 'application/json' };
 const contentTypePlain = { 'Content-Type': 'text/plain' };
 
@@ -38,7 +39,7 @@ let maxCursor = null;
 let minCursor = null;
 let firstItemURL = null;
 const webhookConfig = {
-    callbackUrl: `${callbackDomain}:${port}`,
+    callbackUrl: `${callbackDomain}:${port}${callbackPath}`,
     channelUrl: channelResource,
     parallelCalls: 1,
     batch: 'SECOND',
@@ -50,7 +51,7 @@ describe(__filename, () => {
         const callback = (message) => {
             callbackMessages.push(message);
         };
-        callbackServer = await startServer(port, callback);
+        callbackServer = await startServer(port, callback, callbackPath);
     });
 
     it('creates a channel', async () => {

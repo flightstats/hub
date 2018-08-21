@@ -15,12 +15,16 @@ const getHttp = app => new http.Server(app);
 
 const startServer = async (port, callback, path = '/', secure) => {
     const app = express();
+
     app.use(bodyParser.json());
+
     app.post(path, (request, response) => {
+        console.log('request.body', request.body);
         const arr = fromObjectPath(['body', 'uris'], request) || [];
         const str = arr[arr.length - 1] || '';
-        if (callback) callback(str);
+        if (callback) callback(str, response);
     });
+
     const server = secure ? getHttps(app) : getHttp(app);
 
     server.on('connection', (socket) => {

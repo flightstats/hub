@@ -8,6 +8,7 @@ const {
     getWebhookUrl,
     hubClientPost,
     hubClientPut,
+    randomString,
     startServer,
     waitForCondition,
 } = require('../lib/helpers');
@@ -20,6 +21,15 @@ const {
 const channelUrl = getChannelUrl();
 const port = getCallBackPort();
 const callbackDomain = getCallBackDomain();
+const channelResource = `${channelUrl}/${utils.randomChannelName()}`;
+const webhookName = utils.randomChannelName();
+const webhookResource = `${getWebhookUrl()}/${webhookName}`;
+let callbackServer = null;
+const callbackPath = `/${randomString(5)}`;
+const callbackServerURL = `${callbackDomain}:${port}${callbackPath}`;
+const postedItems = [];
+const callbackItems = [];
+
 /**
  * This should:
  *
@@ -31,17 +41,7 @@ const callbackDomain = getCallBackDomain();
  * 6 - post item - should see items at endPointB
  */
 
-const channelResource = `${channelUrl}/${utils.randomChannelName()}`;
-const webhookName = utils.randomChannelName();
-const webhookResource = `${getWebhookUrl()}/${webhookName}`;
-
 describe(__filename, () => {
-    let callbackServer = null;
-    const callbackServerURL = `${callbackDomain}:${port}/${webhookName}`;
-
-    const postedItems = [];
-    const callbackItems = [];
-
     it('creates a channel', async () => {
         const response = await hubClientPut(channelResource);
         expect(getProp('statusCode', response)).toEqual(201);
@@ -89,13 +89,11 @@ describe(__filename, () => {
     });
 
     it('creates a callback server', async () => {
-        const callback = (request) => {
-            const json = JSON.parse(request);
-            console.log('incoming:', json);
-            const uris = getProp('uris', json) || [];
-            callbackItems.push(...uris);
+        const callback = (str) => {
+            console.log('callback called with payload: ', str);
+            callbackItems.push(str);
         };
-        callbackServer = await startServer(port, callback);
+        callbackServer = await startServer(port, callback, callbackPath);
     });
 
     it('updates the webhook\'s callbackURL', async () => {

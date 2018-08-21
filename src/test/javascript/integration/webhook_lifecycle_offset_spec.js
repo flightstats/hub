@@ -8,6 +8,7 @@ const {
     hubClientPostTestItem,
     itSleeps,
     putWebhook,
+    randomString,
     startServer,
     waitForCondition,
 } = require('../lib/helpers');
@@ -23,7 +24,8 @@ const port = getCallBackPort();
 const channelName = utils.randomChannelName();
 const webhookName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
-const callbackUrl = `${callbackDomain}:${port}/`;
+const callbackPath = `/${randomString(5)}`;
+const callbackUrl = `${callbackDomain}:${port}${callbackPath}`;
 const webhookConfig = {
     callbackUrl: callbackUrl,
     channelUrl: channelResource,
@@ -74,7 +76,7 @@ describe(__filename, function () {
             console.log(`called webhook ${webhookName} ${string}`);
             callbackItems.push(string);
         };
-        callbackServer = await startServer(port, callback);
+        callbackServer = await startServer(port, callback, callbackPath);
     });
 
     it('posts 4 items to the channel', async () => {

@@ -7,6 +7,7 @@ const {
     fromObjectPath,
     hubClientPostTestItem,
     putWebhook,
+    randomString,
     startServer,
     waitForCondition,
 } = require('../lib/helpers');
@@ -20,8 +21,9 @@ const callbackDomain = getCallBackDomain();
 const port = getCallBackPort();
 const channelName = utils.randomChannelName();
 const webhookName = utils.randomChannelName();
+const callbackPath = `/${randomString(5)}`;
 const channelResource = `${getChannelUrl()}/${channelName}`;
-const callbackUrl = `${callbackDomain}:${port}/`.replace('http', 'https');
+const callbackUrl = `${callbackDomain}:${port}${callbackPath}`.replace('http', 'https');
 const webhookConfig = {
     callbackUrl: callbackUrl,
     channelUrl: channelResource,
@@ -66,7 +68,7 @@ describe(__filename, function () {
         const callback = (string) => {
             callbackItems.push(string);
         };
-        callbackServer = await startServer(port, callback, true);
+        callbackServer = await startServer(port, callback, callbackPath, true);
     });
 
     it('posts 4 items to the channel', async () => {
@@ -94,18 +96,7 @@ describe(__filename, function () {
         expect(postedItems.length).toBe(4);
         console.log('callbackItems', callbackItems);
         console.log('postedItems', postedItems);
-        const actual = callbackItems.every((callbackItem, index) => {
-            try {
-                const parse = JSON.parse(callbackItem);
-                const uris = getProp('uris', parse) || [];
-                const name = getProp('name', parse);
-                return uris[0] === postedItems[index] &&
-                name === webhookName;
-            } catch (ex) {
-                console.log('failed to parse json,', callbackItem, ex);
-                return false;
-            }
-        });
+        const actual = callbackItems.every((callbackItem, index) => callbackItem === postedItems[index]);
         expect(actual).toBe(true);
     });
 
