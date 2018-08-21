@@ -7,6 +7,7 @@ const {
     hubClientChannelRefresh,
     hubClientPostTestItem,
     hubClientPut,
+    parseJson,
 } = require('../lib/helpers');
 const {
     getChannelUrl,
@@ -56,7 +57,7 @@ describe(__filename, function () {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
                 if (getProp('statusCode', response) === 200) {
-                    body = utils.parseJson(response, __filename);
+                    body = parseJson(response, __filename);
                     const links = fromObjectPath(['headers', 'link'], response) || '{}';
                     parsedLinks = parse(links);
                     const item = uris[index] && linkStripParams(uris[index]);
@@ -93,7 +94,7 @@ describe(__filename, function () {
                 const statusCode = getProp('statusCode', response);
                 expect(statusCode).toBe(200);
                 if (statusCode === 200) {
-                    body = utils.parseJson(response, __filename);
+                    body = parseJson(response, __filename);
                     console.log('parsed tag body', body);
                     const links = getProp('_links', body);
                     uris = getProp('uris', links) || [];
@@ -152,7 +153,7 @@ describe(__filename, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
-                const parsed = utils.parseJson(response, __filename);
+                const parsed = parseJson(response, __filename);
                 const currentUris = fromObjectPath(['_links', 'uris'], parsed) || [];
                 expect(currentUris.length).toBe(3);
                 currentUris.forEach(function (uri, index) {
@@ -180,7 +181,7 @@ describe(__filename, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
-                const parsed = utils.parseJson(response, __filename);
+                const parsed = parseJson(response, __filename);
                 const currentUris = fromObjectPath(['_links', 'uris'], parsed) || [];
                 expect(currentUris.length).toBe(2);
                 currentUris.forEach(function (uri, index) {
@@ -199,7 +200,7 @@ describe(__filename, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
-                const parsed = utils.parseJson(response, __filename);
+                const parsed = parseJson(response, __filename);
                 const currentUris = fromObjectPath(['_links', 'uris'], parsed) || [];
                 expect(currentUris.length).toBe(2);
                 currentUris.forEach(function (uri, index) {
@@ -219,7 +220,7 @@ describe(__filename, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
-                const parsed = utils.parseJson(response, __filename);
+                const parsed = parseJson(response, __filename);
                 const currentUris = fromObjectPath(['_links', 'uris'], parsed) || [];
                 expect(currentUris.length).toBe(2);
                 currentUris.forEach(function (uri, index) {
@@ -236,7 +237,7 @@ describe(__filename, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
-                const parsed = utils.parseJson(response, __filename);
+                const parsed = parseJson(response, __filename);
                 const currentUris = fromObjectPath(['_links', 'uris'], parsed) || [];
                 expect(currentUris.length).toBe(2);
                 currentUris.forEach(function (uri, index) {
@@ -266,7 +267,7 @@ describe(__filename, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
-                const parsed = utils.parseJson(response, __filename);
+                const parsed = parseJson(response, __filename);
                 const currentUris = fromObjectPath(['_links', 'uris'], parsed) || [];
                 expect(currentUris.length).toBe(3);
                 currentUris.forEach(function (uri, index) {
@@ -295,7 +296,7 @@ describe(__filename, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
-                const parsed = utils.parseJson(response, __filename);
+                const parsed = parseJson(response, __filename);
                 const currentUris = fromObjectPath(['_links', 'uris'], parsed) || [];
                 expect(currentUris.length).toBe(3);
                 currentUris.forEach(function (uri, index) {
@@ -312,7 +313,7 @@ describe(__filename, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
-                const parsed = utils.parseJson(response, __filename);
+                const parsed = parseJson(response, __filename);
                 console.log('parsed', parsed);
                 const currentUris = fromObjectPath(['_links', 'uris'], parsed) || [];
                 expect(currentUris.length).toBe(3);

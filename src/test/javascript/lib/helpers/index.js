@@ -6,6 +6,7 @@ const {
     fromObjectPath,
     getProp,
     itSleeps,
+    parseJson,
     waitForCondition,
 } = require('./functional');
 const {
@@ -50,6 +51,7 @@ module.exports = {
     hubClientPostTestItem,
     hubClientPut,
     itSleeps,
+    parseJson,
     putWebhook,
     randomChannelName,
     randomNumberBetweenInclusive,

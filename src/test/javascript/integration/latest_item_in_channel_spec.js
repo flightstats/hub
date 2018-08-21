@@ -6,6 +6,7 @@ const {
     hubClientPut,
     hubClientPostTestItem,
     itSleeps,
+    parseJson,
 } = require('../lib/helpers');
 const {
     getChannelUrl,
@@ -62,7 +63,7 @@ describe(__filename, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
-                const parsed = utils.parseJson(response, __filename);
+                const parsed = parseJson(response, __filename);
                 const uris = fromObjectPath(['_links', 'uris'], parsed) || [];
                 expect(uris.length).toBe(2);
                 expect(uris[1]).toBe(posted);

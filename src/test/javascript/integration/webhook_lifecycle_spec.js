@@ -8,6 +8,7 @@ const {
     getProp,
     getWebhookUrl,
     hubClientPostTestItem,
+    parseJson,
     putWebhook,
     randomString,
     startServer,
@@ -98,7 +99,7 @@ describe(__filename, function () {
         function (err, response, body) {
             expect(err).toBeNull();
             expect(getProp('statusCode', response)).toBe(200);
-            const parse = utils.parseJson(response, __filename);
+            const parse = parseJson(response, __filename);
             const selfLink = fromObjectPath(['_links', 'self', 'href'], parse);
             expect(selfLink).toBe(webhookResource);
             if (typeof webhookConfig !== "undefined") {

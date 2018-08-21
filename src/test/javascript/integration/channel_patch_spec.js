@@ -3,6 +3,7 @@ const request = require('request');
 const { getProp } = require('../lib/helpers');
 const {
     getChannelUrl,
+    parseJson,
 } = require('../lib/config');
 
 const channelUrl = getChannelUrl();
@@ -32,7 +33,7 @@ describe(__filename, function () {
         function (err, response, body) {
             expect(err).toBeNull();
             expect(getProp('statusCode', response)).toBe(201);
-            const parse = utils.parseJson(response, `${__filename}_A`);
+            const parse = parseJson(response, `${__filename}_A`);
             verifyOptionals(parse);
             done();
         });
@@ -43,7 +44,7 @@ describe(__filename, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
-                const parse = utils.parseJson(response, `${__filename}_B`);
+                const parse = parseJson(response, `${__filename}_B`);
                 verifyOptionals(parse);
                 done();
             });
@@ -68,7 +69,7 @@ describe(__filename, function () {
         function (err, response, body) {
             expect(err).toBeNull();
             expect(getProp('statusCode', response)).toBe(200);
-            const parse = utils.parseJson(response, `${__filename}_C`);
+            const parse = parseJson(response, `${__filename}_C`);
             verifyPatched(parse);
             done();
         });
@@ -79,7 +80,7 @@ describe(__filename, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
-                const parse = utils.parseJson(response, `${__filename}_D`);
+                const parse = parseJson(response, `${__filename}_D`);
                 verifyPatched(parse);
                 done();
             });

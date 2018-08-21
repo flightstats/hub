@@ -4,6 +4,7 @@ const {
     fromObjectPath,
     getProp,
     hubClientPut,
+    parseJson,
 } = require('../lib/helpers');
 const {
     getChannelUrl,
@@ -66,7 +67,7 @@ describe(__filename, function () {
             expect(getProp('statusCode', response)).toBe(201);
             location = fromObjectPath(['headers', 'location'], response);
             expect(location).toBeDefined();
-            const parse = utils.parseJson(response, __filename);
+            const parse = parseJson(response, __filename);
             const responseBody = getProp('body', response);
             console.log(responseBody);
             const uris = fromObjectPath(['_links', 'uris'], parse) || [];

@@ -4,6 +4,7 @@ const {
     getProp,
     hubClientPut,
     hubClientPostTestItem,
+    parseJson,
 } = require('../lib/helpers');
 const {
     getChannelUrl,
@@ -73,7 +74,7 @@ describe(__filename, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
-                const parsed = utils.parseJson(response, __filename);
+                const parsed = parseJson(response, __filename);
                 const links = getProp('_links', parsed);
                 if (links) {
                     const { next, previous, uris = [] } = links;

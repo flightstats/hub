@@ -2,6 +2,7 @@ require('../integration_config');
 const { getProp } = require('../lib/helpers');
 const {
     getChannelUrl,
+    parseJson,
 } = require('../lib/config');
 
 const channelUrl = getChannelUrl();
@@ -26,7 +27,7 @@ describe(__filename, function () {
         function (err, response, body) {
             expect(err).toBeNull();
             expect(getProp('statusCode', response)).toBe(201);
-            const parse = utils.parseJson(response, __filename);
+            const parse = parseJson(response, __filename);
             verifyOptionals(parse);
             done();
         });
@@ -37,7 +38,7 @@ describe(__filename, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
-                const parse = utils.parseJson(response, __filename);
+                const parse = parseJson(response, __filename);
                 verifyOptionals(parse);
                 done();
             });
@@ -52,7 +53,7 @@ describe(__filename, function () {
         function (err, response, body) {
             expect(err).toBeNull();
             expect(getProp('statusCode', response)).toBe(201);
-            const parse = utils.parseJson(response, __filename);
+            const parse = parseJson(response, __filename);
             expect(getProp('owner', parse)).toBe("stuff");
             done();
         });
@@ -63,7 +64,7 @@ describe(__filename, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
-                const parse = utils.parseJson(response, __filename);
+                const parse = parseJson(response, __filename);
                 expect(getProp('owner', parse)).toBe("stuff");
                 done();
             });
