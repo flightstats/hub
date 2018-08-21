@@ -108,20 +108,8 @@ describe(__filename, function () {
     it('verifies we got what we expected through the callback', function () {
         if (!createdChannel) return fail('channel not created in before block');
         expect(callbackItems.length).toBe(2);
-        let uriA;
-        let uriB;
-        try {
-            const itemA = JSON.parse(callbackItems[0]);
-            const itemB = JSON.parse(callbackItems[1]);
-            const urisA = getProp('uris', itemA);
-            const urisB = getProp('uris', itemB);
-            uriA = urisA && urisA[0];
-            uriB = urisB && urisB[0];
-        } catch (ex) {
-            expect(`failed to parse json, ${ex}`).toBeNull();
-        }
-        expect(uriA).toBe(postedItems[0]);
-        expect(uriB).toBe(postedItems[1]);
+        expect(callbackItems[0]).toBe(postedItems[0]);
+        expect(callbackItems[1]).toBe(postedItems[1]);
     });
 
     it('closes the callback server', async () => {

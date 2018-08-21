@@ -61,6 +61,7 @@ describe(__filename, () => {
             maxAttempts: 1,
         };
         const response = await hubClientPut(webhookURL, headers, payload);
+        console.log(getProp('body', response));
         expect(getProp('statusCode', response)).toEqual(201);
     });
 
@@ -73,8 +74,12 @@ describe(__filename, () => {
         expect(channelResource).toBeDefined();
     });
 
+    it('waits 1000 ms', async () => {
+        await itSleeps(1000);
+    });
+
     it('posts an item to the data channel', async () => {
-        const headers = { 'Content-Type': 'text/plain' };
+        const headers = { 'Content-Type': 'application/json' };
         const payload = moment.utc().toISOString();
         const response = await hubClientPost(channelResource, headers, payload);
 
@@ -129,8 +134,9 @@ describe(__filename, () => {
         expect(postedTime).toBeDefined();
         expect(giveUpTime).toBeDefined();
         const clause = res => {
-            console.log('res', res.statusCode);
-            return (getProp('statusCode', res) === 303);
+            const statusCode = getProp('statusCode', res);
+            console.log(statusCode);
+            return (statusCode === 303);
         };
         try {
             const originalRes = await utils.httpGetUntil(`${errorChannelURL}/latest`, clause);

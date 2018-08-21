@@ -100,15 +100,7 @@ describe(__filename, function () {
         expect(callbackItems.length).toBe(4);
         expect(postedItems.length).toBe(4);
         const actual = callbackItems.every((callbackItem, index) => {
-            try {
-                const parse = JSON.parse(callbackItem);
-                const uris = getProp('uris', parse) || [];
-                const name = getProp('name', parse);
-                return uris[0] === postedItems[index] &&
-                    name === webhookName;
-            } catch (ex) {
-                console.log(`failed to parse json, ${callbackItem}, ${ex}`);
-            }
+            return callbackItem === postedItems[index];
         });
         expect(actual).toBe(true);
     });

@@ -13,13 +13,13 @@ const creds = {
 const getHttps = app => new https.Server(creds, app);
 const getHttp = app => new http.Server(app);
 
-const startServer = async (port, callback, path = '/', secure) => {
+const startServer = async (port, callback, path = '/', secure, file) => {
     const app = express();
 
     app.use(bodyParser.json());
 
     app.post(path, (request, response) => {
-        console.log('request.body', request.body);
+        // console.log('request.body', request.body);
         const arr = fromObjectPath(['body', 'uris'], request) || [];
         const str = arr[arr.length - 1] || '';
         if (callback) callback(str, response);
@@ -32,6 +32,9 @@ const startServer = async (port, callback, path = '/', secure) => {
     });
 
     server.on('request', function (request, response) {
+        if (file === '/home/integration/webhook_error_channel_spec.js') {
+            console.log('request.headers', request.headers);
+        }
         request.on('end', function () {
             response.end();
         });

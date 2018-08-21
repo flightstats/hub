@@ -9,7 +9,6 @@ const {
     hubClientPut,
     hubClientPostTestItem,
     randomChannelName,
-    randomString,
     startServer,
     waitForCondition,
 } = require('../lib/helpers');
@@ -29,8 +28,7 @@ const channelName0 = randomChannelName();
 const webhookName0 = randomChannelName();
 const channelResourceA = `${channelUrl}/${channelName}`;
 const channelResourceB = `${channelUrl}/${channelName0}`;
-const callbackPath = `/${randomString(5)}`;
-const callbackUrl = `${callbackDomain}:${port}${callbackPath}`;
+const callbackUrl = `${callbackDomain}:${port}`;
 const context = {
     [channelUrl]: {
         callbackServer1: null,

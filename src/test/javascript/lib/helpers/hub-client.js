@@ -162,7 +162,7 @@ const followRedirectIfPresent = async (response, headers = {}) => {
     const location = fromObjectPath(['headers', 'location'], response);
     console.log('statusCode', statusCode);
     const redirectCode = isRedirect(statusCode);
-    console.log('location', location);
+    console.log('redirecting to location: ', location);
     if (redirectCode && !!location) {
         const newResponse = await hubClientGet(location, headers);
         return newResponse;

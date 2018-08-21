@@ -63,9 +63,7 @@ describe(__filename, function () {
         if (!createdChannel) return fail('channel not created in before block');
         const callback = (string) => {
             console.log('incoming:', string);
-            const json = JSON.parse(string);
-            const uris = json.uris || [];
-            uris.forEach(uri => callbackItems.push(uri));
+            callbackItems.push(string);
         };
         callbackServer = await startServer(port, callback, callbackPath);
     });
