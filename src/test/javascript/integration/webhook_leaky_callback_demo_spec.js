@@ -38,7 +38,7 @@ const context = {
     },
 };
 
-describe('callback leak on same callbackServer same port', () => {
+describe('callback leak on same callbackServer, port, path', () => {
     beforeAll(async () => {
         const channel = await createChannel(channelName, false, __filename);
         if (getProp('statusCode', channel) === 201) {
@@ -65,10 +65,10 @@ describe('callback leak on same callbackServer same port', () => {
     });
 
     it('inserts items', async () => {
-        const response0 = await hubClientPostTestItem(channelResourceA);
-        const response1 = await hubClientPostTestItem(channelResourceA);
-        const response2 = await hubClientPostTestItem(channelResourceA);
-        const response3 = await hubClientPostTestItem(channelResourceA);
+        const response0 = await hubClientPostTestItem(channelResourceA, headers);
+        const response1 = await hubClientPostTestItem(channelResourceA, headers);
+        const response2 = await hubClientPostTestItem(channelResourceA, headers);
+        const response3 = await hubClientPostTestItem(channelResourceA, headers);
         const items = [response0, response1, response2, response3]
             .map(res => `FIRST_SET: ${fromObjectPath(['body', '_links', 'self', 'href'], res)}`);
         const condition = () => (context[channelUrl].callbackItemsA.length === items.length);
@@ -111,10 +111,10 @@ describe('callback leak on same callbackServer same port', () => {
     });
 
     it('inserts items', async () => {
-        await hubClientPostTestItem(channelResourceB);
-        await hubClientPostTestItem(channelResourceB);
-        await hubClientPostTestItem(channelResourceB);
-        await hubClientPostTestItem(channelResourceB);
+        await hubClientPostTestItem(channelResourceB, headers);
+        await hubClientPostTestItem(channelResourceB, headers);
+        await hubClientPostTestItem(channelResourceB, headers);
+        await hubClientPostTestItem(channelResourceB, headers);
         const condition = () => (context[channelUrl].callbackItemsA.length === 8);
         await waitForCondition(condition);
     });

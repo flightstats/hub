@@ -1,37 +1,41 @@
+const express = require('express');
 const http = require('http');
 const https = require('https');
+const bodyParser = require('body-parser');
 const { readFileSync } = require('fs');
+const { fromObjectPath } = require('./functional');
 const { getCallBackDomain } = require('../config');
 
-const getHttps = () => new https.Server({
+const creds = {
     key: readFileSync('localhost.key'),
     cert: readFileSync('localhost.cert'),
-});
-const getHttp = () => new http.Server();
+};
+const getHttps = app => new https.Server(creds, app);
+const getHttp = app => new http.Server(app);
 
-const startServer = async (port, callback, secure) => {
-    const server = secure ? getHttps() : getHttp();
+const startServer = async (port, callback, path = '/', secure) => {
+    const app = express();
+    app.use(bodyParser.json());
+    app.post(path, (request, response) => {
+        const arr = fromObjectPath(['body', 'uris'], request) || [];
+        const str = arr[arr.length - 1] || '';
+        if (callback) callback(str);
+    });
+    const server = secure ? getHttps(app) : getHttp(app);
 
     server.on('connection', (socket) => {
         socket.setTimeout(1000);
     });
 
-    server.on('request', (request, response) => {
-        let incoming = '';
-
-        request.on('data', (chunk) => {
-            incoming = `${incoming}${chunk.toString()}`;
-        });
-
-        request.on('end', () => {
-            if (callback) callback(incoming, response);
+    server.on('request', function (request, response) {
+        request.on('end', function () {
             response.end();
         });
     });
 
     server.listen(port);
     const listeningServer = await server.on('listening', () => {
-        console.log(`server listening at ${getCallBackDomain()}:${port}/`);
+        console.log(`server listening at ${getCallBackDomain()}:${port}${path}`);
         return server;
     });
     return listeningServer;

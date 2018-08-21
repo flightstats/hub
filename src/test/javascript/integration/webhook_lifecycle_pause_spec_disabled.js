@@ -8,6 +8,7 @@ const {
     hubClientPostTestItem,
     itSleeps,
     putWebhook,
+    randomString,
     startServer,
     waitForCondition,
 } = require('../lib/helpers');
@@ -21,10 +22,11 @@ const {
 const channelUrl = getChannelUrl();
 const callbackDomain = getCallBackDomain();
 const port = getCallBackPort();
+const webhookPath = `/${randomString(5)}`;
 const channelName = utils.randomChannelName();
 const webhookName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
-const callbackUrl = `${callbackDomain}:${port}/`;
+const callbackUrl = `${callbackDomain}:${port}${webhookPath}`;
 const webhookConfig = {
     callbackUrl: callbackUrl,
     channelUrl: channelResource,
@@ -80,7 +82,7 @@ describe(__filename, function () {
             callbackItems.push(string);
             console.log(callbackItems.length, 'called back', string);
         };
-        callbackServer = await startServer(port, callback);
+        callbackServer = await startServer(port, callback, webhookPath);
     });
 
     it('posts two items', async () => {
@@ -91,7 +93,6 @@ describe(__filename, function () {
         addPostedItem(response1);
         const condition = () => (callbackItems.length === postedItems.length);
         await waitForCondition(condition);
-        console.log('what is up here??? ', condition());
     });
 
     it('waits 5000 ms', async () => {

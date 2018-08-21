@@ -11,6 +11,7 @@ const {
 const {
     randomChannelName,
     randomNumberBetweenInclusive,
+    randomString,
     randomTagName,
 } = require('./random-values');
 const {
@@ -52,6 +53,7 @@ module.exports = {
     putWebhook,
     randomChannelName,
     randomNumberBetweenInclusive,
+    randomString,
     randomTagName,
     startServer,
     waitForCondition,
