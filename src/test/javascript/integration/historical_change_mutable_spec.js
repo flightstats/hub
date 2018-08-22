@@ -1,11 +1,13 @@
 require('../integration_config');
 const moment = require('moment');
+const rp = require('request-promise-native');
 const { getProp,
     fromObjectPath,
     hubClientChannelRefresh,
     hubClientPut,
     hubClientPostTestItem,
 } = require('../lib/helpers');
+
 const channel = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channel}`;
 const mutableTime = moment.utc().subtract(1, 'day');
@@ -58,11 +60,35 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(200);
     });
 
-    it('queries both items', function (done) {
-        utils.getQuery(`${channelLocation}/latest/2?trace=true`, 200, historicalLocations, done);
+    it('queries both items', async () => {
+        try {
+            const response = await rp({
+                url: `${channelLocation}/latest/2?trace=true`,
+                method: 'GET',
+                resolveWithFullResponse: true,
+            });
+            expect(getProp('statusCode', response)).toBe(200);
+            const body = JSON.parse(getProp('body', response));
+            const uris = fromObjectPath(['_links', 'uris'], body) || [];
+            expect(uris.length).toBeGreaterThan(0);
+            const actual = uris
+                .every((uri, index) => uri === historicalLocations[index]);
+            expect(actual).toBe(true);
+        } catch (ex) {
+            console.log('queries both items failed', ex && ex.message);
+            return fail(ex);
+        }
     });
 
-    it('queries mutable items', function (done) {
-        utils.getQuery(`${channelLocation}/latest/2?trace=true&epoch=MUTABLE`, 404, false, done);
+    it('queries mutable items', async () => {
+        try {
+            await rp({
+                url: `${channelLocation}/latest/2?trace=true&epoch=MUTABLE`,
+                method: 'GET',
+                resolveWithFullResponse: true,
+            });
+        } catch (ex) {
+            expect(getProp('statusCode', ex)).toBe(404);
+        }
     });
 });

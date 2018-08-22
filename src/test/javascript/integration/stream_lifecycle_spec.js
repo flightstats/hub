@@ -1,5 +1,11 @@
 require('../integration_config');
-const { createChannel, getProp, hubClientGet, hubClientPostTestItem } = require('../lib/helpers');
+const {
+    createChannel,
+    getProp,
+    hubClientGet,
+    hubClientPostTestItem,
+    waitForCondition,
+} = require('../lib/helpers');
 const channelName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
 
@@ -40,11 +46,8 @@ xdescribe(__filename, function () {
         const values = [1, 2, 3, 4].map(v => value());
         const responses = await Promise.all(values);
         postedItems.push(responses);
-    });
-
-    it('waits for the data', function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        utils.waitForData(callbackItems, postedItems, done);
+        const condition = () => (callbackItems.length === postedItems.length);
+        await waitForCondition(condition);
     });
 
     it('verifies we got the correct number of items', function () {

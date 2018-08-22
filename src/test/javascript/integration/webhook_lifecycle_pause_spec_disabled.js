@@ -7,6 +7,7 @@ const {
     hubClientPostTestItem,
     itSleeps,
     putWebhook,
+    waitForCondition,
 } = require('../lib/helpers');
 require('../integration_config');
 
@@ -78,12 +79,9 @@ describe(__filename, function () {
         addPostedItem(response0);
         const response1 = await hubClientPostTestItem(channelResource);
         addPostedItem(response1);
+        const condition = () => (callbackItems.length === postedItems.length);
+        await waitForCondition(condition);
     });
-
-    it('waits for data', function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        utils.waitForData(callbackItems, postedItems, done);
-    }, 15 * 1000);
 
     it('waits 2000 ms', async () => {
         await itSleeps(2000);

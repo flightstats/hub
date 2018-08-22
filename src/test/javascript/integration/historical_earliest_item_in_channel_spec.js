@@ -1,5 +1,10 @@
 require('../integration_config');
-const { getProp, fromObjectPath, hubClientPut, hubClientPostTestItem } = require('../lib/helpers');
+const rp = require('request-promise-native');
+const { getProp,
+    fromObjectPath,
+    hubClientPut,
+    hubClientPostTestItem,
+} = require('../lib/helpers');
 
 const channel = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channel}`;
@@ -61,11 +66,44 @@ describe(__filename, function () {
         utils.getLocation(`${channelResource}/earliest?epoch=MUTABLE`, 303, items[0], done);
     });
 
-    it("gets earliest N Mutable in channel ", function (done) {
-        utils.getQuery(`${channelResource}/earliest/10?epoch=MUTABLE`, 200, items.slice(0, 2), done);
+    it("gets earliest N Mutable in channel ", async () => {
+        try {
+            const response = await rp({
+                method: 'GET',
+                url: `${channelResource}/earliest/10?epoch=MUTABLE`,
+                resolveWithFullResponse: true,
+            });
+            expect(getProp('statusCode', response)).toBe(200);
+            const body = JSON.parse(getProp('body', response));
+            const uris = fromObjectPath(['_links', 'uris'], body) || [];
+            expect(uris.length).toBeGreaterThan(0);
+            const expected = items.slice(0, 2);
+            const actual = uris
+                .every((uri, index) => uri && uri === expected[index]);
+            expect(actual).toEqual(true);
+        } catch (ex) {
+            console.log('failed get earliest N in channel', ex && ex.message);
+            return fail(ex);
+        }
     });
 
-    it("gets earliest N ALL in channel ", function (done) {
-        utils.getQuery(`${channelResource}/earliest/10?stable=false&epoch=ALL`, 200, items, done);
+    it("gets earliest N ALL in channel ", async () => {
+        try {
+            const response = await rp({
+                method: 'GET',
+                url: `${channelResource}/earliest/10?stable=false&epoch=ALL`,
+                resolveWithFullResponse: true,
+            });
+            expect(getProp('statusCode', response)).toBe(200);
+            const body = JSON.parse(getProp('body', response));
+            const uris = fromObjectPath(['_links', 'uris'], body) || [];
+            expect(uris.length).toBeGreaterThan(0);
+            const actual = uris
+                .every((uri, index) => uri && uri === items[index]);
+            expect(actual).toEqual(true);
+        } catch (ex) {
+            console.log('failed get earliest N in channel', ex && ex.message);
+            return fail(ex);
+        }
     });
 });

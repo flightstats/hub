@@ -6,6 +6,7 @@ const {
     hubClientPostTestItem,
     itSleeps,
     putWebhook,
+    waitForCondition,
 } = require('../lib/helpers');
 const channelName = utils.randomChannelName();
 const webhookName = utils.randomChannelName();
@@ -58,8 +59,8 @@ describe(__filename, function () {
         expect(getProp('statusCode', result)).toEqual(200);
     });
 
-    it('waits 10000 ms', async () => {
-        await itSleeps(10000);
+    it('waits 5000 ms', async () => {
+        await itSleeps(5000);
     });
 
     it('starts a callback server', function (done) {
@@ -74,11 +75,9 @@ describe(__filename, function () {
         if (!createdChannel) return fail('channel not created in before block');
         const response = await hubClientPostTestItem(channelResource);
         itemURL = fromObjectPath(['body', '_links', 'self', 'href'], response);
-    });
-
-    it('waits for data', function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        utils.waitForData(receivedItems, [itemURL], done);
+        expect(itemURL).toBeDefined();
+        const condition = () => !!receivedItems[0] && receivedItems[0].includes(itemURL);
+        await waitForCondition(condition);
     });
 
     it('verifies we got the item through the callback', () => {
@@ -86,7 +85,7 @@ describe(__filename, function () {
         expect(receivedItems.length).toBe(1);
         const receivedItem = receivedItems.find(item => item.includes(item));
         expect(receivedItem).toBeDefined();
-        expect(receivedItem).toContain(itemURL);
+        expect((receivedItem || '').includes(itemURL)).toBe(true);
     });
 
     it('closes the callback server', function (done) {

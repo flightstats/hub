@@ -1,6 +1,14 @@
 require('../integration_config');
-
 const moment = require('moment');
+const {
+    followRedirectIfPresent,
+    fromObjectPath,
+    getProp,
+    hubClientGet,
+    hubClientPost,
+    hubClientPut,
+    waitForCondition,
+} = require('../lib/helpers');
 
 const dataChannelName = utils.randomChannelName();
 const dataChannelURL = `${hubUrlBase}/channel/${dataChannelName}`;
@@ -10,74 +18,69 @@ const callbackServerPort = utils.getPort();
 const callbackServerURL = `${callbackDomain}:${callbackServerPort}`;
 const webhookName = utils.randomChannelName();
 const webhookURL = `${hubUrlBase}/webhook/${webhookName}`;
+let callbackServer;
+let callbackItems = [];
+let postedItems = [];
+let postedTime = null;
+let giveUpTime = null;
 
 describe(__filename, () => {
-
-    let callbackServer;
-    let callbackItems = [];
-    let postedItems = [];
-
-    it('creates a data channel', (done) => {
-        utils.httpPut(dataChannelURL)
-            .then(response => expect(response.statusCode).toEqual(201))
-            .finally(done);
+    beforeAll(async () => {
+        const response = await hubClientPut(dataChannelURL);
+        expect(getProp('statusCode', response)).toEqual(201);
     });
 
     it('creates a callback server', (done) => {
         callbackServer = utils.startHttpServer(callbackServerPort, (request) => {
-            let json = JSON.parse(request);
-            console.log('incoming:', json);
-            json.uris.forEach(uri => callbackItems.push(uri));
+            try {
+                const json = JSON.parse(request);
+                console.log('incoming:', json);
+                const uris = getProp('uris', json) || [];
+                callbackItems.push(...uris);
+            } catch (ex) {
+                return done.fail(ex);
+            }
         }, done);
     });
 
-    it('creates a webhook', (done) => {
-        let headers = {'Content-Type': 'application/json'};
-        let payload = {
+    it('creates a webhook', async () => {
+        const headers = { 'Content-Type': 'application/json' };
+        const payload = {
             channelUrl: dataChannelURL,
             callbackUrl: callbackServerURL,
             errorChannelUrl: errorChannelURL,
             callbackTimeoutSeconds: 10,
-            maxAttempts: 1
+            maxAttempts: 1,
         };
-        utils.httpPut(webhookURL, headers, payload)
-            .then(response => expect(response.statusCode).toEqual(201))
-            .finally(done);
+        const response = await hubClientPut(webhookURL, headers, payload);
+        expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    it('verifies the error channel was created', (done) => {
-        utils.httpGet(`${hubUrlBase}/channel`)
-            .then(response => {
-                expect(response.body._links).toBeDefined();
-                expect(response.body._links.channels).toBeDefined();
-                let channels = response.body._links.channels;
-                let channelURL = channels.find(channel => channel.href === errorChannelURL);
-                expect(channelURL).toBeDefined();
-            })
-            .finally(done);
+    it('verifies the error channel was created', async () => {
+        const headers = { 'Content-Type': 'application/json' };
+        const response = await hubClientGet(`${hubUrlBase}/channel`, headers);
+        const channels = fromObjectPath(['body', '_links', 'channels'], response) || [];
+        expect(channels.length).toBeGreaterThan(0);
+        const channelURL = channels.find(channel => getProp('href', channel) === errorChannelURL);
+        expect(channelURL).toBeDefined();
     });
 
-    it('posts an item to the data channel', (done) => {
-        let headers = {'Content-Type': 'text/plain'};
-        let payload = moment.utc().toISOString();
-        utils.httpPost(dataChannelURL, headers, payload)
-            .then(response => {
-                expect(response.statusCode).toEqual(201);
-                let itemURL = response.body._links.self.href;
-                postedItems.push(itemURL);
-            })
-            .finally(done);
+    it('posts an item to the data channel', async () => {
+        const headers = { 'Content-Type': 'text/plain' };
+        const payload = moment.utc().toISOString();
+        const response = await hubClientPost(dataChannelURL, headers, payload);
+
+        expect(getProp('statusCode', response)).toEqual(201);
+        const itemURL = fromObjectPath(['body', '_links', 'self', 'href'], response);
+        postedItems.push(itemURL);
+        const condition = () => (callbackItems.length === postedItems.length);
+        await waitForCondition(condition);
     });
 
-    it('waits for data', function (done) {
-        utils.waitForData(callbackItems, postedItems, done);
-    });
-
-    it('verifies no error posted to the error channel', (done) => {
-        utils.httpGet(`${errorChannelURL}/latest`)
-            .then(utils.followRedirectIfPresent)
-            .then(response => expect(response.statusCode).toEqual(404))
-            .finally(done);
+    it('verifies no error posted to the error channel', async () => {
+        const response = await hubClientGet(`${errorChannelURL}/latest`);
+        const response2 = await followRedirectIfPresent(response);
+        expect(getProp('statusCode', response2)).toEqual(404);
     });
 
     it('kills the callback server', (done) => {
@@ -85,52 +88,51 @@ describe(__filename, () => {
         utils.closeServer(callbackServer, done);
     });
 
-    let postedTime;
+    it('posts an item to the data channel', async () => {
+        const headers = { 'Content-Type': 'text/plain' };
+        const payload = moment.utc().toISOString();
+        const response = await hubClientPost(dataChannelURL, headers, payload);
 
-    it('posts an item to the data channel', (done) => {
-        let headers = {'Content-Type': 'text/plain'};
-        let payload = moment.utc().toISOString();
-        utils.httpPost(dataChannelURL, headers, payload)
-            .then(response => {
-                expect(response.statusCode).toEqual(201);
-                postedItems.push(response.body._links.self.href);
-                postedTime = moment.utc();
-                console.log('postedTime:', postedTime.toISOString());
-            })
-            .finally(done);
+        expect(getProp('statusCode', response)).toEqual(201);
+        const itemURL = fromObjectPath(['body', '_links', 'self', 'href'], response);
+        postedItems.push(itemURL);
+        postedTime = moment.utc();
+        console.log('postedTime:', postedTime.toISOString());
     });
 
-    let giveUpTime;
-
-    it('waits for the webhook to give up', (done) => {
-        let clause = (response) => response.body.errors.filter(e => e.includes('max attempts reached')).length > 0;
-        utils.httpGetUntil(webhookURL, clause)
-            .then(response => {
-                giveUpTime = moment.utc();
-                console.log('giveUpTime:', giveUpTime.toISOString());
-            })
-            .catch(error => done.fail(error))
-            .finally(done);
+    it('waits for the webhook to give up', async () => {
+        const clause = (response) => {
+            const errors = fromObjectPath(['body', 'errors'], response) || [];
+            return errors.some(e => e && e.includes('max attempts reached'));
+        };
+        try {
+            await utils.httpGetUntil(webhookURL, clause);
+            giveUpTime = moment.utc();
+            console.log('giveUpTime:', giveUpTime.toISOString());
+        } catch (error) {
+            return fail(error);
+        }
     });
 
-    it('verifies an error was posted to the error channel', (done) => {
+    it('verifies an error was posted to the error channel', async () => {
         expect(postedTime).toBeDefined();
         expect(giveUpTime).toBeDefined();
-        let clause = (response) => response.statusCode === 303;
-        utils.httpGetUntil(`${errorChannelURL}/latest`, clause)
-            .then(utils.followRedirectIfPresent)
-            .then(response => {
-                console.log(response.body);
-                expect(response.body.webhookUrl).toEqual(webhookURL);
-                expect(response.body.failedItemUrl).toEqual(postedItems[1]);
-                expect(response.body.callbackUrl).toEqual(callbackServerURL);
-                expect(response.body.numberOfAttempts).toEqual(1);
-                expect(moment(response.body.lastAttemptTime)).toBeGreaterThan(postedTime);
-                expect(moment(response.body.lastAttemptTime)).toBeLessThan(giveUpTime);
-                expect(response.body.lastAttemptError).toEqual("max attempts reached (1)");
-            })
-            .catch(error => done.fail(error))
-            .finally(done);
+        const clause = res => (getProp('statusCode', res) === 303);
+        try {
+            const originalRes = await utils.httpGetUntil(`${errorChannelURL}/latest`, clause);
+            const headers = { 'Content-Type': 'application/json' };
+            const response = await followRedirectIfPresent(originalRes, headers);
+            const body = getProp('body', response) || {};
+            console.log('body: ', body);
+            expect(body.webhookUrl).toEqual(webhookURL);
+            expect(body.failedItemUrl).toEqual(postedItems[1]);
+            expect(body.callbackUrl).toEqual(callbackServerURL);
+            expect(body.numberOfAttempts).toEqual(1);
+            expect(moment(body.lastAttemptTime).utc()).toBeGreaterThan(postedTime);
+            expect(moment(body.lastAttemptTime)).toBeLessThan(giveUpTime);
+            expect(body.lastAttemptError).toEqual("max attempts reached (1)");
+        } catch (error) {
+            return fail(error);
+        }
     });
-
 });

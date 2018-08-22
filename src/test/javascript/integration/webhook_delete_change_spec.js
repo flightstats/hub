@@ -7,6 +7,7 @@ const {
     hubClientPostTestItem,
     itSleeps,
     putWebhook,
+    waitForCondition,
 } = require('../lib/helpers');
 
 const channelName = utils.randomChannelName();
@@ -67,11 +68,9 @@ describe(__filename, function () {
         if (!createdChannel) return fail('channel not created in before block');
         const response = await hubClientPostTestItem(channelResource);
         postedItemsA.push(fromObjectPath(['body', '_links', 'self', 'href'], response));
-    });
-
-    it('waits for data', function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        utils.waitForData(callbackItemsA, postedItemsA, done);
+        const condition = () => (postedItemsA.length &&
+            (postedItemsA.length === callbackItemsA.length));
+        await waitForCondition(condition);
     });
 
     it('deletes the webhook', async () => {
@@ -99,11 +98,9 @@ describe(__filename, function () {
         if (!createdChannel) return fail('channel not created in before block');
         const response = await hubClientPostTestItem(channelResource);
         postedItemsB.push(fromObjectPath(['body', '_links', 'self', 'href'], response));
-    });
-
-    it('waits for data', function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        utils.waitForData(callbackItemsB, postedItemsB, done);
+        const condition = () => (postedItemsB.length &&
+            (postedItemsB.length === callbackItemsB.length));
+        await waitForCondition(condition);
     });
 
     it('verifies we got what we expected through the callback', () => {

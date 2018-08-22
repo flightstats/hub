@@ -1,10 +1,13 @@
 require('../integration_config');
-const { createChannel,
+const {
+    createChannel,
     getProp,
     fromObjectPath,
     hubClientPostTestItem,
     putWebhook,
+    waitForCondition,
 } = require('../lib/helpers');
+
 const channelName = utils.randomChannelName();
 const webhookName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
@@ -18,6 +21,14 @@ let createdChannel = false;
 const callbackItems = [];
 const postedItems = [];
 let callbackServer = null;
+
+/*
+    TODO: this test will fail ~50% of the time
+    if there are failing webhooks from other tests
+    including if those tests test failover behavior of
+    failing webhooks
+    either a test bug or a bug bug ? investigate/fix
+*/
 /**
  * This should:
  *
@@ -57,11 +68,8 @@ describe(__filename, function () {
         const items = [response0, response1, response2, response3]
             .map(res => fromObjectPath(['body', '_links', 'self', 'href'], res));
         postedItems.push(...items);
-    });
-
-    it('waits for data', function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        utils.waitForData(callbackItems, postedItems, done);
+        const condition = () => (callbackItems.length === postedItems.length);
+        await waitForCondition(condition);
     });
 
     it('closes the callback server', function (done) {
@@ -74,6 +82,8 @@ describe(__filename, function () {
         if (!createdChannel) return fail('channel not created in before block');
         expect(callbackItems.length).toBe(4);
         expect(postedItems.length).toBe(4);
+        console.log('callbackItems', callbackItems);
+        console.log('postedItems', postedItems);
         const actual = callbackItems.every((callbackItem, index) => {
             try {
                 const parse = JSON.parse(callbackItem);

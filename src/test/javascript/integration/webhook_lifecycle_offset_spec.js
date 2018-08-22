@@ -5,6 +5,7 @@ const { createChannel,
     hubClientPostTestItem,
     itSleeps,
     putWebhook,
+    waitForCondition,
 } = require('../lib/helpers');
 const channelName = utils.randomChannelName();
 const webhookName = utils.randomChannelName();
@@ -70,18 +71,14 @@ describe(__filename, function () {
         const response2 = await hubClientPostTestItem(channelResource);
         const response3 = await hubClientPostTestItem(channelResource);
         const response4 = await hubClientPostTestItem(channelResource);
-        expect(getProp('statusCode', response1)).toEqual(201);
-        expect(getProp('statusCode', response2)).toEqual(201);
-        expect(getProp('statusCode', response3)).toEqual(201);
-        expect(getProp('statusCode', response4)).toEqual(201);
-        const items = [response1, response2, response3, response4]
+        const responses = [response1, response2, response3, response4];
+        const successes = responses.every(r => getProp('statusCode', r) === 201);
+        expect(successes).toEqual(true);
+        const items = responses
             .map(res => fromObjectPath(['body', '_links', 'self', 'href'], res));
         postedItems.push(...items);
-    });
-
-    it('waits for data', function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        utils.waitForData(callbackItems, postedItems, done);
+        const condition = () => (callbackItems.length === postedItems.length);
+        await waitForCondition(condition);
     });
 
     it('closes the callback server', function (done) {

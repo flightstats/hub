@@ -1,4 +1,6 @@
 require('../integration_config');
+const rp = require('request-promise-native');
+const moment = require('moment');
 const {
     fromObjectPath,
     getProp,
@@ -8,7 +10,6 @@ const {
 } = require('../lib/helpers');
 
 const channel = utils.randomChannelName();
-const moment = require('moment');
 const channelResource = `${channelUrl}/${channel}`;
 const headers = { 'Content-Type': 'application/json' };
 const mutableTime = moment.utc().subtract(3, 'years');
@@ -62,16 +63,63 @@ describe(__filename, function () {
         items.push(fromObjectPath(['headers', 'location'], response2));
     });
 
-    it(`queries next 7 All ${next7}`, function (done) {
-        utils.getQuery(`${channelResource}${next7}&epoch=ALL`, 200, items, done);
+    it(`queries next 7 All ${next7}`, async () => {
+        try {
+            const response = await rp({
+                url: `${channelResource}${next7}&epoch=ALL`,
+                method: 'GET',
+                resolveWithFullResponse: true,
+            });
+            expect(getProp('statusCode', response)).toEqual(200);
+            const body = JSON.parse(getProp('body', response));
+            const uris = fromObjectPath(['_links', 'uris'], body);
+            expect(uris.length).toBeGreaterThan(0);
+            const actual = uris.every((uri, index) => uri === items[index]);
+            expect(actual).toEqual(true);
+        } catch (ex) {
+            console.log('failed with exception: ', ex && ex.message);
+            return fail(ex);
+        }
     });
 
-    it(`queries next 7 Immutable ${next7}`, function (done) {
-        utils.getQuery(`${channelResource}${next7}&epoch=IMMUTABLE`, 200, items.slice(3), done);
+    it(`queries next 7 Immutable ${next7}`, async () => {
+        try {
+            const response = await rp({
+                url: `${channelResource}${next7}&epoch=IMMUTABLE`,
+                method: 'GET',
+                resolveWithFullResponse: true,
+            });
+            expect(getProp('statusCode', response)).toEqual(200);
+            const body = JSON.parse(getProp('body', response));
+            const uris = fromObjectPath(['_links', 'uris'], body);
+            const expected = items.slice(3);
+            expect(uris.length).toEqual(expected.length);
+            const actual = uris.every((uri, index) => uri === expected[index]);
+            expect(actual).toEqual(true);
+        } catch (ex) {
+            console.log('failed with exception: ', ex && ex.message);
+            return fail(ex);
+        }
     });
 
-    it(`queries next 7 Mutable ${next7}`, function (done) {
-        utils.getQuery(`${channelResource}${next7}&epoch=MUTABLE`, 200, items.slice(0, 3), done);
+    it(`queries next 7 Mutable ${next7}`, async () => {
+        try {
+            const response = await rp({
+                url: `${channelResource}${next7}&epoch=MUTABLE`,
+                method: 'GET',
+                resolveWithFullResponse: true,
+            });
+            expect(getProp('statusCode', response)).toEqual(200);
+            const body = JSON.parse(getProp('body', response));
+            const uris = fromObjectPath(['_links', 'uris'], body);
+            const expected = items.slice(0, 3);
+            expect(uris.length).toEqual(expected.length);
+            const actual = uris.every((uri, index) => uri === expected[index]);
+            expect(actual).toEqual(true);
+        } catch (ex) {
+            console.log('failed with exception: ', ex && ex.message);
+            return fail(ex);
+        }
     });
 
     it('updates the mutableTime value', async () => {
@@ -84,18 +132,82 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(200);
     });
 
-    it(`queries next 7 Immutable after change ${next7}`, function (done) {
-        utils.getQuery(`${channelResource}${next7}&epoch=IMMUTABLE`, 200, items.slice(2), done);
+    it(`queries next 7 Immutable after change ${next7}`, async () => {
+        try {
+            const response = await rp({
+                url: `${channelResource}${next7}&epoch=IMMUTABLE`,
+                method: 'GET',
+                resolveWithFullResponse: true,
+            });
+            expect(getProp('statusCode', response)).toEqual(200);
+            const body = JSON.parse(getProp('body', response));
+            const uris = fromObjectPath(['_links', 'uris'], body);
+            const expected = items.slice(2);
+            expect(uris.length).toEqual(expected.length);
+            const actual = uris.every((uri, index) => uri === expected[index]);
+            expect(actual).toEqual(true);
+        } catch (ex) {
+            console.log('failed with exception: ', ex && ex.message);
+            return fail(ex);
+        }
     }, 3 * 60 * 1000);
 
-    it(`queries next 7 Mutable after change${next7}`, function (done) {
-        utils.getQuery(`${channelResource}${next7}&epoch=MUTABLE`, 200, items.slice(0, 2), done);
+    it(`queries next 7 Mutable after change${next7}`, async () => {
+        try {
+            const response = await rp({
+                url: `${channelResource}${next7}&epoch=MUTABLE`,
+                method: 'GET',
+                resolveWithFullResponse: true,
+            });
+            expect(getProp('statusCode', response)).toEqual(200);
+            const body = JSON.parse(getProp('body', response));
+            const uris = fromObjectPath(['_links', 'uris'], body);
+            const expected = items.slice(0, 2);
+            expect(uris.length).toEqual(expected.length);
+            const actual = uris.every((uri, index) => uri === expected[index]);
+            expect(actual).toEqual(true);
+        } catch (ex) {
+            console.log('failed with exception: ', ex && ex.message);
+            return fail(ex);
+        }
     }, 3 * 60 * 1000);
-    it('queries earliest 2 Immutable after change ', function (done) {
-        utils.getQuery(`${channelResource}/earliest/2${parameters}&epoch=IMMUTABLE`, 200, items.slice(2, 4), done);
+    it('queries earliest 2 Immutable after change ', async () => {
+        try {
+            const response = await rp({
+                url: `${channelResource}/earliest/2${parameters}&epoch=IMMUTABLE`,
+                method: 'GET',
+                resolveWithFullResponse: true,
+            });
+            expect(getProp('statusCode', response)).toEqual(200);
+            const body = JSON.parse(getProp('body', response));
+            const uris = fromObjectPath(['_links', 'uris'], body);
+            const expected = items.slice(2, 4);
+            expect(uris.length).toEqual(expected.length);
+            const actual = uris.every((uri, index) => uri === expected[index]);
+            expect(actual).toEqual(true);
+        } catch (ex) {
+            console.log('failed with exception: ', ex && ex.message);
+            return fail(ex);
+        }
     }, 5 * 60 * 1000);
 
-    it('queries earliest 2 Mutable after change ', function (done) {
-        utils.getQuery(`${channelResource}/earliest/2${parameters}&epoch=MUTABLE`, 200, items.slice(0, 2), done);
+    it('queries earliest 2 Mutable after change ', async () => {
+        try {
+            const response = await rp({
+                url: `${channelResource}/earliest/2${parameters}&epoch=MUTABLE`,
+                method: 'GET',
+                resolveWithFullResponse: true,
+            });
+            expect(getProp('statusCode', response)).toEqual(200);
+            const body = JSON.parse(getProp('body', response));
+            const uris = fromObjectPath(['_links', 'uris'], body);
+            const expected = items.slice(0, 2);
+            expect(uris.length).toEqual(expected.length);
+            const actual = uris.every((uri, index) => uri === expected[index]);
+            expect(actual).toEqual(true);
+        } catch (ex) {
+            console.log('failed with exception: ', ex && ex.message);
+            return fail(ex);
+        }
     }, 5 * 60 * 1000);
 });

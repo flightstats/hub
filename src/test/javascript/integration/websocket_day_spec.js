@@ -1,5 +1,11 @@
 require('../integration_config');
-const { createChannel, fromObjectPath, getProp, hubClientPostTestItem } = require('../lib/helpers');
+const {
+    createChannel,
+    fromObjectPath,
+    getProp,
+    hubClientPostTestItem,
+    waitForCondition,
+} = require('../lib/helpers');
 const WebSocket = require('ws');
 let createdChannel = false;
 const channelName = utils.randomChannelName();
@@ -18,6 +24,7 @@ describe(__filename, function () {
             console.log(`created channel for ${__filename}`);
         }
     });
+
     it('posts item to channel', async () => {
         if (!createdChannel) return fail('channel not created in before block');
         const response = await hubClientPostTestItem(channelResource);
@@ -59,12 +66,8 @@ describe(__filename, function () {
         const itemURL = location;
         console.log('posted:', itemURL);
         postedItem = itemURL;
-    });
-
-    it('waits for data', function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        const sentItems = [startingItem, postedItem];
-        utils.waitForData(receivedMessages, sentItems, done);
+        const condition = () => (receivedMessages.length === 2);
+        await waitForCondition(condition);
     });
 
     it('verifies the correct data was received', function () {
