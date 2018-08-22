@@ -7,6 +7,11 @@ const {
     waitForCondition,
 } = require('../lib/helpers');
 const channelName = utils.randomChannelName();
+const {
+    getChannelUrl,
+} = require('../lib/config');
+
+const channelUrl = getChannelUrl();
 const channelResource = `${channelUrl}/${channelName}`;
 
 /**

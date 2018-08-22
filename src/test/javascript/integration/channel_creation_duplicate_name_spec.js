@@ -1,6 +1,10 @@
 require('../integration_config');
 const { getProp, hubClientGet, hubClientPost } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
+const channelUrl = getChannelUrl();
 const channelName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
 const headers = { 'Content-Type': 'application/json' };

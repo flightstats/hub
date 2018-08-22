@@ -7,8 +7,14 @@ const {
     hubClientDelete,
     itSleeps,
 } = require('../lib/helpers');
+const {
+    getChannelUrl,
+    getHubUrlBase,
+} = require('../lib/config');
+const channelUrl = getChannelUrl();
+
 const tag = utils.randomTag();
-const tagURL = `${hubUrlBase}/tag/${tag}`;
+const tagURL = `${getHubUrlBase()}/tag/${tag}`;
 const tagWebhookPrototypeURL = `${getWebhookUrl()}/TAGWHPROTO_${tag}`;
 
 const channelOneName = utils.randomChannelName();

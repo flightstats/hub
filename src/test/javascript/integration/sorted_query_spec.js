@@ -1,4 +1,5 @@
 require('../integration_config');
+const moment = require('moment');
 const {
     createChannel,
     fromObjectPath,
@@ -6,11 +7,15 @@ const {
     hubClientGet,
     hubClientPost,
 } = require('../lib/helpers');
-const moment = require('moment');
+const {
+    getChannelUrl,
+} = require('../lib/config');
+
+const channelUrl = getChannelUrl();
 const channelName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
-let createdChannel = false;
 const headers = { 'Content-Type': 'application/json' };
+let createdChannel = false;
 
 /**
  * This should:

@@ -7,7 +7,11 @@ const {
     hubClientPut,
     hubClientPostTestItem,
 } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
+const channelUrl = getChannelUrl();
 const mutableTime = moment.utc().subtract(1, 'minute');
 const channelBody = {
     mutableTime: mutableTime.format('YYYY-MM-DDTHH:mm:ss.SSS'),

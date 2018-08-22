@@ -1,4 +1,5 @@
 require('../integration_config');
+const rp = require('request-promise-native');
 const {
     fromObjectPath,
     getProp,
@@ -6,8 +7,11 @@ const {
     hubClientPut,
     hubClientPostTestItem,
 } = require('../lib/helpers');
-const rp = require('request-promise-native');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
+const channelUrl = getChannelUrl();
 const channelName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
 const headers = { 'Content-Type': 'application/json' };

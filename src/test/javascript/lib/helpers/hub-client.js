@@ -1,5 +1,8 @@
 const rp = require('request-promise-native');
 const { fromObjectPath, getProp } = require('./functional');
+const { getChannelUrl, getHubUrlBase } = require('../config');
+
+const channelUrl = getChannelUrl();
 
 const isRedirect = statusCode => !!statusCode &&
     (statusCode >= 300 && statusCode <= 399);
@@ -187,7 +190,7 @@ const hubClientChannelRefresh = async () => {
     try {
         const response = await rp({
             method: 'GET',
-            url: `${global.hubUrlBase}/internal/channel/refresh`,
+            url: `${getHubUrlBase()}/internal/channel/refresh`,
             resolveWithFullResponse: true,
         });
         console.log('refreshed channels');

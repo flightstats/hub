@@ -1,13 +1,17 @@
 require('../integration_config');
+const request = require('request');
+const moment = require('moment');
 const {
     fromObjectPath,
     getProp,
     hubClientPut,
     hubClientPostTestItem,
 } = require('../lib/helpers');
-const request = require('request');
-const moment = require('moment');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
+const channelUrl = getChannelUrl();
 const channel = utils.randomChannelName();
 const mutableTime = moment.utc().subtract(1, 'minute');
 const channelBody = {

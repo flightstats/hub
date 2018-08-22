@@ -9,18 +9,29 @@ const {
     putWebhook,
     waitForCondition,
 } = require('../lib/helpers');
+const {
+    getCallBackDomain,
+    getCallBackPort,
+    getChannelUrl,
+} = require('../lib/config');
+
+const channelUrl = getChannelUrl();
+const port = getCallBackPort();
+const callbackDomain = getCallBackDomain();
 
 const channelName = utils.randomChannelName();
 const webhookName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
 let callbackServerA = null;
 let callbackServerB = null;
-const portA = utils.getPort();
-const portB = utils.getPort();
+const portA = port + 1;
+const portB = portA + 1;
 const callbackItemsA = [];
 const callbackItemsB = [];
 const postedItemsA = [];
 const postedItemsB = [];
+console.log('portA', portA);
+console.log('portB', portB);
 const webhookConfigA = {
     callbackUrl: `${callbackDomain}:${portA}/`,
     channelUrl: channelResource,
@@ -55,7 +66,7 @@ describe(__filename, function () {
     it('creates the webhook', async () => {
         const response = await putWebhook(webhookName, webhookConfigA, 201, __filename);
         expect(getProp('statusCode', response)).toEqual(201);
-    });
+    }, 2 * 60 * 1000);
 
     it('starts the first callback server', function (done) {
         if (!createdChannel) return done.fail('channel not created in before block');
@@ -85,7 +96,7 @@ describe(__filename, function () {
     it('recreates the webhook', async () => {
         const response = await putWebhook(webhookName, webhookConfigB, 201, __filename);
         expect(getProp('statusCode', response)).toEqual(201);
-    });
+    }, 2 * 60 * 1000);
 
     it('starts the second callback server', function (done) {
         if (!createdChannel) return done.fail('channel not created in before block');

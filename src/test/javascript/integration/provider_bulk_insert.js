@@ -1,7 +1,17 @@
 require('../integration_config');
-const { getProp, hubClientGet, hubClientPost } = require('../lib/helpers');
+const {
+    followRedirectIfPresent,
+    getProp,
+    hubClientGet,
+    hubClientPost,
+} = require('../lib/helpers');
+const {
+    getChannelUrl,
+    getHubUrlBase,
+} = require('../lib/config');
 
-const providerResource = `${hubUrlBase}/provider/bulk`;
+const channelUrl = getChannelUrl();
+const providerResource = `${getHubUrlBase()}/provider/bulk`;
 const channelName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
 const multipart = [
@@ -30,11 +40,13 @@ describe(__filename, function () {
 
     it('waits', async () => {
         const wait = () => new Promise((resolve) => {
+            console.log('started');
             const timer = setTimeout(() => {
+                clearTimeout(timer);
+                console.log('waited');
+                resolve(true);
                 // just waiting a sec
-            }, 1200);
-            clearTimeout(timer);
-            resolve(true);
+            }, 2000);
         });
         await wait();
         expect(true).toBe(true);
@@ -42,7 +54,9 @@ describe(__filename, function () {
 
     it('verifies the bulk value was inserted', async () => {
         const url = `${channelResource}/latest?stable=false`;
+        const headers = { 'Content-Type': 'application/json' };
         const response = await hubClientGet(url);
-        expect(getProp('statusCode', response)).toEqual(200);
+        const response2 = await followRedirectIfPresent(response, headers);
+        expect(getProp('statusCode', response2)).toEqual(200);
     });
 });

@@ -6,8 +6,14 @@ const {
     hubClientGet,
     hubClientPost,
 } = require('../lib/helpers');
+const {
+    getChannelUrl,
+    getHubUrlBase,
+} = require('../lib/config');
+
+const channelUrl = getChannelUrl();
 const channelName = utils.randomChannelName();
-const providerResource = `${hubUrlBase}/provider`;
+const providerResource = `${getHubUrlBase()}/provider`;
 const channelResource = `${channelUrl}/${channelName}`;
 const messageText = `MY SUPER TEST CASE: this & <that>.${Math.random()}`;
 

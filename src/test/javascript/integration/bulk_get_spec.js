@@ -1,13 +1,17 @@
 require('../integration_config');
+const request = require('request');
 const {
     fromObjectPath,
     getProp,
     hubClientPut,
 } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
+
 const headers = { 'Content-Type': 'application/json' };
-const request = require('request');
 const channelName = utils.randomChannelName();
-const channelResource = `${channelUrl}/${channelName}`;
+const channelResource = `${getChannelUrl()}/${channelName}`;
 const multipart = [
     'This is a message with multiple parts in MIME format.  This section is ignored.\r\n',
     '--abcdefg\r\n',
@@ -40,7 +44,7 @@ describe(__filename, function () {
             ttlDays: 1,
             tags: ['bulk'],
         };
-        const url = `${channelUrl}/${channelName}`;
+        const url = `${getChannelUrl()}/${channelName}`;
         const response = await hubClientPut(url, headers, body);
         if (getProp('statusCode', response) === 201) {
             channelCreated = true;

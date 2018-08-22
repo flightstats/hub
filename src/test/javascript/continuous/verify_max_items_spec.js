@@ -3,7 +3,7 @@ var request = require('request');
 var async = require('async');
 var moment = require('moment');
 var testName = __filename;
-
+const { getHubUrlBase } = require('../lib/config');
 /**
  * This is designed to run once a day.
  * It should:
@@ -17,7 +17,7 @@ var testName = __filename;
 
 describe(testName, function () {
 
-    var verifyMaxItems = hubUrlBase + '/channel/verifyMaxItems';
+    var verifyMaxItems = getHubUrlBase() + '/channel/verifyMaxItems';
     var maxItems = 10;
 
     it('1 - creates verifyMaxItems channel', function (done) {

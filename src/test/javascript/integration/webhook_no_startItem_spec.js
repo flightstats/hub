@@ -8,6 +8,7 @@ const {
     itSleeps,
     putWebhook,
 } = require('../lib/helpers');
+const { getChannelUrl } = require('../lib/config');
 
 const channelName = utils.randomChannelName();
 const gUrl = `${getWebhookUrl()}/${channelName}`;
@@ -22,7 +23,7 @@ let createdChannel = false;
 
 describe(__filename, function () {
     beforeAll(async () => {
-        const channel = await createChannel(channelName, channelUrl, __filename);
+        const channel = await createChannel(channelName, getChannelUrl(), __filename);
         if (getProp('statusCode', channel) === 201) {
             createdChannel = true;
             console.log(`created channel for ${__filename}`);

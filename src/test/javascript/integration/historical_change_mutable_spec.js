@@ -7,7 +7,12 @@ const { getProp,
     hubClientPut,
     hubClientPostTestItem,
 } = require('../lib/helpers');
+const {
+    getChannelUrl,
+    getHubUrlBase,
+} = require('../lib/config');
 
+const channelUrl = getChannelUrl();
 const channel = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channel}`;
 const mutableTime = moment.utc().subtract(1, 'day');
@@ -20,7 +25,7 @@ const channelBodyChange = {
     mutableTime: moment(mutableTime).subtract(1, 'day').format('YYYY-MM-DDTHH:mm:ss.SSS'),
     tags: ["test"],
 };
-const channelLocation = `${hubUrlBase}/channel/${channel}`;
+const channelLocation = `${getHubUrlBase()}/channel/${channel}`;
 const historicalLocations = [];
 /**
  * This should:

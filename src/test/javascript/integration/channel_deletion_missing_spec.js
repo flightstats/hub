@@ -1,7 +1,11 @@
 require('../integration_config');
 const { getProp, hubClientDelete } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
-var channelResource = channelUrl + '/nonExistent';
+const channelUrl = getChannelUrl();
+const channelResource = `${channelUrl}/nonExistent`;
 
 describe(__filename, function () {
     it('deletes a channel that doesn\'t exist', async () => {

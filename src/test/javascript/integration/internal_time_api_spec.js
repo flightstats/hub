@@ -1,24 +1,23 @@
 require('../integration_config');
+const request = require('request');
 const {
     fromObjectPath,
     getProp,
 } = require('../lib/helpers');
+const {
+    getHubUrlBase,
+} = require('../lib/config');
 
-var request = require('request');
-var testName = __filename;
-var internalTimeUrl = hubUrlBase + '/internal/time'
-
+const internalTimeUrl = `${getHubUrlBase()}/internal/time`;
+let links = {};
+let servers = [];
+const millis = Date.now() - 5;
 /**
  * This should:
  *
  * 1 -
  */
-describe(testName, function () {
-
-    var links = {};
-    var servers = [];
-    var millis = Date.now() - 5;
-
+describe(__filename, function () {
     it('gets internal time links', function (done) {
         request.get({url: internalTimeUrl, json: true},
             function (err, response, body) {
@@ -33,7 +32,8 @@ describe(testName, function () {
     });
 
     it('gets internal time', function (done) {
-        request.get({url: links.local.href, json: true},
+        const localLink = fromObjectPath(['local', 'href'], links);
+        request.get({url: localLink, json: true},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
@@ -43,7 +43,7 @@ describe(testName, function () {
     });
 
     it('gets external time', function (done) {
-        var expected = 200;
+        let expected = 200;
         if (servers.length === 1) {
             expected = 500;
         }
@@ -52,7 +52,7 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 const statusCode = getProp('statusCode', response);
-                console.log('response.statusCode ' + statusCode);
+                console.log('response.statusCode ', statusCode);
                 expect(statusCode).toBe(expected);
                 if (statusCode === 200) {
                     console.log('body', body);
@@ -61,5 +61,4 @@ describe(testName, function () {
                 done();
             });
     });
-
 });

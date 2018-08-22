@@ -9,13 +9,20 @@ const {
     hubClientPut,
     waitForCondition,
 } = require('../lib/helpers');
+const {
+    getCallBackDomain,
+    getCallBackPort,
+    getHubUrlBase,
+} = require('../lib/config');
 
+const hubUrlBase = getHubUrlBase();
+const callbackDomain = getCallBackDomain();
+const port = getCallBackPort();
 const dataChannelName = utils.randomChannelName();
 const dataChannelURL = `${hubUrlBase}/channel/${dataChannelName}`;
 const errorChannelName = utils.randomChannelName();
 const errorChannelURL = `${hubUrlBase}/channel/${errorChannelName}`;
-const callbackServerPort = utils.getPort();
-const callbackServerURL = `${callbackDomain}:${callbackServerPort}`;
+const callbackServerURL = `${callbackDomain}:${port}`;
 const webhookName = utils.randomChannelName();
 const webhookURL = `${hubUrlBase}/webhook/${webhookName}`;
 let callbackServer;
@@ -31,7 +38,7 @@ describe(__filename, () => {
     });
 
     it('creates a callback server', (done) => {
-        callbackServer = utils.startHttpServer(callbackServerPort, (request) => {
+        callbackServer = utils.startHttpServer(port, (request) => {
             try {
                 const json = JSON.parse(request);
                 console.log('incoming:', json);

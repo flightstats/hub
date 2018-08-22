@@ -4,7 +4,11 @@ const { getProp,
     hubClientGet,
     hubClientPut,
 } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
+const channelUrl = getChannelUrl();
 const channel = utils.randomChannelName();
 const moment = require('moment');
 const tag = Math.random().toString().replace(".", "");

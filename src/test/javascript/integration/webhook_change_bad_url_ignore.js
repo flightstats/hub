@@ -8,13 +8,21 @@ const {
     putWebhook,
     waitForCondition,
 } = require('../lib/helpers');
+const {
+    getCallBackDomain,
+    getCallBackPort,
+    getChannelUrl,
+} = require('../lib/config');
+
+const channelUrl = getChannelUrl();
+const port = getCallBackPort();
+const callbackDomain = getCallBackDomain();
 const channelName = utils.randomChannelName();
 const webhookName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
 let createdChannel = false;
 let callbackServer = null;
 let itemURL = null;
-const port = utils.getPort();
 const badConfig = {
     callbackUrl: 'http://localhost:8080/nothing',
     channelUrl: channelResource,
