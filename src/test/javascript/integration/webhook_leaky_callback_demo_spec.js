@@ -6,6 +6,7 @@ const {
     fromObjectPath,
     getProp,
     getWebhookUrl,
+    hubClientGet,
     hubClientPut,
     hubClientPostTestItem,
     randomChannelName,
@@ -16,6 +17,7 @@ const {
     getCallBackDomain,
     getCallBackPort,
     getChannelUrl,
+    getHubUrlBase,
 } = require('../lib/config');
 
 const headers = { 'Content-Type': 'application/json' };
@@ -35,6 +37,7 @@ const context = {
         callbackServer2: null,
         callbackItemsA: [],
         callbackItemsB: [],
+        isClustered: false,
     },
 };
 
@@ -44,6 +47,14 @@ describe('callback leak on same callbackServer, port, path', () => {
         if (getProp('statusCode', channel) === 201) {
             console.log(`created channel for ${__filename}`);
         }
+
+        const headers = { 'Content-Type': 'application/json' };
+        const url = `${getHubUrlBase()}/internal/properties`;
+        const response1 = await hubClientGet(url, headers);
+        const properties = fromObjectPath(['body', 'properties'], response1) || {};
+        const hubType = properties['hub.type'];
+        context[channelUrl].isClustered = hubType === 'aws';
+        console.log('isClustered:', context[channelUrl].isClustered);
     });
 
     it('creates a webhook', async () => {
@@ -115,16 +126,24 @@ describe('callback leak on same callbackServer, port, path', () => {
         await hubClientPostTestItem(channelResourceB, headers);
         await hubClientPostTestItem(channelResourceB, headers);
         await hubClientPostTestItem(channelResourceB, headers);
-        const condition = () => (context[channelUrl].callbackItemsA.length === 8);
+        let condition = () => (context[channelUrl].callbackItemsA.length === 8);
+        if (context[channelUrl].isClustered) {
+            condition = () => (context[channelUrl].callbackItemsB.length === 4);
+        }
         await waitForCondition(condition);
     });
 
     it('leaks callback items from the second callback into the first', () => {
-        console.log('*******callbackItemsA*******', context[channelUrl].callbackItemsA.length);
-        console.log('*******callbackItemsB*******', context[channelUrl].callbackItemsB.length);
-        expect(context[channelUrl].callbackItemsA.length).toEqual(8);
-        expect(context[channelUrl].callbackItemsB.length).toEqual(0);
-        const actual = context[channelUrl].callbackItemsA.every(item => item.includes('FIRST_SET'));
+        let actual = false;
+        if (context[channelUrl].isClustered) {
+            expect(context[channelUrl].callbackItemsA.length).toEqual(4);
+            expect(context[channelUrl].callbackItemsB.length).toEqual(4);
+            actual = context[channelUrl].callbackItemsA.every(item => item && item.includes('SECOND_SET'));
+        } else {
+            expect(context[channelUrl].callbackItemsA.length).toEqual(8);
+            expect(context[channelUrl].callbackItemsB.length).toEqual(0);
+            actual = context[channelUrl].callbackItemsA.every(item => item && item.includes('FIRST_SET'));
+        }
         expect(actual).toBe(true);
     });
 
