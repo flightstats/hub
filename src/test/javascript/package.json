@@ -1,7 +1,8 @@
 {
   "scripts": {
     "test": "node jasmine",
-    "integration-tests": "npm test -- integration/**/*_spec.js"
+    "integration-tests": "npm test -- integration/**/*_spec.js",
+    "integration-test": "npm test -- integration/**/$FILES"
   },
   "engines": {
     "node": ">=8.0.0",
