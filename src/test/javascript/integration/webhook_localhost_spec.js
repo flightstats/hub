@@ -46,7 +46,7 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    it('creates a webhook pointing at localhost', async () => {
+    it('creates a webhook pointing at localhost (or fails if isClustered=true)', async () => {
         const body = {
             callbackUrl: 'http://localhost:8080/nothing',
             channelUrl: channelResource,
@@ -57,8 +57,16 @@ describe(__filename, function () {
         expect(statusCode).toEqual(expected);
     });
 
-    it('deletes the webhook', async () => {
-        const response = await deleteWebhook(webhookName);
-        expect(getProp('statusCode', response)).toBe(202);
+    it('deletes the webhook (or fails if isClustered=true)', async () => {
+        try {
+            const response = await deleteWebhook(webhookName);
+            if (!isClustered) {
+                expect(getProp('statusCode', response)).toBe(202);
+            }
+        } catch (ex) {
+            if (isClustered) {
+                expect(getProp('statusCode', ex)).toBe(404);
+            }
+        }
     });
 });
