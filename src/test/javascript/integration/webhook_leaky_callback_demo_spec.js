@@ -104,7 +104,7 @@ describe('callback leak on same callbackServer, port, path', () => {
 
     it('starts a callback server', async () => {
         const callback = (string) => {
-            console.log('called webhook ', webhookName0, string);
+            console.log('called second webhook ', webhookName0, string);
             context[channelUrl].callbackItemsB.push(`SECOND_SET: ${string}`);
         };
         context[channelUrl].callbackServer2 = await startServer(port, callback);
@@ -119,7 +119,7 @@ describe('callback leak on same callbackServer, port, path', () => {
         await waitForCondition(condition);
     });
 
-    it('leaks callback items from the first callback into the second', () => {
+    it('leaks callback items from the second callback into the first', () => {
         expect(context[channelUrl].callbackItemsA.length).toEqual(8);
         expect(context[channelUrl].callbackItemsB.length).toEqual(0);
         const actual = context[channelUrl].callbackItemsA.every(item => item.includes('FIRST_SET'));
