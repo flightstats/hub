@@ -1,9 +1,8 @@
 require('../integration_config');
 const request = require('request');
-const { getProp } = require('../lib/helpers');
+const { getProp, parseJson } = require('../lib/helpers');
 const {
     getChannelUrl,
-    parseJson,
 } = require('../lib/config');
 
 const channelUrl = getChannelUrl();
