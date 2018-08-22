@@ -1,6 +1,6 @@
 require('../integration_config');
 const moment = require('moment');
-const { getProp, hubClientPut } = require('../lib/helpers');
+const { getProp, hubClientGet, hubClientPut } = require('../lib/helpers');
 const {
     getChannelUrl,
 } = require('../lib/config');
@@ -26,23 +26,33 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    it("gets latest stable in channel ", function (done) {
-        utils.getLocation(`${channelResource}/latest`, 404, false, done);
+    it("gets latest stable in channel ", async () => {
+        const url = `${channelResource}/latest`;
+        const response = await hubClientGet(url, headers);
+        expect(getProp('statusCode', response)).toEqual(404);
     });
 
-    it("gets latest stable Mutable in channel ", function (done) {
-        utils.getLocation(`${channelResource}/latest?epoch=MUTABLE`, 404, false, done);
+    it("gets latest stable Mutable in channel ", async () => {
+        const url = `${channelResource}/latest?epoch=MUTABLE`;
+        const response = await hubClientGet(url, headers);
+        expect(getProp('statusCode', response)).toEqual(404);
     });
 
-    it("gets latest 10 in default Epoch in channel ", function (done) {
-        utils.getLocation(`${channelResource}/latest/10?trace=true`, 404, false, done);
+    it("gets latest 10 in default Epoch in channel ", async () => {
+        const url = `${channelResource}/latest/10?trace=true`;
+        const response = await hubClientGet(url, headers);
+        expect(getProp('statusCode', response)).toEqual(404);
     });
 
-    it("gets latest 10 Immutable in channel ", function (done) {
-        utils.getLocation(`${channelResource}/latest/10?epoch=IMMUTABLE`, 404, false, done);
+    it("gets latest 10 Immutable in channel ", async () => {
+        const url = `${channelResource}/latest/10?epoch=IMMUTABLE`;
+        const response = await hubClientGet(url, headers);
+        expect(getProp('statusCode', response)).toEqual(404);
     });
 
-    it("gets latest 10 Mutable in channel ", function (done) {
-        utils.getLocation(`${channelResource}/latest/10?epoch=MUTABLE`, 404, false, done);
+    it("gets latest 10 Mutable in channel ", async () => {
+        const url = `${channelResource}/latest/10?epoch=MUTABLE`;
+        const response = await hubClientGet(url, headers);
+        expect(getProp('statusCode', response)).toEqual(404);
     });
 });

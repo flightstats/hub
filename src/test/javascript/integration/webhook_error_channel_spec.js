@@ -7,6 +7,7 @@ const {
     fromObjectPath,
     getProp,
     hubClientGet,
+    hubClientGetUntil,
     hubClientPost,
     hubClientPut,
     itSleeps,
@@ -122,7 +123,7 @@ describe(__filename, () => {
             return errors.some(e => e && e.includes('max attempts reached'));
         };
         try {
-            await utils.httpGetUntil(webhookURL, clause);
+            await hubClientGetUntil(webhookURL, clause);
             giveUpTime = moment.utc();
             console.log('giveUpTime:', giveUpTime.toISOString());
         } catch (error) {
@@ -139,7 +140,7 @@ describe(__filename, () => {
             return (statusCode === 303);
         };
         try {
-            const originalRes = await utils.httpGetUntil(`${errorChannelURL}/latest`, clause);
+            const originalRes = await hubClientGetUntil(`${errorChannelURL}/latest`, clause);
             const headers = { 'Content-Type': 'application/json' };
             const response = await followRedirectIfPresent(originalRes, headers);
             const body = getProp('body', response) || {};

@@ -1,5 +1,6 @@
 const rp = require('request-promise-native');
-const { fromObjectPath, getProp } = require('./functional');
+const moment = require('moment');
+const { fromObjectPath, getProp, itSleeps } = require('./functional');
 const { getChannelUrl, getHubUrlBase } = require('../config');
 
 const channelUrl = getChannelUrl();
@@ -201,10 +202,35 @@ const hubClientChannelRefresh = async () => {
     }
 };
 
+const hubClientGetUntil = async (url, clause, timeoutMS = 30000, interval = 1000) => {
+    try {
+        const headers = { 'Content-Type': 'application/json' };
+        const timeout = moment().utc().add(timeoutMS, 'ms');
+        let error = false;
+
+        const exitOnTimeout = () => {
+            let now = moment.utc();
+            if (now.isSameOrAfter(timeout)) return true;
+            return false;
+        };
+        let response = {};
+        do {
+            await itSleeps(1000);
+            response = await hubClientGet(url, headers);
+            error = exitOnTimeout();
+        } while (!clause(response) && !error);
+        return response || {};
+    } catch (ex) {
+        console.log('error in hubClientGetUntil:: ', ex && ex.message);
+        return {};
+    }
+};
+
 module.exports = {
     createChannel,
     followRedirectIfPresent,
     getHubItem,
+    hubClientGetUntil,
     hubClientChannelRefresh,
     hubClientDelete,
     hubClientGet,

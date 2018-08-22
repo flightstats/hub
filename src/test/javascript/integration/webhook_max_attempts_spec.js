@@ -7,6 +7,7 @@ const {
     getProp,
     getWebhookUrl,
     hubClientGet,
+    hubClientGetUntil,
     hubClientPost,
     hubClientPut,
     randomString,
@@ -86,17 +87,15 @@ describe(__filename, () => {
         await waitForCondition(condition);
     });
 
-    it('waits for the webhook to give up', (done) => {
-        let timeoutMS = 5 * 1000;
+    it('waits for the webhook to give up', async () => {
+        const timeoutMS = 5 * 1000;
         const getUntilCallback = (response) => {
             const errorsArray = fromObjectPath(['body', 'errors'], response) || [];
             return errorsArray.some(err => (err || '').includes('max attempts reached'));
         };
-        utils.httpGetUntil(
-            webhookResource,
-            getUntilCallback,
-            timeoutMS
-        ).finally(done);
+        const response = await hubClientGetUntil(webhookResource, getUntilCallback, timeoutMS);
+        const errors = fromObjectPath(['body', 'errors'], response) || [];
+        expect(errors.length).toBeGreaterThan(0);
     });
 
     it('verifies we received the item only once', () => {
