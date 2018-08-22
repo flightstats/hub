@@ -138,6 +138,8 @@ describe('callback leak on same callbackServer, port, path', () => {
         if (context[channelUrl].isClustered) {
             expect(context[channelUrl].callbackItemsA.length).toEqual(4);
             expect(context[channelUrl].callbackItemsB.length).toEqual(4);
+            console.log('******callbackItemsA******', context[channelUrl].callbackItemsA);
+            console.log('******callbackItemsB******', context[channelUrl].callbackItemsB);
             actual = context[channelUrl].callbackItemsA.every(item => item && item.includes('FIRST_SET'));
             actual = actual && context[channelUrl].callbackItemsB.every(item =>
                 item && item.includes('SECOND_SET'));
