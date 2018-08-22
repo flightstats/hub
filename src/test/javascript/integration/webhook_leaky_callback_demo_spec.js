@@ -120,6 +120,8 @@ describe('callback leak on same callbackServer, port, path', () => {
     });
 
     it('leaks callback items from the second callback into the first', () => {
+        console.log('*******callbackItemsA*******', context[channelUrl].callbackItemsA.length);
+        console.log('*******callbackItemsB*******', context[channelUrl].callbackItemsB.length);
         expect(context[channelUrl].callbackItemsA.length).toEqual(8);
         expect(context[channelUrl].callbackItemsB.length).toEqual(0);
         const actual = context[channelUrl].callbackItemsA.every(item => item.includes('FIRST_SET'));
