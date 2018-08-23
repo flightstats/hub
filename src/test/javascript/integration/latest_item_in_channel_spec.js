@@ -2,6 +2,7 @@ const request = require('request');
 const {
     fromObjectPath,
     getProp,
+    hubClientDelete,
     hubClientPut,
     hubClientPostTestItem,
     itSleeps,
@@ -88,5 +89,9 @@ describe(__filename, function () {
                 expect(location).toBe(posted);
                 done();
             });
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

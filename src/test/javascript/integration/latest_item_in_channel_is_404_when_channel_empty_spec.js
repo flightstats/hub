@@ -1,4 +1,4 @@
-const { getProp, hubClientPut, randomChannelName } = require('../lib/helpers');
+const { getProp, hubClientDelete, hubClientPut, randomChannelName } = require('../lib/helpers');
 const request = require('request');
 const {
     getChannelUrl,
@@ -25,4 +25,8 @@ describe(__filename, function () {
             done();
         });
     }, 2 * 60001);
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
+    });
 });

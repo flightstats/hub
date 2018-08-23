@@ -1,6 +1,7 @@
 const {
     fromObjectPath,
     getProp,
+    hubClientDelete,
     hubClientPut,
     itSleeps,
     randomChannelName,
@@ -54,5 +55,9 @@ describe(__filename, function () {
                 expect(getProp('statusCode', response)).toBe(202);
                 done();
             });
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

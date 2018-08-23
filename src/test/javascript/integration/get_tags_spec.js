@@ -1,6 +1,7 @@
 const {
     fromObjectPath,
     getProp,
+    hubClientDelete,
     hubClientChannelRefresh,
     hubClientGet,
     hubClientPut,
@@ -65,4 +66,8 @@ describe(testName, function () {
         if (!channelCreated) return fail('channel not created in before block');
         await getAndMatch(`${hubUrlBase}/tag/${tag}`, 'channels', channel);
     }, 60001);
+
+    afterAll(async () => {
+        await hubClientDelete(`${channelUrl}/${channel}`);
+    });
 });

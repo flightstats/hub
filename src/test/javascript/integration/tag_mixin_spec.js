@@ -4,6 +4,7 @@ const {
     fromObjectPath,
     getProp,
     hubClientChannelRefresh,
+    hubClientDelete,
     hubClientPostTestItem,
     hubClientPut,
     parseJson,
@@ -324,4 +325,9 @@ describe(__filename, function () {
                 done();
             });
     }, 60019);
+
+    afterAll(async () => {
+        await hubClientDelete(`${channelUrl}/${channelA}`);
+        await hubClientDelete(`${channelUrl}/${channelB}`);
+    });
 });

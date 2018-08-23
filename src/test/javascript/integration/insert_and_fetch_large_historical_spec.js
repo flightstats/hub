@@ -1,6 +1,7 @@
 const {
     fromObjectPath,
     getProp,
+    hubClientDelete,
     hubClientPut,
     randomChannelName,
 } = require('../lib/helpers');
@@ -58,4 +59,8 @@ describe(testName, function () {
                 done();
             });
     }, 5 * MINUTE);
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
+    });
 });

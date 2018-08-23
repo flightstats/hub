@@ -1,6 +1,7 @@
 const {
     fromObjectPath,
     getProp,
+    hubClientDelete,
     hubClientGet,
     hubClientPost,
     randomChannelName,
@@ -42,5 +43,9 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(200);
         expect(contentType).toEqual('application/octet-stream');
         expect(getProp('body', response)).toContain(messageText);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

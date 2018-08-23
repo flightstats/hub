@@ -2,6 +2,7 @@ const {
     fromObjectPath,
     getProp,
     hubClientChannelRefresh,
+    hubClientDelete,
     hubClientPost,
     hubClientPut,
     randomChannelName,
@@ -53,5 +54,9 @@ describe(__filename, function () {
     it("fails to add zero byte item", async () => {
         const response = await hubClientPost(channelResource, { "Content-Type": "text/plain" });
         expect(getProp('statusCode', response)).toBe(400);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

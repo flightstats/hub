@@ -2,6 +2,7 @@ const {
     followRedirectIfPresent,
     fromObjectPath,
     getProp,
+    hubClientDelete,
     hubClientGet,
     hubClientPost,
     randomChannelName,
@@ -42,5 +43,9 @@ describe(__filename, function () {
         expect(latestLInk).toEqual(`${channelResource}/latest`);
         expect(name).toEqual(channelName);
         expect(ttlDays).toEqual(120);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

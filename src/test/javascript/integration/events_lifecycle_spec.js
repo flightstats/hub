@@ -3,6 +3,7 @@ const {
     createChannel,
     fromObjectPath,
     getProp,
+    hubClientDelete,
     hubClientPostTestItem,
     itSleeps,
     randomChannelName,
@@ -106,5 +107,9 @@ describe(__filename, function () {
             return !!events.includes(item);
         });
         expect(actual).toBe(true);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

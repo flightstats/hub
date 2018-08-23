@@ -6,6 +6,7 @@ const {
     fromObjectPath,
     getProp,
     getWebhookUrl,
+    hubClientDelete,
     hubClientPostTestItem,
     parseJson,
     putWebhook,
@@ -122,5 +123,9 @@ describe(__filename, function () {
     it('deletes the webhook', async () => {
         const response = await deleteWebhook(webhookName);
         expect(getProp('statusCode', response)).toBe(202);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

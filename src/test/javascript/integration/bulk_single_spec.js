@@ -2,6 +2,7 @@ const request = require('request');
 const {
     fromObjectPath,
     getProp,
+    hubClientDelete,
     hubClientPut,
     randomChannelName,
 } = require('../lib/helpers');
@@ -84,5 +85,9 @@ describe(__filename, function () {
                 expect(body).toBe(multipart);
                 done();
             });
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

@@ -2,6 +2,7 @@ const moment = require('moment');
 const {
     fromObjectPath,
     getProp,
+    hubClientDelete,
     hubClientGet,
     hubClientPostTestItem,
     hubClientPut,
@@ -140,4 +141,8 @@ describe(__filename, function () {
         verifyTwoUrlsInData(upperCase, '/earliest/2?stable=false', done);
      });
      */
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
+    });
 });

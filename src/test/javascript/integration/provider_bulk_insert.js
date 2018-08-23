@@ -1,6 +1,7 @@
 const {
     followRedirectIfPresent,
     getProp,
+    hubClientDelete,
     hubClientGet,
     hubClientPost,
     randomChannelName,
@@ -58,5 +59,9 @@ describe(__filename, function () {
         const response = await hubClientGet(url);
         const response2 = await followRedirectIfPresent(response, headers);
         expect(getProp('statusCode', response2)).toEqual(200);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

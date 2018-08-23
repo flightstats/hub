@@ -4,6 +4,7 @@ const {
     fromObjectPath,
     getProp,
     hubClientChannelRefresh,
+    hubClientDelete,
     hubClientPut,
     hubClientPostTestItem,
     randomChannelName,
@@ -214,4 +215,8 @@ describe(__filename, function () {
             return fail(ex);
         }
     }, 5 * 60 * 1000);
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
+    });
 });

@@ -1,4 +1,4 @@
-const { getProp, hubClientGet, randomChannelName } = require('../lib/helpers');
+const { getProp, hubClientDelete, hubClientGet, randomChannelName } = require('../lib/helpers');
 const {
     getChannelUrl,
 } = require('../lib/config');
@@ -12,5 +12,9 @@ describe(__filename, function () {
         const url = `${channelResource}/earliest`;
         const response = await hubClientGet(url);
         expect(getProp('statusCode', response)).toEqual(404);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

@@ -1,6 +1,7 @@
 const {
     fromObjectPath,
     getProp,
+    hubClientDelete,
     hubClientPost,
     randomChannelName,
 } = require('../lib/helpers');
@@ -31,5 +32,9 @@ describe(__filename, function () {
         expect(contentType).toEqual('application/json');
         expect(channelLink).toEqual(channelResource);
         expect(timestamp).toMatch(/^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d\.\d\d\dZ$/);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

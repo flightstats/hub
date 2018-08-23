@@ -3,6 +3,7 @@ const {
     getProp,
     getWebhookUrl,
     fromObjectPath,
+    hubClientDelete,
     hubClientGet,
     hubClientPut,
     randomChannelName,
@@ -68,5 +69,9 @@ describe(__filename, function () {
                 expect(getProp('statusCode', ex)).toBe(404);
             }
         }
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

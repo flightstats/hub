@@ -5,6 +5,7 @@ const {
     fromObjectPath,
     getProp,
     getWebhookUrl,
+    hubClientDelete,
     hubClientGet,
     hubClientPut,
     hubClientPostTestItem,
@@ -156,5 +157,10 @@ describe('callback leak on same callbackServer, port, path', () => {
     it('deletes the webhook', async () => {
         const response = await deleteWebhook(webhookName0);
         expect(getProp('statusCode', response)).toBe(202);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(`${channelUrl}/${channelName}`);
+        await hubClientDelete(`${channelUrl}/${channelName0}`);
     });
 });

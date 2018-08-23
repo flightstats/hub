@@ -2,6 +2,7 @@ const rp = require('request-promise-native');
 const {
     fromObjectPath,
     getProp,
+    hubClientDelete,
     hubClientGet,
     hubClientPut,
     hubClientPostTestItem,
@@ -124,5 +125,9 @@ describe(__filename, function () {
             console.log('failed get earliest N in channel', ex && ex.message);
             return fail(ex);
         }
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

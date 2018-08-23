@@ -1,5 +1,11 @@
 const moment = require('moment');
-const { getProp, hubClientGet, hubClientPut, randomChannelName } = require('../lib/helpers');
+const {
+    getProp,
+    hubClientDelete,
+    hubClientGet,
+    hubClientPut,
+    randomChannelName,
+} = require('../lib/helpers');
 const {
     getChannelUrl,
 } = require('../lib/config');
@@ -38,5 +44,9 @@ describe(__filename, function () {
         expect(getProp('ttlDays', body)).toBe(0);
         expect(getProp('maxItems', body)).toBe(0);
         expect(getProp('mutableTime', body)).toBe(expected);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

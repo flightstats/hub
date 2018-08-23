@@ -1,6 +1,7 @@
 const {
     fromObjectPath,
     getProp,
+    hubClientDelete,
     hubClientPost,
     randomChannelName,
 } = require('../lib/helpers');
@@ -23,5 +24,9 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(201);
         expect(contentType).toEqual('application/json');
         expect(location).toEqual(channelResource);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

@@ -1,6 +1,7 @@
 const moment = require('moment');
 const {
     getProp,
+    hubClientDelete,
     hubClientPut,
     hubClientPostTestItem,
     randomChannelName,
@@ -34,5 +35,9 @@ describe(__filename, function () {
     it('returns a 400 for item posted after the mutableTime', async () => {
         const response = await hubClientPostTestItem(afterMutableTimeUrl);
         expect(getProp('statusCode', response)).toEqual(400);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

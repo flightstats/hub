@@ -3,6 +3,7 @@ const {
     fromObjectPath,
     getHubItem,
     getProp,
+    hubClientDelete,
     hubClientPost,
     randomChannelName,
 } = require('../lib/helpers');
@@ -52,4 +53,8 @@ describe(__filename, function () {
         const bytes = itemSize - 1; // not sure why the -1 is needed. stole this from insert_and_fetch_large_spec.js
         expect(xItemLength).toBe(bytes.toString());
     }, 5 * 60 * 1000);
+
+    afterAll(async () => {
+        await hubClientDelete(`${channelUrl}/${channelName}`);
+    });
 });

@@ -1,6 +1,7 @@
 const {
     fromObjectPath,
     getProp,
+    hubClientDelete,
     hubClientGet,
     hubClientPost,
     randomChannelName,
@@ -35,5 +36,9 @@ describe(__filename, function () {
             return getProp('href', obj) || '';
         });
         expect(channelURLs).toContain(channelResource);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

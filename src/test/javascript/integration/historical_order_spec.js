@@ -1,6 +1,7 @@
 const moment = require('moment');
 const {
     getProp,
+    hubClientDelete,
     hubClientPut,
     hubClientPostTestItem,
     randomChannelName,
@@ -38,5 +39,9 @@ describe(__filename, function () {
     it('posts a histrocal item before the first successfully to a histrocal channel', async () => {
         const response = await hubClientPostTestItem(`${channelResource}/2016/06/01/11/00/00/000`);
         expect(getProp('statusCode', response)).toEqual(201);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

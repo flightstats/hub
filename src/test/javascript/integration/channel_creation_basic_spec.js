@@ -1,6 +1,7 @@
 const {
     fromObjectPath,
     getProp,
+    hubClientDelete,
     hubClientGet,
     hubClientPost,
     randomChannelName,
@@ -51,5 +52,9 @@ describe(__filename, function () {
     it('verifies the channel does exist', async () => {
         const response = await hubClientGet(channelResource);
         expect(getProp('statusCode', response)).toEqual(200);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

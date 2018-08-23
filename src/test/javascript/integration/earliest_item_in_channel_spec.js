@@ -1,6 +1,7 @@
 const {
     fromObjectPath,
     getProp,
+    hubClientDelete,
     hubClientPut,
     hubClientPostTestItem,
     parseJson,
@@ -88,5 +89,9 @@ describe(__filename, function () {
                 }
                 done();
             });
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });
