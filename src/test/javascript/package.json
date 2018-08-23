@@ -1,8 +1,8 @@
 {
   "scripts": {
     "test": "node jasmine",
-    "integration-tests": "npm test -- integration/**/*_spec.js",
-    "integration-test": "npm test -- integration/**/$FILES"
+    "integration-tests": "FILES='integration/*.js' && node ./jasmine.js --random=false --stop-on-failure=false --fail-fast=false",
+    "integration-test": "node ./jasmine.js --random=false --stop-on-failure=false --fail-fast=false"
   },
   "engines": {
     "node": ">=8.0.0",
@@ -13,7 +13,6 @@
     "console.table": "^0.10.0",
     "eventsource": "^0.1.6",
     "ip": "^0.3.0",
-    "jasmine": "^2.6.0",
     "moment": "^2.22.2",
     "parse-link-header": "^1.0.1",
     "request": "^2.87.0",
@@ -21,6 +20,7 @@
     "ws": "^5.2.2"
   },
   "devDependencies": {
-    "express": "^4.16.3"
+    "express": "^4.16.3",
+    "jasmine": "^2.99.0"
   }
 }
