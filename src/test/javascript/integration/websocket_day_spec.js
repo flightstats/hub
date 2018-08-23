@@ -1,17 +1,17 @@
-require('../integration_config');
 const WebSocket = require('ws');
 const {
     createChannel,
     fromObjectPath,
     getProp,
     hubClientPostTestItem,
+    randomChannelName,
     waitForCondition,
 } = require('../lib/helpers');
 const { getChannelUrl } = require('../lib/config');
 
 const channelUrl = getChannelUrl();
 let createdChannel = false;
-const channelName = utils.randomChannelName();
+const channelName = randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
 let startingItem = null;
 let wsURL = null;

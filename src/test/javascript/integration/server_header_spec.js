@@ -1,4 +1,3 @@
-require('../integration_config');
 const request = require('request');
 const {
     fromObjectPath,

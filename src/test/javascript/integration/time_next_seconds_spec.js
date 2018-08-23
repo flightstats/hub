@@ -1,11 +1,10 @@
-require('../integration_config');
 const request = require('request');
 const moment = require('moment');
-const { createChannel, getProp } = require('../lib/helpers');
+const { createChannel, getProp, randomChannelName } = require('../lib/helpers');
 const { getChannelUrl } = require('../lib/config');
 
 const channelUrl = getChannelUrl();
-const channelName = utils.randomChannelName();
+const channelName = randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
 let stableTime = null;
 let currentTime = null;

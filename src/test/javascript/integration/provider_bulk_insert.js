@@ -1,9 +1,9 @@
-require('../integration_config');
 const {
     followRedirectIfPresent,
     getProp,
     hubClientGet,
     hubClientPost,
+    randomChannelName,
 } = require('../lib/helpers');
 const {
     getChannelUrl,
@@ -12,7 +12,7 @@ const {
 
 const channelUrl = getChannelUrl();
 const providerResource = `${getHubUrlBase()}/provider/bulk`;
-const channelName = utils.randomChannelName();
+const channelName = randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
 const multipart = [
     'This is a message with multiple parts in MIME format.  This section is ignored.\r\n',

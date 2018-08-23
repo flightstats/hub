@@ -1,4 +1,3 @@
-require('../integration_config');
 const {
     getProp,
     getWebhookUrl,
@@ -6,6 +5,8 @@ const {
     hubClientPut,
     hubClientDelete,
     itSleeps,
+    randomChannelName,
+    randomTag,
 } = require('../lib/helpers');
 const {
     getChannelUrl,
@@ -13,15 +14,15 @@ const {
 } = require('../lib/config');
 const channelUrl = getChannelUrl();
 
-const tag = utils.randomTag();
+const tag = randomTag();
 const tagURL = `${getHubUrlBase()}/tag/${tag}`;
 const tagWebhookPrototypeURL = `${getWebhookUrl()}/TAGWHPROTO_${tag}`;
 
-const channelOneName = utils.randomChannelName();
+const channelOneName = randomChannelName();
 const channelOneURL = `${channelUrl}/${channelOneName}`;
 const channelOneWebhookURL = `${getWebhookUrl()}/TAGWH_${tag}_${channelOneName}`;
 
-const channelTwoName = utils.randomChannelName();
+const channelTwoName = randomChannelName();
 const channelTwoURL = `${channelUrl}/${channelTwoName}`;
 const channelTwoWebhookURL = `${getWebhookUrl()}/TAGWH_${tag}_${channelTwoName}`;
 
