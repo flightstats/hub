@@ -1,5 +1,4 @@
-require('../integration_config');
-const { getProp, hubClientPost } = require('../lib/helpers');
+const { getProp, hubClientPost, randomChannelName } = require('../lib/helpers');
 const {
     getChannelUrl,
 } = require('../lib/config');
@@ -8,7 +7,7 @@ describe(__filename, function () {
     it('creates a channel with an old TTL', async () => {
         const headers = { 'Content-Type': 'application/json' };
         const body = {
-            'name': utils.randomChannelName(),
+            'name': randomChannelName(),
             'ttlMillis': 0,
         };
         const response = await hubClientPost(getChannelUrl(), headers, body);

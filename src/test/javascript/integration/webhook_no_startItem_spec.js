@@ -1,4 +1,3 @@
-require('../integration_config');
 const rp = require('request-promise-native');
 const {
     createChannel,
@@ -8,10 +7,11 @@ const {
     getWebhookUrl,
     itSleeps,
     putWebhook,
+    randomChannelName,
 } = require('../lib/helpers');
 const { getChannelUrl } = require('../lib/config');
 
-const channelName = utils.randomChannelName();
+const channelName = randomChannelName();
 const gUrl = `${getWebhookUrl()}/${channelName}`;
 const webhookConfig = {
     callbackUrl: 'http://nothing/callback',

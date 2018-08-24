@@ -1,4 +1,3 @@
-require('../integration_config');
 const EventSource = require('eventsource');
 const {
     createChannel,
@@ -6,6 +5,7 @@ const {
     getProp,
     hubClientPostTestItem,
     itSleeps,
+    randomChannelName,
     waitForCondition,
 } = require('../lib/helpers');
 const {
@@ -13,7 +13,7 @@ const {
 } = require('../lib/config');
 
 const channelUrl = getChannelUrl();
-const channelName = utils.randomChannelName();
+const channelName = randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
 
 /**

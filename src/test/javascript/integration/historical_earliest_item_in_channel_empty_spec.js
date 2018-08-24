@@ -1,12 +1,11 @@
-require('../integration_config');
 const moment = require('moment');
-const { getProp, hubClientPut } = require('../lib/helpers');
+const { getProp, hubClientGet, hubClientPut, randomChannelName } = require('../lib/helpers');
 const {
     getChannelUrl,
 } = require('../lib/config');
 
 const channelUrl = getChannelUrl();
-const channel = utils.randomChannelName();
+const channel = randomChannelName();
 const channelResource = `${channelUrl}/${channel}`;
 const headers = { 'Content-Type': 'application/json' };
 const mutableTime = moment.utc().subtract(1, 'minute');
@@ -28,33 +27,45 @@ describe(__filename, function () {
         }
     });
 
-    it("gets earliest in default Epoch in channel ", function (done) {
-        if (!channelCreated) return done.fail('channel not created in before block');
-        utils.getLocation(channelResource + '/earliest?trace=true', 404, false, done);
+    it("gets earliest in default Epoch in channel ", async () => {
+        if (!channelCreated) return fail('channel not created in before block');
+        const url = `${channelResource}/earliest?trace=true`;
+        const response = await hubClientGet(url, headers);
+        expect(getProp('statusCode', response)).toEqual(404);
     });
 
-    it("gets earliest Immutable in channel ", function (done) {
-        if (!channelCreated) return done.fail('channel not created in before block');
-        utils.getLocation(channelResource + '/earliest?epoch=IMMUTABLE', 404, false, done);
+    it("gets earliest Immutable in channel ", async () => {
+        if (!channelCreated) return fail('channel not created in before block');
+        const url = `${channelResource}/earliest?epoch=IMMUTABLE`;
+        const response = await hubClientGet(url, headers);
+        expect(getProp('statusCode', response)).toEqual(404);
     });
 
-    it("gets earliest Mutable in channel ", function (done) {
-        if (!channelCreated) return done.fail('channel not created in before block');
-        utils.getLocation(channelResource + '/earliest?epoch=MUTABLE', 404, false, done);
+    it("gets earliest Mutable in channel ", async () => {
+        if (!channelCreated) return fail('channel not created in before block');
+        const url = `${channelResource}/earliest?epoch=MUTABLE`;
+        const response = await hubClientGet(url, headers);
+        expect(getProp('statusCode', response)).toEqual(404);
     });
 
-    it("gets earliest 10 in default Epoch in channel ", function (done) {
-        if (!channelCreated) return done.fail('channel not created in before block');
-        utils.getLocation(channelResource + '/earliest/10?trace=true', 404, false, done);
+    it("gets earliest 10 in default Epoch in channel ", async () => {
+        if (!channelCreated) return fail('channel not created in before block');
+        const url = `${channelResource}/earliest/10?trace=true`;
+        const response = await hubClientGet(url, headers);
+        expect(getProp('statusCode', response)).toEqual(404);
     });
 
-    it("gets earliest 10 Immutable in channel ", function (done) {
-        if (!channelCreated) return done.fail('channel not created in before block');
-        utils.getLocation(channelResource + '/earliest/10?epoch=IMMUTABLE', 404, false, done);
+    it("gets earliest 10 Immutable in channel ", async () => {
+        if (!channelCreated) return fail('channel not created in before block');
+        const url = `${channelResource}/earliest/10?epoch=IMMUTABLE`;
+        const response = await hubClientGet(url, headers);
+        expect(getProp('statusCode', response)).toEqual(404);
     });
 
-    it("gets earliest 10 Mutable in channel ", function (done) {
-        if (!channelCreated) return done.fail('channel not created in before block');
-        utils.getLocation(channelResource + '/earliest/10?epoch=MUTABLE', 404, false, done);
+    it("gets earliest 10 Mutable in channel ", async () => {
+        if (!channelCreated) return fail('channel not created in before block');
+        const url = `${channelResource}/earliest/10?epoch=MUTABLE`;
+        const response = await hubClientGet(url, headers);
+        expect(getProp('statusCode', response)).toEqual(404);
     });
 });

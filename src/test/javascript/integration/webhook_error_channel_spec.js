@@ -1,4 +1,3 @@
-require('../integration_config');
 const moment = require('moment');
 const {
     closeServer,
@@ -7,9 +6,11 @@ const {
     fromObjectPath,
     getProp,
     hubClientGet,
+    hubClientGetUntil,
     hubClientPost,
     hubClientPut,
     itSleeps,
+    randomChannelName,
     randomString,
     startServer,
     waitForCondition,
@@ -23,13 +24,13 @@ const {
 const hubUrlBase = getHubUrlBase();
 const callbackDomain = getCallBackDomain();
 const port = getCallBackPort();
-const channelName = utils.randomChannelName();
+const channelName = randomChannelName();
 const channelResource = `${hubUrlBase}/channel/${channelName}`;
-const errorChannelName = utils.randomChannelName();
+const errorChannelName = randomChannelName();
 const errorChannelURL = `${hubUrlBase}/channel/${errorChannelName}`;
 const callbackPath = `/${randomString(5)}`;
 const callbackServerURL = `${callbackDomain}:${port}${callbackPath}`;
-const webhookName = utils.randomChannelName();
+const webhookName = randomChannelName();
 const webhookURL = `${hubUrlBase}/webhook/${webhookName}`;
 let callbackServer;
 const callbackItems = [];
@@ -122,7 +123,7 @@ describe(__filename, () => {
             return errors.some(e => e && e.includes('max attempts reached'));
         };
         try {
-            await utils.httpGetUntil(webhookURL, clause);
+            await hubClientGetUntil(webhookURL, clause);
             giveUpTime = moment.utc();
             console.log('giveUpTime:', giveUpTime.toISOString());
         } catch (error) {
@@ -139,7 +140,7 @@ describe(__filename, () => {
             return (statusCode === 303);
         };
         try {
-            const originalRes = await utils.httpGetUntil(`${errorChannelURL}/latest`, clause);
+            const originalRes = await hubClientGetUntil(`${errorChannelURL}/latest`, clause);
             const headers = { 'Content-Type': 'application/json' };
             const response = await followRedirectIfPresent(originalRes, headers);
             const body = getProp('body', response) || {};

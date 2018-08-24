@@ -1,4 +1,3 @@
-require('../integration_config');
 const request = require('request');
 const {
     fromObjectPath,
@@ -6,13 +5,15 @@ const {
     hubClientPut,
     hubClientPostTestItem,
     itSleeps,
+    parseJson,
+    randomChannelName,
 } = require('../lib/helpers');
 const {
     getChannelUrl,
 } = require('../lib/config');
 
 const channelUrl = getChannelUrl();
-const channelName = utils.randomChannelName();
+const channelName = randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
 const headers = { 'Content-Type': 'application/json' };
 let posted = null;
@@ -62,7 +63,7 @@ describe(__filename, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
-                const parsed = utils.parseJson(response, __filename);
+                const parsed = parseJson(response, __filename);
                 const uris = fromObjectPath(['_links', 'uris'], parsed) || [];
                 expect(uris.length).toBe(2);
                 expect(uris[1]).toBe(posted);

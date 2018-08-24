@@ -1,12 +1,12 @@
-require('../integration_config');
 const {
     deleteWebhook,
     getProp,
     getWebhook,
     putWebhook,
+    randomChannelName,
 } = require('../lib/helpers');
 
-const webhookName = utils.randomChannelName();
+const webhookName = randomChannelName();
 const webhookConfigA = {
     callbackUrl: 'http://nothing/callback',
     channelUrl: 'http://nothing/channel/notHere',

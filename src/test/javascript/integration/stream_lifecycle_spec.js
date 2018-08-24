@@ -1,12 +1,12 @@
-require('../integration_config');
 const {
     createChannel,
     getProp,
     hubClientGet,
     hubClientPostTestItem,
     waitForCondition,
+    randomChannelName,
 } = require('../lib/helpers');
-const channelName = utils.randomChannelName();
+const channelName = randomChannelName();
 const {
     getChannelUrl,
 } = require('../lib/config');

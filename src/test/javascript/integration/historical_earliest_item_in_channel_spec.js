@@ -1,16 +1,18 @@
-require('../integration_config');
 const rp = require('request-promise-native');
-const { getProp,
+const {
     fromObjectPath,
+    getProp,
+    hubClientGet,
     hubClientPut,
     hubClientPostTestItem,
+    randomChannelName,
 } = require('../lib/helpers');
 const {
     getChannelUrl,
 } = require('../lib/config');
 
 const channelUrl = getChannelUrl();
-const channel = utils.randomChannelName();
+const channel = randomChannelName();
 const channelResource = `${channelUrl}/${channel}`;
 const headers = { 'Content-Type': 'application/json' };
 const moment = require('moment');
@@ -44,16 +46,23 @@ describe(__filename, function () {
         items.push(nextLocation);
     });
 
-    it("gets earliest in default Epoch in channel ", function (done) {
-        utils.getLocation(`${channelResource}/earliest?trace=true`, 404, false, done);
+    it("gets earliest in default Epoch in channel ", async () => {
+        const url = `${channelResource}/earliest?trace=true`;
+        const response = await hubClientGet(url, headers);
+        expect(getProp('statusCode', response)).toEqual(404);
     });
 
-    it("gets earliest Immutable in channel missing ", function (done) {
-        utils.getLocation(`${channelResource}/earliest?epoch=IMMUTABLE`, 404, false, done);
+    it("gets earliest Immutable in channel missing ", async () => {
+        const url = `${channelResource}/earliest?epoch=IMMUTABLE`;
+        const response = await hubClientGet(url, headers);
+        expect(getProp('statusCode', response)).toEqual(404);
     });
 
-    it("gets earliest Mutable in channel", function (done) {
-        utils.getLocation(`${channelResource}/earliest?epoch=MUTABLE`, 303, items[0], done);
+    it("gets earliest Mutable in channel", async () => {
+        const url = `${channelResource}/earliest?epoch=MUTABLE`;
+        const response = await hubClientGet(url, headers);
+        expect(getProp('statusCode', response)).toEqual(303);
+        expect(fromObjectPath(['headers', 'location'], response)).toEqual(items[0]);
     });
 
     it('posts item now', async () => {
@@ -62,12 +71,18 @@ describe(__filename, function () {
         items.push(location);
     });
 
-    it("gets earliest Immutable in channel - after now item", function (done) {
-        utils.getLocation(`${channelResource}/earliest?stable=false&trace=true`, 303, items[2], done);
+    it("gets earliest Immutable in channel - after now item", async () => {
+        const url = `${channelResource}/earliest?stable=false&trace=true`;
+        const response = await hubClientGet(url, headers);
+        expect(getProp('statusCode', response)).toEqual(303);
+        expect(fromObjectPath(['headers', 'location'], response)).toEqual(items[2]);
     });
 
-    it("gets earliest Mutable in channel - after now item", function (done) {
-        utils.getLocation(`${channelResource}/earliest?epoch=MUTABLE`, 303, items[0], done);
+    it("gets earliest Mutable in channel - after now item", async () => {
+        const url = `${channelResource}/earliest?epoch=MUTABLE`;
+        const response = await hubClientGet(url, headers);
+        expect(getProp('statusCode', response)).toEqual(303);
+        expect(fromObjectPath(['headers', 'location'], response)).toEqual(items[0]);
     });
 
     it("gets earliest N Mutable in channel ", async () => {
