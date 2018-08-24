@@ -1,4 +1,3 @@
-require('../integration_config');
 const request = require('request');
 const moment = require('moment');
 const {
@@ -6,6 +5,7 @@ const {
     getProp,
     hubClientPut,
     hubClientPostTestItem,
+    randomChannelName,
 } = require('../lib/helpers');
 const {
     getChannelUrl,
@@ -17,7 +17,7 @@ const channelBody = {
     mutableTime: mutableTime.format('YYYY-MM-DDTHH:mm:ss.SSS'),
     tags: ["test"],
 };
-const channel = utils.randomChannelName();
+const channel = randomChannelName();
 const channelResource = `${channelUrl}/${channel}`;
 const headers = { 'Content-Type': 'application/json' };
 const pointInThePastURL = channelResource + '/' + mutableTime.format('YYYY/MM/DD/HH/mm/ss/SSS');

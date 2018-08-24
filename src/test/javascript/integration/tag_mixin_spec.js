@@ -1,4 +1,3 @@
-require('../integration_config');
 const request = require('request');
 const parse = require('parse-link-header');
 const {
@@ -8,6 +7,7 @@ const {
     hubClientPostTestItem,
     hubClientPut,
     parseJson,
+    randomChannelName,
 } = require('../lib/helpers');
 const {
     getChannelUrl,
@@ -16,8 +16,8 @@ const {
 
 const channelUrl = getChannelUrl();
 const hubUrlBase = getHubUrlBase();
-const channelA = utils.randomChannelName();
-const channelB = utils.randomChannelName();
+const channelA = randomChannelName();
+const channelB = randomChannelName();
 const headers = { 'Content-Type': 'application/json' };
 const tag = Math.random().toString().replace(".", "");
 const channelBody = {

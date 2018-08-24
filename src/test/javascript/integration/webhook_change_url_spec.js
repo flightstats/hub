@@ -1,4 +1,3 @@
-require('../integration_config');
 const moment = require('moment');
 const {
     closeServer,
@@ -6,8 +5,10 @@ const {
     fromObjectPath,
     getProp,
     getWebhookUrl,
+    hubClientGetUntil,
     hubClientPost,
     hubClientPut,
+    randomChannelName,
     randomString,
     startServer,
     waitForCondition,
@@ -21,8 +22,8 @@ const {
 const channelUrl = getChannelUrl();
 const port = getCallBackPort();
 const callbackDomain = getCallBackDomain();
-const channelResource = `${channelUrl}/${utils.randomChannelName()}`;
-const webhookName = utils.randomChannelName();
+const channelResource = `${channelUrl}/${randomChannelName()}`;
+const webhookName = randomChannelName();
 const webhookResource = `${getWebhookUrl()}/${webhookName}`;
 let callbackServer = null;
 const callbackPath = `/${randomString(5)}`;
@@ -68,24 +69,21 @@ describe(__filename, () => {
         console.log('itemURL:', itemURL);
     });
 
-    it('verifies the correct delivery error was logged', (done) => {
+    it('verifies the correct delivery error was logged', async () => {
         let timeoutMS = 10 * 1000;
-        utils.httpGetUntil(webhookResource, (response) => response.body.errors.length > 0, timeoutMS)
-            .then(response => {
-                const body = getProp('body', response) || {};
-                console.log(body);
-                const {
-                    lastCompleted,
-                    inFlight = [],
-                    errors = [],
-                } = body;
-                expect(lastCompleted).toContain('initial');
-                expect(inFlight.length).toEqual(1);
-                expect(inFlight[0]).toEqual(postedItems[0]);
-                expect(errors.length).toEqual(1);
-                expect(errors[0]).toContain('java.net.UnknownHostException');
-            })
-            .finally(done);
+        const condition = res => !!((fromObjectPath(['body', 'errors'], res) || []).length);
+        const response = await hubClientGetUntil(webhookResource, condition, timeoutMS);
+        const body = getProp('body', response) || {};
+        const {
+            lastCompleted,
+            inFlight = [],
+            errors = [],
+        } = body;
+        expect(lastCompleted).toContain('initial');
+        expect(inFlight.length).toEqual(1);
+        expect(inFlight[0]).toEqual(postedItems[0]);
+        expect(errors.length).toEqual(1);
+        expect(errors[0]).toContain('java.net.UnknownHostException');
     });
 
     it('creates a callback server', async () => {

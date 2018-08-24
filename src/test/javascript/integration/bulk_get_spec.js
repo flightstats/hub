@@ -1,17 +1,17 @@
-require('../integration_config');
 const request = require('request');
 const {
     fromObjectPath,
     getProp,
     hubClientPut,
     parseJson,
+    randomChannelName,
 } = require('../lib/helpers');
 const {
     getChannelUrl,
 } = require('../lib/config');
 
 const headers = { 'Content-Type': 'application/json' };
-const channelName = utils.randomChannelName();
+const channelName = randomChannelName();
 const channelResource = `${getChannelUrl()}/${channelName}`;
 const multipart = [
     'This is a message with multiple parts in MIME format.  This section is ignored.\r\n',

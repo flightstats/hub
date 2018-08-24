@@ -1,4 +1,3 @@
-require('../integration_config');
 const { getProp, hubClientDelete } = require('../lib/helpers');
 const {
     getChannelUrl,

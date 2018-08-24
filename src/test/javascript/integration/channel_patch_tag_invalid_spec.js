@@ -1,12 +1,11 @@
-require('../integration_config');
-const { getProp, parseJson } = require('../lib/helpers');
+const { getProp, parseJson, randomChannelName } = require('../lib/helpers');
 const {
     getChannelUrl,
 } = require('../lib/config');
 
 const channelUrl = getChannelUrl();
 const request = require('request');
-const channelName = utils.randomChannelName();
+const channelName = randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
 
 describe(__filename, function () {

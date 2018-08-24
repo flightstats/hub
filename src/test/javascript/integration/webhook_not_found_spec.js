@@ -1,8 +1,7 @@
-require('../integration_config');
 const request = require('request');
-const { getProp, getWebhookUrl } = require('../lib/helpers');
+const { getProp, getWebhookUrl, randomChannelName } = require('../lib/helpers');
 
-const webhookName = utils.randomChannelName();
+const webhookName = randomChannelName();
 const webhookResource = `${getWebhookUrl()}/${webhookName}`;
 
 describe(__filename, function () {

@@ -1,4 +1,3 @@
-require('../integration_config');
 const {
     closeServer,
     createChannel,
@@ -8,6 +7,7 @@ const {
     hubClientPostTestItem,
     itSleeps,
     putWebhook,
+    randomChannelName,
     randomString,
     startServer,
     waitForCondition,
@@ -22,8 +22,8 @@ const channelUrl = getChannelUrl();
 const port = getCallBackPort();
 const callbackDomain = getCallBackDomain();
 const callbackPath = `/${randomString(5)}`;
-const channelName = utils.randomChannelName();
-const webhookName = utils.randomChannelName();
+const channelName = randomChannelName();
+const webhookName = randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
 let callbackServerA = null;
 let callbackServerB = null;

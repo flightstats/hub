@@ -13,7 +13,7 @@ const {
     randomChannelName,
     randomNumberBetweenInclusive,
     randomString,
-    randomTagName,
+    randomTag,
 } = require('./random-values');
 const {
     createChannel,
@@ -22,6 +22,7 @@ const {
     hubClientChannelRefresh,
     hubClientDelete,
     hubClientGet,
+    hubClientGetUntil,
     hubClientPatch,
     hubClientPost,
     hubClientPostTestItem,
@@ -46,6 +47,7 @@ module.exports = {
     hubClientChannelRefresh,
     hubClientDelete,
     hubClientGet,
+    hubClientGetUntil,
     hubClientPatch,
     hubClientPost,
     hubClientPostTestItem,
@@ -56,7 +58,7 @@ module.exports = {
     randomChannelName,
     randomNumberBetweenInclusive,
     randomString,
-    randomTagName,
+    randomTag,
     startServer,
     waitForCondition,
 };
