@@ -30,7 +30,7 @@ let callbackServer = null;
 let itemURL = null;
 const callbackPath = `/${randomString(5)}`;
 const badConfig = {
-    callbackUrl: 'http://localhost:8080/nothing',
+    callbackUrl: `${callbackDomain}:8080/nothing`,
     channelUrl: channelResource,
 };
 const goodConfig = {
@@ -39,8 +39,6 @@ const goodConfig = {
 };
 const receivedItems = [];
 /**
- * This is disabled for now.
- *
  * This should:
  *
  * 1 - create a channel

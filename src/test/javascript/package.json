@@ -1,8 +1,7 @@
 {
   "scripts": {
     "test": "node jasmine",
-    "integration-tests": "FILES='integration/*.js' && node ./jasmine.js --random=false --stop-on-failure=false --fail-fast=false",
-    "integration-test": "node ./jasmine.js --random=false --stop-on-failure=false --fail-fast=false"
+    "integration-tests": "npm test --random=false --fail-fast=false"
   },
   "engines": {
     "node": ">=8.0.0",

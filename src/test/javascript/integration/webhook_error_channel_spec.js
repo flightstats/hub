@@ -119,8 +119,8 @@ describe(__filename, () => {
 
     it('waits for the webhook to give up', async () => {
         const clause = (response) => {
-            console.log('response.body', response.body.errors);
             const errors = fromObjectPath(['body', 'errors'], response) || [];
+            console.log('response.body.errors', errors);
             return errors.some(e => e && e.includes('max attempts reached'));
         };
         try {
