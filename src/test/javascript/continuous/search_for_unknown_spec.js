@@ -1,88 +1,110 @@
 require('../integration_config');
-var request = require('request');
-var async = require('async');
-var moment = require('moment');
-var testName = __filename;
-var hubUrl = process.env.hubUrl;
-hubUrl = 'http://' + hubUrl;
-console.log(hubUrl);
-var channelInput = process.env.channels;
-console.log(channelInput);
-var errorRate = parseFloat(process.env.errorRate || 0.95);
+const {
+    followRedirectIfPresent,
+    getProp,
+    fromObjectPath,
+    hubClientGet,
+} = require('../lib/helpers');
+const { getHubUrlBase } = require('../lib/config');
+const hubUrl = getHubUrlBase();
+console.log('hubUrl', hubUrl);
+const channelInput = process.env.channels;
+console.log('channelInput', channelInput);
+const errorRate = parseFloat(process.env.errorRate || 0.95);
 console.log('errorRate', errorRate);
 
-var MINUTE = 60 * 1000;
-
+const MINUTE = 60 * 1000;
+let urisToVerify = [];
+let channels = ['verifier_test_1', 'verifier_test_2', 'verifier_test_3'];
+if (channelInput) {
+    channels = channelInput.split(",");
+}
 /**
  * This should:
  * Attempt to get known existing items from the hub which are outside the Spoke TTL.
  * Log any non-2xx responses as failures.
  *
  */
-describe(testName, function () {
-
-    var channels = ['verifier_test_1', 'verifier_test_2', 'verifier_test_3'];
-    if (channelInput) {
-        channels = channelInput.split(",");
-    }
+describe(__filename, function () {
     console.log('channels', channels);
+    it('runs day queries ', async () => {
+        const iteratorFunc = async (channel) => {
+            console.log('get channel', channel);
+            const url = `${hubUrl}/channel/${channel}/time/day`;
+            const headers = { 'Accept': 'application/json' };
 
-    var urisToVerify = [];
-
-    it('runs day queries ', function (done) {
-        async.eachLimit(channels, 2,
-            function (channel, callback) {
-                console.log('get channel', channel);
-                let url = `${hubUrl}/channel/${channel}/time/day`;
-                let headers = {'Accept': 'application/json'};
-
-                utils.httpGet(url, headers)
-                    .then(utils.followRedirectIfPresent)
-                    .then(res => {
-                        var uris = res.body._links.uris;
-                        console.log('taking ' + errorRate + '% of the ' + uris.length + ' items ');
-                        uris.forEach(function (uri) {
-                            if (Math.random() > errorRate) {
-                                urisToVerify.push(uri);
-                            }
-                        });
-                        callback();
-                    })
-                    .catch(error => callback(error))
-            }, function (err) {
-                done(err);
-            });
+            const response = await hubClientGet(url, headers);
+            const response1 = await followRedirectIfPresent(response, headers);
+            const statusCode = getProp('statusCode', response1);
+            try {
+                const body = getProp('body', response1);
+                const parse = JSON.parse(body);
+                const uris = fromObjectPath(['_links', 'uris'], parse) || [];
+                return {
+                    statusCode,
+                    uris,
+                };
+            } catch (ex) {
+                console.log('error', ex);
+                return fail(ex);
+            }
+        };
+        const twoChannels = channels.slice(0, 2);
+        const result = {
+            uris: [],
+            statusCodes: [],
+        };
+        const resultArray = await Promise.all(twoChannels.map(channel => iteratorFunc(channel)));
+        const { uris, statusCodes } = resultArray
+            .reduce((accum, current) => {
+                const { uris, statusCode } = current;
+                return {
+                    uris: [...accum.uris, ...uris],
+                    statusCodes: [...accum.statusCodes, statusCode],
+                };
+            }, result);
+        expect(statusCodes.every(code => code === 200)).toBe(true);
+        const amountToTake = Math.floor((uris.length * errorRate) / 100);
+        console.log(`taking ${errorRate}% of the ${uris.length} items: `, amountToTake);
+        do {
+            urisToVerify.push(uris[Math.floor(Math.random() * uris.length)]);
+        } while (urisToVerify.length < amountToTake);
     }, 5 * MINUTE);
 
-    var success = 0;
+    const toChunkArray = (arr) => {
+        const newArray = [];
+        let amountToSplice = 50;
+        do {
+            amountToSplice = arr.length >= 50 ? 50 : arr.length;
+            console.log('amountToSplice', amountToSplice);
+            newArray.push(arr.splice(0, amountToSplice));
+        } while (amountToSplice > 0);
+        return newArray;
+    };
 
-    it('verifies items', function (done) {
-        console.log('looking at ' + urisToVerify.length + ' items ');
-        async.eachLimit(urisToVerify, 50,
-            function (uri, callback) {
-                request({uri: uri, encoding: null},
-                    function (error, response, body) {
-                        if (error) {
-                            console.log('got error ', uri, error);
-                        } else {
-                            if (response.statusCode === 200) {
-                                success++
-                            } else {
-                                console.log('wrong status ', uri, response.statusCode);
-                            }
-                        }
-                        callback(null, body);
-                    });
-
-            }, function (err) {
-                done(err);
-            });
+    it('verifies items', async () => {
+        console.log('looking at ', urisToVerify.length, ' items');
+        const iteratorFunc = async (uri) => {
+            const response = await hubClientGet(uri);
+            const statusCode = getProp('statusCode', response);
+            if (statusCode !== 200) console.log('statusCode', statusCode);
+            return statusCode;
+        };
+        const processChunks = async (chunks) => {
+            const totalCodes = [];
+            for (const chunk of chunks) {
+                const statusCodes = await Promise.all(chunk.map(uri => iteratorFunc(uri)));
+                totalCodes.push(...statusCodes);
+            };
+            return totalCodes;
+        };
+        const chunks = toChunkArray(urisToVerify);
+        const statusCodes = await processChunks(chunks);
+        console.log('statusCodes.length', statusCodes.length);
+        expect(statusCodes.every(code => {
+            const success = code && code === 200;
+            if (!success) console.log('code', code);
+            return success;
+        })).toBe(true);
     }, 30 * MINUTE);
-
-
-    it('compares results', function () {
-        console.log('looking at ' + urisToVerify.length + ' items with ' + success + ' success');
-        expect(success).toBe(urisToVerify.length);
-    });
-
 });
