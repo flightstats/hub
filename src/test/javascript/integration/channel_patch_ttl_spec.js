@@ -1,12 +1,11 @@
-require('../integration_config');
-const { getProp } = require('../lib/helpers');
+const { getProp, parseJson, randomChannelName } = require('../lib/helpers');
 const {
     getChannelUrl,
 } = require('../lib/config');
 
 const channelUrl = getChannelUrl();
 const request = require('request');
-const channelName = utils.randomChannelName();
+const channelName = randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
 
 function verifyOptionals (parse) {
@@ -31,7 +30,7 @@ describe(__filename, function () {
         function (err, response, body) {
             expect(err).toBeNull();
             expect(getProp('statusCode', response)).toBe(201);
-            const parse = utils.parseJson(response, __filename);
+            const parse = parseJson(response, __filename);
             expect(getProp('ttlDays', parse)).toBe(10);
             done();
         });
@@ -42,7 +41,7 @@ describe(__filename, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
-                const parse = utils.parseJson(response, __filename);
+                const parse = parseJson(response, __filename);
                 expect(getProp('ttlDays', parse)).toBe(10);
                 verifyOptionals(parse);
                 done();
@@ -56,7 +55,7 @@ describe(__filename, function () {
         function (err, response, body) {
             expect(err).toBeNull();
             expect(getProp('statusCode', response)).toBe(200);
-            const parse = utils.parseJson(response, __filename);
+            const parse = parseJson(response, __filename);
             expect(getProp('ttlDays', parse)).toBe(12);
             verifyOptionals(parse);
             done();
@@ -68,7 +67,7 @@ describe(__filename, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
-                const parse = utils.parseJson(response, __filename);
+                const parse = parseJson(response, __filename);
                 expect(getProp('ttlDays', parse)).toBe(12);
                 verifyOptionals(parse);
                 done();

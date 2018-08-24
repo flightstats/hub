@@ -1,5 +1,4 @@
-require('../integration_config');
-const { getProp, hubClientPut } = require('../lib/helpers');
+const { getProp, hubClientPut, randomChannelName } = require('../lib/helpers');
 const {
     getChannelUrl,
 } = require('../lib/config');
@@ -13,7 +12,7 @@ describe(__filename, function () {
      */
 
     describe('new channel', function () {
-        const channelResource = `${channelUrl}/${utils.randomChannelName()}`;
+        const channelResource = `${channelUrl}/${randomChannelName()}`;
         it('returns 400 on create protected channel without owner set', async () => {
             const response = await hubClientPut(channelResource, headers, { protect: true });
             expect(getProp('statusCode', response)).toEqual(400);
@@ -30,7 +29,7 @@ describe(__filename, function () {
      */
 
     describe('update channel with existing owner', function () {
-        const channelResource = `${channelUrl}/${utils.randomChannelName()}`;
+        const channelResource = `${channelUrl}/${randomChannelName()}`;
         it('creates default channel no owner set', async () => {
             const response = await hubClientPut(channelResource, headers, {});
             expect(getProp('statusCode', response)).toEqual(201);
@@ -55,7 +54,7 @@ describe(__filename, function () {
      */
 
     describe('update channel without existing owner', function () {
-        const channelResource = `${channelUrl}/${utils.randomChannelName()}`;
+        const channelResource = `${channelUrl}/${randomChannelName()}`;
         it('creates default channel no owner set', async () => {
             const response = await hubClientPut(channelResource, headers, {});
             expect(getProp('statusCode', response)).toEqual(201);

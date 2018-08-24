@@ -1,10 +1,10 @@
-require('../integration_config');
 const {
     fromObjectPath,
     getProp,
     hubClientChannelRefresh,
     hubClientGet,
     hubClientPut,
+    randomChannelName,
 } = require('../lib/helpers');
 const {
     getChannelUrl,
@@ -13,7 +13,7 @@ const {
 
 const channelUrl = getChannelUrl();
 const hubUrlBase = getHubUrlBase();
-const channel = utils.randomChannelName();
+const channel = randomChannelName();
 const tag = Math.random().toString().replace(".", "");
 const testName = __filename;
 const channelBody = {

@@ -1,4 +1,3 @@
-require('../integration_config');
 const {
     fromObjectPath,
     getProp,

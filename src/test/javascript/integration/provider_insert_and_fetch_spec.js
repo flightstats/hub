@@ -1,10 +1,10 @@
-require('../integration_config');
 const {
     followRedirectIfPresent,
     fromObjectPath,
     getProp,
     hubClientGet,
     hubClientPost,
+    randomChannelName,
 } = require('../lib/helpers');
 const {
     getChannelUrl,
@@ -12,7 +12,7 @@ const {
 } = require('../lib/config');
 
 const channelUrl = getChannelUrl();
-const channelName = utils.randomChannelName();
+const channelName = randomChannelName();
 const providerResource = `${getHubUrlBase()}/provider`;
 const channelResource = `${channelUrl}/${channelName}`;
 const messageText = `MY SUPER TEST CASE: this & <that>.${Math.random()}`;

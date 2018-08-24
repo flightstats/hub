@@ -1,8 +1,9 @@
-require('../integration_config');
 const {
     fromObjectPath,
     getProp,
     hubClientPut,
+    parseJson,
+    randomChannelName,
 } = require('../lib/helpers');
 const {
     getChannelUrl,
@@ -10,7 +11,7 @@ const {
 
 const channelUrl = getChannelUrl();
 const request = require('request');
-const channelName = utils.randomChannelName();
+const channelName = randomChannelName();
 const channelResource = `${channelUrl}/${channelName}/bulk`;
 const headers = { 'Content-Type': 'application/json' };
 const multipart = [
@@ -43,7 +44,7 @@ describe(__filename, function () {
         function (err, response, body) {
             expect(err).toBeNull();
             expect(getProp('statusCode', response)).toBe(201);
-            const parse = utils.parseJson(response, __filename);
+            const parse = parseJson(response, __filename);
             console.log(getProp('body', response));
             const uris = fromObjectPath(['_links', 'uris'], parse) || [];
             expect(uris.length).toBe(2);

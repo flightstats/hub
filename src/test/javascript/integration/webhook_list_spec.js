@@ -1,4 +1,3 @@
-require('../integration_config');
 const {
     deleteWebhook,
     getProp,
@@ -6,9 +5,10 @@ const {
     fromObjectPath,
     hubClientGet,
     hubClientPut,
+    randomChannelName,
 } = require('../lib/helpers');
-const webhookName1 = utils.randomChannelName();
-const webhookName2 = utils.randomChannelName();
+const webhookName1 = randomChannelName();
+const webhookName2 = randomChannelName();
 const webhookUrl = getWebhookUrl();
 const webhookConfig = {
     callbackUrl: 'http://nothing/callback',

@@ -1,4 +1,3 @@
-require('../integration_config');
 const moment = require('moment');
 const {
     closeServer,
@@ -10,6 +9,7 @@ const {
     hubClientPut,
     itSleeps,
     putWebhook,
+    randomChannelName,
     randomString,
     startServer,
 } = require('../lib/helpers');
@@ -23,9 +23,9 @@ const {
 const channelUrl = getChannelUrl();
 const callbackDomain = getCallBackDomain();
 const port = getCallBackPort();
-const channelName = utils.randomChannelName();
+const channelName = randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
-const webhookName = utils.randomChannelName();
+const webhookName = randomChannelName();
 const webhookURL = `${getHubUrlBase()}/webhook/${webhookName}`;
 const callbackPath = `/${randomString(5)}`;
 const contentTypeJSON = { 'Content-Type': 'application/json' };
