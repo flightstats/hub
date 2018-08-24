@@ -5,10 +5,11 @@ const reporter = require('./lib/ddt_reporter');
 const jasmine = new Jasmine();
 
 global.hubDomain = process.env.hubDomain;
+const files = process.env.FILES || 'integration/*.js';
 
 jasmine.loadConfig({
     spec_dir: '.',
-    spec_files: [process.env.FILES],
+    spec_files: [files],
     stopSpecOnExpectationFailure: true,
 });
 
