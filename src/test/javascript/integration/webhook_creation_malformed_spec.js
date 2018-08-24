@@ -1,11 +1,10 @@
-require('../integration_config');
 const request = require('request');
-const { getProp } = require('../lib/helpers');
+const { getProp, randomChannelName } = require('../lib/helpers');
 const {
     getHubUrlBase,
 } = require('../lib/config');
 
-const webhookName = utils.randomChannelName();
+const webhookName = randomChannelName();
 const webhookUrl = `${getHubUrlBase()}/webhook`;
 const webhookResource = `${webhookUrl}/${webhookName}`;
 

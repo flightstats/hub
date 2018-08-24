@@ -1,14 +1,14 @@
-require('../integration_config');
 const {
     getProp,
     hubClientPost,
     hubClientPut,
+    randomChannelName,
 } = require('../lib/helpers');
 const {
     getChannelUrl,
 } = require('../lib/config');
 
-const channelName = utils.randomChannelName();
+const channelName = randomChannelName();
 const channelResource = `${getChannelUrl()}/${channelName}`;
 const resourceUrl = `${channelResource}/bulk`;
 const contentMultipart = { 'Content-Type': "multipart/mixed; boundary=abcdefg" };

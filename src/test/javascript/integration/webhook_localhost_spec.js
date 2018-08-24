@@ -1,4 +1,3 @@
-require('../integration_config');
 const {
     deleteWebhook,
     getProp,
@@ -6,6 +5,7 @@ const {
     fromObjectPath,
     hubClientGet,
     hubClientPut,
+    randomChannelName,
 } = require('../lib/helpers');
 const {
     getChannelUrl,
@@ -13,8 +13,8 @@ const {
 } = require('../lib/config');
 
 const channelUrl = getChannelUrl();
-const channelResource = `${channelUrl}/${utils.randomChannelName()}`;
-const webhookName = utils.randomChannelName();
+const channelResource = `${channelUrl}/${randomChannelName()}`;
+const webhookName = randomChannelName();
 const webhookResource = `${getWebhookUrl()}/${webhookName}`;
 
 /**

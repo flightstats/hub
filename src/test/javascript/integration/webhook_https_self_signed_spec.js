@@ -1,4 +1,3 @@
-require('../integration_config');
 const {
     closeServer,
     deleteWebhook,
@@ -7,6 +6,7 @@ const {
     fromObjectPath,
     hubClientPostTestItem,
     putWebhook,
+    randomChannelName,
     randomString,
     startServer,
     waitForCondition,
@@ -19,8 +19,8 @@ const {
 
 const callbackDomain = getCallBackDomain();
 const port = getCallBackPort();
-const channelName = utils.randomChannelName();
-const webhookName = utils.randomChannelName();
+const channelName = randomChannelName();
+const webhookName = randomChannelName();
 const callbackPath = `/${randomString(5)}`;
 const channelResource = `${getChannelUrl()}/${channelName}`;
 const callbackUrl = `${callbackDomain}:${port}${callbackPath}`.replace('http', 'https');

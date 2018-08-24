@@ -1,10 +1,10 @@
-require('../integration_config');
 const {
     createChannel,
     fromObjectPath,
     getHubItem,
     getProp,
     hubClientPost,
+    randomChannelName,
 } = require('../lib/helpers');
 const {
     getChannelUrl,
@@ -17,7 +17,7 @@ const channelUrl = getChannelUrl();
  */
 
 describe(__filename, function () {
-    const channelName = utils.randomChannelName();
+    const channelName = randomChannelName();
     const channelEndpoint = channelUrl + '/' + channelName;
     const itemHeaders = {'Content-Type': 'text/plain'};
     const itemSize = 41 * 1024 * 1024;

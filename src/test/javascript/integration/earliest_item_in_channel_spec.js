@@ -1,9 +1,10 @@
-require('../integration_config');
 const {
     fromObjectPath,
     getProp,
     hubClientPut,
     hubClientPostTestItem,
+    parseJson,
+    randomChannelName,
 } = require('../lib/helpers');
 const {
     getChannelUrl,
@@ -12,7 +13,7 @@ const {
 const channelUrl = getChannelUrl();
 const headers = { 'Content-Type': 'application/json' };
 const request = require('request');
-const channelName = utils.randomChannelName();
+const channelName = randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
 let channelCreated = false;
 /**
@@ -73,7 +74,7 @@ describe(__filename, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
-                const parsed = utils.parseJson(response, __filename);
+                const parsed = parseJson(response, __filename);
                 const links = getProp('_links', parsed);
                 if (links) {
                     const { next, previous, uris = [] } = links;
