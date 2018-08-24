@@ -1,4 +1,3 @@
-require('../integration_config');
 const {
     closeServer,
     createChannel,
@@ -11,6 +10,7 @@ const {
     randomString,
     startServer,
     waitForCondition,
+    randomChannelName,
 } = require('../lib/helpers');
 const {
     getCallBackDomain,
@@ -21,8 +21,8 @@ const {
 const channelUrl = getChannelUrl();
 const port = getCallBackPort();
 const callbackDomain = getCallBackDomain();
-const channelName = utils.randomChannelName();
-const webhookName = utils.randomChannelName();
+const channelName = randomChannelName();
+const webhookName = randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
 let createdChannel = false;
 let callbackServer = null;

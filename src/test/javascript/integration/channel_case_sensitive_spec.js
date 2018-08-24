@@ -1,4 +1,3 @@
-require('../integration_config');
 const moment = require('moment');
 const {
     fromObjectPath,
@@ -7,13 +6,14 @@ const {
     hubClientPostTestItem,
     hubClientPut,
     itSleeps,
+    randomChannelName,
 } = require('../lib/helpers');
 const {
     getChannelUrl,
 } = require('../lib/config');
 
 const headers = { 'Content-type': 'application/json' };
-const channelName = utils.randomChannelName() + '_AbCdE';
+const channelName = randomChannelName() + '_AbCdE';
 const channelUrl = getChannelUrl();
 const channelResource = `${channelUrl}/${channelName}`;
 let posted = null;

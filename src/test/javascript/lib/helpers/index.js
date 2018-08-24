@@ -13,7 +13,7 @@ const {
     randomChannelName,
     randomNumberBetweenInclusive,
     randomString,
-    randomTagName,
+    randomTag,
 } = require('./random-values');
 const {
     createChannel,
@@ -58,7 +58,7 @@ module.exports = {
     randomChannelName,
     randomNumberBetweenInclusive,
     randomString,
-    randomTagName,
+    randomTag,
     startServer,
     waitForCondition,
 };

@@ -1,4 +1,3 @@
-require('../integration_config');
 const moment = require('moment');
 const {
     closeServer,
@@ -11,6 +10,7 @@ const {
     hubClientPost,
     hubClientPut,
     itSleeps,
+    randomChannelName,
     randomString,
     startServer,
     waitForCondition,
@@ -24,13 +24,13 @@ const {
 const hubUrlBase = getHubUrlBase();
 const callbackDomain = getCallBackDomain();
 const port = getCallBackPort();
-const channelName = utils.randomChannelName();
+const channelName = randomChannelName();
 const channelResource = `${hubUrlBase}/channel/${channelName}`;
-const errorChannelName = utils.randomChannelName();
+const errorChannelName = randomChannelName();
 const errorChannelURL = `${hubUrlBase}/channel/${errorChannelName}`;
 const callbackPath = `/${randomString(5)}`;
 const callbackServerURL = `${callbackDomain}:${port}${callbackPath}`;
-const webhookName = utils.randomChannelName();
+const webhookName = randomChannelName();
 const webhookURL = `${hubUrlBase}/webhook/${webhookName}`;
 let callbackServer;
 const callbackItems = [];

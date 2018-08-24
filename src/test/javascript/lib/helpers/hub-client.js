@@ -8,6 +8,26 @@ const channelUrl = getChannelUrl();
 const isRedirect = statusCode => !!statusCode &&
     (statusCode >= 300 && statusCode <= 399);
 
+const toLowerCase = (str) => {
+    let output = '';
+    for (let i = 0; i < str.length; ++i) {
+        const character = str[i];
+        const code = parseInt(character, 36) || character;
+        output += code.toString(36);
+    }
+    return output;
+};
+const keysToLowerCase = (obj) => {
+    const output = {};
+    const keys = Object.keys(obj);
+    for (let i = 0; i < keys.length; ++i) {
+        const originalKey = keys[i];
+        const lowerCaseKey = toLowerCase(originalKey);
+        output[lowerCaseKey] = obj[originalKey];
+    }
+    return output;
+};
+
 const createChannel = async (channelName, url, description) => {
     const defaultDescription = description || 'none';
     const defaultUrl = url || channelUrl;
@@ -30,7 +50,7 @@ const createChannel = async (channelName, url, description) => {
 };
 
 const hubClientDelete = async (url, headers = {}) => {
-    const formattedHeaders = utils.keysToLowerCase(headers);
+    const formattedHeaders = keysToLowerCase(headers);
     const options = {
         url,
         method: 'DELETE',
@@ -54,7 +74,7 @@ const hubClientDelete = async (url, headers = {}) => {
 };
 
 const hubClientUpdates = async (url, headers = {}, body = '', method) => {
-    const formattedHeaders = utils.keysToLowerCase(headers);
+    const formattedHeaders = keysToLowerCase(headers);
     const json = !!formattedHeaders['content-type'] &&
         !!formattedHeaders['content-type'].includes('json');
     const options = {
@@ -88,7 +108,7 @@ const hubClientUpdates = async (url, headers = {}, body = '', method) => {
 };
 
 const hubClientGet = async (url, headers = {}, isBinary) => {
-    const formattedHeaders = utils.keysToLowerCase(headers);
+    const formattedHeaders = keysToLowerCase(headers);
     const json = !!formattedHeaders['content-type'] &&
         !!formattedHeaders['content-type'].includes('json');
     const options = {

@@ -1,4 +1,3 @@
-require('../integration_config');
 const moment = require('moment');
 const {
     fromObjectPath,
@@ -6,6 +5,7 @@ const {
     getProp,
     hubClientPut,
     hubClientPost,
+    randomChannelName,
 } = require('../lib/helpers');
 const {
     getChannelUrl,
@@ -20,7 +20,7 @@ const channelUrl = getChannelUrl();
 describe(__filename, function () {
     const oneDayAgo = moment().subtract(1, 'days');
     const pathPattern = 'YYYY/MM/DD/HH/mm/ss/SSS';
-    const channelName = utils.randomChannelName();
+    const channelName = randomChannelName();
     const channelResource = `${channelUrl}/${channelName}`;
     const historicalEndpoint = `${channelResource}/${oneDayAgo.format(pathPattern)}`;
     const itemHeaders = { 'Content-Type': 'text/plain' };
