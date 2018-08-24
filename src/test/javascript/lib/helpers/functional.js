@@ -50,7 +50,7 @@ module.exports.itSleeps = (millis, message) => {
 };
 
 // the drubbings will continue until the condition are belong to us...
-module.exports.waitForCondition = async (conditionalFunc, timeout = 15000) => {
+module.exports.waitForCondition = async (conditionalFunc, timeout = 30000) => {
     let time = 0;
     if (typeof conditionalFunc !== 'function') return false;
     if (conditionalFunc()) return true;
@@ -60,6 +60,7 @@ module.exports.waitForCondition = async (conditionalFunc, timeout = 15000) => {
             const timedOut = time >= timeout;
             process.stdout.write('… … … … …');
             if (conditionalFunc() || timedOut) {
+                if (timedOut) console.log('<<<< ERROR IN waitForCondition TIMED OUT >>>>');
                 clearInterval(wait);
                 return resolve(true);
             }

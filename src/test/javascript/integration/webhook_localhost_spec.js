@@ -1,5 +1,6 @@
 require('../integration_config');
 const {
+    deleteWebhook,
     getProp,
     getWebhookUrl,
     fromObjectPath,
@@ -13,7 +14,8 @@ const {
 
 const channelUrl = getChannelUrl();
 const channelResource = `${channelUrl}/${utils.randomChannelName()}`;
-const webhookResource = `${getWebhookUrl()}/${utils.randomChannelName()}`;
+const webhookName = utils.randomChannelName();
+const webhookResource = `${getWebhookUrl()}/${webhookName}`;
 
 /**
  * This should:
@@ -44,7 +46,7 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    it('creates a webhook pointing at localhost', async () => {
+    it('creates a webhook pointing at localhost (or fails if isClustered=true)', async () => {
         const body = {
             callbackUrl: 'http://localhost:8080/nothing',
             channelUrl: channelResource,
@@ -53,5 +55,18 @@ describe(__filename, function () {
         const statusCode = getProp('statusCode', response);
         const expected = isClustered ? 400 : 201;
         expect(statusCode).toEqual(expected);
+    });
+
+    it('deletes the webhook (or fails if isClustered=true)', async () => {
+        try {
+            const response = await deleteWebhook(webhookName);
+            if (!isClustered) {
+                expect(getProp('statusCode', response)).toBe(202);
+            }
+        } catch (ex) {
+            if (isClustered) {
+                expect(getProp('statusCode', ex)).toBe(404);
+            }
+        }
     });
 });

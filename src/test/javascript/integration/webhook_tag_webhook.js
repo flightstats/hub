@@ -74,8 +74,8 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    it('waits 1000 ms', async () => {
-        await itSleeps(1000);
+    it('waits 2000 ms', async () => {
+        await itSleeps(2000);
     });
 
     it('verifies the webhook created for channel one is removed', async () => {

@@ -1,4 +1,8 @@
 const {
+    closeServer,
+    startServer,
+} = require('./http-server');
+const {
     fromObjectPath,
     getProp,
     itSleeps,
@@ -7,6 +11,7 @@ const {
 const {
     randomChannelName,
     randomNumberBetweenInclusive,
+    randomString,
     randomTagName,
 } = require('./random-values');
 const {
@@ -28,6 +33,7 @@ const {
     putWebhook,
 } = require('./webhook');
 module.exports = {
+    closeServer,
     createChannel,
     deleteWebhook,
     followRedirectIfPresent,
@@ -47,6 +53,8 @@ module.exports = {
     putWebhook,
     randomChannelName,
     randomNumberBetweenInclusive,
+    randomString,
     randomTagName,
+    startServer,
     waitForCondition,
 };
