@@ -1,4 +1,3 @@
-// bc -- this test does not run reliably due to what appears to be timing issues.
 const {
     closeServer,
     createChannel,
@@ -139,22 +138,10 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(200);
     });
 
-    // I upped this to 10s on 08/13/2018 so that it reliably passes
-    // it('waits 10000 ms', async () => {
-    //     await itSleeps(10000);
-    // });
-
-    it('verifies posted items were received', async () => {
+    it('verifies posted items were received after resume', async () => {
         if (!createdChannel) return fail('channel not created in before block');
-        // expect(callbackItems.length).toBe(4);
-        // expect(postedItems.length).toBe(4);
         const condition = () => (callbackItems.length === 4);
         await waitForCondition(condition);
-        // for (var i = 0; i < callbackItems.length; i++) {
-        //     var parse = JSON.parse(callbackItems[i]);
-        //     expect(parse.uris[0]).toBe(postedItems[i]);
-        //     expect(parse.name).toBe(webhookName);
-        // }
     });
 
     it('closes the callback server', async () => {

@@ -38,8 +38,6 @@ const goodConfig = {
 };
 const receivedItems = [];
 /**
- * This is disabled for now.
- *
  * This should:
  *
  * 1 - create a channel
