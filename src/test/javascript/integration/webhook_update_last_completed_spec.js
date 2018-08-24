@@ -1,5 +1,8 @@
 require('../integration_config');
+const moment = require('moment');
 const {
+    closeServer,
+    deleteWebhook,
     getProp,
     fromObjectPath,
     hubClientGet,
@@ -7,19 +10,28 @@ const {
     hubClientPut,
     itSleeps,
     putWebhook,
+    randomString,
+    startServer,
 } = require('../lib/helpers');
-const moment = require('moment');
+const {
+    getCallBackDomain,
+    getCallBackPort,
+    getChannelUrl,
+    getHubUrlBase,
+} = require('../lib/config');
 
+const channelUrl = getChannelUrl();
+const callbackDomain = getCallBackDomain();
+const port = getCallBackPort();
 const channelName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
 const webhookName = utils.randomChannelName();
-const webhookURL = `http://${hubDomain}/webhook/${webhookName}`;
-
+const webhookURL = `${getHubUrlBase()}/webhook/${webhookName}`;
+const callbackPath = `/${randomString(5)}`;
 const contentTypeJSON = { 'Content-Type': 'application/json' };
 const contentTypePlain = { 'Content-Type': 'text/plain' };
 
 let callbackServer;
-const callbackPort = utils.getPort();
 const callbackMessages = [];
 const postedItems = [];
 
@@ -27,7 +39,7 @@ let maxCursor = null;
 let minCursor = null;
 let firstItemURL = null;
 const webhookConfig = {
-    callbackUrl: `${callbackDomain}:${callbackPort}`,
+    callbackUrl: `${callbackDomain}:${port}${callbackPath}`,
     channelUrl: channelResource,
     parallelCalls: 1,
     batch: 'SECOND',
@@ -35,10 +47,11 @@ const webhookConfig = {
 };
 
 describe(__filename, () => {
-    it('runs a callback server', (done) => {
-        callbackServer = utils.startHttpServer(callbackPort, (message) => {
+    it('runs a callback server', async () => {
+        const callback = (message) => {
             callbackMessages.push(message);
-        }, done);
+        };
+        callbackServer = await startServer(port, callback, callbackPath);
     });
 
     it('creates a channel', async () => {
@@ -110,15 +123,13 @@ describe(__filename, () => {
         minCursor = lastCompleted;
     });
 
-    it('closes the callback server', (done) => {
+    it('closes the callback server', async () => {
         expect(callbackServer).toBeDefined();
+        await closeServer(callbackServer);
+    });
 
-        callbackServer.close(() => {
-            console.log("closed server....");
-            done();
-        });
-        setImmediate(function () {
-            callbackServer.emit('close');
-        });
+    it('deletes the webhook', async () => {
+        const response = await deleteWebhook(webhookName);
+        expect(getProp('statusCode', response)).toBe(202);
     });
 });

@@ -4,7 +4,7 @@ var https = require('https');
 var fs = require('fs');
 var request = require('request');
 const moment = require('moment');
-
+const { getCallBackDomain } = require('./config');
 /**
  * Monkey patching Promise.prototype.finally until its officially supported
  *  proposal: https://github.com/tc39/proposal-promise-finally
@@ -532,7 +532,7 @@ exports.startServer = function startServer(server, port, callback, done) {
     });
 
     server.on('listening', function () {
-        console.log(`server listening at ${callbackDomain}:${port}/`);
+        console.log(`server listening at ${getCallBackDomain()}:${port}/`);
         done();
     });
 

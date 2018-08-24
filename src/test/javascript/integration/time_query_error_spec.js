@@ -1,9 +1,11 @@
 require('../integration_config');
+const request = require('request');
 const { createChannel, getProp } = require('../lib/helpers');
-var request = require('request');
-var channelName = utils.randomChannelName();
+const { getChannelUrl } = require('../lib/config');
+
+const channelUrl = getChannelUrl();
+const channelName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
-var testName = __filename;
 let createdChannel = false;
 /**
  * This should:
@@ -12,7 +14,7 @@ let createdChannel = false;
  * 2 - post items into the channel
  * 3 - verify that records are returned via time query
  */
-describe(testName, function () {
+describe(__filename, function () {
     beforeAll(async () => {
         const channel = await createChannel(channelName);
         if (getProp('statusCode', channel) === 201) {

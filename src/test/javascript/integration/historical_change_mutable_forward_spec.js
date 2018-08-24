@@ -1,18 +1,23 @@
 require('../integration_config');
-const { getProp, hubClientPut } = require('../lib/helpers');
-const channel = utils.randomChannelName();
 const moment = require('moment');
+const { getProp, hubClientPut } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
+
+const channelUrl = getChannelUrl();
+const channel = utils.randomChannelName();
+const url = `${channelUrl}/${channel}`;
+const headers = { 'Content-Type': 'application/json' };
+const requestBody = {
+    tags: ["test"],
+};
 /**
  * This should:
  * Create a channel with mutableTime
  *
  * Attempt to move the mutableTime forward
  */
-const url = `${channelUrl}/${channel}`;
-const headers = { 'Content-Type': 'application/json' };
-const requestBody = {
-    tags: ["test"],
-};
 describe(__filename, function () {
     it('creates a channel with mutableTime', async () => {
         requestBody.mutableTime = moment.utc().subtract(1, 'day').format('YYYY-MM-DDTHH:mm:ss.SSS');

@@ -8,6 +8,13 @@ const {
     hubClientPostTestItem,
     hubClientPut,
 } = require('../lib/helpers');
+const {
+    getChannelUrl,
+    getHubUrlBase,
+} = require('../lib/config');
+
+const channelUrl = getChannelUrl();
+const hubUrlBase = getHubUrlBase();
 const channelA = utils.randomChannelName();
 const channelB = utils.randomChannelName();
 const headers = { 'Content-Type': 'application/json' };

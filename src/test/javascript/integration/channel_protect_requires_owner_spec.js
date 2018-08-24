@@ -1,6 +1,10 @@
 require('../integration_config');
 const { getProp, hubClientPut } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
+const channelUrl = getChannelUrl();
 const headers = { 'Content-Type': 'application/json' };
 describe(__filename, function () {
     /**

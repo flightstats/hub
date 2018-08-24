@@ -5,7 +5,11 @@ const {
     getProp,
     hubClientPost,
 } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
+const channelUrl = getChannelUrl();
 const channelName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
 const messageText = "Testing that the Content-Encoding header is returned";

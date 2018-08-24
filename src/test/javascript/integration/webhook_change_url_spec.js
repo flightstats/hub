@@ -1,13 +1,34 @@
 require('../integration_config');
 const moment = require('moment');
 const {
+    closeServer,
+    deleteWebhook,
     fromObjectPath,
     getProp,
     getWebhookUrl,
     hubClientPost,
     hubClientPut,
+    randomString,
+    startServer,
     waitForCondition,
 } = require('../lib/helpers');
+const {
+    getCallBackDomain,
+    getCallBackPort,
+    getChannelUrl,
+} = require('../lib/config');
+
+const channelUrl = getChannelUrl();
+const port = getCallBackPort();
+const callbackDomain = getCallBackDomain();
+const channelResource = `${channelUrl}/${utils.randomChannelName()}`;
+const webhookName = utils.randomChannelName();
+const webhookResource = `${getWebhookUrl()}/${webhookName}`;
+let callbackServer = null;
+const callbackPath = `/${randomString(5)}`;
+const callbackServerURL = `${callbackDomain}:${port}${callbackPath}`;
+const postedItems = [];
+const callbackItems = [];
 
 /**
  * This should:
@@ -20,18 +41,7 @@ const {
  * 6 - post item - should see items at endPointB
  */
 
-const channelResource = `${channelUrl}/${utils.randomChannelName()}`;
-const webhookName = utils.randomChannelName();
-const webhookResource = `${getWebhookUrl()}/${webhookName}`;
-
 describe(__filename, () => {
-    let callbackServer = null;
-    const callbackServerPort = utils.getPort();
-    const callbackServerURL = `${callbackDomain}:${callbackServerPort}/${webhookName}`;
-
-    const postedItems = [];
-    const callbackItems = [];
-
     it('creates a channel', async () => {
         const response = await hubClientPut(channelResource);
         expect(getProp('statusCode', response)).toEqual(201);
@@ -78,13 +88,12 @@ describe(__filename, () => {
             .finally(done);
     });
 
-    it('creates a callback server', (done) => {
-        callbackServer = utils.startHttpServer(callbackServerPort, (request) => {
-            const json = JSON.parse(request);
-            console.log('incoming:', json);
-            const uris = getProp('uris', json) || [];
-            callbackItems.push(...uris);
-        }, done);
+    it('creates a callback server', async () => {
+        const callback = (str) => {
+            console.log('callback called with payload: ', str);
+            callbackItems.push(str);
+        };
+        callbackServer = await startServer(port, callback, callbackPath);
     });
 
     it('updates the webhook\'s callbackURL', async () => {
@@ -116,8 +125,13 @@ describe(__filename, () => {
         expect(callbackItems[1]).toEqual(postedItems[1]);
     });
 
-    it('closes the callback server', (done) => {
+    it('closes the callback server', async () => {
         expect(callbackServer).toBeDefined();
-        utils.closeServer(callbackServer, done);
+        await closeServer(callbackServer);
+    });
+
+    it('deletes the webhook', async () => {
+        const response = await deleteWebhook(webhookName);
+        expect(getProp('statusCode', response)).toBe(202);
     });
 });

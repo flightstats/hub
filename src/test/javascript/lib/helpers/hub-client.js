@@ -1,5 +1,8 @@
 const rp = require('request-promise-native');
 const { fromObjectPath, getProp } = require('./functional');
+const { getChannelUrl, getHubUrlBase } = require('../config');
+
+const channelUrl = getChannelUrl();
 
 const isRedirect = statusCode => !!statusCode &&
     (statusCode >= 300 && statusCode <= 399);
@@ -42,7 +45,7 @@ const hubClientDelete = async (url, headers = {}) => {
         return response || {};
     } catch (ex) {
         const response = getProp('response', ex) || {};
-        console.log(`error in hubClientGet: url:: ${url} ::: ${ex}`);
+        console.log(`error in hubClientDelete: url:: ${url} ::: ${ex}`);
         const statusCode = getProp('statusCode', response);
         console.log('DELETE <', url, statusCode);
         return response;
@@ -77,7 +80,7 @@ const hubClientUpdates = async (url, headers = {}, body = '', method) => {
     } catch (ex) {
         const response = getProp('response', ex) || {};
         const statusCode = getProp('statusCode', response);
-        console.log(`error in hubClient: url:: ${url} ::: ${ex}`);
+        console.log(`error in hubClient"${method}": url:: ${url} ::: ${ex}`);
         console.log(`${method} <`, url, statusCode);
         return response;
     }
@@ -159,7 +162,7 @@ const followRedirectIfPresent = async (response, headers = {}) => {
     const location = fromObjectPath(['headers', 'location'], response);
     console.log('statusCode', statusCode);
     const redirectCode = isRedirect(statusCode);
-    console.log('location', location);
+    console.log('redirecting to location: ', location);
     if (redirectCode && !!location) {
         const newResponse = await hubClientGet(location, headers);
         return newResponse;
@@ -187,7 +190,7 @@ const hubClientChannelRefresh = async () => {
     try {
         const response = await rp({
             method: 'GET',
-            url: `${global.hubUrlBase}/internal/channel/refresh`,
+            url: `${getHubUrlBase()}/internal/channel/refresh`,
             resolveWithFullResponse: true,
         });
         console.log('refreshed channels');

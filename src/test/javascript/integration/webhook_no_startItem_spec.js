@@ -2,12 +2,14 @@ require('../integration_config');
 const rp = require('request-promise-native');
 const {
     createChannel,
+    deleteWebhook,
     fromObjectPath,
     getProp,
     getWebhookUrl,
     itSleeps,
     putWebhook,
 } = require('../lib/helpers');
+const { getChannelUrl } = require('../lib/config');
 
 const channelName = utils.randomChannelName();
 const gUrl = `${getWebhookUrl()}/${channelName}`;
@@ -22,7 +24,7 @@ let createdChannel = false;
 
 describe(__filename, function () {
     beforeAll(async () => {
-        const channel = await createChannel(channelName, channelUrl, __filename);
+        const channel = await createChannel(channelName, getChannelUrl(), __filename);
         if (getProp('statusCode', channel) === 201) {
             createdChannel = true;
             console.log(`created channel for ${__filename}`);
@@ -66,5 +68,10 @@ describe(__filename, function () {
         // if (webhookConfig.maxWaitMinutes) {
         //     expect(getProp('maxWaitMinutes', body)).toBe(webhookConfig.maxWaitMinutes);
         // }
+    });
+
+    it('deletes the webhook', async () => {
+        const response = await deleteWebhook(channelName);
+        expect(getProp('statusCode', response)).toBe(202);
     });
 });

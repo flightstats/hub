@@ -71,10 +71,10 @@ describe(__filename, function () {
         expect(foundURLs).toContain(secondWebhookURL);
     });
 
-    it('deletes the webhookConfigPaused', async () => {
+    it('deletes the webhooks', async () => {
         const response1 = await deleteWebhook(webhookName1);
         expect(getProp('statusCode', response1)).toBe(202);
-        const response12 = await deleteWebhook(webhookName2);
-        expect(getProp('statusCode', response12)).toBe(202);
+        const response2 = await deleteWebhook(webhookName2);
+        expect(getProp('statusCode', response2)).toBe(202);
     });
 });

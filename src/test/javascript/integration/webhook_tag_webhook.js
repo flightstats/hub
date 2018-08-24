@@ -7,8 +7,14 @@ const {
     hubClientDelete,
     itSleeps,
 } = require('../lib/helpers');
+const {
+    getChannelUrl,
+    getHubUrlBase,
+} = require('../lib/config');
+const channelUrl = getChannelUrl();
+
 const tag = utils.randomTag();
-const tagURL = `${hubUrlBase}/tag/${tag}`;
+const tagURL = `${getHubUrlBase()}/tag/${tag}`;
 const tagWebhookPrototypeURL = `${getWebhookUrl()}/TAGWHPROTO_${tag}`;
 
 const channelOneName = utils.randomChannelName();
@@ -68,8 +74,8 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    it('waits 1000 ms', async () => {
-        await itSleeps(1000);
+    it('waits 2000 ms', async () => {
+        await itSleeps(2000);
     });
 
     it('verifies the webhook created for channel one is removed', async () => {

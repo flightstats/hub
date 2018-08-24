@@ -6,6 +6,11 @@ const {
     getProp,
     hubClientPost,
 } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
+
+const channelUrl = getChannelUrl();
 /**
  * POST a single item, GET it, and verify the "X-Item-Length"
  * header is present with the correct value

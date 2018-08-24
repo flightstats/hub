@@ -1,4 +1,5 @@
 require('../integration_config');
+const moment = require('moment');
 const {
     fromObjectPath,
     getHubItem,
@@ -6,8 +7,11 @@ const {
     hubClientPut,
     hubClientPost,
 } = require('../lib/helpers');
-const moment = require('moment');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
+const channelUrl = getChannelUrl();
 /**
  * POST a historical item, GET it, and verify the "X-Item-Length"
  * header is present with the correct value

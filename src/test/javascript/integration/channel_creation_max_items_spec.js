@@ -3,8 +3,13 @@ const {
     fromObjectPath,
     getProp,
     hubClientGet,
-    hubClientPost
+    hubClientPost,
 } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
+
+const channelUrl = getChannelUrl();
 
 const channelName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;

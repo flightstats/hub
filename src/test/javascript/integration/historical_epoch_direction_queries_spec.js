@@ -8,7 +8,11 @@ const {
     hubClientPut,
     hubClientPostTestItem,
 } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
+const channelUrl = getChannelUrl();
 const channel = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channel}`;
 const headers = { 'Content-Type': 'application/json' };
@@ -120,7 +124,7 @@ describe(__filename, function () {
             console.log('failed with exception: ', ex && ex.message);
             return fail(ex);
         }
-    });
+    }, 3 * 60 * 1000);
 
     it('updates the mutableTime value', async () => {
         const response = await hubClientPut(channelResource, headers, channelBodyChange);

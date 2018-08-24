@@ -1,20 +1,32 @@
 require('../integration_config');
+const request = require('request');
 const {
+    closeServer,
     createChannel,
+    deleteWebhook,
     fromObjectPath,
     getProp,
     getWebhookUrl,
     hubClientPostTestItem,
     putWebhook,
+    randomString,
+    startServer,
     waitForCondition,
 } = require('../lib/helpers');
-const request = require('request');
+const {
+    getCallBackDomain,
+    getCallBackPort,
+    getChannelUrl,
+} = require('../lib/config');
+
+const channelUrl = getChannelUrl();
+const callbackDomain = getCallBackDomain();
+const port = getCallBackPort();
 const channelName = utils.randomChannelName();
 const webhookName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
-const testName = __filename;
-const port = utils.getPort();
-const callbackUrl = callbackDomain + ':' + port + '/';
+const callbackPath = `/${randomString(5)}`;
+const callbackUrl = `${callbackDomain}:${port}${callbackPath}`;
 const webhookConfig = {
     callbackUrl: callbackUrl,
     channelUrl: channelResource,
@@ -33,9 +45,9 @@ const postedItems = [];
  * 4 - post items into the channel
  * 5 - verify that the records are returned within delta time
  */
-describe(testName, function () {
+describe(__filename, function () {
     beforeAll(async () => {
-        const channel = await createChannel(channelName, false, testName);
+        const channel = await createChannel(channelName, false, __filename);
         if (getProp('statusCode', channel) === 201) {
             createdChannel = true;
             console.log(`created channel for ${__filename}`);
@@ -43,17 +55,17 @@ describe(testName, function () {
     });
 
     it('creates the webhook', async () => {
-        const response = await putWebhook(webhookName, webhookConfig, 201, testName);
+        const response = await putWebhook(webhookName, webhookConfig, 201, __filename);
         expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    it('starts a callback server', function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        callbackServer = utils.startHttpServer(port, function (string) {
+    it('starts a callback server', async () => {
+        if (!createdChannel) return fail('channel not created in before block');
+        const callback = (string) => {
             console.log('incoming:', string);
-            const json = JSON.parse(string);
-            json.uris.forEach(uri => callbackItems.push(uri));
-        }, done);
+            callbackItems.push(string);
+        };
+        callbackServer = await startServer(port, callback, callbackPath);
     });
 
     it('inserts items', async () => {
@@ -67,12 +79,6 @@ describe(testName, function () {
         postedItems.push(...items);
         const condition = () => (callbackItems.length === postedItems.length);
         await waitForCondition(condition);
-    });
-
-    it('closes the first callback server', function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        expect(callbackServer).toBeDefined();
-        utils.closeServer(callbackServer, done);
     });
 
     it('verifies we got what we expected through the callback', function () {
@@ -92,7 +98,7 @@ describe(testName, function () {
         function (err, response, body) {
             expect(err).toBeNull();
             expect(getProp('statusCode', response)).toBe(200);
-            const parse = utils.parseJson(response, testName);
+            const parse = utils.parseJson(response, __filename);
             const selfLink = fromObjectPath(['_links', 'self', 'href'], parse);
             expect(selfLink).toBe(webhookResource);
             if (typeof webhookConfig !== "undefined") {
@@ -104,5 +110,16 @@ describe(testName, function () {
             }
             done();
         });
+    });
+
+    it('closes the callback server', async () => {
+        if (!createdChannel) return fail('channel not created in before block');
+        expect(callbackServer).toBeDefined();
+        await closeServer(callbackServer);
+    });
+
+    it('deletes the webhook', async () => {
+        const response = await deleteWebhook(webhookName);
+        expect(getProp('statusCode', response)).toBe(202);
     });
 });

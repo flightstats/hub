@@ -1,6 +1,8 @@
 const rp = require('request-promise-native');
 const { getProp } = require('./functional');
+const { getHubUrlBase } = require('../config');
 
+const hubUrlBase = getHubUrlBase();
 const getWebhookUrl = () => {
     if (Math.random() > 0.5) {
         return `${hubUrlBase}/webhook`;

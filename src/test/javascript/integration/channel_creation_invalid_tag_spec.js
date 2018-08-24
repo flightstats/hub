@@ -1,6 +1,10 @@
 require('../integration_config');
 const { getProp, hubClientPost } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
+const channelUrl = getChannelUrl();
 const channelName = utils.randomChannelName();
 
 describe(__filename, function () {

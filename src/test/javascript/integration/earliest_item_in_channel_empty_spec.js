@@ -5,7 +5,11 @@ const {
     hubClientGet,
     hubClientPost,
 } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
+const channelUrl = getChannelUrl();
 const channelName = utils.randomChannelName();
 let earliestURL = null;
 

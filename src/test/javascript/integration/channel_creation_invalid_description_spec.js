@@ -1,7 +1,11 @@
 require('../integration_config');
 const { getProp, hubClientPost } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
-var channelName = utils.randomChannelName();
+const channelUrl = getChannelUrl();
+const channelName = utils.randomChannelName();
 
 describe(__filename, function () {
     it('creates a channel with an invalid description', async () => {

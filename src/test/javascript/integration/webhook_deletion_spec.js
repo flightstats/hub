@@ -1,5 +1,6 @@
 require('../integration_config');
 const {
+    closeServer,
     createChannel,
     deleteWebhook,
     getProp,
@@ -7,13 +8,24 @@ const {
     hubClientPostTestItem,
     itSleeps,
     putWebhook,
+    randomString,
+    startServer,
     waitForCondition,
 } = require('../lib/helpers');
+const {
+    getCallBackDomain,
+    getCallBackPort,
+    getChannelUrl,
+} = require('../lib/config');
+
+const channelUrl = getChannelUrl();
+const port = getCallBackPort();
+const callbackDomain = getCallBackDomain();
+const callbackPath = `/${randomString(5)}`;
 const channelName = utils.randomChannelName();
 const webhookName = utils.randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
-const port = utils.getPort();
-const callbackUrl = `${callbackDomain}:${port}/`;
+const callbackUrl = `${callbackDomain}:${port}${callbackPath}`;
 const webhookConfig = {
     callbackUrl: callbackUrl,
     channelUrl: channelResource,
@@ -52,11 +64,12 @@ describe(__filename, function () {
         await itSleeps(500);
     });
 
-    it('starts the callback server', function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        callbackServer = utils.startHttpServer(port, function (string) {
+    it('starts the callback server', async () => {
+        if (!createdChannel) return fail('channel not created in before block');
+        const callback = (string) => {
             callbackItems.push(string);
-        }, done);
+        };
+        callbackServer = await startServer(port, callback, callbackPath);
     });
 
     it('posts an item to the hub', async () => {
@@ -95,25 +108,18 @@ describe(__filename, function () {
     it('verifies we got what we expected through the callback', function () {
         if (!createdChannel) return fail('channel not created in before block');
         expect(callbackItems.length).toBe(2);
-        let uriA;
-        let uriB;
-        try {
-            const itemA = JSON.parse(callbackItems[0]);
-            const itemB = JSON.parse(callbackItems[1]);
-            const urisA = getProp('uris', itemA);
-            const urisB = getProp('uris', itemB);
-            uriA = urisA && urisA[0];
-            uriB = urisB && urisB[0];
-        } catch (ex) {
-            expect(`failed to parse json, ${ex}`).toBeNull();
-        }
-        expect(uriA).toBe(postedItems[0]);
-        expect(uriB).toBe(postedItems[1]);
+        expect(callbackItems[0]).toBe(postedItems[0]);
+        expect(callbackItems[1]).toBe(postedItems[1]);
     });
 
-    it('closes the callback server', function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
+    it('closes the callback server', async () => {
+        if (!createdChannel) return fail('channel not created in before block');
         expect(callbackServer).toBeDefined();
-        utils.closeServer(callbackServer, done);
+        await closeServer(callbackServer);
+    });
+
+    it('deletes the webhook', async () => {
+        const response = await deleteWebhook(webhookName);
+        expect(getProp('statusCode', response)).toBe(202);
     });
 });
