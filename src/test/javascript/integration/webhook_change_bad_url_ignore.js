@@ -29,7 +29,7 @@ let callbackServer = null;
 let itemURL = null;
 const callbackPath = `/${randomString(5)}`;
 const badConfig = {
-    callbackUrl: 'http://localhost:8080/nothing',
+    callbackUrl: `${callbackDomain}:8080/nothing`,
     channelUrl: channelResource,
 };
 const goodConfig = {
