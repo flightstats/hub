@@ -34,6 +34,10 @@ const {
     getWebhookUrl,
     putWebhook,
 } = require('./webhook');
+const {
+    processChunks,
+    toChunkArray,
+} = require('./async-loop');
 module.exports = {
     closeServer,
     createChannel,
@@ -54,11 +58,13 @@ module.exports = {
     hubClientPut,
     itSleeps,
     parseJson,
+    processChunks,
     putWebhook,
     randomChannelName,
     randomNumberBetweenInclusive,
     randomString,
     randomTag,
     startServer,
+    toChunkArray,
     waitForCondition,
 };

@@ -1,15 +1,29 @@
 require('../integration_config');
 const { getChannelUrl, getHubUrlBase } = require('../lib/config');
-var async = require('async');
-var moment = require('moment');
-var testName = __filename;
-var hubUrl = process.env.hubUrl;
-hubUrl = 'http://' + hubUrl;
+const {
+    fromObjectPath,
+    getProp,
+    hubClientGet,
+    processChunks,
+    toChunkArray,
+} = require('../lib/helpers');
+const moment = require('moment');
+const hubUrl = getHubUrlBase();
 console.log(hubUrl);
-var MINUTE = 60 * 1000;
+const MINUTE = 60 * 1000;
 const NONE = '1970/01/01/00/00/00/001/none';
 const channelUrl = getChannelUrl();
-
+const channelLastUpdated = `${getHubUrlBase()}/internal/zookeeper/ChannelLatestUpdated`;
+let zkChannels = [];
+let valueResults = [];
+const headers = { 'Content-Type': 'application/json' };
+const isWithinSpokeWindow = (key) => {
+    const oneHourAgo = moment().utc().subtract(1, 'hours');
+    const timePart = key.substring(0, key.lastIndexOf('/'));
+    const keyTime = moment.utc(timePart, "YYYY/MM/DD/HH/mm/ss/SSS");
+    console.log(`key ${key} time ${keyTime.format()} ${oneHourAgo.format()}`);
+    return oneHourAgo.isBefore(keyTime);
+};
 /**
  * This should :
  * 1 - Get /ChannelLatestUpdated list from the hub
@@ -21,129 +35,94 @@ const channelUrl = getChannelUrl();
  *      check if ZK value is within Spoke cache
  */
 
-describe(testName, function () {
-
-    var channelLastUpdated = getHubUrlBase() + '/internal/zookeeper/ChannelLatestUpdated';
-
-    var zkChannels;
-    it('1 - loads channels from ZooKeeper cache', function (done) {
+describe(__filename, function () {
+    it('1 - loads channels from ZooKeeper cache', async () => {
         console.log('channelLastUpdated', channelLastUpdated);
-        utils.httpGet(channelLastUpdated)
-            .then(res => {
-                expect(res.statusCode).toBe(200);
-                zkChannels = res.body.children;
-                console.log('body', res.body);
-            })
-            .finally(done);
+        const res = await hubClientGet(channelLastUpdated, headers);
+        expect(getProp('statusCode', res)).toBe(200);
+        zkChannels = fromObjectPath(['body', 'children'], res);
     }, MINUTE);
 
-    var values = {};
-    it('2 - reads values from ZooKeeper cache', function (done) {
-        async.eachLimit(zkChannels, 10,
-            function (zkChannel, callback) {
-                console.log('get channel', zkChannel);
-                let headers = {'Accept': 'application/json'};
-
-                utils.httpGet(zkChannel, headers)
-                    .then(res => {
-                        var name = zkChannel.substring(channelLastUpdated.length + 1);
-                        if (name.substring(0, 4).toLowerCase() !== 'test') {
-                            values[name] = {
-                                zkKey: res.body.data.string,
-                                stats: res.body.stats,
-                                zkChannel: zkChannel
-                            };
-                            console.log('zk value', name, values[name].zkKey);
-                        }
-                        callback();
-                    })
-                    .catch(error => callback(error))
-            }, function (err) {
-                done(err);
-            });
-
+    it('2 - reads values from ZooKeeper cache', async () => {
+        const iteratorFunc = async ({ href: zkChannel }) => {
+            console.log('get channel', zkChannel);
+            let values = {};
+            const res = await hubClientGet(zkChannel, headers);
+            const indexOfName = channelLastUpdated.length + 1;
+            const endIndex = zkChannel.indexOf('?', indexOfName) || zkChannel.length;
+            const name = zkChannel.substring(indexOfName, endIndex);
+            const isNotTestChannel = name.substring(0, 4).toLowerCase() !== 'test';
+            if (isNotTestChannel) {
+                values = {
+                    name,
+                    zkKey: fromObjectPath(['body', 'data', 'string'], res),
+                    stats: fromObjectPath(['body', 'stats'], res),
+                    zkChannel,
+                };
+                console.log('zk value', name, values.zkKey);
+            }
+            return values;
+        };
+        const chunks = toChunkArray(zkChannels, 10);
+        const results = await processChunks(chunks, iteratorFunc);
+        valueResults = results.filter(item => !!Object.keys(item).length);
     }, MINUTE);
 
-    it('3 - gets /latest', function (done) {
-        async.forEachOfLimit(values, 10,
-            function (item, name, callback) {
-                console.log('get latest ', name);
-                let url = `${channelUrl}/${name}/latest?trace=true`;
-                let headers = {'Accept': 'application/json'};
-
-                utils.httpGet(url, headers)
-                    .then(res => {
-                        if (res.statusCode === 404) {
-                            item['empty'] = true;
-                        } else if (res.statusCode === 303) {
-                            var location = res.headers.location;
-                            var latestKey = location.substring(channelUrl.length + name.length + 2);
-                            console.log('latestKey ', latestKey, location);
-                            item['latestKey'] = latestKey;
-                        } else {
-                            console.log('unexpected result');
-                        }
-                        callback();
-                    })
-                    .catch(error => callback(error))
-            }, function (err) {
-                done(err);
-            });
-
+    it('3 - gets /latest', async () => {
+        const iteratorFunc = async (item) => {
+            const { name } = item;
+            console.log('get latest ', name);
+            const url = `${channelUrl}/${name}/latest?trace=true`;
+            const res = await hubClientGet(url, headers);
+            const statusCode = getProp('statusCode', res);
+            if (statusCode === 404) {
+                item.empty = true;
+            } else if (statusCode === 303) {
+                const location = fromObjectPath(['headers', 'location'], res);
+                const strLength = channelUrl.length + name.length + 2;
+                const latestKey = location.substring(strLength);
+                console.log('latestKey ', latestKey, location);
+                item.latestKey = latestKey;
+            } else {
+                console.log('unexpected result');
+            }
+            return item;
+        };
+        const chunks = toChunkArray(valueResults, 10);
+        const results = await processChunks(chunks, iteratorFunc);
+        valueResults = results.filter(item => item.empty || !!item.latestKey);
     }, MINUTE);
 
-    it('4 - verifies', function (done) {
-        async.forEachOfLimit(values, 10,
-            function (item, name, callback) {
-                console.log('get latest ', name);
-                let headers = {'Accept': 'application/json'};
-                if (item['empty']) {
-                    utils.httpGet(item.zkChannel, headers)
-                        .then(res => {
-                            console.log('comparing to NONE ', name, res.body.data.string)
-                            expect(res.body.data.string).toBe(NONE);
-                            callback();
-                        })
-                        .catch(error => callback(error))
-                } else {
-                    expect(item.latestKey).toBeDefined();
-                    if (item.latestKey !== item.zkKey) {
-                        console.log('doing comparison on ', item);
-                        utils.httpGet(item.zkChannel, headers)
-                            .then(res => {
-                                if (res.statusCode == 404) {
-                                    expect(isWithinSpokeWindow(item.latestKey)).toBe(true);
-                                    console.log('missing zk value for ' + name);
-                                } else {
-                                    expect(res.body.data.string).toBe(item.latestKey);
-                                }
-                                callback();
-                            })
-                            .catch(error => callback(error))
+    it('4 - verifies', async () => {
+        const iteratorFunc = async (item) => {
+            const { empty, name, latestKey, zkKey, zkChannel } = item;
+            if (empty) {
+                const res = await hubClientGet(zkChannel, headers);
+                const str = fromObjectPath(['body', 'data', 'string'], res);
+                console.log('comparing to NONE ', name, str);
+                return str === NONE;
+            } else {
+                if (latestKey !== zkKey) {
+                    console.log('doing comparison on ', item);
+                    const res2 = await hubClientGet(zkChannel, headers);
+                    if (getProp('statusCode', res2) === 404) {
+                        console.log('missing zk value for ' + name);
+                        return isWithinSpokeWindow(latestKey);
                     } else {
-                        expect(item.zkKey).toBe(item.latestKey);
-                        var withinSpokeWindow = isWithinSpokeWindow(item.latestKey);
-                        if (withinSpokeWindow) {
-                            console.log('comparing ', item);
-                        }
-                        expect(withinSpokeWindow).toBe(false);
-                        callback();
+                        const dataStr = fromObjectPath(['body', 'data', 'string'], res2);
+                        return dataStr === latestKey;
                     }
+                } else {
+                    const withinSpokeWindow = isWithinSpokeWindow(latestKey);
+                    if (withinSpokeWindow) {
+                        console.log('comparing ', item);
+                    }
+                    return latestKey === zkKey && !withinSpokeWindow;
                 }
-
-            }, function (err) {
-                done(err);
-            });
-
+            }
+        };
+        const chunks = toChunkArray(valueResults, 10);
+        const results = await processChunks(chunks, iteratorFunc);
+        expect(results.every(v => v)).toBe(true);
     }, MINUTE);
-
-    function isWithinSpokeWindow(key) {
-        var oneHourAgo = moment().utc().subtract(1, 'hours');
-        var timePart = key.substring(0, key.lastIndexOf('/'));
-        var keyTime = moment.utc(timePart, "YYYY/MM/DD/HH/mm/ss/SSS");
-        console.log("key " + key + " time " + keyTime.format() + " " + oneHourAgo.format());
-        return oneHourAgo.isBefore(keyTime);
-    }
-
-
 });

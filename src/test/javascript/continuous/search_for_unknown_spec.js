@@ -1,17 +1,18 @@
-require('../integration_config');
 const {
     followRedirectIfPresent,
     getProp,
     fromObjectPath,
     hubClientGet,
+    processChunks,
+    toChunkArray,
 } = require('../lib/helpers');
 const { getHubUrlBase } = require('../lib/config');
 const hubUrl = getHubUrlBase();
 console.log('hubUrl', hubUrl);
 const channelInput = process.env.channels;
 console.log('channelInput', channelInput);
-const errorRate = parseFloat(process.env.errorRate || 0.95);
-console.log('errorRate', errorRate);
+const confirmationPercentage = parseFloat(process.env.confirmationPercentage || 95);
+console.log('confirmationPercentage', confirmationPercentage);
 
 const MINUTE = 60 * 1000;
 let urisToVerify = [];
@@ -49,12 +50,12 @@ describe(__filename, function () {
                 return fail(ex);
             }
         };
-        const twoChannels = channels.slice(0, 2);
         const result = {
             uris: [],
             statusCodes: [],
         };
-        const resultArray = await Promise.all(twoChannels.map(channel => iteratorFunc(channel)));
+        const chunks = toChunkArray(channels, 2);
+        const resultArray = await processChunks(chunks, iteratorFunc);
         const { uris, statusCodes } = resultArray
             .reduce((accum, current) => {
                 const { uris, statusCode } = current;
@@ -64,23 +65,12 @@ describe(__filename, function () {
                 };
             }, result);
         expect(statusCodes.every(code => code === 200)).toBe(true);
-        const amountToTake = Math.floor((uris.length * errorRate) / 100);
-        console.log(`taking ${errorRate}% of the ${uris.length} items: `, amountToTake);
+        const amountToTake = Math.floor((uris.length * confirmationPercentage) / 100);
+        console.log(`taking ${confirmationPercentage}% of the ${uris.length} items: `, amountToTake);
         do {
             urisToVerify.push(uris[Math.floor(Math.random() * uris.length)]);
         } while (urisToVerify.length < amountToTake);
     }, 5 * MINUTE);
-
-    const toChunkArray = (arr) => {
-        const newArray = [];
-        let amountToSplice = 50;
-        do {
-            amountToSplice = arr.length >= 50 ? 50 : arr.length;
-            console.log('amountToSplice', amountToSplice);
-            newArray.push(arr.splice(0, amountToSplice));
-        } while (amountToSplice > 0);
-        return newArray;
-    };
 
     it('verifies items', async () => {
         console.log('looking at ', urisToVerify.length, ' items');
@@ -90,16 +80,8 @@ describe(__filename, function () {
             if (statusCode !== 200) console.log('statusCode', statusCode);
             return statusCode;
         };
-        const processChunks = async (chunks) => {
-            const totalCodes = [];
-            for (const chunk of chunks) {
-                const statusCodes = await Promise.all(chunk.map(uri => iteratorFunc(uri)));
-                totalCodes.push(...statusCodes);
-            };
-            return totalCodes;
-        };
-        const chunks = toChunkArray(urisToVerify);
-        const statusCodes = await processChunks(chunks);
+        const chunks = toChunkArray(urisToVerify, 50);
+        const statusCodes = await processChunks(chunks, iteratorFunc);
         console.log('statusCodes.length', statusCodes.length);
         expect(statusCodes.every(code => {
             const success = code && code === 200;
