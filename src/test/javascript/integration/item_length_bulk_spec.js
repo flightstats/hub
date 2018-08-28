@@ -3,6 +3,7 @@ const {
     fromObjectPath,
     getHubItem,
     getProp,
+    hubClientDelete,
     hubClientPost,
     randomChannelName,
 } = require('../lib/helpers');
@@ -82,5 +83,9 @@ describe(__filename, function () {
         } catch (ex) {
             expect(ex).toBeNull();
         }
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(`${channelUrl}/${channelName}`);
     });
 });

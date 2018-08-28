@@ -1,6 +1,7 @@
 const {
     fromObjectPath,
     getProp,
+    hubClientDelete,
     hubClientGet,
     hubClientPost,
     randomChannelName,
@@ -40,5 +41,9 @@ describe(__filename, function () {
         expect(name).toEqual(channelName);
         expect(ttlDays).toEqual(0);
         expect(keepForever).toEqual(true);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

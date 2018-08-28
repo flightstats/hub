@@ -4,6 +4,7 @@ const {
     createChannel,
     fromObjectPath,
     getProp,
+    hubClientDelete,
     randomChannelName,
 } = require('../lib/helpers');
 const { getChannelUrl } = require('../lib/config');
@@ -95,5 +96,9 @@ describe(__filename, function () {
                 verifyLinks(body, url, moment(millis).utc(), params);
                 done();
             });
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

@@ -1,6 +1,6 @@
 const request = require('request');
 const moment = require('moment');
-const { createChannel, getProp, randomChannelName } = require('../lib/helpers');
+const { createChannel, getProp, hubClientDelete, randomChannelName } = require('../lib/helpers');
 const { getChannelUrl } = require('../lib/config');
 
 const channelUrl = getChannelUrl();
@@ -59,5 +59,9 @@ describe(__filename, function () {
                 expect(body._links.next).toBeUndefined();
                 done();
             });
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

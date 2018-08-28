@@ -1,4 +1,10 @@
-const { getProp, hubClientGet, hubClientPost, randomChannelName } = require('../lib/helpers');
+const {
+    getProp,
+    hubClientDelete,
+    hubClientGet,
+    hubClientPost,
+    randomChannelName,
+} = require('../lib/helpers');
 const {
     getChannelUrl,
 } = require('../lib/config');
@@ -22,5 +28,9 @@ describe(__filename, () => {
     it('verifies creating a channel with an existing name returns an error', async () => {
         const response = await hubClientPost(channelUrl, headers, body);
         expect(getProp('statusCode', response)).toEqual(409);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

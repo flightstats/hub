@@ -1,6 +1,7 @@
 const {
     fromObjectPath,
     getProp,
+    hubClientDelete,
     hubClientGet,
     hubClientPost,
     randomChannelName,
@@ -27,5 +28,9 @@ describe(__filename, function () {
         if (!earliestURL) return fail('required earliestURL not defined by last test');
         const response = await hubClientGet(earliestURL);
         expect(getProp('statusCode', response)).toEqual(404);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(`${channelUrl}/${channelName}`);
     });
 });

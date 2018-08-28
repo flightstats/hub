@@ -1,6 +1,7 @@
 const {
     fromObjectPath,
     getProp,
+    hubClientDelete,
     hubClientGet,
     hubClientPost,
     randomChannelName,
@@ -38,5 +39,9 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(200);
         const creationDate = fromObjectPath(['headers', 'creation-date'], response);
         expect(creationDate).toContain('T');
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

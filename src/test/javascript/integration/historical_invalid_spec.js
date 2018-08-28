@@ -2,6 +2,7 @@ const moment = require('moment');
 const {
     fromObjectPath,
     getProp,
+    hubClientDelete,
     hubClientPut,
     hubClientPostTestItem,
     randomChannelName,
@@ -44,5 +45,9 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(400);
         expect(fromObjectPath(['body', 'error'], response))
             .toContain('Only one of ttlDays, maxItems and mutableTime can be defined');
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

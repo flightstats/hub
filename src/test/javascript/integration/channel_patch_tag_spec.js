@@ -1,4 +1,4 @@
-const { getProp, parseJson, randomChannelName } = require('../lib/helpers');
+const { getProp, hubClientDelete, parseJson, randomChannelName } = require('../lib/helpers');
 const { getChannelUrl } = require('../lib/config');
 
 const channelUrl = getChannelUrl();
@@ -80,5 +80,9 @@ describe(__filename, function () {
                 verifyPatched(parse);
                 done();
             });
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

@@ -1,4 +1,10 @@
-const { fromObjectPath, getProp, hubClientPut, randomChannelName } = require('../lib/helpers');
+const {
+    fromObjectPath,
+    getProp,
+    hubClientDelete,
+    hubClientPut,
+    randomChannelName,
+} = require('../lib/helpers');
 const {
     getChannelUrl,
 } = require('../lib/config');
@@ -43,5 +49,9 @@ describe(__filename, function () {
         expect(getParsedProp('description')).toEqual(newConfig.description);
         expect(getParsedProp('tags')).toEqual(newConfig.tags);
         expect(getParsedProp('creationDate')).toEqual(returnedBody.creationDate);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

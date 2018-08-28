@@ -1,4 +1,5 @@
 const {
+    hubClientDelete,
     hubClientGet,
     fromObjectPath,
     getProp,
@@ -33,5 +34,9 @@ describe(__filename, function () {
         console.log('response', response);
         const contentEncoding = fromObjectPath(['headers', 'content-encoding'], response);
         expect(contentEncoding).toEqual('gzip');
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

@@ -1,6 +1,7 @@
 const {
     createChannel,
     getProp,
+    hubClientDelete,
     hubClientGet,
     hubClientPostTestItem,
     waitForCondition,
@@ -58,5 +59,9 @@ xdescribe(__filename, function () {
     it('verifies we got the correct number of items', function () {
         if (!createdChannel) return fail('channel not created in before block');
         expect(callbackItems.length).toEqual(4);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

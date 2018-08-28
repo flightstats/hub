@@ -3,6 +3,7 @@ const moment = require('moment');
 const {
     fromObjectPath,
     getProp,
+    hubClientDelete,
     hubClientPut,
     hubClientPostTestItem,
     randomChannelName,
@@ -84,5 +85,9 @@ describe(__filename, function () {
                 expect(getProp('statusCode', response)).toBe(200);
                 done();
             });
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(`${channelUrl}/${channel}`);
     });
 });

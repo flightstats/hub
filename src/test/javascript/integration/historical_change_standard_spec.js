@@ -1,5 +1,7 @@
-const { getProp,
+const {
+    getProp,
     hubClientChannelRefresh,
+    hubClientDelete,
     hubClientGet,
     hubClientPut,
     randomChannelName,
@@ -54,5 +56,9 @@ describe(__filename, function () {
         expect(getProp('ttlDays', body)).toBe(0);
         expect(getProp('maxItems', body)).toBe(0);
         expect(getProp('mutableTime', body)).toBe(expected);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

@@ -2,6 +2,7 @@ const request = require('request');
 const {
     fromObjectPath,
     getProp,
+    hubClientDelete,
     hubClientPut,
     parseJson,
     randomChannelName,
@@ -211,4 +212,8 @@ describe(__filename, function () {
             expect(linkHeader).toContain(items[2] + '/next/10?stable=false' + param);
         });
     }, timeout);
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
+    });
 });

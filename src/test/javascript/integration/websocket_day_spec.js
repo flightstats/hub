@@ -3,6 +3,7 @@ const {
     createChannel,
     fromObjectPath,
     getProp,
+    hubClientDelete,
     hubClientPostTestItem,
     randomChannelName,
     waitForCondition,
@@ -88,5 +89,9 @@ describe(__filename, function () {
         };
 
         webSocket.close();
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

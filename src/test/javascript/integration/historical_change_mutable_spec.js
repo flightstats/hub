@@ -3,6 +3,7 @@ const rp = require('request-promise-native');
 const { getProp,
     fromObjectPath,
     hubClientChannelRefresh,
+    hubClientDelete,
     hubClientPut,
     hubClientPostTestItem,
     randomChannelName,
@@ -95,5 +96,9 @@ describe(__filename, function () {
         } catch (ex) {
             expect(getProp('statusCode', ex)).toBe(404);
         }
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

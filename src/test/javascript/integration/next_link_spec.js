@@ -2,6 +2,7 @@ const {
     createChannel,
     fromObjectPath,
     getProp,
+    hubClientDelete,
     hubClientGet,
     hubClientPost,
     randomChannelName,
@@ -90,5 +91,9 @@ describe(__filename, function () {
         expect(uris.length).toBe(2);
         expect(uris[0]).toBe(items[0]);
         expect(uris[1]).toBe(items[1]);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

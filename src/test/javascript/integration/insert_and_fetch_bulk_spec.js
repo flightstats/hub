@@ -1,6 +1,7 @@
 const {
     fromObjectPath,
     getProp,
+    hubClientDelete,
     hubClientPut,
     parseJson,
     randomChannelName,
@@ -99,5 +100,9 @@ describe(__filename, function () {
                 expect(location).toBe(items[1]);
                 done();
             });
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(`${channelUrl}/${channelName}`);
     });
 });

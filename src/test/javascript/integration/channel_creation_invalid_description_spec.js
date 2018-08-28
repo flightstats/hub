@@ -1,4 +1,8 @@
-const { getProp, hubClientPost, randomChannelName } = require('../lib/helpers');
+const {
+    getProp,
+    hubClientPost,
+    randomChannelName,
+} = require('../lib/helpers');
 const {
     getChannelUrl,
 } = require('../lib/config');

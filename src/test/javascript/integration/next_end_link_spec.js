@@ -2,6 +2,7 @@ const {
     createChannel,
     fromObjectPath,
     getProp,
+    hubClientDelete,
     hubClientGet,
     hubClientPostTestItem,
     randomChannelName,
@@ -37,5 +38,9 @@ describe(__filename, function () {
         expect(urisLength).toBe(true);
         expect(previous.href).toBeDefined();
         expect(previous.href).toBe(`${itemHref}/previous/10?stable=false`);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

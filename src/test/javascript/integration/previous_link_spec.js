@@ -1,6 +1,7 @@
 const {
     fromObjectPath,
     getProp,
+    hubClientDelete,
     hubClientGet,
     hubClientPost,
     hubClientPut,
@@ -78,5 +79,9 @@ describe(__filename, function () {
         expect(uris.length).toBe(2);
         expect(uris[0]).toBe(items[1]);
         expect(uris[1]).toBe(items[2]);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

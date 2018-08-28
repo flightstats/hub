@@ -5,6 +5,7 @@ const {
     fromObjectPath,
     getProp,
     getWebhookUrl,
+    hubClientDelete,
     itSleeps,
     putWebhook,
     randomChannelName,
@@ -73,5 +74,9 @@ describe(__filename, function () {
     it('deletes the webhook', async () => {
         const response = await deleteWebhook(channelName);
         expect(getProp('statusCode', response)).toBe(202);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(`${getChannelUrl()}/${channelName}`);
     });
 });

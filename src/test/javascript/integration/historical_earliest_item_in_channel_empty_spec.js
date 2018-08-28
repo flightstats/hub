@@ -1,5 +1,11 @@
 const moment = require('moment');
-const { getProp, hubClientGet, hubClientPut, randomChannelName } = require('../lib/helpers');
+const {
+    getProp,
+    hubClientDelete,
+    hubClientGet,
+    hubClientPut,
+    randomChannelName,
+} = require('../lib/helpers');
 const {
     getChannelUrl,
 } = require('../lib/config');
@@ -67,5 +73,9 @@ describe(__filename, function () {
         const url = `${channelResource}/earliest/10?epoch=MUTABLE`;
         const response = await hubClientGet(url, headers);
         expect(getProp('statusCode', response)).toEqual(404);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

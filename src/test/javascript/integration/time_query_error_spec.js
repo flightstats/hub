@@ -1,5 +1,5 @@
 const request = require('request');
-const { createChannel, getProp, randomChannelName } = require('../lib/helpers');
+const { createChannel, hubClientDelete, getProp, randomChannelName } = require('../lib/helpers');
 const { getChannelUrl } = require('../lib/config');
 
 const channelUrl = getChannelUrl();
@@ -79,5 +79,9 @@ describe(__filename, function () {
 
     it('queries month 13', function (done) {
         expect400(channelResource + '/2015/13/02', done);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

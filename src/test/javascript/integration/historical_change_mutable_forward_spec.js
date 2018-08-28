@@ -1,5 +1,5 @@
 const moment = require('moment');
-const { getProp, hubClientPut, randomChannelName } = require('../lib/helpers');
+const { getProp, hubClientDelete, hubClientPut, randomChannelName } = require('../lib/helpers');
 const {
     getChannelUrl,
 } = require('../lib/config');
@@ -28,5 +28,9 @@ describe(__filename, function () {
         requestBody.mutableTime = moment.utc().subtract(1, 'hour').format('YYYY-MM-DDTHH:mm:ss.SSS');
         const response = await hubClientPut(url, headers, requestBody);
         expect(getProp('statusCode', response)).toEqual(400);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(`${channelUrl}/${channel}`);
     });
 });

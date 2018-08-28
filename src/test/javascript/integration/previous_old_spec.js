@@ -2,6 +2,7 @@ const rp = require('request-promise-native');
 const {
     fromObjectPath,
     getProp,
+    hubClientDelete,
     hubClientGet,
     hubClientPut,
     hubClientPostTestItem,
@@ -85,5 +86,9 @@ describe(__filename, function () {
         expect(uris[0]).toBe(items[0]);
         expect(uris[1]).toBe(items[1]);
         expect(href).toBe(`${items[0]}/previous/2?stable=false`);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

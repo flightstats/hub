@@ -2,6 +2,7 @@ const {
     createChannel,
     fromObjectPath,
     getProp,
+    hubClientDelete,
     hubClientGet,
     hubClientPostTestItem,
     randomChannelName,
@@ -33,5 +34,9 @@ describe(__filename, function () {
         if (!createdChannel) return fail('channel not created in before block');
         const response = await hubClientGet(url, headers);
         expect(getProp('statusCode', response)).toBe(200);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

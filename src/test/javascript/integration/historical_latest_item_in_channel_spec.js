@@ -3,6 +3,7 @@ const moment = require('moment');
 const {
     getProp,
     fromObjectPath,
+    hubClientDelete,
     hubClientGet,
     hubClientPut,
     hubClientPostTestItem,
@@ -122,5 +123,9 @@ describe(__filename, function () {
             console.log('gets latest N ALL in channel failed', ex && ex.message);
             return fail(ex);
         }
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

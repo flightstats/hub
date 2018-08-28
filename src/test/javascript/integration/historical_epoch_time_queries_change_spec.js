@@ -4,6 +4,7 @@ const {
     fromObjectPath,
     getProp,
     hubClientChannelRefresh,
+    hubClientDelete,
     hubClientPut,
     hubClientPostTestItem,
     randomChannelName,
@@ -130,5 +131,9 @@ describe(__filename, function () {
 
     it('mutable item by millis', function (done) {
         queryTimes('/YYYY/MM/DD/HH/mm/ss/SSS', done);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

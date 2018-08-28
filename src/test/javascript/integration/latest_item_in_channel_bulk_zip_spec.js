@@ -1,5 +1,6 @@
 const {
     getProp,
+    hubClientDelete,
     hubClientGet,
     hubClientPut,
     hubClientPostTestItem,
@@ -38,5 +39,9 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toBe(200);
         // todo - gfm - 8/19/15 - parse zip
         expect(getProp('body', response)).toBeDefined();
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

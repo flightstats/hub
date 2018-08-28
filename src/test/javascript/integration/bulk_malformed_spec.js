@@ -1,5 +1,6 @@
 const {
     getProp,
+    hubClientDelete,
     hubClientPost,
     hubClientPut,
     randomChannelName,
@@ -45,5 +46,9 @@ describe(__filename, function () {
         const response = await hubClientPost(resourceUrl, contentMultipart, '--abcdefg\r\n --abcdefg--');
         expect(response instanceof Error).toBe(false);
         expect(getProp('statusCode', response)).toBe(400);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

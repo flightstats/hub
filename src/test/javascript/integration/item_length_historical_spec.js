@@ -3,6 +3,7 @@ const {
     fromObjectPath,
     getHubItem,
     getProp,
+    hubClientDelete,
     hubClientPut,
     hubClientPost,
     randomChannelName,
@@ -53,5 +54,9 @@ describe(__filename, function () {
         expect(xItemLength).toBe(bytes.toString());
         const data = getProp('body', result);
         expect(`${data}`).toEqual(itemContent);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

@@ -1,6 +1,7 @@
 const {
     fromObjectPath,
     getProp,
+    hubClientDelete,
     hubClientGet,
     hubClientPost,
     randomChannelName,
@@ -42,5 +43,9 @@ describe(__filename, function () {
         const contentType = fromObjectPath(['headers', 'content-type'], response);
         expect(contentType).toEqual('application/fractals');
         expect(getProp('body', response)).toContain(messageText);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

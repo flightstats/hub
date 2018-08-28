@@ -3,6 +3,7 @@ const {
     createChannel,
     fromObjectPath,
     getProp,
+    hubClientDelete,
     hubClientGet,
     hubClientPost,
     randomChannelName,
@@ -161,5 +162,9 @@ describe(__filename, () => {
         expect(first).toBeLessThan(second);
         expect(second).toBeLessThan(third);
         expect(third).toBeLessThan(fourth);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

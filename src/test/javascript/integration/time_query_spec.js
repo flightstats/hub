@@ -4,6 +4,7 @@ const {
     fromObjectPath,
     getProp,
     hubClientPostTestItem,
+    hubClientDelete,
     randomChannelName,
 } = require('../lib/helpers');
 const { getChannelUrl } = require('../lib/config');
@@ -86,5 +87,9 @@ describe(__filename, function () {
 
     it('gets items from channel day', function (done) {
         callTime(channelResource + '/time/day?stable=false', [], 0, done);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

@@ -1,5 +1,6 @@
 const {
     hubClientGet,
+    hubClientDelete,
     fromObjectPath,
     getProp,
     hubClientPatch,
@@ -35,5 +36,9 @@ describe(__filename, function () {
         const name = fromObjectPath(['body', 'name'], response);
         expect(contentType).toEqual('application/json');
         expect(name).toEqual(channelName);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });
