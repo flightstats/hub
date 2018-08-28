@@ -42,6 +42,7 @@ public class S3Verifier {
     static final String LAST_SINGLE_VERIFIED = "/S3VerifierSingleLastVerified/";
     private final static Logger logger = LoggerFactory.getLogger(S3Verifier.class);
     public static final String LEADER_PATH = "/S3VerifierSingleService";
+    public static final String MISSING_ITEM_METRIC_NAME = "s3.verifier.missing";
 
     private final int offsetMinutes = HubProperties.getProperty("s3Verifier.offsetMinutes", 15);
     private final int channelThreads = HubProperties.getProperty("s3Verifier.channelThreads", 3);
@@ -134,7 +135,7 @@ public class S3Verifier {
         logger.debug("verifyChannel.starting {}", range);
         for (ContentKey key : keysToAdd) {
             logger.trace("found missing {} {}", channelName, key);
-            metricsService.increment("s3.verifier.missing");
+            metricsService.increment(MISSING_ITEM_METRIC_NAME);
             s3WriteQueue.add(new ChannelContentKey(channelName, key));
         }
         logger.debug("verifyChannel.completed {}", range);
