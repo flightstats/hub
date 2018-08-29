@@ -1,223 +1,180 @@
-require('../integration_config');
-var request = require('request');
-var async = require('async');
-var moment = require('moment');
-var testName = __filename;
-var hubUrl = process.env.hubUrl;
-hubUrl = 'http://' + hubUrl;
+const { getHubUrlBase } = require('../lib/config');
+const {
+    followRedirectIfPresent,
+    fromObjectPath,
+    getProp,
+    hubClientGet,
+    processChunks,
+    toChunkArray,
+    randomItemsFromArrayByPercentage,
+} = require('../lib/helpers');
+
+const hubUrl = getHubUrlBase();
 console.log(hubUrl);
+// contains links to destination channels
+const replicatedChannelUrls = [];
+// uses key of replicationSource to channel body
+const replicatedChannels = {};
+const MINUTE = 60 * 1000;
+const validReplicatedChannelUrls = [];
+const headers = { 'Content-Type': 'application/json' };
+const channels = {};
+const itemsToVerify = [];
+const logDifference = (source, destination) => {
+    if ((!source || !source.length) ||
+        (!destination || !destination.length)) {
+        console.log('source ', source);
+        console.log('destination', destination);
+        return false;
+    }
+    if (source.length + destination.length > 10000) {
+        console.log("too many items to compare ", source.length, destination.length);
+        return false;
+    }
+    const sourceItems = mapContentKey(source, source[0].split('/')[4]);
+    const destinationItems = mapContentKey(destination, destination[0].split('/')[4]);
+    console.log('missing from source:', sourceItems.filter(sourceItem => !(sourceItem in destinationItems)));
+    console.log('missing from destination:', destinationItems.filter(destinationItem => !(destinationItem in sourceItems)));
+};
 
-var MINUTE = 60 * 1000;
+const mapContentKey = (uris, channel) =>
+    uris.map((value) =>
+        getContentKey(value, channel));
 
-describe(testName, function () {
+const getContentKey = (uri, channel) =>
+    uri ? uri.substring(uri.lastIndexOf(channel) + channel.length) : '';
 
-    //contains links to destination channels
-    var replicatedChannelUrls = [];
-    //uses key of replicationSource to channel body
-    var replicatedChannels = {};
+const getItem = async (uri) => {
+    const response = await hubClientGet(uri);
+    const statusCode = getProp('statusCode', response);
+    if (statusCode !== 200) {
+        console.log('wrong status ', uri, statusCode);
+    }
+    return getProp('body', response);
+};
 
-    getItem = function getItem(uri, callback) {
-        request({uri: uri, encoding: null}, function (error, response, body) {
-            expect(error).toBe(null);
-            if (error) {
-                console.log('got error ', uri, error);
+describe(__filename, function () {
+    it(`loads ${hubUrl} replicated channels`, async () => {
+        const url = `${hubUrl}/tag/replicated`;
+        const res = await hubClientGet(url, headers);
+        const channels = fromObjectPath(['body', '_links', 'channels'], res) || [];
+        console.log('found replicated channels', channels);
+        channels.forEach(channel => {
+            if (channel.name.substring(0, 4).toLowerCase() !== 'test') {
+                const channelLink = getProp('href', channel);
+                console.log('adding channel ', channelLink);
+                replicatedChannelUrls.push(channelLink);
+                replicatedChannels[channelLink] = channel;
             } else {
-                if (response.statusCode !== 200) {
-                    console.log('wrong status ', uri, response.statusCode);
-                }
-                expect(response.statusCode).toBe(200);
+                console.log('excluding channel ', channel.name);
             }
-            callback(null, body);
         });
-    };
-
-    it('loads ' + hubUrl + ' replicated channels ', function (done) {
-        let url = `${hubUrl}/tag/replicated`;
-        let headers = {'Accept': 'application/json'};
-        utils.httpGet(url, headers)
-            .then(res => {
-                var channels = res.body._links.channels;
-                console.log('found replicated channels', channels);
-                channels.forEach(channel => {
-                    if (channel.name.substring(0, 4).toLowerCase() !== 'test') {
-                        console.log('adding channel ', channel.href);
-                        replicatedChannelUrls.push(channel.href);
-                        replicatedChannels[channel.href] = channel;
-                    } else {
-                        console.log('excluding channel ', channel.name);
-                    }
-                });
-                expect(replicatedChannelUrls.length).not.toBe(0);
-            })
-            .finally(done);
+        expect(replicatedChannelUrls.length).not.toBe(0);
     });
 
-    var validReplicatedChannelUrls = [];
-
-    it('gets replication sources ', function (done) {
-        async.eachLimit(replicatedChannelUrls, 20,
-            function (channel, callback) {
-                console.log('get channel', channel);
-
-                let url = channel;
-                let headers = {'Accept': 'application/json'};
-                utils.httpGet(url, headers)
-                    .then(res => {
-                        let url = res.body.replicationSource;
-                        let headers = {'Accept': 'application/json'};
-                        replicatedChannels[channel]['replicationSource'] = url;
-
-                        return utils.httpGet(url, headers);
-                    }).then(res => {
-                        if (res.statusCode >= 400) {
-                            console.log('channel is missing remote source ', channel, res.body.replicationSource);
-                            callback();
-                        } else {
-                            validReplicatedChannelUrls.push(channel);
-                            callback(res.error);
-                        }
-                    })
-                    .catch(error => callback(error))
-            }, function (err) {
-                done(err);
-            });
+    it('gets replication sources ', async () => {
+        const iteratorFunc = async (channel, callback) => {
+            console.log('get channel', channel);
+            const res = await hubClientGet(channel, headers);
+            const url = fromObjectPath(['body', 'replicationSource'], res);
+            const res2 = await hubClientGet(url, headers);
+            const url2 = fromObjectPath(['body', 'replicationSource'], res2);
+            if (getProp('statusCode', res2) >= 400) {
+                console.log('channel is missing remote source ', channel, url2);
+            } else {
+                console.log('pushing channel', channel);
+                const error = getProp('error', res2);
+                if (error) return fail(error);
+                return { url, channel };
+            }
+        };
+        const chunks = toChunkArray(replicatedChannelUrls, 20);
+        const results = await processChunks(chunks, iteratorFunc);
+        expect(results).toBeDefined();
+        results.forEach(({ url, channel }) => {
+            if (url && channel) {
+                validReplicatedChannelUrls.push(channel);
+                replicatedChannels[channel].replicationSource = url;
+            }
+        });
     }, MINUTE);
 
-    var channels = {};
-
-    it('gets lists of replicated items', function (done) {
-        async.eachLimit(validReplicatedChannelUrls, 20, (channel, callback) => {
-            let url = channel + '/time/hour?stable=false&trace=true';
-            let headers = {'Accept': 'application/json'};
-
-            utils.httpGet(url, headers)
-                .then(utils.followRedirectIfPresent)
-                .then(res => {
-                    channels[channel] = [];
-                    let url = res.body._links.previous.href
-                    let headers = {'Accept': 'application/json'};
-                    return utils.httpGet(url, headers)
-                })
-                .then(res => {
-                    channels[channel] = res.body._links.uris.concat(channels[channel]);
-                    console.log('found dest second ', channels[channel][0]);
-                    callback(res.error);
-                })
-                .catch(error => callback(error))
-        }, function (err) {
-            done(err);
+    it('gets lists of replicated items', async () => {
+        const iteratorFunc = async (channel) => {
+            const url = `${channel}/time/hour?stable=false&trace=true`;
+            const response = await hubClientGet(url, headers);
+            const res = await followRedirectIfPresent(response, headers);
+            const prevLink = fromObjectPath(['body', '_links', 'previous', 'href'], res);
+            const res2 = await hubClientGet(prevLink, headers);
+            const uris = fromObjectPath(['body', '_links', 'uris'], res2) || [];
+            return { uris, channel };
+        };
+        const chunks = toChunkArray(validReplicatedChannelUrls, 20);
+        const results = await processChunks(chunks, iteratorFunc);
+        expect(results).toBeTruthy();
+        results.forEach(({ uris, channel }) => {
+            if (uris && channel) {
+                channels[channel] = uris;
+                console.log('found dest second ', channels[channel][0]);
+            }
         });
     }, 5 * MINUTE);
 
-    it('verifies number of replicated items', function (done) {
-        let acceptHeader = {'Accept': 'application/json'};
-
-        async.eachLimit(validReplicatedChannelUrls, 20, (channel, callback) => {
-            var source = replicatedChannels[channel]['replicationSource'];
-            let uris = [];
-
-            utils.httpGet(`${source}/time/hour?stable=false`, acceptHeader)
-                .then(utils.followRedirectIfPresent)
-                .then(res => {
-                    let url = res.body._links.previous.href;
-                    return utils.httpGet(url, acceptHeader);
-                })
-                .then(res => {
-                    uris = res.body._links.uris.concat(uris);
-                    if (uris.length !== channels[channel].length) {
-                        console.log('unequal lengths ', channel, uris.length, channels[channel].length);
-                        logDifference(uris, channels[channel]);
-                    }
-                    expect(channels[channel].length).toBe(uris.length);
-                    callback(res.error);
-                })
-                .catch(error => callback(error))
-        }, function (err) {
-            done(err);
-        });
+    it('verifies number of replicated items', async () => {
+        const iteratorFunc = async (channel, callback) => {
+            const currentChannel = replicatedChannels[channel];
+            const source = getProp('replicationSource', currentChannel);
+            const response = await hubClientGet(`${source}/time/hour?stable=false`, headers);
+            const res = await followRedirectIfPresent(response, headers);
+            const prevLink = fromObjectPath(['body', '_links', 'previous', 'href'], res);
+            const res2 = await hubClientGet(prevLink, headers);
+            const uris = fromObjectPath(['body', '_links', 'uris'], res2) || [];
+            if (uris.length !== channels[channel].length) {
+                console.log('unequal lengths ', channel, uris.length, channels[channel].length);
+                logDifference(uris, channels[channel]);
+            }
+            return channels[channel].length === uris.length;
+        };
+        const chunks = toChunkArray(validReplicatedChannelUrls, 20);
+        const results = await processChunks(chunks, iteratorFunc);
+        expect(results.every(val => val)).toBe(true);
     });
 
-    function logDifference(source, destination) {
-        if (source.length == 0 || destination.length == 0) {
-            console.log('source ', source);
-            console.log('destination', destination);
-            return;
-        }
-        if (source.length + destination.length > 10000) {
-            console.log("too many items to compare ", source.length, destination.length);
-            return;
-        }
-        var sourceItems = mapContentKey(source, source[0].split('/')[4]);
-        var destinationItems = mapContentKey(destination, destination[0].split('/')[4]);
-        console.log('missing from source:', sourceItems.filter(sourceItem => !(sourceItem in destinationItems)));
-        console.log('missing from destination:', destinationItems.filter(destinationItem => !(destinationItem in sourceItems)));
-    }
-
-    function mapContentKey(uris, channel) {
-        return uris.map(function (value) {
-            return getContentKey(value, channel);
-        });
-    }
-
-    function getContentKey(uri, channel) {
-        return uri.substring(uri.lastIndexOf(channel) + channel.length);
-    }
-
-    var itemsToVerify = [];
-
-    it('select some random items for content verification ', function (done) {
-        for (var channel in channels) {
-            if (channel.toLowerCase().indexOf('large_test') > 0) {
-                console.log('excluding', channel);
-            } else {
-                console.log('working on', channel);
-                channels[channel].forEach(function (uri) {
-                    var replicatedChannel = replicatedChannels[channel];
-                    if (Math.random() > 0.99) {
-                        var contentKey = getContentKey(uri, channel);
-                        itemsToVerify.push({name: channel, uri: uri, contentKey: contentKey});
-                    }
-                });
+    it('select some random items for content verification ', () => {
+        const workableChannels = Object.keys(channels)
+            .filter(channel => !(channel.toLowerCase().includes('large_test')));
+        const confirmationPercentage = 99;
+        const randoms = randomItemsFromArrayByPercentage(workableChannels, confirmationPercentage);
+        const formatted = randoms.reduce((accum, key) => {
+            if (channels[key] && channels[key].length) {
+                const items = channels[key]
+                    .map(uri => ({ name: key, uri, contentKey: getContentKey(uri, key) }));
+                accum.push(...items);
             }
-
-            console.log(channels[channel].length + ' items for ' + channel + ' verify ' + itemsToVerify.length);
-        }
-        done();
+            return accum;
+        }, []);
+        itemsToVerify.push(...formatted);
     }, MINUTE);
 
-    it('compares replicated items to source items', function (done) {
-
-        async.eachLimit(itemsToVerify, 50,
-            function (item, callback) {
-                async.parallel([
-                        function (callback) {
-                            getItem(replicatedChannels[item.name].replicationSource + item.contentKey, callback);
-                        },
-                        function (callback) {
-                            getItem(item.uri, callback);
-                        }
-                    ],
-                    function (err, results) {
-                        if (results[0] && results[1]) {
-                            var itemZero = results[0].length;
-                            var itemOne = results[1].length;
-                            if (itemOne !== itemZero) {
-                                console.log('wrong length for item ' + item.uri + ' expected ' + itemZero + ' found ' + itemOne);
-                            }
-                            expect(itemOne).toBe(itemZero);
-
-                        } else {
-                            console.log('missing result for ' + item.name + ' ' + item.contentKey);
-                            expect(results[0]).not.toBeNull();
-                            expect(results[1]).not.toBeNull();
-                        }
-                        callback(err);
-
-                    });
-
-            }, function (err) {
-                done(err);
-            });
+    it('compares replicated items to source items', async () => {
+        const iteratorFunc = async (item) => {
+            const parallelArray = [
+                getItem(`${replicatedChannels[item.name].replicationSource}${item.contentKey}`),
+                getItem(item.uri),
+            ];
+            const [itemA, itemB] = await Promise.all(parallelArray);
+            if (itemA && itemB) {
+                const itemALength = itemA.length;
+                const itemBLength = itemB.length;
+                if (itemBLength !== itemALength) {
+                    console.log('wrong length for item ', item.uri, ' expected ', itemALength, ' found ', itemBLength);
+                    return false;
+                }
+            }
+            return !!itemA && !!itemB;
+        };
+        const chunks = toChunkArray(itemsToVerify, 50);
+        const responses = await processChunks(chunks, iteratorFunc);
+        expect(responses.every(v => v)).toBe(true);
     }, 30 * MINUTE);
-
 });

@@ -11,6 +11,7 @@ const {
 } = require('./functional');
 const {
     randomChannelName,
+    randomItemsFromArrayByPercentage,
     randomNumberBetweenInclusive,
     randomString,
     randomTag,
@@ -61,6 +62,7 @@ module.exports = {
     processChunks,
     putWebhook,
     randomChannelName,
+    randomItemsFromArrayByPercentage,
     randomNumberBetweenInclusive,
     randomString,
     randomTag,

@@ -24,6 +24,7 @@ const isWithinSpokeWindow = (key) => {
     console.log(`key ${key} time ${keyTime.format()} ${oneHourAgo.format()}`);
     return oneHourAgo.isBefore(keyTime);
 };
+// TODO: I don't think this is being used ???
 /**
  * This should :
  * 1 - Get /ChannelLatestUpdated list from the hub

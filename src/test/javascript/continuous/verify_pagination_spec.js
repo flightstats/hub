@@ -11,6 +11,7 @@ console.log(hubUrl);
 const channelUrl = `${hubUrl}/channel/load_test_1`;
 const twoDaysAgo = `${channelUrl}/${moment().utc().subtract(2, 'days').format('YYYY/MM/DD/HH/mm')}`;
 const headers = { 'Content-Type': 'application/json' };
+// TODO: I don't think is being used ????
 let uris = [];
 let channel = null;
 let previous = '';
@@ -27,8 +28,8 @@ const getLocation = async (url) => {
 const getAndCompare = async (url) => {
     console.log('gets ', url);
     const res = await hubClientGet(url);
-    expect(res.statusCode).toBe(200);
-    const links = fromObjectPath(['body', '_links', 'uris'], res);
+    expect(getProp('statusCode', res)).toBe(200);
+    const links = fromObjectPath(['body', '_links', 'uris'], res) || [];
     return links.every((link, arr, index) =>
         uris.includes(link) && uris.indexOf(link) === index);
 };
@@ -69,36 +70,34 @@ describe(__filename, function () {
     }, 60 * 1000);
 
     it(`2 - gets previous ${uris[0]}`, async () => {
-        previous = getLocation(`${uris[0]}/previous`);
+        previous = await getLocation(`${uris[0]}/previous`);
     }, 60 * 1001);
 
     it(`3 - gets next N from ${previous}`, async () => {
-        getAndCompare(`${previous}/next/${uris.length}`);
+        await getAndCompare(`${previous}/next/${uris.length}`);
     }, 60 * 1002);
 
     var next = '';
 
     it(`4 - gets next ${uris[uris.length - 1]}`, async () => {
-        next = getLocation(`${uris[uris.length - 1]}/next`);
+        next = await getLocation(`${uris[uris.length - 1]}/next`);
     }, 60 * 1003);
 
     it(`5 - gets previous N from ${next}`, async () => {
-        getAndCompare(`${next}/previous/${uris.length}`);
+        await getAndCompare(`${next}/previous/${uris.length}`);
     }, 60 * 1004);
 
-    it('6 - gets earliest', async (done) => {
-        console.log('earliest', channel._links.earliest.href);
-        utils.httpGet(channel._links.earliest.href)
-            .then(res => {
-                expect(res.statusCode).toBe(303);
-                var time = moment(channel.millis).subtract(channel.ttlDays, 'days').utc();
-                var timeUrlSegments = res.headers.location.substring(channelUrl.length)
-                timeUrlSegments = timeUrlSegments.substring(0, timeUrlSegments.lastIndexOf('/'));
-                var earliestTime = moment(timeUrlSegments + ' +0000', '/YYYY/MM/DD/HH/mm/ss/SSS Z');
-                expect(earliestTime.isAfter(time)).toBe(true);
-                expect(earliestTime.isBefore(time.add(1, 'hours'))).toBe(true);
-            })
-            .finally(done);
+    it('6 - gets earliest', async () => {
+        const earlyLink = fromObjectPath(['_links', 'earliest', 'href'], channel);
+        console.log('earliest', earlyLink);
+        const res = await hubClientGet(earlyLink, headers);
+        expect(getProp('statusCode', res)).toBe(303);
+        const time = moment(channel.millis).subtract(channel.ttlDays, 'days').utc();
+        const location = fromObjectPath(['headers', 'location'], res) || '';
+        let timeUrlSegments = location.substring(channelUrl.length);
+        timeUrlSegments = timeUrlSegments.substring(0, timeUrlSegments.lastIndexOf('/'));
+        const earliestTime = moment(`${timeUrlSegments}+0000`, '/YYYY/MM/DD/HH/mm/ss/SSS Z');
+        expect(earliestTime.isAfter(time)).toBe(true);
+        expect(earliestTime.isBefore(time.add(1, 'hours'))).toBe(true);
     }, 60 * 1000);
-
 });

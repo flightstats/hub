@@ -1,7 +1,6 @@
 const {
-    fromObjectPath,
     getProp,
-    hubClientGet
+    hubClientGet,
 } = require('../lib/helpers');
 require('console.table');
 const locustURL = `http://${process.env.locustUrl}`;

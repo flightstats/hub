@@ -5,6 +5,7 @@ const {
     hubClientGet,
     processChunks,
     toChunkArray,
+    randomItemsFromArrayByPercentage,
 } = require('../lib/helpers');
 const { getHubUrlBase } = require('../lib/config');
 const hubUrl = getHubUrlBase();
@@ -65,11 +66,7 @@ describe(__filename, function () {
                 };
             }, result);
         expect(statusCodes.every(code => code === 200)).toBe(true);
-        const amountToTake = Math.floor((uris.length * confirmationPercentage) / 100);
-        console.log(`taking ${confirmationPercentage}% of the ${uris.length} items: `, amountToTake);
-        do {
-            urisToVerify.push(uris[Math.floor(Math.random() * uris.length)]);
-        } while (urisToVerify.length < amountToTake);
+        urisToVerify = randomItemsFromArrayByPercentage(uris, confirmationPercentage);
     }, 5 * MINUTE);
 
     it('verifies items', async () => {
