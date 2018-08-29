@@ -4,6 +4,7 @@ const timeoutInterval = 60 * 1000;
 const {
     callbackPort,
     hubDomain,
+    hubUrl,
     ipAddress,
     runEncrypted,
 } = process.env;
@@ -18,7 +19,7 @@ const getCallBackPort = () => (parseInt(callbackPort, 10) || 8888);
 
 const getIp = () => (ipAddress || ip.address());
 
-const getHubDomain = () => hubDomain || getIp();
+const getHubDomain = () => hubDomain || hubUrl || getIp();
 
 const getHubUrlBase = () => {
     const domain = getHubDomain();
