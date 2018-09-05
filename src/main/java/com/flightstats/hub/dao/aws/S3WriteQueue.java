@@ -131,7 +131,7 @@ public class S3WriteQueue {
     private void countAge(ChannelContentKey key, String metricName) {
         Long ageMS = calculateAgeMS(key);
         if (ageMS != null) {
-            metricsService.count(metricName, ageMS, "channel:" + key.getChannel());
+            metricsService.count(metricName, ageMS, "key:" + key.toString());
         }
     }
 
