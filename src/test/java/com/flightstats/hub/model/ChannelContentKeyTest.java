@@ -33,4 +33,28 @@ public class ChannelContentKeyTest {
         ChannelContentKey cycled = channelContentKey.fromUrl(channelContentKey.toUrl());
         assertEquals(channelContentKey, cycled);
     }
+
+    @Test
+    public void fromUrl() {
+        String url = "http://hub/channel/foo/1999/12/31/23/59/59/999/l33t";
+        ChannelContentKey key = ChannelContentKey.fromUrl(url);
+        assertEquals(key.getChannel(), "foo");
+        assertEquals(key.getContentKey(), new ContentKey(1999, 12, 31, 23, 59, 59, 999, "l33t"));
+    }
+
+    @Test
+    public void fromSpokePath() {
+        String filePath = "/spoke/write/foo/1999/12/31/23/59/59999l33t";
+        ChannelContentKey key = ChannelContentKey.fromSpokePath(filePath);
+        assertEquals(key.getChannel(), "foo");
+        assertEquals(key.getContentKey(), new ContentKey(1999, 12, 31, 23, 59, 59, 999, "l33t"));
+    }
+
+    @Test
+    public void fromChannelPath() {
+        String path = "foo/1999/12/31/23/59/59/999/l33t";
+        ChannelContentKey key = ChannelContentKey.fromChannelPath(path);
+        assertEquals(key.getChannel(), "foo");
+        assertEquals(key.getContentKey(), new ContentKey(1999, 12, 31, 23, 59, 59, 999, "l33t"));
+    }
 }

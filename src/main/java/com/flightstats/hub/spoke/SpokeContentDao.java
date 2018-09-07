@@ -5,8 +5,11 @@ import com.flightstats.hub.exception.FailedWriteException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.BulkContent;
+import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.util.Commander;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,5 +60,13 @@ public class SpokeContentDao {
             logger.error("unable to write " + channelName, e);
             throw e;
         }
+    }
+
+    static ChannelContentKey getOldestItem(SpokeStore store) {
+        String storePath = "/spoke/" + store.name().toLowerCase();
+        // expected result format: YYYY-MM-DD+HH:MM:SS.SSSSSSSSSS /spoke/store/channel/yyyy/mm/dd/hh/mm/ssSSShash
+        String result = Commander.run(new String[]{"find", storePath, "-type", "f", "-printf", "'%T+ %p\n'", "|", "sort", "|", "head", "-n", "1"}, 3);
+        String spokePath = StringUtils.substring(result, 31);
+        return ChannelContentKey.fromSpokePath(spokePath);
     }
 }

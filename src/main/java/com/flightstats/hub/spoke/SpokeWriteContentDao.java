@@ -189,4 +189,8 @@ public class SpokeWriteContentDao implements ContentDao {
     public void initialize() {
         //do anything?
     }
+
+    ChannelContentKey getOldestItem() {
+        return SpokeContentDao.getOldestItem(SpokeStore.WRITE);
+    }
 }

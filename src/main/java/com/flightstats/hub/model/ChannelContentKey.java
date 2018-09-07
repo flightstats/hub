@@ -1,9 +1,18 @@
 package com.flightstats.hub.model;
 
 import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.Interval;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ChannelContentKey implements Comparable<ChannelContentKey> {
 
+    private final static Logger logger = LoggerFactory.getLogger(ChannelContentKey.class);
     private final ContentKey contentKey;
     private final String channel;
 
@@ -25,9 +34,37 @@ public class ChannelContentKey implements Comparable<ChannelContentKey> {
         return "channel/" + channel + "/" + contentKey.toUrl();
     }
 
+    /**
+     * @param url Expects the format of "http://hub/channel/channelName/yyyy/mm/dd/hh/mm/ss/sss/hash"
+     */
     public static ChannelContentKey fromUrl(String url) {
-        String after = StringUtils.substringAfter(url, "channel/");
-        String[] split = StringUtils.split(after, "/", 2);
+        String channelPath = StringUtils.substringAfter(url, "channel/");
+        return fromChannelPath(channelPath);
+    }
+
+    /**
+     * @param path Expects the format of "/spoke/.+/channelName/yyyy/mm/dd/hh/mm/[ss][sss][hash]"
+     */
+    public static ChannelContentKey fromSpokePath(String path) {
+        String[] split = path.split("/");
+        String channel = split[3];
+        String year = split[4];
+        String month = split[5];
+        String day = split[6];
+        String hour = split[7];
+        String minute = split[8];
+        String second = StringUtils.substring(split[9], 0, 2);
+        String millisecond = StringUtils.substring(split[9], 2, 5);
+        String hash = StringUtils.substring(split[9], 5);
+        String channelPath = Stream.of(channel, year, month, day, hour, minute, second, millisecond, hash).collect(Collectors.joining("/"));
+        return fromChannelPath(channelPath);
+    }
+
+    /**
+     * @param path Expects the format of "channelName/yyyy/mm/dd/hh/mm/ss/sss/hash"
+     */
+    public static ChannelContentKey fromChannelPath(String path) {
+        String[] split = StringUtils.split(path, "/", 2);
         return new ChannelContentKey(split[0], ContentKey.fromUrl(split[1]).get());
     }
 
@@ -71,5 +108,23 @@ public class ChannelContentKey implements Comparable<ChannelContentKey> {
 
     protected boolean canEqual(Object other) {
         return other instanceof ChannelContentKey;
+    }
+
+    public Long getAgeMS() {
+        DateTime then = this.getContentKey().getTime();
+        DateTime now = DateTime.now(DateTimeZone.UTC);
+        try {
+            if (then.isBefore(now)) {
+                Interval delta = new Interval(then, now);
+                return delta.toDurationMillis();
+            } else {
+                Interval delta = new Interval(now, then);
+                return -delta.toDurationMillis();
+            }
+        } catch (IllegalArgumentException e) {
+            logger.warn("unable to calculate the item's age", e);
+            return null;
+        }
+
     }
 }

@@ -4,7 +4,9 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.TtlEnforcer;
+import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.util.Commander;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.util.concurrent.AbstractScheduledService;
@@ -20,15 +22,20 @@ import java.util.function.Consumer;
 @Singleton
 public class SpokeTtlEnforcer {
     private final static Logger logger = LoggerFactory.getLogger(SpokeTtlEnforcer.class);
+    private final SpokeStore spokeStore;
     private final String storagePath;
     private final int ttlMinutes;
 
     @Inject
     private ChannelService channelService;
 
-    public SpokeTtlEnforcer(String storagePath, int ttlMinutes) {
-        this.storagePath = storagePath;
-        this.ttlMinutes = ttlMinutes + 1;
+    @Inject
+    private MetricsService metricsService;
+
+    public SpokeTtlEnforcer(SpokeStore spokeStore) {
+        this.spokeStore = spokeStore;
+        this.storagePath = HubProperties.getSpokePath(spokeStore);
+        this.ttlMinutes = HubProperties.getSpokeTtlMinutes(spokeStore) + 1;
         if (HubProperties.getProperty("spoke.enforceTTL", true)) {
             HubServices.register(new SpokeTtlEnforcerService());
         }
@@ -48,7 +55,16 @@ public class SpokeTtlEnforcer {
             } else {
                 Commander.run(new String[]{"find", channelPath, "-mmin", "+" + ttlMinutes, "-delete"}, 1);
             }
+            updateOldestItemMetric();
         };
+    }
+
+    private void updateOldestItemMetric() {
+        ChannelContentKey oldestItem = SpokeContentDao.getOldestItem(spokeStore);
+        Long oldestItemAgeMS = oldestItem.getAgeMS();
+        if (oldestItemAgeMS != null) {
+            metricsService.gauge("spoke." + spokeStore.name() + ".age.oldest", oldestItemAgeMS);
+        }
     }
 
     private class SpokeTtlEnforcerService extends AbstractScheduledService {

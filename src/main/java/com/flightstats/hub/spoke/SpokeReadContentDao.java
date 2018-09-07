@@ -126,4 +126,7 @@ public class SpokeReadContentDao implements ContentDao {
         throw new NotImplementedException("SpokeReadContentDao.deleteBefore not implemented");
     }
 
+    ChannelContentKey getOldestItem() {
+        return SpokeContentDao.getOldestItem(SpokeStore.READ);
+    }
 }
