@@ -43,19 +43,19 @@ public class ChannelContentKey implements Comparable<ChannelContentKey> {
     }
 
     /**
-     * @param path Expects the format of "/spoke/.+/channelName/yyyy/mm/dd/hh/mm/[ss][sss][hash]"
+     * @param path Expects the format of "/mnt/spoke/.+/channelName/yyyy/mm/dd/hh/mm/[ss][sss][hash]"
      */
     public static ChannelContentKey fromSpokePath(String path) {
         String[] split = path.split("/");
-        String channel = split[3];
-        String year = split[4];
-        String month = split[5];
-        String day = split[6];
-        String hour = split[7];
-        String minute = split[8];
-        String second = StringUtils.substring(split[9], 0, 2);
-        String millisecond = StringUtils.substring(split[9], 2, 5);
-        String hash = StringUtils.substring(split[9], 5);
+        String channel = split[4];
+        String year = split[5];
+        String month = split[6];
+        String day = split[7];
+        String hour = split[8];
+        String minute = split[9];
+        String second = StringUtils.substring(split[10], 0, 2);
+        String millisecond = StringUtils.substring(split[10], 2, 5);
+        String hash = StringUtils.substring(split[10], 5);
         String channelPath = Stream.of(channel, year, month, day, hour, minute, second, millisecond, hash).collect(Collectors.joining("/"));
         return fromChannelPath(channelPath);
     }
