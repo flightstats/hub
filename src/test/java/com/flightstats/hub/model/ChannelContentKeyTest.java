@@ -44,7 +44,7 @@ public class ChannelContentKeyTest {
 
     @Test
     public void fromSpokePath() {
-        String filePath = "/spoke/write/foo/1999/12/31/23/59/59999l33t";
+        String filePath = "/mnt/spoke/write/foo/1999/12/31/23/59/59999l33t";
         ChannelContentKey key = ChannelContentKey.fromSpokePath(filePath);
         assertEquals(key.getChannel(), "foo");
         assertEquals(key.getContentKey(), new ContentKey(1999, 12, 31, 23, 59, 59, 999, "l33t"));
