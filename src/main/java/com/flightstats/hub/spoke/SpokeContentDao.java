@@ -66,8 +66,7 @@ public class SpokeContentDao {
         String storePath = "/spoke/" + store.name().toLowerCase();
         logger.trace("getting oldest item from " + storePath);
         // expected result format: YYYY-MM-DD+HH:MM:SS.SSSSSSSSSS /spoke/store/channel/yyyy/mm/dd/hh/mm/ssSSShash
-        String result = Commander.run(new String[]{"find", storePath, "-type", "f", "-printf", "'%T+ %p\n'", "|", "sort", "|", "head", "-n", "1"}, 3);
-        logger.debug("commander result: " + result);
+        String result = Commander.run(new String[]{"find", storePath, "-type f", "-printf '%T+ %p\\n'", "|", "sort", "|", "head", "-n", "1"}, 3);
         String spokePath = StringUtils.substring(result, 31);
         return ChannelContentKey.fromSpokePath(spokePath);
     }
