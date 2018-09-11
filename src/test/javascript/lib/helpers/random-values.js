@@ -22,12 +22,13 @@ const randomString = (len) => {
 const randomTag = () => `tag${Math.random().toString().replace(".", "")}`;
 
 const randomItemsFromArrayByPercentage = (arr, percentage) => {
+    const LIMIT = 60 * 1000;
     const resultArray = [];
     const amountToTake = Math.floor((arr.length * percentage) / 100);
     console.log(`taking ${percentage}% of the ${arr.length} items: `, amountToTake);
     do {
         resultArray.push(arr[Math.floor(Math.random() * arr.length)]);
-    } while (resultArray.length < amountToTake);
+    } while ((resultArray.length < amountToTake) && (resultArray.length < LIMIT));
     return resultArray;
 };
 
