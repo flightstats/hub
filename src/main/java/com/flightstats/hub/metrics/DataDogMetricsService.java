@@ -1,9 +1,7 @@
 package com.flightstats.hub.metrics;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProperties;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.rest.RestClient;
 import com.sun.jersey.api.client.ClientResponse;
 import com.timgroup.statsd.Event;
@@ -13,14 +11,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.MediaType;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 class DataDogMetricsService implements MetricsService {
     private final static Logger logger = LoggerFactory.getLogger(DataDogMetricsService.class);
     private final static StatsDClient statsd = DataDog.statsd;
-    private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+
+    final static List<String> NULL_TAGS = Arrays.asList("name:", "image:", "instance-type:", "kernel:", "location:", "region:", "security-group:", "team:", "role:", "env:", "environment:", "availability-zone:");
 
     @Override
     public void insert(String channel, long start, Insert type, int items, long bytes) {
@@ -111,9 +111,10 @@ class DataDogMetricsService implements MetricsService {
     }
 
     String[] addChannelTag(String channel, String... tags) {
-        List<String> tagList = Arrays.stream(tags).collect(Collectors.toList());
+        List<String> tagList = new ArrayList<>(tags.length + NULL_TAGS.size() + 1);
         tagList.add("channel:" + channel);
+        Collections.addAll(tagList, tags);
+        tagList.addAll(NULL_TAGS);
         return tagList.toArray(new String[tagList.size()]);
     }
-
 }
