@@ -30,7 +30,7 @@ const randomItemsFromArrayByPercentage = (arr, percentage) => {
     if (finalAmount === LIMIT) console.log(`OVERRIDING confirmationPercentage with LIMIT: ${LIMIT}`);
     do {
         resultArray.push(arr[Math.floor(Math.random() * arr.length)]);
-    } while ((resultArray.length < finalAmount));
+    } while (resultArray.length < finalAmount);
     return resultArray;
 };
 
