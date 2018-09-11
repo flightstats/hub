@@ -25,10 +25,12 @@ const randomItemsFromArrayByPercentage = (arr, percentage) => {
     const LIMIT = 60 * 1000;
     const resultArray = [];
     const amountToTake = Math.floor((arr.length * percentage) / 100);
+    const finalAmount = amountToTake < LIMIT ? amountToTake : LIMIT;
     console.log(`taking ${percentage}% of the ${arr.length} items: `, amountToTake);
+    if (finalAmount === LIMIT) console.log(`OVERRIDING confirmationPercentage with LIMIT: ${LIMIT}`);
     do {
         resultArray.push(arr[Math.floor(Math.random() * arr.length)]);
-    } while ((resultArray.length < amountToTake) && (resultArray.length < LIMIT));
+    } while ((resultArray.length < finalAmount));
     return resultArray;
 };
 
