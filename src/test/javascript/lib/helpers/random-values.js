@@ -1,3 +1,4 @@
+const DEFAULT_LIMIT = 60 * 1000;
 
 const randomChannelName = () => `TeSt_${Math.random().toString().replace(".", "_")}`;
 
@@ -21,13 +22,12 @@ const randomString = (len) => {
 
 const randomTag = () => `tag${Math.random().toString().replace(".", "")}`;
 
-const randomItemsFromArrayByPercentage = (arr, percentage) => {
-    const LIMIT = 60 * 1000;
+const randomItemsFromArrayByPercentage = (arr, percentage, limit = DEFAULT_LIMIT) => {
     const resultArray = [];
     const amountToTake = Math.floor((arr.length * percentage) / 100);
-    const finalAmount = amountToTake < LIMIT ? amountToTake : LIMIT;
+    const finalAmount = amountToTake < limit ? amountToTake : limit;
     console.log(`taking ${percentage}% of the ${arr.length} items: `, amountToTake);
-    if (finalAmount === LIMIT) console.log(`OVERRIDING confirmationPercentage with LIMIT: ${LIMIT}`);
+    if (finalAmount === limit) console.log(`OVERRIDING percentage with limit: ${limit}`);
     do {
         resultArray.push(arr[Math.floor(Math.random() * arr.length)]);
     } while (resultArray.length < finalAmount);
