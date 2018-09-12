@@ -74,9 +74,8 @@ describe(__filename, function () {
     });
 
     it('returns hub name + port in Hub-Node header', async () => {
-        const deployResponse = await hubClientGet(`${hubUrlBase}/internal/deploy/text`);
-        let nodes = getProp('body', deployResponse) || "";
-        nodes = nodes.split(" ").map(node => `${node}:8080`);
+        const deployResponse = await hubClientGet(`${hubUrlBase}/internal/deploy`);
+        let nodes = getProp('body', deployResponse) || [];
         const rootResponse = await hubClientGet(hubUrlBase);
         console.log(rootResponse.headers);
         const node = fromObjectPath(['headers', 'hub-node'], rootResponse);

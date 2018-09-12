@@ -76,9 +76,8 @@ describe(__filename, function () {
 
     it('verifies the headers on the delivered item', async () => {
         if (requests.length < 1) return fail('no requests to verify');
-        const deployResponse = await hubClientGet(`${getHubUrlBase()}/internal/deploy/text`);
-        let nodes = getProp('body', deployResponse) || "";
-        nodes = nodes.split(" ").map(node => `${node}:8080`);
+        const deployResponse = await hubClientGet(`${getHubUrlBase()}/internal/deploy`);
+        let nodes = getProp('body', deployResponse) || [];
         expect(requests.length).toEqual(1);
         const node = fromObjectPath(['headers', 'hub-node'], requests[0]) || "";
         expect(nodes).toContain(node);
