@@ -2,6 +2,7 @@ const request = require('request');
 const {
     fromObjectPath,
     getProp,
+    hubClientGet
 } = require('../lib/helpers');
 const {
     getHubUrlBase,
@@ -70,5 +71,13 @@ describe(__filename, function () {
             expect(fromObjectPath(['_links', 'self', 'href'], body)).toBe("https://headers:9000/");
             done();
         });
+    });
+
+    it('returns hub name + port in Hub-Node header', async () => {
+        const deployResponse = await hubClientGet(`${hubUrlBase}/internal/deploy/text`);
+        const nodes = getProp('body', response).split(" ");
+        const rootResponse = await hubClientGet(hubUrlBase);
+        const node = fromObjectPath(['headers', 'Hub-Node'], rootResponse);
+        expect(nodes).toContain(`${node}:8080`);
     });
 });
