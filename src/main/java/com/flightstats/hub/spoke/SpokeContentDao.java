@@ -78,6 +78,6 @@ public class SpokeContentDao {
         logger.trace("getting the total number of items in " + storePath);
         String[] command = new String[]{"/bin/bash", "-c", "find " + storePath + " -type f | wc -l"};
         String result = Commander.run(command, 1);
-        return Long.valueOf(result);
+        return Long.valueOf(StringUtils.chomp(result));
     }
 }
