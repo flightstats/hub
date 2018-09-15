@@ -1,5 +1,6 @@
 package com.flightstats.hub.spoke;
 
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.exception.FailedWriteException;
 import com.flightstats.hub.metrics.ActiveTraces;
@@ -63,9 +64,9 @@ public class SpokeContentDao {
     }
 
     static ChannelContentKey getOldestItem(SpokeStore store) {
-        String storePath = "/spoke/" + store.name().toLowerCase();
+        String storePath = HubProperties.getSpokePath(store);
         logger.trace("getting oldest item from " + storePath);
-        // expected result format: YYYY-MM-DD+HH:MM:SS.SSSSSSSSSS /spoke/store/channel/yyyy/mm/dd/hh/mm/ssSSShash
+        // expected result format: YYYY-MM-DD+HH:MM:SS.SSSSSSSSSS /mnt/spoke/store/channel/yyyy/mm/dd/hh/mm/ssSSShash
         String[] command = new String[]{"/bin/bash", "-c", "find " + storePath + " -type f -printf '%T+ %p\\n' | sort | head -n 1"};
         String result = Commander.run(command, 3);
         String spokePath = StringUtils.substring(result, 31);

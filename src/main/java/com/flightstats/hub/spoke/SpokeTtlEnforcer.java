@@ -63,7 +63,7 @@ public class SpokeTtlEnforcer {
         ChannelContentKey oldestItem = SpokeContentDao.getOldestItem(spokeStore);
         Long oldestItemAgeMS = oldestItem.getAgeMS();
         if (oldestItemAgeMS != null) {
-            metricsService.gauge("spoke." + spokeStore.name() + ".age.oldest", oldestItemAgeMS);
+            metricsService.gauge("spoke." + spokeStore.name().toLowerCase() + ".age.oldest", oldestItemAgeMS);
         }
     }
 
