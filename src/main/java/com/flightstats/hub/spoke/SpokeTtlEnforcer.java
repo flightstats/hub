@@ -55,7 +55,6 @@ public class SpokeTtlEnforcer {
             } else {
                 Commander.run(new String[]{"find", channelPath, "-mmin", "+" + ttlMinutes, "-delete"}, 1);
             }
-            updateOldestItemMetric();
         };
     }
 
@@ -74,6 +73,7 @@ public class SpokeTtlEnforcer {
                 long start = System.currentTimeMillis();
                 logger.info("running ttl cleanup");
                 TtlEnforcer.enforce(storagePath, channelService, handleCleanup());
+                updateOldestItemMetric();
                 logger.info("completed ttl cleanup {}", (System.currentTimeMillis() - start));
             } catch (Exception e) {
                 logger.info("issue cleaning up spoke", e);
