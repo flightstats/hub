@@ -1,12 +1,16 @@
 package com.flightstats.hub.spoke;
 
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.exception.FailedWriteException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.BulkContent;
+import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.util.Commander;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,5 +61,23 @@ public class SpokeContentDao {
             logger.error("unable to write " + channelName, e);
             throw e;
         }
+    }
+
+    static ChannelContentKey getOldestItem(SpokeStore store) {
+        String storePath = HubProperties.getSpokePath(store);
+        logger.trace("getting oldest item from " + storePath);
+        // expected result format: YYYY-MM-DD+HH:MM:SS.SSSSSSSSSS /mnt/spoke/store/channel/yyyy/mm/dd/hh/mm/ssSSShash
+        String[] command = new String[]{"/bin/bash", "-c", "find " + storePath + " -type f -printf '%T+ %p\\n' | sort | head -n 1"};
+        String result = Commander.run(command, 3);
+        String spokePath = StringUtils.substring(result, 31);
+        return ChannelContentKey.fromSpokePath(spokePath);
+    }
+
+    static long getNumberOfItems(SpokeStore spokeStore) {
+        String storePath = HubProperties.getSpokePath(spokeStore);
+        logger.trace("getting the total number of items in " + storePath);
+        String[] command = new String[]{"/bin/bash", "-c", "find " + storePath + " -type f | wc -l"};
+        String result = Commander.run(command, 1);
+        return Long.valueOf(StringUtils.chomp(result));
     }
 }

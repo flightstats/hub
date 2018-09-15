@@ -15,10 +15,10 @@ public class PeriodicMetricEmitter {
     private MetricsService metricsService;
 
     PeriodicMetricEmitter() {
-        HubServices.register(new PeriodicPropertyEmitterService(), HubServices.TYPE.AFTER_HEALTHY_START);
+        HubServices.register(new PeriodicMetricEmitterService(), HubServices.TYPE.AFTER_HEALTHY_START);
     }
 
-    private class PeriodicPropertyEmitterService extends AbstractScheduledService {
+    private class PeriodicMetricEmitterService extends AbstractScheduledService {
 
         @Override
         protected void runOneIteration() {

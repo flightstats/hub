@@ -17,9 +17,6 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.Interval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -111,25 +108,8 @@ public class S3WriteQueue {
         }
     }
 
-    private Long calculateAgeMS(ChannelContentKey key) {
-        DateTime then = key.getContentKey().getTime();
-        DateTime now = DateTime.now(DateTimeZone.UTC);
-        try {
-            if (then.isBefore(now)) {
-                Interval delta = new Interval(then, now);
-                return delta.toDurationMillis();
-            } else {
-                Interval delta = new Interval(now, then);
-                return -delta.toDurationMillis();
-            }
-        } catch (IllegalArgumentException e) {
-            logger.warn("unable to calculate the item's age", e);
-            return null;
-        }
-    }
-
     private void countAge(ChannelContentKey key, String metricName) {
-        Long ageMS = calculateAgeMS(key);
+        Long ageMS = key.getAgeMS();
         if (ageMS != null) {
             metricsService.count(metricName, ageMS, "key:" + key.toString());
         }

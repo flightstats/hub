@@ -53,15 +53,11 @@ class ClusterHubBindings extends AbstractModule {
 
         bind(SpokeTtlEnforcer.class)
                 .annotatedWith(Names.named(SpokeStore.WRITE.name()))
-                .toInstance(new SpokeTtlEnforcer(
-                        HubProperties.getSpokePath(SpokeStore.WRITE),
-                        HubProperties.getSpokeTtlMinutes(SpokeStore.WRITE)));
+                .toInstance(new SpokeTtlEnforcer(SpokeStore.WRITE));
 
         bind(SpokeTtlEnforcer.class)
                 .annotatedWith(Names.named(SpokeStore.READ.name()))
-                .toInstance(new SpokeTtlEnforcer(
-                        HubProperties.getSpokePath(SpokeStore.READ),
-                        HubProperties.getSpokeTtlMinutes(SpokeStore.READ)));
+                .toInstance(new SpokeTtlEnforcer(SpokeStore.READ));
 
         bind(DocumentationDao.class).to(S3DocumentationDao.class).asEagerSingleton();
         bind(SpokeDecommissionManager.class).asEagerSingleton();
