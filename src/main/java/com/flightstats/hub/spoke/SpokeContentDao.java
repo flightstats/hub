@@ -72,4 +72,12 @@ public class SpokeContentDao {
         String spokePath = StringUtils.substring(result, 31);
         return ChannelContentKey.fromSpokePath(spokePath);
     }
+
+    static long getNumberOfItems(SpokeStore spokeStore) {
+        String storePath = HubProperties.getSpokePath(spokeStore);
+        logger.trace("getting the total number of items in " + storePath);
+        String[] command = new String[]{"/bin/bash", "-c", "find " + storePath + " -type f | wc -l"};
+        String result = Commander.run(command, 1);
+        return Long.valueOf(result);
+    }
 }

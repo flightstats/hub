@@ -72,7 +72,10 @@ public class SpokeTtlEnforcer {
             try {
                 long start = System.currentTimeMillis();
                 logger.info("running ttl cleanup");
+                long itemsBefore = SpokeContentDao.getNumberOfItems(spokeStore);
                 TtlEnforcer.enforce(storagePath, channelService, handleCleanup());
+                long itemsAfter = SpokeContentDao.getNumberOfItems(spokeStore);
+                metricsService.gauge("spoke." + spokeStore.name().toLowerCase() + ".total", itemsAfter - itemsBefore);
                 updateOldestItemMetric();
                 logger.info("completed ttl cleanup {}", (System.currentTimeMillis() - start));
             } catch (Exception e) {
