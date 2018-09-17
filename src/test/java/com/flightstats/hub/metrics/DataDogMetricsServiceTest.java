@@ -7,6 +7,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class DataDogMetricsServiceTest {
 
@@ -32,5 +34,16 @@ public class DataDogMetricsServiceTest {
         DataDogMetricsService metricsService = new DataDogMetricsService();
         String[] tags = metricsService.addChannelTag("stuff");
         assertArrayEquals(new String[]{"channel:stuff"}, tags);
+    }
+
+    @Test
+    public void testAddChannelTag() throws Exception {
+        DataDogMetricsService dataDogMetricsService = new DataDogMetricsService();
+        List<String> tags = Arrays.asList(dataDogMetricsService.addChannelTag("channelX", "tagA:a"));
+
+        assertEquals(tags.size(), (DataDogMetricsService.NULL_TAGS.size() + 2)); // null tags + channelTag + tagA
+        assertTrue(tags.contains("channel:channelX"));
+        assertTrue(tags.contains("tagA:a"));
+        assertTrue(tags.containsAll(DataDogMetricsService.NULL_TAGS));
     }
 }
