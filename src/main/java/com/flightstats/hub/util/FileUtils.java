@@ -11,9 +11,7 @@ public class FileUtils {
      */
     public static long deleteFiles(String path, int waitTimeSeconds) {
         String command = "rm -rfv " + path + " | grep \"removed '\" | wc -l";
-        String result = Commander.runInBash(command, waitTimeSeconds);
-        String number = StringUtils.chomp(result);
-        return Long.valueOf(number);
+        return executeAndParse(command, waitTimeSeconds);
     }
 
     /**
@@ -24,8 +22,12 @@ public class FileUtils {
      */
     public static long deleteFilesByAge(String path, int ageMinutes, int waitTimeSeconds) {
         String command = "find " + path + " -mmin " + " +" + ageMinutes + "-exec rm -rfv {} + | grep \"removed '\" | wc -l";
-        String result = Commander.runInBash(command, waitTimeSeconds);
-        return Long.valueOf(StringUtils.chomp(result));
+        return executeAndParse(command, waitTimeSeconds);
     }
 
+    private static long executeAndParse(String command, int waitTimeSeconds) {
+        String result = Commander.runInBash(command, waitTimeSeconds);
+        String value = StringUtils.chomp(result);
+        return Long.valueOf(value);
+    }
 }
