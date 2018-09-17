@@ -1,17 +1,19 @@
-require('../integration_config');
-const { getProp } = require('../lib/helpers');
+const { getProp, hubClientDelete, parseJson, randomChannelName } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
-var request = require('request');
-var channelName = utils.randomChannelName();
+const channelUrl = getChannelUrl();
+const request = require('request');
+const channelName = randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
-var testName = __filename;
 
-function verifyOptionals(parse) {
+function verifyOptionals (parse) {
     expect(getProp('owner', parse)).toBe('the man');
     expect(getProp('ttlDays', parse)).toBe(9);
 }
 
-describe(testName, function () {
+describe(__filename, function () {
     it("creates channel " + channelName + " at " + channelUrl, function (done) {
         request.post({
             url: channelUrl,
@@ -19,13 +21,13 @@ describe(testName, function () {
             body: JSON.stringify({
                 name: channelName,
                 owner: 'the man',
-                ttlDays: 9
-            })
+                ttlDays: 9,
+            }),
         },
         function (err, response, body) {
             expect(err).toBeNull();
             expect(getProp('statusCode', response)).toBe(201);
-            var parse = utils.parseJson(response, testName + '_A');
+            const parse = parseJson(response, `${__filename}_A`);
             verifyOptionals(parse);
             done();
         });
@@ -36,7 +38,7 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
-                var parse = utils.parseJson(response, testName + '_B');
+                const parse = parseJson(response, `${__filename}_B`);
                 verifyOptionals(parse);
                 done();
             });
@@ -46,12 +48,12 @@ describe(testName, function () {
         request.patch({
             url: channelResource,
             headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({description: 'stuff'})
+            body: JSON.stringify({description: 'stuff'}),
         },
         function (err, response, body) {
             expect(err).toBeNull();
             expect(getProp('statusCode', response)).toBe(200);
-            var parse = utils.parseJson(response, testName + '_C');
+            const parse = parseJson(response, `${__filename}_C`);
             expect(getProp('description', parse)).toBe("stuff");
             done();
         });
@@ -62,10 +64,13 @@ describe(testName, function () {
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
-                var parse = utils.parseJson(response, testName + '_D');
+                const parse = parseJson(response, `${__filename}_D`);
                 expect(getProp('description', parse)).toBe("stuff");
                 done();
             });
     });
 
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
+    });
 });

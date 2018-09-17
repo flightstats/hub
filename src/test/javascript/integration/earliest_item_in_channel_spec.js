@@ -1,39 +1,52 @@
-require('../integration_config');
 const {
     fromObjectPath,
     getProp,
+    hubClientDelete,
+    hubClientPut,
+    hubClientPostTestItem,
+    parseJson,
+    randomChannelName,
 } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
-var request = require('request');
-var channelName = utils.randomChannelName();
+const channelUrl = getChannelUrl();
+const headers = { 'Content-Type': 'application/json' };
+const request = require('request');
+const channelName = randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
-var testName = __filename;
-
-
+let channelCreated = false;
 /**
  * create a channel
  * post an item
  * does not get the item back out with earliest - stable
  * get the item back out with earliest - unstable
  */
-describe(testName, function () {
-
-    utils.putChannel(channelName, function () {
-    }, {"name": channelName, "ttlDays": 1});
-
-    var posted;
-
-    it('posts item', function (done) {
-        utils.postItemQ(channelResource)
-            .then(function (value) {
-                posted = fromObjectPath(['response', 'headers', 'location'], value);
-                done();
-            });
+let posted = null;
+describe(__filename, function () {
+    beforeAll(async () => {
+        const response = await hubClientPut(channelResource, headers, {"name": channelName, "ttlDays": 1});
+        if (getProp('statusCode', response) === 201) {
+            channelCreated = true;
+        }
     });
 
-    utils.addItem(channelResource, 201);
+    it('posts item', async () => {
+        if (!channelCreated) return fail('channel not created in before block');
+        const response = await hubClientPostTestItem(channelResource);
+        expect(getProp('statusCode', response)).toEqual(201);
+        posted = fromObjectPath(['headers', 'location'], response);
+    });
+
+    it('posts another item', async () => {
+        if (!channelCreated) return fail('channel not created in before block');
+        const response = await hubClientPostTestItem(channelResource);
+        expect(getProp('statusCode', response)).toEqual(201);
+    });
 
     it("gets earliest stable in channel ", function (done) {
+        if (!channelCreated) return done.fail('channel not created in before block');
         request.get({url: channelResource + '/earliest', followRedirect: false},
             function (err, response, body) {
                 expect(err).toBeNull();
@@ -43,6 +56,7 @@ describe(testName, function () {
     });
 
     it("gets earliest unstable in channel ", function (done) {
+        if (!channelCreated) return done.fail('channel not created in before block');
         request.get({url: channelResource + '/earliest?stable=false', followRedirect: false},
             function (err, response, body) {
                 expect(err).toBeNull();
@@ -56,11 +70,12 @@ describe(testName, function () {
     });
 
     it("gets earliest N unstable in channel ", function (done) {
+        if (!channelCreated) return done.fail('channel not created in before block');
         request.get({url: channelResource + '/earliest/10?stable=false', followRedirect: false},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
-                var parsed = utils.parseJson(response, testName);
+                const parsed = parseJson(response, __filename);
                 const links = getProp('_links', parsed);
                 if (links) {
                     const { next, previous, uris = [] } = links;
@@ -74,5 +89,9 @@ describe(testName, function () {
                 }
                 done();
             });
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

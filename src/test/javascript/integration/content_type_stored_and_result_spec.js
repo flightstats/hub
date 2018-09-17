@@ -1,45 +1,39 @@
-require('../integration_config');
 const {
     fromObjectPath,
     getProp,
+    hubClientDelete,
     hubClientGet,
+    hubClientPost,
+    randomChannelName,
 } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
-var channelName = utils.randomChannelName();
+const channelUrl = getChannelUrl();
+const channelName = randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
-var messageText = "MY SUPER TEST CASE: this & <that>. " + Math.random().toString();
-
+const messageText = `MY SUPER TEST CASE: this & <that>. ${Math.random()}`;
+let itemURL = null;
+let itemResponse = {};
 describe(__filename, function () {
-    it('creates a channel', function (done) {
-        var url = channelUrl;
-        var headers = {'Content-Type': 'application/json'};
-        var body = {'name': channelName};
-
-        utils.httpPost(url, headers, body)
-            .then(function (response) {
-                expect(getProp('statusCode', response)).toEqual(201);
-            })
-            .finally(done);
+    beforeAll(async () => {
+        const contentJSON = { 'Content-Type': 'application/json' };
+        const body = { 'name': channelName };
+        const response = await hubClientPost(channelUrl, contentJSON, body);
+        if (getProp('statusCode', response) === 201) {
+            const contentFractals = { 'Content-Type': 'application/fractals' };
+            itemResponse = await hubClientPost(channelResource, contentFractals, messageText);
+            itemURL = fromObjectPath(['body', '_links', 'self', 'href'], itemResponse);
+        }
     });
 
-    var itemURL;
-
-    it('inserts an item', function (done) {
-        var url = channelResource;
-        var headers = {'Content-Type': 'application/fractals'};
-        var body = messageText;
-
-        utils.httpPost(url, headers, body)
-            .then(function (response) {
-                expect(getProp('statusCode', response)).toEqual(201);
-                const contentType = fromObjectPath(['headers', 'content-type'], response);
-                expect(contentType).toEqual('application/json');
-                const links = fromObjectPath(['body', '_links'], response) || {};
-                const { channel = {}, self = {} } = links;
-                expect(channel.href).toEqual(channelResource);
-                itemURL = self.href;
-            })
-            .finally(done);
+    it('inserted an item', async () => {
+        expect(getProp('statusCode', itemResponse)).toEqual(201);
+        const contentType = fromObjectPath(['headers', 'content-type'], itemResponse);
+        expect(contentType).toEqual('application/json');
+        const channelLink = fromObjectPath(['body', '_links', 'channel', 'href'], itemResponse);
+        expect(channelLink).toEqual(channelResource);
     });
 
     it('verifies the correct content-type is returned', async () => {
@@ -49,5 +43,9 @@ describe(__filename, function () {
         const contentType = fromObjectPath(['headers', 'content-type'], response);
         expect(contentType).toEqual('application/fractals');
         expect(getProp('body', response)).toContain(messageText);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

@@ -4,7 +4,7 @@ var https = require('https');
 var fs = require('fs');
 var request = require('request');
 const moment = require('moment');
-
+const { getCallBackDomain } = require('./config');
 /**
  * Monkey patching Promise.prototype.finally until its officially supported
  *  proposal: https://github.com/tc39/proposal-promise-finally
@@ -270,25 +270,25 @@ exports.toLowerCase = function toLowerCase(str) {
     return output;
 };
 
-exports.putChannel = function putChannel(channelName, verify, body, description, expectedStatus) {
+exports.putChannel = function putChannel (channelName, verify, body, description, expectedStatus) {
     expectedStatus = expectedStatus || 201;
     verify = verify || function () {};
-    body = body || {"name" : channelName};
+    body = body || { name: channelName };
     description = description || 'none';
     it("puts channel " + channelName + " at " + channelUrl + ' ' + description, function (done) {
         var url = channelUrl + '/' + channelName;
         console.log('creating channel ' + channelName + ' for ' + description);
         request.put({
-                url: url,
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify(body)},
-            function (err, response, body) {
-                expect(err).toBeNull();
-                expect(response.statusCode).toBe(expectedStatus);
-                console.log("respinse " + body);
-                verify(response, body);
-                done();
-            });
+            url: url,
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(body)},
+        function (err, response, body) {
+            expect(err).toBeNull();
+            expect(response.statusCode).toBe(expectedStatus);
+            console.log("respinse " + body);
+            verify(response, body);
+            done();
+        });
     });
 };
 
@@ -532,7 +532,7 @@ exports.startServer = function startServer(server, port, callback, done) {
     });
 
     server.on('listening', function () {
-        console.log(`server listening at ${callbackDomain}:${port}/`);
+        console.log(`server listening at ${getCallBackDomain()}:${port}/`);
         done();
     });
 

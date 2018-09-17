@@ -1,16 +1,24 @@
-require('../integration_config');
 const {
     createChannel,
     fromObjectPath,
     getProp,
+    hubClientDelete,
+    hubClientGet,
+    hubClientPostTestItem,
+    randomChannelName,
 } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
-var channelName = utils.randomChannelName();
+const channelUrl = getChannelUrl();
+const channelName = randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
-var testName = __filename;
+const headers = { 'Content-Type': 'application/json' };
 let createdChannel = false;
+let itemHref;
 
-describe(testName, function () {
+describe(__filename, function () {
     beforeAll(async () => {
         const channel = await createChannel(channelName);
         if (getProp('statusCode', channel) === 201) {
@@ -19,26 +27,20 @@ describe(testName, function () {
         }
     });
 
-    console.log('channelName', channelName);
-
-    it('adds item and checks relative links', function (done) {
-        var itemHref;
-        if (!createdChannel) return done.fail('channel not created in before block');
-        utils.postItemQ(channelResource)
-            .then(function (value) {
-                itemHref = fromObjectPath(['body', '_links', 'self', 'href'], value);
-                console.log('item_link', itemHref);
-                return utils.getQ(itemHref + '/next/10');
-            })
-            .then(function (value) {
-                const links = fromObjectPath(['body', '_links'], value) || {};
-                const { previous = {}, uris } = links;
-                const urisLength = uris && uris.length === 0;
-                expect(urisLength).toBe(true);
-                expect(previous.href).toBeDefined();
-                expect(previous.href).toBe(itemHref + '/previous/10?stable=false');
-                done();
-            });
+    it('adds item and checks relative links', async () => {
+        const response = await hubClientPostTestItem(channelResource);
+        itemHref = fromObjectPath(['body', '_links', 'self', 'href'], response);
+        if (!createdChannel) return fail('channel not created in before block');
+        const response2 = await hubClientGet(`${itemHref}/next/10?stable=false`, headers);
+        const links = fromObjectPath(['body', '_links'], response2) || {};
+        const { previous = {}, uris } = links;
+        const urisLength = uris && uris.length === 0;
+        expect(urisLength).toBe(true);
+        expect(previous.href).toBeDefined();
+        expect(previous.href).toBe(`${itemHref}/previous/10?stable=false`);
     });
 
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
+    });
 });

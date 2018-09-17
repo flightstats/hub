@@ -1,30 +1,43 @@
-require('../integration_config');
+const moment = require('moment');
+const {
+    getProp,
+    hubClientDelete,
+    hubClientPut,
+    hubClientPostTestItem,
+    randomChannelName,
+} = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
-var channel = utils.randomChannelName();
-var moment = require('moment');
-
-var tag = Math.random().toString().replace(".", "");
-var testName = __filename;
-
+const channelUrl = getChannelUrl();
+const channel = randomChannelName();
+const tag = Math.random().toString().replace(".", "");
+const mutableTime = moment.utc().subtract(2, 'minute');
+const channelBody = {
+    mutableTime: mutableTime.format('YYYY-MM-DDTHH:mm:ss'),
+    tags: [tag, "test"],
+};
+const channelResource = `${channelUrl}/${channel}`;
+const headers = { 'Content-Type': 'application/json' };
+const afterMutableTimeUrl = `${channelResource}/${mutableTime.add(1, 'minute').format('YYYY/MM/DD/HH/mm/ss/SSS')}`;
 /**
  * This should:
  * Create a channel with mutableTime
  * insert a historical item after the mutableTime
  */
-describe(testName, function () {
+describe(__filename, function () {
+    it('creates a channel with mutableTime', async () => {
+        const response = await hubClientPut(channelResource, headers, channelBody);
+        expect(getProp('statusCode', response)).toEqual(201);
+    });
 
-    var mutableTime = moment.utc().subtract(2, 'minute');
+    it('returns a 400 for item posted after the mutableTime', async () => {
+        const response = await hubClientPostTestItem(afterMutableTimeUrl);
+        expect(getProp('statusCode', response)).toEqual(400);
+    });
 
-    var channelBody = {
-        mutableTime: mutableTime.format('YYYY-MM-DDTHH:mm:ss'),
-        tags: [tag, "test"]
-    };
-
-    utils.putChannel(channel, false, channelBody, testName);
-
-    var channelURL = hubUrlBase + '/channel/' + channel;
-    var pointInThePastURL = channelURL + '/' + mutableTime.add(1, 'minute').format('YYYY/MM/DD/HH/mm/ss/SSS');
-
-    utils.addItem(pointInThePastURL, 400);
-
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
+    });
 });

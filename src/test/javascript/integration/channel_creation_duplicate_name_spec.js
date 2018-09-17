@@ -1,34 +1,36 @@
-require('../integration_config');
-const { getProp, hubClientGet } = require('../lib/helpers');
+const {
+    getProp,
+    hubClientDelete,
+    hubClientGet,
+    hubClientPost,
+    randomChannelName,
+} = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
-var channelName = utils.randomChannelName();
-var channelResource = channelUrl + '/' + channelName;
-
+const channelUrl = getChannelUrl();
+const channelName = randomChannelName();
+const channelResource = `${channelUrl}/${channelName}`;
+const headers = { 'Content-Type': 'application/json' };
+const body = { name: channelName };
 describe(__filename, () => {
     it('verifies the channel doesn\'t exist yet', async () => {
         const response = await hubClientGet(channelResource);
         expect(getProp('statusCode', response)).toEqual(404);
     });
 
-    it('creates the channel', function (done) {
-        var url = channelUrl;
-        var headers = {'Content-Type': 'application/json'};
-        var body = {'name': channelName};
-
-        utils.httpPost(url, headers, body)
-            .then(function (response) {
-                expect(getProp('statusCode', response)).toEqual(201);
-            }).finally(done);
+    it('creates the channel', async () => {
+        const response = await hubClientPost(channelUrl, headers, body);
+        expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    it('verifies creating a channel with an existing name returns an error', function (done) {
-        var url = channelUrl;
-        var headers = {'Content-Type': 'application/json'};
-        var body = { name: channelName };
+    it('verifies creating a channel with an existing name returns an error', async () => {
+        const response = await hubClientPost(channelUrl, headers, body);
+        expect(getProp('statusCode', response)).toEqual(409);
+    });
 
-        utils.httpPost(url, headers, body)
-            .then(function (response) {
-                expect(getProp('statusCode', response)).toEqual(409);
-            }).finally(done);
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

@@ -1,18 +1,18 @@
-require('../integration_config');
+const request = require('request');
 const {
     fromObjectPath,
     getProp,
 } = require('../lib/helpers');
-var request = require('request');
-var testName = __filename;
+const { getHubUrlBase } = require('../lib/config');
 
-describe(testName, function () {
+const hubUrlBase = getHubUrlBase();
 
-    function verifyHeader(url, done) {
+describe(__filename, function () {
+    function verifyHeader (url, done) {
         console.log('url', url);
         request.get({
-            url: url,
-            headers: {"Content-Type": "application/json"}
+            url,
+            headers: {"Content-Type": "application/json"},
         },
         function (err, response, body) {
             expect(err).toBeNull();
@@ -23,16 +23,15 @@ describe(testName, function () {
         });
     }
 
-    it('verfies header at root ' + hubUrlBase, function (done) {
+    it(`verfies header at root ${hubUrlBase}`, function (done) {
         verifyHeader(hubUrlBase, done);
     });
 
     it('verfies header at channel ', function (done) {
-        verifyHeader(hubUrlBase + '/channel', done);
+        verifyHeader(`${hubUrlBase}/channel`, done);
     });
 
     it('verfies header at health ', function (done) {
-        verifyHeader(hubUrlBase + '/health', done);
+        verifyHeader(`${hubUrlBase}/health`, done);
     });
-
 });

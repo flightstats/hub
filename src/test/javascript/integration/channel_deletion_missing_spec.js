@@ -1,17 +1,17 @@
-require('../integration_config');
-const { getProp } = require('../lib/helpers');
+const { getProp, hubClientDelete } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
-var channelResource = channelUrl + '/nonExistent';
+const channelUrl = getChannelUrl();
+const channelResource = `${channelUrl}/nonExistent`;
 
 describe(__filename, function () {
-    it('deletes a channel that doesn\'t exist', function (done) {
-        var url = channelResource;
-        var headers = {'Content-Type': 'application/json'};
+    it('deletes a channel that doesn\'t exist', async () => {
+        const url = channelResource;
+        const headers = {'Content-Type': 'application/json'};
 
-        utils.httpDelete(url, headers)
-            .then(function (response) {
-                expect(getProp('statusCode', response)).toEqual(404);
-            })
-            .finally(done);
+        const response = await hubClientDelete(url, headers);
+        expect(getProp('statusCode', response)).toEqual(404);
     });
 });

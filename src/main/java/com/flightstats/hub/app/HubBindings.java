@@ -12,7 +12,7 @@ import com.flightstats.hub.health.HubHealthCheck;
 import com.flightstats.hub.metrics.DelegatingMetricsService;
 import com.flightstats.hub.metrics.MetricsRunner;
 import com.flightstats.hub.metrics.MetricsService;
-import com.flightstats.hub.metrics.PeriodicPropertyEmitter;
+import com.flightstats.hub.metrics.PeriodicMetricEmitter;
 import com.flightstats.hub.replication.ReplicationManager;
 import com.flightstats.hub.rest.*;
 import com.flightstats.hub.spoke.FileSpokeStore;
@@ -168,7 +168,7 @@ public class HubBindings extends AbstractModule {
         bind(LastContentPath.class).asEagerSingleton();
         bind(WatchManager.class).asEagerSingleton();
         bind(MetricsService.class).to(DelegatingMetricsService.class).asEagerSingleton();
-        bind(PeriodicPropertyEmitter.class).asEagerSingleton();
+        bind(PeriodicMetricEmitter.class).asEagerSingleton();
         bind(NtpMonitor.class).asEagerSingleton();
         bind(TimeService.class).asEagerSingleton();
         bind(ShutdownManager.class).asEagerSingleton();

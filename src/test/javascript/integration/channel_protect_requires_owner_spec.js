@@ -1,18 +1,26 @@
-require('../integration_config');
+const { getProp, hubClientPut, randomChannelName } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
-// var request = require('request'); // TODO: unused?
-
+const channelUrl = getChannelUrl();
+const headers = { 'Content-Type': 'application/json' };
 describe(__filename, function () {
-
     /**
      * When creating a new channel and protect is true,
      * the owner field must also be provided.
      */
 
     describe('new channel', function () {
-        var channelName = utils.randomChannelName();
-        utils.putChannel(channelName, false, {protect: true}, 'protected channel without owner set', 400);
-        utils.putChannel(channelName, false, {protect: true, owner: 'someone'}, 'protected channel with owner set', 201);
+        const channelResource = `${channelUrl}/${randomChannelName()}`;
+        it('returns 400 on create protected channel without owner set', async () => {
+            const response = await hubClientPut(channelResource, headers, { protect: true });
+            expect(getProp('statusCode', response)).toEqual(400);
+        });
+        it('returns 201 on create protected channel with owner set', async () => {
+            const response = await hubClientPut(channelResource, headers, { protect: true, owner: 'someone' });
+            expect(getProp('statusCode', response)).toEqual(201);
+        });
     });
 
     /**
@@ -21,11 +29,23 @@ describe(__filename, function () {
      */
 
     describe('update channel with existing owner', function () {
-        var channelName = utils.randomChannelName();
-        utils.putChannel(channelName, false, {}, 'default channel', 201);
-        utils.putChannel(channelName, false, {protect: true}, 'protect channel', 400);
-        utils.putChannel(channelName, false, {owner: 'someone'}, 'set owner', 201);
-        utils.putChannel(channelName, false, {protect: true}, 'protect channel', 201);
+        const channelResource = `${channelUrl}/${randomChannelName()}`;
+        it('creates default channel no owner set', async () => {
+            const response = await hubClientPut(channelResource, headers, {});
+            expect(getProp('statusCode', response)).toEqual(201);
+        });
+        it('returns 400 on attempt to update default channel to protect with no owner', async () => {
+            const response = await hubClientPut(channelResource, headers, { protect: true });
+            expect(getProp('statusCode', response)).toEqual(400);
+        });
+        it('successfully updates channel with an owner', async () => {
+            const response = await hubClientPut(channelResource, headers, { owner: 'someone' });
+            expect(getProp('statusCode', response)).toEqual(201);
+        });
+        it('updates channel to protect now that owner is set', async () => {
+            const response = await hubClientPut(channelResource, headers, { protect: true });
+            expect(getProp('statusCode', response)).toEqual(201);
+        });
     });
 
     /**
@@ -34,10 +54,18 @@ describe(__filename, function () {
      */
 
     describe('update channel without existing owner', function () {
-        var channelName = utils.randomChannelName();
-        utils.putChannel(channelName, false, {}, 'default channel', 201);
-        utils.putChannel(channelName, false, {protect: true}, 'protect channel', 400);
-        utils.putChannel(channelName, false, {protect: true, owner: 'someone'}, 'protect channel and set owner', 201);
+        const channelResource = `${channelUrl}/${randomChannelName()}`;
+        it('creates default channel no owner set', async () => {
+            const response = await hubClientPut(channelResource, headers, {});
+            expect(getProp('statusCode', response)).toEqual(201);
+        });
+        it('returns 400 on attempt to update default channel to protect with no owner', async () => {
+            const response = await hubClientPut(channelResource, headers, { protect: true });
+            expect(getProp('statusCode', response)).toEqual(400);
+        });
+        it('successfully updates channel with an owner and protect true', async () => {
+            const response = await hubClientPut(channelResource, headers, { owner: 'someone' });
+            expect(getProp('statusCode', response)).toEqual(201);
+        });
     });
-
 });

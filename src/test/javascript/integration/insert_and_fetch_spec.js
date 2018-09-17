@@ -1,47 +1,44 @@
-require('../integration_config');
 const {
     fromObjectPath,
     getProp,
+    hubClientDelete,
     hubClientGet,
+    hubClientPost,
+    randomChannelName,
 } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
-const channelName = utils.randomChannelName();
+const channelUrl = getChannelUrl();
+const channelName = randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
 const messageText = `MY SUPER TEST CASE: this & <that>.${Math.random()}`;
+let itemURL = null;
+let itemResponse = {};
 
 describe(__filename, function () {
-    it('creates a channel', function (done) {
-        const url = channelUrl;
+    beforeAll(async () => {
         const body = { 'name': channelName };
-        const headers = { 'Content-Type': 'application/json' };
-        utils.httpPost(url, headers, body)
-            .then(function (response) {
-                expect(getProp('statusCode', response)).toEqual(201);
-            })
-            .finally(done);
+        const contentJSON = { 'Content-Type': 'application/json' };
+        const response = await hubClientPost(channelUrl, contentJSON, body);
+        if (getProp('statusCode', response) === 201) {
+            const headers = { 'Content-Type': 'text/plain' };
+            itemResponse = await hubClientPost(channelResource, headers, messageText);
+            itemURL = fromObjectPath(['body', '_links', 'self', 'href'], itemResponse);
+        }
     });
 
-    let itemURL;
-
-    it('inserts an item', function (done) {
-        const url = channelResource;
-        const headers = { 'Content-Type': 'text/plain' };
-        const body = messageText;
-
-        utils.httpPost(url, headers, body)
-            .then(function (response) {
-                expect(getProp('statusCode', response)).toEqual(201);
-                const contentType = fromObjectPath(['headers', 'content-type'], response);
-                const links = fromObjectPath(['body', '_links'], response) || {};
-                const { channel = {}, self = {} } = links;
-                expect(contentType).toEqual('application/json');
-                expect(channel.href).toEqual(channelResource);
-                itemURL = self.href;
-            })
-            .finally(done);
+    it('inserts an item', () => {
+        expect(getProp('statusCode', itemResponse)).toEqual(201);
+        const contentType = fromObjectPath(['headers', 'content-type'], itemResponse);
+        const channelLink = fromObjectPath(['body', '_links', 'channel', 'href'], itemResponse);
+        expect(contentType).toEqual('application/json');
+        expect(channelLink).toEqual(channelResource);
     });
 
     it('verifies the item was inserted successfully', async () => {
+        if (!itemURL) return fail('itemURL not defined in beforeAll block');
         const response = await hubClientGet(itemURL);
         expect(getProp('statusCode', response)).toEqual(200);
         const contentType = fromObjectPath(['headers', 'content-type'], response);
@@ -49,5 +46,9 @@ describe(__filename, function () {
         expect(contentType).toEqual('text/plain');
         expect(user).toBeUndefined();
         expect(getProp('body', response)).toContain(messageText);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

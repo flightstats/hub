@@ -1,11 +1,17 @@
-require('../integration_config');
 const {
     fromObjectPath,
     getProp,
+    hubClientDelete,
     hubClientGet,
+    hubClientPost,
+    randomChannelName,
 } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
-const channelName = utils.randomChannelName();
+const channelUrl = getChannelUrl();
+const channelName = randomChannelName();
 const channelResource = channelUrl + '/' + channelName;
 const headers = { 'Content-Type': 'application/json' };
 
@@ -15,19 +21,17 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(404);
     });
 
-    it('creates a channel with tags', function (done) {
-        var url = channelUrl;
-        var body = {'name': channelName, 'tags': ['foo-bar', 'bar', 'tag:z']};
-
-        utils.httpPost(url, headers, body)
-            .then(function (response) {
-                const contentType = fromObjectPath(['headers', 'content-type'], response);
-                const tags = fromObjectPath(['body', 'tags'], response);
-                expect(getProp('statusCode', response)).toEqual(201);
-                expect(contentType).toEqual('application/json');
-                expect(tags).toEqual(['bar', 'foo-bar', 'tag:z']);
-            })
-            .finally(done);
+    it('creates a channel with tags', async () => {
+        const body = {
+            'name': channelName,
+            'tags': ['foo-bar', 'bar', 'tag:z'],
+        };
+        const response = await hubClientPost(channelUrl, headers, body);
+        const contentType = fromObjectPath(['headers', 'content-type'], response);
+        const tags = fromObjectPath(['body', 'tags'], response);
+        expect(getProp('statusCode', response)).toEqual(201);
+        expect(contentType).toEqual('application/json');
+        expect(tags).toEqual(['bar', 'foo-bar', 'tag:z']);
     });
 
     it('verifies the channel does exist', async () => {
@@ -39,5 +43,9 @@ describe(__filename, function () {
         expect(contentType).toEqual('application/json');
         expect(name).toEqual(channelName);
         expect(tags).toEqual(['bar', 'foo-bar', 'tag:z']);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

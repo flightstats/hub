@@ -1,25 +1,20 @@
-require('../integration_config');
-const { getProp } = require('../lib/helpers');
+const { getProp, hubClientDelete, parseJson, randomChannelName } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
-var request = require('request');
-var channelName = utils.randomChannelName();
+const channelUrl = getChannelUrl();
+const request = require('request');
+const channelName = randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
-var testName = __filename;
 
-function verifyOptionals(parse) {
-    expect(getProp('description', parse)).toBe('describe me');
-    expect(getProp('ttlDays', parse)).toBe(9);
-    expect(getProp('contentSizeKB', parse)).toBe(3);
-    expect(getProp('peakRequestRateSeconds', parse)).toBe(2);
-}
-
-describe(testName, function () {
-    it("fails to create channel " + channelName + " at " + channelUrl, function (done) {
+describe(__filename, function () {
+    it(`fails to create channel ${channelName} at ${channelUrl}`, function (done) {
         request.post({url: channelUrl,
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({
                 name: channelName,
-                tags: ['one', 'tw*o']
+                tags: ['one', 'tw*o'],
             })},
         function (err, response, body) {
             expect(err).toBeNull();
@@ -28,17 +23,17 @@ describe(testName, function () {
         });
     });
 
-    it("creates channel " + channelName + " at " + channelUrl, function (done) {
+    it(`creates channel ${channelName} at ${channelUrl}`, function (done) {
         request.post({url: channelUrl,
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({
                 name: channelName,
-                tags: ['one', 'two']
+                tags: ['one', 'two'],
             })},
         function (err, response, body) {
             expect(err).toBeNull();
             expect(getProp('statusCode', response)).toBe(201);
-            var parse = utils.parseJson(response, testName);
+            const parse = parseJson(response, __filename);
             const tags = getProp('tags', parse);
             expect(tags).toContain('one');
             expect(tags).toContain('two');
@@ -55,5 +50,9 @@ describe(testName, function () {
             expect(getProp('statusCode', response)).toBe(400);
             done();
         });
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

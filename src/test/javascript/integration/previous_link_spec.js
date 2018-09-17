@@ -1,33 +1,38 @@
-require('../integration_config');
 const {
     fromObjectPath,
     getProp,
+    hubClientDelete,
     hubClientGet,
+    hubClientPost,
+    hubClientPut,
+    randomChannelName,
 } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
-const channelName = utils.randomChannelName();
+const channelUrl = getChannelUrl();
+const channelName = randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
+const items = [];
+const headers = { 'Content-Type': 'application/json' };
+const body = { 'name': channelName };
 
 describe(__filename, function () {
-    utils.putChannel(channelName, function () {
-    }, { "name": channelName, ttlDays: 1 });
+    beforeAll(async () => {
+        const response = await hubClientPut(channelResource, headers, { name: channelName, ttlDays: 1 });
+        expect(getProp('statusCode', response)).toEqual(201);
+    });
 
-    const items = [];
-    const headers = { 'Content-Type': 'application/json' };
-    const body = { 'name': channelName };
+    const postOneItem = async () => {
+        const response = await hubClientPost(channelResource, headers, body);
+        expect(getProp('statusCode', response)).toEqual(201);
+        const selfLink = fromObjectPath(['body', '_links', 'self', 'href'], response);
+        items.push(selfLink);
+    };
 
-    function postOneItem (done) {
-        utils.httpPost(channelResource, headers, body)
-            .then(function (response) {
-                expect(getProp('statusCode', response)).toEqual(201);
-                const href = fromObjectPath(['body', '_links', 'self', 'href'], response);
-                items.push(href);
-            })
-            .finally(done);
-    }
-
-    it('posts item', function (done) {
-        postOneItem(done);
+    it(`posts item ${__filename}1`, async () => {
+        await postOneItem();
     });
 
     it('gets 404 from /previous ', async () => {
@@ -43,12 +48,12 @@ describe(__filename, function () {
         expect(urisLength).toBe(true);
     });
 
-    it('posts item', function (done) {
-        postOneItem(done);
+    it(`posts item ${__filename}2`, async () => {
+        await postOneItem();
     });
 
-    it('posts item', function (done) {
-        postOneItem(done);
+    it(`posts item ${__filename}3`, async () => {
+        await postOneItem();
     });
 
     it('gets item from /previous ', async () => {
@@ -74,5 +79,9 @@ describe(__filename, function () {
         expect(uris.length).toBe(2);
         expect(uris[0]).toBe(items[1]);
         expect(uris[1]).toBe(items[2]);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

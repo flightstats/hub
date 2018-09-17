@@ -1,8 +1,15 @@
-require('../integration_config');
-const { getProp, fromObjectPath, hubClientGet } = require('../lib/helpers');
-const webhookName1 = utils.randomChannelName();
-const webhookName2 = utils.randomChannelName();
-const webhookUrl = utils.getWebhookUrl();
+const {
+    deleteWebhook,
+    getProp,
+    getWebhookUrl,
+    fromObjectPath,
+    hubClientGet,
+    hubClientPut,
+    randomChannelName,
+} = require('../lib/helpers');
+const webhookName1 = randomChannelName();
+const webhookName2 = randomChannelName();
+const webhookUrl = getWebhookUrl();
 const webhookConfig = {
     callbackUrl: 'http://nothing/callback',
     channelUrl: 'http://nothing/channel/notHere',
@@ -17,34 +24,28 @@ const headers = { 'Content-Type': 'application/json' };
 describe(__filename, function () {
     const firstWebhookURL = `${webhookUrl}/${webhookName1}`;
 
-    it('creates the first webhook', function (done) {
-        utils.httpPut(firstWebhookURL, headers, webhookConfig)
-            .then(function (response) {
-                const location = fromObjectPath(['headers', 'location'], response);
-                const body = getProp('body', response) || {};
-                expect(getProp('statusCode', response)).toEqual(201);
-                expect(location).toBe(firstWebhookURL);
-                expect(body.callbackUrl).toBe(webhookConfig.callbackUrl);
-                expect(body.channelUrl).toBe(webhookConfig.channelUrl);
-                expect(body.name).toBe(webhookName1);
-            })
-            .finally(done);
+    it('creates the first webhook', async () => {
+        const response = await hubClientPut(firstWebhookURL, headers, webhookConfig);
+        const location = fromObjectPath(['headers', 'location'], response);
+        const body = getProp('body', response) || {};
+        expect(getProp('statusCode', response)).toEqual(201);
+        expect(location).toBe(firstWebhookURL);
+        expect(body.callbackUrl).toBe(webhookConfig.callbackUrl);
+        expect(body.channelUrl).toBe(webhookConfig.channelUrl);
+        expect(body.name).toBe(webhookName1);
     });
 
-    var secondWebhookURL = webhookUrl + '/' + webhookName2;
+    const secondWebhookURL = `${webhookUrl}/${webhookName2}`;
 
-    it('creates the second webhook', function (done) {
-        utils.httpPut(secondWebhookURL, headers, webhookConfig)
-            .then(function (response) {
-                const location = fromObjectPath(['headers', 'location'], response);
-                const body = getProp('body', response) || {};
-                expect(getProp('statusCode', response)).toEqual(201);
-                expect(location).toBe(secondWebhookURL);
-                expect(body.callbackUrl).toBe(webhookConfig.callbackUrl);
-                expect(body.channelUrl).toBe(webhookConfig.channelUrl);
-                expect(body.name).toBe(webhookName2);
-            })
-            .finally(done);
+    it('creates the second webhook', async () => {
+        const response = await hubClientPut(secondWebhookURL, headers, webhookConfig);
+        const location = fromObjectPath(['headers', 'location'], response);
+        const body = getProp('body', response) || {};
+        expect(getProp('statusCode', response)).toEqual(201);
+        expect(location).toBe(secondWebhookURL);
+        expect(body.callbackUrl).toBe(webhookConfig.callbackUrl);
+        expect(body.channelUrl).toBe(webhookConfig.channelUrl);
+        expect(body.name).toBe(webhookName2);
     });
 
     let foundURLs = [];
@@ -70,6 +71,10 @@ describe(__filename, function () {
         expect(foundURLs).toContain(secondWebhookURL);
     });
 
-    utils.deleteWebhook(webhookName1);
-    utils.deleteWebhook(webhookName2);
+    it('deletes the webhooks', async () => {
+        const response1 = await deleteWebhook(webhookName1);
+        expect(getProp('statusCode', response1)).toBe(202);
+        const response2 = await deleteWebhook(webhookName2);
+        expect(getProp('statusCode', response2)).toBe(202);
+    });
 });

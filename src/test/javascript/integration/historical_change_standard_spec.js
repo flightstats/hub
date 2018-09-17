@@ -1,45 +1,64 @@
-require('../integration_config');
-const { getProp } = require('../lib/helpers');
+const {
+    getProp,
+    hubClientChannelRefresh,
+    hubClientDelete,
+    hubClientGet,
+    hubClientPut,
+    randomChannelName,
+} = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
-var channel = utils.randomChannelName();
-var moment = require('moment');
-
-var tag = Math.random().toString().replace(".", "");
-var testName = __filename;
-
+const channelUrl = getChannelUrl();
+const channel = randomChannelName();
+const moment = require('moment');
+const tag = Math.random().toString().replace(".", "");
+const headers = { 'Content-Type': 'application/json' };
 /**
  * This should:
  * Create a channel without mutableTime
  * Change that channel to have a mutableTime
  *
  */
-describe(testName, function () {
+const channelResource = `${channelUrl}/${channel}`;
+describe(__filename, function () {
+    it('creates a channel (no mutableTime)', async () => {
+        const response = await hubClientPut(channelResource, headers, { ttlDays: 20 });
+        expect(getProp('statusCode', response)).toEqual(201);
+    });
 
-    utils.putChannel(channel, false, {ttlDays: 20}, testName, 201);
+    const mutableTime = moment.utc().subtract(1, 'hours').format('YYYY-MM-DDTHH:mm:ss');
+    const expected = `${mutableTime}.000Z`;
 
-    var mutableTime = moment.utc().subtract(1, 'hours').format('YYYY-MM-DDTHH:mm:ss');
-    const expected = mutableTime + '.000Z';
-
-    var channelBody = {
+    const channelBody = {
         ttlDays: 0,
         mutableTime: mutableTime,
-        tags: [tag, "test"]
+        tags: [tag, "test"],
     };
 
-    utils.putChannel(channel, function (response, body) {
-        var parse = utils.parseJson(response, testName);
-        expect(getProp('ttlDays', parse)).toBe(0);
-        expect(getProp('maxItems', parse)).toBe(0);
-        expect(getProp('mutableTime', parse)).toBe(expected);
-    }, channelBody, testName);
+    it('updates the channel to have a mutabelTime', async () => {
+        const response = await hubClientPut(channelResource, headers, channelBody);
+        const body = getProp('body', response);
+        expect(getProp('ttlDays', body)).toBe(0);
+        expect(getProp('maxItems', body)).toBe(0);
+        expect(getProp('mutableTime', body)).toBe(expected);
+    });
 
-    utils.itRefreshesChannels();
+    it('waits while the channel is refreshed', async () => {
+        const response = await hubClientChannelRefresh();
+        expect(getProp('statusCode', response)).toEqual(200);
+    });
 
-    utils.getChannel(channel, function (response) {
-        var parse = utils.parseJson(response, testName);
-        expect(getProp('ttlDays', parse)).toBe(0);
-        expect(getProp('maxItems', parse)).toBe(0);
-        expect(getProp('mutableTime', parse)).toBe(mutableTime + '.000Z');
+    it('verifies the mutabelTime time change after channel refresh', async () => {
+        const response = await hubClientGet(channelResource, headers);
+        const body = getProp('body', response);
+        expect(getProp('ttlDays', body)).toBe(0);
+        expect(getProp('maxItems', body)).toBe(0);
+        expect(getProp('mutableTime', body)).toBe(expected);
+    });
 
-    }, testName)
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
+    });
 });

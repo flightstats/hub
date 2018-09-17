@@ -1,11 +1,38 @@
-require('../integration_config');
-const { fromObjectPath } = require('../lib/helpers');
+const rp = require('request-promise-native');
+const moment = require('moment');
+const {
+    fromObjectPath,
+    getProp,
+    hubClientChannelRefresh,
+    hubClientDelete,
+    hubClientPut,
+    hubClientPostTestItem,
+    randomChannelName,
+} = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
-var channel = utils.randomChannelName();
-var moment = require('moment');
-var tag = Math.random().toString().replace(".", "");
-var testName = __filename;
-
+const channelUrl = getChannelUrl();
+const channel = randomChannelName();
+const channelResource = `${channelUrl}/${channel}`;
+const headers = { 'Content-Type': 'application/json' };
+const mutableTime = moment.utc().subtract(3, 'years');
+const tag = Math.random().toString().replace(".", "");
+const channelBody = {
+    mutableTime: mutableTime.format('YYYY-MM-DDTHH:mm:ss.SSS'),
+    tags: [tag, "test"],
+};
+const earliestTime = mutableTime.subtract(2, 'years');
+const channelBodyChange = {
+    mutableTime: moment(earliestTime).add(1, 'years').format('YYYY-MM-DDTHH:mm:ss.SSS'),
+    tags: [tag, "test"],
+};
+const parameters = "?trace=true&stable=false";
+const next7 = earliestTime.subtract(1, 'month').format('/YYYY/MM/DD/HH/mm/ss/SSS') + "/0/next/7" + parameters;
+const items = [];
+const getFormattedUrl = time =>
+    `${channelResource}${time.format('/YYYY/MM/DD/HH/mm/ss/SSS')}`;
 /**
  * This should:
  * Create a channel with mutableTime
@@ -17,98 +44,179 @@ var testName = __filename;
  * Change mutableTime to include one historical item
  * Query items by direction, verify exclusion
  */
-describe(testName, function () {
-
-    var mutableTime = moment.utc().subtract(3, 'years');
-
-    var channelBody = {
-        mutableTime: mutableTime.format('YYYY-MM-DDTHH:mm:ss.SSS'),
-        tags: [tag, "test"]
-    };
-
-    utils.putChannel(channel, false, channelBody, testName);
-
-    var channelURL = hubUrlBase + '/channel/' + channel;
-
-    var items = [];
-
-    function getFormattedUrl(time) {
-        return channelURL + time.format('/YYYY/MM/DD/HH/mm/ss/SSS');
-    }
-
-    var earliestTime = mutableTime.subtract(2, 'years');
-
-    it('posts historical items to ' + channel, function (done) {
-        utils.postItemQ(getFormattedUrl(earliestTime))
-            .then(function (value) {
-                items.push(fromObjectPath(['response', 'headers', 'location'], value))
-                return utils.postItemQ(getFormattedUrl(earliestTime.add(1, 'years')));
-            })
-            .then(function (value1) {
-                items.push(fromObjectPath(['response', 'headers', 'location'], value1))
-                return utils.postItemQ(getFormattedUrl(earliestTime.add(6, 'months')));
-            })
-            .then(function (value2) {
-                items.push(fromObjectPath(['response', 'headers', 'location'], value2))
-                done();
-            })
-        ;
+describe(__filename, function () {
+    beforeAll(async () => {
+        const response = await hubClientPut(channelResource, headers, channelBody);
+        expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    it('posts live items to ' + channel, function (done) {
-        utils.postItemQ(channelURL)
-            .then(function (value) {
-                items.push(fromObjectPath(['response', 'headers', 'location'], value))
-                return utils.postItemQ(channelURL);
-            })
-            .then(function (value1) {
-                items.push(fromObjectPath(['response', 'headers', 'location'], value1))
-                return utils.postItemQ(channelURL);
-            })
-            .then(function (value2) {
-                items.push(fromObjectPath(['response', 'headers', 'location'], value2))
-                console.log('items', items);
-                done();
-            })
-        ;
+    it(`posts historical items to  ${channel}`, async () => {
+        const response = await hubClientPostTestItem(getFormattedUrl(earliestTime));
+        items.push(fromObjectPath(['headers', 'location'], response));
+        const response1 = await hubClientPostTestItem(getFormattedUrl(earliestTime.add(1, 'years')));
+        items.push(fromObjectPath(['headers', 'location'], response1));
+        const response2 = await hubClientPostTestItem(getFormattedUrl(earliestTime.add(6, 'months')));
+        items.push(fromObjectPath(['headers', 'location'], response2));
     });
 
-    var parameters = "?trace=true&stable=false";
-    var next7 = earliestTime.subtract(1, 'month').format('/YYYY/MM/DD/HH/mm/ss/SSS') + "/0/next/7" + parameters;
-
-    it('queries next 7 All ' + next7, function (done) {
-        utils.getQuery(channelURL + next7 + '&epoch=ALL', 200, items, done);
+    it(`posts live items to ${channel}`, async () => {
+        const response = await hubClientPostTestItem(channelResource);
+        items.push(fromObjectPath(['headers', 'location'], response));
+        const response1 = await hubClientPostTestItem(channelResource);
+        items.push(fromObjectPath(['headers', 'location'], response1));
+        const response2 = await hubClientPostTestItem(channelResource);
+        items.push(fromObjectPath(['headers', 'location'], response2));
     });
 
-    it('queries next 7 Immutable ' + next7, function (done) {
-        utils.getQuery(channelURL + next7 + '&epoch=IMMUTABLE', 200, items.slice(3), done);
+    it(`queries next 7 All ${next7}`, async () => {
+        try {
+            const response = await rp({
+                url: `${channelResource}${next7}&epoch=ALL`,
+                method: 'GET',
+                resolveWithFullResponse: true,
+            });
+            expect(getProp('statusCode', response)).toEqual(200);
+            const body = JSON.parse(getProp('body', response));
+            const uris = fromObjectPath(['_links', 'uris'], body);
+            expect(uris.length).toBeGreaterThan(0);
+            const actual = uris.every((uri, index) => uri === items[index]);
+            expect(actual).toEqual(true);
+        } catch (ex) {
+            console.log('failed with exception: ', ex && ex.message);
+            return fail(ex);
+        }
     });
 
-    it('queries next 7 Mutable ' + next7, function (done) {
-        utils.getQuery(channelURL + next7 + '&epoch=MUTABLE', 200, items.slice(0, 3), done);
+    it(`queries next 7 Immutable ${next7}`, async () => {
+        try {
+            const response = await rp({
+                url: `${channelResource}${next7}&epoch=IMMUTABLE`,
+                method: 'GET',
+                resolveWithFullResponse: true,
+            });
+            expect(getProp('statusCode', response)).toEqual(200);
+            const body = JSON.parse(getProp('body', response));
+            const uris = fromObjectPath(['_links', 'uris'], body);
+            const expected = items.slice(3);
+            expect(uris.length).toEqual(expected.length);
+            const actual = uris.every((uri, index) => uri === expected[index]);
+            expect(actual).toEqual(true);
+        } catch (ex) {
+            console.log('failed with exception: ', ex && ex.message);
+            return fail(ex);
+        }
     });
 
-    var channelBodyChange = {
-        mutableTime: moment(earliestTime).add(1, 'years').format('YYYY-MM-DDTHH:mm:ss.SSS'),
-        tags: [tag, "test"]
-    };
-
-    utils.putChannel(channel, false, channelBodyChange, testName);
-
-    utils.itRefreshesChannels();
-
-    it('queries next 7 Immutable after change ' + next7, function (done) {
-        utils.getQuery(channelURL + next7 + '&epoch=IMMUTABLE', 200, items.slice(2), done);
+    it(`queries next 7 Mutable ${next7}`, async () => {
+        try {
+            const response = await rp({
+                url: `${channelResource}${next7}&epoch=MUTABLE`,
+                method: 'GET',
+                resolveWithFullResponse: true,
+            });
+            expect(getProp('statusCode', response)).toEqual(200);
+            const body = JSON.parse(getProp('body', response));
+            const uris = fromObjectPath(['_links', 'uris'], body);
+            const expected = items.slice(0, 3);
+            expect(uris.length).toEqual(expected.length);
+            const actual = uris.every((uri, index) => uri === expected[index]);
+            expect(actual).toEqual(true);
+        } catch (ex) {
+            console.log('failed with exception: ', ex && ex.message);
+            return fail(ex);
+        }
     }, 3 * 60 * 1000);
 
-    it('queries next 7 Mutable after change' + next7, function (done) {
-        utils.getQuery(channelURL + next7 + '&epoch=MUTABLE', 200, items.slice(0, 2), done);
+    it('updates the mutableTime value', async () => {
+        const response = await hubClientPut(channelResource, headers, channelBodyChange);
+        expect(getProp('statusCode', response)).toEqual(201);
+    });
+
+    it('waits while the channel is refreshed', async () => {
+        const response = await hubClientChannelRefresh();
+        expect(getProp('statusCode', response)).toEqual(200);
+    });
+
+    it(`queries next 7 Immutable after change ${next7}`, async () => {
+        try {
+            const response = await rp({
+                url: `${channelResource}${next7}&epoch=IMMUTABLE`,
+                method: 'GET',
+                resolveWithFullResponse: true,
+            });
+            expect(getProp('statusCode', response)).toEqual(200);
+            const body = JSON.parse(getProp('body', response));
+            const uris = fromObjectPath(['_links', 'uris'], body);
+            const expected = items.slice(2);
+            expect(uris.length).toEqual(expected.length);
+            const actual = uris.every((uri, index) => uri === expected[index]);
+            expect(actual).toEqual(true);
+        } catch (ex) {
+            console.log('failed with exception: ', ex && ex.message);
+            return fail(ex);
+        }
     }, 3 * 60 * 1000);
-    it('queries earliest 2 Immutable after change ', function (done) {
-        utils.getQuery(channelURL + "/earliest/2" + parameters + '&epoch=IMMUTABLE', 200, items.slice(2, 4), done);
+
+    it(`queries next 7 Mutable after change${next7}`, async () => {
+        try {
+            const response = await rp({
+                url: `${channelResource}${next7}&epoch=MUTABLE`,
+                method: 'GET',
+                resolveWithFullResponse: true,
+            });
+            expect(getProp('statusCode', response)).toEqual(200);
+            const body = JSON.parse(getProp('body', response));
+            const uris = fromObjectPath(['_links', 'uris'], body);
+            const expected = items.slice(0, 2);
+            expect(uris.length).toEqual(expected.length);
+            const actual = uris.every((uri, index) => uri === expected[index]);
+            expect(actual).toEqual(true);
+        } catch (ex) {
+            console.log('failed with exception: ', ex && ex.message);
+            return fail(ex);
+        }
+    }, 3 * 60 * 1000);
+    it('queries earliest 2 Immutable after change ', async () => {
+        try {
+            const response = await rp({
+                url: `${channelResource}/earliest/2${parameters}&epoch=IMMUTABLE`,
+                method: 'GET',
+                resolveWithFullResponse: true,
+            });
+            expect(getProp('statusCode', response)).toEqual(200);
+            const body = JSON.parse(getProp('body', response));
+            const uris = fromObjectPath(['_links', 'uris'], body);
+            const expected = items.slice(2, 4);
+            expect(uris.length).toEqual(expected.length);
+            const actual = uris.every((uri, index) => uri === expected[index]);
+            expect(actual).toEqual(true);
+        } catch (ex) {
+            console.log('failed with exception: ', ex && ex.message);
+            return fail(ex);
+        }
     }, 5 * 60 * 1000);
 
-    it('queries earliest 2 Mutable after change ', function (done) {
-        utils.getQuery(channelURL + "/earliest/2" + parameters + '&epoch=MUTABLE', 200, items.slice(0, 2), done);
+    it('queries earliest 2 Mutable after change ', async () => {
+        try {
+            const response = await rp({
+                url: `${channelResource}/earliest/2${parameters}&epoch=MUTABLE`,
+                method: 'GET',
+                resolveWithFullResponse: true,
+            });
+            expect(getProp('statusCode', response)).toEqual(200);
+            const body = JSON.parse(getProp('body', response));
+            const uris = fromObjectPath(['_links', 'uris'], body);
+            const expected = items.slice(0, 2);
+            expect(uris.length).toEqual(expected.length);
+            const actual = uris.every((uri, index) => uri === expected[index]);
+            expect(actual).toEqual(true);
+        } catch (ex) {
+            console.log('failed with exception: ', ex && ex.message);
+            return fail(ex);
+        }
     }, 5 * 60 * 1000);
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
+    });
 });

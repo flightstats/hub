@@ -1,37 +1,31 @@
-require('../integration_config');
 const {
+    hubClientDelete,
     hubClientGet,
     fromObjectPath,
     getProp,
+    hubClientPost,
+    randomChannelName,
 } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
-var channelName = utils.randomChannelName();
+const channelUrl = getChannelUrl();
+const channelName = randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
-var messageText = "Testing that the Content-Encoding header is returned";
+const messageText = "Testing that the Content-Encoding header is returned";
 
 describe(__filename, function () {
-    it('creates a channel', function (done) {
-        var url = channelUrl;
-        var headers = {'Content-Type': 'application/json'};
-        var body = {'name': channelName};
-
-        utils.httpPost(url, headers, body)
-            .then(function (response) {
-                expect(getProp('statusCode', response)).toEqual(201);
-            })
-            .finally(done);
+    it('creates a channel', async () => {
+        const headers = { 'Content-Type': 'application/json' };
+        const body = { 'name': channelName };
+        const response = await hubClientPost(channelUrl, headers, body);
+        expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    it('inserts an item', function (done) {
-        var url = channelResource;
-        var headers = {};
-        var body = messageText;
-
-        utils.httpPost(url, headers, body)
-            .then(function (response) {
-                expect(getProp('statusCode', response)).toEqual(201);
-            })
-            .finally(done);
+    it('inserts an item', async () => {
+        const response = await hubClientPost(channelResource, {}, messageText);
+        expect(getProp('statusCode', response)).toEqual(201);
     });
 
     it('verifies the Content-Encoding header is returned', async () => {
@@ -40,5 +34,9 @@ describe(__filename, function () {
         console.log('response', response);
         const contentEncoding = fromObjectPath(['headers', 'content-encoding'], response);
         expect(contentEncoding).toEqual('gzip');
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

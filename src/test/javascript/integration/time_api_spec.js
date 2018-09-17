@@ -1,15 +1,17 @@
-require('../integration_config');
+const request = require('request');
+const moment = require('moment');
 const {
     createChannel,
     fromObjectPath,
     getProp,
+    hubClientDelete,
+    randomChannelName,
 } = require('../lib/helpers');
+const { getChannelUrl } = require('../lib/config');
 
-var request = require('request');
-var moment = require('moment');
-var channelName = utils.randomChannelName();
+const channelUrl = getChannelUrl();
+const channelName = randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
-var testName = __filename;
 let createdChannel = false;
 /**
  * This should:
@@ -18,7 +20,7 @@ let createdChannel = false;
  * 2 - get time links for that channel
  * 3 - verify that verify templates are correct
  */
-describe(testName, function () {
+describe(__filename, function () {
     beforeAll(async () => {
         const channel = await createChannel(channelName);
         if (getProp('statusCode', channel) === 201) {
@@ -57,7 +59,7 @@ describe(testName, function () {
 
     it('gets stable time links', function (done) {
         if (!createdChannel) return done.fail('channel not created in before block');
-        var url = channelResource + '/time';
+        const url = channelResource + '/time';
         request.get({url: url, json: true},
             function (err, response, body) {
                 expect(err).toBeNull();
@@ -70,8 +72,8 @@ describe(testName, function () {
 
     it('gets stable param time links', function (done) {
         if (!createdChannel) return done.fail('channel not created in before block');
-        var url = channelResource + '/time';
-        var params = '?stable=true';
+        const url = channelResource + '/time';
+        const params = '?stable=true';
         request.get({url: url + params, json: true},
             function (err, response, body) {
                 expect(err).toBeNull();
@@ -84,8 +86,8 @@ describe(testName, function () {
 
     it('gets unstable time links', function (done) {
         if (!createdChannel) return done.fail('channel not created in before block');
-        var url = channelResource + '/time';
-        var params = '?stable=false';
+        const url = channelResource + '/time';
+        const params = '?stable=false';
         request.get({url: url + params, json: true},
             function (err, response, body) {
                 expect(err).toBeNull();
@@ -94,5 +96,9 @@ describe(testName, function () {
                 verifyLinks(body, url, moment(millis).utc(), params);
                 done();
             });
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

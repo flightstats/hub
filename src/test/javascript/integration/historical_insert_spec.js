@@ -1,15 +1,30 @@
-require('../integration_config');
+const request = require('request');
+const moment = require('moment');
 const {
-  fromObjectPath,
-  getProp,
+    fromObjectPath,
+    getProp,
+    hubClientDelete,
+    hubClientPut,
+    hubClientPostTestItem,
+    randomChannelName,
 } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
-var request = require('request');
-var channel = utils.randomChannelName();
-var moment = require('moment');
-
-var testName = __filename;
-
+const channelUrl = getChannelUrl();
+const mutableTime = moment.utc().subtract(1, 'minute');
+const channelBody = {
+    mutableTime: mutableTime.format('YYYY-MM-DDTHH:mm:ss.SSS'),
+    tags: ["test"],
+};
+const channel = randomChannelName();
+const channelResource = `${channelUrl}/${channel}`;
+const headers = { 'Content-Type': 'application/json' };
+const pointInThePastURL = channelResource + '/' + mutableTime.format('YYYY/MM/DD/HH/mm/ss/SSS');
+let historicalLocation = null;
+let liveLocation = null;
+let hashItem = null;
 /**
  * This should:
  * Create a channel with mutableTime
@@ -17,31 +32,18 @@ var testName = __filename;
  * insert an item into now, verify item with get
  * insert an item with a user defined hash
  */
-describe(testName, function () {
-
-    var mutableTime = moment.utc().subtract(1, 'minute');
-
-    var channelBody = {
-        mutableTime: mutableTime.format('YYYY-MM-DDTHH:mm:ss.SSS'),
-        tags: ["test"]
-    };
-
-    utils.putChannel(channel, false, channelBody, testName);
-
-    var channelURL = hubUrlBase + '/channel/' + channel;
-    var pointInThePastURL = channelURL + '/' + mutableTime.format('YYYY/MM/DD/HH/mm/ss/SSS');
-
-    var historicalLocation;
-
-    it('posts historical item to ' + channel, function (done) {
-        utils.postItemQ(pointInThePastURL)
-            .then(function (value) {
-                historicalLocation = fromObjectPath(['response', 'headers', 'location'], value);
-                done();
-            });
+describe(__filename, function () {
+    beforeAll(async () => {
+        const response = await hubClientPut(channelResource, headers, channelBody);
+        expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    it('gets historical item from ' + historicalLocation, function (done) {
+    it(`posts historical item to ${channel}`, async () => {
+        const response = await hubClientPostTestItem(pointInThePastURL);
+        historicalLocation = fromObjectPath(['headers', 'location'], response);
+    });
+
+    it(`gets historical item from ${historicalLocation}`, function (done) {
         request.get({url: historicalLocation},
             function (err, response, body) {
                 expect(err).toBeNull();
@@ -50,17 +52,12 @@ describe(testName, function () {
             });
     });
 
-    var liveLocation;
-
-    it('posts live item to ' + channel, function (done) {
-        utils.postItemQ(channelURL)
-            .then(function (value) {
-                liveLocation = fromObjectPath(['response', 'headers', 'location'], value);
-                done();
-            });
+    it(`posts live item to ${channel}`, async () => {
+        const response = await hubClientPostTestItem(channelResource);
+        liveLocation = fromObjectPath(['headers', 'location'], response);
     });
 
-    it('gets live item from ' + liveLocation, function (done) {
+    it(`gets live item from ${liveLocation}`, function (done) {
         request.get({url: liveLocation},
             function (err, response, body) {
                 expect(err).toBeNull();
@@ -69,23 +66,22 @@ describe(testName, function () {
             });
     });
 
-    var hashItem;
-
-    it('posts historical item to ' + channel, function (done) {
-        utils.postItemQ(pointInThePastURL + '/abcdefg')
-            .then(function (value) {
-                hashItem = fromObjectPath(['response', 'headers', 'location'], value);
-                expect(hashItem).toContain('/abcdefg');
-                done();
-            });
+    it(`posts historical item to ${channel}`, async () => {
+        const response = await hubClientPostTestItem(`${pointInThePastURL}/abcdefg`);
+        hashItem = fromObjectPath(['headers', 'location'], response);
+        expect(hashItem).toContain('/abcdefg');
     });
 
-    it('gets historical item from ' + hashItem, function (done) {
+    it(`gets historical item from ${hashItem}`, function (done) {
         request.get({url: hashItem},
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(200);
                 done();
             });
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

@@ -1,15 +1,22 @@
-require('../integration_config');
+const moment = require('moment');
 const {
     createChannel,
     fromObjectPath,
     getProp,
+    hubClientDelete,
     hubClientGet,
+    hubClientPost,
+    randomChannelName,
 } = require('../lib/helpers');
-const moment = require('moment');
-const channelName = utils.randomChannelName();
+const {
+    getChannelUrl,
+} = require('../lib/config');
+
+const channelUrl = getChannelUrl();
+const channelName = randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
-let createdChannel = false;
 const headers = { 'Content-Type': 'application/json' };
+let createdChannel = false;
 
 /**
  * This should:
@@ -42,7 +49,7 @@ describe(__filename, () => {
         expect(uris).toEqual(reversedItems);
     }
 
-    let postedItems = [];
+    const postedItems = [];
     beforeAll(async () => {
         const channel = await createChannel(channelName);
         if (getProp('statusCode', channel) === 201) {
@@ -51,51 +58,42 @@ describe(__filename, () => {
         }
     });
 
-    it('posts four items', (done) => {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        let headers = {'Content-Type': 'plain/text'};
-        utils.httpPost(channelResource, headers, moment.utc().toISOString())
-            .then(response => {
-                expect(getProp('statusCode', response)).toEqual(201);
-                const selfLink = fromObjectPath(['body', '_links', 'self', 'href'], response);
-                postedItems.push(selfLink);
-                return utils.httpPost(channelResource, headers, moment.utc().toISOString());
-            })
-            .then(response => {
-                expect(getProp('statusCode', response)).toEqual(201);
-                const selfLink = fromObjectPath(['body', '_links', 'self', 'href'], response);
-                postedItems.push(selfLink);
-                return utils.httpPost(channelResource, headers, moment.utc().toISOString());
-            })
-            .then(response => {
-                expect(getProp('statusCode', response)).toEqual(201);
-                const selfLink = fromObjectPath(['body', '_links', 'self', 'href'], response);
-                postedItems.push(selfLink);
-                return utils.httpPost(channelResource, headers, moment.utc().toISOString());
-            })
-            .then(response => {
-                expect(getProp('statusCode', response)).toEqual(201);
-                const selfLink = fromObjectPath(['body', '_links', 'self', 'href'], response);
-                postedItems.push(selfLink);
-            })
-            .finally(() => {
-                console.log('postedItems:', postedItems);
-                expect(postedItems.constructor).toBe(Array);
-                expect(postedItems.length).toEqual(4);
-                done();
-            });
+    it('posts four items', async () => {
+        if (!createdChannel) return fail('channel not created in before block');
+        const headers = {'Content-Type': 'plain/text'};
+        try {
+            const res1 = await hubClientPost(channelResource, headers, moment.utc().toISOString());
+            expect(getProp('statusCode', res1)).toEqual(201);
+            postedItems.push(fromObjectPath(['body', '_links', 'self', 'href'], res1));
+
+            const res2 = await hubClientPost(channelResource, headers, moment.utc().toISOString());
+            expect(getProp('statusCode', res2)).toEqual(201);
+            postedItems.push(fromObjectPath(['body', '_links', 'self', 'href'], res2));
+
+            const res3 = await hubClientPost(channelResource, headers, moment.utc().toISOString());
+            expect(getProp('statusCode', res3)).toEqual(201);
+            postedItems.push(fromObjectPath(['body', '_links', 'self', 'href'], res3));
+
+            const res4 = await hubClientPost(channelResource, headers, moment.utc().toISOString());
+            expect(getProp('statusCode', res4)).toEqual(201);
+            postedItems.push(fromObjectPath(['body', '_links', 'self', 'href'], res4));
+            expect(postedItems.length).toEqual(4);
+        } catch (ex) {
+            console.log('error posting four items');
+            return fail(ex);
+        }
     });
 
     it('gets latest ascending items', async () => {
         if (!createdChannel) return fail('channel not created in before block');
-        let order = trimWordRandomly('ascending');
+        const order = trimWordRandomly('ascending');
         const response = await hubClientGet(`${channelResource}/latest/4?stable=false&order=${order}`, headers);
         expectURIsInAscendingOrder(response);
     });
 
     it('gets latest baloney order items', async () => {
         if (!createdChannel) return fail('channel not created in before block');
-        let order = 'baloney';
+        const order = 'baloney';
         const response = await hubClientGet(`${channelResource}/latest/4?stable=false&order=${order}`, headers);
         expectURIsInAscendingOrder(response);
     });
@@ -103,38 +101,38 @@ describe(__filename, () => {
     // secondDo(`${channelResource}/earliest/4?stable=false&order=desc`, descendingItems, done);
     it('gets descending earliest', async () => {
         if (!createdChannel) return fail('channel not created in before block');
-        let order = trimWordRandomly('descending');
+        const order = trimWordRandomly('descending');
         const response = await hubClientGet(`${channelResource}/earliest/4?stable=false&order=${order}`, headers);
         expectURIsInDescendingOrder(response);
     });
 
     it('gets descending latest', async () => {
         if (!createdChannel) return fail('channel not created in before block');
-        let order = trimWordRandomly('descending');
+        const order = trimWordRandomly('descending');
         const response = await hubClientGet(`${channelResource}/latest/4?stable=false&order=${order}`, headers);
         expectURIsInDescendingOrder(response);
     });
 
     it('gets descending next', async () => {
         if (!createdChannel) return fail('channel not created in before block');
-        let oneMinuteAgo = moment.utc().subtract(1, 'minute').format('YYYY/MM/DD/HH/mm/ss/SSS');
-        let order = trimWordRandomly('descending');
+        const oneMinuteAgo = moment.utc().subtract(1, 'minute').format('YYYY/MM/DD/HH/mm/ss/SSS');
+        const order = trimWordRandomly('descending');
         const response = await hubClientGet(`${channelResource}/${oneMinuteAgo}/A/next/4?stable=false&order=${order}`, headers);
         expectURIsInDescendingOrder(response);
     });
 
     it('gets descending previous', async () => {
         if (!createdChannel) return fail('channel not created in before block');
-        let oneMinuteInTheFuture = moment.utc().add(1, 'minute').format('YYYY/MM/DD/HH/mm/ss/SSS');
-        let order = trimWordRandomly('descending');
+        const oneMinuteInTheFuture = moment.utc().add(1, 'minute').format('YYYY/MM/DD/HH/mm/ss/SSS');
+        const order = trimWordRandomly('descending');
         const response = await hubClientGet(`${channelResource}/${oneMinuteInTheFuture}/A/previous/4?stable=false&order=${order}`, headers);
         expectURIsInDescendingOrder(response);
     });
 
     it('gets descending hour', async () => {
         if (!createdChannel) return fail('channel not created in before block');
-        let now = moment.utc().format('YYYY/MM/DD/HH');
-        let order = trimWordRandomly('descending');
+        const now = moment.utc().format('YYYY/MM/DD/HH');
+        const order = trimWordRandomly('descending');
         const response = await hubClientGet(`${channelResource}/${now}?stable=false&order=${order}`, headers);
         expectURIsInDescendingOrder(response);
     });
@@ -164,5 +162,9 @@ describe(__filename, () => {
         expect(first).toBeLessThan(second);
         expect(second).toBeLessThan(third);
         expect(third).toBeLessThan(fourth);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

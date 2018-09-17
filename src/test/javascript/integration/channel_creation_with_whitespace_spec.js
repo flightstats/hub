@@ -1,26 +1,32 @@
-require('../integration_config');
 const {
     fromObjectPath,
     getProp,
+    hubClientDelete,
+    hubClientPost,
+    randomChannelName,
 } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
-var channelName = utils.randomChannelName();
-var channelResource = channelUrl + '/' + channelName;
+const channelUrl = getChannelUrl();
+const channelName = randomChannelName();
+const channelResource = `${channelUrl}/${channelName}`;
 
 describe(__filename, function () {
-    it('creates a channel with whitespace in the name', function (done) {
-        var url = channelUrl;
-        var headers = {'Content-Type': 'application/json'};
-        var body = {'name': '    ' + channelName + '    '};
+    it('creates a channel with whitespace in the name', async () => {
+        const headers = { 'Content-Type': 'application/json' };
+        const body = { name: `    ${channelName}    ` };
 
-        utils.httpPost(url, headers, body)
-            .then(function (response) {
-                const contentType = fromObjectPath(['headers', 'content-type'], response);
-                const location = fromObjectPath(['headers', 'location'], response);
-                expect(getProp('statusCode', response)).toEqual(201);
-                expect(contentType).toEqual('application/json');
-                expect(location).toEqual(channelResource);
-            })
-            .finally(done);
+        const response = await hubClientPost(channelUrl, headers, body);
+        const contentType = fromObjectPath(['headers', 'content-type'], response);
+        const location = fromObjectPath(['headers', 'location'], response);
+        expect(getProp('statusCode', response)).toEqual(201);
+        expect(contentType).toEqual('application/json');
+        expect(location).toEqual(channelResource);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

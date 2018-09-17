@@ -1,10 +1,23 @@
-require('../integration_config');
-const { createChannel, fromObjectPath, getProp } = require('../lib/helpers');
-var WebSocket = require('ws');
+const WebSocket = require('ws');
+const {
+    createChannel,
+    fromObjectPath,
+    getProp,
+    hubClientDelete,
+    hubClientPostTestItem,
+    randomChannelName,
+    waitForCondition,
+} = require('../lib/helpers');
+const { getChannelUrl } = require('../lib/config');
 
-var channelName = utils.randomChannelName();
+const channelUrl = getChannelUrl();
+const channelName = randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
+const itemURLs = [];
 let createdChannel = false;
+let webSocket;
+const wsURL = `${channelResource.replace('http', 'ws')}/ws`;
+const receivedMessages = [];
 
 describe(__filename, function () {
     beforeAll(async () => {
@@ -14,10 +27,6 @@ describe(__filename, function () {
             console.log(`created channel for ${__filename}`);
         }
     });
-
-    var webSocket;
-    var wsURL = channelResource.replace('http', 'ws') + '/ws';
-    var receivedMessages = [];
 
     it('opens websocket', function (done) {
         expect(wsURL).not.toEqual('undefined');
@@ -36,28 +45,20 @@ describe(__filename, function () {
         });
     });
 
-    var itemURLs = [];
-
-    it('posts item to channel', function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        utils.postItemQ(channelResource)
-            .then(function (result) {
-                const location = fromObjectPath(['response', 'headers', 'location'], result);
-                console.log('posted:', location);
-                itemURLs.push(location);
-                done();
-            });
-    });
-
-    it('waits for data', function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        utils.waitForData(receivedMessages, itemURLs, done);
+    it('posts item to channel', async () => {
+        if (!createdChannel) return fail('channel not created in before block');
+        const response = await hubClientPostTestItem(channelResource);
+        const location = fromObjectPath(['headers', 'location'], response);
+        console.log('posted:', location);
+        itemURLs.push(location);
+        const condition = () => (receivedMessages.length === itemURLs.length);
+        await waitForCondition(condition);
     });
 
     it('verifies the correct data was received', function () {
         if (!createdChannel) return fail('channel not created in before block');
         expect(receivedMessages.length).toEqual(itemURLs.length);
-        for (var i = 0; i < itemURLs.length; ++i) {
+        for (let i = 0; i < itemURLs.length; i++) {
             expect(receivedMessages).toContain(itemURLs[i]);
         }
     });
@@ -70,5 +71,9 @@ describe(__filename, function () {
         };
 
         webSocket.close();
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

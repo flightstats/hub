@@ -1,21 +1,16 @@
-require('../integration_config');
-const { getProp } = require('../lib/helpers');
+const { getProp, hubClientPost, randomChannelName } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
-
-var channelName = utils.randomChannelName();
+const channelUrl = getChannelUrl();
+const channelName = randomChannelName();
 
 describe(__filename, function () {
-
-    it('creates a channel with an invalid tag', function (done) {
-        var url = channelUrl;
-        var headers = {'Content-Type': 'application/json'};
-        var body = {'name': channelName, 'tags': ['foo bar', 'bar@home', 'tagz']};
-
-        utils.httpPost(url, headers, body)
-            .then(function (response) {
-                expect(getProp('statusCode', response)).toEqual(400);
-            })
-            .finally(done);
+    it('creates a channel with an invalid tag', async () => {
+        const headers = { 'Content-Type': 'application/json' };
+        const body = { 'name': channelName, 'tags': ['foo bar', 'bar@home', 'tagz'] };
+        const response = await hubClientPost(channelUrl, headers, body);
+        expect(getProp('statusCode', response)).toEqual(400);
     });
-
 });

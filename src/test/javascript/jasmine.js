@@ -1,22 +1,15 @@
 const Jasmine = require('jasmine');
 const reporter = require('./lib/ddt_reporter');
-
-var specs = process.argv.slice(2);
-var jasmine = new Jasmine();
+const jasmine = new Jasmine();
 
 global.hubDomain = process.env.hubDomain;
-
+const specs = process.argv[2] || 'integration/*_spec.js';
 jasmine.loadConfig({
     spec_dir: '.',
-    spec_files: ['**/*_spec.js'],
-    stopSpecOnExpectationFailure: true
+    spec_files: [specs],
+    stopSpecOnExpectationFailure: true,
 });
 
 jasmine.clearReporters();
 jasmine.addReporter(reporter);
-
-if (specs.length > 0) {
-    jasmine.execute(specs);
-} else {
-    jasmine.execute();
-}
+jasmine.execute();

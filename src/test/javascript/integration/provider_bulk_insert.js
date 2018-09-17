@@ -1,8 +1,19 @@
-require('../integration_config');
-const { getProp, hubClientGet } = require('../lib/helpers');
+const {
+    followRedirectIfPresent,
+    getProp,
+    hubClientDelete,
+    hubClientGet,
+    hubClientPost,
+    randomChannelName,
+} = require('../lib/helpers');
+const {
+    getChannelUrl,
+    getHubUrlBase,
+} = require('../lib/config');
 
-const providerResource = `${hubUrlBase}/provider/bulk`;
-const channelName = utils.randomChannelName();
+const channelUrl = getChannelUrl();
+const providerResource = `${getHubUrlBase()}/provider/bulk`;
+const channelName = randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
 const multipart = [
     'This is a message with multiple parts in MIME format.  This section is ignored.\r\n',
@@ -18,34 +29,39 @@ const multipart = [
 ].join('');
 
 describe(__filename, function () {
-    it('inserts a bulk value into a provider channel', function (done) {
+    it('inserts a bulk value into a provider channel', async () => {
         const headers = {
             'channelName': channelName,
             'Content-Type': 'multipart/mixed; boundary=abcdefg',
         };
-        const body = multipart;
 
-        utils.httpPost(providerResource, headers, body)
-            .then(function (response) {
-                const statusCode = getProp('statusCode', response);
-                console.log('statusCode', statusCode);
-                expect(statusCode).toEqual(200);
-            })
-            .finally(done);
+        const response = await hubClientPost(providerResource, headers, multipart);
+        expect(getProp('statusCode', response)).toEqual(200);
     });
 
-    it('waits', (done) => {
-        const wait = setTimeout(() => {
-            // just waiting a sec
-        }, 900);
-        clearTimeout(wait);
+    it('waits', async () => {
+        const wait = () => new Promise((resolve) => {
+            console.log('started');
+            const timer = setTimeout(() => {
+                clearTimeout(timer);
+                console.log('waited');
+                resolve(true);
+                // just waiting a sec
+            }, 2000);
+        });
+        await wait();
         expect(true).toBe(true);
-        done();
     });
 
     it('verifies the bulk value was inserted', async () => {
         const url = `${channelResource}/latest?stable=false`;
+        const headers = { 'Content-Type': 'application/json' };
         const response = await hubClientGet(url);
-        expect(getProp('statusCode', response)).toEqual(200);
+        const response2 = await followRedirectIfPresent(response, headers);
+        expect(getProp('statusCode', response2)).toEqual(200);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

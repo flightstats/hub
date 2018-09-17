@@ -2,7 +2,6 @@ package com.flightstats.hub.dao.aws;
 
 
 import com.flightstats.hub.app.HubProperties;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.exception.FailedReadException;
 import com.flightstats.hub.metrics.ActiveTraces;
@@ -24,8 +23,11 @@ import org.joda.time.Interval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.concurrent.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("WeakerAccess")
 @Singleton
@@ -70,7 +72,7 @@ public class S3WriteQueue {
             ChannelContentKey key = keys.poll(5, TimeUnit.SECONDS);
             if (key != null) {
                 metricsService.gauge("s3.writeQueue.used", keys.size());
-                metricsService.gauge("s3.writeQueue.oldest", getOldest());
+                countAge(key, "s3.writeQueue.age.removed");
             }
             retryer.call(() -> {
                 writeContent(key);
@@ -102,24 +104,34 @@ public class S3WriteQueue {
         boolean value = keys.offer(key);
         if (value) {
             metricsService.gauge("s3.writeQueue.used", keys.size());
-            metricsService.gauge("s3.writeQueue.oldest", getOldest());
+            countAge(key, "s3.writeQueue.age.added");
         } else {
             logger.warn("Add to queue failed - out of queue space. key= {}", key);
             metricsService.increment("s3.writeQueue.dropped");
         }
     }
 
-    private long getOldest() {
-        ChannelContentKey[] array = keys.toArray(new ChannelContentKey[0]);
-        Arrays.sort(array);
-        if (array.length > 1) {
-            ChannelContentKey oldest = array[array.length - 1];
-            DateTime then = oldest.getContentKey().getTime();
-            DateTime now = DateTime.now(DateTimeZone.UTC);
-            Interval delta = new Interval(then, now);
-            return delta.toDurationMillis();
-        } else {
-            return 0;
+    private Long calculateAgeMS(ChannelContentKey key) {
+        DateTime then = key.getContentKey().getTime();
+        DateTime now = DateTime.now(DateTimeZone.UTC);
+        try {
+            if (then.isBefore(now)) {
+                Interval delta = new Interval(then, now);
+                return delta.toDurationMillis();
+            } else {
+                Interval delta = new Interval(now, then);
+                return -delta.toDurationMillis();
+            }
+        } catch (IllegalArgumentException e) {
+            logger.warn("unable to calculate the item's age", e);
+            return null;
+        }
+    }
+
+    private void countAge(ChannelContentKey key, String metricName) {
+        Long ageMS = calculateAgeMS(key);
+        if (ageMS != null) {
+            metricsService.count(metricName, ageMS, "key:" + key.toString());
         }
     }
 

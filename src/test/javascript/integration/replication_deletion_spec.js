@@ -1,45 +1,55 @@
-require('../integration_config');
 const {
     fromObjectPath,
     getProp,
+    hubClientDelete,
+    hubClientPut,
+    itSleeps,
+    randomChannelName,
 } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
-var request = require('request');
-var testName = __filename;
+const channelUrl = getChannelUrl();
+const channelName = randomChannelName();
+const channelResource = `${channelUrl}/${channelName}`;
+const headers = { 'Content-Type': 'application/json' };
+const request = require('request');
 
 /**
  * 1 - Create local channel with replicationSource to non-existent channel
  * 2 - Delete local channel
  */
-describe(testName, function () {
-    var channelName = utils.randomChannelName();
-    utils.putChannel(channelName, function () {
-    }, {'replicationSource': 'http://hub/channel/none'});
+describe(__filename, function () {
+    beforeAll(async () => {
+        const response = await hubClientPut(channelResource, headers, { replicationSource: 'http://hub/channel/none' });
+        expect(getProp('statusCode', response)).toEqual(201);
+    });
 
-    var localChannelUrl = hubUrlBase + '/channel/' + channelName;
+    it('waits 1000 ms', async () => {
+        await itSleeps(1000);
+    });
 
-    utils.itSleeps(1000);
-
-    it('tries to add item to channel ' + channelName, function (done) {
+    it(`fails with 403 posting item to ${channelName} replicated channel`, function (done) {
         request.post({
-            url: localChannelUrl,
-            headers: {"Content-Type": "application/json", user: 'somebody'},
-            body: JSON.stringify({"data": Date.now()})
+            url: channelResource,
+            headers: { "Content-Type": "application/json", user: 'somebody' },
+            body: JSON.stringify({ "data": Date.now() }),
         },
         function (err, response, body) {
             expect(err).toBeNull();
 
-            console.log('body', body);
+            // console.log('body', body);
             const contentType = fromObjectPath(['headers', 'content-type'], response);
             expect(contentType).toBe('application/json');
             expect(getProp('statusCode', response)).toBe(403);
-            expect(body).toBe(channelName + ' cannot modified while replicating');
+            expect(body).toBe(`${channelName} cannot modified while replicating`);
             done();
         });
     });
 
-    it('tries to delete channel', function (done) {
-        request.del({ url: localChannelUrl },
+    it('deletes the local channel', function (done) {
+        request.del({ url: channelResource },
             function (err, response, body) {
                 expect(err).toBeNull();
                 expect(getProp('statusCode', response)).toBe(202);
@@ -47,4 +57,7 @@ describe(testName, function () {
             });
     });
 
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
+    });
 });

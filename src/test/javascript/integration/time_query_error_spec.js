@@ -1,9 +1,10 @@
-require('../integration_config');
-const { createChannel, getProp } = require('../lib/helpers');
-var request = require('request');
-var channelName = utils.randomChannelName();
+const request = require('request');
+const { createChannel, hubClientDelete, getProp, randomChannelName } = require('../lib/helpers');
+const { getChannelUrl } = require('../lib/config');
+
+const channelUrl = getChannelUrl();
+const channelName = randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
-var testName = __filename;
 let createdChannel = false;
 /**
  * This should:
@@ -12,7 +13,7 @@ let createdChannel = false;
  * 2 - post items into the channel
  * 3 - verify that records are returned via time query
  */
-describe(testName, function () {
+describe(__filename, function () {
     beforeAll(async () => {
         const channel = await createChannel(channelName);
         if (getProp('statusCode', channel) === 201) {
@@ -78,5 +79,9 @@ describe(testName, function () {
 
     it('queries month 13', function (done) {
         expect400(channelResource + '/2015/13/02', done);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

@@ -1,41 +1,51 @@
-require('../integration_config');
 const {
     fromObjectPath,
     getProp,
+    hubClientDelete,
+    hubClientPut,
+    parseJson,
+    randomChannelName,
 } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
-var request = require('request');
-var channelName = utils.randomChannelName();
-var channelResource = channelUrl + '/' + channelName + '/bulk';
-var testName = __filename;
+const channelUrl = getChannelUrl();
+const request = require('request');
+const channelName = randomChannelName();
+const channelResource = `${channelUrl}/${channelName}/bulk`;
+const headers = { 'Content-Type': 'application/json' };
+const multipart = [
+    'This is a message with multiple parts in MIME format.  This section is ignored.\r\n',
+    '--abcdefg\r\n',
+    'Content-Type: application/xml\r\n',
+    ' \r\n',
+    '<coffee><roast>french</roast><coffee>\r\n',
+    '--abcdefg\r\n',
+    'Content-Type: application/json\r\n',
+    ' \r\n',
+    '{ "type" : "coffee", "roast" : "french" }\r\n',
+    '--abcdefg--',
+].join('');
+let items = [];
 
-describe(testName, function () {
-    utils.putChannel(channelName, false, {"ttlDays": 1, "tags": ["bulk"]}, testName);
+describe(__filename, function () {
+    beforeAll(async () => {
+        const channelBody = { ttlDays: 1, tags: ['bulk'] };
+        const response = await hubClientPut(`${channelUrl}/${channelName}`, headers, channelBody);
+        expect(getProp('statusCode', response)).toEqual(201);
+    });
 
-    var multipart =
-        'This is a message with multiple parts in MIME format.  This section is ignored.\r\n' +
-        '--abcdefg\r\n' +
-        'Content-Type: application/xml\r\n' +
-        ' \r\n' +
-        '<coffee><roast>french</roast><coffee>\r\n' +
-        '--abcdefg\r\n' +
-        'Content-Type: application/json\r\n' +
-        ' \r\n' +
-        '{ "type" : "coffee", "roast" : "french" }\r\n' +
-        '--abcdefg--';
-
-    var items = [];
-
-    it("bulk items to " + channelResource, function (done) {
+    it(`bulk items to ${channelResource}`, function (done) {
         request.post({
             url: channelResource,
             headers: {'Content-Type': "multipart/mixed; boundary=abcdefg"},
-            body: multipart
+            body: multipart,
         },
         function (err, response, body) {
             expect(err).toBeNull();
             expect(getProp('statusCode', response)).toBe(201);
-            var parse = utils.parseJson(response, testName);
+            const parse = parseJson(response, __filename);
             console.log(getProp('body', response));
             const uris = fromObjectPath(['_links', 'uris'], parse) || [];
             expect(uris.length).toBe(2);
@@ -44,7 +54,7 @@ describe(testName, function () {
         });
     });
 
-    it("gets first item " + channelResource, function (done) {
+    it(`gets first item ${channelResource}`, function (done) {
         request.get({url: items[0]},
             function (err, response, body) {
                 expect(err).toBeNull();
@@ -56,7 +66,7 @@ describe(testName, function () {
             });
     });
 
-    it("gets second item " + channelResource, function (done) {
+    it(`gets second item ${channelResource}`, function (done) {
         request.get({url: items[1]},
             function (err, response, body) {
                 expect(err).toBeNull();
@@ -68,7 +78,7 @@ describe(testName, function () {
             });
     });
 
-    it("calls previous " + channelResource, function (done) {
+    it(`calls previous ${channelResource}`, function (done) {
         request.get({url: items[1] + '/previous?trace=true&stable=false', followRedirect: false},
             function (err, response, body) {
                 expect(err).toBeNull();
@@ -80,7 +90,7 @@ describe(testName, function () {
             });
     });
 
-    it("calls next " + channelResource, function (done) {
+    it(`calls next ${channelResource}`, function (done) {
         request.get({url: items[0] + '/next?trace=true&stable=false', followRedirect: false},
             function (err, response, body) {
                 expect(err).toBeNull();
@@ -90,5 +100,9 @@ describe(testName, function () {
                 expect(location).toBe(items[1]);
                 done();
             });
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(`${channelUrl}/${channelName}`);
     });
 });

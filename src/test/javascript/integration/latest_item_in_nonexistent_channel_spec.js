@@ -1,7 +1,11 @@
-require('../integration_config');
-const { getProp, hubClientGet } = require('../lib/helpers');
-const channelName = utils.randomChannelName();
-const channelResource = channelUrl + '/' + channelName;
+const { getProp, hubClientGet, randomChannelName } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
+
+const channelUrl = getChannelUrl();
+const channelName = randomChannelName();
+const channelResource = `${channelUrl}/${channelName}`;
 
 describe(__filename, function () {
     it('verifies the latest endpoint returns 404 on a nonexistent channel', async () => {

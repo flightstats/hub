@@ -1,65 +1,80 @@
-require('../integration_config');
 const {
-  getProp,
-  fromObjectPath,
+    getProp,
+    fromObjectPath,
+    hubClientDelete,
+    hubClientPut,
+    randomChannelName,
 } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
-var request = require('request');
-var channelName = utils.randomChannelName();
+const channelUrl = getChannelUrl();
+
+const channelName = randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
-var testName = __filename;
-
+const headers = { 'Content-Type': 'application/json' };
 /**
  * create a channel via put with protect == true
  * verify that we can not change some settings (storage to BATCH)
  * should not be able to change protect to false
  *
  */
-describe(testName, function () {
-    var returnedBody;
-
-    utils.putChannel(channelName, function (response, body) {
-        var parse = utils.parseJson(response, testName);
-        returnedBody = parse;
-        const selfLink = fromObjectPath(['_links', 'self', 'href'], parse);
+const url = `${channelUrl}/${channelName}`;
+describe(__filename, function () {
+    it('creates an unprotected channel', async () => {
+        const response = await hubClientPut(url, headers, { tags: ['one', 'two'] });
+        const body = getProp('body', response);
+        const selfLink = fromObjectPath(['_links', 'self', 'href'], body);
         expect(selfLink).toEqual(channelResource);
-        expect(getProp('ttlDays', parse)).toEqual(120);
-        expect(getProp('description', parse)).toEqual('');
-        expect((getProp('tags', parse) || '').length).toEqual(2);
-        expect(getProp('storage', parse)).toEqual('SINGLE');
-        expect(getProp('protect', parse)).toEqual(false);
-    }, {tags: ['one', 'two']});
+        expect(getProp('ttlDays', body)).toEqual(120);
+        expect(getProp('description', body)).toEqual('');
+        expect((getProp('tags', body) || '').length).toEqual(2);
+        expect(getProp('storage', body)).toEqual('SINGLE');
+        expect(getProp('protect', body)).toEqual(false);
+    });
 
-    utils.putChannel(channelName, function (response, body) {
-        var parse = utils.parseJson(response, testName);
-        const selfLink = fromObjectPath(['_links', 'self', 'href'], parse);
+    it('sets the channel to protected', async () => {
+        const response = await hubClientPut(url, headers, { protect: true, owner: 'someone' });
+        const body = getProp('body', response);
+        const selfLink = fromObjectPath(['_links', 'self', 'href'], body);
         expect(selfLink).toEqual(channelResource);
-        expect(getProp('protect', parse)).toEqual(true);
+        expect(getProp('protect', body)).toEqual(true);
+    });
 
-    }, {protect: true, owner: 'someone'});
+    it('returns 403 failure on attempt to unprotect the channel', async () => {
+        const response = await hubClientPut(url, headers, { protect: false });
+        expect(getProp('statusCode', response)).toEqual(403);
+    });
 
-    utils.putChannel(channelName, false, {protect: false}, 'protect', 403);
+    it('returns 403 failure on attempt to remove original storage source on protected channel', async () => {
+        const response = await hubClientPut(url, headers, { storage: 'BATCH' });
+        expect(getProp('statusCode', response)).toEqual(403);
+    });
 
-    utils.putChannel(channelName, false, {storage: 'BATCH'}, 'storage Batch', 403);
-    utils.putChannel(channelName, false, {tags: ['one']}, 'tag removal', 403);
-    utils.putChannel(channelName, false, {ttlDays: 119}, 'ttlDays', 403);
-    utils.putChannel(channelName, false, {owner: 'CBA'}, 'owner', 403);
+    it('returns 403 failure on attempt to remove tags on protected channel', async () => {
+        const response = await hubClientPut(url, headers, { tags: ['one'] });
+        expect(getProp('statusCode', response)).toEqual(403);
+    });
 
-    utils.putChannel(channelName, function (response, body) {
-        var parse = utils.parseJson(response, testName);
-        const selfLink = fromObjectPath(['_links', 'self', 'href'], parse);
-        expect(selfLink).toEqual(channelResource);
-        expect((getProp('tags', parse) || '').length).toEqual(3);
-        expect(getProp('storage', parse)).toEqual('BOTH');
+    it('returns 403 failure on attempt to decrease ttl on protected channel', async () => {
+        const response = await hubClientPut(url, headers, { ttlDays: 119 });
+        expect(getProp('statusCode', response)).toEqual(403);
+    });
 
-    }, {storage: 'BOTH', tags: ['one', 'two', 'three']}, 'storage and tags', 201);
+    it('returns 403 failure on attempt to change owner on protected channel', async () => {
+        const response = await hubClientPut(url, headers, { owner: 'CBA' });
+        expect(getProp('statusCode', response)).toEqual(403);
+    });
 
-    it("deletes channel " + channelName, function (done) {
-        request.del({url: channelResource},
-            function (err, response, body) {
-                console.log('body', body);
-                expect(getProp('statusCode', response)).toBe(403);
-                done();
-            });
+    it('successfully updates tags and storage additional to original ones', async () => {
+        const requestBody = { storage: 'BOTH', tags: ['one', 'two', 'three'] };
+        const response = await hubClientPut(url, headers, requestBody);
+        expect(getProp('statusCode', response)).toEqual(201);
+    });
+
+    it('returns a 403 to delete protected channel from external', async () => {
+        const response = await hubClientDelete(channelResource);
+        expect(getProp('statusCode', response)).toBe(403);
     });
 });

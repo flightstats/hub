@@ -1,37 +1,41 @@
-require('../integration_config');
+const request = require('request');
 const {
     fromObjectPath,
     getProp,
+    hubClientDelete,
+    hubClientPut,
+    randomChannelName,
 } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
-var request = require('request');
-var channelName = utils.randomChannelName();
-var channelResource = channelUrl + '/' + channelName;
-var testName = __filename;
-
-var MINUTE = 60 * 1000;
-
+const channelUrl = getChannelUrl();
+const channelName = randomChannelName();
+const channelResource = `${channelUrl}/${channelName}`;
+const headers = { 'Content-Type': 'application/json' };
+const MINUTE = 60 * 1000;
+const channelBody = {
+    tags: ["test"],
+};
+let location = null;
+const SIZE = 41 * 1024 * 1024;
 /**
  * 1 - create a large payload channel
  * 2 - post a large item (100+ MB)
  * 3 - fetch the item and verify bytes
  */
-describe(testName, function () {
-
-    var channelBody = {
-        tags: ["test"]
-    };
-
-    utils.putChannel(channelName, false, channelBody, testName);
-
-    var location;
-    const SIZE = 41 * 1024 * 1024;
+describe(__filename, function () {
+    beforeAll(async () => {
+        const response = await hubClientPut(channelResource, headers, channelBody);
+        expect(getProp('statusCode', response)).toEqual(201);
+    });
 
     it("posts a large item to " + channelResource, function (done) {
         request.post({
             url: channelResource,
             headers: {'Content-Type': "text/plain"},
-            body: Array(SIZE).join("a")
+            body: Array(SIZE).join("a"),
         },
         function (err, response, body) {
             expect(err).toBeNull();
@@ -58,4 +62,7 @@ describe(testName, function () {
             });
     }, 5 * MINUTE);
 
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
+    });
 });

@@ -1,11 +1,13 @@
-require('../integration_config');
-
 const request = require('request');
 const moment = require('moment');
-const channelName = utils.randomChannelName();
-const channelResource = channelUrl + "/" + channelName;
-const testName = __filename;
+const { createChannel, getProp, hubClientDelete, randomChannelName } = require('../lib/helpers');
+const { getChannelUrl } = require('../lib/config');
 
+const channelUrl = getChannelUrl();
+const channelName = randomChannelName();
+const channelResource = `${channelUrl}/${channelName}`;
+let stableTime = null;
+let currentTime = null;
 /**
  * This should:
  *
@@ -13,11 +15,12 @@ const testName = __filename;
  * 2 - call next/N on the current time, should get less than a full compliment
  * 3 - subtract X seconds, call next/N
  */
-describe(testName, function () {
-    utils.createChannel(channelName);
 
-    let stableTime;
-    let currentTime;
+describe(__filename, function () {
+    beforeAll(async () => {
+        const response = await createChannel(channelName);
+        expect(getProp('statusCode', response)).toBe(201);
+    });
 
     it('gets times', function (done) {
         const url = channelResource + '/time';
@@ -28,11 +31,12 @@ describe(testName, function () {
                 stableTime = moment(body.stable.millis).utc();
                 currentTime = moment(body.now.millis).utc();
                 done();
-            })
+            });
     });
 
     it('gets unstable next 10 links', function (done) {
         const url = channelResource + currentTime.format('/YYYY/MM/DD/HH/mm/ss') + '/next/10';
+        console.log('******', url);
         request.get({url: url, json: true},
             function (err, response, body) {
                 expect(err).toBeNull();
@@ -41,7 +45,7 @@ describe(testName, function () {
                 expect(body._links.next).toBeUndefined();
 
                 done();
-            })
+            });
     });
 
     it('gets stable next 5 links', function (done) {
@@ -54,8 +58,10 @@ describe(testName, function () {
                 expect(body._links.uris.length).toBe(5);
                 expect(body._links.next).toBeUndefined();
                 done();
-            })
+            });
     });
 
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
+    });
 });
-

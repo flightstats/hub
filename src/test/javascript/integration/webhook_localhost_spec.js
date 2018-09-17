@@ -1,7 +1,22 @@
-require('../integration_config');
-const { getProp, fromObjectPath, hubClientGet } = require('../lib/helpers');
-const channelResource = `${channelUrl}/${utils.randomChannelName()}`;
-const webhookResource = `${utils.getWebhookUrl()}/${utils.randomChannelName()}`;
+const {
+    deleteWebhook,
+    getProp,
+    getWebhookUrl,
+    fromObjectPath,
+    hubClientDelete,
+    hubClientGet,
+    hubClientPut,
+    randomChannelName,
+} = require('../lib/helpers');
+const {
+    getChannelUrl,
+    getHubUrlBase,
+} = require('../lib/config');
+
+const channelUrl = getChannelUrl();
+const channelResource = `${channelUrl}/${randomChannelName()}`;
+const webhookName = randomChannelName();
+const webhookResource = `${getWebhookUrl()}/${webhookName}`;
 
 /**
  * This should:
@@ -16,7 +31,7 @@ describe(__filename, function () {
     let isClustered = true;
     const headers = { 'Content-Type': 'application/json' };
     it('determines if this is a single or clustered hub', async () => {
-        const url = `${hubUrlBase}/internal/properties`;
+        const url = `${getHubUrlBase()}/internal/properties`;
         const response = await hubClientGet(url, headers);
         expect(getProp('statusCode', response)).toEqual(200);
         const properties = fromObjectPath(['body', 'properties'], response) || {};
@@ -27,26 +42,36 @@ describe(__filename, function () {
         console.log('isClustered:', isClustered);
     });
 
-    it('creates a channel', (done) => {
-        utils.httpPut(channelResource)
-            .then(response => expect(getProp('statusCode', response)).toEqual(201))
-            .finally(done);
+    it('creates a channel', async () => {
+        const response = await hubClientPut(channelResource);
+        expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    it('creates a webhook pointing at localhost', (done) => {
+    it('creates a webhook pointing at localhost (or fails if isClustered=true)', async () => {
         const body = {
             callbackUrl: 'http://localhost:8080/nothing',
             channelUrl: channelResource,
         };
-        utils.httpPut(webhookResource, headers, body)
-            .then(response => {
-                const statusCode = getProp('statusCode', response);
-                if (isClustered) {
-                    expect(statusCode).toEqual(400);
-                } else {
-                    expect(statusCode).toEqual(201);
-                }
-            })
-            .finally(done);
+        const response = await hubClientPut(webhookResource, headers, body);
+        const statusCode = getProp('statusCode', response);
+        const expected = isClustered ? 400 : 201;
+        expect(statusCode).toEqual(expected);
+    });
+
+    it('deletes the webhook (or fails if isClustered=true)', async () => {
+        try {
+            const response = await deleteWebhook(webhookName);
+            if (!isClustered) {
+                expect(getProp('statusCode', response)).toBe(202);
+            }
+        } catch (ex) {
+            if (isClustered) {
+                expect(getProp('statusCode', ex)).toBe(404);
+            }
+        }
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

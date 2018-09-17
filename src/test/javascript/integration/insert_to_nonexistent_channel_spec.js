@@ -1,22 +1,17 @@
-require('../integration_config');
-const { getProp } = require('../lib/helpers');
+const { getProp, hubClientPost } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
-var channelName = '123_you_aint_gunna_find_me';
+const channelUrl = getChannelUrl();
+const channelName = '123_you_aint_gunna_find_me';
 const channelResource = `${channelUrl}/${channelName}`;
-var messageText = "Any old value!";
+const messageText = "Any old value!";
 
 describe(__filename, function () {
-
-    it('inserts an item into a bogus channel', function (done) {
-        var url = channelResource;
-        var headers = {'Content-Type': 'text/plain'};
-        var body = messageText;
-
-        utils.httpPost(url, headers, body)
-            .then(function (response) {
-                expect(getProp('statusCode', response)).toEqual(404);
-            })
-            .finally(done);
+    it('inserts an item into a bogus channel', async () => {
+        const headers = { 'Content-Type': 'text/plain' };
+        const response = await hubClientPost(channelResource, headers, messageText);
+        expect(getProp('statusCode', response)).toEqual(404);
     });
-
 });

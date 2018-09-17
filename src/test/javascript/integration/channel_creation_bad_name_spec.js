@@ -1,18 +1,13 @@
-require('../integration_config');
-const { getProp } = require('../lib/helpers');
+const { getProp, hubClientPost } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
 describe(__filename, function () {
-
-	it('creates the channel without a name', function (done) {
-		var url = channelUrl;
-		var headers = {'Content-Type': 'application/json'};
-		var body = {'name': ''};
-
-		utils.httpPost(url, headers, body)
-			.then(function (response) {
-				expect(getProp('statusCode', response)).toEqual(400);
-			})
-			.finally(done);
-	});
-
+    it('creates the channel without a name', async () => {
+        const headers = { 'Content-Type': 'application/json' };
+        const body = { 'name': '' };
+        const response = await hubClientPost(getChannelUrl(), headers, body);
+        expect(getProp('statusCode', response)).toEqual(400);
+    });
 });

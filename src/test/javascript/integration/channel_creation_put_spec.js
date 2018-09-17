@@ -1,47 +1,58 @@
-require('../integration_config');
-const { getProp, fromObjectPath } = require('../lib/helpers');
+const {
+    getProp,
+    fromObjectPath,
+    hubClientDelete,
+    hubClientPut,
+    randomChannelName,
+} = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
+const channelUrl = getChannelUrl();
+const headers = { 'Content-Type': 'application/json' };
 const getParsedPropFunc = parsed => prop => getProp(prop, parsed);
-
-var request = require('request');
-var channelName = utils.randomChannelName();
+const channelName = randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
-var testName = __filename;
-
 /**
  * create a channel via put
  * verify that it exists
  * change the channel via put
  * verify that the new config exists
  */
-describe(testName, function () {
-    var returnedBody;
-
-    utils.putChannel(channelName, function (response, body) {
-        var parse = utils.parseJson(response, testName);
-        returnedBody = parse;
-        const getParsedProp = getParsedPropFunc(parse);
-        expect(fromObjectPath(['_links', 'self', 'href'], parse)).toEqual(channelResource);
+describe(__filename, function () {
+    let returnedBody;
+    it('creates a channel with method PUT', async () => {
+        const response = await hubClientPut(channelResource, headers, {});
+        const body = getProp('body', response);
+        returnedBody = body;
+        expect(fromObjectPath(['_links', 'self', 'href'], body)).toEqual(channelResource);
+        const getParsedProp = getParsedPropFunc(body);
+        expect(fromObjectPath(['_links', 'self', 'href'], body)).toEqual(channelResource);
         expect(getParsedProp('ttlDays')).toEqual(120);
         expect(getParsedProp('description')).toEqual('');
         expect((getParsedProp('tags') || '').length).toEqual(0);
         expect(getParsedProp('replicationSource')).toEqual('');
     });
 
-    var newConfig = {
+    const newConfig = {
         description: 'yay put!',
         ttlDays: 5,
-        tags: ['one', 'two']
+        tags: ['one', 'two'],
     };
 
-    utils.putChannel(channelName, function (response, body) {
-        var parse = utils.parseJson(response, testName);
-        expect(fromObjectPath(['_links', 'self', 'href'], parse)).toEqual(channelResource);
-        const getParsedProp = getParsedPropFunc(parse);
+    it('updates the channel config with method PUT', async () => {
+        const response = await hubClientPut(channelResource, headers, newConfig);
+        const body = getProp('body', response);
+        expect(fromObjectPath(['_links', 'self', 'href'], body)).toEqual(channelResource);
+        const getParsedProp = getParsedPropFunc(body);
         expect(getParsedProp('ttlDays')).toEqual(newConfig.ttlDays);
         expect(getParsedProp('description')).toEqual(newConfig.description);
         expect(getParsedProp('tags')).toEqual(newConfig.tags);
         expect(getParsedProp('creationDate')).toEqual(returnedBody.creationDate);
-    }, newConfig);
+    });
 
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
+    });
 });

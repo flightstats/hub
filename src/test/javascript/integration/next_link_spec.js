@@ -1,12 +1,18 @@
-require('../integration_config');
 const {
     createChannel,
     fromObjectPath,
     getProp,
+    hubClientDelete,
     hubClientGet,
+    hubClientPost,
+    randomChannelName,
 } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
-const channelName = utils.randomChannelName();
+const channelUrl = getChannelUrl();
+const channelName = randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
 let createdChannel = false;
 
@@ -23,17 +29,15 @@ describe(__filename, function () {
     const headers = { 'Content-Type': 'application/json' };
     const body = { 'name': channelName };
 
-    function postOneItem (done) {
-        utils.httpPost(channelResource, headers, body)
-            .then(function (response) {
-                expect(getProp('statusCode', response)).toEqual(201);
-                const selfLink = fromObjectPath(['body', '_links', 'self', 'href'], response);
-                items.push(selfLink);
-            })
-            .finally(done);
-    }
-    it('posts item', function (done) {
-        postOneItem(done);
+    const postOneItem = async () => {
+        const response = await hubClientPost(channelResource, headers, body);
+        expect(getProp('statusCode', response)).toEqual(201);
+        const selfLink = fromObjectPath(['body', '_links', 'self', 'href'], response);
+        items.push(selfLink);
+    };
+
+    it(`posts item ${__filename}1`, async () => {
+        await postOneItem();
     });
 
     it('gets 404 from /next ', async () => {
@@ -51,14 +55,14 @@ describe(__filename, function () {
         expect(urisLength).toBe(true);
     });
 
-    it('posts item', function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        postOneItem(done);
+    it(`posts item ${__filename}2`, async () => {
+        if (!createdChannel) return fail('channel not created in before block');
+        await postOneItem();
     });
 
-    it('posts item', function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        postOneItem(done);
+    it(`posts item ${__filename}3`, async () => {
+        if (!createdChannel) return fail('channel not created in before block');
+        await postOneItem();
     });
 
     it('gets item from /next ', async () => {
@@ -87,5 +91,9 @@ describe(__filename, function () {
         expect(uris.length).toBe(2);
         expect(uris[0]).toBe(items[0]);
         expect(uris[1]).toBe(items[1]);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

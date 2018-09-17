@@ -1,65 +1,78 @@
-require('../integration_config');
 const request = require('request');
 const {
-  fromObjectPath,
-  getProp,
+    fromObjectPath,
+    getProp,
+    hubClientDelete,
+    hubClientPut,
+    randomChannelName,
 } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
-var channelName = utils.randomChannelName();
-const channelResource = `${channelUrl}/${channelName}`;
-var testName = __filename;
-
-
+const channelName = randomChannelName();
+const channelResource = `${getChannelUrl()}/${channelName}`;
+let channelCreated = false;
+const multipart = [
+    'This is a message with multiple parts in MIME format.  This section is ignored.\r\n',
+    '--abcdefg\r\n',
+    'Content-Type: text/plain\r\n',
+    ' \r\n',
+    'message one\r\n',
+    '--abcdefg\r\n',
+    'Content-Type: text/plain\r\n',
+    ' \r\n',
+    'message two\r\n',
+    '--abcdefg\r\n',
+    'Content-Type: text/plain\r\n',
+    ' \r\n',
+    'message three\r\n',
+    '--abcdefg\r\n',
+    'Content-Type: text/plain\r\n',
+    ' \r\n',
+    'message four\r\n',
+    '--abcdefg--',
+].join('');
+let location = '';
 /**
  * create a channel
  * post 4 items as multipart to the single item endpoint.
  */
-describe(testName, function () {
-
-    utils.putChannel(channelName, false, {"name": channelName, "ttlDays": 1, "tags": ["bulk"]}, testName);
-
-    var multipart =
-        'This is a message with multiple parts in MIME format.  This section is ignored.\r\n' +
-        '--abcdefg\r\n' +
-        'Content-Type: text/plain\r\n' +
-        ' \r\n' +
-        'message one\r\n' +
-        '--abcdefg\r\n' +
-        'Content-Type: text/plain\r\n' +
-        ' \r\n' +
-        'message two\r\n' +
-        '--abcdefg\r\n' +
-        'Content-Type: text/plain\r\n' +
-        ' \r\n' +
-        'message three\r\n' +
-        '--abcdefg\r\n' +
-        'Content-Type: text/plain\r\n' +
-        ' \r\n' +
-        'message four\r\n' +
-        '--abcdefg--'
-
-    // var items = []; // TODO: is this expected to be used or is it a copy/paste artifact?
-    var location = '';
+describe(__filename, function () {
+    beforeAll(async () => {
+        const body = {
+            name: channelName,
+            ttlDays: 1,
+            tags: ['bulk'],
+        };
+        const url = `${getChannelUrl()}/${channelName}`;
+        const headers = { 'Content-Type': 'application/json' };
+        const response = await hubClientPut(url, headers, body);
+        if (getProp('statusCode', response) === 201) {
+            channelCreated = true;
+        }
+    });
 
     it("post multipart item to " + channelName, function (done) {
+        if (!channelCreated) return done.fail('channel not created in before block');
         request.post({
-                url: channelResource,
-                headers: {'Content-Type': "multipart/mixed; boundary=abcdefg"},
-                body: multipart
-            },
-            function (err, response, body) {
-                expect(err).toBeNull();
-                expect(getProp('statusCode', response)).toBe(201);
-                location = fromObjectPath(['headers', 'location'], response);
-                console.log('location', location);
-                expect(location).toBeDefined();
-                var parse = utils.parseJson(response, testName);
-                console.log(getProp('body', response));
-                done();
-            });
+            url: channelResource,
+            headers: {'Content-Type': "multipart/mixed; boundary=abcdefg"},
+            body: multipart,
+        },
+        function (err, response, body) {
+            expect(err).toBeNull();
+            expect(getProp('statusCode', response)).toBe(201);
+            location = fromObjectPath(['headers', 'location'], response);
+            console.log('location', location);
+            expect(location).toBeDefined();
+            console.log(getProp('body', response));
+            done();
+        });
     });
 
     it("verifies content " + channelName, function (done) {
+        if (!channelCreated) return done.fail('channel not created in before block');
         request.get({url: location},
             function (err, response, body) {
                 expect(err).toBeNull();
@@ -74,4 +87,7 @@ describe(testName, function () {
             });
     });
 
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
+    });
 });

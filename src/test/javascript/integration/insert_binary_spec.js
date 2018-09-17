@@ -1,27 +1,27 @@
-require('../integration_config');
 const {
     fromObjectPath,
     getProp,
+    hubClientDelete,
     hubClientGet,
+    hubClientPost,
+    randomChannelName,
 } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
-const channelName = utils.randomChannelName();
+const channelUrl = getChannelUrl();
+const channelName = randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
+let itemURL = null;
+let imageData = '';
 
 describe(__filename, function () {
-    it('creates a channel', function (done) {
-        var url = channelUrl;
-        var headers = {'Content-Type': 'application/json'};
-        var body = {'name': channelName};
-
-        utils.httpPost(url, headers, body)
-            .then(function (response) {
-                expect(getProp('statusCode', response)).toEqual(201);
-            })
-            .finally(done);
+    beforeAll(async () => {
+        const body = { 'name': channelName };
+        const contentJSON = { 'Content-Type': 'application/json' };
+        await hubClientPost(channelUrl, contentJSON, body);
     });
-
-    let imageData;
 
     it('downloads an image of a cat', async () => {
         const url = 'http://www.lolcats.com/images/u/08/32/lolcatsdotcombkf8azsotkiwu8z2.jpg';
@@ -33,22 +33,15 @@ describe(__filename, function () {
         imageData = getProp('body', response) || '';
     });
 
-    let itemURL;
+    it('inserts an image into the channel', async () => {
+        const headers = { 'Content-Type': 'image/jpeg' };
+        const body = Buffer.from(imageData, 'binary');
 
-    it('inserts an image into the channel', function (done) {
-        var url = channelResource;
-        var headers = {'Content-Type': 'image/jpeg'};
-        var body = Buffer.from(imageData, 'binary');
-
-        utils.httpPost(url, headers, body)
-            .then(function (response) {
-                expect(getProp('statusCode', response)).toEqual(201);
-                const links = fromObjectPath(['body', '_links'], response) || {};
-                const { channel = {}, self = {} } = links;
-                expect(channel.href).toEqual(channelResource);
-                itemURL = self.href;
-            })
-            .finally(done);
+        const response = await hubClientPost(channelResource, headers, body);
+        expect(getProp('statusCode', response)).toEqual(201);
+        const channelLink = fromObjectPath(['body', '_links', 'channel', 'href'], response);
+        expect(channelLink).toEqual(channelResource);
+        itemURL = fromObjectPath(['body', '_links', 'self', 'href'], response);
     });
 
     it('verifies the image data was inserted correctly', async () => {
@@ -60,5 +53,9 @@ describe(__filename, function () {
         const responseBody = getProp('body', response) || '';
         expect(getProp('statusCode', response)).toEqual(200);
         expect(responseBody.length).toEqual(imageData.length);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

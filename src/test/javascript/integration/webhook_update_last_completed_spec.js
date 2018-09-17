@@ -1,25 +1,46 @@
-require('../integration_config');
-const { getProp, fromObjectPath, hubClientGet } = require('../lib/helpers');
 const moment = require('moment');
+const {
+    closeServer,
+    deleteWebhook,
+    getProp,
+    fromObjectPath,
+    hubClientDelete,
+    hubClientGet,
+    hubClientPost,
+    hubClientPut,
+    itSleeps,
+    putWebhook,
+    randomChannelName,
+    randomString,
+    startServer,
+} = require('../lib/helpers');
+const {
+    getCallBackDomain,
+    getCallBackPort,
+    getChannelUrl,
+    getHubUrlBase,
+} = require('../lib/config');
 
-const channelName = utils.randomChannelName();
+const channelUrl = getChannelUrl();
+const callbackDomain = getCallBackDomain();
+const port = getCallBackPort();
+const channelName = randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
-const webhookName = utils.randomChannelName();
-const webhookURL = `http://${hubDomain}/webhook/${webhookName}`;
-
-const contentTypeJSON = {'Content-Type': 'application/json'};
-const contentTypePlain = {'Content-Type': 'text/plain'};
+const webhookName = randomChannelName();
+const webhookURL = `${getHubUrlBase()}/webhook/${webhookName}`;
+const callbackPath = `/${randomString(5)}`;
+const contentTypeJSON = { 'Content-Type': 'application/json' };
+const contentTypePlain = { 'Content-Type': 'text/plain' };
 
 let callbackServer;
-const callbackPort = utils.getPort();
 const callbackMessages = [];
 const postedItems = [];
 
 let maxCursor = null;
 let minCursor = null;
-
-var webhookConfig = {
-    callbackUrl: `${callbackDomain}:${callbackPort}`,
+let firstItemURL = null;
+const webhookConfig = {
+    callbackUrl: `${callbackDomain}:${port}${callbackPath}`,
     channelUrl: channelResource,
     parallelCalls: 1,
     batch: 'SECOND',
@@ -27,35 +48,34 @@ var webhookConfig = {
 };
 
 describe(__filename, () => {
-    it('runs a callback server', (done) => {
-        callbackServer = utils.startHttpServer(callbackPort, (message) => {
+    it('runs a callback server', async () => {
+        const callback = (message) => {
             callbackMessages.push(message);
-        }, done);
+        };
+        callbackServer = await startServer(port, callback, callbackPath);
     });
 
-    it('creates a channel', (done) => {
-        var body = {'name': channelName};
-        utils.httpPost(channelUrl, contentTypeJSON, body)
-            .then(response => {
-                expect(getProp('statusCode', response)).toEqual(201);
-            })
-            .finally(done);
+    it('creates a channel', async () => {
+        const body = { 'name': channelName };
+        const response = await hubClientPost(channelUrl, contentTypeJSON, body);
+        expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    utils.putWebhook(webhookName, webhookConfig, 201, webhookURL)
-
-    let firstItemURL;
-    it('inserts the first item', (done) => {
-        utils.httpPost(channelResource, contentTypePlain, "a test " + Date.now())
-            .then(response => {
-                expect(getProp('statusCode', response)).toEqual(201);
-                firstItemURL = fromObjectPath(['body', '_links', 'self', 'href'], response);
-                postedItems.push(firstItemURL);
-            })
-            .finally(done);
+    it('creates a webhook', async () => {
+        const response = await putWebhook(webhookName, webhookConfig, 201, webhookURL);
+        expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    utils.itSleeps(5000);
+    it('inserts the first item', async () => {
+        const response = await hubClientPost(channelResource, contentTypePlain, "a test " + Date.now());
+        expect(getProp('statusCode', response)).toEqual(201);
+        firstItemURL = fromObjectPath(['body', '_links', 'self', 'href'], response);
+        postedItems.push(firstItemURL);
+    });
+
+    it('waits 5000 ms', async () => {
+        await itSleeps(5000);
+    });
 
     // Check the latest on the webhook
     it('sets maxItem', async () => {
@@ -63,19 +83,18 @@ describe(__filename, () => {
         maxCursor = fromObjectPath(['body', 'lastCompleted'], response);
     });
 
-    it('moves the cursor backward', (done) => {
-        var y = moment().subtract(1, 'day');
-        var formatted = y.format("YYYY/MM/DD/HH/mm/ss");
-        var url = channelResource + "/" + formatted;
+    it('moves the cursor backward', async () => {
+        const y = moment().subtract(1, 'day');
+        const formatted = y.format("YYYY/MM/DD/HH/mm/ss");
+        const url = channelResource + "/" + formatted;
         console.log("backward cursor ", url);
-        utils.httpPut(webhookURL + "/updateCursor", contentTypePlain, url)
-            .then(response => {
-                expect(getProp('statusCode', response)).toBeLessThan(300);
-            })
-            .finally(done);
+        const response = await hubClientPut(webhookURL + "/updateCursor", contentTypePlain, url);
+        expect(getProp('statusCode', response)).toBeLessThan(300);
     });
 
-    utils.itSleeps(5000);
+    it('waits 5000 ms', async () => {
+        await itSleeps(5000);
+    });
 
     it('checks to see if latest is before "maxCursor"', async () => {
         const response = await hubClientGet(webhookURL, contentTypeJSON, false);
@@ -84,20 +103,19 @@ describe(__filename, () => {
         minCursor = lastCompleted;
     });
 
-    it('moves the cursor forward', (done) => {
-        var y = moment().subtract(1, 'hour');
-        var formatted = y.format("YYYY/MM/DD/HH/mm/ss");
-        var url = channelResource + "/" + formatted;
+    it('moves the cursor forward', async () => {
+        const y = moment().subtract(1, 'hour');
+        const formatted = y.format("YYYY/MM/DD/HH/mm/ss");
+        const url = channelResource + "/" + formatted;
         console.log("forward cursor ", url);
-        // var item = { 'item': url };
-        utils.httpPut(webhookURL + "/updateCursor", contentTypePlain, url)
-            .then(response => {
-                expect(getProp('statusCode', response)).toBeLessThan(300);
-            })
-            .finally(done);
+        // const item = { 'item': url };
+        const response = await hubClientPut(webhookURL + "/updateCursor", contentTypePlain, url);
+        expect(getProp('statusCode', response)).toBeLessThan(300);
     });
 
-    utils.itSleeps(5000);
+    it('waits 5000 ms', async () => {
+        await itSleeps(5000);
+    });
 
     it('checks to see if latest is after "minCursor"', async () => {
         const response = await hubClientGet(webhookURL, contentTypeJSON, false);
@@ -106,15 +124,17 @@ describe(__filename, () => {
         minCursor = lastCompleted;
     });
 
-    it('closes the callback server', (done) => {
+    it('closes the callback server', async () => {
         expect(callbackServer).toBeDefined();
+        await closeServer(callbackServer);
+    });
 
-        callbackServer.close(() => {
-            console.log("closed server....");
-            done();
-        });
-        setImmediate(function () {
-            callbackServer.emit('close');
-        });
+    it('deletes the webhook', async () => {
+        const response = await deleteWebhook(webhookName);
+        expect(getProp('statusCode', response)).toBe(202);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

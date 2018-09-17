@@ -1,30 +1,35 @@
-require('../integration_config');
 const {
     fromObjectPath,
     getProp,
+    hubClientDelete,
     hubClientGet,
+    hubClientPost,
+    randomChannelName,
 } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
-var channelName = utils.randomChannelName();
+const channelUrl = getChannelUrl();
+var channelName = randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
 const headers = { 'Content-Type': 'application/json' };
+
 describe(__filename, function () {
     it('verifies the channel doesn\'t exist yet', async () => {
         const response = await hubClientGet(channelResource);
         expect(getProp('statusCode', response)).toEqual(404);
     });
 
-    it('creates a channel with a description', function (done) {
-        var url = channelUrl;
-        var body = {'name': channelName, 'description': 'describe me'};
-
-        utils.httpPost(url, headers, body)
-            .then(function (response) {
-                const description = fromObjectPath(['body', 'description'], response);
-                expect(getProp('statusCode', response)).toEqual(201);
-                expect(description).toEqual('describe me');
-            })
-            .finally(done);
+    it('creates a channel with a description', async () => {
+        const body = {
+            'name': channelName,
+            'description': 'describe me',
+        };
+        const response = await hubClientPost(channelUrl, headers, body);
+        const description = fromObjectPath(['body', 'description'], response);
+        expect(getProp('statusCode', response)).toEqual(201);
+        expect(description).toEqual('describe me');
     });
 
     it('verifies the channel does exist', async () => {
@@ -36,5 +41,9 @@ describe(__filename, function () {
         expect(contentType).toEqual('application/json');
         expect(name).toEqual(channelName);
         expect(description).toEqual('describe me');
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

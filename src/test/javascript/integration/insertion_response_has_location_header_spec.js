@@ -1,39 +1,36 @@
-require('../integration_config');
 const {
     fromObjectPath,
     getProp,
+    hubClientDelete,
+    hubClientPost,
+    randomChannelName,
 } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
-var channelName = utils.randomChannelName();
+const channelUrl = getChannelUrl();
+const channelName = randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
-var messageText = "MY SUPER TEST CASE: this & <that>. " + Math.random().toString();
+const messageText = `MY SUPER TEST CASE: this & <that>. ${Math.random()}`;
 
 describe(__filename, function () {
-
-    it('creates a channel', function (done) {
-        var url = channelUrl;
-        var headers = {'Content-Type': 'application/json'};
-        var body = {'name': channelName};
-
-        utils.httpPost(url, headers, body)
-            .then(function (response) {
-                expect(getProp('statusCode', response)).toEqual(201);
-            })
-            .finally(done);
+    it('creates a channel', async () => {
+        const headers = { 'Content-Type': 'application/json' };
+        const body = { 'name': channelName };
+        const response = await hubClientPost(channelUrl, headers, body);
+        expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    it('inserts an item', function (done) {
-        var url = channelResource;
-        var headers = {'Content-Type': 'text/plain'};
-        var body = messageText;
-
-        utils.httpPost(url, headers, body)
-            .then(function (response) {
-                expect(getProp('statusCode', response)).toEqual(201);
-                const location = fromObjectPath(['headers', 'location'], response);
-                expect(location).toBeDefined();
-            })
-            .finally(done);
+    it('inserts an item', async () => {
+        const headers = { 'Content-Type': 'text/plain' };
+        const response = await hubClientPost(channelResource, headers, messageText);
+        expect(getProp('statusCode', response)).toEqual(201);
+        const location = fromObjectPath(['headers', 'location'], response);
+        expect(location).toBeDefined();
     });
 
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
+    });
 });

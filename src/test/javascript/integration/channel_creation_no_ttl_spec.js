@@ -1,28 +1,33 @@
-require('../integration_config');
 const {
     fromObjectPath,
     getProp,
+    hubClientDelete,
     hubClientGet,
+    hubClientPost,
+    randomChannelName,
 } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
-var channelName = utils.randomChannelName();
+const channelUrl = getChannelUrl();
+const channelName = randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
-const headers = {'Content-Type': 'application/json'};
+const headers = { 'Content-Type': 'application/json' };
+
 describe(__filename, function () {
     it('verifies the channel doesn\'t exist yet', async () => {
         const response = await hubClientGet(channelResource);
         expect(getProp('statusCode', response)).toEqual(404);
     });
 
-    it('creates a channel with no TTL', function (done) {
-        var url = channelUrl;
-        var body = {'name': channelName, 'ttlMillis': null};
-
-        utils.httpPost(url, headers, body)
-            .then(function (response) {
-                expect(getProp('statusCode', response)).toEqual(201);
-            })
-            .finally(done);
+    it('creates a channel with no TTL', async () => {
+        const body = {
+            'name': channelName,
+            'ttlMillis': null,
+        };
+        const response = await hubClientPost(channelUrl, headers, body);
+        expect(getProp('statusCode', response)).toEqual(201);
     });
 
     it('verifies the channel does exist', async () => {
@@ -32,5 +37,9 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(200);
         expect(contentType).toEqual('application/json');
         expect(name).toEqual(channelName);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

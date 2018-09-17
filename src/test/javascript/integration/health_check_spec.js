@@ -1,9 +1,13 @@
-require('../integration_config');
 const {
     fromObjectPath,
     getProp,
     hubClientGet,
 } = require('../lib/helpers');
+const {
+    getHubUrlBase,
+} = require('../lib/config');
+
+const hubUrlBase = getHubUrlBase();
 
 describe(__filename, function () {
     it('verifies the health check returns healthy', async () => {

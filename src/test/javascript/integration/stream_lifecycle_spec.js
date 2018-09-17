@@ -1,6 +1,18 @@
-require('../integration_config');
-const { createChannel, getProp, hubClientGet } = require('../lib/helpers');
-const channelName = utils.randomChannelName();
+const {
+    createChannel,
+    getProp,
+    hubClientDelete,
+    hubClientGet,
+    hubClientPostTestItem,
+    waitForCondition,
+    randomChannelName,
+} = require('../lib/helpers');
+const channelName = randomChannelName();
+const {
+    getChannelUrl,
+} = require('../lib/config');
+
+const channelUrl = getChannelUrl();
 const channelResource = `${channelUrl}/${channelName}`;
 
 /**
@@ -32,37 +44,24 @@ xdescribe(__filename, function () {
 
         const response = await hubClientGet(url, headers);
         expect(getProp('statusCode', response)).toBe(200);
-        // console.log('body', body);
     });
 
-    it('inserts multiple items', function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        utils.postItemQ(channelResource)
-            .then(function (value) {
-                postedItems.push(value);
-                return utils.postItemQ(channelResource);
-            })
-            .then(function (value) {
-                postedItems.push(value);
-                return utils.postItemQ(channelResource);
-            })
-            .then(function (value) {
-                postedItems.push(value);
-                return utils.postItemQ(channelResource);
-            })
-            .then(function (value) {
-                postedItems.push(value);
-                done();
-            });
+    it('inserts multiple items', async () => {
+        if (!createdChannel) return fail('channel not created in before block');
+        const value = () => hubClientPostTestItem(channelResource);
+        const values = [1, 2, 3, 4].map(v => value());
+        const responses = await Promise.all(values);
+        postedItems.push(responses);
+        const condition = () => (callbackItems.length === postedItems.length);
+        await waitForCondition(condition);
     });
 
-    it('waits for the data', function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
-        utils.waitForData(callbackItems, postedItems, done);
-    });
-
-    it('verifies we got the correct number of items', function (done) {
-        if (!createdChannel) return done.fail('channel not created in before block');
+    it('verifies we got the correct number of items', function () {
+        if (!createdChannel) return fail('channel not created in before block');
         expect(callbackItems.length).toEqual(4);
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });

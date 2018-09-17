@@ -1,12 +1,18 @@
-require('../integration_config');
 const {
     fromObjectPath,
     getProp,
+    hubClientDelete,
     hubClientGet,
+    hubClientPost,
+    randomChannelName,
 } = require('../lib/helpers');
+const {
+    getChannelUrl,
+} = require('../lib/config');
 
-const channelName = utils.randomChannelName();
-const channelResource = channelUrl + "/" + channelName;
+const channelUrl = getChannelUrl();
+const channelName = randomChannelName();
+const channelResource = `${channelUrl}/${channelName}`;
 const headers = { 'Content-Type': 'application/json' };
 describe(__filename, function () {
     it('verifies the channel doesn\'t exist yet', async () => {
@@ -14,19 +20,14 @@ describe(__filename, function () {
         expect(getProp('statusCode', response)).toEqual(404);
     });
 
-    it('creates a channel with valid storage', function (done) {
-        var url = channelUrl;
-        var body = {'name': channelName, 'storage': 'BOTH'};
-
-        utils.httpPost(url, headers, body)
-            .then(function (response) {
-                expect(getProp('statusCode', response)).toEqual(201);
-                const contentType = fromObjectPath(['headers', 'content-type'], response);
-                const storage = fromObjectPath(['body', 'storage'], response);
-                expect(contentType).toEqual('application/json');
-                expect(storage).toEqual('BOTH');
-            })
-            .finally(done);
+    it('creates a channel with valid storage', async () => {
+        const body = { 'name': channelName, 'storage': 'BOTH' };
+        const response = await hubClientPost(channelUrl, headers, body);
+        expect(getProp('statusCode', response)).toEqual(201);
+        const contentType = fromObjectPath(['headers', 'content-type'], response);
+        const storage = fromObjectPath(['body', 'storage'], response);
+        expect(contentType).toEqual('application/json');
+        expect(storage).toEqual('BOTH');
     });
 
     it('verifies the channel does exist', async () => {
@@ -39,5 +40,9 @@ describe(__filename, function () {
         expect(contentType).toEqual('application/json');
         expect(name).toEqual(channelName);
         expect(storage).toEqual('BOTH');
+    });
+
+    afterAll(async () => {
+        await hubClientDelete(channelResource);
     });
 });
