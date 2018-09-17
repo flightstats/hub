@@ -39,6 +39,10 @@ public class Commander {
                 }));
     }
 
+    public static String runInBash(String command, int waitTimeSeconds) {
+        return run(new String[]{"/bin/bash", "-c", command}, waitTimeSeconds);
+    }
+
     private static <T> T process(String[] command, int waitTimeSeconds, Function<InputStream, T> processor) {
         T output = null;
         try {

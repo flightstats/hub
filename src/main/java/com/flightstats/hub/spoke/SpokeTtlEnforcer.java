@@ -7,12 +7,11 @@ import com.flightstats.hub.dao.TtlEnforcer;
 import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ChannelContentKey;
-import com.flightstats.hub.util.Commander;
+import com.flightstats.hub.util.FileUtils;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,21 +54,14 @@ public class SpokeTtlEnforcer {
                     itemsEvicted += removeFromChannelByTime(channelPath, TimeUtil.months(ttlDateTime.minusMonths(i + 1)));
                 }
             } else {
-                itemsEvicted += removeFromChannelByAge(channelPath);
+                itemsEvicted += FileUtils.deleteFilesByAge(channelPath, ttlMinutes, 3);
             }
         };
     }
 
-    private long removeFromChannelByAge(String channelPath) {
-        String[] command = new String[]{"/bin/bash", "-c", "find", channelPath, "-mmin", "+" + ttlMinutes, "-exec rm -rfv {} + | grep \"removed '\" | wc -l"};
-        String result = Commander.run(command, 5);
-        return Long.valueOf(StringUtils.chomp(result));
-    }
-
     private long removeFromChannelByTime(String channelPath, String timePath) {
-        String[] command = new String[]{"/bin/bash", "-c", "rm -rfv " + channelPath + "/" + timePath + " | grep \"removed '\" | wc -l"};
-        String result = Commander.run(command, 5);
-        return Long.valueOf(StringUtils.chomp(result));
+        String path = channelPath + "/" + timePath;
+        return FileUtils.deleteFiles(path, 3);
     }
 
     private void updateOldestItemMetric() {
