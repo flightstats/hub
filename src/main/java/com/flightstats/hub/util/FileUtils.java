@@ -21,7 +21,7 @@ public class FileUtils {
      * @return number of files deleted
      */
     public static long deleteFilesByAge(String path, int ageMinutes, int waitTimeSeconds) {
-        String command = "find " + path + " -mmin " + " +" + ageMinutes + "-exec rm -rfv {} + | grep \"removed '\" | wc -l";
+        String command = "find " + path + " -mmin " + "+" + ageMinutes + " -exec rm -rfv {} + | grep \"removed '\" | wc -l";
         return executeAndParse(command, waitTimeSeconds);
     }
 
