@@ -67,8 +67,8 @@ public class SpokeContentDao {
         String storePath = HubProperties.getSpokePath(store);
         logger.trace("getting oldest item from " + storePath);
         // expected result format: YYYY-MM-DD+HH:MM:SS.SSSSSSSSSS /mnt/spoke/store/channel/yyyy/mm/dd/hh/mm/ssSSShash
-        String[] command = new String[]{"/bin/bash", "-c", "find " + storePath + " -type f -printf '%T+ %p\\n' | sort | head -n 1"};
-        String result = Commander.run(command, 3);
+        String command = "find " + storePath + " -type f -printf '%T+ %p\\n' | sort | head -n 1";
+        String result = Commander.runInBash(command, 3);
         String spokePath = StringUtils.substring(result, 31);
         return ChannelContentKey.fromSpokePath(spokePath);
     }
@@ -76,8 +76,8 @@ public class SpokeContentDao {
     static long getNumberOfItems(SpokeStore spokeStore) {
         String storePath = HubProperties.getSpokePath(spokeStore);
         logger.trace("getting the total number of items in " + storePath);
-        String[] command = new String[]{"/bin/bash", "-c", "find " + storePath + " -type f | wc -l"};
-        String result = Commander.run(command, 1);
+        String command = "find " + storePath + " -type f | wc -l";
+        String result = Commander.runInBash(command, 1);
         return Long.valueOf(StringUtils.chomp(result));
     }
 }
