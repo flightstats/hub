@@ -22,7 +22,7 @@ const startServer = async (port, callback, path = '/', secure, file) => {
         // console.log('request.body', request.body);
         const arr = fromObjectPath(['body', 'uris'], request) || [];
         const str = arr[arr.length - 1] || '';
-        if (callback) callback(str, response);
+        if (callback) callback(str, response, request);
     });
 
     const server = secure ? getHttps(app) : getHttp(app);
