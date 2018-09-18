@@ -1,8 +1,12 @@
 package com.flightstats.hub.util;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FileUtils {
+
+    private final static Logger logger = LoggerFactory.getLogger(FileUtils.class);
 
     /**
      * @param path            the root directory to begin recursive deletion
@@ -28,6 +32,10 @@ public class FileUtils {
     private static long executeAndParse(String command, int waitTimeSeconds) {
         String result = Commander.runInBash(command, waitTimeSeconds);
         String value = StringUtils.chomp(result);
-        return Long.valueOf(value);
+        try {
+            return Long.valueOf(value);
+        } catch (NumberFormatException e) {
+            throw new RuntimeException("delete command returned a non-integer: " + command);
+        }
     }
 }
