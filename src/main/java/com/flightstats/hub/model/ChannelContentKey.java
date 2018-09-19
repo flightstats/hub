@@ -1,5 +1,6 @@
 package com.flightstats.hub.model;
 
+import com.google.common.base.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -35,9 +36,9 @@ public class ChannelContentKey implements Comparable<ChannelContentKey> {
     }
 
     /**
-     * @param url Expects the format of "http://hub/channel/channelName/yyyy/mm/dd/hh/mm/ss/sss/hash"
+     * @param url Expects the format of ".+/channel/channelName/yyyy/mm/dd/hh/mm/ss/sss/hash"
      */
-    public static ChannelContentKey fromUrl(String url) {
+    public static ChannelContentKey fromResourcePath(String url) {
         String channelPath = StringUtils.substringAfter(url, "channel/");
         return fromChannelPath(channelPath);
     }
@@ -49,19 +50,19 @@ public class ChannelContentKey implements Comparable<ChannelContentKey> {
         try {
             String[] split = path.split("/");
             String channel = split[split.length - 7];
-            String year = split[split.length - 6];
-            String month = split[split.length - 5];
-            String day = split[split.length - 4];
-            String hour = split[split.length - 3];
-            String minute = split[split.length - 2];
-            String second = StringUtils.substring(split[split.length - 1], 0, 2);
-            String millisecond = StringUtils.substring(split[split.length - 1], 2, 5);
+            int year = Integer.valueOf(split[split.length - 6]);
+            int month = Integer.valueOf(split[split.length - 5]);
+            int day = Integer.valueOf(split[split.length - 4]);
+            int hour = Integer.valueOf(split[split.length - 3]);
+            int minute = Integer.valueOf(split[split.length - 2]);
+            int second = Integer.valueOf(StringUtils.substring(split[split.length - 1], 0, 2));
+            int millisecond = Integer.valueOf(StringUtils.substring(split[split.length - 1], 2, 5));
             String hash = StringUtils.substring(split[split.length - 1], 5);
-            String channelPath = Stream.of(channel, year, month, day, hour, minute, second, millisecond, hash).collect(Collectors.joining("/"));
+            String channelPath = Stream.of(channel, year, month, day, hour, minute, second, millisecond, hash).map(String::valueOf).collect(Collectors.joining("/"));
             return fromChannelPath(channelPath);
-        } catch (ArrayIndexOutOfBoundsException e) {
-            logger.error("cannot determine content key from spoke path: " + path, e);
-            return null;
+        } catch (IllegalArgumentException | ArrayIndexOutOfBoundsException e) {
+            logger.error("cannot build key from spoke path: " + path);
+            throw new IllegalArgumentException(e);
         }
     }
 
@@ -70,7 +71,13 @@ public class ChannelContentKey implements Comparable<ChannelContentKey> {
      */
     public static ChannelContentKey fromChannelPath(String path) {
         String[] split = StringUtils.split(path, "/", 2);
-        return new ChannelContentKey(split[0], ContentKey.fromUrl(split[1]).get());
+        String channelName = split[0];
+        Optional<ContentKey> key = ContentKey.fromUrl(split[1]);
+        if (key.isPresent()) {
+            return new ChannelContentKey(channelName, key.get());
+        } else {
+            throw new IllegalArgumentException("cannot build key from path: " + path);
+        }
     }
 
     @Override

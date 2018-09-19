@@ -10,6 +10,8 @@ import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.Commander;
+import com.google.common.base.Optional;
+import com.google.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +25,20 @@ import java.util.function.Function;
 
 public class SpokeContentDao {
     private static final Logger logger = LoggerFactory.getLogger(SpokeContentDao.class);
+
+    static final String GET_OLDEST_ITEM_COMMAND = escape("find {0} -type f -printf '%T+ %p\\n' | sort | head -n 1");
+    static final String GET_ITEM_COUNT_COMMAND = escape("find {0} -type f | wc -l");
+
+    private static String escape(String input) {
+        return input.replace("%", "%%");
+    }
+
+    private final Commander commander;
+
+    @Inject
+    public SpokeContentDao(Commander commander) {
+        this.commander = commander;
+    }
 
     public static SortedSet<ContentKey> insert(BulkContent bulkContent, Function<ByteArrayOutputStream, Boolean> inserter) throws Exception {
         Traces traces = ActiveTraces.getLocal();
@@ -63,21 +79,27 @@ public class SpokeContentDao {
         }
     }
 
-    static ChannelContentKey getOldestItem(SpokeStore store) {
+    Optional<ChannelContentKey> getOldestItem(SpokeStore store) {
         String storePath = HubProperties.getSpokePath(store);
         logger.trace("getting oldest item from " + storePath);
         // expected result format: YYYY-MM-DD+HH:MM:SS.SSSSSSSSSS /mnt/spoke/store/channel/yyyy/mm/dd/hh/mm/ssSSShash
-        String command = "find " + storePath + " -type f -printf '%T+ %p\\n' | sort | head -n 1";
-        String result = Commander.runInBash(command, 3);
+        String command = String.format(GET_OLDEST_ITEM_COMMAND, storePath);
+        String result = StringUtils.chomp(commander.runInBash(command, 3));
+        if (StringUtils.isEmpty(result)) return Optional.absent();
         String spokePath = StringUtils.substring(result, 31);
-        return ChannelContentKey.fromSpokePath(spokePath);
+        try {
+            return Optional.of(ChannelContentKey.fromSpokePath(spokePath));
+        } catch (IllegalArgumentException e) {
+            return Optional.absent();
+        }
     }
 
-    static long getNumberOfItems(SpokeStore spokeStore) {
+    long getNumberOfItems(SpokeStore spokeStore) {
         String storePath = HubProperties.getSpokePath(spokeStore);
         logger.trace("getting the total number of items in " + storePath);
-        String command = "find " + storePath + " -type f | wc -l";
-        String result = Commander.runInBash(command, 1);
-        return Long.valueOf(StringUtils.chomp(result));
+        String command = String.format(GET_ITEM_COUNT_COMMAND, storePath);
+        String result = StringUtils.chomp(commander.runInBash(command, 1));
+        return StringUtils.isEmpty(result) ? 0L : Long.valueOf(result);
     }
+
 }

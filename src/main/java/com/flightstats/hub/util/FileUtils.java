@@ -1,12 +1,8 @@
 package com.flightstats.hub.util;
 
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class FileUtils {
-
-    private final static Logger logger = LoggerFactory.getLogger(FileUtils.class);
 
     /**
      * @param path            the root directory to begin recursive deletion
@@ -30,7 +26,7 @@ public class FileUtils {
     }
 
     private static long executeAndParse(String command, int waitTimeSeconds) {
-        String result = Commander.runInBash(command, waitTimeSeconds);
+        String result = Commander.run(new String[]{"/bin/bash", "-c", command}, waitTimeSeconds);
         String value = StringUtils.chomp(result);
         try {
             return Long.valueOf(value);

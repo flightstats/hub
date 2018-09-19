@@ -9,6 +9,7 @@ import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.util.FileUtils;
 import com.flightstats.hub.util.TimeUtil;
+import com.google.common.base.Optional;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -32,6 +33,9 @@ public class SpokeTtlEnforcer {
 
     @Inject
     private MetricsService metricsService;
+
+    @Inject
+    private SpokeContentDao spokeContentDao;
 
     public SpokeTtlEnforcer(SpokeStore spokeStore) {
         this.spokeStore = spokeStore;
@@ -65,11 +69,15 @@ public class SpokeTtlEnforcer {
     }
 
     private void updateOldestItemMetric() {
-        ChannelContentKey oldestItem = SpokeContentDao.getOldestItem(spokeStore);
-        Long oldestItemAgeMS = oldestItem.getAgeMS();
-        if (oldestItemAgeMS != null) {
-            metricsService.gauge("spoke." + spokeStore.name().toLowerCase() + ".age.oldest", oldestItemAgeMS);
+        Long oldestItemAgeMS = null;
+        Optional<ChannelContentKey> potentialItem = spokeContentDao.getOldestItem(spokeStore);
+        if (potentialItem.isPresent()) {
+            oldestItemAgeMS = potentialItem.get().getAgeMS();
         }
+        if (oldestItemAgeMS == null) {
+            oldestItemAgeMS = 0L;
+        }
+        metricsService.gauge("spoke." + spokeStore.name().toLowerCase() + ".age.oldest", oldestItemAgeMS);
     }
 
     private void updateItemsEvictedMetric() {

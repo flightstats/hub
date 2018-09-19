@@ -39,7 +39,7 @@ public class Commander {
                 }));
     }
 
-    public static String runInBash(String command, int waitTimeSeconds) {
+    public String runInBash(String command, int waitTimeSeconds) {
         return run(new String[]{"/bin/bash", "-c", command}, waitTimeSeconds);
     }
 
