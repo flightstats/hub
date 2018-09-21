@@ -94,7 +94,9 @@ public class SpokeTtlEnforcer {
                 TtlEnforcer.enforce(storagePath, channelService, handleCleanup());
                 updateOldestItemMetric();
                 updateItemsEvictedMetric();
-                logger.info("completed ttl cleanup {}", (System.currentTimeMillis() - start));
+                long runtime = (System.currentTimeMillis() - start);
+                logger.info("completed ttl cleanup {}", runtime);
+                metricsService.gauge("spoke." + spokeStore.name().toLowerCase() + ".ttl.enforcer.runtime", runtime);
             } catch (Exception e) {
                 logger.info("issue cleaning up spoke", e);
             }
