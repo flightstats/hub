@@ -77,11 +77,11 @@ public class SpokeTtlEnforcer {
         if (oldestItemAgeMS == null) {
             oldestItemAgeMS = 0L;
         }
-        metricsService.gauge("spoke." + spokeStore.name().toLowerCase() + ".age.oldest", oldestItemAgeMS);
+        metricsService.gauge("spoke." + spokeStore + ".age.oldest", oldestItemAgeMS);
     }
 
     private void updateItemsEvictedMetric() {
-        metricsService.gauge("spoke." + spokeStore.name().toLowerCase() + ".evicted", itemsEvicted);
+        metricsService.gauge("spoke." + spokeStore + ".evicted", itemsEvicted);
         itemsEvicted = 0;
     }
 
@@ -96,7 +96,7 @@ public class SpokeTtlEnforcer {
                 updateItemsEvictedMetric();
                 long runtime = (System.currentTimeMillis() - start);
                 logger.info("completed ttl cleanup {}", runtime);
-                metricsService.gauge("spoke." + spokeStore.name().toLowerCase() + ".ttl.enforcer.runtime", runtime);
+                metricsService.gauge("spoke." + spokeStore + ".ttl.enforcer.runtime", runtime);
             } catch (Exception e) {
                 logger.info("issue cleaning up spoke", e);
             }
