@@ -50,13 +50,13 @@ public class ChannelContentKey implements Comparable<ChannelContentKey> {
         try {
             String[] split = path.split("/");
             String channel = split[split.length - 7];
-            int year = Integer.valueOf(split[split.length - 6]);
-            int month = Integer.valueOf(split[split.length - 5]);
-            int day = Integer.valueOf(split[split.length - 4]);
-            int hour = Integer.valueOf(split[split.length - 3]);
-            int minute = Integer.valueOf(split[split.length - 2]);
-            int second = Integer.valueOf(StringUtils.substring(split[split.length - 1], 0, 2));
-            int millisecond = Integer.valueOf(StringUtils.substring(split[split.length - 1], 2, 5));
+            String year = split[split.length - 6];
+            String month = split[split.length - 5];
+            String day = split[split.length - 4];
+            String hour = split[split.length - 3];
+            String minute = split[split.length - 2];
+            String second = StringUtils.substring(split[split.length - 1], 0, 2);
+            String millisecond = StringUtils.substring(split[split.length - 1], 2, 5);
             String hash = StringUtils.substring(split[split.length - 1], 5);
             String channelPath = Stream.of(channel, year, month, day, hour, minute, second, millisecond, hash).map(String::valueOf).collect(Collectors.joining("/"));
             return fromChannelPath(channelPath);
