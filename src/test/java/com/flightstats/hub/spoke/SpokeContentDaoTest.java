@@ -16,6 +16,7 @@ public class SpokeContentDaoTest {
 
     private Commander commander;
     private SpokeStore spokeStore;
+    private String spokeStorePath;
     private String getOldestItemCommand;
     private String getItemCountCommand;
 
@@ -23,8 +24,9 @@ public class SpokeContentDaoTest {
     public void initialize() {
         commander = mock(Commander.class);
         spokeStore = SpokeStore.WRITE;
-        getOldestItemCommand = String.format(SpokeContentDao.GET_OLDEST_ITEM_COMMAND, HubProperties.getSpokePath(spokeStore));
-        getItemCountCommand = String.format(SpokeContentDao.GET_ITEM_COUNT_COMMAND, spokeStore);
+        spokeStorePath = HubProperties.getSpokePath(spokeStore);
+        getOldestItemCommand = String.format(SpokeContentDao.GET_OLDEST_ITEM_COMMAND, spokeStorePath);
+        getItemCountCommand = String.format(SpokeContentDao.GET_ITEM_COUNT_COMMAND, spokeStorePath);
     }
 
     @Test
