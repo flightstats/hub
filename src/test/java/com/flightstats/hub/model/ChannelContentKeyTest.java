@@ -5,7 +5,8 @@ import org.junit.Test;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class ChannelContentKeyTest {
 
@@ -35,7 +36,7 @@ public class ChannelContentKeyTest {
     }
 
     @Test
-    public void fromUrl() {
+    public void fromResourcePath() {
         String url = "http://hub/channel/foo/1999/12/31/23/59/59/999/l33t";
         ChannelContentKey key = ChannelContentKey.fromResourcePath(url);
         assertEquals(key.getChannel(), "foo");
