@@ -95,7 +95,7 @@ public class SpokeContentDao {
         logger.trace("getting the total number of items in " + storePath);
         String command = String.format(GET_ITEM_COUNT_COMMAND, storePath);
         String result = StringUtils.chomp(commander.runInBash(command, 1));
-        return StringUtils.isEmpty(result) ? 0L : Long.valueOf(result);
+        return StringUtils.isEmpty(result) ? 0L : Long.parseLong(result);
     }
 
 }
