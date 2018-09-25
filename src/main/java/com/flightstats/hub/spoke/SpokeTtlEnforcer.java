@@ -17,8 +17,11 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Singleton
 public class SpokeTtlEnforcer {
@@ -66,18 +69,25 @@ public class SpokeTtlEnforcer {
 
     private long removeFromChannelByTime(String channelPath, String timePath) {
         String path = channelPath + "/" + timePath;
-        return FileUtils.deleteFiles(path, 3);
+        int waitTimeSeconds = 3;
+        return FileUtils.deleteFiles(path, waitTimeSeconds);
     }
 
     private void updateOldestItemMetric() {
         Optional<ChannelContentKey> potentialItem = spokeContentDao.getOldestItem(spokeStore);
         long oldestItemAgeMS = Optional.fromNullable(potentialItem.get().getAgeMS()).or(0L);
-        metricsService.gauge("spoke." + spokeStore + ".age.oldest", oldestItemAgeMS);
+        metricsService.gauge(buildMetricName("age", "oldest"), oldestItemAgeMS);
     }
 
     private void updateItemsEvictedMetric() {
-        metricsService.gauge("spoke." + spokeStore + ".evicted", itemsEvicted);
+        metricsService.gauge(buildMetricName("evicted"), itemsEvicted);
         itemsEvicted = 0;
+    }
+
+    private String buildMetricName(String... elements) {
+        String prefix = String.format("spoke.%s", spokeStore);
+        Stream<String> stream = Stream.concat(Stream.of(prefix), Arrays.stream(elements));
+        return stream.collect(Collectors.joining("."));
     }
 
     private class SpokeTtlEnforcerService extends AbstractScheduledService {
@@ -91,7 +101,7 @@ public class SpokeTtlEnforcer {
                 updateItemsEvictedMetric();
                 long runtime = (System.currentTimeMillis() - start);
                 logger.info("completed ttl cleanup {}", runtime);
-                metricsService.gauge("spoke." + spokeStore + ".ttl.enforcer.runtime", runtime);
+                metricsService.gauge(buildMetricName("ttl", "enforcer", "runtime"), runtime);
             } catch (Exception e) {
                 logger.info("issue cleaning up spoke", e);
             }
