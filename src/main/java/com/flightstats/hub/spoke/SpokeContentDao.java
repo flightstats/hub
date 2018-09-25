@@ -80,11 +80,11 @@ public class SpokeContentDao {
         logger.trace("getting oldest item from " + storePath);
         // expected result format: YYYY-MM-DD+HH:MM:SS.SSSSSSSSSS /mnt/spoke/store/channel/yyyy/mm/dd/hh/mm/ssSSShash
         String command = String.format(GET_OLDEST_ITEM_COMMAND, storePath);
-        String result = StringUtils.chomp(commander.runInBash(command, 3));
+        int waitTimeSeconds = 3;
+        String result = StringUtils.chomp(commander.runInBash(command, waitTimeSeconds));
         if (StringUtils.isEmpty(result)) return Optional.absent();
-        String spokePath = StringUtils.substring(result, 31);
         try {
-            return Optional.of(ChannelContentKey.fromSpokePath(spokePath));
+            return Optional.of(ChannelContentKey.fromSpokePath(result));
         } catch (IllegalArgumentException e) {
             return Optional.absent();
         }
@@ -94,7 +94,8 @@ public class SpokeContentDao {
         String storePath = HubProperties.getSpokePath(spokeStore);
         logger.trace("getting the total number of items in " + storePath);
         String command = String.format(GET_ITEM_COUNT_COMMAND, storePath);
-        String result = StringUtils.chomp(commander.runInBash(command, 1));
+        int waitTimeSeconds = 1;
+        String result = StringUtils.chomp(commander.runInBash(command, waitTimeSeconds));
         return StringUtils.isEmpty(result) ? 0L : Long.parseLong(result);
     }
 

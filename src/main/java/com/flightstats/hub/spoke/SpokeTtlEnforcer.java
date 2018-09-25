@@ -58,7 +58,8 @@ public class SpokeTtlEnforcer {
                     itemsEvicted += removeFromChannelByTime(channelPath, TimeUtil.months(ttlDateTime.minusMonths(i + 1)));
                 }
             } else {
-                itemsEvicted += FileUtils.deleteFilesByAge(channelPath, ttlMinutes, 3);
+                int waitTimeSeconds = 3;
+                itemsEvicted += FileUtils.deleteFilesByAge(channelPath, ttlMinutes, waitTimeSeconds);
             }
         };
     }
@@ -69,14 +70,8 @@ public class SpokeTtlEnforcer {
     }
 
     private void updateOldestItemMetric() {
-        Long oldestItemAgeMS = null;
         Optional<ChannelContentKey> potentialItem = spokeContentDao.getOldestItem(spokeStore);
-        if (potentialItem.isPresent()) {
-            oldestItemAgeMS = potentialItem.get().getAgeMS();
-        }
-        if (oldestItemAgeMS == null) {
-            oldestItemAgeMS = 0L;
-        }
+        long oldestItemAgeMS = Optional.fromNullable(potentialItem.get().getAgeMS()).or(0L);
         metricsService.gauge("spoke." + spokeStore + ".age.oldest", oldestItemAgeMS);
     }
 

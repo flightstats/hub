@@ -37,7 +37,7 @@ public class SpokeContentDaoTest {
         assertTrue(potentialKey.isPresent());
         ChannelContentKey key = potentialKey.get();
         assertEquals("foo", key.getChannel());
-        assertEquals(key.getContentKey(), new ContentKey(1999, 12, 31, 23, 59, 59, 999, "l33t"));
+        assertEquals(new ContentKey(1999, 12, 31, 23, 59, 59, 999, "l33t"), key.getContentKey());
     }
 
     @Test

@@ -10,7 +10,7 @@ public class FileUtils {
      * @return number of files deleted
      */
     public static long deleteFiles(String path, int waitTimeSeconds) {
-        String command = "rm -rfv " + path + " | grep \"removed '\" | wc -l";
+        String command = String.format("rm -rfv %s | grep \"removed '\" | wc -l", path);
         return executeAndParse(command, waitTimeSeconds);
     }
 
@@ -21,7 +21,7 @@ public class FileUtils {
      * @return number of files deleted
      */
     public static long deleteFilesByAge(String path, int ageMinutes, int waitTimeSeconds) {
-        String command = "find " + path + " -mmin " + "+" + ageMinutes + " -exec rm -rfv {} + | grep \"removed '\" | wc -l";
+        String command = String.format("find %s -mmin +%d -exec rm -rfv {} + | grep \"removed '\" | wc -l", path, ageMinutes);
         return executeAndParse(command, waitTimeSeconds);
     }
 
