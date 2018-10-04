@@ -122,21 +122,15 @@ public class ChannelContentKey implements Comparable<ChannelContentKey> {
         return other instanceof ChannelContentKey;
     }
 
-    public Long getAgeMS() {
+    public long getAgeMS() {
         DateTime then = this.getContentKey().getTime();
         DateTime now = DateTime.now(DateTimeZone.UTC);
-        try {
-            if (then.isBefore(now)) {
-                Interval delta = new Interval(then, now);
-                return delta.toDurationMillis();
-            } else {
-                Interval delta = new Interval(now, then);
-                return -delta.toDurationMillis();
-            }
-        } catch (IllegalArgumentException e) {
-            logger.warn("unable to calculate the item's age", e);
-            return null;
+        if (then.isBefore(now)) {
+            Interval delta = new Interval(then, now);
+            return delta.toDurationMillis();
+        } else {
+            Interval delta = new Interval(now, then);
+            return -delta.toDurationMillis();
         }
-
     }
 }

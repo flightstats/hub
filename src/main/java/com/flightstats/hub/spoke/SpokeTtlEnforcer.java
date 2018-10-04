@@ -75,7 +75,7 @@ public class SpokeTtlEnforcer {
 
     private void updateOldestItemMetric() {
         Optional<ChannelContentKey> potentialItem = spokeContentDao.getOldestItem(spokeStore);
-        long oldestItemAgeMS = Optional.fromNullable(potentialItem.get().getAgeMS()).or(0L);
+        long oldestItemAgeMS = potentialItem.isPresent() ? potentialItem.get().getAgeMS() : 0;
         metricsService.gauge(buildMetricName("age", "oldest"), oldestItemAgeMS);
     }
 
