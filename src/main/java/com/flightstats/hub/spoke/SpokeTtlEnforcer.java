@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -29,7 +30,6 @@ public class SpokeTtlEnforcer {
     private final SpokeStore spokeStore;
     private final String storagePath;
     private final int ttlMinutes;
-    private long itemsEvicted = 0;
 
     @Inject
     private ChannelService channelService;
@@ -49,8 +49,9 @@ public class SpokeTtlEnforcer {
         }
     }
 
-    private Consumer<ChannelConfig> handleCleanup() {
+    private Consumer<ChannelConfig> handleCleanup(AtomicLong evictionCounter) {
         return channel -> {
+            int itemsEvicted = 0;
             String channelPath = storagePath + "/" + channel.getDisplayName();
             if (channel.isLive()) {
                 DateTime ttlDateTime = TimeUtil.stable().minusMinutes(ttlMinutes + 1);
@@ -64,6 +65,7 @@ public class SpokeTtlEnforcer {
                 int waitTimeSeconds = 3;
                 itemsEvicted += FileUtils.deleteFilesByAge(channelPath, ttlMinutes, waitTimeSeconds);
             }
+            evictionCounter.getAndAdd(itemsEvicted);
         };
     }
 
@@ -79,11 +81,6 @@ public class SpokeTtlEnforcer {
         metricsService.gauge(buildMetricName("age", "oldest"), oldestItemAgeMS);
     }
 
-    private void updateItemsEvictedMetric() {
-        metricsService.gauge(buildMetricName("evicted"), itemsEvicted);
-        itemsEvicted = 0;
-    }
-
     private String buildMetricName(String... elements) {
         String prefix = String.format("spoke.%s", spokeStore);
         Stream<String> stream = Stream.concat(Stream.of(prefix), Arrays.stream(elements));
@@ -95,10 +92,11 @@ public class SpokeTtlEnforcer {
         protected void runOneIteration() throws Exception {
             try {
                 long start = System.currentTimeMillis();
+                AtomicLong evictionCounter = new AtomicLong(0);
                 logger.info("running ttl cleanup");
-                TtlEnforcer.enforce(storagePath, channelService, handleCleanup());
+                TtlEnforcer.enforce(storagePath, channelService, handleCleanup(evictionCounter));
                 updateOldestItemMetric();
-                updateItemsEvictedMetric();
+                metricsService.gauge(buildMetricName("evicted"), evictionCounter.get());
                 long runtime = (System.currentTimeMillis() - start);
                 logger.info("completed ttl cleanup {}", runtime);
                 metricsService.gauge(buildMetricName("ttl", "enforcer", "runtime"), runtime);
