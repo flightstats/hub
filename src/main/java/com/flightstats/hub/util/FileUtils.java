@@ -28,10 +28,6 @@ public class FileUtils {
     private static long executeAndParse(String command, int waitTimeSeconds) {
         String result = Commander.run(new String[]{"/bin/bash", "-c", command}, waitTimeSeconds);
         String value = StringUtils.chomp(result);
-        try {
-            return Long.parseLong(value);
-        } catch (NumberFormatException e) {
-            throw new RuntimeException("delete command returned a non-integer: " + command);
-        }
+        return Long.parseLong(value);
     }
 }
