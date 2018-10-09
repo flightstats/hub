@@ -5,12 +5,17 @@ import com.amazonaws.SdkClientException;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.S3ResponseMetadata;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.metrics.NoOpMetricsService;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.Collections;
 
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -18,8 +23,11 @@ import static org.mockito.Mockito.when;
 
 public class HubS3ClientTest {
 
+    private static final String METRIC_NAME = "s3.error";
+    private static final int METRIC_VALUE = 1;
+
     @Test
-    public void countError() throws Exception {
+    public void countError() {
         S3BucketName s3BucketName = mock(S3BucketName.class);
         S3ResponseMetadata metadata = mock(S3ResponseMetadata.class);
         String requestId = "numbers-and-letters-go-here";
@@ -41,5 +49,35 @@ public class HubS3ClientTest {
                 "requestId:" + requestId,
                 "foo:bar"
         );
+    }
+
+    @Test
+    public void putObject() {
+        S3BucketName s3BucketName = mock(S3BucketName.class);
+        AmazonS3Client amazonS3Client = mock(AmazonS3Client.class);
+        MetricsService metricsService = mock(MetricsService.class);
+        HubS3Client hubS3Client = new HubS3Client(s3BucketName, amazonS3Client, metricsService);
+
+        InputStream emptyStream = new ByteArrayInputStream(new byte[0]);
+        ObjectMetadata metadata = new ObjectMetadata();
+        PutObjectRequest request = new PutObjectRequest("testBucket", "testKey", emptyStream, metadata);
+
+        when(amazonS3Client.putObject(request)).thenThrow(new SdkClientException("testException"));
+
+        try {
+            hubS3Client.putObject(request);
+            fail("expected SdkClientException to be thrown");
+        } catch (SdkClientException e) {
+            // this should happen
+        }
+
+        String[] tags = {
+            "exception:com.amazonaws.SdkClientException",
+            "method:putObject",
+            "bucket:testBucket",
+            "key:testKey"
+        };
+
+        verify(metricsService).count(METRIC_NAME, METRIC_VALUE, tags);
     }
 }
