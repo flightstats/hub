@@ -54,14 +54,14 @@ public class S3VerifierTest {
 
     @Test
     public void testSingleNormalDefault() {
-        ChannelConfig channel = ChannelConfig.builder().name(channelName).build();
-        channelService.createChannel(channel);
-        S3Verifier.VerifierRange range = s3Verifier.getSingleVerifierRange(now, channel);
+        ChannelConfig channelConfig = ChannelConfig.builder().name(channelName).build();
+        channelService.createChannel(channelConfig);
+        VerifierRange range = s3Verifier.getSingleVerifierRange(now, channelConfig);
         logger.info("{} {}", channelName, range);
-        assertEquals(channel, range.channel);
-        assertEquals(new MinutePath(now.minusMinutes(1)), range.endPath);
-        assertEquals(new MinutePath(offsetTime.minusMinutes(1)), range.startPath);
-        assertEquals(range.endPath, new MinutePath(range.startPath.getTime().plusMinutes(offsetMinutes)));
+        assertEquals(channelConfig, range.getChannelConfig());
+        assertEquals(new MinutePath(now.minusMinutes(1)), range.getEndPath());
+        assertEquals(new MinutePath(offsetTime.minusMinutes(1)), range.getStartPath());
+        assertEquals(range.getEndPath(), new MinutePath(range.getStartPath().getTime().plusMinutes(offsetMinutes)));
     }
 
     @Test
@@ -70,20 +70,20 @@ public class S3VerifierTest {
         lastContentPath.initialize(channelName, lastVerified, LAST_SINGLE_VERIFIED);
         ChannelConfig channel = ChannelConfig.builder().name(channelName).build();
         channelService.createChannel(channel);
-        S3Verifier.VerifierRange range = s3Verifier.getSingleVerifierRange(now, channel);
+        VerifierRange range = s3Verifier.getSingleVerifierRange(now, channel);
         logger.info("{} {}", channelName, range);
-        assertEquals(new MinutePath(now.minusMinutes(1)), range.endPath);
-        assertEquals(lastVerified, range.startPath);
+        assertEquals(new MinutePath(now.minusMinutes(1)), range.getEndPath());
+        assertEquals(lastVerified, range.getStartPath());
     }
 
     @Test
     public void testSingleReplicatedDefault() {
         ChannelConfig channel = getReplicatedChannel(channelName);
         channelService.createChannel(channel);
-        S3Verifier.VerifierRange range = s3Verifier.getSingleVerifierRange(now, channel);
+        VerifierRange range = s3Verifier.getSingleVerifierRange(now, channel);
         logger.info("{} {}", channelName, range);
-        assertEquals(new MinutePath(now.minusMinutes(1)), range.endPath);
-        assertEquals(new MinutePath(range.endPath.getTime().minusMinutes(offsetMinutes)), range.startPath);
+        assertEquals(new MinutePath(now.minusMinutes(1)), range.getEndPath());
+        assertEquals(new MinutePath(range.getEndPath().getTime().minusMinutes(offsetMinutes)), range.getStartPath());
     }
 
     @Test
@@ -92,10 +92,10 @@ public class S3VerifierTest {
         lastContentPath.initialize(channelName, lastReplicated, REPLICATED_LAST_UPDATED);
         ChannelConfig channel = getReplicatedChannel(channelName);
         channelService.updateChannel(channel, null, false);
-        S3Verifier.VerifierRange range = s3Verifier.getSingleVerifierRange(now, channel);
+        VerifierRange range = s3Verifier.getSingleVerifierRange(now, channel);
         logger.info("{} {}", channelName, range);
-        assertEquals(new MinutePath(lastReplicated.getTime().minusMinutes(1)), range.endPath);
-        assertEquals(new MinutePath(lastReplicated.getTime().minusMinutes(offsetMinutes + 1)), range.startPath);
+        assertEquals(new MinutePath(lastReplicated.getTime().minusMinutes(1)), range.getEndPath());
+        assertEquals(new MinutePath(lastReplicated.getTime().minusMinutes(offsetMinutes + 1)), range.getStartPath());
     }
 
     @Test
@@ -104,10 +104,10 @@ public class S3VerifierTest {
         lastContentPath.initialize(channelName, lastVerified, LAST_SINGLE_VERIFIED);
         ChannelConfig channel = ChannelConfig.builder().name(channelName).build();
         channelService.createChannel(channel);
-        S3Verifier.VerifierRange range = s3Verifier.getSingleVerifierRange(now, channel);
+        VerifierRange range = s3Verifier.getSingleVerifierRange(now, channel);
         logger.info("{} {}", channelName, range);
-        assertEquals(new MinutePath(now.minusMinutes(1)), range.endPath);
-        logger.info("expected {} {}", new MinutePath(now.minusMinutes(58)), range.startPath);
+        assertEquals(new MinutePath(now.minusMinutes(1)), range.getEndPath());
+        logger.info("expected {} {}", new MinutePath(now.minusMinutes(58)), range.getStartPath());
         //assertEquals(new MinutePath(now.minusMinutes(58)), range.startPath);
     }
 
@@ -119,10 +119,10 @@ public class S3VerifierTest {
         lastContentPath.initialize(channelName, lastVerified, LAST_SINGLE_VERIFIED);
         ChannelConfig channel = getReplicatedChannel(channelName);
         channelService.updateChannel(channel, null, false);
-        S3Verifier.VerifierRange range = s3Verifier.getSingleVerifierRange(now, channel);
+        VerifierRange range = s3Verifier.getSingleVerifierRange(now, channel);
         logger.info("{} {}", channelName, range);
-        assertEquals(new MinutePath(lastReplicated.getTime().minusMinutes(1)), range.endPath);
-        assertEquals(lastVerified, range.startPath);
+        assertEquals(new MinutePath(lastReplicated.getTime().minusMinutes(1)), range.getEndPath());
+        assertEquals(lastVerified, range.getStartPath());
     }
 
     private ChannelConfig getReplicatedChannel(String name) {
