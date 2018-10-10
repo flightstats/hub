@@ -235,7 +235,7 @@ const hubClientGetUntil = async (url, clause, timeoutMS = 30000, interval = 1000
         };
         let response = {};
         do {
-            await itSleeps(1000);
+            await itSleeps(interval);
             response = await hubClientGet(url, headers);
             error = exitOnTimeout();
         } while (!clause(response) && !error);
