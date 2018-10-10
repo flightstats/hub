@@ -19,5 +19,5 @@ docker build --tag hub:local docker
 echo "----------"
 echo ""
 echo "Usage:"
-echo "  docker run --name hub --publish 80:80 -publish 3333:3333 hub:local"
+echo "  docker run --name hub --publish 80:80 --publish 3333:3333 hub:local"
 echo ""
