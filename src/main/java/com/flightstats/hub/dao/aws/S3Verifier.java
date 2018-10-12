@@ -16,6 +16,7 @@ import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
@@ -43,33 +44,44 @@ public class S3Verifier {
     private final static Logger logger = LoggerFactory.getLogger(S3Verifier.class);
     public static final String LEADER_PATH = "/S3VerifierSingleService";
     public static final String MISSING_ITEM_METRIC_NAME = "s3.verifier.missing";
+    public static final String VERIFIER_FAILED_METRIC_NAME = "s3.verifier.failed";
 
     private final int offsetMinutes = HubProperties.getProperty("s3Verifier.offsetMinutes", 15);
     private final int channelThreads = HubProperties.getProperty("s3Verifier.channelThreads", 3);
     private final ExecutorService channelThreadPool = Executors.newFixedThreadPool(channelThreads, new ThreadFactoryBuilder().setNameFormat("S3VerifierChannel-%d").build());
     private final ExecutorService queryThreadPool = Executors.newFixedThreadPool(channelThreads * 2, new ThreadFactoryBuilder().setNameFormat("S3VerifierQuery-%d").build());
-    @Inject
-    private LastContentPath lastContentPath;
-    @Inject
-    private ChannelService channelService;
-    @Inject
-    @Named(ContentDao.WRITE_CACHE)
-    private ContentDao spokeWriteContentDao;
-    @Inject
-    @Named(ContentDao.SINGLE_LONG_TERM)
-    private ContentDao s3SingleContentDao;
-    @Inject
-    private S3WriteQueue s3WriteQueue;
-    @Inject
-    private Client followClient;
-    @Inject
-    private ZooKeeperState zooKeeperState;
-    @Inject
-    private CuratorFramework curator;
-    @Inject
-    private MetricsService metricsService;
 
-    public S3Verifier() {
+    private final LastContentPath lastContentPath;
+    private final ChannelService channelService;
+    private final ContentDao spokeWriteContentDao;
+    private final ContentDao s3SingleContentDao;
+    private final S3WriteQueue s3WriteQueue;
+    private final Client httpClient;
+    private final ZooKeeperState zooKeeperState;
+    private final CuratorFramework curator;
+    private final MetricsService metricsService;
+
+    @Inject
+    public S3Verifier(LastContentPath lastContentPath,
+                      ChannelService channelService,
+                      @Named(ContentDao.WRITE_CACHE) ContentDao spokeWriteContentDao,
+                      @Named(ContentDao.SINGLE_LONG_TERM) ContentDao s3SingleContentDao,
+                      S3WriteQueue s3WriteQueue,
+                      Client httpClient,
+                      ZooKeeperState zooKeeperState,
+                      CuratorFramework curator,
+                      MetricsService metricsService)
+    {
+        this.lastContentPath = lastContentPath;
+        this.channelService = channelService;
+        this.spokeWriteContentDao = spokeWriteContentDao;
+        this.s3SingleContentDao = s3SingleContentDao;
+        this.s3WriteQueue = s3WriteQueue;
+        this.httpClient = httpClient;
+        this.zooKeeperState = zooKeeperState;
+        this.curator = curator;
+        this.metricsService = metricsService;
+
         if (HubProperties.getProperty("s3Verifier.run", true)) {
             HubServices.register(new S3ScheduledVerifierService(), HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
         }
@@ -88,7 +100,7 @@ public class S3Verifier {
                         logger.debug("calling {}", url);
                         ClientResponse post = null;
                         try {
-                            post = followClient.resource(url).post(ClientResponse.class);
+                            post = httpClient.resource(url).post(ClientResponse.class);
                             logger.debug("response from post {}", post);
                         } finally {
                             HubUtils.close(post);
@@ -115,34 +127,44 @@ public class S3Verifier {
         }
     }
 
-    VerifierRange getSingleVerifierRange(DateTime now, ChannelConfig channel) {
-        VerifierRange range = new VerifierRange(channel);
+    VerifierRange getSingleVerifierRange(DateTime now, ChannelConfig channelConfig) {
         MinutePath spokeTtlTime = getSpokeTtlPath(now);
-        now = channelService.getLastUpdated(channel.getDisplayName(), new MinutePath(now)).getTime();
+        now = channelService.getLastUpdated(channelConfig.getDisplayName(), new MinutePath(now)).getTime();
         DateTime start = now.minusMinutes(1);
-        range.endPath = new MinutePath(start);
+        MinutePath endPath = new MinutePath(start);
         MinutePath defaultStart = new MinutePath(start.minusMinutes(offsetMinutes));
-        range.startPath = (MinutePath) lastContentPath.get(channel.getDisplayName(), defaultStart, LAST_SINGLE_VERIFIED);
-        if (channel.isLive() && range.startPath.compareTo(spokeTtlTime) < 0) {
-            range.startPath = spokeTtlTime;
+        MinutePath startPath = (MinutePath) lastContentPath.get(channelConfig.getDisplayName(), defaultStart, LAST_SINGLE_VERIFIED);
+        if (channelConfig.isLive() && startPath.compareTo(spokeTtlTime) < 0) {
+            startPath = spokeTtlTime;
         }
-        return range;
+        return VerifierRange.builder()
+                .channelConfig(channelConfig)
+                .startPath(startPath)
+                .endPath(endPath)
+                .build();
     }
 
-    private void verifyChannel(VerifierRange range) {
-        String channelName = range.channel.getDisplayName();
-        SortedSet<ContentKey> keysToAdd = getMissing(range.startPath, range.endPath, channelName, s3SingleContentDao, new TreeSet<>());
+    @VisibleForTesting
+    protected void verifyChannel(VerifierRange range) {
+        String channelName = range.getChannelConfig().getDisplayName();
+        SortedSet<ContentKey> keysToAdd = getMissing(range.getStartPath(), range.getEndPath(), channelName, s3SingleContentDao, new TreeSet<>());
         logger.debug("verifyChannel.starting {}", range);
         for (ContentKey key : keysToAdd) {
             logger.trace("found missing {} {}", channelName, key);
             metricsService.increment(MISSING_ITEM_METRIC_NAME);
-            s3WriteQueue.add(new ChannelContentKey(channelName, key));
+            boolean success = s3WriteQueue.add(new ChannelContentKey(channelName, key));
+            if (!success) {
+                logger.error("unable to queue missing item {} {}", channelName, key);
+                metricsService.increment(VERIFIER_FAILED_METRIC_NAME);
+                return;
+            }
         }
         logger.debug("verifyChannel.completed {}", range);
-        lastContentPath.updateIncrease(range.endPath, range.channel.getDisplayName(), LAST_SINGLE_VERIFIED);
+        lastContentPath.updateIncrease(range.getEndPath(), range.getChannelConfig().getDisplayName(), LAST_SINGLE_VERIFIED);
     }
 
-    private SortedSet<ContentKey> getMissing(MinutePath startPath, MinutePath endPath, String channelName, ContentDao s3ContentDao,
+    @VisibleForTesting
+    protected SortedSet<ContentKey> getMissing(MinutePath startPath, MinutePath endPath, String channelName, ContentDao s3ContentDao,
                                              SortedSet<ContentKey> foundCacheKeys) {
         QueryResult queryResult = new QueryResult(1);
         SortedSet<ContentKey> longTermKeys = new TreeSet<>();
@@ -192,21 +214,6 @@ public class S3Verifier {
 
     private MinutePath getSpokeTtlPath(DateTime now) {
         return new MinutePath(now.minusMinutes(HubProperties.getSpokeTtlMinutes(SpokeStore.WRITE) - 2));
-    }
-
-    class VerifierRange {
-
-        MinutePath startPath;
-        MinutePath endPath;
-        ChannelConfig channel;
-
-        VerifierRange(ChannelConfig channel) {
-            this.channel = channel;
-        }
-
-        public String toString() {
-            return "com.flightstats.hub.dao.aws.S3Verifier.VerifierRange(startPath=" + this.startPath + ", endPath=" + this.endPath + ", channel=" + this.channel + ")";
-        }
     }
 
     private class S3ScheduledVerifierService extends AbstractScheduledService implements Lockable {

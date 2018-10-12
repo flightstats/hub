@@ -97,7 +97,7 @@ public class S3WriteQueue {
         }
     }
 
-    public void add(ChannelContentKey key) {
+    public boolean add(ChannelContentKey key) {
         boolean value = keys.offer(key);
         if (value) {
             metricsService.gauge("s3.writeQueue.used", keys.size());
@@ -106,6 +106,7 @@ public class S3WriteQueue {
             logger.warn("Add to queue failed - out of queue space. key= {}", key);
             metricsService.increment("s3.writeQueue.dropped");
         }
+        return value;
     }
 
     public void close() {
