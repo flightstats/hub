@@ -189,4 +189,5 @@ public class SpokeWriteContentDao implements ContentDao {
     public void initialize() {
         //do anything?
     }
+
 }

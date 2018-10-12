@@ -17,9 +17,6 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.Interval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,7 +69,7 @@ public class S3WriteQueue {
             ChannelContentKey key = keys.poll(5, TimeUnit.SECONDS);
             if (key != null) {
                 metricsService.gauge("s3.writeQueue.used", keys.size());
-                countAge(key, "s3.writeQueue.age.removed");
+                metricsService.count("s3.writeQueue.age.removed", key.getAgeMS(), "key:" + key.toString());
             }
             retryer.call(() -> {
                 writeContent(key);
@@ -104,34 +101,10 @@ public class S3WriteQueue {
         boolean value = keys.offer(key);
         if (value) {
             metricsService.gauge("s3.writeQueue.used", keys.size());
-            countAge(key, "s3.writeQueue.age.added");
+            metricsService.count("s3.writeQueue.age.added", key.getAgeMS(), "key:" + key.toString());
         } else {
             logger.warn("Add to queue failed - out of queue space. key= {}", key);
             metricsService.increment("s3.writeQueue.dropped");
-        }
-    }
-
-    private Long calculateAgeMS(ChannelContentKey key) {
-        DateTime then = key.getContentKey().getTime();
-        DateTime now = DateTime.now(DateTimeZone.UTC);
-        try {
-            if (then.isBefore(now)) {
-                Interval delta = new Interval(then, now);
-                return delta.toDurationMillis();
-            } else {
-                Interval delta = new Interval(now, then);
-                return -delta.toDurationMillis();
-            }
-        } catch (IllegalArgumentException e) {
-            logger.warn("unable to calculate the item's age", e);
-            return null;
-        }
-    }
-
-    private void countAge(ChannelContentKey key, String metricName) {
-        Long ageMS = calculateAgeMS(key);
-        if (ageMS != null) {
-            metricsService.count(metricName, ageMS, "key:" + key.toString());
         }
     }
 

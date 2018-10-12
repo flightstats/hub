@@ -1,12 +1,18 @@
 package com.flightstats.hub.spoke;
 
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.exception.FailedWriteException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.BulkContent;
+import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.util.Commander;
+import com.google.common.base.Optional;
+import com.google.inject.Inject;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,6 +25,16 @@ import java.util.function.Function;
 
 public class SpokeContentDao {
     private static final Logger logger = LoggerFactory.getLogger(SpokeContentDao.class);
+
+    static final String GET_OLDEST_ITEM_COMMAND = "find %s -type f -printf '%%T+ %%p\\n' | sort | head -n 1";
+    static final String GET_ITEM_COUNT_COMMAND = "find %s -type f | wc -l";
+
+    private final Commander commander;
+
+    @Inject
+    public SpokeContentDao(Commander commander) {
+        this.commander = commander;
+    }
 
     public static SortedSet<ContentKey> insert(BulkContent bulkContent, Function<ByteArrayOutputStream, Boolean> inserter) throws Exception {
         Traces traces = ActiveTraces.getLocal();
@@ -58,4 +74,29 @@ public class SpokeContentDao {
             throw e;
         }
     }
+
+    Optional<ChannelContentKey> getOldestItem(SpokeStore store) {
+        String storePath = HubProperties.getSpokePath(store);
+        logger.trace("getting oldest item from " + storePath);
+        // expected result format: YYYY-MM-DD+HH:MM:SS.SSSSSSSSSS /mnt/spoke/store/channel/yyyy/mm/dd/hh/mm/ssSSShash
+        String command = String.format(GET_OLDEST_ITEM_COMMAND, storePath);
+        int waitTimeSeconds = 3;
+        String result = StringUtils.chomp(commander.runInBash(command, waitTimeSeconds));
+        if (StringUtils.isEmpty(result)) return Optional.absent();
+        try {
+            return Optional.of(ChannelContentKey.fromSpokePath(result));
+        } catch (IllegalArgumentException e) {
+            return Optional.absent();
+        }
+    }
+
+    long getNumberOfItems(SpokeStore spokeStore) {
+        String storePath = HubProperties.getSpokePath(spokeStore);
+        logger.trace("getting the total number of items in " + storePath);
+        String command = String.format(GET_ITEM_COUNT_COMMAND, storePath);
+        int waitTimeSeconds = 1;
+        String result = StringUtils.chomp(commander.runInBash(command, waitTimeSeconds));
+        return StringUtils.isEmpty(result) ? 0L : Long.parseLong(result);
+    }
+
 }

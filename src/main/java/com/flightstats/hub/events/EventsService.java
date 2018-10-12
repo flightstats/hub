@@ -31,20 +31,18 @@ public class EventsService {
 
     void getAndSendData(String uri, String id) {
         logger.trace("got uri {} {}", uri, id);
-        ChannelContentKey key = ChannelContentKey.fromUrl(uri);
-        if (key != null) {
-            ItemRequest itemRequest = ItemRequest.builder()
-                    .channel(key.getChannel())
-                    .key(key.getContentKey())
-                    .build();
-            Optional<Content> optional = channelService.get(itemRequest);
-            if (optional.isPresent()) {
-                Content content = optional.get();
-                sendData(id, Errors.rethrow().wrap(contentOutput -> {
-                    contentOutput.write(content);
-                    logger.trace("sent content {} to {}", id, content.getContentKey());
-                }));
-            }
+        ChannelContentKey key = ChannelContentKey.fromResourcePath(uri);
+        ItemRequest itemRequest = ItemRequest.builder()
+                .channel(key.getChannel())
+                .key(key.getContentKey())
+                .build();
+        Optional<Content> optional = channelService.get(itemRequest);
+        if (optional.isPresent()) {
+            Content content = optional.get();
+            sendData(id, Errors.rethrow().wrap(contentOutput -> {
+                contentOutput.write(content);
+                logger.trace("sent content {} to {}", id, content.getContentKey());
+            }));
         }
     }
 

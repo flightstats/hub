@@ -4,19 +4,20 @@ set -euo pipefail errfail
 echo "Cleaning up any old files."
 rm -rf docker/hub
 
-echo "Running gradle clean compileJava distTar"
+echo "Building the code into a tarball."
 gradle clean compileJava distTar
 
-echo "Untarring the distTar. Thanks, Gradle."
+echo "Uncompressing the tarball."
 tar -xvf build/distributions/hub-*.tgz -C docker/
 
 echo "Putting the hub code where the Dockerfile wants it."
 mv docker/hub-*/ docker/hub
 
 echo "Building the docker image."
-docker build docker
+docker build --tag hub:local docker
 
-NEWESTIMAGE=$(docker images -q | head -1)
-
-echo "Now run the following command using the image id above:"
-echo "docker run -p 80:80 ${NEWESTIMAGE}"
+echo "----------"
+echo ""
+echo "Usage:"
+echo "  docker run --name hub --publish 80:80 --publish 3333:3333 hub:local"
+echo ""
