@@ -247,9 +247,9 @@ const hubClientGetUntil = async (url, clause, timeoutMS = 30000, interval = 1000
     }
 };
 
-const getPort = (path) => {
+const getHostname = (path) => {
     const url = new URL(path);
-    return url.port;
+    return url.hostname;
 };
 
 const isClusteredHubNode = async () => {
@@ -261,7 +261,7 @@ const isClusteredHubNode = async () => {
     const servers = fromObjectPath(['body', 'servers'], response) || [];
     const server = fromObjectPath(['body', 'server'], response) || '';
     const indeterminate = !server || !servers.length;
-    const single = servers.length === 1 && getPort(servers[0]) === getPort(server);
+    const single = servers.length === 1 && getHostname(servers[0]) === getHostname(server);
     return !indeterminate && !single;
 };
 
