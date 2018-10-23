@@ -12,7 +12,9 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
@@ -35,7 +37,8 @@ public class InternalBatchResource {
     }
 
     @GET
-    Response documentResource() {
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response documentResource() {
         ObjectNode root = objectMapper.createObjectNode();
 
         ObjectNode links = root.putObject("_links");
@@ -52,7 +55,7 @@ public class InternalBatchResource {
 
     @POST
     @Path("/archive/{channel}/{year}/{month}/{day}/{hour}/{minute}")
-    Response archiveBatch(@PathParam("channel") String channel,
+    public Response archiveBatch(@PathParam("channel") String channel,
                           @PathParam("year") int year,
                           @PathParam("month") int month,
                           @PathParam("day") int day,
