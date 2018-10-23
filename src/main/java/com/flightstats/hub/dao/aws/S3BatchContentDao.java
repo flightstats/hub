@@ -11,8 +11,15 @@ import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.metrics.Traces;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.Content;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.ContentPath;
+import com.flightstats.hub.model.ContentPathKeys;
+import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.MinutePath;
+import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.TimeUtil;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -44,12 +51,17 @@ public class S3BatchContentDao implements ContentDao {
 
     private final boolean useEncrypted = HubProperties.isAppEncrypted();
     private final int s3MaxQueryItems = HubProperties.getProperty("s3.maxQueryItems", 1000);
+
+    private final HubS3Client s3Client;
+    private final S3BucketName s3BucketName;
+    private final StatsdReporter statsdReporter;
+
     @Inject
-    private HubS3Client s3Client;
-    @Inject
-    private S3BucketName s3BucketName;
-    @Inject
-    private StatsdReporter statsdReporter;
+    S3BatchContentDao(HubS3Client s3Client, S3BucketName s3BucketName, StatsdReporter statsdReporter) {
+        this.s3Client = s3Client;
+        this.s3BucketName = s3BucketName;
+        this.statsdReporter = statsdReporter;
+    }
 
     @Override
     public ContentKey insert(String channelName, Content content) throws Exception {
@@ -428,6 +440,38 @@ public class S3BatchContentDao implements ContentDao {
 
     private String getS3BatchIndexKey(String channel, ContentPath path) {
         return channel + BATCH_INDEX + path.toUrl();
+    }
+
+    @VisibleForTesting
+    protected static String getS3BatchItemsMinuteKey(String channel, ContentKey key) {
+        return channel + BATCH_ITEMS + key.toMinuteUrl();
+    }
+
+    @VisibleForTesting
+    protected static String getS3BatchIndexMinuteKey(String channel, ContentKey key) {
+        return channel + BATCH_INDEX + key.toMinuteUrl();
+    }
+
+    void archiveBatch(String channel, ContentKey key) {
+        String originalBucket = s3BucketName.getS3BucketName();
+        String archiveBucket = HubProperties.getProperty("s3.archiveBucket", "archive-" + originalBucket);
+
+        String s3AddressFormat = "s3://%s/%s/%s";
+        String originalS3Address = String.format(s3AddressFormat, originalBucket, channel, key.toMinuteUrl());
+        String archiveS3Address = String.format(s3AddressFormat, archiveBucket, channel, key.toMinuteUrl());
+        logger.info("archiving batch {} to {}", originalS3Address, archiveS3Address);
+
+        String indexKey = getS3BatchIndexMinuteKey(channel, key);
+        String itemsKey = getS3BatchItemsMinuteKey(channel, key);
+
+        S3Object index = s3Client.getObject(originalBucket, indexKey);
+        S3Object items = s3Client.getObject(originalBucket, itemsKey);
+
+        s3Client.putObject(archiveBucket, indexKey, index);
+        s3Client.putObject(archiveBucket, itemsKey, items);
+
+        s3Client.deleteObject(originalBucket, indexKey);
+        s3Client.deleteObject(originalBucket, itemsKey);
     }
 
 }
