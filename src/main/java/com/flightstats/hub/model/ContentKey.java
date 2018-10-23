@@ -32,6 +32,10 @@ public class ContentKey implements ContentPath {
         this.hash = hash;
     }
 
+    public ContentKey(int year, int month, int day, int hour, int minute) {
+        this(new DateTime(year, month, day, hour, minute, DateTimeZone.UTC));
+    }
+
     public ContentKey(int year, int month, int day, int hour, int minute, int second, int millis) {
         this(new DateTime(year, month, day, hour, minute, second, millis, DateTimeZone.UTC));
     }
@@ -83,6 +87,10 @@ public class ContentKey implements ContentPath {
 
     public String toUrl() {
         return TimeUtil.millis(time) + hash;
+    }
+
+    public String toMinuteUrl() {
+        return TimeUtil.minutes(time);
     }
 
     public long getMillis() {
