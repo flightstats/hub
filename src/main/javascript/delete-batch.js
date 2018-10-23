@@ -1,12 +1,17 @@
 const aws = require('aws-sdk');
 const s3 = new aws.S3();
 
-const bucket = 'hub-v2-prod-east1.flightstats.com';
-const batchPath = 'positionsFlightradar24/2018/10/16/15/52';
+const bucket = null;
+
+// format: {channel}/{year}/{month}/{day}/{hour}/{minute}
+const batchPath = null;
 
 main();
 
 async function main() {
+    if (!bucket) throw Error('no bucket specified');
+    if (!batchPath) throw Error('no batch path specified');
+
     let channelName = batchPath.slice(0, batchPath.indexOf('/'));
     let metadataPath = batchPath.replace(channelName, channelName + 'Batch/index');
     let dataPath = batchPath.replace(channelName, channelName + 'Batch/items');
