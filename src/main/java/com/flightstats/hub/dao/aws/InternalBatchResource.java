@@ -20,6 +20,8 @@ import javax.ws.rs.core.UriInfo;
 @Path("/internal/batch")
 public class InternalBatchResource {
 
+    public static final String DESCRIPTION = "Perform administrative tasks against batch channels or payloads";
+
     private final S3BatchContentDao s3BatchContentDao;
     private final ObjectMapper objectMapper;
 
@@ -40,7 +42,7 @@ public class InternalBatchResource {
         ObjectNode self = links.putObject("self");
         self.put("href", uriInfo.getRequestUri().toString());
 
-        root.put("description", "Perform administrative tasks against batch channels or payloads");
+        root.put("description", DESCRIPTION);
 
         ObjectNode directions = root.putObject("directions");
         directions.put("archive/{batchPath}", "HTTP POST to /internal/batch/archive/{channel}/{year}/{month}/{day}/{hour}/{minute}");
