@@ -1,12 +1,15 @@
 package com.flightstats.hub.dao.aws;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.LocalHostOnly;
 import com.flightstats.hub.model.ContentKey;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
-import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Context;
@@ -18,24 +21,41 @@ import javax.ws.rs.core.UriInfo;
 public class InternalBatchResource {
 
     private final S3BatchContentDao s3BatchContentDao;
+    private final ObjectMapper objectMapper;
 
     @Context
     private UriInfo uriInfo;
 
     @Inject
-    InternalBatchResource(S3BatchContentDao s3BatchContentDao) {
+    InternalBatchResource(S3BatchContentDao s3BatchContentDao, ObjectMapper objectMapper) {
         this.s3BatchContentDao = s3BatchContentDao;
+        this.objectMapper = objectMapper;
     }
 
-    @DELETE
-    @Path("/{channel}/{year}/{month}/{day}/{hour}/{minute}")
+    @GET
+    Response documentResource() {
+        ObjectNode root = objectMapper.createObjectNode();
+
+        ObjectNode links = root.putObject("_links");
+        ObjectNode self = links.putObject("self");
+        self.put("href", uriInfo.getRequestUri().toString());
+
+        root.put("description", "Perform administrative tasks against batch channels or payloads");
+
+        ObjectNode directions = root.putObject("directions");
+        directions.put("archive/{batchPath}", "HTTP POST to /internal/batch/archive/{channel}/{year}/{month}/{day}/{hour}/{minute}");
+
+        return Response.ok(root).build();
+    }
+
+    @POST
+    @Path("/archive/{channel}/{year}/{month}/{day}/{hour}/{minute}")
     Response archiveBatch(@PathParam("channel") String channel,
                           @PathParam("year") int year,
                           @PathParam("month") int month,
                           @PathParam("day") int day,
                           @PathParam("hour") int hour,
-                          @PathParam("minute") int minute)
-    {
+                          @PathParam("minute") int minute) {
         if (HubProperties.isProtected() && !LocalHostOnly.isLocalhost(uriInfo)) {
             return Response.status(Response.Status.FORBIDDEN).build();
         } else {
