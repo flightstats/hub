@@ -1,11 +1,11 @@
 package com.flightstats.hub.dao.aws;
 
-import com.flightstats.hub.dao.ContentDaoUtil;
+import com.flightstats.hub.dao.ContentDaoTester;
 import com.flightstats.hub.model.BulkContent;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.spoke.SpokeWriteContentDao;
-import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.test.TestMain;
 import com.flightstats.hub.util.StringUtils;
 import com.google.inject.Injector;
 import org.junit.BeforeClass;
@@ -28,7 +28,7 @@ public class SpokeS3SingleContentDaoTest {
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        Injector injector = Integration.startAwsHub();
+        Injector injector = TestMain.start();
         s3SingleContentDao = injector.getInstance(S3SingleContentDao.class);
         spokeWriteContentDao = injector.getInstance(SpokeWriteContentDao.class);
     }
@@ -52,13 +52,13 @@ public class SpokeS3SingleContentDaoTest {
         assertEquals(key, s3Key);
         Content s3Content = s3SingleContentDao.get(channel, key);
         logger.info("s3 {}", s3Content);
-        ContentDaoUtil.compare(spokeContent, s3Content, bytes);
+        ContentDaoTester.compare(spokeContent, s3Content, bytes);
     }
 
     @Test
     public void testBulkSpokeReadWrite() throws Exception {
         String channel = "testBulkSpokeReadWrite";
-        List<Content> items = Arrays.asList(ContentDaoUtil.createContent(), ContentDaoUtil.createContent(), ContentDaoUtil.createContent());
+        List<Content> items = Arrays.asList(ContentDaoTester.createContent(), ContentDaoTester.createContent(), ContentDaoTester.createContent());
         BulkContent bulkContent = BulkContent.builder().channel(channel).isNew(false).build();
         bulkContent.getItems().addAll(items);
 
@@ -73,7 +73,7 @@ public class SpokeS3SingleContentDaoTest {
         assertEquals(firstKey, s3Key);
         Content s3Content = s3SingleContentDao.get(channel, firstKey);
         logger.info("s3 {}", s3Content);
-        ContentDaoUtil.compare(spokeContent, s3Content, firstKey.toString().getBytes());
+        ContentDaoTester.compare(spokeContent, s3Content, firstKey.toString().getBytes());
     }
 
 }

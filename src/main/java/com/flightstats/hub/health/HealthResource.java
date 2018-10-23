@@ -2,15 +2,15 @@ package com.flightstats.hub.health;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubMain;
 import com.flightstats.hub.app.HubProperties;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.app.HubVersion;
 import com.flightstats.hub.channel.LinkBuilder;
 import com.flightstats.hub.util.TimeUtil;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 
+import javax.inject.Inject;
+import javax.inject.Named;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -19,15 +19,30 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-@SuppressWarnings("WeakerAccess")
 @Path("/health")
 public class HealthResource {
+
+    private final DateTime startTime;
+    private final ObjectMapper mapper;
+    private final HubHealthCheck healthCheck;
+    private final HubVersion hubVersion;
+    private final HubProperties hubProperties;
+
     @Context
     private UriInfo uriInfo;
 
-    private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private static final HubHealthCheck healthCheck = HubProvider.getInstance(HubHealthCheck.class);
-    private static final HubVersion hubVersion = HubProvider.getInstance(HubVersion.class);
+    @Inject
+    HealthResource(ObjectMapper mapper,
+                   HubHealthCheck healthCheck,
+                   HubVersion hubVersion,
+                   @Named("StartTime") DateTime startTime,
+                   HubProperties hubProperties) {
+        this.startTime = startTime;
+        this.mapper = mapper;
+        this.healthCheck = healthCheck;
+        this.hubVersion = hubVersion;
+        this.hubProperties = hubProperties;
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -37,8 +52,7 @@ public class HealthResource {
         rootNode.put("healthy", healthStatus.isHealthy());
         rootNode.put("description", healthStatus.getDescription());
         rootNode.put("version", hubVersion.getVersion());
-        rootNode.put("readOnly", HubProperties.isReadOnly());
-        DateTime startTime = HubMain.getStartTime();
+        rootNode.put("readOnly", hubProperties.isReadOnly());
         rootNode.put("startTime", startTime.toString());
         rootNode.put("upTimeHours", new Duration(startTime, TimeUtil.now()).getStandardHours());
         ObjectNode links = rootNode.putObject("_links");
@@ -51,6 +65,5 @@ public class HealthResource {
             return Response.serverError().entity(rootNode).build();
         }
     }
-
 
 }

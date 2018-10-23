@@ -1,7 +1,18 @@
 package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.services.s3.S3ResponseMetadata;
-import com.amazonaws.services.s3.model.*;
+import com.amazonaws.services.s3.model.AbortMultipartUploadRequest;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
+import com.amazonaws.services.s3.model.CompleteMultipartUploadRequest;
+import com.amazonaws.services.s3.model.DeleteObjectRequest;
+import com.amazonaws.services.s3.model.GetObjectRequest;
+import com.amazonaws.services.s3.model.InitiateMultipartUploadRequest;
+import com.amazonaws.services.s3.model.InitiateMultipartUploadResult;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PartETag;
+import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.UploadPartRequest;
+import com.amazonaws.services.s3.model.UploadPartResult;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.metrics.ActiveTraces;
@@ -14,46 +25,41 @@ import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.ChunkOutputStream;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketTimeoutException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.SortedSet;
 
-@SuppressWarnings("Duplicates")
 @Singleton
 public class S3LargeContentDao implements ContentDao {
 
     private final static Logger logger = LoggerFactory.getLogger(S3LargeContentDao.class);
 
-    private final boolean useEncrypted = HubProperties.isAppEncrypted();
+    private final MetricsService metricsService;
+    private final HubS3Client s3Client;
+    private final S3BucketName s3BucketName;
+    private final boolean useEncrypted;
+    private final int threads;
 
     @Inject
-    private MetricsService metricsService;
-    @Inject
-    private HubS3Client s3Client;
-    @Inject
-    private S3BucketName s3BucketName;
-
-    @java.beans.ConstructorProperties({"metricsService", "s3Client", "s3BucketName"})
-    public S3LargeContentDao(MetricsService metricsService, HubS3Client s3Client, S3BucketName s3BucketName) {
+    S3LargeContentDao(MetricsService metricsService, HubS3Client s3Client, S3BucketName s3BucketName, HubProperties hubProperties) {
         this.metricsService = metricsService;
         this.s3Client = s3Client;
         this.s3BucketName = s3BucketName;
-    }
-
-    public S3LargeContentDao() {
-    }
-
-    public static S3LargeContentDaoBuilder builder() {
-        return new S3LargeContentDaoBuilder();
+        this.useEncrypted = hubProperties.isAppEncrypted();
+        this.threads = hubProperties.getProperty("s3.large.threads", 3);
     }
 
     public void initialize() {
@@ -81,7 +87,7 @@ public class S3LargeContentDao implements ContentDao {
             InitiateMultipartUploadRequest initRequest = new InitiateMultipartUploadRequest(name, s3Key, metadata);
             InitiateMultipartUploadResult initResponse = s3Client.initiateMultipartUpload(initRequest);
             uploadId = initResponse.getUploadId();
-            ChunkOutputStream outputStream = new ChunkOutputStream(content.getThreads(), chunk -> {
+            ChunkOutputStream outputStream = new ChunkOutputStream(threads, chunk -> {
                 try {
                     byte[] bytes = chunk.getBytes();
                     logger.info("got bytes {} {}", s3Key, bytes.length);
@@ -253,35 +259,4 @@ public class S3LargeContentDao implements ContentDao {
         }).start();
     }
 
-    public static class S3LargeContentDaoBuilder {
-        private MetricsService metricsService;
-        private HubS3Client s3Client;
-        private S3BucketName s3BucketName;
-
-        S3LargeContentDaoBuilder() {
-        }
-
-        public S3LargeContentDao.S3LargeContentDaoBuilder metricsService(MetricsService metricsService) {
-            this.metricsService = metricsService;
-            return this;
-        }
-
-        public S3LargeContentDao.S3LargeContentDaoBuilder s3Client(HubS3Client s3Client) {
-            this.s3Client = s3Client;
-            return this;
-        }
-
-        public S3LargeContentDao.S3LargeContentDaoBuilder s3BucketName(S3BucketName s3BucketName) {
-            this.s3BucketName = s3BucketName;
-            return this;
-        }
-
-        public S3LargeContentDao build() {
-            return new S3LargeContentDao(metricsService, s3Client, s3BucketName);
-        }
-
-        public String toString() {
-            return "com.flightstats.hub.dao.aws.S3LargeContentDao.S3LargeContentDaoBuilder(metricsService=" + this.metricsService + ", s3Client=" + this.s3Client + ", s3BucketName=" + this.s3BucketName + ")";
-        }
-    }
 }

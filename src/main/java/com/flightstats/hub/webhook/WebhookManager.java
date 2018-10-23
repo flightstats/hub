@@ -1,7 +1,6 @@
 package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.app.HubHost;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.CuratorCluster;
 import com.flightstats.hub.cluster.LastContentPath;
@@ -13,52 +12,62 @@ import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.HubUtils;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.AbstractScheduledService;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
-import com.google.inject.name.Named;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import org.apache.curator.framework.api.CuratorEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
-
-import static com.flightstats.hub.app.HubServices.register;
 
 @Singleton
 public class WebhookManager {
 
     private final static Logger logger = LoggerFactory.getLogger(WebhookManager.class);
+    private final static String WATCHER_PATH = "/groupCallback/watcher";
 
-    private static final String WATCHER_PATH = "/groupCallback/watcher";
-
-    @Inject
-    private WatchManager watchManager;
-    @Inject
-    @Named("Webhook")
-    private Dao<Webhook> webhookDao;
-    @Inject
-    private LastContentPath lastContentPath;
-    @Inject
-    private ActiveWebhooks activeWebhooks;
-
-    @Inject
-    @Named("HubCuratorCluster")
-    private CuratorCluster hubCluster;
-
-    @Inject
-    private WebhookError webhookError;
-    @Inject
-    private WebhookContentPathSet webhookInProcess;
-
+    private final WatchManager watchManager;
+    private final Dao<Webhook> webhookDao;
+    private final LastContentPath lastContentPath;
+    private final ActiveWebhooks activeWebhooks;
+    private final CuratorCluster hubCluster;
+    private final WebhookError webhookError;
+    private final WebhookContentPathSet webhookInProcess;
+    private final LocalWebhookManager localWebhookManager;
     private final Client client = RestClient.createClient(5, 15, true, true);
 
     @Inject
-    public WebhookManager() {
-        register(new WebhookIdleService(), HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
-        register(new WebhookScheduledService(), HubServices.TYPE.AFTER_HEALTHY_START);
+    public WebhookManager(WatchManager watchManager,
+                          @Named("Webhook") Dao<Webhook> webhookDao,
+                          LastContentPath lastContentPath,
+                          ActiveWebhooks activeWebhooks,
+                          @Named("HubCluster") CuratorCluster hubCluster,
+                          WebhookError webhookError,
+                          WebhookContentPathSet webhookInProcess,
+                          LocalWebhookManager localWebhookManager)
+    {
+        this.watchManager = watchManager;
+        this.webhookDao = webhookDao;
+        this.lastContentPath = lastContentPath;
+        this.activeWebhooks = activeWebhooks;
+        this.hubCluster = hubCluster;
+        this.webhookError = webhookError;
+        this.webhookInProcess = webhookInProcess;
+        this.localWebhookManager = localWebhookManager;
+
+        HubServices.register(new WebhookIdleService(), HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
+        HubServices.register(new WebhookScheduledService(), HubServices.TYPE.AFTER_HEALTHY_START);
     }
 
     private void start() {
@@ -222,7 +231,7 @@ public class WebhookManager {
 
         @Override
         protected void shutDown() throws Exception {
-            HubProvider.getInstance(LocalWebhookManager.class).stopAllLocal();
+            localWebhookManager.stopAllLocal();
             notifyWatchers();
         }
 

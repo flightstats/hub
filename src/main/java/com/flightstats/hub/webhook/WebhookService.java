@@ -1,47 +1,65 @@
 package com.flightstats.hub.webhook;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.exception.ConflictException;
+import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentPath;
+import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.util.RequestUtils;
 import com.google.common.base.Optional;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+import java.io.IOException;
 import java.util.Collection;
+import java.util.SortedSet;
 
 import static com.flightstats.hub.webhook.WebhookLeader.WEBHOOK_LAST_COMPLETED;
 
 public class WebhookService {
+
     private final static Logger logger = LoggerFactory.getLogger(WebhookService.class);
 
     private final Dao<Webhook> webhookDao;
     private final WebhookValidator webhookValidator;
     private final WebhookManager webhookManager;
     private final LastContentPath lastContentPath;
-    private ChannelService channelService;
+    private final ChannelService channelService;
+    private final ObjectMapper mapper;
+    private final HubProperties hubProperties;
 
     @Inject
-    public WebhookService(@Named("Webhook") Dao<Webhook> webhookDao, WebhookValidator webhookValidator,
-                          WebhookManager webhookManager, LastContentPath lastContentPath, ChannelService channelService) {
+    public WebhookService(@Named("Webhook") Dao<Webhook> webhookDao,
+                          WebhookValidator webhookValidator,
+                          WebhookManager webhookManager,
+                          LastContentPath lastContentPath,
+                          ChannelService channelService,
+                          ObjectMapper mapper,
+                          HubProperties hubProperties)
+    {
         this.webhookDao = webhookDao;
         this.webhookValidator = webhookValidator;
         this.webhookManager = webhookManager;
         this.lastContentPath = lastContentPath;
         this.channelService = channelService;
+        this.mapper = mapper;
+        this.hubProperties = hubProperties;
     }
 
     public Optional<Webhook> upsert(Webhook webhook) {
         logger.info("incoming webhook {} ", webhook);
-        webhook = webhook.withDefaults();
+        webhook = withDefaults(webhook);
         webhookValidator.validate(webhook);
         Optional<Webhook> preExisting = get(webhook.getName());
         if (webhook.isTagPrototype()) {
@@ -152,4 +170,159 @@ public class WebhookService {
             }
         this.upsert(webhook.withStartingKey(item));
     }
+
+    public Webhook fromJson(String json) {
+        return fromJson(json, Optional.absent());
+    }
+
+    public Webhook fromJson(String json, Optional<Webhook> webhookOptional) {
+        Webhook.WebhookBuilder builder;
+        if (webhookOptional.isPresent()) {
+            builder = webhookOptional.get().toBuilder();
+        } else {
+            builder = Webhook.builder();
+        }
+
+        try {
+            JsonNode root = mapper.readTree(json);
+            if (root.has("startItem")) {
+                Optional<ContentPath> keyOptional = Optional.absent();
+                String startItem = root.get("startItem").asText();
+                if (startItem.equalsIgnoreCase("previous")) {
+                    keyOptional = getPrevious(keyOptional, root.get("channelUrl").asText());
+                } else {
+                    keyOptional = ContentPath.fromFullUrl(startItem);
+                }
+                if (keyOptional.isPresent()) {
+                    builder.startingKey(keyOptional.get());
+                }
+            } else if (root.has("lastCompleted")) {
+                Optional<ContentPath> keyOptional = ContentPath.fromFullUrl(root.get("lastCompleted").asText());
+                if (keyOptional.isPresent()) {
+                    builder.startingKey(keyOptional.get());
+                }
+            }
+            if (root.has("name")) {
+                builder.name(root.get("name").asText());
+            }
+            if (root.has("paused")) {
+                builder.paused(root.get("paused").asBoolean());
+            }
+            if (root.has("callbackUrl")) {
+                builder.callbackUrl(root.get("callbackUrl").asText());
+            }
+            if (root.has("channelUrl")) {
+                builder.channelUrl(root.get("channelUrl").asText());
+            }
+            if (root.has("parallelCalls")) {
+                builder.parallelCalls(root.get("parallelCalls").intValue());
+            }
+            if (root.has("batch")) {
+                builder.batch(root.get("batch").asText());
+            }
+            if (root.has("heartbeat")) {
+                builder.heartbeat(root.get("heartbeat").asBoolean());
+            }
+            if (root.has("ttlMinutes")) {
+                builder.ttlMinutes(root.get("ttlMinutes").intValue());
+            }
+            if (root.has("maxWaitMinutes")) {
+                builder.maxWaitMinutes(root.get("maxWaitMinutes").intValue());
+            }
+            if (root.has("callbackTimeoutSeconds")) {
+                builder.callbackTimeoutSeconds(root.get("callbackTimeoutSeconds").intValue());
+            }
+            if (root.has("fastForwardable")) {
+                builder.fastForwardable(root.get("fastForwardable").asBoolean());
+            }
+            if (root.has("tagUrl")) {
+                String t = root.get("tagUrl").asText().isEmpty() ? null : root.get("tagUrl").asText();
+                builder.tagUrl(t);
+            }
+            if (root.has("tag")) {
+                builder.managedByTag(root.get("tag").asText());
+            }
+            if (root.has("maxAttempts")) {
+                builder.maxAttempts(root.get("maxAttempts").intValue());
+            }
+            if (root.has("errorChannelUrl")) {
+                builder.errorChannelUrl(root.get("errorChannelUrl").asText());
+            }
+        } catch (IOException e) {
+            logger.warn("unable to parse json" + json, e);
+            throw new InvalidRequestException(e.getMessage());
+        }
+
+        return builder.build();
+    }
+
+    private Optional<ContentPath> getPrevious(Optional<ContentPath> keyOptional, String channelUrl) {
+        String channel = RequestUtils.getChannelName(channelUrl);
+        Optional<ContentKey> latest = channelService.getLatest(channel, true);
+        if (latest.isPresent()) {
+            DirectionQuery query = DirectionQuery.builder()
+                    .channelName(channel)
+                    .startKey(latest.get())
+                    .next(false)
+                    .count(1)
+                    .build();
+            SortedSet<ContentKey> keys = channelService.query(query);
+            if (keys.isEmpty()) {
+                keyOptional = Optional.of(new ContentKey(latest.get().getTime().minusMillis(1), "A"));
+            } else {
+                keyOptional = Optional.of(keys.first());
+            }
+        }
+        return keyOptional;
+    }
+
+    Webhook fromTagPrototype(Webhook prototype, String channelName) {
+        String channelUrl = String.format("%s/channel/%s", RequestUtils.getHost(prototype.getTagUrl()), channelName);
+        String name = String.format("TAGWH_%s_%s", prototype.getTagFromTagUrl(), channelName);
+        return prototype.toBuilder()
+                .name(name)
+                .channelUrl(channelUrl)
+                .startingKey(null)
+                .tagUrl(null)
+                .managedByTag(prototype.getTagFromTagUrl())
+                .build();
+    }
+
+    /**
+     * Returns a Webhook with all optional values set to the default.
+     */
+    public Webhook withDefaults(Webhook original) {
+        Webhook.WebhookBuilder builder = original.toBuilder();
+
+        if (original.getParallelCalls() == null) {
+            builder.parallelCalls(1);
+        }
+
+        if (original.getBatch() == null) {
+            builder.batch(Webhook.SINGLE);
+        }
+
+        if (original.isMinute() || original.isSecond()) {
+            builder.heartbeat(true);
+        }
+
+        if (original.getTtlMinutes() == null) {
+            builder.ttlMinutes(0);
+        }
+
+        if (original.getMaxWaitMinutes() == null) {
+            builder.maxWaitMinutes(1);
+        }
+
+        if (original.getCallbackTimeoutSeconds() == null) {
+            builder.callbackTimeoutSeconds(hubProperties.getCallbackTimeoutDefault());
+        }
+
+        if (original.getMaxAttempts() == null) {
+            builder.maxAttempts(0);
+        }
+
+        return builder.build();
+    }
+
 }

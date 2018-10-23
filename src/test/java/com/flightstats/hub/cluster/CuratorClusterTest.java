@@ -1,9 +1,10 @@
 package com.flightstats.hub.cluster;
 
-import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.test.TestMain;
 import com.flightstats.hub.util.Sleeper;
+import com.google.inject.Injector;
 import org.apache.curator.framework.CuratorFramework;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,17 +18,13 @@ public class CuratorClusterTest {
 
     private final static Logger logger = LoggerFactory.getLogger(CuratorClusterTest.class);
 
-    private static CuratorFramework curator;
-
-    @BeforeClass
-    public static void setUpClass() throws Exception {
-        curator = Integration.startZooKeeper();
-    }
-
     @Test
     public void testPath() throws Exception {
-        logger.info("starting testPath");
-        CuratorCluster cluster = new CuratorCluster(curator, "/SpokeCluster", false, true, new SpokeDecommissionCluster(curator));
+        Injector injector = TestMain.start();
+        HubProperties hubProperties = injector.getInstance(HubProperties.class);
+        CuratorFramework curatorFramework = injector.getInstance(CuratorFramework.class);
+        SpokeDecommissionCluster spokeDecommissionCluster = injector.getInstance(SpokeDecommissionCluster.class);
+        CuratorCluster cluster = new CuratorCluster(curatorFramework, "/SpokeCluster", false, true, spokeDecommissionCluster, hubProperties);
 
         Collection<String> servers = cluster.getAllServers();
         assertNotNull(servers);

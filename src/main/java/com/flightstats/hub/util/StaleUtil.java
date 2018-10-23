@@ -3,17 +3,20 @@ package com.flightstats.hub.util;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubProvider;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.net.URI;
 import java.util.Map;
 import java.util.function.Function;
 
+@Singleton
 public class StaleUtil {
 
-    private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    @Inject
+    private static ObjectMapper mapper;
 
     public static void addStaleEntities(ObjectNode root, int age, Function<DateTime, Map<DateTime, URI>> entitySupplier) {
         DateTime staleCutoff = DateTime.now().minusMinutes(age);

@@ -1,26 +1,31 @@
 package com.flightstats.hub.channel;
 
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.*;
+import javax.inject.Inject;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-@SuppressWarnings("WeakerAccess")
 @Path("/channel/{channel}/time")
 public class ChannelTimeResource {
 
-    private final static Logger logger = LoggerFactory.getLogger(ChannelTimeResource.class);
+    private final ChannelService channelService;
 
     @Context
     private UriInfo uriInfo;
 
-    private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
+    @Inject
+    ChannelTimeResource(ChannelService channelService) {
+        this.channelService = channelService;
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

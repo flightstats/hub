@@ -3,10 +3,10 @@ package com.flightstats.hub.metrics;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -15,18 +15,25 @@ import javax.ws.rs.core.Response;
 import java.util.Map;
 import java.util.TreeMap;
 
-@SuppressWarnings("WeakerAccess")
 @Path("/internal/stacktrace")
 public class InternalStacktraceResource {
-    private final static Logger logger = LoggerFactory.getLogger(InternalStacktraceResource.class);
 
-    private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    public static final String DESCRIPTION = "Get a condensed stacktrace with links to other hubs in the cluster.";
+    private final static Logger logger = LoggerFactory.getLogger(InternalStacktraceResource.class);
+    public final static String DESCRIPTION = "Get a condensed stacktrace with links to other hubs in the cluster.";
+
+    private final ObjectMapper mapper;
+    private final InternalTracesResource internalTracesResource;
+
+    @Inject
+    InternalStacktraceResource(ObjectMapper mapper, InternalTracesResource internalTracesResource) {
+        this.mapper = mapper;
+        this.internalTracesResource = internalTracesResource;
+    }
 
     @GET
     @Produces({MediaType.APPLICATION_JSON})
     public Response getTraces() {
-        ObjectNode root = InternalTracesResource.serverAndServers("/internal/stacktrace");
+        ObjectNode root = internalTracesResource.serverAndServers("/internal/stacktrace");
         try {
             Map<Thread, StackTraceElement[]> threadMap = Thread.getAllStackTraces();
             TreeMap<String, Map<String, ArrayNode>> threadStates = new TreeMap<>();

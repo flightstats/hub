@@ -1,9 +1,11 @@
 package com.flightstats.hub.cluster;
 
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.model.MinutePath;
-import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.test.TestMain;
+import com.google.inject.Injector;
 import org.apache.curator.framework.CuratorFramework;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -13,6 +15,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.mock;
 
 public class LastContentPathTest {
 
@@ -22,12 +25,14 @@ public class LastContentPathTest {
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        curator = Integration.startZooKeeper();
+        Injector injector = TestMain.start();
+        curator = injector.getInstance(CuratorFramework.class);
     }
 
     @Before
-    public void setUp() throws Exception {
-        lastContentPath = new LastContentPath(curator);
+    public void setUp() {
+        HubProperties hubProperties = mock(HubProperties.class);
+        lastContentPath = new LastContentPath(curator, hubProperties);
     }
 
     @Test

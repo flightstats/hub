@@ -1,7 +1,8 @@
 package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.model.ChannelConfig;
-import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.test.TestMain;
+import com.google.inject.Injector;
 import org.apache.commons.lang3.StringUtils;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
@@ -57,7 +58,7 @@ public class TagWebhookTest {
     @BeforeSuite
     public void initialize() {
         try {
-            Integration.startAwsHub();
+            Injector injector = TestMain.start();
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProperties;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.app.LocalHostOnly;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Dao;
@@ -12,13 +11,24 @@ import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.HubUtils;
 import com.google.common.base.Optional;
-import com.google.inject.TypeLiteral;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.*;
-import javax.ws.rs.core.*;
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.Map;
 import java.util.TreeMap;
@@ -29,17 +39,35 @@ import static com.flightstats.hub.util.StaleUtil.addStaleEntities;
 @Path("/internal/channel")
 public class InternalChannelResource {
 
-    public static final String DESCRIPTION = "Delete, refresh, and check the staleness of channels.";
+    public final static String DESCRIPTION = "Delete, refresh, and check the staleness of channels.";
     private final static Logger logger = LoggerFactory.getLogger(InternalChannelResource.class);
-    private final static Dao<ChannelConfig> channelConfigDao = HubProvider.getInstance(
-            new TypeLiteral<Dao<ChannelConfig>>() {
-            }, "ChannelConfig");
-    private final static HubUtils hubUtils = HubProvider.getInstance(HubUtils.class);
-    private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
-    private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private static final Long DEFAULT_STALE_AGE = TimeUnit.DAYS.toMinutes(1);
+    private final static Long DEFAULT_STALE_AGE = TimeUnit.DAYS.toMinutes(1);
+
+    private final Dao<ChannelConfig> channelConfigDao;
+    private final HubUtils hubUtils;
+    private final HubProperties hubProperties;
+    private final ChannelService channelService;
+    private final ChannelResource channelResource;
+    private final ObjectMapper mapper;
+
     @Context
     private UriInfo uriInfo;
+
+    @Inject
+    InternalChannelResource(@Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao,
+                            ChannelService channelService,
+                            ChannelResource channelResource,
+                            ObjectMapper mapper,
+                            HubUtils hubUtils,
+                            HubProperties hubProperties)
+    {
+        this.channelConfigDao = channelConfigDao;
+        this.channelService = channelService;
+        this.channelResource = channelResource;
+        this.mapper = mapper;
+        this.hubUtils = hubUtils;
+        this.hubProperties = hubProperties;
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -83,14 +111,14 @@ public class InternalChannelResource {
     public Response delete(@PathParam("channel") final String channelName) throws Exception {
         ChannelConfig channelConfig = channelService.getChannelConfig(channelName, false);
         if (channelConfig == null) {
-            return ChannelResource.notFound(channelName);
+            return channelResource.notFound(channelName);
         }
-        if (HubProperties.isProtected()) {
+        if (hubProperties.isProtected()) {
             logger.info("using internal localhost only to delete {}", channelName);
-            return LocalHostOnly.getResponse(uriInfo, () -> ChannelResource.deletion(channelName));
+            return LocalHostOnly.getResponse(uriInfo, () -> channelResource.deletion(channelName));
         }
         logger.info("using internal delete {}", channelName);
-        return ChannelResource.deletion(channelName);
+        return channelResource.deletion(channelName);
     }
 
     @GET

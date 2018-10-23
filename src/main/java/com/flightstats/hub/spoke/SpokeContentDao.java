@@ -11,11 +11,11 @@ import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.Commander;
 import com.google.common.base.Optional;
-import com.google.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
 import java.util.List;
@@ -24,19 +24,22 @@ import java.util.TreeSet;
 import java.util.function.Function;
 
 public class SpokeContentDao {
+
     private static final Logger logger = LoggerFactory.getLogger(SpokeContentDao.class);
 
     static final String GET_OLDEST_ITEM_COMMAND = "find %s -type f -printf '%%T+ %%p\\n' | sort | head -n 1";
     static final String GET_ITEM_COUNT_COMMAND = "find %s -type f | wc -l";
 
     private final Commander commander;
+    private final HubProperties hubProperties;
 
     @Inject
-    public SpokeContentDao(Commander commander) {
+    public SpokeContentDao(Commander commander, HubProperties hubProperties) {
         this.commander = commander;
+        this.hubProperties = hubProperties;
     }
 
-    public static SortedSet<ContentKey> insert(BulkContent bulkContent, Function<ByteArrayOutputStream, Boolean> inserter) throws Exception {
+    public SortedSet<ContentKey> insert(BulkContent bulkContent, Function<ByteArrayOutputStream, Boolean> inserter) throws Exception {
         Traces traces = ActiveTraces.getLocal();
         traces.add("writeBulk");
         String channelName = bulkContent.getChannel();
@@ -76,7 +79,7 @@ public class SpokeContentDao {
     }
 
     Optional<ChannelContentKey> getOldestItem(SpokeStore store) {
-        String storePath = HubProperties.getSpokePath(store);
+        String storePath = hubProperties.getSpokePath(store);
         logger.trace("getting oldest item from " + storePath);
         // expected result format: YYYY-MM-DD+HH:MM:SS.SSSSSSSSSS /mnt/spoke/store/channel/yyyy/mm/dd/hh/mm/ssSSShash
         String command = String.format(GET_OLDEST_ITEM_COMMAND, storePath);
@@ -91,7 +94,7 @@ public class SpokeContentDao {
     }
 
     long getNumberOfItems(SpokeStore spokeStore) {
-        String storePath = HubProperties.getSpokePath(spokeStore);
+        String storePath = hubProperties.getSpokePath(spokeStore);
         logger.trace("getting the total number of items in " + storePath);
         String command = String.format(GET_ITEM_COUNT_COMMAND, storePath);
         int waitTimeSeconds = 1;

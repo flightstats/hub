@@ -4,13 +4,29 @@ import com.amazonaws.AmazonWebServiceRequest;
 import com.amazonaws.SdkClientException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.S3ResponseMetadata;
-import com.amazonaws.services.s3.model.*;
+import com.amazonaws.services.s3.model.AbortMultipartUploadRequest;
+import com.amazonaws.services.s3.model.CompleteMultipartUploadRequest;
+import com.amazonaws.services.s3.model.CompleteMultipartUploadResult;
+import com.amazonaws.services.s3.model.DeleteObjectRequest;
+import com.amazonaws.services.s3.model.DeleteObjectsRequest;
+import com.amazonaws.services.s3.model.DeleteObjectsResult;
+import com.amazonaws.services.s3.model.GetObjectRequest;
+import com.amazonaws.services.s3.model.InitiateMultipartUploadRequest;
+import com.amazonaws.services.s3.model.InitiateMultipartUploadResult;
+import com.amazonaws.services.s3.model.ListObjectsRequest;
+import com.amazonaws.services.s3.model.ObjectListing;
+import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.s3.model.PutObjectResult;
+import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.SetBucketLifecycleConfigurationRequest;
+import com.amazonaws.services.s3.model.UploadPartRequest;
+import com.amazonaws.services.s3.model.UploadPartResult;
 import com.flightstats.hub.metrics.MetricsService;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -21,22 +37,15 @@ public class HubS3Client {
 
     private final static Logger logger = LoggerFactory.getLogger(HubS3Client.class);
 
-    @Inject
-    private AmazonS3 s3Client;
+    private final S3BucketName s3BucketName;
+    private final AmazonS3 s3Client;
+    private final MetricsService metricsService;
 
     @Inject
-    private MetricsService metricsService;
-
-    @Inject
-    private S3BucketName s3BucketName;
-
     public HubS3Client(S3BucketName s3BucketName, AmazonS3 s3Client, MetricsService metricsService) {
         this.s3BucketName = s3BucketName;
         this.s3Client = s3Client;
         this.metricsService = metricsService;
-    }
-
-    public HubS3Client() {
     }
 
     public void initialize() {

@@ -8,14 +8,19 @@ import com.flightstats.hub.exception.FailedQueryException;
 import com.flightstats.hub.exception.FailedWriteException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.BulkContent;
+import com.flightstats.hub.model.Content;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.TimeUtil;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
-import com.google.inject.Inject;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.util.Collections;
 import java.util.Set;
 import java.util.SortedSet;
@@ -31,14 +36,25 @@ public class SpokeWriteContentDao implements ContentDao {
 
     private final static Logger logger = LoggerFactory.getLogger(SpokeWriteContentDao.class);
 
+    private final SpokeContentDao spokeContentDao;
+    private final RemoteSpokeStore remoteSpokeStore;
+    private final HubProperties hubProperties;
+
     @Inject
-    private RemoteSpokeStore spokeStore;
+    SpokeWriteContentDao(SpokeContentDao spokeContentDao,
+                         RemoteSpokeStore remoteSpokeStore,
+                         HubProperties hubProperties)
+    {
+        this.spokeContentDao = spokeContentDao;
+        this.remoteSpokeStore = remoteSpokeStore;
+        this.hubProperties = hubProperties;
+    }
 
     @Override
     public ContentKey insert(String channelName, Content content) throws Exception {
         ContentKey key = content.getContentKey().get();
         String path = getPath(channelName, key);
-        if (!spokeStore.insert(SpokeStore.WRITE, path, content.getData(), "payload", channelName)) {
+        if (!remoteSpokeStore.insert(SpokeStore.WRITE, path, content.getData(), "payload", channelName)) {
             throw new FailedWriteException("unable to write to spoke " + path);
         }
         return key;
@@ -46,13 +62,14 @@ public class SpokeWriteContentDao implements ContentDao {
 
     @Override
     public SortedSet<ContentKey> insert(BulkContent bulkContent) throws Exception {
-        return SpokeContentDao.insert(bulkContent, (baos) -> {
+        return spokeContentDao.insert(bulkContent, (baos) -> {
             String channel = bulkContent.getChannel();
-            return spokeStore.insert(SpokeStore.WRITE, channel, baos.toByteArray(), "bulkKey", channel);
+            return remoteSpokeStore.insert(SpokeStore.WRITE, channel, baos.toByteArray(), "bulkKey", channel);
         });
     }
 
-    private String getPath(String channelName, ContentKey key) {
+    @VisibleForTesting
+    protected String getPath(String channelName, ContentKey key) {
         return channelName + "/" + key.toUrl();
     }
 
@@ -62,7 +79,7 @@ public class SpokeWriteContentDao implements ContentDao {
         Traces traces = ActiveTraces.getLocal();
         traces.add("SpokeWriteContentDao.read");
         try {
-            return spokeStore.get(SpokeStore.WRITE, path, key);
+            return remoteSpokeStore.get(SpokeStore.WRITE, path, key);
         } catch (Exception e) {
             logger.warn("unable to get data: " + path, e);
             return null;
@@ -77,7 +94,7 @@ public class SpokeWriteContentDao implements ContentDao {
         logger.trace("latest {} {}", channel, path);
         traces.add("SpokeWriteContentDao.latest", channel, path);
         try {
-            Optional<ContentKey> key = spokeStore.getLatest(channel, path, traces);
+            Optional<ContentKey> key = remoteSpokeStore.getLatest(channel, path, traces);
             traces.add("SpokeWriteContentDao.latest", key);
             return key;
         } catch (Exception e) {
@@ -112,10 +129,10 @@ public class SpokeWriteContentDao implements ContentDao {
     private SortedSet<ContentKey> queryByTimeKeys(TimeQuery query) {
         try {
             String timePath = query.getUnit().format(query.getStartTime());
-            QueryResult queryResult = spokeStore.readTimeBucket(SpokeStore.WRITE, query.getChannelName(), timePath);
+            QueryResult queryResult = remoteSpokeStore.readTimeBucket(SpokeStore.WRITE, query.getChannelName(), timePath);
             ActiveTraces.getLocal().add("spoke query result", queryResult);
             if (!queryResult.hadSuccess()) {
-                QueryResult retryResult = spokeStore.readTimeBucket(SpokeStore.WRITE, query.getChannelName(), timePath);
+                QueryResult retryResult = remoteSpokeStore.readTimeBucket(SpokeStore.WRITE, query.getChannelName(), timePath);
                 ActiveTraces.getLocal().add("spoke query retryResult", retryResult);
                 if (!retryResult.hadSuccess()) {
                     ActiveTraces.getLocal().log(logger);
@@ -135,9 +152,9 @@ public class SpokeWriteContentDao implements ContentDao {
 
     @Override
     public SortedSet<ContentKey> query(DirectionQuery query) {
-        int ttlMinutes = HubProperties.getSpokeTtlMinutes(SpokeStore.WRITE);
+        int ttlMinutes = hubProperties.getSpokeTtlMinutes(SpokeStore.WRITE);
         DateTime spokeTtlTime = TimeUtil.BIG_BANG;
-        if (HubProperties.getProperty("spoke.enforceTTL", true)) {
+        if (hubProperties.getProperty("spoke.enforceTTL", true)) {
             spokeTtlTime = query.getChannelStable().minusMinutes(ttlMinutes);
             if (query.getChannelConfig().isLive()) {
                 if (query.getStartKey().getTime().isBefore(spokeTtlTime)) {
@@ -151,7 +168,7 @@ public class SpokeWriteContentDao implements ContentDao {
         SortedSet<ContentKey> contentKeys = Collections.emptySortedSet();
         if (query.isNext()) {
             try {
-                contentKeys = spokeStore.getNext(query.getChannelName(), query.getCount(), query.getStartKey().toUrl());
+                contentKeys = remoteSpokeStore.getNext(query.getChannelName(), query.getCount(), query.getStartKey().toUrl());
             } catch (InterruptedException e) {
                 logger.warn("what happened? " + query, e);
             }
@@ -179,7 +196,7 @@ public class SpokeWriteContentDao implements ContentDao {
     @Override
     public void delete(String channelName) {
         try {
-            spokeStore.delete(SpokeStore.WRITE, channelName);
+            remoteSpokeStore.delete(SpokeStore.WRITE, channelName);
         } catch (Exception e) {
             logger.warn("unable to delete " + channelName, e);
         }

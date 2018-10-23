@@ -2,9 +2,11 @@ package com.flightstats.hub.app;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.flightstats.hub.cluster.Cluster;
+import com.flightstats.hub.cluster.CuratorCluster;
 import org.apache.commons.lang3.StringUtils;
 
+import javax.inject.Inject;
+import javax.inject.Named;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -15,13 +17,19 @@ import javax.ws.rs.core.UriInfo;
 import java.util.ArrayList;
 import java.util.Set;
 
-@SuppressWarnings("WeakerAccess")
 @Path("/internal/deploy")
 public class InternalDeployResource {
-    public static final String DESCRIPTION = "Get a list of hubs to deploy to in a cluster.";
-    private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
 
-    private static final Cluster curatorCluster = HubProvider.getInstance(Cluster.class, "HubCluster");
+    public static final String DESCRIPTION = "Get a list of hubs to deploy to in a cluster.";
+
+    private final ObjectMapper mapper;
+    private final CuratorCluster curatorCluster;
+
+    @Inject
+    InternalDeployResource(ObjectMapper mapper, @Named("HubCluster") CuratorCluster curatorCluster) {
+        this.mapper = mapper;
+        this.curatorCluster = curatorCluster;
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

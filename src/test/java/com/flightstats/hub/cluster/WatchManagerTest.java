@@ -1,7 +1,7 @@
 package com.flightstats.hub.cluster;
 
-import com.flightstats.hub.test.Integration;
-import org.apache.curator.framework.CuratorFramework;
+import com.flightstats.hub.test.TestMain;
+import com.google.inject.Injector;
 import org.apache.curator.framework.api.CuratorEvent;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -18,9 +18,10 @@ public class WatchManagerTest {
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        CuratorFramework curator = Integration.startZooKeeper();
-        watchManager = new WatchManager(curator);
-        watchManager.addCuratorListener();
+//        CuratorFramework curator = TestApplication.startZooKeeper();
+//        watchManager = new WatchManager(curator);
+//        watchManager.addCuratorListener();
+        Injector injector = TestMain.start();
     }
 
     @Test

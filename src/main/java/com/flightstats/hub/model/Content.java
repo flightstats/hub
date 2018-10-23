@@ -1,6 +1,5 @@
 package com.flightstats.hub.model;
 
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.util.HubUtils;
@@ -10,13 +9,16 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Serializable;
 
 public class Content implements Serializable {
     private final static Logger logger = LoggerFactory.getLogger(Content.class);
 
     private static final long serialVersionUID = 1L;
-    public static final int THREADS = HubProperties.getProperty("s3.large.threads", 3);
 
     private final Optional<String> contentType;
     //contentLength is the number of bytes in the total compressed payload (meta & item)
@@ -27,7 +29,6 @@ public class Content implements Serializable {
     //size is the number of bytes in the raw, uncompressed item
     private Long size;
     private transient boolean isLarge;
-    private transient int threads;
     private transient boolean isHistorical;
     private boolean forceWrite;
     private boolean replicated;
@@ -37,7 +38,6 @@ public class Content implements Serializable {
         contentType = builder.contentType;
         stream = builder.stream;
         contentLength = builder.contentLength;
-        threads = Math.max(THREADS, builder.threads);
         forceWrite = builder.forceWrite;
         isLarge = builder.large;
         size = builder.size;
@@ -53,7 +53,7 @@ public class Content implements Serializable {
 
     public boolean isIndexForLarge() {
         return getContentType().isPresent()
-                && getContentType().get().equals(LargeContent.CONTENT_TYPE);
+                && getContentType().get().equals(LargeContentUtil.CONTENT_TYPE);
     }
 
     public ContentKey keyAndStart(DateTime effectiveNow) {
@@ -103,9 +103,7 @@ public class Content implements Serializable {
     }
 
     public void packageStream() throws IOException {
-        if (isLarge || contentLength >= HubProperties.getLargePayload()) {
-            isLarge = true;
-        } else {
+        if (!isLarge) {
             data = ContentMarshaller.toBytes(this);
             stream = null;
         }
@@ -156,10 +154,6 @@ public class Content implements Serializable {
         return this.isLarge;
     }
 
-    public int getThreads() {
-        return this.threads;
-    }
-
     public boolean equals(Object o) {
         if (o == this) return true;
         if (!(o instanceof Content)) return false;
@@ -204,7 +198,6 @@ public class Content implements Serializable {
         contentBuilder.withSize(content.getSize());
         contentBuilder.withForceWrite(content.isForceWrite());
         contentBuilder.withLarge(content.isLarge());
-        contentBuilder.withThreads(content.getThreads());
 
         return contentBuilder.build();
     }
@@ -215,7 +208,6 @@ public class Content implements Serializable {
         private Long size;
         private Optional<ContentKey> contentKey = Optional.absent();
         private InputStream stream;
-        private int threads;
         private boolean forceWrite;
         private boolean large;
 
@@ -253,11 +245,6 @@ public class Content implements Serializable {
             return new Content(this);
         }
 
-        public Builder withThreads(int threads) {
-            this.threads = threads;
-            return this;
-        }
-
         public Builder withForceWrite(boolean forceWrite) {
             this.forceWrite = forceWrite;
             return this;
@@ -286,10 +273,6 @@ public class Content implements Serializable {
 
         public InputStream getStream() {
             return this.stream;
-        }
-
-        public int getThreads() {
-            return this.threads;
         }
     }
 }

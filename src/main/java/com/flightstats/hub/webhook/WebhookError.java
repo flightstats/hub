@@ -2,6 +2,7 @@ package com.flightstats.hub.webhook;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.util.RequestUtils;
@@ -41,11 +42,13 @@ class WebhookError {
 
     private final CuratorFramework curator;
     private final ChannelService channelService;
+    private final HubProperties hubProperties;
 
     @Inject
-    public WebhookError(CuratorFramework curator, ChannelService channelService) {
+    public WebhookError(CuratorFramework curator, ChannelService channelService, HubProperties hubProperties) {
         this.curator = curator;
         this.channelService = channelService;
+        this.hubProperties = hubProperties;
     }
 
     public void add(String webhook, String error) {
@@ -124,9 +127,11 @@ class WebhookError {
 
         String error = errors.get(errors.size() - 1);
         byte[] bytes = buildPayload(attempt, error);
+        long contentLength = (long) bytes.length;
         Content content = Content.builder()
                 .withContentType("application/json")
-                .withContentLength((long) bytes.length)
+                .withContentLength(contentLength)
+                .withLarge(contentLength >= hubProperties.getLargePayload())
                 .withData(bytes)
                 .build();
 

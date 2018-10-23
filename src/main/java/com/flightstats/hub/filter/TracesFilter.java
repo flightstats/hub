@@ -1,12 +1,12 @@
 package com.flightstats.hub.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flightstats.hub.app.HubBindings;
 import com.flightstats.hub.metrics.ActiveTraces;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.ContainerResponseContext;
@@ -19,7 +19,13 @@ import java.net.URI;
 public class TracesFilter implements ContainerRequestFilter, ContainerResponseFilter {
 
     private final static Logger logger = LoggerFactory.getLogger(TracesFilter.class);
-    private static final ObjectMapper mapper = HubBindings.objectMapper();
+
+    private final ObjectMapper mapper;
+
+    @Inject
+    TracesFilter(ObjectMapper mapper) {
+        this.mapper = mapper;
+    }
 
     @Override
     public void filter(ContainerRequestContext request, ContainerResponseContext response) throws IOException {

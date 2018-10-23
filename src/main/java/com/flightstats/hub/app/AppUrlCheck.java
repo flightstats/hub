@@ -1,36 +1,38 @@
 package com.flightstats.hub.app;
 
-import com.flightstats.hub.cluster.Cluster;
-import com.flightstats.hub.rest.RestClient;
+import com.flightstats.hub.cluster.CuratorCluster;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
-import com.google.inject.name.Named;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 
 @Singleton
 class AppUrlCheck extends AbstractIdleService {
 
     private final static Logger logger = LoggerFactory.getLogger(AppUrlCheck.class);
 
+    private final CuratorCluster curatorCluster;
+    private final Client httpClient;
+    private final HubProperties hubProperties;
+
     @Inject
-    @Named("HubCluster")
-    private Cluster cluster;
-
-    private Client client = RestClient.createClient(1000, 1000, true, true);
-
-    public AppUrlCheck() {
+    public AppUrlCheck(@Named("HubCluster") CuratorCluster curatorCluster, Client httpClient, HubProperties hubProperties) {
+        this.curatorCluster = curatorCluster;
+        this.httpClient = httpClient;
+        this.hubProperties = hubProperties;
         HubServices.register(this);
     }
 
     @Override
-    protected void startUp() throws Exception {
+    protected void startUp() {
         if (hasHealthyServers()) {
-            String appUrl = HubProperties.getAppUrl();
-            ClientResponse response = client.resource(appUrl).get(ClientResponse.class);
+            String appUrl = hubProperties.getAppUrl();
+            ClientResponse response = httpClient.resource(appUrl).get(ClientResponse.class);
             logger.info("got response {}", response);
             if (response.getStatus() != 200) {
                 String msg = "unable to connect to app.url " + appUrl + " status=" + response.getStatus();
@@ -43,10 +45,10 @@ class AppUrlCheck extends AbstractIdleService {
     }
 
     private boolean hasHealthyServers() {
-        for (String server : cluster.getAllServers()) {
+        for (String server : curatorCluster.getAllServers()) {
             String serverUri = HubHost.getScheme() + server;
             if (!serverUri.equals(HubHost.getLocalHttpNameUri())) {
-                ClientResponse response = client.resource(serverUri + "/health").get(ClientResponse.class);
+                ClientResponse response = httpClient.resource(serverUri + "/health").get(ClientResponse.class);
                 logger.info("got response {}", response);
                 if (response.getStatus() == 200) {
                     return true;

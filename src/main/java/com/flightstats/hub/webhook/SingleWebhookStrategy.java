@@ -3,12 +3,15 @@ package com.flightstats.hub.webhook;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.ContentPath;
+import com.flightstats.hub.model.MinutePath;
+import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
@@ -19,14 +22,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
-import java.util.concurrent.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 class SingleWebhookStrategy implements WebhookStrategy {
 
     private final static Logger logger = LoggerFactory.getLogger(SingleWebhookStrategy.class);
-    private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private final ObjectMapper mapper;
     private final Webhook webhook;
     private final LastContentPath lastContentPath;
     private final ChannelService channelService;
@@ -38,7 +46,8 @@ class SingleWebhookStrategy implements WebhookStrategy {
     private ExecutorService executorService;
 
 
-    SingleWebhookStrategy(Webhook webhook, LastContentPath lastContentPath, ChannelService channelService) {
+    SingleWebhookStrategy(ObjectMapper mapper, Webhook webhook, LastContentPath lastContentPath, ChannelService channelService) {
+        this.mapper = mapper;
         this.webhook = webhook;
         this.lastContentPath = lastContentPath;
         this.channelService = channelService;

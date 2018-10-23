@@ -3,6 +3,7 @@ package com.flightstats.hub.ws;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import javax.websocket.OnClose;
 import javax.websocket.OnError;
 import javax.websocket.OnOpen;
@@ -14,9 +15,14 @@ import java.io.IOException;
 @ServerEndpoint(value = "/channel/{channel}/ws")
 public class WebSocketChannelEndpoint {
 
-    private static final WebSocketService webSocketService = WebSocketService.getInstance();
-
     private final static Logger logger = LoggerFactory.getLogger(WebSocketChannelEndpoint.class);
+
+    private final WebSocketService webSocketService;
+
+    @Inject
+    WebSocketChannelEndpoint(WebSocketService webSocketService) {
+        this.webSocketService = webSocketService;
+    }
 
     @OnOpen
     public void onOpen(Session session, @PathParam("channel") String channel) throws IOException {

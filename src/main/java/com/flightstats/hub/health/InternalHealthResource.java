@@ -3,12 +3,12 @@ package com.flightstats.hub.health;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.metrics.InternalTracesResource;
 import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.HubUtils;
 import com.sun.jersey.api.client.ClientResponse;
 
+import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -17,18 +17,27 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-@SuppressWarnings("WeakerAccess")
 @Path("/internal/health")
 public class InternalHealthResource {
+
     public static final String DESCRIPTION = "See status of all hubs in a cluster.";
-    private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+
+    private final ObjectMapper mapper;
+    private final InternalTracesResource internalTracesResource;
+
     @Context
     private UriInfo uriInfo;
+
+    @Inject
+    InternalHealthResource(ObjectMapper mapper, InternalTracesResource internalTracesResource) {
+        this.mapper = mapper;
+        this.internalTracesResource = internalTracesResource;
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response checkHealth(@Context UriInfo uriInfo) {
-        ObjectNode healthRoot = InternalTracesResource.serverAndServers("/health");
+        ObjectNode healthRoot = internalTracesResource.serverAndServers("/health");
         ObjectNode root = mapper.createObjectNode();
         JsonNode servers = healthRoot.get("servers");
         for (JsonNode server : servers) {
@@ -50,6 +59,5 @@ public class InternalHealthResource {
             HubUtils.close(response);
         }
     }
-
 
 }

@@ -1,8 +1,7 @@
 package com.flightstats.hub.dao.aws;
 
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.model.ChannelConfig;
-import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.test.TestMain;
 import com.google.inject.Injector;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -18,9 +17,8 @@ public class DynamoChannelConfigDaoTest {
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        logger.info("setting up ...");
-        Injector injector = Integration.startAwsHub();
-        channelConfigDao = HubProvider.getInstance(DynamoChannelConfigDao.class);
+        Injector injector = TestMain.start();
+        channelConfigDao = injector.getInstance(DynamoChannelConfigDao.class);
         channelConfigDao.initialize();
     }
 

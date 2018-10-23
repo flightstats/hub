@@ -4,17 +4,16 @@ import com.flightstats.hub.util.TimeUtil;
 import com.google.common.collect.Sets;
 import org.joda.time.DateTime;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class ChannelConfigTest {
-    private static final Logger logger = LoggerFactory.getLogger(ChannelConfigTest.class);
 
     @Test
     public void testDefaults() throws Exception {
@@ -23,11 +22,6 @@ public class ChannelConfigTest {
         ChannelConfig copy = config.toBuilder().build();
         assertDefaults(copy);
         assertTrue(config.equals(copy));
-    }
-
-    @Test
-    public void testJsonDefaults() throws Exception {
-        assertDefaults(ChannelConfig.createFromJson("{\"name\": \"defaults\"}"));
     }
 
     private void assertDefaults(ChannelConfig config) {
@@ -121,66 +115,6 @@ public class ChannelConfigTest {
 
         ChannelConfig tags = hasCheez.toBuilder().tags(Sets.newHashSet("one", "two")).build();
         assertFalse(tags.equals(defaults));
-    }
-
-    @Test
-    public void testCopy() throws IOException {
-        ChannelConfig config = ChannelConfig.builder()
-                .owner("ABC")
-                .description("something something")
-                .ttlDays(15)
-                .maxItems(5)
-                .tags(Arrays.asList("uno", "dos"))
-                .replicationSource("theSources")
-                .storage("whyNotEnum?")
-                .protect(false)
-                .mutableTime(TimeUtil.now())
-                .allowZeroBytes(false)
-                .build();
-        assertTrue(config.equals(config.toBuilder().build()));
-
-        assertTrue(config.equals(ChannelConfig.createFromJson(config.toJson())));
-    }
-
-    @Test
-    public void testEnforceChannelRetention() throws IOException {
-        ChannelConfig config = ChannelConfig.builder()
-                .owner("ABC")
-                .description("something something")
-                .ttlDays(15)
-                .maxItems(5)
-                .tags(Arrays.asList("uno", "dos"))
-                .replicationSource("theSources")
-                .storage("whyNotEnum?")
-                .protect(false)
-                .allowZeroBytes(false)
-                .build();
-
-        ChannelConfig config2 = ChannelConfig.builder()
-                .owner("ABC")
-                .description("something something")
-                .keepForever(true)
-                .ttlDays(15)
-                .build();
-        ChannelConfig updated = ChannelConfig.updateFromJson(config, config2.toJson());
-        assertEquals(0, updated.getMaxItems());
-        assertEquals(0, updated.getTtlDays());
-    }
-
-    @Test
-    public void testMutableTime() throws Exception {
-        ChannelConfig defaults = ChannelConfig.builder().name("defaults").build();
-        DateTime mutableTime = TimeUtil.now();
-        ChannelConfig channelConfig = defaults.toBuilder().mutableTime(mutableTime).build();
-        assertEquals(mutableTime, channelConfig.getMutableTime());
-
-        String json = channelConfig.toJson();
-        ChannelConfig updated = ChannelConfig.updateFromJson(defaults, json);
-        assertEquals(mutableTime, updated.getMutableTime());
-
-        ChannelConfig createdFromJson = ChannelConfig.createFromJson(updated.toJson());
-        assertEquals(updated, createdFromJson);
-
     }
 
     @Test

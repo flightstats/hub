@@ -3,27 +3,46 @@ package com.flightstats.hub.channel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.TagService;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.ChannelContentKey;
+import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.Epoch;
+import com.flightstats.hub.model.Location;
+import com.flightstats.hub.model.Order;
 
-import javax.ws.rs.*;
+import javax.inject.Inject;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.SortedSet;
 
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 
-@SuppressWarnings("WeakerAccess")
 @Path("/tag/{tag}/earliest")
 public class TagEarliestResource {
 
-    private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private final static TagService tagService = HubProvider.getInstance(TagService.class);
+    private final ObjectMapper mapper;
+    private final TagService tagService;
+
+    @Inject
+    TagEarliestResource(TagService tagService, ObjectMapper mapper) {
+        this.tagService = tagService;
+        this.mapper = mapper;
+    }
 
     @GET
     public Response getEarliest(@PathParam("tag") String tag,

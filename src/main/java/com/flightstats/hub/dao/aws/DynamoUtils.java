@@ -2,13 +2,21 @@ package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.dynamodbv2.model.*;
+import com.amazonaws.services.dynamodbv2.model.AttributeDefinition;
+import com.amazonaws.services.dynamodbv2.model.CreateTableRequest;
+import com.amazonaws.services.dynamodbv2.model.KeySchemaElement;
+import com.amazonaws.services.dynamodbv2.model.KeyType;
+import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
+import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughputDescription;
+import com.amazonaws.services.dynamodbv2.model.ResourceNotFoundException;
+import com.amazonaws.services.dynamodbv2.model.ScalarAttributeType;
+import com.amazonaws.services.dynamodbv2.model.TableDescription;
+import com.amazonaws.services.dynamodbv2.model.TableStatus;
 import com.flightstats.hub.app.HubProperties;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -20,14 +28,15 @@ public class DynamoUtils {
     private final String environment;
     private final String appName;
     private final int tableCreationWaitMinutes;
+    private final HubProperties hubProperties;
 
     @Inject
-    public DynamoUtils(AmazonDynamoDB dbClient,
-                       @Named("app.environment") String environment, @Named("app.name") String appName) {
+    public DynamoUtils(AmazonDynamoDB dbClient, HubProperties hubProperties) {
         this.dbClient = dbClient;
-        this.environment = environment;
-        this.appName = appName;
-        this.tableCreationWaitMinutes = HubProperties.getProperty("dynamo.table_creation_wait_minutes", 10);
+        this.environment = hubProperties.getProperty("app.environment");
+        this.appName = hubProperties.getProperty("app.name");
+        this.tableCreationWaitMinutes = hubProperties.getProperty("dynamo.table_creation_wait_minutes", 10);
+        this.hubProperties = hubProperties;
     }
 
     String getLegacyTableName(String baseTableName) {
@@ -53,8 +62,8 @@ public class DynamoUtils {
     }
 
     ProvisionedThroughput getProvisionedThroughput(String type) {
-        long readThroughput = HubProperties.getProperty("dynamo.throughput." + type + ".read", 100);
-        long writeThroughput = HubProperties.getProperty("dynamo.throughput." + type + ".write", 10);
+        long readThroughput = hubProperties.getProperty("dynamo.throughput." + type + ".read", 100);
+        long writeThroughput = hubProperties.getProperty("dynamo.throughput." + type + ".write", 10);
         return new ProvisionedThroughput(readThroughput, writeThroughput);
     }
 

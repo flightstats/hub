@@ -1,13 +1,23 @@
 package com.flightstats.hub.channel;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.Epoch;
+import com.flightstats.hub.model.Location;
+import com.flightstats.hub.model.Order;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.*;
+import javax.inject.Inject;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -22,14 +32,19 @@ import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 @Path("/channel/{channel}/earliest")
 public class ChannelEarliestResource {
 
-    private final static Logger logger = LoggerFactory.getLogger(ChannelEarliestResource.class);
-
     @Context
     private UriInfo uriInfo;
 
-    private final static TagEarliestResource tagEarliestResource = HubProvider.getInstance(TagEarliestResource.class);
-    private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
+    private final TagEarliestResource tagEarliestResource;
+    private final ObjectMapper mapper;
+    private final ChannelService channelService;
+
+    @Inject
+    ChannelEarliestResource(TagEarliestResource tagEarliestResource, ObjectMapper mapper, ChannelService channelService) {
+        this.tagEarliestResource = tagEarliestResource;
+        this.mapper = mapper;
+        this.channelService = channelService;
+    }
 
     @GET
     public Response getEarliest(@PathParam("channel") String channel,

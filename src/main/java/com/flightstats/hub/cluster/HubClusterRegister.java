@@ -2,9 +2,10 @@ package com.flightstats.hub.cluster;
 
 import com.flightstats.hub.app.HubServices;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
-import com.google.inject.name.Named;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 
 /**
  * The HubCuratorCluster uses the fully qualifed domain name of each host.
@@ -13,23 +14,23 @@ import com.google.inject.name.Named;
 @Singleton
 public class HubClusterRegister {
 
-    @Inject
-    @Named("HubCuratorCluster")
-    private CuratorCluster hubCuratorCluster;
+    private final CuratorCluster hubCuratorCluster;
 
-    public HubClusterRegister() {
+    @Inject
+    public HubClusterRegister(@Named("HubCluster") CuratorCluster hubCuratorCluster) {
+        this.hubCuratorCluster = hubCuratorCluster;
         HubServices.register(new CuratorClusterHook(), HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
     }
 
     private class CuratorClusterHook extends AbstractIdleService {
         @Override
-        protected void startUp() throws Exception {
+        protected void startUp() {
             hubCuratorCluster.addCacheListener();
             hubCuratorCluster.register();
         }
 
         @Override
-        protected void shutDown() throws Exception {
+        protected void shutDown() {
             hubCuratorCluster.delete();
         }
     }

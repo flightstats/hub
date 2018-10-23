@@ -1,11 +1,11 @@
 package com.flightstats.hub.time;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.app.LocalHostOnly;
 import com.flightstats.hub.metrics.InternalTracesResource;
 import com.flightstats.hub.util.TimeUtil;
 
+import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -15,20 +15,28 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-@SuppressWarnings("WeakerAccess")
 @Path("/internal/time")
 public class InternalTimeResource {
 
     public static final String DESCRIPTION = "Links for managing time in a hub cluster.";
-    private final static TimeService timeService = HubProvider.getInstance(TimeService.class);
+
+    private final TimeService timeService;
+    private final InternalTracesResource internalTracesResource;
+
     @Context
     private UriInfo uriInfo;
+
+    @Inject
+    InternalTimeResource(TimeService timeService, InternalTracesResource internalTracesResource) {
+        this.timeService = timeService;
+        this.internalTracesResource = internalTracesResource;
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response get() {
 
-        ObjectNode root = InternalTracesResource.serverAndServers("/internal/time");
+        ObjectNode root = internalTracesResource.serverAndServers("/internal/time");
         root.put("description", DESCRIPTION);
         root.put("details", "There are occasions when we know a particular hub system will not have the correct cluster " +
                 "time.  This interface allows an admin to tell a hub instance to use a remote system instead of trusting " +

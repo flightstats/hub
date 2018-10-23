@@ -11,6 +11,7 @@ import com.flightstats.hub.time.InternalTimeResource;
 import com.flightstats.hub.webhook.InternalWebhookResource;
 import org.apache.commons.lang3.StringUtils;
 
+import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -19,46 +20,48 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-@SuppressWarnings("WeakerAccess")
 @Path("/internal")
 public class InternalResource {
 
-    private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private final ObjectMapper mapper;
 
     @Context
     private UriInfo uriInfo;
-    private ObjectNode links;
-    private String requestUri;
+
+    @Inject
+    InternalResource(ObjectMapper mapper) {
+        this.mapper = mapper;
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getChannels() {
         ObjectNode root = mapper.createObjectNode();
         root.put("WARNING", "Internal APIs may change at any time. They are intended to be used interactively, and scripts might break at any time.");
-        links = root.with("_links");
+        ObjectNode links = root.with("_links");
 
-        requestUri = StringUtils.appendIfMissing(uriInfo.getRequestUri().toString(), "/");
+        String requestUri = StringUtils.appendIfMissing(uriInfo.getRequestUri().toString(), "/");
         links.with("self").put("href", requestUri);
 
-        addLink("channel", InternalChannelResource.DESCRIPTION);
-        addLink("cluster", InternalClusterResource.DESCRIPTION);
-        addLink("deploy", InternalDeployResource.DESCRIPTION);
-        addLink("health", InternalHealthResource.DESCRIPTION);
-        addLink("properties", InternalPropertiesResource.DESCRIPTION);
-        addLink("shutdown", InternalShutdownResource.DESCRIPTION);
-        addLink("stacktrace", InternalStacktraceResource.DESCRIPTION);
-        addLink("time", InternalTimeResource.DESCRIPTION);
-        addLink("traces", InternalTracesResource.DESCRIPTION);
-        addLink("webhook", InternalWebhookResource.DESCRIPTION);
-        addLink("zookeeper", InternalZookeeperResource.DESCRIPTION);
+        addLink(links, "channel", InternalChannelResource.DESCRIPTION, requestUri);
+        addLink(links, "cluster", InternalClusterResource.DESCRIPTION, requestUri);
+        addLink(links, "deploy", InternalDeployResource.DESCRIPTION, requestUri);
+        addLink(links, "health", InternalHealthResource.DESCRIPTION, requestUri);
+        addLink(links, "properties", InternalPropertiesResource.DESCRIPTION, requestUri);
+        addLink(links, "shutdown", InternalShutdownResource.DESCRIPTION, requestUri);
+        addLink(links, "stacktrace", InternalStacktraceResource.DESCRIPTION, requestUri);
+        addLink(links, "time", InternalTimeResource.DESCRIPTION, requestUri);
+        addLink(links, "traces", InternalTracesResource.DESCRIPTION, requestUri);
+        addLink(links, "webhook", InternalWebhookResource.DESCRIPTION, requestUri);
+        addLink(links, "zookeeper", InternalZookeeperResource.DESCRIPTION, requestUri);
+
         return Response.ok(root).build();
     }
 
-    private ObjectNode addLink(String name, String description) {
+    private void addLink(ObjectNode links, String name, String description, String requestUri) {
         ObjectNode node = links.with(name);
         node.put("description", description);
         node.put("href", requestUri + name);
-        return node;
     }
 
 }

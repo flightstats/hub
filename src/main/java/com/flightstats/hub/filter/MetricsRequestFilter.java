@@ -1,6 +1,5 @@
 package com.flightstats.hub.filter;
 
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.util.RequestUtils;
 import com.google.common.annotations.VisibleForTesting;
@@ -9,28 +8,36 @@ import org.glassfish.jersey.uri.UriTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
 import javax.ws.rs.ext.Provider;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
-/**
- * Filter class to handle intercepting requests and responses from the Hub and sending metrics
- */
 @Provider
 public class MetricsRequestFilter implements ContainerRequestFilter, ContainerResponseFilter {
 
     private static final Logger logger = LoggerFactory.getLogger(MetricsRequestFilter.class);
-    private static final MetricsService metricsService = HubProvider.getInstance(MetricsService.class);
     private static final ThreadLocal<RequestState> threadLocal = new ThreadLocal<>();
     private static final String CHARACTERS_TO_REMOVE = "[\\[\\]|.*+]";
     private static final String CHARACTERS_TO_REPLACE = "[:\\{\\}]";
+
+    private final MetricsService metricsService;
+
+    @Inject
+    MetricsRequestFilter(MetricsService metricsService) {
+        this.metricsService = metricsService;
+    }
 
     @Override
     public void filter(ContainerRequestContext request, ContainerResponseContext response) {
@@ -44,7 +51,7 @@ public class MetricsRequestFilter implements ContainerRequestFilter, ContainerRe
         }
     }
 
-    public static void finalStats() {
+    public void finalStats() {
         try {
             RequestState requestState = threadLocal.get();
             if (null == requestState) {

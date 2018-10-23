@@ -3,26 +3,28 @@ package com.flightstats.hub.health;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.spoke.SpokeFinalCheck;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Singleton
 public class HubHealthCheck {
+
     private final static Logger logger = LoggerFactory.getLogger(HubHealthCheck.class);
 
-    @Inject
-    private SpokeFinalCheck spokeFinalCheck;
-
+    private final SpokeFinalCheck spokeFinalCheck;
     private final AtomicBoolean shutdown = new AtomicBoolean(false);
     private final AtomicBoolean startup = new AtomicBoolean(true);
     private final AtomicBoolean decommissionedWithinSpoke = new AtomicBoolean(false);
     private final AtomicBoolean decommissionedDoNotRestart = new AtomicBoolean(false);
 
-    public HubHealthCheck() {
+    @Inject
+    public HubHealthCheck(SpokeFinalCheck spokeFinalCheck) {
+        this.spokeFinalCheck = spokeFinalCheck;
+
         HubServices.register(new HealthService(), HubServices.TYPE.PERFORM_HEALTH_CHECK);
     }
 
@@ -38,7 +40,7 @@ public class HubHealthCheck {
         }
 
         @Override
-        protected void shutDown() throws Exception {
+        protected void shutDown() {
             shutdown();
         }
     }

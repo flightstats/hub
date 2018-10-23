@@ -1,6 +1,7 @@
 package com.flightstats.hub.channel;
 
-import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.test.TestMain;
+import com.google.inject.Injector;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -12,7 +13,7 @@ public class ChannelContentResourceTest {
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        Integration.startAwsHub();
+        Injector injector = TestMain.start();
     }
 
     @Test

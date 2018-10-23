@@ -1,5 +1,6 @@
 package com.flightstats.hub.metrics;
 
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.util.Sleeper;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -16,6 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.mock;
 
 public class TopSetTest {
 
@@ -40,8 +42,9 @@ public class TopSetTest {
     }
 
     private void addTraces(int count, long start, TopSortedSet topSortedSet) {
+        HubProperties hubProperties = mock(HubProperties.class);
         for (int i = 0; i < count; i++) {
-            Traces traces = new Traces(i);
+            Traces traces = new Traces(hubProperties, i);
             traces.setStart(start - i);
             traces.setEnd(start);
             topSortedSet.add(traces);

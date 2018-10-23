@@ -1,7 +1,8 @@
 package com.flightstats.hub.cluster;
 
-import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.test.TestMain;
 import com.google.common.collect.Sets;
+import com.google.inject.Injector;
 import org.apache.curator.framework.CuratorFramework;
 import org.junit.Before;
 import org.junit.Test;
@@ -18,7 +19,8 @@ public class LongSetTest {
 
     @Before
     public void setUp() throws Exception {
-        curator = Integration.startZooKeeper();
+//        curator = TestApplication.startZooKeeper();
+        Injector injector = TestMain.start();
     }
 
     @Test

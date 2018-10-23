@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProperties;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.dao.ItemRequest;
@@ -16,7 +15,16 @@ import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.metrics.NewRelicIgnoreTransaction;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.Content;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.ContentPath;
+import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.Epoch;
+import com.flightstats.hub.model.InsertedContentKey;
+import com.flightstats.hub.model.Location;
+import com.flightstats.hub.model.Order;
+import com.flightstats.hub.model.SecondPath;
+import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.rest.Linked;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
@@ -30,34 +38,73 @@ import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.*;
-import javax.ws.rs.core.*;
+import javax.inject.Inject;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import static com.flightstats.hub.rest.Linked.linked;
-import static com.flightstats.hub.util.TimeUtil.*;
+import static com.flightstats.hub.util.TimeUtil.FORMATTER;
+import static com.flightstats.hub.util.TimeUtil.Unit;
+import static com.flightstats.hub.util.TimeUtil.now;
+import static com.flightstats.hub.util.TimeUtil.stable;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 
 @Path("/channel/{channel}/{Y}/{M}/{D}/")
 public class ChannelContentResource {
-    static final String CREATION_DATE = "Creation-Date";
-    public static final String THREADS = HubProperties.getProperty("s3.large.threads", "3");
 
     private final static Logger logger = LoggerFactory.getLogger(ChannelContentResource.class);
+    public final static String CREATION_DATE = "Creation-Date";
+
+    private final TagContentResource tagContentResource;
+    private final ObjectMapper mapper;
+    private final ChannelService channelService;
+    private final MetricsService metricsService;
+    private final EventsService eventsService;
+    private final HubProperties hubProperties;
 
     @Context
     private UriInfo uriInfo;
 
-    private final static TagContentResource tagContentResource = HubProvider.getInstance(TagContentResource.class);
-    private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
-    private final static MetricsService metricsService = HubProvider.getInstance(MetricsService.class);
-    private final static EventsService eventsService = HubProvider.getInstance(EventsService.class);
+    @Inject
+    ChannelContentResource(TagContentResource tagContentResource,
+                           ObjectMapper mapper,
+                           ChannelService channelService,
+                           MetricsService metricsService,
+                           EventsService eventsService,
+                           HubProperties hubProperties)
+    {
+        this.tagContentResource = tagContentResource;
+        this.mapper = mapper;
+        this.channelService = channelService;
+        this.metricsService = metricsService;
+        this.eventsService = eventsService;
+        this.hubProperties = hubProperties;
+    }
 
     public static MediaType getContentType(Content content) {
         Optional<String> contentType = content.getContentType();
@@ -521,6 +568,7 @@ public class ChannelContentResource {
                 .withContentKey(key)
                 .withContentType(contentType)
                 .withContentLength(contentLength)
+                .withLarge(contentLength >= hubProperties.getLargePayload())
                 .withStream(data)
                 .build();
         content.setHistorical(true);
@@ -550,6 +598,7 @@ public class ChannelContentResource {
                 .withContentKey(key)
                 .withContentType(contentType)
                 .withContentLength(contentLength)
+                .withLarge(contentLength >= hubProperties.getLargePayload())
                 .withStream(data)
                 .build();
         content.setHistorical(true);

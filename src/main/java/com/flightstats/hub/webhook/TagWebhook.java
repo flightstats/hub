@@ -1,16 +1,16 @@
 package com.flightstats.hub.webhook;
 
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
 import com.google.common.base.Optional;
 import com.google.common.collect.Sets;
-import com.google.inject.TypeLiteral;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Named;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
@@ -29,11 +29,19 @@ import java.util.stream.Collectors;
  */
 public class TagWebhook {
     private final static Logger logger = LoggerFactory.getLogger(WebhookResource.class);
-    private final static WebhookService webhookService = HubProvider.getInstance(WebhookService.class);
-    private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
-    private final static Dao<Webhook> webhookDao = HubProvider.getInstance(
-            new TypeLiteral<Dao<Webhook>>() {
-            }, "Webhook");
+
+    @Inject
+    private static WebhookService webhookService;
+
+    @Inject
+    private static ChannelService channelService;
+
+    @Inject
+    private static LocalWebhookManager localWebhookManager;
+
+    @Inject
+    @Named("Webhook")
+    private static Dao<Webhook> webhookDao;
 
     private static Set<Webhook> webhookPrototypesWithTag(String tag) {
         Set<Webhook> webhookSet = new HashSet<>(webhookDao.getAll(false));
@@ -61,7 +69,7 @@ public class TagWebhook {
     private static void ensureChannelHasAssociatedWebhook(Set<Webhook> webhookSet, Webhook wh, ChannelConfig channelConfig) {
         Set<Webhook> managedWebHooks = allManagedWebhooksForChannel(webhookSet, channelConfig);
         if (managedWebHooks.isEmpty()) {
-            Webhook newWHInstance = Webhook.instanceFromTagPrototype(wh, channelConfig);
+            Webhook newWHInstance = webhookService.fromTagPrototype(wh, channelConfig.getName());
             logger.info("TagWebHook: Adding TagWebhook instance for " + channelConfig.getName());
             webhookService.upsert(newWHInstance);
         }
@@ -109,7 +117,7 @@ public class TagWebhook {
         Collection<ChannelConfig> channels = channelService.getChannels(webhookPrototype.getTagFromTagUrl(), false);
         for (ChannelConfig channel : channels) {
             logger.info("TagWebHook: Adding TagWebhook instance for " + channel.getName());
-            webhookService.upsert(Webhook.instanceFromTagPrototype(webhookPrototype, channel));
+            webhookService.upsert(webhookService.fromTagPrototype(webhookPrototype, channel.getName()));
         }
     }
 
@@ -124,6 +132,6 @@ public class TagWebhook {
                 .map((Webhook::getName))
                 .collect(Collectors.toSet());
 
-        LocalWebhookManager.runAndWait("TagWebhook.deleteAll", names, webhookService::delete);
+        localWebhookManager.runAndWait("TagWebhook.deleteAll", names, webhookService::delete);
     }
 }

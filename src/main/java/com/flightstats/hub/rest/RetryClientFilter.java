@@ -1,6 +1,5 @@
 package com.flightstats.hub.rest;
 
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.util.Sleeper;
 import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientRequest;
@@ -15,11 +14,18 @@ import java.net.UnknownHostException;
  * RetryClientFilter assumes that connection issues may be transient, so retry is a good idea.
  */
 public class RetryClientFilter extends ClientFilter {
+
     private static final Logger logger = LoggerFactory.getLogger(RetryClientFilter.class);
 
+    private final int maxRetries;
+    private final int sleep;
+
+    public RetryClientFilter(int maxRetries, int sleep) {
+        this.maxRetries = maxRetries;
+        this.sleep = sleep;
+    }
+
     public ClientResponse handle(ClientRequest clientRequest) throws ClientHandlerException {
-        int maxRetries = HubProperties.getProperty("http.maxRetries", 8);
-        int sleep = HubProperties.getProperty("http.sleep", 1000);
         ClientHandlerException lastCause = null;
         int attempt = 0;
         while (attempt < maxRetries) {

@@ -8,25 +8,27 @@ import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.Commander;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.util.concurrent.AbstractScheduledService;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 @Singleton
 public class ChannelTtlEnforcer {
     private final static Logger logger = LoggerFactory.getLogger(ChannelTtlEnforcer.class);
-    private final String spokePath = HubProperties.getSpokePath(SpokeStore.WRITE);
-    @Inject
-    private ChannelService channelService;
+    private final String spokePath;
+    private final ChannelService channelService;
 
     @Inject
-    public ChannelTtlEnforcer() {
-        if (HubProperties.getProperty("channel.enforceTTL", false)) {
+    public ChannelTtlEnforcer(ChannelService channelService, HubProperties hubProperties) {
+        this.channelService = channelService;
+        this.spokePath = hubProperties.getSpokePath(SpokeStore.WRITE);
+
+        if (hubProperties.getProperty("channel.enforceTTL", false)) {
             HubServices.register(new ChannelTtlEnforcerService());
         }
     }
@@ -62,6 +64,5 @@ public class ChannelTtlEnforcer {
         }
 
     }
-
 
 }

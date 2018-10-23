@@ -9,19 +9,26 @@ import com.flightstats.hub.util.ObjectRing;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.SortedSet;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 public class Traces {
 
-    private static final int LIMIT = HubProperties.getProperty("traces.limit", 50);
-    private long start = System.currentTimeMillis();
-    private long end;
     private final String id = UUID.randomUUID().toString();
     private final List<Trace> traces = Collections.synchronizedList(new ArrayList<>());
-    private final ObjectRing<Trace> lastTraces = new ObjectRing<>(LIMIT);
+    private final ObjectRing<Trace> lastTraces;
+    private final int traceLimit;
 
-    public Traces(Object... objects) {
+    private long start = System.currentTimeMillis();
+    private long end;
+
+    public Traces(HubProperties hubProperties, Object... objects) {
+        traceLimit = hubProperties.getProperty("traces.limit", 50);
+        lastTraces = new ObjectRing<>(traceLimit);
         add(objects);
     }
 
@@ -43,7 +50,7 @@ public class Traces {
     }
 
     public void add(Trace trace) {
-        if (traces.size() > LIMIT) {
+        if (traces.size() > traceLimit) {
             lastTraces.put(trace);
         } else {
             traces.add(trace);
@@ -112,8 +119,8 @@ public class Traces {
             for (Trace trace : traces) {
                 consumer.accept(trace.toString());
             }
-            if (lastTraces.getTotalSize() > LIMIT) {
-                consumer.accept("   ...cut " + (lastTraces.getTotalSize() - LIMIT) + " lines...");
+            if (lastTraces.getTotalSize() > traceLimit) {
+                consumer.accept("   ...cut " + (lastTraces.getTotalSize() - traceLimit) + " lines...");
             }
             List<Trace> lastItems = lastTraces.getItems();
             for (Trace trace : lastItems) {
@@ -121,6 +128,5 @@ public class Traces {
             }
         }
     }
-
 
 }

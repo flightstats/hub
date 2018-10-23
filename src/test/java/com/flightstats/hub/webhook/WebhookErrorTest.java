@@ -1,8 +1,7 @@
 package com.flightstats.hub.webhook;
 
-import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.test.Integration;
-import org.apache.curator.framework.CuratorFramework;
+import com.flightstats.hub.test.TestMain;
+import com.google.inject.Injector;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -17,9 +16,10 @@ public class WebhookErrorTest {
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        ChannelService channelService = mock(ChannelService.class);
-        CuratorFramework curator = Integration.startZooKeeper();
-        webhookError = new WebhookError(curator, channelService);
+//        ChannelService channelService = mock(ChannelService.class);
+//        CuratorFramework curator = TestApplication.startZooKeeper();
+//        webhookError = new WebhookError(curator, channelService);
+        Injector injector = TestMain.start();
     }
 
     @Test

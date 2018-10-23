@@ -4,6 +4,7 @@ import com.diffplug.common.base.Errors;
 import com.diffplug.common.base.Throwing;
 import com.flightstats.hub.util.Sleeper;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,8 +15,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class InFlightService {
     private final static Logger logger = LoggerFactory.getLogger(InFlightService.class);
     private final AtomicInteger inFlight = new AtomicInteger();
+    private final HubProperties hubProperties;
 
-    public InFlightService() {
+    @Inject
+    public InFlightService(HubProperties hubProperties) {
+        this.hubProperties = hubProperties;
         HubServices.registerPreStop(new InFlightServiceShutdown());
     }
 
@@ -29,7 +33,7 @@ public class InFlightService {
     }
 
     private void waitForInFlight() {
-        Integer shutdown_wait_seconds = HubProperties.getProperty("app.shutdown_wait_seconds", 180);
+        Integer shutdown_wait_seconds = hubProperties.getProperty("app.shutdown_wait_seconds", 180);
         logger.info("waiting for " + inFlight.get() + " in-flight to complete in " + shutdown_wait_seconds + " seconds");
         long start = System.currentTimeMillis();
         while (inFlight.get() > 0) {

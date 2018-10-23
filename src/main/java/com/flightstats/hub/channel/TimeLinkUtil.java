@@ -7,16 +7,30 @@ import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.ISODateTimeFormat;
 
-import javax.ws.rs.core.*;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.PathSegment;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.List;
 
-import static com.flightstats.hub.util.TimeUtil.*;
+import static com.flightstats.hub.util.TimeUtil.Unit;
+import static com.flightstats.hub.util.TimeUtil.days;
+import static com.flightstats.hub.util.TimeUtil.hours;
+import static com.flightstats.hub.util.TimeUtil.minutes;
+import static com.flightstats.hub.util.TimeUtil.now;
+import static com.flightstats.hub.util.TimeUtil.seconds;
+import static com.flightstats.hub.util.TimeUtil.stable;
 import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 
+@Singleton
 public class TimeLinkUtil {
 
-    private static final ObjectMapper mapper = new ObjectMapper();
+    @Inject
+    private static ObjectMapper mapper;
 
     static Response getDefault(UriInfo uriInfo) {
         ObjectNode root = mapper.createObjectNode();

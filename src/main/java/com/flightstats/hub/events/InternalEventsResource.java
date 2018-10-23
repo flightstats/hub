@@ -3,24 +3,29 @@ package com.flightstats.hub.events;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.flightstats.hub.app.HubProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 
-@SuppressWarnings("WeakerAccess")
 @Path("/internal/events/{id}")
 public class InternalEventsResource {
 
     private final static Logger logger = LoggerFactory.getLogger(InternalEventsResource.class);
 
-    private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private final static EventsService eventsService = HubProvider.getInstance(EventsService.class);
+    private final EventsService eventsService;
+    private final ObjectMapper mapper;
+
+    @Inject
+    InternalEventsResource(EventsService eventsService, ObjectMapper mapper) {
+        this.eventsService = eventsService;
+        this.mapper = mapper;
+    }
 
     @POST
     public Response putPayload(@PathParam("id") String id, String data) {

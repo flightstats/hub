@@ -4,15 +4,15 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.inject.Singleton;
-import com.google.inject.name.Named;
 import de.jkeylockmanager.manager.KeyLockManager;
 import de.jkeylockmanager.manager.KeyLockManagers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Provider;
+import javax.inject.Singleton;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,17 +25,21 @@ import java.util.function.Consumer;
 public class LocalWebhookManager {
 
     private static final Logger logger = LoggerFactory.getLogger(LocalWebhookManager.class);
-    @Inject
-    @Named("Webhook")
-    private Dao<Webhook> webhookDao;
-    @Inject
-    private Provider<WebhookLeader> v2Provider;
-    private Map<String, WebhookLeader> localLeaders = new ConcurrentHashMap<>();
-    private final KeyLockManager lockManager;
+
+    private final Map<String, WebhookLeader> localLeaders = new ConcurrentHashMap<>();
+    private final KeyLockManager lockManager = KeyLockManagers.newLock(1, TimeUnit.SECONDS);
+    private final Dao<Webhook> webhookDao;
+    private final Provider<WebhookLeader> v2Provider;
+    private final HubProperties hubProperties;
 
     @Inject
-    public LocalWebhookManager() {
-        lockManager = KeyLockManagers.newLock(1, TimeUnit.SECONDS);
+    public LocalWebhookManager(@Named("Webhook") Dao<Webhook> webhookDao,
+                               Provider<WebhookLeader> v2Provider,
+                               HubProperties hubProperties)
+    {
+        this.webhookDao = webhookDao;
+        this.v2Provider = v2Provider;
+        this.hubProperties = hubProperties;
     }
 
     boolean ensureRunning(String name) {
@@ -73,9 +77,9 @@ public class LocalWebhookManager {
         runAndWait("LocalWebhookManager.stopAll", localLeaders.keySet(), (name) -> stopLocal(name, false));
     }
 
-    static void runAndWait(String name, Collection<String> keys, Consumer<String> consumer) {
-        ExecutorService pool = Executors.newFixedThreadPool(HubProperties.getProperty("webhook.shutdown.threads", 100),
-                new ThreadFactoryBuilder().setNameFormat(name + "-%d").build());
+    void runAndWait(String name, Collection<String> keys, Consumer<String> consumer) {
+        int threadCount = hubProperties.getProperty("webhook.shutdown.threads", 100);
+        ExecutorService pool = Executors.newFixedThreadPool(threadCount, new ThreadFactoryBuilder().setNameFormat(name + "-%d").build());
         logger.info("{}", keys);
         for (String key : keys) {
             pool.submit(() -> {

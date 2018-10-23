@@ -1,6 +1,14 @@
 package com.flightstats.hub.dao.aws;
 
-import com.amazonaws.services.s3.model.*;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
+import com.amazonaws.services.s3.model.DeleteObjectRequest;
+import com.amazonaws.services.s3.model.GetObjectRequest;
+import com.amazonaws.services.s3.model.ListObjectsRequest;
+import com.amazonaws.services.s3.model.ObjectListing;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentMarshaller;
@@ -15,32 +23,42 @@ import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketTimeoutException;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 @Singleton
 public class S3SingleContentDao implements ContentDao {
 
     private final static Logger logger = LoggerFactory.getLogger(S3SingleContentDao.class);
-    private static final int MAX_ITEMS = 1000 * 1000;
-    private final boolean useEncrypted = HubProperties.isAppEncrypted();
-    private final int s3MaxQueryItems = HubProperties.getProperty("s3.maxQueryItems", 1000);
+    private final static int MAX_ITEMS = 1000 * 1000;
+
+    private final MetricsService metricsService;
+    private final HubS3Client s3Client;
+    private final S3BucketName s3BucketName;
+    private final boolean useEncrypted;
+    private final int s3MaxQueryItems;
 
     @Inject
-    private MetricsService metricsService;
-    @Inject
-    private HubS3Client s3Client;
-    @Inject
-    private S3BucketName s3BucketName;
+    S3SingleContentDao(S3BucketName s3BucketName, HubS3Client s3Client, MetricsService metricsService, HubProperties hubProperties) {
+        this.s3BucketName = s3BucketName;
+        this.s3Client = s3Client;
+        this.metricsService = metricsService;
+        this.useEncrypted = hubProperties.isAppEncrypted();
+        this.s3MaxQueryItems = hubProperties.getProperty("s3.maxQueryItems", 1000);
+    }
 
     public void initialize() {
         s3Client.initialize();

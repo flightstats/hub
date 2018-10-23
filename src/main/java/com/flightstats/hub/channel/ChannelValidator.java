@@ -1,29 +1,24 @@
 package com.flightstats.hub.channel;
 
-import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.exception.ForbiddenRequestException;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.TimeUtil;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
-import com.google.inject.Inject;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
+import javax.inject.Inject;
+
+@Slf4j
 public class ChannelValidator {
-    public static final String VALID_NAME = "^[a-zA-Z0-9_-]+$";
+
+    public final static String VALID_NAME = "^[a-zA-Z0-9_-]+$";
 
     @Inject
-    private ChannelService channelService;
-
-    // required for Guice
-    ChannelValidator() {}
-
-    @VisibleForTesting
-    ChannelValidator(ChannelService channelService) {
-        this.channelService = channelService;
+    ChannelValidator() {
     }
 
     public void validate(ChannelConfig config, ChannelConfig oldConfig, boolean isLocalHost) throws InvalidRequestException, ConflictException {
@@ -38,9 +33,7 @@ public class ChannelValidator {
         ensureSize(channelName, "name");
         ensureSize(config.getOwner(), "owner");
         checkForInvalidCharacters(channelName);
-        if (oldConfig == null) {
-            validateChannelUniqueness(channelName);
-        }
+
         validateTTL(config, oldConfig);
         validateDescription(config);
         validateTags(config);
@@ -151,7 +144,7 @@ public class ChannelValidator {
         }
     }
 
-    private void validateNameWasGiven(Optional<String> channelName) throws InvalidRequestException {
+    public void validateNameWasGiven(Optional<String> channelName) throws InvalidRequestException {
         if ((channelName == null) || !channelName.isPresent()) {
             throw new InvalidRequestException("{\"error\": \"A channel has no name\"}");
         }
@@ -179,9 +172,4 @@ public class ChannelValidator {
         }
     }
 
-    private void validateChannelUniqueness(String channelName) throws ConflictException {
-        if (channelService.channelExists(channelName)) {
-            throw new ConflictException("{\"error\": \"Channel name " + channelName + " already exists\"}");
-        }
-    }
 }

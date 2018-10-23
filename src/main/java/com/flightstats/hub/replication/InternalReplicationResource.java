@@ -2,17 +2,21 @@ package com.flightstats.hub.replication;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.BulkContent;
+import com.flightstats.hub.model.Content;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.ContentPath;
+import com.flightstats.hub.model.SecondPath;
 import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.HubUtils;
 import com.sun.jersey.api.client.ClientResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -24,10 +28,18 @@ public class InternalReplicationResource {
 
     private final static Logger logger = LoggerFactory.getLogger(InternalReplicationResource.class);
 
-    private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private static final ChannelService channelService = HubProvider.getInstance(ChannelService.class);
-    private static final LastContentPath lastReplicated = HubProvider.getInstance(LastContentPath.class);
-    private static final HubUtils hubUtils = HubProvider.getInstance(HubUtils.class);
+    private final ObjectMapper mapper;
+    private final ChannelService channelService;
+    private final LastContentPath lastReplicated;
+    private final HubUtils hubUtils;
+
+    @Inject
+    InternalReplicationResource(ObjectMapper mapper, ChannelService channelService, LastContentPath lastReplicated, HubUtils hubUtils) {
+        this.mapper = mapper;
+        this.channelService = channelService;
+        this.lastReplicated = lastReplicated;
+        this.hubUtils = hubUtils;
+    }
 
     @POST
     public Response putPayload(@PathParam("channel") String channel, String data) {
@@ -94,7 +106,7 @@ public class InternalReplicationResource {
         return mapper.readTree(data);
     }
 
-    private static boolean attemptBatch(String channel, ContentPath path, String batchUrl) {
+    private boolean attemptBatch(String channel, ContentPath path, String batchUrl) {
         BulkContent bulkContent = null;
         try {
             bulkContent = getAndWriteBatch(channel, path, batchUrl);
@@ -105,7 +117,7 @@ public class InternalReplicationResource {
         return bulkContent != null;
     }
 
-    private static BulkContent getAndWriteBatch(String channel, ContentPath path,
+    private BulkContent getAndWriteBatch(String channel, ContentPath path,
                                                 String batchUrl) throws Exception {
         ActiveTraces.getLocal().add("attemptBatch", path);
         logger.trace("path {} {}", path, batchUrl);
@@ -134,6 +146,5 @@ public class InternalReplicationResource {
         }
         return bulkContent;
     }
-
 
 }

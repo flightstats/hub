@@ -2,10 +2,10 @@ package com.flightstats.hub.dao.aws;
 
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.channel.ZipBulkBuilder;
-import com.flightstats.hub.dao.ContentDaoUtil;
+import com.flightstats.hub.dao.ContentDaoTester;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.*;
-import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.test.TestMain;
 import com.flightstats.hub.util.StringUtils;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Injector;
@@ -32,9 +32,9 @@ public class S3BatchContentDaoTest {
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        HubProperties.loadProperties("useDefault");
-        HubProperties.setProperty("s3.maxQueryItems", "5");
-        Injector injector = Integration.startAwsHub();
+        Injector injector = TestMain.start();
+        HubProperties hubProperties = injector.getInstance(HubProperties.class);
+        hubProperties.setProperty("s3.maxQueryItems", "5");
         contentDao = injector.getInstance(S3BatchContentDao.class);
     }
 
@@ -45,7 +45,7 @@ public class S3BatchContentDaoTest {
         List<ContentKey> keys = writeBatchMinute(channel, minutePath, 5);
 
         for (ContentKey key : keys) {
-            Content content = ContentDaoUtil.createContent(key);
+            Content content = ContentDaoTester.createContent(key);
             Content read = contentDao.get(channel, key);
             assertEquals(content.getContentKey(), read.getContentKey());
             assertArrayEquals(content.getData(), read.getData());
@@ -80,7 +80,7 @@ public class S3BatchContentDaoTest {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ZipOutputStream output = new ZipOutputStream(baos);
         for (ContentKey key : keys) {
-            Content content = ContentDaoUtil.createContent(key);
+            Content content = ContentDaoTester.createContent(key);
             ZipBulkBuilder.createZipEntry(output, content);
         }
         output.close();

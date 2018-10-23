@@ -1,21 +1,18 @@
 package com.flightstats.hub.model;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flightstats.hub.app.HubProperties;
-import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.util.TimeUtil;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 
 import java.io.Serializable;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
-import static com.flightstats.hub.model.BuiltInTag.*;
+import static com.flightstats.hub.model.BuiltInTag.HISTORICAL;
+import static com.flightstats.hub.model.BuiltInTag.REPLICATED;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 public class ChannelConfig implements Serializable, NamedType {
@@ -25,12 +22,6 @@ public class ChannelConfig implements Serializable, NamedType {
     public static final String BOTH = "BOTH";
 
     private static final long serialVersionUID = 1L;
-
-    private static final Gson gson = new GsonBuilder()
-            .registerTypeAdapter(Date.class, new HubDateTypeAdapter())
-            .registerTypeAdapter(DateTime.class, new HubDateTimeTypeAdapter())
-            .create();
-    private static final ObjectMapper mapper = new ObjectMapper();
 
     private String name;
     private String displayName;
@@ -47,9 +38,21 @@ public class ChannelConfig implements Serializable, NamedType {
     private DateTime mutableTime;
     private boolean allowZeroBytes;
 
-    private ChannelConfig(String name, String owner, Date creationDate, long ttlDays, long maxItems, boolean keepForever, String description,
-                          Set<String> tags, String replicationSource, String storage,
-                          boolean protect, DateTime mutableTime, boolean allowZeroBytes, String displayName) {
+    private ChannelConfig(String name,
+                          String owner,
+                          Date creationDate,
+                          long ttlDays,
+                          long maxItems,
+                          boolean keepForever,
+                          String description,
+                          Set<String> tags,
+                          String replicationSource,
+                          String storage,
+                          boolean protect,
+                          DateTime mutableTime,
+                          boolean allowZeroBytes,
+                          String displayName)
+    {
         this.name = StringUtils.trim(name);
         this.displayName = StringUtils.defaultIfBlank(StringUtils.trim(displayName), this.name);
         this.owner = StringUtils.trim(owner);
@@ -80,11 +83,7 @@ public class ChannelConfig implements Serializable, NamedType {
         addTagIf(!isBlank(replicationSource), REPLICATED);
         addTagIf(isHistorical(), HISTORICAL);
 
-        if (HubProperties.isProtected()) {
-            this.protect = true;
-        } else {
-            this.protect = protect;
-        }
+        this.protect = protect;
     }
 
     public static ChannelConfigBuilder builder() {
@@ -97,68 +96,6 @@ public class ChannelConfig implements Serializable, NamedType {
         } else {
             tags.remove(tag.toString());
         }
-    }
-
-    public static ChannelConfig createFromJson(String json) {
-        if (StringUtils.isEmpty(json)) {
-            throw new InvalidRequestException("this method requires at least a json name");
-        } else {
-            return gson.fromJson(json, ChannelConfigBuilder.class).build();
-        }
-    }
-
-    public static ChannelConfig createFromJsonWithName(String json, String name) {
-        if (StringUtils.isEmpty(json)) {
-            return builder().name(name).build();
-        } else {
-            return gson.fromJson(json, ChannelConfig.ChannelConfigBuilder.class).name(name).build();
-        }
-    }
-
-    public static ChannelConfig updateFromJson(ChannelConfig config, String json) {
-        ChannelConfigBuilder builder = config.toBuilder();
-        JsonNode rootNode = readJSON(json);
-        if (rootNode.has("owner")) builder.owner(getString(rootNode.get("owner")));
-        if (rootNode.has("description")) builder.description(getString(rootNode.get("description")));
-        if (rootNode.has("keepForever")) builder.keepForever(rootNode.get("keepForever").asBoolean());
-        if (rootNode.has("ttlDays")) builder.ttlDays(rootNode.get("ttlDays").asLong());
-        if (rootNode.has("maxItems")) builder.maxItems(rootNode.get("maxItems").asLong());
-        if (rootNode.has("tags")) builder.tags(getSet(rootNode.get("tags")));
-        if (rootNode.has("replicationSource")) builder.replicationSource(getString(rootNode.get("replicationSource")));
-        if (rootNode.has("storage")) builder.storage(getString(rootNode.get("storage")));
-        if (rootNode.has("protect")) builder.protect(rootNode.get("protect").asBoolean());
-        if (rootNode.has("mutableTime")) {
-            builder.mutableTime(HubDateTimeTypeAdapter.deserialize(rootNode.get("mutableTime").asText()));
-        }
-        if (rootNode.has("allowZeroBytes")) builder.allowZeroBytes(rootNode.get("allowZeroBytes").asBoolean());
-        return builder.build();
-    }
-
-    private static JsonNode readJSON(String json) {
-        try {
-            return mapper.readTree(json);
-        } catch (Exception e) {
-            throw new InvalidRequestException("couldn't read json: " + json);
-        }
-    }
-
-    private static String getString(JsonNode node) {
-        String value = node.asText();
-        if (value.equals("null")) {
-            value = "";
-        }
-        return value;
-    }
-
-    private static Set<String> getSet(JsonNode node) {
-        if (!node.isArray()) throw new InvalidRequestException("json node is not an array: " + node.toString());
-        return StreamSupport.stream(node.spliterator(), false)
-                .map(JsonNode::asText)
-                .collect(Collectors.toSet());
-    }
-
-    public String toJson() {
-        return gson.toJson(this);
     }
 
     public DateTime getTtlTime() {
@@ -343,7 +280,7 @@ public class ChannelConfig implements Serializable, NamedType {
         private TreeSet<String> tags = new TreeSet<>();
         private String replicationSource = "";
         private String storage = "";
-        private boolean protect = HubProperties.isProtected();
+        private boolean protect = false;
         private boolean allowZeroBytes = true;
         private String name;
         private boolean keepForever = false;

@@ -1,10 +1,9 @@
 package com.flightstats.hub.cluster;
 
+import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.util.TimeUtil;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
@@ -16,6 +15,8 @@ import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -24,18 +25,19 @@ import java.util.Set;
 public class SpokeDecommissionCluster implements DecommissionCluster {
 
     private static final Logger logger = LoggerFactory.getLogger(SpokeDecommissionManager.class);
-
-    private final CuratorFramework curator;
-    private final PathChildrenCache withinSpokeCache;
-
     private static final String WITHIN_SPOKE = "/SpokeDecommission/withinSpokeTtl";
     private static final String DO_NOT_RESTART = "/SpokeDecommission/doNotRestart";
 
+    private final CuratorFramework curator;
+    private final PathChildrenCache withinSpokeCache;
+    private final HubProperties hubProperties;
+
     @Inject
-    public SpokeDecommissionCluster(CuratorFramework curator) throws Exception {
+    public SpokeDecommissionCluster(CuratorFramework curator, HubProperties hubProperties) throws Exception {
         this.curator = curator;
         withinSpokeCache = new PathChildrenCache(curator, WITHIN_SPOKE, true);
         withinSpokeCache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
+        this.hubProperties = hubProperties;
     }
 
     void initialize() throws Exception {
@@ -83,7 +85,7 @@ public class SpokeDecommissionCluster implements DecommissionCluster {
     }
 
     private String getLocalhost() {
-        return Cluster.getHost(false);
+        return HubHost.getLocalAddressPort();
     }
 
     void recommission(String server) throws Exception {
@@ -122,7 +124,7 @@ public class SpokeDecommissionCluster implements DecommissionCluster {
 
     long getDoNotRestartMinutes() throws Exception {
         DateTime creationTime = new DateTime(withinSpokeStat(getLocalhost()).getCtime(), DateTimeZone.UTC);
-        DateTime ttlDateTime = TimeUtil.now().minusMinutes(HubProperties.getSpokeTtlMinutes(SpokeStore.WRITE));
+        DateTime ttlDateTime = TimeUtil.now().minusMinutes(hubProperties.getSpokeTtlMinutes(SpokeStore.WRITE));
         return new Duration(ttlDateTime, creationTime).getStandardMinutes();
     }
 

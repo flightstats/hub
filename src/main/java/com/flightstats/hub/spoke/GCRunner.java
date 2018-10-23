@@ -3,11 +3,11 @@ package com.flightstats.hub.spoke;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.google.common.util.concurrent.AbstractScheduledService;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
@@ -16,9 +16,10 @@ public class GCRunner {
     private final int gcMinutes;
 
     @Inject
-    public GCRunner() {
-        this.gcMinutes = HubProperties.getProperty("hub.gcMinutes", 60);
-        if (HubProperties.getProperty("hub.runGC", false)) {
+    public GCRunner(HubProperties hubProperties) {
+        this.gcMinutes = hubProperties.getProperty("hub.gcMinutes", 60);
+
+        if (hubProperties.getProperty("hub.runGC", false)) {
             HubServices.register(new GCRunnerService());
         }
     }

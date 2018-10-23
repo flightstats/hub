@@ -1,18 +1,19 @@
 package com.flightstats.hub.events;
 
 import com.diffplug.common.base.Errors;
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ItemRequest;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.webhook.WebhookService;
 import com.google.common.base.Optional;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import org.eclipse.jetty.io.EofException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
@@ -22,12 +23,17 @@ public class EventsService {
 
     private final static Logger logger = LoggerFactory.getLogger(EventsService.class);
 
-    @Inject
-    private ChannelService channelService;
-    @Inject
-    private WebhookService webhookService;
+    private final ChannelService channelService;
+    private final WebhookService webhookService;
+    private final HubProperties hubProperties;
+    private final Map<String, EventWebhook> outputStreamMap = new ConcurrentHashMap<>();
 
-    private Map<String, EventWebhook> outputStreamMap = new ConcurrentHashMap<>();
+    @Inject
+    EventsService(ChannelService channelService, WebhookService webhookService, HubProperties hubProperties) {
+        this.channelService = channelService;
+        this.webhookService = webhookService;
+        this.hubProperties = hubProperties;
+    }
 
     void getAndSendData(String uri, String id) {
         logger.trace("got uri {} {}", uri, id);
@@ -77,7 +83,7 @@ public class EventsService {
     }
 
     public void register(ContentOutput contentOutput) {
-        EventWebhook eventWebhook = new EventWebhook(contentOutput);
+        EventWebhook eventWebhook = new EventWebhook(contentOutput, webhookService, hubProperties);
         logger.info("registering events {}", eventWebhook.getGroupName());
         outputStreamMap.put(eventWebhook.getGroupName(), eventWebhook);
         eventWebhook.start();

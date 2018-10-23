@@ -1,19 +1,20 @@
 package com.flightstats.hub.replication;
 
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.Watcher;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.BuiltInTag;
 import com.flightstats.hub.model.ChannelConfig;
-import com.google.common.annotations.VisibleForTesting;
+import com.flightstats.hub.util.HubUtils;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import org.apache.curator.framework.api.CuratorEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -29,31 +30,27 @@ import static com.flightstats.hub.app.HubServices.register;
 
 @Singleton
 public class ReplicationManager {
+
     private final static Logger logger = LoggerFactory.getLogger(ReplicationManager.class);
-    private static final String REPLICATOR_WATCHER_PATH = "/replicator/watcher";
+    private final static String REPLICATOR_WATCHER_PATH = "/replicator/watcher";
 
-    @Inject
-    private ChannelService channelService;
-
-    @Inject
-    private WatchManager watchManager;
-
+    private final ChannelService channelService;
+    private final WatchManager watchManager;
+    private final HubUtils hubUtils;
+    private final HubProperties hubProperties;
     private final Map<String, ChannelReplicator> channelReplicatorMap = new HashMap<>();
     private final AtomicBoolean stopped = new AtomicBoolean();
-    private final ExecutorService executor = Executors.newSingleThreadExecutor(
-            new ThreadFactoryBuilder().setNameFormat("ReplicationManager").build());
-    private final ExecutorService executorPool = Executors.newFixedThreadPool(40,
-            new ThreadFactoryBuilder().setNameFormat("ReplicationManager-%d").build());
+    private final ExecutorService executor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("ReplicationManager").build());
+    private final ExecutorService executorPool = Executors.newFixedThreadPool(40, new ThreadFactoryBuilder().setNameFormat("ReplicationManager-%d").build());
 
-    public ReplicationManager() {
-        register(new ReplicationService(), TYPE.AFTER_HEALTHY_START, TYPE.PRE_STOP);
-    }
-
-    @VisibleForTesting
-    ReplicationManager(ChannelService channelService, WatchManager watchManager) {
-        this();
+    @Inject
+    ReplicationManager(ChannelService channelService, WatchManager watchManager, HubUtils hubUtils, HubProperties hubProperties) {
         this.channelService = channelService;
         this.watchManager = watchManager;
+        this.hubUtils = hubUtils;
+        this.hubProperties = hubProperties;
+
+        register(new ReplicationService(), TYPE.AFTER_HEALTHY_START, TYPE.PRE_STOP);
     }
 
     private void startManager() {
@@ -118,7 +115,7 @@ public class ReplicationManager {
     }
 
     private ChannelReplicator createReplicator(ChannelConfig channel) {
-        ChannelReplicator newReplicator = new ChannelReplicator(channel);
+        ChannelReplicator newReplicator = new ChannelReplicator(channel, hubUtils, hubProperties);
         channelReplicatorMap.put(channel.getDisplayName(), newReplicator);
         return newReplicator;
     }

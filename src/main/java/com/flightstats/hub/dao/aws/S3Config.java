@@ -16,32 +16,45 @@ import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.AbstractScheduledService;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import javax.inject.Inject;
+import javax.inject.Named;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
 public class S3Config {
+
     private final static Logger logger = LoggerFactory.getLogger(S3Config.class);
 
     private final CuratorLock curatorLock;
     private final Dao<ChannelConfig> channelConfigDao;
     private final String s3BucketName;
-    private ChannelService channelService;
+    private final ChannelService channelService;
     private final HubS3Client s3Client;
+    private final int maxRules;
 
     @Inject
-    public S3Config(HubS3Client s3Client, S3BucketName s3BucketName, CuratorLock curatorLock,
-                    @Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao, ChannelService channelService) {
-        this.s3Client = s3Client;
+    public S3Config(CuratorLock curatorLock,
+                    @Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao,
+                    S3BucketName s3BucketName,
+                    ChannelService channelService,
+                    HubS3Client s3Client,
+                    HubProperties hubProperties)
+    {
         this.curatorLock = curatorLock;
         this.channelConfigDao = channelConfigDao;
-        this.channelService = channelService;
         this.s3BucketName = s3BucketName.getS3BucketName();
+        this.channelService = channelService;
+        this.s3Client = s3Client;
+        this.maxRules = hubProperties.getProperty("s3.maxRules", 1000);
+
         HubServices.register(new S3ConfigInit());
     }
 
@@ -139,7 +152,6 @@ public class S3Config {
         private void updateTtlDays() {
             logger.info("updateTtlDays");
             ActiveTraces.start("S3Config.updateTtlDays");
-            int maxRules = HubProperties.getProperty("s3.maxRules", 1000);
             List<BucketLifecycleConfiguration.Rule> rules = new ArrayList<>();
             if (maxRules == 0) {
                 rules.add(new BucketLifecycleConfiguration.Rule()

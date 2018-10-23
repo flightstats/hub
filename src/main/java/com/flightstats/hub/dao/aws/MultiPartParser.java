@@ -12,25 +12,30 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 public class MultiPartParser {
+
     private final static Logger logger = LoggerFactory.getLogger(MultiPartParser.class);
+    private final static byte[] CRLF = "\r\n".getBytes();
 
-    private static final int maxBytes = HubProperties.getProperty("app.maxPayloadSizeMB", 40) * 1024 * 1024 * 3;
-    private BulkContent bulkContent;
-    private BufferedInputStream stream;
-    private Content.Builder builder;
+    private final BulkContent bulkContent;
+    private final BufferedInputStream stream;
     private final ByteArrayOutputStream baos;
-    private static final byte[] CRLF = "\r\n".getBytes();
+    private final int maxBytes;
 
-    public MultiPartParser(BulkContent bulkContent) {
+    private Content.Builder builder;
+
+    @Inject
+    public MultiPartParser(BulkContent bulkContent, HubProperties hubProperties) {
         this.bulkContent = bulkContent;
-        builder = Content.builder();
-        stream = new BufferedInputStream(bulkContent.getStream());
-        baos = new ByteArrayOutputStream();
+        this.stream = new BufferedInputStream(bulkContent.getStream());
+        this.baos = new ByteArrayOutputStream();
+        this.maxBytes = hubProperties.getProperty("app.maxPayloadSizeMB", 40) * 1024 * 1024 * 3;
+        this.builder = Content.builder();
     }
 
     public void parse() throws IOException {

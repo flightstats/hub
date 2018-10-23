@@ -1,5 +1,6 @@
 package com.flightstats.hub.dao.aws;
 
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfig;
@@ -9,11 +10,11 @@ import com.flightstats.hub.webhook.ActiveWebhooks;
 import com.flightstats.hub.webhook.Webhook;
 import com.flightstats.hub.webhook.WebhookService;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Executors;
@@ -23,29 +24,32 @@ public class S3BatchManager {
 
     private final static Logger logger = LoggerFactory.getLogger(S3BatchManager.class);
 
-    @Inject
-    private WebhookService webhookService;
-    @Inject
-    private ChannelService channelService;
-    @Inject
-    private HubUtils hubUtils;
-    @Inject
-    private ActiveWebhooks activeWebhooks;
+    private final WebhookService webhookService;
+    private final ActiveWebhooks activeWebhooks;
+    private final ChannelService channelService;
+    private final HubUtils hubUtils;
+    private final HubProperties hubProperties;
 
     @Inject
-    public S3BatchManager() {
+    public S3BatchManager(WebhookService webhookService, ActiveWebhooks activeWebhooks, ChannelService channelService, HubUtils hubUtils, HubProperties hubProperties) {
+        this.webhookService = webhookService;
+        this.activeWebhooks = activeWebhooks;
+        this.channelService = channelService;
+        this.hubUtils = hubUtils;
+        this.hubProperties = hubProperties;
+
         HubServices.register(new S3BatchManagerService(), HubServices.TYPE.AFTER_HEALTHY_START);
     }
 
     private class S3BatchManagerService extends AbstractIdleService {
 
         @Override
-        protected void startUp() throws Exception {
+        protected void startUp() {
             Executors.newSingleThreadExecutor().submit(S3BatchManager.this::setupBatch);
         }
 
         @Override
-        protected void shutDown() throws Exception {
+        protected void shutDown() {
         }
     }
 
@@ -58,7 +62,7 @@ public class S3BatchManager {
             }
         }
         for (ChannelConfig channel : channelService.getChannels()) {
-            S3Batch s3Batch = new S3Batch(channel, hubUtils);
+            S3Batch s3Batch = new S3Batch(channel, hubUtils, hubProperties);
             if (channel.isSingle()) {
                 if (!activeWebhooks.getServers(channel.getName()).isEmpty()) {
                     logger.debug("turning off batch webhook {}", channel.getDisplayName());

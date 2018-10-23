@@ -3,11 +3,29 @@ package com.flightstats.hub.dao.aws;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.LastContentPath;
-import com.flightstats.hub.dao.*;
+import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.dao.ContentDao;
+import com.flightstats.hub.dao.ContentKeyUtil;
+import com.flightstats.hub.dao.ContentService;
+import com.flightstats.hub.dao.QueryResult;
 import com.flightstats.hub.exception.FailedQueryException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.BulkContent;
+import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.model.ChannelContentKey;
+import com.flightstats.hub.model.Content;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.ContentPath;
+import com.flightstats.hub.model.ContentPathKeys;
+import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.Epoch;
+import com.flightstats.hub.model.LargeContentUtil;
+import com.flightstats.hub.model.Location;
+import com.flightstats.hub.model.MinutePath;
+import com.flightstats.hub.model.Query;
+import com.flightstats.hub.model.StreamResults;
+import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.replication.S3Batch;
 import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.util.HubUtils;
@@ -17,14 +35,19 @@ import com.google.common.base.Optional;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Named;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.SortedSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -33,44 +56,52 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static com.flightstats.hub.model.LargeContent.createIndex;
-import static com.flightstats.hub.model.LargeContent.fromIndex;
-
 public class ClusterContentService implements ContentService {
 
     private final static Logger logger = LoggerFactory.getLogger(ClusterContentService.class);
-    private static final String CHANNEL_LATEST_UPDATED = "/ChannelLatestUpdated/";
-    private static final long largePayload = HubProperties.getLargePayload();
-    private final boolean dropSomeWrites = HubProperties.getProperty("s3.dropSomeWrites", false);
-    private static final int queryMergeMaxWaitMinutes = HubProperties.getProperty("query.merge.max.wait.minutes", 2);
+    private final static String CHANNEL_LATEST_UPDATED = "/ChannelLatestUpdated/";
+    private final static ExecutorService executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("ClusterContentService-%d").build());
+
+    private final ContentDao spokeWriteContentDao;
+    private final ContentDao spokeReadContentDao;
+    private final ContentDao s3SingleContentDao;
+    private final ContentDao s3BatchContentDao;
+    private final ContentDao s3LargePayloadContentDao;
+    private final ChannelService channelService;
+    private final LastContentPath lastContentPath;
+    private final S3WriteQueue s3WriteQueue;
+    private final HubProperties hubProperties;
+    private final HubUtils hubUtils;
+    private final long largePayload;
+    private final boolean dropSomeWrites;
+    private final int queryMergeMaxWaitMinutes;
 
     @Inject
-    @Named(ContentDao.WRITE_CACHE)
-    private ContentDao spokeWriteContentDao;
-    @Inject
-    @Named(ContentDao.SINGLE_LONG_TERM)
-    private ContentDao s3SingleContentDao;
-    @Inject
-    @Named(ContentDao.READ_CACHE)
-    private ContentDao spokeReadContentDao;
-    @Inject
-    @Named(ContentDao.BATCH_LONG_TERM)
-    private ContentDao s3BatchContentDao;
-    @Inject
-    @Named(ContentDao.LARGE_PAYLOAD)
-    private ContentDao s3LargePayloadContentDao;
-    @Inject
-    private ChannelService channelService;
-    @Inject
-    private LastContentPath lastContentPath;
-    @Inject
-    private S3WriteQueue s3WriteQueue;
-    @Inject
-    private HubUtils hubUtils;
+    ClusterContentService(@Named(ContentDao.WRITE_CACHE) ContentDao spokeWriteContentDao,
+                          @Named(ContentDao.READ_CACHE) ContentDao spokeReadContentDao,
+                          @Named(ContentDao.SINGLE_LONG_TERM) ContentDao s3SingleContentDao,
+                          @Named(ContentDao.BATCH_LONG_TERM) ContentDao s3BatchContentDao,
+                          @Named(ContentDao.LARGE_PAYLOAD) ContentDao s3LargePayloadContentDao,
+                          ChannelService channelService,
+                          LastContentPath lastContentPath,
+                          S3WriteQueue s3WriteQueue,
+                          HubProperties hubProperties,
+                          HubUtils hubUtils)
+    {
+        this.spokeWriteContentDao = spokeWriteContentDao;
+        this.spokeReadContentDao = spokeReadContentDao;
+        this.s3SingleContentDao = s3SingleContentDao;
+        this.s3BatchContentDao = s3BatchContentDao;
+        this.s3LargePayloadContentDao = s3LargePayloadContentDao;
+        this.channelService = channelService;
+        this.lastContentPath = lastContentPath;
+        this.s3WriteQueue = s3WriteQueue;
+        this.hubProperties = hubProperties;
+        this.hubUtils = hubUtils;
+        this.largePayload = hubProperties.getLargePayload();
+        this.dropSomeWrites = hubProperties.getProperty("s3.dropSomeWrites", false);
+        this.queryMergeMaxWaitMinutes = hubProperties.getProperty("query.merge.max.wait.minutes", 2);
 
-    private static final ExecutorService executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("ClusterContentService-%d").build());
-
-    public ClusterContentService() {
         HubServices.registerPreStop(new SpokeS3ContentServiceInit());
         HubServices.register(new ChannelLatestUpdatedService(), HubServices.TYPE.AFTER_HEALTHY_START);
     }
@@ -80,7 +111,7 @@ public class ClusterContentService implements ContentService {
         Content spokeContent = content;
         if (content.isLarge()) {
             s3LargePayloadContentDao.insert(channelName, content);
-            spokeContent = createIndex(content);
+            spokeContent = LargeContentUtil.createIndex(content);
         }
         ContentKey key = spokeWriteContentDao.insert(channelName, spokeContent);
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
@@ -186,7 +217,7 @@ public class ClusterContentService implements ContentService {
         }
         if (content.isIndexForLarge()) {
             ContentKey indexKey = content.getContentKey().get();
-            Content largeMeta = fromIndex(content);
+            Content largeMeta = LargeContentUtil.fromIndex(content);
             content = s3LargePayloadContentDao.get(channelName, largeMeta.getContentKey().get());
             content.setContentKey(indexKey);
             content.setSize(largeMeta.getSize());
@@ -196,7 +227,7 @@ public class ClusterContentService implements ContentService {
 
     private DateTime getSpokeTtlTime(String channelName) {
         DateTime startTime = channelService.getLastUpdated(channelName, new ContentKey(TimeUtil.now())).getTime();
-        return startTime.minusMinutes(HubProperties.getSpokeTtlMinutes(SpokeStore.WRITE));
+        return startTime.minusMinutes(hubProperties.getSpokeTtlMinutes(SpokeStore.WRITE));
     }
 
     @Override
@@ -281,7 +312,7 @@ public class ClusterContentService implements ContentService {
         return query(daoQuery, daos);
     }
 
-    private static SortedSet<ContentKey> query(Function<ContentDao, SortedSet<ContentKey>> daoQuery, List<ContentDao> contentDaos) {
+    private SortedSet<ContentKey> query(Function<ContentDao, SortedSet<ContentKey>> daoQuery, List<ContentDao> contentDaos) {
         try {
             QueryResult queryResult = new QueryResult(contentDaos.size());
             CountDownLatch latch = new CountDownLatch(contentDaos.size());
@@ -387,7 +418,7 @@ public class ClusterContentService implements ContentService {
         lastContentPath.delete(channelName, S3Verifier.LAST_SINGLE_VERIFIED);
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
         if (!channel.isSingle()) {
-            new S3Batch(channel, hubUtils).stop();
+            new S3Batch(channel, hubUtils, hubProperties).stop();
         }
     }
 
@@ -411,10 +442,10 @@ public class ClusterContentService implements ContentService {
         }
         if (newConfig.isSingle()) {
             if (oldConfig != null && !oldConfig.isSingle()) {
-                new S3Batch(newConfig, hubUtils).stop();
+                new S3Batch(newConfig, hubUtils, hubProperties).stop();
             }
         } else {
-            new S3Batch(newConfig, hubUtils).start();
+            new S3Batch(newConfig, hubUtils, hubProperties).start();
         }
         if (newConfig.isHistorical() && oldConfig != null && oldConfig.isHistorical()) {
             if (newConfig.getMutableTime().isBefore(oldConfig.getMutableTime())) {
@@ -474,7 +505,7 @@ public class ClusterContentService implements ContentService {
             channelService.getChannels().forEach(channelConfig -> {
                 try {
                     DateTime time = TimeUtil.stable().plusMinutes(1);
-                    Traces traces = new Traces(channelConfig.getDisplayName(), time);
+                    Traces traces = new Traces(hubProperties, channelConfig.getDisplayName(), time);
                     DirectionQuery latestQuery = DirectionQuery.builder()
                             .channelName(channelConfig.getDisplayName())
                             .next(false)

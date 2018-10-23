@@ -3,21 +3,24 @@ package com.flightstats.hub.app;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
+@Singleton
 public class HubHost {
+
     private final static Logger logger = LoggerFactory.getLogger(HubHost.class);
 
+    @Inject
+    @Named("HubPort")
     private static int port;
-    private static String scheme = "http://";
 
-    static {
-        port = HubProperties.getProperty("http.bind_port", 8080);
-        if (HubProperties.isAppEncrypted()) {
-            scheme = "https://";
-        }
-    }
+    @Inject
+    @Named("HubScheme")
+    private static String scheme;
 
     public static String getLocalName() {
         try {

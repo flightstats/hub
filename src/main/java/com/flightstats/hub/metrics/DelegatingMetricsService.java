@@ -1,13 +1,13 @@
 package com.flightstats.hub.metrics;
 
 import com.flightstats.hub.app.HubProperties;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.app.HubServices;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,9 +16,19 @@ public class DelegatingMetricsService implements MetricsService {
 
     private static final Logger logger = LoggerFactory.getLogger(DelegatingMetricsService.class);
 
-    private List<MetricsService> services = new ArrayList<>();
+    private final DataDogMetricsService dataDogMetricsService;
+    private final HostedGraphiteMetricsService hostedGraphiteMetricsService;
+    private final HubProperties hubProperties;
+    private final List<MetricsService> services = new ArrayList<>();
 
-    public DelegatingMetricsService() {
+    @Inject
+    public DelegatingMetricsService(DataDogMetricsService dataDogMetricsService,
+                                    HostedGraphiteMetricsService hostedGraphiteMetricsService,
+                                    HubProperties hubProperties) {
+        this.dataDogMetricsService = dataDogMetricsService;
+        this.hostedGraphiteMetricsService = hostedGraphiteMetricsService;
+        this.hubProperties = hubProperties;
+
         HubServices.register(new DelegatingMetricsServiceInitial(), HubServices.TYPE.BEFORE_HEALTH_CHECK);
     }
 
@@ -69,23 +79,21 @@ public class DelegatingMetricsService implements MetricsService {
 
     private class DelegatingMetricsServiceInitial extends AbstractIdleService {
         @Override
-        protected void startUp() throws Exception {
-            List<MetricsService> newServices = new ArrayList<>();
-            if (HubProperties.getProperty("hosted_graphite.enable", false)) {
+        protected void startUp() {
+            if (hubProperties.getProperty("hosted_graphite.enable", false)) {
                 logger.info("starting hosted graphite");
-                newServices.add(HubProvider.getInstance(HostedGraphiteMetricsService.class));
+                services.add(hostedGraphiteMetricsService);
                 logger.info("started hosted graphite");
             }
-            if (HubProperties.getProperty("data_dog.enable", false)) {
+            if (hubProperties.getProperty("data_dog.enable", false)) {
                 logger.info("starting datadog");
-                newServices.add(HubProvider.getInstance(DataDogMetricsService.class));
+                services.add(dataDogMetricsService);
                 logger.info("started datadog");
             }
-            services = newServices;
         }
 
         @Override
-        protected void shutDown() throws Exception {
+        protected void shutDown() {
             //do nothing
         }
     }

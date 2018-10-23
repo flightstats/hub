@@ -1,5 +1,6 @@
 package com.flightstats.hub.dao.aws;
 
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.model.BulkContent;
 import com.flightstats.hub.model.Content;
@@ -11,6 +12,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.mock;
 
 public class MultiPartParserTest {
 
@@ -36,7 +38,8 @@ public class MultiPartParserTest {
                 .contentType("multipart/mixed; boundary=frontier")
                 .isNew(true)
                 .build();
-        MultiPartParser parser = new MultiPartParser(bulkContent);
+        HubProperties hubProperties = mock(HubProperties.class);
+        MultiPartParser parser = new MultiPartParser(bulkContent, hubProperties);
         parser.parse();
         Content item = bulkContent.getItems().get(0);
         assertEquals("This is the body of the message.", new String(item.getData()));
@@ -74,7 +77,8 @@ public class MultiPartParserTest {
                 .stream(inputStream)
                 .contentType("multipart/mixed; boundary=frontier")
                 .build();
-        MultiPartParser parser = new MultiPartParser(bulkContent);
+        HubProperties hubProperties = mock(HubProperties.class);
+        MultiPartParser parser = new MultiPartParser(bulkContent, hubProperties);
         parser.parse();
         assertEquals(2, bulkContent.getItems().size());
         Content item = bulkContent.getItems().get(0);
@@ -100,7 +104,8 @@ public class MultiPartParserTest {
                 .stream(inputStream)
                 .contentType("multipart/mixed; boundary=boundary")
                 .build();
-        MultiPartParser parser = new MultiPartParser(bulkContent);
+        HubProperties hubProperties = mock(HubProperties.class);
+        MultiPartParser parser = new MultiPartParser(bulkContent, hubProperties);
         parser.parse();
         Content item = bulkContent.getItems().get(0);
         assertEquals("There is some message here.", new String(item.getData()));
@@ -121,7 +126,8 @@ public class MultiPartParserTest {
                 .stream(inputStream)
                 .contentType("multipart/mixed; boundary=\"boundary\"")
                 .build();
-        MultiPartParser parser = new MultiPartParser(bulkContent);
+        HubProperties hubProperties = mock(HubProperties.class);
+        MultiPartParser parser = new MultiPartParser(bulkContent, hubProperties);
         parser.parse();
         Content item = bulkContent.getItems().get(0);
         assertEquals("meow.", new String(item.getData()));
@@ -142,7 +148,8 @@ public class MultiPartParserTest {
                 .stream(inputStream)
                 .contentType("multipart/mixed; boundary=boundary")
                 .build();
-        MultiPartParser parser = new MultiPartParser(bulkContent);
+        HubProperties hubProperties = mock(HubProperties.class);
+        MultiPartParser parser = new MultiPartParser(bulkContent, hubProperties);
         parser.parse();
         Content item = bulkContent.getItems().get(0);
         assertEquals("\r\nThere is some message here.\r\n", new String(item.getData()));
@@ -158,7 +165,8 @@ public class MultiPartParserTest {
                 .stream(inputStream)
                 .contentType("multipart/mixed; boundary=boundary")
                 .build();
-        MultiPartParser parser = new MultiPartParser(bulkContent);
+        HubProperties hubProperties = mock(HubProperties.class);
+        MultiPartParser parser = new MultiPartParser(bulkContent, hubProperties);
         parser.parse();
     }
 
@@ -178,7 +186,8 @@ public class MultiPartParserTest {
                 .contentType("multipart/mixed; boundary=boundary")
                 .build();
 
-        MultiPartParser parser = new MultiPartParser(bulkContent);
+        HubProperties hubProperties = mock(HubProperties.class);
+        MultiPartParser parser = new MultiPartParser(bulkContent, hubProperties);
         parser.parse();
         Content item = bulkContent.getItems().get(0);
         assertArrayEquals(new byte[0], item.getData());

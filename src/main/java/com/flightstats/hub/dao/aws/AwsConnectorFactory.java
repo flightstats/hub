@@ -1,7 +1,16 @@
 package com.flightstats.hub.dao.aws;
 
-import com.amazonaws.*;
-import com.amazonaws.auth.*;
+import com.amazonaws.AmazonClientException;
+import com.amazonaws.AmazonWebServiceRequest;
+import com.amazonaws.ClientConfiguration;
+import com.amazonaws.Protocol;
+import com.amazonaws.SdkBaseException;
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.AWSCredentialsProviderChain;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.auth.PropertiesCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.retry.PredefinedRetryPolicies;
 import com.amazonaws.retry.RetryPolicy;
@@ -16,8 +25,8 @@ import com.flightstats.hub.app.HubProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.io.File;
-import java.io.IOException;
 import java.net.UnknownHostException;
 
 import static com.amazonaws.retry.PredefinedBackoffStrategies.EqualJitterBackoffStrategy;
@@ -27,12 +36,24 @@ public class AwsConnectorFactory {
 
     private final static Logger logger = LoggerFactory.getLogger(AwsConnectorFactory.class);
 
-    private final String dynamoEndpoint = HubProperties.getProperty("dynamo.endpoint", "dynamodb.us-east-1.amazonaws.com");
-    private final String s3Endpoint = HubProperties.getProperty("s3.endpoint", "s3-external-1.amazonaws.com");
-    private final String protocol = HubProperties.getProperty("aws.protocol", "HTTP");
-    private final String signingRegion = HubProperties.getSigningRegion();
+    private final HubProperties hubProperties;
+    private final String dynamoEndpoint;
+    private final String s3Endpoint;
+    private final String protocol;
+    private final String signingRegion;
+    private final String credentialsFile;
 
-    public AmazonS3 getS3Client() throws IOException {
+    @Inject
+    AwsConnectorFactory(HubProperties hubProperties) {
+        this.hubProperties = hubProperties;
+        this.dynamoEndpoint = hubProperties.getProperty("dynamo.endpoint", "dynamodb.us-east-1.amazonaws.com");
+        this.s3Endpoint = hubProperties.getProperty("s3.endpoint", "s3-external-1.amazonaws.com");
+        this.protocol = hubProperties.getProperty("aws.protocol", "HTTP");
+        this.signingRegion = hubProperties.getSigningRegion();
+        this.credentialsFile = hubProperties.getProperty("aws.credentials", "hub_test_credentials.properties");
+    }
+
+    public AmazonS3 getS3Client() {
         logger.info("creating for  " + protocol + " " + s3Endpoint + " " + signingRegion);
         return AmazonS3ClientBuilder.standard()
                 .withClientConfiguration(getClientConfiguration("s3", true))
@@ -41,7 +62,7 @@ public class AwsConnectorFactory {
                 .build();
     }
 
-    public AmazonDynamoDB getDynamoClient() throws IOException {
+    public AmazonDynamoDB getDynamoClient() {
         logger.info("creating for  " + protocol + " " + dynamoEndpoint + " " + signingRegion);
         return AmazonDynamoDBClientBuilder.standard()
                 .withClientConfiguration(getClientConfiguration("dynamo", false))
@@ -53,7 +74,7 @@ public class AwsConnectorFactory {
     private AWSCredentialsProviderChain getAwsCredentials() {
         return new AWSCredentialsProviderChain(
                 new DefaultAWSCredentialsProviderChain(),
-                new AWSStaticCredentialsProvider(loadTestCredentials(HubProperties.getProperty("aws.credentials", "hub_test_credentials.properties"))));
+                new AWSStaticCredentialsProvider(loadTestCredentials(credentialsFile)));
     }
 
     private AWSCredentials loadTestCredentials(String credentialsPath) {
@@ -69,12 +90,12 @@ public class AwsConnectorFactory {
     private ClientConfiguration getClientConfiguration(String name, boolean compress) {
         RetryPolicy retryPolicy = new RetryPolicy(new HubRetryCondition(), new HubBackoffStrategy(), 6, true);
         ClientConfiguration configuration = new ClientConfiguration()
-                .withMaxConnections(HubProperties.getProperty(name + ".maxConnections", 50))
+                .withMaxConnections(hubProperties.getProperty(name + ".maxConnections", 50))
                 .withRetryPolicy(retryPolicy)
                 .withGzip(compress)
                 .withProtocol(Protocol.valueOf(protocol))
-                .withConnectionTimeout(HubProperties.getProperty(name + ".connectionTimeout", 10 * 1000))
-                .withSocketTimeout(HubProperties.getProperty(name + ".socketTimeout", 30 * 1000));
+                .withConnectionTimeout(hubProperties.getProperty(name + ".connectionTimeout", 10 * 1000))
+                .withSocketTimeout(hubProperties.getProperty(name + ".socketTimeout", 30 * 1000));
         logger.info("using config {} {}", name, configuration);
         return configuration;
     }
@@ -82,15 +103,15 @@ public class AwsConnectorFactory {
     /**
      * Copied code from AWS client since SDKDefaultBackoffStrategy and V2CompatibleBackoffStrategyAdapter are not public.
      */
-    static class HubBackoffStrategy implements RetryPolicy.BackoffStrategy {
+    class HubBackoffStrategy implements RetryPolicy.BackoffStrategy {
 
         private final BackoffStrategy fullJitterBackoffStrategy;
         private final BackoffStrategy equalJitterBackoffStrategy;
-        int unknownHostDelay = HubProperties.getProperty("aws.retry.unknown.host.delay.millis", 5000);
+        int unknownHostDelay = hubProperties.getProperty("aws.retry.unknown.host.delay.millis", 5000);
 
         HubBackoffStrategy() {
-            int delayMillis = HubProperties.getProperty("aws.retry.delay.millis", 100);
-            int maxBackoffTime = HubProperties.getProperty("aws.retry.max.delay.millis", 20 * 1000);
+            int delayMillis = hubProperties.getProperty("aws.retry.delay.millis", 100);
+            int maxBackoffTime = hubProperties.getProperty("aws.retry.max.delay.millis", 20 * 1000);
             fullJitterBackoffStrategy = new FullJitterBackoffStrategy(delayMillis, maxBackoffTime);
             equalJitterBackoffStrategy = new EqualJitterBackoffStrategy(delayMillis * 10, maxBackoffTime);  // bc doubling base delay
         }

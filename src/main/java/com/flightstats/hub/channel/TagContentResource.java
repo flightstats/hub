@@ -3,11 +3,18 @@ package com.flightstats.hub.channel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ItemRequest;
 import com.flightstats.hub.dao.TagService;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.model.ChannelContentKey;
+import com.flightstats.hub.model.Content;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.Epoch;
+import com.flightstats.hub.model.Location;
+import com.flightstats.hub.model.Order;
+import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.rest.Linked;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
@@ -17,26 +24,48 @@ import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.*;
-import javax.ws.rs.core.*;
+import javax.inject.Inject;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.SortedSet;
 
 import static com.flightstats.hub.util.TimeUtil.Unit;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 
-@SuppressWarnings("WeakerAccess")
 @Path("/tag/{tag}")
 public class TagContentResource {
 
     private final static Logger logger = LoggerFactory.getLogger(TagContentResource.class);
 
+    private final ObjectMapper mapper;
+    private final TagService tagService;
+
     @Context
     private UriInfo uriInfo;
 
-    private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private final static TagService tagService = HubProvider.getInstance(TagService.class);
+    @Inject
+    TagContentResource(TagService tagService, ObjectMapper mapper) {
+        this.tagService = tagService;
+        this.mapper = mapper;
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

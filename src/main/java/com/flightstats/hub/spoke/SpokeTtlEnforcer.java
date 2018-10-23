@@ -11,12 +11,12 @@ import com.flightstats.hub.util.FileUtils;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.AbstractScheduledService;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -26,25 +26,31 @@ import java.util.stream.Stream;
 
 @Singleton
 public class SpokeTtlEnforcer {
+
     private final static Logger logger = LoggerFactory.getLogger(SpokeTtlEnforcer.class);
+
+    private final ChannelService channelService;
+    private final MetricsService metricsService;
+    private final SpokeContentDao spokeContentDao;
     private final SpokeStore spokeStore;
     private final String storagePath;
     private final int ttlMinutes;
 
     @Inject
-    private ChannelService channelService;
-
-    @Inject
-    private MetricsService metricsService;
-
-    @Inject
-    private SpokeContentDao spokeContentDao;
-
-    public SpokeTtlEnforcer(SpokeStore spokeStore) {
+    public SpokeTtlEnforcer(ChannelService channelService,
+                            MetricsService metricsService,
+                            SpokeContentDao spokeContentDao,
+                            SpokeStore spokeStore,
+                            HubProperties hubProperties)
+    {
+        this.channelService = channelService;
+        this.metricsService = metricsService;
+        this.spokeContentDao = spokeContentDao;
         this.spokeStore = spokeStore;
-        this.storagePath = HubProperties.getSpokePath(spokeStore);
-        this.ttlMinutes = HubProperties.getSpokeTtlMinutes(spokeStore) + 1;
-        if (HubProperties.getProperty("spoke.enforceTTL", true)) {
+        this.storagePath = hubProperties.getSpokePath(spokeStore);
+        this.ttlMinutes = hubProperties.getSpokeTtlMinutes(spokeStore) + 1;
+
+        if (hubProperties.getProperty("spoke.enforceTTL", true)) {
             HubServices.register(new SpokeTtlEnforcerService());
         }
     }

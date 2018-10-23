@@ -1,19 +1,28 @@
 package com.flightstats.hub.webhook;
 
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.exception.InvalidRequestException;
+import com.flightstats.hub.test.TestMain;
 import com.google.common.base.Strings;
+import com.google.inject.Injector;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class WebhookValidatorTest {
 
     private WebhookValidator webhookValidator;
+    private WebhookService webhookService;
     private Webhook webhook;
 
+    @BeforeClass
+    public void setUpClass() throws Exception {
+        Injector injector = TestMain.start();
+        webhookValidator = injector.getInstance(WebhookValidator.class);
+        webhookService = injector.getInstance(WebhookService.class);
+    }
+
     @Before
-    public void setUp() throws Exception {
-        webhookValidator = new WebhookValidator();
+    public void setUp() {
         webhook = Webhook.builder()
                 .callbackUrl("http://client/url")
                 .channelUrl("http://hub/channel/channelName")
@@ -23,13 +32,13 @@ public class WebhookValidatorTest {
 
     @Test
     public void testName() throws Exception {
-        webhook = webhook.withDefaults();
+        webhook = webhookService.withDefaults(webhook);
         webhookValidator.validate(webhook.withName("aA9_-"));
     }
 
     @Test
     public void testNameLarge() throws Exception {
-        webhook = webhook.withDefaults();
+        webhook = webhookService.withDefaults(webhook);
         webhookValidator.validate(webhook.withName(Strings.repeat("B", 128)));
     }
 
@@ -116,7 +125,6 @@ public class WebhookValidatorTest {
 
     @Test(expected = InvalidRequestException.class)
     public void testInvalidLocalhost() throws Exception {
-        HubProperties.setProperty("hub.type", "aws");
         webhook = Webhook.builder()
                 .callbackUrl("http:/localhost:8080/url")
                 .channelUrl("http://hub/channel/channelName")

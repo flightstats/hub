@@ -8,10 +8,10 @@ import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
 import com.flightstats.hub.dao.DocumentationDao;
 import com.google.common.io.ByteStreams;
-import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -23,11 +23,14 @@ public class S3DocumentationDao implements DocumentationDao {
 
     private final static Logger logger = LoggerFactory.getLogger(S3DocumentationDao.class);
 
-    @Inject
-    private S3BucketName s3BucketName;
+    private final S3BucketName s3BucketName;
+    private final HubS3Client s3Client;
 
     @Inject
-    private HubS3Client s3Client;
+    S3DocumentationDao(S3BucketName s3BucketName, HubS3Client s3Client) {
+        this.s3BucketName = s3BucketName;
+        this.s3Client = s3Client;
+    }
 
     @Override
     public String get(String channel) {

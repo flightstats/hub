@@ -1,5 +1,6 @@
 package com.flightstats.hub.app;
 
+import javax.inject.Inject;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Context;
@@ -9,13 +10,18 @@ import javax.ws.rs.core.UriInfo;
 /**
  * ShutdownResource should only be called from the node's instance by the upstart prestop.sh script
  */
-@SuppressWarnings("WeakerAccess")
 @Path("/shutdown")
 public class ShutdownResource {
 
+    private final ShutdownManager shutdownManager;
+
+    @Inject
+    ShutdownResource(ShutdownManager shutdownManager) {
+        this.shutdownManager = shutdownManager;
+    }
+
     @POST
     public Response shutdown(@Context UriInfo uriInfo) throws Exception {
-        ShutdownManager manager = HubProvider.getInstance(ShutdownManager.class);
-        return LocalHostOnly.getResponse(uriInfo, () -> manager.shutdown(true));
+        return LocalHostOnly.getResponse(uriInfo, () -> shutdownManager.shutdown(true));
     }
 }

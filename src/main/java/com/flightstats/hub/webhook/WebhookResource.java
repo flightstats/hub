@@ -3,7 +3,6 @@ package com.flightstats.hub.webhook;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.channel.TimeLinkUtil;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.rest.Linked;
@@ -14,7 +13,14 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.*;
+import javax.inject.Inject;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -27,16 +33,22 @@ import java.util.function.BiConsumer;
 /**
  * WebhookResource represents all of the interactions for Webhook Management.
  */
-@SuppressWarnings("WeakerAccess")
 @Path("/webhook")
 public class WebhookResource {
 
     private final static Logger logger = LoggerFactory.getLogger(WebhookResource.class);
-    private final static WebhookService webhookService = HubProvider.getInstance(WebhookService.class);
-    private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+
+    private final WebhookService webhookService;
+    private final ObjectMapper mapper;
 
     @Context
     private UriInfo uriInfo;
+
+    @Inject
+    WebhookResource(WebhookService webhookService, ObjectMapper mapper) {
+        this.webhookService = webhookService;
+        this.mapper = mapper;
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -44,7 +56,7 @@ public class WebhookResource {
         return getWebhooks("webhooks", uriInfo);
     }
 
-    static Response getWebhooks(String listName, UriInfo uriInfo) {
+    Response getWebhooks(String listName, UriInfo uriInfo) {
         try {
             ObjectNode root = mapper.createObjectNode();
             ObjectNode links = addSelfLink(root, uriInfo, false);
@@ -62,7 +74,7 @@ public class WebhookResource {
         }
     }
 
-    private static ObjectNode addSelfLink(ObjectNode root, UriInfo uriInfo, boolean includeChildren) {
+    private ObjectNode addSelfLink(ObjectNode root, UriInfo uriInfo, boolean includeChildren) {
         ObjectNode links = root.putObject("_links");
         ObjectNode self2 = links.putObject("self");
         String uri = uriInfo.getRequestUri().toString();
@@ -81,7 +93,7 @@ public class WebhookResource {
         return get(name, uriInfo);
     }
 
-    static Response getStatus(String name, boolean includeChildren, UriInfo uriInfo, BiConsumer<WebhookStatus, ObjectNode> biConsumer) {
+    Response getStatus(String name, boolean includeChildren, UriInfo uriInfo, BiConsumer<WebhookStatus, ObjectNode> biConsumer) {
         Optional<Webhook> webhookOptional = webhookService.get(name);
         if (!webhookOptional.isPresent()) {
             logger.info("webhook not found {} ", name);
@@ -96,7 +108,7 @@ public class WebhookResource {
         return Response.ok(root).build();
     }
 
-    static Response get(String name, UriInfo uriInfo) {
+    Response get(String name, UriInfo uriInfo) {
         return getStatus(name, true, uriInfo, ((status, root) -> {
             Webhook webhook = status.getWebhook();
             DateTime stable = TimeUtil.stable();
@@ -127,11 +139,11 @@ public class WebhookResource {
         }));
     }
 
-    static void addErrors(WebhookStatus status, ObjectNode root) {
+    void addErrors(WebhookStatus status, ObjectNode root) {
         status.getErrors().forEach(root.putArray("errors")::add);
     }
 
-    static void addLatest(WebhookStatus status, ObjectNode root) {
+    void addLatest(WebhookStatus status, ObjectNode root) {
         Webhook webhook = status.getWebhook();
         if (status.getChannelLatest() == null) {
             root.put("channelLatest", "");
@@ -146,7 +158,7 @@ public class WebhookResource {
         }
     }
 
-    private static Linked<Webhook> getLinked(Webhook webhook, UriInfo uriInfo) {
+    Linked<Webhook> getLinked(Webhook webhook, UriInfo uriInfo) {
         Linked.Builder<Webhook> builder = Linked.linked(webhook);
         builder.withLink("self", uriInfo.getRequestUri());
         return builder.build();
@@ -210,9 +222,9 @@ public class WebhookResource {
         return upsert(name, body, uriInfo);
     }
 
-    static Response upsert(String name, String body, UriInfo uriInfo) {
+    Response upsert(String name, String body, UriInfo uriInfo) {
         logger.info("upsert webhook {} {}", name, body);
-        Webhook webhook = Webhook.fromJson(body, webhookService.get(name)).withName(name);
+        Webhook webhook = webhookService.fromJson(body, webhookService.get(name)).withName(name);
         Optional<Webhook> upsert = webhookService.upsert(webhook);
         if (upsert.isPresent()) {
             return Response.ok(getLinked(webhook, uriInfo)).build();
@@ -228,7 +240,7 @@ public class WebhookResource {
         return deleter(name);
     }
 
-    static Response deleter(String name) {
+    Response deleter(String name) {
         Optional<Webhook> webhookOptional = webhookService.get(name);
         logger.info("delete webhook {}", name);
         if (!webhookOptional.isPresent()) {
@@ -247,9 +259,9 @@ public class WebhookResource {
         return cursorUpdater(name, body, uriInfo);
     }
 
-    static Response cursorUpdater(String name, String body, UriInfo uriInfo) {
+    Response cursorUpdater(String name, String body, UriInfo uriInfo) {
         logger.info("update cursor webhook {} {}", name, body);
-        Webhook webhook = Webhook.fromJson("{}", webhookService.get(name)).withName(name);
+        Webhook webhook = webhookService.fromJson("{}", webhookService.get(name)).withName(name);
         try {
             if (RequestUtils.isValidChannelUrl(body)) {
                 ContentPath item = ContentPath.fromFullUrl(body).get();

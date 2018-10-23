@@ -7,23 +7,27 @@ import com.flightstats.hub.util.ObjectRing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.Collection;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Singleton
 public class ActiveTraces {
 
     private final static Logger logger = LoggerFactory.getLogger(ActiveTraces.class);
+    private final static Map<String, Traces> activeTraces = new ConcurrentHashMap<>();
+    private final static ObjectRing<Traces> recent = new ObjectRing<>(100);
+    private final static TopSortedSet<Traces> slowest = new TopSortedSet<>(100, Traces::getTime, new DescendingTracesComparator());
+    private final static ThreadLocal<Traces> threadLocal = new ThreadLocal<>();
 
-    private static final Map<String, Traces> activeTraces = new ConcurrentHashMap<>();
-    private static final ObjectRing<Traces> recent = new ObjectRing<>(100);
-    private static final TopSortedSet<Traces> slowest = new TopSortedSet<>(100, Traces::getTime, new DescendingTracesComparator());
-    private static final ThreadLocal<Traces> threadLocal = new ThreadLocal<>();
-    private static long logSlowTraces = HubProperties.getProperty("logSlowTracesSeconds", 10) * 1000;
+    @Inject
+    private static HubProperties hubProperties;
 
     public static void start(Object... objects) {
-        start(new Traces(objects));
+        start(new Traces(hubProperties, objects));
     }
 
     private static void start(Traces traces) {
@@ -37,6 +41,7 @@ public class ActiveTraces {
     }
 
     public static boolean end(boolean trace, int status) {
+        long logSlowTraces = hubProperties.getProperty("logSlowTracesSeconds", 10) * 1000;
         Traces traces = threadLocal.get();
         if (null == traces) {
             logger.trace("no Traces found");
@@ -60,7 +65,7 @@ public class ActiveTraces {
     public static Traces getLocal() {
         Traces traces = threadLocal.get();
         if (traces == null) {
-            traces = new Traces("error: missing initial context");
+            traces = new Traces(hubProperties, "error: missing initial context");
             StackTraceElement[] elements = new Exception().getStackTrace();
             for (StackTraceElement element : elements) {
                 traces.add(element.toString());

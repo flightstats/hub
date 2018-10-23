@@ -1,6 +1,6 @@
 package com.flightstats.hub.channel;
 
-import com.flightstats.hub.dao.ContentDaoUtil;
+import com.flightstats.hub.dao.ContentDaoTester;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.google.common.io.ByteStreams;
@@ -26,7 +26,7 @@ public class ZipBulkBuilderTest {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ZipOutputStream output = new ZipOutputStream(baos);
         ContentKey key = new ContentKey();
-        Content content = ContentDaoUtil.createContent(key);
+        Content content = ContentDaoTester.createContent(key);
         ZipBulkBuilder.createZipEntry(output, content);
         output.close();
         byte[] bytes = baos.toByteArray();

@@ -1,18 +1,23 @@
 package com.flightstats.hub.spoke;
 
-import com.flightstats.hub.cluster.Cluster;
+import com.flightstats.hub.cluster.CuratorCluster;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.QueryResult;
 import com.flightstats.hub.exception.FailedQueryException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.BulkContent;
+import com.flightstats.hub.model.Content;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.TimeQuery;
 import com.google.common.base.Optional;
 import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import java.util.Collections;
 import java.util.SortedSet;
 
@@ -20,19 +25,27 @@ public class SpokeReadContentDao implements ContentDao {
 
     private final static Logger logger = LoggerFactory.getLogger(SpokeReadContentDao.class);
 
+    private final SpokeContentDao spokeContentDao;
+    private final RemoteSpokeStore spokeStore;
+    private final CuratorCluster cluster;
+
     @Inject
-    private RemoteSpokeStore spokeStore;
+    SpokeReadContentDao(SpokeContentDao spokeContentDao, RemoteSpokeStore spokeStore, @Named("SpokeCluster") CuratorCluster cluster) {
+        this.spokeContentDao = spokeContentDao;
+        this.spokeStore = spokeStore;
+        this.cluster = cluster;
+    }
 
     @Override
-    public ContentKey insert(String channelName, Content content) throws Exception {
+    public ContentKey insert(String channelName, Content content) {
         throw new NotImplementedException("SpokeReadContentDao.insert not implemented");
     }
 
     @Override
     public SortedSet<ContentKey> insert(BulkContent bulkContent) throws Exception {
-        return SpokeContentDao.insert(bulkContent, (baos) -> {
+        return spokeContentDao.insert(bulkContent, (baos) -> {
             String channel = bulkContent.getChannel();
-            return spokeStore.insert(SpokeStore.READ, channel, baos.toByteArray(), Cluster.getLocalServer(), ActiveTraces.getLocal(), "bulkKey", channel);
+            return spokeStore.insert(SpokeStore.READ, channel, baos.toByteArray(), cluster.getLocalServer(), ActiveTraces.getLocal(), "bulkKey", channel);
         });
     }
 

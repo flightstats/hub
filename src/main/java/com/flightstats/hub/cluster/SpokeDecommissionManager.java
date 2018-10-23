@@ -34,8 +34,8 @@ public class SpokeDecommissionManager implements DecommissionManager {
 
     @Inject
     public SpokeDecommissionManager(SpokeDecommissionCluster decommissionCluster,
-                                    @Named("SpokeCuratorCluster") CuratorCluster spokeCuratorCluster,
-                                    @Named("HubCuratorCluster") CuratorCluster hubCuratorCluster,
+                                    @Named("SpokeCluster") CuratorCluster spokeCuratorCluster,
+                                    @Named("HubCluster") CuratorCluster hubCuratorCluster,
                                     ShutdownManager shutdownManager,
                                     HubHealthCheck hubHealthCheck) throws Exception {
         this.decommissionCluster = decommissionCluster;

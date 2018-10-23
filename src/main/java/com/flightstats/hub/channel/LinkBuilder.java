@@ -3,7 +3,6 @@ package com.flightstats.hub.channel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ChannelContentKey;
@@ -15,6 +14,7 @@ import com.flightstats.hub.rest.Linked;
 import com.flightstats.hub.util.TimeUtil;
 import org.joda.time.DateTime;
 
+import javax.inject.Inject;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
@@ -24,11 +24,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 public class LinkBuilder {
 
-    private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    @Inject
+    private static ObjectMapper mapper;
 
     static URI buildChannelUri(String channelName, UriInfo uriInfo) {
         return uriInfo.getBaseUriBuilder().path("channel").path(channelName).build();
@@ -123,17 +125,17 @@ public class LinkBuilder {
             ContentKey contentKey = query.getStartKey();
             if (query.isNext()) {
                 ObjectNode previous = links.putObject("previous");
-                previous.put("href", LinkBuilder.getDirection("previous", channel, uriInfo, contentKey, count).toString());
+                previous.put("href", getDirection("previous", channel, uriInfo, contentKey, count).toString());
             } else {
                 ObjectNode next = links.putObject("next");
-                next.put("href", LinkBuilder.getDirection("next", channel, uriInfo, contentKey, count).toString());
+                next.put("href", getDirection("next", channel, uriInfo, contentKey, count).toString());
             }
         } else {
             ObjectNode next = links.putObject("next");
-            next.put("href", LinkBuilder.getDirection("next", channel, uriInfo, list.get(list.size() - 1), count).toString());
+            next.put("href", getDirection("next", channel, uriInfo, list.get(list.size() - 1), count).toString());
             if (includePrevious) {
                 ObjectNode previous = links.putObject("previous");
-                previous.put("href", LinkBuilder.getDirection("previous", channel, uriInfo, list.get(0), count).toString());
+                previous.put("href", getDirection("previous", channel, uriInfo, list.get(0), count).toString());
             }
         }
         ArrayNode ids = links.putArray("uris");

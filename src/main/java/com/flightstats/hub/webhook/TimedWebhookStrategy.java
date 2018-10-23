@@ -3,12 +3,18 @@ package com.flightstats.hub.webhook;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.ContentPath;
+import com.flightstats.hub.model.ContentPathKeys;
+import com.flightstats.hub.model.Epoch;
+import com.flightstats.hub.model.MinutePath;
+import com.flightstats.hub.model.SecondPath;
+import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
@@ -21,7 +27,12 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.concurrent.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
@@ -33,7 +44,7 @@ class TimedWebhookStrategy implements WebhookStrategy {
 
     private final static Logger logger = LoggerFactory.getLogger(TimedWebhookStrategy.class);
 
-    private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private final ObjectMapper mapper;
     private final Webhook webhook;
     private final LastContentPath lastContentPath;
     private final ChannelService channelService;
@@ -53,7 +64,8 @@ class TimedWebhookStrategy implements WebhookStrategy {
     private Function<DateTime, DateTime> getNextTime;
     private Duration duration;
 
-    TimedWebhookStrategy(Webhook webhook, LastContentPath lastContentPath, ChannelService channelService) {
+    TimedWebhookStrategy(ObjectMapper mapper, Webhook webhook, LastContentPath lastContentPath, ChannelService channelService) {
+        this.mapper = mapper;
         this.webhook = webhook;
         this.channel = webhook.getChannelName();
         this.lastContentPath = lastContentPath;

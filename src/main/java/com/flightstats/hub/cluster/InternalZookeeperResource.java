@@ -3,7 +3,6 @@ package com.flightstats.hub.cluster;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.primitives.Longs;
 import org.apache.commons.lang3.StringUtils;
@@ -13,7 +12,13 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.*;
+import javax.inject.Inject;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -24,14 +29,21 @@ import java.util.List;
 @SuppressWarnings("WeakerAccess")
 @Path("/internal/zookeeper/")
 public class InternalZookeeperResource {
-    private static final Logger logger = LoggerFactory.getLogger(InternalZookeeperResource.class);
 
-    private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private static final CuratorFramework curator = HubProvider.getInstance(CuratorFramework.class);
+    private final static Logger logger = LoggerFactory.getLogger(InternalZookeeperResource.class);
     public static final String DESCRIPTION = "Read-only interface into the ZooKeeper hierarchy.";
+
+    private final ObjectMapper mapper;
+    private final CuratorFramework curator;
 
     @Context
     private UriInfo uriInfo;
+
+    @Inject
+    InternalZookeeperResource(CuratorFramework curator, ObjectMapper mapper) {
+        this.curator = curator;
+        this.mapper = mapper;
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

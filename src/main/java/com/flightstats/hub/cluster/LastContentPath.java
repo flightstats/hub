@@ -16,15 +16,16 @@ import java.nio.charset.StandardCharsets;
 import java.util.function.Function;
 
 public class LastContentPath {
+
     private final static Logger logger = LoggerFactory.getLogger(LastContentPath.class);
 
-    private static final String tracing = HubProperties.getProperty("LastContentPathTracing", "channelToTrace");
-
+    private final String tracing;
     private final CuratorFramework curator;
 
     @Inject
-    public LastContentPath(CuratorFramework curator) {
+    public LastContentPath(CuratorFramework curator, HubProperties hubProperties) {
         this.curator = curator;
+        this.tracing = hubProperties.getProperty("LastContentPathTracing", "channelToTrace");
     }
 
     private void trace(String nameOrPath, String text, Object... context) {

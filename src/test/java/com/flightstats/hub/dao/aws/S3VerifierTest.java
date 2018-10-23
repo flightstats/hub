@@ -5,7 +5,7 @@ import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.MinutePath;
-import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.test.TestMain;
 import com.flightstats.hub.util.StringUtils;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Injector;
@@ -38,8 +38,9 @@ public class S3VerifierTest {
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        Injector injector = Integration.startAwsHub();
-        HubProperties.setProperty("spoke.ttlMinutes", "60");
+        Injector injector = TestMain.start();
+        HubProperties hubProperties = injector.getInstance(HubProperties.class);
+        hubProperties.setProperty("spoke.ttlMinutes", "60");
         s3Verifier = injector.getInstance(S3Verifier.class);
         lastContentPath = injector.getInstance(LastContentPath.class);
         channelService = injector.getInstance(ChannelService.class);

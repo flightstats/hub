@@ -11,10 +11,14 @@ import java.util.concurrent.TimeUnit;
 
 public class PeriodicMetricEmitter {
 
-    @Inject
-    private MetricsService metricsService;
+    private final MetricsService metricsService;
+    private final HubProperties hubProperties;
 
-    PeriodicMetricEmitter() {
+    @Inject
+    PeriodicMetricEmitter(MetricsService metricsService, HubProperties hubProperties) {
+        this.metricsService = metricsService;
+        this.hubProperties = hubProperties;
+
         HubServices.register(new PeriodicMetricEmitterService(), HubServices.TYPE.AFTER_HEALTHY_START);
     }
 
@@ -22,10 +26,10 @@ public class PeriodicMetricEmitter {
 
         @Override
         protected void runOneIteration() {
-            metricsService.gauge("s3.writeQueue.total", HubProperties.getS3WriteQueueSize());
-            metricsService.gauge("s3.writeQueue.threads", HubProperties.getS3WriteQueueThreads());
-            metricsService.gauge("spoke.write.ttl", HubProperties.getSpokeTtlMinutes(SpokeStore.WRITE));
-            metricsService.gauge("spoke.read.ttl", HubProperties.getSpokeTtlMinutes(SpokeStore.READ));
+            metricsService.gauge("s3.writeQueue.total", hubProperties.getS3WriteQueueSize());
+            metricsService.gauge("s3.writeQueue.threads", hubProperties.getS3WriteQueueThreads());
+            metricsService.gauge("spoke.write.ttl", hubProperties.getSpokeTtlMinutes(SpokeStore.WRITE));
+            metricsService.gauge("spoke.read.ttl", hubProperties.getSpokeTtlMinutes(SpokeStore.READ));
             metricsService.count(S3Verifier.MISSING_ITEM_METRIC_NAME, 0);
         }
 

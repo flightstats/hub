@@ -9,7 +9,10 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 
+import javax.inject.Inject;
+
 public class TimeUtil {
+
     public static final DateTimeFormatter FORMATTER = ISODateTimeFormat.dateTime().withZoneUTC();
     public static final DateTime BIG_BANG = new DateTime(1, DateTimeZone.UTC);
 
@@ -21,8 +24,11 @@ public class TimeUtil {
     private static final DateTimeFormatter monthsFormatter = DateTimeFormat.forPattern("yyyy/MM").withZoneUTC();
     private static final int stableSeconds;
 
+    @Inject
+    private static HubProperties hubProperties;
+
     static {
-        stableSeconds = HubProperties.getProperty("app.stable_seconds", 5);
+        stableSeconds = hubProperties.getProperty("app.stable_seconds", 5);
     }
 
     public static DateTime now() {
@@ -74,7 +80,7 @@ public class TimeUtil {
     }
 
     static DateTime getBirthDay() {
-        String property = HubProperties.getProperty("app.birthDay", "2015/01/01");
+        String property = hubProperties.getProperty("app.birthDay", "2015/01/01");
         return daysFormatter.parseDateTime(property);
     }
 

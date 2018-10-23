@@ -4,12 +4,12 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.util.Commander;
 import com.google.common.util.concurrent.AbstractScheduledService;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import com.sun.management.UnixOperatingSystemMXBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
 import java.util.Map;
@@ -22,9 +22,10 @@ public class MetricsRunner {
     private final MetricsService metricsService;
 
     @Inject
-    public MetricsRunner(MetricsService metricsService) {
+    public MetricsRunner(MetricsService metricsService, HubProperties hubProperties) {
         this.metricsService = metricsService;
-        this.seconds = HubProperties.getProperty("metrics.seconds", 30);
+        this.seconds = hubProperties.getProperty("metrics.seconds", 30);
+
         HubServices.register(new MetricsRunnerService());
     }
 
@@ -67,7 +68,7 @@ public class MetricsRunner {
 
     private class MetricsRunnerService extends AbstractScheduledService {
         @Override
-        protected void runOneIteration() throws Exception {
+        protected void runOneIteration() {
             run();
         }
 

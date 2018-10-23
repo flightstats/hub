@@ -2,7 +2,8 @@ package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentPath;
-import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.test.TestMain;
+import com.google.inject.Injector;
 import org.apache.curator.framework.CuratorFramework;
 import org.junit.Before;
 import org.junit.Test;
@@ -19,7 +20,8 @@ public class WebhookContentPathSetTest {
 
     @Before
     public void setUp() throws Exception {
-        curator = Integration.startZooKeeper();
+//        curator = TestApplication.startZooKeeper();
+        Injector injector = TestMain.start();
     }
 
     @Test

@@ -1,9 +1,7 @@
 package com.flightstats.hub.metrics;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProperties;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.rest.RestClient;
 import com.sun.jersey.api.client.ClientResponse;
 import com.timgroup.statsd.Event;
@@ -12,15 +10,26 @@ import org.joda.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 class DataDogMetricsService implements MetricsService {
+
     private final static Logger logger = LoggerFactory.getLogger(DataDogMetricsService.class);
-    private final static StatsDClient statsd = DataDog.statsd;
-    private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+
+    private final DataDog dataDog;
+    private final StatsDClient statsd;
+    private final HubProperties hubProperties;
+
+    @Inject
+    DataDogMetricsService(DataDog dataDog, HubProperties hubProperties) {
+        this.dataDog = dataDog;
+        this.statsd = dataDog.getStatsDClient();
+        this.hubProperties = hubProperties;
+    }
 
     @Override
     public void insert(String channel, long start, Insert type, int items, long bytes) {
@@ -32,11 +41,11 @@ class DataDogMetricsService implements MetricsService {
 
     @Override
     public void event(String title, String text, String[] tags) {
-        Event event = DataDog.getEventBuilder()
+        Event event = dataDog.getEventBuilder()
                 .withTitle(title)
                 .withText(text)
                 .build();
-        DataDog.statsd.recordEvent(event, tags);
+        dataDog.getStatsDClient().recordEvent(event, tags);
     }
 
     @Override
@@ -77,8 +86,8 @@ class DataDogMetricsService implements MetricsService {
     @Override
     public void mute(){
         logger.info("Attempting to mute datadog");
-        String api_key = HubProperties.getProperty("data_dog.api_key", "");
-        String app_key = HubProperties.getProperty("data_dog.app_key", "");
+        String api_key = hubProperties.getProperty("data_dog.api_key", "");
+        String app_key = hubProperties.getProperty("data_dog.app_key", "");
         String name = HubHost.getLocalName();
         long end = (new Instant()).getMillis()/1000 + (4 * 60);
 

@@ -1,13 +1,23 @@
 package com.flightstats.hub.channel;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.Epoch;
+import com.flightstats.hub.model.Location;
+import com.flightstats.hub.model.Order;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 
-import javax.ws.rs.*;
+import javax.inject.Inject;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -25,9 +35,16 @@ public class ChannelLatestResource {
     @Context
     private UriInfo uriInfo;
 
-    private final static TagLatestResource tagLatestResource = HubProvider.getInstance(TagLatestResource.class);
-    private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
+    private final TagLatestResource tagLatestResource;
+    private final ObjectMapper mapper;
+    private final ChannelService channelService;
+
+    @Inject
+    ChannelLatestResource(TagLatestResource tagLatestResource, ObjectMapper mapper, ChannelService channelService) {
+        this.tagLatestResource = tagLatestResource;
+        this.mapper = mapper;
+        this.channelService = channelService;
+    }
 
     @GET
     public Response getLatest(@PathParam("channel") String channel,

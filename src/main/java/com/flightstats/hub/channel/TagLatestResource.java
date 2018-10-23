@@ -1,12 +1,22 @@
 package com.flightstats.hub.channel;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.TagService;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.ChannelContentKey;
+import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.Epoch;
+import com.flightstats.hub.model.Location;
+import com.flightstats.hub.model.Order;
 import com.google.common.base.Optional;
 
-import javax.ws.rs.*;
+import javax.inject.Inject;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -21,8 +31,14 @@ import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 @Path("/tag/{tag}/latest")
 public class TagLatestResource {
 
-    private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private TagService tagService = HubProvider.getInstance(TagService.class);
+    private ObjectMapper mapper;
+    private TagService tagService;
+
+    @Inject
+    TagLatestResource(TagService tagService, ObjectMapper mapper) {
+        this.tagService = tagService;
+        this.mapper = mapper;
+    }
 
     @GET
     public Response getLatest(@PathParam("tag") String tag,
@@ -83,7 +99,6 @@ public class TagLatestResource {
         SortedSet<ChannelContentKey> keys = tagService.getKeys(query);
         keys.add(latest.get());
         if (bulk || batch) {
-            //todo - gfm -
             return BulkBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo, accept);
         }
         return LinkBuilder.directionalTagResponse(tag, keys, count, query, mapper, uriInfo, true, trace, Order.isDescending(order));

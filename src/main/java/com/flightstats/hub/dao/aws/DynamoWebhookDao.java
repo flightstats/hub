@@ -1,29 +1,45 @@
 package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.dynamodbv2.model.*;
+import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+import com.amazonaws.services.dynamodbv2.model.DeleteItemRequest;
+import com.amazonaws.services.dynamodbv2.model.GetItemResult;
+import com.amazonaws.services.dynamodbv2.model.ResourceNotFoundException;
+import com.amazonaws.services.dynamodbv2.model.ScanRequest;
+import com.amazonaws.services.dynamodbv2.model.ScanResult;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.webhook.Webhook;
+import com.flightstats.hub.webhook.WebhookService;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class DynamoWebhookDao implements Dao<Webhook> {
+
     private final static Logger logger = LoggerFactory.getLogger(DynamoWebhookDao.class);
 
     private final AmazonDynamoDB dbClient;
     private final DynamoUtils dynamoUtils;
+    private final WebhookService webhookService;
+    private final HubProperties hubProperties;
 
     @Inject
-    public DynamoWebhookDao(AmazonDynamoDB dbClient, DynamoUtils dynamoUtils) {
+    public DynamoWebhookDao(AmazonDynamoDB dbClient, DynamoUtils dynamoUtils, WebhookService webhookService, HubProperties hubProperties) {
         this.dbClient = dbClient;
         this.dynamoUtils = dynamoUtils;
+        this.webhookService = webhookService;
+        this.hubProperties = hubProperties;
+
         HubServices.register(new DynamoGroupDaoInit());
     }
 
@@ -115,7 +131,8 @@ public class DynamoWebhookDao implements Dao<Webhook> {
         if (item.containsKey("errorChannelUrl")) {
             builder.errorChannelUrl(item.get("errorChannelUrl").getS());
         }
-        return builder.build().withDefaults();
+        Webhook webhook = builder.build();
+        return webhookService.withDefaults(webhook);
     }
 
     @Override
@@ -149,17 +166,17 @@ public class DynamoWebhookDao implements Dao<Webhook> {
 
     private String getTableName() {
         String legacyTableName = dynamoUtils.getLegacyTableName("GroupConfig");
-        return HubProperties.getProperty("dynamo.table_name.webhook_configs", legacyTableName);
+        return hubProperties.getProperty("dynamo.table_name.webhook_configs", legacyTableName);
     }
 
     private class DynamoGroupDaoInit extends AbstractIdleService {
         @Override
-        protected void startUp() throws Exception {
+        protected void startUp() {
             initialize();
         }
 
         @Override
-        protected void shutDown() throws Exception {
+        protected void shutDown() {
         }
     }
 }

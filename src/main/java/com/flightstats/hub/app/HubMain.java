@@ -1,112 +1,62 @@
 package com.flightstats.hub.app;
 
-import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
-import com.flightstats.hub.filter.CORSFilter;
-import com.flightstats.hub.filter.StreamEncodingFilter;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
-import com.google.inject.Module;
-import org.glassfish.jersey.message.DeflateEncoder;
-import org.glassfish.jersey.message.GZipEncoder;
-import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.server.filter.EncodingFilter;
-import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.google.inject.Injector;
+import com.google.inject.Stage;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.security.Security;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
+import java.util.Properties;
+import java.util.stream.Collectors;
 
-/**
- * Main entry point for the hub.  This is the main runnable class.
- */
+@Slf4j
 public class HubMain {
 
-    private static final Logger logger = LoggerFactory.getLogger(HubMain.class);
-    private static final DateTime startTime = new DateTime();
-
-    public static void main(String[] args) throws Exception {
-        if (args.length == 0) {
-            throw new UnsupportedOperationException("HubMain requires a property filename, 'useDefault', or 'useEncryptedDefault'");
+    public static void main(String... args) throws Exception {
+        Properties properties = loadProperties(args[0]);
+        if (shouldRunZooKeeperInProcess(properties)) {
+            new Thread(() -> new ZooKeeperInProcess().start()).start();
         }
-        HubProperties.loadProperties(args[0]);
-        start();
+        Injector injector = Guice.createInjector(Stage.PRODUCTION, buildModuleArray(properties));
+        injector.getInstance(HubApplication.class).run();
     }
 
-    static void start() throws Exception {
-        Security.setProperty("networkaddress.cache.ttl", "60");
-        startZookeeperIfSingle();
-        HubJettyServer server = startServer();
-
-        final CountDownLatch latch = new CountDownLatch(1);
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            public void run() {
-                logger.info("Jetty Server shutting down...");
-                latch.countDown();
-            }
-        });
-        latch.await();
-        logger.warn("calling shutdown");
-        HubProvider.getInstance(ShutdownManager.class).shutdown(true);
-        server.halt();
-        logger.info("Server shutdown complete.  Exiting application.");
+    private static Properties loadProperties(String path) throws IOException {
+        log.info("loading properties file: {}", path);
+        Properties properties = new Properties();
+        InputStream propertiesStream = new FileInputStream(path);
+        properties.load(propertiesStream);
+        return properties;
     }
 
-    public static HubJettyServer startServer() throws IOException {
-        ResourceConfig resourceConfig = new ResourceConfig();
-        resourceConfig.register(new ObjectMapperResolver(HubBindings.objectMapper()));
-        resourceConfig.register(JacksonJsonProvider.class);
-        resourceConfig.registerClasses(CORSFilter.class,EncodingFilter.class, StreamEncodingFilter.class, GZipEncoder
-                        .class,
-                DeflateEncoder.class);
+    private static boolean shouldRunZooKeeperInProcess(Properties properties) {
+        String property = properties.getProperty("runSingleZookeeperInternally", "");
+        return !StringUtils.isEmpty(property);
+    }
 
-        List<Module> modules = new ArrayList<>();
-        modules.add(new HubBindings());
-        String hubType = HubProperties.getProperty("hub.type", "aws");
-        logger.info("starting with hub.type {}", hubType);
-        resourceConfig.packages("com.flightstats.hub");
-        switch (hubType) {
-            case "aws":
-                modules.add(new ClusterHubBindings());
-                break;
-            case "nas":
-            case "test":
-                modules.add(new SingleHubBindings());
-                break;
-            default:
-                throw new RuntimeException("unsupported hub.type " + hubType);
+    private static AbstractModule[] buildModuleArray(Properties properties) {
+        List<AbstractModule> modules = new ArrayList<>();
+        modules.add(new HubModule(properties));
+        String type = properties.getProperty("hub.type", "");
+        if (type.equals("aws")) {
+            modules.add(new ClusteredModule());
+        } else {
+            modules.add(new StandaloneModule());
         }
-        HubProvider.setInjector(Guice.createInjector(modules));
-        HubServices.start(HubServices.TYPE.BEFORE_HEALTH_CHECK);
-        HubJettyServer server = new HubJettyServer();
-        server.start(resourceConfig);
-        logger.info("Hub server has been started.");
-
-        HubServices.start(HubServices.TYPE.PERFORM_HEALTH_CHECK);
-        logger.info("completed initial post start");
-        HubServices.start(HubServices.TYPE.AFTER_HEALTHY_START);
-        return server;
+        log.debug("using Guice modules: {}", getModuleNames(modules));
+        return modules.toArray(new AbstractModule[0]);
     }
 
-    private static void startZookeeperIfSingle() {
-        new Thread(() -> {
-            String zkConfigFile = HubProperties.getProperty("runSingleZookeeperInternally", "");
-            if ("singleNode".equals(zkConfigFile)) {
-                warn("using single node zookeeper");
-                ZookeeperMain.start();
-            }
-        }).start();
+    private static String getModuleNames(List<AbstractModule> modules) {
+        return modules.stream()
+                .map(module -> module.getClass().getSimpleName())
+                .collect(Collectors.joining(", "));
     }
 
-    static void warn(String message) {
-        logger.warn("**********************************************************");
-        logger.warn("*** " + message);
-        logger.warn("**********************************************************");
-    }
-
-    public static DateTime getStartTime() {
-        return startTime;
-    }
 }

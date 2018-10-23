@@ -2,7 +2,11 @@ package com.flightstats.hub.dao.aws;
 
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.cluster.*;
+import com.flightstats.hub.cluster.CuratorLock;
+import com.flightstats.hub.cluster.LastContentPath;
+import com.flightstats.hub.cluster.Leadership;
+import com.flightstats.hub.cluster.Lockable;
+import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.QueryResult;
@@ -10,7 +14,11 @@ import com.flightstats.hub.exception.FailedQueryException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.metrics.Traces;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.model.ChannelContentKey;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.MinutePath;
+import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
@@ -18,9 +26,6 @@ import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
-import com.google.inject.name.Named;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import org.apache.curator.framework.CuratorFramework;
@@ -29,6 +34,9 @@ import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.CountDownLatch;
@@ -39,38 +47,57 @@ import java.util.concurrent.TimeUnit;
 @Singleton
 public class S3Verifier {
 
-    static final String LAST_SINGLE_VERIFIED = "/S3VerifierSingleLastVerified/";
     private final static Logger logger = LoggerFactory.getLogger(S3Verifier.class);
-    public static final String LEADER_PATH = "/S3VerifierSingleService";
-    public static final String MISSING_ITEM_METRIC_NAME = "s3.verifier.missing";
+    public final static String LAST_SINGLE_VERIFIED = "/S3VerifierSingleLastVerified/";
+    private final static String LEADER_PATH = "/S3VerifierSingleService";
+    public final static String MISSING_ITEM_METRIC_NAME = "s3.verifier.missing";
 
-    private final int offsetMinutes = HubProperties.getProperty("s3Verifier.offsetMinutes", 15);
-    private final int channelThreads = HubProperties.getProperty("s3Verifier.channelThreads", 3);
-    private final ExecutorService channelThreadPool = Executors.newFixedThreadPool(channelThreads, new ThreadFactoryBuilder().setNameFormat("S3VerifierChannel-%d").build());
-    private final ExecutorService queryThreadPool = Executors.newFixedThreadPool(channelThreads * 2, new ThreadFactoryBuilder().setNameFormat("S3VerifierQuery-%d").build());
-    @Inject
-    private LastContentPath lastContentPath;
-    @Inject
-    private ChannelService channelService;
-    @Inject
-    @Named(ContentDao.WRITE_CACHE)
-    private ContentDao spokeWriteContentDao;
-    @Inject
-    @Named(ContentDao.SINGLE_LONG_TERM)
-    private ContentDao s3SingleContentDao;
-    @Inject
-    private S3WriteQueue s3WriteQueue;
-    @Inject
-    private Client followClient;
-    @Inject
-    private ZooKeeperState zooKeeperState;
-    @Inject
-    private CuratorFramework curator;
-    @Inject
-    private MetricsService metricsService;
+    private final ContentDao spokeWriteContentDao;
+    private final ContentDao s3SingleContentDao;
+    private final S3WriteQueue s3WriteQueue;
+    private final ChannelService channelService;
+    private final LastContentPath lastContentPath;
+    private final Client httpClient;
+    private final ZooKeeperState zooKeeperState;
+    private final CuratorFramework curator;
+    private final MetricsService metricsService;
+    private final int offsetMinutes;
+    private final String appUrl;
+    private int writeSpokeStoreTtlMinutes;
+    private final ExecutorService channelThreadPool;
+    private final ExecutorService queryThreadPool;
 
-    public S3Verifier() {
-        if (HubProperties.getProperty("s3Verifier.run", true)) {
+
+    @Inject
+    public S3Verifier(@Named(ContentDao.WRITE_CACHE) ContentDao spokeWriteContentDao,
+                      @Named(ContentDao.SINGLE_LONG_TERM) ContentDao s3SingleContentDao,
+                      S3WriteQueue s3WriteQueue,
+                      ChannelService channelService,
+                      LastContentPath lastContentPath,
+                      Client httpClient,
+                      ZooKeeperState zooKeeperState,
+                      CuratorFramework curator,
+                      MetricsService metricsService,
+                      HubProperties hubProperties)
+    {
+        this.spokeWriteContentDao = spokeWriteContentDao;
+        this.s3SingleContentDao = s3SingleContentDao;
+        this.s3WriteQueue = s3WriteQueue;
+        this.channelService = channelService;
+        this.lastContentPath = lastContentPath;
+        this.httpClient = httpClient;
+        this.zooKeeperState = zooKeeperState;
+        this.curator = curator;
+        this.metricsService = metricsService;
+        this.offsetMinutes = hubProperties.getProperty("s3Verifier.offsetMinutes", 15);
+        this.appUrl = hubProperties.getAppUrl();
+        this.writeSpokeStoreTtlMinutes = hubProperties.getSpokeTtlMinutes(SpokeStore.WRITE);
+
+        int channelThreads = hubProperties.getProperty("s3Verifier.channelThreads", 3);
+        this.channelThreadPool = Executors.newFixedThreadPool(channelThreads, new ThreadFactoryBuilder().setNameFormat("S3VerifierChannel-%d").build());
+        this.queryThreadPool = Executors.newFixedThreadPool(channelThreads * 2, new ThreadFactoryBuilder().setNameFormat("S3VerifierQuery-%d").build());
+
+        if (hubProperties.getProperty("s3Verifier.run", true)) {
             HubServices.register(new S3ScheduledVerifierService(), HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
         }
     }
@@ -84,11 +111,11 @@ public class S3Verifier {
                     channelThreadPool.submit(() -> {
                         String name = Thread.currentThread().getName();
                         Thread.currentThread().setName(name + "|" + channel.getDisplayName());
-                        String url = HubProperties.getAppUrl() + "internal/s3Verifier/" + channel.getDisplayName();
+                        String url = appUrl + "internal/s3Verifier/" + channel.getDisplayName();
                         logger.debug("calling {}", url);
                         ClientResponse post = null;
                         try {
-                            post = followClient.resource(url).post(ClientResponse.class);
+                            post = httpClient.resource(url).post(ClientResponse.class);
                             logger.debug("response from post {}", post);
                         } finally {
                             HubUtils.close(post);
@@ -191,7 +218,7 @@ public class S3Verifier {
     }
 
     private MinutePath getSpokeTtlPath(DateTime now) {
-        return new MinutePath(now.minusMinutes(HubProperties.getSpokeTtlMinutes(SpokeStore.WRITE) - 2));
+        return new MinutePath(now.minusMinutes(writeSpokeStoreTtlMinutes - 2));
     }
 
     class VerifierRange {
@@ -212,7 +239,7 @@ public class S3Verifier {
     private class S3ScheduledVerifierService extends AbstractScheduledService implements Lockable {
 
         @Override
-        protected void runOneIteration() throws Exception {
+        protected void runOneIteration() {
             CuratorLock curatorLock = new CuratorLock(curator, zooKeeperState, LEADER_PATH);
             curatorLock.runWithLock(this, 1, TimeUnit.SECONDS);
         }
@@ -222,7 +249,7 @@ public class S3Verifier {
         }
 
         @Override
-        public void takeLeadership(Leadership leadership) throws Exception {
+        public void takeLeadership(Leadership leadership) {
             logger.info("taking leadership");
             while (leadership.hasLeadership()) {
                 long start = System.currentTimeMillis();

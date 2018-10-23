@@ -1,6 +1,13 @@
 package com.flightstats.hub.dao.aws;
 
-import com.amazonaws.services.s3.model.*;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
+import com.amazonaws.services.s3.model.GetObjectRequest;
+import com.amazonaws.services.s3.model.ListObjectsRequest;
+import com.amazonaws.services.s3.model.ObjectListing;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -11,17 +18,23 @@ import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.metrics.Traces;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.Content;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.ContentPath;
+import com.flightstats.hub.model.ContentPathKeys;
+import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.MinutePath;
+import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -29,7 +42,14 @@ import java.io.InputStream;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableSet;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -39,18 +59,24 @@ import java.util.zip.ZipInputStream;
 public class S3BatchContentDao implements ContentDao {
 
     private final static Logger logger = LoggerFactory.getLogger(S3BatchContentDao.class);
-    private static final String BATCH_INDEX = "Batch/index/";
-    private static final String BATCH_ITEMS = "Batch/items/";
-    private static final ObjectMapper mapper = new ObjectMapper();
+    private final static String BATCH_INDEX = "Batch/index/";
+    private final static String BATCH_ITEMS = "Batch/items/";
+    private final static ObjectMapper mapper = new ObjectMapper();
 
-    private final boolean useEncrypted = HubProperties.isAppEncrypted();
-    private final int s3MaxQueryItems = HubProperties.getProperty("s3.maxQueryItems", 1000);
+    private final HubS3Client s3Client;
+    private final S3BucketName s3BucketName;
+    private final MetricsService metricsService;
+    private final boolean useEncrypted;
+    private final int s3MaxQueryItems;
+
     @Inject
-    private HubS3Client s3Client;
-    @Inject
-    private S3BucketName s3BucketName;
-    @Inject
-    private MetricsService metricsService;
+    S3BatchContentDao(S3BucketName s3BucketName, HubS3Client s3Client, MetricsService metricsService, HubProperties hubProperties) {
+        this.s3BucketName = s3BucketName;
+        this.s3Client = s3Client;
+        this.metricsService = metricsService;
+        this.useEncrypted = hubProperties.isAppEncrypted();
+        this.s3MaxQueryItems = hubProperties.getProperty("s3.maxQueryItems", 1000);
+    }
 
     @Override
     public ContentKey insert(String channelName, Content content) throws Exception {

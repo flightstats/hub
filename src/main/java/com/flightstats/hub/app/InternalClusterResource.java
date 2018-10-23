@@ -3,35 +3,52 @@ package com.flightstats.hub.app;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.cluster.Cluster;
+import com.flightstats.hub.cluster.CuratorCluster;
 import com.flightstats.hub.cluster.DecommissionManager;
 import com.flightstats.hub.cluster.SpokeDecommissionCluster;
 import com.flightstats.hub.cluster.SpokeDecommissionManager;
 import com.flightstats.hub.rest.Linked;
 
-import javax.ws.rs.*;
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
-@SuppressWarnings("WeakerAccess")
 @Path("/internal/cluster")
 public class InternalClusterResource {
-    private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private static final Cluster spokeCluster = HubProvider.getInstance(Cluster.class, "SpokeCluster");
-    private static final DecommissionManager decommissionManager = HubProvider.getInstance(SpokeDecommissionManager.class);
-    private static final SpokeDecommissionCluster decommissionCluster = HubProvider.getInstance(SpokeDecommissionCluster.class);
 
     public static final String DESCRIPTION = "Information about the cluster and decommissioning nodes.";
-    private @Context
-    UriInfo uriInfo;
+
+    private final ObjectMapper mapper;
+    private final CuratorCluster spokeCluster;
+    private final DecommissionManager decommissionManager;
+    private final SpokeDecommissionCluster decommissionCluster;
+
+    @Context
+    private UriInfo uriInfo;
+
+    @Inject
+    InternalClusterResource(ObjectMapper mapper,
+                            @Named("SpokeCluster") CuratorCluster spokeCluster,
+                            SpokeDecommissionManager decommissionManager,
+                            SpokeDecommissionCluster decommissionCluster) {
+        this.mapper = mapper;
+        this.spokeCluster = spokeCluster;
+        this.decommissionManager = decommissionManager;
+        this.decommissionCluster = decommissionCluster;
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -40,10 +57,8 @@ public class InternalClusterResource {
         ObjectNode root = mapper.createObjectNode();
         root.put("description", DESCRIPTION);
         root.put("directions", "Make HTTP POSTs to links below to take the desired action");
-        root.put("/decommission", "POSTing to /decommission will remove the localhost from Spoke writes.  " +
-                "The server will continue to receive Spoke queries until all of its data is expired from Spoke.");
-        root.put("/recommission/{server}", "POSTing to /recommission/{server} with the ip address and port of a previously decommissioned " +
-                "server will allow that server to rejoin the cluster.  The new server should be started after this command.");
+        root.put("/decommission", "POSTing to /decommission will remove the localhost from Spoke writes. The server will continue to receive Spoke queries until all of its data is expired from Spoke.");
+        root.put("/recommission/{server}", "POSTing to /recommission/{server} with the ip address and port of a previously decommissioned server will allow that server to rejoin the cluster.  The new server should be started after this command.");
         addNodes("spokeCluster", spokeCluster.getAllServers(), root);
         ObjectNode decommissioned = root.putObject("decommissioned");
         addNodes("withinSpokeTTL", decommissionCluster.getWithinSpokeTTL(), decommissioned);
@@ -60,7 +75,7 @@ public class InternalClusterResource {
     }
 
 
-    private void addNodes(String name, Collection<String> servers, ObjectNode root) throws UnknownHostException {
+    private void addNodes(String name, Collection<String> servers, ObjectNode root) {
         ArrayNode cluster = root.putArray(name);
         Set<String> allServers = new TreeSet<>(servers);
         for (String server : allServers) {

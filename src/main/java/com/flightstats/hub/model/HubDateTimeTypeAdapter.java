@@ -12,7 +12,7 @@ import org.joda.time.format.ISODateTimeFormat;
 
 import java.io.IOException;
 
-final class HubDateTimeTypeAdapter extends TypeAdapter<DateTime> {
+public final class HubDateTimeTypeAdapter extends TypeAdapter<DateTime> {
 
     private static DateTimeFormatter dateTimeFormatter = ISODateTimeFormat.dateOptionalTimeParser().withZoneUTC();
 
@@ -25,7 +25,7 @@ final class HubDateTimeTypeAdapter extends TypeAdapter<DateTime> {
         return deserialize(in.nextString());
     }
 
-    static DateTime deserialize(String json) {
+    public static DateTime deserialize(String json) {
         if (StringUtils.isEmpty(json)) return null;
         DateTime parsed;
         try {

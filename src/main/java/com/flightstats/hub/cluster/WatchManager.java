@@ -6,18 +6,19 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.google.inject.Inject;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class WatchManager {
+
     private final static Logger logger = LoggerFactory.getLogger(WatchManager.class);
 
     private final CuratorFramework curator;
@@ -25,9 +26,9 @@ public class WatchManager {
     private final ConcurrentHashMap<String, Watcher> watcherMap = new ConcurrentHashMap<>();
 
     @Inject
-    public WatchManager(CuratorFramework curator) {
+    public WatchManager(CuratorFramework curator, HubProperties hubProperties) {
         this.curator = curator;
-        executorService = Executors.newFixedThreadPool(HubProperties.getProperty("watchManager.threads", 10),
+        executorService = Executors.newFixedThreadPool(hubProperties.getProperty("watchManager.threads", 10),
                 new ThreadFactoryBuilder().setNameFormat("watch-manager-%d").build());
         HubServices.register(new WatchManagerService());
     }
@@ -35,7 +36,7 @@ public class WatchManager {
     private class WatchManagerService extends AbstractIdleService {
 
         @Override
-        protected void startUp() throws Exception {
+        protected void startUp() {
             addCuratorListener();
         }
 

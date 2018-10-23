@@ -1,19 +1,20 @@
 package com.flightstats.hub.replication;
 
 import com.flightstats.hub.app.HubProperties;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.webhook.Webhook;
 
 class ChannelReplicator implements Replicator {
 
-    private static final HubUtils hubUtils = HubProvider.getInstance(HubUtils.class);
+    private final HubUtils hubUtils;
+    private final HubProperties hubProperties;
+    private final ChannelConfig channel;
 
-    private ChannelConfig channel;
-
-    ChannelReplicator(ChannelConfig channel) {
+    ChannelReplicator(ChannelConfig channel, HubUtils hubUtils, HubProperties hubProperties) {
         this.channel = channel;
+        this.hubUtils = hubUtils;
+        this.hubProperties = hubProperties;
     }
 
     public void start() {
@@ -28,11 +29,11 @@ class ChannelReplicator implements Replicator {
     }
 
     private String getCallbackUrl() {
-        return HubProperties.getAppUrl() + "internal/repls/" + channel.getDisplayName();
+        return hubProperties.getAppUrl() + "internal/repls/" + channel.getDisplayName();
     }
 
     private String getGroupName() {
-        return "Repl_" + HubProperties.getAppEnv() + "_" + channel.getDisplayName();
+        return "Repl_" + hubProperties.getAppEnv() + "_" + channel.getDisplayName();
     }
 
     public ChannelConfig getChannel() {

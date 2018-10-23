@@ -12,10 +12,12 @@ public class S3Batch {
 
     private ChannelConfig channel;
     private HubUtils hubUtils;
+    private final HubProperties hubProperties;
 
-    public S3Batch(ChannelConfig channel, HubUtils hubUtils) {
+    public S3Batch(ChannelConfig channel, HubUtils hubUtils, HubProperties hubProperties) {
         this.channel = channel;
         this.hubUtils = hubUtils;
+        this.hubProperties = hubProperties;
     }
 
     public void start() {
@@ -31,15 +33,15 @@ public class S3Batch {
     }
 
     private String getChannelUrl() {
-        return HubProperties.getAppUrl() + "channel/" + channel.getDisplayName();
+        return hubProperties.getAppUrl() + "channel/" + channel.getDisplayName();
     }
 
     private String getCallbackUrl() {
-        return HubProperties.getAppUrl() + "internal/s3Batch/" + channel.getDisplayName();
+        return hubProperties.getAppUrl() + "internal/s3Batch/" + channel.getDisplayName();
     }
 
     public String getGroupName() {
-        return S3_BATCH + HubProperties.getAppEnv() + "_" + channel.getDisplayName();
+        return S3_BATCH + hubProperties.getAppEnv() + "_" + channel.getDisplayName();
     }
 
     public ChannelConfig getChannel() {

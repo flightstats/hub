@@ -1,6 +1,11 @@
 package com.flightstats.hub.webhook;
 
-import com.flightstats.hub.cluster.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flightstats.hub.cluster.CuratorLock;
+import com.flightstats.hub.cluster.LastContentPath;
+import com.flightstats.hub.cluster.Leadership;
+import com.flightstats.hub.cluster.Lockable;
+import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.MetricsService;
@@ -10,52 +15,71 @@ import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
-import com.google.inject.Inject;
 import org.apache.curator.framework.CuratorFramework;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.util.Set;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 class WebhookLeader implements Lockable {
-    private final static Logger logger = LoggerFactory.getLogger(WebhookLeader.class);
+
+    private static final Logger logger = LoggerFactory.getLogger(WebhookLeader.class);
+
     static final String WEBHOOK_LAST_COMPLETED = "/GroupLastCompleted/";
-    public static final String LEADER_PATH = "/WebhookLeader";
+    private static final String LEADER_PATH = "/WebhookLeader";
 
     private final AtomicBoolean deleteOnExit = new AtomicBoolean();
+    private final AtomicReference<ContentPath> lastUpdated = new AtomicReference<>();
 
-    @Inject
-    private CuratorFramework curator;
-    @Inject
-    private ZooKeeperState zooKeeperState;
-    @Inject
-    private ChannelService channelService;
-    @Inject
-    private WebhookService webhookService;
-    @Inject
-    private MetricsService metricsService;
-    @Inject
-    private LastContentPath lastContentPath;
-    @Inject
-    private WebhookContentPathSet webhookInProcess;
-    @Inject
-    private WebhookError webhookError;
+    private final CuratorFramework curatorFramework;
+    private final ZooKeeperState zooKeeperState;
+    private final ChannelService channelService;
+    private final WebhookService webhookService;
+    private final MetricsService metricsService;
+    private final LastContentPath lastContentPath;
+    private final WebhookContentPathSet webhookInProcess;
+    private final WebhookError webhookError;
+    private final WebhookRetryer webhookRetryer;
 
     private Webhook webhook;
-
     private ExecutorService executorService;
     private Semaphore semaphore;
     private Leadership leadership;
-    private WebhookRetryer retryer;
-
     private WebhookStrategy webhookStrategy;
-    private AtomicReference<ContentPath> lastUpdated = new AtomicReference<>();
     private String channelName;
     private CuratorLock curatorLock;
+    private ObjectMapper mapper;
+
+    @Inject
+    WebhookLeader(CuratorFramework curatorFramework,
+                  ZooKeeperState zooKeeperState,
+                  ChannelService channelService,
+                  WebhookService webhookService,
+                  MetricsService metricsService,
+                  LastContentPath lastContentPath,
+                  WebhookContentPathSet webhookInProcess,
+                  WebhookError webhookError,
+                  WebhookRetryer webhookRetryer, ObjectMapper mapper)
+    {
+        this.curatorFramework = curatorFramework;
+        this.zooKeeperState = zooKeeperState;
+        this.channelService = channelService;
+        this.webhookService = webhookService;
+        this.metricsService = metricsService;
+        this.lastContentPath = lastContentPath;
+        this.webhookInProcess = webhookInProcess;
+        this.webhookError = webhookError;
+        this.webhookRetryer = webhookRetryer;
+        this.mapper = mapper;
+    }
 
     void setWebhook(Webhook webhook) {
         this.webhook = webhook;
@@ -68,7 +92,7 @@ class WebhookLeader implements Lockable {
             logger.info("not starting paused webhook " + webhook);
             return false;
         } else {
-            curatorLock = new CuratorLock(curator, zooKeeperState, getLeaderPath());
+            curatorLock = new CuratorLock(curatorFramework, zooKeeperState, getLeaderPath());
             return curatorLock.runWithLock(this, 1, TimeUnit.SECONDS);
         }
     }
@@ -91,15 +115,15 @@ class WebhookLeader implements Lockable {
         logger.info("taking leadership {} {}", webhook, leadership.hasLeadership());
         executorService = Executors.newCachedThreadPool();
         semaphore = new Semaphore(webhook.getParallelCalls());
-        retryer = WebhookRetryer.builder()
+        webhookRetryer.setCriteria(WebhookRetryerCriteria.builder()
                 .readTimeoutSeconds(webhook.getCallbackTimeoutSeconds())
                 .tryLaterIf(this::doesNotHaveLeadership)
                 .tryLaterIf(this::webhookIsPaused)
                 .giveUpIf(this::webhookTTLExceeded)
                 .giveUpIf(this::channelTTLExceeded)
                 .giveUpIf(this::maxAttemptsReached)
-                .build();
-        webhookStrategy = WebhookStrategy.getStrategy(webhook, lastContentPath, channelService);
+                .build());
+        webhookStrategy = determineStrategy(webhook);
         try {
             ContentPath lastCompletedPath = webhookStrategy.getStartingPath();
             lastUpdated.set(lastCompletedPath);
@@ -130,6 +154,13 @@ class WebhookLeader implements Lockable {
             webhookStrategy = null;
             executorService = null;
         }
+    }
+
+    private WebhookStrategy determineStrategy(Webhook webhook) {
+        if (webhook.isMinute() || webhook.isSecond()) {
+            return new TimedWebhookStrategy(mapper, webhook, lastContentPath, channelService);
+        }
+        return new SingleWebhookStrategy(mapper, webhook, lastContentPath, channelService);
     }
 
     private boolean doesNotHaveLeadership(DeliveryAttempt attempt) {
@@ -218,7 +249,7 @@ class WebhookLeader implements Lockable {
             try {
                 metricsService.time("webhook.delta", contentPath.getTime().getMillis(), "name:" + webhook.getName());
                 long start = System.currentTimeMillis();
-                boolean shouldGoToNextItem = retryer.send(webhook, contentPath, webhookStrategy.createResponse(contentPath));
+                boolean shouldGoToNextItem = webhookRetryer.send(webhook, contentPath, webhookStrategy.createResponse(contentPath));
                 metricsService.time("webhook", start, "name:" + webhook.getName());
                 if (shouldGoToNextItem) {
                     if (increaseLastUpdated(contentPath)) {

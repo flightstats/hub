@@ -1,59 +1,107 @@
 package com.flightstats.hub.dao;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.InFlightService;
 import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.aws.MultiPartParser;
-import com.flightstats.hub.exception.*;
+import com.flightstats.hub.exception.ConflictException;
+import com.flightstats.hub.exception.ContentTooLargeException;
+import com.flightstats.hub.exception.ForbiddenRequestException;
+import com.flightstats.hub.exception.InvalidRequestException;
+import com.flightstats.hub.exception.MethodNotAllowedException;
+import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.metrics.MetricsService.Insert;
 import com.flightstats.hub.metrics.Traces;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.BulkContent;
+import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.model.Content;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.ContentPath;
+import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.Epoch;
+import com.flightstats.hub.model.HubDateTimeTypeAdapter;
+import com.flightstats.hub.model.SecondPath;
+import com.flightstats.hub.model.StreamResults;
+import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.replication.ReplicationManager;
 import com.flightstats.hub.time.TimeService;
 import com.flightstats.hub.util.TimeUtil;
 import com.flightstats.hub.webhook.TagWebhook;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
-import com.google.inject.name.Named;
+import com.google.gson.Gson;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 @Singleton
 public class ChannelService {
-    /**
-     * REPLICATED_LAST_UPDATED is set to the last second updated, inclusive of that entire second.
-     */
-    public static final String REPLICATED_LAST_UPDATED = "/ReplicatedLastUpdated/";
-    private static final String HISTORICAL_EARLIEST = "/HistoricalEarliest/";
 
     private final static Logger logger = LoggerFactory.getLogger(ChannelService.class);
-    private static final int DIR_COUNT_LIMIT = HubProperties.getProperty("app.directionCountLimit", 10000);
+    private final static String HISTORICAL_EARLIEST = "/HistoricalEarliest/";
+    // set to the last second updated, inclusive of that entire second.
+    public final static String REPLICATED_LAST_UPDATED = "/ReplicatedLastUpdated/";
+
+    private final Dao<ChannelConfig> channelConfigDao;
+    private final ContentService contentService;
+    private final ChannelValidator channelValidator;
+    private final ReplicationManager replicationManager;
+    private final LastContentPath lastContentPath;
+    private final InFlightService inFlightService;
+    private final TimeService timeService;
+    private final MetricsService metricsService;
+    private final HubProperties hubProperties;
+    private final ObjectMapper mapper;
+    private final Gson gson;
+    private final int directionCountLimit;
+
     @Inject
-    private ContentService contentService;
-    @Inject
-    @Named("ChannelConfig")
-    private Dao<ChannelConfig> channelConfigDao;
-    @Inject
-    private ChannelValidator channelValidator;
-    @Inject
-    private ReplicationManager replicationManager;
-    @Inject
-    private LastContentPath lastContentPath;
-    @Inject
-    private InFlightService inFlightService;
-    @Inject
-    private TimeService timeService;
-    @Inject
-    private MetricsService metricsService;
+    ChannelService(@Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao,
+                   ContentService contentService,
+                   ChannelValidator channelValidator,
+                   ReplicationManager replicationManager,
+                   LastContentPath lastContentPath,
+                   InFlightService inFlightService,
+                   TimeService timeService,
+                   MetricsService metricsService,
+                   HubProperties hubProperties,
+                   ObjectMapper mapper,
+                   Gson gson)
+    {
+        this.channelConfigDao = channelConfigDao;
+        this.contentService = contentService;
+        this.channelValidator = channelValidator;
+        this.replicationManager = replicationManager;
+        this.lastContentPath = lastContentPath;
+        this.inFlightService = inFlightService;
+        this.timeService = timeService;
+        this.metricsService = metricsService;
+        this.hubProperties = hubProperties;
+        this.mapper = mapper;
+        this.gson = gson;
+        this.directionCountLimit = hubProperties.getProperty("app.directionCountLimit", 10000);
+    }
 
     public boolean channelExists(String channelName) {
         return channelConfigDao.exists(channelName);
@@ -61,11 +109,80 @@ public class ChannelService {
 
     public ChannelConfig createChannel(ChannelConfig configuration) {
         logger.info("create channel {}", configuration);
+        verifyChannelUniqueness(configuration);
         channelValidator.validate(configuration, null, false);
         channelConfigDao.upsert(configuration);
         notify(configuration, null);
         TagWebhook.updateTagWebhooksDueToChannelConfigChange(configuration);
         return configuration;
+    }
+
+    @VisibleForTesting
+    protected void verifyChannelUniqueness(ChannelConfig configuration) {
+        Optional<String> channelNameOptional = Optional.fromNullable(configuration.getDisplayName());
+        channelValidator.validateNameWasGiven(channelNameOptional);
+        String channelName = channelNameOptional.get().trim();
+        if (channelExists(channelName)) {
+            throw new ConflictException("{\"error\": \"Channel name " + channelName + " already exists\"}");
+        }
+    }
+
+    public ChannelConfig createFromJson(String json) {
+        if (StringUtils.isEmpty(json)) {
+            throw new InvalidRequestException("this method requires at least a json name");
+        } else {
+            return gson.fromJson(json, ChannelConfig.ChannelConfigBuilder.class).build();
+        }
+    }
+
+    public ChannelConfig createFromJsonWithName(String json, String name) {
+        if (StringUtils.isEmpty(json)) {
+            return ChannelConfig.builder().name(name).build();
+        } else {
+            return gson.fromJson(json, ChannelConfig.ChannelConfigBuilder.class).name(name).build();
+        }
+    }
+
+    public ChannelConfig updateFromJson(ChannelConfig config, String json) {
+        ChannelConfig.ChannelConfigBuilder builder = config.toBuilder();
+        JsonNode rootNode = readJSON(json);
+        if (rootNode.has("owner")) builder.owner(getString(rootNode.get("owner")));
+        if (rootNode.has("description")) builder.description(getString(rootNode.get("description")));
+        if (rootNode.has("keepForever")) builder.keepForever(rootNode.get("keepForever").asBoolean());
+        if (rootNode.has("ttlDays")) builder.ttlDays(rootNode.get("ttlDays").asLong());
+        if (rootNode.has("maxItems")) builder.maxItems(rootNode.get("maxItems").asLong());
+        if (rootNode.has("tags")) builder.tags(getSet(rootNode.get("tags")));
+        if (rootNode.has("replicationSource")) builder.replicationSource(getString(rootNode.get("replicationSource")));
+        if (rootNode.has("storage")) builder.storage(getString(rootNode.get("storage")));
+        if (rootNode.has("protect")) builder.protect(rootNode.get("protect").asBoolean());
+        if (rootNode.has("mutableTime")) {
+            builder.mutableTime(HubDateTimeTypeAdapter.deserialize(rootNode.get("mutableTime").asText()));
+        }
+        if (rootNode.has("allowZeroBytes")) builder.allowZeroBytes(rootNode.get("allowZeroBytes").asBoolean());
+        return builder.build();
+    }
+
+    private JsonNode readJSON(String json) {
+        try {
+            return mapper.readTree(json);
+        } catch (Exception e) {
+            throw new InvalidRequestException("couldn't read json: " + json);
+        }
+    }
+
+    private String getString(JsonNode node) {
+        String value = node.asText();
+        if (value.equals("null")) {
+            value = "";
+        }
+        return value;
+    }
+
+    private Set<String> getSet(JsonNode node) {
+        if (!node.isArray()) throw new InvalidRequestException("json node is not an array: " + node.toString());
+        return StreamSupport.stream(node.spliterator(), false)
+                .map(JsonNode::asText)
+                .collect(Collectors.toSet());
     }
 
     private void notify(ChannelConfig newConfig, ChannelConfig oldConfig) {
@@ -172,7 +289,7 @@ public class ChannelService {
         }
         long start = System.currentTimeMillis();
         Collection<ContentKey> contentKeys = inFlightService.inFlight(() -> {
-            MultiPartParser multiPartParser = new MultiPartParser(bulkContent);
+            MultiPartParser multiPartParser = new MultiPartParser(bulkContent, hubProperties);
             multiPartParser.parse();
             return contentService.insert(bulkContent);
         });
@@ -335,8 +452,8 @@ public class ChannelService {
 
     private DirectionQuery configureQuery(DirectionQuery query) {
         ActiveTraces.getLocal().add("configureQuery.start", query);
-        if (query.getCount() > DIR_COUNT_LIMIT) {
-            query = query.withCount(DIR_COUNT_LIMIT);
+        if (query.getCount() > directionCountLimit) {
+            query = query.withCount(directionCountLimit);
         }
         ChannelConfig channelConfig = getCachedChannelConfig(query.getChannelName());
         query = query.withChannelConfig(channelConfig);

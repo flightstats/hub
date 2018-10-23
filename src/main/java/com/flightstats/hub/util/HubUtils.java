@@ -4,12 +4,17 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubHost;
-import com.flightstats.hub.app.HubProvider;
-import com.flightstats.hub.cluster.Cluster;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.cluster.CuratorCluster;
+import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.model.BulkContent;
+import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.model.Content;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.Query;
 import com.flightstats.hub.webhook.Webhook;
 import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -37,12 +42,23 @@ public class HubUtils {
     private final static Logger logger = LoggerFactory.getLogger(HubUtils.class);
     private final ObjectMapper mapper = new ObjectMapper();
     private final Client noRedirectsClient;
+    private final CuratorCluster hubCluster;
     private final Client followClient;
+    private final ChannelService channelService;
+    private final Gson gson;
 
     @Inject
-    public HubUtils(@Named("NoRedirects") Client noRedirectsClient, Client followClient) {
+    public HubUtils(@Named("NoRedirects") Client noRedirectsClient,
+                    @Named("HubCluster") CuratorCluster hubCluster,
+                    Client followClient,
+                    ChannelService channelService,
+                    Gson gson)
+    {
         this.noRedirectsClient = noRedirectsClient;
+        this.hubCluster = hubCluster;
         this.followClient = followClient;
+        this.channelService = channelService;
+        this.gson = gson;
     }
 
     public static void close(ClientResponse response) {
@@ -80,7 +96,7 @@ public class HubUtils {
 
     public ClientResponse startWebhook(Webhook webhook) {
         String groupUrl = getSourceUrl(webhook.getChannelUrl()) + "/group/" + webhook.getName();
-        String json = webhook.toJson();
+        String json = gson.toJson(webhook);
         logger.info("starting {} with {}", groupUrl, json);
         ClientResponse response = null;
         try {
@@ -122,7 +138,7 @@ public class HubUtils {
             response = followClient.resource(channelUrl)
                     .accept(MediaType.APPLICATION_JSON)
                     .type(MediaType.APPLICATION_JSON)
-                    .put(ClientResponse.class, channelConfig.toJson());
+                    .put(ClientResponse.class, gson.toJson(channelConfig));
             logger.info("put channel response {} {}", channelConfig, response);
             return response.getStatus() < 400;
         } finally {
@@ -142,7 +158,7 @@ public class HubUtils {
             if (response.getStatus() >= 400) {
                 return null;
             } else {
-                return ChannelConfig.createFromJson(response.getEntity(String.class));
+                return channelService.createFromJson(response.getEntity(String.class));
             }
         } finally {
             HubUtils.close(response);
@@ -273,7 +289,6 @@ public class HubUtils {
     }
 
     public ObjectNode refreshAll() {
-        Cluster hubCluster = HubProvider.getInstance(Cluster.class, "HubCluster");
         ObjectNode root = mapper.createObjectNode();
         Set<String> servers = hubCluster.getAllServers();
         for (String server : servers) {

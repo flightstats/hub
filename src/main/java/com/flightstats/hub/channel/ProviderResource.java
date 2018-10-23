@@ -1,6 +1,5 @@
 package com.flightstats.hub.channel;
 
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.model.BulkContent;
@@ -10,7 +9,12 @@ import com.flightstats.hub.model.ContentKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.*;
+import javax.inject.Inject;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.InputStream;
@@ -20,12 +24,17 @@ import java.util.Collection;
  * This is a convenience interface for external data Providers.
  * It supports automatic channel creation and does not return links they can not access.
  */
-@SuppressWarnings("WeakerAccess")
 @Path("/provider")
 public class ProviderResource {
+
     private final static Logger logger = LoggerFactory.getLogger(ProviderResource.class);
 
-    private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
+    private final ChannelService channelService;
+
+    @Inject
+    ProviderResource(ChannelService channelService) {
+        this.channelService = channelService;
+    }
 
     protected void ensureChannel(String channelName){
         if (!channelService.channelExists(channelName)) {

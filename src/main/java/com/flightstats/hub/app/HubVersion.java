@@ -1,12 +1,11 @@
 package com.flightstats.hub.app;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
-import com.google.inject.name.Named;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.File;
 
 @Singleton
@@ -14,10 +13,12 @@ public class HubVersion {
     private final static Logger logger = LoggerFactory.getLogger(HubVersion.class);
 
     private static String version;
+    private final String libPath;
 
     @Inject
-    @Named("app.lib_path")
-    private String libPath;
+    HubVersion(HubProperties hubProperties) {
+        this.libPath = hubProperties.getProperty("app.lib_path");
+    }
 
     public synchronized String getVersion() {
         if (version != null) {

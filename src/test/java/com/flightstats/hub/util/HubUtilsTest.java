@@ -1,8 +1,8 @@
 package com.flightstats.hub.util;
 
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.model.*;
-import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.test.TestMain;
+import com.google.inject.Injector;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -25,8 +25,8 @@ public class HubUtilsTest {
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        Integration.startAwsHub();
-        hubUtils = HubProvider.getInstance(HubUtils.class);
+        Injector injector = TestMain.start();
+        hubUtils = injector.getInstance(HubUtils.class);
         channelUrl = create();
     }
 
@@ -34,7 +34,7 @@ public class HubUtilsTest {
     Use this to test a remote hub instance.
     @BeforeClass
     public static void setUpClass() throws Exception {
-        hubUtils = new HubUtils(null, HubBindings.buildJerseyClient());
+        hubUtils = new HubUtils(null, HubModule.buildJerseyClient());
         channelUrl = create();
     }*/
 

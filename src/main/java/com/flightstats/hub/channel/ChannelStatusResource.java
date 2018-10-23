@@ -2,12 +2,16 @@ package com.flightstats.hub.channel;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.Epoch;
+import com.flightstats.hub.model.Location;
 import com.flightstats.hub.util.HubUtils;
 import com.google.common.base.Optional;
 
+import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -15,16 +19,22 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.util.SortedSet;
 
-@SuppressWarnings("WeakerAccess")
 @Path("/channel/{channel}/status")
 public class ChannelStatusResource {
+
+    private final ChannelService channelService;
+    private final HubUtils hubUtils;
+    private final ObjectMapper mapper;
 
     @Context
     private UriInfo uriInfo;
 
-    private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
-    private final static HubUtils hubUtils = HubProvider.getInstance(HubUtils.class);
-    private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    @Inject
+    ChannelStatusResource(ChannelService channelService, HubUtils hubUtils, ObjectMapper mapper) {
+        this.channelService = channelService;
+        this.hubUtils = hubUtils;
+        this.mapper = mapper;
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

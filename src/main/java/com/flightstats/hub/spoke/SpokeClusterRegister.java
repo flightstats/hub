@@ -3,8 +3,9 @@ package com.flightstats.hub.spoke;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.CuratorCluster;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
+
+import javax.inject.Inject;
+import javax.inject.Named;
 
 /**
  * The SpokeClusterRegister uses ip addresses of each instance in the cluster.
@@ -12,11 +13,12 @@ import com.google.inject.name.Named;
  */
 public class SpokeClusterRegister {
 
-    @Inject
-    @Named("SpokeCuratorCluster")
-    private CuratorCluster spokeCuratorCluster;
+    private final CuratorCluster spokeCuratorCluster;
 
-    public SpokeClusterRegister() {
+    @Inject
+    public SpokeClusterRegister(@Named("SpokeCluster") CuratorCluster spokeCuratorCluster) {
+        this.spokeCuratorCluster = spokeCuratorCluster;
+
         HubServices.register(new CuratorSpokeClusterHook(), HubServices.TYPE.PERFORM_HEALTH_CHECK, HubServices.TYPE.PRE_STOP);
     }
 

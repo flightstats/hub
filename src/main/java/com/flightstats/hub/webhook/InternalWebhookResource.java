@@ -3,12 +3,20 @@ package com.flightstats.hub.webhook;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.model.ContentPath;
 import org.joda.time.DateTime;
 
-import javax.ws.rs.*;
-import javax.ws.rs.core.*;
+import javax.inject.Inject;
+import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Map;
@@ -24,12 +32,24 @@ public class InternalWebhookResource {
     public static final String DESCRIPTION = "Get all webhooks, or stale or erroring webhooks.";
     private static final Long DEFAULT_STALE_AGE = TimeUnit.HOURS.toMinutes(1);
 
-    private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private final static WebhookService webhookService = HubProvider.getInstance(WebhookService.class);
-    private final static LocalWebhookManager LOCAL_WEBHOOK_MANAGER = HubProvider.getInstance(LocalWebhookManager.class);
+    private final ObjectMapper mapper;
+    private final WebhookService webhookService;
+    private final LocalWebhookManager localWebhookManager;
+    private final WebhookResource webhookResource;
 
     @Context
     private UriInfo uriInfo;
+
+    @Inject
+    InternalWebhookResource(ObjectMapper mapper,
+                            WebhookService webhookService,
+                            LocalWebhookManager localWebhookManager,
+                            WebhookResource webhookResource) {
+        this.mapper = mapper;
+        this.webhookService = webhookService;
+        this.localWebhookManager = localWebhookManager;
+        this.webhookResource = webhookResource;
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -111,8 +131,8 @@ public class InternalWebhookResource {
                 node.put("href", constructWebhookURI(webhook).toString());
                 node.put("callbackUrl", webhook.getCallbackUrl());
                 node.put("channelUrl", webhook.getChannelUrl());
-                WebhookResource.addLatest(status, node);
-                WebhookResource.addErrors(status, node);
+                webhookResource.addLatest(status, node);
+                webhookResource.addErrors(status, node);
             }
         });
         return Response.ok(root).build();
@@ -130,7 +150,7 @@ public class InternalWebhookResource {
     @Path("/run/{name}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response run(@PathParam("name") String name) {
-        if (LOCAL_WEBHOOK_MANAGER.ensureRunning(name)) {
+        if (localWebhookManager.ensureRunning(name)) {
             return Response.ok().build();
         }
         return Response.status(400).build();
@@ -140,14 +160,14 @@ public class InternalWebhookResource {
     @Path("/delete/{name}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response delete(@PathParam("name") String name) {
-        LOCAL_WEBHOOK_MANAGER.stopLocal(name, true);
+        localWebhookManager.stopLocal(name, true);
         return Response.ok().build();
     }
 
     @GET
     @Path("/count")
     public Response count() {
-        return Response.ok(LOCAL_WEBHOOK_MANAGER.getCount()).build();
+        return Response.ok(localWebhookManager.getCount()).build();
     }
 
 }

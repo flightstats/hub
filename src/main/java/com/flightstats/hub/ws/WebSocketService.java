@@ -1,7 +1,6 @@
 package com.flightstats.hub.ws;
 
 import com.flightstats.hub.app.HubHost;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.StringUtils;
 import com.flightstats.hub.webhook.Webhook;
@@ -9,6 +8,8 @@ import com.flightstats.hub.webhook.WebhookService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.websocket.Session;
 import javax.ws.rs.core.UriBuilder;
 import java.io.IOException;
@@ -17,22 +18,17 @@ import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 
+@Singleton
 class WebSocketService {
 
     private final static Logger logger = LoggerFactory.getLogger(WebSocketService.class);
-    private static WebSocketService instance;
-    private final WebhookService webhookService;
+
     private final Map<String, Session> sessionMap = new HashMap<>();
+    private final WebhookService webhookService;
 
-    private WebSocketService() {
-        webhookService = HubProvider.getInstance(WebhookService.class);
-    }
-
-    public static synchronized WebSocketService getInstance() {
-        if (null == instance) {
-            instance = new WebSocketService();
-        }
-        return instance;
+    @Inject
+    private WebSocketService(WebhookService webhookService) {
+        this.webhookService = webhookService;
     }
 
     void createCallback(Session session, String channel) throws UnknownHostException {

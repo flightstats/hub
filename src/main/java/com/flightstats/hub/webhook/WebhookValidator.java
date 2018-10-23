@@ -6,10 +6,18 @@ import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.util.RequestUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import javax.inject.Inject;
 import java.net.URI;
 import java.net.URISyntaxException;
 
 public class WebhookValidator {
+
+    private final HubProperties hubProperties;
+
+    @Inject
+    WebhookValidator(HubProperties hubProperties) {
+        this.hubProperties = hubProperties;
+    }
 
     void validate(Webhook webhook) {
         String name = webhook.getName();
@@ -52,24 +60,22 @@ public class WebhookValidator {
             throw new InvalidRequestException("{\"error\": \"SINGLE webhooks can not have a heartbeat'\"}");
         }
         isValidCallbackTimeoutSeconds(webhook.getCallbackTimeoutSeconds());
-        if (HubProperties.getProperty("hub.type", "aws").equals("aws")) {
+        if (hubProperties.getProperty("hub.type", "aws").equals("aws")) {
             if (webhook.getCallbackUrl().toLowerCase().contains("localhost")) {
                 throw new InvalidRequestException("{\"error\": \"A callbackUrl to localhost will never succeed.\"}");
             }
         }
-
-
     }
 
-    private static void isValidCallbackTimeoutSeconds(int value) {
-        int minimum = HubProperties.getCallbackTimeoutMin();
-        int maximum = HubProperties.getCallbackTimeoutMax();
+    private void isValidCallbackTimeoutSeconds(int value) {
+        int minimum = hubProperties.getCallbackTimeoutMin();
+        int maximum = hubProperties.getCallbackTimeoutMax();
         if (isOutsideRange(value, minimum, maximum)) {
             throw new InvalidRequestException("callbackTimeoutSeconds must be between " + minimum + " and " + maximum);
         }
     }
 
-    private static boolean isOutsideRange(int value, int minimum, int maximum) {
+    private boolean isOutsideRange(int value, int minimum, int maximum) {
         return (value > maximum || value < minimum);
     }
 }

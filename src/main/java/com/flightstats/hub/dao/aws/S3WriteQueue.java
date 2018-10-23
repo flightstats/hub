@@ -1,6 +1,5 @@
 package com.flightstats.hub.dao.aws;
 
-
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.exception.FailedReadException;
@@ -14,43 +13,54 @@ import com.github.rholder.retry.RetryerBuilder;
 import com.github.rholder.retry.StopStrategies;
 import com.github.rholder.retry.WaitStrategies;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
-import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
-@SuppressWarnings("WeakerAccess")
 @Singleton
 public class S3WriteQueue {
 
     private final static Logger logger = LoggerFactory.getLogger(S3WriteQueue.class);
 
-    private static final int THREADS = HubProperties.getS3WriteQueueThreads();
-    private static final int QUEUE_SIZE = HubProperties.getS3WriteQueueSize();
-    private Retryer<Void> retryer = buildRetryer();
-    private BlockingQueue<ChannelContentKey> keys = new LinkedBlockingQueue<>(QUEUE_SIZE);
-    private ExecutorService executorService = Executors.newFixedThreadPool(THREADS,
-            new ThreadFactoryBuilder().setNameFormat("S3WriteQueue-%d").build());
-    @Inject
-    @Named(ContentDao.WRITE_CACHE)
-    private ContentDao spokeWriteContentDao;
-    @Inject
-    @Named(ContentDao.SINGLE_LONG_TERM)
-    private ContentDao s3SingleContentDao;
-    @Inject
-    private MetricsService metricsService;
+    private final ContentDao spokeWriteContentDao;
+    private final ContentDao s3SingleContentDao;
+    private final MetricsService metricsService;
+    private final int writeQueueThreads;
+    private final int writeQueueSize;
+    private final Retryer<Void> retryer = buildRetryer();
+    private final BlockingQueue<ChannelContentKey> keys;
+    private final ExecutorService executorService;
 
     @Inject
-    private S3WriteQueue() throws InterruptedException {
-        logger.info("queue size {}", QUEUE_SIZE);
-        for (int i = 0; i < THREADS; i++) {
+    S3WriteQueue(@Named(ContentDao.WRITE_CACHE) ContentDao spokeWriteContentDao,
+                 @Named(ContentDao.SINGLE_LONG_TERM) ContentDao s3SingleContentDao,
+                 MetricsService metricsService,
+                 HubProperties hubProperties) {
+        this.spokeWriteContentDao = spokeWriteContentDao;
+        this.s3SingleContentDao = s3SingleContentDao;
+        this.metricsService = metricsService;
+        this.writeQueueThreads = hubProperties.getS3WriteQueueThreads();
+        this.writeQueueSize = hubProperties.getS3WriteQueueSize();
+        this.keys = new LinkedBlockingQueue<>(writeQueueSize);
+
+        ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("S3WriteQueue-%d").build();
+        this.executorService = Executors.newFixedThreadPool(writeQueueThreads, threadFactory);
+
+        run();
+    }
+
+    private void run() {
+        logger.info("queue size {}", writeQueueSize);
+        for (int i = 0; i < writeQueueThreads; i++) {
             executorService.submit(() -> {
                 try {
                     while (true) {
@@ -64,7 +74,7 @@ public class S3WriteQueue {
         }
     }
 
-    private void write() throws InterruptedException {
+    private void write() {
         try {
             ChannelContentKey key = keys.poll(5, TimeUnit.SECONDS);
             if (key != null) {
