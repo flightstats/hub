@@ -253,7 +253,7 @@ const getHostname = (path) => {
 };
 
 const isClusteredHubNode = async () => {
-    const headers = { 'Accept': 'application/json' };
+    const headers = { 'Content-Type': 'application/json' };
     const url = `${getHubUrlBase()}/internal/properties`;
     const response = await hubClientGet(url, headers);
     const properties = fromObjectPath(['body', 'properties'], response) || {};
