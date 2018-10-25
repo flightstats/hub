@@ -2,15 +2,13 @@ const {
     deleteWebhook,
     getProp,
     getWebhookUrl,
-    fromObjectPath,
     hubClientDelete,
-    hubClientGet,
     hubClientPut,
+    isClusteredHubNode,
     randomChannelName,
 } = require('../lib/helpers');
 const {
     getChannelUrl,
-    getHubUrlBase,
 } = require('../lib/config');
 
 const channelUrl = getChannelUrl();
@@ -31,14 +29,7 @@ describe(__filename, function () {
     let isClustered = true;
     const headers = { 'Content-Type': 'application/json' };
     it('determines if this is a single or clustered hub', async () => {
-        const url = `${getHubUrlBase()}/internal/properties`;
-        const response = await hubClientGet(url, headers);
-        expect(getProp('statusCode', response)).toEqual(200);
-        const properties = fromObjectPath(['body', 'properties'], response) || {};
-        const hubType = properties['hub.type'];
-        if (hubType !== undefined) {
-            isClustered = hubType === 'aws';
-        }
+        isClustered = await isClusteredHubNode();
         console.log('isClustered:', isClustered);
     });
 

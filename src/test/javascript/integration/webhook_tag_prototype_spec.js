@@ -1,10 +1,10 @@
 const {
-    fromObjectPath,
     getProp,
     getWebhookUrl,
     hubClientDelete,
     hubClientGet,
     hubClientPut,
+    isClusteredHubNode,
     itSleeps,
     randomChannelName,
     randomTag,
@@ -33,12 +33,7 @@ const acceptJSON = { "Content-Type": "application/json" };
 
 describe(__filename, function () {
     beforeAll(async () => {
-        const headers = { 'Content-Type': 'application/json' };
-        const url = `${getHubUrlBase()}/internal/properties`;
-        const response = await hubClientGet(url, headers);
-        const properties = fromObjectPath(['body', 'properties'], response) || {};
-        const hubType = properties['hub.type'];
-        context[tag].isClustered = hubType === 'aws';
+        context[tag].isClustered = await isClusteredHubNode();
         console.log('isClustered:', context[tag].isClustered);
     });
 
