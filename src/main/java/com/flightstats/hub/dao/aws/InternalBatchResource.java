@@ -4,10 +4,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.LocalHostOnly;
+import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.model.ContentKey;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -31,8 +33,8 @@ public class InternalBatchResource {
     private UriInfo uriInfo;
 
     @Inject
-    InternalBatchResource(S3BatchContentDao s3BatchContentDao, ObjectMapper objectMapper) {
-        this.s3BatchContentDao = s3BatchContentDao;
+    InternalBatchResource(@Named(ContentDao.BATCH_LONG_TERM) ContentDao contentDao, ObjectMapper objectMapper) {
+        this.s3BatchContentDao = (S3BatchContentDao) contentDao;
         this.objectMapper = objectMapper;
     }
 
