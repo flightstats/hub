@@ -24,7 +24,7 @@ import javax.ws.rs.core.UriInfo;
 @Path("/internal/batch")
 public class InternalBatchResource {
 
-    public static final String DESCRIPTION = "Perform administrative tasks against batch channels or payloads";
+    public static final String DESCRIPTION = "Perform administrative tasks against batch payloads";
 
     private final S3BatchContentDao s3BatchContentDao;
     private final ObjectMapper objectMapper;
@@ -33,8 +33,8 @@ public class InternalBatchResource {
     private UriInfo uriInfo;
 
     @Inject
-    InternalBatchResource(@Named(ContentDao.BATCH_LONG_TERM) ContentDao contentDao, ObjectMapper objectMapper) {
-        this.s3BatchContentDao = (S3BatchContentDao) contentDao;
+    InternalBatchResource(S3BatchContentDao s3BatchContentDao, ObjectMapper objectMapper) {
+        this.s3BatchContentDao = s3BatchContentDao;
         this.objectMapper = objectMapper;
     }
 
