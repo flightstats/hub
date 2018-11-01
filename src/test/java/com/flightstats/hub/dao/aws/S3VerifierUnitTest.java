@@ -40,7 +40,7 @@ public class S3VerifierUnitTest {
         MetricsService metricsService = mock(MetricsService.class);
         S3Verifier s3Verifier = spy(new S3Verifier(lastContentPath, channelService, spokeWriteContentDao, s3SingleContentDao, s3WriteQueue, httpClient, zooKeeperState, curator, metricsService));
 
-        ChannelContentKey key = ChannelContentKey.fromUrl("http://hub/channel/foo/1999/12/31/23/59/59/999/bar");
+        ChannelContentKey key = ChannelContentKey.fromResourcePath("http://hub/channel/foo/1999/12/31/23/59/59/999/bar");
         VerifierRange verifierRange = VerifierRange.builder()
                 .channelConfig(ChannelConfig.builder().name("foo").build())
                 .startPath(new MinutePath(DateTime.parse("1999-12-31T23:59:59.999Z")))
@@ -70,7 +70,7 @@ public class S3VerifierUnitTest {
         MetricsService metricsService = mock(MetricsService.class);
         S3Verifier s3Verifier = spy(new S3Verifier(lastContentPath, channelService, spokeWriteContentDao, s3SingleContentDao, s3WriteQueue, httpClient, zooKeeperState, curator, metricsService));
 
-        ChannelContentKey key = ChannelContentKey.fromUrl("http://hub/channel/foo/1999/12/31/23/59/59/999/bar");
+        ChannelContentKey key = ChannelContentKey.fromResourcePath("http://hub/channel/foo/1999/12/31/23/59/59/999/bar");
         VerifierRange verifierRange = VerifierRange.builder()
                 .channelConfig(ChannelConfig.builder().name("foo").build())
                 .startPath(new MinutePath(DateTime.parse("1999-12-31T23:59:59.999Z")))
