@@ -1,3 +1,4 @@
+const { URL } = require('url');
 const rp = require('request-promise-native');
 const moment = require('moment');
 const { fromObjectPath, getProp, itSleeps } = require('./functional');
@@ -246,6 +247,24 @@ const hubClientGetUntil = async (url, clause, timeoutMS = 30000, interval = 1000
     }
 };
 
+const getHostname = (path) => {
+    const url = new URL(path);
+    return url.hostname;
+};
+
+const isClusteredHubNode = async () => {
+    const headers = { 'Content-Type': 'application/json' };
+    const url = `${getHubUrlBase()}/internal/properties`;
+    const response = await hubClientGet(url, headers);
+    const properties = fromObjectPath(['body', 'properties'], response) || {};
+    if (properties['hub.type'] === 'aws') return true;
+    const servers = fromObjectPath(['body', 'servers'], response) || [];
+    const server = fromObjectPath(['body', 'server'], response) || '';
+    const indeterminate = !server || !servers.length;
+    const single = servers.length === 1 && getHostname(servers[0]) === getHostname(server);
+    return !indeterminate && !single;
+};
+
 module.exports = {
     createChannel,
     followRedirectIfPresent,
@@ -258,4 +277,5 @@ module.exports = {
     hubClientPost,
     hubClientPostTestItem,
     hubClientPut,
+    isClusteredHubNode,
 };

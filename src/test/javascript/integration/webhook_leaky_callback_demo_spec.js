@@ -6,9 +6,9 @@ const {
     getProp,
     getWebhookUrl,
     hubClientDelete,
-    hubClientGet,
     hubClientPut,
     hubClientPostTestItem,
+    isClusteredHubNode,
     randomChannelName,
     startServer,
     waitForCondition,
@@ -17,7 +17,6 @@ const {
     getCallBackDomain,
     getCallBackPort,
     getChannelUrl,
-    getHubUrlBase,
 } = require('../lib/config');
 
 const headers = { 'Content-Type': 'application/json' };
@@ -47,13 +46,7 @@ describe('callback leak on same callbackServer, port, path', () => {
         if (getProp('statusCode', channel) === 201) {
             console.log(`created channel for ${__filename}`);
         }
-
-        const headers = { 'Content-Type': 'application/json' };
-        const url = `${getHubUrlBase()}/internal/properties`;
-        const response1 = await hubClientGet(url, headers);
-        const properties = fromObjectPath(['body', 'properties'], response1) || {};
-        const hubType = properties['hub.type'];
-        context[channelUrl].isClustered = hubType === 'aws';
+        context[channelUrl].isClustered = await isClusteredHubNode();
         console.log('isClustered:', context[channelUrl].isClustered);
     });
 

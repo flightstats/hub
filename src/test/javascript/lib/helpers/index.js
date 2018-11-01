@@ -28,6 +28,7 @@ const {
     hubClientPost,
     hubClientPostTestItem,
     hubClientPut,
+    isClusteredHubNode,
 } = require('./hub-client');
 const {
     deleteWebhook,
@@ -57,6 +58,7 @@ module.exports = {
     hubClientPost,
     hubClientPostTestItem,
     hubClientPut,
+    isClusteredHubNode,
     itSleeps,
     parseJson,
     processChunks,
