@@ -18,9 +18,11 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
+import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.zip.ZipInputStream;
 
 @SuppressWarnings("WeakerAccess")
 @Path("/internal/s3Batch/{channel}")
@@ -44,8 +46,24 @@ public class S3BatchResource {
         }
         ActiveTraces.getLocal().add("S3BatchResource.getAndWriteBatch got response");
         byte[] bytes = response.getEntity(byte[].class);
+
+        if(!verifyZipBytes(bytes)) {
+            logger.warn("S3BatchResource failed to verify zip file bytes for keys: {}, channel: {}", keys, channel);
+            return false;
+        }
+
         contentDao.writeBatch(channel, path, keys, bytes);
         ActiveTraces.getLocal().add("S3BatchResource.getAndWriteBatch completed");
+        return true;
+    }
+
+    private static boolean verifyZipBytes(byte[] bytes)  {
+        ZipInputStream zis = new ZipInputStream(new ByteArrayInputStream(bytes));
+        try {
+            while (zis.getNextEntry() != null) ;
+        }catch(Exception exception) {
+            return false;
+        }
         return true;
     }
 
