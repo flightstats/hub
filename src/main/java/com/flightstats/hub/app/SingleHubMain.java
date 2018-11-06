@@ -38,7 +38,7 @@ public class SingleHubMain {
         setProperty("app.runNtpMonitor", "false");
         setProperty("data_dog.enable", "false");
         setProperty("app.large.payload.MB", "10000");
-        HubMain.start();
+        new HubMain().run();
     }
 
     private static void setProperty(String name, String defaultValue) {
