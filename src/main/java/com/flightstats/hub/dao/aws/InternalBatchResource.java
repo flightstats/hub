@@ -33,7 +33,7 @@ public class InternalBatchResource {
     private UriInfo uriInfo;
 
     @Inject
-    InternalBatchResource(S3BatchContentDao s3BatchContentDao, ObjectMapper objectMapper) {
+    public InternalBatchResource(S3BatchContentDao s3BatchContentDao, ObjectMapper objectMapper) {
         this.s3BatchContentDao = s3BatchContentDao;
         this.objectMapper = objectMapper;
     }
