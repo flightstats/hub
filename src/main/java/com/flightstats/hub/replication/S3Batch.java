@@ -4,6 +4,7 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.webhook.Webhook;
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.lang3.StringUtils;
 
 public class S3Batch {
@@ -13,6 +14,7 @@ public class S3Batch {
     private static final int MAX_ATTEMPTS = 12;
     private ChannelConfig channel;
     private HubUtils hubUtils;
+    private Webhook webhook;
 
     public S3Batch(ChannelConfig channel, HubUtils hubUtils) {
         this.channel = channel;
@@ -33,12 +35,34 @@ public class S3Batch {
         hubUtils.startWebhook(webhook);
     }
 
+    @VisibleForTesting
+    public void start(boolean isUnitTest) {
+        if (isUnitTest) {
+            Webhook.WebhookBuilder builder = Webhook.builder()
+                    .name(getGroupName())
+                    .callbackUrl(getCallbackUrl())
+                    .channelUrl(getChannelUrl())
+                    .heartbeat(true)
+                    .parallelCalls(2)
+                    .ttlMinutes(TTL_MINUTES)
+                    .maxAttempts(MAX_ATTEMPTS)
+                    .batch(Webhook.MINUTE);
+            Webhook webhook = builder.build();
+            this.webhook = webhook;
+        }
+    }
+
     private String getChannelUrl() {
         return HubProperties.getAppUrl() + "channel/" + channel.getDisplayName();
     }
 
     private String getCallbackUrl() {
         return HubProperties.getAppUrl() + "internal/s3Batch/" + channel.getDisplayName();
+    }
+
+    @VisibleForTesting
+    Webhook getWebhook() {
+        return this.webhook;
     }
 
     public String getGroupName() {
