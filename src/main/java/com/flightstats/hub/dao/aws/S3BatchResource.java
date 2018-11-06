@@ -48,7 +48,8 @@ public class S3BatchResource {
         byte[] bytes = response.getEntity(byte[].class);
 
         if(!verifyZipBytes(bytes)) {
-            logger.warn("S3BatchResource failed to verify zip file bytes for keys: {}, channel: {}", keys, channel);
+            // TODO: Add metrics reporting for failed batch/zip webhook responses
+            logger.warn("S3BatchResource failed zip verification for keys: {}, channel: {}", keys, channel);
             return false;
         }
 

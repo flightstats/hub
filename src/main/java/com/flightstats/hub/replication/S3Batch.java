@@ -9,7 +9,8 @@ import org.apache.commons.lang3.StringUtils;
 public class S3Batch {
 
     private static final String S3_BATCH = "S3Batch_";
-
+    private static final int TTL_MINUTES = 60 * 6;
+    private static final int MAX_ATTEMPTS = 12;
     private ChannelConfig channel;
     private HubUtils hubUtils;
 
@@ -25,6 +26,8 @@ public class S3Batch {
                 .channelUrl(getChannelUrl())
                 .heartbeat(true)
                 .parallelCalls(2)
+                .ttlMinutes(TTL_MINUTES)
+                .maxAttempts(MAX_ATTEMPTS)
                 .batch(Webhook.MINUTE);
         Webhook webhook = builder.build();
         hubUtils.startWebhook(webhook);
