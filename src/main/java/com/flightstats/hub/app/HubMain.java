@@ -3,7 +3,12 @@ package com.flightstats.hub.app;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.flightstats.hub.filter.CORSFilter;
 import com.flightstats.hub.filter.StreamEncodingFilter;
-import com.flightstats.hub.ws.HubWebSocketServlet;
+import com.flightstats.hub.ws.WebSocketChannelEndpoint;
+import com.flightstats.hub.ws.WebSocketDayEndpoint;
+import com.flightstats.hub.ws.WebSocketHashEndpoint;
+import com.flightstats.hub.ws.WebSocketHourEndpoint;
+import com.flightstats.hub.ws.WebSocketMinuteEndpoint;
+import com.flightstats.hub.ws.WebSocketSecondEndpoint;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.Resources;
 import com.google.inject.AbstractModule;
@@ -17,18 +22,18 @@ import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
-import org.eclipse.jetty.websocket.servlet.WebSocketServlet;
+import org.eclipse.jetty.websocket.jsr356.server.deploy.WebSocketServerContainerInitializer;
+import org.glassfish.jersey.jetty.JettyHttpContainer;
 import org.glassfish.jersey.message.DeflateEncoder;
 import org.glassfish.jersey.message.GZipEncoder;
+import org.glassfish.jersey.server.ContainerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.server.filter.EncodingFilter;
-import org.glassfish.jersey.servlet.ServletContainer;
 import org.joda.time.DateTime;
 
+import javax.websocket.server.ServerContainer;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -87,11 +92,42 @@ public class HubMain {
         HubProvider.setInjector(injector);
         HubServices.start(HubServices.TYPE.BEFORE_HEALTH_CHECK);
 
-        ResourceConfig resourceConfig = buildResourceConfig(injector);
-        ServletContextHandler httpContextHandler = buildHTTPContext(resourceConfig);
-        ServletContextHandler wsContextHandler = buildWSContext();
+        // build Jetty server
+        Server server = new Server();
+        HttpConfiguration httpConfig = new HttpConfiguration();
+        SslContextFactory sslContextFactory = getSslContextFactory();
+        if (null != sslContextFactory) {
+            httpConfig.addCustomizer(new SecureRequestCustomizer());
+        }
+        ConnectionFactory connectionFactory = new HttpConnectionFactory(httpConfig);
+        ServerConnector serverConnector = new ServerConnector(server, sslContextFactory, connectionFactory);
+        serverConnector.setHost(HubProperties.getProperty("http.bind_ip", "0.0.0.0"));
+        serverConnector.setPort(HubHost.getLocalPort());
+        serverConnector.setIdleTimeout(HubProperties.getProperty("http.idle_timeout", 30 * 1000));
+        server.setConnectors(new Connector[]{serverConnector});
 
-        Server server = buildJettyServer(httpContextHandler, wsContextHandler);
+        // build Jersey HTTP context
+        ResourceConfig resourceConfig = buildResourceConfig(injector);
+        JettyHttpContainer httpContainer = ContainerFactory.createContainer(JettyHttpContainer.class, resourceConfig);
+
+        // build Jetty WebSocket context
+        ServletContextHandler wsContext = new ServletContextHandler(server, "/", ServletContextHandler.SESSIONS);
+        wsContext.setContextPath("/");
+        ServerContainer wsContainer = WebSocketServerContainerInitializer.configureContext(wsContext);
+        wsContainer.addEndpoint(WebSocketChannelEndpoint.class);
+        wsContainer.addEndpoint(WebSocketDayEndpoint.class);
+        wsContainer.addEndpoint(WebSocketHourEndpoint.class);
+        wsContainer.addEndpoint(WebSocketMinuteEndpoint.class);
+        wsContainer.addEndpoint(WebSocketSecondEndpoint.class);
+        wsContainer.addEndpoint(WebSocketHashEndpoint.class);
+
+        // use handler collection to choose the proper context
+        HttpAndWSHandler handler = new HttpAndWSHandler();
+        handler.addHttpHandler(httpContainer);
+        handler.addWSHandler(wsContext);
+        server.setHandler(handler);
+
+        // start everything up
         server.start();
 
         log.info("Hub server has been started.");
@@ -140,50 +176,6 @@ public class HubMain {
         );
         config.packages("com.flightstats.hub");
         return config;
-    }
-
-    private ServletContextHandler buildHTTPContext(ResourceConfig resourceConfig) {
-        ServletContextHandler contextHandler = new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
-        ServletContainer container = new ServletContainer(resourceConfig);
-        ServletHolder holder = new ServletHolder(container);
-
-        contextHandler.setContextPath("/");
-        contextHandler.addServlet(holder, "/*");
-        return contextHandler;
-    }
-
-    private ServletContextHandler buildWSContext() {
-        ServletContextHandler contextHandler = new ServletContextHandler(ServletContextHandler.SESSIONS);
-        WebSocketServlet servlet = new HubWebSocketServlet();
-        ServletHolder holder = new ServletHolder(servlet);
-
-        contextHandler.setContextPath("/");
-        contextHandler.addServlet(holder, "/*");
-        return contextHandler;
-    }
-
-    private Server buildJettyServer(ServletContextHandler... handlers) throws IOException {
-        Server server = new Server();
-        HttpConfiguration httpConfig = new HttpConfiguration();
-        SslContextFactory sslContextFactory = getSslContextFactory();
-        if (null != sslContextFactory) {
-            httpConfig.addCustomizer(new SecureRequestCustomizer());
-        }
-        ConnectionFactory connectionFactory = new HttpConnectionFactory(httpConfig);
-        ServerConnector serverConnector = new ServerConnector(server, sslContextFactory, connectionFactory);
-        serverConnector.setHost(HubProperties.getProperty("http.bind_ip", "0.0.0.0"));
-        serverConnector.setPort(HubHost.getLocalPort());
-        serverConnector.setIdleTimeout(HubProperties.getProperty("http.idle_timeout", 30 * 1000));
-
-        server.setConnectors(new Connector[]{serverConnector});
-
-        HandlerCollection handlerCollection = new HandlerCollection();
-        for (ServletContextHandler handler : handlers) {
-            handlerCollection.addHandler(handler);
-        }
-
-        server.setHandler(handlerCollection);
-        return server;
     }
 
     private SslContextFactory getSslContextFactory() throws IOException {
