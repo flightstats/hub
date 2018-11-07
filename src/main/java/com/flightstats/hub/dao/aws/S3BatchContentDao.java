@@ -62,7 +62,6 @@ public class S3BatchContentDao implements ContentDao {
         this.s3Client = s3Client;
         this.s3BucketName = s3BucketName;
         this.metricsService = metricsService;
-        logger.error("S3BatchContentDao CONSTRUCTED: " + this);
     }
 
     @Override
