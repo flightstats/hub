@@ -46,6 +46,7 @@ class ClusterHubBindings extends AbstractModule {
         bind(ContentDao.class)
                 .annotatedWith(Names.named(ContentDao.LARGE_PAYLOAD))
                 .to(S3LargeContentDao.class).asEagerSingleton();
+        bind(S3BatchContentDao.class).asEagerSingleton();
         bind(DynamoUtils.class).asEagerSingleton();
         bind(S3BatchManager.class).asEagerSingleton();
         bind(S3Verifier.class).asEagerSingleton();
@@ -64,12 +65,12 @@ class ClusterHubBindings extends AbstractModule {
         bind(HubS3Client.class).asEagerSingleton();
     }
 
-    @Provides
-    @Singleton
-    public S3BatchContentDao provideS3BatchContentDao(@Named(ContentDao.BATCH_LONG_TERM) ContentDao contentDao) {
-        // this is a convenience provider for injection of S3BatchContentDao instead of the ContentDao interface
-        return (S3BatchContentDao) contentDao;
-    }
+//    @Provides
+//    @Singleton
+//    public S3BatchContentDao provideS3BatchContentDao(@Named(ContentDao.BATCH_LONG_TERM) ContentDao contentDao) {
+//        // this is a convenience provider for injection of S3BatchContentDao instead of the ContentDao interface
+//        return (S3BatchContentDao) contentDao;
+//    }
 
     @Inject
     @Singleton
