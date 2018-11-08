@@ -18,7 +18,8 @@ public class S3BatchTest {
         ChannelConfig config = ChannelConfig.builder().name("defaults").build();
         HubUtils hubUtils = new HubUtils(HubBindings.buildJerseyClientNoRedirects(), HubBindings.buildJerseyClient());
         S3Batch batch = new S3Batch(config, hubUtils);
-        assertEquals(batch.getGroupName(), "S3Batch_hub_unknown_defaults");
+        String name = batch.getGroupName();
+        assertTrue(name.contains("S3Batch_hub_"));
     }
 
     @Test
