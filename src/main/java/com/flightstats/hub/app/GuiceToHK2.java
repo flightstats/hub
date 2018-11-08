@@ -18,8 +18,7 @@ class GuiceToHK2 extends AbstractBinder {
     protected void configure() {
         injector.getBindings().forEach((key, value) -> {
             String typeName = key.getTypeLiteral().getType().getTypeName();
-//            if (!typeName.startsWith("com.flightstats.hub")) return;
-            log.info("mapping guice to hk2: {}", typeName);
+            log.debug("mapping guice to hk2: {}", typeName);
             try {
                 Class boundClass = Class.forName(typeName);
                 bindFactory(new ServiceFactory<>(boundClass)).to(boundClass);
