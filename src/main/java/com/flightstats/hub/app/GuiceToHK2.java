@@ -2,7 +2,6 @@ package com.flightstats.hub.app;
 
 import com.google.inject.Injector;
 import com.google.inject.Key;
-import com.google.inject.name.Named;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
