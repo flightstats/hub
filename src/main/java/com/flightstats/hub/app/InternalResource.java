@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.channel.InternalChannelResource;
 import com.flightstats.hub.cluster.InternalZookeeperResource;
-import com.flightstats.hub.dao.aws.InternalBatchResource;
+import com.flightstats.hub.dao.aws.InternalS3BatchResource;
 import com.flightstats.hub.health.InternalHealthResource;
 import com.flightstats.hub.metrics.InternalStacktraceResource;
 import com.flightstats.hub.metrics.InternalTracesResource;
@@ -41,7 +41,7 @@ public class InternalResource {
         requestUri = StringUtils.appendIfMissing(uriInfo.getRequestUri().toString(), "/");
         links.with("self").put("href", requestUri);
 
-        addLink("batch", InternalBatchResource.DESCRIPTION);
+        addLink("batch", InternalS3BatchResource.DESCRIPTION);
         addLink("channel", InternalChannelResource.DESCRIPTION);
         addLink("cluster", InternalClusterResource.DESCRIPTION);
         addLink("deploy", InternalDeployResource.DESCRIPTION);
