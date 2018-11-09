@@ -94,13 +94,6 @@ class ClusterHubBindings extends AbstractModule {
         bind(PeriodicMetricEmitterLifecycle.class).asEagerSingleton();
     }
 
-//    @Provides
-//    @Singleton
-//    public S3BatchContentDao provideS3BatchContentDao(@Named(ContentDao.BATCH_LONG_TERM) ContentDao contentDao) {
-//        // this is a convenience provider for injection of S3BatchContentDao instead of the ContentDao interface
-//        return (S3BatchContentDao) contentDao;
-//    }
-
     @Inject
     @Singleton
     @Provides
