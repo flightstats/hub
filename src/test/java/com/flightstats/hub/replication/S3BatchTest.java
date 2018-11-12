@@ -1,39 +1,35 @@
 package com.flightstats.hub.replication;
 
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.HubUtils;
-import com.flightstats.hub.app.HubBindings;
 import com.flightstats.hub.webhook.Webhook;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
 
 public class S3BatchTest {
-    private static final Logger logger = LoggerFactory.getLogger(S3BatchTest.class);
 
     @Test
     public void testBatchWebhookCreation() {
-        ChannelConfig config = ChannelConfig.builder().name("defaults").build();
-        HubUtils hubUtils = new HubUtils(HubBindings.buildJerseyClientNoRedirects(), HubBindings.buildJerseyClient());
+        String appUrl = HubProperties.getAppUrl();
+        String appEnv = HubProperties.getAppEnv();
+        HubUtils hubUtils = mock(HubUtils.class);
+        ChannelConfig config = ChannelConfig.builder().name("test").build();
         S3Batch batch = new S3Batch(config, hubUtils);
-        String name = batch.getGroupName();
-        assertTrue(name.contains("S3Batch_hub_"));
-    }
 
-    @Test
-    public void testBatchWebhookCreationConfig() {
-        ChannelConfig config = ChannelConfig.builder().name("defaults").build();
-        HubUtils hubUtils = new HubUtils(HubBindings.buildJerseyClientNoRedirects(), HubBindings.buildJerseyClient());
-        S3Batch batch = new S3Batch(config, hubUtils);
-        batch.start(true);
-        Webhook webhook = batch.getWebhook();
-        assertEquals(webhook.getBatch(), "MINUTE");
-        long ttlMins =  webhook.getTtlMinutes();
-        assertEquals(ttlMins, 360);
-        int maxAttempts = webhook.getMaxAttempts();
-        assertEquals(maxAttempts,12);
+        Webhook webhook = batch.buildS3BatchWebhook();
+
+        assertEquals(S3Batch.S3_BATCH + appEnv + "_test", webhook.getName());
+        assertEquals(appUrl + "internal/s3Batch/test", webhook.getCallbackUrl());
+        assertEquals(appUrl + "channel/test", webhook.getChannelUrl());
+        assertTrue(webhook.isHeartbeat());
+        assertEquals((Integer) 2, webhook.getParallelCalls());
+        assertEquals((Integer) 360, webhook.getTtlMinutes());
+        assertEquals((Integer) 12, webhook.getMaxAttempts());
+        assertEquals("MINUTE", webhook.getBatch());
     }
 
 }

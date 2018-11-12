@@ -9,12 +9,12 @@ import org.apache.commons.lang3.StringUtils;
 
 public class S3Batch {
 
-    private static final String S3_BATCH = "S3Batch_";
+    @VisibleForTesting
+    static final String S3_BATCH = "S3Batch_";
     private static final int TTL_MINUTES = 60 * 6;
     private static final int MAX_ATTEMPTS = 12;
     private ChannelConfig channel;
     private HubUtils hubUtils;
-    private Webhook webhook;
 
     public S3Batch(ChannelConfig channel, HubUtils hubUtils) {
         this.channel = channel;
@@ -22,7 +22,13 @@ public class S3Batch {
     }
 
     public void start() {
-        Webhook.WebhookBuilder builder = Webhook.builder()
+        Webhook webhook = buildS3BatchWebhook();
+        hubUtils.startWebhook(webhook);
+    }
+
+    @VisibleForTesting
+    Webhook buildS3BatchWebhook() {
+        return Webhook.builder()
                 .name(getGroupName())
                 .callbackUrl(getCallbackUrl())
                 .channelUrl(getChannelUrl())
@@ -30,26 +36,8 @@ public class S3Batch {
                 .parallelCalls(2)
                 .ttlMinutes(TTL_MINUTES)
                 .maxAttempts(MAX_ATTEMPTS)
-                .batch(Webhook.MINUTE);
-        Webhook webhook = builder.build();
-        hubUtils.startWebhook(webhook);
-    }
-
-    @VisibleForTesting
-    public void start(boolean isUnitTest) {
-        if (isUnitTest) {
-            Webhook.WebhookBuilder builder = Webhook.builder()
-                    .name(getGroupName())
-                    .callbackUrl(getCallbackUrl())
-                    .channelUrl(getChannelUrl())
-                    .heartbeat(true)
-                    .parallelCalls(2)
-                    .ttlMinutes(TTL_MINUTES)
-                    .maxAttempts(MAX_ATTEMPTS)
-                    .batch(Webhook.MINUTE);
-            Webhook webhook = builder.build();
-            this.webhook = webhook;
-        }
+                .batch(Webhook.MINUTE)
+                .build();
     }
 
     private String getChannelUrl() {
@@ -58,11 +46,6 @@ public class S3Batch {
 
     private String getCallbackUrl() {
         return HubProperties.getAppUrl() + "internal/s3Batch/" + channel.getDisplayName();
-    }
-
-    @VisibleForTesting
-    Webhook getWebhook() {
-        return this.webhook;
     }
 
     public String getGroupName() {
