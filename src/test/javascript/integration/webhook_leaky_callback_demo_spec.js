@@ -40,7 +40,7 @@ const context = {
     },
 };
 
-describe('callback leak on same callbackServer, port, path', () => {
+describe(__filename, () => {
     beforeAll(async () => {
         const channel = await createChannel(channelName, false, __filename);
         if (getProp('statusCode', channel) === 201) {
