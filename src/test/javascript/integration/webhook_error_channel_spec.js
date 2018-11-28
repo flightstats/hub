@@ -93,7 +93,7 @@ describe(__filename, () => {
 
     it('verifies no error was posted to the error channel', async () => {
         const latestResponse = await hubClientGet(`${errorChannelURL}/latest`);
-        const redirectResponse = await followRedirectIfPresent(response);
+        const redirectResponse = await followRedirectIfPresent(latestResponse);
         expect(getProp('statusCode', redirectResponse)).toEqual(404);
     });
 
