@@ -48,9 +48,6 @@ const context = {
 xdescribe(__filename, () => {
     beforeAll(async () => {
         const channel = await createChannel(channelName, false, __filename);
-        if (getProp('statusCode', channel) === 201) {
-            console.log(`created channel for ${__filename}`);
-        }
         context[channelUrl].isClustered = await isClusteredHubNode();
         console.log('isClustered:', context[channelUrl].isClustered);
     });
