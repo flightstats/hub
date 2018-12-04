@@ -9,6 +9,7 @@ import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
 class GuiceToHK2Adapter extends AbstractBinder {
@@ -64,6 +65,7 @@ class GuiceToHK2Adapter extends AbstractBinder {
 
     private class ServiceFactory<T> implements Factory<T> {
 
+        private final AtomicBoolean hasBeenProvided = new AtomicBoolean(false);
         private final Class<T> serviceClass;
 
         ServiceFactory(Class<T> serviceClass) {
@@ -71,7 +73,14 @@ class GuiceToHK2Adapter extends AbstractBinder {
         }
 
         public T provide() {
+            if (isFirstProvide()) {
+                log.debug("providing {} for the first time", serviceClass.getCanonicalName());
+            }
             return injector.getInstance(serviceClass);
+        }
+
+        private boolean isFirstProvide() {
+            return hasBeenProvided.compareAndSet(false, true);
         }
 
         public void dispose(T versionResource) {
