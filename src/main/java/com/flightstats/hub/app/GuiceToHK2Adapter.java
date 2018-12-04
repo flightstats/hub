@@ -2,6 +2,7 @@ package com.flightstats.hub.app;
 
 import com.google.inject.Injector;
 import com.google.inject.Key;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
@@ -33,6 +34,7 @@ class GuiceToHK2Adapter extends AbstractBinder {
         return key.getAnnotationType() != null && key.getAnnotationType().getSimpleName().equals("Named");
     }
 
+    @SneakyThrows
     private void bindClass(Key<?> key) {
         try {
             String typeName = key.getTypeLiteral().getType().getTypeName();
@@ -41,9 +43,11 @@ class GuiceToHK2Adapter extends AbstractBinder {
             bindFactory(new ServiceFactory<>(boundClass)).to(boundClass);
         } catch (ClassNotFoundException e) {
             log.warn("unable to bind {}", key);
+            throw e;
         }
     }
 
+    @SneakyThrows
     private void bindNamedClass(Key<?> key) {
         try {
             String typeName = key.getTypeLiteral().getType().getTypeName();
@@ -54,6 +58,7 @@ class GuiceToHK2Adapter extends AbstractBinder {
             bindFactory(new ServiceFactory<>(boundClass)).to(boundClass).named(name);
         } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             log.warn("unable to bind {}", key);
+            throw e;
         }
     }
 
