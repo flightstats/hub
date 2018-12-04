@@ -10,11 +10,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 @Slf4j
-class GuiceToHK2 extends AbstractBinder {
+class GuiceToHK2Adapter extends AbstractBinder {
 
     private final Injector injector;
 
-    GuiceToHK2(Injector injector) {
+    GuiceToHK2Adapter(Injector injector) {
         this.injector = injector;
     }
 
