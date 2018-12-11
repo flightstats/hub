@@ -1,24 +1,18 @@
 package com.flightstats.hub.webhook;
 
-import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.cluster.CuratorCluster;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.Watcher;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ContentPath;
-import com.flightstats.hub.rest.RestClient;
-import com.flightstats.hub.util.HubUtils;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
 import org.apache.curator.framework.api.CuratorEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,13 +44,11 @@ public class WebhookManager {
     @Inject
     private WebhookContentPathSet webhookInProcess;
 
-    private final Client client;
-    private final CuratorCluster hubCluster;
+    @Inject
+    private InternalWebhookClient webhookClient;
 
     @Inject
-    public WebhookManager(@Named("HubCuratorCluster") CuratorCluster hubCluster) {
-        this.hubCluster = hubCluster;
-        this.client = RestClient.createClient(5, 15, true, true);
+    public WebhookManager() {
         register(new WebhookIdleService(), HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
         register(new WebhookScheduledService(), HubServices.TYPE.AFTER_HEALTHY_START);
     }
@@ -66,18 +58,16 @@ public class WebhookManager {
                    Dao<Webhook> webhookDao,
                    LastContentPath lastContentPath,
                    ActiveWebhooks activeWebhooks,
-                   CuratorCluster hubCluster,
                    WebhookError webhookError,
                    WebhookContentPathSet webhookInProcess,
-                   Client client) {
+                   InternalWebhookClient webhookClient) {
         this.watchManager = watchManager;
         this.webhookDao = webhookDao;
         this.lastContentPath = lastContentPath;
         this.activeWebhooks = activeWebhooks;
-        this.hubCluster = hubCluster;
         this.webhookError = webhookError;
         this.webhookInProcess = webhookInProcess;
-        this.client = client;
+        this.webhookClient = webhookClient;
     }
 
     private void start() {
@@ -125,90 +115,18 @@ public class WebhookManager {
                 logger.warn("found multiple servers! {}", servers);
                 Collections.shuffle(servers);
                 for (int i = 1; i < servers.size(); i++) {
-                    callOneDelete(name, servers.get(i));
+                    webhookClient.remove(name, servers.get(i));
                 }
             }
             if (servers.isEmpty()) {
-                callOneRun(name, getOrderedServers());
+                webhookClient.runOnServerWithFewestWebhooks(name);
             } else if (webhookChanged) {
-                callOneRun(name, servers);
+                webhookClient.runOnOneServer(name, servers);
             }
         } else {
             logger.debug("found new v2 webhook {}", name);
-            callOneRun(name, getOrderedServers());
+            webhookClient.runOnServerWithFewestWebhooks(name);
         }
-    }
-
-    /**
-     * We want this to return this list in order from fewest to most
-     */
-    private Collection<String> getOrderedServers() {
-        TreeMap<Integer, String> orderedServers = new TreeMap<>();
-        List<String> servers = hubCluster.getRandomServers();
-        for (String server : servers) {
-            int count = get(server + "/internal/webhook/count");
-            orderedServers.put(count, server);
-        }
-        if (orderedServers.isEmpty()) {
-            return servers;
-        }
-        return orderedServers.values();
-    }
-
-    private int get(String url) {
-        ClientResponse response = null;
-        String hubUrl = HubHost.getScheme() + url;
-        try {
-            logger.info("calling {}", hubUrl);
-            response = client.resource(hubUrl).get(ClientResponse.class);
-            if (response.getStatus() == 200) {
-                logger.debug("success {}", response);
-                return Integer.parseInt(response.getEntity(String.class));
-            } else {
-                logger.warn("unexpected response {}", response);
-            }
-        } catch (Exception e) {
-            logger.warn("unable to get " + hubUrl, e);
-        } finally {
-            HubUtils.close(response);
-        }
-        return 0;
-    }
-
-    private void callAllDelete(String name, Collection<String> servers) {
-        for (String server : servers) {
-            callOneDelete(name, server);
-        }
-    }
-
-    private void callOneDelete(String name, String server) {
-        put(server + "/internal/webhook/delete/" + name);
-    }
-
-    private void callOneRun(String name, Collection<String> servers) {
-        for (String server : servers) {
-            if (put(server + "/internal/webhook/run/" + name)) break;
-        }
-    }
-
-    private boolean put(String url) {
-        String hubUrl = HubHost.getScheme() + url;
-        ClientResponse response = null;
-        try {
-            logger.info("calling {}", hubUrl);
-            response = client.resource(hubUrl).put(ClientResponse.class);
-            if (response.getStatus() == 200) {
-                logger.debug("success {}", response);
-                return true;
-            } else {
-                logger.warn("unexpected response {}", response);
-            }
-        } catch (Exception e) {
-            logger.warn("unable to put " + hubUrl, e);
-        } finally {
-            HubUtils.close(response);
-        }
-        return false;
     }
 
     private void notifyWatchers() {
@@ -216,7 +134,7 @@ public class WebhookManager {
     }
 
     public void delete(String name) {
-        callAllDelete(name, activeWebhooks.getServers(name));
+        webhookClient.remove(name, activeWebhooks.getServers(name));
         lastContentPath.delete(name, WebhookLeader.WEBHOOK_LAST_COMPLETED);
     }
 

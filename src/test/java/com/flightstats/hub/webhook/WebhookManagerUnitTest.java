@@ -25,6 +25,7 @@ public class WebhookManagerUnitTest {
     private final WebhookError webhookError = mock(WebhookError.class);
     private final WebhookContentPathSet webhookContentPathSet = mock(WebhookContentPathSet.class);
     private final Client restClient = mock(Client.class);
+    private final InternalWebhookClient webhookClient = new InternalWebhookClient(restClient, hubCluster);
 
     private static final String SERVER1 = "123.1.1";
     private static final String SERVER2 = "123.2.1";
@@ -170,7 +171,7 @@ public class WebhookManagerUnitTest {
     }
 
     private WebhookManager getWebhookManager() {
-        return new WebhookManager(watchManager, webhookDao, lastContentPath, activeWebhooks, hubCluster, webhookError, webhookContentPathSet, restClient);
+        return new WebhookManager(watchManager, webhookDao, lastContentPath, activeWebhooks, webhookError, webhookContentPathSet, webhookClient);
     }
 
     @SuppressWarnings("unchecked")
