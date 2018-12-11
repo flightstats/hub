@@ -12,9 +12,9 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.util.Collection;
-import java.util.List;
-import java.util.TreeMap;
+import java.util.*;
+
+import static java.util.stream.Collectors.toList;
 
 public class InternalWebhookClient {
     private final static Logger logger = LoggerFactory.getLogger(InternalWebhookClient.class);
@@ -34,24 +34,24 @@ public class InternalWebhookClient {
         this.client = client;
     }
 
-    void remove(String name, Collection<String> servers) {
-        for (String server : servers) {
-            remove(name, server);
-        }
+    List<String> remove(String name, Collection<String> servers) {
+        return servers.stream()
+                .filter(server -> remove(name, server))
+                .collect(toList());
     }
 
-    void remove(String name, String server) {
-        put(server + "/internal/webhook/delete/" + name);
+    boolean remove(String name, String server) {
+        return put(server + "/internal/webhook/delete/" + name);
     }
 
-    void runOnServerWithFewestWebhooks(String name) {
-        runOnOneServer(name, getOrderedServers());
+    Optional<String> runOnServerWithFewestWebhooks(String name) {
+        return runOnOneServer(name, getOrderedServers());
     }
 
-    void runOnOneServer(String name, Collection<String> servers) {
-        for (String server : servers) {
-            if (put(server + "/internal/webhook/run/" + name)) break;
-        }
+    Optional<String> runOnOneServer(String name, Collection<String> servers) {
+        return servers.stream()
+                .filter(server -> put(server + "/internal/webhook/run/" + name))
+                .findFirst();
     }
 
     /**
@@ -59,16 +59,13 @@ public class InternalWebhookClient {
      */
     @VisibleForTesting
     Collection<String> getOrderedServers() {
-        TreeMap<Integer, String> orderedServers = new TreeMap<>();
-        List<String> servers = hubCluster.getRandomServers();
-        for (String server : servers) {
-            int count = get(server + "/internal/webhook/count");
-            orderedServers.put(count, server);
-        }
-        if (orderedServers.isEmpty()) {
-            return servers;
-        }
-        return orderedServers.values();
+        return hubCluster.getRandomServers().stream()
+                .sorted(Comparator.comparingInt(this::getCount))
+                .collect(toList());
+    }
+
+    private Integer getCount(String server) {
+        return get(server + "/internal/webhook/count");
     }
 
     private boolean put(String url) {
