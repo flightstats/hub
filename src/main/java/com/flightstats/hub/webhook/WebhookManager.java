@@ -98,7 +98,7 @@ public class WebhookManager {
             return;
         }
         String name = daoWebhook.getName();
-        if (activeWebhooks.getServers().contains(name)) {
+        if (activeWebhooks.isActiveWebhook(name)) {
             logger.debug("found existing v2 webhook {}", name);
             List<String> servers = new ArrayList<>(activeWebhooks.getServers(name));
             if (servers.size() >= 2) {

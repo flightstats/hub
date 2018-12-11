@@ -14,7 +14,9 @@ import static com.google.common.collect.Sets.newHashSet;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toSet;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
+import static org.testng.AssertJUnit.assertTrue;
 
 public class ActiveWebhooksTest {
     private static final String WEBHOOK_LEADER_PATH = "/WebhookLeader";
@@ -87,9 +89,18 @@ public class ActiveWebhooksTest {
     }
 
     @Test
-    public void testGetServers_returnsUniqueListOfWebhookLeases() {
-        Set<String> webhookLeases = activeWebhooks.getServers();
-        assertEquals(newHashSet(WEBHOOK_WITH_LEASE, WEBHOOK_WITH_A_FEW_LEASES, WEBHOOK_WITH_LOCK), webhookLeases);
+    public void testIsActiveWebhook_isTrueIfWebhookHasLease() {
+        assertTrue(activeWebhooks.isActiveWebhook(WEBHOOK_WITH_LEASE));
+    }
+
+    @Test
+    public void testIsActiveWebhook_isTrueIfWebhookHasLock() {
+        assertTrue(activeWebhooks.isActiveWebhook(WEBHOOK_WITH_LOCK));
+    }
+
+    @Test
+    public void testIsActiveWebhook_isFalseIfWebhookIsEmptyAndHasBeenCleanedUp() {
+        assertFalse(activeWebhooks.isActiveWebhook(EMPTY_WEBHOOK));
     }
 
     private static void createWebhook(String webhook) throws Exception {
