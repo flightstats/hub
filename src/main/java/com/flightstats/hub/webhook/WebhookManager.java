@@ -11,6 +11,7 @@ import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.HubUtils;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
@@ -45,20 +46,38 @@ public class WebhookManager {
     private ActiveWebhooks activeWebhooks;
 
     @Inject
-    @Named("HubCuratorCluster")
-    private CuratorCluster hubCluster;
-
-    @Inject
     private WebhookError webhookError;
     @Inject
     private WebhookContentPathSet webhookInProcess;
 
-    private final Client client = RestClient.createClient(5, 15, true, true);
+    private final Client client;
+    private final CuratorCluster hubCluster;
 
     @Inject
-    public WebhookManager() {
+    public WebhookManager(@Named("HubCuratorCluster") CuratorCluster hubCluster) {
+        this.hubCluster = hubCluster;
+        this.client = RestClient.createClient(5, 15, true, true);
         register(new WebhookIdleService(), HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
         register(new WebhookScheduledService(), HubServices.TYPE.AFTER_HEALTHY_START);
+    }
+
+    @VisibleForTesting
+    WebhookManager(WatchManager watchManager,
+                   Dao<Webhook> webhookDao,
+                   LastContentPath lastContentPath,
+                   ActiveWebhooks activeWebhooks,
+                   CuratorCluster hubCluster,
+                   WebhookError webhookError,
+                   WebhookContentPathSet webhookInProcess,
+                   Client client) {
+        this.watchManager = watchManager;
+        this.webhookDao = webhookDao;
+        this.lastContentPath = lastContentPath;
+        this.activeWebhooks = activeWebhooks;
+        this.hubCluster = hubCluster;
+        this.webhookError = webhookError;
+        this.webhookInProcess = webhookInProcess;
+        this.client = client;
     }
 
     private void start() {
@@ -89,7 +108,8 @@ public class WebhookManager {
         manageWebhook(webhook, true);
     }
 
-    private void manageWebhook(Webhook daoWebhook, boolean webhookChanged) {
+    @VisibleForTesting
+    void manageWebhook(Webhook daoWebhook, boolean webhookChanged) {
         if (daoWebhook.getTagUrl() != null && !daoWebhook.getTagUrl().isEmpty()) {
             // tag webhooks are not processed like normal webhooks.
             // they are used as prototype definitions for new webhooks added
