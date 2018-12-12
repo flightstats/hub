@@ -12,6 +12,7 @@ import org.glassfish.hk2.utilities.ServiceLocatorUtilities;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class GuiceToHK2AdapterTest {
 
@@ -29,14 +30,24 @@ public class GuiceToHK2AdapterTest {
 
     }
 
+    @Value
     private static class NativeService {
+        SimpleService simpleService;
+
         @javax.inject.Inject
-        NativeService() {}
+        NativeService(SimpleService simpleService) {
+            this.simpleService = simpleService;
+        }
     }
 
+    @Value
     private static class GuicedService {
+        SimpleService simpleService;
+
         @com.google.inject.Inject
-        GuicedService() {}
+        GuicedService(SimpleService simpleService) {
+            this.simpleService = simpleService;
+        }
     }
 
     @javax.inject.Singleton
@@ -47,9 +58,20 @@ public class GuiceToHK2AdapterTest {
 
     @Test
     public void testSimple() {
-        ServiceLocator locator = initializeHK2(buildEmptyInjector());
-        locator.getService(NativeService.class);
-        locator.getService(GuicedService.class);
+        Injector injector = Guice.createInjector(new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(NativeService.class);
+                bind(GuicedService.class);
+            }
+        });
+        ServiceLocator locator = initializeHK2(injector);
+        NativeService nativeService = locator.getService(NativeService.class);
+        GuicedService guicedService = locator.getService(GuicedService.class);
+        assertNotNull(nativeService);
+        assertNotNull(nativeService.getSimpleService());
+        assertNotNull(guicedService);
+        assertNotNull(guicedService.getSimpleService());
     }
 
     @Test
@@ -64,7 +86,8 @@ public class GuiceToHK2AdapterTest {
             }
         });
         ServiceLocator locator = initializeHK2(injector);
-        locator.getService(SimpleService.class);
+        SimpleService service = locator.getService(SimpleService.class);
+        assertNotNull(service);
     }
 
     @Test
