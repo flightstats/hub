@@ -8,12 +8,10 @@ import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.util.FileUtils;
-import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,28 +49,11 @@ public class SpokeTtlEnforcer {
 
     private Consumer<ChannelConfig> handleCleanup(AtomicLong evictionCounter) {
         return channel -> {
-            int itemsEvicted = 0;
             String channelPath = storagePath + "/" + channel.getDisplayName();
-            if (channel.isLive()) {
-                DateTime ttlDateTime = TimeUtil.stable().minusMinutes(ttlMinutes + 1);
-                for (int i = 0; i < 2; i++) {
-                    itemsEvicted += removeFromChannelByTime(channelPath, TimeUtil.minutes(ttlDateTime.minusMinutes(i)));
-                    itemsEvicted += removeFromChannelByTime(channelPath, TimeUtil.hours(ttlDateTime.minusHours(i + 1)));
-                    itemsEvicted += removeFromChannelByTime(channelPath, TimeUtil.days(ttlDateTime.minusDays(i + 1)));
-                    itemsEvicted += removeFromChannelByTime(channelPath, TimeUtil.months(ttlDateTime.minusMonths(i + 1)));
-                }
-            } else {
-                int waitTimeSeconds = 3;
-                itemsEvicted += FileUtils.deleteFilesByAge(channelPath, ttlMinutes, waitTimeSeconds);
-            }
+            int waitTimeSeconds = 3;
+            long itemsEvicted = FileUtils.deleteFilesByAge(channelPath, ttlMinutes, waitTimeSeconds);
             evictionCounter.getAndAdd(itemsEvicted);
         };
-    }
-
-    private long removeFromChannelByTime(String channelPath, String timePath) {
-        String path = channelPath + "/" + timePath;
-        int waitTimeSeconds = 3;
-        return FileUtils.deleteFiles(path, waitTimeSeconds);
     }
 
     private void updateOldestItemMetric() {
