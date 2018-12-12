@@ -12,8 +12,13 @@ import java.util.Optional;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.String.format;
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class InternalWebhookClientTest {
     private final CuratorCluster hubCluster = mock(CuratorCluster.class);
