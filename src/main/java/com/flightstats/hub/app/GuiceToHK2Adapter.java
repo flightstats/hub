@@ -2,6 +2,7 @@ package com.flightstats.hub.app;
 
 import com.google.inject.Injector;
 import com.google.inject.Key;
+import com.google.inject.name.Names;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.hk2.api.Factory;
@@ -39,7 +40,7 @@ class GuiceToHK2Adapter extends AbstractBinder {
     private void bindClass(Key<?> key) {
         try {
             String typeName = key.getTypeLiteral().getType().getTypeName();
-            log.info("mapping guice to hk2: {}", typeName);
+            log.debug("mapping guice to hk2: {}", typeName);
             Class boundClass = Class.forName(typeName);
             bindFactory(new ServiceFactory<>(boundClass)).to(boundClass);
         } catch (ClassNotFoundException e) {
@@ -54,9 +55,9 @@ class GuiceToHK2Adapter extends AbstractBinder {
             String typeName = key.getTypeLiteral().getType().getTypeName();
             Method value = key.getAnnotationType().getDeclaredMethod("value");
             String name = (String) value.invoke(key.getAnnotation());
-            log.info("mapping guice to hk2: {} (named: {})", typeName, name);
+            log.debug("mapping guice to hk2: {} (named: {})", typeName, name);
             Class boundClass = Class.forName(typeName);
-            bindFactory(new ServiceFactory<>(boundClass)).to(boundClass).named(name);
+            bindFactory(new ServiceFactory<>(boundClass, name)).to(boundClass).named(name);
         } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             log.warn("unable to bind {}", key);
             throw e;
@@ -67,16 +68,27 @@ class GuiceToHK2Adapter extends AbstractBinder {
 
         private final AtomicBoolean hasBeenProvided = new AtomicBoolean(false);
         private final Class<T> serviceClass;
+        private final String name;
 
         ServiceFactory(Class<T> serviceClass) {
+            this(serviceClass, null);
+        }
+
+        ServiceFactory(Class<T> serviceClass, String name) {
             this.serviceClass = serviceClass;
+            this.name = name;
         }
 
         public T provide() {
             if (isFirstProvide()) {
-                log.debug("providing {} for the first time", serviceClass.getCanonicalName());
+                log.debug("providing {} for the first time", getPrettyName());
             }
-            return injector.getInstance(serviceClass);
+
+            if (isNamed()) {
+                return injector.getInstance(Key.get(serviceClass, Names.named(name)));
+            } else {
+                return injector.getInstance(serviceClass);
+            }
         }
 
         private boolean isFirstProvide() {
@@ -86,6 +98,19 @@ class GuiceToHK2Adapter extends AbstractBinder {
         public void dispose(T versionResource) {
             // do nothing
         }
+
+        private String getPrettyName() {
+            if (isNamed()) {
+                return String.format("%s (named: %s)", serviceClass.getCanonicalName(), name);
+            } else {
+                return serviceClass.getCanonicalName();
+            }
+        }
+
+        private boolean isNamed() {
+            return name != null;
+        }
+
     }
 
 }
