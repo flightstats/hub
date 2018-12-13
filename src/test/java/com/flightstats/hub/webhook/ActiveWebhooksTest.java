@@ -26,15 +26,15 @@ public class ActiveWebhooksTest {
     private static final String SERVER_IP1 = "10.2.1";
     private static final String SERVER_IP2 = "10.2.2";
 
-    private final WebhookLeaderServers webhookLeaderServers = mock(WebhookLeaderServers.class);
+    private final WebhookLeaderLocks webhookLeaderLocks = mock(WebhookLeaderLocks.class);
     private final ActiveWebhookSweeper activeWebhookSweeper = mock(ActiveWebhookSweeper.class);
 
     @Test
     public void testGetServers_returnsSeveralForAWebhook() throws Exception {
-        when(webhookLeaderServers.getServers(WEBHOOK_WITH_A_FEW_LEASES))
+        when(webhookLeaderLocks.getServerLeases(WEBHOOK_WITH_A_FEW_LEASES))
                 .thenReturn(newHashSet(SERVER_IP2, SERVER_IP1));
 
-        ActiveWebhooks activeWebhooks = new ActiveWebhooks(webhookLeaderServers, activeWebhookSweeper);
+        ActiveWebhooks activeWebhooks = new ActiveWebhooks(webhookLeaderLocks, activeWebhookSweeper);
         Set<String> servers = activeWebhooks.getServers(WEBHOOK_WITH_A_FEW_LEASES);
 
         assertEquals(getServersWithPort(SERVER_IP1, SERVER_IP2), servers);
@@ -43,10 +43,10 @@ public class ActiveWebhooksTest {
 
     @Test
     public void testGetServers_returnsAnEmptyListIfThereAreNoLeases() throws Exception {
-        when(webhookLeaderServers.getServers(EMPTY_WEBHOOK))
+        when(webhookLeaderLocks.getServerLeases(EMPTY_WEBHOOK))
                 .thenReturn(newHashSet());
 
-        ActiveWebhooks activeWebhooks = new ActiveWebhooks(webhookLeaderServers, activeWebhookSweeper);
+        ActiveWebhooks activeWebhooks = new ActiveWebhooks(webhookLeaderLocks, activeWebhookSweeper);
         Set<String> servers = activeWebhooks.getServers(EMPTY_WEBHOOK);
 
         assertEquals(newHashSet(), servers);
@@ -54,20 +54,20 @@ public class ActiveWebhooksTest {
 
     @Test
     public void testIsActiveWebhook_isTrueIfWebhookIsPresent() throws Exception {
-        when(webhookLeaderServers.getWebhooks())
+        when(webhookLeaderLocks.getWebhooks())
                 .thenReturn(newHashSet(WEBHOOK_WITH_A_FEW_LEASES, WEBHOOK_WITH_LEASE, WEBHOOK_WITH_LOCK));
 
-        ActiveWebhooks activeWebhooks = new ActiveWebhooks(webhookLeaderServers, activeWebhookSweeper);
+        ActiveWebhooks activeWebhooks = new ActiveWebhooks(webhookLeaderLocks, activeWebhookSweeper);
         assertTrue(activeWebhooks.isActiveWebhook(WEBHOOK_WITH_LEASE));
     }
 
 
     @Test
     public void testIsActiveWebhook_isFalseIfWebhookIsNotPresent() throws Exception{
-        when(webhookLeaderServers.getWebhooks())
+        when(webhookLeaderLocks.getWebhooks())
                 .thenReturn(newHashSet(WEBHOOK_WITH_A_FEW_LEASES, WEBHOOK_WITH_LEASE, WEBHOOK_WITH_LOCK));
 
-        ActiveWebhooks activeWebhooks = new ActiveWebhooks(webhookLeaderServers, activeWebhookSweeper);
+        ActiveWebhooks activeWebhooks = new ActiveWebhooks(webhookLeaderLocks, activeWebhookSweeper);
         assertFalse(activeWebhooks.isActiveWebhook(EMPTY_WEBHOOK));
     }
 

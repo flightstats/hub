@@ -24,14 +24,11 @@ import java.util.concurrent.atomic.AtomicReference;
 class WebhookLeader implements Lockable {
     private final static Logger logger = LoggerFactory.getLogger(WebhookLeader.class);
     static final String WEBHOOK_LAST_COMPLETED = "/GroupLastCompleted/";
-    public static final String LEADER_PATH = "/WebhookLeader";
 
     private final AtomicBoolean deleteOnExit = new AtomicBoolean();
 
     @Inject
-    private CuratorFramework curator;
-    @Inject
-    private ZooKeeperState zooKeeperState;
+    private WebhookLeaderLocks webhookLeaderLocks;
     @Inject
     private ChannelService channelService;
     @Inject
@@ -68,7 +65,7 @@ class WebhookLeader implements Lockable {
             logger.info("not starting paused webhook " + webhook);
             return false;
         } else {
-            curatorLock = new CuratorLock(curator, zooKeeperState, getLeaderPath());
+            curatorLock = webhookLeaderLocks.createLock(webhook.getName());
             return curatorLock.runWithLock(this, 1, TimeUnit.SECONDS);
         }
     }
@@ -292,10 +289,6 @@ class WebhookLeader implements Lockable {
         } catch (Exception e) {
             logger.warn("unable to close strategy", e);
         }
-    }
-
-    private String getLeaderPath() {
-        return LEADER_PATH + "/" + webhook.getName();
     }
 
     private void delete() {

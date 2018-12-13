@@ -21,16 +21,21 @@ public class Integration {
         startZooKeeper();
     }
 
-    public static synchronized CuratorFramework startZooKeeper() throws Exception {
+    public static synchronized CuratorFramework startZooKeeper(ZooKeeperState zooKeeperState) throws Exception {
         HubProperties.loadProperties("useDefault");
         if (testingServer == null) {
             logger.info("starting zookeeper");
             testingServer = new TestingServer(2181);
-            curator = HubBindings.buildCurator("hub", "test", "localhost:2181", new ZooKeeperState());
+            curator = HubBindings.buildCurator("hub", "test", "localhost:2181", zooKeeperState);
         } else {
             logger.info("zookeeper already started");
         }
         return curator;
+
+    }
+
+    public static synchronized CuratorFramework startZooKeeper() throws Exception {
+        return startZooKeeper(new ZooKeeperState());
     }
 
     public static synchronized Injector startAwsHub() throws Exception {

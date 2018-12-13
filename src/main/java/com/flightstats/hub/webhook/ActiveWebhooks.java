@@ -13,23 +13,23 @@ import static java.util.stream.Collectors.toSet;
 
 @Singleton
 public class ActiveWebhooks {
-    private final WebhookLeaderServers webhookLeaderServers;
+    private final WebhookLeaderLocks webhookLeaderLocks;
     private final ActiveWebhookSweeper activeWebhookSweeper;
 
     @Inject
-    public ActiveWebhooks(WebhookLeaderServers webhookLeaderServers, ActiveWebhookSweeper activeWebhookSweeper) {
-        this.webhookLeaderServers = webhookLeaderServers;
+    public ActiveWebhooks(WebhookLeaderLocks webhookLeaderLocks, ActiveWebhookSweeper activeWebhookSweeper) {
+        this.webhookLeaderLocks = webhookLeaderLocks;
         this.activeWebhookSweeper = activeWebhookSweeper;
 
         register(new WebhookLeaderCleanupService());
     }
 
     public boolean isActiveWebhook(String webhookName) {
-        return webhookLeaderServers.getWebhooks().contains(webhookName);
+        return webhookLeaderLocks.getWebhooks().contains(webhookName);
     }
 
     public Set<String> getServers(String name) {
-        return webhookLeaderServers.getServers(name).stream()
+        return webhookLeaderLocks.getServerLeases(name).stream()
                 .map(server -> server + ":" + HubHost.getLocalPort())
                 .collect(toSet());
     }
