@@ -10,18 +10,18 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 public class ActiveWebhookSweeper {
-    private static final Logger logger = LoggerFactory.getLogger(WebhookLeaderServers.class);
-    private final WebhookLeaderServers webhookLeaderServers;
+    private static final Logger logger = LoggerFactory.getLogger(WebhookLeaderLocks.class);
+    private final WebhookLeaderLocks webhookLeaderLocks;
 
     @Inject
-    public ActiveWebhookSweeper(WebhookLeaderServers webhookLeaderServers) {
-        this.webhookLeaderServers = webhookLeaderServers;
+    public ActiveWebhookSweeper(WebhookLeaderLocks webhookLeaderLocks) {
+        this.webhookLeaderLocks = webhookLeaderLocks;
     }
 
     void cleanupEmpty() throws Exception {
         logger.info("cleaning empty webhook leader nodes...");
 
-        Set<String> currentData = webhookLeaderServers.getWebhooks();
+        Set<String> currentData = webhookLeaderLocks.getWebhooks();
         logger.info("data {}", currentData.size());
 
         currentData.stream()
@@ -30,14 +30,14 @@ public class ActiveWebhookSweeper {
     }
 
     private boolean isEmpty(String webhookName) {
-        return Stream.of(webhookLeaderServers.getLeasePaths(webhookName), webhookLeaderServers.getLockPaths(webhookName))
+        return Stream.of(webhookLeaderLocks.getLeasePaths(webhookName), webhookLeaderLocks.getLockPaths(webhookName))
                 .allMatch(List::isEmpty);
     }
 
     @SneakyThrows
     private void deleteWebhookLeader(String webhookName) {
         logger.info("deleting empty {}", webhookName);
-        webhookLeaderServers.deleteWebhookLeader(webhookName);
+        webhookLeaderLocks.deleteWebhookLeader(webhookName);
 
     }
 
