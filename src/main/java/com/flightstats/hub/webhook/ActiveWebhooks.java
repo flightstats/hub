@@ -42,7 +42,7 @@ public class ActiveWebhooks {
 
         @Override
         protected Scheduler scheduler() {
-            return Scheduler.newFixedRateSchedule(2, 15, TimeUnit.MINUTES);
+            return Scheduler.newFixedRateSchedule(2, 5, TimeUnit.MINUTES);
         }
     }
 

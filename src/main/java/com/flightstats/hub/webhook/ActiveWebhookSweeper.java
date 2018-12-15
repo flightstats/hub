@@ -10,7 +10,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 public class ActiveWebhookSweeper {
-    private static final Logger logger = LoggerFactory.getLogger(WebhookLeaderLocks.class);
+    private static final Logger logger = LoggerFactory.getLogger(ActiveWebhookSweeper.class);
     private final WebhookLeaderLocks webhookLeaderLocks;
 
     @Inject
