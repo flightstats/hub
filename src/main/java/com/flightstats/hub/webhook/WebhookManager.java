@@ -53,6 +53,9 @@ public class WebhookManager {
     @Inject
     private WebhookContentPathSet webhookInProcess;
 
+    @Inject
+    private WebhookStateReaper webhookStateReaper;
+
     private final Client client = RestClient.createClient(5, 15, true, true);
 
     @Inject
@@ -197,7 +200,7 @@ public class WebhookManager {
 
     public void delete(String name) {
         callAllDelete(name, activeWebhooks.getServers(name));
-        lastContentPath.delete(name, WebhookLeader.WEBHOOK_LAST_COMPLETED);
+        webhookStateReaper.delete(name);
     }
 
     public void getStatus(Webhook webhook, WebhookStatus.WebhookStatusBuilder statusBuilder) {
