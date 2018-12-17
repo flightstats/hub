@@ -11,8 +11,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static com.google.common.collect.Sets.newHashSet;
+import static java.util.stream.Collectors.toSet;
+
 class WebhookContentPathSet {
     private final static Logger logger = LoggerFactory.getLogger(WebhookContentPathSet.class);
+    private final static String BASE_PATH = "/GroupInFlight";
 
     private final CuratorFramework curator;
 
@@ -57,8 +61,20 @@ class WebhookContentPathSet {
         return keys;
     }
 
+    Set<String> getWebhooks() {
+        try {
+            return new HashSet<>(curator.getChildren().forPath(BASE_PATH));
+        } catch (KeeperException.NoNodeException e) {
+            logger.info("no node for {}", BASE_PATH);
+            return newHashSet();
+        } catch (Exception e) {
+            logger.warn("unable to get webhooks for {}", BASE_PATH);
+            return newHashSet();
+        }
+    }
+
     private String getPath(String webhookName) {
-        return "/GroupInFlight/" + webhookName;
+        return BASE_PATH + "/" + webhookName;
     }
 
     private String getPath(String webhookName, ContentPath key) {
