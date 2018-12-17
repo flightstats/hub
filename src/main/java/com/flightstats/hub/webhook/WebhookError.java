@@ -17,11 +17,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
 import static com.flightstats.hub.util.RequestUtils.getChannelName;
+import static java.util.stream.Collectors.toSet;
 
 /**
  * This class is responsible for creation and management of webhook error strings.
@@ -38,6 +41,7 @@ import static com.flightstats.hub.util.RequestUtils.getChannelName;
 class WebhookError {
     private final static Logger logger = LoggerFactory.getLogger(WebhookError.class);
     private static final int MAX_SIZE = 10;
+    private static final String BASE_PATH = "/GroupError";
 
     private final CuratorFramework curator;
     private final ChannelService channelService;
@@ -101,8 +105,19 @@ class WebhookError {
         }
     }
 
+    public Set<String> getWebhooks() {
+        try {
+            return new HashSet<>(curator.getChildren().forPath(BASE_PATH));
+        } catch (KeeperException.NoNodeException e) {
+            logger.info("{} node not found", BASE_PATH);
+        } catch (Exception e) {
+            logger.warn("unable to retrieve webhooks for " + BASE_PATH, e);
+        }
+        return new HashSet<>();
+    }
+
     private String getErrorRoot(String webhook) {
-        return "/GroupError/" + webhook;
+        return BASE_PATH + "/" + webhook;
     }
 
     private String getChildPath(String errorRoot, String child) {
