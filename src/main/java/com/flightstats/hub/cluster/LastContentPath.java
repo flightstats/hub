@@ -13,6 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Function;
 
 public class LastContentPath {
@@ -77,6 +79,18 @@ public class LastContentPath {
             logger.info("unable to get node {} {} {} ", name, basePath, e.getMessage());
             return defaultPath;
         }
+    }
+
+    public Set<String> getNames(String basePath) {
+        try {
+            String baseWithoutEndSlash = basePath.replaceFirst("/$", "");
+            return new HashSet<>(curator.getChildren().forPath(baseWithoutEndSlash));
+        } catch (KeeperException.NoNodeException e) {
+            logger.warn("no {} node found", basePath);
+        } catch (Exception e) {
+            logger.warn("unable to get node {}", basePath);
+        }
+        return new HashSet<>();
     }
 
     private ContentPath get(String path) throws Exception {
