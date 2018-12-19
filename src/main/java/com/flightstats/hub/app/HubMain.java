@@ -12,6 +12,7 @@ import org.glassfish.jersey.server.filter.EncodingFilter;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.flightstats.hub.metrics.JVMMetrics;
 
 import java.io.IOException;
 import java.security.Security;
@@ -26,6 +27,7 @@ public class HubMain {
 
     private static final Logger logger = LoggerFactory.getLogger(HubMain.class);
     private static final DateTime startTime = new DateTime();
+    private JVMMetrics jvmMetrics;
 
     public static void main(String[] args) throws Exception {
         if (args.length == 0) {
@@ -39,7 +41,8 @@ public class HubMain {
         Security.setProperty("networkaddress.cache.ttl", "60");
         startZookeeperIfSingle();
         HubJettyServer server = startServer();
-
+        JVMMetrics jvmMetrics = new JVMMetrics();
+        jvmMetrics.startMetricRegistry();
         final CountDownLatch latch = new CountDownLatch(1);
         Runtime.getRuntime().addShutdownHook(new Thread() {
             public void run() {
@@ -49,6 +52,7 @@ public class HubMain {
         });
         latch.await();
         logger.warn("calling shutdown");
+//        jvmMetrics.shutDown();
         HubProvider.getInstance(ShutdownManager.class).shutdown(true);
         server.halt();
         logger.info("Server shutdown complete.  Exiting application.");
@@ -58,6 +62,7 @@ public class HubMain {
         ResourceConfig resourceConfig = new ResourceConfig();
         resourceConfig.register(new ObjectMapperResolver(HubBindings.objectMapper()));
         resourceConfig.register(JacksonJsonProvider.class);
+        resourceConfig.register(JVMMetrics.class);
         resourceConfig.registerClasses(CORSFilter.class,EncodingFilter.class, StreamEncodingFilter.class, GZipEncoder
                         .class,
                 DeflateEncoder.class);
