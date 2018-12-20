@@ -11,6 +11,7 @@ import com.flightstats.hub.spoke.FileSpokeStore;
 import com.flightstats.hub.spoke.RemoteSpokeStore;
 import com.flightstats.hub.spoke.SpokeReadContentDao;
 import com.flightstats.hub.spoke.SpokeWriteContentDao;
+import com.flightstats.hub.metrics.JVMMetricsService;
 import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.spoke.SpokeTtlEnforcer;
 import com.flightstats.hub.webhook.Webhook;
@@ -50,6 +51,7 @@ class ClusterHubBindings extends AbstractModule {
         bind(S3BatchManager.class).asEagerSingleton();
         bind(S3Verifier.class).asEagerSingleton();
         bind(AppUrlCheck.class).asEagerSingleton();
+        bind(JVMMetricsService.class).asEagerSingleton();
 
         bind(SpokeTtlEnforcer.class)
                 .annotatedWith(Names.named(SpokeStore.WRITE.name()))
