@@ -65,8 +65,8 @@ public class ActiveWebhooks {
                 .collect(Collectors.toSet());
     }
 
-    public Set<String> getServers() {
-        return get(webhooks);
+    public boolean isActiveWebhook(String webhookName) {
+        return get(webhooks).contains(webhookName);
     }
 
     public Set<String> getServers(String name) {
