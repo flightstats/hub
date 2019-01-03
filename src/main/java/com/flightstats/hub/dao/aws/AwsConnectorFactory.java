@@ -36,6 +36,8 @@ public class AwsConnectorFactory {
         logger.info("creating for  " + protocol + " " + s3Endpoint + " " + signingRegion);
         return AmazonS3ClientBuilder.standard()
                 .withClientConfiguration(getClientConfiguration("s3", true))
+                .withPathStyleAccessEnabled(HubProperties.getProperty("s3.pathStyleAccessEnable", false))
+                .withChunkedEncodingDisabled(HubProperties.getProperty("s3.disableChunkedEncoding", false))
                 .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(s3Endpoint, signingRegion))
                 .withCredentials(getAwsCredentials())
                 .build();

@@ -69,11 +69,8 @@ describe(__filename, () => {
 
     it('verifies the error channel was created', async () => {
         const headers = { 'Content-Type': 'application/json' };
-        const response = await hubClientGet(`${hubUrlBase}/channel`, headers);
-        const channels = fromObjectPath(['body', '_links', 'channels'], response) || [];
-        expect(channels.length).toBeGreaterThan(0);
-        const channelResource = channels.find(channel => getProp('href', channel) === errorChannelURL);
-        expect(channelResource).toBeDefined();
+        const response = await hubClientGet(errorChannelURL, headers);
+        expect(getProp('statusCode', response)).toEqual(200);
     });
 
     it('waits 1000 ms', async () => {
@@ -84,18 +81,20 @@ describe(__filename, () => {
         const headers = { 'Content-Type': 'application/json' };
         const payload = moment.utc().toISOString();
         const response = await hubClientPost(channelResource, headers, payload);
-
         expect(getProp('statusCode', response)).toEqual(201);
         const itemURL = fromObjectPath(['body', '_links', 'self', 'href'], response);
         postedItems.push(itemURL);
+    });
+
+    it('waits for the item to be delivered', async () => {
         const condition = () => (callbackItems.length === postedItems.length);
         await waitForCondition(condition);
     });
 
-    it('verifies no error posted to the error channel', async () => {
-        const response = await hubClientGet(`${errorChannelURL}/latest`);
-        const response2 = await followRedirectIfPresent(response);
-        expect(getProp('statusCode', response2)).toEqual(404);
+    it('verifies no error was posted to the error channel', async () => {
+        const latestResponse = await hubClientGet(`${errorChannelURL}/latest`);
+        const redirectResponse = await followRedirectIfPresent(latestResponse);
+        expect(getProp('statusCode', redirectResponse)).toEqual(404);
     });
 
     it('kills the callback server', async () => {
@@ -109,7 +108,6 @@ describe(__filename, () => {
         const headers = { 'Content-Type': 'text/plain' };
         const payload = moment.utc().toISOString();
         const response = await hubClientPost(channelResource, headers, payload);
-
         expect(getProp('statusCode', response)).toEqual(201);
         const itemURL = fromObjectPath(['body', '_links', 'self', 'href'], response);
         postedItems.push(itemURL);
