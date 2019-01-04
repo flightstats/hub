@@ -19,7 +19,7 @@ public class DataDog {
         HubServices.register(new DataDogService(), AFTER_HEALTHY_START);
     }
 
-    public final static StatsDClient statsd = HubProperties.getProperty("data_dog.enable", false) ?
+    public final static StatsDClient statsd = HubProperties.getProperty("metrics.enable", false) ?
             new NonBlockingStatsDClient("hub", "localhost", 8125)
             : new NoOpStatsDClient();
 

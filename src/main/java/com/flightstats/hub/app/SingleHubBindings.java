@@ -13,6 +13,7 @@ import com.flightstats.hub.spoke.SpokeReadContentDao;
 import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.spoke.SpokeWriteContentDao;
 import com.flightstats.hub.webhook.Webhook;
+import com.flightstats.hub.metrics.JVMMetricsService;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
@@ -27,6 +28,7 @@ class SingleHubBindings extends AbstractModule {
         bind(ContentService.class).to(SingleContentService.class).asEagerSingleton();
         bind(DocumentationDao.class).to(FileDocumentationDao.class).asEagerSingleton();
         bind(ChannelTtlEnforcer.class).asEagerSingleton();
+        bind(JVMMetricsService.class).asEagerSingleton();
     }
 
     @Inject

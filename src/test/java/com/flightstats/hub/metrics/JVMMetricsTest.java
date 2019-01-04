@@ -1,22 +1,22 @@
 package com.flightstats.hub.metrics;
 
+import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.app.HubVersion;
 import metrics_influxdb.HttpInfluxdbProtocol;
 import metrics_influxdb.InfluxdbProtocol;
+import com.codahale.metrics.MetricRegistry;
+import java.util.SortedSet;
+import static com.flightstats.hub.app.HubHost.getLocalName;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.Iterator;
-import java.util.SortedSet;
-import com.codahale.metrics.MetricRegistry;
-import com.flightstats.hub.app.HubVersion;
-
 
 import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.StringContains.containsString;
-import static com.flightstats.hub.app.HubHost.getLocalName;
+import static org.testng.AssertJUnit.assertTrue;
 
 public class JVMMetricsTest {
     private static JVMMetricsService metricsService;
@@ -24,21 +24,20 @@ public class JVMMetricsTest {
 
     @BeforeClass
     public static void before() {
-        System.setProperty("metrics.environment", "test");
+        HubProperties.setProperty("metrics.enable", "true");
         MetricRegistry registry = new MetricRegistry();
         metricsService = new JVMMetricsService(registry, hubVersion);
-        metricsService.start();
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void registeredMetricNamesTest() {
 
         SortedSet<String> metricNames = metricsService.getRegisteredMetricNames();
-        Iterator iterator = metricNames.iterator();
-        while (iterator.hasNext()) {
-            String nextString = (String) iterator.next();
-            assertThat(nextString, anyOf(containsString("gc"), containsString("memory"), containsString("thread")));
-            assertThat(nextString, containsString("jvm_"));
+        for (String metricName : metricNames) {
+            //noinspection unchecked
+            assertThat(metricName, anyOf(containsString("gc"), containsString("memory"), containsString("thread")));
+            assertThat(metricName, containsString("jvm_"));
         }
     }
 
@@ -50,16 +49,16 @@ public class JVMMetricsTest {
 
     @Test
     public void getHostTest() {
-        assert(metricsService.getHost() == getLocalName());
+        assertTrue(metricsService.getHost().equalsIgnoreCase(getLocalName()));
     }
 
     @Test
     public void getVersionTest() {
-        assert(metricsService.getVersion().equals(hubVersion.getVersion()));
+        assertTrue(metricsService.getVersion().equalsIgnoreCase(hubVersion.getVersion()));
     }
 
     @AfterClass public static void after() {
-            metricsService.stop();
+        metricsService.stop();
     }
 
 }

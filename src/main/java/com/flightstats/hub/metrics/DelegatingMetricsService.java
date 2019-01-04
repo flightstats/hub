@@ -76,7 +76,7 @@ public class DelegatingMetricsService implements MetricsService {
                 newServices.add(HubProvider.getInstance(HostedGraphiteMetricsService.class));
                 logger.info("started hosted graphite");
             }
-            if (HubProperties.getProperty("data_dog.enable", false)) {
+            if (HubProperties.getProperty("metrics.enable", false)) {
                 logger.info("starting datadog");
                 newServices.add(HubProvider.getInstance(DataDogMetricsService.class));
                 logger.info("started datadog");
