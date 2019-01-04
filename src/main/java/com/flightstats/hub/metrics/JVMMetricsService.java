@@ -1,25 +1,27 @@
 package com.flightstats.hub.metrics;
 
-import com.flightstats.hub.app.*;
+import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.app.HubVersion;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.jvm.GarbageCollectorMetricSet;
 import com.codahale.metrics.jvm.CachedThreadStatesGaugeSet;
 import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
 import com.codahale.metrics.ScheduledReporter;
-import com.google.inject.Singleton;
 import metrics_influxdb.InfluxdbProtocol;
 import metrics_influxdb.InfluxdbReporter;
 import metrics_influxdb.HttpInfluxdbProtocol;
+import metrics_influxdb.UdpInfluxdbProtocol;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.inject.Singleton;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
-import metrics_influxdb.UdpInfluxdbProtocol;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import java.util.SortedSet;
 import java.util.concurrent.TimeUnit;
 import static com.flightstats.hub.app.HubServices.register;
+import static com.flightstats.hub.app.HubHost.getLocalName;
 
 @Singleton
 public class JVMMetricsService {
@@ -28,27 +30,27 @@ public class JVMMetricsService {
     @Inject
     private MetricRegistry registry;
 
-    private final String protocolType = HubProperties.getProperty("jvmMetrics.protocol", "http");
-    private final String influxHost = HubProperties.getProperty("jvmMetrics.host", "influxdb");
-    private final int influxPort = HubProperties.getProperty("jvmMetrics.jvmPort", 8086);
-    private final String influxUser = HubProperties.getProperty("jvmMetrics.dbUser", "");
-    private final String influxPass = HubProperties.getProperty("jvmMetrics.dbPass", "");
-    private final String influxDatabaseName = HubProperties.getProperty("jvmMetrics.dbName", "hubmain");
-    private final int reporterInterval = HubProperties.getProperty("jvmMetrics.seconds", 15);
+    @Inject
+    private HubVersion hubVersion;
 
+    private ScheduledReporter influxReporter;
+    private final String protocolScheme = HubProperties.getProperty("influx.protocolScheme", "http");
+    private final String influxHost = HubProperties.getProperty("influx.host", "influxdb");
+    private final int influxPort = HubProperties.getProperty("influx.port", 8086);
+    private final String influxUser = HubProperties.getProperty("influx.dbUser", "");
+    private final String influxPass = HubProperties.getProperty("influx.dbPass", "");
+    private final String influxDatabaseName = HubProperties.getProperty("influx.dbName", "hubmain");
+    private final int reporterInterval = HubProperties.getProperty("metrics.seconds", 15);
+    private final String env = HubProperties.getProperty("app.environment", "dev");
+    private final String clusterName = HubProperties.getProperty("cluster.tagName", "single.local");
     private final String metricPrefix = "jvm_";
-    private ScheduledReporter influxDBReporter;
 
     @Inject
-    JVMMetricsService(MetricRegistry registry) {
+    JVMMetricsService(MetricRegistry registry, HubVersion hubVersion) {
+        this.hubVersion = hubVersion;
         this.registry = registry;
-        register(new JVMMetricsIdleService());
-    }
-
-    public void start() {
-        logger.info("starting jvm metrics service on {} :// {} : {}", protocolType, influxHost, influxPort);
         // custom configurable reporter
-        influxDBReporter = InfluxdbReporter.forRegistry(registry)
+        influxReporter = InfluxdbReporter.forRegistry(registry)
                 .protocol(getProtocol())
                 .convertRatesTo(TimeUnit.SECONDS)
                 .convertDurationsTo(TimeUnit.MILLISECONDS)
@@ -56,26 +58,33 @@ public class JVMMetricsService {
                 .skipIdleMetrics(false)
                 .tag("role", "hub")
                 .tag("team", "ddt")
-                .tag("env", getEnvironment())
-                .tag("cluster", getCluster())
+                .tag("env", env)
+                .tag("cluster", clusterName)
                 .tag("host", getHost())
                 .tag("version", getVersion())
                 .build();
-        // collect these metrics
-        registry.register(metricPrefix + "gc", new GarbageCollectorMetricSet());
-        registry.register(metricPrefix + "thread", new CachedThreadStatesGaugeSet(15, TimeUnit.SECONDS));
-        registry.register(metricPrefix + "memory", new MemoryUsageGaugeSet());
-        influxDBReporter.start(reporterInterval, TimeUnit.SECONDS);
+        // HubServices.register this as a service
+        register(new JVMMetricsIdleService());
     }
 
-    InfluxdbProtocol getProtocol() {
-        String protocol = protocolType;
+    public void start() {
+        logger.info("starting jvm metrics service on {} :// {} : {}", protocolScheme, influxHost, influxPort);
+        // collect these metrics
+        registry.register(metricPrefix + "gc", new GarbageCollectorMetricSet());
+        registry.register(metricPrefix + "thread", new CachedThreadStatesGaugeSet(reporterInterval, TimeUnit.SECONDS));
+        registry.register(metricPrefix + "memory", new MemoryUsageGaugeSet());
+        // report the metrics every N seconds
+        influxReporter.start(reporterInterval, TimeUnit.SECONDS);
+    }
+
+    @VisibleForTesting InfluxdbProtocol getProtocol() {
+        String scheme = protocolScheme;
         // allow use of udp
-        if (!"https,udp".contains(protocol.trim().toLowerCase())) {
+        if (!"https,udp".contains(scheme.trim().toLowerCase())) {
             logger.warn("Invalid protocol for influxdb reporter - using http");
-            protocol = "http";
+            scheme = "http";
         }
-        return protocol == "http" ? httpProtocol() : udpProtocol();
+        return scheme == "http" ? httpProtocol() : udpProtocol();
     }
 
     private UdpInfluxdbProtocol udpProtocol() {
@@ -86,31 +95,25 @@ public class JVMMetricsService {
         return new HttpInfluxdbProtocol(influxHost, influxPort, influxUser, influxPass, influxDatabaseName);
     }
 
-    @VisibleForTesting public SortedSet<String>  getRegisteredMetricNames() {
+    @VisibleForTesting SortedSet<String>  getRegisteredMetricNames() {
         return registry.getNames();
     }
 
-    private String getEnvironment() {
-        return HubProperties.getProperty("app.environment", "dev");
-    }
-
-    private String getCluster() {
-        return HubProperties.getProperty("cluster.tagname", "single.local");
-    }
-
-    private String getHost() {
+    @VisibleForTesting String getHost() {
         try {
-            return HubHost.getLocalName();
+            return getLocalName();
         } catch (RuntimeException e) {
             logger.debug("unable to get HubHost.getLocalName() err: {}", e);
-            return "unknown-host";
+            return "unknown";
         }
     }
 
-    private String getVersion() {
-        HubVersion hubVersion = HubProvider.getInstance(HubVersion.class);
+    @VisibleForTesting String getVersion() {
         return hubVersion.getVersion();
-//        return "test";
+    }
+
+    @VisibleForTesting void stop() {
+        influxReporter.close();
     }
 
     private class JVMMetricsIdleService extends AbstractIdleService {
