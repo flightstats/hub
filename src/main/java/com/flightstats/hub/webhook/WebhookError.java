@@ -11,6 +11,8 @@ import com.flightstats.hub.util.SafeZooKeeperUtils;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import lombok.Builder;
+import lombok.Getter;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -133,66 +135,12 @@ class WebhookError {
         }
     }
 
+    @Builder
+    @Getter
     private static class Error {
         String name;
         DateTime creationTime;
         String data;
-
-        @java.beans.ConstructorProperties({"name", "creationTime", "data"})
-        Error(String name, DateTime creationTime, String data) {
-            this.name = name;
-            this.creationTime = creationTime;
-            this.data = data;
-        }
-
-        public static ErrorBuilder builder() {
-            return new ErrorBuilder();
-        }
-
-        public String getName() {
-            return this.name;
-        }
-
-        public DateTime getCreationTime() {
-            return this.creationTime;
-        }
-
-        public String getData() {
-            return this.data;
-        }
-
-        public static class ErrorBuilder {
-            private String name;
-            private DateTime creationTime;
-            private String data;
-
-            ErrorBuilder() {
-            }
-
-            public Error.ErrorBuilder name(String name) {
-                this.name = name;
-                return this;
-            }
-
-            public Error.ErrorBuilder creationTime(DateTime creationTime) {
-                this.creationTime = creationTime;
-                return this;
-            }
-
-            public Error.ErrorBuilder data(String data) {
-                this.data = data;
-                return this;
-            }
-
-
-            public Error build() {
-                return new Error(name, creationTime, data);
-            }
-
-            public String toString() {
-                return "com.flightstats.hub.webhook.WebhookError.Error.ErrorBuilder(name=" + this.name + ", creationTime=" + this.creationTime + ", data=" + this.data + ")";
-            }
-        }
     }
 
     static class WebhookErrorReaper {
@@ -225,7 +173,11 @@ class WebhookError {
         private List<Error> getChildren(String webhook) {
              return zooKeeperUtils.getChildren(BASE_PATH, webhook).stream()
                     .map(child -> zooKeeperUtils.getDataWithStat(BASE_PATH, webhook, child)
-                            .map(dataWithStat -> new Error(child, new DateTime(dataWithStat.getStat().getCtime()), dataWithStat.getData())))
+                            .map(dataWithStat -> Error.builder()
+                                    .name(child)
+                                    .creationTime(new DateTime(dataWithStat.getStat().getCtime()))
+                                    .data(dataWithStat.getData())
+                                    .build()))
                     .flatMap(maybeData -> maybeData.map(Stream::of).orElse(Stream.empty()))
                     .collect(toList());
 
