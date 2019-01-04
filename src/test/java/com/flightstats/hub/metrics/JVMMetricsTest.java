@@ -2,6 +2,8 @@ package com.flightstats.hub.metrics;
 
 import metrics_influxdb.HttpInfluxdbProtocol;
 import metrics_influxdb.InfluxdbProtocol;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Iterator;
@@ -17,12 +19,20 @@ import static org.hamcrest.core.StringContains.containsString;
 import static com.flightstats.hub.app.HubHost.getLocalName;
 
 public class JVMMetricsTest {
+    private static JVMMetricsService metricsService;
+    private static final HubVersion hubVersion = new HubVersion();
+
+    @BeforeClass
+    public static void before() {
+        System.setProperty("metrics.environment", "test");
+        MetricRegistry registry = new MetricRegistry();
+        metricsService = new JVMMetricsService(registry, hubVersion);
+        metricsService.start();
+    }
+
     @Test
     public void registeredMetricNamesTest() {
-        MetricRegistry registry = new MetricRegistry();
-        HubVersion hubVersion = new HubVersion();
-        JVMMetricsService metricsService = new JVMMetricsService(registry, hubVersion);
-        metricsService.start();
+
         SortedSet<String> metricNames = metricsService.getRegisteredMetricNames();
         Iterator iterator = metricNames.iterator();
         while (iterator.hasNext()) {
@@ -30,33 +40,26 @@ public class JVMMetricsTest {
             assertThat(nextString, anyOf(containsString("gc"), containsString("memory"), containsString("thread")));
             assertThat(nextString, containsString("jvm_"));
         }
-        metricsService.stop();
     }
 
     @Test
     public void getProtocolTest() {
-        MetricRegistry registry = new MetricRegistry();
-        HubVersion hubVersion = new HubVersion();
-        JVMMetricsService metricsService = new JVMMetricsService(registry, hubVersion);
         assertThat(metricsService.getProtocol(), is(InfluxdbProtocol.class));
         assertThat(metricsService.getProtocol(), is(HttpInfluxdbProtocol.class));
     }
 
     @Test
     public void getHostTest() {
-        MetricRegistry registry = new MetricRegistry();
-        HubVersion hubVersion = new HubVersion();
-        JVMMetricsService metricsService = new JVMMetricsService(registry, hubVersion);
         assert(metricsService.getHost() == getLocalName());
     }
 
     @Test
     public void getVersionTest() {
-        MetricRegistry registry = new MetricRegistry();
-        HubVersion hubVersion = new HubVersion();
-        JVMMetricsService metricsService = new JVMMetricsService(registry, hubVersion);
         assert(metricsService.getVersion().equals(hubVersion.getVersion()));
     }
 
+    @AfterClass public static void after() {
+            metricsService.stop();
+    }
 
 }

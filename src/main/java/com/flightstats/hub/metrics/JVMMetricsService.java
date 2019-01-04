@@ -34,6 +34,9 @@ public class JVMMetricsService {
     private HubVersion hubVersion;
 
     private ScheduledReporter influxReporter;
+    private final String env = HubProperties.getProperty("app.environment", "dev");
+    private final boolean metricCollectionEnabled = HubProperties.getProperty("metrics.enabled", false) ||
+            System.getProperty("metrics.environment", "dev").equals("test");
     private final String protocolScheme = HubProperties.getProperty("influx.protocolScheme", "http");
     private final String influxHost = HubProperties.getProperty("influx.host", "influxdb");
     private final int influxPort = HubProperties.getProperty("influx.port", 8086);
@@ -41,7 +44,6 @@ public class JVMMetricsService {
     private final String influxPass = HubProperties.getProperty("influx.dbPass", "");
     private final String influxDatabaseName = HubProperties.getProperty("influx.dbName", "hubmain");
     private final int reporterInterval = HubProperties.getProperty("metrics.seconds", 15);
-    private final String env = HubProperties.getProperty("app.environment", "dev");
     private final String clusterName = HubProperties.getProperty("cluster.tagName", "single.local");
     private final String metricPrefix = "jvm_";
 
@@ -50,31 +52,37 @@ public class JVMMetricsService {
         this.hubVersion = hubVersion;
         this.registry = registry;
         // custom configurable reporter
-        influxReporter = InfluxdbReporter.forRegistry(registry)
-                .protocol(getProtocol())
-                .convertRatesTo(TimeUnit.SECONDS)
-                .convertDurationsTo(TimeUnit.MILLISECONDS)
-                .filter(MetricFilter.ALL)
-                .skipIdleMetrics(false)
-                .tag("role", "hub")
-                .tag("team", "ddt")
-                .tag("env", env)
-                .tag("cluster", clusterName)
-                .tag("host", getHost())
-                .tag("version", getVersion())
-                .build();
-        // HubServices.register this as a service
-        register(new JVMMetricsIdleService());
+        if (metricCollectionEnabled) {
+            influxReporter = InfluxdbReporter.forRegistry(registry)
+                    .protocol(getProtocol())
+                    .convertRatesTo(TimeUnit.SECONDS)
+                    .convertDurationsTo(TimeUnit.MILLISECONDS)
+                    .filter(MetricFilter.ALL)
+                    .skipIdleMetrics(false)
+                    .tag("role", "hub")
+                    .tag("team", "ddt")
+                    .tag("env", env)
+                    .tag("cluster", clusterName)
+                    .tag("host", getHost())
+                    .tag("version", getVersion())
+                    .build();
+            // HubServices.register this as a service
+            register(new JVMMetricsIdleService());
+        }
     }
 
     public void start() {
-        logger.info("starting jvm metrics service on {} :// {} : {}", protocolScheme, influxHost, influxPort);
-        // collect these metrics
-        registry.register(metricPrefix + "gc", new GarbageCollectorMetricSet());
-        registry.register(metricPrefix + "thread", new CachedThreadStatesGaugeSet(reporterInterval, TimeUnit.SECONDS));
-        registry.register(metricPrefix + "memory", new MemoryUsageGaugeSet());
-        // report the metrics every N seconds
-        influxReporter.start(reporterInterval, TimeUnit.SECONDS);
+        if (metricCollectionEnabled) {
+            logger.info("starting jvm metrics service on {} :// {} : {}", protocolScheme, influxHost, influxPort);
+            // collect these metrics
+            registry.register(metricPrefix + "gc", new GarbageCollectorMetricSet());
+            registry.register(metricPrefix + "thread", new CachedThreadStatesGaugeSet(reporterInterval, TimeUnit.SECONDS));
+            registry.register(metricPrefix + "memory", new MemoryUsageGaugeSet());
+            // report the metrics every N seconds
+            influxReporter.start(reporterInterval, TimeUnit.SECONDS);
+        } else {
+            logger.info("not starting metrics collection for jvm: disabled");
+        }
     }
 
     @VisibleForTesting InfluxdbProtocol getProtocol() {

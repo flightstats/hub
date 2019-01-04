@@ -39,6 +39,7 @@ public class HubMain {
         Security.setProperty("networkaddress.cache.ttl", "60");
         startZookeeperIfSingle();
         HubJettyServer server = startServer();
+
         final CountDownLatch latch = new CountDownLatch(1);
         Runtime.getRuntime().addShutdownHook(new Thread() {
             public void run() {
