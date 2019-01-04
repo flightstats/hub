@@ -110,6 +110,7 @@ public class GuiceToHK2AdapterTest {
         });
         ServiceLocator locator = initializeHK2(injector);
         SimpleService service = locator.getService(SimpleService.class, "foo");
+        assertNotNull(service);
         assertEquals("foo", service.getName());
     }
 
@@ -124,6 +125,8 @@ public class GuiceToHK2AdapterTest {
         ServiceLocator locator = initializeHK2(injector);
         NativeService a = locator.getService(NativeService.class);
         NativeService b = locator.getService(NativeService.class);
+        assertNotNull(a);
+        assertNotNull(b);
         assertEquals(a, b);
 
     }
@@ -139,31 +142,42 @@ public class GuiceToHK2AdapterTest {
         ServiceLocator locator = initializeHK2(injector);
         GuicedService a = locator.getService(GuicedService.class);
         GuicedService b = locator.getService(GuicedService.class);
+        assertNotNull(a);
+        assertNotNull(b);
         assertEquals(a, b);
 
     }
 
     @Test
     public void testNativeAnnotatedSingleton() {
-        ServiceLocator locator = initializeHK2(buildEmptyInjector());
+        Injector injector = Guice.createInjector(new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(NativeSingletonService.class).asEagerSingleton();
+            }
+        });
+        ServiceLocator locator = initializeHK2(injector);
         NativeSingletonService a = locator.getService(NativeSingletonService.class);
         NativeSingletonService b = locator.getService(NativeSingletonService.class);
+        assertNotNull(a);
+        assertNotNull(b);
         assertEquals(a, b);
     }
 
     @Test
     public void testGuicedAnnotatedSingleton() {
-        ServiceLocator locator = initializeHK2(buildEmptyInjector());
+        Injector injector = Guice.createInjector(new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(GuicedSingletonService.class).asEagerSingleton();
+            }
+        });
+        ServiceLocator locator = initializeHK2(injector);
         GuicedSingletonService a = locator.getService(GuicedSingletonService.class);
         GuicedSingletonService b = locator.getService(GuicedSingletonService.class);
+        assertNotNull(a);
+        assertNotNull(b);
         assertEquals(a, b);
-    }
-
-    private Injector buildEmptyInjector() {
-        return Guice.createInjector(new AbstractModule() {
-            @Override
-            protected void configure() {}
-        });
     }
 
     private ServiceLocator initializeHK2(Injector injector) {
