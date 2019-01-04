@@ -11,7 +11,6 @@ import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
-import org.apache.curator.framework.CuratorFramework;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

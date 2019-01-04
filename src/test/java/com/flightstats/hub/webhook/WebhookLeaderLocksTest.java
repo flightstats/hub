@@ -2,6 +2,7 @@ package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.util.SafeZooKeeperUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.junit.After;
 import org.junit.Before;
@@ -30,12 +31,13 @@ public class WebhookLeaderLocksTest {
     private static final String SERVER_IP2 = "10.2.2";
 
     private static CuratorFramework curator;
-    private static ZooKeeperState zooKeeperState;
+    private static SafeZooKeeperUtils zooKeeperUtils;
 
     @BeforeClass
     public static void setup() throws Exception {
-        zooKeeperState = new ZooKeeperState();
+        ZooKeeperState zooKeeperState = new ZooKeeperState();
         curator = Integration.startZooKeeper(zooKeeperState);
+        zooKeeperUtils = new SafeZooKeeperUtils(curator, zooKeeperState);
     }
 
     @Before
@@ -59,7 +61,7 @@ public class WebhookLeaderLocksTest {
         List<String> initialWebhooks = curator.getChildren().forPath(WEBHOOK_LEADER_PATH);
         assertEquals("givens should have created 2 webhooks", 2, initialWebhooks.size());
 
-        WebhookLeaderLocks webhookLeaderLocks = new WebhookLeaderLocks(curator, zooKeeperState);
+        WebhookLeaderLocks webhookLeaderLocks = new WebhookLeaderLocks(zooKeeperUtils);
         webhookLeaderLocks.deleteWebhookLeader(WEBHOOK_WITH_A_FEW_LEASES);
 
         List<String> webhooks = curator.getChildren().forPath(WEBHOOK_LEADER_PATH);
@@ -73,7 +75,7 @@ public class WebhookLeaderLocksTest {
         createWebhookLease(WEBHOOK_WITH_A_FEW_LEASES, "someLease2", SERVER_IP2);
         createWebhookLease(WEBHOOK_WITH_A_FEW_LEASES, "someLease3", SERVER_IP2);
 
-        WebhookLeaderLocks webhookLeaderLocks = new WebhookLeaderLocks(curator, zooKeeperState);
+        WebhookLeaderLocks webhookLeaderLocks = new WebhookLeaderLocks(zooKeeperUtils);
         Set<String> servers = webhookLeaderLocks.getServerLeases(WEBHOOK_WITH_A_FEW_LEASES);
 
         assertEquals(newHashSet(SERVER_IP1, SERVER_IP2), servers);
@@ -84,7 +86,7 @@ public class WebhookLeaderLocksTest {
         createWebhookLock(WEBHOOK_WITH_LEASE, "someLock", "");
         createWebhookLease(WEBHOOK_WITH_LEASE, "someLease", SERVER_IP1);
 
-        WebhookLeaderLocks webhookLeaders = new WebhookLeaderLocks(curator, zooKeeperState);
+        WebhookLeaderLocks webhookLeaders = new WebhookLeaderLocks(zooKeeperUtils);
         Set<String> servers = webhookLeaders.getServerLeases(WEBHOOK_WITH_LEASE);
 
         assertEquals(newHashSet(SERVER_IP1), servers);
@@ -94,7 +96,7 @@ public class WebhookLeaderLocksTest {
     public void testGetServers_returnsAnEmptyListIfThereAreNoLeases()  throws Exception {
         createWebhookLock(WEBHOOK_WITH_LOCK, "aLock", "???");
 
-        WebhookLeaderLocks webhookLeaders = new WebhookLeaderLocks(curator, zooKeeperState);
+        WebhookLeaderLocks webhookLeaders = new WebhookLeaderLocks(zooKeeperUtils);
         Set<String> servers = webhookLeaders.getServerLeases(WEBHOOK_WITH_LOCK);
 
         assertEquals(newHashSet(), servers);
@@ -104,7 +106,7 @@ public class WebhookLeaderLocksTest {
     public void testGetServers_returnsAnEmptyListIfTheWebhookWasEmpty() throws Exception{
         createWebhook(EMPTY_WEBHOOK);
 
-        WebhookLeaderLocks webhookLeaders = new WebhookLeaderLocks(curator, zooKeeperState);
+        WebhookLeaderLocks webhookLeaders = new WebhookLeaderLocks(zooKeeperUtils);
         Set<String> servers = webhookLeaders.getServerLeases(EMPTY_WEBHOOK);
 
         assertEquals(newHashSet(), servers);
@@ -112,7 +114,7 @@ public class WebhookLeaderLocksTest {
 
     @Test
     public void testGetServers_returnsAnEmptyListForNonExistentWebhook() throws Exception {
-        WebhookLeaderLocks webhookLeaders = new WebhookLeaderLocks(curator, zooKeeperState);
+        WebhookLeaderLocks webhookLeaders = new WebhookLeaderLocks(zooKeeperUtils);
         Set<String> servers = webhookLeaders.getServerLeases("bogusWebhook");
 
         assertEquals(newHashSet(), servers);
@@ -131,7 +133,7 @@ public class WebhookLeaderLocksTest {
 
         createWebhook(EMPTY_WEBHOOK);
 
-        WebhookLeaderLocks webhookLeaders = new WebhookLeaderLocks(curator, zooKeeperState);
+        WebhookLeaderLocks webhookLeaders = new WebhookLeaderLocks(zooKeeperUtils);
         Set<String> webhooks = webhookLeaders.getWebhooks();
         assertEquals(newHashSet(WEBHOOK_WITH_A_FEW_LEASES, WEBHOOK_WITH_LEASE, WEBHOOK_WITH_LOCK, EMPTY_WEBHOOK), webhooks);
     }
@@ -141,7 +143,7 @@ public class WebhookLeaderLocksTest {
         createWebhookLock(WEBHOOK_WITH_LOCK, "someLock", "");
         createWebhookLease(WEBHOOK_WITH_LOCK, "someLease", SERVER_IP1);
 
-        WebhookLeaderLocks webhookLeaders = new WebhookLeaderLocks(curator, zooKeeperState);
+        WebhookLeaderLocks webhookLeaders = new WebhookLeaderLocks(zooKeeperUtils);
         List<String> locks = webhookLeaders.getLockPaths(WEBHOOK_WITH_LOCK);
 
         assertEquals(newArrayList("someLock"), locks);
@@ -151,7 +153,7 @@ public class WebhookLeaderLocksTest {
     public void testGetLocks_withNoLocks() throws Exception {
         createWebhookLease(WEBHOOK_WITH_LEASE, "someLease", SERVER_IP1);
 
-        WebhookLeaderLocks webhookLeaders = new WebhookLeaderLocks(curator, zooKeeperState);
+        WebhookLeaderLocks webhookLeaders = new WebhookLeaderLocks(zooKeeperUtils);
         List<String> locks = webhookLeaders.getLockPaths(WEBHOOK_WITH_LEASE);
 
         assertEquals(emptyList(), locks);
@@ -159,7 +161,7 @@ public class WebhookLeaderLocksTest {
 
     @Test
     public void testGetLocks_noWebhook() throws Exception {
-        WebhookLeaderLocks webhookLeaders = new WebhookLeaderLocks(curator, zooKeeperState);
+        WebhookLeaderLocks webhookLeaders = new WebhookLeaderLocks(zooKeeperUtils);
         List<String> locks = webhookLeaders.getLockPaths("dunno");
 
         assertEquals(emptyList(), locks);
@@ -172,7 +174,7 @@ public class WebhookLeaderLocksTest {
         createWebhookLease(WEBHOOK_WITH_A_FEW_LEASES, "someLease2", SERVER_IP2);
         createWebhookLease(WEBHOOK_WITH_A_FEW_LEASES, "someLease3", SERVER_IP1);
 
-        WebhookLeaderLocks webhookLeaders = new WebhookLeaderLocks(curator, zooKeeperState);
+        WebhookLeaderLocks webhookLeaders = new WebhookLeaderLocks(zooKeeperUtils);
         List<String> leases = webhookLeaders.getLeasePaths(WEBHOOK_WITH_A_FEW_LEASES);
 
         assertEquals(3, leases.size());
@@ -183,7 +185,7 @@ public class WebhookLeaderLocksTest {
     public void testGetLeases_withNoLeases() throws Exception {
         createWebhookLock(WEBHOOK_WITH_LOCK, "someLock", "");
 
-        WebhookLeaderLocks webhookLeaders = new WebhookLeaderLocks(curator, zooKeeperState);
+        WebhookLeaderLocks webhookLeaders = new WebhookLeaderLocks(zooKeeperUtils);
         List<String> leases = webhookLeaders.getLeasePaths(WEBHOOK_WITH_LOCK);
 
         assertEquals(emptyList(), leases);
@@ -191,7 +193,7 @@ public class WebhookLeaderLocksTest {
 
     @Test
     public void testGetLeases_noWebhook() throws Exception {
-        WebhookLeaderLocks webhookLeaders = new WebhookLeaderLocks(curator, zooKeeperState);
+        WebhookLeaderLocks webhookLeaders = new WebhookLeaderLocks(zooKeeperUtils);
         List<String> leases = webhookLeaders.getLeasePaths("dunno");
 
         assertEquals(emptyList(), leases);

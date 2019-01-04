@@ -81,18 +81,6 @@ public class LastContentPath {
         }
     }
 
-    public Set<String> getNames(String basePath) {
-        try {
-            String baseWithoutEndSlash = basePath.replaceFirst("/$", "");
-            return new HashSet<>(curator.getChildren().forPath(baseWithoutEndSlash));
-        } catch (KeeperException.NoNodeException e) {
-            logger.warn("no {} node found", basePath);
-        } catch (Exception e) {
-            logger.warn("unable to get node {}", basePath);
-        }
-        return new HashSet<>();
-    }
-
     private ContentPath get(String path) throws Exception {
         byte[] bytes = curator.getData().forPath(path);
         String found = new String(bytes, StandardCharsets.UTF_8);
