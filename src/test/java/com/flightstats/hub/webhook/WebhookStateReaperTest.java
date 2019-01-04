@@ -6,6 +6,8 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.SafeZooKeeperUtils;
+import com.flightstats.hub.webhook.error.WebhookErrorReaper;
+import com.flightstats.hub.webhook.error.WebhookErrorService;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
 import org.joda.time.DateTime;
@@ -39,10 +41,12 @@ public class WebhookStateReaperTest {
     @SuppressWarnings("unchecked")
     public void setup() {
         ChannelService channelService = mock(ChannelService.class);
+        WebhookErrorReaper webhookErrorReaper = new WebhookErrorReaper();
         SafeZooKeeperUtils zooKeeperUtils = new SafeZooKeeperUtils(curator, mock(ZooKeeperState.class));
+        WebhookErrorService webhookErrorService = new WebhookErrorService(zooKeeperUtils);
 
         lastContentPath = new LastContentPath(curator);
-        webhookError = new WebhookError(zooKeeperUtils, channelService);
+        webhookError = new WebhookError(webhookErrorService, webhookErrorReaper, channelService);
         webhookInProcess = new WebhookContentPathSet(zooKeeperUtils);
     }
 

@@ -8,7 +8,7 @@ import lombok.Setter;
 
 @Data
 @Builder
-class DeliveryAttempt {
+public class DeliveryAttempt {
     int number;
     Webhook webhook;
     ContentPath contentPath;
