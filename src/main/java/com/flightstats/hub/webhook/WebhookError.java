@@ -7,21 +7,22 @@ import com.flightstats.hub.model.Content;
 import com.flightstats.hub.util.RequestUtils;
 import com.flightstats.hub.util.StringUtils;
 import com.flightstats.hub.util.TimeUtil;
+import com.flightstats.hub.util.SafeZooKeeperUtils;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.data.Stat;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
+import java.time.Duration;
 import java.util.List;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static com.flightstats.hub.util.RequestUtils.getChannelName;
+import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.toList;
 
 /**
  * This class is responsible for creation and management of webhook error strings.
@@ -37,80 +38,40 @@ import static com.flightstats.hub.util.RequestUtils.getChannelName;
 @Singleton
 class WebhookError {
     private final static Logger logger = LoggerFactory.getLogger(WebhookError.class);
-    private static final int MAX_SIZE = 10;
+    private static final String BASE_PATH = "/GroupError";
 
-    private final CuratorFramework curator;
+    private final SafeZooKeeperUtils zooKeeperUtils;
     private final ChannelService channelService;
+    private final ErrorNodeNameGenerator errorNameGenerator;
+    private final WebhookErrorReaper webhookErrorReaper;
 
     @Inject
-    public WebhookError(CuratorFramework curator, ChannelService channelService) {
-        this.curator = curator;
+    public WebhookError(SafeZooKeeperUtils zooKeeperUtils, ChannelService channelService) {
+        this(zooKeeperUtils, channelService, new ErrorNodeNameGenerator(), new WebhookErrorReaper(zooKeeperUtils));
+    }
+
+    @VisibleForTesting
+    public WebhookError(SafeZooKeeperUtils zooKeeperUtils, ChannelService channelService, ErrorNodeNameGenerator errorNameGenerator, WebhookErrorReaper errorReaper) {
+        this.zooKeeperUtils = zooKeeperUtils;
         this.channelService = channelService;
+        this.errorNameGenerator = errorNameGenerator;
+        this.webhookErrorReaper = errorReaper;
     }
 
     public void add(String webhook, String error) {
-        String path = getErrorRoot(webhook) + "/" + TimeUtil.now().getMillis() + StringUtils.randomAlphaNumeric(6);
-        try {
-            curator.create().creatingParentsIfNeeded().forPath(path, error.getBytes());
-        } catch (Exception e) {
-            logger.warn("unable to create " + path, e);
-        }
-        limitChildren(webhook);
-    }
-
-    private List<String> limitChildren(String webhook) {
-        String errorRoot = getErrorRoot(webhook);
-        List<String> results = new ArrayList<>();
-        SortedMap<String, Error> errors = new TreeMap<>();
-        try {
-            for (String child : curator.getChildren().forPath(errorRoot)) {
-                Stat stat = new Stat();
-                byte[] bytes = curator.getData().storingStatIn(stat).forPath(getChildPath(errorRoot, child));
-                errors.put(child, new Error(child, new DateTime(stat.getCtime()), new String(bytes)));
-            }
-            while (errors.size() > MAX_SIZE) {
-                String firstKey = errors.firstKey();
-                errors.remove(firstKey);
-                curator.delete().inBackground().forPath(getChildPath(errorRoot, firstKey));
-            }
-            DateTime cutoffTime = TimeUtil.now().minusDays(1);
-            for (Error error : errors.values()) {
-                if (error.getCreationTime().isBefore(cutoffTime)) {
-                    curator.delete().inBackground().forPath(getChildPath(errorRoot, error.getName()));
-                } else {
-                    results.add(error.getData());
-                }
-            }
-        } catch (KeeperException.NoNodeException ignore) {
-            logger.debug(ignore.getMessage());
-        } catch (Exception e) {
-            logger.warn("unable to limit children " + errorRoot, e);
-        }
-        return results;
+        zooKeeperUtils.createData(error.getBytes(), BASE_PATH, webhook, errorNameGenerator.generateName());
+        webhookErrorReaper.limitChildren(webhook);
     }
 
     public void delete(String webhook) {
-        String errorRoot = getErrorRoot(webhook);
-        logger.info("deleting " + errorRoot);
-        try {
-            curator.delete().deletingChildrenIfNeeded().forPath(errorRoot);
-        } catch (KeeperException.NoNodeException e) {
-            logger.info("unable to delete missing node " + errorRoot);
-        } catch (Exception e) {
-            logger.warn("unable to delete " + errorRoot, e);
-        }
-    }
-
-    private String getErrorRoot(String webhook) {
-        return "/GroupError/" + webhook;
-    }
-
-    private String getChildPath(String errorRoot, String child) {
-        return errorRoot + "/" + child;
+        logger.info("deleting webhook errors for " + webhook);
+        zooKeeperUtils.deletePathAndChildren(BASE_PATH, webhook);
     }
 
     public List<String> get(String webhook) {
-        return limitChildren(webhook);
+        return webhookErrorReaper.limitChildren(webhook).stream()
+                .map(Error::getData)
+                .collect(toList());
     }
 
     void publishToErrorChannel(DeliveryAttempt attempt) {
@@ -163,6 +124,13 @@ class WebhookError {
         int firstSpace = error.indexOf(" ");
         int secondSpace = error.indexOf(" ", firstSpace + 1);
         return error.substring(secondSpace + 1);
+    }
+
+    @VisibleForTesting
+    static class ErrorNodeNameGenerator {
+        String generateName() {
+            return TimeUtil.now().getMillis() + StringUtils.randomAlphaNumeric(6);
+        }
     }
 
     private static class Error {
@@ -224,6 +192,56 @@ class WebhookError {
             public String toString() {
                 return "com.flightstats.hub.webhook.WebhookError.Error.ErrorBuilder(name=" + this.name + ", creationTime=" + this.creationTime + ", data=" + this.data + ")";
             }
+        }
+    }
+
+    static class WebhookErrorReaper {
+        private static final int MAX_SIZE = 10;
+        private static final Duration MAX_AGE = Duration.ofDays(1);
+
+        private final SafeZooKeeperUtils zooKeeperUtils;
+
+        @Inject
+        WebhookErrorReaper(SafeZooKeeperUtils zooKeeperUtils) {
+            this.zooKeeperUtils = zooKeeperUtils;
+        }
+
+        List<Error> limitChildren(String webhook) {
+            try {
+                List<Error> errors = getChildren(webhook);
+                List<Error> errorsToDelete = getErrorsToRemove(errors);
+
+                errorsToDelete.forEach(error -> zooKeeperUtils.deletePathInBackground(BASE_PATH, webhook, error.getName()));
+
+                return errors.stream()
+                        .filter(error -> !errorsToDelete.contains(error))
+                        .collect(toList());
+            } catch (Exception e) {
+                logger.warn("unable to limit webhook error children " + webhook, e);
+            }
+            return emptyList();
+        }
+
+        private List<Error> getChildren(String webhook) {
+             return zooKeeperUtils.getChildren(BASE_PATH, webhook).stream()
+                    .map(child -> zooKeeperUtils.getDataWithStat(BASE_PATH, webhook, child)
+                            .map(dataWithStat -> new Error(child, new DateTime(dataWithStat.getStat().getCtime()), dataWithStat.getData())))
+                    .flatMap(maybeData -> maybeData.map(Stream::of).orElse(Stream.empty()))
+                    .collect(toList());
+
+        }
+
+        private List<Error> getErrorsToRemove(List<Error> errors) {
+            return IntStream.range(0, errors.size())
+                    .filter(errorIndex -> shouldRemoveError(errors, errorIndex))
+                    .mapToObj(errors::get)
+                    .collect(toList());
+        }
+
+        private boolean shouldRemoveError(List<Error> errors, int errorIndex) {
+            DateTime cutoffTime = TimeUtil.now().minus(MAX_AGE.toMillis());
+            int maxErrorIndexToDelete = errors.size() - MAX_SIZE;
+            return errorIndex < maxErrorIndexToDelete || errors.get(errorIndex).getCreationTime().isBefore(cutoffTime);
         }
     }
 }
