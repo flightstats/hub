@@ -12,7 +12,6 @@ import static java.util.stream.Collectors.toSet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -29,13 +28,6 @@ public class ActiveWebhooksTest {
 
     private final WebhookLeaderLocks webhookLeaderLocks = mock(WebhookLeaderLocks.class);
     private final ActiveWebhookSweeper activeWebhookSweeper = mock(ActiveWebhookSweeper.class);
-
-    @Test
-    public void testInitialize_cleansUpWebhooks() {
-        new ActiveWebhooks(webhookLeaderLocks, activeWebhookSweeper);
-
-        verify(activeWebhookSweeper).cleanupEmpty();
-    }
 
     @Test
     public void testGetServers_returnsSeveralForAWebhook() throws Exception {
