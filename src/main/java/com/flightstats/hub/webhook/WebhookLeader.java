@@ -11,7 +11,6 @@ import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
-import org.apache.curator.framework.CuratorFramework;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +19,8 @@ import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static com.flightstats.hub.webhook.WebhookLeaderLocks.WEBHOOK_LEADER;
 
 class WebhookLeader implements Lockable {
     private final static Logger logger = LoggerFactory.getLogger(WebhookLeader.class);
@@ -44,6 +45,8 @@ class WebhookLeader implements Lockable {
     private WebhookContentPathSet webhookInProcess;
     @Inject
     private WebhookError webhookError;
+    @Inject
+    private WebhookStateReaper webhookStateReaper;
 
     private Webhook webhook;
 
@@ -68,7 +71,7 @@ class WebhookLeader implements Lockable {
             logger.info("not starting paused webhook " + webhook);
             return false;
         } else {
-            curatorLock = new CuratorLock(curator, zooKeeperState, getLeaderPath());
+            curatorLock = new CuratorLock(curator, zooKeeperState, WEBHOOK_LEADER);
             return curatorLock.runWithLock(this, 1, TimeUnit.SECONDS);
         }
     }
@@ -123,7 +126,7 @@ class WebhookLeader implements Lockable {
             leadership.setLeadership(false);
             closeStrategy();
             if (deleteOnExit.get()) {
-                delete();
+                webhookStateReaper.delete(webhook.getName());
             }
             stopExecutor();
             logger.info("stopped last completed at {} {}", webhookStrategy.getLastCompleted(), webhook.getName());
@@ -292,19 +295,6 @@ class WebhookLeader implements Lockable {
         } catch (Exception e) {
             logger.warn("unable to close strategy", e);
         }
-    }
-
-    private String getLeaderPath() {
-        return LEADER_PATH + "/" + webhook.getName();
-    }
-
-    private void delete() {
-        String name = webhook.getName();
-        logger.info("deleting " + name);
-        webhookInProcess.delete(name);
-        lastContentPath.delete(name, WEBHOOK_LAST_COMPLETED);
-        webhookError.delete(name);
-        logger.info("deleted " + name);
     }
 
     public Webhook getWebhook() {

@@ -53,6 +53,9 @@ public class WebhookManager {
     private InternalWebhookClient webhookClient;
 
     @Inject
+    private WebhookStateReaper webhookStateReaper;
+
+    @Inject
     public WebhookManager() {
         register(new WebhookIdleService(), HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
         register(new WebhookScheduledService(), HubServices.TYPE.AFTER_HEALTHY_START);
@@ -140,7 +143,7 @@ public class WebhookManager {
 
     public void delete(String name) {
         webhookClient.remove(name, activeWebhooks.getServers(name));
-        lastContentPath.delete(name, WebhookLeader.WEBHOOK_LAST_COMPLETED);
+        webhookStateReaper.delete(name);
     }
 
     public void getStatus(Webhook webhook, WebhookStatus.WebhookStatusBuilder statusBuilder) {
