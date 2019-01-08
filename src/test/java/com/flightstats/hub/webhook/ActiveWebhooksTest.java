@@ -2,7 +2,10 @@ package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.util.SafeZooKeeperUtils;
 import org.apache.curator.framework.CuratorFramework;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -32,84 +35,135 @@ public class ActiveWebhooksTest {
     private static final String SERVER_IP2 = "10.2.2";
 
     private static CuratorFramework curator;
-    private static ActiveWebhooks activeWebhooks;
+    private static SafeZooKeeperUtils zooKeeperUtils;
 
     @BeforeClass
     public static void setup() throws Exception {
         curator = Integration.startZooKeeper();
+        zooKeeperUtils = new SafeZooKeeperUtils(curator);
+    }
 
-        createWebhookLock(WEBHOOK_WITH_LEASE, "someLock", "");
-        createWebhookLease(WEBHOOK_WITH_LEASE, "someLease", SERVER_IP1);
+    @Before
+    public void createWebhookLeader() throws Exception {
+        curator.create().creatingParentsIfNeeded().forPath(WEBHOOK_LEADER_PATH);
+    }
 
+    @After
+    public void destroyWebhookLeaders() throws Exception {
+        curator.delete().deletingChildrenIfNeeded().forPath(WEBHOOK_LEADER_PATH);
+    }
+
+    @Test
+    public void testCleanupEmpty_keepsWebhooksWithLeasesAndLocksAndDiscardsOthers() throws Exception {
         createWebhookLease(WEBHOOK_WITH_A_FEW_LEASES, "someLease", SERVER_IP1);
         createWebhookLease(WEBHOOK_WITH_A_FEW_LEASES, "someLease2", SERVER_IP2);
         createWebhookLease(WEBHOOK_WITH_A_FEW_LEASES, "someLease3", SERVER_IP2);
 
-        createWebhook(EMPTY_WEBHOOK);
+        createWebhookLock(WEBHOOK_WITH_LEASE, "someLock", "");
+        createWebhookLease(WEBHOOK_WITH_LEASE, "someLease", SERVER_IP1);
 
         createWebhookLock(WEBHOOK_WITH_LOCK, "aLock", "???");
 
-        // Reasonableness check
-        List<String> webhooksBeforeInitialize = curator.getChildren().forPath(WEBHOOK_LEADER_PATH);
-        assertEquals(4, webhooksBeforeInitialize.size());
+        createWebhook(EMPTY_WEBHOOK);
 
-        activeWebhooks = new ActiveWebhooks(curator);
-    }
+        ActiveWebhooks activeWebhooks = new ActiveWebhooks(zooKeeperUtils);
+        activeWebhooks.cleanupEmpty();
 
-    @Test
-    public void testInitialize_cleansUpEmptyLeaderNodes() throws Exception {
         List<String> webhooks = curator.getChildren().forPath(WEBHOOK_LEADER_PATH);
         assertEquals(3, webhooks.size());
-
         assertEquals(newHashSet(WEBHOOK_WITH_LOCK, WEBHOOK_WITH_A_FEW_LEASES, WEBHOOK_WITH_LEASE), newHashSet(webhooks));
+
+        assertTrue(activeWebhooks.isActiveWebhook(WEBHOOK_WITH_A_FEW_LEASES));
+        assertTrue(activeWebhooks.isActiveWebhook(WEBHOOK_WITH_LEASE));
+        assertTrue(activeWebhooks.isActiveWebhook(WEBHOOK_WITH_LOCK));
+
+        assertFalse(activeWebhooks.isActiveWebhook(EMPTY_WEBHOOK));
     }
 
     @Test
-    public void testGetServers_returnsSeveralDistinctServersForAWebhook() {
+    public void testGetServers_returnsSeveralDistinctServersForAWebhook() throws Exception {
+        createWebhookLease(WEBHOOK_WITH_A_FEW_LEASES, "someLease", SERVER_IP1);
+        createWebhookLease(WEBHOOK_WITH_A_FEW_LEASES, "someLease2", SERVER_IP2);
+        createWebhookLease(WEBHOOK_WITH_A_FEW_LEASES, "someLease3", SERVER_IP2);
+
+        ActiveWebhooks activeWebhooks = new ActiveWebhooks(zooKeeperUtils);
         Set<String> servers = activeWebhooks.getServers(WEBHOOK_WITH_A_FEW_LEASES);
         assertEquals(getServersWithPort(SERVER_IP1, SERVER_IP2), servers);
     }
 
     @Test
-    public void testGetServers_returnsSingleServerForAWebhook() {
+    public void testGetServers_returnsSingleServerForAWebhook() throws Exception {
+        createWebhookLock(WEBHOOK_WITH_LEASE, "someLock", "");
+        createWebhookLease(WEBHOOK_WITH_LEASE, "someLease", SERVER_IP1);
+
+        ActiveWebhooks activeWebhooks = new ActiveWebhooks(zooKeeperUtils);
         Set<String> servers = activeWebhooks.getServers(WEBHOOK_WITH_LEASE);
         assertEquals(getServersWithPort(SERVER_IP1), servers);
     }
 
     @Test
-    public void testGetServers_returnsAnEmptyListIfThereAreNoLeases() {
+    public void testGetServers_returnsAnEmptyListIfThereAreNoLeases()  throws Exception {
+        createWebhookLock(WEBHOOK_WITH_LOCK, "aLock", "???");
+
+        ActiveWebhooks activeWebhooks = new ActiveWebhooks(zooKeeperUtils);
         Set<String> servers = activeWebhooks.getServers(WEBHOOK_WITH_LOCK);
         assertEquals(newHashSet(), servers);
     }
 
     @Test
-    public void testGetServers_returnsAnEmptyListIfTheWebhookWasEmpty() {
+    public void testGetServers_returnsAnEmptyListIfTheWebhookWasEmpty() throws Exception{
+        createWebhook(EMPTY_WEBHOOK);
+
+        ActiveWebhooks activeWebhooks = new ActiveWebhooks(zooKeeperUtils);
         Set<String> servers = activeWebhooks.getServers(EMPTY_WEBHOOK);
         assertEquals(newHashSet(), servers);
     }
 
     @Test
-    public void testIsActiveWebhook_isTrueIfWebhookHasLease() {
+    public void testGetServers_returnsAnEmptyListForNonExistentWebhook() throws Exception {
+        ActiveWebhooks activeWebhooks = new ActiveWebhooks(zooKeeperUtils);
+        Set<String> servers = activeWebhooks.getServers("bogusWebhook");
+        assertEquals(newHashSet(), servers);
+    }
+
+    @Test
+    public void testIsActiveWebhook_isTrueIfWebhookHasLease() throws Exception {
+        createWebhookLock(WEBHOOK_WITH_LEASE, "someLock", "");
+        createWebhookLease(WEBHOOK_WITH_LEASE, "someLease", SERVER_IP1);
+
+        ActiveWebhooks activeWebhooks = new ActiveWebhooks(zooKeeperUtils);
         assertTrue(activeWebhooks.isActiveWebhook(WEBHOOK_WITH_LEASE));
     }
 
     @Test
-    public void testIsActiveWebhook_isTrueIfWebhookHasLock() {
+    public void testIsActiveWebhook_isTrueIfWebhookHasLock() throws Exception {
+        createWebhookLock(WEBHOOK_WITH_LOCK, "aLock", "???");
+
+        ActiveWebhooks activeWebhooks = new ActiveWebhooks(zooKeeperUtils);
         assertTrue(activeWebhooks.isActiveWebhook(WEBHOOK_WITH_LOCK));
     }
 
     @Test
-    public void testIsActiveWebhook_isFalseIfWebhookIsEmptyAndHasBeenCleanedUp() {
-        assertFalse(activeWebhooks.isActiveWebhook(EMPTY_WEBHOOK));
+    public void testIsActiveWebhook_isFalseIfWebhookIsEmptyAndHasBeenCleanedUp() throws Exception{
+        ActiveWebhooks activeWebhooks = new ActiveWebhooks(zooKeeperUtils);
+        assertFalse(activeWebhooks.isActiveWebhook("nonexistent webhook"));
     }
 
-    private static void createWebhook(String webhook) throws Exception {
-        curator.create().creatingParentsIfNeeded().forPath(format("%s/%s/locks", WEBHOOK_LEADER_PATH, webhook), "".getBytes());
-        curator.create().creatingParentsIfNeeded().forPath(format("%s/%s/leases", WEBHOOK_LEADER_PATH, webhook), "".getBytes());
+    private static void createWebhook(String webhook) {
+        try {
+            curator.create().creatingParentsIfNeeded().forPath(format("%s/%s/locks", WEBHOOK_LEADER_PATH, webhook), "".getBytes());
+            curator.create().creatingParentsIfNeeded().forPath(format("%s/%s/leases", WEBHOOK_LEADER_PATH, webhook), "".getBytes());
+        } catch(Exception e) {
+            fail(e.getMessage());
+        }
     }
 
-    private static void createWebhookLock(String webhook, String lockName, String value) throws Exception {
-        curator.create().creatingParentsIfNeeded().forPath(format("%s/%s/locks/%s", WEBHOOK_LEADER_PATH, webhook, lockName), value.getBytes());
+    private static void createWebhookLock(String webhook, String lockName, String value) {
+        try {
+            curator.create().creatingParentsIfNeeded().forPath(format("%s/%s/locks/%s", WEBHOOK_LEADER_PATH, webhook, lockName), value.getBytes());
+        } catch(Exception e) {
+            fail(e.getMessage());
+        }
     }
 
     private static void createWebhookLease(String webhook, String leaseName, String value) {
