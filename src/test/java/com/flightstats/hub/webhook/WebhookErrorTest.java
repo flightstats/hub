@@ -1,9 +1,10 @@
 package com.flightstats.hub.webhook;
 
-import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.SafeZooKeeperUtils;
+import com.flightstats.hub.webhook.error.WebhookErrorPruner;
+import com.flightstats.hub.webhook.error.WebhookErrorService;
 import org.apache.curator.framework.CuratorFramework;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -21,8 +22,10 @@ public class WebhookErrorTest {
     public static void setUpClass() throws Exception {
         ChannelService channelService = mock(ChannelService.class);
         CuratorFramework curator = Integration.startZooKeeper();
-        SafeZooKeeperUtils zooKeeperUtils = new SafeZooKeeperUtils(curator, mock(ZooKeeperState.class));
-        webhookError = new WebhookError(zooKeeperUtils, channelService);
+        SafeZooKeeperUtils zooKeeperUtils = new SafeZooKeeperUtils(curator);
+        WebhookErrorService webhookErrorService = new WebhookErrorService(zooKeeperUtils);
+        WebhookErrorPruner webhookErrorPruner = new WebhookErrorPruner(webhookErrorService);
+        webhookError = new WebhookError(webhookErrorService, webhookErrorPruner, channelService);
     }
 
     @Test

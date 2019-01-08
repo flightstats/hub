@@ -11,6 +11,7 @@ import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
+import org.apache.curator.framework.CuratorFramework;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +26,6 @@ import static com.flightstats.hub.webhook.WebhookLeaderLocks.WEBHOOK_LEADER;
 class WebhookLeader implements Lockable {
     private final static Logger logger = LoggerFactory.getLogger(WebhookLeader.class);
     static final String WEBHOOK_LAST_COMPLETED = "/GroupLastCompleted/";
-    public static final String LEADER_PATH = "/WebhookLeader";
 
     private final AtomicBoolean deleteOnExit = new AtomicBoolean();
 

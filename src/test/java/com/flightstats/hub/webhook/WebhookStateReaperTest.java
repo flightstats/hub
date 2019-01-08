@@ -1,11 +1,12 @@
 package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.cluster.LastContentPath;
-import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.SafeZooKeeperUtils;
+import com.flightstats.hub.webhook.error.WebhookErrorPruner;
+import com.flightstats.hub.webhook.error.WebhookErrorService;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
 import org.joda.time.DateTime;
@@ -40,9 +41,11 @@ public class WebhookStateReaperTest {
     public void setup() {
         ChannelService channelService = mock(ChannelService.class);
         SafeZooKeeperUtils zooKeeperUtils = new SafeZooKeeperUtils(curator);
+        WebhookErrorService webhookErrorService = new WebhookErrorService(zooKeeperUtils);
+        WebhookErrorPruner webhookErrorPruner = new WebhookErrorPruner(webhookErrorService);
 
         lastContentPath = new LastContentPath(curator);
-        webhookError = new WebhookError(curator, channelService);
+        webhookError = new WebhookError(webhookErrorService, webhookErrorPruner, channelService);
         webhookInProcess = new WebhookContentPathSet(zooKeeperUtils);
     }
 
