@@ -33,7 +33,7 @@ public class JVMMetricsService {
 
     private ScheduledReporter influxReporter;
     private final String protocolScheme = HubProperties.getProperty("influx.protocolScheme", "http");
-    private final String influxHost = HubProperties.getProperty("influx.host", "influxdb");
+    private final String influxHost = HubProperties.getProperty("influx.host", "localhost");
     private final int influxPort = HubProperties.getProperty("influx.port", 8086);
     private final String influxUser = HubProperties.getProperty("influx.dbUser", "");
     private final String influxPass = HubProperties.getProperty("influx.dbPass", "");
