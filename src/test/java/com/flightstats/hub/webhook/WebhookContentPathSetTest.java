@@ -11,7 +11,6 @@ import org.junit.Test;
 import java.util.Set;
 
 import static org.junit.Assert.*;
-import static org.mockito.Mockito.mock;
 
 public class WebhookContentPathSetTest {
     private SafeZooKeeperUtils zooKeeperUtils;
