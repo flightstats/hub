@@ -5,6 +5,7 @@ import com.flightstats.hub.filter.CORSFilter;
 import com.flightstats.hub.filter.StreamEncodingFilter;
 import com.google.inject.Guice;
 import com.google.inject.Module;
+import lombok.Getter;
 import org.glassfish.jersey.message.DeflateEncoder;
 import org.glassfish.jersey.message.GZipEncoder;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -26,11 +27,14 @@ public class HubMain {
 
     private static final Logger logger = LoggerFactory.getLogger(HubMain.class);
     private static final DateTime startTime = new DateTime();
+    @Getter
+    private static String propertiesLoaderArg;
 
     public static void main(String[] args) throws Exception {
         if (args.length == 0) {
             throw new UnsupportedOperationException("HubMain requires a property filename, 'useDefault', or 'useEncryptedDefault'");
         }
+        propertiesLoaderArg = args[0];
         HubProperties.loadProperties(args[0]);
         start();
     }

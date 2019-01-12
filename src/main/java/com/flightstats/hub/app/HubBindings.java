@@ -13,6 +13,8 @@ import com.flightstats.hub.metrics.DelegatingMetricsService;
 import com.flightstats.hub.metrics.MetricsRunner;
 import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.metrics.PeriodicMetricEmitter;
+import com.flightstats.hub.metrics.JVMMetricsService;
+import com.flightstats.hub.metrics.InfluxdbReporterProvider;
 import com.flightstats.hub.replication.ReplicationManager;
 import com.flightstats.hub.rest.*;
 import com.flightstats.hub.spoke.FileSpokeStore;
@@ -162,6 +164,7 @@ public class HubBindings extends AbstractModule {
         bind(HubUtils.class).asEagerSingleton();
         bind(GCRunner.class).asEagerSingleton();
         bind(MetricsRunner.class).asEagerSingleton();
+//        bind(InfluxdbReporterProvider.class).to(JVMMetricsService.class).asEagerSingleton();
         bind(ChannelValidator.class).asEagerSingleton();
         bind(WebhookValidator.class).asEagerSingleton();
         bind(WebhookManager.class).asEagerSingleton();
