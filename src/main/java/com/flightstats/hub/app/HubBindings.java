@@ -1,5 +1,8 @@
 package com.flightstats.hub.app;
 
+import com.codahale.metrics.MetricFilter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.ScheduledReporter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -9,12 +12,7 @@ import com.flightstats.hub.cluster.*;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.health.HubHealthCheck;
-import com.flightstats.hub.metrics.DelegatingMetricsService;
-import com.flightstats.hub.metrics.MetricsRunner;
-import com.flightstats.hub.metrics.MetricsService;
-import com.flightstats.hub.metrics.PeriodicMetricEmitter;
-import com.flightstats.hub.metrics.JVMMetricsService;
-import com.flightstats.hub.metrics.InfluxdbReporterProvider;
+import com.flightstats.hub.metrics.*;
 import com.flightstats.hub.replication.ReplicationManager;
 import com.flightstats.hub.rest.*;
 import com.flightstats.hub.spoke.FileSpokeStore;
@@ -35,6 +33,10 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.sun.jersey.api.client.Client;
+import metrics_influxdb.HttpInfluxdbProtocol;
+import metrics_influxdb.InfluxdbProtocol;
+import metrics_influxdb.InfluxdbReporter;
+import metrics_influxdb.UdpInfluxdbProtocol;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.ensemble.fixed.FixedEnsembleProvider;
 import org.apache.curator.framework.CuratorFramework;
@@ -51,6 +53,13 @@ import java.util.concurrent.TimeUnit;
 
 public class HubBindings extends AbstractModule {
     private final static Logger logger = LoggerFactory.getLogger(HubBindings.class);
+    private MetricRegistry metricRegistry;
+    private MetricsConfig metricsConfig;
+
+    HubBindings(MetricsConfig metricsConfig) {
+        this.metricRegistry = new MetricRegistry();
+        this.metricsConfig = metricsConfig;
+    }
 
     @Singleton
     @Provides
@@ -153,6 +162,39 @@ public class HubBindings extends AbstractModule {
         return mapper;
     }
 
+    private UdpInfluxdbProtocol udpProtocol() {
+        return new UdpInfluxdbProtocol(metricsConfig.getInfluxdbHost(), metricsConfig.getInfluxdbPort());
+    }
+
+    private HttpInfluxdbProtocol httpProtocol() {
+        return new HttpInfluxdbProtocol(
+                metricsConfig.getInfluxdbHost(),
+                metricsConfig.getInfluxdbPort(),
+                metricsConfig.getInfluxdbUser(),
+                metricsConfig.getInfluxdbPass(),
+                metricsConfig.getInfluxdbDatabaseName());
+    }
+
+    @Singleton
+    @Provides
+    private ScheduledReporter influxdbReporter() {
+        String protocolId = metricsConfig.getInfluxdbProtocol();
+        InfluxdbProtocol protocol = protocolId.contains("http") ? httpProtocol() : udpProtocol();
+        return InfluxdbReporter.forRegistry(metricRegistry)
+                .protocol(protocol)
+                .convertRatesTo(TimeUnit.SECONDS)
+                .convertDurationsTo(TimeUnit.MILLISECONDS)
+                .filter(MetricFilter.ALL)
+                .skipIdleMetrics(false)
+                .tag("role", metricsConfig.getRole())
+                .tag("team", metricsConfig.getTeam())
+                .tag("env", metricsConfig.getEnv())
+                .tag("cluster", metricsConfig.getClusterTag())
+                .tag("host", metricsConfig.getHostTag())
+                .tag("version", metricsConfig.getAppVersion())
+                .build();
+    }
+
     @Override
     protected void configure() {
         Names.bindProperties(binder(), HubProperties.getProperties());
@@ -164,7 +206,6 @@ public class HubBindings extends AbstractModule {
         bind(HubUtils.class).asEagerSingleton();
         bind(GCRunner.class).asEagerSingleton();
         bind(MetricsRunner.class).asEagerSingleton();
-//        bind(InfluxdbReporterProvider.class).to(JVMMetricsService.class).asEagerSingleton();
         bind(ChannelValidator.class).asEagerSingleton();
         bind(WebhookValidator.class).asEagerSingleton();
         bind(WebhookManager.class).asEagerSingleton();
@@ -179,6 +220,9 @@ public class HubBindings extends AbstractModule {
         bind(FinalCheck.class).to(SpokeFinalCheck.class).asEagerSingleton();
         bind(InFlightService.class).asEagerSingleton();
         bind(ChannelService.class).asEagerSingleton();
+        bind(MetricsConfig.class).toInstance(metricsConfig);
+        bind(MetricRegistry.class).toInstance(metricRegistry);
+        bind(JVMMetricsService.class).asEagerSingleton();
 
         bind(ContentDao.class)
                 .annotatedWith(Names.named(ContentDao.WRITE_CACHE))

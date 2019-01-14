@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%5p %d{ISO8601} [%t] %c [line %L] - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${HOME}/local/log/hub.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${HOME}/local/log/hub_%d{yyyy-MM-dd-HH}.log.gz</fileNamePattern>
+            <maxHistory>14</maxHistory>
+        </rollingPolicy>
+
+        <encoder>
+            <pattern>%5p %d{ISO8601} [%t] %c [line %L] - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="info">
+        <appender-ref ref="FILE"/>
+        <appender-ref ref="STDOUT"/>
+    </root>
+
+    <logger name="com.sun.jersey.server.wadl.generators" level="WARN"/>
+    <logger name="org.apache.zookeeper.server.PrepRequestProcessor" level="WARN"/>
+    <logger name="com.flightstats.hub" level="INFO"/>
+    <logger name="com.flightstats.hub.cluster" level="DEBUG"/>
+    <logger name="com.flightstats.hub.webhook" level="DEBUG"/>
+    <logger name="com.flightstats.hub.filter.TracesFilter" level="INFO"/>
+
+</configuration>

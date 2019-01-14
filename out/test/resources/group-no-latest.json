@@ -1,0 +1,15 @@
+{
+  "_links": {
+    "self": {
+      "href": "http://hub/group/parser"
+    }
+  },
+  "name": "parser",
+  "callbackUrl": "http://parsers/parser",
+  "channelUrl": "http://hub/channel/provider",
+  "parallelCalls": 1,
+  "lastCompleted": "",
+  "channelLatest": "",
+  "inFlight": [],
+  "errors": []
+}

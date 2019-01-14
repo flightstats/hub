@@ -1,9 +1,13 @@
 package com.flightstats.hub.app;
 
+import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.flightstats.hub.filter.CORSFilter;
 import com.flightstats.hub.filter.StreamEncodingFilter;
+import com.flightstats.hub.metrics.JVMMetricsService;
+import com.flightstats.hub.metrics.MetricsConfig;
 import com.google.inject.Guice;
+import com.google.inject.Injector;
 import com.google.inject.Module;
 import lombok.Getter;
 import org.glassfish.jersey.message.DeflateEncoder;
@@ -27,15 +31,15 @@ public class HubMain {
 
     private static final Logger logger = LoggerFactory.getLogger(HubMain.class);
     private static final DateTime startTime = new DateTime();
-    @Getter
-    private static String propertiesLoaderArg;
+    private static MetricsConfig metricsConfig;
 
     public static void main(String[] args) throws Exception {
         if (args.length == 0) {
             throw new UnsupportedOperationException("HubMain requires a property filename, 'useDefault', or 'useEncryptedDefault'");
         }
-        propertiesLoaderArg = args[0];
         HubProperties.loadProperties(args[0]);
+        metricsConfig = new MetricsConfig();
+        metricsConfig.loadValues(args[0]);
         start();
     }
 
@@ -67,7 +71,7 @@ public class HubMain {
                 DeflateEncoder.class);
 
         List<Module> modules = new ArrayList<>();
-        modules.add(new HubBindings());
+        modules.add(new HubBindings(metricsConfig));
         String hubType = HubProperties.getProperty("hub.type", "aws");
         logger.info("starting with hub.type {}", hubType);
         resourceConfig.packages("com.flightstats.hub");
@@ -82,7 +86,10 @@ public class HubMain {
             default:
                 throw new RuntimeException("unsupported hub.type " + hubType);
         }
-        HubProvider.setInjector(Guice.createInjector(modules));
+        Injector injector = Guice.createInjector(modules);
+        JVMMetricsService jvmMetricsService = injector.getInstance(JVMMetricsService.class);
+        HubProvider.setInjector(injector);
+        jvmMetricsService.start();
         HubServices.start(HubServices.TYPE.BEFORE_HEALTH_CHECK);
         HubJettyServer server = new HubJettyServer();
         server.start(resourceConfig);
