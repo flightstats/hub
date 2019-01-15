@@ -8,6 +8,7 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.LocalHostOnly;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.metrics.ActiveTraces;
+import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.MinutePath;
 import com.flightstats.hub.rest.RestClient;
@@ -24,9 +25,11 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.zip.ZipInputStream;
 
 @Slf4j
 @Path("/internal/s3Batch")
@@ -35,6 +38,7 @@ public class InternalS3BatchResource {
     public static final String DESCRIPTION = "Perform administrative tasks against batch payloads";
 
     private final ObjectMapper objectMapper;
+    private final MetricsService metricsService;
     private final S3BatchContentDao s3BatchContentDao;
     private final boolean shouldDropSomeWrites;
 
@@ -42,9 +46,10 @@ public class InternalS3BatchResource {
     UriInfo uriInfo;
 
     @Inject
-    public InternalS3BatchResource(S3BatchContentDao s3BatchContentDao, ObjectMapper objectMapper) {
+    public InternalS3BatchResource(S3BatchContentDao s3BatchContentDao, ObjectMapper objectMapper, MetricsService metricsService) {
         this.s3BatchContentDao = s3BatchContentDao;
         this.objectMapper = objectMapper;
+        this.metricsService = metricsService;
         this.shouldDropSomeWrites = HubProperties.getProperty("s3.dropSomeWrites", false);
     }
 
@@ -130,8 +135,25 @@ public class InternalS3BatchResource {
         }
         ActiveTraces.getLocal().add("InternalS3BatchResource.getAndWriteBatch got response");
         byte[] bytes = response.getEntity(byte[].class);
+
+        if(!verifyZipBytes(bytes)) {
+            metricsService.increment("batch.invalid_zip");
+            log.warn("S3BatchResource failed zip verification for keys: {}, channel: {}", keys, channel);
+            return false;
+        }
+
         contentDao.writeBatch(channel, path, keys, bytes);
         ActiveTraces.getLocal().add("InternalS3BatchResource.getAndWriteBatch completed");
+        return true;
+    }
+
+    private static boolean verifyZipBytes(byte[] bytes)  {
+        ZipInputStream zis = new ZipInputStream(new ByteArrayInputStream(bytes));
+        try {
+            while (zis.getNextEntry() != null) ;
+        }catch(Exception exception) {
+            return false;
+        }
         return true;
     }
 

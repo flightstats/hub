@@ -4,12 +4,15 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.webhook.Webhook;
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.lang3.StringUtils;
 
 public class S3Batch {
 
-    private static final String S3_BATCH = "S3Batch_";
-
+    @VisibleForTesting
+    static final String S3_BATCH = "S3Batch_";
+    private static final int TTL_MINUTES = 60 * 6;
+    private static final int MAX_ATTEMPTS = 12;
     private ChannelConfig channel;
     private HubUtils hubUtils;
 
@@ -19,15 +22,22 @@ public class S3Batch {
     }
 
     public void start() {
-        Webhook.WebhookBuilder builder = Webhook.builder()
+        Webhook webhook = buildS3BatchWebhook();
+        hubUtils.startWebhook(webhook);
+    }
+
+    @VisibleForTesting
+    Webhook buildS3BatchWebhook() {
+        return Webhook.builder()
                 .name(getGroupName())
                 .callbackUrl(getCallbackUrl())
                 .channelUrl(getChannelUrl())
                 .heartbeat(true)
                 .parallelCalls(2)
-                .batch(Webhook.MINUTE);
-        Webhook webhook = builder.build();
-        hubUtils.startWebhook(webhook);
+                .ttlMinutes(TTL_MINUTES)
+                .maxAttempts(MAX_ATTEMPTS)
+                .batch(Webhook.MINUTE)
+                .build();
     }
 
     private String getChannelUrl() {
