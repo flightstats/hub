@@ -88,8 +88,8 @@ public class HubMain {
         }
         Injector injector = Guice.createInjector(modules);
         JVMMetricsService jvmMetricsService = injector.getInstance(JVMMetricsService.class);
+        HubServices.register(jvmMetricsService, HubServices.TYPE.BEFORE_HEALTH_CHECK);
         HubProvider.setInjector(injector);
-        jvmMetricsService.start();
         HubServices.start(HubServices.TYPE.BEFORE_HEALTH_CHECK);
         HubJettyServer server = new HubJettyServer();
         server.start(resourceConfig);

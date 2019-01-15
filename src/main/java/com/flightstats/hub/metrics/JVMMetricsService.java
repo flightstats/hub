@@ -5,6 +5,7 @@ import com.codahale.metrics.jvm.GarbageCollectorMetricSet;
 import com.codahale.metrics.jvm.CachedThreadStatesGaugeSet;
 import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
 import com.codahale.metrics.ScheduledReporter;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.slf4j.LoggerFactory;
@@ -12,11 +13,11 @@ import org.slf4j.Logger;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class JVMMetricsService {
+public class JVMMetricsService extends AbstractIdleService {
     private final Logger logger = LoggerFactory.getLogger(JVMMetricsService.class);
-    MetricRegistry metricsRegistry;
-    ScheduledReporter influxdbReporter;
-    MetricsConfig metricsConfig;
+    private final MetricRegistry metricsRegistry;
+    private final ScheduledReporter influxdbReporter;
+    private final MetricsConfig metricsConfig;
 
     @Inject
     public JVMMetricsService(MetricRegistry metricsRegistry, ScheduledReporter influxdbReporter, MetricsConfig metricsConfig) {
@@ -25,7 +26,7 @@ public class JVMMetricsService {
         this.metricsConfig = metricsConfig;
     }
 
-    public void start() {
+    public void startUp() {
         if (metricsConfig.enabled()) {
             logger.info(
                     "starting jvm metrics service reporting to {} :// {} : {}",
@@ -41,6 +42,14 @@ public class JVMMetricsService {
 
         } else {
             logger.info("not starting metrics collection for jvm: disabled");
+        }
+
+    }
+
+    public void shutDown() {
+        logger.info("shutting down influxdb reporter");
+        if (isRunning()) {
+            influxdbReporter.stop();
         }
     }
 }
