@@ -18,7 +18,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class WebhookErrorPrunerTest {
-    private final WebhookErrorService errorService = mock(WebhookErrorService.class);
+    private final WebhookErrorStateService errorService = mock(WebhookErrorStateService.class);
 
     @Test
     public void testAddCleansUpOldestExcessiveErrors() {
@@ -55,7 +55,7 @@ public class WebhookErrorPrunerTest {
 
     private List<WebhookError> setupErrorMocks(String webhookName, int numberOfErrors, Function<Integer, Duration> createdAtOffsetCalculator) {
         List<WebhookError> webhookErrors = IntStream.range(0, numberOfErrors)
-                .mapToObj(number -> com.flightstats.hub.webhook.error.WebhookError.builder()
+                .mapToObj(number -> WebhookError.builder()
                         .name("error" + number)
                         .data(number + " message")
                         .creationTime(TimeUtil.now().minus(createdAtOffsetCalculator.apply(number).toMillis()))

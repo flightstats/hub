@@ -5,8 +5,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.util.RequestUtils;
+import com.flightstats.hub.webhook.error.WebhookError;
 import com.flightstats.hub.webhook.error.WebhookErrorPruner;
-import com.flightstats.hub.webhook.error.WebhookErrorService;
+import com.flightstats.hub.webhook.error.WebhookErrorStateService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.slf4j.Logger;
@@ -29,40 +30,40 @@ import static java.util.stream.Collectors.toList;
  */
 
 @Singleton
-class WebhookError {
-    private final static Logger logger = LoggerFactory.getLogger(WebhookError.class);
+class WebhookErrorService {
+    private final static Logger logger = LoggerFactory.getLogger(WebhookErrorService.class);
 
-    private final WebhookErrorService webhookErrorService;
+    private final WebhookErrorStateService webhookErrorStateService;
     private final ChannelService channelService;
     private final WebhookErrorPruner webhookErrorPruner;
 
     @Inject
-    public WebhookError(WebhookErrorService webhookErrorService, WebhookErrorPruner webhookErrorPruner, ChannelService channelService) {
-        this.webhookErrorService = webhookErrorService;
+    public WebhookErrorService(WebhookErrorStateService webhookErrorStateService, WebhookErrorPruner webhookErrorPruner, ChannelService channelService) {
+        this.webhookErrorStateService = webhookErrorStateService;
         this.webhookErrorPruner = webhookErrorPruner;
         this.channelService = channelService;
     }
 
     public void add(String webhook, String error) {
-        webhookErrorService.add(webhook, error);
+        webhookErrorStateService.add(webhook, error);
         limitChildren(webhook);
     }
 
     public void delete(String webhook) {
         logger.info("deleting webhook errors for " + webhook);
-        webhookErrorService.deleteWebhook(webhook);
+        webhookErrorStateService.deleteWebhook(webhook);
     }
 
     public List<String> get(String webhook) {
         return limitChildren(webhook).stream()
-                .map(com.flightstats.hub.webhook.error.WebhookError::getData)
+                .map(WebhookError::getData)
                 .collect(toList());
     }
 
-    private List<com.flightstats.hub.webhook.error.WebhookError> limitChildren(String webhook) {
-        List<com.flightstats.hub.webhook.error.WebhookError> errors = webhookErrorService.getErrors(webhook);
+    private List<WebhookError> limitChildren(String webhook) {
+        List<WebhookError> errors = webhookErrorStateService.getErrors(webhook);
 
-        List<com.flightstats.hub.webhook.error.WebhookError> prunedErrors = webhookErrorPruner.pruneErrors(webhook, errors);
+        List<WebhookError> prunedErrors = webhookErrorPruner.pruneErrors(webhook, errors);
 
         return errors.stream()
                 .filter(error -> !prunedErrors.contains(error))

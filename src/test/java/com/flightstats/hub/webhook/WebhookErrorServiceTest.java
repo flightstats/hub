@@ -4,7 +4,7 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.SafeZooKeeperUtils;
 import com.flightstats.hub.webhook.error.WebhookErrorPruner;
-import com.flightstats.hub.webhook.error.WebhookErrorService;
+import com.flightstats.hub.webhook.error.WebhookErrorStateService;
 import org.apache.curator.framework.CuratorFramework;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -14,26 +14,26 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 
-public class WebhookErrorTest {
+public class WebhookErrorServiceTest {
 
-    private static WebhookError webhookError;
+    private static WebhookErrorService webhookErrorService;
 
     @BeforeClass
     public static void setUpClass() throws Exception {
         ChannelService channelService = mock(ChannelService.class);
         CuratorFramework curator = Integration.startZooKeeper();
         SafeZooKeeperUtils zooKeeperUtils = new SafeZooKeeperUtils(curator);
-        WebhookErrorService webhookErrorService = new WebhookErrorService(zooKeeperUtils);
-        WebhookErrorPruner webhookErrorPruner = new WebhookErrorPruner(webhookErrorService);
-        webhookError = new WebhookError(webhookErrorService, webhookErrorPruner, channelService);
+        WebhookErrorStateService webhookErrorStateService = new WebhookErrorStateService(zooKeeperUtils);
+        WebhookErrorPruner webhookErrorPruner = new WebhookErrorPruner(webhookErrorStateService);
+        webhookErrorService = new WebhookErrorService(webhookErrorStateService, webhookErrorPruner, channelService);
     }
 
     @Test
     public void testErrors() {
         for (int i = 0; i < 20; i++) {
-            webhookError.add("testErrors", "stuff" + i);
+            webhookErrorService.add("testErrors", "stuff" + i);
         }
-        List<String> errors = webhookError.get("testErrors");
+        List<String> errors = webhookErrorService.get("testErrors");
         assertEquals(10, errors.size());
 
         /*

@@ -6,7 +6,7 @@ import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.SafeZooKeeperUtils;
 import com.flightstats.hub.webhook.error.WebhookErrorPruner;
-import com.flightstats.hub.webhook.error.WebhookErrorService;
+import com.flightstats.hub.webhook.error.WebhookErrorStateService;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
 import org.joda.time.DateTime;
@@ -25,7 +25,7 @@ public class WebhookStateReaperTest {
     private static CuratorFramework curator;
     private LastContentPath lastContentPath;
     private WebhookContentPathSet webhookInProcess;
-    private WebhookError webhookError;
+    private WebhookErrorService webhookErrorService;
 
     private static final String webhookName = "onTheHook";
     private static final DateTime start = new DateTime(2014, 12, 3, 20, 45, DateTimeZone.UTC);
@@ -41,11 +41,11 @@ public class WebhookStateReaperTest {
     public void setup() {
         ChannelService channelService = mock(ChannelService.class);
         SafeZooKeeperUtils zooKeeperUtils = new SafeZooKeeperUtils(curator);
-        WebhookErrorService webhookErrorService = new WebhookErrorService(zooKeeperUtils);
-        WebhookErrorPruner webhookErrorPruner = new WebhookErrorPruner(webhookErrorService);
+        WebhookErrorStateService webhookErrorStateService = new WebhookErrorStateService(zooKeeperUtils);
+        WebhookErrorPruner webhookErrorPruner = new WebhookErrorPruner(webhookErrorStateService);
 
         lastContentPath = new LastContentPath(curator);
-        webhookError = new WebhookError(webhookErrorService, webhookErrorPruner, channelService);
+        webhookErrorService = new WebhookErrorService(webhookErrorStateService, webhookErrorPruner, channelService);
         webhookInProcess = new WebhookContentPathSet(zooKeeperUtils);
     }
 
@@ -57,7 +57,7 @@ public class WebhookStateReaperTest {
         addError(webhookName);
 
         // WHEN
-        WebhookStateReaper reaper = new WebhookStateReaper(lastContentPath, webhookInProcess, webhookError);
+        WebhookStateReaper reaper = new WebhookStateReaper(lastContentPath, webhookInProcess, webhookErrorService);
         reaper.delete(webhookName);
 
         // THEN
@@ -73,7 +73,7 @@ public class WebhookStateReaperTest {
         addWebhookInProcess(webhookName);
 
         // WHEN
-        WebhookStateReaper reaper = new WebhookStateReaper(lastContentPath, webhookInProcess, webhookError);
+        WebhookStateReaper reaper = new WebhookStateReaper(lastContentPath, webhookInProcess, webhookErrorService);
         reaper.delete(webhookName);
 
         // THEN
@@ -89,7 +89,7 @@ public class WebhookStateReaperTest {
         addError(webhookName);
 
         // WHEN
-        WebhookStateReaper reaper = new WebhookStateReaper(lastContentPath, webhookInProcess, webhookError);
+        WebhookStateReaper reaper = new WebhookStateReaper(lastContentPath, webhookInProcess, webhookErrorService);
         reaper.delete(webhookName);
 
         // THEN
@@ -105,7 +105,7 @@ public class WebhookStateReaperTest {
         addError(webhookName);
 
         // WHEN
-        WebhookStateReaper reaper = new WebhookStateReaper(lastContentPath, webhookInProcess, webhookError);
+        WebhookStateReaper reaper = new WebhookStateReaper(lastContentPath, webhookInProcess, webhookErrorService);
         reaper.delete(webhookName);
 
         // THEN
@@ -125,7 +125,7 @@ public class WebhookStateReaperTest {
     }
 
     private void addError(String webhook) {
-        webhookError.add(webhook, "oops");
+        webhookErrorService.add(webhook, "oops");
         assertErrorExists(webhook);
     }
 
@@ -138,7 +138,7 @@ public class WebhookStateReaperTest {
     }
 
     private void assertErrorExists(String webhook) {
-        assertEquals(1, webhookError.get(webhook).size());
+        assertEquals(1, webhookErrorService.get(webhook).size());
     }
 
     private void assertLastCompletedDeleted(String webhook) {
@@ -147,7 +147,7 @@ public class WebhookStateReaperTest {
     }
 
     private void assertErrorDeleted(String webhook) {
-        assertTrue(webhookError.get(webhook).isEmpty());
+        assertTrue(webhookErrorService.get(webhook).isEmpty());
     }
 
     private void assertWebhookInProcessDeleted(String webhook) {

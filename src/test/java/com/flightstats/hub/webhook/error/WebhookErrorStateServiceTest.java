@@ -17,9 +17,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class WebhookErrorServiceTest {
+public class WebhookErrorStateServiceTest {
     private final SafeZooKeeperUtils zooKeeperUtils = mock(SafeZooKeeperUtils.class);
-    private final WebhookErrorService.ErrorNodeNameGenerator errorNameGenerator = mock(WebhookErrorService.ErrorNodeNameGenerator.class);
+    private final WebhookErrorStateService.ErrorNodeNameGenerator errorNameGenerator = mock(WebhookErrorStateService.ErrorNodeNameGenerator.class);
 
     private final static String ZK_BASE_PATH = "/GroupError";
     public static final String WEBHOOK_NAME = "webhookName";
@@ -32,14 +32,14 @@ public class WebhookErrorServiceTest {
         when(errorNameGenerator.generateName())
                 .thenReturn(newErrorId);
 
-        WebhookErrorService errorService = new WebhookErrorService(zooKeeperUtils, errorNameGenerator);
+        WebhookErrorStateService errorService = new WebhookErrorStateService(zooKeeperUtils, errorNameGenerator);
         errorService.add(WEBHOOK_NAME, errorMessage);
         verify(zooKeeperUtils).createData(errorMessage.getBytes(), ZK_BASE_PATH, WEBHOOK_NAME, newErrorId);
     }
 
     @Test
     public void testDeleteWebhook() {
-        WebhookErrorService errorService = new WebhookErrorService(zooKeeperUtils, errorNameGenerator);
+        WebhookErrorStateService errorService = new WebhookErrorStateService(zooKeeperUtils, errorNameGenerator);
         errorService.deleteWebhook(WEBHOOK_NAME);
         verify(zooKeeperUtils).deletePathAndChildren(ZK_BASE_PATH, WEBHOOK_NAME);
     }
@@ -48,7 +48,7 @@ public class WebhookErrorServiceTest {
     public void testDelete() {
         String errorId = "error10";
 
-        WebhookErrorService errorService = new WebhookErrorService(zooKeeperUtils, errorNameGenerator);
+        WebhookErrorStateService errorService = new WebhookErrorStateService(zooKeeperUtils, errorNameGenerator);
         errorService.delete(WEBHOOK_NAME, errorId);
         verify(zooKeeperUtils).deletePathInBackground(ZK_BASE_PATH, WEBHOOK_NAME, errorId);
     }
@@ -59,7 +59,7 @@ public class WebhookErrorServiceTest {
         when(zooKeeperUtils.getChildren(ZK_BASE_PATH))
                 .thenReturn(webhooks);
 
-        WebhookErrorService errorService = new WebhookErrorService(zooKeeperUtils, errorNameGenerator);
+        WebhookErrorStateService errorService = new WebhookErrorStateService(zooKeeperUtils, errorNameGenerator);
 
         assertEquals(newHashSet(webhooks), errorService.getWebhooks());
     }
@@ -78,7 +78,7 @@ public class WebhookErrorServiceTest {
         when(zooKeeperUtils.getDataWithStat(ZK_BASE_PATH, WEBHOOK_NAME, "3"))
                 .thenReturn(buildData("error3", createdStart.plusMinutes(3)));
 
-        WebhookErrorService errorService = new WebhookErrorService(zooKeeperUtils, errorNameGenerator);
+        WebhookErrorStateService errorService = new WebhookErrorStateService(zooKeeperUtils, errorNameGenerator);
 
         List<WebhookError> expectedErrors = newArrayList(
                 WebhookError.builder().name("1").data("error1").creationTime(createdStart.plusMinutes(1).withZone(DateTimeZone.getDefault())).build(),

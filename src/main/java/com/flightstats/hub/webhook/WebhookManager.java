@@ -45,7 +45,7 @@ public class WebhookManager {
     private ActiveWebhooks activeWebhooks;
 
     @Inject
-    private WebhookError webhookError;
+    private WebhookErrorService webhookErrorService;
     @Inject
     private WebhookContentPathSet webhookInProcess;
 
@@ -66,14 +66,14 @@ public class WebhookManager {
                    Dao<Webhook> webhookDao,
                    LastContentPath lastContentPath,
                    ActiveWebhooks activeWebhooks,
-                   WebhookError webhookError,
+                   WebhookErrorService webhookErrorService,
                    WebhookContentPathSet webhookInProcess,
                    InternalWebhookClient webhookClient) {
         this.watchManager = watchManager;
         this.webhookDao = webhookDao;
         this.lastContentPath = lastContentPath;
         this.activeWebhooks = activeWebhooks;
-        this.webhookError = webhookError;
+        this.webhookErrorService = webhookErrorService;
         this.webhookInProcess = webhookInProcess;
         this.webhookClient = webhookClient;
     }
@@ -149,7 +149,7 @@ public class WebhookManager {
     public void getStatus(Webhook webhook, WebhookStatus.WebhookStatusBuilder statusBuilder) {
         statusBuilder.lastCompleted(lastContentPath.get(webhook.getName(), WebhookStrategy.createContentPath(webhook), WebhookLeader.WEBHOOK_LAST_COMPLETED));
         try {
-            statusBuilder.errors(webhookError.get(webhook.getName()));
+            statusBuilder.errors(webhookErrorService.get(webhook.getName()));
             ArrayList<ContentPath> inFlight = new ArrayList<>(new TreeSet<>(webhookInProcess.getSet(webhook.getName(), WebhookStrategy.createContentPath(webhook))));
             statusBuilder.inFlight(inFlight);
         } catch (Exception e) {

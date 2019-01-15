@@ -44,7 +44,7 @@ class WebhookLeader implements Lockable {
     @Inject
     private WebhookContentPathSet webhookInProcess;
     @Inject
-    private WebhookError webhookError;
+    private WebhookErrorService webhookErrorService;
     @Inject
     private WebhookStateReaper webhookStateReaper;
 
@@ -151,7 +151,7 @@ class WebhookLeader implements Lockable {
             if (attempt.getContentPath().getTime().isBefore(ttlTime)) {
                 String message = String.format("%s is before webhook ttl %s", attempt.getContentPath().toUrl(), ttlTime);
                 logger.debug(webhook.getName(), message);
-                webhookError.add(webhook.getName(), new DateTime() + " " + message);
+                webhookErrorService.add(webhook.getName(), new DateTime() + " " + message);
                 return true;
             }
         }
@@ -163,7 +163,7 @@ class WebhookLeader implements Lockable {
         if (attempt.getContentPath().getTime().isBefore(channelConfig.getTtlTime())) {
             String message = String.format("%s is before channel ttl %s", attempt.getContentPath().toUrl(), channelConfig.getTtlTime());
             logger.debug(webhook.getName(), message);
-            webhookError.add(webhook.getName(), new DateTime() + " " + message);
+            webhookErrorService.add(webhook.getName(), new DateTime() + " " + message);
             return true;
         } else {
             return false;
@@ -175,7 +175,7 @@ class WebhookLeader implements Lockable {
         if (maxAttempts > 0 && attempt.number > maxAttempts) {
             String message = String.format("%s max attempts reached (%s)", attempt.getContentPath().toUrl(), maxAttempts);
             logger.debug(webhook.getName() + " " + message);
-            webhookError.add(webhook.getName(), new DateTime() + " " + message);
+            webhookErrorService.add(webhook.getName(), new DateTime() + " " + message);
             return true;
         } else {
             return false;

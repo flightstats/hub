@@ -15,22 +15,22 @@ class WebhookStateReaper {
 
     private final LastContentPath lastContentPath;
     private final WebhookContentPathSet webhookInProcess;
-    private final WebhookError webhookError;
+    private final WebhookErrorService webhookErrorService;
 
     @Inject
     WebhookStateReaper(LastContentPath lastContentPath,
                        WebhookContentPathSet webhookInProcess,
-                       WebhookError webhookError) {
+                       WebhookErrorService webhookErrorService) {
         this.lastContentPath = lastContentPath;
         this.webhookInProcess = webhookInProcess;
-        this.webhookError = webhookError;
+        this.webhookErrorService = webhookErrorService;
     }
 
     void delete(String webhook) {
         logger.info("deleting " + webhook);
         webhookInProcess.delete(webhook);
         lastContentPath.delete(webhook, WEBHOOK_LAST_COMPLETED);
-        webhookError.delete(webhook);
+        webhookErrorService.delete(webhook);
         logger.info("deleted " + webhook);
     }
 }
