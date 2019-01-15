@@ -45,12 +45,15 @@ public class WebhookManager {
     private ActiveWebhooks activeWebhooks;
 
     @Inject
-    private WebhookError webhookError;
+    private WebhookErrorService webhookErrorService;
     @Inject
     private WebhookContentPathSet webhookInProcess;
 
     @Inject
     private InternalWebhookClient webhookClient;
+
+    @Inject
+    private WebhookStateReaper webhookStateReaper;
 
     @Inject
     public WebhookManager() {
@@ -63,14 +66,14 @@ public class WebhookManager {
                    Dao<Webhook> webhookDao,
                    LastContentPath lastContentPath,
                    ActiveWebhooks activeWebhooks,
-                   WebhookError webhookError,
+                   WebhookErrorService webhookErrorService,
                    WebhookContentPathSet webhookInProcess,
                    InternalWebhookClient webhookClient) {
         this.watchManager = watchManager;
         this.webhookDao = webhookDao;
         this.lastContentPath = lastContentPath;
         this.activeWebhooks = activeWebhooks;
-        this.webhookError = webhookError;
+        this.webhookErrorService = webhookErrorService;
         this.webhookInProcess = webhookInProcess;
         this.webhookClient = webhookClient;
     }
@@ -140,13 +143,13 @@ public class WebhookManager {
 
     public void delete(String name) {
         webhookClient.remove(name, activeWebhooks.getServers(name));
-        lastContentPath.delete(name, WebhookLeader.WEBHOOK_LAST_COMPLETED);
+        webhookStateReaper.delete(name);
     }
 
     public void getStatus(Webhook webhook, WebhookStatus.WebhookStatusBuilder statusBuilder) {
         statusBuilder.lastCompleted(lastContentPath.get(webhook.getName(), WebhookStrategy.createContentPath(webhook), WebhookLeader.WEBHOOK_LAST_COMPLETED));
         try {
-            statusBuilder.errors(webhookError.get(webhook.getName()));
+            statusBuilder.errors(webhookErrorService.lookup(webhook.getName()));
             ArrayList<ContentPath> inFlight = new ArrayList<>(new TreeSet<>(webhookInProcess.getSet(webhook.getName(), WebhookStrategy.createContentPath(webhook))));
             statusBuilder.inFlight(inFlight);
         } catch (Exception e) {

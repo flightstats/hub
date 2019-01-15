@@ -1,7 +1,9 @@
 package com.flightstats.hub.filter;
 
+import com.flightstats.hub.test.Integration;
 import org.glassfish.jersey.server.internal.routing.UriRoutingContext;
 import org.glassfish.jersey.uri.UriTemplate;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import javax.ws.rs.container.ContainerRequestContext;
@@ -13,6 +15,10 @@ import static org.mockito.Mockito.when;
 
 
 public class MetricsRequestFilterTest {
+    @BeforeClass
+    public static void integrationSetup() throws Exception {
+        Integration.startAwsHub();
+    }
 
     @Test
     public void testGetRequestTemplate() {

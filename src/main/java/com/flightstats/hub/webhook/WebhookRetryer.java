@@ -41,7 +41,7 @@ class WebhookRetryer {
     private List<Predicate<DeliveryAttempt>> giveUpIfs = new ArrayList<>();
     private List<Predicate<DeliveryAttempt>> tryLaterIfs = new ArrayList<>();
 
-    private WebhookError webhookError;
+    private WebhookErrorService webhookErrorService;
     private Client httpClient;
 
     @Builder
@@ -49,7 +49,7 @@ class WebhookRetryer {
                    @Singular List<Predicate<DeliveryAttempt>> tryLaterIfs,
                    Integer connectTimeoutSeconds,
                    Integer readTimeoutSeconds) {
-        this(giveUpIfs, tryLaterIfs, connectTimeoutSeconds, readTimeoutSeconds, HubProvider.getInstance(WebhookError.class));
+        this(giveUpIfs, tryLaterIfs, connectTimeoutSeconds, readTimeoutSeconds, HubProvider.getInstance(WebhookErrorService.class));
     }
 
     @VisibleForTesting
@@ -57,10 +57,10 @@ class WebhookRetryer {
                    List<Predicate<DeliveryAttempt>> tryLaterIfs,
                    Integer connectTimeoutSeconds,
                    Integer readTimeoutSeconds,
-                   WebhookError webhookError) {
+                   WebhookErrorService webhookErrorService) {
         this.giveUpIfs = giveUpIfs;
         this.tryLaterIfs = tryLaterIfs;
-        this.webhookError = webhookError;
+        this.webhookErrorService = webhookErrorService;
         if (connectTimeoutSeconds == null) connectTimeoutSeconds = HubProperties.getProperty("webhook.connectTimeoutSeconds", 60);
         if (readTimeoutSeconds == null) readTimeoutSeconds = HubProperties.getProperty("webhook.readTimeoutSeconds", 60);
         this.httpClient = RestClient.createClient(connectTimeoutSeconds, readTimeoutSeconds, true, false);
@@ -92,7 +92,7 @@ class WebhookRetryer {
                 isRetrying = false;
                 if (shouldGiveUp) {
                     isDoneWithItem = true;
-                    webhookError.publishToErrorChannel(attempt);
+                    webhookErrorService.publishToErrorChannel(attempt);
                 }
 
                 continue;
@@ -122,7 +122,7 @@ class WebhookRetryer {
                 isDoneWithItem = true;
                 continue;
             } else {
-                webhookError.add(attempt.getWebhook().getName(), new DateTime() + " " + attempt.getContentPath() + " " + requestResult);
+                webhookErrorService.add(attempt.getWebhook().getName(), new DateTime() + " " + attempt.getContentPath() + " " + requestResult);
                 statsd.incrementCounter("webhook.errors", "name:" + attempt.getWebhook().getName(), "status:" + attempt.getStatusCode());
             }
 

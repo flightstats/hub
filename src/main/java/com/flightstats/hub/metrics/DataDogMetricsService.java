@@ -1,9 +1,7 @@
 package com.flightstats.hub.metrics;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProperties;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.rest.RestClient;
 import com.sun.jersey.api.client.ClientResponse;
 import com.timgroup.statsd.Event;
@@ -20,7 +18,6 @@ import java.util.stream.Collectors;
 class DataDogMetricsService implements MetricsService {
     private final static Logger logger = LoggerFactory.getLogger(DataDogMetricsService.class);
     private final static StatsDClient statsd = DataDog.statsd;
-    private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
 
     @Override
     public void insert(String channel, long start, Insert type, int items, long bytes) {

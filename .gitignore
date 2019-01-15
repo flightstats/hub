@@ -2,6 +2,7 @@
 *.ipr
 *.iml
 build/
+out/
 .gradle/
 *_local.properties
 integration_config_local.js
@@ -11,6 +12,7 @@ __init__.py
 **/node_modules/
 **/*.pyc
 docker/hub/
+docker/configs/
 .DS_Store
 src/test/load/globalConfig.py
 src/test/load/locust.log

@@ -1,13 +1,25 @@
 const request = require('request');
 const moment = require('moment');
-const { createChannel, getProp, hubClientDelete, randomChannelName } = require('../lib/helpers');
+const {
+    createChannel,
+    fromObjectPath,
+    getProp,
+    hubClientDelete,
+    hubClientGet,
+    itSleeps,
+    randomChannelName,
+} = require('../lib/helpers');
 const { getChannelUrl } = require('../lib/config');
 
 const channelUrl = getChannelUrl();
 const channelName = randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
-let stableTime = null;
-let currentTime = null;
+const testContext = {
+    stableTime: null,
+};
+const headers = {
+    'Content-Type': 'application/json',
+};
 /**
  * This should:
  *
@@ -19,46 +31,25 @@ let currentTime = null;
 describe(__filename, function () {
     beforeAll(async () => {
         const response = await createChannel(channelName);
-        expect(getProp('statusCode', response)).toBe(201);
+        expect(getProp('statusCode', response)).toEqual(201);
     });
 
-    it('gets times', function (done) {
-        const url = channelResource + '/time';
-        request.get({url: url, json: true},
-            function (err, response, body) {
-                expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
-                stableTime = moment(body.stable.millis).utc();
-                currentTime = moment(body.now.millis).utc();
-                done();
-            });
+    it('gets times', async () => {
+        const response = await hubClientGet(`${channelResource}/time`, headers);
+        expect(getProp('statusCode', response)).toEqual(200);
+        const stableTimeMillis = fromObjectPath(['body', 'stable', 'millis'], response);
+        testContext.stableTime = moment(stableTimeMillis).utc();
     });
 
-    it('gets unstable next 10 links', function (done) {
-        const url = channelResource + currentTime.format('/YYYY/MM/DD/HH/mm/ss') + '/next/10';
-        console.log('******', url);
-        request.get({url: url, json: true},
-            function (err, response, body) {
-                expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
-                expect(body._links.uris.length).toBe(0);
-                expect(body._links.next).toBeUndefined();
-
-                done();
-            });
-    });
-
-    it('gets stable next 5 links', function (done) {
-        const nextTime = stableTime.subtract(5, 'seconds');
-        const url = channelResource + nextTime.format('/YYYY/MM/DD/HH/mm/ss') + '/next/10';
-        request.get({url: url, json: true},
-            function (err, response, body) {
-                expect(err).toBeNull();
-                expect(response.statusCode).toBe(200);
-                expect(body._links.uris.length).toBe(5);
-                expect(body._links.next).toBeUndefined();
-                done();
-            });
+    it('verifies endpoint returns stable links', async () => {
+        await itSleeps(1000);
+        const fiveSecondsAgo = testContext.stableTime.subtract(5, 'seconds');
+        const url = `${channelResource}${fiveSecondsAgo.format('/YYYY/MM/DD/HH/mm/ss')}/next/10`;
+        const response = await hubClientGet(url, headers);
+        expect(getProp('statusCode', response)).toBe(200);
+        const uris = fromObjectPath(['body', '_links', 'uris'], response);
+        expect(uris.length).toBeLessThan(10);
+        expect(uris.length).toBeGreaterThan(0);
     });
 
     afterAll(async () => {

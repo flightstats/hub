@@ -13,6 +13,7 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.Properties;
 
+@Deprecated
 public class HubProperties {
     private final static Logger logger = LoggerFactory.getLogger(HubProperties.class);
     private static Properties properties = new Properties();
@@ -120,7 +121,7 @@ public class HubProperties {
     }
 
     private static Properties getLocalProperties(String fileNameRoot) {
-        HubMain.warn("using " + fileNameRoot + " properties file");
+        logger.warn("using " + fileNameRoot + " properties file");
         Properties defaultProperties = getProperties("/" + fileNameRoot + ".properties", true);
         Properties localProperties = getProperties("/" + fileNameRoot + "_local.properties", false);
         for (String localKey : localProperties.stringPropertyNames()) {
@@ -137,7 +138,7 @@ public class HubProperties {
         if (resource != null) {
             return loadProperties(resource, required);
         } else {
-            HubMain.warn("unable to load files, using baked in defaults");
+            logger.warn("unable to load files, using baked in defaults");
             Properties properties = new Properties();
             properties.put("hub.type", "aws");
             properties.put("app.name", "hub-v2");
@@ -159,7 +160,6 @@ public class HubProperties {
             properties.put("hub.protect.channels", "false");
             properties.put("metrics.enable", "false");
             properties.put("s3Verifier.run", "false");
-            properties.put("aws.credentials", "config/credentials/hub_test_credentials.properties");
             properties.put("aws.signing_region", "us-east-1");
             return properties;
         }
