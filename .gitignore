@@ -11,6 +11,7 @@ __init__.py
 **/node_modules/
 **/*.pyc
 docker/hub/
+docker/configs/
 .DS_Store
 src/test/load/globalConfig.py
 src/test/load/locust.log
