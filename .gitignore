@@ -2,6 +2,7 @@
 *.ipr
 *.iml
 build/
+out/
 .gradle/
 *_local.properties
 integration_config_local.js
