@@ -9,8 +9,7 @@ ENV MIN_HEAP=1g \
     MAX_HEAP=3g \
     NEW_SIZE=100m
 
-ADD logback.xml /etc/hub/logback.xml
-ADD hub.properties /etc/hub/hub.properties
+ADD configs /etc/hub
 
 ADD hub /opt/hub
 ADD run /opt/hub/bin/run

@@ -13,6 +13,7 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.Properties;
 
+@Deprecated
 public class HubProperties {
     private final static Logger logger = LoggerFactory.getLogger(HubProperties.class);
     private static Properties properties = new Properties();
