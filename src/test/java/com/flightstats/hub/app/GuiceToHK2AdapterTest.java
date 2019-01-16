@@ -11,6 +11,10 @@ import org.glassfish.hk2.api.ServiceLocatorFactory;
 import org.glassfish.hk2.utilities.ServiceLocatorUtilities;
 import org.junit.Test;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static com.google.common.collect.Lists.newArrayList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -55,6 +59,28 @@ public class GuiceToHK2AdapterTest {
 
     @com.google.inject.Singleton
     private static class GuicedSingletonService {}
+
+
+    private static class ComplicatedSimpleService<T extends SimpleService> {
+        List<T> list;
+        @com.google.inject.Inject
+        public ComplicatedSimpleService(List<T> whateverList) {
+            this.list = whateverList;
+        }
+
+        List<String> getNames() {
+            return list.stream().map(SimpleService::getName).collect(Collectors.toList());
+        }
+    }
+
+    private static class WithComplicatedDependencyService {
+        final ComplicatedSimpleService<SimpleService> dependency;
+
+        @javax.inject.Inject
+        public WithComplicatedDependencyService(ComplicatedSimpleService<SimpleService> dependency) {
+            this.dependency = dependency;
+        }
+    }
 
     @Test
     public void testSimple() {
@@ -178,6 +204,56 @@ public class GuiceToHK2AdapterTest {
         assertNotNull(a);
         assertNotNull(b);
         assertEquals(a, b);
+    }
+
+    @Test
+    public void testComplicatedDependencyWithGenericAndProvider() {
+        Injector injector = Guice.createInjector(new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(WithComplicatedDependencyService.class).asEagerSingleton();
+            }
+
+            @Provides
+            public ComplicatedSimpleService<SimpleService> buildSomeServices() {
+                return new ComplicatedSimpleService<>(newArrayList(new SimpleService("just one")));
+            }
+        });
+
+        ServiceLocator locator = initializeHK2(injector);
+        WithComplicatedDependencyService service = locator.getService(WithComplicatedDependencyService.class);
+        assertNotNull(service);
+        assertEquals(newArrayList("just one"), service.dependency.getNames());
+    }
+
+    @Test
+    public void testNamedComplicatedDependencyWithGenericAndProvider() {
+        Injector injector = Guice.createInjector(new AbstractModule() {
+            @Override
+            protected void configure() { }
+
+            @Provides
+            public WithComplicatedDependencyService buildComplicatedService(@Named("aDependency") ComplicatedSimpleService<SimpleService> aDependency) {
+                return new WithComplicatedDependencyService(aDependency);
+            }
+
+            @Named("aDependency")
+            @Provides
+            public ComplicatedSimpleService<SimpleService> buildAService() {
+                return new ComplicatedSimpleService<>(newArrayList(new SimpleService("just one")));
+            }
+
+            @Named("anotherDependency")
+            @Provides
+            public ComplicatedSimpleService<SimpleService> buildAnotherService() {
+                return new ComplicatedSimpleService<>(newArrayList(new SimpleService("one"), new SimpleService("two")));
+            }
+        });
+
+        ServiceLocator locator = initializeHK2(injector);
+        WithComplicatedDependencyService service = locator.getService(WithComplicatedDependencyService.class);
+        assertNotNull(service);
+        assertEquals(newArrayList("just one"), service.dependency.getNames());
     }
 
     private ServiceLocator initializeHK2(Injector injector) {

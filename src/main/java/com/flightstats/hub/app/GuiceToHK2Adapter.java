@@ -8,8 +8,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
-import java.lang.reflect.InvocationTargetException;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
@@ -23,45 +25,41 @@ class GuiceToHK2Adapter extends AbstractBinder {
 
     @Override
     protected void configure() {
-        injector.getBindings().forEach((key, value) -> {
-            if (isNamedBinding(key)) {
-                bindNamedClass(key);
-            } else {
-                bindClass(key);
-            }
-        });
+        injector.getAllBindings().forEach((key, value) -> bindClass(key));
     }
 
-    private boolean isNamedBinding(Key<?> key) {
-        return key.getAnnotationType() != null && key.getAnnotationType().getSimpleName().equals("Named");
-    }
-
-    @SneakyThrows
     private void bindClass(Key<?> key) {
-        try {
-            String typeName = key.getTypeLiteral().getType().getTypeName();
-            log.debug("mapping guice to hk2: {}", typeName);
-            Class boundClass = Class.forName(typeName);
-            bindFactory(new ServiceFactory<>(boundClass)).to(boundClass);
-        } catch (ClassNotFoundException e) {
-            log.warn("unable to bind {}", key);
-            throw e;
+        Type type = key.getTypeLiteral().getType();
+        Class<?> rawType = key.getTypeLiteral().getRawType();
+        Optional<String> name = getName(key);
+
+        if (name.isPresent()) {
+            bindFactoryWithName(type, rawType, name.get());
+        } else {
+            bindFactory(type, rawType);
         }
     }
 
+    private void bindFactory(Type type, Class<?> rawType) {
+        log.debug("mapping guice to hk2: {}", type.getTypeName());
+        bindFactory(new ServiceFactory<>(rawType)).to(type);
+    }
+
+    private void bindFactoryWithName(Type type, Class<?> rawType, String name) {
+        log.debug("mapping guice to hk2: {} (named: {})", type.getTypeName(), name);
+        bindFactory(new ServiceFactory<>(rawType, name)).to(type).named(name);
+    }
+
+    private Optional<String> getName(Key<?> key) {
+        return Optional.ofNullable(key.getAnnotationType())
+                .filter(annotationType -> annotationType.getSimpleName().equals("Named"))
+                .map(annotationType -> getNameAnnotation(key, annotationType));
+    }
+
     @SneakyThrows
-    private void bindNamedClass(Key<?> key) {
-        try {
-            String typeName = key.getTypeLiteral().getType().getTypeName();
-            Method value = key.getAnnotationType().getDeclaredMethod("value");
-            String name = (String) value.invoke(key.getAnnotation());
-            log.debug("mapping guice to hk2: {} (named: {})", typeName, name);
-            Class boundClass = Class.forName(typeName);
-            bindFactory(new ServiceFactory<>(boundClass, name)).to(boundClass).named(name);
-        } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-            log.warn("unable to bind {}", key);
-            throw e;
-        }
+    private String getNameAnnotation(Key<?> key, Class<? extends Annotation> annotationType) {
+        Method value = annotationType.getDeclaredMethod("value");
+        return (String) value.invoke(key.getAnnotation());
     }
 
     private class ServiceFactory<T> implements Factory<T> {
@@ -78,6 +76,7 @@ class GuiceToHK2Adapter extends AbstractBinder {
             this.serviceClass = serviceClass;
             this.name = name;
         }
+
 
         public T provide() {
             if (isFirstProvide()) {
