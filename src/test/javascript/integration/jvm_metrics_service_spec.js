@@ -76,6 +76,7 @@ const EXPECTED_HOST_TAGS = [
 
 describe(__filename, function () {
     beforeAll(async () => {
+        pending('infrastructure needed to allow metrics.enable to be dynamically true in test envs');
         const request = await hubClientGet(`${getHubUrlBase()}/internal/properties`, headers);
         const properties = fromObjectPath(['body', 'properties'], request);
         let intervalInSeconds = properties && properties['metrics.seconds'];
