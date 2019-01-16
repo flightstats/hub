@@ -1,6 +1,5 @@
 package com.flightstats.hub.app;
 
-import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.flightstats.hub.filter.CORSFilter;
 import com.flightstats.hub.filter.StreamEncodingFilter;
@@ -9,7 +8,6 @@ import com.flightstats.hub.metrics.MetricsConfig;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import lombok.Getter;
 import org.glassfish.jersey.message.DeflateEncoder;
 import org.glassfish.jersey.message.GZipEncoder;
 import org.glassfish.jersey.server.ResourceConfig;
