@@ -2,13 +2,26 @@ package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.SecondPath;
+import com.flightstats.hub.test.Integration;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.junit.Assert.assertEquals;
 
 public class TimedWebhookStrategyTest {
+    @BeforeClass
+    public static void setupIntegration() {
+        Logger logger = LoggerFactory.getLogger(TimedWebhookStrategyTest.class);
+        try {
+            Integration.startAwsHub();
+        } catch (Exception e) {
+            logger.error("failed to start hub for integration test!", e);
+        }
+    }
 
     @Test
     public void testRoundingSecondPath() {
