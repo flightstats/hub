@@ -5,6 +5,7 @@ import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
 
+@Deprecated
 public class HubProvider {
 
     private static Injector injector;
