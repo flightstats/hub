@@ -42,9 +42,10 @@ public class S3Verifier {
 
     static final String LAST_SINGLE_VERIFIED = "/S3VerifierSingleLastVerified/";
     private final static Logger logger = LoggerFactory.getLogger(S3Verifier.class);
-    public static final String LEADER_PATH = "/S3VerifierSingleService";
+    private static final String LEADER_PATH = "/S3VerifierSingleService";
     public static final String MISSING_ITEM_METRIC_NAME = "s3.verifier.missing";
-    public static final String VERIFIER_FAILED_METRIC_NAME = "s3.verifier.failed";
+    private static final String VERIFIER_FAILED_METRIC_NAME = "s3.verifier.failed";
+    private static final String VERIFIER_TIMEOUT_METRIC_NAME = "s3.verifier.timeout";
 
     private final int offsetMinutes = HubProperties.getProperty("s3Verifier.offsetMinutes", 15);
     private final int channelThreads = HubProperties.getProperty("s3Verifier.channelThreads", 3);
@@ -172,7 +173,7 @@ public class S3Verifier {
                 .channelName(channelName)
                 .startTime(startPath.getTime())
                 .unit(TimeUtil.Unit.MINUTES);
-        long timeout = 1;
+        long timeout = 2;
         if (endPath != null) {
             Duration duration = new Duration(startPath.getTime(), endPath.getTime());
             timeout += duration.getStandardDays();
@@ -188,6 +189,10 @@ public class S3Verifier {
             });
             runInQueryPool(ActiveTraces.getLocal(), latch, () -> longTermKeys.addAll(s3ContentDao.queryByTime(timeQuery)));
             latch.await(timeout, TimeUnit.MINUTES);
+            if (latch.getCount() != 0) {
+                logger.error("s3 verifier timed out while finding missing items, write queue is backing up");
+                metricsService.increment(VERIFIER_TIMEOUT_METRIC_NAME);
+            }
             queryResult.getContentKeys().removeAll(longTermKeys);
             if (queryResult.getContentKeys().size() > 0) {
                 logger.info("missing items {} {}", channelName, queryResult.getContentKeys());
