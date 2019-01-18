@@ -47,6 +47,7 @@ public class S3Verifier {
     private static final String VERIFIER_FAILED_METRIC_NAME = "s3.verifier.failed";
     private static final String VERIFIER_TIMEOUT_METRIC_NAME = "s3.verifier.timeout";
 
+    private final long baseTimeoutMinutes;
     private final int offsetMinutes = HubProperties.getProperty("s3Verifier.offsetMinutes", 15);
     private final int channelThreads = HubProperties.getProperty("s3Verifier.channelThreads", 3);
     private final ExecutorService channelThreadPool = Executors.newFixedThreadPool(channelThreads, new ThreadFactoryBuilder().setNameFormat("S3VerifierChannel-%d").build());
@@ -82,6 +83,7 @@ public class S3Verifier {
         this.zooKeeperState = zooKeeperState;
         this.curator = curator;
         this.metricsService = metricsService;
+        this.baseTimeoutMinutes = HubProperties.getProperty("s3Verifier.baseTimeoutMinutes", 2);
 
         if (HubProperties.getProperty("s3Verifier.run", true)) {
             HubServices.register(new S3ScheduledVerifierService(), HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
@@ -167,13 +169,13 @@ public class S3Verifier {
     @VisibleForTesting
     protected SortedSet<ContentKey> getMissing(MinutePath startPath, MinutePath endPath, String channelName, ContentDao s3ContentDao,
                                              SortedSet<ContentKey> foundCacheKeys) {
+        long timeout = baseTimeoutMinutes;
         QueryResult queryResult = new QueryResult(1);
         SortedSet<ContentKey> longTermKeys = new TreeSet<>();
         TimeQuery.TimeQueryBuilder builder = TimeQuery.builder()
                 .channelName(channelName)
                 .startTime(startPath.getTime())
                 .unit(TimeUtil.Unit.MINUTES);
-        long timeout = 2;
         if (endPath != null) {
             Duration duration = new Duration(startPath.getTime(), endPath.getTime());
             timeout += duration.getStandardDays();
