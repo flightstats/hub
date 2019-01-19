@@ -29,15 +29,14 @@ public class HubMain {
 
     private static final Logger logger = LoggerFactory.getLogger(HubMain.class);
     private static final DateTime startTime = new DateTime();
-    private static MetricsConfig metricsConfig;
+    private static String propertiesFilePath;
 
     public static void main(String[] args) throws Exception {
         if (args.length == 0) {
             throw new UnsupportedOperationException("HubMain requires a property filename, 'useDefault', or 'useEncryptedDefault'");
         }
+        propertiesFilePath = args[0];
         HubProperties.loadProperties(args[0]);
-        metricsConfig = new MetricsConfig();
-        metricsConfig.loadValues(args[0]);
         start();
     }
 
@@ -69,6 +68,8 @@ public class HubMain {
                 DeflateEncoder.class);
 
         List<Module> modules = new ArrayList<>();
+        MetricsConfig metricsConfig = new MetricsConfig();
+        metricsConfig.loadValues(propertiesFilePath);
         modules.add(new HubBindings(metricsConfig));
         String hubType = HubProperties.getProperty("hub.type", "aws");
         logger.info("starting with hub.type {}", hubType);
