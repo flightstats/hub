@@ -23,7 +23,8 @@ public class WebhookErrorServiceTest {
         ChannelService channelService = mock(ChannelService.class);
         CuratorFramework curator = Integration.startZooKeeper();
         SafeZooKeeperUtils zooKeeperUtils = new SafeZooKeeperUtils(curator);
-        WebhookErrorStateService webhookErrorStateService = new WebhookErrorStateService(zooKeeperUtils);
+        WebhookErrorStateService.ErrorNodeNameGenerator errorNameGenerator = new WebhookErrorStateService.ErrorNodeNameGenerator();
+        WebhookErrorStateService webhookErrorStateService = new WebhookErrorStateService(zooKeeperUtils, errorNameGenerator);
         WebhookErrorPruner webhookErrorPruner = new WebhookErrorPruner(webhookErrorStateService);
         webhookErrorService = new WebhookErrorService(webhookErrorStateService, webhookErrorPruner, channelService);
     }

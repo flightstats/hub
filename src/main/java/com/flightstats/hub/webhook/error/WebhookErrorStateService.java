@@ -24,12 +24,6 @@ public class WebhookErrorStateService {
     private final ErrorNodeNameGenerator errorNameGenerator;
 
     @Inject
-    public WebhookErrorStateService(SafeZooKeeperUtils zooKeeperUtils) {
-        this.zooKeeperUtils = zooKeeperUtils;
-        this.errorNameGenerator = new ErrorNodeNameGenerator();
-    }
-
-    @VisibleForTesting
     public WebhookErrorStateService(SafeZooKeeperUtils zooKeeperUtils, ErrorNodeNameGenerator errorNameGenerator) {
         this.zooKeeperUtils = zooKeeperUtils;
         this.errorNameGenerator = errorNameGenerator;

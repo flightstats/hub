@@ -41,7 +41,8 @@ public class WebhookStateReaperTest {
     public void setup() {
         ChannelService channelService = mock(ChannelService.class);
         SafeZooKeeperUtils zooKeeperUtils = new SafeZooKeeperUtils(curator);
-        WebhookErrorStateService webhookErrorStateService = new WebhookErrorStateService(zooKeeperUtils);
+        WebhookErrorStateService.ErrorNodeNameGenerator nameGenerator = new WebhookErrorStateService.ErrorNodeNameGenerator();
+        WebhookErrorStateService webhookErrorStateService = new WebhookErrorStateService(zooKeeperUtils, nameGenerator);
         WebhookErrorPruner webhookErrorPruner = new WebhookErrorPruner(webhookErrorStateService);
 
         lastContentPath = new LastContentPath(curator);
