@@ -11,8 +11,8 @@ public class MetricsConfigTest {
     public void testDefaultValues_defaultTags() {
         Properties emptyProperties = new Properties();
         MetricsConfig metricsConfig = new MetricsConfig(emptyProperties);
-        assertEquals(metricsConfig.getRole(), "hub");
-        assertEquals(metricsConfig.getTeam(), "ddt");
+        assertEquals(metricsConfig.getRole(), "");
+        assertEquals(metricsConfig.getTeam(), "");
         assertEquals(metricsConfig.getEnv(), "dev");
         assertEquals(metricsConfig.getClusterLocation(), "local");
         assertEquals(metricsConfig.getAppVersion(), "local");
@@ -33,8 +33,8 @@ public class MetricsConfigTest {
         MetricsConfig metricsConfig = new MetricsConfig(emptyProperties);
         boolean loaded = metricsConfig.loadValues("/not/a/path");
         assertFalse(loaded);
-        assertEquals(metricsConfig.getRole(), "hub");
-        assertEquals(metricsConfig.getTeam(), "ddt");
+        assertEquals(metricsConfig.getRole(), "");
+        assertEquals(metricsConfig.getTeam(), "");
         assertEquals(metricsConfig.getEnv(), "dev");
         assertEquals(metricsConfig.getClusterLocation(), "local");
         assertEquals(metricsConfig.getAppVersion(), "local");

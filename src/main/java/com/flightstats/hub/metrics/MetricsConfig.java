@@ -18,11 +18,11 @@ public class MetricsConfig {
 
     private Properties properties;
 
-    @Getter
-    private final String role = "hub";
+    @Getter(lazy = true)
+    private final String role = safeGetProperty("metrics.tags.defaults.role", "");
 
-    @Getter
-    private final String team = "ddt";
+    @Getter(lazy = true)
+    private final String team = safeGetProperty("metrics.tags.defaults.team", "");
 
     @Getter(lazy = true)
     private final String env = safeGetProperty("app.environment", "dev");
