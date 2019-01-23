@@ -6,7 +6,7 @@ import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.SafeZooKeeperUtils;
 import com.flightstats.hub.webhook.error.WebhookErrorPruner;
-import com.flightstats.hub.webhook.error.WebhookErrorStateService;
+import com.flightstats.hub.webhook.error.WebhookErrorRepository;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
 import org.joda.time.DateTime;
@@ -41,12 +41,12 @@ public class WebhookStateReaperTest {
     public void setup() {
         ChannelService channelService = mock(ChannelService.class);
         SafeZooKeeperUtils zooKeeperUtils = new SafeZooKeeperUtils(curator);
-        WebhookErrorStateService.ErrorNodeNameGenerator nameGenerator = new WebhookErrorStateService.ErrorNodeNameGenerator();
-        WebhookErrorStateService webhookErrorStateService = new WebhookErrorStateService(zooKeeperUtils, nameGenerator);
-        WebhookErrorPruner webhookErrorPruner = new WebhookErrorPruner(webhookErrorStateService);
+        WebhookErrorRepository.ErrorNodeNameGenerator nameGenerator = new WebhookErrorRepository.ErrorNodeNameGenerator();
+        WebhookErrorRepository webhookErrorRepository = new WebhookErrorRepository(zooKeeperUtils, nameGenerator);
+        WebhookErrorPruner webhookErrorPruner = new WebhookErrorPruner(webhookErrorRepository);
 
         lastContentPath = new LastContentPath(curator);
-        webhookErrorService = new WebhookErrorService(webhookErrorStateService, webhookErrorPruner, channelService);
+        webhookErrorService = new WebhookErrorService(webhookErrorRepository, webhookErrorPruner, channelService);
         webhookInProcess = new WebhookContentPathSet(zooKeeperUtils);
     }
 

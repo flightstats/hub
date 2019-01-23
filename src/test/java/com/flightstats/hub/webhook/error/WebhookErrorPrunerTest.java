@@ -18,7 +18,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class WebhookErrorPrunerTest {
-    private final WebhookErrorStateService errorService = mock(WebhookErrorStateService.class);
+    private final WebhookErrorRepository errorRepo = mock(WebhookErrorRepository.class);
 
     @Test
     public void testAddCleansUpOldestExcessiveErrors() {
@@ -26,15 +26,15 @@ public class WebhookErrorPrunerTest {
 
         List<WebhookError> webhookErrors = setupErrorMocks(webhookName, 12, errorIndex -> Duration.ofMinutes(12 - errorIndex));
 
-        WebhookErrorPruner webhookErrorPruner = new WebhookErrorPruner(errorService);
+        WebhookErrorPruner webhookErrorPruner = new WebhookErrorPruner(errorRepo);
 
         List<WebhookError> prunedErrors = webhookErrorPruner.pruneErrors(webhookName, webhookErrors);
 
         assertEquals(newArrayList("error0", "error1"), prunedErrors.stream().map(WebhookError::getName).collect(toList()));
 
-        verify(errorService, times(2)).delete(anyString(), anyString());
-        verify(errorService).delete(webhookName, "error0");
-        verify(errorService).delete(webhookName, "error1");
+        verify(errorRepo, times(2)).delete(anyString(), anyString());
+        verify(errorRepo).delete(webhookName, "error0");
+        verify(errorRepo).delete(webhookName, "error1");
     }
 
     @Test
@@ -43,14 +43,14 @@ public class WebhookErrorPrunerTest {
 
         List<WebhookError> webhookErrors = setupErrorMocks(webhookName, 2, errorIndex -> Duration.ofDays(1 - errorIndex).plusMinutes(1));
 
-        WebhookErrorPruner webhookErrorPruner = new WebhookErrorPruner(errorService);
+        WebhookErrorPruner webhookErrorPruner = new WebhookErrorPruner(errorRepo);
 
         List<WebhookError> prunedErrors = webhookErrorPruner.pruneErrors(webhookName, webhookErrors);
 
         assertEquals(newArrayList("error0"), prunedErrors.stream().map(WebhookError::getName).collect(toList()));
 
-        verify(errorService, times(1)).delete(anyString(), anyString());
-        verify(errorService).delete(webhookName, "error0");
+        verify(errorRepo, times(1)).delete(anyString(), anyString());
+        verify(errorRepo).delete(webhookName, "error0");
     }
 
     private List<WebhookError> setupErrorMocks(String webhookName, int numberOfErrors, Function<Integer, Duration> createdAtOffsetCalculator) {
@@ -61,7 +61,7 @@ public class WebhookErrorPrunerTest {
                         .creationTime(TimeUtil.now().minus(createdAtOffsetCalculator.apply(number).toMillis()))
                         .build())
                 .collect(toList());
-        when(errorService.getErrors(webhookName)).thenReturn(webhookErrors);
+        when(errorRepo.getErrors(webhookName)).thenReturn(webhookErrors);
         return webhookErrors;
     }
 

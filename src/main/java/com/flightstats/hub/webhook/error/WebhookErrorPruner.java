@@ -14,17 +14,17 @@ public class WebhookErrorPruner {
     private static final int MAX_SIZE = 10;
     private static final Duration MAX_AGE = Duration.ofDays(1);
 
-    private final WebhookErrorStateService webhookErrorStateService;
+    private final WebhookErrorRepository webhookErrorRepository;
 
     @Inject
-    public WebhookErrorPruner(WebhookErrorStateService webhookErrorStateService) {
-        this.webhookErrorStateService = webhookErrorStateService;
+    public WebhookErrorPruner(WebhookErrorRepository webhookErrorRepository) {
+        this.webhookErrorRepository = webhookErrorRepository;
     }
 
     public List<WebhookError> pruneErrors(String webhook, List<WebhookError> errors) {
         List<WebhookError> errorsToRemove = getErrorsToRemove(errors);
 
-        errorsToRemove.forEach(error -> webhookErrorStateService.delete(webhook, error.getName()));
+        errorsToRemove.forEach(error -> webhookErrorRepository.delete(webhook, error.getName()));
 
         return errorsToRemove;
     }

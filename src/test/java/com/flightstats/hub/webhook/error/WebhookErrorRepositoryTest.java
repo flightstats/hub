@@ -17,9 +17,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class WebhookErrorStateServiceTest {
+public class WebhookErrorRepositoryTest {
     private final SafeZooKeeperUtils zooKeeperUtils = mock(SafeZooKeeperUtils.class);
-    private final WebhookErrorStateService.ErrorNodeNameGenerator errorNameGenerator = mock(WebhookErrorStateService.ErrorNodeNameGenerator.class);
+    private final WebhookErrorRepository.ErrorNodeNameGenerator errorNameGenerator = mock(WebhookErrorRepository.ErrorNodeNameGenerator.class);
 
     private final static String ZK_BASE_PATH = "/GroupError";
     public static final String WEBHOOK_NAME = "webhookName";
@@ -32,15 +32,15 @@ public class WebhookErrorStateServiceTest {
         when(errorNameGenerator.generateName())
                 .thenReturn(newErrorId);
 
-        WebhookErrorStateService errorService = new WebhookErrorStateService(zooKeeperUtils, errorNameGenerator);
-        errorService.add(WEBHOOK_NAME, errorMessage);
+        WebhookErrorRepository errorRepo = new WebhookErrorRepository(zooKeeperUtils, errorNameGenerator);
+        errorRepo.add(WEBHOOK_NAME, errorMessage);
         verify(zooKeeperUtils).createData(errorMessage.getBytes(), ZK_BASE_PATH, WEBHOOK_NAME, newErrorId);
     }
 
     @Test
     public void testDeleteWebhook() {
-        WebhookErrorStateService errorService = new WebhookErrorStateService(zooKeeperUtils, errorNameGenerator);
-        errorService.deleteWebhook(WEBHOOK_NAME);
+        WebhookErrorRepository errorRepo = new WebhookErrorRepository(zooKeeperUtils, errorNameGenerator);
+        errorRepo.deleteWebhook(WEBHOOK_NAME);
         verify(zooKeeperUtils).deletePathAndChildren(ZK_BASE_PATH, WEBHOOK_NAME);
     }
 
@@ -48,8 +48,8 @@ public class WebhookErrorStateServiceTest {
     public void testDelete() {
         String errorId = "error10";
 
-        WebhookErrorStateService errorService = new WebhookErrorStateService(zooKeeperUtils, errorNameGenerator);
-        errorService.delete(WEBHOOK_NAME, errorId);
+        WebhookErrorRepository errorRepo = new WebhookErrorRepository(zooKeeperUtils, errorNameGenerator);
+        errorRepo.delete(WEBHOOK_NAME, errorId);
         verify(zooKeeperUtils).deletePathInBackground(ZK_BASE_PATH, WEBHOOK_NAME, errorId);
     }
 
@@ -59,9 +59,9 @@ public class WebhookErrorStateServiceTest {
         when(zooKeeperUtils.getChildren(ZK_BASE_PATH))
                 .thenReturn(webhooks);
 
-        WebhookErrorStateService errorService = new WebhookErrorStateService(zooKeeperUtils, errorNameGenerator);
+        WebhookErrorRepository errorRepo = new WebhookErrorRepository(zooKeeperUtils, errorNameGenerator);
 
-        assertEquals(newHashSet(webhooks), errorService.getWebhooks());
+        assertEquals(newHashSet(webhooks), errorRepo.getWebhooks());
     }
 
     @Test
@@ -78,13 +78,13 @@ public class WebhookErrorStateServiceTest {
         when(zooKeeperUtils.getDataWithStat(ZK_BASE_PATH, WEBHOOK_NAME, "3"))
                 .thenReturn(buildData("error3", createdStart.plusMinutes(3)));
 
-        WebhookErrorStateService errorService = new WebhookErrorStateService(zooKeeperUtils, errorNameGenerator);
+        WebhookErrorRepository errorRepo = new WebhookErrorRepository(zooKeeperUtils, errorNameGenerator);
 
         List<WebhookError> expectedErrors = newArrayList(
                 WebhookError.builder().name("1").data("error1").creationTime(createdStart.plusMinutes(1).withZone(DateTimeZone.getDefault())).build(),
                 WebhookError.builder().name("3").data("error3").creationTime(createdStart.plusMinutes(3).withZone(DateTimeZone.getDefault())).build()
         );
-        assertEquals(expectedErrors, errorService.getErrors(WEBHOOK_NAME));
+        assertEquals(expectedErrors, errorRepo.getErrors(WEBHOOK_NAME));
     }
 
     private Optional<SafeZooKeeperUtils.DataWithStat> buildData(String errorMessage, DateTime ctime) {

@@ -16,15 +16,15 @@ import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 
-public class WebhookErrorStateService {
-    private static final Logger logger = LoggerFactory.getLogger(WebhookErrorStateService.class);
+public class WebhookErrorRepository {
+    private static final Logger logger = LoggerFactory.getLogger(WebhookErrorRepository.class);
     private static final String BASE_PATH = "/GroupError";
 
     private final SafeZooKeeperUtils zooKeeperUtils;
     private final ErrorNodeNameGenerator errorNameGenerator;
 
     @Inject
-    public WebhookErrorStateService(SafeZooKeeperUtils zooKeeperUtils, ErrorNodeNameGenerator errorNameGenerator) {
+    public WebhookErrorRepository(SafeZooKeeperUtils zooKeeperUtils, ErrorNodeNameGenerator errorNameGenerator) {
         this.zooKeeperUtils = zooKeeperUtils;
         this.errorNameGenerator = errorNameGenerator;
     }

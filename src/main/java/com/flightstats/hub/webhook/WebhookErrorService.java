@@ -7,7 +7,7 @@ import com.flightstats.hub.model.Content;
 import com.flightstats.hub.util.RequestUtils;
 import com.flightstats.hub.webhook.error.WebhookError;
 import com.flightstats.hub.webhook.error.WebhookErrorPruner;
-import com.flightstats.hub.webhook.error.WebhookErrorStateService;
+import com.flightstats.hub.webhook.error.WebhookErrorRepository;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.slf4j.Logger;
@@ -33,25 +33,25 @@ import static java.util.stream.Collectors.toList;
 class WebhookErrorService {
     private final static Logger logger = LoggerFactory.getLogger(WebhookErrorService.class);
 
-    private final WebhookErrorStateService webhookErrorStateService;
+    private final WebhookErrorRepository webhookErrorRepository;
     private final ChannelService channelService;
     private final WebhookErrorPruner webhookErrorPruner;
 
     @Inject
-    public WebhookErrorService(WebhookErrorStateService webhookErrorStateService, WebhookErrorPruner webhookErrorPruner, ChannelService channelService) {
-        this.webhookErrorStateService = webhookErrorStateService;
+    public WebhookErrorService(WebhookErrorRepository webhookErrorRepository, WebhookErrorPruner webhookErrorPruner, ChannelService channelService) {
+        this.webhookErrorRepository = webhookErrorRepository;
         this.webhookErrorPruner = webhookErrorPruner;
         this.channelService = channelService;
     }
 
     public void add(String webhook, String error) {
-        webhookErrorStateService.add(webhook, error);
+        webhookErrorRepository.add(webhook, error);
         trimAndLookup(webhook);
     }
 
     public void delete(String webhook) {
         logger.info("deleting webhook errors for " + webhook);
-        webhookErrorStateService.deleteWebhook(webhook);
+        webhookErrorRepository.deleteWebhook(webhook);
     }
 
     public List<String> lookup(String webhook) {
@@ -61,7 +61,7 @@ class WebhookErrorService {
     }
 
     private List<WebhookError> trimAndLookup(String webhook) {
-        List<WebhookError> errors = webhookErrorStateService.getErrors(webhook);
+        List<WebhookError> errors = webhookErrorRepository.getErrors(webhook);
 
         List<WebhookError> prunedErrors = webhookErrorPruner.pruneErrors(webhook, errors);
 

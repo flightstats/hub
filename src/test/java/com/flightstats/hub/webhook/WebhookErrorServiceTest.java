@@ -4,7 +4,7 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.SafeZooKeeperUtils;
 import com.flightstats.hub.webhook.error.WebhookErrorPruner;
-import com.flightstats.hub.webhook.error.WebhookErrorStateService;
+import com.flightstats.hub.webhook.error.WebhookErrorRepository;
 import org.apache.curator.framework.CuratorFramework;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -23,10 +23,10 @@ public class WebhookErrorServiceTest {
         ChannelService channelService = mock(ChannelService.class);
         CuratorFramework curator = Integration.startZooKeeper();
         SafeZooKeeperUtils zooKeeperUtils = new SafeZooKeeperUtils(curator);
-        WebhookErrorStateService.ErrorNodeNameGenerator errorNameGenerator = new WebhookErrorStateService.ErrorNodeNameGenerator();
-        WebhookErrorStateService webhookErrorStateService = new WebhookErrorStateService(zooKeeperUtils, errorNameGenerator);
-        WebhookErrorPruner webhookErrorPruner = new WebhookErrorPruner(webhookErrorStateService);
-        webhookErrorService = new WebhookErrorService(webhookErrorStateService, webhookErrorPruner, channelService);
+        WebhookErrorRepository.ErrorNodeNameGenerator errorNameGenerator = new WebhookErrorRepository.ErrorNodeNameGenerator();
+        WebhookErrorRepository webhookErrorRepository = new WebhookErrorRepository(zooKeeperUtils, errorNameGenerator);
+        WebhookErrorPruner webhookErrorPruner = new WebhookErrorPruner(webhookErrorRepository);
+        webhookErrorService = new WebhookErrorService(webhookErrorRepository, webhookErrorPruner, channelService);
     }
 
     @Test

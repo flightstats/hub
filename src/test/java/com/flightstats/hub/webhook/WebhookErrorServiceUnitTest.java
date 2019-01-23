@@ -3,7 +3,7 @@ package com.flightstats.hub.webhook;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.webhook.error.WebhookError;
 import com.flightstats.hub.webhook.error.WebhookErrorPruner;
-import com.flightstats.hub.webhook.error.WebhookErrorStateService;
+import com.flightstats.hub.webhook.error.WebhookErrorRepository;
 import org.junit.Test;
 
 import java.util.List;
@@ -19,7 +19,7 @@ import static org.mockito.Mockito.when;
 public class WebhookErrorServiceUnitTest {
     private final ChannelService channelService = mock(ChannelService.class);
     private final WebhookErrorPruner errorPruner = mock(WebhookErrorPruner.class);
-    private final WebhookErrorStateService errorService = mock(WebhookErrorStateService.class);
+    private final WebhookErrorRepository errorRepo = mock(WebhookErrorRepository.class);
 
     @Test
     public void testAdd() {
@@ -30,10 +30,10 @@ public class WebhookErrorServiceUnitTest {
         List<WebhookError> errorsToDelete = webhookErrors.subList(0, 1);
         when(errorPruner.pruneErrors(webhookName, webhookErrors)).thenReturn(errorsToDelete);
 
-        WebhookErrorService webhookErrorService = new WebhookErrorService(errorService, errorPruner, channelService);
+        WebhookErrorService webhookErrorService = new WebhookErrorService(errorRepo, errorPruner, channelService);
 
         webhookErrorService.add(webhookName, errorMessage);
-        verify(errorService).add(webhookName, errorMessage);
+        verify(errorRepo).add(webhookName, errorMessage);
         verify(errorPruner).pruneErrors(webhookName, webhookErrors);
     }
 
@@ -45,7 +45,7 @@ public class WebhookErrorServiceUnitTest {
         List<WebhookError> errorsToDelete = newArrayList(webhookErrors.get(1), webhookErrors.get(3), webhookErrors.get(5));
         when(errorPruner.pruneErrors(webhookName, webhookErrors)).thenReturn(errorsToDelete);
 
-        WebhookErrorService webhookErrorService = new WebhookErrorService(errorService, errorPruner, channelService);
+        WebhookErrorService webhookErrorService = new WebhookErrorService(errorRepo, errorPruner, channelService);
 
         List<String> errors = webhookErrorService.lookup(webhookName);
 
@@ -59,7 +59,7 @@ public class WebhookErrorServiceUnitTest {
                         .data(number + " message")
                         .build())
                 .collect(toList());
-        when(errorService.getErrors(webhookName)).thenReturn(webhookErrors);
+        when(errorRepo.getErrors(webhookName)).thenReturn(webhookErrors);
         return webhookErrors;
     }
 }
