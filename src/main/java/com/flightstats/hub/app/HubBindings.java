@@ -47,12 +47,16 @@ import org.eclipse.jetty.websocket.jsr356.ClientContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import javax.websocket.WebSocketContainer;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 public class HubBindings extends AbstractModule {
     private final static Logger logger = LoggerFactory.getLogger(HubBindings.class);
+    private static final int channelThreads = HubProperties.getProperty("s3Verifier.channelThreads", 3);
 
     @Singleton
     @Provides
@@ -153,6 +157,21 @@ public class HubBindings extends AbstractModule {
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
         return mapper;
+    }
+
+    @Named("s3VerifierChannelThreadPool")
+    @Singleton
+    @Provides
+    public static ExecutorService channelThreadPool() {
+        return Executors.newFixedThreadPool(channelThreads, new ThreadFactoryBuilder().setNameFormat("S3VerifierChannel-%d").build());
+    }
+
+    @Named("s3VerifierQueryThreadPool")
+    @Singleton
+    @Provides
+    public
+    static ExecutorService queryThreadPool() {
+        return Executors.newFixedThreadPool(channelThreads * 2, new ThreadFactoryBuilder().setNameFormat("S3VerifierQuery-%d").build());
     }
 
     @Override
