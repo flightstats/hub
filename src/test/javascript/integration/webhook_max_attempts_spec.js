@@ -108,7 +108,6 @@ describe(__filename, () => {
         const response = await hubClientGet(webhookResource, headers);
         expect(getProp('statusCode', response)).toEqual(200);
         const body = getProp('body', response) || {};
-      console.info(body);
         const {
             channelLatest,
             errors = [],
