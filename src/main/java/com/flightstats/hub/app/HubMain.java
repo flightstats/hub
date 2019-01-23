@@ -164,7 +164,7 @@ public class HubMain {
 
     private ResourceConfig buildResourceConfig(Injector injector) {
         ResourceConfig config = new ResourceConfig();
-        config.register(new GuiceToHK2(injector));
+        config.register(new GuiceToHK2Adapter(injector));
         config.register(new ObjectMapperResolver(HubBindings.objectMapper()));
         config.register(JacksonJsonProvider.class);
         config.registerClasses(
