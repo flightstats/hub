@@ -34,7 +34,7 @@ public class WebhookErrorServiceTest {
         for (int i = 0; i < 20; i++) {
             webhookErrorService.add("testErrors", "stuff" + i);
         }
-        List<String> errors = webhookErrorService.get("testErrors");
+        List<String> errors = webhookErrorService.lookup("testErrors");
         assertEquals(10, errors.size());
 
         /*

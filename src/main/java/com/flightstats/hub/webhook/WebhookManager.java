@@ -149,7 +149,7 @@ public class WebhookManager {
     public void getStatus(Webhook webhook, WebhookStatus.WebhookStatusBuilder statusBuilder) {
         statusBuilder.lastCompleted(lastContentPath.get(webhook.getName(), WebhookStrategy.createContentPath(webhook), WebhookLeader.WEBHOOK_LAST_COMPLETED));
         try {
-            statusBuilder.errors(webhookErrorService.get(webhook.getName()));
+            statusBuilder.errors(webhookErrorService.lookup(webhook.getName()));
             ArrayList<ContentPath> inFlight = new ArrayList<>(new TreeSet<>(webhookInProcess.getSet(webhook.getName(), WebhookStrategy.createContentPath(webhook))));
             statusBuilder.inFlight(inFlight);
         } catch (Exception e) {

@@ -139,7 +139,7 @@ public class WebhookStateReaperTest {
     }
 
     private void assertErrorExists(String webhook) {
-        assertEquals(1, webhookErrorService.get(webhook).size());
+        assertEquals(1, webhookErrorService.lookup(webhook).size());
     }
 
     private void assertLastCompletedDeleted(String webhook) {
@@ -148,7 +148,7 @@ public class WebhookStateReaperTest {
     }
 
     private void assertErrorDeleted(String webhook) {
-        assertTrue(webhookErrorService.get(webhook).isEmpty());
+        assertTrue(webhookErrorService.lookup(webhook).isEmpty());
     }
 
     private void assertWebhookInProcessDeleted(String webhook) {

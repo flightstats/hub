@@ -47,7 +47,7 @@ public class WebhookErrorServiceUnitTest {
 
         WebhookErrorService webhookErrorService = new WebhookErrorService(errorService, errorPruner, channelService);
 
-        List<String> errors = webhookErrorService.get(webhookName);
+        List<String> errors = webhookErrorService.lookup(webhookName);
 
         assertEquals(newArrayList("0 message", "2 message", "4 message"), errors);
     }

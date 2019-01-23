@@ -46,7 +46,7 @@ class WebhookErrorService {
 
     public void add(String webhook, String error) {
         webhookErrorStateService.add(webhook, error);
-        limitChildren(webhook);
+        trimAndLookup(webhook);
     }
 
     public void delete(String webhook) {
@@ -54,13 +54,13 @@ class WebhookErrorService {
         webhookErrorStateService.deleteWebhook(webhook);
     }
 
-    public List<String> get(String webhook) {
-        return limitChildren(webhook).stream()
+    public List<String> lookup(String webhook) {
+        return trimAndLookup(webhook).stream()
                 .map(WebhookError::getData)
                 .collect(toList());
     }
 
-    private List<WebhookError> limitChildren(String webhook) {
+    private List<WebhookError> trimAndLookup(String webhook) {
         List<WebhookError> errors = webhookErrorStateService.getErrors(webhook);
 
         List<WebhookError> prunedErrors = webhookErrorPruner.pruneErrors(webhook, errors);
@@ -73,7 +73,7 @@ class WebhookErrorService {
     void publishToErrorChannel(DeliveryAttempt attempt) {
         if (attempt.getWebhook().getErrorChannelUrl() == null) return;
 
-        List<String> errors = get(attempt.getWebhook().getName());
+        List<String> errors = lookup(attempt.getWebhook().getName());
         if (errors.size() < 1) {
             logger.debug("no errors found for", attempt.getWebhook().getName());
             return;
