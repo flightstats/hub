@@ -1,5 +1,6 @@
 package com.flightstats.hub.dao.aws;
 
+import com.amazonaws.services.cloudfront.model.CNAMEAlreadyExistsException;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.*;
@@ -18,7 +19,6 @@ import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractScheduledService;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -34,7 +34,6 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
@@ -49,10 +48,9 @@ public class S3Verifier {
 
     private final long baseTimeoutMinutes;
     private final int offsetMinutes = HubProperties.getProperty("s3Verifier.offsetMinutes", 15);
-    private final int channelThreads = HubProperties.getProperty("s3Verifier.channelThreads", 3);
-    private final ExecutorService channelThreadPool = Executors.newFixedThreadPool(channelThreads, new ThreadFactoryBuilder().setNameFormat("S3VerifierChannel-%d").build());
-    private final ExecutorService queryThreadPool = Executors.newFixedThreadPool(channelThreads * 2, new ThreadFactoryBuilder().setNameFormat("S3VerifierQuery-%d").build());
 
+    private final ExecutorService channelThreadPool;
+    private final ExecutorService queryThreadPool;
     private final LastContentPath lastContentPath;
     private final ChannelService channelService;
     private final ContentDao spokeWriteContentDao;
@@ -72,7 +70,10 @@ public class S3Verifier {
                       Client httpClient,
                       ZooKeeperState zooKeeperState,
                       CuratorFramework curator,
-                      MetricsService metricsService)
+                      MetricsService metricsService,
+                      @Named("channel") ExecutorService channelThreadPool,
+                      @Named("query") ExecutorService queryThreadPool
+                      )
     {
         this.lastContentPath = lastContentPath;
         this.channelService = channelService;
@@ -84,6 +85,8 @@ public class S3Verifier {
         this.curator = curator;
         this.metricsService = metricsService;
         this.baseTimeoutMinutes = HubProperties.getProperty("s3Verifier.baseTimeoutMinutes", 2);
+        this.channelThreadPool = channelThreadPool;
+        this.queryThreadPool = queryThreadPool;
 
         if (HubProperties.getProperty("s3Verifier.run", true)) {
             HubServices.register(new S3ScheduledVerifierService(), HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
@@ -150,7 +153,7 @@ public class S3Verifier {
     @VisibleForTesting
     protected void verifyChannel(VerifierRange range) {
         String channelName = range.getChannelConfig().getDisplayName();
-        SortedSet<ContentKey> keysToAdd = getMissing(range.getStartPath(), range.getEndPath(), channelName, s3SingleContentDao, new TreeSet<>());
+        SortedSet<ContentKey> keysToAdd = getMissing(range.getStartPath(), range.getEndPath(), channelName);
         logger.debug("verifyChannel.starting {}", range);
         for (ContentKey key : keysToAdd) {
             logger.trace("found missing {} {}", channelName, key);
@@ -167,11 +170,11 @@ public class S3Verifier {
     }
 
     @VisibleForTesting
-    protected SortedSet<ContentKey> getMissing(MinutePath startPath, MinutePath endPath, String channelName, ContentDao s3ContentDao,
-                                             SortedSet<ContentKey> foundCacheKeys) {
+    protected SortedSet<ContentKey> getMissing(MinutePath startPath, MinutePath endPath, String channelName) {
         long timeout = baseTimeoutMinutes;
         QueryResult queryResult = new QueryResult(1);
-        SortedSet<ContentKey> longTermKeys = new TreeSet<>();
+        SortedSet<ContentKey> s3Keys = new TreeSet<>();
+        SortedSet<ContentKey> spokeKeys = new TreeSet<>();
         TimeQuery.TimeQueryBuilder builder = TimeQuery.builder()
                 .channelName(channelName)
                 .startTime(startPath.getTime())
@@ -184,25 +187,20 @@ public class S3Verifier {
         TimeQuery timeQuery = builder.build();
         try {
             CountDownLatch latch = new CountDownLatch(2);
-            runInQueryPool(ActiveTraces.getLocal(), latch, () -> {
-                SortedSet<ContentKey> spokeKeys = spokeWriteContentDao.queryByTime(timeQuery);
-                foundCacheKeys.addAll(spokeKeys);
-                queryResult.addKeys(spokeKeys);
-            });
-            runInQueryPool(ActiveTraces.getLocal(), latch, () -> longTermKeys.addAll(s3ContentDao.queryByTime(timeQuery)));
+            runInQueryPool(ActiveTraces.getLocal(), latch, () -> spokeKeys.addAll(spokeWriteContentDao.queryByTime(timeQuery)));
+            runInQueryPool(ActiveTraces.getLocal(), latch, () -> s3Keys.addAll(s3SingleContentDao.queryByTime(timeQuery)));
             latch.await(timeout, TimeUnit.MINUTES);
             if (latch.getCount() != 0) {
                 logger.error("s3 verifier timed out while finding missing items, write queue is backing up");
                 metricsService.increment(VERIFIER_TIMEOUT_METRIC_NAME);
+                return new TreeSet<>();
             }
-            queryResult.getContentKeys().removeAll(longTermKeys);
-            if (queryResult.getContentKeys().size() > 0) {
+            spokeKeys.removeAll(s3Keys);
+            if (spokeKeys.size() > 0) {
                 logger.info("missing items {} {}", channelName, queryResult.getContentKeys());
             }
-            if (queryResult.hadSuccess()) {
-                return queryResult.getContentKeys();
-            }
-            throw new FailedQueryException("unable to query spoke");
+            return spokeKeys;
+//            throw new FailedQueryException("unable to query spoke");
         } catch (InterruptedException e) {
             throw new RuntimeInterruptedException(e);
         }

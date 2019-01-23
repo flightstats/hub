@@ -43,12 +43,16 @@ import org.eclipse.jetty.websocket.jsr356.ClientContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import javax.websocket.WebSocketContainer;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 public class HubBindings extends AbstractModule {
     private final static Logger logger = LoggerFactory.getLogger(HubBindings.class);
+    private static final int channelThreads = HubProperties.getProperty("s3Verifier.channelThreads", 3);
 
     @Singleton
     @Provides
@@ -151,6 +155,21 @@ public class HubBindings extends AbstractModule {
         return mapper;
     }
 
+    @Named("channel")
+    @Singleton
+    @Provides
+    public static ExecutorService channelThreadPool() {
+        return Executors.newFixedThreadPool(channelThreads, new ThreadFactoryBuilder().setNameFormat("S3VerifierChannel-%d").build());
+    }
+
+    @Named("query")
+    @Singleton
+    @Provides
+    public
+    static ExecutorService queryThreadPool() {
+        return Executors.newFixedThreadPool(channelThreads * 2, new ThreadFactoryBuilder().setNameFormat("S3VerifierQuery-%d").build());
+    }
+
     @Override
     protected void configure() {
         Names.bindProperties(binder(), HubProperties.getProperties());
@@ -176,6 +195,12 @@ public class HubBindings extends AbstractModule {
         bind(FinalCheck.class).to(SpokeFinalCheck.class).asEagerSingleton();
         bind(InFlightService.class).asEagerSingleton();
         bind(ChannelService.class).asEagerSingleton();
+        bind(ExecutorService.class)
+                .annotatedWith(Names.named("channel"))
+                .toProvider(HubBindings::channelThreadPool);
+        bind(ExecutorService.class)
+                .annotatedWith(Names.named("query"))
+                .toProvider(HubBindings::queryThreadPool);
 
         bind(ContentDao.class)
                 .annotatedWith(Names.named(ContentDao.WRITE_CACHE))
