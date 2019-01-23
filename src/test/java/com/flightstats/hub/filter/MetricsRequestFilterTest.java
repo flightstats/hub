@@ -8,8 +8,6 @@ import org.junit.Test;
 
 import javax.ws.rs.container.ContainerRequestContext;
 import java.util.Collections;
-import org.slf4j.LoggerFactory;
-import org.slf4j.Logger;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -18,13 +16,8 @@ import static org.mockito.Mockito.when;
 
 public class MetricsRequestFilterTest {
     @BeforeClass
-    public static void integrationSetup() {
-        try {
-            Integration.startAwsHub();
-        } catch(Exception e) {
-            Logger logger = LoggerFactory.getLogger(MetricsRequestFilterTest.class);
-            logger.error("failed to start the hub ", e);
-        }
+    public static void integrationSetup() throws Exception {
+        Integration.startAwsHub();
     }
 
     @Test
