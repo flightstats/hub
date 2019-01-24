@@ -16,6 +16,7 @@ import org.junit.Test;
 
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.concurrent.ExecutorService;
 
 import static com.flightstats.hub.dao.aws.S3Verifier.LAST_SINGLE_VERIFIED;
 import static org.mockito.Mockito.mock;
@@ -31,14 +32,14 @@ public class S3VerifierUnitTest {
     public void testZKNotUpdatedOnFailure() {
         LastContentPath lastContentPath = mock(LastContentPath.class);
         ChannelService channelService = mock(ChannelService.class);
-        ContentDao spokeWriteContentDao = mock(ContentDao.class);
-        ContentDao s3SingleContentDao = mock(ContentDao.class);
         S3WriteQueue s3WriteQueue = mock(S3WriteQueue.class);
         Client httpClient = mock(Client.class);
         ZooKeeperState zooKeeperState = mock(ZooKeeperState.class);
         CuratorFramework curator = mock(CuratorFramework.class);
         MetricsService metricsService = mock(MetricsService.class);
-        S3Verifier s3Verifier = spy(new S3Verifier(lastContentPath, channelService, spokeWriteContentDao, s3SingleContentDao, s3WriteQueue, httpClient, zooKeeperState, curator, metricsService));
+        ExecutorService channelThreadPool = mock(ExecutorService.class);
+        S3Verifier.MissingContentFinder missingContentFinder = mock(S3Verifier.MissingContentFinder.class);
+        S3Verifier s3Verifier = new S3Verifier(lastContentPath, channelService, s3WriteQueue, httpClient, zooKeeperState, curator, metricsService, missingContentFinder, channelThreadPool);
 
         ChannelContentKey key = ChannelContentKey.fromResourcePath("http://hub/channel/foo/1999/12/31/23/59/59/999/bar");
         VerifierRange verifierRange = VerifierRange.builder()
@@ -49,7 +50,7 @@ public class S3VerifierUnitTest {
         SortedSet<ContentKey> missingKeys = new TreeSet<>();
         missingKeys.add(key.getContentKey());
 
-        when(s3Verifier.getMissing(verifierRange.getStartPath(), verifierRange.getEndPath(), "foo", s3SingleContentDao, new TreeSet<>())).thenReturn(missingKeys);
+        when(missingContentFinder.getMissing(verifierRange.getStartPath(), verifierRange.getEndPath(), "foo")).thenReturn(missingKeys);
         when(s3WriteQueue.add(key)).thenReturn(false);
 
         s3Verifier.verifyChannel(verifierRange);
@@ -61,14 +62,14 @@ public class S3VerifierUnitTest {
     public void testZKUpdatedOnSuccess() {
         LastContentPath lastContentPath = mock(LastContentPath.class);
         ChannelService channelService = mock(ChannelService.class);
-        ContentDao spokeWriteContentDao = mock(ContentDao.class);
-        ContentDao s3SingleContentDao = mock(ContentDao.class);
         S3WriteQueue s3WriteQueue = mock(S3WriteQueue.class);
         Client httpClient = mock(Client.class);
         ZooKeeperState zooKeeperState = mock(ZooKeeperState.class);
         CuratorFramework curator = mock(CuratorFramework.class);
         MetricsService metricsService = mock(MetricsService.class);
-        S3Verifier s3Verifier = spy(new S3Verifier(lastContentPath, channelService, spokeWriteContentDao, s3SingleContentDao, s3WriteQueue, httpClient, zooKeeperState, curator, metricsService));
+        ExecutorService channelThreadPool = mock(ExecutorService.class);
+        S3Verifier.MissingContentFinder missingContentFinder = mock(S3Verifier.MissingContentFinder.class);
+        S3Verifier s3Verifier = new S3Verifier(lastContentPath, channelService, s3WriteQueue, httpClient, zooKeeperState, curator, metricsService, missingContentFinder, channelThreadPool);
 
         ChannelContentKey key = ChannelContentKey.fromResourcePath("http://hub/channel/foo/1999/12/31/23/59/59/999/bar");
         VerifierRange verifierRange = VerifierRange.builder()
@@ -79,7 +80,7 @@ public class S3VerifierUnitTest {
         SortedSet<ContentKey> missingKeys = new TreeSet<>();
         missingKeys.add(key.getContentKey());
 
-        when(s3Verifier.getMissing(verifierRange.getStartPath(), verifierRange.getEndPath(), "foo", s3SingleContentDao, new TreeSet<>())).thenReturn(missingKeys);
+        when(missingContentFinder.getMissing(verifierRange.getStartPath(), verifierRange.getEndPath(), "foo")).thenReturn(missingKeys);
         when(s3WriteQueue.add(key)).thenReturn(true);
 
         s3Verifier.verifyChannel(verifierRange);

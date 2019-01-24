@@ -155,14 +155,14 @@ public class HubBindings extends AbstractModule {
         return mapper;
     }
 
-    @Named("channel")
+    @Named("s3VerifierChannelThreadPool")
     @Singleton
     @Provides
     public static ExecutorService channelThreadPool() {
         return Executors.newFixedThreadPool(channelThreads, new ThreadFactoryBuilder().setNameFormat("S3VerifierChannel-%d").build());
     }
 
-    @Named("query")
+    @Named("s3VerifierQueryThreadPool")
     @Singleton
     @Provides
     public
@@ -195,12 +195,6 @@ public class HubBindings extends AbstractModule {
         bind(FinalCheck.class).to(SpokeFinalCheck.class).asEagerSingleton();
         bind(InFlightService.class).asEagerSingleton();
         bind(ChannelService.class).asEagerSingleton();
-        bind(ExecutorService.class)
-                .annotatedWith(Names.named("channel"))
-                .toProvider(HubBindings::channelThreadPool);
-        bind(ExecutorService.class)
-                .annotatedWith(Names.named("query"))
-                .toProvider(HubBindings::queryThreadPool);
 
         bind(ContentDao.class)
                 .annotatedWith(Names.named(ContentDao.WRITE_CACHE))
