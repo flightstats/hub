@@ -41,7 +41,7 @@ public class S3Verifier {
     private final static Logger logger = LoggerFactory.getLogger(S3Verifier.class);
     private static final String LEADER_PATH = "/S3VerifierSingleService";
 
-    private final int offsetMinutes = HubProperties.getProperty("s3Verifier.offsetMinutes", 15);
+    private final S3VerifierConfig s3VerifierConfig;
 
     private final ExecutorService channelThreadPool;
     private final LastContentPath lastContentPath;
@@ -62,6 +62,7 @@ public class S3Verifier {
                       CuratorFramework curator,
                       MetricsService metricsService,
                       MissingContentFinder missingContentFinder,
+                      S3VerifierConfig s3VerifierConfig,
                       @Named("s3VerifierChannelThreadPool") ExecutorService channelThreadPool) {
         this.lastContentPath = lastContentPath;
         this.channelService = channelService;
@@ -70,10 +71,11 @@ public class S3Verifier {
         this.zooKeeperState = zooKeeperState;
         this.curator = curator;
         this.metricsService = metricsService;
+        this.s3VerifierConfig = s3VerifierConfig;
         this.channelThreadPool = channelThreadPool;
         this.missingContentFinder = missingContentFinder;
 
-        if (HubProperties.getProperty("s3Verifier.run", true)) {
+        if (s3VerifierConfig.isEnabled()) {
             HubServices.register(new S3ScheduledVerifierService(), HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
         }
     }
@@ -87,7 +89,7 @@ public class S3Verifier {
                     channelThreadPool.submit(() -> {
                         String name = Thread.currentThread().getName();
                         Thread.currentThread().setName(name + "|" + channel.getDisplayName());
-                        String url = HubProperties.getAppUrl() + "internal/s3Verifier/" + channel.getDisplayName();
+                        String url = s3VerifierConfig.getEndpointUrlGenerator().apply(channel.getDisplayName());
                         logger.debug("calling {}", url);
                         ClientResponse post = null;
                         try {
@@ -123,7 +125,7 @@ public class S3Verifier {
         now = channelService.getLastUpdated(channelConfig.getDisplayName(), new MinutePath(now)).getTime();
         DateTime start = now.minusMinutes(1);
         MinutePath endPath = new MinutePath(start);
-        MinutePath defaultStart = new MinutePath(start.minusMinutes(offsetMinutes));
+        MinutePath defaultStart = new MinutePath(start.minusMinutes(s3VerifierConfig.getOffsetMinutes()));
         MinutePath startPath = (MinutePath) lastContentPath.get(channelConfig.getDisplayName(), defaultStart, LAST_SINGLE_VERIFIED);
         if (channelConfig.isLive() && startPath.compareTo(spokeTtlTime) < 0) {
             startPath = spokeTtlTime;
@@ -165,7 +167,7 @@ public class S3Verifier {
 
     @VisibleForTesting
     static class MissingContentFinder {
-        private final long baseTimeoutMinutes;
+        private final S3VerifierConfig s3VerifierConfig;
         private final ExecutorService queryThreadPool;
         private final ContentDao spokeWriteContentDao;
         private final ContentDao s3SingleContentDao;
@@ -174,18 +176,19 @@ public class S3Verifier {
         @Inject
         public MissingContentFinder(@Named(ContentDao.WRITE_CACHE) ContentDao spokeWriteContentDao,
                                     @Named(ContentDao.SINGLE_LONG_TERM) ContentDao s3SingleContentDao,
+                                    S3VerifierConfig s3VerifierConfig,
                                     MetricsService metricsService,
                                     @Named("s3VerifierQueryThreadPool") ExecutorService queryThreadPool) {
             this.spokeWriteContentDao = spokeWriteContentDao;
             this.s3SingleContentDao = s3SingleContentDao;
             this.metricsService = metricsService;
-            this.baseTimeoutMinutes = HubProperties.getProperty("s3Verifier.baseTimeoutMinutes", 2);
+            this.s3VerifierConfig = s3VerifierConfig;
             this.queryThreadPool = queryThreadPool;
         }
 
         @VisibleForTesting
         protected SortedSet<ContentKey> getMissing(MinutePath startPath, MinutePath endPath, String channelName) {
-            long timeout = baseTimeoutMinutes;
+            long timeout = s3VerifierConfig.getBaseTimeoutMinutes();
             QueryResult queryResult = new QueryResult(1);
             SortedSet<ContentKey> s3Keys = new TreeSet<>();
             SortedSet<ContentKey> spokeKeys = new TreeSet<>();
@@ -250,7 +253,7 @@ public class S3Verifier {
         }
 
         protected Scheduler scheduler() {
-            return Scheduler.newFixedDelaySchedule(0, offsetMinutes, TimeUnit.MINUTES);
+            return Scheduler.newFixedDelaySchedule(0, s3VerifierConfig.getOffsetMinutes(), TimeUnit.MINUTES);
         }
 
         @Override
@@ -259,7 +262,7 @@ public class S3Verifier {
             while (leadership.hasLeadership()) {
                 long start = System.currentTimeMillis();
                 verifySingleChannels();
-                long sleep = TimeUnit.MINUTES.toMillis(offsetMinutes) - (System.currentTimeMillis() - start);
+                long sleep = TimeUnit.MINUTES.toMillis(s3VerifierConfig.getOffsetMinutes()) - (System.currentTimeMillis() - start);
                 logger.debug("sleeping for {} ms", sleep);
                 Sleeper.sleep(Math.max(0, sleep));
                 logger.debug("waking up after sleep");
