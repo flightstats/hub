@@ -7,20 +7,13 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static org.junit.Assert.assertEquals;
 
 public class TimedWebhookStrategyTest {
     @BeforeClass
-    public static void setupIntegration() {
-        Logger logger = LoggerFactory.getLogger(TimedWebhookStrategyTest.class);
-        try {
-            Integration.startAwsHub();
-        } catch (Exception e) {
-            logger.error("failed to start hub for integration test!", e);
-        }
+    public static void setupIntegration() throws Exception {
+        Integration.startAwsHub();
     }
 
     @Test
