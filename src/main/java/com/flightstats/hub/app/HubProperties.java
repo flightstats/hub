@@ -121,7 +121,7 @@ public class HubProperties {
     }
 
     private static Properties getLocalProperties(String fileNameRoot) {
-        HubMain.warn("using " + fileNameRoot + " properties file");
+        logger.warn("using " + fileNameRoot + " properties file");
         Properties defaultProperties = getProperties("/" + fileNameRoot + ".properties", true);
         Properties localProperties = getProperties("/" + fileNameRoot + "_local.properties", false);
         for (String localKey : localProperties.stringPropertyNames()) {
@@ -138,7 +138,7 @@ public class HubProperties {
         if (resource != null) {
             return loadProperties(resource, required);
         } else {
-            HubMain.warn("unable to load files, using baked in defaults");
+            logger.warn("unable to load files, using baked in defaults");
             Properties properties = new Properties();
             properties.put("hub.type", "aws");
             properties.put("app.name", "hub-v2");
