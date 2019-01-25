@@ -3,7 +3,7 @@ package com.flightstats.hub.app;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.flightstats.hub.filter.CORSFilter;
 import com.flightstats.hub.filter.StreamEncodingFilter;
-import com.flightstats.hub.metrics.JVMMetricsService;
+import com.flightstats.hub.metrics.InfluxdbReporterLifecycle;
 import com.flightstats.hub.metrics.MetricsConfig;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -29,13 +29,11 @@ public class HubMain {
 
     private static final Logger logger = LoggerFactory.getLogger(HubMain.class);
     private static final DateTime startTime = new DateTime();
-    private static String propertiesFilePath;
 
     public static void main(String[] args) throws Exception {
         if (args.length == 0) {
             throw new UnsupportedOperationException("HubMain requires a property filename, 'useDefault', or 'useEncryptedDefault'");
         }
-        propertiesFilePath = args[0];
         HubProperties.loadProperties(args[0]);
         start();
     }
@@ -68,9 +66,7 @@ public class HubMain {
                 DeflateEncoder.class);
 
         List<Module> modules = new ArrayList<>();
-        MetricsConfig metricsConfig = new MetricsConfig();
-        metricsConfig.loadValues(propertiesFilePath);
-        modules.add(new HubBindings(metricsConfig));
+        modules.add(new HubBindings());
         String hubType = HubProperties.getProperty("hub.type", "aws");
         logger.info("starting with hub.type {}", hubType);
         resourceConfig.packages("com.flightstats.hub");
@@ -86,8 +82,8 @@ public class HubMain {
                 throw new RuntimeException("unsupported hub.type " + hubType);
         }
         Injector injector = Guice.createInjector(modules);
-        JVMMetricsService jvmMetricsService = injector.getInstance(JVMMetricsService.class);
-        HubServices.register(jvmMetricsService, HubServices.TYPE.BEFORE_HEALTH_CHECK);
+        InfluxdbReporterLifecycle influxdbReporterLifecycle = injector.getInstance(InfluxdbReporterLifecycle.class);
+        HubServices.register(influxdbReporterLifecycle, HubServices.TYPE.BEFORE_HEALTH_CHECK);
         HubProvider.setInjector(injector);
         HubServices.start(HubServices.TYPE.BEFORE_HEALTH_CHECK);
         HubJettyServer server = new HubJettyServer();

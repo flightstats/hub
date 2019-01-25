@@ -13,35 +13,39 @@ import org.slf4j.Logger;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class JVMMetricsService extends AbstractIdleService {
-    private final Logger logger = LoggerFactory.getLogger(JVMMetricsService.class);
+public class InfluxdbReporterLifecycle extends AbstractIdleService {
+    private final Logger logger = LoggerFactory.getLogger(InfluxdbReporterLifecycle.class);
+    public final static String NAME = "InfluxdbReporter";
     private final MetricRegistry metricsRegistry;
     private final ScheduledReporter influxdbReporter;
     private final MetricsConfig metricsConfig;
 
     @Inject
-    public JVMMetricsService(MetricRegistry metricsRegistry, ScheduledReporter influxdbReporter, MetricsConfig metricsConfig) {
+    public InfluxdbReporterLifecycle(
+            MetricRegistry metricsRegistry,
+            ScheduledReporter influxdbReporter,
+            MetricsConfig metricsConfig
+            ) {
         this.metricsRegistry = metricsRegistry;
         this.influxdbReporter = influxdbReporter;
         this.metricsConfig = metricsConfig;
     }
 
     public void startUp() {
-        if (metricsConfig.enabled()) {
+        if (metricsConfig.isEnabled()) {
             logger.info(
-                    "starting jvm metrics service reporting to {} :// {} : {}",
+                    "starting metrics reporting to influxdb at {}://{}:{}",
                     metricsConfig.getInfluxdbProtocol(),
                     metricsConfig.getInfluxdbHost(),
                     metricsConfig.getInfluxdbPort());
             int intervalSeconds = metricsConfig.getReportingIntervalSeconds();
-            String metricPrefix = "jvm_";
-            metricsRegistry.register(metricPrefix + "gc", new GarbageCollectorMetricSet());
-            metricsRegistry.register(metricPrefix + "thread", new CachedThreadStatesGaugeSet(intervalSeconds, TimeUnit.SECONDS));
-            metricsRegistry.register(metricPrefix + "memory", new MemoryUsageGaugeSet());
+            metricsRegistry.registerAll(new GarbageCollectorMetricSet());
+            metricsRegistry.registerAll(new CachedThreadStatesGaugeSet(intervalSeconds, TimeUnit.SECONDS));
+            metricsRegistry.registerAll(new MemoryUsageGaugeSet());
             influxdbReporter.start(intervalSeconds, TimeUnit.SECONDS);
 
         } else {
-            logger.info("not starting metrics collection for jvm: disabled");
+            logger.info("not starting influxdb reporter: disabled");
         }
 
     }

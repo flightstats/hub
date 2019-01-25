@@ -7,14 +7,15 @@ import static com.flightstats.hub.app.HubHost.getLocalName;
 
 
 public class MetricsConfigTest {
+
     @Test
     public void testDefaultValues_defaultTags() {
-        Properties emptyProperties = new Properties();
-        MetricsConfig metricsConfig = new MetricsConfig(emptyProperties);
+        MetricsConfig metricsConfig = MetricsConfig
+                .builder()
+                .build();
         assertEquals(metricsConfig.getRole(), "");
         assertEquals(metricsConfig.getTeam(), "");
         assertEquals(metricsConfig.getEnv(), "dev");
-        assertEquals(metricsConfig.getClusterLocation(), "local");
         assertEquals(metricsConfig.getAppVersion(), "local");
         assertEquals(metricsConfig.getInfluxdbProtocol(), "http");
         assertEquals(metricsConfig.getInfluxdbHost(), "localhost");
@@ -24,124 +25,148 @@ public class MetricsConfigTest {
         assertEquals(metricsConfig.getInfluxdbDatabaseName(), "hubmain");
         assertEquals(metricsConfig.getClusterTag(), "local-dev");
         assertEquals(metricsConfig.getReportingIntervalSeconds(),  15);
-        assertFalse(metricsConfig.enabled());
+        assertFalse(metricsConfig.isEnabled());
     }
 
-    @Test
-    public void testDefaultValuesAfterFailedFileLoad_defaultTags() {
-        Properties emptyProperties = new Properties();
-        MetricsConfig metricsConfig = new MetricsConfig(emptyProperties);
-        boolean loaded = metricsConfig.loadValues("/not/a/path");
-        assertFalse(loaded);
-        assertEquals(metricsConfig.getRole(), "");
-        assertEquals(metricsConfig.getTeam(), "");
-        assertEquals(metricsConfig.getEnv(), "dev");
-        assertEquals(metricsConfig.getClusterLocation(), "local");
-        assertEquals(metricsConfig.getAppVersion(), "local");
-        assertEquals(metricsConfig.getInfluxdbProtocol(), "http");
-        assertEquals(metricsConfig.getInfluxdbHost(), "localhost");
-        assertEquals(metricsConfig.getInfluxdbPort(), 8086);
-        assertEquals(metricsConfig.getInfluxdbPass(), "");
-        assertEquals(metricsConfig.getInfluxdbUser(), "");
-        assertEquals(metricsConfig.getInfluxdbDatabaseName(), "hubmain");
-        assertEquals(metricsConfig.getClusterTag(), "local-dev");
-        assertEquals(metricsConfig.getReportingIntervalSeconds(),  15);
-        assertFalse(metricsConfig.enabled());
-    }
+//    @Test
+//    public void testCustomValues_customValues() {
+//        Properties customProperties = new Properties();
+//        customProperties.setProperty("app.environment", "staging");
+//        customProperties.setProperty("metrics.influxdb.protocol", "https");
+//        customProperties.setProperty("metrics.influxdb.host", "hub.test.io");
+//        customProperties.setProperty("metrics.influxdb.port", "9999");
+//        customProperties.setProperty("metrics.enable", "true");
+//        customProperties.setProperty("metrics.influxdb.database.user", "test_user");
+//        customProperties.setProperty("metrics.influxdb.database.password", "$$$$$$");
+//        customProperties.setProperty("metrics.influxdb.database.name", "hub_test");
+//        customProperties.setProperty("cluster.location", "dls");
+//        customProperties.setProperty("metrics.seconds", "30");
+//        MetricsConfig metricsConfigCustom = MetricsConfig
+//                .builder()
+//                .properties(customProperties)
+//                .build();
+//
+//        assertEquals("staging", metricsConfigCustom.getEnv());
+//        assertEquals("https", metricsConfigCustom.getInfluxdbProtocol());
+//        assertEquals("hub.test.io", metricsConfigCustom.getInfluxdbHost());
+//        assertEquals(9999, metricsConfigCustom.getInfluxdbPort());
+//        assertEquals("test_user", metricsConfigCustom.getInfluxdbUser());
+//        assertEquals("$$$$$$", metricsConfigCustom.getInfluxdbPass());
+//        assertEquals("hub_test", metricsConfigCustom.getInfluxdbDatabaseName());
+//        assertTrue(metricsConfigCustom.isEnabled());
+//        assertEquals("dls-staging", metricsConfigCustom.getClusterTag());
+//        assertEquals(30, metricsConfigCustom.getReportingIntervalSeconds());
+//        assertEquals(getLocalName(), metricsConfigCustom.getHostTag());
+//    }
+//
+//    @Test
+//    public void testCustomValuesByIndividualBuilders_customValues() {
+//        Properties customProperties = new Properties();
+//        customProperties.setProperty("app.environment", "testing");
+//        customProperties.setProperty("metrics.influxdb.protocol", "https");
+//        customProperties.setProperty("metrics.influxdb.host", "hub.test.io");
+//        customProperties.setProperty("metrics.influxdb.port", "9999");
+//        customProperties.setProperty("metrics.enable", "true");
+//        customProperties.setProperty("metrics.influxdb.database.user", "test_user");
+//        customProperties.setProperty("metrics.influxdb.database.password", "$$$$$$");
+//        customProperties.setProperty("metrics.influxdb.database.name", "hub_test");
+//        customProperties.setProperty("cluster.location", "dls");
+//        customProperties.setProperty("metrics.seconds", "30");
+//        customProperties.setProperty("metrics.enabled", "false");
+//        MetricsConfig metricsConfigCustom = MetricsConfig
+//                .builder()
+//                .properties(customProperties)
+//                .env("testing")
+//                .influxdbProtocol("udp")
+//                .influxdbHost("hub.test2.io")
+//                .influxdbPort(8765)
+//                .influxdbUser("test_user2")
+//                .influxdbPass("@@@@@@")
+//                .influxdbDatabaseName("hub_test2")
+//                .clusterTag("dls-testing")
+//                .reportingIntervalSeconds(31)
+//                .hostTag(getLocalName() + "test")
+//                .enabled(true)
+//                .build();
+//
+//
+//        assertEquals("testing", metricsConfigCustom.getEnv());
+//        assertEquals("udp", metricsConfigCustom.getInfluxdbProtocol());
+//        assertEquals("hub.test2.io", metricsConfigCustom.getInfluxdbHost());
+//        assertEquals(8765, metricsConfigCustom.getInfluxdbPort());
+//        assertEquals("test_user2", metricsConfigCustom.getInfluxdbUser());
+//        assertEquals("@@@@@@", metricsConfigCustom.getInfluxdbPass());
+//        assertEquals("hub_test2", metricsConfigCustom.getInfluxdbDatabaseName());
+//        assertTrue(metricsConfigCustom.isEnabled());
+//        assertEquals("dls-testing", metricsConfigCustom.getClusterTag());
+//        assertEquals(31, metricsConfigCustom.getReportingIntervalSeconds());
+//        assertEquals(getLocalName() + "test", metricsConfigCustom.getHostTag());
+//    }
+//
+//    @Test
+//    public void testCustomValuesByPropertiesBuilder_overriddenPropertiesValues() {
+//        Properties customProperties = new Properties();
+//        customProperties.setProperty("app.environment", "testing");
+//        customProperties.setProperty("metrics.influxdb.protocol", "https");
+//        customProperties.setProperty("metrics.influxdb.host", "hub.test.io");
+//        customProperties.setProperty("metrics.influxdb.port", "9999");
+//        customProperties.setProperty("metrics.enable", "true");
+//        customProperties.setProperty("metrics.influxdb.database.user", "test_user");
+//        customProperties.setProperty("metrics.influxdb.database.password", "$$$$$$");
+//        customProperties.setProperty("metrics.influxdb.database.name", "hub_test");
+//        customProperties.setProperty("cluster.location", "dls");
+//        customProperties.setProperty("metrics.seconds", "30");
+//        customProperties.setProperty("metrics.enabled", "false");
+//        MetricsConfig metricsConfigCustom = MetricsConfig
+//                .builder()
+//                .env("testing")
+//                .influxdbProtocol("udp")
+//                .influxdbHost("hub.test2.io")
+//                .influxdbPort(8765)
+//                .influxdbUser("test_user2")
+//                .influxdbPass("@@@@@@")
+//                .influxdbDatabaseName("hub_test2")
+//                .clusterTag("dls-testing")
+//                .reportingIntervalSeconds(31)
+//                .hostTag(getLocalName() + "test")
+//                .enabled(true)
+//                // note the properties file is overridden despite order of ops here
+//                .properties(customProperties)
+//                .build();
+//
+//
+//        assertEquals("testing", metricsConfigCustom.getEnv());
+//        assertEquals("udp", metricsConfigCustom.getInfluxdbProtocol());
+//        assertEquals("hub.test2.io", metricsConfigCustom.getInfluxdbHost());
+//        assertEquals(8765, metricsConfigCustom.getInfluxdbPort());
+//        assertEquals("test_user2", metricsConfigCustom.getInfluxdbUser());
+//        assertEquals("@@@@@@", metricsConfigCustom.getInfluxdbPass());
+//        assertEquals("hub_test2", metricsConfigCustom.getInfluxdbDatabaseName());
+//        assertTrue(metricsConfigCustom.isEnabled());
+//        assertEquals("dls-testing", metricsConfigCustom.getClusterTag());
+//        assertEquals(31, metricsConfigCustom.getReportingIntervalSeconds());
+//        assertEquals(getLocalName() + "test", metricsConfigCustom.getHostTag());
+//    }
+//
+//    @Test
+//    public void testDefaultValuesAfterFailedFileLoad_defaultTags() {
+//        MetricsConfig metricsConfig = MetricsConfig
+//                .builder()
+//                .properties("/not/a/valid/path")
+//                .build();
+//        assertEquals(metricsConfig.getRole(), "");
+//        assertEquals(metricsConfig.getTeam(), "");
+//        assertEquals(metricsConfig.getEnv(), "dev");
+//        assertEquals(metricsConfig.getAppVersion(), "local");
+//        assertEquals(metricsConfig.getInfluxdbProtocol(), "http");
+//        assertEquals(metricsConfig.getInfluxdbHost(), "localhost");
+//        assertEquals(metricsConfig.getInfluxdbPort(), 8086);
+//        assertEquals(metricsConfig.getInfluxdbPass(), "");
+//        assertEquals(metricsConfig.getInfluxdbUser(), "");
+//        assertEquals(metricsConfig.getInfluxdbDatabaseName(), "hubmain");
+//        assertEquals(metricsConfig.getClusterTag(), "local-dev");
+//        assertEquals(metricsConfig.getReportingIntervalSeconds(),  15);
+//        assertFalse(metricsConfig.isEnabled());
+//    }
 
-    @Test
-    public void testCustomValues_envTag() {
-        Properties customProperties = new Properties();
-        customProperties.setProperty("app.environment", "staging");
-        MetricsConfig metricsConfig = new MetricsConfig(customProperties);
-        assertEquals("staging", metricsConfig.getEnv());
-    }
-
-    @Test
-    public void testCustomValues_clusterLocationTag() {
-        Properties customProperties = new Properties();
-        customProperties.setProperty("cluster.location", "dls");
-        MetricsConfig metricsConfig = new MetricsConfig(customProperties);
-        assertEquals("dls", metricsConfig.getClusterLocation());
-    }
-
-    @Test
-    public void testCustomValues_influxdbProtocolTag() {
-        Properties customProperties = new Properties();
-        customProperties.setProperty("metrics.influxdb.protocol", "https");
-        MetricsConfig metricsConfig = new MetricsConfig(customProperties);
-        assertEquals("https", metricsConfig.getInfluxdbProtocol());
-    }
-
-    @Test
-    public void testCustomValues_influxdbHostTag() {
-        Properties customProperties = new Properties();
-        customProperties.setProperty("metrics.influxdb.host", "hub.test.io");
-        MetricsConfig metricsConfig = new MetricsConfig(customProperties);
-        assertEquals("hub.test.io", metricsConfig.getInfluxdbHost());
-    }
-
-    @Test
-    public void testCustomValues_influxdbPortTag() {
-        Properties customProperties = new Properties();
-        customProperties.setProperty("metrics.influxdb.port", "9999");
-        MetricsConfig metricsConfig = new MetricsConfig(customProperties);
-        assertEquals(9999, metricsConfig.getInfluxdbPort());
-    }
-
-    @Test
-    public void testCustomValues_influxdbUserTag() {
-        Properties customProperties = new Properties();
-        customProperties.setProperty("metrics.influxdb.database.user", "test_user");
-        MetricsConfig metricsConfig = new MetricsConfig(customProperties);
-        assertEquals("test_user", metricsConfig.getInfluxdbUser());
-    }
-
-    @Test
-    public void testCustomValues_influxdbPasswordTag() {
-        Properties customProperties = new Properties();
-        customProperties.setProperty("metrics.influxdb.database.password", "$$$$$$");
-        MetricsConfig metricsConfig = new MetricsConfig(customProperties);
-        assertEquals("$$$$$$", metricsConfig.getInfluxdbPass());
-    }
-
-    @Test
-    public void testCustomValues_influxdbDatabaseNameTag() {
-        Properties customProperties = new Properties();
-        customProperties.setProperty("metrics.influxdb.database.name", "hub_test");
-        MetricsConfig metricsConfig = new MetricsConfig(customProperties);
-        assertEquals("hub_test", metricsConfig.getInfluxdbDatabaseName());
-    }
-
-    @Test
-    public void testCustomValues_metricsEnabled() {
-        Properties customProperties = new Properties();
-        customProperties.setProperty("metrics.enable", "true");
-        MetricsConfig metricsConfig = new MetricsConfig(customProperties);
-        assertTrue(metricsConfig.enabled());
-    }
-
-    @Test
-    public void testCustomValues_clusterNameTag() {
-        Properties customProperties = new Properties();
-        customProperties.setProperty("app.environment", "test");
-        customProperties.setProperty("cluster.location", "dls");
-        MetricsConfig metricsConfig = new MetricsConfig(customProperties);
-        assertEquals("dls-test", metricsConfig.getClusterTag());
-    }
-
-    @Test
-    public void testCustomValues_reporterInterval() {
-        Properties customProperties = new Properties();
-        customProperties.setProperty("metrics.seconds", "30");
-        MetricsConfig metricsConfig = new MetricsConfig(customProperties);
-        assertEquals(30, metricsConfig.getReportingIntervalSeconds());
-    }
-
-    @Test
-    public void testGetHostTag_HubHostGetLocalName() {
-        Properties customProperties = new Properties();
-        MetricsConfig metricsConfig = new MetricsConfig(customProperties);
-        assertEquals(getLocalName(), metricsConfig.getHostTag());
-    }
 }
