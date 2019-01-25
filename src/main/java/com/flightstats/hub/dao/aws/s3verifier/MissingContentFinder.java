@@ -20,10 +20,9 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
 
 public class MissingContentFinder {
-    private static final String VERIFIER_TIMEOUT_METRIC_NAME = "s3.verifier.timeout";
+    protected static final String VERIFIER_TIMEOUT_METRIC_NAME = "s3.verifier.timeout";
     private static final Logger logger = LoggerFactory.getLogger(MissingContentFinder.class);
 
     private final VerifierConfig verifierConfig;
@@ -46,7 +45,7 @@ public class MissingContentFinder {
     }
 
     public SortedSet<ContentKey> getMissing(MinutePath startPath, MinutePath endPath, String channelName) {
-        long timeout = verifierConfig.getBaseTimeoutMinutes();
+        long timeout = verifierConfig.getBaseTimeoutValue();
         QueryResult queryResult = new QueryResult(1);
         SortedSet<ContentKey> s3Keys = new TreeSet<>();
         SortedSet<ContentKey> spokeKeys = new TreeSet<>();
@@ -64,7 +63,7 @@ public class MissingContentFinder {
             CountDownLatch latch = new CountDownLatch(2);
             runInQueryPool(ActiveTraces.getLocal(), latch, () -> spokeKeys.addAll(spokeWriteContentDao.queryByTime(timeQuery)));
             runInQueryPool(ActiveTraces.getLocal(), latch, () -> s3Keys.addAll(s3SingleContentDao.queryByTime(timeQuery)));
-            latch.await(timeout, TimeUnit.MINUTES);
+            latch.await(timeout, verifierConfig.getBaseTimeoutUnit());
             if (latch.getCount() != 0) {
                 logger.error("s3 verifier timed out while finding missing items, write queue is backing up");
                 metricsService.increment(VERIFIER_TIMEOUT_METRIC_NAME);
