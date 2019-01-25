@@ -32,10 +32,7 @@ import com.flightstats.hub.time.TimeService;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.webhook.WebhookManager;
 import com.flightstats.hub.webhook.WebhookValidator;
-import com.google.inject.AbstractModule;
-import com.google.inject.Inject;
-import com.google.inject.Provides;
-import com.google.inject.Singleton;
+import com.google.inject.*;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.sun.jersey.api.client.Client;
@@ -59,6 +56,12 @@ import java.util.concurrent.TimeUnit;
 
 public class HubBindings extends AbstractModule {
     private final static Logger logger = LoggerFactory.getLogger(HubBindings.class);
+    private final static MetricRegistry metricRegistry = new MetricRegistry();
+    private final static MetricsConfig  metricsConfig = MetricsConfig
+            .builder()
+            .buildWithDefaults()
+            .build();
+
 
     @Singleton
     @Provides
@@ -161,11 +164,11 @@ public class HubBindings extends AbstractModule {
         return mapper;
     }
 
-    private UdpInfluxdbProtocol udpProtocol(MetricsConfig metricsConfig) {
+    private UdpInfluxdbProtocol udpProtocol() {
         return new UdpInfluxdbProtocol(metricsConfig.getInfluxdbHost(), metricsConfig.getInfluxdbPort());
     }
 
-    private HttpInfluxdbProtocol httpProtocol(MetricsConfig metricsConfig) {
+    private HttpInfluxdbProtocol httpProtocol() {
         return new HttpInfluxdbProtocol(
                 metricsConfig.getInfluxdbHost(),
                 metricsConfig.getInfluxdbPort(),
@@ -174,50 +177,18 @@ public class HubBindings extends AbstractModule {
                 metricsConfig.getInfluxdbDatabaseName());
     }
 
-    private static String parseAppVersion() {
-        try {
-            HubVersion hubVersion = HubProvider.getInstance(HubVersion.class);
-            return hubVersion.getVersion();
-            // catch null exception because HubProvider is not available in unit tests
-        } catch (NullPointerException e) {
-            logger.info("no app version available using 'local'", e);
-            return "local";
-        }
-    }
-
-    @Named(InfluxdbReporterLifecycle.NAME)
     @Provides
     @Singleton
     public static MetricsConfig influxdbReporterConfig() {
-        return MetricsConfig
-                .builder()
-                .appVersion(parseAppVersion())
-                .clusterTag(
-                        HubProperties.getProperty("cluster.location", "local") +
-                                "-" +
-                                HubProperties.getProperty("app.environment", "dev")
-                )
-                .env(HubProperties.getProperty("app.environment", "dev"))
-                .enabled(HubProperties.getProperty("metrics.enabled", "false").equals("true"))
-                .hostTag(HubHost.getLocalName())
-                .influxdbDatabaseName(HubProperties.getProperty("metrics.influxdb.database.name", "hub_tick"))
-                .influxdbHost("localhost")
-                .influxdbPass(HubProperties.getProperty("metrics.influxdb.database.password", ""))
-                .influxdbPort(HubProperties.getProperty("metrics.influxdb.port", 8086))
-                .influxdbProtocol("http")
-                .influxdbUser(HubProperties.getProperty("metrics.influxdb.database.user", ""))
-                .reportingIntervalSeconds(HubProperties.getProperty("metrics.seconds", 15))
-                .role(HubProperties.getProperty("metrics.tags.role", ""))
-                .team(HubProperties.getProperty("metrics.tags.team", ""))
-                .build();
+        return metricsConfig;
     }
 
     @Singleton
     @Provides
-    @Inject
-    private ScheduledReporter influxdbReporter(MetricsConfig metricsConfig, MetricRegistry metricRegistry) {
+    private ScheduledReporter influxdbReporter() {
         String protocolId = metricsConfig.getInfluxdbProtocol();
-        InfluxdbProtocol protocol = protocolId.contains("http") ? httpProtocol(metricsConfig) : udpProtocol(metricsConfig);
+
+        InfluxdbProtocol protocol = protocolId.contains("http") ? httpProtocol() : udpProtocol();
         return InfluxdbReporter.forRegistry(metricRegistry)
                 .protocol(protocol)
                 .convertRatesTo(TimeUnit.SECONDS)
@@ -261,7 +232,7 @@ public class HubBindings extends AbstractModule {
         bind(MetricsConfig.class)
                 .annotatedWith(Names.named(InfluxdbReporterLifecycle.NAME))
                 .toProvider(HubBindings::influxdbReporterConfig);
-        bind(MetricRegistry.class).asEagerSingleton();
+        bind(MetricRegistry.class).toInstance(metricRegistry);
         bind(InfluxdbReporterLifecycle.class).asEagerSingleton();
 
         bind(ContentDao.class)
