@@ -8,7 +8,6 @@ import com.codahale.metrics.ScheduledReporter;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.google.inject.name.Named;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import java.util.concurrent.TimeUnit;
@@ -16,7 +15,6 @@ import java.util.concurrent.TimeUnit;
 @Singleton
 public class InfluxdbReporterLifecycle extends AbstractIdleService {
     private final Logger logger = LoggerFactory.getLogger(InfluxdbReporterLifecycle.class);
-    public final static String NAME = "InfluxdbReporter";
     private final MetricRegistry metricsRegistry;
     private final ScheduledReporter influxdbReporter;
     private final MetricsConfig metricsConfig;
@@ -25,7 +23,7 @@ public class InfluxdbReporterLifecycle extends AbstractIdleService {
     public InfluxdbReporterLifecycle(
             MetricRegistry metricsRegistry,
             ScheduledReporter influxdbReporter,
-            @Named(NAME) MetricsConfig metricsConfig
+            MetricsConfig metricsConfig
             ) {
         this.metricsRegistry = metricsRegistry;
         this.influxdbReporter = influxdbReporter;

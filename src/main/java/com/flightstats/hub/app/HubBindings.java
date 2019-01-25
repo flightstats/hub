@@ -179,7 +179,7 @@ public class HubBindings extends AbstractModule {
 
     @Provides
     @Singleton
-    public static MetricsConfig influxdbReporterConfig() {
+    public static MetricsConfig metricsReportersConfig() {
         return metricsConfig;
     }
 
@@ -229,9 +229,6 @@ public class HubBindings extends AbstractModule {
         bind(FinalCheck.class).to(SpokeFinalCheck.class).asEagerSingleton();
         bind(InFlightService.class).asEagerSingleton();
         bind(ChannelService.class).asEagerSingleton();
-        bind(MetricsConfig.class)
-                .annotatedWith(Names.named(InfluxdbReporterLifecycle.NAME))
-                .toProvider(HubBindings::influxdbReporterConfig);
         bind(MetricRegistry.class).toInstance(metricRegistry);
         bind(InfluxdbReporterLifecycle.class).asEagerSingleton();
 
