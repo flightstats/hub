@@ -177,7 +177,6 @@ public class HubBindings extends AbstractModule {
         return Executors.newFixedThreadPool(verifierConfig.getQueryThreads(), new ThreadFactoryBuilder().setNameFormat("S3VerifierQuery-%d").build());
     }
 
-
     @Override
     protected void configure() {
         Names.bindProperties(binder(), HubProperties.getProperties());
