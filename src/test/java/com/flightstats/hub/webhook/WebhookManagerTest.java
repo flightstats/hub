@@ -26,7 +26,7 @@ public class WebhookManagerTest {
     private final Dao<Webhook> webhookDao = getWebhookDao();
     private final LastContentPath lastContentPath = mock(LastContentPath.class);
     private final ActiveWebhooks activeWebhooks = mock(ActiveWebhooks.class);
-    private final WebhookError webhookError = mock(WebhookError.class);
+    private final WebhookErrorService webhookErrorService = mock(WebhookErrorService.class);
     private final WebhookContentPathSet webhookContentPathSet = mock(WebhookContentPathSet.class);
     private final InternalWebhookClient webhookClient = mock(InternalWebhookClient.class);
 
@@ -147,7 +147,7 @@ public class WebhookManagerTest {
     }
 
     private WebhookManager getWebhookManager() {
-        return new WebhookManager(watchManager, webhookDao, lastContentPath, activeWebhooks, webhookError, webhookContentPathSet, webhookClient);
+        return new WebhookManager(watchManager, webhookDao, lastContentPath, activeWebhooks, webhookErrorService, webhookContentPathSet, webhookClient);
     }
 
     @SuppressWarnings("unchecked")

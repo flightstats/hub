@@ -15,7 +15,7 @@ import static java.util.stream.Collectors.toSet;
 
 @Singleton
 public class WebhookLeaderLocks {
-    private static final String WEBHOOK_LEADER = "/WebhookLeader";
+    static final String WEBHOOK_LEADER = "/WebhookLeader";
     private static final String LEASE_NODE = "leases";
     private static final String LOCK_NODE = "locks";
     private final SafeZooKeeperUtils zooKeeperUtils;
