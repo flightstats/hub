@@ -44,7 +44,6 @@ module.exports = {
     getCallBackPort,
     getChannelUrl,
     getHubDomain,
-    getIp,
     getHubUrlBase,
     getRunEncrypted,
 };

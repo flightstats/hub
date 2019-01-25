@@ -4,7 +4,6 @@ import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.flightstats.hub.filter.CORSFilter;
 import com.flightstats.hub.filter.StreamEncodingFilter;
 import com.flightstats.hub.metrics.InfluxdbReporterLifecycle;
-import com.flightstats.hub.metrics.MetricsConfig;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
