@@ -40,7 +40,7 @@ public class Integration {
         }
         startZooKeeper();
         HubProperties.setProperty("hub.type", "aws");
-        HubMain.startServer();
+        new HubMain().startServer();
         injector = HubProvider.getInjector();
         return injector;
     }

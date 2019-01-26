@@ -119,6 +119,7 @@ describe(__filename, () => {
         expect(inFlight.length).toEqual(0);
         expect(errors.length).toEqual(2);
         let contentKey = (postedItems[0] || '').replace(`${channelResource}/`, '');
+        const orderedErrors = errors.sort(); // Timestamp appears first, so that should straighten up occasional ordering problems
         expect(errors[0]).toContain(contentKey);
         expect(errors[0]).toContain('400 Bad Request');
         expect(errors[1]).toContain(`${contentKey} max attempts reached (1)`);
