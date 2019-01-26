@@ -2,13 +2,19 @@ package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.SecondPath;
+import com.flightstats.hub.test.Integration;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
 public class TimedWebhookStrategyTest {
+    @BeforeClass
+    public static void setupIntegration() throws Exception {
+        Integration.startAwsHub();
+    }
 
     @Test
     public void testRoundingSecondPath() {
