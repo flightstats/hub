@@ -53,10 +53,6 @@ describe(__filename, function () {
         testContext.itemURL = fromObjectPath(['body', '_links', 'self', 'href'], response);
     });
 
-    it('posts a large item', async () => {
-
-    });
-
     it('verifies item has correct length info', async () => {
         const { itemSize, itemURL } = testContext;
         if (!itemURL) {
