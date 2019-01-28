@@ -48,28 +48,31 @@ public class MissingContentFinder {
     public SortedSet<ContentKey> getMissing(MinutePath startPath, MinutePath endPath, String channelName) {
         long timeout = calculateQueryTimeout(startPath, endPath);
         TimeQuery timeQuery = buildTimeQuery(channelName, startPath, endPath);
-        QueryResult queryResult = new QueryResult(1);
-        SortedSet<ContentKey> s3Keys = new TreeSet<>();
-        SortedSet<ContentKey> spokeKeys = new TreeSet<>();
         try {
             CountDownLatch latch = new CountDownLatch(2);
-            runInQueryPool(ActiveTraces.getLocal(), latch, () -> spokeKeys.addAll(spokeWriteContentDao.queryByTime(timeQuery)));
-            runInQueryPool(ActiveTraces.getLocal(), latch, () -> s3Keys.addAll(s3SingleContentDao.queryByTime(timeQuery)));
+            QueryResult s3QueryResult = new QueryResult(1);
+            QueryResult spokeQueryResult = new QueryResult(1);
+            runInQueryPool(ActiveTraces.getLocal(), latch, () -> spokeQueryResult.addKeys(spokeWriteContentDao.queryByTime(timeQuery)));
+            runInQueryPool(ActiveTraces.getLocal(), latch, () -> s3QueryResult.addKeys(s3SingleContentDao.queryByTime(timeQuery)));
             latch.await(timeout, verifierConfig.getBaseTimeoutUnit());
             if (latch.getCount() != 0) {
                 logger.error("s3 verifier timed out while finding missing items, write queue is backing up");
                 metricsService.increment(VERIFIER_TIMEOUT_METRIC_NAME);
                 return new TreeSet<>();
             }
-            spokeKeys.removeAll(s3Keys);
-            if (spokeKeys.size() > 0) {
-                logger.info("missing items {} {}", channelName, queryResult.getContentKeys());
-            }
-            return spokeKeys;
-//            throw new FailedQueryException("unable to query spoke");
+            return findMissingKeys(channelName, s3QueryResult, spokeQueryResult);
         } catch (InterruptedException e) {
             throw new RuntimeInterruptedException(e);
         }
+    }
+
+    private SortedSet<ContentKey> findMissingKeys(String channelName, QueryResult spokeQueryResult, QueryResult s3QueryResult) {
+        SortedSet<ContentKey> missingKeys = new TreeSet<>(s3QueryResult.getContentKeys());
+        missingKeys.removeAll(spokeQueryResult.getContentKeys());
+        if (missingKeys.size() > 0) {
+            logger.info("missing items {} {}", channelName, missingKeys);
+        }
+        return missingKeys;
     }
 
     private TimeQuery buildTimeQuery(String channelName, MinutePath startPath, MinutePath endPath) {
