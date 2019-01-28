@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.CountDownLatch;
@@ -45,20 +46,11 @@ public class MissingContentFinder {
     }
 
     public SortedSet<ContentKey> getMissing(MinutePath startPath, MinutePath endPath, String channelName) {
-        long timeout = verifierConfig.getBaseTimeoutValue();
+        long timeout = calculateQueryTimeout(startPath, endPath);
+        TimeQuery timeQuery = buildTimeQuery(channelName, startPath, endPath);
         QueryResult queryResult = new QueryResult(1);
         SortedSet<ContentKey> s3Keys = new TreeSet<>();
         SortedSet<ContentKey> spokeKeys = new TreeSet<>();
-        TimeQuery.TimeQueryBuilder builder = TimeQuery.builder()
-                .channelName(channelName)
-                .startTime(startPath.getTime())
-                .unit(TimeUtil.Unit.MINUTES);
-        if (endPath != null) {
-            Duration duration = new Duration(startPath.getTime(), endPath.getTime());
-            timeout += duration.getStandardDays();
-            builder.limitKey(ContentKey.lastKey(endPath.getTime()));
-        }
-        TimeQuery timeQuery = builder.build();
         try {
             CountDownLatch latch = new CountDownLatch(2);
             runInQueryPool(ActiveTraces.getLocal(), latch, () -> spokeKeys.addAll(spokeWriteContentDao.queryByTime(timeQuery)));
@@ -78,6 +70,30 @@ public class MissingContentFinder {
         } catch (InterruptedException e) {
             throw new RuntimeInterruptedException(e);
         }
+    }
+
+    private TimeQuery buildTimeQuery(String channelName, MinutePath startPath, MinutePath endPath) {
+        TimeQuery.TimeQueryBuilder builder = TimeQuery.builder()
+                .channelName(channelName)
+                .startTime(startPath.getTime())
+                .unit(TimeUtil.Unit.MINUTES);
+
+        Optional.ofNullable(endPath)
+                .map(MinutePath::getTime)
+                .map(ContentKey::lastKey)
+                .ifPresent(builder::limitKey);
+
+        return builder.build();
+    }
+
+    private long calculateQueryTimeout(MinutePath startPath, MinutePath endPath) {
+        long timeout = verifierConfig.getBaseTimeoutValue();
+        long timeoutAdjustmentForExcessiveDelays = Optional.ofNullable(endPath)
+                .map(MinutePath::getTime)
+                .map(endTime -> new Duration(startPath.getTime(), endTime))
+                .map(Duration::getStandardDays)
+                .orElse(0L) ;
+        return timeout + timeoutAdjustmentForExcessiveDelays;
     }
 
     private void runInQueryPool(Traces traces, CountDownLatch countDownLatch, Runnable runnable) {
