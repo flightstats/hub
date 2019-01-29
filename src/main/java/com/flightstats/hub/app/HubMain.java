@@ -42,6 +42,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.Security;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
@@ -93,7 +94,7 @@ public class HubMain {
 
         List<AbstractIdleService> beforeHealthCheckServices = getBeforeHealthCheckServices(injector);
         registerServices(beforeHealthCheckServices, HubServices.TYPE.BEFORE_HEALTH_CHECK);
-        
+
         HubProvider.setInjector(injector);
         HubServices.start(HubServices.TYPE.BEFORE_HEALTH_CHECK);
 
@@ -144,11 +145,11 @@ public class HubMain {
         return server;
     }
 
-    List<AbstractIdleService> getBeforeHealthCheckServices(Injector injector) {
-        List<AbstractIdleService> beforeHealthCheckServices = new ArrayList<>();
+    private List<AbstractIdleService> getBeforeHealthCheckServices(Injector injector) {
         InfluxdbReporterLifecycle influxdbReporterLifecycle = injector.getInstance(InfluxdbReporterLifecycle.class);
-        beforeHealthCheckServices.add(influxdbReporterLifecycle);
-        return beforeHealthCheckServices;
+        // preferring registering services here over in their own constructors
+        // expecting to register more services here in future and update this to ex: Arrays.asList(service, service...
+        return Collections.singletonList(influxdbReporterLifecycle);
     }
 
     private void registerServices(List<AbstractIdleService> services, HubServices.TYPE type) {

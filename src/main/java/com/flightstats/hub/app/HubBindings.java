@@ -1,6 +1,5 @@
 package com.flightstats.hub.app;
 
-import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ScheduledReporter;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -12,6 +11,7 @@ import com.flightstats.hub.cluster.*;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.health.HubHealthCheck;
+import com.flightstats.hub.metrics.InfluxdbReporterProvider;
 import com.flightstats.hub.metrics.MetricsRunner;
 import com.flightstats.hub.metrics.MetricsConfig;
 import com.flightstats.hub.metrics.InfluxdbReporterLifecycle;
@@ -33,15 +33,12 @@ import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.webhook.WebhookManager;
 import com.flightstats.hub.webhook.WebhookValidator;
 import com.google.inject.AbstractModule;
+import com.google.inject.Inject;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.sun.jersey.api.client.Client;
-import metrics_influxdb.HttpInfluxdbProtocol;
-import metrics_influxdb.InfluxdbProtocol;
-import metrics_influxdb.InfluxdbReporter;
-import metrics_influxdb.UdpInfluxdbProtocol;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.ensemble.fixed.FixedEnsembleProvider;
 import org.apache.curator.framework.CuratorFramework;
@@ -59,11 +56,6 @@ import java.util.concurrent.TimeUnit;
 public class HubBindings extends AbstractModule {
     private final static Logger logger = LoggerFactory.getLogger(HubBindings.class);
     private final static MetricRegistry metricRegistry = new MetricRegistry();
-    private final static MetricsConfig  metricsConfig = MetricsConfig
-            .builder()
-            .buildWithDefaults()
-            .build();
-
 
     @Singleton
     @Provides
@@ -166,43 +158,36 @@ public class HubBindings extends AbstractModule {
         return mapper;
     }
 
-    private UdpInfluxdbProtocol udpProtocol() {
-        return new UdpInfluxdbProtocol(metricsConfig.getInfluxdbHost(), metricsConfig.getInfluxdbPort());
-    }
-
-    private HttpInfluxdbProtocol httpProtocol() {
-        return new HttpInfluxdbProtocol(
-                metricsConfig.getInfluxdbHost(),
-                metricsConfig.getInfluxdbPort(),
-                metricsConfig.getInfluxdbUser(),
-                metricsConfig.getInfluxdbPass(),
-                metricsConfig.getInfluxdbDatabaseName());
-    }
-
-    @Provides
-    @Singleton
-    public static MetricsConfig metricsReportersConfig() {
-        return metricsConfig;
-    }
-
     @Singleton
     @Provides
-    private ScheduledReporter influxdbReporter() {
-        String protocolId = metricsConfig.getInfluxdbProtocol();
-
-        InfluxdbProtocol protocol = protocolId.contains("http") ? httpProtocol() : udpProtocol();
-        return InfluxdbReporter.forRegistry(metricRegistry)
-                .protocol(protocol)
-                .convertRatesTo(TimeUnit.SECONDS)
-                .convertDurationsTo(TimeUnit.MILLISECONDS)
-                .filter(MetricFilter.ALL)
-                .skipIdleMetrics(false)
-                .tag("role", metricsConfig.getRole())
-                .tag("team", metricsConfig.getTeam())
-                .tag("env", metricsConfig.getEnv())
-                .tag("cluster", metricsConfig.getClusterTag())
-                .tag("host", metricsConfig.getHostTag())
-                .tag("version", metricsConfig.getAppVersion())
+    @Inject
+    public static MetricsConfig metricsReportersConfig(HubVersion hubVersion) {
+        String version = "local";
+        try {
+            version = hubVersion.getVersion();
+            // catch null exception because HubProvider is not available in unit tests
+        } catch (NullPointerException e) {
+            logger.info("no app version available using 'local'", e);
+        }
+        return MetricsConfig.builder()
+                .appVersion(version)
+                .clusterTag(
+                        HubProperties.getProperty("cluster.location", "local") +
+                                "-" +
+                                HubProperties.getProperty("app.environment", "dev")
+                )
+                .env(HubProperties.getProperty("app.environment", "dev"))
+                .enabled(HubProperties.getProperty("metrics.enable", "false").equals("true"))
+                .hostTag(HubHost.getLocalName())
+                .influxdbDatabaseName(HubProperties.getProperty("metrics.influxdb.database.name", "hub_tick"))
+                .influxdbHost(HubProperties.getProperty("metrics.influxdb.host", "localhost"))
+                .influxdbPass(HubProperties.getProperty("metrics.influxdb.database.password", ""))
+                .influxdbPort(HubProperties.getProperty("metrics.influxdb.port", 8086))
+                .influxdbProtocol(HubProperties.getProperty("metrics.influxdb.protocol", "http"))
+                .influxdbUser(HubProperties.getProperty("metrics.influxdb.database.user", ""))
+                .reportingIntervalSeconds(HubProperties.getProperty("metrics.seconds", 15))
+                .role(HubProperties.getProperty("metrics.tags.role", "hub"))
+                .team(HubProperties.getProperty("metrics.tags.team", "development"))
                 .build();
     }
 
@@ -231,7 +216,9 @@ public class HubBindings extends AbstractModule {
         bind(FinalCheck.class).to(SpokeFinalCheck.class).asEagerSingleton();
         bind(InFlightService.class).asEagerSingleton();
         bind(ChannelService.class).asEagerSingleton();
+        bind(HubVersion.class).toInstance(HubProvider.getInstance(HubVersion.class));
         bind(MetricRegistry.class).toInstance(metricRegistry);
+        bind(ScheduledReporter.class).toProvider(InfluxdbReporterProvider.class);
         bind(InfluxdbReporterLifecycle.class).asEagerSingleton();
 
         bind(ContentDao.class)
