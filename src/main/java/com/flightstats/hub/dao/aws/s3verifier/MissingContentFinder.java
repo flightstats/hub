@@ -16,11 +16,16 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 public class MissingContentFinder {
     private static final Logger logger = LoggerFactory.getLogger(MissingContentFinder.class);
@@ -45,31 +50,37 @@ public class MissingContentFinder {
     }
 
     public SortedSet<ContentKey> getMissing(MinutePath startPath, MinutePath endPath, String channelName) {
-        long timeout = calculateQueryTimeout(startPath, endPath);
         TimeQuery timeQuery = buildTimeQuery(channelName, startPath, endPath);
+        CompletableFuture<QueryResult> spokeQueryResults = getContentKeyFuture(() -> spokeWriteContentDao.queryByTime(timeQuery));
+        CompletableFuture<QueryResult> s3QueryResults = getContentKeyFuture(() -> s3SingleContentDao.queryByTime(timeQuery));
+
         try {
-            CountDownLatch latch = new CountDownLatch(2);
-            QueryResult s3QueryResult = new QueryResult(1);
-            QueryResult spokeQueryResult = new QueryResult(1);
-            runInQueryPool(ActiveTraces.getLocal(), latch, () -> spokeQueryResult.addKeys(spokeWriteContentDao.queryByTime(timeQuery)));
-            runInQueryPool(ActiveTraces.getLocal(), latch, () -> s3QueryResult.addKeys(s3SingleContentDao.queryByTime(timeQuery)));
-            latch.await(timeout, verifierConfig.getBaseTimeoutUnit());
-            if (latch.getCount() != 0) {
-                logger.error("s3 verifier timed out while finding missing items, write queue is backing up");
-                metricsService.increment(VerifierMetrics.TIMEOUT.getName());
-                return new TreeSet<>();
-            }
-            return findMissingKeys(channelName, s3QueryResult, spokeQueryResult);
+            CompletableFuture
+                    .allOf(spokeQueryResults, s3QueryResults)
+                    .get(calculateQueryTimeout(startPath, endPath), verifierConfig.getBaseTimeoutUnit());
+
+            return findMissingKeys(channelName, spokeQueryResults.get(), s3QueryResults.get());
         } catch (InterruptedException e) {
             throw new RuntimeInterruptedException(e);
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        } catch (TimeoutException e) {
+            logger.error("s3 verifier timed out while finding missing items, write queue is backing up");
+            metricsService.increment(VerifierMetrics.TIMEOUT.getName());
+            return new TreeSet<>();
+        } finally {
+            Stream.of(spokeQueryResults, s3QueryResults)
+                    .filter(future -> !future.isDone())
+                    .forEach(future -> future.cancel(true));
         }
     }
 
     private SortedSet<ContentKey> findMissingKeys(String channelName, QueryResult spokeQueryResult, QueryResult s3QueryResult) {
-        SortedSet<ContentKey> missingKeys = new TreeSet<>(s3QueryResult.getContentKeys());
-        missingKeys.removeAll(spokeQueryResult.getContentKeys());
+        SortedSet<ContentKey> missingKeys = new TreeSet<>(spokeQueryResult.getContentKeys());
+        missingKeys.removeAll(s3QueryResult.getContentKeys());
         if (missingKeys.size() > 0) {
-            logger.info("missing items {} {}", channelName, missingKeys);
+            logger.info("{} missing items found for {}!", missingKeys.size(), channelName);
+            missingKeys.forEach(key -> logger.info("{} missing item {}"));
         }
         return missingKeys;
     }
@@ -98,14 +109,13 @@ public class MissingContentFinder {
         return timeout + timeoutAdjustmentForExcessiveDelays;
     }
 
-    private void runInQueryPool(Traces traces, CountDownLatch countDownLatch, Runnable runnable) {
-        queryThreadPool.submit(() -> {
+    private CompletableFuture<QueryResult> getContentKeyFuture(Supplier<SortedSet<ContentKey>> callable) {
+        Traces traces = ActiveTraces.getLocal();
+        return CompletableFuture.supplyAsync(() -> {
             ActiveTraces.setLocal(traces);
-            try {
-                runnable.run();
-            } finally {
-                countDownLatch.countDown();
-            }
-        });
+            QueryResult queryResult = new QueryResult(1);
+            queryResult.addKeys(callable.get());
+            return queryResult;
+        }, queryThreadPool);
     }
 }
