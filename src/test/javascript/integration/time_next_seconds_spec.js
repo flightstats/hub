@@ -16,7 +16,6 @@ const channelName = randomChannelName();
 const channelResource = `${channelUrl}/${channelName}`;
 const testContext = {
     stableTime: null,
-    currentTime: null,
 };
 const headers = {
     'Content-Type': 'application/json',
@@ -39,15 +38,13 @@ describe(__filename, function () {
         const response = await hubClientGet(`${channelResource}/time`, headers);
         expect(getProp('statusCode', response)).toEqual(200);
         const stableTimeMillis = fromObjectPath(['body', 'stable', 'millis'], response);
-        const currentTimeMillis = fromObjectPath(['body', 'stable', 'millis'], response);
         testContext.stableTime = moment(stableTimeMillis).utc();
-        testContext.currentTime = moment(currentTimeMillis).utc();
     });
 
-    it('gets stable next 5 links', async () => {
+    it('verifies endpoint returns stable links', async () => {
         await itSleeps(1000);
-        const nextTime = testContext.stableTime.subtract(5, 'seconds');
-        const url = `${channelResource}${nextTime.format('/YYYY/MM/DD/HH/mm/ss')}/next/10`;
+        const fiveSecondsAgo = testContext.stableTime.subtract(5, 'seconds');
+        const url = `${channelResource}${fiveSecondsAgo.format('/YYYY/MM/DD/HH/mm/ss')}/next/10`;
         const response = await hubClientGet(url, headers);
         expect(getProp('statusCode', response)).toBe(200);
         const uris = fromObjectPath(['body', '_links', 'uris'], response);

@@ -20,9 +20,7 @@ const itemHeaders = {'Content-Type': 'text/plain'};
 const headers = { 'Content-Type': 'application/json' };
 const testContext = {
     itemSize: 0,
-    itemContent: '',
     itemURL: null,
-    createdChannel: false,
 };
 
 /**
@@ -30,30 +28,29 @@ const testContext = {
  * header is present with the correct value
  */
 
+const getMaxPayLoadMB = async () => {
+    const propertiesUrl = `${getHubUrlBase()}/internal/properties`;
+    const internals = await hubClientGet(propertiesUrl, headers);
+    const properties = fromObjectPath(['body', 'properties'], internals) || {};
+    return parseInt(properties['app.maxPayloadSizeMB'] || '43');
+}
+
 describe(__filename, function () {
     beforeAll(async () => {
         const channel = await createChannel(channelName, null, 'large inserts');
+        let createdChannel = false;
         if (getProp('statusCode', channel) === 201) {
-            testContext.createdChannel = true;
+            createdChannel = true;
             console.log(`created channel for ${__filename}`);
         }
-        const propertiesUrl = `${getHubUrlBase()}/internal/properties`;
-        const internals = await hubClientGet(propertiesUrl, headers);
-        const properties = fromObjectPath(['body', 'properties'], internals) || {};
-        const maxPayloadSizeMB = parseInt(properties['app.maxPayloadSizeMB'] || '43');
+        const maxPayloadSizeMB = await getMaxPayLoadMB();
         testContext.itemSize = maxPayloadSizeMB - 1;
-        testContext.itemContent = Array(testContext.itemSize).join('a');
-    });
+        const itemContent = Array(testContext.itemSize).join('a');
 
-    it('posts a large item', async () => {
-        const { createdChannel } = testContext;
+        // post a large item
         if (!createdChannel) return fail('channel not created in before block');
-        const { itemContent } = testContext;
         const response = await hubClientPost(channelEndpoint, itemHeaders, itemContent);
-        const body = getProp('body', response);
-        const itemURL = fromObjectPath(['_links', 'self', 'href'], body);
-        expect(itemURL).toBeDefined();
-        testContext.itemURL = itemURL;
+        testContext.itemURL = fromObjectPath(['body', '_links', 'self', 'href'], response);
     });
 
     it('verifies item has correct length info', async () => {
