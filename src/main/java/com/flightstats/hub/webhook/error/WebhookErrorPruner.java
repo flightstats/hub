@@ -5,6 +5,7 @@ import org.joda.time.DateTime;
 
 import javax.inject.Inject;
 import java.time.Duration;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -22,7 +23,10 @@ public class WebhookErrorPruner {
     }
 
     public List<WebhookError> pruneErrors(String webhook, List<WebhookError> errors) {
-        List<WebhookError> errorsToRemove = getErrorsToRemove(errors);
+        List<WebhookError> errorsOrderByCreation = errors.stream()
+                .sorted(Comparator.comparing(WebhookError::getCreationTime))
+                .collect(toList());
+        List<WebhookError> errorsToRemove = getErrorsToRemove(errorsOrderByCreation);
 
         errorsToRemove.forEach(error -> webhookErrorRepository.delete(webhook, error.getName()));
 
