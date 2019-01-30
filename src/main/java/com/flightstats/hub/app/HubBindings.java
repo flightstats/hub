@@ -8,7 +8,9 @@ import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.cluster.*;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
+import com.flightstats.hub.dao.aws.S3Verifier;
 import com.flightstats.hub.dao.aws.S3VerifierConfig;
+import com.flightstats.hub.dao.aws.S3VerifierConfigProvider;
 import com.flightstats.hub.health.HubHealthCheck;
 import com.flightstats.hub.metrics.DelegatingMetricsService;
 import com.flightstats.hub.metrics.MetricsRunner;
@@ -22,7 +24,9 @@ import com.flightstats.hub.spoke.SpokeClusterRegister;
 import com.flightstats.hub.spoke.SpokeFinalCheck;
 import com.flightstats.hub.spoke.SpokeReadContentDao;
 import com.flightstats.hub.spoke.SpokeStore;
+import com.flightstats.hub.spoke.SpokeStoreConfig;
 import com.flightstats.hub.spoke.SpokeWriteContentDao;
+import com.flightstats.hub.spoke.SpokeWriteStoreConfigProvider;
 import com.flightstats.hub.time.NtpMonitor;
 import com.flightstats.hub.time.TimeService;
 import com.flightstats.hub.util.HubUtils;
@@ -171,20 +175,6 @@ public class HubBindings extends AbstractModule {
     }
 
 
-    @Singleton
-    @Provides
-    public static S3VerifierConfig s3VerifierConfig() {
-        int channelThreads = HubProperties.getProperty("s3Verifier.channelThreads", 3);
-        return S3VerifierConfig.builder()
-                .enabled(HubProperties.getProperty("s3Verifier.run", true))
-                .baseTimeoutMinutes(HubProperties.getProperty("s3Verifier.baseTimeoutMinutes", 2))
-                .offsetMinutes(HubProperties.getProperty("s3Verifier.offsetMinutes", 15))
-                .channelThreads(channelThreads)
-                .queryThreads(channelThreads * 2)
-                .endpointUrlGenerator(channelName -> HubProperties.getAppUrl() + "internal/s3Verifier/" + channelName)
-                .build();
-    }
-
     @Override
     protected void configure() {
         Names.bindProperties(binder(), HubProperties.getProperties());
@@ -217,6 +207,15 @@ public class HubBindings extends AbstractModule {
         bind(ContentDao.class)
                 .annotatedWith(Names.named(ContentDao.READ_CACHE))
                 .to(SpokeReadContentDao.class).asEagerSingleton();
+
+        bind(S3VerifierConfig.class)
+                .toProvider(S3VerifierConfigProvider.class)
+                .asEagerSingleton();
+
+        bind(SpokeStoreConfig.class)
+                .annotatedWith(Names.named("spokeWriteStoreConfig"))
+                .toProvider(SpokeWriteStoreConfigProvider.class)
+                .asEagerSingleton();
 
         bind(FileSpokeStore.class)
                 .annotatedWith(Names.named(SpokeStore.WRITE.name()))

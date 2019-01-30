@@ -3,12 +3,13 @@ package com.flightstats.hub.dao.aws;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.model.MinutePath;
+import com.flightstats.hub.spoke.SpokeStoreConfig;
 import com.sun.jersey.api.client.Client;
 import org.apache.curator.framework.CuratorFramework;
 import org.joda.time.DateTime;
@@ -18,7 +19,9 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 
+import static com.flightstats.hub.dao.ChannelService.REPLICATED_LAST_UPDATED;
 import static com.flightstats.hub.dao.aws.S3Verifier.LAST_SINGLE_VERIFIED;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -27,20 +30,21 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 public class S3VerifierUnitTest {
+    private final LastContentPath lastContentPath = mock(LastContentPath.class);
+    private final ChannelService channelService = mock(ChannelService.class);
+    private final S3WriteQueue s3WriteQueue = mock(S3WriteQueue.class);
+    private final Client httpClient = mock(Client.class);
+    private final ZooKeeperState zooKeeperState = mock(ZooKeeperState.class);
+    private final CuratorFramework curator = mock(CuratorFramework.class);
+    private final MetricsService metricsService = mock(MetricsService.class);
+    private final ExecutorService channelThreadPool = mock(ExecutorService.class);
+    private final S3Verifier.MissingContentFinder missingContentFinder = mock(S3Verifier.MissingContentFinder.class);
+    private final S3Verifier.S3VerifierRangeLookup verifierRangeLookup = mock(S3Verifier.S3VerifierRangeLookup.class);
 
     @Test
     public void testZKNotUpdatedOnFailure() {
-        LastContentPath lastContentPath = mock(LastContentPath.class);
-        ChannelService channelService = mock(ChannelService.class);
-        S3WriteQueue s3WriteQueue = mock(S3WriteQueue.class);
-        Client httpClient = mock(Client.class);
-        ZooKeeperState zooKeeperState = mock(ZooKeeperState.class);
-        CuratorFramework curator = mock(CuratorFramework.class);
-        MetricsService metricsService = mock(MetricsService.class);
-        ExecutorService channelThreadPool = mock(ExecutorService.class);
-        S3Verifier.MissingContentFinder missingContentFinder = mock(S3Verifier.MissingContentFinder.class);
-        S3VerifierConfig s3VerifierConfig = S3VerifierConfig.builder().build();
-        S3Verifier s3Verifier = new S3Verifier(lastContentPath, channelService, s3WriteQueue, httpClient, zooKeeperState, curator, metricsService, missingContentFinder, s3VerifierConfig, channelThreadPool);
+        S3VerifierConfig config = S3VerifierConfig.builder().build();
+        S3Verifier s3Verifier = new S3Verifier(lastContentPath, channelService, s3WriteQueue, httpClient, zooKeeperState, curator, metricsService, missingContentFinder, verifierRangeLookup, config, channelThreadPool);
 
         ChannelContentKey key = ChannelContentKey.fromResourcePath("http://hub/channel/foo/1999/12/31/23/59/59/999/bar");
         VerifierRange verifierRange = VerifierRange.builder()
@@ -61,17 +65,8 @@ public class S3VerifierUnitTest {
 
     @Test
     public void testZKUpdatedOnSuccess() {
-        LastContentPath lastContentPath = mock(LastContentPath.class);
-        ChannelService channelService = mock(ChannelService.class);
-        S3WriteQueue s3WriteQueue = mock(S3WriteQueue.class);
-        Client httpClient = mock(Client.class);
-        ZooKeeperState zooKeeperState = mock(ZooKeeperState.class);
-        CuratorFramework curator = mock(CuratorFramework.class);
-        MetricsService metricsService = mock(MetricsService.class);
-        ExecutorService channelThreadPool = mock(ExecutorService.class);
-        S3VerifierConfig s3VerifierConfig = S3VerifierConfig.builder().build();
-        S3Verifier.MissingContentFinder missingContentFinder = mock(S3Verifier.MissingContentFinder.class);
-        S3Verifier s3Verifier = new S3Verifier(lastContentPath, channelService, s3WriteQueue, httpClient, zooKeeperState, curator, metricsService, missingContentFinder, s3VerifierConfig, channelThreadPool);
+        S3VerifierConfig config = S3VerifierConfig.builder().build();
+        S3Verifier s3Verifier = new S3Verifier(lastContentPath, channelService, s3WriteQueue, httpClient, zooKeeperState, curator, metricsService, missingContentFinder, verifierRangeLookup, config, channelThreadPool);
 
         ChannelContentKey key = ChannelContentKey.fromResourcePath("http://hub/channel/foo/1999/12/31/23/59/59/999/bar");
         VerifierRange verifierRange = VerifierRange.builder()
