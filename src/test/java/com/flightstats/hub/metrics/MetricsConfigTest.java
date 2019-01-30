@@ -15,7 +15,7 @@ import static org.testng.AssertJUnit.assertFalse;
 
 public class MetricsConfigTest {
     @Test
-    public void testDefaultValues_defaultTags() {
+    public void testExpectedValues_customBuiltTags() {
         HubVersion hubVersion = mock(HubVersion.class);
         when(hubVersion.getVersion()).thenReturn("local");
 
