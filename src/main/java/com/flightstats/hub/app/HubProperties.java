@@ -160,7 +160,6 @@ public class HubProperties {
             properties.put("hub.protect.channels", "false");
             properties.put("metrics.enable", "false");
             properties.put("s3Verifier.run", "false");
-            properties.put("aws.credentials", "config/credentials/hub_test_credentials.properties");
             properties.put("aws.signing_region", "us-east-1");
             return properties;
         }
