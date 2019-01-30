@@ -12,6 +12,7 @@ import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.spoke.SpokeStore;
+import com.flightstats.hub.spoke.SpokeStoreConfig;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
@@ -52,6 +53,7 @@ public class S3Verifier {
     private final CuratorFramework curator;
     private final MetricsService metricsService;
     private final MissingContentFinder missingContentFinder;
+    private final S3VerifierRangeLookup verifierRangeLookup;
 
     @Inject
     public S3Verifier(LastContentPath lastContentPath,
@@ -62,6 +64,7 @@ public class S3Verifier {
                       CuratorFramework curator,
                       MetricsService metricsService,
                       MissingContentFinder missingContentFinder,
+                      S3VerifierRangeLookup verifierRangeLookup,
                       S3VerifierConfig s3VerifierConfig,
                       @Named("s3VerifierChannelThreadPool") ExecutorService channelThreadPool) {
         this.lastContentPath = lastContentPath;
@@ -74,6 +77,7 @@ public class S3Verifier {
         this.s3VerifierConfig = s3VerifierConfig;
         this.channelThreadPool = channelThreadPool;
         this.missingContentFinder = missingContentFinder;
+        this.verifierRangeLookup = verifierRangeLookup;
 
         if (s3VerifierConfig.isEnabled()) {
             HubServices.register(new S3ScheduledVerifierService(), HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
@@ -114,28 +118,12 @@ public class S3Verifier {
         if (channel == null) {
             return;
         }
-        VerifierRange range = getSingleVerifierRange(now, channel);
+        VerifierRange range = verifierRangeLookup.getSingleVerifierRange(now, channel);
         if (range != null) {
             verifyChannel(range);
         }
     }
 
-    VerifierRange getSingleVerifierRange(DateTime now, ChannelConfig channelConfig) {
-        MinutePath spokeTtlTime = getSpokeTtlPath(now);
-        now = channelService.getLastUpdated(channelConfig.getDisplayName(), new MinutePath(now)).getTime();
-        DateTime start = now.minusMinutes(1);
-        MinutePath endPath = new MinutePath(start);
-        MinutePath defaultStart = new MinutePath(start.minusMinutes(s3VerifierConfig.getOffsetMinutes()));
-        MinutePath startPath = (MinutePath) lastContentPath.get(channelConfig.getDisplayName(), defaultStart, LAST_SINGLE_VERIFIED);
-        if (channelConfig.isLive() && startPath.compareTo(spokeTtlTime) < 0) {
-            startPath = spokeTtlTime;
-        }
-        return VerifierRange.builder()
-                .channelConfig(channelConfig)
-                .startPath(startPath)
-                .endPath(endPath)
-                .build();
-    }
 
     @VisibleForTesting
     void verifyChannel(VerifierRange range) {
@@ -162,6 +150,47 @@ public class S3Verifier {
         } else {
             logger.warn("verifyChannel completed, but start time is the same as last completed");
             incrementMetric(VerifierMetrics.EXCESSIVE_CHANNEL_VOLUME);
+        }
+    }
+
+    @VisibleForTesting
+    static class S3VerifierRangeLookup {
+        private final S3VerifierConfig s3VerifierConfig;
+        private final SpokeStoreConfig spokeWriteStoreConfig;
+
+        private final LastContentPath lastContentPath;
+        private final ChannelService channelService;
+
+        @Inject
+        public S3VerifierRangeLookup(LastContentPath lastContentPath,
+                          ChannelService channelService,
+                          S3VerifierConfig s3VerifierConfig,
+                          @Named("spokeWriteStoreConfig") SpokeStoreConfig spokeWriteStoreConfig) {
+            this.lastContentPath = lastContentPath;
+            this.channelService = channelService;
+            this.s3VerifierConfig = s3VerifierConfig;
+            this.spokeWriteStoreConfig = spokeWriteStoreConfig;
+        }
+
+        VerifierRange getSingleVerifierRange(DateTime now, ChannelConfig channelConfig) {
+            MinutePath spokeTtlTime = getSpokeTtlPath(now);
+            now = channelService.getLastUpdated(channelConfig.getDisplayName(), new MinutePath(now)).getTime();
+            DateTime start = now.minusMinutes(1);
+            MinutePath endPath = new MinutePath(start);
+            MinutePath defaultStart = new MinutePath(start.minusMinutes(s3VerifierConfig.getOffsetMinutes()));
+            MinutePath startPath = (MinutePath) lastContentPath.get(channelConfig.getDisplayName(), defaultStart, LAST_SINGLE_VERIFIED);
+            if (channelConfig.isLive() && startPath.compareTo(spokeTtlTime) < 0) {
+                startPath = spokeTtlTime;
+            }
+            return VerifierRange.builder()
+                    .channelConfig(channelConfig)
+                    .startPath(startPath)
+                    .endPath(endPath)
+                    .build();
+        }
+
+        private MinutePath getSpokeTtlPath(DateTime now) {
+            return new MinutePath(now.minusMinutes(spokeWriteStoreConfig.getTtlMinutes() - 2));
         }
     }
 
@@ -236,14 +265,9 @@ public class S3Verifier {
     }
 
 
-    private MinutePath getSpokeTtlPath(DateTime now) {
-        return new MinutePath(now.minusMinutes(HubProperties.getSpokeTtlMinutes(SpokeStore.WRITE) - 2));
-    }
-
     private void incrementMetric(VerifierMetrics verifierMetric) {
         metricsService.increment(verifierMetric.getName());
     }
-
     private class S3ScheduledVerifierService extends AbstractScheduledService implements Lockable {
 
         @Override
