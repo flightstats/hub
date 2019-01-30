@@ -1,4 +1,4 @@
-package com.flightstats.hub.dao.aws;
+package com.flightstats.hub.dao.aws.s3Verifier;
 
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.cluster.LastContentPath;
@@ -23,10 +23,10 @@ import static com.flightstats.hub.dao.ChannelService.REPLICATED_LAST_UPDATED;
 import static com.flightstats.hub.dao.aws.S3Verifier.LAST_SINGLE_VERIFIED;
 import static org.junit.Assert.assertEquals;
 
-public class S3VerifierRangeLookupTest {
-    private final static Logger logger = LoggerFactory.getLogger(S3VerifierRangeLookupTest.class);
+public class VerifierRangeLookupTest {
+    private final static Logger logger = LoggerFactory.getLogger(VerifierRangeLookupTest.class);
 
-    private static S3Verifier.S3VerifierRangeLookup verifierRangeLookup;
+    private static VerifierRangeLookup verifierRangeLookup;
     private static LastContentPath lastContentPath;
     private static int ttlMinutes;
     private DateTime now = TimeUtil.now();
@@ -42,7 +42,7 @@ public class S3VerifierRangeLookupTest {
     public static void setUpClass() throws Exception {
         Injector injector = Integration.startAwsHub();
         ttlMinutes = HubProperties.getSpokeTtlMinutes(SpokeStore.WRITE);
-        verifierRangeLookup = injector.getInstance(S3Verifier.S3VerifierRangeLookup.class);
+        verifierRangeLookup = injector.getInstance(VerifierRangeLookup.class);
         lastContentPath = injector.getInstance(LastContentPath.class);
         channelService = injector.getInstance(ChannelService.class);
     }

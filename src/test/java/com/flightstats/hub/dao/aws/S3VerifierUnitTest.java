@@ -3,13 +3,15 @@ package com.flightstats.hub.dao.aws;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.dao.aws.s3Verifier.MissingContentFinder;
+import com.flightstats.hub.dao.aws.s3Verifier.VerifierConfig;
+import com.flightstats.hub.dao.aws.s3Verifier.VerifierRange;
+import com.flightstats.hub.dao.aws.s3Verifier.VerifierRangeLookup;
 import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.model.MinutePath;
-import com.flightstats.hub.spoke.SpokeStoreConfig;
 import com.sun.jersey.api.client.Client;
 import org.apache.curator.framework.CuratorFramework;
 import org.joda.time.DateTime;
@@ -19,11 +21,8 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 
-import static com.flightstats.hub.dao.ChannelService.REPLICATED_LAST_UPDATED;
 import static com.flightstats.hub.dao.aws.S3Verifier.LAST_SINGLE_VERIFIED;
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -38,12 +37,12 @@ public class S3VerifierUnitTest {
     private final CuratorFramework curator = mock(CuratorFramework.class);
     private final MetricsService metricsService = mock(MetricsService.class);
     private final ExecutorService channelThreadPool = mock(ExecutorService.class);
-    private final S3Verifier.MissingContentFinder missingContentFinder = mock(S3Verifier.MissingContentFinder.class);
-    private final S3Verifier.S3VerifierRangeLookup verifierRangeLookup = mock(S3Verifier.S3VerifierRangeLookup.class);
+    private final MissingContentFinder missingContentFinder = mock(MissingContentFinder.class);
+    private final VerifierRangeLookup verifierRangeLookup = mock(VerifierRangeLookup.class);
 
     @Test
     public void testZKDoesNotUpdateOnAbsoluteFailure() {
-        S3VerifierConfig config = S3VerifierConfig.builder().build();
+        VerifierConfig config = VerifierConfig.builder().build();
         S3Verifier s3Verifier = new S3Verifier(lastContentPath, channelService, s3WriteQueue, httpClient, zooKeeperState, curator, metricsService, missingContentFinder, verifierRangeLookup, config, channelThreadPool);
 
         ChannelContentKey key = ChannelContentKey.fromResourcePath("http://hub/channel/foo/1999/12/31/23/59/59/999/bar");
@@ -65,7 +64,7 @@ public class S3VerifierUnitTest {
 
     @Test
     public void testZKUpdatesWithPartialCompletionIfVerifierFailsPartwayThroughAndLastSuccessfulWasADifferentMinute() {
-        S3VerifierConfig config = S3VerifierConfig.builder().build();
+        VerifierConfig config = VerifierConfig.builder().build();
         S3Verifier s3Verifier = new S3Verifier(lastContentPath, channelService, s3WriteQueue, httpClient, zooKeeperState, curator, metricsService, missingContentFinder, verifierRangeLookup, config, channelThreadPool);
 
         ChannelContentKey key = ChannelContentKey.fromResourcePath("http://hub/channel/foo/1999/12/31/23/58/59/999/bar");
@@ -91,7 +90,7 @@ public class S3VerifierUnitTest {
 
     @Test
     public void testZKUpdatesWithPartialCompletionIfVerifierFailsPartwayThroughAMinute() {
-        S3VerifierConfig config = S3VerifierConfig.builder().build();
+        VerifierConfig config = VerifierConfig.builder().build();
         S3Verifier s3Verifier = new S3Verifier(lastContentPath, channelService, s3WriteQueue, httpClient, zooKeeperState, curator, metricsService, missingContentFinder, verifierRangeLookup, config, channelThreadPool);
 
         ChannelContentKey key = ChannelContentKey.fromResourcePath("http://hub/channel/foo/1999/12/31/23/57/59/999/bar");
@@ -124,7 +123,7 @@ public class S3VerifierUnitTest {
 
     @Test
     public void testZKUpdatedOnSuccess() {
-        S3VerifierConfig config = S3VerifierConfig.builder().build();
+        VerifierConfig config = VerifierConfig.builder().build();
         S3Verifier s3Verifier = new S3Verifier(lastContentPath, channelService, s3WriteQueue, httpClient, zooKeeperState, curator, metricsService, missingContentFinder, verifierRangeLookup, config, channelThreadPool);
 
         ChannelContentKey key = ChannelContentKey.fromResourcePath("http://hub/channel/foo/1999/12/31/23/59/59/999/bar");
