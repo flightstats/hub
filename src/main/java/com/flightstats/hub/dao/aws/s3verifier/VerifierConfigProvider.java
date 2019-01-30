@@ -1,12 +1,12 @@
-package com.flightstats.hub.dao.aws;
+package com.flightstats.hub.dao.aws.s3verifier;
 
 import com.flightstats.hub.app.HubProperties;
 import com.google.inject.Provider;
 
-public class S3VerifierConfigProvider implements Provider<S3VerifierConfig> {
+public class VerifierConfigProvider implements Provider<VerifierConfig> {
     @Override
-    public S3VerifierConfig get() {
-        return S3VerifierConfig.builder()
+    public VerifierConfig get() {
+        return VerifierConfig.builder()
                 .enabled(HubProperties.getProperty("s3Verifier.run", true))
                 .baseTimeoutMinutes(HubProperties.getProperty("s3Verifier.baseTimeoutMinutes", 2))
                 .offsetMinutes(HubProperties.getProperty("s3Verifier.offsetMinutes", 15))

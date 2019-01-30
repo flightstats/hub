@@ -8,9 +8,8 @@ import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.cluster.*;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
-import com.flightstats.hub.dao.aws.S3Verifier;
-import com.flightstats.hub.dao.aws.S3VerifierConfig;
-import com.flightstats.hub.dao.aws.S3VerifierConfigProvider;
+import com.flightstats.hub.dao.aws.s3verifier.VerifierConfig;
+import com.flightstats.hub.dao.aws.s3verifier.VerifierConfigProvider;
 import com.flightstats.hub.health.HubHealthCheck;
 import com.flightstats.hub.metrics.DelegatingMetricsService;
 import com.flightstats.hub.metrics.MetricsRunner;
@@ -162,16 +161,16 @@ public class HubBindings extends AbstractModule {
     @Named("s3VerifierChannelThreadPool")
     @Singleton
     @Provides
-    public static ExecutorService channelThreadPool(S3VerifierConfig s3VerifierConfig) {
-        return Executors.newFixedThreadPool(s3VerifierConfig.getChannelThreads(), new ThreadFactoryBuilder().setNameFormat("S3VerifierChannel-%d").build());
+    public static ExecutorService channelThreadPool(VerifierConfig verifierConfig) {
+        return Executors.newFixedThreadPool(verifierConfig.getChannelThreads(), new ThreadFactoryBuilder().setNameFormat("S3VerifierChannel-%d").build());
     }
 
     @Named("s3VerifierQueryThreadPool")
     @Singleton
     @Provides
     public
-    static ExecutorService queryThreadPool(S3VerifierConfig s3VerifierConfig) {
-        return Executors.newFixedThreadPool(s3VerifierConfig.getQueryThreads(), new ThreadFactoryBuilder().setNameFormat("S3VerifierQuery-%d").build());
+    static ExecutorService queryThreadPool(VerifierConfig verifierConfig) {
+        return Executors.newFixedThreadPool(verifierConfig.getQueryThreads(), new ThreadFactoryBuilder().setNameFormat("S3VerifierQuery-%d").build());
     }
 
 
@@ -208,8 +207,8 @@ public class HubBindings extends AbstractModule {
                 .annotatedWith(Names.named(ContentDao.READ_CACHE))
                 .to(SpokeReadContentDao.class).asEagerSingleton();
 
-        bind(S3VerifierConfig.class)
-                .toProvider(S3VerifierConfigProvider.class)
+        bind(VerifierConfig.class)
+                .toProvider(VerifierConfigProvider.class)
                 .asEagerSingleton();
 
         bind(SpokeStoreConfig.class)
