@@ -12,6 +12,10 @@ import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
 
+/**
+ *
+ * Validates the channel's configuration parameters.
+ */
 public class ChannelValidator {
     public static final String VALID_NAME = "^[a-zA-Z0-9_-]+$";
 
