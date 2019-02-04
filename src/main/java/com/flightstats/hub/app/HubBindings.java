@@ -1,6 +1,5 @@
 package com.flightstats.hub.app;
 
-import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ScheduledReporter;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -13,6 +12,7 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.health.HubHealthCheck;
 import com.flightstats.hub.metrics.InfluxdbReporterProvider;
+import com.flightstats.hub.metrics.MetricRegistryProvider;
 import com.flightstats.hub.metrics.MetricsRunner;
 import com.flightstats.hub.metrics.MetricsConfig;
 import com.flightstats.hub.metrics.InfluxdbReporterLifecycle;
@@ -56,8 +56,6 @@ import java.util.concurrent.TimeUnit;
 
 public class HubBindings extends AbstractModule {
     private final static Logger logger = LoggerFactory.getLogger(HubBindings.class);
-    private final static MetricRegistry metricRegistry = new MetricRegistry();
-
 
     @Singleton
     @Provides
@@ -214,7 +212,7 @@ public class HubBindings extends AbstractModule {
 
 
         bind(HubVersion.class).toInstance(new HubVersion());
-        bind(MetricRegistry.class).toInstance(metricRegistry);
+        bind(MetricRegistry.class).toProvider(MetricRegistryProvider.class).asEagerSingleton();
         bind(ScheduledReporter.class).toProvider(InfluxdbReporterProvider.class);
         bind(InfluxdbReporterLifecycle.class).asEagerSingleton();
 
