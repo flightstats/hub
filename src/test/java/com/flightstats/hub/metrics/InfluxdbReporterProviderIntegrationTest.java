@@ -30,9 +30,9 @@ import static org.mockito.Mockito.when;
 
 public class InfluxdbReporterProviderIntegrationTest {
     private HttpServer httpServer;
-    private List<String> writeResult;
+    private static List<String> writeResult;
 
-    private class TestHandler implements HttpHandler {
+    private static class TestHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange httpExchange) throws IOException {
 
