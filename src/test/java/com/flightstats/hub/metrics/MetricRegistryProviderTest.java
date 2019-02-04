@@ -10,7 +10,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.junit.Assert.assertTrue;
 
-public class MetricRegistryTestProvider {
+public class MetricRegistryProviderTest {
     @Test
     public void testMetricRegistryProvider_metricNames() {
         HubVersion hubVersion = mock(HubVersion.class);
