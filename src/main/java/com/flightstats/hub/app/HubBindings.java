@@ -13,6 +13,7 @@ import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.health.HubHealthCheck;
 import com.flightstats.hub.metrics.InfluxdbReporterProvider;
 import com.flightstats.hub.metrics.MetricRegistryProvider;
+import com.flightstats.hub.metrics.MetricsConfigProvider;
 import com.flightstats.hub.metrics.MetricsRunner;
 import com.flightstats.hub.metrics.MetricsConfig;
 import com.flightstats.hub.metrics.InfluxdbReporterLifecycle;
@@ -158,32 +159,6 @@ public class HubBindings extends AbstractModule {
         return mapper;
     }
 
-    @Provides
-    @Singleton
-    @Inject
-    public static MetricsConfig metricsReportersConfig(HubVersion hubVersion) {
-        return MetricsConfig.builder()
-                .appVersion(hubVersion.getVersion())
-                .clusterTag(
-                        HubProperties.getProperty("cluster.location", "local") +
-                                "-" +
-                                HubProperties.getProperty("app.environment", "dev")
-                )
-                .env(HubProperties.getProperty("app.environment", "dev"))
-                .enabled(HubProperties.getProperty("metrics.enable", "false").equals("true"))
-                .hostTag(HubHost.getLocalName())
-                .influxdbDatabaseName(HubProperties.getProperty("metrics.influxdb.database.name", "hub_tick"))
-                .influxdbHost(HubProperties.getProperty("metrics.influxdb.host", "localhost"))
-                .influxdbPass(HubProperties.getProperty("metrics.influxdb.database.password", ""))
-                .influxdbPort(HubProperties.getProperty("metrics.influxdb.port", 8086))
-                .influxdbProtocol(HubProperties.getProperty("metrics.influxdb.protocol", "http"))
-                .influxdbUser(HubProperties.getProperty("metrics.influxdb.database.user", ""))
-                .reportingIntervalSeconds(HubProperties.getProperty("metrics.seconds", 15))
-                .role(HubProperties.getProperty("metrics.tags.role", "hub"))
-                .team(HubProperties.getProperty("metrics.tags.team", "development"))
-                .build();
-    }
-
     @Override
     protected void configure() {
         Names.bindProperties(binder(), HubProperties.getProperties());
@@ -212,8 +187,9 @@ public class HubBindings extends AbstractModule {
 
 
         bind(HubVersion.class).toInstance(new HubVersion());
+        bind(MetricsConfig.class).toProvider(MetricsConfigProvider.class).asEagerSingleton();
         bind(MetricRegistry.class).toProvider(MetricRegistryProvider.class).asEagerSingleton();
-        bind(ScheduledReporter.class).toProvider(InfluxdbReporterProvider.class);
+        bind(ScheduledReporter.class).toProvider(InfluxdbReporterProvider.class).asEagerSingleton();
         bind(InfluxdbReporterLifecycle.class).asEagerSingleton();
 
         bind(ContentDao.class)
