@@ -5,7 +5,6 @@ import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.metrics.DataDog;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.model.RecurringTrace;
@@ -36,31 +35,34 @@ import java.util.function.Predicate;
 class WebhookRetryer {
 
     private final static Logger logger = LoggerFactory.getLogger(WebhookRetryer.class);
-    private final static StatsDClient statsd = DataDog.statsd;
 
     private List<Predicate<DeliveryAttempt>> giveUpIfs = new ArrayList<>();
     private List<Predicate<DeliveryAttempt>> tryLaterIfs = new ArrayList<>();
 
     private WebhookErrorService webhookErrorService;
     private Client httpClient;
+    private StatsDClient statsd;
 
     @Builder
     WebhookRetryer(@Singular List<Predicate<DeliveryAttempt>> giveUpIfs,
                    @Singular List<Predicate<DeliveryAttempt>> tryLaterIfs,
+                   StatsDClient statsd,
                    Integer connectTimeoutSeconds,
                    Integer readTimeoutSeconds) {
-        this(giveUpIfs, tryLaterIfs, connectTimeoutSeconds, readTimeoutSeconds, HubProvider.getInstance(WebhookErrorService.class));
+        this(giveUpIfs, tryLaterIfs, statsd, connectTimeoutSeconds, readTimeoutSeconds, HubProvider.getInstance(WebhookErrorService.class));
     }
 
     @VisibleForTesting
     WebhookRetryer(List<Predicate<DeliveryAttempt>> giveUpIfs,
                    List<Predicate<DeliveryAttempt>> tryLaterIfs,
+                   StatsDClient statsd,
                    Integer connectTimeoutSeconds,
                    Integer readTimeoutSeconds,
                    WebhookErrorService webhookErrorService) {
         this.giveUpIfs = giveUpIfs;
         this.tryLaterIfs = tryLaterIfs;
         this.webhookErrorService = webhookErrorService;
+        this.statsd = statsd;
         if (connectTimeoutSeconds == null) connectTimeoutSeconds = HubProperties.getProperty("webhook.connectTimeoutSeconds", 60);
         if (readTimeoutSeconds == null) readTimeoutSeconds = HubProperties.getProperty("webhook.readTimeoutSeconds", 60);
         this.httpClient = RestClient.createClient(connectTimeoutSeconds, readTimeoutSeconds, true, false);

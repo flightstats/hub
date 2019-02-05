@@ -40,7 +40,7 @@ public class MetricsRequestFilter implements ContainerRequestFilter, ContainerRe
                 requestState.setResponse(response);
             }
         } catch (Exception e) {
-            logger.error("DataDog request error", e);
+            logger.error("DataDogClient request error", e);
         }
     }
 
@@ -74,7 +74,7 @@ public class MetricsRequestFilter implements ContainerRequestFilter, ContainerRe
                 logger.info("call to shutdown, ignoring datadog time {}", time);
             } else {
                 String[] tagArray = getTagArray(tags);
-                logger.trace("DataDog data sent: {}", Arrays.toString(tagArray));
+                logger.trace("DataDogClient data sent: {}", Arrays.toString(tagArray));
                 if (metricsService.shouldLog(channel)) {
                     metricsService.time("request", requestState.getStart(), tagArray);
                 }
