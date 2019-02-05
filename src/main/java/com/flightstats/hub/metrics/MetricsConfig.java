@@ -15,6 +15,8 @@ public class MetricsConfig {
 
     String appVersion;
     String clusterTag;
+    String dataDogAPIKey;
+    String dataDogAppKey;
     boolean enabled;
     String env;
     String hostTag;

@@ -39,7 +39,7 @@ const callbackItems = [];
  * 2 - create a webhook on that channel with startItem=previous
  * 3 - start a server at the endpoint
  * 4 - post item into the channel
- * 5 - verify that the item are returned within delta time, incuding the second item posted in 2.
+ * 5 - verify that the item are returned within delta time, including the second item posted in 2.
  */
 describe(__filename, function () {
     beforeAll(async () => {
