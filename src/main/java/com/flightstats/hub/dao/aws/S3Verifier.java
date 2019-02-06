@@ -152,6 +152,7 @@ public class S3Verifier {
         String channelName = range.getChannelConfig().getDisplayName();
         SortedSet<ContentKey> keysToAdd = getMissing(range.getStartPath(), range.getEndPath(), channelName, s3SingleContentDao, new TreeSet<>());
         logger.debug("verifyChannel.starting {}", range);
+        MinutePath lastCompleted = range.getEndPath();
         for (ContentKey key : keysToAdd) {
             logger.trace("found missing {} {}", channelName, key);
             metricsService.increment(MISSING_ITEM_METRIC_NAME);
@@ -159,11 +160,17 @@ public class S3Verifier {
             if (!success) {
                 logger.error("unable to queue missing item {} {}", channelName, key);
                 metricsService.increment(VERIFIER_FAILED_METRIC_NAME);
-                return;
+                lastCompleted = new MinutePath(key.getTime().minusMinutes(1));
+                break;
             }
         }
-        logger.debug("verifyChannel.completed {}", range);
-        lastContentPath.updateIncrease(range.getEndPath(), range.getChannelConfig().getDisplayName(), LAST_SINGLE_VERIFIED);
+
+        if (lastCompleted.compareTo(range.getStartPath()) > 0) {
+            logger.debug("verifyChannel.completed {}", range);
+            lastContentPath.updateIncrease(lastCompleted, range.getChannelConfig().getDisplayName(), LAST_SINGLE_VERIFIED);
+        } else {
+            logger.warn("verifyChannel completed, but start time is the same as last completed");
+        }
     }
 
     @VisibleForTesting
