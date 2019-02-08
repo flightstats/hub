@@ -17,7 +17,7 @@ import com.flightstats.hub.metrics.MetricsConfigProvider;
 import com.flightstats.hub.metrics.MetricsRunner;
 import com.flightstats.hub.metrics.MetricsConfig;
 import com.flightstats.hub.metrics.InfluxdbReporterLifecycle;
-import com.flightstats.hub.metrics.StatsDFilter;
+import com.flightstats.hub.metrics.HostedGraphiteMetricsService;
 import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.metrics.PeriodicMetricEmitter;
 import com.flightstats.hub.replication.ReplicationManager;
@@ -174,7 +174,7 @@ public class HubBindings extends AbstractModule {
         bind(WebhookManager.class).asEagerSingleton();
         bind(LastContentPath.class).asEagerSingleton();
         bind(WatchManager.class).asEagerSingleton();
-        bind(MetricsService.class).to(StatsDFilter.class).asEagerSingleton();
+        bind(MetricsService.class).to(HostedGraphiteMetricsService.class).asEagerSingleton();
         bind(PeriodicMetricEmitter.class).asEagerSingleton();
         bind(NtpMonitor.class).asEagerSingleton();
         bind(TimeService.class).asEagerSingleton();

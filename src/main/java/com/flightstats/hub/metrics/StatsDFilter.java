@@ -7,31 +7,36 @@ import com.timgroup.statsd.StatsDClient;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Predicate;
+import java.util.function.Function;
 
 @Singleton
 public class StatsDFilter {
     private StatsDClient statsDClient;
     private StatsDClient dataDogClient;
-    private List<String> predicates = Arrays.asList("", "");
+    private DataDogWhitelist dataDogWhitelist;
 
     @Inject
     public StatsDFilter(
             StatsDClient statsDClient,
-            StatsDClient dataDogClient
+            StatsDClient dataDogClient,
+            DataDogWhitelist dataDogWhitelist
             ) {
         this.statsDClient = statsDClient;
         this.dataDogClient = dataDogClient;
-    }
-    
-    public List<StatsDClient> getFilteredClients(String metric) {
-        List <StatsDClient> clients = Arrays.asList(statsDClient, dataDogClient);
-        boolean matched = match.test(metric);
-        return matched ? clients : Collections.singletonList(statsDClient);
+        this.dataDogWhitelist = dataDogWhitelist;
     }
 
-    private Predicate<String> match = (metric) -> predicates
+    private Function<Boolean, List<StatsDClient>> clientList = (bool) -> bool ?
+            Arrays.asList(statsDClient, dataDogClient) :
+            Collections.singletonList(statsDClient);
+
+    private Function<String, Boolean> match = (metric) -> dataDogWhitelist
+            .getWhitelist()
             .stream()
             .anyMatch(predicate -> predicate.equals(metric));
+    
+    List<StatsDClient> getFilteredClients(String metric) {
+        return clientList.apply(match.apply(metric));
+    }
 
 }

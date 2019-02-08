@@ -5,7 +5,7 @@ import com.google.inject.Singleton;
 import org.apache.commons.lang3.NotImplementedException;
 
 @Singleton
-class HostedGraphiteMetricsService implements MetricsService {
+public class HostedGraphiteMetricsService implements MetricsService {
 
     @Inject
     private HostedGraphiteSender sender;
