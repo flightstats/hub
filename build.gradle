@@ -119,7 +119,7 @@ dependencies {
     testCompile 'junit:junit:4.+'
     testCompile "org.mockito:mockito-all:1.+"
     testCompile 'org.testng:testng:6.+'
-    testCompile group: 'org.hamcrest', name: 'hamcrest-core', version: '1.3'
+    testCompile group: 'org.hamcrest', name: 'hamcrest-all', version: '1.3'
 }
 
 
