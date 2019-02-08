@@ -8,47 +8,45 @@ import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.MediaType;
 
-public class DataDogClient {
-    private static final Logger logger = LoggerFactory.getLogger(DataDogClient.class);
+class DataDogHandler {
+    private static final Logger logger = LoggerFactory.getLogger(DataDogHandler.class);
     private MetricsConfig metricsConfig;
-    private String datadogURL = "https://app.datadoghq.com/api/v1/downtime";
+    private String datadogUrl = "https://app.datadoghq.com/api/v1/downtime";
 
-    public DataDogClient(
+    DataDogHandler(
             MetricsConfig metricsConfig) {
         this.metricsConfig = metricsConfig;
     }
 
-    public DataDogClient(
+    DataDogHandler(
             MetricsConfig metricsConfig,
-            String datadogURL
+            String datadogUrl
     ) {
         this.metricsConfig = metricsConfig;
-        this.datadogURL = datadogURL;
+        this.datadogUrl = datadogUrl;
     }
 
     void mute() {
         logger.info("Attempting to mute datadog");
-        String api_key = metricsConfig.getDataDogAPIKey();
-        String app_key = metricsConfig.getDataDogAppKey();
+        String apiKey = metricsConfig.getDataDogAPIKey();
+        String appKey = metricsConfig.getDataDogAppKey();
         String name = metricsConfig.getHostTag();
 
         long fourMinutesInSeconds = 4 * 60;
         long nowMillis = TimeUtil.now().getMillis();
         long fourMinutesFutureInSeconds = nowMillis / 1000 + fourMinutesInSeconds;
 
-        if ("".equals(api_key) || "".equals(app_key)) {
+        if ("".equals(apiKey) || "".equals(appKey)) {
             logger.warn("datadog api_key or app_key not defined");
             return;
         }
-        String template = "{ \"message\": \"restarting\", \"scope\": \"name:%s\", \"end\": %d }";
+        String dataTemplate = "{ \"message\": \"restarting\", \"scope\": \"name:%s\", \"end\": %d }";
+        String urlTemplate = "%s?api_key=%s&application_key=%s";
         try {
 
-            String data = String.format(template, name, fourMinutesFutureInSeconds);
-            String url = datadogURL +
-                    "?api_key=" +
-                    api_key +
-                    "&application_key=" +
-                    app_key;
+            String data = String.format(dataTemplate, name, fourMinutesFutureInSeconds);
+            String url = String.format(urlTemplate, datadogUrl, apiKey, appKey);
+            logger.info("************** {}", url);
             ClientResponse response = RestClient
                     .defaultClient()
                     .resource(url)

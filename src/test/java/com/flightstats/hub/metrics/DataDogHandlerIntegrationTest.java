@@ -25,7 +25,7 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.StringContains.containsString;
 import static org.hamcrest.number.IsCloseTo.closeTo;
 
-public class DataDogClientIntegrationTest {
+public class DataDogHandlerIntegrationTest {
     private static List<String> writeResult;
     private static String queryResult;
     private static HttpServer httpServer;
@@ -82,8 +82,8 @@ public class DataDogClientIntegrationTest {
                 .hostTag("test_host")
                 .build();
         String url = "http://localhost:8888/api";
-        DataDogClient dataDogClient = new DataDogClient(metricsConfig, url);
-        dataDogClient.mute();
+        DataDogHandler dataDogHandler = new DataDogHandler(metricsConfig, url);
+        dataDogHandler.mute();
 
         ObjectMapper mapper = new ObjectMapper();
         JsonNode jsonExpected = mapper.createObjectNode()

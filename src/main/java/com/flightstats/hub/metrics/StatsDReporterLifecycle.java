@@ -1,15 +1,22 @@
 package com.flightstats.hub.metrics;
 
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.inject.Inject;
+import com.timgroup.statsd.StatsDClient;
 
 public class StatsDReporterLifecycle extends AbstractIdleService {
-    @Override
-    public void startUp() {
-        //
+    private StatsDFilter statsDFilter;
+
+    @Inject
+    public StatsDReporterLifecycle(StatsDFilter statsDFilter) {
+        this.statsDFilter = statsDFilter;
     }
 
-    @Override
+    public void startUp() {
+        statsDFilter.setOperatingClients();
+    }
+
     public void shutDown() {
-        //
+        statsDFilter.getAllClients().forEach(StatsDClient::stop);
     }
 }

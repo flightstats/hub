@@ -11,17 +11,17 @@ public class StatsDHandlers {
 
     private StatsDFilter statsDFilter;
     private StatsDFormatter statsDFormatter;
-    private DataDogClient dataDogClient;
+    private DataDogHandler dataDogHandler;
 
     @Inject
     public StatsDHandlers(
             StatsDFilter statsDFilter,
             StatsDFormatter statsDFormatter,
-            DataDogClient dataDogClient
+            DataDogHandler dataDogHandler
     ) {
         this.statsDFilter = statsDFilter;
         this.statsDFormatter = statsDFormatter;
-        this.dataDogClient = dataDogClient;
+        this.dataDogHandler = dataDogHandler;
     }
 
     private boolean isTestChannel(String channel) {
@@ -85,7 +85,7 @@ public class StatsDHandlers {
     }
 
     public void mute() {
-        dataDogClient.mute();
+        dataDogHandler.mute();
     }
 
 }
