@@ -116,10 +116,10 @@ dependencies {
     compile 'com.atlassian.commonmark:commonmark:0.10.0'
 
     testCompile 'com.sparkjava:spark-core:2.7.1'
+    testCompile group: 'org.hamcrest', name: 'hamcrest', version: '2.1'
     testCompile 'junit:junit:4.+'
     testCompile "org.mockito:mockito-all:1.+"
     testCompile 'org.testng:testng:6.+'
-    testCompile group: 'org.hamcrest', name: 'hamcrest-all', version: '1.3'
 }
 
 

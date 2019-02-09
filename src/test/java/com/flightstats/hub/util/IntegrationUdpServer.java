@@ -1,41 +1,38 @@
 package com.flightstats.hub.util;
 
 import lombok.Builder;
-import lombok.Getter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.io.IOException;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.TimeUnit;
 
 @Builder
 public class IntegrationUdpServer {
     private long timeoutMillis;
     private int port;
+    private boolean listening;
+    private final Logger logger = LoggerFactory.getLogger(IntegrationUdpServer.class);
+    private final Map<String, String> store = new HashMap<>();
 
-    @Builder.Default
-    private boolean listening = false;
-
-    private final CompletableFuture<Void> timeoutFuture = CompletableFuture.runAsync(new TimeoutRunnable());
-
-    private final CompletableFuture<String> serverFuture = CompletableFuture.supplyAsync(() -> {
-        String result = "";
+    private final CompletableFuture<Void> serverFuture = CompletableFuture.runAsync(() -> {
         try {
             DatagramSocket serverSocket = new DatagramSocket(port);
-            byte[] data = new byte[1024];
             listening = true;
             while(listening) {
-                result = openSocket(data, serverSocket);
-                if (!result.equals("")) {
-                    listening = false;
-                }
+                byte[] data = new byte[1024];
+                String result = openSocket(data, serverSocket);
+                addValueToStore(result);
             }
         } catch (Exception ex) {
             listening = false;
             throw new IllegalStateException(ex);
         }
-        return result;
     });
 
     private String openSocket(byte[] data, DatagramSocket serverSocket) {
@@ -49,26 +46,23 @@ public class IntegrationUdpServer {
         }
     }
 
-    public String getAsyncResult() {
-        try {
-            return serverFuture.get();
-        } catch (Exception ex) {
-            serverFuture.completeExceptionally(ex);
-            return "";
-        }
+    private void addValueToStore(String currentResult) {
+        String key = currentResult.substring(0, currentResult.indexOf(":"));
+        store.put(key, currentResult);
     }
 
-    private class TimeoutRunnable implements Runnable {
-        @Override
-        public void run() {
-            try {
-                Thread.sleep(timeoutMillis);
-                if (!serverFuture.isDone()) {
-                    serverFuture.completeExceptionally(new TimeoutException("timed out waiting for test task completion"));
-                }
-            } catch (Exception ex) {
-                serverFuture.completeExceptionally(ex);
-            }
+    public void closeServer() {
+        this.listening = false;
+    }
+
+    public Map<String, String> getResult () {
+        try {
+            serverFuture.get(timeoutMillis, TimeUnit.MILLISECONDS);
+            return store;
+        } catch (Exception ex) {
+            logger.error("error in udp server " + ex);
+            serverFuture.completeExceptionally(ex);
+            return store;
         }
     }
 }

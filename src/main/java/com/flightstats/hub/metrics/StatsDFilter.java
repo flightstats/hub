@@ -22,7 +22,6 @@ public class StatsDFilter {
         this.dataDogWhitelist = dataDogWhitelist;
     }
 
-
     // initializing these clients starts their udp reporters, setting them explicitly in order to trigger them specifically
     void setOperatingClients() {
         this.statsDClient = new NonBlockingStatsDClient("hub", "localhost", 8124);
