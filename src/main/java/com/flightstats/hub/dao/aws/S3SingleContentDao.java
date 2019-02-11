@@ -5,7 +5,6 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.metrics.StatsDHandlers;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.Content;

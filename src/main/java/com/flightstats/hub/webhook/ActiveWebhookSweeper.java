@@ -1,6 +1,5 @@
 package com.flightstats.hub.webhook;
 
-import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.metrics.StatsDHandlers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

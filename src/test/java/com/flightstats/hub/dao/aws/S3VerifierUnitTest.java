@@ -4,7 +4,6 @@ import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
-import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.metrics.StatsDHandlers;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ChannelContentKey;
@@ -12,7 +11,6 @@ import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.MinutePath;
 import com.sun.jersey.api.client.Client;
 import org.apache.curator.framework.CuratorFramework;
-import org.apache.zookeeper.data.Stat;
 import org.joda.time.DateTime;
 import org.junit.Test;
 

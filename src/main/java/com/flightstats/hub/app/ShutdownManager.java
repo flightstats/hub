@@ -1,7 +1,6 @@
 package com.flightstats.hub.app;
 
 import com.flightstats.hub.health.HubHealthCheck;
-import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.metrics.StatsDHandlers;
 import com.flightstats.hub.util.Sleeper;
 import com.google.common.util.concurrent.AbstractIdleService;

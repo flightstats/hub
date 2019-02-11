@@ -14,8 +14,6 @@ import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.metrics.MetricsService;
-import com.flightstats.hub.metrics.NewRelicIgnoreTransaction;
 import com.flightstats.hub.metrics.StatsDHandlers;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.rest.Linked;
@@ -420,7 +418,6 @@ public class ChannelContentResource {
     @GET
     @Path("/{h}/{m}/{s}/{ms}/{hash}/events")
     @Produces(SseFeature.SERVER_SENT_EVENTS)
-    @NewRelicIgnoreTransaction
     public EventOutput getEvents(@PathParam("channel") String channel,
                                  @PathParam("Y") int year,
                                  @PathParam("M") int month,
