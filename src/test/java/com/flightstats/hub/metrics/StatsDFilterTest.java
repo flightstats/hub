@@ -60,7 +60,7 @@ public class StatsDFilterTest {
                 .build();
         StatsDFilter statsDFilter = new StatsDFilter(dataDogWhitelist);
         assertEquals(2, statsDFilter.getFilteredClients("testChannelName").size());
-        assertEquals(NoOpStatsDClient.class, statsDFilter.getAll    Clients().get(0).getClass());
+        assertEquals(NoOpStatsDClient.class, statsDFilter.getAllClients().get(0).getClass());
     }
 
     @Test
