@@ -166,8 +166,10 @@ public class S3Verifier {
         if (lastCompleted.compareTo(range.getStartPath()) > 0) {
             logger.debug("verifyChannel.completed {}", range);
             lastContentPath.updateIncrease(lastCompleted, range.getChannelConfig().getDisplayName(), LAST_SINGLE_VERIFIED);
+            incrementMetric(VerifierMetrics.PARTIAL_UPDATE);
         } else {
             logger.warn("verifyChannel completed, but start time is the same as last completed");
+            incrementMetric(VerifierMetrics.EXCESSIVE_CHANNEL_VOLUME);
         }
     }
 
