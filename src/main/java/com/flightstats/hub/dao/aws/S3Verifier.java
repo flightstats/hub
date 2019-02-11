@@ -8,7 +8,6 @@ import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.QueryResult;
 import com.flightstats.hub.exception.FailedQueryException;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.metrics.StatsDHandlers;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;

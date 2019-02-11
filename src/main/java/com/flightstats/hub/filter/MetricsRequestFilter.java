@@ -1,7 +1,6 @@
 package com.flightstats.hub.filter;
 
 import com.flightstats.hub.app.HubProvider;
-import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.metrics.StatsDHandlers;
 import com.flightstats.hub.util.RequestUtils;
 import com.google.common.annotations.VisibleForTesting;

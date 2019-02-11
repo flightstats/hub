@@ -7,8 +7,6 @@ import com.amazonaws.services.s3.S3ResponseMetadata;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.flightstats.hub.metrics.MetricsService;
-import com.flightstats.hub.metrics.NoOpMetricsService;
 import com.flightstats.hub.metrics.StatsDHandlers;
 import org.junit.Test;
 

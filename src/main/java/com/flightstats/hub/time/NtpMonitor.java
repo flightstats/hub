@@ -3,7 +3,6 @@ package com.flightstats.hub.time;
 
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.metrics.StatsDHandlers;
 import com.flightstats.hub.util.Commander;
 import com.google.common.util.concurrent.AbstractScheduledService;
