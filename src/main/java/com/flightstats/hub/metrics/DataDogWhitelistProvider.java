@@ -7,7 +7,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class DataDogWhitelistProvider implements Provider {
+public class DataDogWhitelistProvider implements Provider<DataDogWhitelist> {
 
     @Override
     public DataDogWhitelist get() {

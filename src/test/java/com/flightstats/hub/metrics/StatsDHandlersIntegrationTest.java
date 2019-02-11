@@ -18,7 +18,7 @@ public class StatsDHandlersIntegrationTest {
 
     private static IntegrationUdpServer provideNewServer() {
         return IntegrationUdpServer.builder()
-                .timeoutMillis(2000)
+                .timeoutMillis(4000)
                 .listening(true)
                 .port(8124)
                 .build();
@@ -50,6 +50,7 @@ public class StatsDHandlersIntegrationTest {
         handlers.time("timeName1", "timeTest2", 1, tags);
         handlers.time("timeName2", "timeTest3", 1, 1024, tags);
         results = udpServer.getResult();
+        System.out.println("****************" + results);
     }
 
     @Test

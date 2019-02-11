@@ -9,6 +9,7 @@ import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.metrics.NoOpMetricsService;
+import com.flightstats.hub.metrics.StatsDHandlers;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -35,13 +36,13 @@ public class HubS3ClientTest {
         AmazonS3Client amazonS3Client = mock(AmazonS3Client.class);
         AmazonWebServiceRequest request = mock(AmazonWebServiceRequest.class);
         when(amazonS3Client.getCachedResponseMetadata(request)).thenReturn(metadata);
-        MetricsService metricsService = spy(new NoOpMetricsService());
-        HubS3Client hubS3Client = new HubS3Client(s3BucketName, amazonS3Client, metricsService);
+        StatsDHandlers statsDHandlers = mock(StatsDHandlers.class);
+        HubS3Client hubS3Client = new HubS3Client(s3BucketName, amazonS3Client, statsDHandlers);
         SdkClientException exception = new AmazonS3Exception("something f'd up");
 
         hubS3Client.countError(exception, request, "fauxMethod", Collections.singletonList("foo:bar"));
 
-        verify(metricsService).count(
+        verify(statsDHandlers).count(
                 "s3.error",
                 1,
                 "exception:com.amazonaws.services.s3.model.AmazonS3Exception",
@@ -55,8 +56,8 @@ public class HubS3ClientTest {
     public void putObject() {
         S3BucketName s3BucketName = mock(S3BucketName.class);
         AmazonS3Client amazonS3Client = mock(AmazonS3Client.class);
-        MetricsService metricsService = mock(MetricsService.class);
-        HubS3Client hubS3Client = new HubS3Client(s3BucketName, amazonS3Client, metricsService);
+        StatsDHandlers statsDHandlers = mock(StatsDHandlers.class);
+        HubS3Client hubS3Client = new HubS3Client(s3BucketName, amazonS3Client, statsDHandlers);
 
         InputStream emptyStream = new ByteArrayInputStream(new byte[0]);
         ObjectMetadata metadata = new ObjectMetadata();
@@ -78,6 +79,6 @@ public class HubS3ClientTest {
             "key:testKey"
         };
 
-        verify(metricsService).count(METRIC_NAME, METRIC_VALUE, tags);
+        verify(statsDHandlers).count(METRIC_NAME, METRIC_VALUE, tags);
     }
 }

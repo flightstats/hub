@@ -9,7 +9,7 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.metrics.MetricsService;
+import com.flightstats.hub.metrics.StatsDHandlers;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.TimeUtil;
@@ -50,7 +50,7 @@ public class S3BatchContentDao implements ContentDao {
     @Inject
     private S3BucketName s3BucketName;
     @Inject
-    private MetricsService metricsService;
+    private StatsDHandlers statsDHandlers;
 
     @Override
     public ContentKey insert(String channelName, Content content) throws Exception {
@@ -125,7 +125,7 @@ public class S3BatchContentDao implements ContentDao {
             S3Object object = s3Client.getObject(request);
             return new ZipInputStream(new BufferedInputStream(object.getObjectContent()));
         } finally {
-            metricsService.time(channel, "s3.get", start, "type:batch");
+            statsDHandlers.time(channel, "s3.get", start, "type:batch");
         }
     }
 
@@ -260,7 +260,7 @@ public class S3BatchContentDao implements ContentDao {
             logger.warn("unable to get index " + channel, minutePath, e);
             traces.add("issue with getting keys", e);
         } finally {
-            metricsService.time(channel, "s3.get", start, "type:batch");
+            statsDHandlers.time(channel, "s3.get", start, "type:batch");
         }
     }
 
@@ -323,7 +323,7 @@ public class S3BatchContentDao implements ContentDao {
         traces.add("S3BatchContentDao.listMinutePaths ", request.getPrefix(), request.getMarker(), iterate);
         long start = System.currentTimeMillis();
         ObjectListing listing = s3Client.listObjects(request);
-        metricsService.time(channel, "s3.list", start, "type:batch");
+        statsDHandlers.time(channel, "s3.list", start, "type:batch");
         List<S3ObjectSummary> summaries = listing.getObjectSummaries();
         for (S3ObjectSummary summary : summaries) {
             String key = summary.getKey();
@@ -419,7 +419,7 @@ public class S3BatchContentDao implements ContentDao {
             PutObjectRequest request = new PutObjectRequest(s3BucketName.getS3BucketName(), batchIndexKey, stream, metadata);
             s3Client.putObject(request);
         } finally {
-            metricsService.time(channel, "s3.put", start, bytes.length, "type:batch");
+            statsDHandlers.time(channel, "s3.put", start, bytes.length, "type:batch");
         }
     }
 

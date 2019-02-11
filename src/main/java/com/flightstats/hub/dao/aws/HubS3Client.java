@@ -5,7 +5,7 @@ import com.amazonaws.SdkClientException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.S3ResponseMetadata;
 import com.amazonaws.services.s3.model.*;
-import com.flightstats.hub.metrics.MetricsService;
+import com.flightstats.hub.metrics.StatsDHandlers;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -25,15 +25,15 @@ public class HubS3Client {
     private AmazonS3 s3Client;
 
     @Inject
-    private MetricsService metricsService;
+    private StatsDHandlers statsDHandlers;
 
     @Inject
     private S3BucketName s3BucketName;
 
-    public HubS3Client(S3BucketName s3BucketName, AmazonS3 s3Client, MetricsService metricsService) {
+    public HubS3Client(S3BucketName s3BucketName, AmazonS3 s3Client, StatsDHandlers statsDHandlers) {
         this.s3BucketName = s3BucketName;
         this.s3Client = s3Client;
-        this.metricsService = metricsService;
+        this.statsDHandlers = statsDHandlers;
     }
 
     public HubS3Client() {
@@ -162,7 +162,7 @@ public class HubS3Client {
         }
 
         tags.addAll(extraTags);
-        metricsService.count("s3.error", 1, toStringArray(tags));
+        statsDHandlers.count("s3.error", 1, toStringArray(tags));
     }
 
     private static String[] toStringArray(List<String> list) {

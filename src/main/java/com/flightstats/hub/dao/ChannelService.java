@@ -7,8 +7,8 @@ import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.aws.MultiPartParser;
 import com.flightstats.hub.exception.*;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.metrics.MetricsService;
-import com.flightstats.hub.metrics.MetricsService.Insert;
+import com.flightstats.hub.metrics.MetricInsert;
+import com.flightstats.hub.metrics.StatsDHandlers;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.replication.ReplicationManager;
@@ -53,7 +53,7 @@ public class ChannelService {
     @Inject
     private TimeService timeService;
     @Inject
-    private MetricsService metricsService;
+    private StatsDHandlers statsDHandlers;
 
     public boolean channelExists(String channelName) {
         return channelConfigDao.exists(channelName);
@@ -105,7 +105,7 @@ public class ChannelService {
         }
         long start = System.currentTimeMillis();
         ContentKey contentKey = insertInternal(channelName, content);
-        metricsService.insert(channelName, start, Insert.single, 1, content.getSize());
+        statsDHandlers.insert(channelName, start, MetricInsert.single, 1, content.getSize());
         return contentKey;
     }
 
@@ -154,7 +154,7 @@ public class ChannelService {
             return contentService.historicalInsert(normalizedChannelName, content);
         });
         lastContentPath.updateDecrease(contentKey, normalizedChannelName, HISTORICAL_EARLIEST);
-        metricsService.insert(normalizedChannelName, start, Insert.historical, 1, content.getSize());
+        statsDHandlers.insert(normalizedChannelName, start, MetricInsert.historical, 1, content.getSize());
         return insert;
     }
 
@@ -176,7 +176,7 @@ public class ChannelService {
             multiPartParser.parse();
             return contentService.insert(bulkContent);
         });
-        metricsService.insert(channel, start, Insert.bulk, bulkContent.getItems().size(), bulkContent.getSize());
+        statsDHandlers.insert(channel, start, MetricInsert.bulk, bulkContent.getItems().size(), bulkContent.getSize());
         return contentKeys;
     }
 

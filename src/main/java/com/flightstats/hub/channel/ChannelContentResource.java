@@ -16,6 +16,7 @@ import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.metrics.NewRelicIgnoreTransaction;
+import com.flightstats.hub.metrics.StatsDHandlers;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.rest.Linked;
 import com.flightstats.hub.util.TimeUtil;
@@ -56,7 +57,7 @@ public class ChannelContentResource {
     private final static TagContentResource tagContentResource = HubProvider.getInstance(TagContentResource.class);
     private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
-    private final static MetricsService metricsService = HubProvider.getInstance(MetricsService.class);
+    private final static StatsDHandlers statsDHandlers = HubProvider.getInstance(StatsDHandlers.class);
     private final static EventsService eventsService = HubProvider.getInstance(EventsService.class);
 
     public static MediaType getContentType(Content content) {
@@ -370,7 +371,7 @@ public class ChannelContentResource {
 
         builder.header("X-Item-Length", itemLength);
 
-        metricsService.time(channel, "get", start);
+        statsDHandlers.time(channel, "get", start);
         return builder.build();
     }
 

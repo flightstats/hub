@@ -19,11 +19,11 @@ import java.util.concurrent.TimeUnit;
 public class MetricsRunner {
     private final static Logger logger = LoggerFactory.getLogger(MetricsRunner.class);
     private final int seconds;
-    private final MetricsService metricsService;
+    private final StatsDHandlers statsDHandlers;
 
     @Inject
-    public MetricsRunner(MetricsService metricsService) {
-        this.metricsService = metricsService;
+    public MetricsRunner(StatsDHandlers statsDHandlers) {
+        this.statsDHandlers = statsDHandlers;
         this.seconds = HubProperties.getProperty("metrics.seconds", 30);
         HubServices.register(new MetricsRunnerService());
     }
@@ -60,7 +60,7 @@ public class MetricsRunner {
         long openFiles = getOpenFiles();
         if (openFiles >= 0) {
             logger.info("open files {}", openFiles);
-            metricsService.count("openFiles", openFiles);
+            statsDHandlers.count("openFiles", openFiles);
         }
     }
 
