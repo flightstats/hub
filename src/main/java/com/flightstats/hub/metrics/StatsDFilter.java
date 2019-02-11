@@ -13,6 +13,8 @@ import java.util.function.Function;
 
 @Singleton
 public class StatsDFilter {
+    private final static String clientPrefix = "hub";
+    private final static String clientHost = "localhost";
     private StatsDClient statsDClient = new NoOpStatsDClient();
     private StatsDClient dataDogClient = new NoOpStatsDClient();
     private DataDogWhitelist dataDogWhitelist;
@@ -24,18 +26,20 @@ public class StatsDFilter {
 
     // initializing these clients starts their udp reporters, setting them explicitly in order to trigger them specifically
     void setOperatingClients() {
-        this.statsDClient = new NonBlockingStatsDClient("hub", "localhost", 8124);
-        this.dataDogClient = new NonBlockingStatsDClient("hub", "localhost", 8125);
+        this.statsDClient = new NonBlockingStatsDClient(clientPrefix, clientHost, 8124);
+        this.dataDogClient = new NonBlockingStatsDClient(clientPrefix, clientHost, 8125);
     }
 
     private Function<Boolean, List<StatsDClient>> clientList = (bool) -> bool ?
             Arrays.asList(statsDClient, dataDogClient) :
             Collections.singletonList(statsDClient);
 
+    private Function<String, Boolean> matcherExists = (matcher) ->  matcher != null && !matcher.equals("");
+
     private Function<String, Boolean> match = (metric) -> dataDogWhitelist
             .getWhitelist()
             .stream()
-            .anyMatch(matcher -> matcher.equals(metric));
+            .anyMatch(matcher -> matcherExists.apply(matcher) && matcher.equals(metric));
     
     List<StatsDClient> getFilteredClients(String metric) {
         return clientList.apply(match.apply(metric));
