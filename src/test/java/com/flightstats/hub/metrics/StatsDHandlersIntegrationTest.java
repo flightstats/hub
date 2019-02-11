@@ -103,8 +103,6 @@ public class StatsDHandlersIntegrationTest {
         assertEquals(results.get("hub.timeTest3.bytes"), "hub.timeTest3.bytes:1024|c|#channel:timeName2,tag2,tag1");
     }
 
-
-
     @AfterClass
     public static void shutDownServer() {
         udpServer.closeServer();

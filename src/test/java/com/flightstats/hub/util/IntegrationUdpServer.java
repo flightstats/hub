@@ -4,9 +4,10 @@ import lombok.Builder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
+import java.lang.reflect.Constructor;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import com.google.common.collect.ImmutableMap;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.io.IOException;
@@ -18,7 +19,9 @@ public class IntegrationUdpServer {
     private int port;
     private boolean listening;
     private final Logger logger = LoggerFactory.getLogger(IntegrationUdpServer.class);
-    private final Map<String, String> store = new HashMap<>();
+
+    @Builder.Default
+    private Map<String, String> store = ImmutableMap.<String, String>builder().put("a", "b").build();
 
     private final CompletableFuture<Void> serverFuture = CompletableFuture.runAsync(() -> {
         try {
@@ -48,7 +51,10 @@ public class IntegrationUdpServer {
 
     private void addValueToStore(String currentResult) {
         String key = currentResult.substring(0, currentResult.indexOf(":"));
-        store.put(key, currentResult);
+        store = ImmutableMap.<String, String>builder()
+                .putAll(store)
+                .put(key, currentResult)
+                .build();
     }
 
     public void closeServer() {
