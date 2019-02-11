@@ -6,6 +6,7 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.MetricsService;
+import com.flightstats.hub.metrics.StatsDHandlers;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
@@ -18,6 +19,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,15 +38,15 @@ public class S3LargeContentDao implements ContentDao {
     private final boolean useEncrypted = HubProperties.isAppEncrypted();
 
     @Inject
-    private MetricsService metricsService;
+    private StatsDHandlers statsDHandlers;
     @Inject
     private HubS3Client s3Client;
     @Inject
     private S3BucketName s3BucketName;
 
-    @java.beans.ConstructorProperties({"metricsService", "s3Client", "s3BucketName"})
-    public S3LargeContentDao(MetricsService metricsService, HubS3Client s3Client, S3BucketName s3BucketName) {
-        this.metricsService = metricsService;
+    @java.beans.ConstructorProperties({"statsDHandlers", "s3Client", "s3BucketName"})
+    public S3LargeContentDao(StatsDHandlers statsDHandlers, HubS3Client s3Client, S3BucketName s3BucketName) {
+        this.statsDHandlers = statsDHandlers;
         this.s3Client = s3Client;
         this.s3BucketName = s3BucketName;
     }
@@ -136,7 +138,7 @@ public class S3LargeContentDao implements ContentDao {
             }
             throw new RuntimeException(e);
         } finally {
-            metricsService.time(channelName, "s3.put", start, length, "type:large");
+            statsDHandlers.time(channelName, "s3.put", start, length, "type:large");
         }
     }
 
@@ -205,7 +207,7 @@ public class S3LargeContentDao implements ContentDao {
             }
             return null;
         } finally {
-            metricsService.time(channelName, "s3.get", start, "type:single");
+            statsDHandlers.time(channelName, "s3.get", start, "type:single");
         }
     }
 
@@ -245,7 +247,7 @@ public class S3LargeContentDao implements ContentDao {
         new Thread(() -> {
             try {
                 ContentKey limitKey = new ContentKey(TimeUtil.now(), "ZZZZZZ");
-                ActiveTraces.start("S3LargeontentDao.delete", traces, limitKey);
+                ActiveTraces.start("S3LargeContentDao.delete", traces, limitKey);
                 deleteBefore(channel, limitKey);
             } finally {
                 ActiveTraces.end();
@@ -254,15 +256,15 @@ public class S3LargeContentDao implements ContentDao {
     }
 
     public static class S3LargeContentDaoBuilder {
-        private MetricsService metricsService;
+        private StatsDHandlers statsDHandlers;
         private HubS3Client s3Client;
         private S3BucketName s3BucketName;
 
         S3LargeContentDaoBuilder() {
         }
 
-        public S3LargeContentDao.S3LargeContentDaoBuilder metricsService(MetricsService metricsService) {
-            this.metricsService = metricsService;
+        public S3LargeContentDao.S3LargeContentDaoBuilder statsDHandlers(StatsDHandlers statsDHandlers) {
+            this.statsDHandlers = statsDHandlers;
             return this;
         }
 
@@ -277,11 +279,11 @@ public class S3LargeContentDao implements ContentDao {
         }
 
         public S3LargeContentDao build() {
-            return new S3LargeContentDao(metricsService, s3Client, s3BucketName);
+            return new S3LargeContentDao(statsDHandlers, s3Client, s3BucketName);
         }
 
         public String toString() {
-            return "com.flightstats.hub.dao.aws.S3LargeContentDao.S3LargeContentDaoBuilder(metricsService=" + this.metricsService + ", s3Client=" + this.s3Client + ", s3BucketName=" + this.s3BucketName + ")";
+            return "com.flightstats.hub.dao.aws.S3LargeContentDao.S3LargeContentDaoBuilder(statsDHandlers=" + this.statsDHandlers + ", s3Client=" + this.s3Client + ", s3BucketName=" + this.s3BucketName + ")";
         }
     }
 }

@@ -6,6 +6,7 @@ import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.MetricsService;
+import com.flightstats.hub.metrics.StatsDHandlers;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
@@ -36,7 +37,7 @@ public class S3SingleContentDao implements ContentDao {
     private final int s3MaxQueryItems = HubProperties.getProperty("s3.maxQueryItems", 1000);
 
     @Inject
-    private MetricsService metricsService;
+    private StatsDHandlers statsDHandlers;
     @Inject
     private HubS3Client s3Client;
     @Inject
@@ -83,7 +84,7 @@ public class S3SingleContentDao implements ContentDao {
             logger.warn("unable to write item to S3 " + channelName + " " + key, e);
             throw e;
         } finally {
-            metricsService.time(channelName, "s3.put", start, length, "type:single");
+            statsDHandlers.time(channelName, "s3.put", start, length, "type:single");
             ActiveTraces.getLocal().add("S3SingleContentDao.write completed");
         }
     }
@@ -140,7 +141,7 @@ public class S3SingleContentDao implements ContentDao {
             }
             return null;
         } finally {
-            metricsService.time(channelName, "s3.get", start, "type:single");
+            statsDHandlers.time(channelName, "s3.get", start, "type:single");
         }
     }
 
@@ -190,7 +191,7 @@ public class S3SingleContentDao implements ContentDao {
     private ObjectListing getObjectListing(ListObjectsRequest request, String channel) {
         long start = System.currentTimeMillis();
         ObjectListing objects = s3Client.listObjects(request);
-        metricsService.time(channel, "s3.list", start, "type:single");
+        statsDHandlers.time(channel, "s3.list", start, "type:single");
         return objects;
     }
 

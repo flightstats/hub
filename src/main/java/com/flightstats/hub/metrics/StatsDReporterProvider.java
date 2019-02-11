@@ -1,11 +1,13 @@
 package com.flightstats.hub.metrics;
 
+import com.google.inject.Inject;
 import com.google.inject.Provider;
 
-public class StatsDReporterProvider implements Provider {
+public class StatsDReporterProvider implements Provider<StatsDHandlers> {
     private StatsDFilter statsDFilter;
     private MetricsConfig metricsConfig;
 
+    @Inject
     StatsDReporterProvider(
             StatsDFilter statsDFilter,
             MetricsConfig metricsConfig

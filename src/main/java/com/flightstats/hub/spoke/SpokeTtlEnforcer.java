@@ -5,6 +5,7 @@ import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.TtlEnforcer;
 import com.flightstats.hub.metrics.MetricsService;
+import com.flightstats.hub.metrics.StatsDHandlers;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.util.FileUtils;
@@ -35,7 +36,7 @@ public class SpokeTtlEnforcer {
     private ChannelService channelService;
 
     @Inject
-    private MetricsService metricsService;
+    private StatsDHandlers statsDHandlers;
 
     @Inject
     private SpokeContentDao spokeContentDao;
@@ -78,7 +79,7 @@ public class SpokeTtlEnforcer {
     private void updateOldestItemMetric() {
         Optional<ChannelContentKey> potentialItem = spokeContentDao.getOldestItem(spokeStore);
         long oldestItemAgeMS = potentialItem.isPresent() ? potentialItem.get().getAgeMS() : 0;
-        metricsService.gauge(buildMetricName("age", "oldest"), oldestItemAgeMS);
+        statsDHandlers.gauge(buildMetricName("age", "oldest"), oldestItemAgeMS);
     }
 
     private String buildMetricName(String... elements) {
@@ -96,10 +97,10 @@ public class SpokeTtlEnforcer {
                 logger.info("running ttl cleanup");
                 TtlEnforcer.enforce(storagePath, channelService, handleCleanup(evictionCounter));
                 updateOldestItemMetric();
-                metricsService.gauge(buildMetricName("evicted"), evictionCounter.get());
+                statsDHandlers.gauge(buildMetricName("evicted"), evictionCounter.get());
                 long runtime = (System.currentTimeMillis() - start);
                 logger.info("completed ttl cleanup {}", runtime);
-                metricsService.gauge(buildMetricName("ttl", "enforcer", "runtime"), runtime);
+                statsDHandlers.gauge(buildMetricName("ttl", "enforcer", "runtime"), runtime);
             } catch (Exception e) {
                 logger.info("issue cleaning up spoke", e);
             }

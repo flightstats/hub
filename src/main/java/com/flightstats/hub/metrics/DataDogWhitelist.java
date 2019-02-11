@@ -7,6 +7,6 @@ import java.util.List;
 
 @Value
 @Builder
-class DataDogWhitelist {
+public class DataDogWhitelist {
     List<String> whitelist;
 }
