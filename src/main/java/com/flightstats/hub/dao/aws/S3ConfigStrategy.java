@@ -80,6 +80,7 @@ class S3ConfigStrategy {
                 .withFilter(new LifecycleFilter(new LifecyclePrefixPredicate(id + "/")))
                 .withId(id)
                 .withExpirationInDays((int) config.getTtlDays())
+                .withNoncurrentVersionExpirationInDays((int) config.getTtlDays())
                 .withStatus(BucketLifecycleConfiguration.ENABLED);
     }
 }

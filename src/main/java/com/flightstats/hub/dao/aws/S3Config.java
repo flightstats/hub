@@ -145,6 +145,7 @@ public class S3Config {
                 rules.add(new BucketLifecycleConfiguration.Rule()
                         .withId("OneDay")
                         .withExpirationInDays(1)
+                        .withNoncurrentVersionExpirationInDays(1)
                         .withStatus(BucketLifecycleConfiguration.ENABLED));
             } else {
                 rules = S3ConfigStrategy.apportion(configurations, new DateTime(), maxRules);
