@@ -146,7 +146,7 @@ public class S3Verifier {
     }
 
     @VisibleForTesting
-    protected void verifyChannel(VerifierRange range) {
+    void verifyChannel(VerifierRange range) {
         String channelName = range.getChannelConfig().getDisplayName();
         SortedSet<ContentKey> keysToAdd = getMissing(range.getStartPath(), range.getEndPath(), channelName, s3SingleContentDao, new TreeSet<>());
         logger.debug("verifyChannel.starting {}", range);
@@ -174,7 +174,7 @@ public class S3Verifier {
     }
 
     @VisibleForTesting
-    protected SortedSet<ContentKey> getMissing(MinutePath startPath, MinutePath endPath, String channelName, ContentDao s3ContentDao,
+    SortedSet<ContentKey> getMissing(MinutePath startPath, MinutePath endPath, String channelName, ContentDao s3ContentDao,
                                              SortedSet<ContentKey> foundCacheKeys) {
         long timeout = baseTimeoutMinutes;
         QueryResult queryResult = new QueryResult(1);
