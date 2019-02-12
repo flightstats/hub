@@ -3,7 +3,10 @@ package com.flightstats.hub.app;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.flightstats.hub.filter.CORSFilter;
 import com.flightstats.hub.filter.StreamEncodingFilter;
+import com.flightstats.hub.metrics.CustomMetricsLifecycle;
 import com.flightstats.hub.metrics.InfluxdbReporterLifecycle;
+import com.flightstats.hub.metrics.StatsDReporterLifecycle;
+import com.flightstats.hub.metrics.PeriodicMetricEmitterLifecycle;
 import com.flightstats.hub.ws.WebSocketChannelEndpoint;
 import com.flightstats.hub.ws.WebSocketDayEndpoint;
 import com.flightstats.hub.ws.WebSocketHashEndpoint;
@@ -12,6 +15,7 @@ import com.flightstats.hub.ws.WebSocketMinuteEndpoint;
 import com.flightstats.hub.ws.WebSocketSecondEndpoint;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.Resources;
+import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -41,8 +45,11 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.Security;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 public class HubMain {
@@ -92,6 +99,8 @@ public class HubMain {
         InfluxdbReporterLifecycle influxdbReporterLifecycle = injector.getInstance(InfluxdbReporterLifecycle.class);
         HubServices.register(influxdbReporterLifecycle, HubServices.TYPE.BEFORE_HEALTH_CHECK);
 
+        registerServices(getBeforeHealthCheckServices(injector), HubServices.TYPE.BEFORE_HEALTH_CHECK);
+        registerServices(getAfterHealthCheckServices(injector), HubServices.TYPE.AFTER_HEALTHY_START);
         HubProvider.setInjector(injector);
         HubServices.start(HubServices.TYPE.BEFORE_HEALTH_CHECK);
 
@@ -140,6 +149,26 @@ public class HubMain {
         HubServices.start(HubServices.TYPE.AFTER_HEALTHY_START);
 
         return server;
+    }
+
+    private List<Service> getBeforeHealthCheckServices(Injector injector) {
+        return Stream.of(
+                InfluxdbReporterLifecycle.class,
+                StatsDReporterLifecycle.class)
+                .map(injector::getInstance)
+                .collect(Collectors.toList());
+    }
+
+    private List<Service> getAfterHealthCheckServices(Injector injector) {
+        return Stream.of(
+                CustomMetricsLifecycle.class,
+                PeriodicMetricEmitterLifecycle.class)
+                .map(injector::getInstance)
+                .collect(Collectors.toList());
+    }
+
+    private void registerServices(List<Service> services, HubServices.TYPE type) {
+        services.forEach(service -> HubServices.register(service, type));
     }
 
     private List<AbstractModule> buildGuiceModules() {
