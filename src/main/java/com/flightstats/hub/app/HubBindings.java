@@ -11,17 +11,20 @@ import com.flightstats.hub.cluster.*;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.health.HubHealthCheck;
+import com.flightstats.hub.metrics.CustomMetricsLifecycle;
+import com.flightstats.hub.metrics.CustomMetricsReporter;
 import com.flightstats.hub.metrics.DataDogWhitelist;
 import com.flightstats.hub.metrics.DataDogWhitelistProvider;
 import com.flightstats.hub.metrics.InfluxdbReporterProvider;
 import com.flightstats.hub.metrics.MetricRegistryProvider;
 import com.flightstats.hub.metrics.MetricsConfigProvider;
-import com.flightstats.hub.metrics.MetricsRunner;
 import com.flightstats.hub.metrics.MetricsConfig;
 import com.flightstats.hub.metrics.InfluxdbReporterLifecycle;
 import com.flightstats.hub.metrics.PeriodicMetricEmitter;
+import com.flightstats.hub.metrics.PeriodicMetricEmitterLifecycle;
 import com.flightstats.hub.metrics.StatsDFilter;
 import com.flightstats.hub.metrics.StatsDHandlers;
+import com.flightstats.hub.metrics.StatsDReporterLifecycle;
 import com.flightstats.hub.metrics.StatsDReporterProvider;
 import com.flightstats.hub.replication.ReplicationManager;
 import com.flightstats.hub.rest.*;
@@ -50,6 +53,7 @@ import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.BoundedExponentialBackoffRetry;
 import org.apache.zookeeper.data.Stat;
 import org.eclipse.jetty.websocket.jsr356.ClientContainer;
+import org.joda.time.Period;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -185,16 +189,21 @@ public class HubBindings extends AbstractModule {
         bind(ChannelService.class).asEagerSingleton();
 
 
+        // metrics
         bind(HubVersion.class).toInstance(new HubVersion());
         bind(MetricsConfig.class).toProvider(MetricsConfigProvider.class).asEagerSingleton();
         bind(MetricRegistry.class).toProvider(MetricRegistryProvider.class).asEagerSingleton();
         bind(ScheduledReporter.class).toProvider(InfluxdbReporterProvider.class).asEagerSingleton();
         bind(InfluxdbReporterLifecycle.class).asEagerSingleton();
+
         bind(DataDogWhitelist.class).toProvider(DataDogWhitelistProvider.class).asEagerSingleton();
         bind(StatsDFilter.class).asEagerSingleton();
         bind(StatsDHandlers.class).toProvider(StatsDReporterProvider.class).asEagerSingleton();
-        bind(MetricsRunner.class).asEagerSingleton();
+        bind(StatsDReporterLifecycle.class).asEagerSingleton();
+        bind(CustomMetricsLifecycle.class).asEagerSingleton();
         bind(PeriodicMetricEmitter.class).asEagerSingleton();
+        bind(PeriodicMetricEmitterLifecycle.class).asEagerSingleton();
+        ////
 
         bind(ContentDao.class)
                 .annotatedWith(Names.named(ContentDao.WRITE_CACHE))
