@@ -3,7 +3,7 @@ package com.flightstats.hub.metrics;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
-public class StatsDReporterProvider implements Provider<StatsDHandlers> {
+public class StatsDReporterProvider implements Provider<StatsdReporter> {
     private StatsDFilter statsDFilter;
     private MetricsConfig metricsConfig;
 
@@ -16,10 +16,10 @@ public class StatsDReporterProvider implements Provider<StatsDHandlers> {
         this.metricsConfig = metricsConfig;
     }
 
-    @Override public StatsDHandlers get() {
+    @Override public StatsdReporter get() {
         StatsDFormatter statsDFormatter = new StatsDFormatter(metricsConfig);
         DataDogHandler dataDogHandler = new DataDogHandler(metricsConfig);
-        return new StatsDHandlers(statsDFilter, statsDFormatter, dataDogHandler);
+        return new StatsdReporter(statsDFilter, statsDFormatter, dataDogHandler);
     }
 
 }

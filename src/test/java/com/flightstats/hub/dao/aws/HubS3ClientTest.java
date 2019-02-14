@@ -7,7 +7,7 @@ import com.amazonaws.services.s3.S3ResponseMetadata;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.flightstats.hub.metrics.StatsDHandlers;
+import com.flightstats.hub.metrics.StatsdReporter;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -34,13 +34,13 @@ public class HubS3ClientTest {
         AmazonS3Client amazonS3Client = mock(AmazonS3Client.class);
         AmazonWebServiceRequest request = mock(AmazonWebServiceRequest.class);
         when(amazonS3Client.getCachedResponseMetadata(request)).thenReturn(metadata);
-        StatsDHandlers statsDHandlers = mock(StatsDHandlers.class);
-        HubS3Client hubS3Client = new HubS3Client(s3BucketName, amazonS3Client, statsDHandlers);
+        StatsdReporter statsdReporter = mock(StatsdReporter.class);
+        HubS3Client hubS3Client = new HubS3Client(s3BucketName, amazonS3Client, statsdReporter);
         SdkClientException exception = new AmazonS3Exception("something f'd up");
 
         hubS3Client.countError(exception, request, "fauxMethod", Collections.singletonList("foo:bar"));
 
-        verify(statsDHandlers).count(
+        verify(statsdReporter).count(
                 "s3.error",
                 1,
                 "exception:com.amazonaws.services.s3.model.AmazonS3Exception",
@@ -54,8 +54,8 @@ public class HubS3ClientTest {
     public void putObject() {
         S3BucketName s3BucketName = mock(S3BucketName.class);
         AmazonS3Client amazonS3Client = mock(AmazonS3Client.class);
-        StatsDHandlers statsDHandlers = mock(StatsDHandlers.class);
-        HubS3Client hubS3Client = new HubS3Client(s3BucketName, amazonS3Client, statsDHandlers);
+        StatsdReporter statsdReporter = mock(StatsdReporter.class);
+        HubS3Client hubS3Client = new HubS3Client(s3BucketName, amazonS3Client, statsdReporter);
 
         InputStream emptyStream = new ByteArrayInputStream(new byte[0]);
         ObjectMetadata metadata = new ObjectMetadata();
@@ -77,6 +77,6 @@ public class HubS3ClientTest {
             "key:testKey"
         };
 
-        verify(statsDHandlers).count(METRIC_NAME, METRIC_VALUE, tags);
+        verify(statsdReporter).count(METRIC_NAME, METRIC_VALUE, tags);
     }
 }

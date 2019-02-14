@@ -5,7 +5,7 @@ import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.metrics.StatsDHandlers;
+import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.model.RecurringTrace;
@@ -41,7 +41,7 @@ class WebhookRetryer {
 
     private WebhookErrorService webhookErrorService;
     private Client httpClient;
-    private StatsDHandlers statsdHandlers;
+    private StatsdReporter statsdHandlers;
 
     @Builder
     WebhookRetryer(@Singular List<Predicate<DeliveryAttempt>> giveUpIfs,
@@ -53,7 +53,7 @@ class WebhookRetryer {
                 connectTimeoutSeconds,
                 readTimeoutSeconds,
                 HubProvider.getInstance(WebhookErrorService.class),
-                HubProvider.getInstance(StatsDHandlers.class));
+                HubProvider.getInstance(StatsdReporter.class));
     }
 
     @VisibleForTesting
@@ -62,14 +62,14 @@ class WebhookRetryer {
                    Integer connectTimeoutSeconds,
                    Integer readTimeoutSeconds,
                    WebhookErrorService webhookErrorService,
-                   StatsDHandlers statsDHandlers) {
+                   StatsdReporter statsdReporter) {
         this.giveUpIfs = giveUpIfs;
         this.tryLaterIfs = tryLaterIfs;
         this.webhookErrorService = webhookErrorService;
         if (connectTimeoutSeconds == null) connectTimeoutSeconds = HubProperties.getProperty("webhook.connectTimeoutSeconds", 60);
         if (readTimeoutSeconds == null) readTimeoutSeconds = HubProperties.getProperty("webhook.readTimeoutSeconds", 60);
         this.httpClient = RestClient.createClient(connectTimeoutSeconds, readTimeoutSeconds, true, false);
-        this.statsdHandlers = statsDHandlers;
+        this.statsdHandlers = statsdReporter;
     }
 
     boolean send(Webhook webhook, ContentPath contentPath, ObjectNode body) {

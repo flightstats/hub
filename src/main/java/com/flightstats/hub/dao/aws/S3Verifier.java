@@ -8,7 +8,7 @@ import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.QueryResult;
 import com.flightstats.hub.exception.FailedQueryException;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.metrics.StatsDHandlers;
+import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.spoke.SpokeStore;
@@ -61,7 +61,7 @@ public class S3Verifier {
     private final Client httpClient;
     private final ZooKeeperState zooKeeperState;
     private final CuratorFramework curator;
-    private final StatsDHandlers statsDHandlers;
+    private final StatsdReporter statsdReporter;
 
     @Inject
     public S3Verifier(LastContentPath lastContentPath,
@@ -72,7 +72,7 @@ public class S3Verifier {
                       Client httpClient,
                       ZooKeeperState zooKeeperState,
                       CuratorFramework curator,
-                      StatsDHandlers statsDHandlers)
+                      StatsdReporter statsdReporter)
     {
         this.lastContentPath = lastContentPath;
         this.channelService = channelService;
@@ -82,7 +82,7 @@ public class S3Verifier {
         this.httpClient = httpClient;
         this.zooKeeperState = zooKeeperState;
         this.curator = curator;
-        this.statsDHandlers = statsDHandlers;
+        this.statsdReporter = statsdReporter;
         this.baseTimeoutMinutes = HubProperties.getProperty("s3Verifier.baseTimeoutMinutes", 2);
 
         if (HubProperties.getProperty("s3Verifier.run", true)) {
@@ -154,11 +154,11 @@ public class S3Verifier {
         logger.debug("verifyChannel.starting {}", range);
         for (ContentKey key : keysToAdd) {
             logger.trace("found missing {} {}", channelName, key);
-            statsDHandlers.increment(MISSING_ITEM_METRIC_NAME);
+            statsdReporter.increment(MISSING_ITEM_METRIC_NAME);
             boolean success = s3WriteQueue.add(new ChannelContentKey(channelName, key));
             if (!success) {
                 logger.error("unable to queue missing item {} {}", channelName, key);
-                statsDHandlers.increment(VERIFIER_FAILED_METRIC_NAME);
+                statsdReporter.increment(VERIFIER_FAILED_METRIC_NAME);
                 return;
             }
         }
@@ -193,7 +193,7 @@ public class S3Verifier {
             latch.await(timeout, TimeUnit.MINUTES);
             if (latch.getCount() != 0) {
                 logger.error("s3 verifier timed out while finding missing items, write queue is backing up");
-                statsDHandlers.increment(VERIFIER_TIMEOUT_METRIC_NAME);
+                statsdReporter.increment(VERIFIER_TIMEOUT_METRIC_NAME);
             }
             queryResult.getContentKeys().removeAll(longTermKeys);
             if (queryResult.getContentKeys().size() > 0) {

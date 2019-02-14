@@ -1,7 +1,7 @@
 package com.flightstats.hub.app;
 
 import com.flightstats.hub.health.HubHealthCheck;
-import com.flightstats.hub.metrics.StatsDHandlers;
+import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.util.Sleeper;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -24,11 +24,11 @@ public class ShutdownManager {
 
     private static final String PATH = "/ShutdownManager";
 
-    private StatsDHandlers statsDHandlers;
+    private StatsdReporter statsdReporter;
 
     @Inject
-    public ShutdownManager(StatsDHandlers statsDHandlers) {
-        this.statsDHandlers = statsDHandlers;
+    public ShutdownManager(StatsdReporter statsdReporter) {
+        this.statsdReporter = statsdReporter;
         HubServices.register(new ShutdownManagerService(), HubServices.TYPE.AFTER_HEALTHY_START);
     }
 
@@ -57,8 +57,8 @@ public class ShutdownManager {
     public boolean shutdown(boolean useLock) throws Exception {
         logger.warn("shutting down!");
         String[] tags = { "restart", "shutdown" };
-        statsDHandlers.event("Hub Restart Shutdown", "shutting down", tags);
-        statsDHandlers.mute();
+        statsdReporter.event("Hub Restart Shutdown", "shutting down", tags);
+        statsdReporter.mute();
 
         HubHealthCheck healthCheck = HubProvider.getInstance(HubHealthCheck.class);
         if (healthCheck.isShuttingDown()) {

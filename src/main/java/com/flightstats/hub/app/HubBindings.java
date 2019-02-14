@@ -12,7 +12,6 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.health.HubHealthCheck;
 import com.flightstats.hub.metrics.CustomMetricsLifecycle;
-import com.flightstats.hub.metrics.CustomMetricsReporter;
 import com.flightstats.hub.metrics.DataDogWhitelist;
 import com.flightstats.hub.metrics.DataDogWhitelistProvider;
 import com.flightstats.hub.metrics.InfluxdbReporterProvider;
@@ -23,7 +22,7 @@ import com.flightstats.hub.metrics.InfluxdbReporterLifecycle;
 import com.flightstats.hub.metrics.PeriodicMetricEmitter;
 import com.flightstats.hub.metrics.PeriodicMetricEmitterLifecycle;
 import com.flightstats.hub.metrics.StatsDFilter;
-import com.flightstats.hub.metrics.StatsDHandlers;
+import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.metrics.StatsDReporterLifecycle;
 import com.flightstats.hub.metrics.StatsDReporterProvider;
 import com.flightstats.hub.replication.ReplicationManager;
@@ -53,7 +52,6 @@ import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.BoundedExponentialBackoffRetry;
 import org.apache.zookeeper.data.Stat;
 import org.eclipse.jetty.websocket.jsr356.ClientContainer;
-import org.joda.time.Period;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -198,7 +196,7 @@ public class HubBindings extends AbstractModule {
 
         bind(DataDogWhitelist.class).toProvider(DataDogWhitelistProvider.class).asEagerSingleton();
         bind(StatsDFilter.class).asEagerSingleton();
-        bind(StatsDHandlers.class).toProvider(StatsDReporterProvider.class).asEagerSingleton();
+        bind(StatsdReporter.class).toProvider(StatsDReporterProvider.class).asEagerSingleton();
         bind(StatsDReporterLifecycle.class).asEagerSingleton();
         bind(CustomMetricsLifecycle.class).asEagerSingleton();
         bind(PeriodicMetricEmitter.class).asEagerSingleton();
