@@ -15,19 +15,24 @@ import java.util.function.Function;
 public class StatsDFilter {
     private final static String clientPrefix = "hub";
     private final static String clientHost = "localhost";
+    private MetricsConfig metricsConfig;
     private StatsDClient statsDClient = new NoOpStatsDClient();
     private StatsDClient dataDogClient = new NoOpStatsDClient();
     private DataDogWhitelist dataDogWhitelist;
 
     @Inject
-    public StatsDFilter(DataDogWhitelist dataDogWhitelist) {
+    public StatsDFilter(DataDogWhitelist dataDogWhitelist,
+                        MetricsConfig metricsConfig) {
         this.dataDogWhitelist = dataDogWhitelist;
+        this.metricsConfig = metricsConfig;
     }
 
     // initializing these clients starts their udp reporters, setting them explicitly in order to trigger them specifically
     void setOperatingClients() {
-        this.statsDClient = new NonBlockingStatsDClient(clientPrefix, clientHost, 8124);
-        this.dataDogClient = new NonBlockingStatsDClient(clientPrefix, clientHost, 8125);
+        int statsdPort = metricsConfig.getStatsdPort();
+        int dogstatsdPort = metricsConfig.getDogstatsdPort();
+        this.statsDClient = new NonBlockingStatsDClient(clientPrefix, clientHost, statsdPort);
+        this.dataDogClient = new NonBlockingStatsDClient(clientPrefix, clientHost, dogstatsdPort);
     }
 
     private Function<Boolean, List<StatsDClient>> clientList = (bool) -> bool ?

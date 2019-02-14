@@ -1,12 +1,15 @@
 package com.flightstats.hub.metrics;
 
 import com.google.common.util.concurrent.AbstractScheduledService;
+import com.google.inject.Inject;
+
 import java.util.concurrent.TimeUnit;
 
 public class CustomMetricsLifecycle extends AbstractScheduledService{
     private CustomMetricsReporter collector;
     private MetricsConfig metricsConfig;
 
+    @Inject
     public CustomMetricsLifecycle(
             CustomMetricsReporter collector,
             MetricsConfig metricsConfig) {

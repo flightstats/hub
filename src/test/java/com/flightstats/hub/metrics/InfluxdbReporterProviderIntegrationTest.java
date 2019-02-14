@@ -30,6 +30,7 @@ import static org.mockito.Mockito.when;
 
 public class InfluxdbReporterProviderIntegrationTest {
     private HttpServer httpServer;
+    private ScheduledReporter influxdbReporter;
     private static List<String> writeResult;
 
     private static class TestHandler implements HttpHandler {
@@ -90,7 +91,7 @@ public class InfluxdbReporterProviderIntegrationTest {
         MetricRegistry metricRegistry = new MetricRegistryProvider(metricsConfig).get();
 
         InfluxdbReporterProvider influxdbReporterProvider = new InfluxdbReporterProvider(metricsConfig, metricRegistry);
-        ScheduledReporter influxdbReporter = influxdbReporterProvider.get();
+        influxdbReporter = influxdbReporterProvider.get();
 
         influxdbReporter.start(1, SECONDS);
         TimeUnit.MILLISECONDS.sleep(2000);
@@ -103,6 +104,7 @@ public class InfluxdbReporterProviderIntegrationTest {
 
     @After
     public void shutdownServer() {
+        influxdbReporter.stop();
         httpServer.stop(0);
     }
 }

@@ -11,8 +11,9 @@ public class StatsDFilterTest {
 
     @Test
     public void testStatsDFilterGetAllClients_twoNoOpClients() {
+        MetricsConfig metricsConfig = MetricsConfig.builder().build();
         DataDogWhitelist dataDogWhitelist = DataDogWhitelist.builder().build();
-        StatsDFilter statsDFilter = new StatsDFilter(dataDogWhitelist);
+        StatsDFilter statsDFilter = new StatsDFilter(dataDogWhitelist, metricsConfig);
         assertEquals(2, statsDFilter.getAllClients().size());
         assertEquals(NoOpStatsDClient.class, statsDFilter.getAllClients().get(0).getClass());
         assertEquals(NoOpStatsDClient.class, statsDFilter.getAllClients().get(1).getClass());
@@ -20,8 +21,9 @@ public class StatsDFilterTest {
 
     @Test
     public void testStatsDFilterGetAllClients_twoCustomClients() {
+        MetricsConfig metricsConfig = MetricsConfig.builder().build();
         DataDogWhitelist dataDogWhitelist = DataDogWhitelist.builder().build();
-        StatsDFilter statsDFilter = new StatsDFilter(dataDogWhitelist);
+        StatsDFilter statsDFilter = new StatsDFilter(dataDogWhitelist, metricsConfig);
         statsDFilter.setOperatingClients();
         assertEquals(2, statsDFilter.getAllClients().size());
         assertEquals(NonBlockingStatsDClient.class, statsDFilter.getAllClients().get(0).getClass());
@@ -30,10 +32,11 @@ public class StatsDFilterTest {
 
     @Test
     public void testStatsDFilterGetFilteredClients_throwsOnNoWhiteList() {
+        MetricsConfig metricsConfig = MetricsConfig.builder().build();
         DataDogWhitelist dataDogWhitelist = DataDogWhitelist
                 .builder()
                 .build();
-        StatsDFilter statsDFilter = new StatsDFilter(dataDogWhitelist);
+        StatsDFilter statsDFilter = new StatsDFilter(dataDogWhitelist, metricsConfig);
         try {
             statsDFilter.getFilteredClients("testChannelName");
         } catch (Exception ex) {
@@ -47,7 +50,8 @@ public class StatsDFilterTest {
                 .builder()
                 .whitelist(Collections.singletonList(""))
                 .build();
-        StatsDFilter statsDFilter = new StatsDFilter(dataDogWhitelist);
+        MetricsConfig metricsConfig = MetricsConfig.builder().build();
+        StatsDFilter statsDFilter = new StatsDFilter(dataDogWhitelist, metricsConfig);
         assertEquals(1, statsDFilter.getFilteredClients("testChannelName").size());
         assertEquals(NoOpStatsDClient.class, statsDFilter.getAllClients().get(0).getClass());
     }
@@ -58,7 +62,8 @@ public class StatsDFilterTest {
                 .builder()
                 .whitelist(Collections.singletonList("testChannelName"))
                 .build();
-        StatsDFilter statsDFilter = new StatsDFilter(dataDogWhitelist);
+        MetricsConfig metricsConfig = MetricsConfig.builder().build();
+        StatsDFilter statsDFilter = new StatsDFilter(dataDogWhitelist, metricsConfig);
         assertEquals(2, statsDFilter.getFilteredClients("testChannelName").size());
         assertEquals(NoOpStatsDClient.class, statsDFilter.getAllClients().get(0).getClass());
     }
@@ -69,7 +74,8 @@ public class StatsDFilterTest {
                 .builder()
                 .whitelist(Collections.singletonList("testChannelName"))
                 .build();
-        StatsDFilter statsDFilter = new StatsDFilter(dataDogWhitelist);
+        MetricsConfig metricsConfig = MetricsConfig.builder().build();
+        StatsDFilter statsDFilter = new StatsDFilter(dataDogWhitelist, metricsConfig);
         assertEquals(1, statsDFilter.getFilteredClients("testChannelName2").size());
         assertEquals(NoOpStatsDClient.class, statsDFilter.getAllClients().get(0).getClass());
     }
@@ -80,7 +86,8 @@ public class StatsDFilterTest {
                 .builder()
                 .whitelist(Collections.singletonList("@_-(*&*"))
                 .build();
-        StatsDFilter statsDFilter = new StatsDFilter(dataDogWhitelist);
+        MetricsConfig metricsConfig = MetricsConfig.builder().build();
+        StatsDFilter statsDFilter = new StatsDFilter(dataDogWhitelist, metricsConfig);
         assertEquals(2, statsDFilter.getFilteredClients("@_-(*&*").size());
         assertEquals(NoOpStatsDClient.class, statsDFilter.getAllClients().get(0).getClass());
     }
