@@ -13,6 +13,7 @@ import com.google.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Comparator;
 import java.util.List;
 
 import static com.flightstats.hub.util.RequestUtils.getChannelName;
@@ -61,7 +62,9 @@ class WebhookErrorService {
     }
 
     private List<WebhookError> trimAndLookup(String webhook) {
-        List<WebhookError> errors = webhookErrorRepository.getErrors(webhook);
+        List<WebhookError> errors = webhookErrorRepository.getErrors(webhook).stream()
+                .sorted(Comparator.comparing(WebhookError::getCreationTime))
+                .collect(toList());
 
         List<WebhookError> prunedErrors = webhookErrorPruner.pruneErrors(webhook, errors);
 
