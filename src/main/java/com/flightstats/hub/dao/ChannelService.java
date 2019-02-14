@@ -7,7 +7,7 @@ import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.aws.MultiPartParser;
 import com.flightstats.hub.exception.*;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.metrics.MetricInsert;
+import com.flightstats.hub.metrics.ChannelType;
 import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
@@ -105,7 +105,7 @@ public class ChannelService {
         }
         long start = System.currentTimeMillis();
         ContentKey contentKey = insertInternal(channelName, content);
-        statsdReporter.insert(channelName, start, MetricInsert.single, 1, content.getSize());
+        statsdReporter.insert(channelName, start, ChannelType.single, 1, content.getSize());
         return contentKey;
     }
 
@@ -154,7 +154,7 @@ public class ChannelService {
             return contentService.historicalInsert(normalizedChannelName, content);
         });
         lastContentPath.updateDecrease(contentKey, normalizedChannelName, HISTORICAL_EARLIEST);
-        statsdReporter.insert(normalizedChannelName, start, MetricInsert.historical, 1, content.getSize());
+        statsdReporter.insert(normalizedChannelName, start, ChannelType.historical, 1, content.getSize());
         return insert;
     }
 
@@ -176,7 +176,7 @@ public class ChannelService {
             multiPartParser.parse();
             return contentService.insert(bulkContent);
         });
-        statsdReporter.insert(channel, start, MetricInsert.bulk, bulkContent.getItems().size(), bulkContent.getSize());
+        statsdReporter.insert(channel, start, ChannelType.bulk, bulkContent.getItems().size(), bulkContent.getSize());
         return contentKeys;
     }
 

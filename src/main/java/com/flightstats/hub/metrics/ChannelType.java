@@ -1,6 +1,6 @@
 package com.flightstats.hub.metrics;
 
-public enum MetricInsert {
+public enum ChannelType {
     single,
     historical,
     bulk
