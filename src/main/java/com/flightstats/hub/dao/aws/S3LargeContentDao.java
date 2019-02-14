@@ -1,7 +1,18 @@
 package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.services.s3.S3ResponseMetadata;
-import com.amazonaws.services.s3.model.*;
+import com.amazonaws.services.s3.model.AbortMultipartUploadRequest;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
+import com.amazonaws.services.s3.model.CompleteMultipartUploadRequest;
+import com.amazonaws.services.s3.model.DeleteObjectRequest;
+import com.amazonaws.services.s3.model.GetObjectRequest;
+import com.amazonaws.services.s3.model.InitiateMultipartUploadRequest;
+import com.amazonaws.services.s3.model.InitiateMultipartUploadResult;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PartETag;
+import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.UploadPartRequest;
+import com.amazonaws.services.s3.model.UploadPartResult;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.metrics.ActiveTraces;
@@ -13,7 +24,6 @@ import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.ChunkOutputStream;
 import com.flightstats.hub.util.TimeUtil;
-import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.commons.io.IOUtils;
@@ -21,11 +31,17 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.beans.ConstructorProperties;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketTimeoutException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.SortedSet;
 
 @SuppressWarnings("Duplicates")
 @Singleton
@@ -261,17 +277,22 @@ public class S3LargeContentDao implements ContentDao {
         S3LargeContentDaoBuilder() {
         }
 
+<<<<<<< HEAD
         public S3LargeContentDao.S3LargeContentDaoBuilder statsdReporter(StatsdReporter statsdReporter) {
             this.statsdReporter = statsdReporter;
+=======
+        public S3LargeContentDaoBuilder metricsService(MetricsService metricsService) {
+            this.metricsService = metricsService;
+>>>>>>> f5383d0a8... Convert a bunch of google Optionals to java's Optionals
             return this;
         }
 
-        public S3LargeContentDao.S3LargeContentDaoBuilder s3Client(HubS3Client s3Client) {
+        public S3LargeContentDaoBuilder s3Client(HubS3Client s3Client) {
             this.s3Client = s3Client;
             return this;
         }
 
-        public S3LargeContentDao.S3LargeContentDaoBuilder s3BucketName(S3BucketName s3BucketName) {
+        public S3LargeContentDaoBuilder s3BucketName(S3BucketName s3BucketName) {
             this.s3BucketName = s3BucketName;
             return this;
         }

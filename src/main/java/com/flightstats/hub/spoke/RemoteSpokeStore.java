@@ -16,7 +16,6 @@ import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
-import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -31,6 +30,7 @@ import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.CountDownLatch;
@@ -310,7 +310,7 @@ public class RemoteSpokeStore {
         }
         countDownLatch.await(5, TimeUnit.SECONDS);
         if (orderedKeys.isEmpty()) {
-            return Optional.absent();
+            return Optional.empty();
         }
         return Optional.of(orderedKeys.last());
     }
