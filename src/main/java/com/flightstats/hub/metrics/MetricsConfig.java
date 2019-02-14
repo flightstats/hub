@@ -29,4 +29,6 @@ public class MetricsConfig {
     int reportingIntervalSeconds;
     String role;
     String team;
+    int statsdPort;
+    int dogstatsdPort;
 }

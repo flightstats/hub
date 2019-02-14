@@ -6,14 +6,19 @@ import com.timgroup.statsd.StatsDClient;
 
 public class StatsDReporterLifecycle extends AbstractIdleService {
     private StatsDFilter statsDFilter;
+    private MetricsConfig metricsConfig;
 
     @Inject
-    public StatsDReporterLifecycle(StatsDFilter statsDFilter) {
+    public StatsDReporterLifecycle(StatsDFilter statsDFilter,
+                                   MetricsConfig metricsConfig) {
+        this.metricsConfig = metricsConfig;
         this.statsDFilter = statsDFilter;
     }
 
     public void startUp() {
-        statsDFilter.setOperatingClients();
+        if (metricsConfig.isEnabled()) {
+            statsDFilter.setOperatingClients();
+        }
     }
 
     public void shutDown() {

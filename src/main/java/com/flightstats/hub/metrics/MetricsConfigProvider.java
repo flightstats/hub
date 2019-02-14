@@ -34,6 +34,8 @@ public class MetricsConfigProvider implements Provider<MetricsConfig> {
                 .influxdbUser(HubProperties.getProperty("metrics.influxdb.database.user", ""))
                 .reportingIntervalSeconds(HubProperties.getProperty("metrics.seconds", 15))
                 .role(HubProperties.getProperty("metrics.tags.role", "hub"))
+                .statsdPort(HubProperties.getProperty("metrics.statsd.port", 8124))
+                .dogstatsdPort(HubProperties.getProperty("metrics.dogstatsd.port", 8125))
                 .team(HubProperties.getProperty("metrics.tags.team", "development"))
                 .build();
     }
