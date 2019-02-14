@@ -46,7 +46,6 @@ class DataDogHandler {
 
             String data = String.format(dataTemplate, name, fourMinutesFutureInSeconds);
             String url = String.format(urlTemplate, datadogUrl, apiKey, appKey);
-            logger.info("************** {}", url);
             ClientResponse response = RestClient
                     .defaultClient()
                     .resource(url)

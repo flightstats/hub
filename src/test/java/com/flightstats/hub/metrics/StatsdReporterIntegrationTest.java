@@ -40,7 +40,6 @@ public class StatsdReporterIntegrationTest {
         TimeUnit.MILLISECONDS.sleep(300);
         handlers.count("countTest", 1, tags);
         handlers.increment("closeSocket", tags);
-//        TimeUnit.MILLISECONDS.sleep(300);
         results = udpServer.getResult();
     }
 
