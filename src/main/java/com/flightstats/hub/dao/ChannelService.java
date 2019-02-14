@@ -5,17 +5,29 @@ import com.flightstats.hub.app.InFlightService;
 import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.aws.MultiPartParser;
-import com.flightstats.hub.exception.*;
+import com.flightstats.hub.exception.ContentTooLargeException;
+import com.flightstats.hub.exception.ForbiddenRequestException;
+import com.flightstats.hub.exception.InvalidRequestException;
+import com.flightstats.hub.exception.MethodNotAllowedException;
+import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.metrics.MetricsService.Insert;
 import com.flightstats.hub.metrics.Traces;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.BulkContent;
+import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.model.Content;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.ContentPath;
+import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.Epoch;
+import com.flightstats.hub.model.SecondPath;
+import com.flightstats.hub.model.StreamResults;
+import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.replication.ReplicationManager;
 import com.flightstats.hub.time.TimeService;
 import com.flightstats.hub.util.TimeUtil;
 import com.flightstats.hub.webhook.TagWebhook;
-import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -23,7 +35,14 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -200,16 +219,18 @@ public class ChannelService {
         query = query.withChannelName(getDisplayName(query.getChannelName()));
         String channel = query.getChannelName();
         if (!channelExists(channel)) {
-            return Optional.absent();
+            return Optional.empty();
         }
         query = query.withStartKey(getLatestLimit(query.getChannelName(), query.isStable()));
         query = configureQuery(query);
         Optional<ContentKey> latest = contentService.getLatest(query);
         ActiveTraces.getLocal().add("before filter", channel, latest);
         if (latest.isPresent()) {
-            SortedSet<ContentKey> filtered = ContentKeyUtil.filter(latest.asSet(), query);
+            SortedSet<ContentKey> filtered = ContentKeyUtil.filter(latest
+                    .map(Collections::singleton)
+                    .orElseGet(Collections::emptySet), query);
             if (filtered.isEmpty()) {
-                return Optional.absent();
+                return Optional.empty();
             }
         }
         return latest;
@@ -249,7 +270,7 @@ public class ChannelService {
         itemRequest = itemRequest.withChannel(getDisplayName(itemRequest.getChannel()));
         DateTime limitTime = getChannelLimitTime(itemRequest.getChannel()).minusMinutes(15);
         if (itemRequest.getKey().getTime().isBefore(limitTime)) {
-            return Optional.absent();
+            return Optional.empty();
         }
         return contentService.get(itemRequest.getChannel(), itemRequest.getKey(), itemRequest.isRemoteOnly());
     }
