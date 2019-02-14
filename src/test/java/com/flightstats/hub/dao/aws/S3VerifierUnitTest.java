@@ -4,7 +4,7 @@ import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
-import com.flightstats.hub.metrics.StatsDHandlers;
+import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.ContentKey;
@@ -37,8 +37,8 @@ public class S3VerifierUnitTest {
         Client httpClient = mock(Client.class);
         ZooKeeperState zooKeeperState = mock(ZooKeeperState.class);
         CuratorFramework curator = mock(CuratorFramework.class);
-        StatsDHandlers statsDHandlers = mock(StatsDHandlers.class);
-        S3Verifier s3Verifier = spy(new S3Verifier(lastContentPath, channelService, spokeWriteContentDao, s3SingleContentDao, s3WriteQueue, httpClient, zooKeeperState, curator, statsDHandlers));
+        StatsdReporter statsdReporter = mock(StatsdReporter.class);
+        S3Verifier s3Verifier = spy(new S3Verifier(lastContentPath, channelService, spokeWriteContentDao, s3SingleContentDao, s3WriteQueue, httpClient, zooKeeperState, curator, statsdReporter));
 
         ChannelContentKey key = ChannelContentKey.fromResourcePath("http://hub/channel/foo/1999/12/31/23/59/59/999/bar");
         VerifierRange verifierRange = VerifierRange.builder()
@@ -67,8 +67,8 @@ public class S3VerifierUnitTest {
         Client httpClient = mock(Client.class);
         ZooKeeperState zooKeeperState = mock(ZooKeeperState.class);
         CuratorFramework curator = mock(CuratorFramework.class);
-        StatsDHandlers statsDHandlers = mock(StatsDHandlers.class);
-        S3Verifier s3Verifier = spy(new S3Verifier(lastContentPath, channelService, spokeWriteContentDao, s3SingleContentDao, s3WriteQueue, httpClient, zooKeeperState, curator, statsDHandlers));
+        StatsdReporter statsdReporter = mock(StatsdReporter.class);
+        S3Verifier s3Verifier = spy(new S3Verifier(lastContentPath, channelService, spokeWriteContentDao, s3SingleContentDao, s3WriteQueue, httpClient, zooKeeperState, curator, statsdReporter));
 
         ChannelContentKey key = ChannelContentKey.fromResourcePath("http://hub/channel/foo/1999/12/31/23/59/59/999/bar");
         VerifierRange verifierRange = VerifierRange.builder()

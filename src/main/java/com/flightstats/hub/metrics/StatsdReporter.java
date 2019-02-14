@@ -7,14 +7,14 @@ import com.timgroup.statsd.StatsDClient;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class StatsDHandlers {
+public class StatsdReporter {
 
     private StatsDFilter statsDFilter;
     private StatsDFormatter statsDFormatter;
     private DataDogHandler dataDogHandler;
 
     @Inject
-    public StatsDHandlers(
+    public StatsdReporter(
             StatsDFilter statsDFilter,
             StatsDFormatter statsDFormatter,
             DataDogHandler dataDogHandler

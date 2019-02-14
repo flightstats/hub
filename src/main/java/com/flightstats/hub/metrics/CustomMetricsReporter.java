@@ -10,11 +10,11 @@ import java.lang.management.OperatingSystemMXBean;
 
 public class CustomMetricsReporter {
     private final static Logger logger = LoggerFactory.getLogger(CustomMetricsReporter.class);
-    private final StatsDHandlers statsDHandlers;
+    private final StatsdReporter statsdReporter;
 
     @Inject
-    public CustomMetricsReporter(StatsDHandlers statsDHandlers) {
-        this.statsDHandlers = statsDHandlers;
+    public CustomMetricsReporter(StatsdReporter statsdReporter) {
+        this.statsdReporter = statsdReporter;
     }
 
     long getOpenFiles() {
@@ -31,7 +31,7 @@ public class CustomMetricsReporter {
         long openFiles = getOpenFiles();
         if (openFiles >= 0) {
             logger.info("open files {}", openFiles);
-            statsDHandlers.count("openFiles", openFiles);
+            statsdReporter.count("openFiles", openFiles);
         }
     }
 }

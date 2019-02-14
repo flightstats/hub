@@ -7,7 +7,7 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.metrics.StatsDHandlers;
+import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.MinutePath;
 import com.flightstats.hub.rest.RestClient;
@@ -33,7 +33,7 @@ public class S3BatchResource {
     private static final boolean dropSomeWrites = HubProperties.getProperty("s3.dropSomeWrites", false);
     private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private static final ContentDao s3BatchContentDao = HubProvider.getInstance(ContentDao.class, ContentDao.BATCH_LONG_TERM);
-    private static final StatsDHandlers statsDHandlers = HubProvider.getInstance(StatsDHandlers.class);
+    private static final StatsdReporter statsdReporter = HubProvider.getInstance(StatsdReporter.class);
 
     public static boolean getAndWriteBatch(ContentDao contentDao, String channel, MinutePath path,
                                            Collection<ContentKey> keys, String batchUrl) {
@@ -50,7 +50,7 @@ public class S3BatchResource {
         byte[] bytes = response.getEntity(byte[].class);
 
         if(!verifyZipBytes(bytes)) {
-            statsDHandlers.increment("batch.invalid_zip");
+            statsdReporter.increment("batch.invalid_zip");
             logger.warn("S3BatchResource failed zip verification for keys: {}, channel: {}", keys, channel);
             return false;
         }

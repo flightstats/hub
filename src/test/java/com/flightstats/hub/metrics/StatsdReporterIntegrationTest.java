@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.assertEquals;
 
-public class StatsDHandlersIntegrationTest {
+public class StatsdReporterIntegrationTest {
     private static String[] tags = { "tag1", "tag2" };
     private static Map<String, String> results;
 
@@ -19,7 +19,7 @@ public class StatsDHandlersIntegrationTest {
                 .build();
     }
 
-    private static StatsDHandlers provideStatsDHandlers() {
+    private static StatsdReporter provideStatsDHandlers() {
         MetricsConfig metricsConfig = MetricsConfig.builder()
                 .hostTag("test_host")
                 .statsdPort(8123)
@@ -35,7 +35,7 @@ public class StatsDHandlersIntegrationTest {
 
     @BeforeClass
     public static void startMockStatsDServer() throws InterruptedException {
-        StatsDHandlers handlers = provideStatsDHandlers();
+        StatsdReporter handlers = provideStatsDHandlers();
         IntegrationUdpServer udpServer = provideNewServer();
         TimeUnit.MILLISECONDS.sleep(300);
         handlers.count("countTest", 1, tags);

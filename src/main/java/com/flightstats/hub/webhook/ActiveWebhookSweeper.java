@@ -1,6 +1,6 @@
 package com.flightstats.hub.webhook;
 
-import com.flightstats.hub.metrics.StatsDHandlers;
+import com.flightstats.hub.metrics.StatsdReporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,13 +14,13 @@ import static java.util.stream.Collectors.toList;
 public class ActiveWebhookSweeper {
     private static final Logger logger = LoggerFactory.getLogger(ActiveWebhookSweeper.class);
     private final WebhookLeaderLocks webhookLeaderLocks;
-    private final StatsDHandlers statsDHandlers;
+    private final StatsdReporter statsdReporter;
 
     @Inject
     public ActiveWebhookSweeper(WebhookLeaderLocks webhookLeaderLocks,
-                                StatsDHandlers statsDHandlers) {
+                                StatsdReporter statsdReporter) {
         this.webhookLeaderLocks = webhookLeaderLocks;
-        this.statsDHandlers = statsDHandlers;
+        this.statsdReporter = statsdReporter;
     }
 
     void cleanupEmpty() {
@@ -35,7 +35,7 @@ public class ActiveWebhookSweeper {
 
         emptyWebhookLeaders.forEach(this::deleteWebhookLeader);
 
-        statsDHandlers.count("webhook.leaders.cleanup", emptyWebhookLeaders.size());
+        statsdReporter.count("webhook.leaders.cleanup", emptyWebhookLeaders.size());
     }
 
     private boolean isEmpty(String webhookName) {
