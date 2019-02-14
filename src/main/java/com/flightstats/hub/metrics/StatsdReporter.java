@@ -33,7 +33,7 @@ public class StatsdReporter {
         clients.forEach(method);
     }
 
-    public void insert(String channel, long start, MetricInsert type, int items, long bytes) {
+    public void insert(String channel, long start, ChannelType type, int items, long bytes) {
         if (isTestChannel(channel)) return;
 
         time(channel, "channel", start, bytes, "type:" + type.toString());
