@@ -2,6 +2,7 @@ package com.flightstats.hub.metrics;
 
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.app.HubVersion;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -36,6 +37,7 @@ public class MetricsConfigProvider implements Provider<MetricsConfig> {
                 .role(HubProperties.getProperty("metrics.tags.role", "hub"))
                 .statsdPort(HubProperties.getProperty("metrics.statsd.port", 8124))
                 .dogstatsdPort(HubProperties.getProperty("metrics.dogstatsd.port", 8125))
+                .datadogApiUrl(HubProperties.getProperty("metrics.datadog.url", "https://app.datadoghq.com/api/v1"))
                 .team(HubProperties.getProperty("metrics.tags.team", "development"))
                 .build();
     }
