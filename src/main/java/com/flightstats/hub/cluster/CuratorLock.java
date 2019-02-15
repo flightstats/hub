@@ -18,9 +18,11 @@ public class CuratorLock {
 
     private final CuratorFramework curator;
     private final ExecutorService singleThreadExecutor;
-    private final Leadership leadershipV2;
+    private final Leadership leadership;
+
     private String lockPath;
     private InterProcessSemaphoreMutex mutex;
+
     @Inject
     public CuratorLock(CuratorFramework curator, ZooKeeperState zooKeeperState) {
         this(curator, zooKeeperState, null);
@@ -30,7 +32,7 @@ public class CuratorLock {
         this.curator = curator;
         this.lockPath = lockPath;
         singleThreadExecutor = Executors.newSingleThreadExecutor();
-        leadershipV2 = new LeadershipV2(zooKeeperState);
+        leadership = new Leadership(zooKeeperState);
     }
 
     public void setLockPath(String lockPath) {
@@ -42,14 +44,14 @@ public class CuratorLock {
         try {
             logger.debug("attempting acquire {}", lockPath);
             if (mutex.acquire(time, timeUnit)) {
-                leadershipV2.setLeadership(true);
-                logger.debug("acquired {} {}", lockPath, leadershipV2.hasLeadership());
+                leadership.setLeadership(true);
+                logger.debug("acquired {} {}", lockPath, leadership.hasLeadership());
                 singleThreadExecutor.submit(() -> {
                     try {
-                        lockable.takeLeadership(leadershipV2);
+                        lockable.takeLeadership(leadership);
                     } catch (Exception e) {
                         logger.warn("we lost the lock " + lockPath, e);
-                        leadershipV2.setLeadership(false);
+                        leadership.setLeadership(false);
                     } finally {
                         release();
                     }
@@ -61,14 +63,14 @@ public class CuratorLock {
             }
         } catch (Exception e) {
             logger.warn("oh no! issue with " + lockPath, e);
-            leadershipV2.setLeadership(false);
+            leadership.setLeadership(false);
             release();
             return false;
         }
     }
 
     public void stopWorking() {
-        leadershipV2.setLeadership(false);
+        leadership.setLeadership(false);
     }
 
     public void delete() {
