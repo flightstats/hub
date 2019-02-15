@@ -21,10 +21,11 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.flightstats.hub.webhook.WebhookLeaderLocks.WEBHOOK_LEADER;
+
 class WebhookLeader implements Lockable {
     private final static Logger logger = LoggerFactory.getLogger(WebhookLeader.class);
     static final String WEBHOOK_LAST_COMPLETED = "/GroupLastCompleted/";
-    public static final String LEADER_PATH = "/WebhookLeader";
 
     private final AtomicBoolean deleteOnExit = new AtomicBoolean();
 
@@ -43,7 +44,9 @@ class WebhookLeader implements Lockable {
     @Inject
     private WebhookContentPathSet webhookInProcess;
     @Inject
-    private WebhookError webhookError;
+    private WebhookErrorService webhookErrorService;
+    @Inject
+    private WebhookStateReaper webhookStateReaper;
 
     private Webhook webhook;
 
@@ -68,7 +71,8 @@ class WebhookLeader implements Lockable {
             logger.info("not starting paused webhook " + webhook);
             return false;
         } else {
-            curatorLock = new CuratorLock(curator, zooKeeperState, getLeaderPath());
+            String leaderPath = WEBHOOK_LEADER + "/" + webhook.getName();
+            curatorLock = new CuratorLock(curator, zooKeeperState, leaderPath);
             return curatorLock.runWithLock(this, 1, TimeUnit.SECONDS);
         }
     }
@@ -123,7 +127,7 @@ class WebhookLeader implements Lockable {
             leadership.setLeadership(false);
             closeStrategy();
             if (deleteOnExit.get()) {
-                delete();
+                webhookStateReaper.delete(webhook.getName());
             }
             stopExecutor();
             logger.info("stopped last completed at {} {}", webhookStrategy.getLastCompleted(), webhook.getName());
@@ -147,7 +151,7 @@ class WebhookLeader implements Lockable {
             if (attempt.getContentPath().getTime().isBefore(ttlTime)) {
                 String message = String.format("%s is before webhook ttl %s", attempt.getContentPath().toUrl(), ttlTime);
                 logger.debug(webhook.getName(), message);
-                webhookError.add(webhook.getName(), new DateTime() + " " + message);
+                webhookErrorService.add(webhook.getName(), new DateTime() + " " + message);
                 return true;
             }
         }
@@ -159,7 +163,7 @@ class WebhookLeader implements Lockable {
         if (attempt.getContentPath().getTime().isBefore(channelConfig.getTtlTime())) {
             String message = String.format("%s is before channel ttl %s", attempt.getContentPath().toUrl(), channelConfig.getTtlTime());
             logger.debug(webhook.getName(), message);
-            webhookError.add(webhook.getName(), new DateTime() + " " + message);
+            webhookErrorService.add(webhook.getName(), new DateTime() + " " + message);
             return true;
         } else {
             return false;
@@ -171,7 +175,7 @@ class WebhookLeader implements Lockable {
         if (maxAttempts > 0 && attempt.number > maxAttempts) {
             String message = String.format("%s max attempts reached (%s)", attempt.getContentPath().toUrl(), maxAttempts);
             logger.debug(webhook.getName() + " " + message);
-            webhookError.add(webhook.getName(), new DateTime() + " " + message);
+            webhookErrorService.add(webhook.getName(), new DateTime() + " " + message);
             return true;
         } else {
             return false;
@@ -292,19 +296,6 @@ class WebhookLeader implements Lockable {
         } catch (Exception e) {
             logger.warn("unable to close strategy", e);
         }
-    }
-
-    private String getLeaderPath() {
-        return LEADER_PATH + "/" + webhook.getName();
-    }
-
-    private void delete() {
-        String name = webhook.getName();
-        logger.info("deleting " + name);
-        webhookInProcess.delete(name);
-        lastContentPath.delete(name, WEBHOOK_LAST_COMPLETED);
-        webhookError.delete(name);
-        logger.info("deleted " + name);
     }
 
     public Webhook getWebhook() {
