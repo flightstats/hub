@@ -44,7 +44,7 @@ let createdChannel = false;
  * 2 - create a webhook on that channel
  * 3 - start a server at the endpoint
  * 4 - post items into the channel
- * 5 - verify that the item are returned within delta time, excluding items posted in step 2.
+ * 5 - verify that the item are returned within delta time, excluding items posted in 2.
  */
 describe(__filename, function () {
     beforeAll(async () => {
