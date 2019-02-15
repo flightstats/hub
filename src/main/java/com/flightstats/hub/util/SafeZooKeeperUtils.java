@@ -1,7 +1,5 @@
 package com.flightstats.hub.util;
 
-import com.flightstats.hub.cluster.CuratorLock;
-import com.flightstats.hub.cluster.ZooKeeperState;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import lombok.Builder;
