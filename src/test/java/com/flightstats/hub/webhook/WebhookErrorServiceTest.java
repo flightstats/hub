@@ -6,19 +6,19 @@ import com.flightstats.hub.util.SafeZooKeeperUtils;
 import com.flightstats.hub.webhook.error.WebhookErrorPruner;
 import com.flightstats.hub.webhook.error.WebhookErrorRepository;
 import org.apache.curator.framework.CuratorFramework;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
 public class WebhookErrorServiceTest {
 
     private static WebhookErrorService webhookErrorService;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() throws Exception {
         ChannelService channelService = mock(ChannelService.class);
         CuratorFramework curator = Integration.startZooKeeper();

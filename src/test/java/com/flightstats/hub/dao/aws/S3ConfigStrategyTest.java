@@ -4,15 +4,15 @@ import com.amazonaws.services.s3.model.BucketLifecycleConfiguration;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.StringUtils;
 import org.joda.time.DateTime;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class S3ConfigStrategyTest {
 

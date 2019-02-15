@@ -4,19 +4,19 @@ import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.test.Integration;
 import com.google.inject.Injector;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class DynamoChannelConfigDaoTest {
 
     private static final Logger logger = LoggerFactory.getLogger(DynamoChannelConfigDaoTest.class);
     private static DynamoChannelConfigDao channelConfigDao;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() throws Exception {
         logger.info("setting up ...");
         Injector injector = Integration.startAwsHub();

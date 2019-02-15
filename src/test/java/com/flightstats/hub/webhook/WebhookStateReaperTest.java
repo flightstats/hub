@@ -11,14 +11,14 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 public class WebhookStateReaperTest {
@@ -31,12 +31,12 @@ public class WebhookStateReaperTest {
     private static final DateTime start = new DateTime(2014, 12, 3, 20, 45, DateTimeZone.UTC);
     private static final ContentKey key = new ContentKey(start, "B");
 
-    @BeforeClass
+    @BeforeAll
     public static void setupCurator() throws Exception {
         curator = Integration.startZooKeeper();
     }
 
-    @Before
+    @BeforeEach
     @SuppressWarnings("unchecked")
     public void setup() {
         ChannelService channelService = mock(ChannelService.class);

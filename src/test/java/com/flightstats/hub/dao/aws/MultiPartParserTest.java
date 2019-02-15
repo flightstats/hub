@@ -5,19 +5,19 @@ import com.flightstats.hub.model.BulkContent;
 import com.flightstats.hub.model.Content;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class MultiPartParserTest {
+class MultiPartParserTest {
 
-    public static final String BINARY_ITEM = "PGh0bWw+CiAgPGhlYWQ+CiAgPC9oZWFkPgogIDxib2R5PgogICAgPHA+VGhpcyBpcyB0aGUgYm9keSBvZiB0aGUgbWVzc2FnZS48L3A+CiAgPC9ib2R5Pgo8L2h0bWw+Cg==";
+    static final String BINARY_ITEM = "PGh0bWw+CiAgPGhlYWQ+CiAgPC9oZWFkPgogIDxib2R5PgogICAgPHA+VGhpcyBpcyB0aGUgYm9keSBvZiB0aGUgbWVzc2FnZS48L3A+CiAgPC9ib2R5Pgo8L2h0bWw+Cg==";
 
     @Test
-    public void testSimple() throws IOException {
+    void testSimple() throws IOException {
         String data = "This is a message with multiple parts in MIME format.\r\n" +
                 "--frontier\r\n" +
                 "Content-Type: text/plain\r\n" +
@@ -52,7 +52,7 @@ public class MultiPartParserTest {
     }
 
     @Test
-    public void testSimpleWithKeys() throws IOException {
+    void testSimpleWithKeys() throws IOException {
         String data = "This is a message with multiple parts in MIME format.\r\n" +
                 "--frontier\r\n" +
                 "Content-Type: text/plain\r\n" +
@@ -89,7 +89,7 @@ public class MultiPartParserTest {
     }
 
     @Test
-    public void testMinimal() throws IOException {
+    void testMinimal() throws IOException {
         String data = "--boundary\r\n" +
                 "\r\n" +
                 "There is some message here.\r\n" +
@@ -108,7 +108,7 @@ public class MultiPartParserTest {
     }
 
     @Test
-    public void testContentHeaders() throws IOException {
+    void testContentHeaders() throws IOException {
         String data = "--boundary\r\n" +
                 "Content-Transfer-Encoding: text\r\n" +
                 "Content-Type: application/ocelot-stream\r\n" +
@@ -129,7 +129,7 @@ public class MultiPartParserTest {
     }
 
     @Test
-    public void testWhiteSpace() throws IOException {
+    void testWhiteSpace() throws IOException {
         String data = "--boundary\r\n" +
                 "\r\n" +
                 "\r\n" +
@@ -149,8 +149,8 @@ public class MultiPartParserTest {
         assertEquals("text/plain", item.getContentType().get());
     }
 
-    @Test(expected = InvalidRequestException.class)
-    public void testMalformed() throws IOException {
+    @Test
+    void testMalformed() {
         String data = "--boundary--";
 
         ByteArrayInputStream inputStream = new ByteArrayInputStream(data.getBytes());
@@ -159,11 +159,15 @@ public class MultiPartParserTest {
                 .contentType("multipart/mixed; boundary=boundary")
                 .build();
         MultiPartParser parser = new MultiPartParser(bulkContent);
-        parser.parse();
+        try {
+            parser.parse();
+        } catch (Exception ex) {
+            assertEquals(ex.getClass(), InvalidRequestException.class);
+        }
     }
 
     @Test
-    public void testEmptyBytePayload() throws IOException {
+    void testEmptyBytePayload() throws IOException {
 
         String data = "--boundary\r\n" +
                 "Content-Type: text/plain\r\n" +

@@ -8,8 +8,8 @@ import com.flightstats.hub.spoke.SpokeWriteContentDao;
 import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.StringUtils;
 import com.google.inject.Injector;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +17,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.SortedSet;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class SpokeS3SingleContentDaoTest {
 
@@ -26,7 +26,7 @@ public class SpokeS3SingleContentDaoTest {
     private static S3SingleContentDao s3SingleContentDao;
     private static SpokeWriteContentDao spokeWriteContentDao;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() throws Exception {
         Injector injector = Integration.startAwsHub();
         s3SingleContentDao = injector.getInstance(S3SingleContentDao.class);

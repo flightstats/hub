@@ -33,6 +33,13 @@ task nasTest(type: Test) {
     exclude 'com/flightstats/hub/spoke/**'
 }
 
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
+
 configurations {
     all*.exclude(group: 'org.slf4j', module: 'slf4j-log4j12')
     all*.exclude(group: 'org.slf4j', module: 'slf4j-simple')
@@ -113,7 +120,9 @@ dependencies {
     compile 'com.atlassian.commonmark:commonmark:0.10.0'
 
     testCompile 'com.sparkjava:spark-core:2.7.1'
-    testCompile 'junit:junit:4.+'
+//    testCompile 'junit:junit:4.+'
+    testImplementation('org.junit.jupiter:junit-jupiter:5.4.0'  )
+
     testCompile "org.mockito:mockito-all:1.+"
     testCompile 'org.testng:testng:6.+'
 }

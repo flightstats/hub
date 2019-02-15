@@ -3,15 +3,15 @@ package com.flightstats.hub.cluster;
 import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.Sleeper;
 import org.apache.curator.framework.CuratorFramework;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class CuratorClusterTest {
 
@@ -19,7 +19,7 @@ public class CuratorClusterTest {
 
     private static CuratorFramework curator;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() throws Exception {
         curator = Integration.startZooKeeper();
     }

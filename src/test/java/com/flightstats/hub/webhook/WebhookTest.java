@@ -2,17 +2,17 @@ package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.MinutePath;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class WebhookTest {
 
     private Webhook webhook;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         webhook = Webhook.builder()
                 .channelUrl("url").callbackUrl("end").build();
@@ -23,7 +23,7 @@ public class WebhookTest {
         Webhook webhook = Webhook.fromJson(this.webhook.toJson());
         assertEquals("end", webhook.getCallbackUrl());
         assertEquals("url", webhook.getChannelUrl());
-        Assert.assertNull(webhook.getName());
+        assertNull(webhook.getName());
     }
 
     @Test

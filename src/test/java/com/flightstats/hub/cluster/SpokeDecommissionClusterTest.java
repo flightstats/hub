@@ -4,24 +4,24 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.test.Integration;
 import org.apache.curator.framework.CuratorFramework;
-import org.junit.After;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class SpokeDecommissionClusterTest {
 
     private static CuratorFramework curator;
     private static SpokeDecommissionCluster cluster;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() throws Exception {
         curator = Integration.startZooKeeper();
         cluster = new SpokeDecommissionCluster(curator);
     }
 
-    @After
+    @AfterEach
     public void afterTest() throws Exception {
         cluster.doNotRestart();
     }

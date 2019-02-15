@@ -2,11 +2,11 @@ package com.flightstats.hub.model;
 
 import com.flightstats.hub.util.TimeUtil;
 import org.joda.time.DateTime;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.TreeSet;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ContentKeyTest {
 

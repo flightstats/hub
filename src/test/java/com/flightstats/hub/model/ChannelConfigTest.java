@@ -3,7 +3,7 @@ package com.flightstats.hub.model;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.collect.Sets;
 import org.joda.time.DateTime;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ChannelConfigTest {
     private static final Logger logger = LoggerFactory.getLogger(ChannelConfigTest.class);

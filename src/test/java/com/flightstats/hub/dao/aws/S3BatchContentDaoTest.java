@@ -10,8 +10,8 @@ import com.flightstats.hub.util.StringUtils;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Injector;
 import org.joda.time.DateTime;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,14 +23,14 @@ import java.util.SortedSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.ZipOutputStream;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class S3BatchContentDaoTest {
 
     private final static Logger logger = LoggerFactory.getLogger(S3BatchContentDaoTest.class);
     private static S3BatchContentDao contentDao;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() throws Exception {
         HubProperties.loadProperties("useDefault");
         HubProperties.setProperty("s3.maxQueryItems", "5");

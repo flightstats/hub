@@ -2,23 +2,23 @@ package com.flightstats.hub.cluster;
 
 import com.flightstats.hub.test.Integration;
 import org.apache.curator.framework.CuratorFramework;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class LongValueTest {
 
     private static CuratorFramework curator;
     private LongValue longValue;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() throws Exception {
         curator = Integration.startZooKeeper();
     }
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         longValue = new LongValue(curator);
     }

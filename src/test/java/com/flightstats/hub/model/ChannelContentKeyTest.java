@@ -1,12 +1,12 @@
 package com.flightstats.hub.model;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class ChannelContentKeyTest {
 
@@ -51,16 +51,25 @@ public class ChannelContentKeyTest {
         assertEquals(key.getContentKey(), new ContentKey(1999, 12, 31, 23, 59, 59, 999, "l33t"));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void fromSpokePathInvalidFormat() {
-        String filePath = "/some/arbitrary/directory/structure/foo/1999/12/31/bar/23/59/59999l33t";
-        ChannelContentKey.fromSpokePath(filePath);
+        try {
+            String filePath = "/some/arbitrary/directory/structure/foo/1999/12/31/bar/23/59/59999l33t";
+                    ChannelContentKey.fromSpokePath(filePath);
+        } catch (Exception ex) {
+            assertEquals(ex.getClass(), IllegalArgumentException.class);
+        }
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void fromSpokePathInvalidDepth() {
-        String filePath = "/foo/bar/23/59/59999l33t";
-        ChannelContentKey.fromSpokePath(filePath);
+        try {
+            String filePath = "/foo/bar/23/59/59999l33t";
+            ChannelContentKey.fromSpokePath(filePath);
+        } catch (Exception ex) {
+            assertEquals(ex.getClass(), IllegalArgumentException.class);
+        }
+
     }
 
     @Test

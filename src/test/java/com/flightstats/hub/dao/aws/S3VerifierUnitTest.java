@@ -12,7 +12,7 @@ import com.flightstats.hub.model.MinutePath;
 import com.sun.jersey.api.client.Client;
 import org.apache.curator.framework.CuratorFramework;
 import org.joda.time.DateTime;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.SortedSet;
 import java.util.TreeSet;

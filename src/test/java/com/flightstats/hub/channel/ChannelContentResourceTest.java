@@ -1,16 +1,16 @@
 package com.flightstats.hub.channel;
 
 import com.flightstats.hub.test.Integration;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import javax.ws.rs.core.MediaType;
 
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class ChannelContentResourceTest {
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() throws Exception {
         Integration.startAwsHub();
     }

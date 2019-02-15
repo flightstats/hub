@@ -4,10 +4,10 @@ import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.SafeZooKeeperUtils;
 import org.apache.curator.framework.CuratorFramework;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Set;
@@ -16,8 +16,8 @@ import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Sets.newHashSet;
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class WebhookLeaderLocksTest {
     private static final String WEBHOOK_LEADER_PATH = "/WebhookLeader";
@@ -33,19 +33,19 @@ public class WebhookLeaderLocksTest {
     private static CuratorFramework curator;
     private static SafeZooKeeperUtils zooKeeperUtils;
 
-    @BeforeClass
+    @BeforeAll
     public static void setup() throws Exception {
         ZooKeeperState zooKeeperState = new ZooKeeperState();
         curator = Integration.startZooKeeper();
         zooKeeperUtils = new SafeZooKeeperUtils(curator);
     }
 
-    @Before
+    @BeforeEach
     public void createWebhookLeader() throws Exception {
         curator.create().creatingParentsIfNeeded().forPath(WEBHOOK_LEADER_PATH);
     }
 
-    @After
+    @AfterEach
     public void destroyWebhookLeaders() throws Exception {
         curator.delete().deletingChildrenIfNeeded().forPath(WEBHOOK_LEADER_PATH);
     }
@@ -59,7 +59,7 @@ public class WebhookLeaderLocksTest {
         createWebhookLease(WEBHOOK_WITH_A_FEW_LEASES, "someLease3", SERVER_IP2);
 
         List<String> initialWebhooks = curator.getChildren().forPath(WEBHOOK_LEADER_PATH);
-        assertEquals("givens should have created 2 webhooks", 2, initialWebhooks.size());
+        assertEquals(2, initialWebhooks.size());
 
         WebhookLeaderLocks webhookLeaderLocks = new WebhookLeaderLocks(zooKeeperUtils);
         webhookLeaderLocks.deleteWebhookLeader(WEBHOOK_WITH_A_FEW_LEASES);

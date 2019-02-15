@@ -5,19 +5,19 @@ import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.SafeZooKeeperUtils;
 import org.apache.curator.framework.CuratorFramework;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Set;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class WebhookContentPathSetTest {
     private SafeZooKeeperUtils zooKeeperUtils;
     private WebhookContentPathSet groupSet;
     private String groupName;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         CuratorFramework curator = Integration.startZooKeeper();
         zooKeeperUtils = new SafeZooKeeperUtils(curator);

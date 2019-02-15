@@ -3,8 +3,8 @@ package com.flightstats.hub.util;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.test.Integration;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,7 +13,7 @@ import java.util.Collection;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class HubUtilsTest {
 
@@ -23,7 +23,7 @@ public class HubUtilsTest {
     private static HubUtils hubUtils;
     private static String channelUrl;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() throws Exception {
         Integration.startAwsHub();
         hubUtils = HubProvider.getInstance(HubUtils.class);

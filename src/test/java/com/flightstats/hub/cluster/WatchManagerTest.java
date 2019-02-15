@@ -3,20 +3,20 @@ package com.flightstats.hub.cluster;
 import com.flightstats.hub.test.Integration;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.api.CuratorEvent;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class WatchManagerTest {
 
     private static WatchManager watchManager;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() throws Exception {
         CuratorFramework curator = Integration.startZooKeeper();
         watchManager = new WatchManager(curator);

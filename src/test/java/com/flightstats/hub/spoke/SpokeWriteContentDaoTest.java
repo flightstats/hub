@@ -10,8 +10,8 @@ import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.Sleeper;
 import com.google.inject.Injector;
 import org.apache.curator.framework.CuratorFramework;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,7 +20,7 @@ public class SpokeWriteContentDaoTest {
     private final static Logger logger = LoggerFactory.getLogger(SpokeWriteContentDaoTest.class);
     private static ContentDaoUtil util;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() throws Exception {
         Injector injector = Integration.startAwsHub();
         util = new ContentDaoUtil(injector.getInstance(SpokeWriteContentDao.class));

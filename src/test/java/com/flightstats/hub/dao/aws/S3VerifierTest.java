@@ -10,19 +10,21 @@ import com.flightstats.hub.util.StringUtils;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Injector;
 import org.joda.time.DateTime;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestName;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Method;
+import java.util.Optional;
+
 import static com.flightstats.hub.dao.ChannelService.REPLICATED_LAST_UPDATED;
 import static com.flightstats.hub.dao.aws.S3Verifier.LAST_SINGLE_VERIFIED;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class S3VerifierTest {
+class S3VerifierTest {
     private final static Logger logger = LoggerFactory.getLogger(S3VerifierTest.class);
 
     private static S3Verifier s3Verifier;
@@ -32,12 +34,10 @@ public class S3VerifierTest {
     private int offsetMinutes = 15;
     private static ChannelService channelService;
 
-    @Rule
-    public TestName testName = new TestName();
     private String channelName;
 
-    @BeforeClass
-    public static void setUpClass() throws Exception {
+    @BeforeAll
+    static void setUpClass() throws Exception {
         Injector injector = Integration.startAwsHub();
         HubProperties.setProperty("spoke.ttlMinutes", "60");
         s3Verifier = injector.getInstance(S3Verifier.class);
@@ -45,15 +45,17 @@ public class S3VerifierTest {
         channelService = injector.getInstance(ChannelService.class);
     }
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp(TestInfo testInfo) throws Exception {
         offsetTime = now.minusMinutes(offsetMinutes);
-        channelName = (testName.getMethodName() + StringUtils.randomAlphaNumeric(6)).toLowerCase();
+        Optional<Method> currentTest = testInfo.getTestMethod();
+        String nameBase = currentTest.isPresent() ? currentTest.get().getName() : "DEFAULTCHANNEL";
+        channelName = (nameBase + StringUtils.randomAlphaNumeric(6)).toLowerCase();
         logger.info("channel name " + channelName);
     }
 
     @Test
-    public void testSingleNormalDefault() {
+    void testSingleNormalDefault() {
         ChannelConfig channelConfig = ChannelConfig.builder().name(channelName).build();
         channelService.createChannel(channelConfig);
         VerifierRange range = s3Verifier.getSingleVerifierRange(now, channelConfig);
@@ -65,7 +67,7 @@ public class S3VerifierTest {
     }
 
     @Test
-    public void testSingleNormal() {
+    void testSingleNormal() {
         MinutePath lastVerified = new MinutePath(offsetTime);
         lastContentPath.initialize(channelName, lastVerified, LAST_SINGLE_VERIFIED);
         ChannelConfig channel = ChannelConfig.builder().name(channelName).build();
@@ -77,7 +79,7 @@ public class S3VerifierTest {
     }
 
     @Test
-    public void testSingleReplicatedDefault() {
+    void testSingleReplicatedDefault() {
         ChannelConfig channel = getReplicatedChannel(channelName);
         channelService.createChannel(channel);
         VerifierRange range = s3Verifier.getSingleVerifierRange(now, channel);
@@ -87,7 +89,7 @@ public class S3VerifierTest {
     }
 
     @Test
-    public void testSingleReplicated() {
+    void testSingleReplicated() {
         MinutePath lastReplicated = new MinutePath(now.minusMinutes(30));
         lastContentPath.initialize(channelName, lastReplicated, REPLICATED_LAST_UPDATED);
         ChannelConfig channel = getReplicatedChannel(channelName);
@@ -99,7 +101,7 @@ public class S3VerifierTest {
     }
 
     @Test
-    public void testSingleNormalLagging() {
+    void testSingleNormalLagging() {
         MinutePath lastVerified = new MinutePath(now.minusMinutes(60));
         lastContentPath.initialize(channelName, lastVerified, LAST_SINGLE_VERIFIED);
         ChannelConfig channel = ChannelConfig.builder().name(channelName).build();
@@ -112,7 +114,7 @@ public class S3VerifierTest {
     }
 
     @Test
-    public void testSingleReplicationLagging() {
+    void testSingleReplicationLagging() {
         MinutePath lastReplicated = new MinutePath(now.minusMinutes(90));
         lastContentPath.initialize(channelName, lastReplicated, REPLICATED_LAST_UPDATED);
         MinutePath lastVerified = new MinutePath(now.minusMinutes(100));

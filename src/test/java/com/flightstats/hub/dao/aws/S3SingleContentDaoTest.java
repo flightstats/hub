@@ -6,12 +6,12 @@ import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.test.Integration;
 import com.google.inject.Injector;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class S3SingleContentDaoTest {
 
@@ -20,7 +20,7 @@ public class S3SingleContentDaoTest {
     private static ContentDaoUtil util;
     private static S3SingleContentDao s3SingleContentDao;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() throws Exception {
         HubProperties.loadProperties("useDefault");
         Injector injector = Integration.startAwsHub();

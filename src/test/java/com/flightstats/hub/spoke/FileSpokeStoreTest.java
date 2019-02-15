@@ -7,8 +7,8 @@ import com.flightstats.hub.util.TimeUtil;
 import com.google.common.io.Files;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,7 +20,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class FileSpokeStoreTest {
     public static final byte[] BYTES = new byte[]{0, 2, 3, 4, 5, 6};
@@ -29,7 +29,7 @@ public class FileSpokeStoreTest {
     private FileSpokeStore spokeStore;
     private static final int ttlMinutes = HubProperties.getSpokeTtlMinutes(SpokeStore.WRITE);
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         tempDir = Files.createTempDir().getPath();
         HubProperties.setProperty("spoke.write.path", tempDir);
@@ -200,7 +200,7 @@ public class FileSpokeStoreTest {
         List<String> found = getNextTesting(name, limitKey.toUrl(), 2);
         logger.info("found {}", found);
         assertEquals(3, found.size());
-        assertTrue(contentKeyB.toUrl(), found.contains(name + "/" + contentKeyB.toUrl()));
+        assertTrue(found.contains(name + "/" + contentKeyB.toUrl()));
         assertTrue(found.contains(name + "/" + contentKeyC.toUrl()));
     }
 
@@ -223,7 +223,7 @@ public class FileSpokeStoreTest {
         List<String> found = getNextTesting(name, limitKey.toUrl(), 2);
         logger.info("found {}", found);
         assertEquals(2, found.size());
-        assertTrue(contentKeyB.toUrl(), found.contains(name + "/" + contentKeyB.toUrl()));
+        assertTrue(found.contains(name + "/" + contentKeyB.toUrl()));
         assertTrue(found.contains(name + "/" + contentKeyC.toUrl()));
     }
 

@@ -3,19 +3,19 @@ package com.flightstats.hub.filter;
 import com.flightstats.hub.test.Integration;
 import org.glassfish.jersey.server.internal.routing.UriRoutingContext;
 import org.glassfish.jersey.uri.UriTemplate;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import javax.ws.rs.container.ContainerRequestContext;
 import java.util.Collections;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 
 public class MetricsRequestFilterTest {
-    @BeforeClass
+    @BeforeAll
     public static void integrationSetup() throws Exception {
         Integration.startAwsHub();
     }
