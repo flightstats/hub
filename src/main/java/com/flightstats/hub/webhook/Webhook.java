@@ -9,7 +9,6 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.RequestUtils;
-import com.google.common.base.Optional;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import de.danielbechler.diff.ObjectDifferBuilder;
@@ -22,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.SortedSet;
 
 @Builder
@@ -91,7 +91,7 @@ public class Webhook implements Comparable<Webhook>, NamedType {
         try {
             JsonNode root = mapper.readTree(json);
             if (root.has("startItem")) {
-                Optional<ContentPath> keyOptional = Optional.absent();
+                Optional<ContentPath> keyOptional = Optional.empty();
                 String startItem = root.get("startItem").asText();
                 if (startItem.equalsIgnoreCase("previous")) {
                     keyOptional = getPrevious(keyOptional, root.get("channelUrl").asText());
@@ -201,7 +201,7 @@ public class Webhook implements Comparable<Webhook>, NamedType {
     }
 
     public static Webhook fromJson(String json) {
-        return fromJson(json, Optional.absent());
+        return fromJson(json, Optional.empty());
     }
 
     @JsonIgnore

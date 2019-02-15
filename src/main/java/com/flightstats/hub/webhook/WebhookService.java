@@ -9,7 +9,6 @@ import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.util.RequestUtils;
-import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.joda.time.DateTime;
@@ -17,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
+import java.util.Optional;
 
 import static com.flightstats.hub.webhook.WebhookLeader.WEBHOOK_LAST_COMPLETED;
 
@@ -101,11 +101,11 @@ public class WebhookService {
     }
 
     public Optional<Webhook> get(String name) {
-        return Optional.fromNullable(webhookDao.get(name));
+        return Optional.ofNullable(webhookDao.get(name));
     }
 
     Optional<Webhook> getCached(String name) {
-        return Optional.fromNullable(webhookDao.getCached(name));
+        return Optional.ofNullable(webhookDao.getCached(name));
     }
 
     public Collection<Webhook> getAll() {

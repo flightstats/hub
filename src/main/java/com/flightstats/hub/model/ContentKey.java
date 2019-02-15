@@ -1,7 +1,6 @@
 package com.flightstats.hub.model;
 
 import com.flightstats.hub.util.TimeUtil;
-import com.google.common.base.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -11,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
+import java.util.Optional;
 
 public class ContentKey implements ContentPath {
     public static final ContentKey NONE = new ContentKey(TimeUtil.BIG_BANG, "none");
@@ -69,7 +69,7 @@ public class ContentKey implements ContentPath {
             return Optional.of(new ContentKey(dateTime, hash));
         } catch (Exception e) {
             logger.trace("unable to parse {} {} ", key, e.getMessage());
-            return Optional.absent();
+            return Optional.empty();
         }
     }
 

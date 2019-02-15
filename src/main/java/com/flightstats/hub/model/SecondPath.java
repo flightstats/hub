@@ -1,7 +1,6 @@
 package com.flightstats.hub.model;
 
 import com.flightstats.hub.util.TimeUtil;
-import com.google.common.base.Optional;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
@@ -10,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Optional;
 
 /**
  * A SecondPath represents the end of a second period.
@@ -79,7 +79,7 @@ public class SecondPath implements ContentPathKeys {
             return Optional.of(new SecondPath(TimeUtil.seconds(key)));
         } catch (Exception e) {
             logger.info("unable to parse " + key + " " + e.getMessage());
-            return Optional.absent();
+            return Optional.empty();
         }
     }
 

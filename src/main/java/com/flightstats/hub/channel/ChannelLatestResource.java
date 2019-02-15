@@ -5,7 +5,6 @@ import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.TimeUtil;
-import com.google.common.base.Optional;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
@@ -13,6 +12,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
