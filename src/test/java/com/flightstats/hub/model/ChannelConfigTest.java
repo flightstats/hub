@@ -4,29 +4,25 @@ import com.flightstats.hub.util.TimeUtil;
 import com.google.common.collect.Sets;
 import org.joda.time.DateTime;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.*;
 
 public class ChannelConfigTest {
-    private static final Logger logger = LoggerFactory.getLogger(ChannelConfigTest.class);
 
     @Test
-    public void testDefaults() throws Exception {
+    public void testDefaults() {
         ChannelConfig config = ChannelConfig.builder().name("defaults").build();
         assertDefaults(config);
         ChannelConfig copy = config.toBuilder().build();
         assertDefaults(copy);
-        assertTrue(config.equals(copy));
+        assertEquals(config, copy);
     }
 
     @Test
-    public void testJsonDefaults() throws Exception {
+    public void testJsonDefaults() {
         assertDefaults(ChannelConfig.createFromJson("{\"name\": \"defaults\"}"));
     }
 
@@ -37,26 +33,26 @@ public class ChannelConfigTest {
         assertTrue(config.getTags().isEmpty());
         assertEquals("", config.getReplicationSource());
         assertEquals("SINGLE", config.getStorage());
-        assertEquals(null, config.getMutableTime());
+        assertNull(config.getMutableTime());
         assertTrue(config.isAllowZeroBytes());
     }
 
     @Test
-    public void testDescription() throws Exception {
+    public void testDescription() {
         ChannelConfig config = ChannelConfig.builder().description("some thing").build();
         assertEquals("some thing", config.getDescription());
     }
 
     @Test
-    public void testDescriptionCopy() throws Exception {
+    public void testDescriptionCopy() {
         ChannelConfig config = ChannelConfig.builder().description("some copy").build();
         ChannelConfig copy = config.toBuilder().build();
         assertEquals("some copy", copy.getDescription());
-        assertTrue(config.equals(copy));
+        assertEquals(config, copy);
     }
 
     @Test
-    public void testTags() throws Exception {
+    public void testTags() {
         List<String> tags = Arrays.asList("one", "two", "three", "4 four");
         ChannelConfig config = ChannelConfig.builder().tags(tags).build();
         assertEquals(4, config.getTags().size());
@@ -64,28 +60,28 @@ public class ChannelConfigTest {
     }
 
     @Test
-    public void testTagsCopy() throws Exception {
+    public void testTagsCopy() {
         List<String> tags = Arrays.asList("one", "two", "three", "4 four");
         ChannelConfig config = ChannelConfig.builder().tags(tags).build();
         ChannelConfig copy = config.toBuilder().build();
         assertTrue(copy.getTags().containsAll(config.getTags()));
-        assertTrue(config.equals(copy));
+        assertEquals(config, copy);
     }
 
     @Test
-    public void testReplicationSource() throws Exception {
+    public void testReplicationSource() {
         String replicationSource = "http://hub/channel/blah";
         ChannelConfig config = ChannelConfig.builder().replicationSource(replicationSource).build();
         assertEquals(replicationSource, config.getReplicationSource());
     }
 
     @Test
-    public void testReplicationSourceCopy() throws Exception {
+    public void testReplicationSourceCopy() {
         String replicationSource = "http://hub/channel/blah";
         ChannelConfig config = ChannelConfig.builder().replicationSource(replicationSource).build();
         ChannelConfig copy = config.toBuilder().build();
         assertEquals(replicationSource, copy.getReplicationSource());
-        assertTrue(config.equals(copy));
+        assertEquals(config, copy);
     }
 
     @Test
@@ -93,7 +89,7 @@ public class ChannelConfigTest {
         ChannelConfig config = ChannelConfig.builder().storage("BOTH").build();
         ChannelConfig copy = config.toBuilder().build();
         assertEquals("BOTH", copy.getStorage());
-        assertTrue(config.equals(copy));
+        assertEquals(config, copy);
     }
 
     @Test
@@ -102,29 +98,29 @@ public class ChannelConfigTest {
         ChannelConfig hasCheez = ChannelConfig.builder().name("hasCheez").build();
 
         ChannelConfig repl = hasCheez.toBuilder().replicationSource("R").build();
-        assertFalse(repl.equals(defaults));
+        assertNotEquals(repl, defaults);
 
         ChannelConfig desc = hasCheez.toBuilder().description("D").build();
-        assertFalse(desc.equals(defaults));
+        assertNotEquals(desc, defaults);
 
         ChannelConfig max = hasCheez.toBuilder().maxItems(1).build();
-        assertFalse(max.equals(defaults));
+        assertNotEquals(max, defaults);
 
         ChannelConfig owner = hasCheez.toBuilder().owner("O").build();
-        assertFalse(owner.equals(defaults));
+        assertNotEquals(owner, defaults);
 
         ChannelConfig storage = hasCheez.toBuilder().storage("S").build();
-        assertFalse(storage.equals(defaults));
+        assertNotEquals(storage, defaults);
 
         ChannelConfig ttl = hasCheez.toBuilder().ttlDays(5).build();
-        assertFalse(ttl.equals(defaults));
+        assertNotEquals(ttl, defaults);
 
         ChannelConfig tags = hasCheez.toBuilder().tags(Sets.newHashSet("one", "two")).build();
-        assertFalse(tags.equals(defaults));
+        assertNotEquals(tags, defaults);
     }
 
     @Test
-    public void testCopy() throws IOException {
+    public void testCopy() {
         ChannelConfig config = ChannelConfig.builder()
                 .owner("ABC")
                 .description("something something")
@@ -137,13 +133,13 @@ public class ChannelConfigTest {
                 .mutableTime(TimeUtil.now())
                 .allowZeroBytes(false)
                 .build();
-        assertTrue(config.equals(config.toBuilder().build()));
 
-        assertTrue(config.equals(ChannelConfig.createFromJson(config.toJson())));
+        assertEquals(config, config.toBuilder().build());
+        assertEquals(config, ChannelConfig.createFromJson(config.toJson()));
     }
 
     @Test
-    public void testEnforceChannelRetention() throws IOException {
+    public void testEnforceChannelRetention() {
         ChannelConfig config = ChannelConfig.builder()
                 .owner("ABC")
                 .description("something something")
@@ -168,7 +164,7 @@ public class ChannelConfigTest {
     }
 
     @Test
-    public void testMutableTime() throws Exception {
+    public void testMutableTime() {
         ChannelConfig defaults = ChannelConfig.builder().name("defaults").build();
         DateTime mutableTime = TimeUtil.now();
         ChannelConfig channelConfig = defaults.toBuilder().mutableTime(mutableTime).build();
@@ -187,6 +183,36 @@ public class ChannelConfigTest {
     public void testZeroBytes() {
         ChannelConfig testZeroBytes = ChannelConfig.builder().name("testZeroBytes").allowZeroBytes(false).build();
         assertFalse(testZeroBytes.isAllowZeroBytes());
+    }
+
+    @Test
+    public void testSecondaryMetricsReporting_defaultEmpty() {
+        ChannelConfig testSecondaryMetricsNull = ChannelConfig
+                .builder()
+                .name("testSecondaryMetrics0")
+                .build();
+        assertEquals("", testSecondaryMetricsNull.getSecondaryMetricsReporting());
+    }
+
+    @Test
+    public void testSecondaryMetricsReporting_built() {
+        ChannelConfig testSecondaryMetrics = ChannelConfig
+                .builder()
+                .name("testSecondaryMetrics1")
+                .secondaryMetricsReporting("datadog")
+                .build();
+        assertEquals("datadog", testSecondaryMetrics.getSecondaryMetricsReporting());
+    }
+
+    @Test
+    public void testSecondaryMetricsReportingUpdateFromJson_updated() {
+        ChannelConfig testSecondaryMetrics = ChannelConfig
+                .builder()
+                .name("testSecondaryMetrics2")
+                .build();
+        String update = "{ \"secondaryMetricsReporting\": \"datadog\" }";
+        ChannelConfig updated = ChannelConfig.updateFromJson(testSecondaryMetrics, update);
+        assertEquals("datadog", updated.getSecondaryMetricsReporting());
     }
 
 }
