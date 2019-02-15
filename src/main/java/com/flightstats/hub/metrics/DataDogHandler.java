@@ -2,6 +2,7 @@ package com.flightstats.hub.metrics;
 
 import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.TimeUtil;
+import com.google.inject.Inject;
 import com.sun.jersey.api.client.ClientResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,23 +12,15 @@ import javax.ws.rs.core.MediaType;
 class DataDogHandler {
     private static final Logger logger = LoggerFactory.getLogger(DataDogHandler.class);
     private MetricsConfig metricsConfig;
-    private String datadogUrl = "https://app.datadoghq.com/api/v1/downtime";
 
-    DataDogHandler(
-            MetricsConfig metricsConfig) {
+    @Inject
+    DataDogHandler(MetricsConfig metricsConfig) {
         this.metricsConfig = metricsConfig;
-    }
-
-    DataDogHandler(
-            MetricsConfig metricsConfig,
-            String datadogUrl
-    ) {
-        this.metricsConfig = metricsConfig;
-        this.datadogUrl = datadogUrl;
     }
 
     void mute() {
         logger.info("Attempting to mute datadog");
+        String datadogUrl = metricsConfig.getDatadogApiUrl() + "/downtime";
         String apiKey = metricsConfig.getDataDogAPIKey();
         String appKey = metricsConfig.getDataDogAppKey();
         String name = metricsConfig.getHostTag();

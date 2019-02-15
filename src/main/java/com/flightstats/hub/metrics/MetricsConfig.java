@@ -31,4 +31,5 @@ public class MetricsConfig {
     String team;
     int statsdPort;
     int dogstatsdPort;
+    String datadogApiUrl;
 }

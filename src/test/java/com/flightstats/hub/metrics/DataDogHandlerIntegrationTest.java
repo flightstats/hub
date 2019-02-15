@@ -79,10 +79,10 @@ public class DataDogHandlerIntegrationTest {
         MetricsConfig metricsConfig = MetricsConfig.builder()
                 .dataDogAPIKey("apiKey")
                 .dataDogAppKey("appKey")
+                .datadogApiUrl("http://localhost:8888/api")
                 .hostTag("test_host")
                 .build();
-        String url = "http://localhost:8888/api";
-        DataDogHandler dataDogHandler = new DataDogHandler(metricsConfig, url);
+        DataDogHandler dataDogHandler = new DataDogHandler(metricsConfig);
         dataDogHandler.mute();
 
         ObjectMapper mapper = new ObjectMapper();
