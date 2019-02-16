@@ -9,7 +9,6 @@ import com.timgroup.statsd.StatsDClient;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Function;
 
 @Singleton
 public class StatsDFilter {
@@ -18,12 +17,9 @@ public class StatsDFilter {
     private MetricsConfig metricsConfig;
     private StatsDClient statsDClient = new NoOpStatsDClient();
     private StatsDClient dataDogClient = new NoOpStatsDClient();
-    private DataDogWhitelist dataDogWhitelist;
 
     @Inject
-    public StatsDFilter(DataDogWhitelist dataDogWhitelist,
-                        MetricsConfig metricsConfig) {
-        this.dataDogWhitelist = dataDogWhitelist;
+    public StatsDFilter(MetricsConfig metricsConfig) {
         this.metricsConfig = metricsConfig;
     }
 
@@ -35,21 +31,10 @@ public class StatsDFilter {
         this.dataDogClient = new NonBlockingStatsDClient(clientPrefix, clientHost, dogstatsdPort);
     }
 
-    private Function<Boolean, List<StatsDClient>> clientList = (bool) -> bool ?
-            Arrays.asList(statsDClient, dataDogClient) :
-            Collections.singletonList(statsDClient);
-
-    private Function<String, Boolean> matcherExists = (matcher) ->  matcher != null && !matcher.equals("");
-
-    private Function<String, Boolean> match = (metric) -> dataDogWhitelist
-            .getWhitelist()
-            .stream()
-            .anyMatch(matcher -> matcherExists.apply(matcher) && matcher.equals(metric));
-    
-    List<StatsDClient> getFilteredClients(String metric) {
-        return clientList.apply(match.apply(metric));
+    List<StatsDClient> getFilteredClients(boolean secondaryReporting) {
+        return secondaryReporting ?
+                Arrays.asList(statsDClient, dataDogClient) :
+                Collections.singletonList(statsDClient);
     }
-
-    List<StatsDClient> getAllClients() { return clientList.apply(true); }
 
 }

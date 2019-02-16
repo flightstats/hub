@@ -191,7 +191,7 @@ public class ChannelConfigTest {
                 .builder()
                 .name("testSecondaryMetrics0")
                 .build();
-        assertEquals("", testSecondaryMetricsNull.getSecondaryMetricsReporting());
+        assertFalse(testSecondaryMetricsNull.isSecondaryMetricsReporting());
     }
 
     @Test
@@ -199,9 +199,9 @@ public class ChannelConfigTest {
         ChannelConfig testSecondaryMetrics = ChannelConfig
                 .builder()
                 .name("testSecondaryMetrics1")
-                .secondaryMetricsReporting("datadog")
+                .secondaryMetricsReporting(true)
                 .build();
-        assertEquals("datadog", testSecondaryMetrics.getSecondaryMetricsReporting());
+        assertTrue(testSecondaryMetrics.isSecondaryMetricsReporting());
     }
 
     @Test
@@ -210,9 +210,9 @@ public class ChannelConfigTest {
                 .builder()
                 .name("testSecondaryMetrics2")
                 .build();
-        String update = "{ \"secondaryMetricsReporting\": \"datadog\" }";
+        String update = "{ \"secondaryMetricsReporting\": \"true\" }";
         ChannelConfig updated = ChannelConfig.updateFromJson(testSecondaryMetrics, update);
-        assertEquals("datadog", updated.getSecondaryMetricsReporting());
+        assertTrue(updated.isSecondaryMetricsReporting());
     }
 
 }

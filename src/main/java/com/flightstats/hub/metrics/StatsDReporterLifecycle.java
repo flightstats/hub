@@ -22,6 +22,8 @@ public class StatsDReporterLifecycle extends AbstractIdleService {
     }
 
     public void shutDown() {
-        statsDFilter.getAllClients().forEach(StatsDClient::stop);
+        statsDFilter
+                .getFilteredClients(true)
+                .forEach(StatsDClient::stop);
     }
 }
