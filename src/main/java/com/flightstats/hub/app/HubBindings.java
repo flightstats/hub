@@ -12,8 +12,6 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.health.HubHealthCheck;
 import com.flightstats.hub.metrics.CustomMetricsLifecycle;
-import com.flightstats.hub.metrics.DataDogWhitelist;
-import com.flightstats.hub.metrics.DataDogWhitelistProvider;
 import com.flightstats.hub.metrics.InfluxdbReporterProvider;
 import com.flightstats.hub.metrics.MetricRegistryProvider;
 import com.flightstats.hub.metrics.MetricsConfigProvider;
@@ -185,16 +183,14 @@ public class HubBindings extends AbstractModule {
         bind(FinalCheck.class).to(SpokeFinalCheck.class).asEagerSingleton();
         bind(InFlightService.class).asEagerSingleton();
         bind(ChannelService.class).asEagerSingleton();
-
+        bind(HubVersion.class).toInstance(new HubVersion());
 
         // metrics
-        bind(HubVersion.class).toInstance(new HubVersion());
         bind(MetricsConfig.class).toProvider(MetricsConfigProvider.class).asEagerSingleton();
         bind(MetricRegistry.class).toProvider(MetricRegistryProvider.class).asEagerSingleton();
         bind(ScheduledReporter.class).toProvider(InfluxdbReporterProvider.class).asEagerSingleton();
         bind(InfluxdbReporterLifecycle.class).asEagerSingleton();
 
-        bind(DataDogWhitelist.class).toProvider(DataDogWhitelistProvider.class).asEagerSingleton();
         bind(StatsDFilter.class).asEagerSingleton();
         bind(StatsdReporter.class).toProvider(StatsDReporterProvider.class).asEagerSingleton();
         bind(StatsDReporterLifecycle.class).asEagerSingleton();

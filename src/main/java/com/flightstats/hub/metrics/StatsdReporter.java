@@ -1,5 +1,7 @@
 package com.flightstats.hub.metrics;
 
+import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.model.ChannelConfig;
 import com.google.inject.Inject;
 import com.timgroup.statsd.Event;
 import com.timgroup.statsd.StatsDClient;
@@ -12,24 +14,30 @@ public class StatsdReporter {
     private StatsDFilter statsDFilter;
     private StatsDFormatter statsDFormatter;
     private DataDogHandler dataDogHandler;
+    private ChannelService channelService;
 
     @Inject
     public StatsdReporter(
             StatsDFilter statsDFilter,
             StatsDFormatter statsDFormatter,
-            DataDogHandler dataDogHandler
+            DataDogHandler dataDogHandler,
+            ChannelService channelService
     ) {
         this.statsDFilter = statsDFilter;
         this.statsDFormatter = statsDFormatter;
         this.dataDogHandler = dataDogHandler;
+        this.channelService = channelService;
     }
 
     private boolean isTestChannel(String channel) {
         return channel.toLowerCase().startsWith("test_");
     }
 
-    private void reportWithFilteredClients(String metric, Consumer<StatsDClient> method) {
-        List<StatsDClient> clients = statsDFilter.getFilteredClients(metric);
+    private void reportWithFilteredClients(String name, Consumer<StatsDClient> method) {
+        ChannelConfig channelConfig = channelService.getChannelConfig(name, false);
+        boolean secondaryReport = channelConfig != null &&
+                channelConfig.isSecondaryMetricsReporting();
+        List<StatsDClient> clients = statsDFilter.getFilteredClients(secondaryReport);
         clients.forEach(method);
     }
 
@@ -85,7 +93,9 @@ public class StatsdReporter {
     }
 
     public void mute() {
-        dataDogHandler.mute();
+        if (dataDogHandler != null) {
+            dataDogHandler.mute();
+        }
     }
 
 }

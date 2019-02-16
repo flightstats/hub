@@ -50,7 +50,7 @@ public class ChannelConfig implements Serializable, NamedType {
     private boolean protect;
     private DateTime mutableTime;
     private boolean allowZeroBytes;
-    private String secondaryMetricsReporting;
+    private boolean secondaryMetricsReporting;
 
     private ChannelConfig(String name,
                           String owner,
@@ -66,7 +66,7 @@ public class ChannelConfig implements Serializable, NamedType {
                           DateTime mutableTime,
                           boolean allowZeroBytes,
                           String displayName,
-                          String secondaryMetricsReporting) {
+                          boolean secondaryMetricsReporting) {
         this.name = StringUtils.trim(name);
         this.displayName = StringUtils.defaultIfBlank(StringUtils.trim(displayName), this.name);
         this.owner = StringUtils.trim(owner);
@@ -150,7 +150,7 @@ public class ChannelConfig implements Serializable, NamedType {
         }
         if (rootNode.has("allowZeroBytes")) builder.allowZeroBytes(rootNode.get("allowZeroBytes").asBoolean());
         if (rootNode.has("secondaryMetricsReporting")) {
-            builder.secondaryMetricsReporting(rootNode.get("secondaryMetricsReporting").asText());
+            builder.secondaryMetricsReporting(rootNode.get("secondaryMetricsReporting").asBoolean());
         }
         return builder.build();
     }
@@ -278,7 +278,7 @@ public class ChannelConfig implements Serializable, NamedType {
         return getDisplayName().toLowerCase();
     }
 
-    public String getSecondaryMetricsReporting() { return secondaryMetricsReporting; }
+    public boolean isSecondaryMetricsReporting() { return secondaryMetricsReporting; }
 
     public boolean equals(Object o) {
         if (o == this) return true;
@@ -316,8 +316,8 @@ public class ChannelConfig implements Serializable, NamedType {
         final Object other$mutableTime = other.getMutableTime();
         if (this$mutableTime == null ? other$mutableTime != null : !this$mutableTime.equals(other$mutableTime))
             return false;
-        if (!this.getSecondaryMetricsReporting().equals(other.getSecondaryMetricsReporting())) return false;
-        return this.isAllowZeroBytes() == other.isAllowZeroBytes();
+        return this.isSecondaryMetricsReporting() == other.isSecondaryMetricsReporting() &&
+        this.isAllowZeroBytes() == other.isAllowZeroBytes();
     }
 
     public int hashCode() {
@@ -374,7 +374,7 @@ public class ChannelConfig implements Serializable, NamedType {
         private long maxItems;
         private DateTime mutableTime;
         private String displayName;
-        private String secondaryMetricsReporting = "";
+        private boolean secondaryMetricsReporting = false;
 
         ChannelConfigBuilder() {
         }
@@ -394,7 +394,7 @@ public class ChannelConfig implements Serializable, NamedType {
             maxItems(config.getMaxItems());
             mutableTime(config.getMutableTime());
             displayName(config.getDisplayName());
-            secondaryMetricsReporting(config.getSecondaryMetricsReporting());
+            secondaryMetricsReporting(config.isSecondaryMetricsReporting());
         }
 
         public ChannelConfigBuilder tags(List<String> tagList) {
@@ -474,7 +474,7 @@ public class ChannelConfig implements Serializable, NamedType {
             return this;
         }
 
-        public ChannelConfigBuilder secondaryMetricsReporting(String secondaryMetricsReporting) {
+        public ChannelConfigBuilder secondaryMetricsReporting(boolean secondaryMetricsReporting) {
             this.secondaryMetricsReporting = secondaryMetricsReporting;
             return this;
         }
