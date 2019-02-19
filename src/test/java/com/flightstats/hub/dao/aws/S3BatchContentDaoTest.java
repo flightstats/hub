@@ -4,7 +4,12 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.channel.ZipBulkBuilder;
 import com.flightstats.hub.dao.ContentDaoUtil;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.model.Content;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.MinutePath;
+import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.StringUtils;
 import com.flightstats.hub.util.TimeUtil;
@@ -23,7 +28,10 @@ import java.util.SortedSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.ZipOutputStream;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class S3BatchContentDaoTest {
 

@@ -4,7 +4,6 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.model.ContentPath;
-import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
@@ -13,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 import java.util.function.Function;
 
 public class LastContentPath {

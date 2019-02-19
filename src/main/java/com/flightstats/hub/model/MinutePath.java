@@ -1,7 +1,6 @@
 package com.flightstats.hub.model;
 
 import com.flightstats.hub.util.TimeUtil;
-import com.google.common.base.Optional;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
@@ -10,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Optional;
 
 /**
  * A MinutePath represents the end of a minute period.
@@ -79,7 +79,7 @@ public class MinutePath implements ContentPathKeys {
             return Optional.of(new MinutePath(TimeUtil.minutes(key)));
         } catch (Exception e) {
             logger.trace("unable to parse {} {}", key, e.getMessage());
-            return Optional.absent();
+            return Optional.empty();
         }
     }
 

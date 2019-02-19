@@ -6,13 +6,13 @@ import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.HubUtils;
-import com.google.common.base.Optional;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.util.Optional;
 import java.util.SortedSet;
 
 @SuppressWarnings("WeakerAccess")
@@ -47,7 +47,7 @@ public class ChannelStatusResource {
                 Location.ALL.name(), Epoch.IMMUTABLE.name());
         SortedSet<ContentKey> earliest = channelService.query(directionQuery);
         if (earliest.isEmpty()) {
-            addLink("earliest", Optional.absent(), channel, links);
+            addLink("earliest", Optional.empty(), channel, links);
         } else {
             addLink("earliest", Optional.of(earliest.first()), channel, links);
         }

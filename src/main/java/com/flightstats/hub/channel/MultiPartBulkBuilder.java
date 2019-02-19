@@ -9,7 +9,6 @@ import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.StreamResults;
 import com.flightstats.hub.util.TimeUtil;
-import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +20,7 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
+import java.util.Optional;
 import java.util.SortedSet;
 import java.util.function.Consumer;
 

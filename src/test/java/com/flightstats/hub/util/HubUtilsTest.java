@@ -1,7 +1,12 @@
 package com.flightstats.hub.util;
 
 import com.flightstats.hub.app.HubProvider;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.BulkContent;
+import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.model.Content;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.test.Integration;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -13,7 +18,10 @@ import java.util.Collection;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class HubUtilsTest {
 

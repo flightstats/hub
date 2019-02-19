@@ -4,13 +4,17 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.util.HubUtils;
-import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Serializable;
+import java.util.Optional;
 
 public class Content implements Serializable {
     private final static Logger logger = LoggerFactory.getLogger(Content.class);
@@ -23,7 +27,7 @@ public class Content implements Serializable {
     private long contentLength;
     private InputStream stream;
     private byte[] data;
-    private Optional<ContentKey> contentKey = Optional.absent();
+    private Optional<ContentKey> contentKey = Optional.empty();
     //size is the number of bytes in the raw, uncompressed item
     private Long size;
     private transient boolean isLarge;
@@ -210,22 +214,22 @@ public class Content implements Serializable {
     }
 
     public static class Builder {
-        private Optional<String> contentType = Optional.absent();
+        private Optional<String> contentType = Optional.empty();
         private long contentLength = 0;
         private Long size;
-        private Optional<ContentKey> contentKey = Optional.absent();
+        private Optional<ContentKey> contentKey = Optional.empty();
         private InputStream stream;
         private int threads;
         private boolean forceWrite;
         private boolean large;
 
         public Builder withContentType(String contentType) {
-            this.contentType = Optional.fromNullable(contentType);
+            this.contentType = Optional.ofNullable(contentType);
             return this;
         }
 
         public Builder withContentKey(ContentKey contentKey) {
-            this.contentKey = Optional.fromNullable(contentKey);
+            this.contentKey = Optional.ofNullable(contentKey);
             return this;
         }
 
