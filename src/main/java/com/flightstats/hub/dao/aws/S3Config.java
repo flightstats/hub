@@ -14,7 +14,6 @@ import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.util.TimeUtil;
-import com.google.common.base.Optional;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;

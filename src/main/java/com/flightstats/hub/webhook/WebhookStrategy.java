@@ -8,8 +8,8 @@ import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.model.MinutePath;
 import com.flightstats.hub.model.SecondPath;
 import com.flightstats.hub.util.TimeUtil;
-import com.google.common.base.Optional;
 
+import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;

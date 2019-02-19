@@ -2,11 +2,11 @@ package com.flightstats.hub.dao;
 
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
-import com.google.common.base.Optional;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 import java.util.SortedSet;
 import java.util.function.Consumer;
 

@@ -10,7 +10,6 @@ import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.rest.Linked;
 import com.flightstats.hub.util.TimeUtil;
-import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;

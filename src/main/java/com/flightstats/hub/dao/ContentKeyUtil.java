@@ -65,10 +65,10 @@ public class ContentKeyUtil {
         }
     }
 
-    public static com.google.common.base.Optional<ContentKey> convertKey(String key) {
+    public static Optional<ContentKey> convertKey(String key) {
         if (StringUtils.isNotEmpty(key)) {
             return ContentKey.fromUrl(StringUtils.substringAfter(key, "/"));
         }
-        return com.google.common.base.Optional.absent();
+        return Optional.empty();
     }
 }
