@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.TagService;
 import com.flightstats.hub.model.*;
-import com.google.common.base.Optional;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
@@ -12,6 +11,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.util.Optional;
 import java.util.SortedSet;
 
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
