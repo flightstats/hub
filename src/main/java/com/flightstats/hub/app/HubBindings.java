@@ -201,7 +201,6 @@ public class HubBindings extends AbstractModule {
         bind(CustomMetricsLifecycle.class).asEagerSingleton();
         bind(PeriodicMetricEmitter.class).asEagerSingleton();
         bind(PeriodicMetricEmitterLifecycle.class).asEagerSingleton();
-        ////
 
         bind(ContentDao.class)
                 .annotatedWith(Names.named(ContentDao.WRITE_CACHE))
