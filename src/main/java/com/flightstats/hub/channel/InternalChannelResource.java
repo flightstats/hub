@@ -16,8 +16,18 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.*;
-import javax.ws.rs.core.*;
+import javax.ws.rs.Path;
+import javax.ws.rs.GET;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
 import java.net.URI;
 import java.util.Map;
 import java.util.Optional;
@@ -81,8 +91,9 @@ public class InternalChannelResource {
     @Path("{channel}")
     @DELETE
     public Response delete(@PathParam("channel") final String channelName) throws Exception {
-        ChannelConfig channelConfig = channelService.getChannelConfig(channelName, false);
-        if (channelConfig == null) {
+        Optional<ChannelConfig> optionalChannelConfig = channelService.getChannelConfig(channelName, false);
+
+        if (!optionalChannelConfig.isPresent()) {
             return ChannelResource.notFound(channelName);
         }
         if (HubProperties.isProtected()) {

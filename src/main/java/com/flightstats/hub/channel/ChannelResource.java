@@ -72,13 +72,14 @@ public class ChannelResource {
     public Response getChannelMetadata(@PathParam("channel") String channelName,
                                        @QueryParam("cached") @DefaultValue("true") boolean cached) {
         logger.debug("get channel {}", channelName);
-        ChannelConfig config = channelService.getChannelConfig(channelName, cached);
-        if (config == null) {
+
+        Optional<ChannelConfig> optionalChannelConfig = channelService.getChannelConfig(channelName, cached);
+        if (!optionalChannelConfig.isPresent()) {
             logger.info("unable to get channel " + channelName);
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
 
-        ObjectNode output = buildChannelConfigResponse(config, uriInfo, channelName);
+        ObjectNode output = buildChannelConfigResponse(optionalChannelConfig.get(), uriInfo, channelName);
         return Response.ok(output).build();
     }
 
@@ -87,14 +88,18 @@ public class ChannelResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createChannel(@PathParam("channel") String channelName, String json) throws Exception {
         logger.debug("put channel {} {}", channelName, json);
-        ChannelConfig oldConfig = channelService.getChannelConfig(channelName, false);
+        Optional<ChannelConfig> optionalChannelConfig = channelService.getChannelConfig(channelName, false);
         ChannelConfig channelConfig = ChannelConfig.createFromJsonWithName(json, channelName);
-        if (oldConfig != null) {
+        if (optionalChannelConfig.isPresent()) {
+            ChannelConfig oldConfig = optionalChannelConfig.get();
             logger.info("using old channel {} {}", oldConfig, oldConfig.getCreationDate().getTime());
             channelConfig = ChannelConfig.updateFromJson(oldConfig, StringUtils.defaultIfBlank(json, "{}"));
         }
         logger.info("creating channel {} {}", channelConfig, channelConfig.getCreationDate().getTime());
-        channelConfig = channelService.updateChannel(channelConfig, oldConfig, LocalHostOnly.isLocalhost(uriInfo));
+        channelConfig = channelService.updateChannel(
+                channelConfig,
+                optionalChannelConfig.orElse(null),
+                LocalHostOnly.isLocalhost(uriInfo));
 
         URI channelUri = buildChannelUri(channelConfig.getDisplayName(), uriInfo);
         ObjectNode output = buildChannelConfigResponse(channelConfig, uriInfo, channelName);
@@ -106,12 +111,12 @@ public class ChannelResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateMetadata(@PathParam("channel") String channelName, String json) throws Exception {
         logger.debug("patch channel {} {}", channelName, json);
-        ChannelConfig oldConfig = channelService.getChannelConfig(channelName, false);
-        if (oldConfig == null) {
+        Optional<ChannelConfig> optionalChannelConfig = channelService.getChannelConfig(channelName, false);
+        if (!optionalChannelConfig.isPresent()) {
             logger.info("unable to patch channel " + channelName);
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
-
+        ChannelConfig oldConfig = optionalChannelConfig.get();
         ChannelConfig newConfig = ChannelConfig.updateFromJson(oldConfig, json);
         newConfig = channelService.updateChannel(newConfig, oldConfig, LocalHostOnly.isLocalhost(uriInfo));
 
@@ -251,11 +256,11 @@ public class ChannelResource {
 
     @DELETE
     public Response delete(@PathParam("channel") final String channelName) throws Exception {
-        ChannelConfig channelConfig = channelService.getChannelConfig(channelName, false);
-        if (channelConfig == null) {
+        Optional<ChannelConfig> optionalChannelConfig = channelService.getChannelConfig(channelName, false);
+        if (!optionalChannelConfig.isPresent()) {
             return notFound(channelName);
         }
-        if (HubProperties.isProtected() || channelConfig.isProtect()) {
+        if (HubProperties.isProtected() || optionalChannelConfig.get().isProtect()) {
             logger.info("using localhost only to delete {}", channelName);
             return LocalHostOnly.getResponse(uriInfo, () -> deletion(channelName));
         }
