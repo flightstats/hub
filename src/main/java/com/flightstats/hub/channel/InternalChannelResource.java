@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.net.URI;
+import java.nio.channels.Channel;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
@@ -81,8 +82,9 @@ public class InternalChannelResource {
     @Path("{channel}")
     @DELETE
     public Response delete(@PathParam("channel") final String channelName) throws Exception {
-        ChannelConfig channelConfig = channelService.getChannelConfig(channelName, false);
-        if (channelConfig == null) {
+        Optional<ChannelConfig> optionalChannelConfig = channelService.getChannelConfig(channelName, false);
+
+        if (!optionalChannelConfig.isPresent()) {
             return ChannelResource.notFound(channelName);
         }
         if (HubProperties.isProtected()) {
