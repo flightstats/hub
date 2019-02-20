@@ -1,5 +1,7 @@
 package com.flightstats.hub.metrics;
 
+import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.webhook.Webhook;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.timgroup.statsd.NoOpStatsDClient;
@@ -8,7 +10,9 @@ import com.timgroup.statsd.StatsDClient;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Singleton
 public class StatsDFilter {
@@ -31,10 +35,20 @@ public class StatsDFilter {
         this.dataDogClient = new NonBlockingStatsDClient(clientPrefix, clientHost, dogstatsdPort);
     }
 
+    boolean isSecondaryReporting(Webhook webhookConfig, ChannelConfig channelConfig) {
+        Map<String, Boolean> valueMap = new HashMap<>();
+        if (webhookConfig != null) {
+            valueMap.put("webhook", webhookConfig.isSecondaryMetricsReporting());
+        }
+        if (channelConfig != null) {
+            valueMap.put("channel", channelConfig.isSecondaryMetricsReporting());
+        }
+        return valueMap.values().contains(true);
+    }
+
     List<StatsDClient> getFilteredClients(boolean secondaryReporting) {
         return secondaryReporting ?
                 Arrays.asList(statsDClient, dataDogClient) :
                 Collections.singletonList(statsDClient);
     }
-
 }
