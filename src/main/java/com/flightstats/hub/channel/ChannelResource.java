@@ -113,14 +113,13 @@ public class ChannelResource {
     public Response updateMetadata(@PathParam("channel") String channelName, String json) throws Exception {
         logger.debug("patch channel {} {}", channelName, json);
         Optional<ChannelConfig> optionalChannelConfig = channelService.getChannelConfig(channelName, false);
-        ChannelConfig channelConfig = ChannelConfig.createFromJsonWithName(json, channelName);
         if (!optionalChannelConfig.isPresent()) {
             logger.info("unable to patch channel " + channelName);
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
-
-        ChannelConfig newConfig = ChannelConfig.updateFromJson(channelConfig, json);
-        newConfig = channelService.updateChannel(newConfig, channelConfig, LocalHostOnly.isLocalhost(uriInfo));
+        ChannelConfig oldConfig = optionalChannelConfig.get();
+        ChannelConfig newConfig = ChannelConfig.updateFromJson(oldConfig, json);
+        newConfig = channelService.updateChannel(newConfig, oldConfig, LocalHostOnly.isLocalhost(uriInfo));
 
         URI channelUri = buildChannelUri(newConfig.getDisplayName(), uriInfo);
         ObjectNode output = buildChannelConfigResponse(newConfig, uriInfo, channelName);
