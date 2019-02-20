@@ -29,11 +29,13 @@ public class StatsdReporterIntegrationTest {
                 .build();
         StatsDFilter statsDFilter = new StatsDFilter(metricsConfig);
         ChannelService channelService = mock(ChannelService.class);
+        WebhookService webhookService = mock(WebhookService.class);
         statsDFilter.setOperatingClients();
         StatsDReporterProvider provider = new StatsDReporterProvider(
                 statsDFilter,
                 metricsConfig,
-                channelService
+                channelService,
+                webhookService
         );
         return provider.get();
     }

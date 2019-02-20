@@ -67,6 +67,8 @@ public class Webhook implements Comparable<Webhook>, NamedType {
     @Wither
     private final String errorChannelUrl;
 
+    boolean secondaryMetricsReporting;
+
     static Webhook fromJson(String json, Optional<Webhook> webhookOptional) {
         WebhookBuilder builder = Webhook.builder();
         if (webhookOptional.isPresent()) {
@@ -195,9 +197,9 @@ public class Webhook implements Comparable<Webhook>, NamedType {
     }
 
     static Webhook instanceFromTagPrototype(Webhook whp, ChannelConfig channel) {
-        String channenUrl = RequestUtils.getHost(whp.getTagUrl()) + "/channel/" + channel.getName();
+        String channelUrl = RequestUtils.getHost(whp.getTagUrl()) + "/channel/" + channel.getName();
         String whName = "TAGWH_" + whp.getTagFromTagUrl() + "_" + channel.getName();
-        return new Webhook(whp.callbackUrl, channenUrl, whp.parallelCalls, whName, null, whp.batch, whp.heartbeat, whp.paused, whp.ttlMinutes, whp.maxWaitMinutes, whp.callbackTimeoutSeconds, whp.fastForwardable, null, whp.getTagFromTagUrl(), whp.maxAttempts, whp.errorChannelUrl);
+        return new Webhook(whp.callbackUrl, channelUrl, whp.parallelCalls, whName, null, whp.batch, whp.heartbeat, whp.paused, whp.ttlMinutes, whp.maxWaitMinutes, whp.callbackTimeoutSeconds, whp.fastForwardable, null, whp.getTagFromTagUrl(), whp.maxAttempts, whp.errorChannelUrl, whp.secondaryMetricsReporting);
     }
 
     public static Webhook fromJson(String json) {

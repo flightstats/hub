@@ -2,6 +2,8 @@ package com.flightstats.hub.metrics;
 
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.webhook.Webhook;
+import com.flightstats.hub.webhook.WebhookService;
 import com.google.inject.Inject;
 import com.timgroup.statsd.Event;
 import com.timgroup.statsd.StatsDClient;
@@ -15,18 +17,21 @@ public class StatsdReporter {
     private StatsDFormatter statsDFormatter;
     private DataDogHandler dataDogHandler;
     private ChannelService channelService;
+    private WebhookService webhookService;
 
     @Inject
     public StatsdReporter(
             StatsDFilter statsDFilter,
             StatsDFormatter statsDFormatter,
             DataDogHandler dataDogHandler,
-            ChannelService channelService
+            ChannelService channelService,
+            WebhookService webhookService
     ) {
         this.statsDFilter = statsDFilter;
         this.statsDFormatter = statsDFormatter;
         this.dataDogHandler = dataDogHandler;
         this.channelService = channelService;
+        this.webhookService = webhookService;
     }
 
     private boolean isTestChannel(String channel) {
@@ -34,10 +39,15 @@ public class StatsdReporter {
     }
 
     private void reportWithFilteredClients(String name, Consumer<StatsDClient> method) {
-        ChannelConfig channelConfig = channelService.getChannelConfig(name, false);
-        boolean secondaryReport = channelConfig != null &&
-                channelConfig.isSecondaryMetricsReporting();
-        List<StatsDClient> clients = statsDFilter.getFilteredClients(secondaryReport);
+        Webhook nullableWebhook = webhookService
+                .get(name)
+                .orElse(null);
+        ChannelConfig nullableChannel = channelService
+                .getCachedChannelConfig(name)
+                .orElse(null);
+
+        boolean isSecondaryReporting = statsDFilter.isSecondaryReporting(nullableWebhook, nullableChannel);
+        List<StatsDClient> clients = statsDFilter.getFilteredClients(isSecondaryReporting);
         clients.forEach(method);
     }
 
