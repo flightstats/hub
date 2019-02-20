@@ -1,18 +1,19 @@
 package com.flightstats.hub.metrics;
 
+import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.webhook.Webhook;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import com.timgroup.statsd.NoOpStatsDClient;
 import com.timgroup.statsd.NonBlockingStatsDClient;
 import com.timgroup.statsd.StatsDClient;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 
 @Singleton
 public class StatsDFilter {
@@ -21,10 +22,18 @@ public class StatsDFilter {
     private MetricsConfig metricsConfig;
     private StatsDClient statsDClient = new NoOpStatsDClient();
     private StatsDClient dataDogClient = new NoOpStatsDClient();
+    private Dao<ChannelConfig> channelConfigDao;
+    private Dao<Webhook> webhookConfigDao;
 
     @Inject
-    public StatsDFilter(MetricsConfig metricsConfig) {
+    public StatsDFilter(
+            MetricsConfig metricsConfig,
+            @Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao,
+            @Named("Webhook") Dao<Webhook> webhookConfigDao
+    ) {
         this.metricsConfig = metricsConfig;
+        this.channelConfigDao = channelConfigDao;
+        this.webhookConfigDao = webhookConfigDao;
     }
 
     // initializing these clients starts their udp reporters, setting them explicitly in order to trigger them specifically
@@ -35,15 +44,20 @@ public class StatsDFilter {
         this.dataDogClient = new NonBlockingStatsDClient(clientPrefix, clientHost, dogstatsdPort);
     }
 
-    boolean isSecondaryReporting(Webhook webhookConfig, ChannelConfig channelConfig) {
-        Map<String, Boolean> valueMap = new HashMap<>();
-        if (webhookConfig != null) {
-            valueMap.put("webhook", webhookConfig.isSecondaryMetricsReporting());
-        }
-        if (channelConfig != null) {
-            valueMap.put("channel", channelConfig.isSecondaryMetricsReporting());
-        }
-        return valueMap.values().contains(true);
+    boolean isTestChannel(String channel) {
+        return channel.toLowerCase().startsWith("test_");
+    }
+
+    boolean isSecondaryReporting(String name) {
+        Optional<Webhook> optionalWebhook = Optional
+                .ofNullable(webhookConfigDao.getCached(name))
+                .filter(Webhook::isSecondaryMetricsReporting);
+
+        Optional<ChannelConfig> optionalChannelConfig = Optional
+                .ofNullable(channelConfigDao.getCached(name))
+                .filter(ChannelConfig::isSecondaryMetricsReporting);
+
+        return optionalChannelConfig.isPresent() || optionalWebhook.isPresent();
     }
 
     List<StatsDClient> getFilteredClients(boolean secondaryReporting) {

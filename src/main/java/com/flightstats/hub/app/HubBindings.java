@@ -36,6 +36,7 @@ import com.flightstats.hub.time.NtpMonitor;
 import com.flightstats.hub.time.TimeService;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.webhook.WebhookManager;
+import com.flightstats.hub.webhook.WebhookService;
 import com.flightstats.hub.webhook.WebhookValidator;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -183,6 +184,7 @@ public class HubBindings extends AbstractModule {
         bind(FinalCheck.class).to(SpokeFinalCheck.class).asEagerSingleton();
         bind(InFlightService.class).asEagerSingleton();
         bind(ChannelService.class).asEagerSingleton();
+        bind(WebhookService.class).asEagerSingleton();
         bind(HubVersion.class).toInstance(new HubVersion());
 
         // metrics
@@ -197,7 +199,6 @@ public class HubBindings extends AbstractModule {
         bind(CustomMetricsLifecycle.class).asEagerSingleton();
         bind(PeriodicMetricEmitter.class).asEagerSingleton();
         bind(PeriodicMetricEmitterLifecycle.class).asEagerSingleton();
-        ////
 
         bind(ContentDao.class)
                 .annotatedWith(Names.named(ContentDao.WRITE_CACHE))
