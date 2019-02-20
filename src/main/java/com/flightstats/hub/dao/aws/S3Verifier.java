@@ -30,6 +30,7 @@ import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.CountDownLatch;
@@ -120,11 +121,11 @@ public class S3Verifier {
 
     void verifyChannel(String channelName) {
         DateTime now = TimeUtil.now();
-        ChannelConfig channel = channelService.getChannelConfig(channelName, false);
-        if (channel == null) {
+        Optional<ChannelConfig> channelConfigOptional = channelService.getChannelConfig(channelName, false);
+        if (!channelConfigOptional.isPresent()) {
             return;
         }
-        VerifierRange range = getSingleVerifierRange(now, channel);
+        VerifierRange range = getSingleVerifierRange(now, channelConfigOptional.get());
         if (range != null) {
             verifyChannel(range);
         }

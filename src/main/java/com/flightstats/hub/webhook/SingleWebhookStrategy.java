@@ -107,7 +107,6 @@ class SingleWebhookStrategy implements WebhookStrategy {
         executorService.submit(new Runnable() {
 
             ContentPath lastAdded = startingPath;
-            ChannelConfig channelConfig = channelService.getChannelConfig(channel, true);
 
             @Override
             public void run() {
@@ -133,7 +132,8 @@ class SingleWebhookStrategy implements WebhookStrategy {
                 ActiveTraces.start("SingleWebhookStrategy", webhook);
                 try {
                     DateTime latestStableInChannel = TimeUtil.stable();
-                    if (!channelConfig.isLive()) {
+                    Optional<ChannelConfig> optionalChannelConfig = channelService.getChannelConfig(channel, true);
+                    if (optionalChannelConfig.isPresent() && !optionalChannelConfig.get().isLive()) {
                         latestStableInChannel = channelService.getLastUpdated(channel, MinutePath.NONE).getTime();
                     }
                     TimeQuery timeQuery = queryGenerator.getQuery(latestStableInChannel);

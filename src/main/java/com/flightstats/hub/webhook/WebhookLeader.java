@@ -159,7 +159,9 @@ class WebhookLeader implements Lockable {
     }
 
     private boolean channelTTLExceeded(DeliveryAttempt attempt) {
-        ChannelConfig channelConfig = channelService.getCachedChannelConfig(webhook.getChannelName());
+        Optional<ChannelConfig> optionalChannelConfig = channelService.getCachedChannelConfig(webhook.getChannelName());
+        if (!optionalChannelConfig.isPresent()) return false;
+        ChannelConfig channelConfig = optionalChannelConfig.get();
         if (attempt.getContentPath().getTime().isBefore(channelConfig.getTtlTime())) {
             String message = String.format("%s is before channel ttl %s", attempt.getContentPath().toUrl(), channelConfig.getTtlTime());
             logger.debug(webhook.getName(), message);
