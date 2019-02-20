@@ -65,9 +65,8 @@ These instructions will allow you to run the hub without Docker.
 ### For OSX users:
 * install [java 8](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html)
 * install [homebrew](http://brew.sh/)
-* install gradle 2.8 ```brew install homebrew/versions/gradle28```
 * download the code ```git clone https://github.com/flightstats/hub.git```
-* build ```gradle build```
+* build ```./gradlew build```
 
 ### Using IntelliJ:
 * Download and install [IntelliJ](https://www.jetbrains.com/idea/download/)
