@@ -88,7 +88,8 @@ public class Webhook implements Comparable<Webhook>, NamedType {
                     .tagUrl(existing.tagUrl)
                     .managedByTag(existing.managedByTag)
                     .maxAttempts(existing.maxAttempts)
-                    .errorChannelUrl(existing.errorChannelUrl);
+                    .errorChannelUrl(existing.errorChannelUrl)
+                    .secondaryMetricsReporting(existing.secondaryMetricsReporting);
         }
         try {
             JsonNode root = mapper.readTree(json);
@@ -154,6 +155,9 @@ public class Webhook implements Comparable<Webhook>, NamedType {
             }
             if (root.has("errorChannelUrl")) {
                 builder.errorChannelUrl(root.get("errorChannelUrl").asText());
+            }
+            if (root.has("secondaryMetricsReporting")) {
+                builder.secondaryMetricsReporting(root.get("secondaryMetricsReporting").asBoolean());
             }
         } catch (IOException e) {
             logger.warn("unable to parse json" + json, e);
