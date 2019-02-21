@@ -124,7 +124,7 @@ public class ChannelService {
         }
         long start = System.currentTimeMillis();
         ContentKey contentKey = insertInternal(channelName, content);
-        statsdReporter.insert(channelName, start, ChannelType.single, 1, content.getSize());
+        statsdReporter.insert(channelName, start, ChannelType.SINGLE, 1, content.getSize());
         return contentKey;
     }
 
@@ -179,7 +179,7 @@ public class ChannelService {
             return contentService.historicalInsert(normalizedChannelName, content);
         });
         lastContentPath.updateDecrease(contentKey, normalizedChannelName, HISTORICAL_EARLIEST);
-        statsdReporter.insert(normalizedChannelName, start, ChannelType.historical, 1, content.getSize());
+        statsdReporter.insert(normalizedChannelName, start, ChannelType.HISTORICAL, 1, content.getSize());
         return insert;
     }
 
@@ -201,7 +201,7 @@ public class ChannelService {
             multiPartParser.parse();
             return contentService.insert(bulkContent);
         });
-        statsdReporter.insert(channel, start, ChannelType.bulk, bulkContent.getItems().size(), bulkContent.getSize());
+        statsdReporter.insert(channel, start, ChannelType.BULK, bulkContent.getItems().size(), bulkContent.getSize());
         return contentKeys;
     }
 
