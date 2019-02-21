@@ -23,6 +23,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.MediaType;
@@ -91,11 +92,11 @@ public class InternalChannelResource {
     @Path("{channel}")
     @DELETE
     public Response delete(@PathParam("channel") final String channelName) throws Exception {
-        Optional<ChannelConfig> optionalChannelConfig = channelService.getChannelConfig(channelName, false);
-
-        if (!optionalChannelConfig.isPresent()) {
-            return ChannelResource.notFound(channelName);
-        }
+        channelService.getChannelConfig(channelName, false)
+                .orElseThrow(() -> {
+                    Response errorResponse = ChannelResource.notFound(channelName);
+                    throw new WebApplicationException(errorResponse);
+                });
         if (HubProperties.isProtected()) {
             logger.info("using internal localhost only to delete {}", channelName);
             return LocalHostOnly.getResponse(uriInfo, () -> ChannelResource.deletion(channelName));
