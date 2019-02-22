@@ -8,11 +8,7 @@ import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.model.ChannelConfig;
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.ContentPath;
-import com.flightstats.hub.model.MinutePath;
-import com.flightstats.hub.model.TimeQuery;
+import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
@@ -23,12 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Optional;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -82,7 +73,7 @@ class SingleWebhookStrategy implements WebhookStrategy {
             response.put("id", contentPath.toUrl());
             response.put("type", "heartbeat");
         }
-        return response; 
+        return response;
     }
 
     @Override

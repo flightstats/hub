@@ -10,10 +10,6 @@ public class HubProvider {
 
     private static Injector injector;
 
-    static void setInjector(Injector injector) {
-        HubProvider.injector = injector;
-    }
-
     public static <T> T getInstance(Class<T> type) {
         return injector.getInstance(type);
     }
@@ -28,5 +24,9 @@ public class HubProvider {
 
     public static Injector getInjector() {
         return injector;
+    }
+
+    static void setInjector(Injector injector) {
+        HubProvider.injector = injector;
     }
 }

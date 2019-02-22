@@ -3,28 +3,11 @@ package com.flightstats.hub.dao.aws;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.LastContentPath;
-import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.dao.ContentDao;
-import com.flightstats.hub.dao.ContentKeyUtil;
-import com.flightstats.hub.dao.ContentService;
-import com.flightstats.hub.dao.QueryResult;
+import com.flightstats.hub.dao.*;
 import com.flightstats.hub.exception.FailedQueryException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
-import com.flightstats.hub.model.BulkContent;
-import com.flightstats.hub.model.ChannelConfig;
-import com.flightstats.hub.model.ChannelContentKey;
-import com.flightstats.hub.model.Content;
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.ContentPath;
-import com.flightstats.hub.model.ContentPathKeys;
-import com.flightstats.hub.model.DirectionQuery;
-import com.flightstats.hub.model.Epoch;
-import com.flightstats.hub.model.Location;
-import com.flightstats.hub.model.MinutePath;
-import com.flightstats.hub.model.Query;
-import com.flightstats.hub.model.StreamResults;
-import com.flightstats.hub.model.TimeQuery;
+import com.flightstats.hub.model.*;
 import com.flightstats.hub.replication.S3Batch;
 import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.util.HubUtils;
@@ -40,13 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.SortedSet;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -63,9 +40,9 @@ public class ClusterContentService implements ContentService {
     private final static Logger logger = LoggerFactory.getLogger(ClusterContentService.class);
     private static final String CHANNEL_LATEST_UPDATED = "/ChannelLatestUpdated/";
     private static final long largePayload = HubProperties.getLargePayload();
-    private final boolean dropSomeWrites = HubProperties.getProperty("s3.dropSomeWrites", false);
     private static final int queryMergeMaxWaitMinutes = HubProperties.getProperty("query.merge.max.wait.minutes", 2);
-
+    private static final ExecutorService executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("ClusterContentService-%d").build());
+    private final boolean dropSomeWrites = HubProperties.getProperty("s3.dropSomeWrites", false);
     @Inject
     @Named(ContentDao.WRITE_CACHE)
     private ContentDao spokeWriteContentDao;
@@ -90,11 +67,38 @@ public class ClusterContentService implements ContentService {
     @Inject
     private HubUtils hubUtils;
 
-    private static final ExecutorService executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("ClusterContentService-%d").build());
-
     public ClusterContentService() {
         HubServices.registerPreStop(new SpokeS3ContentServiceInit());
         HubServices.register(new ChannelLatestUpdatedService(), HubServices.TYPE.AFTER_HEALTHY_START);
+    }
+
+    private static SortedSet<ContentKey> query(Function<ContentDao, SortedSet<ContentKey>> daoQuery, List<ContentDao> contentDaos) {
+        try {
+            QueryResult queryResult = new QueryResult(contentDaos.size());
+            CountDownLatch latch = new CountDownLatch(contentDaos.size());
+            Traces traces = ActiveTraces.getLocal();
+            String threadName = Thread.currentThread().getName();
+            for (ContentDao contentDao : contentDaos) {
+                executorService.submit(() -> {
+                    Thread.currentThread().setName(contentDao.getClass().getSimpleName() + "|" + threadName);
+                    ActiveTraces.setLocal(traces);
+                    try {
+                        queryResult.addKeys(daoQuery.apply(contentDao));
+                    } finally {
+                        latch.countDown();
+                    }
+                });
+            }
+            latch.await(queryMergeMaxWaitMinutes, TimeUnit.MINUTES);
+            if (queryResult.hadSuccess()) {
+                return queryResult.getContentKeys();
+            } else {
+                traces.add("unable to complete query ", queryResult);
+                throw new FailedQueryException("unable to complete query " + queryResult + " " + threadName);
+            }
+        } catch (InterruptedException e) {
+            throw new RuntimeInterruptedException(e);
+        }
     }
 
     @Override
@@ -301,35 +305,6 @@ public class ClusterContentService implements ContentService {
             }
         }
         return query(daoQuery, daos);
-    }
-
-    private static SortedSet<ContentKey> query(Function<ContentDao, SortedSet<ContentKey>> daoQuery, List<ContentDao> contentDaos) {
-        try {
-            QueryResult queryResult = new QueryResult(contentDaos.size());
-            CountDownLatch latch = new CountDownLatch(contentDaos.size());
-            Traces traces = ActiveTraces.getLocal();
-            String threadName = Thread.currentThread().getName();
-            for (ContentDao contentDao : contentDaos) {
-                executorService.submit(() -> {
-                    Thread.currentThread().setName(contentDao.getClass().getSimpleName() + "|" + threadName);
-                    ActiveTraces.setLocal(traces);
-                    try {
-                        queryResult.addKeys(daoQuery.apply(contentDao));
-                    } finally {
-                        latch.countDown();
-                    }
-                });
-            }
-            latch.await(queryMergeMaxWaitMinutes, TimeUnit.MINUTES);
-            if (queryResult.hadSuccess()) {
-                return queryResult.getContentKeys();
-            } else {
-                traces.add("unable to complete query ", queryResult);
-                throw new FailedQueryException("unable to complete query " + queryResult + " " + threadName);
-            }
-        } catch (InterruptedException e) {
-            throw new RuntimeInterruptedException(e);
-        }
     }
 
     @Override

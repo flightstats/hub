@@ -40,10 +40,10 @@ import java.util.concurrent.TimeUnit;
 @Singleton
 public class S3Verifier {
 
+    public static final String MISSING_ITEM_METRIC_NAME = "s3.verifier.missing";
     static final String LAST_SINGLE_VERIFIED = "/S3VerifierSingleLastVerified/";
     private final static Logger logger = LoggerFactory.getLogger(S3Verifier.class);
     private static final String LEADER_PATH = "/S3VerifierSingleService";
-    public static final String MISSING_ITEM_METRIC_NAME = "s3.verifier.missing";
     private static final String VERIFIER_FAILED_METRIC_NAME = "s3.verifier.failed";
     private static final String VERIFIER_TIMEOUT_METRIC_NAME = "s3.verifier.timeout";
 
@@ -72,8 +72,7 @@ public class S3Verifier {
                       Client httpClient,
                       ZooKeeperState zooKeeperState,
                       CuratorFramework curator,
-                      MetricsService metricsService)
-    {
+                      MetricsService metricsService) {
         this.lastContentPath = lastContentPath;
         this.channelService = channelService;
         this.spokeWriteContentDao = spokeWriteContentDao;
@@ -168,7 +167,7 @@ public class S3Verifier {
 
     @VisibleForTesting
     protected SortedSet<ContentKey> getMissing(MinutePath startPath, MinutePath endPath, String channelName, ContentDao s3ContentDao,
-                                             SortedSet<ContentKey> foundCacheKeys) {
+                                               SortedSet<ContentKey> foundCacheKeys) {
         long timeout = baseTimeoutMinutes;
         QueryResult queryResult = new QueryResult(1);
         SortedSet<ContentKey> longTermKeys = new TreeSet<>();

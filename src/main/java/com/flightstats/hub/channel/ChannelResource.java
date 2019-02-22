@@ -12,11 +12,7 @@ import com.flightstats.hub.events.EventsService;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.NewRelicIgnoreTransaction;
-import com.flightstats.hub.model.BulkContent;
-import com.flightstats.hub.model.ChannelConfig;
-import com.flightstats.hub.model.Content;
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.InsertedContentKey;
+import com.flightstats.hub.model.*;
 import com.flightstats.hub.rest.Linked;
 import com.flightstats.hub.rest.PATCH;
 import com.flightstats.hub.time.NtpMonitor;
@@ -27,18 +23,7 @@ import org.glassfish.jersey.media.sse.SseFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -59,14 +44,24 @@ import static com.flightstats.hub.rest.Linked.linked;
 @Path("/channel/{channel}")
 public class ChannelResource {
     private final static Logger logger = LoggerFactory.getLogger(ChannelResource.class);
-
-    @Context
-    private UriInfo uriInfo;
-
     private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
     private final static NtpMonitor ntpMonitor = HubProvider.getInstance(NtpMonitor.class);
     private final static EventsService eventsService = HubProvider.getInstance(EventsService.class);
+    @Context
+    private UriInfo uriInfo;
+
+    public static Response deletion(@PathParam("channel") String channelName) {
+        if (channelService.delete(channelName)) {
+            return Response.status(Response.Status.ACCEPTED).build();
+        } else {
+            return notFound(channelName);
+        }
+    }
+
+    public static Response notFound(@PathParam("channel") String channelName) {
+        return Response.status(Response.Status.NOT_FOUND).entity("channel " + channelName + " not found").build();
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -263,17 +258,5 @@ public class ChannelResource {
         }
         logger.info("using normal delete {}", channelName);
         return deletion(channelName);
-    }
-
-    public static Response deletion(@PathParam("channel") String channelName) {
-        if (channelService.delete(channelName)) {
-            return Response.status(Response.Status.ACCEPTED).build();
-        } else {
-            return notFound(channelName);
-        }
-    }
-
-    public static Response notFound(@PathParam("channel") String channelName) {
-        return Response.status(Response.Status.NOT_FOUND).entity("channel " + channelName + " not found").build();
     }
 }

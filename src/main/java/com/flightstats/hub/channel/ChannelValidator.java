@@ -19,7 +19,8 @@ public class ChannelValidator {
     private ChannelService channelService;
 
     // required for Guice
-    ChannelValidator() {}
+    ChannelValidator() {
+    }
 
     @VisibleForTesting
     ChannelValidator(ChannelService channelService) {
@@ -130,7 +131,7 @@ public class ChannelValidator {
         if ((request.getTtlDays() > 0 && request.getMaxItems() > 0)
                 || (request.getTtlDays() > 0 && request.getMutableTime() != null)
                 || (request.getMaxItems() > 0 && request.getMutableTime() != null)
-                ) {
+        ) {
             throw new InvalidRequestException("{\"error\": \"Only one of ttlDays, maxItems and mutableTime can be defined \"}");
         }
         if (request.getMutableTime() != null) {

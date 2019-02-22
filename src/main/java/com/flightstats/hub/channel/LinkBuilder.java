@@ -5,11 +5,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.model.ChannelConfig;
-import com.flightstats.hub.model.ChannelContentKey;
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.ContentPath;
-import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.*;
 import com.flightstats.hub.rest.HalLink;
 import com.flightstats.hub.rest.Linked;
 import com.flightstats.hub.util.TimeUtil;
@@ -19,11 +15,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.SortedSet;
+import java.util.*;
 import java.util.function.Consumer;
 
 public class LinkBuilder {

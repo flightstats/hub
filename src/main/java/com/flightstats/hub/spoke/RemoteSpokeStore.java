@@ -28,11 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.ConnectException;
 import java.net.UnknownHostException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Optional;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -57,6 +53,10 @@ public class RemoteSpokeStore {
         this.cluster = cluster;
         this.metricsService = metricsService;
         executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("RemoteSpokeStore-%d").build());
+    }
+
+    static int getQuorum(int size) {
+        return (int) Math.max(1, Math.ceil(size / 2.0));
     }
 
     void testOne(Collection<String> server) throws InterruptedException {
@@ -177,10 +177,6 @@ public class RemoteSpokeStore {
     private void resetThread() {
         Thread thread = Thread.currentThread();
         thread.setName(StringUtils.substringBefore(thread.getName(), "|"));
-    }
-
-    static int getQuorum(int size) {
-        return (int) Math.max(1, Math.ceil(size / 2.0));
     }
 
     public Content get(SpokeStore spokeStore, String path, ContentKey key) {

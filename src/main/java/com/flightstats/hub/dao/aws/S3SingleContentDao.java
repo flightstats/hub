@@ -1,14 +1,6 @@
 package com.flightstats.hub.dao.aws;
 
-import com.amazonaws.services.s3.model.AmazonS3Exception;
-import com.amazonaws.services.s3.model.DeleteObjectRequest;
-import com.amazonaws.services.s3.model.GetObjectRequest;
-import com.amazonaws.services.s3.model.ListObjectsRequest;
-import com.amazonaws.services.s3.model.ObjectListing;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.amazonaws.services.s3.model.S3Object;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.amazonaws.services.s3.model.*;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentMarshaller;
@@ -32,12 +24,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketTimeoutException;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 
 @Singleton
 public class S3SingleContentDao implements ContentDao {
@@ -53,6 +40,20 @@ public class S3SingleContentDao implements ContentDao {
     private HubS3Client s3Client;
     @Inject
     private S3BucketName s3BucketName;
+
+    static ObjectMetadata createObjectMetadata(Content content, boolean useEncrypted) {
+        ObjectMetadata metadata = new ObjectMetadata();
+        if (content.getContentType().isPresent()) {
+            metadata.setContentType(content.getContentType().get());
+            metadata.addUserMetadata("type", content.getContentType().get());
+        } else {
+            metadata.addUserMetadata("type", "none");
+        }
+        if (useEncrypted) {
+            metadata.setSSEAlgorithm(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
+        }
+        return metadata;
+    }
 
     public void initialize() {
         s3Client.initialize();
@@ -284,19 +285,5 @@ public class S3SingleContentDao implements ContentDao {
                 ActiveTraces.end();
             }
         }).start();
-    }
-
-    static ObjectMetadata createObjectMetadata(Content content, boolean useEncrypted) {
-        ObjectMetadata metadata = new ObjectMetadata();
-        if (content.getContentType().isPresent()) {
-            metadata.setContentType(content.getContentType().get());
-            metadata.addUserMetadata("type", content.getContentType().get());
-        } else {
-            metadata.addUserMetadata("type", "none");
-        }
-        if (useEncrypted) {
-            metadata.setSSEAlgorithm(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
-        }
-        return metadata;
     }
 }

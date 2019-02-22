@@ -8,14 +8,7 @@ import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.model.ChannelConfig;
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.ContentPath;
-import com.flightstats.hub.model.ContentPathKeys;
-import com.flightstats.hub.model.Epoch;
-import com.flightstats.hub.model.MinutePath;
-import com.flightstats.hub.model.SecondPath;
-import com.flightstats.hub.model.TimeQuery;
+import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -28,12 +21,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Optional;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
@@ -78,6 +66,22 @@ class TimedWebhookStrategy implements WebhookStrategy {
         }
     }
 
+    static DateTime replicatingStable_minute(ContentPath contentPath) {
+        TimeUtil.Unit unit = TimeUtil.Unit.MINUTES;
+        if (contentPath instanceof SecondPath) {
+            SecondPath secondPath = (SecondPath) contentPath;
+            if (secondPath.getTime().getSecondOfMinute() < 59) {
+                return unit.round(contentPath.getTime().minusMinutes(1));
+            }
+        } else if (contentPath instanceof ContentKey) {
+            return unit.round(contentPath.getTime().minusMinutes(1));
+        }
+        return unit.round(contentPath.getTime());
+    }
+
+    private static String getBulkUrl(String channelUrl, ContentPath path, String parameter) {
+        return channelUrl + "/" + path.toUrl() + "?" + parameter + "=true";
+    }
 
     private void minuteConfig() {
         getOffsetSeconds = () -> (66 - (new DateTime().getSecondOfMinute())) % 60;
@@ -119,25 +123,8 @@ class TimedWebhookStrategy implements WebhookStrategy {
                 && Math.abs(Minutes.minutesBetween(stableTime(), currentTime).getMinutes()) > 4;
     }
 
-    static DateTime replicatingStable_minute(ContentPath contentPath) {
-        TimeUtil.Unit unit = TimeUtil.Unit.MINUTES;
-        if (contentPath instanceof SecondPath) {
-            SecondPath secondPath = (SecondPath) contentPath;
-            if (secondPath.getTime().getSecondOfMinute() < 59) {
-                return unit.round(contentPath.getTime().minusMinutes(1));
-            }
-        } else if (contentPath instanceof ContentKey) {
-            return unit.round(contentPath.getTime().minusMinutes(1));
-        }
-        return unit.round(contentPath.getTime());
-    }
-
     private DateTime stableTime() {
         return TimeUtil.stable().minus(unit.getDuration());
-    }
-
-    private static String getBulkUrl(String channelUrl, ContentPath path, String parameter) {
-        return channelUrl + "/" + path.toUrl() + "?" + parameter + "=true";
     }
 
     @Override

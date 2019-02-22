@@ -6,11 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.cluster.Cluster;
-import com.flightstats.hub.model.BulkContent;
-import com.flightstats.hub.model.ChannelConfig;
-import com.flightstats.hub.model.Content;
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.Query;
+import com.flightstats.hub.model.*;
 import com.flightstats.hub.webhook.Webhook;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
@@ -28,11 +24,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.function.Function;
 
 @Singleton
@@ -56,6 +48,16 @@ public class HubUtils {
             } catch (Exception e) {
                 logger.warn("unable to close " + e);
             }
+        }
+    }
+
+    public static void closeQuietly(final Closeable closeable) {
+        try {
+            if (closeable != null) {
+                closeable.close();
+            }
+        } catch (final IOException ioe) {
+            // ignore
         }
     }
 
@@ -297,16 +299,6 @@ public class HubUtils {
             }
         } catch (Exception e) {
             logger.warn("unable to refresh " + server, e);
-        }
-    }
-
-    public static void closeQuietly(final Closeable closeable) {
-        try {
-            if (closeable != null) {
-                closeable.close();
-            }
-        } catch (final IOException ioe) {
-            // ignore
         }
     }
 

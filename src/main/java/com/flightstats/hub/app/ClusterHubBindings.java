@@ -7,10 +7,7 @@ import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.dao.*;
 import com.flightstats.hub.dao.aws.*;
 import com.flightstats.hub.model.ChannelConfig;
-import com.flightstats.hub.spoke.FileSpokeStore;
 import com.flightstats.hub.spoke.RemoteSpokeStore;
-import com.flightstats.hub.spoke.SpokeReadContentDao;
-import com.flightstats.hub.spoke.SpokeWriteContentDao;
 import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.spoke.SpokeTtlEnforcer;
 import com.flightstats.hub.webhook.Webhook;
@@ -27,6 +24,22 @@ import java.io.IOException;
 
 class ClusterHubBindings extends AbstractModule {
     private final static Logger logger = LoggerFactory.getLogger(ClusterHubBindings.class);
+
+    @Inject
+    @Singleton
+    @Provides
+    @Named("ChannelConfig")
+    public static Dao<ChannelConfig> buildChannelConfigDao(WatchManager watchManager, DynamoChannelConfigDao dao) {
+        return new CachedLowerCaseDao<>(dao, watchManager, "/channels/cache");
+    }
+
+    @Inject
+    @Singleton
+    @Provides
+    @Named("Webhook")
+    public static Dao<Webhook> buildWebhookDao(WatchManager watchManager, DynamoWebhookDao dao) {
+        return new CachedDao<>(dao, watchManager, "/webhooks/cache");
+    }
 
     @Override
     protected void configure() {
@@ -62,22 +75,6 @@ class ClusterHubBindings extends AbstractModule {
         bind(DocumentationDao.class).to(S3DocumentationDao.class).asEagerSingleton();
         bind(SpokeDecommissionManager.class).asEagerSingleton();
         bind(HubS3Client.class).asEagerSingleton();
-    }
-
-    @Inject
-    @Singleton
-    @Provides
-    @Named("ChannelConfig")
-    public static Dao<ChannelConfig> buildChannelConfigDao(WatchManager watchManager, DynamoChannelConfigDao dao) {
-        return new CachedLowerCaseDao<>(dao, watchManager, "/channels/cache");
-    }
-
-    @Inject
-    @Singleton
-    @Provides
-    @Named("Webhook")
-    public static Dao<Webhook> buildWebhookDao(WatchManager watchManager, DynamoWebhookDao dao) {
-        return new CachedDao<>(dao, watchManager, "/webhooks/cache");
     }
 
     @Inject

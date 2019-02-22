@@ -14,7 +14,7 @@ public class HalLinks {
     private final Multimap<String, HalLink> multiLinks = ArrayListMultimap.create();
 
     public HalLinks(List<HalLink> links) {
-        this(links, ArrayListMultimap.<String, HalLink>create());
+        this(links, ArrayListMultimap.create());
     }
 
     public HalLinks(List<HalLink> links, Multimap<String, HalLink> multiLinks) {
@@ -44,11 +44,7 @@ public class HalLinks {
         if (!links.equals(halLinks.links)) {
             return false;
         }
-        if (!multiLinks.equals(halLinks.multiLinks)) {
-            return false;
-        }
-
-        return true;
+        return multiLinks.equals(halLinks.multiLinks);
     }
 
     @Override

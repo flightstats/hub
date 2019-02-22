@@ -9,19 +9,13 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
-import java.io.EOFException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Serializable;
+import java.io.*;
 import java.util.Optional;
 
 public class Content implements Serializable {
-    private final static Logger logger = LoggerFactory.getLogger(Content.class);
-
-    private static final long serialVersionUID = 1L;
     public static final int THREADS = HubProperties.getProperty("s3.large.threads", 3);
-
+    private final static Logger logger = LoggerFactory.getLogger(Content.class);
+    private static final long serialVersionUID = 1L;
     private final Optional<String> contentType;
     //contentLength is the number of bytes in the total compressed payload (meta & item)
     private long contentLength;
@@ -51,6 +45,27 @@ public class Content implements Serializable {
         return new Builder();
     }
 
+    public static Content copy(Content content) {
+        Builder contentBuilder = Content.builder();
+
+        if (content.getContentType().isPresent()) {
+            contentBuilder.withContentType(content.getContentType().get());
+        }
+
+        if (content.getContentKey().isPresent()) {
+            contentBuilder.withContentKey(content.getContentKey().get());
+        }
+
+        contentBuilder.withData(content.getData());
+        contentBuilder.withContentLength(content.getContentLength());
+        contentBuilder.withSize(content.getSize());
+        contentBuilder.withForceWrite(content.isForceWrite());
+        contentBuilder.withLarge(content.isLarge());
+        contentBuilder.withThreads(content.getThreads());
+
+        return contentBuilder.build();
+    }
+
     public boolean isNew() {
         return !contentKey.isPresent();
     }
@@ -71,20 +86,12 @@ public class Content implements Serializable {
         return getContentKey().get();
     }
 
-    public void setContentKey(ContentKey contentKey) {
-        this.contentKey = Optional.of(contentKey);
-    }
-
-    public void setContentLength(long contentLength) {
-        this.contentLength = contentLength;
+    public boolean isHistorical() {
+        return this.isHistorical;
     }
 
     public void setHistorical(boolean isHistorical) {
         this.isHistorical = isHistorical;
-    }
-
-    public boolean isHistorical() {
-        return this.isHistorical;
     }
 
     public boolean isForceWrite() {
@@ -140,6 +147,10 @@ public class Content implements Serializable {
         return size;
     }
 
+    public void setSize(Long size) {
+        this.size = size;
+    }
+
     public void close() {
         HubUtils.closeQuietly(stream);
     }
@@ -152,8 +163,16 @@ public class Content implements Serializable {
         return this.contentLength;
     }
 
+    public void setContentLength(long contentLength) {
+        this.contentLength = contentLength;
+    }
+
     public Optional<ContentKey> getContentKey() {
         return this.contentKey;
+    }
+
+    public void setContentKey(ContentKey contentKey) {
+        this.contentKey = Optional.of(contentKey);
     }
 
     public boolean isLarge() {
@@ -168,12 +187,10 @@ public class Content implements Serializable {
         if (o == this) return true;
         if (!(o instanceof Content)) return false;
         final Content other = (Content) o;
-        if (!other.canEqual((Object) this)) return false;
+        if (!other.canEqual(this)) return false;
         final Object this$contentType = this.getContentType();
         final Object other$contentType = other.getContentType();
-        if (this$contentType == null ? other$contentType != null : !this$contentType.equals(other$contentType))
-            return false;
-        return true;
+        return this$contentType == null ? other$contentType == null : this$contentType.equals(other$contentType);
     }
 
     public int hashCode() {
@@ -186,31 +203,6 @@ public class Content implements Serializable {
 
     protected boolean canEqual(Object other) {
         return other instanceof Content;
-    }
-
-    public void setSize(Long size) {
-        this.size = size;
-    }
-
-    public static Content copy(Content content) {
-        Builder contentBuilder = Content.builder();
-
-        if (content.getContentType().isPresent()) {
-            contentBuilder.withContentType(content.getContentType().get());
-        }
-
-        if (content.getContentKey().isPresent()) {
-            contentBuilder.withContentKey(content.getContentKey().get());
-        }
-
-        contentBuilder.withData(content.getData());
-        contentBuilder.withContentLength(content.getContentLength());
-        contentBuilder.withSize(content.getSize());
-        contentBuilder.withForceWrite(content.isForceWrite());
-        contentBuilder.withLarge(content.isLarge());
-        contentBuilder.withThreads(content.getThreads());
-
-        return contentBuilder.build();
     }
 
     public static class Builder {

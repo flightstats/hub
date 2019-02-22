@@ -30,12 +30,10 @@ import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 public class TagContentResource {
 
     private final static Logger logger = LoggerFactory.getLogger(TagContentResource.class);
-
-    @Context
-    private UriInfo uriInfo;
-
     private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private final static TagService tagService = HubProvider.getInstance(TagService.class);
+    @Context
+    private UriInfo uriInfo;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

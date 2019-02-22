@@ -22,19 +22,6 @@ public class ChannelContentKey implements Comparable<ChannelContentKey> {
         this.contentKey = contentKey;
     }
 
-    @Override
-    public int compareTo(ChannelContentKey o) {
-        int diff = contentKey.compareTo(o.getContentKey());
-        if (diff == 0) {
-            diff = channel.compareTo(o.getChannel());
-        }
-        return diff;
-    }
-
-    public String toUrl() {
-        return "channel/" + channel + "/" + contentKey.toUrl();
-    }
-
     /**
      * @param url Expects the format of ".+/channel/channelName/yyyy/mm/dd/hh/mm/ss/sss/hash"
      */
@@ -81,6 +68,19 @@ public class ChannelContentKey implements Comparable<ChannelContentKey> {
     }
 
     @Override
+    public int compareTo(ChannelContentKey o) {
+        int diff = contentKey.compareTo(o.getContentKey());
+        if (diff == 0) {
+            diff = channel.compareTo(o.getChannel());
+        }
+        return diff;
+    }
+
+    public String toUrl() {
+        return "channel/" + channel + "/" + contentKey.toUrl();
+    }
+
+    @Override
     public String toString() {
         return toUrl();
     }
@@ -97,15 +97,14 @@ public class ChannelContentKey implements Comparable<ChannelContentKey> {
         if (o == this) return true;
         if (!(o instanceof ChannelContentKey)) return false;
         final ChannelContentKey other = (ChannelContentKey) o;
-        if (!other.canEqual((Object) this)) return false;
+        if (!other.canEqual(this)) return false;
         final Object this$contentKey = this.getContentKey();
         final Object other$contentKey = other.getContentKey();
         if (this$contentKey == null ? other$contentKey != null : !this$contentKey.equals(other$contentKey))
             return false;
         final Object this$channel = this.getChannel();
         final Object other$channel = other.getChannel();
-        if (this$channel == null ? other$channel != null : !this$channel.equals(other$channel)) return false;
-        return true;
+        return this$channel == null ? other$channel == null : this$channel.equals(other$channel);
     }
 
     public int hashCode() {

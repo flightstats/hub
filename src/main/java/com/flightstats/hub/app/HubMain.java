@@ -3,25 +3,14 @@ package com.flightstats.hub.app;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.flightstats.hub.filter.CORSFilter;
 import com.flightstats.hub.filter.StreamEncodingFilter;
-import com.flightstats.hub.ws.WebSocketChannelEndpoint;
-import com.flightstats.hub.ws.WebSocketDayEndpoint;
-import com.flightstats.hub.ws.WebSocketHashEndpoint;
-import com.flightstats.hub.ws.WebSocketHourEndpoint;
-import com.flightstats.hub.ws.WebSocketMinuteEndpoint;
-import com.flightstats.hub.ws.WebSocketSecondEndpoint;
+import com.flightstats.hub.ws.*;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.Resources;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.jetty.server.ConnectionFactory;
-import org.eclipse.jetty.server.Connector;
-import org.eclipse.jetty.server.HttpConfiguration;
-import org.eclipse.jetty.server.HttpConnectionFactory;
-import org.eclipse.jetty.server.SecureRequestCustomizer;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.websocket.jsr356.server.deploy.WebSocketServerContainerInitializer;
@@ -54,6 +43,10 @@ public class HubMain {
         }
         HubProperties.loadProperties(args[0]);
         new HubMain().run();
+    }
+
+    public static DateTime getStartTime() {
+        return startTime;
     }
 
     public void run() throws Exception {
@@ -196,10 +189,6 @@ public class HubMain {
         String path = HubProperties.getProperty("app.keyStorePath", "/etc/ssl/") + HubHost.getLocalName() + ".jks";
         log.info("using key store path: {}", path);
         return path;
-    }
-
-    public static DateTime getStartTime() {
-        return startTime;
     }
 
 }

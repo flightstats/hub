@@ -8,26 +8,14 @@ import com.flightstats.hub.dao.file.FileWebhookDao;
 import com.flightstats.hub.dao.file.SingleContentService;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.spoke.ChannelTtlEnforcer;
-import com.flightstats.hub.spoke.FileSpokeStore;
-import com.flightstats.hub.spoke.SpokeReadContentDao;
-import com.flightstats.hub.spoke.SpokeStore;
-import com.flightstats.hub.spoke.SpokeWriteContentDao;
 import com.flightstats.hub.webhook.Webhook;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
-import com.google.inject.name.Names;
 
 class SingleHubBindings extends AbstractModule {
-
-    @Override
-    protected void configure() {
-        bind(ContentService.class).to(SingleContentService.class).asEagerSingleton();
-        bind(DocumentationDao.class).to(FileDocumentationDao.class).asEagerSingleton();
-        bind(ChannelTtlEnforcer.class).asEagerSingleton();
-    }
 
     @Inject
     @Singleton
@@ -43,5 +31,12 @@ class SingleHubBindings extends AbstractModule {
     @Named("Webhook")
     public static Dao<Webhook> buildWebhookDao(WatchManager watchManager, FileWebhookDao dao) {
         return new CachedDao<>(dao, watchManager, "/webhooks/cache");
+    }
+
+    @Override
+    protected void configure() {
+        bind(ContentService.class).to(SingleContentService.class).asEagerSingleton();
+        bind(DocumentationDao.class).to(FileDocumentationDao.class).asEagerSingleton();
+        bind(ChannelTtlEnforcer.class).asEagerSingleton();
     }
 }
