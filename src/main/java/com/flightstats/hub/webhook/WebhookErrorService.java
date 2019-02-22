@@ -10,8 +10,7 @@ import com.flightstats.hub.webhook.error.WebhookErrorPruner;
 import com.flightstats.hub.webhook.error.WebhookErrorRepository;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Comparator;
 import java.util.List;
@@ -31,9 +30,8 @@ import static java.util.stream.Collectors.toList;
  */
 
 @Singleton
+@Slf4j
 class WebhookErrorService {
-    private final static Logger logger = LoggerFactory.getLogger(WebhookErrorService.class);
-
     private final WebhookErrorRepository webhookErrorRepository;
     private final ChannelService channelService;
     private final WebhookErrorPruner webhookErrorPruner;
@@ -51,7 +49,7 @@ class WebhookErrorService {
     }
 
     public void delete(String webhook) {
-        logger.info("deleting webhook errors for " + webhook);
+        log.info("deleting webhook errors for " + webhook);
         webhookErrorRepository.deleteWebhook(webhook);
     }
 
@@ -78,7 +76,7 @@ class WebhookErrorService {
 
         List<String> errors = lookup(attempt.getWebhook().getName());
         if (errors.size() < 1) {
-            logger.debug("no errors found for", attempt.getWebhook().getName());
+            log.debug("no errors found for", attempt.getWebhook().getName());
             return;
         }
 
@@ -93,7 +91,7 @@ class WebhookErrorService {
         try {
             channelService.insert(getChannelName(attempt.getWebhook().getErrorChannelUrl()), content);
         } catch (Exception e) {
-            logger.warn("unable to publish errors for " + attempt.getWebhook().getName(), e);
+            log.warn("unable to publish errors for " + attempt.getWebhook().getName(), e);
         }
     }
 
