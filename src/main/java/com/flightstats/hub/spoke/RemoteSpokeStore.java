@@ -9,7 +9,7 @@ import com.flightstats.hub.dao.ContentKeyUtil;
 import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.dao.QueryResult;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.metrics.MetricsService;
+import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
@@ -48,14 +48,14 @@ public class RemoteSpokeStore {
     private final static Client query_client = RestClient.createClient(5, 15, true, true);
 
     private final CuratorCluster cluster;
-    private final MetricsService metricsService;
+    private final StatsdReporter statsdReporter;
     private final ExecutorService executorService;
     private final int stableSeconds = HubProperties.getProperty("app.stable_seconds", 5);
 
     @Inject
-    public RemoteSpokeStore(@Named("SpokeCuratorCluster") CuratorCluster cluster, MetricsService metricsService) {
+    public RemoteSpokeStore(@Named("SpokeCuratorCluster") CuratorCluster cluster, StatsdReporter statsdReporter) {
         this.cluster = cluster;
-        this.metricsService = metricsService;
+        this.statsdReporter = statsdReporter;
         executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("RemoteSpokeStore-%d").build());
     }
 
@@ -142,7 +142,7 @@ public class RemoteSpokeStore {
                         traces.add(server, response.getEntity(String.class));
                         if (response.getStatus() == 201) {
                             if (firstComplete.compareAndSet(false, true)) {
-                                metricsService.time(channel, "heisenberg", traces.getStart());
+                                statsdReporter.time(channel, "heisenberg", traces.getStart());
                             }
                             quorumLatch.countDown();
                             logger.trace("server {} path {} response {}", server, path, response);
@@ -165,7 +165,7 @@ public class RemoteSpokeStore {
         } catch (InterruptedException e) {
             throw new RuntimeInterruptedException(e);
         }
-        metricsService.time(channel, "consistent", traces.getStart());
+        statsdReporter.time(channel, "consistent", traces.getStart());
         return quorumLatch.getCount() != quorum;
     }
 

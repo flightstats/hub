@@ -5,7 +5,7 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.exception.FailedReadException;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.metrics.MetricsService;
+import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.util.Sleeper;
@@ -45,7 +45,7 @@ public class S3WriteQueue {
     @Named(ContentDao.SINGLE_LONG_TERM)
     private ContentDao s3SingleContentDao;
     @Inject
-    private MetricsService metricsService;
+    private StatsdReporter statsdReporter;
 
     @Inject
     private S3WriteQueue() throws InterruptedException {
@@ -68,8 +68,8 @@ public class S3WriteQueue {
         try {
             ChannelContentKey key = keys.poll(5, TimeUnit.SECONDS);
             if (key != null) {
-                metricsService.gauge("s3.writeQueue.used", keys.size());
-                metricsService.count("s3.writeQueue.age.removed", key.getAgeMS());
+                statsdReporter.gauge("s3.writeQueue.used", keys.size());
+                statsdReporter.count("s3.writeQueue.age.removed", key.getAgeMS());
             }
             retryer.call(() -> {
                 writeContent(key);
@@ -100,11 +100,11 @@ public class S3WriteQueue {
     public boolean add(ChannelContentKey key) {
         boolean value = keys.offer(key);
         if (value) {
-            metricsService.gauge("s3.writeQueue.used", keys.size());
-            metricsService.count("s3.writeQueue.age.added", key.getAgeMS());
+            statsdReporter.gauge("s3.writeQueue.used", keys.size());
+            statsdReporter.count("s3.writeQueue.age.added", key.getAgeMS());
         } else {
             logger.warn("Add to queue failed - out of queue space. key= {}", key);
-            metricsService.increment("s3.writeQueue.dropped");
+            statsdReporter.increment("s3.writeQueue.dropped");
         }
         return value;
     }

@@ -11,8 +11,8 @@ import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.exception.MethodNotAllowedException;
 import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.metrics.MetricsService;
-import com.flightstats.hub.metrics.MetricsService.Insert;
+import com.flightstats.hub.metrics.ChannelType;
+import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.BulkContent;
 import com.flightstats.hub.model.ChannelConfig;
@@ -72,7 +72,7 @@ public class ChannelService {
     @Inject
     private TimeService timeService;
     @Inject
-    private MetricsService metricsService;
+    private StatsdReporter statsdReporter;
 
     public boolean channelExists(String channelName) {
         return channelConfigDao.exists(channelName);
@@ -124,7 +124,7 @@ public class ChannelService {
         }
         long start = System.currentTimeMillis();
         ContentKey contentKey = insertInternal(channelName, content);
-        metricsService.insert(channelName, start, Insert.single, 1, content.getSize());
+        statsdReporter.insert(channelName, start, ChannelType.SINGLE, 1, content.getSize());
         return contentKey;
     }
 
@@ -179,7 +179,7 @@ public class ChannelService {
             return contentService.historicalInsert(normalizedChannelName, content);
         });
         lastContentPath.updateDecrease(contentKey, normalizedChannelName, HISTORICAL_EARLIEST);
-        metricsService.insert(normalizedChannelName, start, Insert.historical, 1, content.getSize());
+        statsdReporter.insert(normalizedChannelName, start, ChannelType.HISTORICAL, 1, content.getSize());
         return insert;
     }
 
@@ -201,7 +201,7 @@ public class ChannelService {
             multiPartParser.parse();
             return contentService.insert(bulkContent);
         });
-        metricsService.insert(channel, start, Insert.bulk, bulkContent.getItems().size(), bulkContent.getSize());
+        statsdReporter.insert(channel, start, ChannelType.BULK, bulkContent.getItems().size(), bulkContent.getSize());
         return contentKeys;
     }
 

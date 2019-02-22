@@ -15,6 +15,8 @@ public class MetricsConfig {
 
     String appVersion;
     String clusterTag;
+    String dataDogAPIKey;
+    String dataDogAppKey;
     boolean enabled;
     String env;
     String hostTag;
@@ -27,4 +29,7 @@ public class MetricsConfig {
     int reportingIntervalSeconds;
     String role;
     String team;
+    int statsdPort;
+    int dogstatsdPort;
+    String datadogApiUrl;
 }
