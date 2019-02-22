@@ -54,7 +54,6 @@ public class WebhookTest {
 
     @Test
     public void testFromJson() {
-//        System.out.println(webhook.toJson());
         Webhook cycled = Webhook.fromJson(webhook.toJson());
         assertEquals(webhook, cycled);
     }
