@@ -22,6 +22,7 @@ public class StatsDFilter {
     private MetricsConfig metricsConfig;
     private StatsDClient statsDClient = new NoOpStatsDClient();
     private StatsDClient dataDogClient = new NoOpStatsDClient();
+    // going direct to the DAO here over channelService/webhookService to avoid circular dep. condition in Guice injections
     private Dao<ChannelConfig> channelConfigDao;
     private Dao<Webhook> webhookConfigDao;
 
