@@ -15,14 +15,13 @@ import static com.flightstats.hub.app.HubServices.TYPE.AFTER_HEALTHY_START;
 @Singleton
 public class DataDog {
 
-    static {
-        HubServices.register(new DataDogService(), AFTER_HEALTHY_START);
-    }
-
     public final static StatsDClient statsd = HubProperties.getProperty("data_dog.enable", false) ?
             new NonBlockingStatsDClient("hub", "localhost", 8125)
             : new NoOpStatsDClient();
 
+    static {
+        HubServices.register(new DataDogService(), AFTER_HEALTHY_START);
+    }
 
     public static Event.Builder getEventBuilder() {
         return Event.builder()

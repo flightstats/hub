@@ -59,6 +59,16 @@ public class HubUtils {
         }
     }
 
+    public static void closeQuietly(final Closeable closeable) {
+        try {
+            if (closeable != null) {
+                closeable.close();
+            }
+        } catch (final IOException ioe) {
+            // ignore
+        }
+    }
+
     public Optional<String> getLatest(String channelUrl) {
         ClientResponse response = null;
         try {
@@ -297,16 +307,6 @@ public class HubUtils {
             }
         } catch (Exception e) {
             logger.warn("unable to refresh " + server, e);
-        }
-    }
-
-    public static void closeQuietly(final Closeable closeable) {
-        try {
-            if (closeable != null) {
-                closeable.close();
-            }
-        } catch (final IOException ioe) {
-            // ignore
         }
     }
 

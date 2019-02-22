@@ -85,13 +85,6 @@ public class SafeZooKeeperUtils {
         deletePath(Backgroundable::inBackground, pathParts);
     }
 
-    @Builder
-    @Getter
-    public static class DataWithStat {
-        Stat stat;
-        String data;
-    }
-
     private Optional<String> getData(Function<GetDataBuilder, Pathable<byte[]>> dataBuilder, String... pathParts) {
         return doItSafely(path -> {
                     GetDataBuilder data = curator.getData();
@@ -103,17 +96,11 @@ public class SafeZooKeeperUtils {
                 Optional.empty());
     }
 
-
     private void deletePath(Function<DeleteBuilder, Pathable<Void>> deleteBuilder, String... pathParts) {
         doItSafely(path -> deleteBuilder.apply(curator.delete()).forPath(path),
                 newArrayList(pathParts),
                 "unable to delete",
                 null);
-    }
-
-    @FunctionalInterface
-    private interface CheckedCuratorAction<String, R> {
-        R apply(String t) throws Exception;
     }
 
     private <T> T doItSafely(CheckedCuratorAction<String, T> curatorAction, List<String> pathParts, String failureMessage, T defaultValue) {
@@ -132,5 +119,17 @@ public class SafeZooKeeperUtils {
 
     private String getPath(List<String> pathParts) {
         return String.join("/", pathParts);
+    }
+
+    @FunctionalInterface
+    private interface CheckedCuratorAction<String, R> {
+        R apply(String t) throws Exception;
+    }
+
+    @Builder
+    @Getter
+    public static class DataWithStat {
+        Stat stat;
+        String data;
     }
 }

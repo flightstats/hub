@@ -20,9 +20,12 @@ import java.net.URI;
 @SuppressWarnings("WeakerAccess")
 @Path("/internal/shutdown")
 public class InternalShutdownResource {
+    public static final String DESCRIPTION = "See if any server is being shutdown, shutdown a node, and reset the shutdown lock.";
     private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
 
-    public static final String DESCRIPTION = "See if any server is being shutdown, shutdown a node, and reset the shutdown lock.";
+    private static ShutdownManager getManager() {
+        return HubProvider.getInstance(ShutdownManager.class);
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -53,10 +56,6 @@ public class InternalShutdownResource {
     @Path("resetLock")
     public Response resetLock(@Context UriInfo uriInfo) throws Exception {
         return LocalHostOnly.getResponse(uriInfo, () -> getManager().resetLock());
-    }
-
-    private static ShutdownManager getManager() {
-        return HubProvider.getInstance(ShutdownManager.class);
     }
 
 }

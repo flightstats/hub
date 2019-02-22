@@ -16,9 +16,8 @@ import java.util.TreeSet;
 @SuppressWarnings("WeakerAccess")
 @Path("/internal/properties")
 public class InternalPropertiesResource {
-    private final static Logger logger = LoggerFactory.getLogger(InternalPropertiesResource.class);
-
     public static final String DESCRIPTION = "Get hub properties with links to other hubs in the cluster.";
+    private final static Logger logger = LoggerFactory.getLogger(InternalPropertiesResource.class);
 
     @GET
     @Produces({MediaType.APPLICATION_JSON})
