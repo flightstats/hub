@@ -57,6 +57,7 @@ public class RequestUtils {
             return false;
         }
     }
+
     public static boolean isValidChannelUrl(String url) {
         return isValidTopicUrl(url, "channel");
     }

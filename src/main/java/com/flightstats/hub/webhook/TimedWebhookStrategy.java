@@ -78,6 +78,22 @@ class TimedWebhookStrategy implements WebhookStrategy {
         }
     }
 
+    static DateTime replicatingStable_minute(ContentPath contentPath) {
+        TimeUtil.Unit unit = TimeUtil.Unit.MINUTES;
+        if (contentPath instanceof SecondPath) {
+            SecondPath secondPath = (SecondPath) contentPath;
+            if (secondPath.getTime().getSecondOfMinute() < 59) {
+                return unit.round(contentPath.getTime().minusMinutes(1));
+            }
+        } else if (contentPath instanceof ContentKey) {
+            return unit.round(contentPath.getTime().minusMinutes(1));
+        }
+        return unit.round(contentPath.getTime());
+    }
+
+    private static String getBulkUrl(String channelUrl, ContentPath path, String parameter) {
+        return channelUrl + "/" + path.toUrl() + "?" + parameter + "=true";
+    }
 
     private void minuteConfig() {
         getOffsetSeconds = () -> (66 - (new DateTime().getSecondOfMinute())) % 60;
@@ -119,25 +135,8 @@ class TimedWebhookStrategy implements WebhookStrategy {
                 && Math.abs(Minutes.minutesBetween(stableTime(), currentTime).getMinutes()) > 4;
     }
 
-    static DateTime replicatingStable_minute(ContentPath contentPath) {
-        TimeUtil.Unit unit = TimeUtil.Unit.MINUTES;
-        if (contentPath instanceof SecondPath) {
-            SecondPath secondPath = (SecondPath) contentPath;
-            if (secondPath.getTime().getSecondOfMinute() < 59) {
-                return unit.round(contentPath.getTime().minusMinutes(1));
-            }
-        } else if (contentPath instanceof ContentKey) {
-            return unit.round(contentPath.getTime().minusMinutes(1));
-        }
-        return unit.round(contentPath.getTime());
-    }
-
     private DateTime stableTime() {
         return TimeUtil.stable().minus(unit.getDuration());
-    }
-
-    private static String getBulkUrl(String channelUrl, ContentPath path, String parameter) {
-        return channelUrl + "/" + path.toUrl() + "?" + parameter + "=true";
     }
 
     @Override

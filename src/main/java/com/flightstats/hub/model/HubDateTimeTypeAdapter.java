@@ -16,15 +16,6 @@ final class HubDateTimeTypeAdapter extends TypeAdapter<DateTime> {
 
     private static DateTimeFormatter dateTimeFormatter = ISODateTimeFormat.dateOptionalTimeParser().withZoneUTC();
 
-    @Override
-    public DateTime read(JsonReader in) throws IOException {
-        if (in.peek() == JsonToken.NULL) {
-            in.nextNull();
-            return null;
-        }
-        return deserialize(in.nextString());
-    }
-
     static DateTime deserialize(String json) {
         if (StringUtils.isEmpty(json)) return null;
         DateTime parsed;
@@ -34,6 +25,15 @@ final class HubDateTimeTypeAdapter extends TypeAdapter<DateTime> {
             throw new JsonSyntaxException(json, ignored);
         }
         return parsed;
+    }
+
+    @Override
+    public DateTime read(JsonReader in) throws IOException {
+        if (in.peek() == JsonToken.NULL) {
+            in.nextNull();
+            return null;
+        }
+        return deserialize(in.nextString());
     }
 
     @Override

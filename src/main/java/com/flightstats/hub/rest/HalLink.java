@@ -24,14 +24,13 @@ public class HalLink {
         if (o == this) return true;
         if (!(o instanceof HalLink)) return false;
         final HalLink other = (HalLink) o;
-        if (!other.canEqual((Object) this)) return false;
+        if (!other.canEqual(this)) return false;
         final Object this$name = this.getName();
         final Object other$name = other.getName();
         if (this$name == null ? other$name != null : !this$name.equals(other$name)) return false;
         final Object this$uri = this.getUri();
         final Object other$uri = other.getUri();
-        if (this$uri == null ? other$uri != null : !this$uri.equals(other$uri)) return false;
-        return true;
+        return this$uri == null ? other$uri == null : this$uri.equals(other$uri);
     }
 
     public int hashCode() {

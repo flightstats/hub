@@ -21,13 +21,13 @@ import static java.util.stream.Collectors.toList;
 
 /**
  * This class is responsible for creation and management of webhook error strings.
- *
+ * <p>
  * Format: "{timestamp} {contentKey} {message}"
- *
+ * <p>
  * Example: "2018-01-02T03:04:05.006Z 2018/01/02/03/04/05/006/abcdef 400 Bad Request"
- *  - timestamp: 2018-01-02T03:04:05.006Z
- *  - contentKey: 2018/01/02/03/04/05/006/abcdef
- *  - message: 400 Bad Request
+ * - timestamp: 2018-01-02T03:04:05.006Z
+ * - contentKey: 2018/01/02/03/04/05/006/abcdef
+ * - message: 400 Bad Request
  */
 
 @Singleton

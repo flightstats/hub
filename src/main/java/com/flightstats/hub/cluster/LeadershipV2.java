@@ -7,9 +7,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class LeadershipV2 implements Leadership {
     private static final Logger logger = LoggerFactory.getLogger(LeadershipV2.class);
-    private ZooKeeperState zooKeeperState;
-
     private final AtomicBoolean hasLeadership = new AtomicBoolean(false);
+    private ZooKeeperState zooKeeperState;
 
     LeadershipV2(ZooKeeperState zooKeeperState) {
         this.zooKeeperState = zooKeeperState;

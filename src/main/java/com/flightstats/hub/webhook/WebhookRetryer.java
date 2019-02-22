@@ -29,8 +29,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 /**
- *  This class is responsible for trying to deliver a payload
- *  until a set of configurable criteria is met.
+ * This class is responsible for trying to deliver a payload
+ * until a set of configurable criteria is met.
  */
 class WebhookRetryer {
 
@@ -66,8 +66,10 @@ class WebhookRetryer {
         this.giveUpIfs = giveUpIfs;
         this.tryLaterIfs = tryLaterIfs;
         this.webhookErrorService = webhookErrorService;
-        if (connectTimeoutSeconds == null) connectTimeoutSeconds = HubProperties.getProperty("webhook.connectTimeoutSeconds", 60);
-        if (readTimeoutSeconds == null) readTimeoutSeconds = HubProperties.getProperty("webhook.readTimeoutSeconds", 60);
+        if (connectTimeoutSeconds == null)
+            connectTimeoutSeconds = HubProperties.getProperty("webhook.connectTimeoutSeconds", 60);
+        if (readTimeoutSeconds == null)
+            readTimeoutSeconds = HubProperties.getProperty("webhook.readTimeoutSeconds", 60);
         this.httpClient = RestClient.createClient(connectTimeoutSeconds, readTimeoutSeconds, true, false);
         this.statsdHandlers = statsdReporter;
     }

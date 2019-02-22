@@ -17,16 +17,10 @@ public class CuratorLock {
     private final static Logger logger = LoggerFactory.getLogger(CuratorLock.class);
 
     private final CuratorFramework curator;
-
-    public void setLockPath(String lockPath) {
-        this.lockPath = lockPath;
-    }
-
-    private String lockPath;
     private final ExecutorService singleThreadExecutor;
     private final Leadership leadershipV2;
+    private String lockPath;
     private InterProcessSemaphoreMutex mutex;
-
     @Inject
     public CuratorLock(CuratorFramework curator, ZooKeeperState zooKeeperState) {
         this(curator, zooKeeperState, null);
@@ -37,6 +31,10 @@ public class CuratorLock {
         this.lockPath = lockPath;
         singleThreadExecutor = Executors.newSingleThreadExecutor();
         leadershipV2 = new LeadershipV2(zooKeeperState);
+    }
+
+    public void setLockPath(String lockPath) {
+        this.lockPath = lockPath;
     }
 
     public boolean runWithLock(Lockable lockable, long time, TimeUnit timeUnit) {

@@ -13,7 +13,7 @@ import java.util.Map;
 public class HalLinksSerializer extends JsonSerializer<HalLinks> {
 
     @Override
-    public void serialize(HalLinks halLinks, JsonGenerator jgen, SerializerProvider provider) throws IOException, JsonProcessingException {
+    public void serialize(HalLinks halLinks, JsonGenerator jgen, SerializerProvider provider) throws IOException {
         jgen.writeStartObject();
         serializeLinks(halLinks, jgen);
         serializeMultiLinks(halLinks, jgen);

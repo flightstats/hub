@@ -10,18 +10,6 @@ import java.util.Optional;
 public interface ContentPath extends Comparable<ContentPath> {
     Logger logger = LoggerFactory.getLogger(ContentPath.class);
 
-    byte[] toBytes();
-
-    String toUrl();
-
-    DateTime getTime();
-
-    String toZk();
-
-    ContentPath fromZk(String value);
-
-    int compareTo(ContentPath other);
-
     static Optional<ContentPath> fromFullUrl(String url) {
         try {
             String substring = StringUtils.substringAfter(url, "/channel/");
@@ -48,5 +36,17 @@ public interface ContentPath extends Comparable<ContentPath> {
         }
         return Optional.empty();
     }
+
+    byte[] toBytes();
+
+    String toUrl();
+
+    DateTime getTime();
+
+    String toZk();
+
+    ContentPath fromZk(String value);
+
+    int compareTo(ContentPath other);
 
 }

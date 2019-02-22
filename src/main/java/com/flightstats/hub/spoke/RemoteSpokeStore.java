@@ -59,6 +59,10 @@ public class RemoteSpokeStore {
         executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("RemoteSpokeStore-%d").build());
     }
 
+    static int getQuorum(int size) {
+        return (int) Math.max(1, Math.ceil(size / 2.0));
+    }
+
     void testOne(Collection<String> server) throws InterruptedException {
         String path = "Internal-Spoke-Health-Hook/";
         Traces traces = new Traces(path);
@@ -177,10 +181,6 @@ public class RemoteSpokeStore {
     private void resetThread() {
         Thread thread = Thread.currentThread();
         thread.setName(StringUtils.substringBefore(thread.getName(), "|"));
-    }
-
-    static int getQuorum(int size) {
-        return (int) Math.max(1, Math.ceil(size / 2.0));
     }
 
     public Content get(SpokeStore spokeStore, String path, ContentKey key) {

@@ -277,13 +277,8 @@ public class S3LargeContentDao implements ContentDao {
         S3LargeContentDaoBuilder() {
         }
 
-<<<<<<< HEAD
         public S3LargeContentDao.S3LargeContentDaoBuilder statsdReporter(StatsdReporter statsdReporter) {
             this.statsdReporter = statsdReporter;
-=======
-        public S3LargeContentDaoBuilder metricsService(MetricsService metricsService) {
-            this.metricsService = metricsService;
->>>>>>> f5383d0a8... Convert a bunch of google Optionals to java's Optionals
             return this;
         }
 

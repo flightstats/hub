@@ -29,11 +29,9 @@ import static com.flightstats.hub.channel.LinkBuilder.buildChannelConfigResponse
 public class ChannelsResource {
 
     private final static Logger logger = LoggerFactory.getLogger(ChannelsResource.class);
-
+    private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
     @Context
     private UriInfo uriInfo;
-
-    private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

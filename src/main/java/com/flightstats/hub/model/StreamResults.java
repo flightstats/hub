@@ -12,10 +12,10 @@ import java.util.function.Consumer;
 @Getter
 @AllArgsConstructor
 public class StreamResults {
-    @Wither
-    private String channel;
     private final SortedSet<ContentKey> keys;
     private final Consumer<Content> callback;
     private final boolean descending;
+    @Wither
+    private String channel;
 
 }

@@ -54,6 +54,20 @@ public class S3SingleContentDao implements ContentDao {
     @Inject
     private S3BucketName s3BucketName;
 
+    static ObjectMetadata createObjectMetadata(Content content, boolean useEncrypted) {
+        ObjectMetadata metadata = new ObjectMetadata();
+        if (content.getContentType().isPresent()) {
+            metadata.setContentType(content.getContentType().get());
+            metadata.addUserMetadata("type", content.getContentType().get());
+        } else {
+            metadata.addUserMetadata("type", "none");
+        }
+        if (useEncrypted) {
+            metadata.setSSEAlgorithm(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
+        }
+        return metadata;
+    }
+
     public void initialize() {
         s3Client.initialize();
     }
@@ -284,19 +298,5 @@ public class S3SingleContentDao implements ContentDao {
                 ActiveTraces.end();
             }
         }).start();
-    }
-
-    static ObjectMetadata createObjectMetadata(Content content, boolean useEncrypted) {
-        ObjectMetadata metadata = new ObjectMetadata();
-        if (content.getContentType().isPresent()) {
-            metadata.setContentType(content.getContentType().get());
-            metadata.addUserMetadata("type", content.getContentType().get());
-        } else {
-            metadata.addUserMetadata("type", "none");
-        }
-        if (useEncrypted) {
-            metadata.setSSEAlgorithm(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
-        }
-        return metadata;
     }
 }

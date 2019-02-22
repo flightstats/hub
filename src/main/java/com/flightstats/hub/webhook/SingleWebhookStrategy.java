@@ -82,7 +82,7 @@ class SingleWebhookStrategy implements WebhookStrategy {
             response.put("id", contentPath.toUrl());
             response.put("type", "heartbeat");
         }
-        return response; 
+        return response;
     }
 
     @Override

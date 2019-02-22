@@ -20,11 +20,11 @@ public class MultiPartParser {
     private final static Logger logger = LoggerFactory.getLogger(MultiPartParser.class);
 
     private static final int maxBytes = HubProperties.getProperty("app.maxPayloadSizeMB", 40) * 1024 * 1024 * 3;
+    private static final byte[] CRLF = "\r\n".getBytes();
+    private final ByteArrayOutputStream baos;
     private BulkContent bulkContent;
     private BufferedInputStream stream;
     private Content.Builder builder;
-    private final ByteArrayOutputStream baos;
-    private static final byte[] CRLF = "\r\n".getBytes();
 
     public MultiPartParser(BulkContent bulkContent) {
         this.bulkContent = bulkContent;

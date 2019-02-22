@@ -63,14 +63,24 @@ import static com.flightstats.hub.rest.Linked.linked;
 @Path("/channel/{channel}")
 public class ChannelResource {
     private final static Logger logger = LoggerFactory.getLogger(ChannelResource.class);
-
-    @Context
-    private UriInfo uriInfo;
-
     private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
     private final static NtpMonitor ntpMonitor = HubProvider.getInstance(NtpMonitor.class);
     private final static EventsService eventsService = HubProvider.getInstance(EventsService.class);
+    @Context
+    private UriInfo uriInfo;
+
+    public static Response deletion(@PathParam("channel") String channelName) {
+        if (channelService.delete(channelName)) {
+            return Response.status(Response.Status.ACCEPTED).build();
+        } else {
+            return notFound(channelName);
+        }
+    }
+
+    public static Response notFound(@PathParam("channel") String channelName) {
+        return Response.status(Response.Status.NOT_FOUND).entity("channel " + channelName + " not found").build();
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -271,17 +281,5 @@ public class ChannelResource {
         }
         logger.info("using normal delete {}", channelName);
         return deletion(channelName);
-    }
-
-    public static Response deletion(@PathParam("channel") String channelName) {
-        if (channelService.delete(channelName)) {
-            return Response.status(Response.Status.ACCEPTED).build();
-        } else {
-            return notFound(channelName);
-        }
-    }
-
-    public static Response notFound(@PathParam("channel") String channelName) {
-        return Response.status(Response.Status.NOT_FOUND).entity("channel " + channelName + " not found").build();
     }
 }

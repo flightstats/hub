@@ -13,6 +13,13 @@ import java.util.Optional;
 
 public interface ContentService {
 
+    static Optional<ContentKey> chooseLatest(Collection<ContentKey> contentKeys, DirectionQuery query) {
+        if (contentKeys.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(contentKeys.iterator().next());
+    }
+
     ContentKey insert(String channelName, Content content) throws Exception;
 
     Collection<ContentKey> insert(BulkContent bulkContent) throws Exception;
@@ -39,12 +46,5 @@ public interface ContentService {
 
     default void notify(ChannelConfig newConfig, ChannelConfig oldConfig) {
         //do nothing
-    }
-
-    static Optional<ContentKey> chooseLatest(Collection<ContentKey> contentKeys, DirectionQuery query) {
-        if (contentKeys.isEmpty()) {
-            return Optional.empty();
-        }
-        return Optional.of(contentKeys.iterator().next());
     }
 }
