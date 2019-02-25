@@ -22,12 +22,11 @@ import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 @Path("/channel/{channel}/latest")
 public class ChannelLatestResource {
 
-    @Context
-    private UriInfo uriInfo;
-
     private final static TagLatestResource tagLatestResource = HubProvider.getInstance(TagLatestResource.class);
     private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
+    @Context
+    private UriInfo uriInfo;
 
     @GET
     public Response getLatest(@PathParam("channel") String channel,

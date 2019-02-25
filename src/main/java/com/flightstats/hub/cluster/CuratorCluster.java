@@ -28,9 +28,9 @@ public class CuratorCluster implements Cluster {
     private final CuratorFramework curator;
     private final String clusterPath;
     private final boolean useName;
+    private final PathChildrenCache clusterCache;
     private boolean checkReadOnly;
     private DecommissionCluster decommissionCluster;
-    private final PathChildrenCache clusterCache;
     private String fullPath;
 
     @Inject

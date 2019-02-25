@@ -160,19 +160,6 @@ public class Webhook implements Comparable<Webhook>, NamedType {
         return builder.build();
     }
 
-    @JsonIgnore
-    boolean isTagPrototype() {
-        return !StringUtils.isEmpty(this.tagUrl);
-    }
-
-    String getTagFromTagUrl() {
-        return RequestUtils.getTag(this.getTagUrl());
-    }
-
-    boolean isManagedByTag() {
-        return !StringUtils.isEmpty(managedByTag);
-    }
-
     private static Optional<ContentPath> getPrevious(Optional<ContentPath> keyOptional, String channelUrl) {
         ChannelService channelService = HubProvider.getInstance(ChannelService.class);
         String channel = RequestUtils.getChannelName(channelUrl);
@@ -202,6 +189,19 @@ public class Webhook implements Comparable<Webhook>, NamedType {
 
     public static Webhook fromJson(String json) {
         return fromJson(json, Optional.empty());
+    }
+
+    @JsonIgnore
+    boolean isTagPrototype() {
+        return !StringUtils.isEmpty(this.tagUrl);
+    }
+
+    String getTagFromTagUrl() {
+        return RequestUtils.getTag(this.getTagUrl());
+    }
+
+    boolean isManagedByTag() {
+        return !StringUtils.isEmpty(managedByTag);
     }
 
     @JsonIgnore

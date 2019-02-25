@@ -17,6 +17,14 @@ public interface Cluster {
         return server;
     }
 
+    static String getHost(boolean useName) {
+        if (useName) {
+            return HubHost.getLocalNamePort();
+        } else {
+            return HubHost.getLocalAddressPort();
+        }
+    }
+
     /**
      * @return All servers in the cluster
      */
@@ -28,14 +36,6 @@ public interface Cluster {
         List<String> servers = new ArrayList<>(getServers(channel));
         servers.remove(getHost(true));
         return servers;
-    }
-
-    static String getHost(boolean useName) {
-        if (useName) {
-            return HubHost.getLocalNamePort();
-        } else {
-            return HubHost.getLocalAddressPort();
-        }
     }
 
 }
