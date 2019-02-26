@@ -32,18 +32,6 @@ public class MetricsRequestFilter implements ContainerRequestFilter, ContainerRe
     private static final String CHARACTERS_TO_REMOVE = "[\\[\\]|.*+]";
     private static final String CHARACTERS_TO_REPLACE = "[:\\{\\}]";
 
-    @Override
-    public void filter(ContainerRequestContext request, ContainerResponseContext response) {
-        try {
-            RequestState requestState = threadLocal.get();
-            if (null != requestState) {
-                requestState.setResponse(response);
-            }
-        } catch (Exception e) {
-            logger.error("statsdReporter request error", e);
-        }
-    }
-
     public static void finalStats() {
         try {
             RequestState requestState = threadLocal.get();
@@ -92,11 +80,6 @@ public class MetricsRequestFilter implements ContainerRequestFilter, ContainerRe
         }
     }
 
-    @Override
-    public void filter(ContainerRequestContext request) throws IOException {
-        threadLocal.set(new RequestState(request));
-    }
-
     private static String[] getTagArray(Map<String, String> tags, String... tagsOnly) {
         return tags.entrySet().stream()
                 .filter(entry -> {
@@ -121,6 +104,23 @@ public class MetricsRequestFilter implements ContainerRequestFilter, ContainerRe
                 .map(template -> template.replaceAll(CHARACTERS_TO_REMOVE, ""))
                 .map(template -> template.replaceAll(CHARACTERS_TO_REPLACE, "_"))
                 .collect(Collectors.joining(""));
+    }
+
+    @Override
+    public void filter(ContainerRequestContext request, ContainerResponseContext response) {
+        try {
+            RequestState requestState = threadLocal.get();
+            if (null != requestState) {
+                requestState.setResponse(response);
+            }
+        } catch (Exception e) {
+            logger.error("DataDog request error", e);
+        }
+    }
+
+    @Override
+    public void filter(ContainerRequestContext request) throws IOException {
+        threadLocal.set(new RequestState(request));
     }
 
     private class RequestState {

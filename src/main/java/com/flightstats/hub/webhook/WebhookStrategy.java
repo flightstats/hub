@@ -16,18 +16,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 interface WebhookStrategy extends AutoCloseable {
 
-    ContentPath getStartingPath();
-
-    ContentPath getLastCompleted();
-
-    void start(Webhook webhook, ContentPath startingKey);
-
-    Optional<ContentPath> next() throws Exception;
-
-    ObjectNode createResponse(ContentPath contentPath);
-
-    ContentPath inProcess(ContentPath contentPath);
-
     static ContentPath createContentPath(Webhook webhook) {
         if (webhook.isSecond()) {
             return new SecondPath();
@@ -56,4 +44,16 @@ interface WebhookStrategy extends AutoCloseable {
             queue.clear();
         }
     }
+
+    ContentPath getStartingPath();
+
+    ContentPath getLastCompleted();
+
+    void start(Webhook webhook, ContentPath startingKey);
+
+    Optional<ContentPath> next() throws Exception;
+
+    ObjectNode createResponse(ContentPath contentPath);
+
+    ContentPath inProcess(ContentPath contentPath);
 }

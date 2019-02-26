@@ -63,6 +63,10 @@ public class HubMain {
         new HubMain().run();
     }
 
+    public static DateTime getStartTime() {
+        return startTime;
+    }
+
     public void run() throws Exception {
         Security.setProperty("networkaddress.cache.ttl", "60");
         startZookeeperIfSingle();
@@ -226,10 +230,6 @@ public class HubMain {
         String path = HubProperties.getProperty("app.keyStorePath", "/etc/ssl/") + HubHost.getLocalName() + ".jks";
         log.info("using key store path: {}", path);
         return path;
-    }
-
-    public static DateTime getStartTime() {
-        return startTime;
     }
 
 }

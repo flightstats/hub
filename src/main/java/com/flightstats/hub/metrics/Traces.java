@@ -15,11 +15,11 @@ import java.util.function.Consumer;
 public class Traces {
 
     private static final int LIMIT = HubProperties.getProperty("traces.limit", 50);
-    private long start = System.currentTimeMillis();
-    private long end;
     private final String id = UUID.randomUUID().toString();
     private final List<Trace> traces = Collections.synchronizedList(new ArrayList<>());
     private final ObjectRing<Trace> lastTraces = new ObjectRing<>(LIMIT);
+    private long start = System.currentTimeMillis();
+    private long end;
 
     public Traces(Object... objects) {
         add(objects);
@@ -62,12 +62,12 @@ public class Traces {
         }
     }
 
-    public void setStart(long start) {
-        this.start = start;
-    }
-
     public long getStart() {
         return start;
+    }
+
+    public void setStart(long start) {
+        this.start = start;
     }
 
     public String getId() {

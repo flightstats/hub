@@ -32,28 +32,6 @@ public class ShutdownManager {
         HubServices.register(new ShutdownManagerService(), HubServices.TYPE.AFTER_HEALTHY_START);
     }
 
-    private class ShutdownManagerService extends AbstractIdleService {
-
-        @Override
-        protected void startUp() throws Exception {
-            try {
-                String foundIpAddress = getLockData();
-                logger.info("found shutdown lock {} local {}", foundIpAddress, HubHost.getLocalAddress());
-                if (HubHost.getLocalAddress().equals(foundIpAddress)) {
-                    logger.info("deleting shutdown lock {} local {}", foundIpAddress, HubHost.getLocalAddress());
-                    resetLock();
-                }
-            } catch (KeeperException.NoNodeException e) {
-                logger.info("node not found for ..." + PATH);
-            }
-        }
-
-        @Override
-        protected void shutDown() throws Exception {
-            //do nothing, ShutdownManager should have already been shutdown.
-        }
-    }
-
     public boolean shutdown(boolean useLock) throws Exception {
         logger.warn("shutting down!");
         String[] tags = { "restart", "shutdown" };
@@ -90,7 +68,6 @@ public class ShutdownManager {
         return true;
     }
 
-
     public String getLockData() throws Exception {
         byte[] bytes = getCurator().getData().forPath(PATH);
         return new String(bytes);
@@ -126,6 +103,28 @@ public class ShutdownManager {
                     logger.info("why did this fail?", e1);
                 }
             }
+        }
+    }
+
+    private class ShutdownManagerService extends AbstractIdleService {
+
+        @Override
+        protected void startUp() throws Exception {
+            try {
+                String foundIpAddress = getLockData();
+                logger.info("found shutdown lock {} local {}", foundIpAddress, HubHost.getLocalAddress());
+                if (HubHost.getLocalAddress().equals(foundIpAddress)) {
+                    logger.info("deleting shutdown lock {} local {}", foundIpAddress, HubHost.getLocalAddress());
+                    resetLock();
+                }
+            } catch (KeeperException.NoNodeException e) {
+                logger.info("node not found for ..." + PATH);
+            }
+        }
+
+        @Override
+        protected void shutDown() throws Exception {
+            //do nothing, ShutdownManager should have already been shutdown.
         }
     }
 }

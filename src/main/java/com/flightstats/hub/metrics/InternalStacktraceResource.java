@@ -18,10 +18,9 @@ import java.util.TreeMap;
 @SuppressWarnings("WeakerAccess")
 @Path("/internal/stacktrace")
 public class InternalStacktraceResource {
-    private final static Logger logger = LoggerFactory.getLogger(InternalStacktraceResource.class);
-
-    private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     public static final String DESCRIPTION = "Get a condensed stacktrace with links to other hubs in the cluster.";
+    private final static Logger logger = LoggerFactory.getLogger(InternalStacktraceResource.class);
+    private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
 
     @GET
     @Produces({MediaType.APPLICATION_JSON})

@@ -30,12 +30,9 @@ import java.nio.charset.StandardCharsets;
 public class TimeService {
 
     private final static Logger logger = LoggerFactory.getLogger(TimeService.class);
-
-    private final String remoteFile = HubProperties.getProperty("app.remoteTimeFile", "/home/hub/remoteTime");
     private final static Client client = RestClient.createClient(1, 5, true, false);
-
     private final static String randomKey = StringUtils.randomAlphaNumeric(6);
-
+    private final String remoteFile = HubProperties.getProperty("app.remoteTimeFile", "/home/hub/remoteTime");
     @Inject
     @Named("HubCluster")
     private Cluster cluster;
@@ -44,16 +41,6 @@ public class TimeService {
 
     public TimeService() {
         HubServices.register(new TimeServiceRegister());
-    }
-
-    public void setRemote(boolean remote) {
-        isRemote = remote;
-        logger.info("remote {}", remote);
-        if (isRemote) {
-            createFile();
-        } else {
-            deleteFile();
-        }
     }
 
     public DateTime getNow() {
@@ -115,6 +102,16 @@ public class TimeService {
 
     public boolean isRemote() {
         return isRemote;
+    }
+
+    public void setRemote(boolean remote) {
+        isRemote = remote;
+        logger.info("remote {}", remote);
+        if (isRemote) {
+            createFile();
+        } else {
+            deleteFile();
+        }
     }
 
     private class TimeServiceRegister extends AbstractIdleService {

@@ -19,7 +19,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import static com.flightstats.hub.model.BuiltInTag.*;
+import static com.flightstats.hub.model.BuiltInTag.HISTORICAL;
+import static com.flightstats.hub.model.BuiltInTag.REPLICATED;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 public class ChannelConfig implements Serializable, NamedType {
@@ -109,14 +110,6 @@ public class ChannelConfig implements Serializable, NamedType {
         return new ChannelConfigBuilder();
     }
 
-    private void addTagIf(boolean shouldBeTagged, BuiltInTag tag) {
-        if (shouldBeTagged) {
-            tags.add(tag.toString());
-        } else {
-            tags.remove(tag.toString());
-        }
-    }
-
     public static ChannelConfig createFromJson(String json) {
         if (StringUtils.isEmpty(json)) {
             throw new InvalidRequestException("this method requires at least a json name");
@@ -176,6 +169,14 @@ public class ChannelConfig implements Serializable, NamedType {
         return StreamSupport.stream(node.spliterator(), false)
                 .map(JsonNode::asText)
                 .collect(Collectors.toSet());
+    }
+
+    private void addTagIf(boolean shouldBeTagged, BuiltInTag tag) {
+        if (shouldBeTagged) {
+            tags.add(tag.toString());
+        } else {
+            tags.remove(tag.toString());
+        }
     }
 
     public String toJson() {

@@ -31,19 +31,16 @@ import static com.flightstats.hub.app.HubServices.register;
 public class ReplicationManager {
     private final static Logger logger = LoggerFactory.getLogger(ReplicationManager.class);
     private static final String REPLICATOR_WATCHER_PATH = "/replicator/watcher";
-
-    @Inject
-    private ChannelService channelService;
-
-    @Inject
-    private WatchManager watchManager;
-
     private final Map<String, ChannelReplicator> channelReplicatorMap = new HashMap<>();
     private final AtomicBoolean stopped = new AtomicBoolean();
     private final ExecutorService executor = Executors.newSingleThreadExecutor(
             new ThreadFactoryBuilder().setNameFormat("ReplicationManager").build());
     private final ExecutorService executorPool = Executors.newFixedThreadPool(40,
             new ThreadFactoryBuilder().setNameFormat("ReplicationManager-%d").build());
+    @Inject
+    private ChannelService channelService;
+    @Inject
+    private WatchManager watchManager;
 
     public ReplicationManager() {
         register(new ReplicationService(), TYPE.AFTER_HEALTHY_START, TYPE.PRE_STOP);
