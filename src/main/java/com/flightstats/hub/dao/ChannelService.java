@@ -31,6 +31,7 @@ import com.flightstats.hub.webhook.TagWebhook;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
+import lombok.SneakyThrows;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -153,6 +154,7 @@ public class ChannelService {
         });
     }
 
+    @SneakyThrows
     public boolean historicalInsert(String channelName, Content content) throws RuntimeException {
         final String normalizedChannelName = getDisplayName(channelName);
         if (!isHistorical(channelName)) {
@@ -292,6 +294,7 @@ public class ChannelService {
                 .isPresent();
     }
 
+    @SneakyThrows
     private ChannelConfig getExpectedCachedChannelConfig(String channelName) throws NoSuchChannelException {
         return getCachedChannelConfig(channelName)
                 .orElseThrow(() -> {
