@@ -13,8 +13,14 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import de.danielbechler.diff.ObjectDifferBuilder;
 import de.danielbechler.diff.node.DiffNode;
-import lombok.*;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.ToString;
+import lombok.EqualsAndHashCode;
 import lombok.experimental.Wither;
+import lombok.extern.slf4j.Slf4j;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,12 +34,12 @@ import java.util.SortedSet;
 @Getter
 @ToString
 @EqualsAndHashCode
+@Slf4j
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class Webhook implements Comparable<Webhook>, NamedType {
     public static final String SINGLE = "SINGLE";
     public static final String MINUTE = "MINUTE";
     public static final String SECOND = "SECOND";
-    private final static Logger logger = LoggerFactory.getLogger(Webhook.class);
     private static final ObjectMapper mapper = new ObjectMapper();
     private static final Gson gson = new GsonBuilder().create();
     private final String callbackUrl;
@@ -160,7 +166,7 @@ public class Webhook implements Comparable<Webhook>, NamedType {
                 builder.secondaryMetricsReporting(root.get("secondaryMetricsReporting").asBoolean());
             }
         } catch (IOException e) {
-            logger.warn("unable to parse json" + json, e);
+            log.warn("unable to parse json" + json, e);
             throw new InvalidRequestException(e.getMessage());
         }
         return builder.build();
