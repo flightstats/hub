@@ -132,10 +132,7 @@ class SingleWebhookStrategy implements WebhookStrategy {
                 ActiveTraces.start("SingleWebhookStrategy", webhook);
                 try {
                     DateTime latestStableInChannel = TimeUtil.stable();
-                    boolean notLiveChannel = channelService.getChannelConfig(channel, true)
-                            .filter(ChannelConfig::isLive)
-                            .isPresent();
-                    if (notLiveChannel) {
+                    if (channelService.isNotLiveChannel(channel, true)) {
                         latestStableInChannel = channelService.getLastUpdated(channel, MinutePath.NONE).getTime();
                     }
                     TimeQuery timeQuery = queryGenerator.getQuery(latestStableInChannel);

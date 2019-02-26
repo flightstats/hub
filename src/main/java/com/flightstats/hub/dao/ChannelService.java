@@ -253,11 +253,8 @@ public class ChannelService {
     }
 
     private ContentKey getLatestLimit(String channelName, boolean stable) {
-        boolean isLive = getCachedChannelConfig(channelName)
-                .filter(ChannelConfig::isLive)
-                .isPresent();
         DateTime time = TimeUtil.now().plusMinutes(1);
-        if (stable || !isLive) {
+        if (stable || isNotLiveChannel(channelName, true)) {
             time = getLastUpdated(channelName, new ContentKey(TimeUtil.stable())).getTime();
         }
         return ContentKey.lastKey(time);
@@ -287,6 +284,12 @@ public class ChannelService {
     public Optional<ChannelConfig> getCachedChannelConfig(String channelName) {
         ChannelConfig channelConfig = channelConfigDao.getCached(channelName);
         return Optional.ofNullable(channelConfig);
+    }
+
+    public boolean isNotLiveChannel(String channelName, boolean checkCache) {
+        return getChannelConfig(channelName, checkCache)
+                .filter((config) -> !config.isLive())
+                .isPresent();
     }
 
     private ChannelConfig getExpectedCachedChannelConfig(String channelName) throws NoSuchChannelException {
