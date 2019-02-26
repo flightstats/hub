@@ -3,8 +3,8 @@ package com.flightstats.hub.webhook;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.test.Integration;
 import org.apache.commons.lang3.StringUtils;
-import org.testng.annotations.BeforeSuite;
-import org.testng.annotations.Test;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -54,7 +54,7 @@ public class TagWebhookTest {
                 .build();
     }
 
-    @BeforeSuite
+    @Before
     public void initialize() {
         try {
             Integration.startAwsHub();

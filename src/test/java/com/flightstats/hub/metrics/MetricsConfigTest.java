@@ -1,15 +1,13 @@
 package com.flightstats.hub.metrics;
 
 import com.flightstats.hub.app.HubHost;
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubVersion;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 
 

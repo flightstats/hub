@@ -12,6 +12,7 @@ import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.HubUtils;
 import com.google.inject.TypeLiteral;
+import lombok.SneakyThrows;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,6 +90,7 @@ public class InternalChannelResource {
         }
     }
 
+    @SneakyThrows
     @Path("{channel}")
     @DELETE
     public Response delete(@PathParam("channel") final String channelName) throws Exception {

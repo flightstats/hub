@@ -150,7 +150,7 @@ public class WebhookTest {
     public void testSecondaryMetricsReporting() {
         Webhook withDefaults = this.webhook.withDefaults();
         assertFalse(withDefaults.isSecondaryMetricsReporting());
-        String json = "{ \"secondaryMetricsReporting\": \"true\" }";
+        String json = "{ \"secondaryMetricsReporting\": true }";
         Webhook newWebhook = Webhook.fromJson(json, Optional.of(withDefaults));
         assertTrue(newWebhook.isSecondaryMetricsReporting());
     }

@@ -6,6 +6,7 @@ import com.flightstats.hub.cluster.*;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.QueryResult;
+import com.flightstats.hub.dao.aws.s3Verifier.VerifierMetrics;
 import com.flightstats.hub.exception.FailedQueryException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.StatsdReporter;
@@ -41,12 +42,9 @@ import java.util.concurrent.TimeUnit;
 @Singleton
 public class S3Verifier {
 
-    public static final String MISSING_ITEM_METRIC_NAME = "s3.verifier.missing";
     static final String LAST_SINGLE_VERIFIED = "/S3VerifierSingleLastVerified/";
     private final static Logger logger = LoggerFactory.getLogger(S3Verifier.class);
     private static final String LEADER_PATH = "/S3VerifierSingleService";
-    private static final String VERIFIER_FAILED_METRIC_NAME = "s3.verifier.failed";
-    private static final String VERIFIER_TIMEOUT_METRIC_NAME = "s3.verifier.timeout";
 
     private final long baseTimeoutMinutes;
     private final int offsetMinutes = HubProperties.getProperty("s3Verifier.offsetMinutes", 15);
@@ -149,27 +147,34 @@ public class S3Verifier {
     }
 
     @VisibleForTesting
-    protected void verifyChannel(VerifierRange range) {
+    void verifyChannel(VerifierRange range) {
         String channelName = range.getChannelConfig().getDisplayName();
         SortedSet<ContentKey> keysToAdd = getMissing(range.getStartPath(), range.getEndPath(), channelName, s3SingleContentDao, new TreeSet<>());
         logger.debug("verifyChannel.starting {}", range);
+        MinutePath lastCompleted = range.getEndPath();
         for (ContentKey key : keysToAdd) {
             logger.trace("found missing {} {}", channelName, key);
-            statsdReporter.increment(MISSING_ITEM_METRIC_NAME);
             boolean success = s3WriteQueue.add(new ChannelContentKey(channelName, key));
             if (!success) {
                 logger.error("unable to queue missing item {} {}", channelName, key);
-                statsdReporter.increment(VERIFIER_FAILED_METRIC_NAME);
-                return;
+                incrementMetric(VerifierMetrics.FAILED);
+                lastCompleted = new MinutePath(key.getTime().minusMinutes(1));
+                break;
             }
         }
-        logger.debug("verifyChannel.completed {}", range);
-        lastContentPath.updateIncrease(range.getEndPath(), range.getChannelConfig().getDisplayName(), LAST_SINGLE_VERIFIED);
-    }
 
-    @VisibleForTesting
-    protected SortedSet<ContentKey> getMissing(MinutePath startPath, MinutePath endPath, String channelName, ContentDao s3ContentDao,
-                                               SortedSet<ContentKey> foundCacheKeys) {
+        if (lastCompleted.compareTo(range.getStartPath()) > 0) {
+            logger.debug("verifyChannel.completed {}", range);
+            lastContentPath.updateIncrease(lastCompleted, range.getChannelConfig().getDisplayName(), LAST_SINGLE_VERIFIED);
+            incrementMetric(VerifierMetrics.PARTIAL_UPDATE);
+        } else {
+            logger.warn("verifyChannel completed, but start time is the same as last completed");
+            incrementMetric(VerifierMetrics.EXCESSIVE_CHANNEL_VOLUME);
+        }
+    }
+    
+    SortedSet<ContentKey> getMissing(MinutePath startPath, MinutePath endPath, String channelName, ContentDao s3ContentDao,
+                                             SortedSet<ContentKey> foundCacheKeys) {
         long timeout = baseTimeoutMinutes;
         QueryResult queryResult = new QueryResult(1);
         SortedSet<ContentKey> longTermKeys = new TreeSet<>();
@@ -177,6 +182,7 @@ public class S3Verifier {
                 .channelName(channelName)
                 .startTime(startPath.getTime())
                 .unit(TimeUtil.Unit.MINUTES);
+
         if (endPath != null) {
             Duration duration = new Duration(startPath.getTime(), endPath.getTime());
             timeout += duration.getStandardDays();
@@ -194,7 +200,7 @@ public class S3Verifier {
             latch.await(timeout, TimeUnit.MINUTES);
             if (latch.getCount() != 0) {
                 logger.error("s3 verifier timed out while finding missing items, write queue is backing up");
-                statsdReporter.increment(VERIFIER_TIMEOUT_METRIC_NAME);
+                incrementMetric(VerifierMetrics.TIMEOUT);
             }
             queryResult.getContentKeys().removeAll(longTermKeys);
             if (queryResult.getContentKeys().size() > 0) {
@@ -222,6 +228,10 @@ public class S3Verifier {
 
     private MinutePath getSpokeTtlPath(DateTime now) {
         return new MinutePath(now.minusMinutes(HubProperties.getSpokeTtlMinutes(SpokeStore.WRITE) - 2));
+    }
+
+    private void incrementMetric(VerifierMetrics verifierMetric) {
+        statsdReporter.increment(verifierMetric.getName());
     }
 
     private class S3ScheduledVerifierService extends AbstractScheduledService implements Lockable {

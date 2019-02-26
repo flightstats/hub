@@ -13,9 +13,8 @@ import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.api.CuratorEvent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -23,10 +22,8 @@ import java.util.concurrent.TimeUnit;
 import static com.flightstats.hub.app.HubServices.register;
 
 @Singleton
+@Slf4j
 public class WebhookManager {
-
-    private final static Logger logger = LoggerFactory.getLogger(WebhookManager.class);
-
     private static final String WATCHER_PATH = "/groupCallback/watcher";
 
     @Inject
@@ -74,7 +71,7 @@ public class WebhookManager {
     }
 
     private void start() {
-        logger.info("starting");
+        log.info("starting");
         watchManager.register(new Watcher() {
             @Override
             public void callback(CuratorEvent event) {
@@ -112,10 +109,10 @@ public class WebhookManager {
         }
         String name = daoWebhook.getName();
         if (activeWebhooks.isActiveWebhook(name)) {
-            logger.debug("found existing v2 webhook {}", name);
+            log.debug("found existing v2 webhook {}", name);
             List<String> servers = new ArrayList<>(activeWebhooks.getServers(name));
             if (servers.size() >= 2) {
-                logger.warn("found multiple servers! {}", servers);
+                log.warn("found multiple servers! {}", servers);
                 Collections.shuffle(servers);
                 for (int i = 1; i < servers.size(); i++) {
                     webhookClient.remove(name, servers.get(i));
@@ -127,7 +124,7 @@ public class WebhookManager {
                 webhookClient.runOnOneServer(name, servers);
             }
         } else {
-            logger.debug("found new v2 webhook {}", name);
+            log.debug("found new v2 webhook {}", name);
             webhookClient.runOnServerWithFewestWebhooks(name);
         }
     }
@@ -148,7 +145,7 @@ public class WebhookManager {
             ArrayList<ContentPath> inFlight = new ArrayList<>(new TreeSet<>(webhookInProcess.getSet(webhook.getName(), WebhookStrategy.createContentPath(webhook))));
             statusBuilder.inFlight(inFlight);
         } catch (Exception e) {
-            logger.warn("unable to get status " + webhook.getName(), e);
+            log.warn("unable to get status " + webhook.getName(), e);
             statusBuilder.errors(Collections.emptyList());
             statusBuilder.inFlight(Collections.emptyList());
         }

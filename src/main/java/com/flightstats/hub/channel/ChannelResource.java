@@ -25,10 +25,11 @@ import com.flightstats.hub.rest.Linked;
 import com.flightstats.hub.rest.PATCH;
 import com.flightstats.hub.time.NtpMonitor;
 import com.flightstats.hub.util.Sleeper;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.media.sse.EventOutput;
 import org.glassfish.jersey.media.sse.SseFeature;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -59,9 +60,9 @@ import static com.flightstats.hub.rest.Linked.linked;
  * This resource represents a single channel in the Hub.
  */
 @SuppressWarnings("WeakerAccess")
+@Slf4j
 @Path("/channel/{channel}")
 public class ChannelResource {
-    private final static Logger logger = LoggerFactory.getLogger(ChannelResource.class);
     private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
     private final static NtpMonitor ntpMonitor = HubProvider.getInstance(NtpMonitor.class);
@@ -81,15 +82,16 @@ public class ChannelResource {
         return Response.status(Response.Status.NOT_FOUND).entity("channel " + channelName + " not found").build();
     }
 
+    @SneakyThrows
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getChannelMetadata(@PathParam("channel") String channelName,
                                        @QueryParam("cached") @DefaultValue("true") boolean cached) throws WebApplicationException {
-        logger.debug("get channel {}", channelName);
+        log.debug("get channel {}", channelName);
 
         ChannelConfig channelConfig = channelService.getChannelConfig(channelName, cached)
                 .orElseThrow(() -> {
-                    logger.info("unable to get channel " + channelName);
+                    log.info("unable to get channel " + channelName);
                     throw new WebApplicationException(Response.Status.NOT_FOUND);
                 });
 
@@ -100,34 +102,32 @@ public class ChannelResource {
     @PUT
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response createChannel(@PathParam("channel") String channelName, String json) {
-        logger.debug("put channel {} {}", channelName, json);
-        ChannelConfig newChannelConfig = ChannelConfig.createFromJsonWithName(json, channelName);
-        
-        ChannelConfig oldChannelConfig = channelService
-                .getChannelConfig(channelName, false)
-                .orElse(newChannelConfig);
+    public Response createChannel(@PathParam("channel") String channelName, String json) throws Exception {
+        log.debug("put channel {} {}", channelName, json);
+        Optional<ChannelConfig> oldConfig = channelService.getChannelConfig(channelName, false);
+        ChannelConfig channelConfig = ChannelConfig.createFromJsonWithName(json, channelName);
+        if (oldConfig.isPresent()) {
+            ChannelConfig config = oldConfig.get();
+            log.info("using old channel {} {}", config, config.getCreationDate().getTime());
+            channelConfig = ChannelConfig.updateFromJson(config, StringUtils.defaultIfBlank(json, "{}"));
+        }
+        log.info("creating channel {} {}", channelConfig, channelConfig.getCreationDate().getTime());
+        channelConfig = channelService.updateChannel(channelConfig, oldConfig.orElse(null), LocalHostOnly.isLocalhost(uriInfo));
 
-
-        logger.info("creating channel {} {}", newChannelConfig, newChannelConfig.getCreationDate().getTime());
-        newChannelConfig = channelService.updateChannel(
-                newChannelConfig,
-                oldChannelConfig,
-                LocalHostOnly.isLocalhost(uriInfo));
-
-        URI channelUri = buildChannelUri(newChannelConfig.getDisplayName(), uriInfo);
-        ObjectNode output = buildChannelConfigResponse(newChannelConfig, uriInfo, channelName);
+        URI channelUri = buildChannelUri(channelConfig.getDisplayName(), uriInfo);
+        ObjectNode output = buildChannelConfigResponse(channelConfig, uriInfo, channelName);
         return Response.created(channelUri).entity(output).build();
     }
 
+    @SneakyThrows
     @PATCH
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateMetadata(@PathParam("channel") String channelName, String json) throws WebApplicationException {
-        logger.debug("patch channel {} {}", channelName, json);
+        log.debug("patch channel {} {}", channelName, json);
         ChannelConfig oldConfig = channelService.getChannelConfig(channelName, false)
                 .orElseThrow(() -> {
-                    logger.info("unable to patch channel " + channelName);
+                    log.info("unable to patch channel " + channelName);
                     throw new WebApplicationException(Response.Status.NOT_FOUND);
                 });
 
@@ -160,7 +160,7 @@ public class ChannelResource {
                 .build();
         try {
             ContentKey contentKey = channelService.insert(channelName, content);
-            logger.trace("posted {}", contentKey);
+            log.trace("posted {}", contentKey);
             InsertedContentKey insertionResult = new InsertedContentKey(contentKey);
             URI payloadUri = LinkBuilder.buildItemUri(contentKey, uriInfo.getAbsolutePath());
             Linked<InsertedContentKey> linkedResult = linked(insertionResult)
@@ -171,7 +171,7 @@ public class ChannelResource {
             Response.ResponseBuilder builder = Response.status(Response.Status.CREATED);
             builder.entity(linkedResult);
             builder.location(payloadUri);
-            ActiveTraces.getLocal().log(1000, false, logger);
+            ActiveTraces.getLocal().log(1000, false, log);
             long time = System.currentTimeMillis() - start;
             int postTimeBuffer = ntpMonitor.getPostTimeBuffer();
             if (time < postTimeBuffer) {
@@ -185,7 +185,7 @@ public class ChannelResource {
             if (content.getContentKey().isPresent()) {
                 key = content.getContentKey().get().toString();
             }
-            logger.warn("unable to POST to " + channelName + " key " + key, e);
+            log.warn("unable to POST to " + channelName + " key " + key, e);
             throw e;
         }
     }
@@ -215,7 +215,7 @@ public class ChannelResource {
                     .channel(channelName)
                     .build();
             Collection<ContentKey> keys = channelService.insert(content);
-            logger.trace("posted {}", keys);
+            log.trace("posted {}", keys);
             ObjectNode root = mapper.createObjectNode();
             ObjectNode links = root.putObject("_links");
             ObjectNode self = links.putObject("self");
@@ -238,7 +238,7 @@ public class ChannelResource {
         } catch (ContentTooLargeException e) {
             return Response.status(413).entity(e.getMessage()).build();
         } catch (Exception e) {
-            logger.warn("unable to bulk POST to " + channelName, e);
+            log.warn("unable to bulk POST to " + channelName, e);
             throw e;
         }
     }
@@ -248,7 +248,7 @@ public class ChannelResource {
     @Produces(SseFeature.SERVER_SENT_EVENTS)
     public EventOutput getEvents(@PathParam("channel") String channel, @HeaderParam("Last-Event-ID") String lastEventId) throws Exception {
         try {
-            logger.info("starting events for {} at {}", channel, lastEventId);
+            log.info("starting events for {} at {}", channel, lastEventId);
             ContentKey contentKey = new ContentKey();
             ContentKey fromUrl = ContentKey.fromFullUrl(lastEventId);
             if (fromUrl != null) {
@@ -263,7 +263,7 @@ public class ChannelResource {
             eventsService.register(new ContentOutput(channel, eventOutput, contentKey, uriInfo.getBaseUri()));
             return eventOutput;
         } catch (Exception e) {
-            logger.warn("unable to events to " + channel, e);
+            log.warn("unable to events to " + channel, e);
             throw e;
         }
     }
@@ -275,10 +275,10 @@ public class ChannelResource {
             return notFound(channelName);
         }
         if (HubProperties.isProtected() || optionalChannelConfig.get().isProtect()) {
-            logger.info("using localhost only to delete {}", channelName);
+            log.info("using localhost only to delete {}", channelName);
             return LocalHostOnly.getResponse(uriInfo, () -> deletion(channelName));
         }
-        logger.info("using normal delete {}", channelName);
+        log.info("using normal delete {}", channelName);
         return deletion(channelName);
     }
 }

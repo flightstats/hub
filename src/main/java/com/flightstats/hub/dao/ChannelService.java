@@ -31,6 +31,7 @@ import com.flightstats.hub.webhook.TagWebhook;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
+import lombok.SneakyThrows;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -124,7 +125,7 @@ public class ChannelService {
         }
         long start = System.currentTimeMillis();
         ContentKey contentKey = insertInternal(channelName, content);
-        statsdReporter.insert(channelName, start, ChannelType.single, 1, content.getSize());
+        statsdReporter.insert(channelName, start, ChannelType.SINGLE, 1, content.getSize());
         return contentKey;
     }
 
@@ -153,6 +154,7 @@ public class ChannelService {
         });
     }
 
+    @SneakyThrows
     public boolean historicalInsert(String channelName, Content content) throws RuntimeException {
         final String normalizedChannelName = getDisplayName(channelName);
         if (!isHistorical(channelName)) {
@@ -177,7 +179,7 @@ public class ChannelService {
             return contentService.historicalInsert(normalizedChannelName, content);
         });
         lastContentPath.updateDecrease(contentKey, normalizedChannelName, HISTORICAL_EARLIEST);
-        statsdReporter.insert(normalizedChannelName, start, ChannelType.historical, 1, content.getSize());
+        statsdReporter.insert(normalizedChannelName, start, ChannelType.HISTORICAL, 1, content.getSize());
         return insert;
     }
 
@@ -199,7 +201,7 @@ public class ChannelService {
             multiPartParser.parse();
             return contentService.insert(bulkContent);
         });
-        statsdReporter.insert(channel, start, ChannelType.bulk, bulkContent.getItems().size(), bulkContent.getSize());
+        statsdReporter.insert(channel, start, ChannelType.BULK, bulkContent.getItems().size(), bulkContent.getSize());
         return contentKeys;
     }
 
@@ -253,11 +255,8 @@ public class ChannelService {
     }
 
     private ContentKey getLatestLimit(String channelName, boolean stable) {
-        boolean isLive = getCachedChannelConfig(channelName)
-                .filter(ChannelConfig::isLive)
-                .isPresent();
         DateTime time = TimeUtil.now().plusMinutes(1);
-        if (stable || !isLive) {
+        if (stable || !isLiveChannel(channelName)) {
             time = getLastUpdated(channelName, new ContentKey(TimeUtil.stable())).getTime();
         }
         return ContentKey.lastKey(time);
@@ -289,6 +288,13 @@ public class ChannelService {
         return Optional.ofNullable(channelConfig);
     }
 
+    public boolean isLiveChannel(String channelName) {
+        return getChannelConfig(channelName, true)
+                .filter(ChannelConfig::isLive)
+                .isPresent();
+    }
+
+    @SneakyThrows
     private ChannelConfig getExpectedCachedChannelConfig(String channelName) throws NoSuchChannelException {
         return getCachedChannelConfig(channelName)
                 .orElseThrow(() -> {

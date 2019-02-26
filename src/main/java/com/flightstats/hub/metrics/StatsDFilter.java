@@ -9,11 +9,14 @@ import com.google.inject.name.Named;
 import com.timgroup.statsd.NoOpStatsDClient;
 import com.timgroup.statsd.NonBlockingStatsDClient;
 import com.timgroup.statsd.StatsDClient;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 @Singleton
 public class StatsDFilter {
@@ -45,21 +48,42 @@ public class StatsDFilter {
         this.dataDogClient = new NonBlockingStatsDClient(clientPrefix, clientHost, dogstatsdPort);
     }
 
-    boolean isTestChannel(String channel) {
+    public boolean isTestChannel(String channel) {
         return channel.toLowerCase().startsWith("test_");
     }
 
     boolean isSecondaryReporting(String name) {
-        Optional<Webhook> optionalWebhook = Optional
-                .ofNullable(webhookConfigDao.getCached(name))
-                .filter(Webhook::isSecondaryMetricsReporting);
+        return shouldChannelReport(name).isPresent() || shouldWebhookReport(name).isPresent();
+    }
 
-        Optional<ChannelConfig> optionalChannelConfig = Optional
+    Optional<ChannelConfig> shouldChannelReport(String name) {
+        return Optional
                 .ofNullable(channelConfigDao.getCached(name))
                 .filter(ChannelConfig::isSecondaryMetricsReporting);
-
-        return optionalChannelConfig.isPresent() || optionalWebhook.isPresent();
     }
+
+    Optional<Webhook> shouldWebhookReport(String name) {
+        return Optional
+                .ofNullable(webhookConfigDao.getCached(name))
+                .filter(Webhook::isSecondaryMetricsReporting);
+    }
+
+    String extractName(String[] tags) {
+        // webhook tags may contain name:webhookName
+        // channel tags may contain channel:channelName
+        try {
+            return Stream.of(tags)
+                    .filter(StringUtils::isNotBlank)
+                    .filter(str -> str.contains("name") || str.contains("channel"))
+                    .map(parseName)
+                    .findAny()
+                    .orElse("");
+        } catch (Exception ex) {
+            return "";
+        }
+    }
+
+    Function<String, String> parseName = (String str) -> str.contains(":") ? str.substring(str.indexOf(":") + 1) : "";
 
     List<StatsDClient> getFilteredClients(boolean secondaryReporting) {
         return secondaryReporting ?

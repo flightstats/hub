@@ -2,6 +2,7 @@ package com.flightstats.hub.metrics;
 
 import com.timgroup.statsd.Event;
 import com.timgroup.statsd.StatsDClient;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -27,6 +28,21 @@ public class StatsdReporter {
         clients.forEach(method);
     }
 
+    private void reportWithDefaultClient(Consumer<StatsDClient> method) {
+        StatsDClient statsdClient = statsDFilter
+                .getFilteredClients(false)
+                .get(0);
+        method.accept(statsdClient);
+    }
+
+    private void reportWithEitherClient(String metricTagName, Consumer<StatsDClient> method) {
+        if (StringUtils.isNotBlank(metricTagName)) {
+            reportWithFilteredClients(metricTagName, method);
+        } else {
+            reportWithDefaultClient(method);
+        }
+    }
+
     public void insert(String channel, long start, ChannelType type, int items, long bytes) {
         if (statsDFilter.isTestChannel(channel)) return;
 
@@ -36,38 +52,49 @@ public class StatsdReporter {
 
     public void event(String title, String text, String[] tags) {
         Event event = statsDFormatter.buildCustomEvent(title, text);
-        reportWithFilteredClients(title, (statsDClient -> statsDClient.recordEvent(event, tags)));
+        reportWithDefaultClient(statsDClient -> statsDClient.recordEvent(event, tags));
     }
 
     public void count(String name, long value, String... tags) {
-        reportWithFilteredClients(name, (statsDClient -> statsDClient.count(name, value, tags)));
+        reportWithEitherClient(statsDFilter.extractName(tags), statsDClient -> statsDClient.count(name, value, tags));
     }
 
     public void incrementCounter(String name, String... tags) {
-        reportWithFilteredClients(name, (statsDClient -> statsDClient.incrementCounter(name, tags)));
+        reportWithEitherClient(statsDFilter.extractName(tags), statsDClient -> statsDClient.incrementCounter(name, tags));
     }
 
     public void increment(String name, String... tags) {
-        reportWithFilteredClients(name, (statsDClient) -> statsDClient.increment(name, tags));
+        reportWithDefaultClient(statsDClient -> statsDClient.increment(name, tags));
     }
 
     public void gauge(String name, double value, String... tags) {
-        reportWithFilteredClients(name, (statsDClient -> statsDClient.gauge(name, value, tags)));
+        reportWithDefaultClient(statsDClient -> statsDClient.gauge(name, value, tags));
+    }
+
+    public void requestTime(long start, String ...tags) {
+        reportWithEitherClient(
+                statsDFilter.extractName(tags),
+                (statsDClient) ->
+                        statsDClient.time("request", System.currentTimeMillis() - start, tags)
+        );
     }
 
     public void time(String name, long start, String... tags) {
-        reportWithFilteredClients(name, (statsDClient) -> statsDClient.time(name, System.currentTimeMillis() - start, tags));
+        reportWithFilteredClients(statsDFilter.extractName(tags),
+                (statsDClient) ->
+                        statsDClient.time(name, System.currentTimeMillis() - start, tags)
+        );
     }
 
     public void time(String channel, String name, long start, String... tags) {
         if (statsDFilter.isTestChannel(channel)) return;
 
         reportWithFilteredClients(channel, (
-                statsDClient -> statsDClient.time(
+                statsDClient) -> statsDClient.time(
                         name,
                         statsDFormatter.startTimeMillis(start),
                         statsDFormatter.formatChannelTags(channel, tags)
-                )));
+                ));
     }
 
     public void time(String channel, String name, long start, long bytes, String... tags) {
@@ -79,9 +106,7 @@ public class StatsdReporter {
     }
 
     public void mute() {
-        if (dataDogHandler != null) {
-            dataDogHandler.mute();
-        }
+        dataDogHandler.mute();
     }
 
 }

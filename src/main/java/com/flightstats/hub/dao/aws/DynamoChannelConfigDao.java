@@ -43,6 +43,7 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
         }
         item.put("protect", new AttributeValue().withBOOL(config.isProtect()));
         item.put("allowZeroBytes", new AttributeValue().withBOOL(config.isAllowZeroBytes()));
+        item.put("secondaryMetricsReporting", new AttributeValue().withBOOL(config.isSecondaryMetricsReporting()));
         if (!config.getTags().isEmpty()) {
             item.put("tags", new AttributeValue().withSS(config.getTags()));
         }
@@ -135,6 +136,9 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
         }
         if (item.containsKey("allowZeroBytes")) {
             builder.allowZeroBytes(item.get("allowZeroBytes").getBOOL());
+        }
+        if (item.containsKey("secondaryMetricsReporting")) {
+            builder.secondaryMetricsReporting(item.get("secondaryMetricsReporting").getBOOL());
         }
         if (item.containsKey("mutableTime")) {
             builder.mutableTime(new DateTime(Long.parseLong(item.get("mutableTime").getN()), DateTimeZone.UTC));

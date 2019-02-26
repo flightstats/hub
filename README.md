@@ -34,3 +34,22 @@ The hub is a long term data store.
 Run ./gradlew build
 
 The above command compiles the code, runs the unit tests and integration tests.~~~~
+
+### How to run System tests:
+
+From Local:
+
+1) Setup hub:
+    a) ./localDocker.sh (from root directory)
+    b) docker run -p 80:80 hub:local
+   
+2) set base.url property in intergation-hub.properties
+    
+3) Go to root of hub project source and run below command
+   ./gradlew systemTest -i    
+   
+From Jenkins:
+
+1) Goto https://ddt-jenkins.pdx.prod.flightstats.io/job/hub-system-test/ 
+2) Click on "Build With Parameters" 
+3) Add your git branch and start the build.
