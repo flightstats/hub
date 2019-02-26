@@ -20,6 +20,7 @@ import com.flightstats.hub.rest.Linked;
 import com.flightstats.hub.rest.PATCH;
 import com.flightstats.hub.time.NtpMonitor;
 import com.flightstats.hub.util.Sleeper;
+import lombok.SneakyThrows;
 import org.glassfish.jersey.media.sse.EventOutput;
 import org.glassfish.jersey.media.sse.SseFeature;
 import org.slf4j.Logger;
@@ -76,6 +77,7 @@ public class ChannelResource {
         return Response.status(Response.Status.NOT_FOUND).entity("channel " + channelName + " not found").build();
     }
 
+    @SneakyThrows
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getChannelMetadata(@PathParam("channel") String channelName,
@@ -115,6 +117,7 @@ public class ChannelResource {
         return Response.created(channelUri).entity(output).build();
     }
 
+    @SneakyThrows
     @PATCH
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)

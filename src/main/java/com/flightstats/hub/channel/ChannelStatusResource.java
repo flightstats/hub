@@ -6,6 +6,7 @@ import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.HubUtils;
+import lombok.SneakyThrows;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
@@ -25,6 +26,7 @@ public class ChannelStatusResource {
     @Context
     private UriInfo uriInfo;
 
+    @SneakyThrows
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getLatest(@PathParam("channel") String channel,
