@@ -1,12 +1,11 @@
 package com.flightstats.hub.cluster;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@Slf4j
 public class Leadership {
-    private static final Logger logger = LoggerFactory.getLogger(Leadership.class);
     private ZooKeeperState zooKeeperState;
 
     private final AtomicBoolean hasLeadership = new AtomicBoolean(false);
@@ -16,7 +15,7 @@ public class Leadership {
     }
 
     public boolean hasLeadership() {
-        logger.trace("hasLeadership : shouldKeepWorking() {} , hasLeadership.get() {}", zooKeeperState.shouldKeepWorking(), hasLeadership.get());
+        log.trace("hasLeadership : shouldKeepWorking() {} , hasLeadership.get() {}", zooKeeperState.shouldKeepWorking(), hasLeadership.get());
         return zooKeeperState.shouldKeepWorking() && hasLeadership.get();
     }
 
@@ -26,7 +25,7 @@ public class Leadership {
 
     public void setLeadership(boolean leadership) {
         hasLeadership.set(leadership);
-        logger.trace("setLeadership : shouldKeepWorking() {} , hasLeadership.get() {}", zooKeeperState.shouldKeepWorking(), hasLeadership.get());
+        log.trace("setLeadership : shouldKeepWorking() {} , hasLeadership.get() {}", zooKeeperState.shouldKeepWorking(), hasLeadership.get());
     }
 
 }
