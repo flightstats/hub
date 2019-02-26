@@ -153,7 +153,7 @@ public class ChannelService {
         });
     }
 
-    public boolean historicalInsert(String channelName, Content content) throws Exception {
+    public boolean historicalInsert(String channelName, Content content) throws RuntimeException {
         final String normalizedChannelName = getDisplayName(channelName);
         if (!isHistorical(channelName)) {
             logger.warn("historical inserts require a mutableTime on the channel. {}", normalizedChannelName);
@@ -162,12 +162,10 @@ public class ChannelService {
         long start = System.currentTimeMillis();
 
         ChannelConfig channelConfig = getExpectedCachedChannelConfig(channelName);
-
-        Optional<ContentKey> optionalContentKey = content.getContentKey();
-        if (!optionalContentKey.isPresent()) {
-            throw new RuntimeException("internal error while retrieving content key, historical insert to channel: " + channelName);
-        }
-        ContentKey contentKey = optionalContentKey.get();
+        ContentKey contentKey = content.getContentKey()
+                .orElseThrow(() -> {
+                    throw new RuntimeException("internal error: invalid content key on historical insert to channel: " + channelName);
+                });
         if (contentKey.getTime().isAfter(channelConfig.getMutableTime())) {
             String msg = "historical inserts must not be after mutableTime" + normalizedChannelName + " " + contentKey;
             logger.warn(msg);
@@ -206,13 +204,15 @@ public class ChannelService {
     }
 
     public boolean isReplicating(String channelName) {
-        Optional<ChannelConfig> config = getCachedChannelConfig(channelName);
-        return config.isPresent() && config.get().isReplicating();
+        return getCachedChannelConfig(channelName)
+                .filter(ChannelConfig::isReplicating)
+                .isPresent();
     }
 
     private boolean isHistorical(String channelName) {
-        Optional<ChannelConfig> config = getCachedChannelConfig(channelName);
-        return config.isPresent() && config.get().isHistorical();
+        return getCachedChannelConfig(channelName)
+                .filter(ChannelConfig::isHistorical)
+                .isPresent();
     }
 
     public Optional<ContentKey> getLatest(DirectionQuery query) {
@@ -253,10 +253,8 @@ public class ChannelService {
     }
 
     private ContentKey getLatestLimit(String channelName, boolean stable) {
-        Optional<ChannelConfig> optionalChannelConfig = getCachedChannelConfig(channelName);
-        boolean isLive = optionalChannelConfig.isPresent() && optionalChannelConfig.get().isLive();
         DateTime time = TimeUtil.now().plusMinutes(1);
-        if (stable || !isLive) {
+        if (stable || isNotLiveChannel(channelName, true)) {
             time = getLastUpdated(channelName, new ContentKey(TimeUtil.stable())).getTime();
         }
         return ContentKey.lastKey(time);
@@ -275,6 +273,7 @@ public class ChannelService {
         }
         return contentService.get(itemRequest.getChannel(), itemRequest.getKey(), itemRequest.isRemoteOnly());
     }
+
     public Optional<ChannelConfig> getChannelConfig(String channelName, boolean allowChannelCache) {
         if (allowChannelCache) {
             return getCachedChannelConfig(channelName);
@@ -287,10 +286,17 @@ public class ChannelService {
         return Optional.ofNullable(channelConfig);
     }
 
-    public ChannelConfig getExpectedCachedChannelConfig(String channelName) throws NoSuchChannelException {
-        Optional<ChannelConfig> optionalChannelConfig = getCachedChannelConfig(channelName);
-        if (!optionalChannelConfig.isPresent()) throw new NoSuchChannelException(channelName);
-        return optionalChannelConfig.get();
+    public boolean isNotLiveChannel(String channelName, boolean checkCache) {
+        return getChannelConfig(channelName, checkCache)
+                .filter((config) -> !config.isLive())
+                .isPresent();
+    }
+
+    private ChannelConfig getExpectedCachedChannelConfig(String channelName) throws NoSuchChannelException {
+        return getCachedChannelConfig(channelName)
+                .orElseThrow(() -> {
+                    throw new NoSuchChannelException(channelName);
+                });
     }
 
     public Collection<ChannelConfig> getChannels() {
@@ -326,9 +332,10 @@ public class ChannelService {
             return Collections.emptySortedSet();
         }
         String channelName = query.getChannelName();
-        Optional<ChannelConfig> optionalChannelConfig = getCachedChannelConfig(channelName);
+        ChannelConfig channelConfig  = getCachedChannelConfig(channelName)
+                .orElse(null);
         query = query.withChannelName(getDisplayName(channelName));
-        query = query.withChannelConfig(optionalChannelConfig.orElse(null));
+        query = query.withChannelConfig(channelConfig);
         ContentPath lastUpdated = getLastUpdated(query.getChannelName(), new ContentKey(TimeUtil.time(query.isStable())));
         query = query.withChannelStable(lastUpdated.getTime());
         Stream<ContentKey> stream = contentService.queryByTime(query).stream();

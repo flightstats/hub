@@ -20,7 +20,6 @@ import com.flightstats.hub.rest.Linked;
 import com.flightstats.hub.rest.PATCH;
 import com.flightstats.hub.time.NtpMonitor;
 import com.flightstats.hub.util.Sleeper;
-import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.media.sse.EventOutput;
 import org.glassfish.jersey.media.sse.SseFeature;
 import org.slf4j.Logger;
@@ -80,53 +79,53 @@ public class ChannelResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getChannelMetadata(@PathParam("channel") String channelName,
-                                       @QueryParam("cached") @DefaultValue("true") boolean cached) {
+                                       @QueryParam("cached") @DefaultValue("true") boolean cached) throws WebApplicationException {
         logger.debug("get channel {}", channelName);
 
-        Optional<ChannelConfig> optionalChannelConfig = channelService.getChannelConfig(channelName, cached);
-        if (!optionalChannelConfig.isPresent()) {
-            logger.info("unable to get channel " + channelName);
-            throw new WebApplicationException(Response.Status.NOT_FOUND);
-        }
+        ChannelConfig channelConfig = channelService.getChannelConfig(channelName, cached)
+                .orElseThrow(() -> {
+                    logger.info("unable to get channel " + channelName);
+                    throw new WebApplicationException(Response.Status.NOT_FOUND);
+                });
 
-        ObjectNode output = buildChannelConfigResponse(optionalChannelConfig.get(), uriInfo, channelName);
+        ObjectNode output = buildChannelConfigResponse(channelConfig, uriInfo, channelName);
         return Response.ok(output).build();
     }
 
     @PUT
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response createChannel(@PathParam("channel") String channelName, String json) throws Exception {
+    public Response createChannel(@PathParam("channel") String channelName, String json) {
         logger.debug("put channel {} {}", channelName, json);
-        Optional<ChannelConfig> optionalChannelConfig = channelService.getChannelConfig(channelName, false);
         ChannelConfig channelConfig = ChannelConfig.createFromJsonWithName(json, channelName);
-        if (optionalChannelConfig.isPresent()) {
-            ChannelConfig oldConfig = optionalChannelConfig.get();
-            logger.info("using old channel {} {}", oldConfig, oldConfig.getCreationDate().getTime());
-            channelConfig = ChannelConfig.updateFromJson(oldConfig, StringUtils.defaultIfBlank(json, "{}"));
-        }
+        
+        ChannelConfig oldChannelConfig = channelService
+                .getChannelConfig(channelName, false)
+                .orElse(channelConfig);
+
+
         logger.info("creating channel {} {}", channelConfig, channelConfig.getCreationDate().getTime());
-        channelConfig = channelService.updateChannel(
+        ChannelConfig updatedChannelConfig = channelService.updateChannel(
                 channelConfig,
-                optionalChannelConfig.orElse(null),
+                oldChannelConfig,
                 LocalHostOnly.isLocalhost(uriInfo));
 
-        URI channelUri = buildChannelUri(channelConfig.getDisplayName(), uriInfo);
-        ObjectNode output = buildChannelConfigResponse(channelConfig, uriInfo, channelName);
+        URI channelUri = buildChannelUri(updatedChannelConfig.getDisplayName(), uriInfo);
+        ObjectNode output = buildChannelConfigResponse(updatedChannelConfig, uriInfo, channelName);
         return Response.created(channelUri).entity(output).build();
     }
 
     @PATCH
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response updateMetadata(@PathParam("channel") String channelName, String json) throws Exception {
+    public Response updateMetadata(@PathParam("channel") String channelName, String json) throws WebApplicationException {
         logger.debug("patch channel {} {}", channelName, json);
-        Optional<ChannelConfig> optionalChannelConfig = channelService.getChannelConfig(channelName, false);
-        if (!optionalChannelConfig.isPresent()) {
-            logger.info("unable to patch channel " + channelName);
-            throw new WebApplicationException(Response.Status.NOT_FOUND);
-        }
-        ChannelConfig oldConfig = optionalChannelConfig.get();
+        ChannelConfig oldConfig = channelService.getChannelConfig(channelName, false)
+                .orElseThrow(() -> {
+                    logger.info("unable to patch channel " + channelName);
+                    throw new WebApplicationException(Response.Status.NOT_FOUND);
+                });
+
         ChannelConfig newConfig = ChannelConfig.updateFromJson(oldConfig, json);
         newConfig = channelService.updateChannel(newConfig, oldConfig, LocalHostOnly.isLocalhost(uriInfo));
 
