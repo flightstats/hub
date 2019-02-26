@@ -236,8 +236,8 @@ public class S3Verifier {
 
         @Override
         protected void runOneIteration() throws Exception {
-            CuratorLock curatorLock = new CuratorLock(curator, zooKeeperState, LEADER_PATH);
-            curatorLock.runWithLock(this, 1, TimeUnit.SECONDS);
+            DistributedAsynchronousLockRunner distributedLockRunner = new DistributedAsynchronousLockRunner(curator, zooKeeperState, LEADER_PATH);
+            distributedLockRunner.runWithLock(this, 1, TimeUnit.SECONDS);
         }
 
         protected Scheduler scheduler() {
