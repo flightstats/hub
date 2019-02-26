@@ -30,8 +30,8 @@ public class S3Config {
     private final CuratorLock curatorLock;
     private final Dao<ChannelConfig> channelConfigDao;
     private final String s3BucketName;
-    private ChannelService channelService;
     private final HubS3Client s3Client;
+    private ChannelService channelService;
 
     @Inject
     public S3Config(HubS3Client s3Client, S3BucketName s3BucketName, CuratorLock curatorLock,

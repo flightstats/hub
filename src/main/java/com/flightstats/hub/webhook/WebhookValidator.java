@@ -11,6 +11,18 @@ import java.net.URISyntaxException;
 
 public class WebhookValidator {
 
+    private static void isValidCallbackTimeoutSeconds(int value) {
+        int minimum = HubProperties.getCallbackTimeoutMin();
+        int maximum = HubProperties.getCallbackTimeoutMax();
+        if (isOutsideRange(value, minimum, maximum)) {
+            throw new InvalidRequestException("callbackTimeoutSeconds must be between " + minimum + " and " + maximum);
+        }
+    }
+
+    private static boolean isOutsideRange(int value, int minimum, int maximum) {
+        return (value > maximum || value < minimum);
+    }
+
     void validate(Webhook webhook) {
         String name = webhook.getName();
         if (StringUtils.isEmpty(name)) {
@@ -59,17 +71,5 @@ public class WebhookValidator {
         }
 
 
-    }
-
-    private static void isValidCallbackTimeoutSeconds(int value) {
-        int minimum = HubProperties.getCallbackTimeoutMin();
-        int maximum = HubProperties.getCallbackTimeoutMax();
-        if (isOutsideRange(value, minimum, maximum)) {
-            throw new InvalidRequestException("callbackTimeoutSeconds must be between " + minimum + " and " + maximum);
-        }
-    }
-
-    private static boolean isOutsideRange(int value, int minimum, int maximum) {
-        return (value > maximum || value < minimum);
     }
 }

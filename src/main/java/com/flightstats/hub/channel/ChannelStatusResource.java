@@ -19,12 +19,11 @@ import java.util.SortedSet;
 @Path("/channel/{channel}/status")
 public class ChannelStatusResource {
 
-    @Context
-    private UriInfo uriInfo;
-
     private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
     private final static HubUtils hubUtils = HubProvider.getInstance(HubUtils.class);
     private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    @Context
+    private UriInfo uriInfo;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

@@ -76,19 +76,16 @@ import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 
 @Path("/channel/{channel}/{Y}/{M}/{D}/")
 public class ChannelContentResource {
-    static final String CREATION_DATE = "Creation-Date";
     public static final String THREADS = HubProperties.getProperty("s3.large.threads", "3");
-
+    static final String CREATION_DATE = "Creation-Date";
     private final static Logger logger = LoggerFactory.getLogger(ChannelContentResource.class);
-
-    @Context
-    private UriInfo uriInfo;
-
     private final static TagContentResource tagContentResource = HubProvider.getInstance(TagContentResource.class);
     private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
     private final static MetricsService metricsService = HubProvider.getInstance(MetricsService.class);
     private final static EventsService eventsService = HubProvider.getInstance(EventsService.class);
+    @Context
+    private UriInfo uriInfo;
 
     public static MediaType getContentType(Content content) {
         Optional<String> contentType = content.getContentType();

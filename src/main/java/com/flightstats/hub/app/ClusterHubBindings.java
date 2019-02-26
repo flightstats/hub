@@ -7,10 +7,7 @@ import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.dao.*;
 import com.flightstats.hub.dao.aws.*;
 import com.flightstats.hub.model.ChannelConfig;
-import com.flightstats.hub.spoke.FileSpokeStore;
 import com.flightstats.hub.spoke.RemoteSpokeStore;
-import com.flightstats.hub.spoke.SpokeReadContentDao;
-import com.flightstats.hub.spoke.SpokeWriteContentDao;
 import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.spoke.SpokeTtlEnforcer;
 import com.flightstats.hub.webhook.Webhook;
@@ -93,5 +90,4 @@ class ClusterHubBindings extends AbstractModule {
     public AmazonS3 buildS3Client(AwsConnectorFactory factory) throws IOException {
         return factory.getS3Client();
     }
-
 }

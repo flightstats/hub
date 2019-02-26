@@ -13,34 +13,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Singleton
 public class HubHealthCheck {
     private final static Logger logger = LoggerFactory.getLogger(HubHealthCheck.class);
-
-    @Inject
-    private SpokeFinalCheck spokeFinalCheck;
-
     private final AtomicBoolean shutdown = new AtomicBoolean(false);
     private final AtomicBoolean startup = new AtomicBoolean(true);
     private final AtomicBoolean decommissionedWithinSpoke = new AtomicBoolean(false);
     private final AtomicBoolean decommissionedDoNotRestart = new AtomicBoolean(false);
+    @Inject
+    private SpokeFinalCheck spokeFinalCheck;
 
     public HubHealthCheck() {
         HubServices.register(new HealthService(), HubServices.TYPE.PERFORM_HEALTH_CHECK);
-    }
-
-    private class HealthService extends AbstractIdleService {
-
-        @Override
-        protected void startUp() throws Exception {
-            if (!spokeFinalCheck.check()) {
-                logger.warn("unable to cleanly start!");
-                throw new RuntimeException("unable to cleanly start");
-            }
-            startup.set(false);
-        }
-
-        @Override
-        protected void shutDown() throws Exception {
-            shutdown();
-        }
     }
 
     public HealthStatus getStatus() {
@@ -75,6 +56,23 @@ public class HubHealthCheck {
     public void decommissionedDoNotRestart() {
         decommissionedWithinSpoke.set(false);
         decommissionedDoNotRestart.set(true);
+    }
+
+    private class HealthService extends AbstractIdleService {
+
+        @Override
+        protected void startUp() throws Exception {
+            if (!spokeFinalCheck.check()) {
+                logger.warn("unable to cleanly start!");
+                throw new RuntimeException("unable to cleanly start");
+            }
+            startup.set(false);
+        }
+
+        @Override
+        protected void shutDown() throws Exception {
+            shutdown();
+        }
     }
 
 }

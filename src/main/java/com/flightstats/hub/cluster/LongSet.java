@@ -23,6 +23,14 @@ public class LongSet {
         createNode();
     }
 
+    public static void delete(String path, CuratorFramework curator) {
+        try {
+            curator.delete().deletingChildrenIfNeeded().forPath(path);
+        } catch (Exception e) {
+            logger.warn("unable to delete {} {}", path, e.getMessage());
+        }
+    }
+
     private void createNode() {
         try {
             curator.create().creatingParentsIfNeeded().forPath(path);
@@ -66,13 +74,5 @@ public class LongSet {
 
     private String getValuePath(long value) {
         return path + "/" + value;
-    }
-
-    public static void delete(String path, CuratorFramework curator) {
-        try {
-            curator.delete().deletingChildrenIfNeeded().forPath(path);
-        } catch (Exception e) {
-            logger.warn("unable to delete {} {}", path, e.getMessage());
-        }
     }
 }

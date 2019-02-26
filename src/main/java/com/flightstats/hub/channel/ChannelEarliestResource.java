@@ -23,13 +23,22 @@ import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 public class ChannelEarliestResource {
 
     private final static Logger logger = LoggerFactory.getLogger(ChannelEarliestResource.class);
-
-    @Context
-    private UriInfo uriInfo;
-
     private final static TagEarliestResource tagEarliestResource = HubProvider.getInstance(TagEarliestResource.class);
     private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
+    @Context
+    private UriInfo uriInfo;
+
+    public static DirectionQuery getDirectionQuery(String channel, int count, boolean stable, String location, String epoch) {
+        return DirectionQuery.builder()
+                .channelName(channel)
+                .next(true)
+                .stable(stable)
+                .count(count)
+                .location(Location.valueOf(location))
+                .epoch(Epoch.valueOf(epoch))
+                .build();
+    }
 
     @GET
     public Response getEarliest(@PathParam("channel") String channel,
@@ -80,17 +89,6 @@ public class ChannelEarliestResource {
         } else {
             return LinkBuilder.directionalResponse(keys, count, query, mapper, uriInfo, false, trace, descending);
         }
-    }
-
-    public static DirectionQuery getDirectionQuery(String channel, int count, boolean stable, String location, String epoch) {
-        return DirectionQuery.builder()
-                .channelName(channel)
-                .next(true)
-                .stable(stable)
-                .count(count)
-                .location(Location.valueOf(location))
-                .epoch(Epoch.valueOf(epoch))
-                .build();
     }
 
 

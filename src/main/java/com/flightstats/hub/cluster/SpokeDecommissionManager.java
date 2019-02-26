@@ -46,18 +46,6 @@ public class SpokeDecommissionManager implements DecommissionManager {
         HubServices.register(new SpokeDecommissionManagerService(), HubServices.TYPE.BEFORE_HEALTH_CHECK);
     }
 
-    private class SpokeDecommissionManagerService extends AbstractIdleService {
-        @Override
-        protected void startUp() throws Exception {
-            startCheck();
-        }
-
-        @Override
-        protected void shutDown() throws Exception {
-            //do nothing
-        }
-    }
-
     @Override
     public boolean decommission() throws Exception {
         hubHealthCheck.decommissionWithinSpoke();
@@ -67,7 +55,6 @@ public class SpokeDecommissionManager implements DecommissionManager {
         scheduleDoNotRestart();
         return true;
     }
-
 
     @Override
     public void recommission(String server) throws Exception {
@@ -119,6 +106,18 @@ public class SpokeDecommissionManager implements DecommissionManager {
             shutdownManager.shutdown(false);
         } catch (Exception e) {
             logger.warn("unable to complete ", e);
+        }
+    }
+
+    private class SpokeDecommissionManagerService extends AbstractIdleService {
+        @Override
+        protected void startUp() throws Exception {
+            startCheck();
+        }
+
+        @Override
+        protected void shutDown() throws Exception {
+            //do nothing
         }
     }
 

@@ -22,12 +22,11 @@ import javax.ws.rs.core.UriInfo;
 @SuppressWarnings("WeakerAccess")
 @Path("/health")
 public class HealthResource {
-    @Context
-    private UriInfo uriInfo;
-
     private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private static final HubHealthCheck healthCheck = HubProvider.getInstance(HubHealthCheck.class);
     private static final HubVersion hubVersion = HubProvider.getInstance(HubVersion.class);
+    @Context
+    private UriInfo uriInfo;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

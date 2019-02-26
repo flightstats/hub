@@ -156,14 +156,13 @@ public class ContentKey implements ContentPath {
         if (o == this) return true;
         if (!(o instanceof ContentKey)) return false;
         final ContentKey other = (ContentKey) o;
-        if (!other.canEqual((Object) this)) return false;
+        if (!other.canEqual(this)) return false;
         final Object this$time = this.getTime();
         final Object other$time = other.getTime();
         if (this$time == null ? other$time != null : !this$time.equals(other$time)) return false;
         final Object this$hash = this.getHash();
         final Object other$hash = other.getHash();
-        if (this$hash == null ? other$hash != null : !this$hash.equals(other$hash)) return false;
-        return true;
+        return this$hash == null ? other$hash == null : this$hash.equals(other$hash);
     }
 
     public int hashCode() {

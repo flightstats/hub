@@ -55,5 +55,7 @@ class HostedGraphiteMetricsService implements MetricsService {
     }
 
     @Override
-    public void mute() {};
+    public void mute() {
+    }
+
 }

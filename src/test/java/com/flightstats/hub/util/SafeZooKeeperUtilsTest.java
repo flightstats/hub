@@ -1,6 +1,5 @@
 package com.flightstats.hub.util;
 
-import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.test.Integration;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;

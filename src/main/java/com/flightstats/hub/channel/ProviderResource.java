@@ -31,7 +31,7 @@ public class ProviderResource {
 
     private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
 
-    protected void ensureChannel(String channelName){
+    protected void ensureChannel(String channelName) {
         if (!channelService.channelExists(channelName)) {
             logger.info("creating new Provider channel " + channelName);
             ChannelConfig configuration = ChannelConfig.builder()
