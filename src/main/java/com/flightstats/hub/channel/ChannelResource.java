@@ -98,21 +98,21 @@ public class ChannelResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createChannel(@PathParam("channel") String channelName, String json) {
         logger.debug("put channel {} {}", channelName, json);
-        ChannelConfig newChannelConfig = ChannelConfig.createFromJsonWithName(json, channelName);
+        ChannelConfig channelConfig = ChannelConfig.createFromJsonWithName(json, channelName);
         
         ChannelConfig oldChannelConfig = channelService
                 .getChannelConfig(channelName, false)
-                .orElse(newChannelConfig);
+                .orElse(channelConfig);
 
 
-        logger.info("creating channel {} {}", newChannelConfig, newChannelConfig.getCreationDate().getTime());
-        newChannelConfig = channelService.updateChannel(
-                newChannelConfig,
+        logger.info("creating channel {} {}", channelConfig, channelConfig.getCreationDate().getTime());
+        ChannelConfig updatedChannelConfig = channelService.updateChannel(
+                channelConfig,
                 oldChannelConfig,
                 LocalHostOnly.isLocalhost(uriInfo));
 
-        URI channelUri = buildChannelUri(newChannelConfig.getDisplayName(), uriInfo);
-        ObjectNode output = buildChannelConfigResponse(newChannelConfig, uriInfo, channelName);
+        URI channelUri = buildChannelUri(updatedChannelConfig.getDisplayName(), uriInfo);
+        ObjectNode output = buildChannelConfigResponse(updatedChannelConfig, uriInfo, channelName);
         return Response.created(channelUri).entity(output).build();
     }
 
