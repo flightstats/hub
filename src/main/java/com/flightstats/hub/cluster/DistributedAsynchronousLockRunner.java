@@ -11,10 +11,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
- * CuratorLock is intended for long or short running processes.
+ * DistributedAsynchronousLockRunner is intended for long or short running processes.
  */
-public class CuratorLock {
-    private final static Logger logger = LoggerFactory.getLogger(CuratorLock.class);
+public class DistributedAsynchronousLockRunner {
+    private final static Logger logger = LoggerFactory.getLogger(DistributedAsynchronousLockRunner.class);
 
     private final CuratorFramework curator;
     private final ExecutorService singleThreadExecutor;
@@ -24,11 +24,11 @@ public class CuratorLock {
     private InterProcessSemaphoreMutex mutex;
 
     @Inject
-    public CuratorLock(CuratorFramework curator, ZooKeeperState zooKeeperState) {
+    public DistributedAsynchronousLockRunner(CuratorFramework curator, ZooKeeperState zooKeeperState) {
         this(curator, zooKeeperState, null);
     }
 
-    public CuratorLock(CuratorFramework curator, ZooKeeperState zooKeeperState, String lockPath) {
+    public DistributedAsynchronousLockRunner(CuratorFramework curator, ZooKeeperState zooKeeperState, String lockPath) {
         this.curator = curator;
         this.lockPath = lockPath;
         singleThreadExecutor = Executors.newSingleThreadExecutor();

@@ -59,7 +59,7 @@ class WebhookLeader implements Lockable {
     private WebhookStrategy webhookStrategy;
     private AtomicReference<ContentPath> lastUpdated = new AtomicReference<>();
     private String channelName;
-    private CuratorLock curatorLock;
+    private DistributedAsynchronousLockRunner distributedLockRunner;
 
     boolean tryLeadership(Webhook webhook) {
         log.debug("starting webhook: " + webhook);
@@ -69,8 +69,8 @@ class WebhookLeader implements Lockable {
             return false;
         } else {
             String leaderPath = WEBHOOK_LEADER + "/" + webhook.getName();
-            curatorLock = new CuratorLock(curator, zooKeeperState, leaderPath);
-            return curatorLock.runWithLock(this, 1, TimeUnit.SECONDS);
+            distributedLockRunner = new DistributedAsynchronousLockRunner(curator, zooKeeperState, leaderPath);
+            return distributedLockRunner.runWithLock(this, 1, TimeUnit.SECONDS);
         }
     }
 
@@ -258,13 +258,13 @@ class WebhookLeader implements Lockable {
         String name = webhook.getName();
         log.info("exiting webhook " + name + "deleting " + delete);
         deleteOnExit.set(delete);
-        if (null != curatorLock) {
-            curatorLock.stopWorking();
+        if (null != distributedLockRunner) {
+            distributedLockRunner.stopWorking();
         }
         closeStrategy();
         stopExecutor();
-        if (null != curatorLock) {
-            curatorLock.delete();
+        if (null != distributedLockRunner) {
+            distributedLockRunner.delete();
         }
         log.info("exited webhook " + name);
     }
