@@ -21,6 +21,10 @@ public class S3Batch {
         this.hubUtils = hubUtils;
     }
 
+    public static boolean isS3BatchCallback(String groupName) {
+        return StringUtils.startsWith(groupName, S3_BATCH);
+    }
+
     public void start() {
         Webhook webhook = buildS3BatchWebhook();
         hubUtils.startWebhook(webhook);
@@ -58,10 +62,6 @@ public class S3Batch {
 
     public void stop() {
         hubUtils.stopGroupCallback(getGroupName(), getChannelUrl());
-    }
-
-    public static boolean isS3BatchCallback(String groupName) {
-        return StringUtils.startsWith(groupName, S3_BATCH);
     }
 
 }

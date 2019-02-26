@@ -1,6 +1,14 @@
 package com.flightstats.hub.dao.aws;
 
-import com.amazonaws.services.s3.model.*;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
+import com.amazonaws.services.s3.model.DeleteObjectRequest;
+import com.amazonaws.services.s3.model.GetObjectRequest;
+import com.amazonaws.services.s3.model.ListObjectsRequest;
+import com.amazonaws.services.s3.model.ObjectListing;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentMarshaller;
@@ -13,7 +21,6 @@ import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Function;
-import com.google.common.base.Optional;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -25,7 +32,12 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketTimeoutException;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 @Singleton
 public class S3SingleContentDao implements ContentDao {
@@ -41,6 +53,20 @@ public class S3SingleContentDao implements ContentDao {
     private HubS3Client s3Client;
     @Inject
     private S3BucketName s3BucketName;
+
+    static ObjectMetadata createObjectMetadata(Content content, boolean useEncrypted) {
+        ObjectMetadata metadata = new ObjectMetadata();
+        if (content.getContentType().isPresent()) {
+            metadata.setContentType(content.getContentType().get());
+            metadata.addUserMetadata("type", content.getContentType().get());
+        } else {
+            metadata.addUserMetadata("type", "none");
+        }
+        if (useEncrypted) {
+            metadata.setSSEAlgorithm(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
+        }
+        return metadata;
+    }
 
     public void initialize() {
         s3Client.initialize();
@@ -204,7 +230,7 @@ public class S3SingleContentDao implements ContentDao {
     }
 
     private ContentKey addKeys(String channelName, ObjectListing listing, Set<ContentKey> keys) {
-        Optional<ContentKey> contentKey = Optional.absent();
+        Optional<ContentKey> contentKey = Optional.empty();
         List<S3ObjectSummary> summaries = listing.getObjectSummaries();
         for (S3ObjectSummary summary : summaries) {
             contentKey = ContentKey.fromUrl(StringUtils.substringAfter(summary.getKey(), channelName + "/"));
@@ -214,7 +240,7 @@ public class S3SingleContentDao implements ContentDao {
                 }
             }
         }
-        return contentKey.orNull();
+        return contentKey.orElse(null);
     }
 
     @Override
@@ -272,19 +298,5 @@ public class S3SingleContentDao implements ContentDao {
                 ActiveTraces.end();
             }
         }).start();
-    }
-
-    static ObjectMetadata createObjectMetadata(Content content, boolean useEncrypted) {
-        ObjectMetadata metadata = new ObjectMetadata();
-        if (content.getContentType().isPresent()) {
-            metadata.setContentType(content.getContentType().get());
-            metadata.addUserMetadata("type", content.getContentType().get());
-        } else {
-            metadata.addUserMetadata("type", "none");
-        }
-        if (useEncrypted) {
-            metadata.setSSEAlgorithm(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
-        }
-        return metadata;
     }
 }

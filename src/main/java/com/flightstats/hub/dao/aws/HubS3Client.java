@@ -39,6 +39,10 @@ public class HubS3Client {
     public HubS3Client() {
     }
 
+    private static String[] toStringArray(List<String> list) {
+        return list.toArray(new String[0]);
+    }
+
     public void initialize() {
         String bucketName = s3BucketName.getS3BucketName();
         logger.info("checking if bucket exists " + bucketName);
@@ -163,9 +167,5 @@ public class HubS3Client {
 
         tags.addAll(extraTags);
         metricsService.count("s3.error", 1, toStringArray(tags));
-    }
-
-    private static String[] toStringArray(List<String> list) {
-        return list.toArray(new String[0]);
     }
 }

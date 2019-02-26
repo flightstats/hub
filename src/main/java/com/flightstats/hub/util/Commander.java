@@ -39,10 +39,6 @@ public class Commander {
                 }));
     }
 
-    public String runInBash(String command, int waitTimeSeconds) {
-        return run(new String[]{"/bin/bash", "-c", command}, waitTimeSeconds);
-    }
-
     private static <T> T process(String[] command, int waitTimeSeconds, Function<InputStream, T> processor) {
         T output = null;
         try {
@@ -65,5 +61,9 @@ public class Commander {
             logger.warn("unable to run command " + StringUtils.join(" ", command), e);
         }
         return output;
+    }
+
+    public String runInBash(String command, int waitTimeSeconds) {
+        return run(new String[]{"/bin/bash", "-c", command}, waitTimeSeconds);
     }
 }

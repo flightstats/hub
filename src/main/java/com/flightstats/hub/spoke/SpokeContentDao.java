@@ -24,11 +24,9 @@ import java.util.TreeSet;
 import java.util.function.Function;
 
 public class SpokeContentDao {
-    private static final Logger logger = LoggerFactory.getLogger(SpokeContentDao.class);
-
     static final String GET_OLDEST_ITEM_COMMAND = "find %s -type f -printf '%%T+ %%p\\n' | sort | head -n 1";
     static final String GET_ITEM_COUNT_COMMAND = "find %s -type f | wc -l";
-
+    private static final Logger logger = LoggerFactory.getLogger(SpokeContentDao.class);
     private final Commander commander;
 
     @Inject

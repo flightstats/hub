@@ -78,7 +78,7 @@ public class InternalWebhookResource {
     @GET
     @Path("/configs")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response configs(){
+    public Response configs() {
         ObjectNode root = mapper.createObjectNode();
         ArrayNode arrayNode = root.putArray("webhooks");
         Collection<Webhook> webhooks = new TreeSet<>(webhookService.getAll());

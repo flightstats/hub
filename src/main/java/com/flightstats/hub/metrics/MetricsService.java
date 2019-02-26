@@ -4,12 +4,6 @@ import java.util.concurrent.Callable;
 
 public interface MetricsService {
 
-    enum Insert {
-        single,
-        historical,
-        bulk
-    }
-
     void insert(String channel, long start, Insert type, int items, long bytes);
 
     void event(String title, String text, String... tags);
@@ -39,5 +33,11 @@ public interface MetricsService {
 
     default boolean shouldLog(String channel) {
         return !channel.toLowerCase().startsWith("test_");
+    }
+
+    enum Insert {
+        single,
+        historical,
+        bulk
     }
 }

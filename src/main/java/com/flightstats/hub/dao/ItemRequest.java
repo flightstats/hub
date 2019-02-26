@@ -55,14 +55,13 @@ public class ItemRequest {
         if (o == this) return true;
         if (!(o instanceof ItemRequest)) return false;
         final ItemRequest other = (ItemRequest) o;
-        if (!other.canEqual((Object) this)) return false;
+        if (!other.canEqual(this)) return false;
         final Object this$channel = this.getChannel();
         final Object other$channel = other.getChannel();
         if (this$channel == null ? other$channel != null : !this$channel.equals(other$channel)) return false;
         final Object this$key = this.getKey();
         final Object other$key = other.getKey();
-        if (this$key == null ? other$key != null : !this$key.equals(other$key)) return false;
-        return true;
+        return this$key == null ? other$key == null : this$key.equals(other$key);
     }
 
     public int hashCode() {

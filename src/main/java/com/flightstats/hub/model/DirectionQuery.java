@@ -17,12 +17,6 @@ public class DirectionQuery implements Query {
     private final ChannelConfig channelConfig;
     @Wither
     private final String tagName;
-    /**
-     * The startKey is exclusive.
-     */
-    @Wither
-    private ContentKey startKey;
-    private boolean inclusive;
     @Wither
     private final int count;
     @Wither
@@ -31,18 +25,21 @@ public class DirectionQuery implements Query {
     private final Location location;
     @Wither
     private final boolean stable;
-
+    @Wither
+    private final DateTime channelStable;
+    @Wither
+    private final Epoch epoch;
+    /**
+     * The startKey is exclusive.
+     */
+    @Wither
+    private ContentKey startKey;
+    private boolean inclusive;
     /**
      * earliestTime is only relevant for previous queries.
      */
     @Wither
     private DateTime earliestTime;
-
-    @Wither
-    private final DateTime channelStable;
-
-    @Wither
-    private final Epoch epoch;
 
     public Location getLocation() {
         if (location == null) {

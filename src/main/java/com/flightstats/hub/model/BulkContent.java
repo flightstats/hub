@@ -41,10 +41,6 @@ public class BulkContent {
         return new BulkContentBuilder();
     }
 
-    public void setMasterKey(ContentKey masterKey) {
-        this.masterKey = masterKey;
-    }
-
     public long getSize() {
         long bytes = 0;
         for (Content item : items) {
@@ -52,7 +48,6 @@ public class BulkContent {
         }
         return bytes;
     }
-
 
     public boolean isNew() {
         return this.isNew;
@@ -76,6 +71,10 @@ public class BulkContent {
 
     public ContentKey getMasterKey() {
         return this.masterKey;
+    }
+
+    public void setMasterKey(ContentKey masterKey) {
+        this.masterKey = masterKey;
     }
 
     public BulkContent withChannel(String channel) {

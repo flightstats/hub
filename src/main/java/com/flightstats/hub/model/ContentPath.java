@@ -1,25 +1,14 @@
 package com.flightstats.hub.model;
 
-import com.google.common.base.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Optional;
+
 public interface ContentPath extends Comparable<ContentPath> {
     Logger logger = LoggerFactory.getLogger(ContentPath.class);
-
-    byte[] toBytes();
-
-    String toUrl();
-
-    DateTime getTime();
-
-    String toZk();
-
-    ContentPath fromZk(String value);
-
-    int compareTo(ContentPath other);
 
     static Optional<ContentPath> fromFullUrl(String url) {
         try {
@@ -28,7 +17,7 @@ public interface ContentPath extends Comparable<ContentPath> {
             return fromUrl(substring);
         } catch (Exception e) {
             logger.info("unable to parse " + url + " " + e.getMessage());
-            return Optional.absent();
+            return Optional.empty();
         }
     }
 
@@ -45,7 +34,19 @@ public interface ContentPath extends Comparable<ContentPath> {
         if (secondPathOptional.isPresent()) {
             return Optional.of(secondPathOptional.get());
         }
-        return Optional.absent();
+        return Optional.empty();
     }
+
+    byte[] toBytes();
+
+    String toUrl();
+
+    DateTime getTime();
+
+    String toZk();
+
+    ContentPath fromZk(String value);
+
+    int compareTo(ContentPath other);
 
 }

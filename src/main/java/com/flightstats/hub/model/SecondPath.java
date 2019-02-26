@@ -1,7 +1,6 @@
 package com.flightstats.hub.model;
 
 import com.flightstats.hub.util.TimeUtil;
-import com.google.common.base.Optional;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
@@ -10,16 +9,15 @@ import org.slf4j.LoggerFactory;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Optional;
 
 /**
  * A SecondPath represents the end of a second period.
  * So any ContentKeys contained within that second come before the SecondPath.
  */
 public class SecondPath implements ContentPathKeys {
-    private final static Logger logger = LoggerFactory.getLogger(SecondPath.class);
-
     public static final SecondPath NONE = new SecondPath(new DateTime(1, DateTimeZone.UTC));
-
+    private final static Logger logger = LoggerFactory.getLogger(SecondPath.class);
     private final DateTime time;
     private final Collection<ContentKey> keys;
 
@@ -34,6 +32,19 @@ public class SecondPath implements ContentPathKeys {
 
     public SecondPath() {
         this(TimeUtil.now().minusSeconds(1));
+    }
+
+    public static SecondPath fromBytes(byte[] bytes) {
+        return fromUrl(new String(bytes, StandardCharsets.UTF_8)).get();
+    }
+
+    public static Optional<SecondPath> fromUrl(String key) {
+        try {
+            return Optional.of(new SecondPath(TimeUtil.seconds(key)));
+        } catch (Exception e) {
+            logger.info("unable to parse " + key + " " + e.getMessage());
+            return Optional.empty();
+        }
     }
 
     @Override
@@ -70,19 +81,6 @@ public class SecondPath implements ContentPathKeys {
         }
     }
 
-    public static SecondPath fromBytes(byte[] bytes) {
-        return fromUrl(new String(bytes, StandardCharsets.UTF_8)).get();
-    }
-
-    public static Optional<SecondPath> fromUrl(String key) {
-        try {
-            return Optional.of(new SecondPath(TimeUtil.seconds(key)));
-        } catch (Exception e) {
-            logger.info("unable to parse " + key + " " + e.getMessage());
-            return Optional.absent();
-        }
-    }
-
     @Override
     public String toString() {
         return toUrl();
@@ -100,11 +98,10 @@ public class SecondPath implements ContentPathKeys {
         if (o == this) return true;
         if (!(o instanceof SecondPath)) return false;
         final SecondPath other = (SecondPath) o;
-        if (!other.canEqual((Object) this)) return false;
+        if (!other.canEqual(this)) return false;
         final Object this$time = this.getTime();
         final Object other$time = other.getTime();
-        if (this$time == null ? other$time != null : !this$time.equals(other$time)) return false;
-        return true;
+        return this$time == null ? other$time == null : this$time.equals(other$time);
     }
 
     public int hashCode() {

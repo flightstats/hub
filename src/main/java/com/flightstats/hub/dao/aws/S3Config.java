@@ -14,7 +14,6 @@ import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.util.TimeUtil;
-import com.google.common.base.Optional;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -31,8 +30,8 @@ public class S3Config {
     private final CuratorLock curatorLock;
     private final Dao<ChannelConfig> channelConfigDao;
     private final String s3BucketName;
-    private ChannelService channelService;
     private final HubS3Client s3Client;
+    private ChannelService channelService;
 
     @Inject
     public S3Config(HubS3Client s3Client, S3BucketName s3BucketName, CuratorLock curatorLock,

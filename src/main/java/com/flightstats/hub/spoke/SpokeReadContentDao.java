@@ -7,13 +7,13 @@ import com.flightstats.hub.exception.FailedQueryException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
-import com.google.common.base.Optional;
 import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.SortedSet;
 
 public class SpokeReadContentDao implements ContentDao {

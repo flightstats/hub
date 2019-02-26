@@ -1,5 +1,5 @@
 ---
-title: Inserting into channels
+title: Writing items to channel
 keywords: channel
 last_updated: July 3, 2016
 tags: [channel]
@@ -10,10 +10,9 @@ folder: hub
 ---
 
 
-## insert individual payloads {#individual}
+## Write individual items {#individual}
 
-To insert data to a channel, issue a POST on the channel's `self` URI and specify the appropriate
-content-type header (all content types should be supported).  The `Content-Encoding` header is optional.
+All content types should be supported.  The `Content-Encoding` header is optional.
 
 Clustered Hubs using AWS have a configurable max item size, the default is 390 GB.
 A singleHub which only uses Spoke has a default max item size of 40 MB, which is [configurable](hub_install_locally.html)
@@ -33,17 +32,18 @@ On success: `HTTP/1.1 201 Created`
 
 ```json
 {
-  "_links" : {
-    "channel" : {
-      "href" : "http://hub/channel/stumptown"
+  "timestamp": "2019-02-22T17:59:51.793Z",
+  "_links": {
+    "channel": {
+      "href": "http://hub/channel/stumptown"
     },
-    "self" : {
-      "href" : "http://hub/channel/stumptown/2013/04/23/20/42/31/749/{hash}"
+    "self": {
+      "href": "http://hub/channel/stumptown/2019/02/22/17/59/51/793/G4Xog0"
     }
-  },
-  "timestamp" : "2013-04-23T20:42:31.146Z"
+  }
 }
 ```
+
 
 Here's how you could do this with curl:
 
@@ -57,7 +57,7 @@ Here's how you could insert a ZIP file with curl:
 curl -X POST -H "Content-Type: application/zip" --data-binary @coffee.zip http://hub/channel/stumptown
 ```
 
-## bulk insert content into channel {#bulk}
+## Write items in bulk to the channel {#bulk}
 
 If your data source will be writing a lot of data per second - or have very large spikes of data in a short amount of time,
 consider doing bulk inserts.  This is an optimized way of writing a lot of data that will put less load on the Hub.
@@ -94,19 +94,19 @@ On success: `HTTP/1.1 201 Created`
 
 ```json
 {
-  "_links" : {
-    "channel" : {
-      "href" : "http://hub/channel/stumptown"
-    },
-    "uris" : [
-      "http://hub/channel/stumptown/2013/04/23/20/42/31/749/{hash}000",
-      "http://hub/channel/stumptown/2013/04/23/20/42/31/749/{hash}001"
-    ]
-  }
-}
+   "_links": {
+     "self": {
+       "href": "http://hub/channel/stumptown/2019/02/22/17/36/52/977/GQa3SX/next/2?stable=false"
+     },
+     "uris": [
+       "http://hub/channel/stumptown/2019/02/22/17/36/52/977/GQa3SX000000",
+       "http://hub/channel/stumptown/2019/02/22/17/36/52/977/GQa3SX000001"
+     ]
+   }
+ }
 ```
 
-## provider interface {#provider}
+## Provider interface {#provider}
 
 For external data providers, there is a simplified interface suitable for exposing to the authenticated outside world.
 
@@ -118,7 +118,7 @@ For external data providers, there is a simplified interface suitable for exposi
 * does not return any links
 * access by external data providers is controlled through a proxy maintained by Operations
 
-### provider bulk {#providerBulk}
+### Provider bulk {#providerBulk}
 `POST http://hub/provider/bulk`
 
 This API allows bulk uploading to the provider interface.  It works just like the provider interface, except the uploaded payload is a multipart message.  You must still provide the `channelName` in the header.   See [bulk](#bulk) for more info on how to compose the multipart bulk payload.

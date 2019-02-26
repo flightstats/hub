@@ -28,3 +28,9 @@ The hub is a long term data store.
 * Many messaging systems are difficult to cluster
 * Many messaging system require custom clients
 
+
+### How to build hub:
+
+Run ./gradlew build
+
+The above command compiles the code, runs the unit tests and integration tests.~~~~

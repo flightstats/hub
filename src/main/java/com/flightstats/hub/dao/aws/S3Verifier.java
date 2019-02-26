@@ -40,7 +40,6 @@ import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class S3Verifier {
-
     static final String LAST_SINGLE_VERIFIED = "/S3VerifierSingleLastVerified/";
     private final static Logger logger = LoggerFactory.getLogger(S3Verifier.class);
     private static final String LEADER_PATH = "/S3VerifierSingleService";
@@ -70,8 +69,7 @@ public class S3Verifier {
                       Client httpClient,
                       ZooKeeperState zooKeeperState,
                       CuratorFramework curator,
-                      MetricsService metricsService)
-    {
+                      MetricsService metricsService) {
         this.lastContentPath = lastContentPath;
         this.channelService = channelService;
         this.spokeWriteContentDao = spokeWriteContentDao;

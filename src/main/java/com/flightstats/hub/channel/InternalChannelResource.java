@@ -11,7 +11,6 @@ import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.HubUtils;
-import com.google.common.base.Optional;
 import com.google.inject.TypeLiteral;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -21,6 +20,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.net.URI;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 

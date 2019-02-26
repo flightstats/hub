@@ -4,7 +4,6 @@ import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
-import com.google.common.base.Optional;
 import com.google.common.collect.Sets;
 import com.google.inject.TypeLiteral;
 import org.apache.commons.lang3.StringUtils;
@@ -14,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
