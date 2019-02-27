@@ -186,7 +186,7 @@ class TimedWebhookStrategy implements WebhookStrategy {
                     nextTime = lastAdded.getTime();
                 }
                 DateTime stable = TimeUtil.stable().minus(duration);
-                if (channelService.isNotLiveChannel(channel, true)) {
+                if (!channelService.isLiveChannel(channel, true)) {
                     ContentPath contentPath = channelService.getLastUpdated(channel, getNone.get());
                     DateTime replicatedStable = getReplicatingStable.apply(contentPath);
                     if (replicatedStable.isBefore(stable)) {
