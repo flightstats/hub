@@ -98,23 +98,25 @@ public class ChannelResource {
     @PUT
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response createChannel(@PathParam("channel") String channelName, String json) {
+    public Response createOrUpdateChannel(@PathParam("channel") String channelName, String json) {
         logger.debug("put channel {} {}", channelName, json);
-        ChannelConfig channelConfig = ChannelConfig.createFromJsonWithName(json, channelName);
-        
-        ChannelConfig oldChannelConfig = channelService
-                .getChannelConfig(channelName, false)
-                .orElse(channelConfig);
+        Optional<ChannelConfig> existing = channelService
+                .getCachedChannelConfig(channelName);
 
+        ChannelConfig createOrUpdate = ChannelConfig.createFromJsonWithName(json, channelName);
 
-        logger.info("creating channel {} {}", channelConfig, channelConfig.getCreationDate().getTime());
-        ChannelConfig updatedChannelConfig = channelService.updateChannel(
-                channelConfig,
-                oldChannelConfig,
-                LocalHostOnly.isLocalhost(uriInfo));
+        if (existing.isPresent()) {
+            channelService.updateChannel(
+                    createOrUpdate,
+                    existing.get(),
+                    LocalHostOnly.isLocalhost(uriInfo));
+        } else {
+            channelService.createChannel(createOrUpdate);
+        }
 
-        URI channelUri = buildChannelUri(updatedChannelConfig.getDisplayName(), uriInfo);
-        ObjectNode output = buildChannelConfigResponse(updatedChannelConfig, uriInfo, channelName);
+        logger.info("created or updated channel {} {}", createOrUpdate, createOrUpdate.getCreationDate().getTime());
+        URI channelUri = buildChannelUri(createOrUpdate.getDisplayName(), uriInfo);
+        ObjectNode output = buildChannelConfigResponse(createOrUpdate, uriInfo, channelName);
         return Response.created(channelUri).entity(output).build();
     }
 
