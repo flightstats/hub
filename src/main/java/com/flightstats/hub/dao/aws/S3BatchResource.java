@@ -43,13 +43,13 @@ public class S3BatchResource {
                 .accept("application/zip")
                 .get(ClientResponse.class);
         if (response.getStatus() != 200) {
-             logger.warn("unable to get data for {} {}", channel, response);
-             return false;
+            logger.warn("unable to get data for {} {}", channel, response);
+            return false;
         }
         ActiveTraces.getLocal().add("S3BatchResource.getAndWriteBatch got response");
         byte[] bytes = response.getEntity(byte[].class);
 
-        if(!verifyZipBytes(bytes)) {
+        if (!verifyZipBytes(bytes)) {
             metricsService.increment("batch.invalid_zip");
             logger.warn("S3BatchResource failed zip verification for keys: {}, channel: {}", keys, channel);
             return false;
@@ -60,11 +60,11 @@ public class S3BatchResource {
         return true;
     }
 
-    private static boolean verifyZipBytes(byte[] bytes)  {
+    private static boolean verifyZipBytes(byte[] bytes) {
         ZipInputStream zis = new ZipInputStream(new ByteArrayInputStream(bytes));
         try {
             while (zis.getNextEntry() != null) ;
-        }catch(Exception exception) {
+        } catch (Exception exception) {
             return false;
         }
         return true;

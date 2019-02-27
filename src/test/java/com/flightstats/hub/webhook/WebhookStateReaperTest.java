@@ -11,12 +11,14 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -26,6 +28,7 @@ public class WebhookStateReaperTest {
     private LastContentPath lastContentPath;
     private WebhookContentPathSet webhookInProcess;
     private WebhookErrorService webhookErrorService;
+    private WebhookLeaderLocks webhookLeaderLocks;
 
     private static final String webhookName = "onTheHook";
     private static final DateTime start = new DateTime(2014, 12, 3, 20, 45, DateTimeZone.UTC);
@@ -38,16 +41,22 @@ public class WebhookStateReaperTest {
 
     @Before
     @SuppressWarnings("unchecked")
-    public void setup() {
+    public void setup() throws Exception {
         ChannelService channelService = mock(ChannelService.class);
         SafeZooKeeperUtils zooKeeperUtils = new SafeZooKeeperUtils(curator);
         WebhookErrorRepository.ErrorNodeNameGenerator nameGenerator = new WebhookErrorRepository.ErrorNodeNameGenerator();
         WebhookErrorRepository webhookErrorRepository = new WebhookErrorRepository(zooKeeperUtils, nameGenerator);
         WebhookErrorPruner webhookErrorPruner = new WebhookErrorPruner(webhookErrorRepository);
 
+        webhookLeaderLocks = new WebhookLeaderLocks(zooKeeperUtils);
         lastContentPath = new LastContentPath(curator);
         webhookErrorService = new WebhookErrorService(webhookErrorRepository, webhookErrorPruner, channelService);
         webhookInProcess = new WebhookContentPathSet(zooKeeperUtils);
+    }
+
+    @After
+    public void teardown() throws Exception {
+        curator.delete().deletingChildrenIfNeeded().forPath("/");
     }
 
     @Test
@@ -56,15 +65,17 @@ public class WebhookStateReaperTest {
         addLastCompleted(webhookName);
         addWebhookInProcess(webhookName);
         addError(webhookName);
+        addWebhookLeader(webhookName);
 
         // WHEN
-        WebhookStateReaper reaper = new WebhookStateReaper(lastContentPath, webhookInProcess, webhookErrorService);
+        WebhookStateReaper reaper = new WebhookStateReaper(lastContentPath, webhookInProcess, webhookErrorService, webhookLeaderLocks);
         reaper.delete(webhookName);
 
         // THEN
         assertLastCompletedDeleted(webhookName);
         assertErrorDeleted(webhookName);
         assertWebhookInProcessDeleted(webhookName);
+        assertWebhookLeaderDeleted(webhookName);
     }
 
     @Test
@@ -72,15 +83,17 @@ public class WebhookStateReaperTest {
         // GIVEN
         addLastCompleted(webhookName);
         addWebhookInProcess(webhookName);
+        addWebhookLeader(webhookName);
 
         // WHEN
-        WebhookStateReaper reaper = new WebhookStateReaper(lastContentPath, webhookInProcess, webhookErrorService);
+        WebhookStateReaper reaper = new WebhookStateReaper(lastContentPath, webhookInProcess, webhookErrorService, webhookLeaderLocks);
         reaper.delete(webhookName);
 
         // THEN
         assertLastCompletedDeleted(webhookName);
         assertErrorDeleted(webhookName);
         assertWebhookInProcessDeleted(webhookName);
+        assertWebhookLeaderDeleted(webhookName);
     }
 
     @Test
@@ -88,15 +101,17 @@ public class WebhookStateReaperTest {
         // GIVEN
         addLastCompleted(webhookName);
         addError(webhookName);
+        addWebhookLeader(webhookName);
 
         // WHEN
-        WebhookStateReaper reaper = new WebhookStateReaper(lastContentPath, webhookInProcess, webhookErrorService);
+        WebhookStateReaper reaper = new WebhookStateReaper(lastContentPath, webhookInProcess, webhookErrorService, webhookLeaderLocks);
         reaper.delete(webhookName);
 
         // THEN
         assertLastCompletedDeleted(webhookName);
         assertErrorDeleted(webhookName);
         assertWebhookInProcessDeleted(webhookName);
+        assertWebhookLeaderDeleted(webhookName);
     }
 
     @Test
@@ -104,16 +119,37 @@ public class WebhookStateReaperTest {
         // GIVEN
         addWebhookInProcess(webhookName);
         addError(webhookName);
+        addWebhookLeader(webhookName);
 
         // WHEN
-        WebhookStateReaper reaper = new WebhookStateReaper(lastContentPath, webhookInProcess, webhookErrorService);
+        WebhookStateReaper reaper = new WebhookStateReaper(lastContentPath, webhookInProcess, webhookErrorService, webhookLeaderLocks);
         reaper.delete(webhookName);
 
         // THEN
         assertLastCompletedDeleted(webhookName);
         assertErrorDeleted(webhookName);
         assertWebhookInProcessDeleted(webhookName);
+        assertWebhookLeaderDeleted(webhookName);
     }
+
+    @Test
+    public void testCleansUpZookeeperNodesRelatedToState_whenNoWebhookLeader() throws Exception {
+        // GIVEN
+        addLastCompleted(webhookName);
+        addWebhookInProcess(webhookName);
+        addError(webhookName);
+
+        // WHEN
+        WebhookStateReaper reaper = new WebhookStateReaper(lastContentPath, webhookInProcess, webhookErrorService, webhookLeaderLocks);
+        reaper.delete(webhookName);
+
+        // THEN
+        assertLastCompletedDeleted(webhookName);
+        assertErrorDeleted(webhookName);
+        assertWebhookInProcessDeleted(webhookName);
+        assertWebhookLeaderDeleted(webhookName);
+    }
+
 
     private void addLastCompleted(String webhook) throws Exception {
         lastContentPath.initialize(webhook, key, WebhookLeader.WEBHOOK_LAST_COMPLETED);
@@ -130,6 +166,13 @@ public class WebhookStateReaperTest {
         assertErrorExists(webhook);
     }
 
+    private void addWebhookLeader(String webhook) throws Exception {
+        String path = WebhookLeaderLocks.WEBHOOK_LEADER + "/" + webhook + "/leases/someLease";
+        curator.create().creatingParentContainersIfNeeded().forPath(path);
+        curator.setData().forPath(path, "foo".getBytes());
+        assertWebhookLeaderExists(webhook);
+    }
+
     private void assertLastCompletedExists(String webhook) throws Exception {
         assertTrue(curator.getData().forPath(WebhookLeader.WEBHOOK_LAST_COMPLETED + webhook).length > 0);
     }
@@ -140,6 +183,10 @@ public class WebhookStateReaperTest {
 
     private void assertErrorExists(String webhook) {
         assertEquals(1, webhookErrorService.lookup(webhook).size());
+    }
+
+    private void assertWebhookLeaderExists(String webhook) {
+        assertFalse(webhookLeaderLocks.getServerLeases(webhook).isEmpty());
     }
 
     private void assertLastCompletedDeleted(String webhook) {
@@ -153,5 +200,9 @@ public class WebhookStateReaperTest {
 
     private void assertWebhookInProcessDeleted(String webhook) {
         assertTrue(webhookInProcess.getSet(webhook, key).isEmpty());
+    }
+
+    private void assertWebhookLeaderDeleted(String webhook) {
+        assertFalse(webhookLeaderLocks.getWebhooks().contains(webhook));
     }
 }

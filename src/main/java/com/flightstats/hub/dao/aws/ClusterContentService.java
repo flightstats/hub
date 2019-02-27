@@ -64,9 +64,9 @@ public class ClusterContentService implements ContentService {
     private final static Logger logger = LoggerFactory.getLogger(ClusterContentService.class);
     private static final String CHANNEL_LATEST_UPDATED = "/ChannelLatestUpdated/";
     private static final long largePayload = HubProperties.getLargePayload();
-    private final boolean dropSomeWrites = HubProperties.getProperty("s3.dropSomeWrites", false);
     private static final int queryMergeMaxWaitMinutes = HubProperties.getProperty("query.merge.max.wait.minutes", 2);
-
+    private static final ExecutorService executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("ClusterContentService-%d").build());
+    private final boolean dropSomeWrites = HubProperties.getProperty("s3.dropSomeWrites", false);
     @Inject
     @Named(ContentDao.WRITE_CACHE)
     private ContentDao spokeWriteContentDao;
@@ -91,11 +91,38 @@ public class ClusterContentService implements ContentService {
     @Inject
     private HubUtils hubUtils;
 
-    private static final ExecutorService executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("ClusterContentService-%d").build());
-
     public ClusterContentService() {
         HubServices.registerPreStop(new SpokeS3ContentServiceInit());
         HubServices.register(new ChannelLatestUpdatedService(), HubServices.TYPE.AFTER_HEALTHY_START);
+    }
+
+    private static SortedSet<ContentKey> query(Function<ContentDao, SortedSet<ContentKey>> daoQuery, List<ContentDao> contentDaos) {
+        try {
+            QueryResult queryResult = new QueryResult(contentDaos.size());
+            CountDownLatch latch = new CountDownLatch(contentDaos.size());
+            Traces traces = ActiveTraces.getLocal();
+            String threadName = Thread.currentThread().getName();
+            for (ContentDao contentDao : contentDaos) {
+                executorService.submit(() -> {
+                    Thread.currentThread().setName(contentDao.getClass().getSimpleName() + "|" + threadName);
+                    ActiveTraces.setLocal(traces);
+                    try {
+                        queryResult.addKeys(daoQuery.apply(contentDao));
+                    } finally {
+                        latch.countDown();
+                    }
+                });
+            }
+            latch.await(queryMergeMaxWaitMinutes, TimeUnit.MINUTES);
+            if (queryResult.hadSuccess()) {
+                return queryResult.getContentKeys();
+            } else {
+                traces.add("unable to complete query ", queryResult);
+                throw new FailedQueryException("unable to complete query " + queryResult + " " + threadName);
+            }
+        } catch (InterruptedException e) {
+            throw new RuntimeInterruptedException(e);
+        }
     }
 
     @Override
@@ -306,35 +333,6 @@ public class ClusterContentService implements ContentService {
             }
         }
         return query(daoQuery, daos);
-    }
-
-    private static SortedSet<ContentKey> query(Function<ContentDao, SortedSet<ContentKey>> daoQuery, List<ContentDao> contentDaos) {
-        try {
-            QueryResult queryResult = new QueryResult(contentDaos.size());
-            CountDownLatch latch = new CountDownLatch(contentDaos.size());
-            Traces traces = ActiveTraces.getLocal();
-            String threadName = Thread.currentThread().getName();
-            for (ContentDao contentDao : contentDaos) {
-                executorService.submit(() -> {
-                    Thread.currentThread().setName(contentDao.getClass().getSimpleName() + "|" + threadName);
-                    ActiveTraces.setLocal(traces);
-                    try {
-                        queryResult.addKeys(daoQuery.apply(contentDao));
-                    } finally {
-                        latch.countDown();
-                    }
-                });
-            }
-            latch.await(queryMergeMaxWaitMinutes, TimeUnit.MINUTES);
-            if (queryResult.hadSuccess()) {
-                return queryResult.getContentKeys();
-            } else {
-                traces.add("unable to complete query ", queryResult);
-                throw new FailedQueryException("unable to complete query " + queryResult + " " + threadName);
-            }
-        } catch (InterruptedException e) {
-            throw new RuntimeInterruptedException(e);
-        }
     }
 
     @Override

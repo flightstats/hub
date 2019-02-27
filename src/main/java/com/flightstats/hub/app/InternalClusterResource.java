@@ -24,12 +24,11 @@ import java.util.TreeSet;
 @SuppressWarnings("WeakerAccess")
 @Path("/internal/cluster")
 public class InternalClusterResource {
+    public static final String DESCRIPTION = "Information about the cluster and decommissioning nodes.";
     private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private static final Cluster spokeCluster = HubProvider.getInstance(Cluster.class, "SpokeCluster");
     private static final DecommissionManager decommissionManager = HubProvider.getInstance(SpokeDecommissionManager.class);
     private static final SpokeDecommissionCluster decommissionCluster = HubProvider.getInstance(SpokeDecommissionCluster.class);
-
-    public static final String DESCRIPTION = "Information about the cluster and decommissioning nodes.";
     private @Context
     UriInfo uriInfo;
 

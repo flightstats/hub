@@ -53,10 +53,6 @@ public class ActiveTraces {
         }
     }
 
-    public static void setLocal(Traces traces) {
-        threadLocal.set(traces);
-    }
-
     public static Traces getLocal() {
         Traces traces = threadLocal.get();
         if (traces == null) {
@@ -68,6 +64,10 @@ public class ActiveTraces {
             start(traces);
         }
         return traces;
+    }
+
+    public static void setLocal(Traces traces) {
+        threadLocal.set(traces);
     }
 
     public static void log(ObjectNode root) {

@@ -16,10 +16,8 @@ import java.util.Optional;
  * So any ContentKeys contained within that minute come before the MinutePath.
  */
 public class MinutePath implements ContentPathKeys {
-    private final static Logger logger = LoggerFactory.getLogger(MinutePath.class);
-
     public static final MinutePath NONE = new MinutePath(new DateTime(1, DateTimeZone.UTC));
-
+    private final static Logger logger = LoggerFactory.getLogger(MinutePath.class);
     private final DateTime time;
     private final Collection<ContentKey> keys;
 
@@ -34,6 +32,19 @@ public class MinutePath implements ContentPathKeys {
 
     public MinutePath() {
         this(TimeUtil.now().minusMinutes(1));
+    }
+
+    public static MinutePath fromBytes(byte[] bytes) {
+        return fromUrl(new String(bytes, StandardCharsets.UTF_8)).get();
+    }
+
+    public static Optional<MinutePath> fromUrl(String key) {
+        try {
+            return Optional.of(new MinutePath(TimeUtil.minutes(key)));
+        } catch (Exception e) {
+            logger.trace("unable to parse {} {}", key, e.getMessage());
+            return Optional.empty();
+        }
     }
 
     @Override
@@ -70,19 +81,6 @@ public class MinutePath implements ContentPathKeys {
         }
     }
 
-    public static MinutePath fromBytes(byte[] bytes) {
-        return fromUrl(new String(bytes, StandardCharsets.UTF_8)).get();
-    }
-
-    public static Optional<MinutePath> fromUrl(String key) {
-        try {
-            return Optional.of(new MinutePath(TimeUtil.minutes(key)));
-        } catch (Exception e) {
-            logger.trace("unable to parse {} {}", key, e.getMessage());
-            return Optional.empty();
-        }
-    }
-
     @Override
     public String toString() {
         return toUrl();
@@ -104,11 +102,10 @@ public class MinutePath implements ContentPathKeys {
         if (o == this) return true;
         if (!(o instanceof MinutePath)) return false;
         final MinutePath other = (MinutePath) o;
-        if (!other.canEqual((Object) this)) return false;
+        if (!other.canEqual(this)) return false;
         final Object this$time = this.getTime();
         final Object other$time = other.getTime();
-        if (this$time == null ? other$time != null : !this$time.equals(other$time)) return false;
-        return true;
+        return this$time == null ? other$time == null : this$time.equals(other$time);
     }
 
     public int hashCode() {

@@ -37,18 +37,6 @@ public class S3BatchManager {
         HubServices.register(new S3BatchManagerService(), HubServices.TYPE.AFTER_HEALTHY_START);
     }
 
-    private class S3BatchManagerService extends AbstractIdleService {
-
-        @Override
-        protected void startUp() throws Exception {
-            Executors.newSingleThreadExecutor().submit(S3BatchManager.this::setupBatch);
-        }
-
-        @Override
-        protected void shutDown() throws Exception {
-        }
-    }
-
     private void setupBatch() {
         Set<String> existingBatchGroups = new HashSet<>();
         Iterable<Webhook> groups = webhookService.getAllCached();
@@ -73,6 +61,18 @@ public class S3BatchManager {
         for (String groupName : existingBatchGroups) {
             logger.info("stopping unused batch webhook {}", groupName);
             webhookService.delete(groupName);
+        }
+    }
+
+    private class S3BatchManagerService extends AbstractIdleService {
+
+        @Override
+        protected void startUp() throws Exception {
+            Executors.newSingleThreadExecutor().submit(S3BatchManager.this::setupBatch);
+        }
+
+        @Override
+        protected void shutDown() throws Exception {
         }
     }
 
