@@ -4,9 +4,8 @@ import com.flightstats.hub.util.SafeZooKeeperUtils;
 import com.flightstats.hub.util.StringUtils;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.annotations.VisibleForTesting;
+import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.util.HashSet;
@@ -16,8 +15,8 @@ import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 
+@Slf4j
 public class WebhookErrorRepository {
-    private static final Logger logger = LoggerFactory.getLogger(WebhookErrorRepository.class);
     private static final String BASE_PATH = "/GroupError";
 
     private final SafeZooKeeperUtils zooKeeperUtils;
@@ -34,7 +33,7 @@ public class WebhookErrorRepository {
     }
 
     public void deleteWebhook(String webhook) {
-        logger.info("deleting webhook errors for " + webhook);
+        log.info("deleting webhook errors for " + webhook);
         zooKeeperUtils.deletePathAndChildren(BASE_PATH, webhook);
     }
 
