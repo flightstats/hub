@@ -1,96 +1,154 @@
 package com.flightstats.hub.metrics;
 
+import com.flightstats.hub.dao.CachedDao;
+import com.flightstats.hub.dao.CachedLowerCaseDao;
+import com.flightstats.hub.dao.Dao;
+import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.webhook.Webhook;
 import com.timgroup.statsd.NoOpStatsDClient;
 import com.timgroup.statsd.NonBlockingStatsDClient;
 import org.junit.Test;
-import java.util.Collections;
+
+import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class StatsDFilterTest {
 
     @Test
+    @SuppressWarnings("unchecked")
+    // suppressing the unchecked warning here, the cast to Dao<T> is safe in this case
     public void testStatsDFilterGetAllClients_twoNoOpClients() {
         MetricsConfig metricsConfig = MetricsConfig.builder().build();
-        DataDogWhitelist dataDogWhitelist = DataDogWhitelist.builder().build();
-        StatsDFilter statsDFilter = new StatsDFilter(dataDogWhitelist, metricsConfig);
-        assertEquals(2, statsDFilter.getAllClients().size());
-        assertEquals(NoOpStatsDClient.class, statsDFilter.getAllClients().get(0).getClass());
-        assertEquals(NoOpStatsDClient.class, statsDFilter.getAllClients().get(1).getClass());
+        Dao<ChannelConfig> channelConfigDao = (Dao<ChannelConfig>) mock(CachedLowerCaseDao.class);
+        Dao<Webhook> webhookDao =  (Dao<Webhook>) mock(CachedDao.class);
+        StatsDFilter statsDFilter = new StatsDFilter(metricsConfig, channelConfigDao, webhookDao);
+        assertEquals(2, statsDFilter.getFilteredClients(true).size());
+        assertEquals(NoOpStatsDClient.class, statsDFilter.getFilteredClients(true).get(0).getClass());
+        assertEquals(NoOpStatsDClient.class, statsDFilter.getFilteredClients(true).get(1).getClass());
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testStatsDFilterGetAllClients_twoCustomClients() {
         MetricsConfig metricsConfig = MetricsConfig.builder().build();
-        DataDogWhitelist dataDogWhitelist = DataDogWhitelist.builder().build();
-        StatsDFilter statsDFilter = new StatsDFilter(dataDogWhitelist, metricsConfig);
+        Dao<ChannelConfig> channelConfigDao = (Dao<ChannelConfig>) mock(CachedLowerCaseDao.class);
+        Dao<Webhook> webhookDao =  (Dao<Webhook>) mock(CachedDao.class);
+        StatsDFilter statsDFilter = new StatsDFilter(metricsConfig, channelConfigDao, webhookDao);
         statsDFilter.setOperatingClients();
-        assertEquals(2, statsDFilter.getAllClients().size());
-        assertEquals(NonBlockingStatsDClient.class, statsDFilter.getAllClients().get(0).getClass());
-        assertEquals(NonBlockingStatsDClient.class, statsDFilter.getAllClients().get(1).getClass());
+        assertEquals(2, statsDFilter.getFilteredClients(true).size());
+        assertEquals(NonBlockingStatsDClient.class, statsDFilter.getFilteredClients(true).get(0).getClass());
+        assertEquals(NonBlockingStatsDClient.class, statsDFilter.getFilteredClients(true).get(1).getClass());
     }
 
     @Test
-    public void testStatsDFilterGetFilteredClients_throwsOnNoWhiteList() {
-        MetricsConfig metricsConfig = MetricsConfig.builder().build();
-        DataDogWhitelist dataDogWhitelist = DataDogWhitelist
-                .builder()
-                .build();
-        StatsDFilter statsDFilter = new StatsDFilter(dataDogWhitelist, metricsConfig);
-        try {
-            statsDFilter.getFilteredClients("testChannelName");
-        } catch (Exception ex) {
-            assertEquals(NullPointerException.class, ex.getClass());
-        }
-    }
-
-    @Test
+    @SuppressWarnings("unchecked")
     public void testStatsDFilterGetFilteredClients_oneClient() {
-        DataDogWhitelist dataDogWhitelist = DataDogWhitelist
-                .builder()
-                .whitelist(Collections.singletonList(""))
-                .build();
         MetricsConfig metricsConfig = MetricsConfig.builder().build();
-        StatsDFilter statsDFilter = new StatsDFilter(dataDogWhitelist, metricsConfig);
-        assertEquals(1, statsDFilter.getFilteredClients("testChannelName").size());
-        assertEquals(NoOpStatsDClient.class, statsDFilter.getAllClients().get(0).getClass());
+        Dao<ChannelConfig> channelConfigDao = (Dao<ChannelConfig>) mock(CachedLowerCaseDao.class);
+        Dao<Webhook> webhookDao =  (Dao<Webhook>) mock(CachedDao.class);
+        StatsDFilter statsDFilter = new StatsDFilter(metricsConfig, channelConfigDao, webhookDao);
+        assertEquals(1, statsDFilter.getFilteredClients(false).size());
+        assertEquals(NoOpStatsDClient.class, statsDFilter.getFilteredClients(false).get(0).getClass());
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testStatsDFilterGetFilteredClients_twoClientsFiltered() {
-        DataDogWhitelist dataDogWhitelist = DataDogWhitelist
-                .builder()
-                .whitelist(Collections.singletonList("testChannelName"))
-                .build();
         MetricsConfig metricsConfig = MetricsConfig.builder().build();
-        StatsDFilter statsDFilter = new StatsDFilter(dataDogWhitelist, metricsConfig);
-        assertEquals(2, statsDFilter.getFilteredClients("testChannelName").size());
-        assertEquals(NoOpStatsDClient.class, statsDFilter.getAllClients().get(0).getClass());
+        Dao<ChannelConfig> channelConfigDao = (Dao<ChannelConfig>) mock(CachedLowerCaseDao.class);
+        Dao<Webhook> webhookDao =  (Dao<Webhook>) mock(CachedDao.class);
+        StatsDFilter statsDFilter = new StatsDFilter(metricsConfig, channelConfigDao, webhookDao);
+        assertEquals(2, statsDFilter.getFilteredClients(true).size());
+        assertEquals(NoOpStatsDClient.class, statsDFilter.getFilteredClients(true).get(0).getClass());
     }
 
     @Test
-    public void testStatsDFilterGetFilteredClients_oneClientFiltered() {
-        DataDogWhitelist dataDogWhitelist = DataDogWhitelist
-                .builder()
-                .whitelist(Collections.singletonList("testChannelName"))
-                .build();
+    @SuppressWarnings("unchecked")
+    public void testStatsdFilterIsSecondaryReporting_false() {
+        // GIVEN
         MetricsConfig metricsConfig = MetricsConfig.builder().build();
-        StatsDFilter statsDFilter = new StatsDFilter(dataDogWhitelist, metricsConfig);
-        assertEquals(1, statsDFilter.getFilteredClients("testChannelName2").size());
-        assertEquals(NoOpStatsDClient.class, statsDFilter.getAllClients().get(0).getClass());
+        Dao<ChannelConfig> channelConfigDao = (Dao<ChannelConfig>) mock(CachedLowerCaseDao.class);
+        ChannelConfig channelConfig = mock(ChannelConfig.class);
+        Dao<Webhook> webhookDao =  (Dao<Webhook>) mock(CachedDao.class);
+        Webhook webhook = mock(Webhook.class);
+
+        // WHEN
+        when(channelConfigDao.getCached(anyString())).thenReturn(channelConfig);
+        when(channelConfig.isSecondaryMetricsReporting()).thenReturn(false);
+        when(webhook.isSecondaryMetricsReporting()).thenReturn(false);
+        when(webhookDao.getCached(anyString())).thenReturn(webhook);
+
+        // THEN
+        StatsDFilter statsDFilter = new StatsDFilter(metricsConfig, channelConfigDao, webhookDao);
+        assertFalse(statsDFilter.isSecondaryReporting("foo"));
     }
 
     @Test
-    public void testStatsDFilterGetFilteredClients_twoClientsSpecialChars() {
-        DataDogWhitelist dataDogWhitelist = DataDogWhitelist
-                .builder()
-                .whitelist(Collections.singletonList("@_-(*&*"))
-                .build();
+    @SuppressWarnings("unchecked")
+    public void testStatsdFilterIsSecondaryReporting_handlesNull() {
+        // GIVEN
         MetricsConfig metricsConfig = MetricsConfig.builder().build();
-        StatsDFilter statsDFilter = new StatsDFilter(dataDogWhitelist, metricsConfig);
-        assertEquals(2, statsDFilter.getFilteredClients("@_-(*&*").size());
-        assertEquals(NoOpStatsDClient.class, statsDFilter.getAllClients().get(0).getClass());
+        Dao<ChannelConfig> channelConfigDao = (Dao<ChannelConfig>) mock(CachedLowerCaseDao.class);
+        Dao<Webhook> webhookDao =  (Dao<Webhook>) mock(CachedDao.class);
+
+        // WHEN
+        when(channelConfigDao.getCached(anyString())).thenReturn(null);
+        when(webhookDao.getCached(anyString())).thenReturn(null);
+
+        // THEN
+        StatsDFilter statsDFilter = new StatsDFilter(metricsConfig, channelConfigDao, webhookDao);
+        assertFalse(statsDFilter.isSecondaryReporting("foo"));
     }
 
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testStatsdFilterIsSecondaryReporting_trueIfAnyTrue() {
+        // GIVEN
+        boolean trueOrFalse = new Random().nextBoolean();
+        boolean opposite = !trueOrFalse;
+        MetricsConfig metricsConfig = MetricsConfig.builder().build();
 
+        Dao<ChannelConfig> channelConfigDao = (Dao<ChannelConfig>) mock(CachedLowerCaseDao.class);
+        ChannelConfig channelConfig = mock(ChannelConfig.class);
+
+        Dao<Webhook> webhookDao = (Dao<Webhook>) mock(CachedDao.class);
+        Webhook webhook = mock(Webhook.class);
+
+        // WHEN
+        when(channelConfigDao.getCached(anyString())).thenReturn(channelConfig);
+        when(channelConfig.isSecondaryMetricsReporting()).thenReturn(trueOrFalse);
+        when(webhookDao.getCached(anyString())).thenReturn(webhook);
+        when(webhook.isSecondaryMetricsReporting()).thenReturn(opposite);
+
+        // THEN
+        StatsDFilter statsDFilter = new StatsDFilter(metricsConfig, channelConfigDao, webhookDao);
+        assertTrue(statsDFilter.isSecondaryReporting("foo"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testStatsdFilterIsSecondaryReporting_handleNullAndTrue() {
+        // GIVEN
+        MetricsConfig metricsConfig = MetricsConfig.builder().build();
+
+        Dao<ChannelConfig> channelConfigDao = (Dao<ChannelConfig>) mock(CachedLowerCaseDao.class);
+        ChannelConfig channelConfig = mock(ChannelConfig.class);
+
+        Dao<Webhook> webhookDao = (Dao<Webhook>) mock(CachedDao.class);
+
+        // WHEN
+        when(channelConfigDao.getCached(anyString())).thenReturn(channelConfig);
+        when(channelConfig.isSecondaryMetricsReporting()).thenReturn(true);
+        when(webhookDao.getCached(anyString())).thenReturn(null);
+
+        // THEN
+        StatsDFilter statsDFilter = new StatsDFilter(metricsConfig, channelConfigDao, webhookDao);
+        assertTrue(statsDFilter.isSecondaryReporting("foo"));
+    }
 }

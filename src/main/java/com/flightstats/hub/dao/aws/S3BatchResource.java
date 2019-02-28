@@ -49,13 +49,8 @@ public class S3BatchResource {
         ActiveTraces.getLocal().add("S3BatchResource.getAndWriteBatch got response");
         byte[] bytes = response.getEntity(byte[].class);
 
-<<<<<<< HEAD
-        if (!verifyZipBytes(bytes)) {
-            metricsService.increment("batch.invalid_zip");
-=======
         if(!verifyZipBytes(bytes)) {
             statsdReporter.increment("batch.invalid_zip");
->>>>>>> bdc4c443eb3d2e05bdbeed4d345b2730b9a89912
             logger.warn("S3BatchResource failed zip verification for keys: {}, channel: {}", keys, channel);
             return false;
         }

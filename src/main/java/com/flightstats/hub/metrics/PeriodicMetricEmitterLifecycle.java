@@ -1,8 +1,5 @@
 package com.flightstats.hub.metrics;
 
-import com.flightstats.hub.app.HubProperties;
-import com.flightstats.hub.dao.aws.S3Verifier;
-import com.flightstats.hub.spoke.SpokeStore;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 

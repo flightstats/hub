@@ -31,7 +31,7 @@ public class MetricsRequestFilter implements ContainerRequestFilter, ContainerRe
     private static final ThreadLocal<RequestState> threadLocal = new ThreadLocal<>();
     private static final String CHARACTERS_TO_REMOVE = "[\\[\\]|.*+]";
     private static final String CHARACTERS_TO_REPLACE = "[:\\{\\}]";
-    
+
     public static void finalStats() {
         try {
             RequestState requestState = threadLocal.get();

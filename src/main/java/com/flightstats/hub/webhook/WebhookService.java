@@ -104,7 +104,7 @@ public class WebhookService {
         return Optional.ofNullable(webhookDao.get(name));
     }
 
-    Optional<Webhook> getCached(String name) {
+    public Optional<Webhook> getCached(String name) {
         return Optional.ofNullable(webhookDao.getCached(name));
     }
 

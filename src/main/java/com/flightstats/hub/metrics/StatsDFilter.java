@@ -1,7 +1,11 @@
 package com.flightstats.hub.metrics;
 
+import com.flightstats.hub.dao.Dao;
+import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.webhook.Webhook;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import com.timgroup.statsd.NoOpStatsDClient;
 import com.timgroup.statsd.NonBlockingStatsDClient;
 import com.timgroup.statsd.StatsDClient;
@@ -9,7 +13,7 @@ import com.timgroup.statsd.StatsDClient;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Function;
+import java.util.Optional;
 
 @Singleton
 public class StatsDFilter {
@@ -18,13 +22,19 @@ public class StatsDFilter {
     private MetricsConfig metricsConfig;
     private StatsDClient statsDClient = new NoOpStatsDClient();
     private StatsDClient dataDogClient = new NoOpStatsDClient();
-    private DataDogWhitelist dataDogWhitelist;
+    // going direct to the DAO here over channelService/webhookService to avoid circular dep. condition in Guice injections
+    private Dao<ChannelConfig> channelConfigDao;
+    private Dao<Webhook> webhookConfigDao;
 
     @Inject
-    public StatsDFilter(DataDogWhitelist dataDogWhitelist,
-                        MetricsConfig metricsConfig) {
-        this.dataDogWhitelist = dataDogWhitelist;
+    public StatsDFilter(
+            MetricsConfig metricsConfig,
+            @Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao,
+            @Named("Webhook") Dao<Webhook> webhookConfigDao
+    ) {
         this.metricsConfig = metricsConfig;
+        this.channelConfigDao = channelConfigDao;
+        this.webhookConfigDao = webhookConfigDao;
     }
 
     // initializing these clients starts their udp reporters, setting them explicitly in order to trigger them specifically
@@ -35,21 +45,25 @@ public class StatsDFilter {
         this.dataDogClient = new NonBlockingStatsDClient(clientPrefix, clientHost, dogstatsdPort);
     }
 
-    private Function<Boolean, List<StatsDClient>> clientList = (bool) -> bool ?
-            Arrays.asList(statsDClient, dataDogClient) :
-            Collections.singletonList(statsDClient);
-
-    private Function<String, Boolean> matcherExists = (matcher) ->  matcher != null && !matcher.equals("");
-
-    private Function<String, Boolean> match = (metric) -> dataDogWhitelist
-            .getWhitelist()
-            .stream()
-            .anyMatch(matcher -> matcherExists.apply(matcher) && matcher.equals(metric));
-    
-    List<StatsDClient> getFilteredClients(String metric) {
-        return clientList.apply(match.apply(metric));
+    boolean isTestChannel(String channel) {
+        return channel.toLowerCase().startsWith("test_");
     }
 
-    List<StatsDClient> getAllClients() { return clientList.apply(true); }
+    boolean isSecondaryReporting(String name) {
+        Optional<Webhook> optionalWebhook = Optional
+                .ofNullable(webhookConfigDao.getCached(name))
+                .filter(Webhook::isSecondaryMetricsReporting);
 
+        Optional<ChannelConfig> optionalChannelConfig = Optional
+                .ofNullable(channelConfigDao.getCached(name))
+                .filter(ChannelConfig::isSecondaryMetricsReporting);
+
+        return optionalChannelConfig.isPresent() || optionalWebhook.isPresent();
+    }
+
+    List<StatsDClient> getFilteredClients(boolean secondaryReporting) {
+        return secondaryReporting ?
+                Arrays.asList(statsDClient, dataDogClient) :
+                Collections.singletonList(statsDClient);
+    }
 }

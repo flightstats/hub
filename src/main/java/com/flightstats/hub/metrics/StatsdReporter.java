@@ -1,6 +1,5 @@
 package com.flightstats.hub.metrics;
 
-import com.google.inject.Inject;
 import com.timgroup.statsd.Event;
 import com.timgroup.statsd.StatsDClient;
 
@@ -13,7 +12,6 @@ public class StatsdReporter {
     private StatsDFormatter statsDFormatter;
     private DataDogHandler dataDogHandler;
 
-    @Inject
     public StatsdReporter(
             StatsDFilter statsDFilter,
             StatsDFormatter statsDFormatter,
@@ -24,17 +22,13 @@ public class StatsdReporter {
         this.dataDogHandler = dataDogHandler;
     }
 
-    private boolean isTestChannel(String channel) {
-        return channel.toLowerCase().startsWith("test_");
-    }
-
-    private void reportWithFilteredClients(String metric, Consumer<StatsDClient> method) {
-        List<StatsDClient> clients = statsDFilter.getFilteredClients(metric);
+    private void reportWithFilteredClients(String name, Consumer<StatsDClient> method) {
+        List<StatsDClient> clients = statsDFilter.getFilteredClients(statsDFilter.isSecondaryReporting(name));
         clients.forEach(method);
     }
 
     public void insert(String channel, long start, ChannelType type, int items, long bytes) {
-        if (isTestChannel(channel)) return;
+        if (statsDFilter.isTestChannel(channel)) return;
 
         time(channel, "channel", start, bytes, "type:" + type.toString());
         count("channel.items", items, "type:" + type.toString(), "channel:" + channel);
@@ -66,7 +60,7 @@ public class StatsdReporter {
     }
 
     public void time(String channel, String name, long start, String... tags) {
-        if (isTestChannel(channel)) return;
+        if (statsDFilter.isTestChannel(channel)) return;
 
         reportWithFilteredClients(channel, (
                 statsDClient -> statsDClient.time(
@@ -77,7 +71,7 @@ public class StatsdReporter {
     }
 
     public void time(String channel, String name, long start, long bytes, String... tags) {
-        if (isTestChannel(channel)) return;
+        if (statsDFilter.isTestChannel(channel)) return;
 
         time(channel, name, start, tags);
         count(name + ".bytes", bytes, statsDFormatter.formatChannelTags(channel, tags));
@@ -85,7 +79,9 @@ public class StatsdReporter {
     }
 
     public void mute() {
-        dataDogHandler.mute();
+        if (dataDogHandler != null) {
+            dataDogHandler.mute();
+        }
     }
 
 }

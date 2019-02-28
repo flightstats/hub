@@ -6,6 +6,7 @@ import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.HubUtils;
+import lombok.SneakyThrows;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
@@ -25,16 +26,16 @@ public class ChannelStatusResource {
     @Context
     private UriInfo uriInfo;
 
+    @SneakyThrows
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getLatest(@PathParam("channel") String channel,
                               @QueryParam("stable") @DefaultValue("true") boolean stable,
                               @QueryParam("trace") @DefaultValue("false") boolean trace) {
-        Optional<ChannelConfig> optionalChannelConfig = channelService.getCachedChannelConfig(channel);
-        if (!optionalChannelConfig.isPresent()) {
-            return Response.status(404).build();
-        }
-        ChannelConfig channelConfig = optionalChannelConfig.get();
+        ChannelConfig channelConfig = channelService.getCachedChannelConfig(channel)
+                .orElseThrow(() -> {
+                    throw new WebApplicationException(Response.status(404).build());
+                });
         ObjectNode root = mapper.createObjectNode();
         ObjectNode links = root.putObject("_links");
         ObjectNode self = links.putObject("self");
