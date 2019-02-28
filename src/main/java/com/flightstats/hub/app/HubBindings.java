@@ -11,15 +11,20 @@ import com.flightstats.hub.cluster.*;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.health.HubHealthCheck;
+import com.flightstats.hub.metrics.CustomMetricsLifecycle;
+import com.flightstats.hub.metrics.DataDogWhitelist;
+import com.flightstats.hub.metrics.DataDogWhitelistProvider;
 import com.flightstats.hub.metrics.InfluxdbReporterProvider;
 import com.flightstats.hub.metrics.MetricRegistryProvider;
 import com.flightstats.hub.metrics.MetricsConfigProvider;
-import com.flightstats.hub.metrics.MetricsRunner;
 import com.flightstats.hub.metrics.MetricsConfig;
 import com.flightstats.hub.metrics.InfluxdbReporterLifecycle;
-import com.flightstats.hub.metrics.DelegatingMetricsService;
-import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.metrics.PeriodicMetricEmitter;
+import com.flightstats.hub.metrics.PeriodicMetricEmitterLifecycle;
+import com.flightstats.hub.metrics.StatsDFilter;
+import com.flightstats.hub.metrics.StatsdReporter;
+import com.flightstats.hub.metrics.StatsDReporterLifecycle;
+import com.flightstats.hub.metrics.StatsDReporterProvider;
 import com.flightstats.hub.replication.ReplicationManager;
 import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.rest.RetryClientFilter;
@@ -39,7 +44,6 @@ import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.webhook.WebhookManager;
 import com.flightstats.hub.webhook.WebhookValidator;
 import com.google.inject.AbstractModule;
-import com.google.inject.Inject;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -173,14 +177,11 @@ public class HubBindings extends AbstractModule {
         bind(ReplicationManager.class).asEagerSingleton();
         bind(HubUtils.class).asEagerSingleton();
         bind(GCRunner.class).asEagerSingleton();
-        bind(MetricsRunner.class).asEagerSingleton();
         bind(ChannelValidator.class).asEagerSingleton();
         bind(WebhookValidator.class).asEagerSingleton();
         bind(WebhookManager.class).asEagerSingleton();
         bind(LastContentPath.class).asEagerSingleton();
         bind(WatchManager.class).asEagerSingleton();
-        bind(MetricsService.class).to(DelegatingMetricsService.class).asEagerSingleton();
-        bind(PeriodicMetricEmitter.class).asEagerSingleton();
         bind(NtpMonitor.class).asEagerSingleton();
         bind(TimeService.class).asEagerSingleton();
         bind(ShutdownManager.class).asEagerSingleton();
@@ -190,11 +191,20 @@ public class HubBindings extends AbstractModule {
         bind(ChannelService.class).asEagerSingleton();
 
 
+        // metrics
         bind(HubVersion.class).toInstance(new HubVersion());
         bind(MetricsConfig.class).toProvider(MetricsConfigProvider.class).asEagerSingleton();
         bind(MetricRegistry.class).toProvider(MetricRegistryProvider.class).asEagerSingleton();
         bind(ScheduledReporter.class).toProvider(InfluxdbReporterProvider.class).asEagerSingleton();
         bind(InfluxdbReporterLifecycle.class).asEagerSingleton();
+
+        bind(DataDogWhitelist.class).toProvider(DataDogWhitelistProvider.class).asEagerSingleton();
+        bind(StatsDFilter.class).asEagerSingleton();
+        bind(StatsdReporter.class).toProvider(StatsDReporterProvider.class).asEagerSingleton();
+        bind(StatsDReporterLifecycle.class).asEagerSingleton();
+        bind(CustomMetricsLifecycle.class).asEagerSingleton();
+        bind(PeriodicMetricEmitter.class).asEagerSingleton();
+        bind(PeriodicMetricEmitterLifecycle.class).asEagerSingleton();
 
         bind(ContentDao.class)
                 .annotatedWith(Names.named(ContentDao.WRITE_CACHE))

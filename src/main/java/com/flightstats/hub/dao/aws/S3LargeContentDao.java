@@ -16,7 +16,7 @@ import com.amazonaws.services.s3.model.UploadPartResult;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.metrics.MetricsService;
+import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
@@ -52,15 +52,15 @@ public class S3LargeContentDao implements ContentDao {
     private final boolean useEncrypted = HubProperties.isAppEncrypted();
 
     @Inject
-    private MetricsService metricsService;
+    private StatsdReporter statsdReporter;
     @Inject
     private HubS3Client s3Client;
     @Inject
     private S3BucketName s3BucketName;
 
-    @ConstructorProperties({"metricsService", "s3Client", "s3BucketName"})
-    public S3LargeContentDao(MetricsService metricsService, HubS3Client s3Client, S3BucketName s3BucketName) {
-        this.metricsService = metricsService;
+    @ConstructorProperties({"statsdReporter", "s3Client", "s3BucketName"})
+    private S3LargeContentDao(StatsdReporter statsdReporter, HubS3Client s3Client, S3BucketName s3BucketName) {
+        this.statsdReporter = statsdReporter;
         this.s3Client = s3Client;
         this.s3BucketName = s3BucketName;
     }
@@ -152,7 +152,7 @@ public class S3LargeContentDao implements ContentDao {
             }
             throw new RuntimeException(e);
         } finally {
-            metricsService.time(channelName, "s3.put", start, length, "type:large");
+            statsdReporter.time(channelName, "s3.put", start, length, "type:large");
         }
     }
 
@@ -221,7 +221,7 @@ public class S3LargeContentDao implements ContentDao {
             }
             return null;
         } finally {
-            metricsService.time(channelName, "s3.get", start, "type:single");
+            statsdReporter.time(channelName, "s3.get", start, "type:single");
         }
     }
 
@@ -261,7 +261,7 @@ public class S3LargeContentDao implements ContentDao {
         new Thread(() -> {
             try {
                 ContentKey limitKey = new ContentKey(TimeUtil.now(), "ZZZZZZ");
-                ActiveTraces.start("S3LargeontentDao.delete", traces, limitKey);
+                ActiveTraces.start("S3LargeContentDao.delete", traces, limitKey);
                 deleteBefore(channel, limitKey);
             } finally {
                 ActiveTraces.end();
@@ -270,15 +270,15 @@ public class S3LargeContentDao implements ContentDao {
     }
 
     public static class S3LargeContentDaoBuilder {
-        private MetricsService metricsService;
+        private StatsdReporter statsdReporter;
         private HubS3Client s3Client;
         private S3BucketName s3BucketName;
 
         S3LargeContentDaoBuilder() {
         }
 
-        public S3LargeContentDaoBuilder metricsService(MetricsService metricsService) {
-            this.metricsService = metricsService;
+        public S3LargeContentDaoBuilder statsdReporter(StatsdReporter statsdReporter) {
+            this.statsdReporter = statsdReporter;
             return this;
         }
 
@@ -293,11 +293,11 @@ public class S3LargeContentDao implements ContentDao {
         }
 
         public S3LargeContentDao build() {
-            return new S3LargeContentDao(metricsService, s3Client, s3BucketName);
+            return new S3LargeContentDao(statsdReporter, s3Client, s3BucketName);
         }
 
         public String toString() {
-            return "com.flightstats.hub.dao.aws.S3LargeContentDao.S3LargeContentDaoBuilder(metricsService=" + this.metricsService + ", s3Client=" + this.s3Client + ", s3BucketName=" + this.s3BucketName + ")";
+            return "com.flightstats.hub.dao.aws.S3LargeContentDao.S3LargeContentDaoBuilder(statsdReporter=" + this.statsdReporter + ", s3Client=" + this.s3Client + ", s3BucketName=" + this.s3BucketName + ")";
         }
     }
 }

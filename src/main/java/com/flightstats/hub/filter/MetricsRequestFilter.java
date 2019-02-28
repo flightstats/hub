@@ -1,7 +1,7 @@
 package com.flightstats.hub.filter;
 
 import com.flightstats.hub.app.HubProvider;
-import com.flightstats.hub.metrics.MetricsService;
+import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.util.RequestUtils;
 import com.google.common.annotations.VisibleForTesting;
 import org.glassfish.jersey.server.internal.routing.UriRoutingContext;
@@ -27,11 +27,11 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 public class MetricsRequestFilter implements ContainerRequestFilter, ContainerResponseFilter {
 
     private static final Logger logger = LoggerFactory.getLogger(MetricsRequestFilter.class);
-    private static final MetricsService metricsService = HubProvider.getInstance(MetricsService.class);
+    private static final StatsdReporter statsdReporter = HubProvider.getInstance(StatsdReporter.class);
     private static final ThreadLocal<RequestState> threadLocal = new ThreadLocal<>();
     private static final String CHARACTERS_TO_REMOVE = "[\\[\\]|.*+]";
     private static final String CHARACTERS_TO_REPLACE = "[:\\{\\}]";
-
+    
     public static void finalStats() {
         try {
             RequestState requestState = threadLocal.get();
@@ -59,13 +59,11 @@ public class MetricsRequestFilter implements ContainerRequestFilter, ContainerRe
             if (isBlank(endpoint)) {
                 logger.trace("no endpoint, path: {}", request.getUriInfo().getPath());
             } else if (tags.get("call").endsWith("/shutdown")) {
-                logger.info("call to shutdown, ignoring datadog time {}", time);
+                logger.info("call to shutdown, ignoring statsd time {}", time);
             } else {
                 String[] tagArray = getTagArray(tags);
-                logger.trace("DataDog data sent: {}", Arrays.toString(tagArray));
-                if (metricsService.shouldLog(channel)) {
-                    metricsService.time("request", requestState.getStart(), tagArray);
-                }
+                logger.trace("statsdReporter data sent: {}", Arrays.toString(tagArray));
+                statsdReporter.time("request", requestState.getStart(), tagArray);
             }
             logger.trace("request {}, time: {}", tags.get("endpoint"), time);
             int returnCode = requestState.getResponse().getStatus();
@@ -73,7 +71,7 @@ public class MetricsRequestFilter implements ContainerRequestFilter, ContainerRe
                 tags.put("errorCode", String.valueOf(returnCode));
                 String[] tagArray = getTagArray(tags, "errorCode", "call", "channel");
                 logger.trace("data sent: {}", Arrays.toString(tagArray));
-                metricsService.count("errors", 1, tagArray);
+                statsdReporter.count("errors", 1, tagArray);
             }
         } catch (Exception e) {
             logger.error("metrics request error", e);

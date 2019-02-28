@@ -7,7 +7,7 @@ import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.metrics.MetricsService;
+import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.MinutePath;
 import com.flightstats.hub.rest.RestClient;
@@ -33,7 +33,7 @@ public class S3BatchResource {
     private static final boolean dropSomeWrites = HubProperties.getProperty("s3.dropSomeWrites", false);
     private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private static final ContentDao s3BatchContentDao = HubProvider.getInstance(ContentDao.class, ContentDao.BATCH_LONG_TERM);
-    private static final MetricsService metricsService = HubProvider.getInstance(MetricsService.class);
+    private static final StatsdReporter statsdReporter = HubProvider.getInstance(StatsdReporter.class);
 
     public static boolean getAndWriteBatch(ContentDao contentDao, String channel, MinutePath path,
                                            Collection<ContentKey> keys, String batchUrl) {
@@ -49,8 +49,13 @@ public class S3BatchResource {
         ActiveTraces.getLocal().add("S3BatchResource.getAndWriteBatch got response");
         byte[] bytes = response.getEntity(byte[].class);
 
+<<<<<<< HEAD
         if (!verifyZipBytes(bytes)) {
             metricsService.increment("batch.invalid_zip");
+=======
+        if(!verifyZipBytes(bytes)) {
+            statsdReporter.increment("batch.invalid_zip");
+>>>>>>> bdc4c443eb3d2e05bdbeed4d345b2730b9a89912
             logger.warn("S3BatchResource failed zip verification for keys: {}, channel: {}", keys, channel);
             return false;
         }

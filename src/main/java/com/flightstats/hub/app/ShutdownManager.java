@@ -1,9 +1,10 @@
 package com.flightstats.hub.app;
 
 import com.flightstats.hub.health.HubHealthCheck;
-import com.flightstats.hub.metrics.MetricsService;
+import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.util.Sleeper;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
@@ -23,13 +24,19 @@ public class ShutdownManager {
 
     private static final String PATH = "/ShutdownManager";
 
-    public ShutdownManager() {
+    private StatsdReporter statsdReporter;
+
+    @Inject
+    public ShutdownManager(StatsdReporter statsdReporter) {
+        this.statsdReporter = statsdReporter;
         HubServices.register(new ShutdownManagerService(), HubServices.TYPE.AFTER_HEALTHY_START);
     }
 
     public boolean shutdown(boolean useLock) throws Exception {
         logger.warn("shutting down!");
-        getMetricsService().mute();
+        String[] tags = { "restart", "shutdown" };
+        statsdReporter.event("Hub Restart Shutdown", "shutting down", tags);
+        statsdReporter.mute();
 
         HubHealthCheck healthCheck = HubProvider.getInstance(HubHealthCheck.class);
         if (healthCheck.isShuttingDown()) {
@@ -38,7 +45,6 @@ public class ShutdownManager {
         if (useLock) {
             waitForLock();
         }
-        getMetricsService().event("Hub Restart Shutdown", "shutting down", "restart", "shutdown");
 
         //this call will get the node removed from the Load Balancer
         healthCheck.shutdown();
@@ -60,10 +66,6 @@ public class ShutdownManager {
         logger.warn("completed shutdown tasks, exiting JVM");
         Executors.newSingleThreadExecutor().submit(() -> System.exit(0));
         return true;
-    }
-
-    private MetricsService getMetricsService() {
-        return HubProvider.getInstance(MetricsService.class);
     }
 
     public String getLockData() throws Exception {
