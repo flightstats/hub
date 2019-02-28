@@ -72,7 +72,6 @@ public class S3Verifier {
                       CuratorFramework curator,
                       StatsdReporter statsdReporter)
     {
-
         this.lastContentPath = lastContentPath;
         this.channelService = channelService;
         this.spokeWriteContentDao = spokeWriteContentDao;

@@ -67,8 +67,8 @@ public class S3VerifierUnitTest {
         Client httpClient = mock(Client.class);
         ZooKeeperState zooKeeperState = mock(ZooKeeperState.class);
         CuratorFramework curator = mock(CuratorFramework.class);
-        MetricsService metricsService = mock(MetricsService.class);
-        S3Verifier s3Verifier = spy(new S3Verifier(lastContentPath, channelService, spokeWriteContentDao, s3SingleContentDao, s3WriteQueue, httpClient, zooKeeperState, curator, metricsService));
+        StatsdReporter statsdReporter = mock(StatsdReporter.class);
+        S3Verifier s3Verifier = spy(new S3Verifier(lastContentPath, channelService, spokeWriteContentDao, s3SingleContentDao, s3WriteQueue, httpClient, zooKeeperState, curator, statsdReporter));
 
         ChannelContentKey key = ChannelContentKey.fromResourcePath("http://hub/channel/foo/1999/12/31/23/58/59/999/bar");
         ChannelContentKey secondKey = ChannelContentKey.fromResourcePath("http://hub/channel/foo/1999/12/31/23/59/59/999/bar");
@@ -101,8 +101,8 @@ public class S3VerifierUnitTest {
         Client httpClient = mock(Client.class);
         ZooKeeperState zooKeeperState = mock(ZooKeeperState.class);
         CuratorFramework curator = mock(CuratorFramework.class);
-        MetricsService metricsService = mock(MetricsService.class);
-        S3Verifier s3Verifier = spy(new S3Verifier(lastContentPath, channelService, spokeWriteContentDao, s3SingleContentDao, s3WriteQueue, httpClient, zooKeeperState, curator, metricsService));
+        StatsdReporter statsdReporter = mock(StatsdReporter.class);
+        S3Verifier s3Verifier = spy(new S3Verifier(lastContentPath, channelService, spokeWriteContentDao, s3SingleContentDao, s3WriteQueue, httpClient, zooKeeperState, curator, statsdReporter));
 
         ChannelContentKey key = ChannelContentKey.fromResourcePath("http://hub/channel/foo/1999/12/31/23/57/59/999/bar");
         ChannelContentKey secondKey = ChannelContentKey.fromResourcePath("http://hub/channel/foo/1999/12/31/23/59/59/999/bar");
