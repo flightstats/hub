@@ -22,6 +22,7 @@ import com.flightstats.hub.rest.PATCH;
 import com.flightstats.hub.time.NtpMonitor;
 import com.flightstats.hub.util.Sleeper;
 import lombok.SneakyThrows;
+import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.media.sse.EventOutput;
 import org.glassfish.jersey.media.sse.SseFeature;
 import org.slf4j.Logger;
@@ -98,28 +99,23 @@ public class ChannelResource {
     @PUT
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response createOrUpdateChannel(@PathParam("channel") String channelName, String json) {
+    public Response createChannel(@PathParam("channel") String channelName, String json) throws Exception {
         logger.debug("put channel {} {}", channelName, json);
-        Optional<ChannelConfig> existing = channelService
-                .getCachedChannelConfig(channelName);
-
-        ChannelConfig createOrUpdate = ChannelConfig.createFromJsonWithName(json, channelName);
-
-        if (existing.isPresent()) {
-            channelService.updateChannel(
-                    createOrUpdate,
-                    existing.get(),
-                    LocalHostOnly.isLocalhost(uriInfo));
-        } else {
-            channelService.createChannel(createOrUpdate);
+        Optional<ChannelConfig> oldConfig = channelService.getChannelConfig(channelName, false);
+        ChannelConfig channelConfig = ChannelConfig.createFromJsonWithName(json, channelName);
+        if (oldConfig.isPresent()) {
+            ChannelConfig config = oldConfig.get();
+            logger.info("using old channel {} {}", config, config.getCreationDate().getTime());
+            channelConfig = ChannelConfig.updateFromJson(config, StringUtils.defaultIfBlank(json, "{}"));
         }
+        logger.info("creating channel {} {}", channelConfig, channelConfig.getCreationDate().getTime());
+        channelConfig = channelService.updateChannel(channelConfig, oldConfig.orElse(null), LocalHostOnly.isLocalhost(uriInfo));
 
-        logger.info("created or updated channel {} {}", createOrUpdate, createOrUpdate.getCreationDate().getTime());
-        URI channelUri = buildChannelUri(createOrUpdate.getDisplayName(), uriInfo);
-        ObjectNode output = buildChannelConfigResponse(createOrUpdate, uriInfo, channelName);
+        URI channelUri = buildChannelUri(channelConfig.getDisplayName(), uriInfo);
+        ObjectNode output = buildChannelConfigResponse(channelConfig, uriInfo, channelName);
         return Response.created(channelUri).entity(output).build();
     }
-
+    
     @SneakyThrows
     @PATCH
     @Produces(MediaType.APPLICATION_JSON)
