@@ -256,7 +256,7 @@ public class ChannelService {
 
     private ContentKey getLatestLimit(String channelName, boolean stable) {
         DateTime time = TimeUtil.now().plusMinutes(1);
-        if (stable || !isLiveChannel(channelName, true)) {
+        if (stable || !isLiveChannel(channelName)) {
             time = getLastUpdated(channelName, new ContentKey(TimeUtil.stable())).getTime();
         }
         return ContentKey.lastKey(time);
@@ -288,8 +288,8 @@ public class ChannelService {
         return Optional.ofNullable(channelConfig);
     }
 
-    public boolean isLiveChannel(String channelName, boolean checkCache) {
-        return getChannelConfig(channelName, checkCache)
+    public boolean isLiveChannel(String channelName) {
+        return getChannelConfig(channelName, true)
                 .filter(ChannelConfig::isLive)
                 .isPresent();
     }

@@ -45,7 +45,7 @@ public class StatsDFilter {
         this.dataDogClient = new NonBlockingStatsDClient(clientPrefix, clientHost, dogstatsdPort);
     }
 
-    boolean isTestChannel(String channel) {
+    public boolean isTestChannel(String channel) {
         return channel.toLowerCase().startsWith("test_");
     }
 

@@ -1,6 +1,7 @@
 package com.flightstats.hub.filter;
 
 import com.flightstats.hub.app.HubProvider;
+import com.flightstats.hub.metrics.StatsDFilter;
 import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.util.RequestUtils;
 import com.google.common.annotations.VisibleForTesting;
@@ -28,6 +29,7 @@ public class MetricsRequestFilter implements ContainerRequestFilter, ContainerRe
 
     private static final Logger logger = LoggerFactory.getLogger(MetricsRequestFilter.class);
     private static final StatsdReporter statsdReporter = HubProvider.getInstance(StatsdReporter.class);
+    private static final StatsDFilter statsdFilter = HubProvider.getInstance(StatsDFilter.class);
     private static final ThreadLocal<RequestState> threadLocal = new ThreadLocal<>();
     private static final String CHARACTERS_TO_REMOVE = "[\\[\\]|.*+]";
     private static final String CHARACTERS_TO_REPLACE = "[:\\{\\}]";
@@ -62,8 +64,10 @@ public class MetricsRequestFilter implements ContainerRequestFilter, ContainerRe
                 logger.info("call to shutdown, ignoring statsd time {}", time);
             } else {
                 String[] tagArray = getTagArray(tags);
-                logger.trace("statsdReporter data sent: {}", Arrays.toString(tagArray));
-                statsdReporter.time("request", requestState.getStart(), tagArray);
+                if (!statsdFilter.isTestChannel(channel)) {
+                    logger.trace("statsdReporter data sent: {}", Arrays.toString(tagArray));
+                    statsdReporter.time("request", requestState.getStart(), tagArray);
+                }
             }
             logger.trace("request {}, time: {}", tags.get("endpoint"), time);
             int returnCode = requestState.getResponse().getStatus();
