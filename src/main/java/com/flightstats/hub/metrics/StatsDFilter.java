@@ -53,8 +53,6 @@ public class StatsDFilter {
     }
 
     boolean isSecondaryReporting(String name) {
-        if (name.equals("request")) return false;
-
         return Optional
                 .ofNullable(channelConfigDao.getCached(name))
                 .filter(ChannelConfig::isSecondaryMetricsReporting)
