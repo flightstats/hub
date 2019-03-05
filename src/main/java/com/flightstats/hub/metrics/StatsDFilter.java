@@ -66,15 +66,16 @@ public class StatsDFilter {
     }
 
     String extractName(String[] tags) {
+        // webhook tags may contain name:webhookName
+        // channel tags may contain channel:channelName
         try {
-            String namedMetric = Stream.of(tags)
+            Optional<String> namedMetric = Stream.of(tags)
                     .filter((str -> StringUtils.isNotBlank(str) &&
                             (str.contains("name") || str.contains("channel"))))
-                    .findAny()
-                    .orElse(null);
-            return namedMetric == null ?
-                    "" :
-                    namedMetric.substring(namedMetric.indexOf(":") + 1);
+                    .findAny();
+            return namedMetric
+                    .map(str -> str.substring(str.indexOf(":") + 1))
+                    .orElse("");
         } catch (Exception ex) {
             return "";
         }
