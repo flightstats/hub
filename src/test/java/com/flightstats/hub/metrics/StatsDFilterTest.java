@@ -151,4 +151,67 @@ public class StatsDFilterTest {
         StatsDFilter statsDFilter = new StatsDFilter(metricsConfig, channelConfigDao, webhookDao);
         assertTrue(statsDFilter.isSecondaryReporting("foo"));
     }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testStatsdFilterExtractName_handleNullTags() {
+        // GIVEN
+        MetricsConfig metricsConfig = MetricsConfig.builder().build();
+
+        Dao<ChannelConfig> channelConfigDao = (Dao<ChannelConfig>) mock(CachedLowerCaseDao.class);
+
+        Dao<Webhook> webhookDao = (Dao<Webhook>) mock(CachedDao.class);
+
+        // THEN
+        StatsDFilter statsDFilter = new StatsDFilter(metricsConfig, channelConfigDao, webhookDao);
+        assertEquals("", statsDFilter.extractName(null));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testStatsdFilterExtractName_handleIrrelevantTags() {
+        // GIVEN
+        MetricsConfig metricsConfig = MetricsConfig.builder().build();
+
+        Dao<ChannelConfig> channelConfigDao = (Dao<ChannelConfig>) mock(CachedLowerCaseDao.class);
+
+        Dao<Webhook> webhookDao = (Dao<Webhook>) mock(CachedDao.class);
+
+        // THEN
+        String[] tags = { "tag1", "tag2" };
+        StatsDFilter statsDFilter = new StatsDFilter(metricsConfig, channelConfigDao, webhookDao);
+        assertEquals("", statsDFilter.extractName(tags));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testStatsdFilterExtractName_handleExtractChannelTags() {
+        // GIVEN
+        MetricsConfig metricsConfig = MetricsConfig.builder().build();
+
+        Dao<ChannelConfig> channelConfigDao = (Dao<ChannelConfig>) mock(CachedLowerCaseDao.class);
+
+        Dao<Webhook> webhookDao = (Dao<Webhook>) mock(CachedDao.class);
+
+        // THEN
+        String[] tags = { "channel:test1", "tag2" };
+        StatsDFilter statsDFilter = new StatsDFilter(metricsConfig, channelConfigDao, webhookDao);
+        assertEquals("test1", statsDFilter.extractName(tags));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testStatsdFilterExtractName_handleExtractWebhookTags() {
+        // GIVEN
+        MetricsConfig metricsConfig = MetricsConfig.builder().build();
+
+        Dao<ChannelConfig> channelConfigDao = (Dao<ChannelConfig>) mock(CachedLowerCaseDao.class);
+
+        Dao<Webhook> webhookDao = (Dao<Webhook>) mock(CachedDao.class);
+
+        // THEN
+        String[] tags = { "name:test1", "tag2" };
+        StatsDFilter statsDFilter = new StatsDFilter(metricsConfig, channelConfigDao, webhookDao);
+        assertEquals("test1", statsDFilter.extractName(tags));
+    }
 }

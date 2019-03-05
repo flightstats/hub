@@ -9,11 +9,14 @@ import com.google.inject.name.Named;
 import com.timgroup.statsd.NoOpStatsDClient;
 import com.timgroup.statsd.NonBlockingStatsDClient;
 import com.timgroup.statsd.StatsDClient;
+import org.apache.commons.lang3.StringUtils;
 
+import javax.validation.constraints.Null;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @Singleton
 public class StatsDFilter {
@@ -60,6 +63,21 @@ public class StatsDFilter {
                 .ofNullable(webhookConfigDao.getCached(name))
                 .filter(Webhook::isSecondaryMetricsReporting)
                 .isPresent();
+    }
+
+    String extractName(String[] tags) {
+        try {
+            String namedMetric = Stream.of(tags)
+                    .filter((str -> StringUtils.isNotBlank(str) &&
+                            (str.contains("name") || str.contains("channel"))))
+                    .findAny()
+                    .orElse(null);
+            return namedMetric == null ?
+                    "" :
+                    namedMetric.substring(namedMetric.indexOf(":") + 1);
+        } catch (Exception ex) {
+            return "";
+        }
     }
 
     List<StatsDClient> getFilteredClients(boolean secondaryReporting) {
