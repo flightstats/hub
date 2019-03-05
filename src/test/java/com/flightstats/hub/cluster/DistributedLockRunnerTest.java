@@ -37,7 +37,7 @@ public class DistributedLockRunnerTest {
     }
 
     @Test
-    public void testRunsTheRunnableInALock() throws Exception {
+    public void test_runWithLock_executesTheRunnableCode() throws Exception {
         DistributedLockRunner distributedLockRunner = new DistributedLockRunner(lockManager);
         CountDownLatch latch = new CountDownLatch(1);
 
@@ -56,7 +56,7 @@ public class DistributedLockRunnerTest {
     }
 
     @Test
-    public void testPreventsTwoLockablesFromRunningAtTheSameTime() throws Exception {
+    public void test_runWithLock_withTwoLockables_runsOneAtATime() throws Exception {
         DistributedLockRunner distributedLockRunner = new DistributedLockRunner( lockManager);
         CountDownLatch waitForMe = new CountDownLatch(1);
         CountDownLatch latch = new CountDownLatch(2);
@@ -83,7 +83,7 @@ public class DistributedLockRunnerTest {
     }
 
     @Test
-    public void testIsAbleToContinueLockingAfterAFailureToLock() throws Exception {
+    public void test_runWithLock_afterAFailureToLock_continuesLocking() throws Exception {
         DistributedLockRunner distributedLockRunner = new DistributedLockRunner(lockManager);
         CountDownLatch waitForMe = new CountDownLatch(1);
         CountDownLatch latch = new CountDownLatch(2);
@@ -121,7 +121,7 @@ public class DistributedLockRunnerTest {
     }
 
     @Test
-    public void testIsAbleToLockOnOtherPathsWhileLocked() {
+    public void test_runWithLock_withTwoSeparateLocks_isAbleToLockOnBothPaths() {
         DistributedLockRunner distributedLockRunner = new DistributedLockRunner(lockManager);
         CountDownLatch waitForOne = new CountDownLatch(1);
         CountDownLatch waitForTwo = new CountDownLatch(1);

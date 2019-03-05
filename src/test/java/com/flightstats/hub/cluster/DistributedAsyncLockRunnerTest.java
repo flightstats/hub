@@ -35,7 +35,7 @@ public class DistributedAsyncLockRunnerTest {
     }
 
     @Test
-    public void testDoesWorkPassedInFromLockable() throws Exception {
+    public void test_runWithLock_executesTheRunnableCode() throws Exception {
         DistributedAsyncLockRunner distributedLockRunner = new DistributedAsyncLockRunner("/LockPath", lockManager);
         CountDownLatch latch = new CountDownLatch(1);
         SimpleTestLockable lockable = new SimpleTestLockable("lockable1", latch, 0);
@@ -50,7 +50,7 @@ public class DistributedAsyncLockRunnerTest {
     }
 
     @Test
-    public void testPreventsTwoLockablesFromRunningAtTheSameTime() throws Exception {
+    public void test_runWithLock_withTwoRunnables_runsOneAtATime() throws Exception {
         DistributedAsyncLockRunner distributedLockRunner = new DistributedAsyncLockRunner("/LockPath2", lockManager);
         CountDownLatch latch = new CountDownLatch(2);
         SimpleTestLockable lockable = new SimpleTestLockable("lockable1", latch, 100);
@@ -68,7 +68,7 @@ public class DistributedAsyncLockRunnerTest {
     }
 
     @Test
-    public void testIsAbleToContinueLockingAfterAFailureToLock() throws Exception {
+    public void test_runWithLock_afterAFailureToLock_continueLocking() throws Exception {
         DistributedAsyncLockRunner distributedLockRunner = new DistributedAsyncLockRunner("/LockPath3", lockManager);
         CountDownLatch latch = new CountDownLatch(2);
         SimpleTestLockable lockable = new SimpleTestLockable("lockable1", latch, 1000);
