@@ -50,15 +50,16 @@ public class StatsDFilter {
     }
 
     boolean isSecondaryReporting(String name) {
-        Optional<Webhook> optionalWebhook = Optional
-                .ofNullable(webhookConfigDao.getCached(name))
-                .filter(Webhook::isSecondaryMetricsReporting);
+        if (name.equals("request")) return false;
 
-        Optional<ChannelConfig> optionalChannelConfig = Optional
+        return Optional
                 .ofNullable(channelConfigDao.getCached(name))
-                .filter(ChannelConfig::isSecondaryMetricsReporting);
-
-        return optionalChannelConfig.isPresent() || optionalWebhook.isPresent();
+                .filter(ChannelConfig::isSecondaryMetricsReporting)
+                .isPresent() ||
+                Optional
+                .ofNullable(webhookConfigDao.getCached(name))
+                .filter(Webhook::isSecondaryMetricsReporting)
+                .isPresent();
     }
 
     List<StatsDClient> getFilteredClients(boolean secondaryReporting) {
