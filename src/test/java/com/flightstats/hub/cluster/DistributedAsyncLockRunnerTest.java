@@ -18,7 +18,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-public class DistributedAsynchronousLockRunnerTest {
+public class DistributedAsyncLockRunnerTest {
     private static DistributedLeaderLockManager lockManager;
     private static AtomicReference<List<String>> lockList;
 
@@ -36,7 +36,7 @@ public class DistributedAsynchronousLockRunnerTest {
 
     @Test
     public void testDoesWorkPassedInFromLockable() throws Exception {
-        DistributedAsynchronousLockRunner distributedLockRunner = new DistributedAsynchronousLockRunner("/LockPath", lockManager);
+        DistributedAsyncLockRunner distributedLockRunner = new DistributedAsyncLockRunner("/LockPath", lockManager);
         CountDownLatch latch = new CountDownLatch(1);
         SimpleTestLockable lockable = new SimpleTestLockable("lockable1", latch, 0);
 
@@ -51,7 +51,7 @@ public class DistributedAsynchronousLockRunnerTest {
 
     @Test
     public void testPreventsTwoLockablesFromRunningAtTheSameTime() throws Exception {
-        DistributedAsynchronousLockRunner distributedLockRunner = new DistributedAsynchronousLockRunner("/LockPath2", lockManager);
+        DistributedAsyncLockRunner distributedLockRunner = new DistributedAsyncLockRunner("/LockPath2", lockManager);
         CountDownLatch latch = new CountDownLatch(2);
         SimpleTestLockable lockable = new SimpleTestLockable("lockable1", latch, 100);
         SimpleTestLockable secondLockable = new SimpleTestLockable("lockable2", latch, 0);
@@ -69,7 +69,7 @@ public class DistributedAsynchronousLockRunnerTest {
 
     @Test
     public void testIsAbleToContinueLockingAfterAFailureToLock() throws Exception {
-        DistributedAsynchronousLockRunner distributedLockRunner = new DistributedAsynchronousLockRunner("/LockPath3", lockManager);
+        DistributedAsyncLockRunner distributedLockRunner = new DistributedAsyncLockRunner("/LockPath3", lockManager);
         CountDownLatch latch = new CountDownLatch(2);
         SimpleTestLockable lockable = new SimpleTestLockable("lockable1", latch, 1000);
         SimpleTestLockable secondLockable = new SimpleTestLockable("lockable2", latch, 0);

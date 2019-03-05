@@ -9,21 +9,21 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
- * DistributedAsynchronousLockRunner is intended for long or short running processes.
+ * DistributedAsyncLockRunner is intended for long or short running processes.
  */
 @Slf4j
-public class DistributedAsynchronousLockRunner {
+public class DistributedAsyncLockRunner {
     private final DistributedLeaderLockManager leadershipLockManager;
     private final ExecutorService executorService;
 
     private String lockPath;
 
     @Inject
-    public DistributedAsynchronousLockRunner(DistributedLeaderLockManager leadershipLockManager) {
+    public DistributedAsyncLockRunner(DistributedLeaderLockManager leadershipLockManager) {
         this(null, leadershipLockManager);
     }
 
-    public DistributedAsynchronousLockRunner(String lockPath, DistributedLeaderLockManager leadershipLockManager) {
+    public DistributedAsyncLockRunner(String lockPath, DistributedLeaderLockManager leadershipLockManager) {
         this.lockPath = lockPath;
         this.leadershipLockManager = leadershipLockManager;
         this.executorService = Executors.newSingleThreadExecutor();

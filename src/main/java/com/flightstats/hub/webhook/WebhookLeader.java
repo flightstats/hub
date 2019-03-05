@@ -62,7 +62,7 @@ class WebhookLeader implements Lockable {
     private String channelName;
 
     private Optional<LeadershipLock> leadershipLock;
-    private DistributedAsynchronousLockRunner distributedLockRunner;
+    private DistributedAsyncLockRunner distributedLockRunner;
 
     boolean tryLeadership(Webhook webhook) {
         log.debug("starting webhook: " + webhook);
@@ -72,7 +72,7 @@ class WebhookLeader implements Lockable {
             leadershipLock = Optional.empty();
         } else {
             String leaderPath = WEBHOOK_LEADER + "/" + webhook.getName();
-            distributedLockRunner = new DistributedAsynchronousLockRunner(leaderPath, lockManager);
+            distributedLockRunner = new DistributedAsyncLockRunner(leaderPath, lockManager);
             leadershipLock = distributedLockRunner.runWithLock(this, 1, TimeUnit.SECONDS);
         }
         return leadershipLock.isPresent();

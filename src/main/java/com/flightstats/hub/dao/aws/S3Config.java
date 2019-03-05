@@ -4,7 +4,7 @@ import com.amazonaws.services.s3.model.BucketLifecycleConfiguration;
 import com.amazonaws.services.s3.model.SetBucketLifecycleConfigurationRequest;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.cluster.DistributedAsynchronousLockRunner;
+import com.flightstats.hub.cluster.DistributedAsyncLockRunner;
 import com.flightstats.hub.cluster.Leadership;
 import com.flightstats.hub.cluster.Lockable;
 import com.flightstats.hub.dao.ChannelService;
@@ -34,14 +34,14 @@ public class S3Config {
     // S3 limits max lifecycle rules to 1000. 10 rules are made available for setting lifecycle rules from infrastructure code.
     private static final Integer S3_LIFECYCLE_RULES_AVAILABLE = 990;
 
-    private final DistributedAsynchronousLockRunner distributedLockRunner;
+    private final DistributedAsyncLockRunner distributedLockRunner;
     private final Dao<ChannelConfig> channelConfigDao;
     private final String s3BucketName;
     private final HubS3Client s3Client;
     private ChannelService channelService;
 
     @Inject
-    public S3Config(HubS3Client s3Client, S3BucketName s3BucketName, DistributedAsynchronousLockRunner distributedLockRunner,
+    public S3Config(HubS3Client s3Client, S3BucketName s3BucketName, DistributedAsyncLockRunner distributedLockRunner,
                     @Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao, ChannelService channelService) {
         this.s3Client = s3Client;
         this.distributedLockRunner = distributedLockRunner;

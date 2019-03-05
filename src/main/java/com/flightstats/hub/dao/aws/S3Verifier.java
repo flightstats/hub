@@ -232,7 +232,7 @@ public class S3Verifier {
 
         @Override
         protected void runOneIteration() throws Exception {
-            DistributedAsynchronousLockRunner distributedLockRunner = new DistributedAsynchronousLockRunner(LEADER_PATH, distributedLeaderLockManager);
+            DistributedAsyncLockRunner distributedLockRunner = new DistributedAsyncLockRunner(LEADER_PATH, distributedLeaderLockManager);
             distributedLockRunner.runWithLock(this, 1, TimeUnit.SECONDS);
         }
 
