@@ -35,19 +35,20 @@ public class WebhookLeaderLocksTest {
 
     @BeforeClass
     public static void setup() throws Exception {
-        ZooKeeperState zooKeeperState = new ZooKeeperState();
         curator = Integration.startZooKeeper();
         zooKeeperUtils = new SafeZooKeeperUtils(curator);
     }
 
     @Before
     public void createWebhookLeader() throws Exception {
-        curator.create().creatingParentsIfNeeded().forPath(WEBHOOK_LEADER_PATH);
+        curator.checkExists().creatingParentsIfNeeded().forPath(WEBHOOK_LEADER_PATH);
     }
 
     @After
     public void destroyWebhookLeaders() throws Exception {
-        curator.delete().deletingChildrenIfNeeded().forPath(WEBHOOK_LEADER_PATH);
+        for (String path : curator.getChildren().forPath(WEBHOOK_LEADER_PATH)) {
+            curator.delete().deletingChildrenIfNeeded().forPath(WEBHOOK_LEADER_PATH + "/" + path);
+        }
     }
 
     @Test

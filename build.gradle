@@ -104,15 +104,11 @@ dependencies {
 
     compile 'com.amazonaws:aws-java-sdk:1.11.248'
 
-    //todo https://curator.apache.org/zk-compatibility.html
-    //Curator 4.0 supports ZooKeeper 3.4.x ensembles in a soft-compatibility mode. To use this mode you must exclude ZooKeeper when adding Curator to your dependency management tool.
-    //You must add a dependency on ZooKeeper 3.4.x also.
-    compile('org.apache.curator:curator-recipes:4.0.0') {
+    compile('org.apache.curator:curator-recipes:4.1.0') {
         exclude group: 'org.apache.zookeeper', module: 'zookeeper'
     }
-    compile('org.apache.zookeeper:zookeeper:3.4.11')
-    //todo curator-test 4.0.0 has a compile issue with QuorumPeerConfig
-    testCompile ('org.apache.curator:curator-test:2.12.0') {
+    compile('org.apache.zookeeper:zookeeper:3.5.4-beta')
+    testCompile ('org.apache.curator:curator-test:4.1.0') {
         exclude group: 'org.apache.zookeeper', module: 'zookeeper'
     }
 
