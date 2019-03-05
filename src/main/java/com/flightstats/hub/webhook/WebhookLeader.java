@@ -49,7 +49,7 @@ class WebhookLeader implements Lockable {
     @Inject
     private WebhookStateReaper webhookStateReaper;
     @Inject
-    private DistributedLeadershipLockManager lockManager;
+    private DistributedLeaderLockManager lockManager;
 
     private Webhook webhook;
 

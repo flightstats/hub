@@ -19,14 +19,14 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class DistributedAsynchronousLockRunnerTest {
-    private static DistributedLeadershipLockManager lockManager;
+    private static DistributedLeaderLockManager lockManager;
     private static AtomicReference<List<String>> lockList;
 
     @BeforeClass
     public static void setupCurator() throws Exception {
         ZooKeeperState zooKeeperState = new ZooKeeperState();
         CuratorFramework curator = Integration.startZooKeeper(zooKeeperState);
-        lockManager = new DistributedLeadershipLockManager(curator, zooKeeperState);
+        lockManager = new DistributedLeaderLockManager(curator, zooKeeperState);
     }
 
     @Before

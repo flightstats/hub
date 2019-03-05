@@ -1,5 +1,6 @@
 package com.flightstats.hub.cluster;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.locks.InterProcessSemaphoreMutex;
 import org.slf4j.Logger;
@@ -8,13 +9,13 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import java.util.concurrent.TimeUnit;
 
-public class DistributedLeadershipLockManager {
-    private final static Logger logger = LoggerFactory.getLogger(DistributedLeadershipLockManager.class);
+@Slf4j
+public class DistributedLeaderLockManager {
     private final CuratorFramework curator;
     private final ZooKeeperState zooKeeperState;
 
     @Inject
-    public DistributedLeadershipLockManager(CuratorFramework curator, ZooKeeperState zooKeeperState) {
+    public DistributedLeaderLockManager(CuratorFramework curator, ZooKeeperState zooKeeperState) {
         this.curator = curator;
         this.zooKeeperState = zooKeeperState;
     }
@@ -34,16 +35,16 @@ public class DistributedLeadershipLockManager {
         Leadership leadership = leadershipLock.getLeadership();
         InterProcessSemaphoreMutex mutex = leadershipLock.getMutex();
         try {
-            logger.debug("attempting acquire {}", leadershipLock.getLockPath());
+            log.debug("attempting acquire {}", leadershipLock.getLockPath());
             if (mutex.acquire(waitTimeout, waitTimeoutUnit)) {
                 leadership.setLeadership(true);
-                logger.debug("acquired {} {}", leadershipLock.getLockPath(), leadership.hasLeadership());
+                log.debug("acquired {} {}", leadershipLock.getLockPath(), leadership.hasLeadership());
                 return true;
             } else {
-                logger.debug("unable to acquire {} ", leadershipLock.getLockPath());
+                log.debug("unable to acquire {} ", leadershipLock.getLockPath());
             }
         } catch (Exception e) {
-            logger.warn("oh no! issue with " + leadershipLock.getLockPath(), e);
+            log.warn("oh no! issue with " + leadershipLock.getLockPath(), e);
             release(leadershipLock);
         }
         return false;
@@ -54,9 +55,9 @@ public class DistributedLeadershipLockManager {
         try {
             lock.getMutex().release();
         } catch (IllegalStateException e) {
-            logger.info("illegal state " + lock.getLockPath() + " " + e.getMessage());
+            log.info("illegal state " + lock.getLockPath() + " " + e.getMessage());
         } catch (Exception e) {
-            logger.warn("issue releasing mutex for " + lock.getLockPath(), e);
+            log.warn("issue releasing mutex for " + lock.getLockPath(), e);
         }
     }
 }

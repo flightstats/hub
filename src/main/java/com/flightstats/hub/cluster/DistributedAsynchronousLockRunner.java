@@ -13,17 +13,17 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 public class DistributedAsynchronousLockRunner {
-    private final DistributedLeadershipLockManager leadershipLockManager;
+    private final DistributedLeaderLockManager leadershipLockManager;
     private final ExecutorService executorService;
 
     private String lockPath;
 
     @Inject
-    public DistributedAsynchronousLockRunner(DistributedLeadershipLockManager leadershipLockManager) {
+    public DistributedAsynchronousLockRunner(DistributedLeaderLockManager leadershipLockManager) {
         this(null, leadershipLockManager);
     }
 
-    public DistributedAsynchronousLockRunner(String lockPath, DistributedLeadershipLockManager leadershipLockManager) {
+    public DistributedAsynchronousLockRunner(String lockPath, DistributedLeaderLockManager leadershipLockManager) {
         this.lockPath = lockPath;
         this.leadershipLockManager = leadershipLockManager;
         this.executorService = Executors.newSingleThreadExecutor();

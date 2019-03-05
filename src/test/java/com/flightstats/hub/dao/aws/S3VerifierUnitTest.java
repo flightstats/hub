@@ -1,6 +1,6 @@
 package com.flightstats.hub.dao.aws;
 
-import com.flightstats.hub.cluster.DistributedLeadershipLockManager;
+import com.flightstats.hub.cluster.DistributedLeaderLockManager;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
@@ -34,7 +34,7 @@ public class S3VerifierUnitTest {
         ContentDao s3SingleContentDao = mock(ContentDao.class);
         S3WriteQueue s3WriteQueue = mock(S3WriteQueue.class);
         Client httpClient = mock(Client.class);
-        DistributedLeadershipLockManager lockManager = mock(DistributedLeadershipLockManager.class);
+        DistributedLeaderLockManager lockManager = mock(DistributedLeaderLockManager.class);
         MetricsService metricsService = mock(MetricsService.class);
         S3Verifier s3Verifier = spy(new S3Verifier(lastContentPath, channelService, spokeWriteContentDao, s3SingleContentDao, s3WriteQueue, httpClient, lockManager, metricsService));
 
@@ -63,7 +63,7 @@ public class S3VerifierUnitTest {
         ContentDao s3SingleContentDao = mock(ContentDao.class);
         S3WriteQueue s3WriteQueue = mock(S3WriteQueue.class);
         Client httpClient = mock(Client.class);
-        DistributedLeadershipLockManager lockManager = mock(DistributedLeadershipLockManager.class);
+        DistributedLeaderLockManager lockManager = mock(DistributedLeaderLockManager.class);
         MetricsService metricsService = mock(MetricsService.class);
         S3Verifier s3Verifier = spy(new S3Verifier(lastContentPath, channelService, spokeWriteContentDao, s3SingleContentDao, s3WriteQueue, httpClient, lockManager, metricsService));
 
@@ -96,7 +96,7 @@ public class S3VerifierUnitTest {
         ContentDao s3SingleContentDao = mock(ContentDao.class);
         S3WriteQueue s3WriteQueue = mock(S3WriteQueue.class);
         Client httpClient = mock(Client.class);
-        DistributedLeadershipLockManager lockManager = mock(DistributedLeadershipLockManager.class);
+        DistributedLeaderLockManager lockManager = mock(DistributedLeaderLockManager.class);
         MetricsService metricsService = mock(MetricsService.class);
         S3Verifier s3Verifier = spy(new S3Verifier(lastContentPath, channelService, spokeWriteContentDao, s3SingleContentDao, s3WriteQueue, httpClient, lockManager, metricsService));
 
@@ -136,7 +136,7 @@ public class S3VerifierUnitTest {
         ContentDao s3SingleContentDao = mock(ContentDao.class);
         S3WriteQueue s3WriteQueue = mock(S3WriteQueue.class);
         Client httpClient = mock(Client.class);
-        DistributedLeadershipLockManager lockManager = mock(DistributedLeadershipLockManager.class);
+        DistributedLeaderLockManager lockManager = mock(DistributedLeaderLockManager.class);
         MetricsService metricsService = mock(MetricsService.class);
         S3Verifier s3Verifier = spy(new S3Verifier(lastContentPath, channelService, spokeWriteContentDao, s3SingleContentDao, s3WriteQueue, httpClient, lockManager, metricsService));
 

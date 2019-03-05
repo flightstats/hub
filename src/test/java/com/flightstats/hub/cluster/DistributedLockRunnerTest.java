@@ -7,7 +7,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -22,14 +21,14 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class DistributedLockRunnerTest {
-    private static DistributedLeadershipLockManager lockManager;
+    private static DistributedLeaderLockManager lockManager;
     private static AtomicReference<List<String>> lockList;
 
     @BeforeClass
     public static void setupCurator() throws Exception {
         ZooKeeperState zooKeeperState = new ZooKeeperState();
         CuratorFramework curator = Integration.startZooKeeper(zooKeeperState);
-        lockManager = new DistributedLeadershipLockManager(curator, zooKeeperState);
+        lockManager = new DistributedLeaderLockManager(curator, zooKeeperState);
     }
 
     @Before

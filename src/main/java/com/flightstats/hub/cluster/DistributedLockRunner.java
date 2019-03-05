@@ -11,10 +11,10 @@ import java.util.function.Consumer;
  */
 @Slf4j
 public class DistributedLockRunner {
-    private final DistributedLeadershipLockManager leadershipLockManager;
+    private final DistributedLeaderLockManager leadershipLockManager;
 
     @Inject
-    public DistributedLockRunner(DistributedLeadershipLockManager leadershipLockManager) {
+    public DistributedLockRunner(DistributedLeaderLockManager leadershipLockManager) {
         this.leadershipLockManager = leadershipLockManager;
     }
 

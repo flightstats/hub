@@ -55,7 +55,7 @@ public class S3Verifier {
     private final ContentDao s3SingleContentDao;
     private final S3WriteQueue s3WriteQueue;
     private final Client httpClient;
-    private final DistributedLeadershipLockManager distributedLeadershipLockManager;
+    private final DistributedLeaderLockManager distributedLeaderLockManager;
     private final MetricsService metricsService;
 
     @Inject
@@ -65,7 +65,7 @@ public class S3Verifier {
                       @Named(ContentDao.SINGLE_LONG_TERM) ContentDao s3SingleContentDao,
                       S3WriteQueue s3WriteQueue,
                       Client httpClient,
-                      DistributedLeadershipLockManager distributedLeadershipLockManager,
+                      DistributedLeaderLockManager distributedLeaderLockManager,
                       MetricsService metricsService) {
         this.lastContentPath = lastContentPath;
         this.channelService = channelService;
@@ -73,7 +73,7 @@ public class S3Verifier {
         this.s3SingleContentDao = s3SingleContentDao;
         this.s3WriteQueue = s3WriteQueue;
         this.httpClient = httpClient;
-        this.distributedLeadershipLockManager = distributedLeadershipLockManager;
+        this.distributedLeaderLockManager = distributedLeaderLockManager;
         this.metricsService = metricsService;
         this.baseTimeoutMinutes = HubProperties.getProperty("s3Verifier.baseTimeoutMinutes", 2);
 
@@ -232,7 +232,7 @@ public class S3Verifier {
 
         @Override
         protected void runOneIteration() throws Exception {
-            DistributedAsynchronousLockRunner distributedLockRunner = new DistributedAsynchronousLockRunner(LEADER_PATH, distributedLeadershipLockManager);
+            DistributedAsynchronousLockRunner distributedLockRunner = new DistributedAsynchronousLockRunner(LEADER_PATH, distributedLeaderLockManager);
             distributedLockRunner.runWithLock(this, 1, TimeUnit.SECONDS);
         }
 
