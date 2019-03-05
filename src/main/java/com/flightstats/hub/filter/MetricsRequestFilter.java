@@ -66,7 +66,7 @@ public class MetricsRequestFilter implements ContainerRequestFilter, ContainerRe
                 String[] tagArray = getTagArray(tags);
                 if (!statsdFilter.isTestChannel(channel)) {
                     logger.trace("statsdReporter data sent: {}", Arrays.toString(tagArray));
-                    statsdReporter.time("request", requestState.getStart(), tagArray);
+                    statsdReporter.requestTime(requestState.getStart(), tagArray);
                 }
             }
             logger.trace("request {}, time: {}", tags.get("endpoint"), time);

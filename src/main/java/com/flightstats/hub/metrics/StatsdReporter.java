@@ -36,15 +36,15 @@ public class StatsdReporter {
 
     public void event(String title, String text, String[] tags) {
         Event event = statsDFormatter.buildCustomEvent(title, text);
-        reportWithFilteredClients(title, (statsDClient -> statsDClient.recordEvent(event, tags)));
+        reportWithFilteredClients(title, (statsDClient) -> statsDClient.recordEvent(event, tags));
     }
 
     public void count(String name, long value, String... tags) {
-        reportWithFilteredClients(name, (statsDClient -> statsDClient.count(name, value, tags)));
+        reportWithFilteredClients(name, (statsDClient) -> statsDClient.count(name, value, tags));
     }
 
     public void incrementCounter(String name, String... tags) {
-        reportWithFilteredClients(name, (statsDClient -> statsDClient.incrementCounter(name, tags)));
+        reportWithFilteredClients(name, (statsDClient) -> statsDClient.incrementCounter(name, tags));
     }
 
     public void increment(String name, String... tags) {
@@ -52,7 +52,7 @@ public class StatsdReporter {
     }
 
     public void gauge(String name, double value, String... tags) {
-        reportWithFilteredClients(name, (statsDClient -> statsDClient.gauge(name, value, tags)));
+        reportWithFilteredClients(name, (statsDClient) -> statsDClient.gauge(name, value, tags));
     }
 
     public void requestTime(long start, String ...tags) {
@@ -67,11 +67,11 @@ public class StatsdReporter {
         if (statsDFilter.isTestChannel(channel)) return;
 
         reportWithFilteredClients(channel, (
-                statsDClient -> statsDClient.time(
+                statsDClient) -> statsDClient.time(
                         name,
                         statsDFormatter.startTimeMillis(start),
                         statsDFormatter.formatChannelTags(channel, tags)
-                )));
+                ));
     }
 
     public void time(String channel, String name, long start, long bytes, String... tags) {
