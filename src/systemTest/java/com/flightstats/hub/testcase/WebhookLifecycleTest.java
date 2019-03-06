@@ -100,9 +100,10 @@ public class WebhookLifecycleTest extends BaseTest {
     private List<String> parseResponse(String body) {
         if (!StringUtils.isBlank(body)) {
             String parsedString = body.replace("[", EMPTY_STRING)
-                    .replace("]", EMPTY_STRING)
-                    .replaceAll(" ", EMPTY_STRING);
-            return Arrays.asList(parsedString.split(","));
+                    .replace("]", EMPTY_STRING);
+            List<String> postedItems = Arrays.asList(parsedString.split(","));
+            postedItems.replaceAll(String::trim);
+            return postedItems;
         }
         return Collections.EMPTY_LIST;
     }
