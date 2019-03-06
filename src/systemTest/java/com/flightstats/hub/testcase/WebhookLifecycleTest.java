@@ -89,9 +89,11 @@ public class WebhookLifecycleTest extends BaseTest {
         });
 
         Collections.sort(channelItems);
-        Collections.sort(channelItems);
+        Collections.sort(channelItemsPosted);
         log.info("channelItemsPosted {} ", channelItemsPosted);
         log.info("channelItems {} ", channelItems);
+        log.info("equals1 {} ", channelItemsPosted.equals(channelItems));
+        log.info("equals2 {} ", channelItems.equals(channelItemsPosted));
         assertTrue(channelItems.equals(channelItemsPosted));
     }
 
