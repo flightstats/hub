@@ -88,6 +88,9 @@ public class WebhookLifecycleTest extends BaseTest {
                     && channelItemsPosted.size() == channelItems.size();
         });
 
+
+        channelItems.replaceAll(String::trim);
+        channelItemsPosted.replaceAll(String::trim);
         Collections.sort(channelItems);
         Collections.sort(channelItemsPosted);
         log.info("channelItemsPosted {} ", channelItemsPosted);
