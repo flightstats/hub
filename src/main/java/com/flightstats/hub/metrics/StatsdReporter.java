@@ -52,23 +52,23 @@ public class StatsdReporter {
 
     public void event(String title, String text, String[] tags) {
         Event event = statsDFormatter.buildCustomEvent(title, text);
-        reportWithDefaultClient((statsDClient) -> statsDClient.recordEvent(event, tags));
+        reportWithDefaultClient(statsDClient -> statsDClient.recordEvent(event, tags));
     }
 
     public void count(String name, long value, String... tags) {
-        reportWithEitherClient(statsDFilter.extractName(tags), (statsDClient) -> statsDClient.count(name, value, tags));
+        reportWithEitherClient(statsDFilter.extractName(tags), statsDClient -> statsDClient.count(name, value, tags));
     }
 
     public void incrementCounter(String name, String... tags) {
-        reportWithEitherClient(statsDFilter.extractName(tags), (statsDClient) -> statsDClient.incrementCounter(name, tags));
+        reportWithEitherClient(statsDFilter.extractName(tags), statsDClient -> statsDClient.incrementCounter(name, tags));
     }
 
     public void increment(String name, String... tags) {
-        reportWithDefaultClient((statsDClient) -> statsDClient.increment(name, tags));
+        reportWithDefaultClient(statsDClient -> statsDClient.increment(name, tags));
     }
 
     public void gauge(String name, double value, String... tags) {
-        reportWithDefaultClient((statsDClient) -> statsDClient.gauge(name, value, tags));
+        reportWithDefaultClient(statsDClient -> statsDClient.gauge(name, value, tags));
     }
 
     public void requestTime(long start, String ...tags) {
