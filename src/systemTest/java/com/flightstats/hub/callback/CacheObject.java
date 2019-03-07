@@ -4,6 +4,7 @@ import com.flightstats.hub.callback.model.RequestObject;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -19,7 +20,8 @@ public class CacheObject {
         if (cacheRequestObject.containsKey(webhookName)) {
             cacheRequestObject.get(webhookName).addAll(requestObject.getUris());
         } else {
-            cacheRequestObject.put(requestObject.getName(), new ArrayList<>(requestObject.getUris()));
+            cacheRequestObject.put(requestObject.getName(),
+                    Collections.synchronizedList(new ArrayList<>(requestObject.getUris())));
         }
     }
 
