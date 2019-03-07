@@ -24,6 +24,7 @@ import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
 public class BaseTest {
 
     private static final String PROPERTY_FILE_NAME = "integration-hub.properties";
+
     protected Injector injector = Guice.createInjector(new AbstractModule() {
         @Override
         protected void configure() {

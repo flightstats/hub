@@ -11,7 +11,6 @@ import com.flightstats.hub.model.ChannelItem;
 import com.flightstats.hub.model.Webhook;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.awaitility.Duration;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -22,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.OK;
@@ -29,7 +29,6 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 @Slf4j
 public class WebhookLifecycleTest extends BaseTest {
@@ -49,6 +48,7 @@ public class WebhookLifecycleTest extends BaseTest {
 
     @Before
     public void setup() {
+
         this.channelItemResourceClient = getHttpClient(ChannelItemResourceClient.class);
         this.channelResourceClient = getHttpClient(ChannelResourceClient.class);
         this.webhookResourceClient = getHttpClient(WebhookResourceClient.class);
@@ -83,7 +83,6 @@ public class WebhookLifecycleTest extends BaseTest {
 
         addWebhook(buildWebhook(channelItems.get(4)));
         verifyWebhookCallback(channelItems.subList(5, channelItems.size()));
-        logWebhookCallbackError();
     }
 
     @SneakyThrows
@@ -94,18 +93,24 @@ public class WebhookLifecycleTest extends BaseTest {
         Response<Object> response = call.execute();
 
         assertEquals(OK.getStatusCode(), response.code());
-        log.info("Call back errors for webhook {} {} ", webhookName, response);
+        log.info("Call back errors for webhook {} {} ", webhookName, response.body());
     }
 
-    @SneakyThrows
+
     private void verifyWebhookCallback(List<String> channelItems) {
         Call<String> call = callbackResourceClient.get(callbackServer.getUrl() + "/" + this.webhookName);
-        await().atMost(Duration.TWO_MINUTES).until(() -> {
-            Response<String> response = call.clone().execute();
-            channelItemsPosted = parseResponse(response.body());
-            return response.code() == OK.getStatusCode()
-                    && channelItemsPosted.size() == channelItems.size();
-        });
+
+        try {
+            await().atMost(90, TimeUnit.SECONDS).until(() -> {
+                Response<String> response = call.clone().execute();
+                channelItemsPosted = parseResponse(response.body());
+                return response.code() == OK.getStatusCode()
+                        && channelItemsPosted.size() == channelItems.size();
+            });
+        } catch (Exception e) {
+            log.info("Problem verifying webhook callbacks. {} ", e.getMessage());
+            logWebhookCallbackError();
+        }
 
         Collections.sort(channelItems);
         Collections.sort(channelItemsPosted);
@@ -113,7 +118,7 @@ public class WebhookLifecycleTest extends BaseTest {
         log.info("channelItemsPosted {} ", channelItemsPosted);
         log.info("channelItems {} ", channelItems);
 
-        assertTrue(channelItems.equals(channelItemsPosted));
+        assertEquals(channelItems, channelItemsPosted);
     }
 
     private List<String> parseResponse(String body) {
@@ -185,7 +190,6 @@ public class WebhookLifecycleTest extends BaseTest {
     @After
     @SneakyThrows
     public void cleanup() {
-
         this.channelResourceClient.delete(channelName).execute();
         this.webhookResourceClient.delete(webhookName).execute();
 

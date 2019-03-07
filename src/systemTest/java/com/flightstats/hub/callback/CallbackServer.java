@@ -4,7 +4,6 @@ import lombok.SneakyThrows;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
-import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 
 import java.net.InetAddress;
@@ -18,12 +17,10 @@ public class CallbackServer {
     @SneakyThrows
     public void start() {
 
-        ResourceConfig config = new ResourceConfig();
-        config.packages("com.flightstats.hub.callback");
-
-        ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
+        final ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
         context.setContextPath("/");
-        ServletHolder servletHolder = new ServletHolder(new ServletContainer(config));
+
+        final ServletHolder servletHolder = new ServletHolder(new ServletContainer());
         context.addServlet(servletHolder, "/*");
         servletHolder.setInitOrder(0);
 
