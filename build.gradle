@@ -116,7 +116,7 @@ dependencies {
     testCompile 'com.sparkjava:spark-core:2.7.1'
     testCompile 'junit:junit:4.+'
     testCompile "org.mockito:mockito-all:1.+"
-    testCompile 'org.testng:testng:6.+'
+
 }
 
 

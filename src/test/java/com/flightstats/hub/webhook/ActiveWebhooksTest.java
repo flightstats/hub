@@ -11,9 +11,9 @@ import static java.lang.String.format;
 import static java.util.stream.Collectors.toSet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.testng.AssertJUnit.assertTrue;
 
 public class ActiveWebhooksTest {
     private static final int HUB_PORT = HubHost.getLocalPort();
