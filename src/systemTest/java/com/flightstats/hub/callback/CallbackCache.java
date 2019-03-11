@@ -17,8 +17,8 @@ public class CallbackCache {
         String webhookName = webhookCallbackRequest.getName();
 
         synchronized (this) {
-            if (cacheRequestObject.containsKey(webhookName)) {
-                cacheRequestObject.get(webhookName).addAll(webhookCallbackRequest.getUris());
+            if (contains(webhookName)) {
+                get(webhookName).addAll(webhookCallbackRequest.getUris());
             } else {
                 cacheRequestObject.put(
                         webhookCallbackRequest.getName(),

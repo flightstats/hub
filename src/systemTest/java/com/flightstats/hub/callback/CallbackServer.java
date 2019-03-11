@@ -10,7 +10,6 @@ import java.net.InetAddress;
 
 public class CallbackServer {
 
-    private static final String CALLBACK_PATH = "/callback";
     private static final int JETTY_PORT = 8090;
     private Server jettyServer;
 
@@ -44,8 +43,8 @@ public class CallbackServer {
         return InetAddress.getLocalHost().getHostAddress();
     }
 
-    public String getUrl() {
-        return "http://" + getHostAddress() + ":" + JETTY_PORT + CALLBACK_PATH;
+    public String getBaseUrl() {
+        return "http://" + getHostAddress() + ":" + JETTY_PORT;
     }
 }
 

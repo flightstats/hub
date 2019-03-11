@@ -1,15 +1,15 @@
 package com.flightstats.hub.model;
 
 import lombok.Builder;
+import lombok.experimental.Wither;
 
 @Builder
 public class Webhook {
 
     private final String callbackUrl;
     private final String channelUrl;
-    private final Integer parallelCalls;
+
     private final String name;
-    private final String startItem;
     private final String batch;
     private final boolean heartbeat;
     private final boolean paused;
@@ -22,4 +22,8 @@ public class Webhook {
     private final Integer maxAttempts;
     private final String errorChannelUrl;
 
+    @Wither
+    private final String startItem;
+    @Wither
+    private final Integer parallelCalls;
 }

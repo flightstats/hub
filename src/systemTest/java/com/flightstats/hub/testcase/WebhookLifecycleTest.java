@@ -17,12 +17,14 @@ import org.junit.Test;
 import retrofit2.Call;
 import retrofit2.Response;
 
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static com.flightstats.hub.model.ChannelContentStorageType.SINGLE;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang3.StringUtils.isBlank;
@@ -39,6 +41,8 @@ public class WebhookLifecycleTest extends BaseTest {
     private ChannelResourceClient channelResourceClient;
     private WebhookResourceClient webhookResourceClient;
     private CallbackResourceClient callbackResourceClient;
+
+    @Inject
     private CallbackServer callbackServer;
 
     private String channelName;
@@ -46,13 +50,12 @@ public class WebhookLifecycleTest extends BaseTest {
 
     @Before
     public void setup() {
+        super.setup();
+        this.channelItemResourceClient = getHubClient(ChannelItemResourceClient.class);
+        this.channelResourceClient = getHubClient(ChannelResourceClient.class);
+        this.webhookResourceClient = getHubClient(WebhookResourceClient.class);
 
-        this.channelItemResourceClient = getHttpClient(ChannelItemResourceClient.class);
-        this.channelResourceClient = getHttpClient(ChannelResourceClient.class);
-        this.webhookResourceClient = getHttpClient(WebhookResourceClient.class);
-        this.callbackResourceClient = getHttpClient(CallbackResourceClient.class);
-        this.callbackServer = injector.getInstance(CallbackServer.class);
-
+        this.callbackResourceClient = getCallbackClient(CallbackResourceClient.class);
         this.callbackServer.start();
 
         this.channelName = generateRandomString();
@@ -62,25 +65,57 @@ public class WebhookLifecycleTest extends BaseTest {
     @Test
     @SneakyThrows
     public void testWebhookWithNoStartItem() {
-        final String data = "{\"webhook\": \"test1\", \"startitem\":\"false\"}";
+        final String data = "{\"fn\": \"first\", \"ln\":\"last\"}";
 
         createChannel();
-        addWebhook(buildWebhook(EMPTY_STRING));
 
-        List<String> channelItems = addItemsToChannel(data, 10);
-        verifyWebhookCallback(channelItems);
+        final Webhook webhook = buildWebhook().withParallelCalls(2);
+        addWebhook(webhook);
+
+        final List<String> channelItems = addItemsToChannel(data, 10);
+        final List<String> channelItemsPosted = getWebhookCallbackItems(channelItems.size());
+
+        Collections.sort(channelItems);
+        Collections.sort(channelItemsPosted);
+        assertEquals(channelItems, channelItemsPosted);
     }
 
     @Test
     @SneakyThrows
     public void testWebhookWithStartItem() {
-        final String data = "{\"webhook\": \"test2\", \"startitem\":\"true\"}";
+        final String data = "{\"key1\": \"value1\", \"key2\":\"value2\"}";
 
         createChannel();
-        List<String> channelItems = addItemsToChannel(data, 10);
+        final List<String> channelItems = addItemsToChannel(data, 10);
 
-        addWebhook(buildWebhook(channelItems.get(4)));
-        verifyWebhookCallback(channelItems.subList(5, channelItems.size()));
+        final Webhook webhook = buildWebhook().
+                withStartItem(channelItems.get(4)).
+                withParallelCalls(2);
+        addWebhook(webhook);
+        final List<String> channelItemsExpected = channelItems.subList(5, channelItems.size());
+        final List<String> channelItemsPosted = getWebhookCallbackItems(channelItemsExpected.size());
+
+        Collections.sort(channelItemsExpected);
+        Collections.sort(channelItemsPosted);
+        assertEquals(channelItemsExpected, channelItemsPosted);
+    }
+
+    @Test
+    @SneakyThrows
+    public void testWebhookWithStartItem_expectItemsInOrder() {
+        final String data = "{\"city\": \"portland\", \"state\":\"or\"}";
+
+        createChannel();
+        final List<String> channelItems = addItemsToChannel(data, 10);
+
+        final Webhook webhook = buildWebhook().
+                withStartItem(channelItems.get(4)).
+                withParallelCalls(1);
+        addWebhook(webhook);
+        final List<String> channelItemsExpected = channelItems.subList(5, channelItems.size());
+        final List<String> channelItemsPosted = getWebhookCallbackItems(channelItemsExpected.size());
+
+        assertEquals(channelItemsExpected, channelItemsPosted);
     }
 
     @SneakyThrows
@@ -95,9 +130,9 @@ public class WebhookLifecycleTest extends BaseTest {
     }
 
 
-    private void verifyWebhookCallback(List<String> channelItems) {
+    private List<String> getWebhookCallbackItems(int expectedItemCount) {
         final List<String> channelItemsPosted = new ArrayList<>();
-        Call<String> call = callbackResourceClient.get(callbackServer.getUrl() + "/" + this.webhookName);
+        Call<String> call = callbackResourceClient.get(webhookName);
 
         try {
             await().atMost(90, TimeUnit.SECONDS).until(() -> {
@@ -105,20 +140,14 @@ public class WebhookLifecycleTest extends BaseTest {
                 channelItemsPosted.clear();
                 channelItemsPosted.addAll(parseResponse(response.body()));
                 return response.code() == OK.getStatusCode()
-                        && channelItemsPosted.size() == channelItems.size();
+                        && channelItemsPosted.size() == expectedItemCount;
             });
         } catch (Exception e) {
             log.error("Problem verifying webhook callbacks. {} ", e.getMessage());
             logWebhookCallbackError();
         }
+        return channelItemsPosted;
 
-        Collections.sort(channelItems);
-        Collections.sort(channelItemsPosted);
-
-        log.info("channelItemsPosted {} ", channelItemsPosted);
-        log.info("channelItems {} ", channelItems);
-
-        assertEquals(channelItems, channelItemsPosted);
     }
 
     private List<String> parseResponse(String body) {
@@ -172,13 +201,11 @@ public class WebhookLifecycleTest extends BaseTest {
         return response.body().get_links().getSelf().getHref();
     }
 
-    private Webhook buildWebhook(String startItem) {
+    private Webhook buildWebhook() {
         return Webhook.builder()
-                .channelUrl(retrofit.baseUrl() + "channel/" + channelName)
-                .callbackUrl(callbackServer.getUrl())
-                .parallelCalls(2)
-                .batch("single")
-                .startItem(isBlank(startItem) ? null : startItem)
+                .channelUrl(getHubClientBaseUrl() + "channel/" + channelName)
+                .callbackUrl(getCallbackClientBaseUrl() + "callback/")
+                .batch(SINGLE.toString())
                 .build();
 
     }
