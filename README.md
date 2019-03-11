@@ -41,7 +41,8 @@ The above command compiles the code, runs the unit tests and integration tests.~
 From Local:
 
 1) Setup hub:
-    docker run -p 80:80 flightstats/hub:latest
+    a) ./localDocker.sh (from root directory)
+    b) docker run -p 80:80 hub:local
    
 2) set base.url property in intergation-hub.properties
     
