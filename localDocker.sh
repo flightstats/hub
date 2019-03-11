@@ -9,7 +9,7 @@ rm -rf docker/hub
 rm -rf docker/configs
 
 echo "Building the code into a tarball."
-gradle clean compileJava distTar
+./gradlew clean compileJava distTar
 
 echo "Uncompressing the tarball."
 tar -xvf build/distributions/hub-*.tgz -C docker/
