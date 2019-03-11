@@ -1,6 +1,9 @@
 package com.flightstats.hub.dao.aws.s3Verifier;
 
 import com.flightstats.hub.dao.ContentDao;
+import com.flightstats.hub.dao.aws.s3Verifier.MissingContentFinder;
+import com.flightstats.hub.dao.aws.s3Verifier.VerifierConfig;
+import com.flightstats.hub.dao.aws.s3Verifier.VerifierMetrics;
 import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.MinutePath;
