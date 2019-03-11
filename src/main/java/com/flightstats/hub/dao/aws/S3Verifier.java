@@ -1,6 +1,7 @@
 package com.flightstats.hub.dao.aws;
 
 import com.flightstats.hub.app.HubServices;
+import com.flightstats.hub.app.NamedDependencies;
 import com.flightstats.hub.cluster.*;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.aws.s3Verifier.MissingContentFinder;
@@ -59,7 +60,7 @@ public class S3Verifier {
                       MissingContentFinder missingContentFinder,
                       VerifierRangeLookup verifierRangeLookup,
                       VerifierConfig verifierConfig,
-                      @Named("s3VerifierChannelThreadPool") ExecutorService channelThreadPool) {
+                      @Named(NamedDependencies.S3_VERIFIER_CHANNEL_THREAD_POOL) ExecutorService channelThreadPool) {
         this.lastContentPath = lastContentPath;
         this.channelService = channelService;
         this.s3WriteQueue = s3WriteQueue;

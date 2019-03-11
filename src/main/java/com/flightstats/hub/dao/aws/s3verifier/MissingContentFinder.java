@@ -1,5 +1,6 @@
 package com.flightstats.hub.dao.aws.s3Verifier;
 
+import com.flightstats.hub.app.NamedDependencies;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.QueryResult;
 import com.flightstats.hub.metrics.ActiveTraces;
@@ -41,7 +42,7 @@ public class MissingContentFinder {
                                 @Named(ContentDao.SINGLE_LONG_TERM) ContentDao s3SingleContentDao,
                                 VerifierConfig verifierConfig,
                                 MetricsService metricsService,
-                                @Named("s3VerifierQueryThreadPool") ExecutorService queryThreadPool) {
+                                @Named(NamedDependencies.S3_VERIFIER_QUERY_THREAD_POOL) ExecutorService queryThreadPool) {
         this.spokeWriteContentDao = spokeWriteContentDao;
         this.s3SingleContentDao = s3SingleContentDao;
         this.metricsService = metricsService;

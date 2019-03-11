@@ -162,14 +162,14 @@ public class HubBindings extends AbstractModule {
         return mapper;
     }
 
-    @Named("s3VerifierChannelThreadPool")
+    @Named(NamedDependencies.S3_VERIFIER_CHANNEL_THREAD_POOL)
     @Singleton
     @Provides
     public static ExecutorService channelThreadPool(VerifierConfig verifierConfig) {
         return Executors.newFixedThreadPool(verifierConfig.getChannelThreads(), new ThreadFactoryBuilder().setNameFormat("S3VerifierChannel-%d").build());
     }
 
-    @Named("s3VerifierQueryThreadPool")
+    @Named(NamedDependencies.S3_VERIFIER_QUERY_THREAD_POOL)
     @Singleton
     @Provides
     public
