@@ -1,6 +1,5 @@
 package com.flightstats.hub.webhook;
 
-import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.metrics.MetricsService;
 import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.SafeZooKeeperUtils;
@@ -15,10 +14,10 @@ import java.util.List;
 import static com.google.common.collect.Sets.newHashSet;
 import static java.lang.String.format;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
-import static org.testng.AssertJUnit.assertTrue;
 
 public class ActiveWebhooksIntTest {
     private static final String WEBHOOK_LEADER_PATH = "/WebhookLeader";
