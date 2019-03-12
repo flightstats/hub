@@ -37,7 +37,7 @@ public class VerifierRangeLookup {
         MinutePath endPath = new MinutePath(start);
         MinutePath defaultStart = new MinutePath(start.minusMinutes(verifierConfig.getOffsetMinutes()));
         MinutePath startPath = (MinutePath) lastContentPath.get(channelConfig.getDisplayName(), defaultStart, LAST_SINGLE_VERIFIED);
-        if (channelConfig.isLive() && startPath.compareTo(spokeTtlTime) < 0) {
+        if (channelConfig.isLive() && isStartTimeBeforeSpokeTtl(startPath, spokeTtlTime)) {
             startPath = spokeTtlTime;
         }
         return VerifierRange.builder()
@@ -47,7 +47,13 @@ public class VerifierRangeLookup {
                 .build();
     }
 
+    private boolean isStartTimeBeforeSpokeTtl(MinutePath startTime, MinutePath spokeTtlTime) {
+        return startTime.compareTo(spokeTtlTime) < 0;
+
+    }
+
     private MinutePath getSpokeTtlPath(DateTime now) {
-        return new MinutePath(now.minusMinutes(spokeWriteStoreConfig.getTtlMinutes() - 2));
+        int numberOfMinutesNeededToKickstartVerificationWhenWeFallOutsideSpokeTtl = 2;
+        return new MinutePath(now.minusMinutes(spokeWriteStoreConfig.getTtlMinutes() - numberOfMinutesNeededToKickstartVerificationWhenWeFallOutsideSpokeTtl));
     }
 }
