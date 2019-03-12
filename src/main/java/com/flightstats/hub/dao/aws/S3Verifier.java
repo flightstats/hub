@@ -21,6 +21,7 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -30,10 +31,10 @@ import java.util.SortedSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 @Singleton
 public class S3Verifier {
     public static final String LAST_SINGLE_VERIFIED = "/S3VerifierSingleLastVerified/";
-    private final static Logger logger = LoggerFactory.getLogger(S3Verifier.class);
     private static final String LEADER_PATH = "/S3VerifierSingleService";
 
     private final VerifierConfig verifierConfig;
@@ -80,7 +81,7 @@ public class S3Verifier {
 
     private void verifySingleChannels() {
         try {
-            logger.info("Verifying Single S3 data");
+            log.info("Verifying Single S3 data");
             Iterable<ChannelConfig> channels = channelService.getChannels();
             for (ChannelConfig channel : channels) {
                 if (channel.isSingle() || channel.isBoth()) {
@@ -88,11 +89,11 @@ public class S3Verifier {
                         String name = Thread.currentThread().getName();
                         Thread.currentThread().setName(name + "|" + channel.getDisplayName());
                         String url = verifierConfig.getChannelVerifierEndpoint(channel.getDisplayName());
-                        logger.debug("calling {}", url);
+                        log.debug("calling {}", url);
                         ClientResponse post = null;
                         try {
                             post = httpClient.resource(url).post(ClientResponse.class);
-                            logger.debug("response from post {}", post);
+                            log.debug("response from post {}", post);
                         } finally {
                             HubUtils.close(post);
                             Thread.currentThread().setName(name);
@@ -100,9 +101,9 @@ public class S3Verifier {
                     });
                 }
             }
-            logger.info("Completed Verifying Single S3 data");
+            log.info("Completed Verifying Single S3 data");
         } catch (Exception e) {
-            logger.error("Error: ", e);
+            log.error("Error: ", e);
         }
     }
 
@@ -123,14 +124,14 @@ public class S3Verifier {
     void verifyChannel(VerifierRange range) {
         String channelName = range.getChannelConfig().getDisplayName();
         SortedSet<ContentKey> keysToAdd = missingContentFinder.getMissing(range.getStartPath(), range.getEndPath(), channelName);
-        logger.debug("verifyChannel.starting {}", range);
+        log.debug("verifyChannel.starting {}", range);
         MinutePath lastCompleted = range.getEndPath();
         for (ContentKey key : keysToAdd) {
-            logger.trace("found missing {} {}", channelName, key);
+            log.trace("found missing {} {}", channelName, key);
             incrementMetric(VerifierMetrics.MISSING_ITEM);
             boolean success = s3WriteQueue.add(new ChannelContentKey(channelName, key));
             if (!success) {
-                logger.error("unable to queue missing item {} {}", channelName, key);
+                log.error("unable to queue missing item {} {}", channelName, key);
                 incrementMetric(VerifierMetrics.FAILED);
                 lastCompleted = new MinutePath(key.getTime().minusMinutes(1));
                 break;
@@ -138,11 +139,11 @@ public class S3Verifier {
         }
 
         if (lastCompleted.compareTo(range.getStartPath()) > 0) {
-            logger.debug("verifyChannel.completed {}", range);
+            log.debug("verifyChannel.completed {}", range);
             lastContentPath.updateIncrease(lastCompleted, range.getChannelConfig().getDisplayName(), LAST_SINGLE_VERIFIED);
             incrementMetric(VerifierMetrics.PARTIAL_UPDATE);
         } else {
-            logger.warn("verifyChannel completed, but start time is the same as last completed");
+            log.warn("verifyChannel completed, but start time is the same as last completed");
             incrementMetric(VerifierMetrics.EXCESSIVE_CHANNEL_VOLUME);
         }
     }
@@ -164,16 +165,16 @@ public class S3Verifier {
 
         @Override
         public void takeLeadership(Leadership leadership) throws Exception {
-            logger.info("taking leadership");
+            log.info("taking leadership");
             while (leadership.hasLeadership()) {
                 long start = System.currentTimeMillis();
                 verifySingleChannels();
                 long sleep = TimeUnit.MINUTES.toMillis(verifierConfig.getOffsetMinutes()) - (System.currentTimeMillis() - start);
-                logger.debug("sleeping for {} ms", sleep);
+                log.debug("sleeping for {} ms", sleep);
                 Sleeper.sleep(Math.max(0, sleep));
-                logger.debug("waking up after sleep");
+                log.debug("waking up after sleep");
             }
-            logger.info("lost leadership");
+            log.info("lost leadership");
         }
     }
 }
