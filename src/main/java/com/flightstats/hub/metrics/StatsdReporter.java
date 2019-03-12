@@ -28,6 +28,11 @@ public class StatsdReporter {
         clients.forEach(method);
     }
 
+    private void reportWithFilteredClients(Consumer<StatsDClient> method) {
+        List<StatsDClient> clients = statsDFilter.getFilteredClients(true);
+        clients.forEach(method);
+    }
+
     private void reportWithDefaultClient(Consumer<StatsDClient> method) {
         StatsDClient statsdClient = statsDFilter
                 .getFilteredClients(false)
@@ -52,45 +57,37 @@ public class StatsdReporter {
 
     public void event(String title, String text, String[] tags) {
         Event event = statsDFormatter.buildCustomEvent(title, text);
-        reportWithDefaultClient(statsDClient -> statsDClient.recordEvent(event, tags));
+        reportWithFilteredClients(statsDClient -> statsDClient.recordEvent(event, tags));
     }
 
     public void count(String name, long value, String... tags) {
-        reportWithEitherClient(statsDFilter.extractName(tags), statsDClient -> statsDClient.count(name, value, tags));
+        reportWithFilteredClients(statsDClient -> statsDClient.count(name, value, tags));
     }
 
     public void incrementCounter(String name, String... tags) {
-        reportWithEitherClient(statsDFilter.extractName(tags), statsDClient -> statsDClient.incrementCounter(name, tags));
+        reportWithFilteredClients(statsDClient -> statsDClient.incrementCounter(name, tags));
     }
 
     public void increment(String name, String... tags) {
-        reportWithDefaultClient(statsDClient -> statsDClient.increment(name, tags));
+        reportWithFilteredClients(statsDClient -> statsDClient.increment(name, tags));
     }
 
     public void gauge(String name, double value, String... tags) {
-        reportWithDefaultClient(statsDClient -> statsDClient.gauge(name, value, tags));
+        reportWithFilteredClients(statsDClient -> statsDClient.gauge(name, value, tags));
     }
 
     public void requestTime(long start, String ...tags) {
-        reportWithEitherClient(
-                statsDFilter.extractName(tags),
-                (statsDClient) ->
-                        statsDClient.time("request", System.currentTimeMillis() - start, tags)
-        );
+        reportWithFilteredClients((statsDClient) -> statsDClient.time("request", System.currentTimeMillis() - start, tags));
     }
 
     public void time(String name, long start, String... tags) {
-        reportWithFilteredClients(statsDFilter.extractName(tags),
-                (statsDClient) ->
-                        statsDClient.time(name, System.currentTimeMillis() - start, tags)
-        );
+        reportWithFilteredClients(statsDClient -> statsDClient.time(name, System.currentTimeMillis() - start, tags));
     }
 
     public void time(String channel, String name, long start, String... tags) {
         if (statsDFilter.isTestChannel(channel)) return;
 
-        reportWithFilteredClients(channel, (
-                statsDClient) -> statsDClient.time(
+        reportWithFilteredClients(statsDClient -> statsDClient.time(
                         name,
                         statsDFormatter.startTimeMillis(start),
                         statsDFormatter.formatChannelTags(channel, tags)
