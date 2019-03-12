@@ -23,13 +23,13 @@ public class StatsdReporter {
         this.dataDogHandler = dataDogHandler;
     }
 
+    // unused but useful in future. currently default reporting to both clients for all metrics
     private void reportWithFilteredClients(String name, Consumer<StatsDClient> method) {
         List<StatsDClient> clients = statsDFilter.getFilteredClients(statsDFilter.isSecondaryReporting(name));
         clients.forEach(method);
     }
 
-    // unused but useful in future. currently default reporting to both clients for all metrics
-    private void reportWithFilteredClients(Consumer<StatsDClient> method) {
+    private void reportWithBothClients(Consumer<StatsDClient> method) {
         List<StatsDClient> clients = statsDFilter.getFilteredClients(true);
         clients.forEach(method);
     }
@@ -60,37 +60,37 @@ public class StatsdReporter {
 
     public void event(String title, String text, String[] tags) {
         Event event = statsDFormatter.buildCustomEvent(title, text);
-        reportWithFilteredClients(statsDClient -> statsDClient.recordEvent(event, tags));
+        reportWithBothClients(statsDClient -> statsDClient.recordEvent(event, tags));
     }
 
     public void count(String name, long value, String... tags) {
-        reportWithFilteredClients(statsDClient -> statsDClient.count(name, value, tags));
+        reportWithBothClients(statsDClient -> statsDClient.count(name, value, tags));
     }
 
     public void incrementCounter(String name, String... tags) {
-        reportWithFilteredClients(statsDClient -> statsDClient.incrementCounter(name, tags));
+        reportWithBothClients(statsDClient -> statsDClient.incrementCounter(name, tags));
     }
 
     public void increment(String name, String... tags) {
-        reportWithFilteredClients(statsDClient -> statsDClient.increment(name, tags));
+        reportWithBothClients(statsDClient -> statsDClient.increment(name, tags));
     }
 
     public void gauge(String name, double value, String... tags) {
-        reportWithFilteredClients(statsDClient -> statsDClient.gauge(name, value, tags));
+        reportWithBothClients(statsDClient -> statsDClient.gauge(name, value, tags));
     }
 
     public void requestTime(long start, String ...tags) {
-        reportWithFilteredClients((statsDClient) -> statsDClient.time("request", System.currentTimeMillis() - start, tags));
+        reportWithBothClients((statsDClient) -> statsDClient.time("request", System.currentTimeMillis() - start, tags));
     }
 
     public void time(String name, long start, String... tags) {
-        reportWithFilteredClients(statsDClient -> statsDClient.time(name, System.currentTimeMillis() - start, tags));
+        reportWithBothClients(statsDClient -> statsDClient.time(name, System.currentTimeMillis() - start, tags));
     }
 
     public void time(String channel, String name, long start, String... tags) {
         if (statsDFilter.isTestChannel(channel)) return;
 
-        reportWithFilteredClients(statsDClient -> statsDClient.time(
+        reportWithBothClients(statsDClient -> statsDClient.time(
                         name,
                         statsDFormatter.startTimeMillis(start),
                         statsDFormatter.formatChannelTags(channel, tags)
