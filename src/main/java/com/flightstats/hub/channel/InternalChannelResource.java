@@ -12,12 +12,24 @@ import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.HubUtils;
 import com.google.inject.TypeLiteral;
+import lombok.SneakyThrows;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.*;
-import javax.ws.rs.core.*;
+import javax.ws.rs.Path;
+import javax.ws.rs.GET;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
 import java.net.URI;
 import java.util.Map;
 import java.util.Optional;
@@ -78,13 +90,15 @@ public class InternalChannelResource {
         }
     }
 
+    @SneakyThrows
     @Path("{channel}")
     @DELETE
     public Response delete(@PathParam("channel") final String channelName) throws Exception {
-        ChannelConfig channelConfig = channelService.getChannelConfig(channelName, false);
-        if (channelConfig == null) {
-            return ChannelResource.notFound(channelName);
-        }
+        channelService.getChannelConfig(channelName, false)
+                .orElseThrow(() -> {
+                    Response errorResponse = ChannelResource.notFound(channelName);
+                    throw new WebApplicationException(errorResponse);
+                });
         if (HubProperties.isProtected()) {
             logger.info("using internal localhost only to delete {}", channelName);
             return LocalHostOnly.getResponse(uriInfo, () -> ChannelResource.deletion(channelName));

@@ -9,7 +9,7 @@ import com.flightstats.hub.dao.QueryResult;
 import com.flightstats.hub.dao.aws.s3Verifier.VerifierMetrics;
 import com.flightstats.hub.exception.FailedQueryException;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.metrics.MetricsService;
+import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.spoke.SpokeStore;
@@ -31,6 +31,7 @@ import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.CountDownLatch;
@@ -58,7 +59,7 @@ public class S3Verifier {
     private final Client httpClient;
     private final ZooKeeperState zooKeeperState;
     private final CuratorFramework curator;
-    private final MetricsService metricsService;
+    private final StatsdReporter statsdReporter;
 
     @Inject
     public S3Verifier(LastContentPath lastContentPath,
@@ -69,7 +70,7 @@ public class S3Verifier {
                       Client httpClient,
                       ZooKeeperState zooKeeperState,
                       CuratorFramework curator,
-                      MetricsService metricsService) {
+                      StatsdReporter statsdReporter) {
         this.lastContentPath = lastContentPath;
         this.channelService = channelService;
         this.spokeWriteContentDao = spokeWriteContentDao;
@@ -78,7 +79,7 @@ public class S3Verifier {
         this.httpClient = httpClient;
         this.zooKeeperState = zooKeeperState;
         this.curator = curator;
-        this.metricsService = metricsService;
+        this.statsdReporter = statsdReporter;
         this.baseTimeoutMinutes = HubProperties.getProperty("s3Verifier.baseTimeoutMinutes", 2);
 
         if (HubProperties.getProperty("s3Verifier.run", true)) {
@@ -116,11 +117,11 @@ public class S3Verifier {
 
     void verifyChannel(String channelName) {
         DateTime now = TimeUtil.now();
-        ChannelConfig channel = channelService.getChannelConfig(channelName, false);
-        if (channel == null) {
+        Optional<ChannelConfig> optionalChannelConfig = channelService.getChannelConfig(channelName, false);
+        if (!optionalChannelConfig.isPresent()) {
             return;
         }
-        VerifierRange range = getSingleVerifierRange(now, channel);
+        VerifierRange range = getSingleVerifierRange(now, optionalChannelConfig.get());
         if (range != null) {
             verifyChannel(range);
         }
@@ -229,7 +230,7 @@ public class S3Verifier {
     }
 
     private void incrementMetric(VerifierMetrics verifierMetric) {
-        metricsService.increment(verifierMetric.getName());
+        statsdReporter.increment(verifierMetric.getName());
     }
 
     private class S3ScheduledVerifierService extends AbstractScheduledService implements Lockable {

@@ -14,8 +14,7 @@ import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.metrics.MetricsService;
-import com.flightstats.hub.metrics.NewRelicIgnoreTransaction;
+import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentPath;
@@ -82,7 +81,7 @@ public class ChannelContentResource {
     private final static TagContentResource tagContentResource = HubProvider.getInstance(TagContentResource.class);
     private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
-    private final static MetricsService metricsService = HubProvider.getInstance(MetricsService.class);
+    private final static StatsdReporter statsdReporter = HubProvider.getInstance(StatsdReporter.class);
     private final static EventsService eventsService = HubProvider.getInstance(EventsService.class);
     @Context
     private UriInfo uriInfo;
@@ -398,7 +397,7 @@ public class ChannelContentResource {
 
         builder.header("X-Item-Length", itemLength);
 
-        metricsService.time(channel, "get", start);
+        statsdReporter.time(channel, "get", start);
         return builder.build();
     }
 
@@ -447,7 +446,6 @@ public class ChannelContentResource {
     @GET
     @Path("/{h}/{m}/{s}/{ms}/{hash}/events")
     @Produces(SseFeature.SERVER_SENT_EVENTS)
-    @NewRelicIgnoreTransaction
     public EventOutput getEvents(@PathParam("channel") String channel,
                                  @PathParam("Y") int year,
                                  @PathParam("M") int month,

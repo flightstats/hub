@@ -127,15 +127,19 @@ dependencies {
     compile 'de.jkeylockmanager:jkeylockmanager:2.1.0'
 
     compile 'com.datadoghq:java-dogstatsd-client:2.4'
+    compile 'io.dropwizard.metrics:metrics-core:4.0.0'
+    compile 'io.dropwizard.metrics:metrics-jvm:4.0.0'
+    compile 'com.github.davidb:metrics-influxdb:0.9.3'
 
     compile 'com.atlassian.commonmark:commonmark:0.10.0'
 
-    compile 'org.projectlombok:lombok:1.18.6'
+    compileOnly 'org.projectlombok:lombok:1.18.6'
     annotationProcessor 'org.projectlombok:lombok:1.18.6'
 
     testCompileOnly 'org.projectlombok:lombok:1.18.6'
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.6'
     testCompile 'com.sparkjava:spark-core:2.7.1'
+    testCompile group: 'org.hamcrest', name: 'hamcrest', version: '2.1'
     testCompile 'junit:junit:4.+'
     testCompile "org.mockito:mockito-all:1.+"
 

@@ -1,5 +1,7 @@
 package com.flightstats.hub.app;
 
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.ScheduledReporter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -9,10 +11,18 @@ import com.flightstats.hub.cluster.*;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.health.HubHealthCheck;
-import com.flightstats.hub.metrics.DelegatingMetricsService;
-import com.flightstats.hub.metrics.MetricsRunner;
-import com.flightstats.hub.metrics.MetricsService;
+import com.flightstats.hub.metrics.CustomMetricsLifecycle;
+import com.flightstats.hub.metrics.InfluxdbReporterProvider;
+import com.flightstats.hub.metrics.MetricRegistryProvider;
+import com.flightstats.hub.metrics.MetricsConfigProvider;
+import com.flightstats.hub.metrics.MetricsConfig;
+import com.flightstats.hub.metrics.InfluxdbReporterLifecycle;
 import com.flightstats.hub.metrics.PeriodicMetricEmitter;
+import com.flightstats.hub.metrics.PeriodicMetricEmitterLifecycle;
+import com.flightstats.hub.metrics.StatsDFilter;
+import com.flightstats.hub.metrics.StatsdReporter;
+import com.flightstats.hub.metrics.StatsDReporterLifecycle;
+import com.flightstats.hub.metrics.StatsDReporterProvider;
 import com.flightstats.hub.replication.ReplicationManager;
 import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.rest.RetryClientFilter;
@@ -165,14 +175,11 @@ public class HubBindings extends AbstractModule {
         bind(ReplicationManager.class).asEagerSingleton();
         bind(HubUtils.class).asEagerSingleton();
         bind(GCRunner.class).asEagerSingleton();
-        bind(MetricsRunner.class).asEagerSingleton();
         bind(ChannelValidator.class).asEagerSingleton();
         bind(WebhookValidator.class).asEagerSingleton();
         bind(WebhookManager.class).asEagerSingleton();
         bind(LastContentPath.class).asEagerSingleton();
         bind(WatchManager.class).asEagerSingleton();
-        bind(MetricsService.class).to(DelegatingMetricsService.class).asEagerSingleton();
-        bind(PeriodicMetricEmitter.class).asEagerSingleton();
         bind(NtpMonitor.class).asEagerSingleton();
         bind(TimeService.class).asEagerSingleton();
         bind(ShutdownManager.class).asEagerSingleton();
@@ -180,6 +187,20 @@ public class HubBindings extends AbstractModule {
         bind(FinalCheck.class).to(SpokeFinalCheck.class).asEagerSingleton();
         bind(InFlightService.class).asEagerSingleton();
         bind(ChannelService.class).asEagerSingleton();
+        bind(HubVersion.class).toInstance(new HubVersion());
+
+        // metrics
+        bind(MetricsConfig.class).toProvider(MetricsConfigProvider.class).asEagerSingleton();
+        bind(MetricRegistry.class).toProvider(MetricRegistryProvider.class).asEagerSingleton();
+        bind(ScheduledReporter.class).toProvider(InfluxdbReporterProvider.class).asEagerSingleton();
+        bind(InfluxdbReporterLifecycle.class).asEagerSingleton();
+
+        bind(StatsDFilter.class).asEagerSingleton();
+        bind(StatsdReporter.class).toProvider(StatsDReporterProvider.class).asEagerSingleton();
+        bind(StatsDReporterLifecycle.class).asEagerSingleton();
+        bind(CustomMetricsLifecycle.class).asEagerSingleton();
+        bind(PeriodicMetricEmitter.class).asEagerSingleton();
+        bind(PeriodicMetricEmitterLifecycle.class).asEagerSingleton();
 
         bind(ContentDao.class)
                 .annotatedWith(Names.named(ContentDao.WRITE_CACHE))

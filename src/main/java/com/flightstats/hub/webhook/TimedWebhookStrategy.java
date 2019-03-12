@@ -161,7 +161,6 @@ class TimedWebhookStrategy implements WebhookStrategy {
         executorService.scheduleAtFixedRate(new Runnable() {
 
             ContentPath lastAdded = startingPath;
-            ChannelConfig channelConfig = channelService.getChannelConfig(channel, true);
 
             @Override
             public void run() {
@@ -187,7 +186,7 @@ class TimedWebhookStrategy implements WebhookStrategy {
                     nextTime = lastAdded.getTime();
                 }
                 DateTime stable = TimeUtil.stable().minus(duration);
-                if (!channelConfig.isLive()) {
+                if (!channelService.isLiveChannel(channel)) {
                     ContentPath contentPath = channelService.getLastUpdated(channel, getNone.get());
                     DateTime replicatedStable = getReplicatingStable.apply(contentPath);
                     if (replicatedStable.isBefore(stable)) {
