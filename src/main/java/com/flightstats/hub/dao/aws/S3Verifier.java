@@ -87,7 +87,7 @@ public class S3Verifier {
                     channelThreadPool.submit(() -> {
                         String name = Thread.currentThread().getName();
                         Thread.currentThread().setName(name + "|" + channel.getDisplayName());
-                        String url = verifierConfig.getEndpointUrlGenerator().apply(channel.getDisplayName());
+                        String url = verifierConfig.getChannelVerifierEndpoint(channel.getDisplayName());
                         logger.debug("calling {}", url);
                         ClientResponse post = null;
                         try {

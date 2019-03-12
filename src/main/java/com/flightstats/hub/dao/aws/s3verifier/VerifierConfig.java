@@ -22,4 +22,8 @@ public class VerifierConfig {
     int queryThreads;
 
     Function<String, String> endpointUrlGenerator;
+
+    public String getChannelVerifierEndpoint(String channelName) {
+        return getEndpointUrlGenerator().apply(channelName);
+    }
 }
