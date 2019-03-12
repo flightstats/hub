@@ -99,8 +99,6 @@ public class HubMain {
     public Server startServer() throws Exception {
         List<AbstractModule> guiceModules = buildGuiceModules();
         Injector injector = Guice.createInjector(guiceModules);
-        InfluxdbReporterLifecycle influxdbReporterLifecycle = injector.getInstance(InfluxdbReporterLifecycle.class);
-        HubServices.register(influxdbReporterLifecycle, HubServices.TYPE.BEFORE_HEALTH_CHECK);
 
         registerServices(getBeforeHealthCheckServices(injector), HubServices.TYPE.BEFORE_HEALTH_CHECK);
         registerServices(getAfterHealthCheckServices(injector), HubServices.TYPE.AFTER_HEALTHY_START);
