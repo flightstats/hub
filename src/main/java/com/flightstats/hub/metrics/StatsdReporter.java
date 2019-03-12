@@ -28,11 +28,13 @@ public class StatsdReporter {
         clients.forEach(method);
     }
 
+    // unused but useful in future. currently default reporting to both clients for all metrics
     private void reportWithFilteredClients(Consumer<StatsDClient> method) {
         List<StatsDClient> clients = statsDFilter.getFilteredClients(true);
         clients.forEach(method);
     }
 
+    // unused but useful in future
     private void reportWithDefaultClient(Consumer<StatsDClient> method) {
         StatsDClient statsdClient = statsDFilter
                 .getFilteredClients(false)
@@ -40,6 +42,7 @@ public class StatsdReporter {
         method.accept(statsdClient);
     }
 
+    // unused but useful in future
     private void reportWithEitherClient(String metricTagName, Consumer<StatsDClient> method) {
         if (StringUtils.isNotBlank(metricTagName)) {
             reportWithFilteredClients(metricTagName, method);
