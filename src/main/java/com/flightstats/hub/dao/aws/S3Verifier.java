@@ -41,7 +41,6 @@ import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class S3Verifier {
-
     static final String LAST_SINGLE_VERIFIED = "/S3VerifierSingleLastVerified/";
     private final static Logger logger = LoggerFactory.getLogger(S3Verifier.class);
     private static final String LEADER_PATH = "/S3VerifierSingleService";
@@ -71,8 +70,7 @@ public class S3Verifier {
                       Client httpClient,
                       ZooKeeperState zooKeeperState,
                       CuratorFramework curator,
-                      StatsdReporter statsdReporter)
-    {
+                      StatsdReporter statsdReporter) {
         this.lastContentPath = lastContentPath;
         this.channelService = channelService;
         this.spokeWriteContentDao = spokeWriteContentDao;
@@ -119,11 +117,11 @@ public class S3Verifier {
 
     void verifyChannel(String channelName) {
         DateTime now = TimeUtil.now();
-        Optional<ChannelConfig> channelConfigOptional = channelService.getChannelConfig(channelName, false);
-        if (!channelConfigOptional.isPresent()) {
+        Optional<ChannelConfig> optionalChannelConfig = channelService.getChannelConfig(channelName, false);
+        if (!optionalChannelConfig.isPresent()) {
             return;
         }
-        VerifierRange range = getSingleVerifierRange(now, channelConfigOptional.get());
+        VerifierRange range = getSingleVerifierRange(now, optionalChannelConfig.get());
         if (range != null) {
             verifyChannel(range);
         }
@@ -154,6 +152,7 @@ public class S3Verifier {
         MinutePath lastCompleted = range.getEndPath();
         for (ContentKey key : keysToAdd) {
             logger.trace("found missing {} {}", channelName, key);
+            incrementMetric(VerifierMetrics.MISSING_ITEM);
             boolean success = s3WriteQueue.add(new ChannelContentKey(channelName, key));
             if (!success) {
                 logger.error("unable to queue missing item {} {}", channelName, key);
@@ -172,7 +171,8 @@ public class S3Verifier {
             incrementMetric(VerifierMetrics.EXCESSIVE_CHANNEL_VOLUME);
         }
     }
-    
+
+    @VisibleForTesting
     SortedSet<ContentKey> getMissing(MinutePath startPath, MinutePath endPath, String channelName, ContentDao s3ContentDao,
                                              SortedSet<ContentKey> foundCacheKeys) {
         long timeout = baseTimeoutMinutes;
@@ -182,7 +182,6 @@ public class S3Verifier {
                 .channelName(channelName)
                 .startTime(startPath.getTime())
                 .unit(TimeUtil.Unit.MINUTES);
-
         if (endPath != null) {
             Duration duration = new Duration(startPath.getTime(), endPath.getTime());
             timeout += duration.getStandardDays();

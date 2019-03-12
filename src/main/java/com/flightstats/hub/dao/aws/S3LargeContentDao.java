@@ -277,7 +277,7 @@ public class S3LargeContentDao implements ContentDao {
         S3LargeContentDaoBuilder() {
         }
 
-        public S3LargeContentDao.S3LargeContentDaoBuilder statsdReporter(StatsdReporter statsdReporter) {
+        public S3LargeContentDaoBuilder statsdReporter(StatsdReporter statsdReporter) {
             this.statsdReporter = statsdReporter;
             return this;
         }

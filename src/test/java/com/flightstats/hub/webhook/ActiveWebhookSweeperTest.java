@@ -42,7 +42,6 @@ public class ActiveWebhookSweeperTest {
         verify(webhookLeaderLocks, never()).deleteWebhookLeader(WEBHOOK_WITH_LEASE);
         verify(webhookLeaderLocks, never()).deleteWebhookLeader(WEBHOOK_WITH_LOCK);
         verify(webhookLeaderLocks).deleteWebhookLeader(EMPTY_WEBHOOK);
-
         verify(statsdReporter).count("webhook.leaders.cleanup", 1);
     }
 }

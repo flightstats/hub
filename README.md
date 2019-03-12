@@ -43,7 +43,7 @@ From Local:
     a) ./localDocker.sh (from root directory)
     b) docker run -p 80:80 hub:local
    
-2) set base.url property in intergation-hub.properties
+2) set base.url property in integration-hub.properties
     
 3) Go to root of hub project source and run below command
    ./gradlew systemTest -i    
@@ -51,5 +51,8 @@ From Local:
 From Jenkins:
 
 1) Goto https://ddt-jenkins.pdx.prod.flightstats.io/job/hub-system-test/ 
-2) Click on "Build With Parameters" 
+
+2) Click on "Build With Parameters"
+ 
 3) Add your git branch and start the build.
+  

@@ -1,7 +1,6 @@
 package com.flightstats.hub.webhook;
 
-import com.flightstats.hub.app.HubHost;
-import com.flightstats.hub.metrics.MetricsService;
+import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.SafeZooKeeperUtils;
 import org.apache.curator.framework.CuratorFramework;
@@ -65,7 +64,7 @@ public class ActiveWebhooksIntTest {
         createWebhook(EMPTY_WEBHOOK);
 
         WebhookLeaderLocks webhookLeaderLocks = new WebhookLeaderLocks(zooKeeperUtils);
-        ActiveWebhookSweeper activeWebhookSweeper = new ActiveWebhookSweeper(webhookLeaderLocks, mock(MetricsService.class));
+        ActiveWebhookSweeper activeWebhookSweeper = new ActiveWebhookSweeper(webhookLeaderLocks, mock(StatsdReporter.class));
         ActiveWebhooks activeWebhooks = new ActiveWebhooks(webhookLeaderLocks, activeWebhookSweeper);
 
         List<String> webhooks = curator.getChildren().forPath(WEBHOOK_LEADER_PATH);

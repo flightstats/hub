@@ -104,6 +104,7 @@ public class HubMain {
 
         registerServices(getBeforeHealthCheckServices(injector), HubServices.TYPE.BEFORE_HEALTH_CHECK);
         registerServices(getAfterHealthCheckServices(injector), HubServices.TYPE.AFTER_HEALTHY_START);
+
         HubProvider.setInjector(injector);
         HubServices.start(HubServices.TYPE.BEFORE_HEALTH_CHECK);
 

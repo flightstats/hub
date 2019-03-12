@@ -20,7 +20,7 @@ public class ActiveWebhookSweeper {
     public ActiveWebhookSweeper(WebhookLeaderLocks webhookLeaderLocks,
                                 StatsdReporter statsdReporter) {
         this.webhookLeaderLocks = webhookLeaderLocks;
-        this.statsdReporter = statsdReporter;
+            this.statsdReporter = statsdReporter;
     }
 
     void cleanupEmpty() {
@@ -34,7 +34,6 @@ public class ActiveWebhookSweeper {
                 .collect(toList());
 
         emptyWebhookLeaders.forEach(this::deleteWebhookLeader);
-
         statsdReporter.count("webhook.leaders.cleanup", emptyWebhookLeaders.size());
     }
 
