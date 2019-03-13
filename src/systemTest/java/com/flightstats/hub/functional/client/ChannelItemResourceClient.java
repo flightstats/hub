@@ -1,6 +1,6 @@
-package com.flightstats.hub.client;
+package com.flightstats.hub.functional.client;
 
-import com.flightstats.hub.model.ChannelItem;
+import com.flightstats.hub.functional.model.ChannelItem;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.GET;

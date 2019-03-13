@@ -1,6 +1,6 @@
-package com.flightstats.hub.config;
+package com.flightstats.hub.functional.config;
 
-import com.flightstats.hub.callback.CallbackServer;
+import com.flightstats.hub.functional.callback.CallbackServer;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.name.Named;

@@ -1,6 +1,6 @@
-package com.flightstats.hub.callback;
+package com.flightstats.hub.functional.callback;
 
-import com.flightstats.hub.model.WebhookCallbackRequest;
+import com.flightstats.hub.functional.model.WebhookCallbackRequest;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 

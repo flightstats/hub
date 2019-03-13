@@ -1,6 +1,6 @@
-package com.flightstats.hub;
+package com.flightstats.hub.functional;
 
-import com.flightstats.hub.config.GuiceModule;
+import com.flightstats.hub.functional.config.GuiceModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;

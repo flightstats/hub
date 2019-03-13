@@ -1,14 +1,14 @@
-package com.flightstats.hub.testcase;
+package com.flightstats.hub.functional.testcase;
 
-import com.flightstats.hub.BaseTest;
-import com.flightstats.hub.callback.CallbackServer;
-import com.flightstats.hub.client.CallbackResourceClient;
-import com.flightstats.hub.client.ChannelItemResourceClient;
-import com.flightstats.hub.client.ChannelResourceClient;
-import com.flightstats.hub.client.WebhookResourceClient;
-import com.flightstats.hub.model.Channel;
-import com.flightstats.hub.model.ChannelItem;
-import com.flightstats.hub.model.Webhook;
+import com.flightstats.hub.functional.BaseTest;
+import com.flightstats.hub.functional.callback.CallbackServer;
+import com.flightstats.hub.functional.client.CallbackResourceClient;
+import com.flightstats.hub.functional.client.ChannelItemResourceClient;
+import com.flightstats.hub.functional.client.ChannelResourceClient;
+import com.flightstats.hub.functional.client.WebhookResourceClient;
+import com.flightstats.hub.functional.model.Channel;
+import com.flightstats.hub.functional.model.ChannelItem;
+import com.flightstats.hub.functional.model.Webhook;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
@@ -24,7 +24,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.flightstats.hub.model.ChannelContentStorageType.SINGLE;
+import static com.flightstats.hub.functional.model.ChannelContentStorageType.SINGLE;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang3.StringUtils.isBlank;
@@ -175,8 +175,8 @@ public class WebhookLifecycleTest extends BaseTest {
     private void addWebhook(Webhook webhook) {
         log.info("Webhook name {} ", webhookName);
 
-        Call<com.flightstats.hub.model.Webhook> call = webhookResourceClient.create(webhookName, webhook);
-        Response<com.flightstats.hub.model.Webhook> response = call.execute();
+        Call<Webhook> call = webhookResourceClient.create(webhookName, webhook);
+        Response<Webhook> response = call.execute();
 
         assertEquals(CREATED.getStatusCode(), response.code());
     }

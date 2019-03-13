@@ -1,4 +1,4 @@
-package com.flightstats.hub.model;
+package com.flightstats.hub.functional.model;
 
 import lombok.Builder;
 import org.joda.time.DateTime;

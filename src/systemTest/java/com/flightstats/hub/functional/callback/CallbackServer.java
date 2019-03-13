@@ -1,4 +1,4 @@
-package com.flightstats.hub.callback;
+package com.flightstats.hub.functional.callback;
 
 import lombok.SneakyThrows;
 import org.eclipse.jetty.server.Server;
