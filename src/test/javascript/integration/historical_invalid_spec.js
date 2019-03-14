@@ -21,7 +21,7 @@ const mutableTime = moment.utc().subtract(1, 'minute');
  * Create a normal channel
  * Verify no items can be inserted through the historical interface
  */
-describe(__filename, function () {
+describe(__filename, () => {
     beforeAll(async () => {
         const response = await hubClientPut(channelResource, headers, {});
         expect(getProp('statusCode', response)).toEqual(201);

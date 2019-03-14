@@ -47,6 +47,7 @@ public class LinkBuilder {
 
         root.put("name", config.getDisplayName());
         root.put("allowZeroBytes", config.isAllowZeroBytes());
+        root.put("secondaryMetricsReporting", config.isSecondaryMetricsReporting());
         root.put("creationDate", TimeUtil.FORMATTER.print(new DateTime(config.getCreationDate())));
         root.put("description", config.getDescription());
         root.put("maxItems", config.getMaxItems());

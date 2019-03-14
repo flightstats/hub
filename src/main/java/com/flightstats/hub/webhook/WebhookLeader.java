@@ -3,7 +3,7 @@ package com.flightstats.hub.webhook;
 import com.flightstats.hub.cluster.*;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.metrics.MetricsService;
+import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.util.RuntimeInterruptedException;
@@ -39,7 +39,7 @@ class WebhookLeader implements Lockable {
     @Inject
     private WebhookService webhookService;
     @Inject
-    private MetricsService metricsService;
+    private StatsdReporter statsdReporter;
     @Inject
     private LastContentPath lastContentPath;
     @Inject
@@ -159,7 +159,9 @@ class WebhookLeader implements Lockable {
     }
 
     private boolean channelTTLExceeded(DeliveryAttempt attempt) {
-        ChannelConfig channelConfig = channelService.getCachedChannelConfig(webhook.getChannelName());
+        Optional<ChannelConfig> optionalChannelConfig = channelService.getCachedChannelConfig(webhook.getChannelName());
+        if (!optionalChannelConfig.isPresent()) return false;
+        ChannelConfig channelConfig = optionalChannelConfig.get();
         if (attempt.getContentPath().getTime().isBefore(channelConfig.getTtlTime())) {
             String message = String.format("%s is before channel ttl %s", attempt.getContentPath().toUrl(), channelConfig.getTtlTime());
             log.debug(webhook.getName(), message);
@@ -220,10 +222,10 @@ class WebhookLeader implements Lockable {
             ActiveTraces.start("WebhookLeader.send", webhook, contentPath);
             webhookInProcess.add(webhook.getName(), contentPath);
             try {
-                metricsService.time("webhook.delta", contentPath.getTime().getMillis(), "name:" + webhook.getName());
+                statsdReporter.time("webhook.delta", contentPath.getTime().getMillis(), "name:" + webhook.getName());
                 long start = System.currentTimeMillis();
                 boolean shouldGoToNextItem = retryer.send(webhook, contentPath, webhookStrategy.createResponse(contentPath));
-                metricsService.time("webhook", start, "name:" + webhook.getName());
+                statsdReporter.time("webhook", start, "name:" + webhook.getName());
                 if (shouldGoToNextItem) {
                     if (increaseLastUpdated(contentPath)) {
                         if (!deleteOnExit.get()) {

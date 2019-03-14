@@ -3,7 +3,7 @@ package com.flightstats.hub.time;
 
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.metrics.MetricsService;
+import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.util.Commander;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
@@ -23,7 +23,7 @@ public class NtpMonitor {
     private final int minPostTimeMillis = HubProperties.getProperty("app.minPostTimeMillis", 5);
     private final int maxPostTimeMillis = HubProperties.getProperty("app.maxPostTimeMillis", 1000);
     @Inject
-    private MetricsService metricsService;
+    private StatsdReporter statsdReporter;
     private double primaryOffset;
 
     public NtpMonitor() {
@@ -71,10 +71,10 @@ public class NtpMonitor {
         try {
             List<String> lines = Commander.runLines(new String[]{"ntpq", "-p"}, 10);
             double delta = parseClusterRange(lines);
-            metricsService.gauge("ntp", delta, "ntpType:clusterTimeDelta");
+            statsdReporter.gauge("ntp", delta, "ntpType:clusterTimeDelta");
             double primary = parsePrimary(lines);
             primaryOffset = Math.abs(primary);
-            metricsService.gauge("ntp", primaryOffset, "ntpType:primaryTimeDelta");
+            statsdReporter.gauge("ntp", primaryOffset, "ntpType:primaryTimeDelta");
             logger.info("ntp cluster {} primary {}", delta, primary);
         } catch (Exception e) {
             logger.info("unable to exec", e);

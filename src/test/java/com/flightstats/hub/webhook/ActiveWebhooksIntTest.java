@@ -1,7 +1,6 @@
 package com.flightstats.hub.webhook;
 
-import com.flightstats.hub.app.HubHost;
-import com.flightstats.hub.metrics.MetricsService;
+import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.SafeZooKeeperUtils;
 import org.apache.curator.framework.CuratorFramework;
@@ -15,10 +14,10 @@ import java.util.List;
 import static com.google.common.collect.Sets.newHashSet;
 import static java.lang.String.format;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
-import static org.testng.AssertJUnit.assertTrue;
 
 public class ActiveWebhooksIntTest {
     private static final String WEBHOOK_LEADER_PATH = "/WebhookLeader";
@@ -65,7 +64,7 @@ public class ActiveWebhooksIntTest {
         createWebhook(EMPTY_WEBHOOK);
 
         WebhookLeaderLocks webhookLeaderLocks = new WebhookLeaderLocks(zooKeeperUtils);
-        ActiveWebhookSweeper activeWebhookSweeper = new ActiveWebhookSweeper(webhookLeaderLocks, mock(MetricsService.class));
+        ActiveWebhookSweeper activeWebhookSweeper = new ActiveWebhookSweeper(webhookLeaderLocks, mock(StatsdReporter.class));
         ActiveWebhooks activeWebhooks = new ActiveWebhooks(webhookLeaderLocks, activeWebhookSweeper);
 
         List<String> webhooks = curator.getChildren().forPath(WEBHOOK_LEADER_PATH);
