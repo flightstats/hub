@@ -25,7 +25,6 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
-import org.apache.curator.framework.CuratorFramework;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.slf4j.Logger;
@@ -57,8 +56,7 @@ public class S3Verifier {
     private final ContentDao s3SingleContentDao;
     private final S3WriteQueue s3WriteQueue;
     private final Client httpClient;
-    private final ZooKeeperState zooKeeperState;
-    private final CuratorFramework curator;
+    private final DistributedLeaderLockManager distributedLeaderLockManager;
     private final StatsdReporter statsdReporter;
 
     @Inject
@@ -68,8 +66,7 @@ public class S3Verifier {
                       @Named(ContentDao.SINGLE_LONG_TERM) ContentDao s3SingleContentDao,
                       S3WriteQueue s3WriteQueue,
                       Client httpClient,
-                      ZooKeeperState zooKeeperState,
-                      CuratorFramework curator,
+                      DistributedLeaderLockManager distributedLeaderLockManager,
                       StatsdReporter statsdReporter) {
         this.lastContentPath = lastContentPath;
         this.channelService = channelService;
@@ -77,8 +74,7 @@ public class S3Verifier {
         this.s3SingleContentDao = s3SingleContentDao;
         this.s3WriteQueue = s3WriteQueue;
         this.httpClient = httpClient;
-        this.zooKeeperState = zooKeeperState;
-        this.curator = curator;
+        this.distributedLeaderLockManager = distributedLeaderLockManager;
         this.statsdReporter = statsdReporter;
         this.baseTimeoutMinutes = HubProperties.getProperty("s3Verifier.baseTimeoutMinutes", 2);
 
@@ -237,8 +233,8 @@ public class S3Verifier {
 
         @Override
         protected void runOneIteration() throws Exception {
-            CuratorLock curatorLock = new CuratorLock(curator, zooKeeperState, LEADER_PATH);
-            curatorLock.runWithLock(this, 1, TimeUnit.SECONDS);
+            DistributedAsyncLockRunner distributedLockRunner = new DistributedAsyncLockRunner(LEADER_PATH, distributedLeaderLockManager);
+            distributedLockRunner.runWithLock(this, 1, TimeUnit.SECONDS);
         }
 
         protected Scheduler scheduler() {

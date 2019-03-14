@@ -48,35 +48,38 @@ class WebhookLeader implements Lockable {
     private WebhookErrorService webhookErrorService;
     @Inject
     private WebhookStateReaper webhookStateReaper;
+    @Inject
+    private DistributedLeaderLockManager lockManager;
 
     private Webhook webhook;
 
     private ExecutorService executorService;
     private Semaphore semaphore;
-    private Leadership leadership;
     private WebhookRetryer retryer;
 
     private WebhookStrategy webhookStrategy;
     private AtomicReference<ContentPath> lastUpdated = new AtomicReference<>();
     private String channelName;
-    private CuratorLock curatorLock;
+
+    private Optional<LeadershipLock> leadershipLock;
+    private DistributedAsyncLockRunner distributedLockRunner;
 
     boolean tryLeadership(Webhook webhook) {
         log.debug("starting webhook: " + webhook);
         setWebhook(webhook);
         if (webhook.isPaused()) {
             log.info("not starting paused webhook " + webhook);
-            return false;
+            leadershipLock = Optional.empty();
         } else {
             String leaderPath = WEBHOOK_LEADER + "/" + webhook.getName();
-            curatorLock = new CuratorLock(curator, zooKeeperState, leaderPath);
-            return curatorLock.runWithLock(this, 1, TimeUnit.SECONDS);
+            distributedLockRunner = new DistributedAsyncLockRunner(leaderPath, lockManager);
+            leadershipLock = distributedLockRunner.runWithLock(this, 1, TimeUnit.SECONDS);
         }
+        return leadershipLock.isPresent();
     }
 
     @Override
     public void takeLeadership(Leadership leadership) {
-        this.leadership = leadership;
         Optional<Webhook> foundWebhook = webhookService.get(webhook.getName());
         channelName = webhook.getChannelName();
         if (!foundWebhook.isPresent() || !channelService.channelExists(channelName)) {
@@ -134,7 +137,7 @@ class WebhookLeader implements Lockable {
     }
 
     private boolean doesNotHaveLeadership(DeliveryAttempt attempt) {
-        if (!leadership.hasLeadership()) {
+        if (!hasLeadership()) {
             log.debug("{} {} not the leader", webhook.getName(), attempt.getContentPath());
             return true;
         } else {
@@ -260,14 +263,9 @@ class WebhookLeader implements Lockable {
         String name = webhook.getName();
         log.info("exiting webhook " + name + "deleting " + delete);
         deleteOnExit.set(delete);
-        if (null != curatorLock) {
-            curatorLock.stopWorking();
-        }
+        leadershipLock.ifPresent(distributedLockRunner::delete);
         closeStrategy();
         stopExecutor();
-        if (null != curatorLock) {
-            curatorLock.delete();
-        }
         log.info("exited webhook " + name);
     }
 
@@ -306,6 +304,8 @@ class WebhookLeader implements Lockable {
     }
 
     boolean hasLeadership() {
-        return leadership.hasLeadership();
+        return leadershipLock
+                .map(lock -> lock.getLeadership().hasLeadership())
+                .orElse(false);
     }
 }
