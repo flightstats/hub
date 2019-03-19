@@ -12,28 +12,36 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.Properties;
 import java.util.TreeSet;
+import java.util.stream.Stream;
 
 @SuppressWarnings("WeakerAccess")
 @Path("/internal/properties")
 public class InternalPropertiesResource {
     public static final String DESCRIPTION = "Get hub properties with links to other hubs in the cluster.";
     private final static Logger logger = LoggerFactory.getLogger(InternalPropertiesResource.class);
-
+    private final static String redacted = "[REDACTED]";
+    private final Stream<String> matchers = Stream.of("app_key", "api_key", "password");
     @GET
     @Produces({MediaType.APPLICATION_JSON})
     public Response getTraces() {
         ObjectNode root = InternalTracesResource.serverAndServers("/internal/properties");
         try {
-            ObjectNode properyNode = root.putObject("properties");
+            ObjectNode propertyNode = root.putObject("properties");
             Properties properties = HubProperties.getProperties();
             for (Object key : new TreeSet<>(properties.keySet())) {
                 Object value = properties.get(key);
-                properyNode.put(key.toString(), value.toString());
+                String possiblySensitiveValue = redactionFilter(key.toString(), value.toString());
+                propertyNode.put(key.toString(), possiblySensitiveValue);
             }
         } catch (Exception e) {
             logger.warn("?", e);
         }
         return Response.ok(root).build();
+    }
+
+    private String redactionFilter(String key, String property) {
+        boolean shouldRedact = matchers.anyMatch(key::contains);
+        return shouldRedact ? redacted : property;
     }
 
 }
