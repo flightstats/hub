@@ -5,6 +5,7 @@ import com.flightstats.hub.metrics.InternalTracesResource;
 import com.flightstats.hub.util.SecretFilter;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -18,8 +19,12 @@ import java.util.TreeSet;
 @Path("/internal/properties")
 public class InternalPropertiesResource {
     public static final String DESCRIPTION = "Get hub properties with links to other hubs in the cluster.";
-    private final SecretFilter secretFilter = HubProvider.getInstance(SecretFilter.class);
+    private final SecretFilter secretFilter;
 
+    @Inject
+    public InternalPropertiesResource(SecretFilter secretFilter) {
+        this.secretFilter = secretFilter;
+    }
 
     @GET
     @Produces({MediaType.APPLICATION_JSON})
