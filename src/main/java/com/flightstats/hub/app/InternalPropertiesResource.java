@@ -2,7 +2,7 @@ package com.flightstats.hub.app;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.metrics.InternalTracesResource;
-import com.flightstats.hub.util.SecretsFilter;
+import com.flightstats.hub.util.SecretFilter;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.ws.rs.GET;
@@ -18,7 +18,8 @@ import java.util.TreeSet;
 @Path("/internal/properties")
 public class InternalPropertiesResource {
     public static final String DESCRIPTION = "Get hub properties with links to other hubs in the cluster.";
-    private final SecretsFilter secretsFilter = new SecretsFilter();
+    private final SecretFilter secretFilter = HubProvider.getInstance(SecretFilter.class);
+
 
     @GET
     @Produces({MediaType.APPLICATION_JSON})
@@ -29,7 +30,7 @@ public class InternalPropertiesResource {
             Properties properties = HubProperties.getProperties();
             for (Object key : new TreeSet<>(properties.keySet())) {
                 String value = properties.get(key).toString();
-                String possiblySensitiveValue = secretsFilter.redactionFilter(key.toString(), value);
+                String possiblySensitiveValue = secretFilter.redact(key.toString(), value);
                 propertyNode.put(key.toString(), possiblySensitiveValue);
             }
         } catch (Exception e) {
