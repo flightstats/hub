@@ -11,7 +11,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.Date;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.HashSet;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -47,10 +51,23 @@ public class ChannelConfig implements Serializable, NamedType {
     private boolean protect;
     private DateTime mutableTime;
     private boolean allowZeroBytes;
+    private boolean secondaryMetricsReporting;
 
-    private ChannelConfig(String name, String owner, Date creationDate, long ttlDays, long maxItems, boolean keepForever, String description,
-                          Set<String> tags, String replicationSource, String storage,
-                          boolean protect, DateTime mutableTime, boolean allowZeroBytes, String displayName) {
+    private ChannelConfig(String name,
+                          String owner,
+                          Date creationDate,
+                          long ttlDays,
+                          long maxItems,
+                          boolean keepForever,
+                          String description,
+                          Set<String> tags,
+                          String replicationSource,
+                          String storage,
+                          boolean protect,
+                          DateTime mutableTime,
+                          boolean allowZeroBytes,
+                          String displayName,
+                          boolean secondaryMetricsReporting) {
         this.name = StringUtils.trim(name);
         this.displayName = StringUtils.defaultIfBlank(StringUtils.trim(displayName), this.name);
         this.owner = StringUtils.trim(owner);
@@ -60,6 +77,7 @@ public class ChannelConfig implements Serializable, NamedType {
         this.replicationSource = replicationSource;
         this.mutableTime = mutableTime;
         this.allowZeroBytes = allowZeroBytes;
+        this.secondaryMetricsReporting = secondaryMetricsReporting;
         this.keepForever = keepForever;  // keepForever overrides all other retention policies
         if (this.keepForever) {
             this.ttlDays = 0;
@@ -124,6 +142,9 @@ public class ChannelConfig implements Serializable, NamedType {
             builder.mutableTime(HubDateTimeTypeAdapter.deserialize(rootNode.get("mutableTime").asText()));
         }
         if (rootNode.has("allowZeroBytes")) builder.allowZeroBytes(rootNode.get("allowZeroBytes").asBoolean());
+        if (rootNode.has("secondaryMetricsReporting")) {
+            builder.secondaryMetricsReporting(rootNode.get("secondaryMetricsReporting").asBoolean());
+        }
         return builder.build();
     }
 
@@ -258,6 +279,8 @@ public class ChannelConfig implements Serializable, NamedType {
         return getDisplayName().toLowerCase();
     }
 
+    public boolean isSecondaryMetricsReporting() { return secondaryMetricsReporting; }
+
     public boolean equals(Object o) {
         if (o == this) return true;
         if (!(o instanceof ChannelConfig)) return false;
@@ -294,7 +317,8 @@ public class ChannelConfig implements Serializable, NamedType {
         final Object other$mutableTime = other.getMutableTime();
         if (this$mutableTime == null ? other$mutableTime != null : !this$mutableTime.equals(other$mutableTime))
             return false;
-        return this.isAllowZeroBytes() == other.isAllowZeroBytes();
+        return this.isSecondaryMetricsReporting() == other.isSecondaryMetricsReporting() &&
+        this.isAllowZeroBytes() == other.isAllowZeroBytes();
     }
 
     public int hashCode() {
@@ -351,6 +375,7 @@ public class ChannelConfig implements Serializable, NamedType {
         private long maxItems;
         private DateTime mutableTime;
         private String displayName;
+        private boolean secondaryMetricsReporting = false;
 
         ChannelConfigBuilder() {
         }
@@ -370,6 +395,7 @@ public class ChannelConfig implements Serializable, NamedType {
             maxItems(config.getMaxItems());
             mutableTime(config.getMutableTime());
             displayName(config.getDisplayName());
+            secondaryMetricsReporting(config.isSecondaryMetricsReporting());
         }
 
         public ChannelConfigBuilder tags(List<String> tagList) {
@@ -449,8 +475,28 @@ public class ChannelConfig implements Serializable, NamedType {
             return this;
         }
 
+        public ChannelConfigBuilder secondaryMetricsReporting(boolean secondaryMetricsReporting) {
+            this.secondaryMetricsReporting = secondaryMetricsReporting;
+            return this;
+        }
+
         public ChannelConfig build() {
-            return new ChannelConfig(name, owner, creationDate, ttlDays, maxItems, keepForever, description, tags, replicationSource, storage, protect, mutableTime, allowZeroBytes, displayName);
+            return new ChannelConfig(
+                    name,
+                    owner,
+                    creationDate,
+                    ttlDays,
+                    maxItems,
+                    keepForever,
+                    description,
+                    tags,
+                    replicationSource,
+                    storage,
+                    protect,
+                    mutableTime,
+                    allowZeroBytes,
+                    displayName,
+                    secondaryMetricsReporting);
         }
 
     }

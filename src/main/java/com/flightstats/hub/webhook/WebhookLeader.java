@@ -3,7 +3,7 @@ package com.flightstats.hub.webhook;
 import com.flightstats.hub.cluster.*;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.metrics.MetricsService;
+import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.util.RuntimeInterruptedException;
@@ -39,7 +39,7 @@ class WebhookLeader implements Lockable {
     @Inject
     private WebhookService webhookService;
     @Inject
-    private MetricsService metricsService;
+    private StatsdReporter statsdReporter;
     @Inject
     private LastContentPath lastContentPath;
     @Inject
@@ -48,35 +48,38 @@ class WebhookLeader implements Lockable {
     private WebhookErrorService webhookErrorService;
     @Inject
     private WebhookStateReaper webhookStateReaper;
+    @Inject
+    private DistributedLeaderLockManager lockManager;
 
     private Webhook webhook;
 
     private ExecutorService executorService;
     private Semaphore semaphore;
-    private Leadership leadership;
     private WebhookRetryer retryer;
 
     private WebhookStrategy webhookStrategy;
     private AtomicReference<ContentPath> lastUpdated = new AtomicReference<>();
     private String channelName;
-    private CuratorLock curatorLock;
+
+    private Optional<LeadershipLock> leadershipLock;
+    private DistributedAsyncLockRunner distributedLockRunner;
 
     boolean tryLeadership(Webhook webhook) {
         log.debug("starting webhook: " + webhook);
         setWebhook(webhook);
         if (webhook.isPaused()) {
             log.info("not starting paused webhook " + webhook);
-            return false;
+            leadershipLock = Optional.empty();
         } else {
             String leaderPath = WEBHOOK_LEADER + "/" + webhook.getName();
-            curatorLock = new CuratorLock(curator, zooKeeperState, leaderPath);
-            return curatorLock.runWithLock(this, 1, TimeUnit.SECONDS);
+            distributedLockRunner = new DistributedAsyncLockRunner(leaderPath, lockManager);
+            leadershipLock = distributedLockRunner.runWithLock(this, 1, TimeUnit.SECONDS);
         }
+        return leadershipLock.isPresent();
     }
 
     @Override
     public void takeLeadership(Leadership leadership) {
-        this.leadership = leadership;
         Optional<Webhook> foundWebhook = webhookService.get(webhook.getName());
         channelName = webhook.getChannelName();
         if (!foundWebhook.isPresent() || !channelService.channelExists(channelName)) {
@@ -134,7 +137,7 @@ class WebhookLeader implements Lockable {
     }
 
     private boolean doesNotHaveLeadership(DeliveryAttempt attempt) {
-        if (!leadership.hasLeadership()) {
+        if (!hasLeadership()) {
             log.debug("{} {} not the leader", webhook.getName(), attempt.getContentPath());
             return true;
         } else {
@@ -156,7 +159,9 @@ class WebhookLeader implements Lockable {
     }
 
     private boolean channelTTLExceeded(DeliveryAttempt attempt) {
-        ChannelConfig channelConfig = channelService.getCachedChannelConfig(webhook.getChannelName());
+        Optional<ChannelConfig> optionalChannelConfig = channelService.getCachedChannelConfig(webhook.getChannelName());
+        if (!optionalChannelConfig.isPresent()) return false;
+        ChannelConfig channelConfig = optionalChannelConfig.get();
         if (attempt.getContentPath().getTime().isBefore(channelConfig.getTtlTime())) {
             String message = String.format("%s is before channel ttl %s", attempt.getContentPath().toUrl(), channelConfig.getTtlTime());
             log.debug(webhook.getName(), message);
@@ -217,10 +222,10 @@ class WebhookLeader implements Lockable {
             ActiveTraces.start("WebhookLeader.send", webhook, contentPath);
             webhookInProcess.add(webhook.getName(), contentPath);
             try {
-                metricsService.time("webhook.delta", contentPath.getTime().getMillis(), "name:" + webhook.getName());
+                statsdReporter.time("webhook.delta", contentPath.getTime().getMillis(), "name:" + webhook.getName());
                 long start = System.currentTimeMillis();
                 boolean shouldGoToNextItem = retryer.send(webhook, contentPath, webhookStrategy.createResponse(contentPath));
-                metricsService.time("webhook", start, "name:" + webhook.getName());
+                statsdReporter.time("webhook", start, "name:" + webhook.getName());
                 if (shouldGoToNextItem) {
                     if (increaseLastUpdated(contentPath)) {
                         if (!deleteOnExit.get()) {
@@ -258,14 +263,9 @@ class WebhookLeader implements Lockable {
         String name = webhook.getName();
         log.info("exiting webhook " + name + "deleting " + delete);
         deleteOnExit.set(delete);
-        if (null != curatorLock) {
-            curatorLock.stopWorking();
-        }
+        leadershipLock.ifPresent(distributedLockRunner::delete);
         closeStrategy();
         stopExecutor();
-        if (null != curatorLock) {
-            curatorLock.delete();
-        }
         log.info("exited webhook " + name);
     }
 
@@ -304,6 +304,8 @@ class WebhookLeader implements Lockable {
     }
 
     boolean hasLeadership() {
-        return leadership.hasLeadership();
+        return leadershipLock
+                .map(lock -> lock.getLeadership().hasLeadership())
+                .orElse(false);
     }
 }

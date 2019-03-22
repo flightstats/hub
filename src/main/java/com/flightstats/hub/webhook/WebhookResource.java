@@ -98,6 +98,7 @@ public class WebhookResource {
             root.put("callbackTimeoutSeconds", webhook.getCallbackTimeoutSeconds());
             root.put("maxAttempts", webhook.getMaxAttempts());
             root.put("errorChannelUrl", webhook.getErrorChannelUrl());
+            root.put("secondaryMetricsReporting", webhook.isSecondaryMetricsReporting());
             if (webhook.isTagPrototype()) {
                 root.put("tagUrl", webhook.getTagUrl());
                 root.put("isTagPrototype", webhook.isTagPrototype());

@@ -1,10 +1,7 @@
 package com.flightstats.hub.dao.aws.s3Verifier;
 
 import com.flightstats.hub.dao.ContentDao;
-import com.flightstats.hub.dao.aws.s3Verifier.MissingContentFinder;
-import com.flightstats.hub.dao.aws.s3Verifier.VerifierConfig;
-import com.flightstats.hub.dao.aws.s3Verifier.VerifierMetrics;
-import com.flightstats.hub.metrics.MetricsService;
+import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.MinutePath;
 import com.flightstats.hub.model.TimeQuery;
@@ -33,7 +30,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class MissingContentFinderTest {
-    private final MetricsService metricsService = mock(MetricsService.class);
+    private final StatsdReporter statsdReporter = mock(StatsdReporter.class);
     private final CurrentThreadExecutor queryThreadPool = new CurrentThreadExecutor();
     private final ContentDao spokeWriteContentDao = mock(ContentDao.class);
     private final ContentDao s3SContentDao = mock(ContentDao.class);
@@ -63,7 +60,7 @@ public class MissingContentFinderTest {
         when(spokeWriteContentDao.queryByTime(timeQuery)).thenReturn(buildSet(contentKey1, contentKey2, contentKey3));
         when(s3SContentDao.queryByTime(timeQuery)).thenReturn(buildSet(contentKey2));
 
-        MissingContentFinder missingContentFinder = new MissingContentFinder(spokeWriteContentDao, s3SContentDao, defaultConfig, metricsService, queryThreadPool);
+        MissingContentFinder missingContentFinder = new MissingContentFinder(spokeWriteContentDao, s3SContentDao, defaultConfig, statsdReporter, queryThreadPool);
         SortedSet<ContentKey> missing = missingContentFinder.getMissing(startPath, endPath, channelName);
         assertEquals(buildSet(contentKey1, contentKey3), missing);
     }
@@ -79,7 +76,7 @@ public class MissingContentFinderTest {
         when(spokeWriteContentDao.queryByTime(timeQuery)).thenReturn(buildSet(contentKey1, contentKey2, contentKey3));
         when(s3SContentDao.queryByTime(timeQuery)).thenReturn(buildSet(contentKey2));
 
-        MissingContentFinder missingContentFinder = new MissingContentFinder(spokeWriteContentDao, s3SContentDao, defaultConfig, metricsService, queryThreadPool);
+        MissingContentFinder missingContentFinder = new MissingContentFinder(spokeWriteContentDao, s3SContentDao, defaultConfig, statsdReporter, queryThreadPool);
         SortedSet<ContentKey> missing = missingContentFinder.getMissing(startPath, null, channelName);
         assertEquals(buildSet(contentKey1, contentKey3), missing);
     }
@@ -107,7 +104,7 @@ public class MissingContentFinderTest {
         when(spokeWriteContentDao.queryByTime(timeQuery)).thenReturn(buildSet(contentKey1, contentKey2, contentKey3));
         when(s3SContentDao.queryByTime(timeQuery)).thenReturn(buildSet(contentKey2));
 
-        MissingContentFinder missingContentFinder = new MissingContentFinder(spokeWriteContentDao, s3SContentDao, configWithShortTimeout, metricsService, executorService);
+        MissingContentFinder missingContentFinder = new MissingContentFinder(spokeWriteContentDao, s3SContentDao, configWithShortTimeout, statsdReporter, executorService);
 
         SortedSet<ContentKey> missing = missingContentFinder.getMissing(ancientStartPath, endPath, channelName);
         assertEquals(buildSet(contentKey1, contentKey3), missing);
@@ -133,11 +130,11 @@ public class MissingContentFinderTest {
         when(spokeWriteContentDao.queryByTime(timeQuery)).thenReturn(buildSet(contentKey1, contentKey2, contentKey3));
         when(s3SContentDao.queryByTime(timeQuery)).thenReturn(buildSet(contentKey2));
 
-        MissingContentFinder missingContentFinder = new MissingContentFinder(spokeWriteContentDao, s3SContentDao, configWithShortTimeout, metricsService, executorService);
+        MissingContentFinder missingContentFinder = new MissingContentFinder(spokeWriteContentDao, s3SContentDao, configWithShortTimeout, statsdReporter, executorService);
 
         SortedSet<ContentKey> missing = missingContentFinder.getMissing(startPath, endPath, channelName);
         assertTrue(missing.isEmpty());
-        verify(metricsService).increment(VerifierMetrics.TIMEOUT.getName());
+        verify(statsdReporter).increment(VerifierMetrics.TIMEOUT.getName());
     }
 
     private TreeSet<ContentKey> buildSet(ContentKey... contentKeys) {

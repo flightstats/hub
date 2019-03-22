@@ -4,7 +4,7 @@ import com.flightstats.hub.app.NamedDependencies;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.QueryResult;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.metrics.MetricsService;
+import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.MinutePath;
@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.util.Arrays;
 import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -35,19 +34,19 @@ public class MissingContentFinder {
     private final ExecutorService queryThreadPool;
     private final ContentDao spokeWriteContentDao;
     private final ContentDao s3SingleContentDao;
-    private final MetricsService metricsService;
+    private final StatsdReporter statsdReporter;
 
     @Inject
     public MissingContentFinder(@Named(ContentDao.WRITE_CACHE) ContentDao spokeWriteContentDao,
                                 @Named(ContentDao.SINGLE_LONG_TERM) ContentDao s3SingleContentDao,
                                 VerifierConfig verifierConfig,
-                                MetricsService metricsService,
+                                StatsdReporter statsdReporter,
                                 @Named(NamedDependencies.S3_VERIFIER_QUERY_THREAD_POOL) ExecutorService queryThreadPool) {
         this.spokeWriteContentDao = spokeWriteContentDao;
         this.s3SingleContentDao = s3SingleContentDao;
-        this.metricsService = metricsService;
         this.verifierConfig = verifierConfig;
         this.queryThreadPool = queryThreadPool;
+        this.statsdReporter = statsdReporter;
     }
 
     public SortedSet<ContentKey> getMissing(MinutePath startPath, MinutePath endPath, String channelName) {
@@ -63,12 +62,12 @@ public class MissingContentFinder {
             return findMissingKeys(channelName, spokeQueryResults.get(), s3QueryResults.get());
         } catch (InterruptedException e) {
             throw new RuntimeInterruptedException(e);
-        } catch (ExecutionException e) {
-            throw new RuntimeException(e);
         } catch (TimeoutException e) {
             logger.error("s3 verifier timed out while finding missing items, write queue is backing up");
-            metricsService.increment(VerifierMetrics.TIMEOUT.getName());
+            statsdReporter.increment(VerifierMetrics.TIMEOUT.getName());
             return new TreeSet<>();
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
         } finally {
             Stream.of(spokeQueryResults, s3QueryResults)
                     .filter(future -> !future.isDone())

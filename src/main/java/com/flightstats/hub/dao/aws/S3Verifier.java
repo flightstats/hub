@@ -9,7 +9,7 @@ import com.flightstats.hub.dao.aws.s3Verifier.VerifierMetrics;
 import com.flightstats.hub.dao.aws.s3Verifier.VerifierConfig;
 import com.flightstats.hub.dao.aws.s3Verifier.VerifierRange;
 import com.flightstats.hub.dao.aws.s3Verifier.VerifierRangeLookup;
-import com.flightstats.hub.metrics.MetricsService;
+import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.Sleeper;
@@ -22,10 +22,7 @@ import com.google.inject.name.Named;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.curator.framework.CuratorFramework;
 import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.SortedSet;
 import java.util.concurrent.ExecutorService;
@@ -44,35 +41,32 @@ public class S3Verifier {
     private final ChannelService channelService;
     private final S3WriteQueue s3WriteQueue;
     private final Client httpClient;
-    private final ZooKeeperState zooKeeperState;
-    private final CuratorFramework curator;
-    private final MetricsService metricsService;
     private final MissingContentFinder missingContentFinder;
     private final VerifierRangeLookup verifierRangeLookup;
+    private final DistributedLeaderLockManager distributedLeaderLockManager;
+    private final StatsdReporter statsdReporter;
 
     @Inject
     public S3Verifier(LastContentPath lastContentPath,
                       ChannelService channelService,
                       S3WriteQueue s3WriteQueue,
                       Client httpClient,
-                      ZooKeeperState zooKeeperState,
-                      CuratorFramework curator,
-                      MetricsService metricsService,
                       MissingContentFinder missingContentFinder,
                       VerifierRangeLookup verifierRangeLookup,
                       VerifierConfig verifierConfig,
-                      @Named(NamedDependencies.S3_VERIFIER_CHANNEL_THREAD_POOL) ExecutorService channelThreadPool) {
+                      @Named(NamedDependencies.S3_VERIFIER_CHANNEL_THREAD_POOL) ExecutorService channelThreadPool,
+                      DistributedLeaderLockManager distributedLeaderLockManager,
+                      StatsdReporter statsdReporter) {
         this.lastContentPath = lastContentPath;
         this.channelService = channelService;
         this.s3WriteQueue = s3WriteQueue;
         this.httpClient = httpClient;
-        this.zooKeeperState = zooKeeperState;
-        this.curator = curator;
-        this.metricsService = metricsService;
         this.verifierConfig = verifierConfig;
         this.channelThreadPool = channelThreadPool;
         this.missingContentFinder = missingContentFinder;
         this.verifierRangeLookup = verifierRangeLookup;
+        this.distributedLeaderLockManager = distributedLeaderLockManager;
+        this.statsdReporter = statsdReporter;
 
         if (verifierConfig.isEnabled()) {
             HubServices.register(new S3ScheduledVerifierService(), HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
@@ -109,14 +103,9 @@ public class S3Verifier {
 
     void verifyChannel(String channelName) {
         DateTime now = TimeUtil.now();
-        ChannelConfig channel = channelService.getChannelConfig(channelName, false);
-        if (channel == null) {
-            return;
-        }
-        VerifierRange range = verifierRangeLookup.getSingleVerifierRange(now, channel);
-        if (range != null) {
-            verifyChannel(range);
-        }
+        channelService.getChannelConfig(channelName, false)
+                .map(channel -> verifierRangeLookup.getSingleVerifierRange(now, channel))
+                .ifPresent(this::verifyChannel);
     }
 
 
@@ -149,14 +138,14 @@ public class S3Verifier {
     }
 
     private void incrementMetric(VerifierMetrics verifierMetric) {
-        metricsService.increment(verifierMetric.getName());
+        statsdReporter.increment(verifierMetric.getName());
     }
 
     private class S3ScheduledVerifierService extends AbstractScheduledService implements Lockable {
         @Override
         protected void runOneIteration() throws Exception {
-            CuratorLock curatorLock = new CuratorLock(curator, zooKeeperState, LEADER_PATH);
-            curatorLock.runWithLock(this, 1, TimeUnit.SECONDS);
+            DistributedAsyncLockRunner distributedLockRunner = new DistributedAsyncLockRunner(LEADER_PATH, distributedLeaderLockManager);
+            distributedLockRunner.runWithLock(this, 1, TimeUnit.SECONDS);
         }
 
         protected Scheduler scheduler() {
