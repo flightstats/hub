@@ -91,12 +91,15 @@ public class MissingContentFinder {
                 .startTime(startPath.getTime())
                 .unit(TimeUtil.Unit.MINUTES);
 
-        Optional.ofNullable(endPath)
-                .map(MinutePath::getTime)
-                .map(ContentKey::lastKey)
-                .ifPresent(builder::limitKey);
+        findLastKeyFromEndPath(endPath).ifPresent(builder::limitKey);
 
         return builder.build();
+    }
+
+    private Optional<ContentKey> findLastKeyFromEndPath(MinutePath endPath) {
+        return Optional.ofNullable(endPath)
+                .map(MinutePath::getTime)
+                .map(ContentKey::lastKey);
     }
 
     private long calculateQueryTimeout(MinutePath startPath, MinutePath endPath) {
