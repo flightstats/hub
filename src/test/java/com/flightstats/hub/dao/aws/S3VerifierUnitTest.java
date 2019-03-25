@@ -3,7 +3,10 @@ package com.flightstats.hub.dao.aws;
 import com.flightstats.hub.cluster.DistributedLeaderLockManager;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.dao.ContentDao;
+import com.flightstats.hub.dao.aws.s3Verifier.MissingContentFinder;
+import com.flightstats.hub.dao.aws.s3Verifier.VerifierConfig;
+import com.flightstats.hub.dao.aws.s3Verifier.VerifierRange;
+import com.flightstats.hub.dao.aws.s3Verifier.VerifierRangeLookup;
 import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ChannelContentKey;
@@ -15,28 +18,30 @@ import org.junit.Test;
 
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.concurrent.ExecutorService;
 
 import static com.flightstats.hub.dao.aws.S3Verifier.LAST_SINGLE_VERIFIED;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 public class S3VerifierUnitTest {
+    private final LastContentPath lastContentPath = mock(LastContentPath.class);
+    private final ChannelService channelService = mock(ChannelService.class);
+    private final S3WriteQueue s3WriteQueue = mock(S3WriteQueue.class);
+    private final Client httpClient = mock(Client.class);
+    private final ExecutorService channelThreadPool = mock(ExecutorService.class);
+    private final MissingContentFinder missingContentFinder = mock(MissingContentFinder.class);
+    private final VerifierRangeLookup verifierRangeLookup = mock(VerifierRangeLookup.class);
+    private final DistributedLeaderLockManager lockManager = mock(DistributedLeaderLockManager.class);
+    private final StatsdReporter statsdReporter = mock(StatsdReporter.class);
 
     @Test
     public void testZKDoesNotUpdateOnAbsoluteFailure() {
-        LastContentPath lastContentPath = mock(LastContentPath.class);
-        ChannelService channelService = mock(ChannelService.class);
-        ContentDao spokeWriteContentDao = mock(ContentDao.class);
-        ContentDao s3SingleContentDao = mock(ContentDao.class);
-        S3WriteQueue s3WriteQueue = mock(S3WriteQueue.class);
-        Client httpClient = mock(Client.class);
-        DistributedLeaderLockManager lockManager = mock(DistributedLeaderLockManager.class);
-        StatsdReporter statsdReporter = mock(StatsdReporter.class);
-        S3Verifier s3Verifier = spy(new S3Verifier(lastContentPath, channelService, spokeWriteContentDao, s3SingleContentDao, s3WriteQueue, httpClient, lockManager, statsdReporter));
+        VerifierConfig config = VerifierConfig.builder().build();
+        S3Verifier s3Verifier = new S3Verifier(lastContentPath, channelService, s3WriteQueue, httpClient,  missingContentFinder, verifierRangeLookup, config, channelThreadPool, lockManager, statsdReporter);
 
         ChannelContentKey key = ChannelContentKey.fromResourcePath("http://hub/channel/foo/1999/12/31/23/59/59/999/bar");
         VerifierRange verifierRange = VerifierRange.builder()
@@ -47,7 +52,7 @@ public class S3VerifierUnitTest {
         SortedSet<ContentKey> missingKeys = new TreeSet<>();
         missingKeys.add(key.getContentKey());
 
-        when(s3Verifier.getMissing(verifierRange.getStartPath(), verifierRange.getEndPath(), "foo", s3SingleContentDao, new TreeSet<>())).thenReturn(missingKeys);
+        when(missingContentFinder.getMissing(verifierRange.getStartPath(), verifierRange.getEndPath(), "foo")).thenReturn(missingKeys);
         when(s3WriteQueue.add(key)).thenReturn(false);
 
         s3Verifier.verifyChannel(verifierRange);
@@ -57,15 +62,8 @@ public class S3VerifierUnitTest {
 
     @Test
     public void testZKUpdatesWithPartialCompletionIfVerifierFailsPartwayThroughAndLastSuccessfulWasADifferentMinute() {
-        LastContentPath lastContentPath = mock(LastContentPath.class);
-        ChannelService channelService = mock(ChannelService.class);
-        ContentDao spokeWriteContentDao = mock(ContentDao.class);
-        ContentDao s3SingleContentDao = mock(ContentDao.class);
-        S3WriteQueue s3WriteQueue = mock(S3WriteQueue.class);
-        Client httpClient = mock(Client.class);
-        DistributedLeaderLockManager lockManager = mock(DistributedLeaderLockManager.class);
-        StatsdReporter statsdReporter = mock(StatsdReporter.class);
-        S3Verifier s3Verifier = spy(new S3Verifier(lastContentPath, channelService, spokeWriteContentDao, s3SingleContentDao, s3WriteQueue, httpClient, lockManager, statsdReporter));
+        VerifierConfig config = VerifierConfig.builder().build();
+        S3Verifier s3Verifier = new S3Verifier(lastContentPath, channelService, s3WriteQueue, httpClient,  missingContentFinder, verifierRangeLookup, config, channelThreadPool, lockManager, statsdReporter);
 
         ChannelContentKey key = ChannelContentKey.fromResourcePath("http://hub/channel/foo/1999/12/31/23/58/59/999/bar");
         ChannelContentKey secondKey = ChannelContentKey.fromResourcePath("http://hub/channel/foo/1999/12/31/23/59/59/999/bar");
@@ -78,7 +76,7 @@ public class S3VerifierUnitTest {
         missingKeys.add(secondKey.getContentKey());
         missingKeys.add(key.getContentKey());
 
-        when(s3Verifier.getMissing(verifierRange.getStartPath(), verifierRange.getEndPath(), "foo", s3SingleContentDao, new TreeSet<>())).thenReturn(missingKeys);
+        when(missingContentFinder.getMissing(verifierRange.getStartPath(), verifierRange.getEndPath(), "foo")).thenReturn(missingKeys);
         when(s3WriteQueue.add(key)).thenReturn(true);
         when(s3WriteQueue.add(secondKey)).thenReturn(false);
 
@@ -90,15 +88,8 @@ public class S3VerifierUnitTest {
 
     @Test
     public void testZKUpdatesWithPartialCompletionIfVerifierFailsPartwayThroughAMinute() {
-        LastContentPath lastContentPath = mock(LastContentPath.class);
-        ChannelService channelService = mock(ChannelService.class);
-        ContentDao spokeWriteContentDao = mock(ContentDao.class);
-        ContentDao s3SingleContentDao = mock(ContentDao.class);
-        S3WriteQueue s3WriteQueue = mock(S3WriteQueue.class);
-        Client httpClient = mock(Client.class);
-        DistributedLeaderLockManager lockManager = mock(DistributedLeaderLockManager.class);
-        StatsdReporter statsdReporter = mock(StatsdReporter.class);
-        S3Verifier s3Verifier = spy(new S3Verifier(lastContentPath, channelService, spokeWriteContentDao, s3SingleContentDao, s3WriteQueue, httpClient, lockManager, statsdReporter));
+        VerifierConfig config = VerifierConfig.builder().build();
+        S3Verifier s3Verifier = new S3Verifier(lastContentPath, channelService, s3WriteQueue, httpClient,  missingContentFinder, verifierRangeLookup, config, channelThreadPool, lockManager, statsdReporter);
 
         ChannelContentKey key = ChannelContentKey.fromResourcePath("http://hub/channel/foo/1999/12/31/23/57/59/999/bar");
         ChannelContentKey secondKey = ChannelContentKey.fromResourcePath("http://hub/channel/foo/1999/12/31/23/59/59/999/bar");
@@ -113,7 +104,7 @@ public class S3VerifierUnitTest {
         missingKeys.add(key.getContentKey());
         missingKeys.add(secondKey.getContentKey());
 
-        when(s3Verifier.getMissing(verifierRange.getStartPath(), verifierRange.getEndPath(), "foo", s3SingleContentDao, new TreeSet<>())).thenReturn(missingKeys);
+        when(missingContentFinder.getMissing(verifierRange.getStartPath(), verifierRange.getEndPath(), "foo")).thenReturn(missingKeys);
         when(s3WriteQueue.add(key)).thenReturn(true);
         when(s3WriteQueue.add(secondKey)).thenReturn(true);
         when(s3WriteQueue.add(thirdKey)).thenReturn(false);
@@ -130,15 +121,8 @@ public class S3VerifierUnitTest {
 
     @Test
     public void testZKUpdatedOnSuccess() {
-        LastContentPath lastContentPath = mock(LastContentPath.class);
-        ChannelService channelService = mock(ChannelService.class);
-        ContentDao spokeWriteContentDao = mock(ContentDao.class);
-        ContentDao s3SingleContentDao = mock(ContentDao.class);
-        S3WriteQueue s3WriteQueue = mock(S3WriteQueue.class);
-        Client httpClient = mock(Client.class);
-        DistributedLeaderLockManager lockManager = mock(DistributedLeaderLockManager.class);
-        StatsdReporter statsdReporter = mock(StatsdReporter.class);
-        S3Verifier s3Verifier = spy(new S3Verifier(lastContentPath, channelService, spokeWriteContentDao, s3SingleContentDao, s3WriteQueue, httpClient, lockManager, statsdReporter));
+        VerifierConfig config = VerifierConfig.builder().build();
+        S3Verifier s3Verifier = new S3Verifier(lastContentPath, channelService, s3WriteQueue, httpClient,  missingContentFinder, verifierRangeLookup, config, channelThreadPool, lockManager, statsdReporter);
 
         ChannelContentKey key = ChannelContentKey.fromResourcePath("http://hub/channel/foo/1999/12/31/23/59/59/999/bar");
         VerifierRange verifierRange = VerifierRange.builder()
@@ -149,7 +133,7 @@ public class S3VerifierUnitTest {
         SortedSet<ContentKey> missingKeys = new TreeSet<>();
         missingKeys.add(key.getContentKey());
 
-        when(s3Verifier.getMissing(verifierRange.getStartPath(), verifierRange.getEndPath(), "foo", s3SingleContentDao, new TreeSet<>())).thenReturn(missingKeys);
+        when(missingContentFinder.getMissing(verifierRange.getStartPath(), verifierRange.getEndPath(), "foo")).thenReturn(missingKeys);
         when(s3WriteQueue.add(key)).thenReturn(true);
 
         s3Verifier.verifyChannel(verifierRange);

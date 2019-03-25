@@ -1,10 +1,11 @@
-package com.flightstats.hub.dao.aws;
+package com.flightstats.hub.dao.aws.s3Verifier;
 
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.MinutePath;
+import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.StringUtils;
 import com.flightstats.hub.util.TimeUtil;
@@ -22,11 +23,12 @@ import static com.flightstats.hub.dao.ChannelService.REPLICATED_LAST_UPDATED;
 import static com.flightstats.hub.dao.aws.S3Verifier.LAST_SINGLE_VERIFIED;
 import static org.junit.Assert.assertEquals;
 
-public class S3VerifierTest {
-    private final static Logger logger = LoggerFactory.getLogger(S3VerifierTest.class);
+public class VerifierRangeLookupTest {
+    private final static Logger logger = LoggerFactory.getLogger(VerifierRangeLookupTest.class);
 
-    private static S3Verifier s3Verifier;
+    private static VerifierRangeLookup verifierRangeLookup;
     private static LastContentPath lastContentPath;
+    private static int ttlMinutes;
     private DateTime now = TimeUtil.now();
     private DateTime offsetTime;
     private int offsetMinutes = 15;
@@ -39,8 +41,8 @@ public class S3VerifierTest {
     @BeforeClass
     public static void setUpClass() throws Exception {
         Injector injector = Integration.startAwsHub();
-        HubProperties.setProperty("spoke.ttlMinutes", "60");
-        s3Verifier = injector.getInstance(S3Verifier.class);
+        ttlMinutes = HubProperties.getSpokeTtlMinutes(SpokeStore.WRITE);
+        verifierRangeLookup = injector.getInstance(VerifierRangeLookup.class);
         lastContentPath = injector.getInstance(LastContentPath.class);
         channelService = injector.getInstance(ChannelService.class);
     }
@@ -56,7 +58,7 @@ public class S3VerifierTest {
     public void testSingleNormalDefault() {
         ChannelConfig channelConfig = ChannelConfig.builder().name(channelName).build();
         channelService.createChannel(channelConfig);
-        VerifierRange range = s3Verifier.getSingleVerifierRange(now, channelConfig);
+        VerifierRange range = verifierRangeLookup.getSingleVerifierRange(now, channelConfig);
         logger.info("{} {}", channelName, range);
         assertEquals(channelConfig, range.getChannelConfig());
         assertEquals(new MinutePath(now.minusMinutes(1)), range.getEndPath());
@@ -70,7 +72,7 @@ public class S3VerifierTest {
         lastContentPath.initialize(channelName, lastVerified, LAST_SINGLE_VERIFIED);
         ChannelConfig channel = ChannelConfig.builder().name(channelName).build();
         channelService.createChannel(channel);
-        VerifierRange range = s3Verifier.getSingleVerifierRange(now, channel);
+        VerifierRange range = verifierRangeLookup.getSingleVerifierRange(now, channel);
         logger.info("{} {}", channelName, range);
         assertEquals(new MinutePath(now.minusMinutes(1)), range.getEndPath());
         assertEquals(lastVerified, range.getStartPath());
@@ -80,7 +82,7 @@ public class S3VerifierTest {
     public void testSingleReplicatedDefault() {
         ChannelConfig channel = getReplicatedChannel(channelName);
         channelService.createChannel(channel);
-        VerifierRange range = s3Verifier.getSingleVerifierRange(now, channel);
+        VerifierRange range = verifierRangeLookup.getSingleVerifierRange(now, channel);
         logger.info("{} {}", channelName, range);
         assertEquals(new MinutePath(now.minusMinutes(1)), range.getEndPath());
         assertEquals(new MinutePath(range.getEndPath().getTime().minusMinutes(offsetMinutes)), range.getStartPath());
@@ -92,7 +94,7 @@ public class S3VerifierTest {
         lastContentPath.initialize(channelName, lastReplicated, REPLICATED_LAST_UPDATED);
         ChannelConfig channel = getReplicatedChannel(channelName);
         channelService.updateChannel(channel, null, false);
-        VerifierRange range = s3Verifier.getSingleVerifierRange(now, channel);
+        VerifierRange range = verifierRangeLookup.getSingleVerifierRange(now, channel);
         logger.info("{} {}", channelName, range);
         assertEquals(new MinutePath(lastReplicated.getTime().minusMinutes(1)), range.getEndPath());
         assertEquals(new MinutePath(lastReplicated.getTime().minusMinutes(offsetMinutes + 1)), range.getStartPath());
@@ -100,11 +102,11 @@ public class S3VerifierTest {
 
     @Test
     public void testSingleNormalLagging() {
-        MinutePath lastVerified = new MinutePath(now.minusMinutes(60));
+        MinutePath lastVerified = new MinutePath(now.minusMinutes(ttlMinutes));
         lastContentPath.initialize(channelName, lastVerified, LAST_SINGLE_VERIFIED);
         ChannelConfig channel = ChannelConfig.builder().name(channelName).build();
         channelService.createChannel(channel);
-        VerifierRange range = s3Verifier.getSingleVerifierRange(now, channel);
+        VerifierRange range = verifierRangeLookup.getSingleVerifierRange(now, channel);
         logger.info("{} {}", channelName, range);
         assertEquals(new MinutePath(now.minusMinutes(1)), range.getEndPath());
         logger.info("expected {} {}", new MinutePath(now.minusMinutes(58)), range.getStartPath());
@@ -113,13 +115,13 @@ public class S3VerifierTest {
 
     @Test
     public void testSingleReplicationLagging() {
-        MinutePath lastReplicated = new MinutePath(now.minusMinutes(90));
+        MinutePath lastReplicated = new MinutePath(now.minusMinutes(ttlMinutes + 1));
         lastContentPath.initialize(channelName, lastReplicated, REPLICATED_LAST_UPDATED);
-        MinutePath lastVerified = new MinutePath(now.minusMinutes(100));
+        MinutePath lastVerified = new MinutePath(now.minusMinutes(ttlMinutes + 2));
         lastContentPath.initialize(channelName, lastVerified, LAST_SINGLE_VERIFIED);
         ChannelConfig channel = getReplicatedChannel(channelName);
         channelService.updateChannel(channel, null, false);
-        VerifierRange range = s3Verifier.getSingleVerifierRange(now, channel);
+        VerifierRange range = verifierRangeLookup.getSingleVerifierRange(now, channel);
         logger.info("{} {}", channelName, range);
         assertEquals(new MinutePath(lastReplicated.getTime().minusMinutes(1)), range.getEndPath());
         assertEquals(lastVerified, range.getStartPath());

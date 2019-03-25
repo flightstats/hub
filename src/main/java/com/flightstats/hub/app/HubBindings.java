@@ -10,6 +10,8 @@ import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.cluster.*;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
+import com.flightstats.hub.dao.aws.s3Verifier.VerifierConfig;
+import com.flightstats.hub.dao.aws.s3Verifier.VerifierConfigProvider;
 import com.flightstats.hub.health.HubHealthCheck;
 import com.flightstats.hub.metrics.CustomMetricsLifecycle;
 import com.flightstats.hub.metrics.InfluxdbReporterProvider;
@@ -35,7 +37,9 @@ import com.flightstats.hub.spoke.SpokeClusterRegister;
 import com.flightstats.hub.spoke.SpokeFinalCheck;
 import com.flightstats.hub.spoke.SpokeReadContentDao;
 import com.flightstats.hub.spoke.SpokeStore;
+import com.flightstats.hub.spoke.SpokeStoreConfig;
 import com.flightstats.hub.spoke.SpokeWriteContentDao;
+import com.flightstats.hub.spoke.SpokeWriteStoreConfigProvider;
 import com.flightstats.hub.time.NtpMonitor;
 import com.flightstats.hub.time.TimeService;
 import com.flightstats.hub.util.HubUtils;
@@ -57,6 +61,9 @@ import org.eclipse.jetty.websocket.jsr356.ClientContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import javax.websocket.WebSocketContainer;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
@@ -165,6 +172,21 @@ public class HubBindings extends AbstractModule {
         return mapper;
     }
 
+    @Named(NamedDependencies.S3_VERIFIER_CHANNEL_THREAD_POOL)
+    @Singleton
+    @Provides
+    public static ExecutorService channelThreadPool(VerifierConfig verifierConfig) {
+        return Executors.newFixedThreadPool(verifierConfig.getChannelThreads(), new ThreadFactoryBuilder().setNameFormat("S3VerifierChannel-%d").build());
+    }
+
+    @Named(NamedDependencies.S3_VERIFIER_QUERY_THREAD_POOL)
+    @Singleton
+    @Provides
+    public
+    static ExecutorService queryThreadPool(VerifierConfig verifierConfig) {
+        return Executors.newFixedThreadPool(verifierConfig.getQueryThreads(), new ThreadFactoryBuilder().setNameFormat("S3VerifierQuery-%d").build());
+    }
+
     @Override
     protected void configure() {
         Names.bindProperties(binder(), HubProperties.getProperties());
@@ -208,6 +230,15 @@ public class HubBindings extends AbstractModule {
         bind(ContentDao.class)
                 .annotatedWith(Names.named(ContentDao.READ_CACHE))
                 .to(SpokeReadContentDao.class).asEagerSingleton();
+
+        bind(VerifierConfig.class)
+                .toProvider(VerifierConfigProvider.class)
+                .asEagerSingleton();
+
+        bind(SpokeStoreConfig.class)
+                .annotatedWith(Names.named("spokeWriteStoreConfig"))
+                .toProvider(SpokeWriteStoreConfigProvider.class)
+                .asEagerSingleton();
 
         bind(FileSpokeStore.class)
                 .annotatedWith(Names.named(SpokeStore.WRITE.name()))
