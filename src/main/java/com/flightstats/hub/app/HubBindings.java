@@ -43,6 +43,7 @@ import com.flightstats.hub.spoke.SpokeWriteStoreConfigProvider;
 import com.flightstats.hub.time.NtpMonitor;
 import com.flightstats.hub.time.TimeService;
 import com.flightstats.hub.util.HubUtils;
+import com.flightstats.hub.util.SecretFilter;
 import com.flightstats.hub.webhook.WebhookManager;
 import com.flightstats.hub.webhook.WebhookValidator;
 import com.google.inject.AbstractModule;
@@ -191,6 +192,7 @@ public class HubBindings extends AbstractModule {
     protected void configure() {
         Names.bindProperties(binder(), HubProperties.getProperties());
 
+        bind(SecretFilter.class).asEagerSingleton();
         bind(HubHealthCheck.class).asEagerSingleton();
         bind(HubClusterRegister.class).asEagerSingleton();
         bind(ZooKeeperState.class).asEagerSingleton();
