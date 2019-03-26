@@ -13,7 +13,7 @@ import retrofit2.Retrofit;
 import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
 
 @Slf4j
-public class BaseTest {
+public class FunctionalBaseTest {
 
     protected Injector injector = Guice.createInjector(new GuiceModule());
 

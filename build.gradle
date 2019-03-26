@@ -1,6 +1,8 @@
-apply plugin: 'java'
-
-apply plugin: 'application'
+plugins {
+    id 'java'
+    id 'application'
+    id 'com.google.osdetector' version '1.6.2'
+}
 
 if (project.ext.properties.get('isDevBuild') == null) {
     project.ext.isDevBuild = !project.ext.properties.containsKey("buildConfig") || !"release".equals(project.ext.buildConfig)
@@ -154,8 +156,11 @@ dependencies {
     systemTestCompile 'org.glassfish.jersey.containers:jersey-container-servlet-core:2.28'
     systemTestCompile 'org.glassfish.jersey.media:jersey-media-json-jackson:2.28'
 
+    systemTestCompile('io.netty:netty-tcnative-boringssl-static:2.0.6.Final:' + osdetector.classifier)
+    systemTestCompile('org.microbean:microbean-helm:2.8.2.1.0.5') {
+        exclude group: 'io.netty', module: 'netty-tcnative-boringssl-static'
+    }
 }
-
 
 distTar {
     compression = Compression.GZIP

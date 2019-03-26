@@ -1,6 +1,6 @@
 package com.flightstats.hub.functional.testcase;
 
-import com.flightstats.hub.functional.BaseTest;
+import com.flightstats.hub.functional.FunctionalBaseTest;
 import com.flightstats.hub.functional.callback.CallbackServer;
 import com.flightstats.hub.functional.client.CallbackResourceClient;
 import com.flightstats.hub.functional.client.ChannelItemResourceClient;
@@ -33,7 +33,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 @Slf4j
-public class WebhookLifecycleTest extends BaseTest {
+public class WebhookLifecycleTest extends FunctionalBaseTest {
 
     private static final String EMPTY_STRING = "";
 

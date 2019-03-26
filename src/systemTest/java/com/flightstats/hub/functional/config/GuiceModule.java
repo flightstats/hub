@@ -12,18 +12,17 @@ import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.converter.scalars.ScalarsConverterFactory;
 
 import javax.inject.Singleton;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Properties;
+
+import static com.flightstats.hub.PropertyLoader.load;
 
 @Slf4j
 public class GuiceModule extends AbstractModule {
 
-    private static final String PROPERTY_FILE_NAME = "integration-hub.properties";
+    private static final String PROPERTY_FILE_NAME = "functional-hub.properties";
 
     @Override
     protected void configure() {
-        Names.bindProperties(binder(), loadProperties());
+        Names.bindProperties(binder(), load(PROPERTY_FILE_NAME));
     }
 
     @Singleton
@@ -54,18 +53,6 @@ public class GuiceModule extends AbstractModule {
     @Provides
     public CallbackServer callbackServer() {
         return new CallbackServer();
-    }
-
-    private Properties loadProperties() {
-        final Properties properties = new Properties();
-        try (final InputStream inputStream =
-                     this.getClass().getClassLoader().getResourceAsStream(PROPERTY_FILE_NAME)) {
-            properties.load(inputStream);
-
-        } catch (IOException e) {
-            log.error("Property file {} not found", PROPERTY_FILE_NAME, e);
-        }
-        return properties;
     }
 
 }
