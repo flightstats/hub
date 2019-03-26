@@ -1,3 +1,4 @@
+<<<<<<< HEAD:src/systemTest/java/com/flightstats/hub/testcase/WebhookLifecycleTest.java
 package com.flightstats.hub.testcase;
 
 import com.flightstats.hub.BaseTest;
@@ -9,6 +10,19 @@ import com.flightstats.hub.client.WebhookResourceClient;
 import com.flightstats.hub.model.Channel;
 import com.flightstats.hub.model.ChannelItem;
 import com.flightstats.hub.model.Webhook;
+=======
+package com.flightstats.hub.functional.testcase;
+
+import com.flightstats.hub.functional.FunctionalBaseTest;
+import com.flightstats.hub.functional.callback.CallbackServer;
+import com.flightstats.hub.functional.client.CallbackResourceClient;
+import com.flightstats.hub.functional.client.ChannelItemResourceClient;
+import com.flightstats.hub.functional.client.ChannelResourceClient;
+import com.flightstats.hub.functional.client.WebhookResourceClient;
+import com.flightstats.hub.functional.model.Channel;
+import com.flightstats.hub.functional.model.ChannelItem;
+import com.flightstats.hub.functional.model.Webhook;
+>>>>>>> 6c9403b46... Add tests for helm release install and delete. Also some minor refactor:src/systemTest/java/com/flightstats/hub/functional/testcase/WebhookLifecycleTest.java
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
@@ -33,7 +47,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 @Slf4j
-public class WebhookLifecycleTest extends BaseTest {
+public class WebhookLifecycleTest extends FunctionalBaseTest {
 
     private static final String EMPTY_STRING = "";
 

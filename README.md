@@ -43,7 +43,7 @@ From Local:
     a) ./localDocker.sh (from root directory)
     b) docker run -p 80:80 hub:local
    
-2) set base.url property in integration-hub.properties
+2) set base.url property in functional-hub.properties
     
 3) Go to root of hub project source and run below command
    ./gradlew systemTest -i    
