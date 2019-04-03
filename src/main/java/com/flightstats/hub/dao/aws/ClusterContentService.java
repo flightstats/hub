@@ -134,10 +134,7 @@ public class ClusterContentService implements ContentService {
         }
         ContentKey key = spokeWriteContentDao.insert(channelName, spokeContent);
         if (isWriteable(channelName)) {
-            Supplier<Void> local = () -> {
-                s3SingleWrite(channelName, key, content.isForceWrite());
-                return null;
-            };
+            s3SingleWrite(channelName, key, content.isForceWrite());
         }
         return key;
     }
