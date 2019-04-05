@@ -41,23 +41,11 @@ public class ClusterContentServiceTest {
         ccs = new ClusterContentService(channelSvc, mockSpokeWriteDao, mockSpokeReadDao, mockS3SingleDao, mockS3LargeDao, mockS3BatchDao, s3WriteQueue, lastContentPath, hubUtils);
     }
 
-    @SneakyThrows
-    private void initSimpleContent(boolean isLarge) {
-        byte[] data = "SimpleTest".getBytes();
-        contentKey = new ContentKey(TimeUtil.now(), "someHash");
-        content = Content.builder()
-                .withContentType("text/plain")
-                .withContentKey(contentKey)
-                .withLarge(isLarge)
-                .withData(data).build();
-        when(mockSpokeWriteDao.insert(anyString(), any(Content.class))).thenReturn(contentKey);
-        when(channelConfig.isBatch()).thenReturn(false);
-    }
-
     @Test
     @SneakyThrows
     public void testSingleNormalInsertWritesContentToSpokeAndEnqueuesS3Write() {
         initSimpleContent(false);
+        when(channelConfig.isBatch()).thenReturn(false);
 
         ContentKey ret = ccs.insert(channelName, content);
         verify(mockSpokeWriteDao, times(1)).insert(channelName, content);
@@ -77,8 +65,8 @@ public class ClusterContentServiceTest {
     @SneakyThrows
     public void testSingleNormalInsertDoesntWriteToS3IfBatch() {
         initSimpleContent(false);
-
         when(channelConfig.isBatch()).thenReturn(true);
+
         ccs.insert(channelName, content);
         verifyZeroInteractions(s3WriteQueue);
     }
@@ -87,10 +75,24 @@ public class ClusterContentServiceTest {
     @SneakyThrows
     public void testLargePayloadWritesContentToS3AndIndexToSpokeAndS3() {
         initSimpleContent(true);
+        when(channelConfig.isBatch()).thenReturn(false);
 
         ccs.insert(channelName, content);
         verify(mockS3LargeDao, times(1)).insert(channelName, content);
         verify(mockSpokeWriteDao, times(1)).insert(channelName, LargeContent.createIndex(content));
         verify(s3WriteQueue, times(1)).add(any());
     }
+
+    @SneakyThrows
+    private void initSimpleContent(boolean isLarge) {
+        byte[] data = "SimpleTest".getBytes();
+        contentKey = new ContentKey(TimeUtil.now(), "someHash");
+        content = Content.builder()
+                .withContentType("text/plain")
+                .withContentKey(contentKey)
+                .withLarge(isLarge)
+                .withData(data).build();
+        when(mockSpokeWriteDao.insert(anyString(), any(Content.class))).thenReturn(contentKey);
+    }
+
 }
