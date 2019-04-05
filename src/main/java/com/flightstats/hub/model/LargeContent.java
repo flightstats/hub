@@ -3,17 +3,16 @@ package com.flightstats.hub.model;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.flightstats.hub.app.HubBindings;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 
+@Slf4j
 public class LargeContent {
 
     static final String CONTENT_TYPE = "application/hub";
-    private static final Logger logger = LoggerFactory.getLogger(LargeContent.class);
-    private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private static final ObjectMapper mapper = HubBindings.objectMapper();
 
     public static Content createIndex(Content largePayload) {
         try {
@@ -36,7 +35,7 @@ public class LargeContent {
             content.packageStream();
             return content;
         } catch (IOException e) {
-            logger.warn("unable to create index");
+            log.warn("unable to create index");
             throw new RuntimeException(e);
         }
     }
@@ -52,7 +51,7 @@ public class LargeContent {
             builder.withLarge(true);
             return builder.build();
         } catch (IOException e) {
-            logger.info("trying to read " + content.getContentKey(), e);
+            log.info("trying to read " + content.getContentKey(), e);
             throw new RuntimeException(e);
         }
     }

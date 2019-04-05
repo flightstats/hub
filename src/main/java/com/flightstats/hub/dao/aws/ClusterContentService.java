@@ -30,6 +30,7 @@ import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.TimeUtil;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -63,37 +64,41 @@ public class ClusterContentService implements ContentService {
 
     private final static Logger logger = LoggerFactory.getLogger(ClusterContentService.class);
     private static final String CHANNEL_LATEST_UPDATED = "/ChannelLatestUpdated/";
-    private static final long largePayload = HubProperties.getLargePayload();
     private static final int queryMergeMaxWaitMinutes = HubProperties.getProperty("query.merge.max.wait.minutes", 2);
     private static final ExecutorService executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("ClusterContentService-%d").build());
     private final boolean dropSomeWrites = HubProperties.getProperty("s3.dropSomeWrites", false);
-    @Inject
-    @Named(ContentDao.WRITE_CACHE)
     private ContentDao spokeWriteContentDao;
-    @Inject
-    @Named(ContentDao.SINGLE_LONG_TERM)
     private ContentDao s3SingleContentDao;
-    @Inject
-    @Named(ContentDao.READ_CACHE)
     private ContentDao spokeReadContentDao;
-    @Inject
-    @Named(ContentDao.BATCH_LONG_TERM)
     private ContentDao s3BatchContentDao;
-    @Inject
-    @Named(ContentDao.LARGE_PAYLOAD)
     private ContentDao s3LargePayloadContentDao;
-    @Inject
-    private ChannelService channelService;
-    @Inject
-    private LastContentPath lastContentPath;
-    @Inject
     private S3WriteQueue s3WriteQueue;
-    @Inject
+    private ChannelService channelService;
+    private LastContentPath lastContentPath;
     private HubUtils hubUtils;
 
-    public ClusterContentService() {
+    @Inject
+    public ClusterContentService(
+                            ChannelService channelService,
+                            @Named(ContentDao.WRITE_CACHE) ContentDao spokeWriteContentDao,
+                            @Named(ContentDao.READ_CACHE) ContentDao spokeReadContentDao,
+                            @Named(ContentDao.SINGLE_LONG_TERM) ContentDao s3SingleContentDao,
+                            @Named(ContentDao.LARGE_PAYLOAD) ContentDao s3LargePayloadContentDao,
+                            @Named(ContentDao.BATCH_LONG_TERM) ContentDao s3BatchContentDao,
+                            S3WriteQueue s3WriteQueue,
+                            LastContentPath lastContentPath,
+                            HubUtils hubUtils) {
         HubServices.registerPreStop(new SpokeS3ContentServiceInit());
         HubServices.register(new ChannelLatestUpdatedService(), HubServices.TYPE.AFTER_HEALTHY_START);
+        this.channelService = channelService;
+        this.spokeWriteContentDao = spokeWriteContentDao;
+        this.spokeReadContentDao = spokeReadContentDao;
+        this.s3SingleContentDao = s3SingleContentDao;
+        this.s3LargePayloadContentDao = s3LargePayloadContentDao;
+        this.s3BatchContentDao = s3BatchContentDao;
+        this.s3WriteQueue = s3WriteQueue;
+        this.lastContentPath = lastContentPath;
+        this.hubUtils = hubUtils;
     }
 
     private static SortedSet<ContentKey> query(Function<ContentDao, SortedSet<ContentKey>> daoQuery, List<ContentDao> contentDaos) {
