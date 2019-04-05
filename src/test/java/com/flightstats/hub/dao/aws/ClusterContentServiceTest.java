@@ -23,8 +23,11 @@ import static org.mockito.Mockito.*;
 public class ClusterContentServiceTest {
     @Mock private ClusterContentService ccs;
     @Mock private ChannelService channelSvc;
-    @Mock private ContentDao mockSpokeWriteDao, mockSpokeReadDao;
-    @Mock private ContentDao mockS3SingleDao, mockS3LargeDao, mockS3BatchDao;
+    @Mock private ContentDao mockSpokeWriteDao;
+    @Mock private ContentDao mockSpokeReadDao;
+    @Mock private ContentDao mockS3SingleDao;
+    @Mock private ContentDao mockS3LargeDao;
+    @Mock private ContentDao mockS3BatchDao;
     @Mock private S3WriteQueue s3WriteQueue;
     @Mock private ChannelConfig channelConfig;
     @Mock private LastContentPath lastContentPath;
@@ -38,7 +41,11 @@ public class ClusterContentServiceTest {
     public void initClusterContentService() {
         channelName = "/testChannel";
         when(channelSvc.getCachedChannelConfig(channelName)).thenReturn(Optional.of(channelConfig));
-        ccs = new ClusterContentService(channelSvc, mockSpokeWriteDao, mockSpokeReadDao, mockS3SingleDao, mockS3LargeDao, mockS3BatchDao, s3WriteQueue, lastContentPath, hubUtils);
+        ccs = new ClusterContentService(
+                channelSvc,
+                mockSpokeWriteDao, mockSpokeReadDao,
+                mockS3SingleDao, mockS3LargeDao, mockS3BatchDao,
+                s3WriteQueue, lastContentPath, hubUtils);
     }
 
     @Test
