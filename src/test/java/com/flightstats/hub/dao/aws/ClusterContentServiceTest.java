@@ -1,5 +1,6 @@
 package com.flightstats.hub.dao.aws;
 
+import com.flightstats.hub.app.HubBindings;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
@@ -36,16 +37,19 @@ public class ClusterContentServiceTest {
     private Content content;
     private ContentKey contentKey;
     private String channelName;
+    private LargeContentUtils largeContentUtils;
 
     @Before
     public void initClusterContentService() {
         channelName = "/testChannel";
         when(channelSvc.getCachedChannelConfig(channelName)).thenReturn(Optional.of(channelConfig));
+        largeContentUtils = new LargeContentUtils(HubBindings.objectMapper());
         ccs = new ClusterContentService(
                 channelSvc,
                 mockSpokeWriteDao, mockSpokeReadDao,
                 mockS3SingleDao, mockS3LargeDao, mockS3BatchDao,
-                s3WriteQueue, lastContentPath, hubUtils);
+                s3WriteQueue, lastContentPath, hubUtils,
+                largeContentUtils);
     }
 
     @Test
@@ -86,7 +90,7 @@ public class ClusterContentServiceTest {
 
         ccs.insert(channelName, content);
         verify(mockS3LargeDao, times(1)).insert(channelName, content);
-        verify(mockSpokeWriteDao, times(1)).insert(channelName, LargeContent.createIndex(content));
+        verify(mockSpokeWriteDao, times(1)).insert(channelName, largeContentUtils.createIndex(content));
         verify(s3WriteQueue, times(1)).add(any());
     }
 

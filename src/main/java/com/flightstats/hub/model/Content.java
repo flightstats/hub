@@ -76,7 +76,7 @@ public class Content implements Serializable {
 
     public boolean isIndexForLarge() {
         return getContentType().isPresent()
-                && getContentType().get().equals(LargeContent.CONTENT_TYPE);
+                && getContentType().get().equals(LargeContentUtils.CONTENT_TYPE);
     }
 
     public ContentKey keyAndStart(DateTime effectiveNow) {

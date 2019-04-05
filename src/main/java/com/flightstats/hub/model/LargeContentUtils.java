@@ -3,18 +3,22 @@ package com.flightstats.hub.model;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubBindings;
+import com.google.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 
 @Slf4j
-public class LargeContent {
-
+public class LargeContentUtils {
     static final String CONTENT_TYPE = "application/hub";
-    private static final ObjectMapper mapper = HubBindings.objectMapper();
+    private final ObjectMapper mapper;
 
-    public static Content createIndex(Content largePayload) {
+    @Inject
+    public LargeContentUtils(ObjectMapper mapper) {
+        this.mapper = mapper;
+    }
+
+    public Content createIndex(Content largePayload) {
         try {
             Content.Builder builder = Content.builder();
             builder.withContentType(CONTENT_TYPE);
@@ -40,7 +44,7 @@ public class LargeContent {
         }
     }
 
-    public static Content fromIndex(Content content) {
+    public Content fromIndex(Content content) {
         try {
             String data = new String(content.getData());
             JsonNode jsonNode = mapper.readTree(data);
