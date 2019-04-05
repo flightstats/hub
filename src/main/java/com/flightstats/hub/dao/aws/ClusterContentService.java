@@ -67,15 +67,15 @@ public class ClusterContentService implements ContentService {
     private static final int queryMergeMaxWaitMinutes = HubProperties.getProperty("query.merge.max.wait.minutes", 2);
     private static final ExecutorService executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("ClusterContentService-%d").build());
     private final boolean dropSomeWrites = HubProperties.getProperty("s3.dropSomeWrites", false);
-    private ContentDao spokeWriteContentDao;
-    private ContentDao s3SingleContentDao;
-    private ContentDao spokeReadContentDao;
-    private ContentDao s3BatchContentDao;
-    private ContentDao s3LargePayloadContentDao;
-    private S3WriteQueue s3WriteQueue;
-    private ChannelService channelService;
-    private LastContentPath lastContentPath;
-    private HubUtils hubUtils;
+    private final ContentDao spokeWriteContentDao;
+    private final ContentDao s3SingleContentDao;
+    private final ContentDao spokeReadContentDao;
+    private final ContentDao s3BatchContentDao;
+    private final ContentDao s3LargePayloadContentDao;
+    private final S3WriteQueue s3WriteQueue;
+    private final ChannelService channelService;
+    private final LastContentPath lastContentPath;
+    private final HubUtils hubUtils;
 
     @Inject
     public ClusterContentService(
