@@ -6,7 +6,6 @@ import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.IntegrationUdpServer;
 import com.flightstats.hub.webhook.Webhook;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 
 import java.util.Map;
@@ -17,15 +16,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 
 public class StatsdReporterIntegrationTest {
-    private String[] tags = { "tag1", "tag2" };
-    private MetricsConfig metricsConfig = MetricsConfig.builder()
+    private final String[] tags = { "tag1", "tag2" };
+    private final MetricsConfig metricsConfig = MetricsConfig.builder()
             .hostTag("test_host")
             .statsdPort(8123)
             .dogstatsdPort(8122)
@@ -36,25 +34,6 @@ public class StatsdReporterIntegrationTest {
 
     private final IntegrationUdpServer udpServer = provideNewServer(metricsConfig.getStatsdPort());
     private final IntegrationUdpServer udpServerDD = provideNewServer(metricsConfig.getDogstatsdPort());
-
-    private IntegrationUdpServer provideNewServer(int port) {
-        return IntegrationUdpServer.builder()
-                .listening(true)
-                .port(port)
-                .startupCountDownLatch(startupCountDownLatch)
-                .executorService(executorService)
-                .build();
-    }
-
-    @SuppressWarnings("unchecked")
-    private StatsdReporter provideStatsDHandlers() {
-        Dao<ChannelConfig> channelConfigDao = (Dao<ChannelConfig>) mock(CachedLowerCaseDao.class);
-        Dao<Webhook> webhookDao =  (Dao<Webhook>) mock(CachedDao.class);
-        StatsDFilter statsDFilter = new StatsDFilter(metricsConfig, channelConfigDao, webhookDao);
-        statsDFilter.setOperatingClients();
-        StatsDReporterProvider provider = new StatsDReporterProvider(statsDFilter, metricsConfig);
-        return provider.get();
-    }
 
     @Test
     public void StatsDHandlersCount_metricShape() throws InterruptedException, ExecutionException, TimeoutException {
@@ -69,6 +48,15 @@ public class StatsdReporterIntegrationTest {
         assertEquals("hub.countTest:1|c|#tag2,tag1", resultsDogStatsd.get("hub.countTest"));
     }
 
+    private IntegrationUdpServer provideNewServer(int port) {
+        return IntegrationUdpServer.builder()
+                .listening(true)
+                .port(port)
+                .startupCountDownLatch(startupCountDownLatch)
+                .executorService(executorService)
+                .build();
+    }
+
     private CompletableFuture<String> getMetricsWriterFuture() {
         return CompletableFuture.supplyAsync(() -> {
             try {
@@ -80,6 +68,17 @@ public class StatsdReporterIntegrationTest {
             return "done";
         }, executorService);
     }
+
+    @SuppressWarnings("unchecked")
+    private StatsdReporter provideStatsDHandlers() {
+        Dao<ChannelConfig> channelConfigDao = (Dao<ChannelConfig>) mock(CachedLowerCaseDao.class);
+        Dao<Webhook> webhookDao =  (Dao<Webhook>) mock(CachedDao.class);
+        StatsDFilter statsDFilter = new StatsDFilter(metricsConfig, channelConfigDao, webhookDao);
+        statsDFilter.setOperatingClients();
+        StatsDReporterProvider provider = new StatsDReporterProvider(statsDFilter, metricsConfig);
+        return provider.get();
+    }
+
 
     private void writeMetrics() {
         StatsdReporter handlers = provideStatsDHandlers();
