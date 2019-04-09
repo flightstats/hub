@@ -26,9 +26,8 @@ import java.util.stream.Collectors;
 public class IntegrationUdpServer {
     private final static Logger logger = LoggerFactory.getLogger(IntegrationUdpServer.class);
     private int port;
-    private AtomicBoolean listening;
+    private boolean listening;
     private CountDownLatch startupCountDownLatch;
-    private AtomicBoolean canListen;
     private ExecutorService executorService;
 
     private final Map<String, String> store = new HashMap<>();
@@ -37,7 +36,7 @@ public class IntegrationUdpServer {
         return  CompletableFuture.supplyAsync(() -> {
             try {
                 DatagramSocket serverSocket = new DatagramSocket(port);
-                while (listening.get()) {
+                while (listening) {
                     byte[] data = new byte[70];
                     DatagramPacket receivePacket = new DatagramPacket(data, data.length);
                     startupCountDownLatch.countDown();
@@ -47,7 +46,7 @@ public class IntegrationUdpServer {
                     addValueToStore(result);
                 }
             } catch (IOException e) {
-                listening.set(false);
+                listening = false;
             }
 //        logger.info(":::::::::, {}", store);
             return store;
@@ -55,10 +54,6 @@ public class IntegrationUdpServer {
     }
 
     private String listen(DatagramPacket receivePacket) throws IOException {
-        if (!canListen.get()) {
-            return "";
-        }
-
         InputStream inputStream = new ByteArrayInputStream(receivePacket.getData());
         InputStreamReader streamReader =  new InputStreamReader(inputStream, StandardCharsets.UTF_8);
         BufferedReader reader = new BufferedReader(streamReader);
@@ -70,7 +65,7 @@ public class IntegrationUdpServer {
                 .trim();
 
         if (result.contains("closeSocket")) {
-            listening.set(false);
+            listening = false;
         }
 
         reader.close();
