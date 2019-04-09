@@ -37,9 +37,11 @@ public class StatsdReporterIntegrationTest {
 
     @Test
     public void StatsDHandlersCount_metricShape() throws InterruptedException, ExecutionException, TimeoutException {
-        CompletableFuture<String> metricsWriter = getMetricsWriterFuture();
-        CompletableFuture.allOf(metricsWriter, udpServer.getServerFuture(), udpServerDD.getServerFuture())
-                .get(15000, TimeUnit.MILLISECONDS);
+        CompletableFuture.allOf(
+                getMetricsWriterFuture(),
+                udpServer.getServerFuture(startupCountDownLatch, executorService),
+                udpServerDD.getServerFuture(startupCountDownLatch, executorService)
+        ).get(15000, TimeUnit.MILLISECONDS);
 
         Map<String, String> resultsStatsd = udpServer.getResult();
         assertEquals("hub.countTest:1|c|#tag2,tag1", resultsStatsd.get("hub.countTest"));
@@ -50,10 +52,7 @@ public class StatsdReporterIntegrationTest {
 
     private IntegrationUdpServer provideNewServer(int port) {
         return IntegrationUdpServer.builder()
-                .listening(true)
                 .port(port)
-                .startupCountDownLatch(startupCountDownLatch)
-                .executorService(executorService)
                 .build();
     }
 

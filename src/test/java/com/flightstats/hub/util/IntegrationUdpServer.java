@@ -16,20 +16,17 @@ import java.net.DatagramSocket;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Builder
 public class IntegrationUdpServer {
     private int port;
-    private boolean listening;
-    private CountDownLatch startupCountDownLatch;
-    private ExecutorService executorService;
 
     private final Map<String, String> store = new HashMap<>();
 
-    public CompletableFuture<Map<String, String>> getServerFuture() {
+    public CompletableFuture<Map<String, String>> getServerFuture(final CountDownLatch startupCountDownLatch, final ExecutorService executorService) {
         return  CompletableFuture.supplyAsync(() -> {
+            boolean listening = true;
             try {
                 DatagramSocket serverSocket = new DatagramSocket(port);
                 while (listening) {
@@ -40,9 +37,13 @@ public class IntegrationUdpServer {
 
                     String result = listen(receivePacket);
                     addValueToStore(result);
+
+                    if (result.contains("closeSocket")) {
+                        listening = false;
+                    }
                 }
-            } catch (IOException e) {
-                listening = false;
+            } catch (Exception e) {
+                log.error("error listening on port %s", port, e);
             }
 //        log.info(":::::::::, {}", store);
             return store;
@@ -51,21 +52,16 @@ public class IntegrationUdpServer {
 
     private String listen(DatagramPacket receivePacket) throws IOException {
         InputStream inputStream = new ByteArrayInputStream(receivePacket.getData());
-        InputStreamReader streamReader =  new InputStreamReader(inputStream, StandardCharsets.UTF_8);
-        BufferedReader reader = new BufferedReader(streamReader);
-        String result = reader
-                .lines()
-                .collect(Collectors.toList())
-                .get(0)
-                .trim();
+        try (
+            InputStreamReader streamReader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
+            BufferedReader reader = new BufferedReader(streamReader)) {
 
-        if (result.contains("closeSocket")) {
-            listening = false;
+            return reader
+                    .lines()
+                    .findFirst()
+                    .map(String::trim)
+                    .orElse("");
         }
-
-        reader.close();
-        streamReader.close();
-        return result;
     }
 
     private void addValueToStore(String currentResult) {
