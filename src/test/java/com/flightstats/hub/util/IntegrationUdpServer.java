@@ -1,6 +1,7 @@
 package com.flightstats.hub.util;
 
 import lombok.Builder;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,9 +23,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Builder
 public class IntegrationUdpServer {
-    private final static Logger logger = LoggerFactory.getLogger(IntegrationUdpServer.class);
     private int port;
     private boolean listening;
     private CountDownLatch startupCountDownLatch;
@@ -48,7 +49,7 @@ public class IntegrationUdpServer {
             } catch (IOException e) {
                 listening = false;
             }
-//        logger.info(":::::::::, {}", store);
+//        log.info(":::::::::, {}", store);
             return store;
         }, executorService);
     }
@@ -59,7 +60,6 @@ public class IntegrationUdpServer {
         BufferedReader reader = new BufferedReader(streamReader);
         String result = reader
                 .lines()
-                .peek(logger::info)
                 .collect(Collectors.toList())
                 .get(0)
                 .trim();
@@ -70,7 +70,6 @@ public class IntegrationUdpServer {
 
         reader.close();
         streamReader.close();
-        logger.info(result);
         return result;
     }
 
