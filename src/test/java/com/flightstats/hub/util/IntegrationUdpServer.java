@@ -36,7 +36,6 @@ public class IntegrationUdpServer {
             while (listening) {
                 byte[] data = new byte[70];
                 String result = openSocket(data, serverSocket);
-                Thread.sleep(500);
                 addValueToStore(result);
             }
         } catch(Exception ex) {

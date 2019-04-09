@@ -9,6 +9,7 @@ import com.flightstats.hub.webhook.Webhook;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import java.util.Map;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
@@ -42,15 +43,20 @@ public class StatsdReporterIntegrationTest {
         return provider.get();
     }
 
+    private static void runAfterSocketInit(Runnable runnable) {
+        Executors.newScheduledThreadPool(1).schedule(runnable, 100, TimeUnit.MILLISECONDS);
+    }
+
 
     @BeforeClass
-    public static void startMockStatsDServer() throws InterruptedException {
+    public static void startMockStatsDServer() {
         StatsdReporter handlers = provideStatsDHandlers();
         IntegrationUdpServer udpServer = provideNewServer(metricsConfig.getStatsdPort());
         IntegrationUdpServer udpServerDD = provideNewServer(metricsConfig.getDogstatsdPort());
-        TimeUnit.MILLISECONDS.sleep(300);
-        handlers.count("countTest", 1, tags);
-        handlers.increment("closeSocket", tags);
+        runAfterSocketInit(() -> {
+            handlers.count("countTest", 1, tags);
+            handlers.increment("closeSocket", tags);
+        });
         resultsStatsd = udpServer.getResult();
         resultsDogStatsd = udpServerDD.getResult();
     }
