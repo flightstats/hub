@@ -17,57 +17,66 @@ import java.util.concurrent.CompletableFuture;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 @Builder
 public class IntegrationUdpServer {
     private final static Logger logger = LoggerFactory.getLogger(IntegrationUdpServer.class);
-    private long timeoutMillis;
-    private final List<String> queue = new ArrayList<>();
     private int port;
-    private boolean listening;
+    private AtomicBoolean listening;
+    private CountDownLatch startupCountDownLatch;
+    private AtomicBoolean canListen;
+    private ExecutorService executorService;
 
     private final Map<String, String> store = new HashMap<>();
 
-    private final CompletableFuture<Map<String, String>> serverFuture = CompletableFuture.supplyAsync(() -> {
-        try {
-            DatagramSocket serverSocket = new DatagramSocket(port);
-            while (listening) {
-                byte[] data = new byte[70];
-                String result = openSocket(data, serverSocket);
-                addValueToStore(result);
-            }
-        } catch(Exception ex) {
-            listening = false;
-        }
-//        logger.info(":::::::::, {}", store);
-        return store;
-    });
+    public CompletableFuture<Map<String, String>> getServerFuture() {
+        return  CompletableFuture.supplyAsync(() -> {
+            try {
+                DatagramSocket serverSocket = new DatagramSocket(port);
+                while (listening.get()) {
+                    byte[] data = new byte[70];
+                    DatagramPacket receivePacket = new DatagramPacket(data, data.length);
+                    startupCountDownLatch.countDown();
+                    serverSocket.receive(receivePacket);
 
-    private String openSocket(byte[] data, DatagramSocket serverSocket) {
-        DatagramPacket receivePacket = new DatagramPacket(data, data.length);
-        try {
-            serverSocket.receive(receivePacket);
-            InputStream inputStream = new ByteArrayInputStream(receivePacket.getData());
-            InputStreamReader streamReader =  new InputStreamReader(inputStream, StandardCharsets.UTF_8);
-            BufferedReader reader = new BufferedReader(streamReader);
-            String result = reader
-                    .lines()
-                    .collect(Collectors.toList())
-                    .get(0)
-                    .trim();
-            if (result.contains("closeSocket")) {
-                listening = false;
+                    String result = listen(receivePacket);
+                    addValueToStore(result);
+                }
+            } catch (IOException e) {
+                listening.set(false);
             }
-            reader.close();
-            streamReader.close();
-            return result;
-        } catch (IOException ex) {
-            logger.error("error io exception at open socket", ex);
-            serverFuture.completeExceptionally(ex);
+//        logger.info(":::::::::, {}", store);
+            return store;
+        }, executorService);
+    }
+
+    private String listen(DatagramPacket receivePacket) throws IOException {
+        if (!canListen.get()) {
             return "";
         }
+
+        InputStream inputStream = new ByteArrayInputStream(receivePacket.getData());
+        InputStreamReader streamReader =  new InputStreamReader(inputStream, StandardCharsets.UTF_8);
+        BufferedReader reader = new BufferedReader(streamReader);
+        String result = reader
+                .lines()
+                .peek(logger::info)
+                .collect(Collectors.toList())
+                .get(0)
+                .trim();
+
+        if (result.contains("closeSocket")) {
+            listening.set(false);
+        }
+
+        reader.close();
+        streamReader.close();
+        logger.info(result);
+        return result;
     }
 
     private void addValueToStore(String currentResult) {
@@ -76,12 +85,6 @@ public class IntegrationUdpServer {
     }
 
     public Map<String, String> getResult () {
-        try {
-            return serverFuture.get(timeoutMillis, TimeUnit.MILLISECONDS);
-        } catch (Exception ex) {
-            logger.error("error in udp server " + ex);
-            serverFuture.completeExceptionally(ex);
-            return store;
-        }
+        return store;
     }
 }
