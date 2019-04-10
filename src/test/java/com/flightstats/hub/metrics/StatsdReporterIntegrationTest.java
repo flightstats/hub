@@ -6,34 +6,72 @@ import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.IntegrationUdpServer;
 import com.flightstats.hub.webhook.Webhook;
-import org.junit.BeforeClass;
+import lombok.SneakyThrows;
 import org.junit.Test;
+
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 
 public class StatsdReporterIntegrationTest {
-    private static String[] tags = { "tag1", "tag2" };
-    private static Map<String, String> resultsStatsd;
-    private static Map<String, String> resultsDogStatsd;
-    private static MetricsConfig metricsConfig = MetricsConfig.builder()
+    private final String[] tags = { "tag1", "tag2" };
+    private final MetricsConfig metricsConfig = MetricsConfig.builder()
             .hostTag("test_host")
             .statsdPort(8123)
             .dogstatsdPort(8122)
             .build();
 
-    private static IntegrationUdpServer provideNewServer(int port) {
+    private final CountDownLatch startupCountDownLatch = new CountDownLatch(2);
+    private final ExecutorService executorService = Executors.newFixedThreadPool(3);
+
+    private final IntegrationUdpServer udpServer = provideNewServer(metricsConfig.getStatsdPort());
+    private final IntegrationUdpServer udpServerDD = provideNewServer(metricsConfig.getDogstatsdPort());
+
+    @SneakyThrows
+    @Test
+    public void StatsDHandlersCount_metricShape() {
+        CompletableFuture.allOf(
+                getMetricsWriterFuture(),
+                udpServer.getServerFuture(startupCountDownLatch, executorService),
+                udpServerDD.getServerFuture(startupCountDownLatch, executorService)
+        ).get(5000, TimeUnit.MILLISECONDS);
+
+        Map<String, String> resultsStatsd = udpServer.getResult();
+        assertEquals("hub.countTest:1|c|#tag2,tag1", resultsStatsd.get("hub.countTest"));
+
+        Map<String, String> resultsDogStatsd = udpServerDD.getResult();
+        assertEquals("hub.countTest:1|c|#tag2,tag1", resultsDogStatsd.get("hub.countTest"));
+    }
+
+    private IntegrationUdpServer provideNewServer(int port) {
         return IntegrationUdpServer.builder()
-                .timeoutMillis(5000)
-                .listening(true)
                 .port(port)
                 .build();
     }
 
+    private CompletableFuture<String> getMetricsWriterFuture() {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                startupCountDownLatch.await(1000, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+                fail(e.getMessage());
+            }
+            writeMetrics();
+            return "done";
+        }, executorService);
+    }
+
     @SuppressWarnings("unchecked")
-    private static StatsdReporter provideStatsDHandlers() {
+    private StatsdReporter provideStatsDHandlers() {
         Dao<ChannelConfig> channelConfigDao = (Dao<ChannelConfig>) mock(CachedLowerCaseDao.class);
         Dao<Webhook> webhookDao =  (Dao<Webhook>) mock(CachedDao.class);
         StatsDFilter statsDFilter = new StatsDFilter(metricsConfig, channelConfigDao, webhookDao);
@@ -43,22 +81,9 @@ public class StatsdReporterIntegrationTest {
     }
 
 
-    @BeforeClass
-    public static void startMockStatsDServer() throws InterruptedException {
+    private void writeMetrics() {
         StatsdReporter handlers = provideStatsDHandlers();
-        IntegrationUdpServer udpServer = provideNewServer(metricsConfig.getStatsdPort());
-        IntegrationUdpServer udpServerDD = provideNewServer(metricsConfig.getDogstatsdPort());
-        TimeUnit.MILLISECONDS.sleep(300);
         handlers.count("countTest", 1, tags);
         handlers.increment("closeSocket", tags);
-        resultsStatsd = udpServer.getResult();
-        resultsDogStatsd = udpServerDD.getResult();
     }
-
-    @Test
-    public void StatsDHandlersCount_metricShape() {
-        assertEquals("hub.countTest:1|c|#tag2,tag1", resultsStatsd.get("hub.countTest"));
-        assertEquals("hub.countTest:1|c|#tag2,tag1", resultsDogStatsd.get("hub.countTest"));
-    }
-
 }
