@@ -1,5 +1,6 @@
 package com.flightstats.hub.config;
 
+import com.flightstats.hub.callback.CallbackResource;
 import com.flightstats.hub.callback.CallbackServer;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -24,6 +25,7 @@ public class GuiceModule extends AbstractModule {
     @Override
     protected void configure() {
         Names.bindProperties(binder(), loadProperties());
+        bind(CallbackResource.class).asEagerSingleton();
     }
 
     @Singleton

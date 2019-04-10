@@ -19,11 +19,13 @@ public class Webhook {
     private final boolean fastForwardable;
     private final String tagUrl;
     private final String managedByTag;
-    private final Integer maxAttempts;
     private final String errorChannelUrl;
 
     @Wither
     private final String startItem;
     @Wither
     private final Integer parallelCalls;
+    @Wither
+    private final Integer maxAttempts;
+
 }

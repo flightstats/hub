@@ -1,6 +1,7 @@
 package com.flightstats.hub.testcase;
 
 import com.flightstats.hub.BaseTest;
+import com.flightstats.hub.callback.CallbackResource;
 import com.flightstats.hub.callback.CallbackServer;
 import com.flightstats.hub.client.CallbackResourceClient;
 import com.flightstats.hub.client.ChannelItemResourceClient;
@@ -39,32 +40,41 @@ public abstract class WebhookTest extends BaseTest {
     protected CallbackResourceClient callbackResourceClient;
     @Inject
     protected CallbackServer callbackServer;
+    @Inject
+    protected CallbackResource callbackResource;
     protected String channelName;
     protected String webhookName;
 
-    public void setup(Logger log) {
+    public void setup() {
         super.setup();
-        this.log = log;
+        this.log = getLog();
         this.channelItemResourceClient = getHubClient(ChannelItemResourceClient.class);
         this.channelResourceClient = getHubClient(ChannelResourceClient.class);
         this.webhookResourceClient = getHubClient(WebhookResourceClient.class);
 
         this.callbackResourceClient = getCallbackClient(CallbackResourceClient.class);
-        this.callbackServer.start();
+        this.callbackServer.start(super.injector);
 
         this.channelName = generateRandomString();
         this.webhookName = generateRandomString();
     }
 
+    protected abstract Logger getLog();
+
     @SneakyThrows
     protected void logWebhookCallbackError() {
         log.info("Webhook name {} ", webhookName);
+        log.info("Call back errors for webhook {} {} ", webhookName, getWebhookCallbackError().body());
+    }
 
+    @SneakyThrows
+    protected Response<Object> getWebhookCallbackError() {
         Call<Object> call = webhookResourceClient.getError(webhookName);
         Response<Object> response = call.execute();
 
         assertEquals(OK.getStatusCode(), response.code());
-        log.info("Call back errors for webhook {} {} ", webhookName, response.body());
+
+        return response;
     }
 
     protected List<String> getWebhookCallbackItems(int expectedItemCount) {
