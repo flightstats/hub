@@ -36,7 +36,7 @@ public class WebhookLifecycleTest extends WebhookTest {
         addWebhook(webhook);
 
         final List<String> channelItems = addItemsToChannel(data, 10);
-        final List<String> channelItemsPosted = getWebhookCallbackItems(channelItems.size());
+        final List<String> channelItemsPosted = awaitItemCountSentToWebhook(channelItems.size());
 
         Collections.sort(channelItems);
         Collections.sort(channelItemsPosted);
@@ -56,7 +56,7 @@ public class WebhookLifecycleTest extends WebhookTest {
                 withParallelCalls(2);
         addWebhook(webhook);
         final List<String> channelItemsExpected = channelItems.subList(5, channelItems.size());
-        final List<String> channelItemsPosted = getWebhookCallbackItems(channelItemsExpected.size());
+        final List<String> channelItemsPosted = awaitItemCountSentToWebhook(channelItemsExpected.size());
 
         Collections.sort(channelItemsExpected);
         Collections.sort(channelItemsPosted);
@@ -76,7 +76,7 @@ public class WebhookLifecycleTest extends WebhookTest {
                 withParallelCalls(1);
         addWebhook(webhook);
         final List<String> channelItemsExpected = channelItems.subList(5, channelItems.size());
-        final List<String> channelItemsPosted = getWebhookCallbackItems(channelItemsExpected.size());
+        final List<String> channelItemsPosted = awaitItemCountSentToWebhook(channelItemsExpected.size());
 
         assertEquals(channelItemsExpected, channelItemsPosted);
     }

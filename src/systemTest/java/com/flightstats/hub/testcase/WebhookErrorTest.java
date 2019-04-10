@@ -38,10 +38,10 @@ public class WebhookErrorTest extends WebhookTest {
                         (uri) -> uri.contains(firstUrl)));
 
         Thread.sleep(5*1000);  // awaitHasFailedCallBackForItem(first)
-        assertTrue(super.hasCallbackErrorForFullUrl(webhookName, firstUrl));
+        assertTrue(super.hasCallbackErrorInHub(webhookName, firstUrl));
         String secondUrl = super.addItemToChannel("{ name:\"item2\" }");
         Thread.sleep(5*1000);  // awaitHasSuccessfullyCalledBackForItem(second)
-        assertFalse(super.hasCallbackErrorForFullUrl(webhookName, secondUrl));
+        assertFalse(super.hasCallbackErrorInHub(webhookName, secondUrl));
 
         // delete webhook
         super.webhookResourceClient.delete(webhookName);
@@ -51,7 +51,7 @@ public class WebhookErrorTest extends WebhookTest {
         Thread.sleep(5*1000);  // awaitHasSuccessfullyCalledBackForItem(third)
         // verify errors are clear
         // assert has no errors at all
-        assertFalse(super.hasCallbackErrorForFullUrl(webhookName, firstUrl));
+        assertFalse(super.hasCallbackErrorInHub(webhookName, firstUrl));
         for (;;);
 
         /*

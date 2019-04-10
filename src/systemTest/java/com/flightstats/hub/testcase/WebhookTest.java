@@ -65,14 +65,14 @@ public abstract class WebhookTest extends BaseTest {
     protected abstract Logger getLog();
 
     @SneakyThrows
-    protected void logWebhookCallbackError() {
+    protected void logCurrentCallbackErrorsFromHub() {
         log.info("Webhook name {} ", webhookName);
-        WebhookErrors body = getWebhookCallbackError().body();
+        WebhookErrors body = getCallbackErrorsFromHub().body();
         log.info("Call back errors for webhook {} {} ", webhookName, body);
     }
 
     @SneakyThrows
-    protected Response<WebhookErrors> getWebhookCallbackError() {
+    protected Response<WebhookErrors> getCallbackErrorsFromHub() {
         Call<WebhookErrors> call = webhookResourceClient.getError(webhookName);
         Response<WebhookErrors> response = call.execute();
 
@@ -85,9 +85,9 @@ public abstract class WebhookTest extends BaseTest {
     }
 
     @SneakyThrows
-    protected boolean hasCallbackErrorForFullUrl(String webhookName, String fullUrl) {
+    protected boolean hasCallbackErrorInHub(String webhookName, String fullUrl) {
         String itemPath = ContentKey.fromFullUrl(fullUrl).toUrl();
-        return getWebhookCallbackError().body().getErrors()
+        return getCallbackErrorsFromHub().body().getErrors()
                 .stream()
                 .filter((error) -> webhookName.equals(error.getName()))
                 .findFirst().get().getErrors()
@@ -95,7 +95,7 @@ public abstract class WebhookTest extends BaseTest {
                     .anyMatch((path) -> path.contains(itemPath));
     }
 
-    protected List<String> getWebhookCallbackItems(int expectedItemCount) {
+    protected List<String> awaitItemCountSentToWebhook(int expectedItemCount) {
         final List<String> channelItemsPosted = new ArrayList<>();
         Call<String> call = callbackResourceClient.get(webhookName);
 
@@ -103,19 +103,19 @@ public abstract class WebhookTest extends BaseTest {
             await().atMost(90, TimeUnit.SECONDS).until(() -> {
                 Response<String> response = call.clone().execute();
                 channelItemsPosted.clear();
-                channelItemsPosted.addAll(parseResponse(response.body()));
+                channelItemsPosted.addAll(parseItemSentToWebhook(response.body()));
                 return response.code() == OK.getStatusCode()
                         && channelItemsPosted.size() == expectedItemCount;
             });
         } catch (Exception e) {
             log.error("Problem verifying webhook callbacks. {} ", e.getMessage());
-            logWebhookCallbackError();
+            logCurrentCallbackErrorsFromHub();
         }
         return channelItemsPosted;
 
     }
 
-    protected List<String> parseResponse(String body) {
+    protected List<String> parseItemSentToWebhook(String body) {
         if (!isBlank(body)) {
             String parsedString = body.replace("[", EMPTY_STRING)
                     .replace("]", EMPTY_STRING);
