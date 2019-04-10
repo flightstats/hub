@@ -9,7 +9,9 @@ import com.flightstats.hub.client.ChannelResourceClient;
 import com.flightstats.hub.client.WebhookResourceClient;
 import com.flightstats.hub.model.Channel;
 import com.flightstats.hub.model.ChannelItem;
+import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.Webhook;
+import com.flightstats.hub.model.WebhookErrors;
 import lombok.SneakyThrows;
 import org.junit.After;
 import org.slf4j.Logger;
@@ -29,6 +31,7 @@ import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
 public abstract class WebhookTest extends BaseTest {
@@ -64,17 +67,32 @@ public abstract class WebhookTest extends BaseTest {
     @SneakyThrows
     protected void logWebhookCallbackError() {
         log.info("Webhook name {} ", webhookName);
-        log.info("Call back errors for webhook {} {} ", webhookName, getWebhookCallbackError().body());
+        WebhookErrors body = getWebhookCallbackError().body();
+        log.info("Call back errors for webhook {} {} ", webhookName, body);
     }
 
     @SneakyThrows
-    protected Response<Object> getWebhookCallbackError() {
-        Call<Object> call = webhookResourceClient.getError(webhookName);
-        Response<Object> response = call.execute();
+    protected Response<WebhookErrors> getWebhookCallbackError() {
+        Call<WebhookErrors> call = webhookResourceClient.getError(webhookName);
+        Response<WebhookErrors> response = call.execute();
 
+        WebhookErrors body = response.body();
         assertEquals(OK.getStatusCode(), response.code());
+        assertFalse(body.getErrors().isEmpty());
+        assertEquals(webhookName, body.getErrors().get(0).getName());
 
         return response;
+    }
+
+    @SneakyThrows
+    protected boolean hasCallbackErrorForFullUrl(String webhookName, String fullUrl) {
+        String itemPath = ContentKey.fromFullUrl(fullUrl).toUrl();
+        return getWebhookCallbackError().body().getErrors()
+                .stream()
+                .filter((error) -> webhookName.equals(error.getName()))
+                .findFirst().get().getErrors()
+                    .stream()
+                    .anyMatch((path) -> path.contains(itemPath));
     }
 
     protected List<String> getWebhookCallbackItems(int expectedItemCount) {

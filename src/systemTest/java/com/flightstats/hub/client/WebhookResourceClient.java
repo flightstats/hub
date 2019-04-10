@@ -1,6 +1,7 @@
 package com.flightstats.hub.client;
 
 import com.flightstats.hub.model.Webhook;
+import com.flightstats.hub.model.WebhookErrors;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.DELETE;
@@ -17,7 +18,7 @@ public interface WebhookResourceClient {
     Call<Webhook> get(@Path("webhookName") String webhookName);
 
     @GET("/webhook/{webhookName}/errors")
-    Call<Object> getError(@Path("webhookName") String webhookName);
+    Call<WebhookErrors> getError(@Path("webhookName") String webhookName);
 
     @DELETE("/webhook/{webhookName}")
     Call<Void> delete(@Path("webhookName") String webhookName);
