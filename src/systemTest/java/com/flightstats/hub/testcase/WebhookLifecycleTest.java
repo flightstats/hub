@@ -5,6 +5,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
 
 import java.util.Collections;
 import java.util.List;
@@ -16,7 +17,12 @@ public class WebhookLifecycleTest extends WebhookTest {
 
     @Before
     public void setup() {
-        super.setup(log);
+        super.setup();
+    }
+
+    @Override
+    protected Logger getLog() {
+        return log;
     }
 
     @Test

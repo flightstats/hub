@@ -1,5 +1,7 @@
 package com.flightstats.hub.callback;
 
+import com.flightstats.hub.app.GuiceToHK2Adapter;
+import com.google.inject.Injector;
 import lombok.SneakyThrows;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -14,12 +16,14 @@ public class CallbackServer {
     private Server jettyServer;
 
     @SneakyThrows
-    public void start() {
+    public void start(Injector injector) {
 
         final ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
         context.setContextPath("/");
 
-        final ServletContainer servletContainer = new ServletContainer(new JerseyAppConfig());
+        JerseyAppConfig resourceConfig = new JerseyAppConfig();
+        resourceConfig.register(new GuiceToHK2Adapter(injector));
+        final ServletContainer servletContainer = new ServletContainer(resourceConfig);
         final ServletHolder servletHolder = new ServletHolder(servletContainer);
         context.addServlet(servletHolder, "/*");
         servletHolder.setInitOrder(0);
