@@ -26,10 +26,9 @@ public class IntegrationUdpServer {
 
     public CompletableFuture<Map<String, String>> getServerFuture(CountDownLatch startupCountDownLatch, ExecutorService executorService) {
         return  CompletableFuture.supplyAsync(() -> {
-            boolean listening = true;
             try {
                 DatagramSocket serverSocket = new DatagramSocket(port);
-                while (listening) {
+                while (true) {
                     byte[] data = new byte[70];
                     DatagramPacket receivePacket = new DatagramPacket(data, data.length);
                     startupCountDownLatch.countDown();
@@ -39,13 +38,12 @@ public class IntegrationUdpServer {
                     addValueToStore(result);
 
                     if (result.contains("closeSocket")) {
-                        listening = false;
+                        break;
                     }
                 }
             } catch (Exception e) {
                 log.error("error listening on port %s", port, e);
             }
-//        log.info(":::::::::, {}", store);
             return store;
         }, executorService);
     }

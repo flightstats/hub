@@ -6,6 +6,7 @@ import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.IntegrationUdpServer;
 import com.flightstats.hub.webhook.Webhook;
+import lombok.SneakyThrows;
 import org.junit.Test;
 
 import java.util.Map;
@@ -35,13 +36,14 @@ public class StatsdReporterIntegrationTest {
     private final IntegrationUdpServer udpServer = provideNewServer(metricsConfig.getStatsdPort());
     private final IntegrationUdpServer udpServerDD = provideNewServer(metricsConfig.getDogstatsdPort());
 
+    @SneakyThrows
     @Test
-    public void StatsDHandlersCount_metricShape() throws InterruptedException, ExecutionException, TimeoutException {
+    public void StatsDHandlersCount_metricShape() {
         CompletableFuture.allOf(
                 getMetricsWriterFuture(),
                 udpServer.getServerFuture(startupCountDownLatch, executorService),
                 udpServerDD.getServerFuture(startupCountDownLatch, executorService)
-        ).get(15000, TimeUnit.MILLISECONDS);
+        ).get(5000, TimeUnit.MILLISECONDS);
 
         Map<String, String> resultsStatsd = udpServer.getResult();
         assertEquals("hub.countTest:1|c|#tag2,tag1", resultsStatsd.get("hub.countTest"));
@@ -59,7 +61,7 @@ public class StatsdReporterIntegrationTest {
     private CompletableFuture<String> getMetricsWriterFuture() {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                startupCountDownLatch.await(15000, TimeUnit.MILLISECONDS);
+                startupCountDownLatch.await(1000, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
                 fail(e.getMessage());
             }
