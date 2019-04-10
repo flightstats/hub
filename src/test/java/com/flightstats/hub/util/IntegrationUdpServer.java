@@ -24,7 +24,7 @@ public class IntegrationUdpServer {
 
     private final Map<String, String> store = new HashMap<>();
 
-    public CompletableFuture<Map<String, String>> getServerFuture(final CountDownLatch startupCountDownLatch, final ExecutorService executorService) {
+    public CompletableFuture<Map<String, String>> getServerFuture(CountDownLatch startupCountDownLatch, ExecutorService executorService) {
         return  CompletableFuture.supplyAsync(() -> {
             boolean listening = true;
             try {
