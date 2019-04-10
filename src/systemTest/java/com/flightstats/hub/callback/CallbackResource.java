@@ -14,18 +14,26 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 
 @Slf4j
 @Path("/callback")
 public class CallbackResource {
 
     private CallbackCache callbackCache;
-    private Optional<Response> overrideNextResponse;
+    private List<Predicate<WebhookCallbackRequest>> responseOverrides;
 
     @Inject
     public CallbackResource(CallbackCache callbackCache) {
         this.callbackCache = callbackCache;
+        this.responseOverrides = Collections.synchronizedList(new ArrayList<>());
     }
 
     @POST
@@ -33,11 +41,11 @@ public class CallbackResource {
     @SneakyThrows
     public Response create(WebhookCallbackRequest webhookCallbackRequest) {
         log.info("Callback request received {} ", webhookCallbackRequest);
-        if (overrideNextResponse.isPresent()) {
-            log.info("Overriding callback response with {} ", overrideNextResponse.get().getStatus());
-            Response r =  overrideNextResponse.get();
-            overrideNextResponse = Optional.empty();
-            return r;
+        if (responseOverrides
+                .stream()
+                .anyMatch((pred) -> pred.test(webhookCallbackRequest))) {
+            log.info("Simulating callback error due to matching predicate {} ", webhookCallbackRequest);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
         }
         this.callbackCache.put(webhookCallbackRequest);
         return Response.status(Response.Status.OK).build();
@@ -60,7 +68,7 @@ public class CallbackResource {
         }
     }
 
-    public void errorOnNextCreate() {
-        overrideNextResponse = Optional.of(Response.status(Response.Status.INTERNAL_SERVER_ERROR).build());
+    public void errorOnCreate(Predicate<WebhookCallbackRequest> predicate) {
+        responseOverrides.add(predicate);
     }
 }
