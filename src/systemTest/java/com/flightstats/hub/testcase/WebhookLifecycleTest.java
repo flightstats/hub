@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 
@@ -33,10 +34,10 @@ public class WebhookLifecycleTest extends WebhookTest {
         createChannel();
 
         final Webhook webhook = buildWebhook().withParallelCalls(2);
-        addWebhook(webhook);
+        insertAndVerifyWebhook(webhook);
 
         final List<String> channelItems = addItemsToChannel(data, 10);
-        final List<String> channelItemsPosted = awaitItemCountSentToWebhook(channelItems.size());
+        final List<String> channelItemsPosted = awaitItemCountSentToWebhook(Optional.empty(), channelItems.size());
 
         Collections.sort(channelItems);
         Collections.sort(channelItemsPosted);
@@ -54,9 +55,9 @@ public class WebhookLifecycleTest extends WebhookTest {
         final Webhook webhook = buildWebhook().
                 withStartItem(channelItems.get(4)).
                 withParallelCalls(2);
-        addWebhook(webhook);
+        insertAndVerifyWebhook(webhook);
         final List<String> channelItemsExpected = channelItems.subList(5, channelItems.size());
-        final List<String> channelItemsPosted = awaitItemCountSentToWebhook(channelItemsExpected.size());
+        final List<String> channelItemsPosted = awaitItemCountSentToWebhook(Optional.empty(), channelItemsExpected.size());
 
         Collections.sort(channelItemsExpected);
         Collections.sort(channelItemsPosted);
@@ -74,9 +75,9 @@ public class WebhookLifecycleTest extends WebhookTest {
         final Webhook webhook = buildWebhook().
                 withStartItem(channelItems.get(4)).
                 withParallelCalls(1);
-        addWebhook(webhook);
+        insertAndVerifyWebhook(webhook);
         final List<String> channelItemsExpected = channelItems.subList(5, channelItems.size());
-        final List<String> channelItemsPosted = awaitItemCountSentToWebhook(channelItemsExpected.size());
+        final List<String> channelItemsPosted = awaitItemCountSentToWebhook(Optional.empty(), channelItemsExpected.size());
 
         assertEquals(channelItemsExpected, channelItemsPosted);
     }
