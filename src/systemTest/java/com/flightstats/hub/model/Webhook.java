@@ -1,9 +1,11 @@
 package com.flightstats.hub.model;
 
 import lombok.Builder;
+import lombok.Value;
 import lombok.experimental.Wither;
 
 @Builder
+@Value
 public class Webhook {
 
     private final String callbackUrl;

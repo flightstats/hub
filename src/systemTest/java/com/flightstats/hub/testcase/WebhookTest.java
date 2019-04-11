@@ -23,7 +23,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static com.flightstats.hub.model.ChannelContentStorageType.SINGLE;
 import static javax.ws.rs.core.Response.Status.CREATED;
@@ -95,7 +97,15 @@ public abstract class WebhookTest extends BaseTest {
                     .anyMatch((path) -> path.contains(itemPath));
     }
 
-    protected List<String> awaitItemCountSentToWebhook(int expectedItemCount) {
+    protected void awaitHubHasCallbackErrorForItemPath(String path) {
+        try {
+            await().atMost(90, TimeUnit.SECONDS).until(() -> hasCallbackErrorInHub(webhookName, path));
+        } catch (Exception e) {
+            log.error("Unable to see callback error on hub for {} {} due to {}", webhookName, path, e.getMessage());
+        }
+    }
+
+    protected List<String> awaitItemCountSentToWebhook(Optional<String> path, int expectedItemCount) {
         final List<String> channelItemsPosted = new ArrayList<>();
         Call<String> call = callbackResourceClient.get(webhookName);
 
@@ -104,15 +114,18 @@ public abstract class WebhookTest extends BaseTest {
                 Response<String> response = call.clone().execute();
                 channelItemsPosted.clear();
                 channelItemsPosted.addAll(parseItemSentToWebhook(response.body()));
+                List<String> filtered = channelItemsPosted
+                        .stream()
+                        .filter((item) -> !path.isPresent() || item.contains(path.get()))
+                        .collect(Collectors.toList());
                 return response.code() == OK.getStatusCode()
-                        && channelItemsPosted.size() == expectedItemCount;
+                        && filtered.size() == expectedItemCount;
             });
         } catch (Exception e) {
             log.error("Problem verifying webhook callbacks. {} ", e.getMessage());
             logCurrentCallbackErrorsFromHub();
         }
         return channelItemsPosted;
-
     }
 
     protected List<String> parseItemSentToWebhook(String body) {
@@ -128,7 +141,7 @@ public abstract class WebhookTest extends BaseTest {
 
     @SneakyThrows
     protected void createChannel() {
-        log.info("Channel name {} ", channelName);
+        log.info("Create channel name {} ", channelName);
 
         Call<Object> call = channelResourceClient.create(Channel.builder().name(channelName).build());
         Response<Object> response = call.execute();
@@ -137,13 +150,23 @@ public abstract class WebhookTest extends BaseTest {
     }
 
     @SneakyThrows
-    protected void addWebhook(Webhook webhook) {
-        log.info("Webhook name {} ", webhookName);
+    protected int upsertWebhook(Webhook webhook) {
+        log.info("Upsert webhook name {} ", webhookName);
 
         Call<Webhook> call = webhookResourceClient.create(webhookName, webhook);
         Response<Webhook> response = call.execute();
 
-        assertEquals(CREATED.getStatusCode(), response.code());
+        return response.code();
+    }
+
+    @SneakyThrows
+    protected void insertAndVerifyWebhook(Webhook webhook) {
+        assertEquals(CREATED.getStatusCode(), upsertWebhook(webhook));
+    }
+
+    @SneakyThrows
+    protected void updateAndVerifyWebhook(Webhook webhook) {
+        assertEquals(OK.getStatusCode(), upsertWebhook(webhook));
     }
 
     protected List<String> addItemsToChannel(Object data, int count) {
@@ -183,4 +206,5 @@ public abstract class WebhookTest extends BaseTest {
 
         this.callbackServer.stop();
     }
+
 }
