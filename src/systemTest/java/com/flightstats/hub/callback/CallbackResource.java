@@ -43,7 +43,7 @@ public class CallbackResource {
         log.info("Callback request received {} ", webhookCallbackRequest);
         if (responseOverrides
                 .stream()
-                .anyMatch((pred) -> pred.test(webhookCallbackRequest))) {
+                .anyMatch(pred -> pred.test(webhookCallbackRequest))) {
             log.info("Simulating callback error due to matching predicate {} ", webhookCallbackRequest);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
         }
