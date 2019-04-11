@@ -3,19 +3,22 @@ package com.flightstats.hub.model;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.google.inject.Inject;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 
-public class LargeContent {
-
+@Slf4j
+public class LargeContentUtils {
     static final String CONTENT_TYPE = "application/hub";
-    private static final Logger logger = LoggerFactory.getLogger(LargeContent.class);
-    private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private final ObjectMapper mapper;
 
-    public static Content createIndex(Content largePayload) {
+    @Inject
+    public LargeContentUtils(ObjectMapper mapper) {
+        this.mapper = mapper;
+    }
+
+    public Content createIndex(Content largePayload) {
         try {
             Content.Builder builder = Content.builder();
             builder.withContentType(CONTENT_TYPE);
@@ -36,12 +39,12 @@ public class LargeContent {
             content.packageStream();
             return content;
         } catch (IOException e) {
-            logger.warn("unable to create index");
+            log.warn("unable to create index");
             throw new RuntimeException(e);
         }
     }
 
-    public static Content fromIndex(Content content) {
+    public Content fromIndex(Content content) {
         try {
             String data = new String(content.getData());
             JsonNode jsonNode = mapper.readTree(data);
@@ -52,7 +55,7 @@ public class LargeContent {
             builder.withLarge(true);
             return builder.build();
         } catch (IOException e) {
-            logger.info("trying to read " + content.getContentKey(), e);
+            log.info("trying to read " + content.getContentKey(), e);
             throw new RuntimeException(e);
         }
     }

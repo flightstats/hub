@@ -4,7 +4,7 @@ import com.amazonaws.services.s3.model.BucketLifecycleConfiguration;
 import com.amazonaws.services.s3.model.SetBucketLifecycleConfigurationRequest;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.cluster.CuratorLock;
+import com.flightstats.hub.cluster.DistributedAsyncLockRunner;
 import com.flightstats.hub.cluster.Leadership;
 import com.flightstats.hub.cluster.Lockable;
 import com.flightstats.hub.dao.ChannelService;
@@ -34,17 +34,17 @@ public class S3Config {
     // S3 limits max lifecycle rules to 1000. 10 rules are made available for setting lifecycle rules from infrastructure code.
     private static final Integer S3_LIFECYCLE_RULES_AVAILABLE = 990;
 
-    private final CuratorLock curatorLock;
+    private final DistributedAsyncLockRunner distributedLockRunner;
     private final Dao<ChannelConfig> channelConfigDao;
     private final String s3BucketName;
     private final HubS3Client s3Client;
     private ChannelService channelService;
 
     @Inject
-    public S3Config(HubS3Client s3Client, S3BucketName s3BucketName, CuratorLock curatorLock,
+    public S3Config(HubS3Client s3Client, S3BucketName s3BucketName, DistributedAsyncLockRunner distributedLockRunner,
                     @Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao, ChannelService channelService) {
         this.s3Client = s3Client;
-        this.curatorLock = curatorLock;
+        this.distributedLockRunner = distributedLockRunner;
         this.channelConfigDao = channelConfigDao;
         this.channelService = channelService;
         this.s3BucketName = s3BucketName.getS3BucketName();
@@ -63,8 +63,8 @@ public class S3Config {
         log.info("starting work");
         Iterable<ChannelConfig> channels = channelConfigDao.getAll(false);
         S3ConfigLockable lockable = new S3ConfigLockable(channels);
-        curatorLock.setLockPath("/S3ConfigLock");
-        curatorLock.runWithLock(lockable, 1, TimeUnit.MINUTES);
+        distributedLockRunner.setLockPath("/S3ConfigLock");
+        distributedLockRunner.runWithLock(lockable, 1, TimeUnit.MINUTES);
     }
 
     private class S3ConfigInit extends AbstractScheduledService {

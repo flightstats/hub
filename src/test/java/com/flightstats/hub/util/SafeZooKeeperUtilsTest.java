@@ -13,6 +13,8 @@ import java.util.Optional;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Collections.emptyList;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
@@ -51,7 +53,7 @@ public class SafeZooKeeperUtilsTest {
     }
 
     @Test
-    public void testGetChildren_unknownNode() throws Exception {
+    public void testGetChildren_unknownNode() {
         List<String> children = zooKeeperUtils.getChildren("/some", "path");
 
         assertEquals(emptyList(), children);
@@ -97,7 +99,7 @@ public class SafeZooKeeperUtilsTest {
 
         assertTrue(data.isPresent());
         assertEquals("hi", data.get().getData());
-        assertTrue(data.get().getStat().getCtime() > startTime);
+        assertThat(data.get().getStat().getCtime(), greaterThanOrEqualTo(startTime));
     }
 
     @Test
