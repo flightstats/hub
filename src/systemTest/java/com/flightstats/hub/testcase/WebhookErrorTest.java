@@ -9,10 +9,6 @@ import org.slf4j.Logger;
 
 import java.util.Optional;
 
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.in;
-import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -35,7 +31,7 @@ public class WebhookErrorTest extends WebhookTest {
     @Test
     @SneakyThrows
     public void testThatNewlyCreatedWebhookDoesntReceiveStaleErrors() {
-        // verify that errors are created only for the first item
+        // verify that errors are created for the first item
         String firstUrl = super.addItemToChannel("{ name:\"item1\" }");
         super.callbackResource.errorOnCreate(
                 (callback) -> callback.getUris().stream().anyMatch(
@@ -53,7 +49,7 @@ public class WebhookErrorTest extends WebhookTest {
         log.info("Re-creating webhook {}", webhookName);
         super.insertAndVerifyWebhook(webhook);
 
-        // add new item
+        // add new item and wait to hear about it
         String thirdUrl = super.addItemToChannel("{ name:\"item3\" }");
         log.info("Adding new item to channel {}", thirdUrl);
         super.awaitItemCountSentToWebhook(Optional.of(thirdUrl), 1);
@@ -65,7 +61,7 @@ public class WebhookErrorTest extends WebhookTest {
 
     @Test
     public void testSettingCursorBeyondErrorClearsErrorStateAndContinues() {
-        // verify that errors are created only for the first item
+        // verify that errors are created for the first item
         String firstUrl = super.addItemToChannel("{ name:\"item1\" }");
         super.callbackResource.errorOnCreate(
                 (callback) -> callback.getUris().stream().anyMatch(
