@@ -56,7 +56,7 @@ public class S3AccessMonitor {
     private CompletableFuture<String> waitForRead(String versionId) {
         try {
             return CompletableFuture.supplyAsync(() -> {
-                hubS3Client.getObject(new GetObjectRequest(s3BucketName.getS3BucketName(), "", versionId));
+                hubS3Client.getObject(new GetObjectRequest(s3BucketName.getS3BucketName(), key(), versionId));
                 return versionId;
             });
         } catch(Exception e) {
