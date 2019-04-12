@@ -14,6 +14,7 @@ import org.joda.time.DateTime;
 import javax.inject.Inject;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 @Slf4j
 public class S3AccessMonitor {
@@ -65,20 +66,24 @@ public class S3AccessMonitor {
         }
     }
 
+    private void cleanup(String versionId) {
+        try {
+            DeleteObjectRequest deleteObjectRequest = new DeleteObjectRequest(s3BucketName.getS3BucketName(), key());
+            hubS3Client.deleteObject(deleteObjectRequest);
+            if (versionId != null) {
+                DeleteVersionRequest deleteVersionRequest = new DeleteVersionRequest(s3BucketName.getS3BucketName(), key(), versionId);
+                hubS3Client.deleteVersion(deleteVersionRequest);
+            }
+        } catch (Exception e) {
+            log.error("error cleaning up items after s3 access verification: ", e);
+        }
+    };
+
     public boolean verifyReadWriteAccess() {
         try {
             waitForWrite()
                     .thenCompose(putObjectResult -> waitForRead(putObjectResult.getVersionId()))
-                    .thenAccept(versionId -> {
-                        try {
-                            DeleteObjectRequest deleteObjectRequest = new DeleteObjectRequest(s3BucketName.getS3BucketName(), key());
-                            hubS3Client.deleteObject(deleteObjectRequest);
-                            DeleteVersionRequest deleteVersionRequest = new DeleteVersionRequest(s3BucketName.getS3BucketName(), key(), versionId);
-                            hubS3Client.deleteVersion(deleteVersionRequest);
-                        } catch (Exception e) {
-                            log.error("error cleaning up items after s3 access verification: ", e);
-                        }
-                    }).get();
+                    .thenAccept(this::cleanup).get();
         } catch (Exception e) {
             log.error("error reaching S3: ", e);
             return false;
