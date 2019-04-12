@@ -77,7 +77,7 @@ public class S3AccessMonitor {
         } catch (Exception e) {
             log.error("error cleaning up items after s3 access verification: ", e);
         }
-    };
+    }
 
     public boolean verifyReadWriteAccess() {
         try {
