@@ -108,6 +108,15 @@ public class HubS3Client {
         }
     }
 
+    void deleteVersion(DeleteVersionRequest request) {
+        try {
+            s3Client.deleteVersion(request);
+        } catch (SdkClientException e) {
+            countError(e, request, "deleteVersion", Arrays.asList("bucket:" + request.getBucketName(), "key:" + request.getKey()));
+            throw e;
+        }
+    }
+
     DeleteObjectsResult deleteObjects(DeleteObjectsRequest request) {
         try {
             return s3Client.deleteObjects(request);
