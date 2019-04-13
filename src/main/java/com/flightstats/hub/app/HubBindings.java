@@ -19,8 +19,6 @@ import com.flightstats.hub.metrics.MetricRegistryProvider;
 import com.flightstats.hub.metrics.MetricsConfigProvider;
 import com.flightstats.hub.metrics.MetricsConfig;
 import com.flightstats.hub.metrics.InfluxdbReporterLifecycle;
-import com.flightstats.hub.metrics.PeriodicMetricEmitter;
-import com.flightstats.hub.metrics.PeriodicMetricEmitterLifecycle;
 import com.flightstats.hub.metrics.StatsDFilter;
 import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.metrics.StatsDReporterLifecycle;
@@ -213,6 +211,7 @@ public class HubBindings extends AbstractModule {
         bind(ChannelService.class).asEagerSingleton();
         bind(HubVersion.class).toInstance(new HubVersion());
 
+
         // metrics
         bind(MetricsConfig.class).toProvider(MetricsConfigProvider.class).asEagerSingleton();
         bind(MetricRegistry.class).toProvider(MetricRegistryProvider.class).asEagerSingleton();
@@ -223,8 +222,6 @@ public class HubBindings extends AbstractModule {
         bind(StatsdReporter.class).toProvider(StatsDReporterProvider.class).asEagerSingleton();
         bind(StatsDReporterLifecycle.class).asEagerSingleton();
         bind(CustomMetricsLifecycle.class).asEagerSingleton();
-        bind(PeriodicMetricEmitter.class).asEagerSingleton();
-        bind(PeriodicMetricEmitterLifecycle.class).asEagerSingleton();
 
         bind(ContentDao.class)
                 .annotatedWith(Names.named(ContentDao.WRITE_CACHE))

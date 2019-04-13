@@ -14,7 +14,6 @@ import org.joda.time.DateTime;
 import javax.inject.Inject;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 
 @Slf4j
 public class S3AccessMonitor {
