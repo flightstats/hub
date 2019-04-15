@@ -13,10 +13,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -98,9 +98,8 @@ public class DistributedLockRunnerTest {
         });
 
         executorService.execute(() -> {
-            Consumer<LeadershipLock> lockable = leadershipLock -> {
-                doAThing(0, "lockable2", latch);
-            };
+            Consumer<LeadershipLock> lockable = leadershipLock -> doAThing(0, "lockable2", latch);
+
             try {
                 waitForMe.await(50, TimeUnit.MILLISECONDS);
             } catch (Exception e) {
@@ -117,7 +116,9 @@ public class DistributedLockRunnerTest {
         });
 
         latch.await(5, TimeUnit.MINUTES);
-        assertEquals(newArrayList("lockable1", "lockable3"), lockList.get());
+        assertTrue(lockList.get().contains("lockable1"));
+        assertTrue(lockList.get().contains("lockable3"));
+        assertEquals(2, lockList.get().size());
     }
 
     @Test
