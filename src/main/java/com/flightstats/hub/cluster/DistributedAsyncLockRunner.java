@@ -52,12 +52,8 @@ public class DistributedAsyncLockRunner {
 
     public void delete(LeadershipLock leadershipLock) {
         try {
-            executorService.shutdown();
-            if (!executorService.awaitTermination(1, TimeUnit.SECONDS)) {
-                executorService.shutdownNow();
-                executorService.awaitTermination(10, TimeUnit.SECONDS);
-            }
-
+            executorService.shutdownNow();
+            executorService.awaitTermination(10, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             log.info("InterruptedException for " + leadershipLock.getLockPath(), e);
         } finally {
