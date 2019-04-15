@@ -106,7 +106,6 @@ public class WebhookErrorTest extends WebhookTest {
             super.deleteWebhook();
             this.createWebhook();
             log.info("Completed iteration {}", i);
-            //Thread.sleep(2*1000);
         }
 
     }
@@ -119,7 +118,6 @@ public class WebhookErrorTest extends WebhookTest {
             log.info("Iteration {}", i);
             this.testThatNewlyCreatedWebhookDoesntReceiveStaleErrors();
             log.info("Completed iteration {}", i);
-            //Thread.sleep(2*1000);
         }
 
     }

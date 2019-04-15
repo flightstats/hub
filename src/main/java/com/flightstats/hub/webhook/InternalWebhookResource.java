@@ -7,8 +7,16 @@ import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.model.ContentPath;
 import org.joda.time.DateTime;
 
-import javax.ws.rs.*;
-import javax.ws.rs.core.*;
+import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Map;
@@ -130,11 +138,9 @@ public class InternalWebhookResource {
     @Path("/run/{name}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response run(@PathParam("name") String name) {
-        DLog.log("/internal ensure running " + name);
         if (LOCAL_WEBHOOK_MANAGER.ensureRunning(name)) {
             return Response.ok().build();
         }
-        DLog.log("/internal ensured running " + name);
         return Response.status(400).build();
     }
 
@@ -142,9 +148,7 @@ public class InternalWebhookResource {
     @Path("/delete/{name}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response delete(@PathParam("name") String name) {
-        DLog.log("/internal heard delete " + name);
         LOCAL_WEBHOOK_MANAGER.stopLocal(name, true);
-        DLog.log("/internal completed delete " + name);
         return Response.ok().build();
     }
 
