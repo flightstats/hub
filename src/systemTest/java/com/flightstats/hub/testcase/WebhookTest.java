@@ -201,10 +201,20 @@ public abstract class WebhookTest extends BaseTest {
     @After
     @SneakyThrows
     public void cleanup() {
-        this.channelResourceClient.delete(channelName).execute();
-        this.webhookResourceClient.delete(webhookName).execute();
+        deleteChannelAndWebhook();
 
         this.callbackServer.stop();
+    }
+
+    @SneakyThrows
+    protected void deleteChannelAndWebhook() {
+        deleteWebhook();
+        this.channelResourceClient.delete(channelName).execute();
+    }
+
+    @SneakyThrows
+    protected void deleteWebhook() {
+        webhookResourceClient.delete(webhookName).execute();
     }
 
 }

@@ -22,8 +22,16 @@ public class WebhookErrorTest extends WebhookTest {
     public void setup() {
         super.setup();
 
+        initChannelAndWebhook();
+    }
+
+    private void initChannelAndWebhook() {
         createChannel();
 
+        createWebhook();
+    }
+
+    private void createWebhook() {
         webhook = buildWebhook().withParallelCalls(1).withMaxAttempts(0);
         super.insertAndVerifyWebhook(webhook);
     }
@@ -78,10 +86,32 @@ public class WebhookErrorTest extends WebhookTest {
         super.updateAndVerifyWebhook(webhook);
 
         // verify that you get the second item's data
+        log.info("Verifying that data for 2nd item was sent {}", secondUrl);
         Optional<String> opt = super.awaitItemCountSentToWebhook(Optional.of(secondUrl), 1).stream().findFirst();
         assertTrue(opt.isPresent());
         assertEquals(secondUrl, opt.get());
+
+        // verify that no errors exist on the hub
+        log.info("Verifying that no errors exist on the hub for webhook {}", webhookName);
         assertFalse(super.hasCallbackErrorInHub(webhookName, firstUrl));
+    }
+
+    @Test
+    @SneakyThrows
+    public void testChannelAndWebhookRecreationInTightLoopDoesntTriggerErrorStateCorruption() {
+
+        int i = 1;
+        for (;;) {
+            log.info("Iteration {}", i);
+            this.testSettingCursorBeyondErrorClearsErrorStateAndContinues();
+            //super.deleteChannelAndWebhook();
+            //this.initChannelAndWebhook();
+            super.deleteWebhook();
+            this.createWebhook();
+            log.info("Completed iteration {}", i++);
+            Thread.sleep(2*1000);
+        }
+
     }
 
     @Override
