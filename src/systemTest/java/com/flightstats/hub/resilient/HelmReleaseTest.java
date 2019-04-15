@@ -25,11 +25,10 @@ public class HelmReleaseTest extends ResilientBaseTest {
     @Test
     public void test() {
         this.releaseInstall.install(this.releaseName, this.chartPath);
-
     }
 
     @After
-    public void cleanup() throws InterruptedException {
+    public void cleanup() {
         this.releaseDelete.delete(this.releaseName);
     }
 }

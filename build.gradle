@@ -145,6 +145,7 @@ dependencies {
     testCompile 'junit:junit:4.+'
     testCompile "org.mockito:mockito-all:1.+"
 
+    systemTestCompileOnly 'org.projectlombok:lombok:1.18.6'
     systemTestAnnotationProcessor 'org.projectlombok:lombok:1.18.6'
 
     systemTestCompile 'org.eclipse.jetty:jetty-server:9.4.15.v20190215'

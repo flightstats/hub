@@ -1,6 +1,6 @@
 package com.flightstats.hub.functional.client;
 
-import com.flightstats.hub.functional.model.Webhook;
+import com.flightstats.hub.model.Webhook;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.DELETE;

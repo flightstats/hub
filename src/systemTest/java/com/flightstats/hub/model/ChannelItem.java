@@ -1,5 +1,4 @@
-package com.flightstats.hub.functional.model;
-
+package com.flightstats.hub.model;
 
 import lombok.Builder;
 import lombok.Value;
