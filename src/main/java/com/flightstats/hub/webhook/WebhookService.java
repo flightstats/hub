@@ -40,7 +40,6 @@ public class WebhookService {
     }
 
     public Optional<Webhook> upsert(Webhook webhook) {
-        DLog.log("upsert " + webhook.getName());
         logger.info("incoming webhook {} ", webhook);
         webhook = webhook.withDefaults();
         webhookValidator.validate(webhook);
@@ -49,7 +48,6 @@ public class WebhookService {
             return upsertTagWebhook(webhook, preExisting);
         }
         if (preExisting.isPresent()) {
-            DLog.log("upsert isPresent() is true " + webhook.getName());
             Webhook existing = preExisting.get();
             ContentPath newStartingKey = webhook.getStartingKey();
             if (newStartingKey != null && newStartingKey.getTime().compareTo(new DateTime(1980, 1, 1, 1, 1)) >= 0
@@ -83,7 +81,6 @@ public class WebhookService {
             }
         }
 
-        DLog.log("upsert notifying DAO and watchers " + webhook.getName());
         webhookDao.upsert(webhook);
         webhookManager.notifyWatchers(webhook);
         return preExisting;
@@ -145,17 +142,7 @@ public class WebhookService {
     }
 
     void updateCursor(Webhook webhook, ContentPath item) {
-        DLog.log("updateCursor() - start " + item.toUrl());
         this.delete(webhook.getName());
-        DLog.log("updateCursor() - finished delete " + item.toUrl());
-        try // wait a few seconds? TODO - something more intelligent?
-        {
-            Thread.sleep(2000);
-        } catch (InterruptedException ex) {
-            logger.warn("Interruption exception while deleting");
-            Thread.currentThread().interrupt();
-        }
         this.upsert(webhook.withStartingKey(item));
-        DLog.log("updateCursor() - finished upsert " + item.toUrl());
     }
 }
