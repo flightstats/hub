@@ -108,9 +108,11 @@ public class WebhookManager {
             return;
         }
         String name = daoWebhook.getName();
+        DLog.log("WHM is activeWebhook " + activeWebhooks.isActiveWebhook(name) + " for " + name);
         if (activeWebhooks.isActiveWebhook(name)) {
             log.debug("found existing v2 webhook {}", name);
             List<String> servers = new ArrayList<>(activeWebhooks.getServers(name));
+            DLog.log("WHM found " + servers.size() + " active servers for " + name);
             if (servers.size() >= 2) {
                 log.warn("found multiple servers! {}", servers);
                 Collections.shuffle(servers);
@@ -134,7 +136,9 @@ public class WebhookManager {
     }
 
     public void delete(String name) {
+        DLog.log("WHM delete(" + name + ") calling /internal delete on " + activeWebhooks.getServers(name).size() + " servers");
         webhookClient.remove(name, activeWebhooks.getServers(name));
+        DLog.log("WHM delete(" + name + ") clearing ZK state during delete");
         webhookStateReaper.delete(name);
     }
 

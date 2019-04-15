@@ -79,6 +79,7 @@ class WebhookRetryer {
         traces.add("WebhookRetryer.send start");
         RecurringTrace recurringTrace = new RecurringTrace("WebhookRetryer.send start");
         traces.add(recurringTrace);
+        DLog.log("starting retryer on thread for " + contentPath);
 
         int attemptNumber = 0;
         boolean isDoneWithItem = false;
@@ -94,7 +95,7 @@ class WebhookRetryer {
 
             boolean shouldGiveUp = shouldGiveUp(attempt);
             boolean shouldTryLater = shouldTryLater(attempt);
-
+            DLog.log("shouldGiveUp " + shouldGiveUp + " shouldTryLater " + shouldTryLater + " for " + contentPath);
             if (shouldGiveUp || shouldTryLater) {
                 logger.debug("{} {} stopping delivery before attempt #{}", attempt.getWebhook().getName(), attempt.getContentPath().toUrl(), attempt.getNumber());
                 isRetrying = false;
@@ -115,6 +116,7 @@ class WebhookRetryer {
                         .header("Hub-Node", HubHost.getLocalNamePort())
                         .post(ClientResponse.class, payload);
                 attempt.setStatusCode(response.getStatus());
+                DLog.log("delivery attempt " + response.getStatus() + " for " + contentPath);
             } catch (ClientHandlerException e) {
                 attempt.setException(e);
             } finally {
@@ -141,6 +143,7 @@ class WebhookRetryer {
                 logger.debug("{} {} waiting {} seconds until retrying", attempt.getWebhook().getName(), attempt.getContentPath().toUrl(), TimeUnit.MILLISECONDS.toSeconds(sleepTimeMS));
                 Thread.sleep(sleepTimeMS);
             } catch (InterruptedException e) {
+                DLog.log("Interrupted retryer on " + Thread.currentThread().getName() + " for " + contentPath);
                 String message = String.format("%s %s to %s interrupted", attempt.getWebhook().getName(), attempt.getContentPath().toUrl(), attempt.getWebhook().getCallbackUrl());
                 logger.debug(message, e);
                 statsdHandlers.incrementCounter("webhook.errors", "name:" + webhook.getName(), "status:500");
@@ -150,6 +153,7 @@ class WebhookRetryer {
         }
 
         recurringTrace.update("WebhookRetryer.send completed");
+        DLog.log("Finished retryer on " + Thread.currentThread().getName() + " for " + contentPath);
         return isDoneWithItem;
     }
 
