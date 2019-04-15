@@ -210,8 +210,7 @@ public class HubBindings extends AbstractModule {
         bind(InFlightService.class).asEagerSingleton();
         bind(ChannelService.class).asEagerSingleton();
         bind(HubVersion.class).toInstance(new HubVersion());
-
-
+        
         // metrics
         bind(MetricsConfig.class).toProvider(MetricsConfigProvider.class).asEagerSingleton();
         bind(MetricRegistry.class).toProvider(MetricRegistryProvider.class).asEagerSingleton();

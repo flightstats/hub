@@ -115,5 +115,4 @@ class ClusterHubBindings extends AbstractModule {
     public AmazonS3 buildS3Client(AwsConnectorFactory factory) throws IOException {
         return factory.getS3Client();
     }
-
 }

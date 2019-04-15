@@ -45,7 +45,6 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.Security;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
