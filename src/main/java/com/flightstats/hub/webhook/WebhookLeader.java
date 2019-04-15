@@ -97,7 +97,6 @@ class WebhookLeader implements Lockable {
         log.info("taking leadership {} {}", webhook, leadership.hasLeadership());
         executorService = Executors.newCachedThreadPool();
         semaphore = new Semaphore(webhook.getParallelCalls());
-        System.out.println("-========== Definitely new code ============-");
         retryer = WebhookRetryer.builder()
                 .readTimeoutSeconds(webhook.getCallbackTimeoutSeconds())
                 .tryLaterIf(this::doesNotHaveLeadership)
@@ -284,12 +283,9 @@ class WebhookLeader implements Lockable {
         String name = webhook.getName();
         log.info("stopExecutor " + name);
         try {
-            executorService.shutdown();
             log.info("awating termination " + name);
-            if (!executorService.awaitTermination(1, TimeUnit.SECONDS)) {
-                executorService.shutdownNow();
-                executorService.awaitTermination(webhook.getCallbackTimeoutSeconds() + 10, TimeUnit.SECONDS);
-            }
+            executorService.shutdownNow();
+            executorService.awaitTermination(webhook.getCallbackTimeoutSeconds() + 10, TimeUnit.SECONDS);
             log.info("stopped Executor " + name);
         } catch (InterruptedException e) {
             log.warn("unable to stop?" + name, e);
