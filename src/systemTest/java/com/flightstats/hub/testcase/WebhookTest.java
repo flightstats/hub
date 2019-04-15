@@ -113,13 +113,14 @@ public abstract class WebhookTest extends BaseTest {
             await().atMost(90, TimeUnit.SECONDS).until(() -> {
                 Response<String> response = call.clone().execute();
                 channelItemsPosted.clear();
-                channelItemsPosted.addAll(parseItemSentToWebhook(response.body()));
-                List<String> filtered = channelItemsPosted
-                        .stream()
-                        .filter((item) -> !path.isPresent() || item.contains(path.get()))
-                        .collect(Collectors.toList());
+                channelItemsPosted.addAll(
+                        parseItemSentToWebhook(response.body())
+                            .stream()
+                            .filter((item) -> !path.isPresent() || item.contains(path.get()))
+                            .collect(Collectors.toList()));
+
                 return response.code() == OK.getStatusCode()
-                        && filtered.size() == expectedItemCount;
+                        && channelItemsPosted.size() == expectedItemCount;
             });
         } catch (Exception e) {
             log.error("Problem verifying webhook callbacks. {} ", e.getMessage());

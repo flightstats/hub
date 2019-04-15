@@ -130,9 +130,11 @@ public class InternalWebhookResource {
     @Path("/run/{name}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response run(@PathParam("name") String name) {
+        DLog.log("/internal ensure running " + name);
         if (LOCAL_WEBHOOK_MANAGER.ensureRunning(name)) {
             return Response.ok().build();
         }
+        DLog.log("/internal ensured running " + name);
         return Response.status(400).build();
     }
 
@@ -140,7 +142,9 @@ public class InternalWebhookResource {
     @Path("/delete/{name}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response delete(@PathParam("name") String name) {
+        DLog.log("/internal heard delete " + name);
         LOCAL_WEBHOOK_MANAGER.stopLocal(name, true);
+        DLog.log("/internal completed delete " + name);
         return Response.ok().build();
     }
 

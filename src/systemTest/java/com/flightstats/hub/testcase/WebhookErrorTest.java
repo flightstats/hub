@@ -98,18 +98,28 @@ public class WebhookErrorTest extends WebhookTest {
 
     @Test
     @SneakyThrows
-    public void testChannelAndWebhookRecreationInTightLoopDoesntTriggerErrorStateCorruption() {
+    public void testWebhookCursorUpdateLoopDoesntCorruptState() {
 
-        int i = 1;
-        for (;;) {
+        for (int i = 1; i <= 5; i++) {
             log.info("Iteration {}", i);
             this.testSettingCursorBeyondErrorClearsErrorStateAndContinues();
-            //super.deleteChannelAndWebhook();
-            //this.initChannelAndWebhook();
             super.deleteWebhook();
             this.createWebhook();
-            log.info("Completed iteration {}", i++);
-            Thread.sleep(2*1000);
+            log.info("Completed iteration {}", i);
+            //Thread.sleep(2*1000);
+        }
+
+    }
+
+    @Test
+    @SneakyThrows
+    public void testWebhookRecreationLoopDoesntCorruptState() {
+
+        for (int i = 1; i <= 5; i++) {
+            log.info("Iteration {}", i);
+            this.testThatNewlyCreatedWebhookDoesntReceiveStaleErrors();
+            log.info("Completed iteration {}", i);
+            //Thread.sleep(2*1000);
         }
 
     }
