@@ -43,7 +43,7 @@ public class StatsdReporterIntegrationTest {
                 getMetricsWriterFuture(),
                 udpServer.getServerFuture(startupCountDownLatch, executorService),
                 udpServerDD.getServerFuture(startupCountDownLatch, executorService)
-        ).get(5000, TimeUnit.MILLISECONDS);
+        ).get(15000, TimeUnit.MILLISECONDS);
 
         Map<String, String> resultsStatsd = udpServer.getResult();
         assertEquals("hub.countTest:1|c|#tag2,tag1", resultsStatsd.get("hub.countTest"));
@@ -61,7 +61,7 @@ public class StatsdReporterIntegrationTest {
     private CompletableFuture<String> getMetricsWriterFuture() {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                startupCountDownLatch.await(1000, TimeUnit.MILLISECONDS);
+                startupCountDownLatch.await(10000, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
                 fail(e.getMessage());
             }
