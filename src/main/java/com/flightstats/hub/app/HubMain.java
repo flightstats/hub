@@ -55,7 +55,8 @@ import java.util.stream.Stream;
 public class HubMain {
 
     private static final DateTime startTime = new DateTime();
-    private final String hubType = HubProperties.getProperty("hub.type", "aws");
+    private final StorageBackend storageBackend = StorageBackend
+            .valueOf(HubProperties.getProperty("hub.type", "aws"));
 
     public static void main(String[] args) throws Exception {
         if (args.length == 0) {
@@ -164,7 +165,7 @@ public class HubMain {
     }
 
     private List<Service> getAfterHealthCheckServices(Injector injector) {
-        if (!hubType.equals("aws")) {
+        if (storageBackend != StorageBackend.AWS) {
             return Collections.singletonList(injector.getInstance(CustomMetricsLifecycle.class));
         }
         return Stream.of(
@@ -182,9 +183,9 @@ public class HubMain {
         List<AbstractModule> modules = new ArrayList<>();
         modules.add(new HubBindings());
 
-        log.info("starting with hub.type {}", hubType);
+        log.info("starting with hub.type {}", storageBackend);
 
-        modules.add(getGuiceModuleForHubType(hubType));
+        modules.add(getGuiceModuleForHubType(storageBackend.getName()));
         return modules;
     }
 
