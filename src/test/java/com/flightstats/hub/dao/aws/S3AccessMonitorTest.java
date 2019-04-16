@@ -55,18 +55,4 @@ public class S3AccessMonitorTest {
         when(s3Client.putObject(any(PutObjectRequest.class))).thenReturn(putObjectResult);
         assertTrue(monitor.verifyReadWriteAccess());
     }
-
-    @Test
-    public void testVerifyReadWriteAccess_SwallowDeleteObjectError_true() {
-        when(s3Client.putObject(any(PutObjectRequest.class))).thenReturn(putObjectResult);
-        doThrow(new RuntimeException("should get swallowed")).when(s3Client).deleteObject(any(DeleteObjectRequest.class));
-        assertTrue(monitor.verifyReadWriteAccess());
-    }
-
-    @Test
-    public void testVerifyReadWriteAccess_SwallowDeleteVersionError_true() {
-        when(s3Client.putObject(any(PutObjectRequest.class))).thenReturn(putObjectResult);
-        doThrow(new RuntimeException("should get swallowed")).when(s3Client).deleteVersion(any(DeleteVersionRequest.class));
-        assertTrue(monitor.verifyReadWriteAccess());
-    }
 }
