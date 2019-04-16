@@ -1,4 +1,4 @@
-package com.flightstats.hub.resilient.helm;
+package com.flightstats.hub.helm;
 
 import hapi.chart.ChartOuterClass;
 import hapi.release.ReleaseOuterClass;
@@ -39,14 +39,17 @@ public class ReleaseInstall {
             requestBuilder.setTimeout(300L);
             requestBuilder.setName(releaseName);
             requestBuilder.setWait(true);
+            requestBuilder.setDisableHooks(false);
+            requestBuilder.clearWait();
 
             final Future<InstallReleaseResponse> releaseFuture = releaseManager.install(requestBuilder, chartBuilder);
             ReleaseOuterClass.Release release = releaseFuture.get().getRelease();
             assertTrue(release.hasChart());
             assertTrue(release.hasConfig());
 
-            log.info("Hub release {} install completed in {} ms", releaseName, (System.currentTimeMillis() - start));
         }
+
+        log.info("Hub release {} install completed in {} ms", releaseName, (System.currentTimeMillis() - start));
     }
 }
 

@@ -1,4 +1,4 @@
-package com.flightstats.hub.functional.client;
+package com.flightstats.hub.client;
 
 import retrofit2.Call;
 import retrofit2.http.GET;

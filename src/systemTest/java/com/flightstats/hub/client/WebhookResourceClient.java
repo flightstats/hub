@@ -1,4 +1,4 @@
-package com.flightstats.hub.functional.client;
+package com.flightstats.hub.client;
 
 import com.flightstats.hub.model.Webhook;
 import retrofit2.Call;

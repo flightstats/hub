@@ -1,6 +1,7 @@
-package com.flightstats.hub.functional.config;
+package com.flightstats.hub.system.config;
 
-import com.flightstats.hub.functional.callback.CallbackServer;
+import com.flightstats.hub.helm.ReleaseDelete;
+import com.flightstats.hub.helm.ReleaseInstall;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.name.Named;
@@ -13,24 +14,35 @@ import retrofit2.converter.scalars.ScalarsConverterFactory;
 
 import javax.inject.Singleton;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static com.flightstats.hub.PropertyLoader.load;
 
 @Slf4j
-public class GuiceModule extends AbstractModule {
+public class ConfigModule extends AbstractModule {
 
-    private static final String PROPERTY_FILE_NAME = "functional-hub.properties";
+    private static final String PROPERTY_FILE_NAME = "test-hub.properties";
+    private final String releaseName = "ddt-" + com.flightstats.hub.util.StringUtils.randomAlphaNumeric(10).toLowerCase();
 
     @Override
     protected void configure() {
+
         Names.bindProperties(binder(), load(PROPERTY_FILE_NAME));
+        final Map<String, String> releaseNameProperty = new HashMap<>();
+        releaseNameProperty.put("helm.release.name", releaseName);
+        Names.bindProperties(binder(), releaseNameProperty);
+
+        bind(ReleaseInstall.class);
+        bind(ReleaseDelete.class);
     }
 
     @Singleton
     @Named("hub")
     @Provides
-    public Retrofit retrofitHub(@Named("base.url") String hubBaseUrl) {
+    public Retrofit retrofitHub(@Named("hub.url") String hubBaseUrl) {
         return new Retrofit.Builder()
-                .baseUrl(hubBaseUrl)
+                .baseUrl(String.format(hubBaseUrl, releaseName))
                 .addConverterFactory(ScalarsConverterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(new OkHttpClient.Builder().build())
@@ -40,19 +52,12 @@ public class GuiceModule extends AbstractModule {
     @Singleton
     @Named("callback")
     @Provides
-    public Retrofit retrofitCallback() {
+    public Retrofit retrofitCallback(@Named("callback.url") String callbackUrl) {
         return new Retrofit.Builder()
-                .baseUrl(callbackServer().getBaseUrl())
+                .baseUrl(String.format(callbackUrl, releaseName))
                 .addConverterFactory(ScalarsConverterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(new OkHttpClient.Builder().build())
                 .build();
     }
-
-    @Singleton
-    @Provides
-    public CallbackServer callbackServer() {
-        return new CallbackServer();
-    }
-
 }

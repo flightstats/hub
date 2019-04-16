@@ -54,6 +54,7 @@ task nasTest(type: Test) {
 task systemTest(type: Test, description: 'Runs the system tests.', group: 'Verification') {
     testClassesDirs = sourceSets.systemTest.output.classesDirs
     classpath = sourceSets.systemTest.runtimeClasspath
+    exclude  'com/flightstats/hub/system/functional/**'
     mustRunAfter tasks.test
 }
 

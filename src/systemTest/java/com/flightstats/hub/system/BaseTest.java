@@ -1,21 +1,22 @@
-package com.flightstats.hub.functional;
+package com.flightstats.hub.system;
 
-import com.flightstats.hub.functional.config.GuiceModule;
+import com.flightstats.hub.system.config.ConfigModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.name.Names;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.HttpUrl;
+import org.junit.After;
 import org.junit.Before;
 import retrofit2.Retrofit;
 
 import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
 
 @Slf4j
-public class FunctionalBaseTest {
+public class BaseTest {
 
-    protected Injector injector = Guice.createInjector(new GuiceModule());
+    protected Injector injector = Guice.createInjector(new ConfigModule());
 
     private Retrofit retrofitHub =
             injector.getInstance(Key.get(Retrofit.class, Names.named("hub")));
@@ -23,7 +24,7 @@ public class FunctionalBaseTest {
             injector.getInstance(Key.get(Retrofit.class, Names.named("callback")));
 
     @Before
-    public void setup () {
+    public void setup() {
         injector.injectMembers(this);
     }
 

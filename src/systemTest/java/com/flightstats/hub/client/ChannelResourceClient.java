@@ -1,4 +1,4 @@
-package com.flightstats.hub.functional.client;
+package com.flightstats.hub.client;
 
 import com.flightstats.hub.model.Channel;
 import com.flightstats.hub.model.ContentKey;

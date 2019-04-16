@@ -1,14 +1,13 @@
-package com.flightstats.hub.functional.testcase;
+package com.flightstats.hub.system.functional;
 
-import com.flightstats.hub.functional.FunctionalBaseTest;
-import com.flightstats.hub.functional.callback.CallbackServer;
-import com.flightstats.hub.functional.client.CallbackResourceClient;
-import com.flightstats.hub.functional.client.ChannelItemResourceClient;
-import com.flightstats.hub.functional.client.ChannelResourceClient;
-import com.flightstats.hub.functional.client.WebhookResourceClient;
+import com.flightstats.hub.client.CallbackResourceClient;
+import com.flightstats.hub.client.ChannelItemResourceClient;
+import com.flightstats.hub.client.ChannelResourceClient;
+import com.flightstats.hub.client.WebhookResourceClient;
 import com.flightstats.hub.model.Channel;
 import com.flightstats.hub.model.ChannelItem;
 import com.flightstats.hub.model.Webhook;
+import com.flightstats.hub.system.BaseTest;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
@@ -17,7 +16,6 @@ import org.junit.Test;
 import retrofit2.Call;
 import retrofit2.Response;
 
-import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -33,7 +31,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 @Slf4j
-public class WebhookLifecycleTest extends FunctionalBaseTest {
+public class WebhookLifecycleTest extends BaseTest {
 
     private static final String EMPTY_STRING = "";
 
@@ -42,21 +40,16 @@ public class WebhookLifecycleTest extends FunctionalBaseTest {
     private WebhookResourceClient webhookResourceClient;
     private CallbackResourceClient callbackResourceClient;
 
-    @Inject
-    private CallbackServer callbackServer;
-
     private String channelName;
     private String webhookName;
 
     @Before
-    public void setup() {
-        super.setup();
+    public void setupTest() {
         this.channelItemResourceClient = getHubClient(ChannelItemResourceClient.class);
         this.channelResourceClient = getHubClient(ChannelResourceClient.class);
         this.webhookResourceClient = getHubClient(WebhookResourceClient.class);
 
         this.callbackResourceClient = getCallbackClient(CallbackResourceClient.class);
-        this.callbackServer.start();
 
         this.channelName = generateRandomString();
         this.webhookName = generateRandomString();
@@ -65,6 +58,7 @@ public class WebhookLifecycleTest extends FunctionalBaseTest {
     @Test
     @SneakyThrows
     public void testWebhookWithNoStartItem() {
+        log.info("webhook");
         final String data = "{\"fn\": \"first\", \"ln\":\"last\"}";
 
         createChannel();
@@ -212,11 +206,9 @@ public class WebhookLifecycleTest extends FunctionalBaseTest {
 
     @After
     @SneakyThrows
-    public void cleanup() {
+    public void cleanupTest() {
         this.channelResourceClient.delete(channelName).execute();
         this.webhookResourceClient.delete(webhookName).execute();
-
-        this.callbackServer.stop();
     }
 
 }
