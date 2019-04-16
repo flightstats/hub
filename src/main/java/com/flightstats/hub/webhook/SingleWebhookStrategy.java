@@ -96,7 +96,7 @@ class SingleWebhookStrategy implements WebhookStrategy {
             logger.error("unable to determine next " + webhook.getName(), e);
             throw e;
         }
-        return Optional.ofNullable(queue.poll(10, TimeUnit.SECONDS));
+        return Optional.ofNullable(queue.poll(1, TimeUnit.SECONDS));
     }
 
     public void start(Webhook webhook, ContentPath startingPath) {

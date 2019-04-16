@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -23,10 +24,14 @@ public class DistributedAsyncLockRunner {
         this(null, leadershipLockManager);
     }
 
+    private Thread runner;
     public DistributedAsyncLockRunner(String lockPath, DistributedLeaderLockManager leadershipLockManager) {
         this.lockPath = lockPath;
         this.leadershipLockManager = leadershipLockManager;
-        this.executorService = Executors.newSingleThreadExecutor();
+        this.executorService = Executors.newSingleThreadExecutor((r) -> {
+                runner = new Thread(r, "DALR Runner");
+                return runner;
+            });
     }
 
     public void setLockPath(String lockPath) {
@@ -52,12 +57,21 @@ public class DistributedAsyncLockRunner {
 
     public void delete(LeadershipLock leadershipLock) {
         try {
-            executorService.shutdownNow();
-            executorService.awaitTermination(10, TimeUnit.SECONDS);
+            executorService.shutdown();
+            if (!executorService.awaitTermination(1, TimeUnit.SECONDS)) {
+                executorService.shutdownNow();
+                executorService.awaitTermination(3, TimeUnit.SECONDS);
+            }
         } catch (InterruptedException e) {
             log.info("InterruptedException for " + leadershipLock.getLockPath(), e);
         } finally {
             leadershipLockManager.release(leadershipLock);
         }
+    }
+    private void printStackTrace(Thread t) {
+        System.out.println(this);
+        StackTraceElement[] trace = t.getStackTrace();
+        for (StackTraceElement traceElement : trace)
+            System.out.println("\tat " + traceElement);
     }
 }
