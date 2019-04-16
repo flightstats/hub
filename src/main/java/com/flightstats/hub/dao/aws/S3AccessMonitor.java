@@ -25,7 +25,7 @@ public class S3AccessMonitor {
     private final S3BucketName s3BucketName;
     private final Content content;
     private static final String CHANNEL_NAME = "S3_HEALTH_MONITOR";
-    private static final byte[] SINGLE_BYTE_DATA = {1};
+    private static final byte[] SINGLE_BYTE_DATA = new byte[1];
     private static final ChannelConfig channelConfig = ChannelConfig
             .builder()
             .name(CHANNEL_NAME)
