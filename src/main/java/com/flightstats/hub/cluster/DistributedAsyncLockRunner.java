@@ -59,6 +59,7 @@ public class DistributedAsyncLockRunner {
             }
         } catch (InterruptedException e) {
             log.info("InterruptedException for " + leadershipLock.getLockPath(), e);
+            Thread.currentThread().interrupt();
         } finally {
             leadershipLockManager.release(leadershipLock);
         }

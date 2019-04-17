@@ -289,6 +289,7 @@ class WebhookLeader implements Lockable {
             log.info("stopped Executor " + name);
         } catch (InterruptedException e) {
             log.warn("unable to stop?" + name, e);
+            Thread.currentThread().interrupt();
         }
     }
 
