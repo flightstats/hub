@@ -27,8 +27,8 @@ import java.util.function.Predicate;
 @Path("/callback")
 public class CallbackResource {
 
-    private CallbackCache callbackCache;
-    private List<Predicate<WebhookCallbackRequest>> responseOverrides;
+    private final CallbackCache callbackCache;
+    private final List<Predicate<WebhookCallbackRequest>> responseOverrides;
 
     @Inject
     public CallbackResource(CallbackCache callbackCache) {
