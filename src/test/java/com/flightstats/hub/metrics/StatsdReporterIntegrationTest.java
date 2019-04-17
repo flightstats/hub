@@ -12,13 +12,9 @@ import org.junit.Test;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -33,15 +29,7 @@ public class StatsdReporterIntegrationTest {
             .build();
 
     private final CountDownLatch startupCountDownLatch = new CountDownLatch(2);
-    private final ThreadFactory threadFactory = new ThreadFactory() {
-        private final AtomicInteger id = new AtomicInteger(0);
-
-        @Override
-        public Thread newThread(Runnable r) {
-            return new Thread(r, "StatsdTestThread-" + id.incrementAndGet());
-        }
-    };
-    private final ExecutorService executorService = Executors.newFixedThreadPool(3, threadFactory);
+    private final ExecutorService executorService = Executors.newFixedThreadPool(3);
     private final IntegrationUdpServer udpServer = provideNewServer(metricsConfig.getStatsdPort());
     private final IntegrationUdpServer udpServerDD = provideNewServer(metricsConfig.getDogstatsdPort());
 
@@ -49,24 +37,12 @@ public class StatsdReporterIntegrationTest {
     @Test
     public void StatsDHandlersCount_metricShape() {
 
-        try {
-            CompletableFuture.allOf(
-                    getMetricsWriterFuture(),
-                    udpServer.getServerFuture(startupCountDownLatch, executorService),
-                    udpServerDD.getServerFuture(startupCountDownLatch, executorService)
-            ).get(15000, TimeUnit.MILLISECONDS);
-        } catch (Exception e) {
-            e.printStackTrace();
-            for (Map.Entry<Thread,StackTraceElement[]> entry : Thread.getAllStackTraces().entrySet()) {
-                if (entry.getKey().getName().contains("StatsdTestThread")) {
-                    System.out.println("Thread named " + entry.getKey().getName());
-                    for (StackTraceElement el : entry.getValue()) {
-                        System.out.println("\t" + el.toString());
-                    }
-                    System.out.println();
-                }
-            }
-        }
+        CompletableFuture.allOf(
+                getMetricsWriterFuture(),
+                udpServer.getServerFuture(startupCountDownLatch, executorService),
+                udpServerDD.getServerFuture(startupCountDownLatch, executorService)
+        ).get(15000, TimeUnit.MILLISECONDS);
+
 
         Map<String, String> resultsStatsd = udpServer.getResult();
         assertEquals("hub.countTest:1|c|#tag2,tag1", resultsStatsd.get("hub.countTest"));
