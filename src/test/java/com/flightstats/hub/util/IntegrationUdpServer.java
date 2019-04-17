@@ -39,6 +39,7 @@ public class IntegrationUdpServer {
                     addValueToStore(result);
 
                     if (result.contains("closeSocket")) {
+                        log.debug("are we getting to break????");
                         break;
                     }
                 }
