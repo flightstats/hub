@@ -61,7 +61,7 @@ public class StatsdReporterIntegrationTest {
                 if (entry.getKey().getName().contains("StatsdTestThread")) {
                     System.out.println("Thread named " + entry.getKey().getName());
                     for (StackTraceElement el : entry.getValue()) {
-                        System.out.println(el.toString());
+                        System.out.println("\t" + el.toString());
                     }
                     System.out.println();
                 }
