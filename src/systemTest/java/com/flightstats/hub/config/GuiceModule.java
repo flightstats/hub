@@ -2,6 +2,8 @@ package com.flightstats.hub.config;
 
 import com.flightstats.hub.callback.CallbackResource;
 import com.flightstats.hub.callback.CallbackServer;
+import com.flightstats.hub.testcase.CallbackServerHelper;
+import com.flightstats.hub.testcase.HubHelper;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.name.Named;
@@ -19,13 +21,15 @@ import java.util.Properties;
 
 @Slf4j
 public class GuiceModule extends AbstractModule {
-
     private static final String PROPERTY_FILE_NAME = "integration-hub.properties";
 
     @Override
     protected void configure() {
         Names.bindProperties(binder(), loadProperties());
         bind(CallbackResource.class).asEagerSingleton();
+        bind(CallbackServer.class).asEagerSingleton();
+        bind(HubHelper.class);
+        bind(CallbackServerHelper.class);
     }
 
     @Singleton
@@ -43,19 +47,13 @@ public class GuiceModule extends AbstractModule {
     @Singleton
     @Named("callback")
     @Provides
-    public Retrofit retrofitCallback() {
+    public Retrofit retrofitCallback(CallbackServer callbackServer) {
         return new Retrofit.Builder()
-                .baseUrl(callbackServer().getBaseUrl())
+                .baseUrl(callbackServer.getBaseUrl())
                 .addConverterFactory(ScalarsConverterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(new OkHttpClient.Builder().build())
                 .build();
-    }
-
-    @Singleton
-    @Provides
-    public CallbackServer callbackServer() {
-        return new CallbackServer();
     }
 
     private Properties loadProperties() {
