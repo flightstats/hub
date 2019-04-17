@@ -100,7 +100,7 @@ public class WebhookErrorTest extends WebhookTest {
     @SneakyThrows
     public void testWebhookCursorUpdateLoopDoesntCorruptState() {
 
-        for (int i = 1; i <= 5; i++) {
+        for (int i = 1; i <= 3; i++) {
             log.info("Iteration {}", i);
             this.testSettingCursorBeyondErrorClearsErrorStateAndContinues();
             super.deleteWebhook();
@@ -114,7 +114,7 @@ public class WebhookErrorTest extends WebhookTest {
     @SneakyThrows
     public void testWebhookRecreationLoopDoesntCorruptState() {
 
-        for (int i = 1; i <= 5; i++) {
+        for (int i = 1; i <= 3; i++) {
             log.info("Iteration {}", i);
             this.testThatNewlyCreatedWebhookDoesntReceiveStaleErrors();
             log.info("Completed iteration {}", i);
