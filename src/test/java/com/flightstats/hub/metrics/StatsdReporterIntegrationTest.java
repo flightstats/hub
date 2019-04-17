@@ -21,7 +21,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 
-@Slf4j
 public class StatsdReporterIntegrationTest {
     private final String[] tags = { "tag1", "tag2" };
     private final MetricsConfig metricsConfig = MetricsConfig.builder()
@@ -63,13 +62,18 @@ public class StatsdReporterIntegrationTest {
             try {
                 startupCountDownLatch.await(10000, TimeUnit.MILLISECONDS);
                 writeMetrics();
+                stopServers();
                 return "done";
             } catch (InterruptedException e) {
                 fail("timed out waiting for startup latch " + e.getMessage());
-                log.error("timed out waiting for startup latch {}", e);
                 return e.getMessage();
             }
         }, executorService);
+    }
+
+    private void stopServers() {
+        udpServer.stop();
+        udpServerDD.stop();
     }
 
     private StatsdReporter provideStatsDHandlers() {
@@ -85,6 +89,5 @@ public class StatsdReporterIntegrationTest {
     private void writeMetrics() {
         StatsdReporter handlers = provideStatsDHandlers();
         handlers.count("countTest", 1, tags);
-        handlers.increment("closeSocket", tags);
     }
 }

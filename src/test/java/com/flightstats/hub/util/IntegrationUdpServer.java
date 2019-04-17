@@ -16,6 +16,7 @@ import java.net.DatagramSocket;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
 @Builder
@@ -23,26 +24,24 @@ public class IntegrationUdpServer {
     private int port;
 
     private final Map<String, String> store = new HashMap<>();
+    private final AtomicBoolean listening = new AtomicBoolean(true);
 
     public CompletableFuture<Map<String, String>> getServerFuture(CountDownLatch startupCountDownLatch, ExecutorService executorService) {
         return  CompletableFuture.supplyAsync(() -> {
             try {
                 DatagramSocket serverSocket = new DatagramSocket(port);
                 startupCountDownLatch.countDown();
-                while (true) {
+                while (listening.get()) {
+                    log.info("udp server listening on PORT: {}", port);
                     byte[] data = new byte[70];
                     DatagramPacket receivePacket = new DatagramPacket(data, data.length);
                     serverSocket.receive(receivePacket);
 
                     String result = listen(receivePacket);
                     addValueToStore(result);
-
-                    if (result.contains("closeSocket")) {
-                        break;
-                    }
                 }
             } catch (Exception e) {
-                log.error("error listening on port %s", port, e);
+                log.error("udp server error listening on port %s", port, e);
             }
             return store;
         }, executorService);
@@ -69,5 +68,9 @@ public class IntegrationUdpServer {
 
     public Map<String, String> getResult () {
         return store;
+    }
+
+    public void stop() {
+        this.listening.set(false);
     }
 }
