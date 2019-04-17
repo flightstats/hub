@@ -7,6 +7,7 @@ import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.IntegrationUdpServer;
 import com.flightstats.hub.webhook.Webhook;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 
 import java.util.Map;
@@ -20,6 +21,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 
+@Slf4j
 public class StatsdReporterIntegrationTest {
     private final String[] tags = { "tag1", "tag2" };
     private final MetricsConfig metricsConfig = MetricsConfig.builder()
@@ -64,6 +66,7 @@ public class StatsdReporterIntegrationTest {
                 return "done";
             } catch (InterruptedException e) {
                 fail("timed out waiting for startup latch " + e.getMessage());
+                log.error("timed out waiting for startup latch {}", e);
                 return e.getMessage();
             }
         }, executorService);
