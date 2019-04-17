@@ -14,7 +14,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -29,7 +31,14 @@ public class StatsdReporterIntegrationTest {
             .build();
 
     private final CountDownLatch startupCountDownLatch = new CountDownLatch(2);
-    private final ExecutorService executorService = Executors.newFixedThreadPool(3);
+    private final ThreadFactory factory = new ThreadFactory() {
+        private final AtomicInteger counter = new AtomicInteger(0);
+        @Override
+        public Thread newThread(Runnable r) {
+            return new Thread(r, "StatsDThread " + counter.incrementAndGet());
+        }
+    };
+    private final ExecutorService executorService = Executors.newFixedThreadPool(3, factory);
     private final IntegrationUdpServer udpServer = provideNewServer(metricsConfig.getStatsdPort());
     private final IntegrationUdpServer udpServerDD = provideNewServer(metricsConfig.getDogstatsdPort());
 
@@ -37,11 +46,16 @@ public class StatsdReporterIntegrationTest {
     @Test
     public void StatsDHandlersCount_metricShape() {
 
-        CompletableFuture.allOf(
-                getMetricsWriterFuture(),
-                udpServer.getServerFuture(startupCountDownLatch, executorService),
-                udpServerDD.getServerFuture(startupCountDownLatch, executorService)
-        ).get(15000, TimeUnit.MILLISECONDS);
+        try {
+            CompletableFuture.allOf(
+                    getMetricsWriterFuture(),
+                    udpServer.getServerFuture(startupCountDownLatch, executorService),
+                    udpServerDD.getServerFuture(startupCountDownLatch, executorService)
+            ).get(15000, TimeUnit.MILLISECONDS);
+        } catch (Exception e) {
+            e.printStackTrace();
+            printStackTraces();
+        }
 
 
         Map<String, String> resultsStatsd = udpServer.getResult();
@@ -51,10 +65,26 @@ public class StatsdReporterIntegrationTest {
         assertEquals("hub.countTest:1|c|#tag2,tag1", resultsDogStatsd.get("hub.countTest"));
     }
 
+    private void printStackTraces() {
+        Thread.getAllStackTraces().entrySet()
+                .stream()
+                .filter(entry -> entry.getKey().getName().contains("StatsDThread"))
+                .map(entry -> entry.getKey())
+                .forEach(this::printStackTrace);
+    }
+
     private IntegrationUdpServer provideNewServer(int port) {
         return IntegrationUdpServer.builder()
                 .port(port)
                 .build();
+    }
+
+    private void printStackTrace(Thread t) {
+        System.out.println(t.getName());
+        for (StackTraceElement el : t.getStackTrace()) {
+            System.out.println("\t" + el.toString());
+        }
+        System.out.println();
     }
 
     private CompletableFuture<String> getMetricsWriterFuture() {
