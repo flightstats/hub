@@ -28,10 +28,10 @@ public class IntegrationUdpServer {
         return  CompletableFuture.supplyAsync(() -> {
             try {
                 DatagramSocket serverSocket = new DatagramSocket(port);
+                startupCountDownLatch.countDown();
                 while (true) {
                     byte[] data = new byte[70];
                     DatagramPacket receivePacket = new DatagramPacket(data, data.length);
-                    startupCountDownLatch.countDown();
                     serverSocket.receive(receivePacket);
 
                     String result = listen(receivePacket);
