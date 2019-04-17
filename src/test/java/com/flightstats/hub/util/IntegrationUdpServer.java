@@ -30,6 +30,7 @@ public class IntegrationUdpServer {
                 DatagramSocket serverSocket = new DatagramSocket(port);
                 startupCountDownLatch.countDown();
                 while (true) {
+                    log.info("udp server listening on PORT: {}", port);
                     byte[] data = new byte[70];
                     DatagramPacket receivePacket = new DatagramPacket(data, data.length);
                     serverSocket.receive(receivePacket);
@@ -42,8 +43,9 @@ public class IntegrationUdpServer {
                     }
                 }
             } catch (Exception e) {
-                log.error("error listening on port %s", port, e);
+                log.error("udp server error listening on port %s", port, e);
             }
+            log.debug("return store: {}", store);
             return store;
         }, executorService);
     }
