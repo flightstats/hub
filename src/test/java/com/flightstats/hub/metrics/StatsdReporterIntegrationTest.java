@@ -62,15 +62,19 @@ public class StatsdReporterIntegrationTest {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 startupCountDownLatch.await(10000, TimeUnit.MILLISECONDS);
-                log.info("*********************************************************writeMetrics");
                 writeMetrics();
+                stopServers();
                 return "done";
             } catch (InterruptedException e) {
                 fail("timed out waiting for startup latch " + e.getMessage());
-                log.error("timed out waiting for startup latch {}", e);
                 return e.getMessage();
             }
         }, executorService);
+    }
+
+    private void stopServers() {
+        udpServer.stop();
+        udpServerDD.stop();
     }
 
     private StatsdReporter provideStatsDHandlers() {
@@ -86,6 +90,5 @@ public class StatsdReporterIntegrationTest {
     private void writeMetrics() {
         StatsdReporter handlers = provideStatsDHandlers();
         handlers.count("countTest", 1, tags);
-        handlers.increment("closeSocket", tags);
     }
 }
