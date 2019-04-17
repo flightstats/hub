@@ -62,6 +62,7 @@ public class StatsdReporterIntegrationTest {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 startupCountDownLatch.await(10000, TimeUnit.MILLISECONDS);
+                log.info("*********************************************************writeMetrics");
                 writeMetrics();
                 return "done";
             } catch (InterruptedException e) {
