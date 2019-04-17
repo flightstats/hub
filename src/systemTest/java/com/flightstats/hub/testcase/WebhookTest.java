@@ -69,27 +69,27 @@ public abstract class WebhookTest extends BaseTest {
     @SneakyThrows
     protected void logCurrentCallbackErrorsFromHub() {
         log.info("Webhook name {} ", webhookName);
-        WebhookErrors body = getCallbackErrorsFromHub().body();
-        log.info("Call back errors for webhook {} {} ", webhookName, body);
+        Response<WebhookErrors> response = getCallbackErrorsForCurrentWebhook();
+        verifyErrorsFor(response, webhookName);
+        log.info("Call back errors for webhook {} {} ", webhookName, response.body());
     }
 
     @SneakyThrows
-    protected Response<WebhookErrors> getCallbackErrorsFromHub() {
-        Call<WebhookErrors> call = webhookResourceClient.getError(webhookName);
-        Response<WebhookErrors> response = call.execute();
+    protected Response<WebhookErrors> getCallbackErrorsForCurrentWebhook() {
+        return webhookResourceClient.getError(webhookName).execute();
+    }
 
+    private void verifyErrorsFor(Response<WebhookErrors> response, String webhookName) {
         WebhookErrors body = response.body();
         assertEquals(OK.getStatusCode(), response.code());
         assertFalse(body.getErrors().isEmpty());
         assertEquals(webhookName, body.getErrors().get(0).getName());
-
-        return response;
     }
 
     @SneakyThrows
     protected boolean hasCallbackErrorInHub(String webhookName, String fullUrl) {
         String itemPath = ContentKey.fromFullUrl(fullUrl).toUrl();
-        return getCallbackErrorsFromHub().body().getErrors()
+        return getCallbackErrorsForCurrentWebhook().body().getErrors()
                 .stream()
                 .filter((error) -> webhookName.equals(error.getName()))
                 .findFirst().get().getErrors()
