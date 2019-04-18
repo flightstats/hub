@@ -43,21 +43,6 @@ public class HubHelper {
         this.webhookResourceClient = getHubClient(WebhookResourceClient.class);
     }
 
-    @SneakyThrows
-    protected void logCurrentCallbackErrorsFromHub(String webhookName) {
-        log.info("Webhook name {} ", webhookName);
-        Response<WebhookErrors> response = getCallbackErrorsForCurrentWebhook(webhookName);
-        verifyErrorsFor(response, webhookName);
-        log.info("Call back errors for webhook {} {} ", webhookName, response.body());
-    }
-
-    private void verifyErrorsFor(Response<WebhookErrors> response, String webhookName) {
-        WebhookErrors body = response.body();
-        assertEquals(OK.getStatusCode(), response.code());
-        assertFalse(body.getErrors().isEmpty());
-        assertEquals(webhookName, body.getErrors().get(0).getName());
-    }
-
     private <T> T getHubClient(Class<T> serviceClass) {
         return retrofitHub.create(serviceClass);
     }
