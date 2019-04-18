@@ -45,6 +45,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.Security;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
@@ -54,6 +55,7 @@ import java.util.stream.Stream;
 public class HubMain {
 
     private static final DateTime startTime = new DateTime();
+    private final StorageBackend storageBackend = StorageBackend.valueOf(HubProperties.getProperty("hub.type", "aws"));
 
     public static void main(String[] args) throws Exception {
         if (args.length == 0) {
@@ -162,6 +164,9 @@ public class HubMain {
     }
 
     private List<Service> getAfterHealthCheckServices(Injector injector) {
+        if (storageBackend != StorageBackend.aws) {
+            return Collections.singletonList(injector.getInstance(CustomMetricsLifecycle.class));
+        }
         return Stream.of(
                 CustomMetricsLifecycle.class,
                 PeriodicMetricEmitterLifecycle.class)
@@ -177,10 +182,9 @@ public class HubMain {
         List<AbstractModule> modules = new ArrayList<>();
         modules.add(new HubBindings());
 
-        String hubType = HubProperties.getProperty("hub.type", "aws");
-        log.info("starting with hub.type {}", hubType);
+        log.info("starting with hub.type {}", storageBackend);
 
-        modules.add(getGuiceModuleForHubType(hubType));
+        modules.add(getGuiceModuleForHubType(storageBackend.toString()));
         return modules;
     }
 
