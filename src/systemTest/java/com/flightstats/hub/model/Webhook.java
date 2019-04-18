@@ -1,9 +1,11 @@
 package com.flightstats.hub.model;
 
 import lombok.Builder;
+import lombok.Value;
 import lombok.experimental.Wither;
 
 @Builder
+@Value
 public class Webhook {
 
     private final String callbackUrl;
@@ -19,11 +21,13 @@ public class Webhook {
     private final boolean fastForwardable;
     private final String tagUrl;
     private final String managedByTag;
-    private final Integer maxAttempts;
     private final String errorChannelUrl;
 
     @Wither
     private final String startItem;
     @Wither
     private final Integer parallelCalls;
+    @Wither
+    private final Integer maxAttempts;
+
 }

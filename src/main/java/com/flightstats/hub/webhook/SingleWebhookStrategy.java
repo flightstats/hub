@@ -96,7 +96,7 @@ class SingleWebhookStrategy implements WebhookStrategy {
             logger.error("unable to determine next " + webhook.getName(), e);
             throw e;
         }
-        return Optional.ofNullable(queue.poll(10, TimeUnit.SECONDS));
+        return Optional.ofNullable(queue.poll(1, TimeUnit.SECONDS));
     }
 
     public void start(Webhook webhook, ContentPath startingPath) {
@@ -119,6 +119,7 @@ class SingleWebhookStrategy implements WebhookStrategy {
                 } catch (InterruptedException | RuntimeInterruptedException e) {
                     exceptionReference.set(e);
                     logger.info("InterruptedException with " + webhook.getName());
+                    Thread.currentThread().interrupt();
                 } catch (NoSuchChannelException e) {
                     exceptionReference.set(e);
                     logger.debug("NoSuchChannelException for " + webhook.getName());

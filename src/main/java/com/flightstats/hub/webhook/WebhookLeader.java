@@ -1,6 +1,12 @@
 package com.flightstats.hub.webhook;
 
-import com.flightstats.hub.cluster.*;
+import com.flightstats.hub.cluster.DistributedAsyncLockRunner;
+import com.flightstats.hub.cluster.DistributedLeaderLockManager;
+import com.flightstats.hub.cluster.LastContentPath;
+import com.flightstats.hub.cluster.Leadership;
+import com.flightstats.hub.cluster.LeadershipLock;
+import com.flightstats.hub.cluster.Lockable;
+import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.StatsdReporter;
@@ -30,10 +36,6 @@ class WebhookLeader implements Lockable {
     static final String WEBHOOK_LAST_COMPLETED = "/GroupLastCompleted/";
     private final AtomicBoolean deleteOnExit = new AtomicBoolean();
 
-    @Inject
-    private CuratorFramework curator;
-    @Inject
-    private ZooKeeperState zooKeeperState;
     @Inject
     private ChannelService channelService;
     @Inject
@@ -99,6 +101,7 @@ class WebhookLeader implements Lockable {
                 .readTimeoutSeconds(webhook.getCallbackTimeoutSeconds())
                 .tryLaterIf(this::doesNotHaveLeadership)
                 .tryLaterIf(this::webhookIsPaused)
+                .tryLaterIf(this::retryerInterrupted)
                 .giveUpIf(this::webhookTTLExceeded)
                 .giveUpIf(this::channelTTLExceeded)
                 .giveUpIf(this::maxAttemptsReached)
@@ -126,10 +129,10 @@ class WebhookLeader implements Lockable {
             log.info("stopping last completed at {} {}", webhookStrategy.getLastCompleted(), webhook.getName());
             leadership.setLeadership(false);
             closeStrategy();
+            stopExecutor();
             if (deleteOnExit.get()) {
                 webhookStateReaper.delete(webhook.getName());
             }
-            stopExecutor();
             log.info("stopped last completed at {} {}", webhookStrategy.getLastCompleted(), webhook.getName());
             webhookStrategy = null;
             executorService = null;
@@ -191,6 +194,10 @@ class WebhookLeader implements Lockable {
         } else {
             return false;
         }
+    }
+
+    private boolean retryerInterrupted(DeliveryAttempt attempt) {
+        return Thread.currentThread().isInterrupted();
     }
 
     private void sendInProcess(ContentPath lastCompletedPath) throws InterruptedException {
@@ -276,12 +283,13 @@ class WebhookLeader implements Lockable {
         String name = webhook.getName();
         log.info("stopExecutor " + name);
         try {
-            executorService.shutdown();
             log.info("awating termination " + name);
+            executorService.shutdownNow();
             executorService.awaitTermination(webhook.getCallbackTimeoutSeconds() + 10, TimeUnit.SECONDS);
             log.info("stopped Executor " + name);
         } catch (InterruptedException e) {
             log.warn("unable to stop?" + name, e);
+            Thread.currentThread().interrupt();
         }
     }
 

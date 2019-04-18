@@ -31,18 +31,19 @@ public class StatsdReporterIntegrationTest {
 
     private final CountDownLatch startupCountDownLatch = new CountDownLatch(2);
     private final ExecutorService executorService = Executors.newFixedThreadPool(3);
-
     private final IntegrationUdpServer udpServer = provideNewServer(metricsConfig.getStatsdPort());
     private final IntegrationUdpServer udpServerDD = provideNewServer(metricsConfig.getDogstatsdPort());
 
     @SneakyThrows
     @Test
     public void StatsDHandlersCount_metricShape() {
+
         CompletableFuture.allOf(
                 getMetricsWriterFuture(),
                 udpServer.getServerFuture(startupCountDownLatch, executorService),
                 udpServerDD.getServerFuture(startupCountDownLatch, executorService)
         ).get(15000, TimeUnit.MILLISECONDS);
+
 
         Map<String, String> resultsStatsd = udpServer.getResult();
         assertEquals("hub.countTest:1|c|#tag2,tag1", resultsStatsd.get("hub.countTest"));

@@ -143,13 +143,6 @@ public class WebhookService {
 
     void updateCursor(Webhook webhook, ContentPath item) {
         this.delete(webhook.getName());
-        try // wait a few seconds? TODO - something more intelligent?
-        {
-            Thread.sleep(2000);
-        } catch (InterruptedException ex) {
-            logger.warn("Interruption exception while deleting");
-            Thread.currentThread().interrupt();
-        }
         this.upsert(webhook.withStartingKey(item));
     }
 }
