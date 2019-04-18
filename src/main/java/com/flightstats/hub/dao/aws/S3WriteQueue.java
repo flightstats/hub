@@ -69,7 +69,7 @@ public class S3WriteQueue {
             ChannelContentKey key = keys.poll(5, TimeUnit.SECONDS);
             if (key != null) {
                 statsdReporter.gauge("s3.writeQueue.used", keys.size());
-                statsdReporter.count("s3.writeQueue.age.removed", key.getAgeMS());
+                statsdReporter.time("s3.writeQueue.age.removed", key.getAgeMS());
             }
             retryer.call(() -> {
                 writeContent(key);
@@ -101,7 +101,7 @@ public class S3WriteQueue {
         boolean value = keys.offer(key);
         if (value) {
             statsdReporter.gauge("s3.writeQueue.used", keys.size());
-            statsdReporter.count("s3.writeQueue.age.added", key.getAgeMS());
+            statsdReporter.time("s3.writeQueue.age.added", key.getAgeMS());
         } else {
             logger.warn("Add to queue failed - out of queue space. key= {}", key);
             statsdReporter.increment("s3.writeQueue.dropped");
