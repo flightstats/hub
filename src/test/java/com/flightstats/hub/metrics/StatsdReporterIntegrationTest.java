@@ -1,22 +1,21 @@
 package com.flightstats.hub.metrics;
 
-import com.flightstats.hub.dao.CachedDao;
-import com.flightstats.hub.dao.CachedLowerCaseDao;
 import com.flightstats.hub.dao.Dao;
+import com.flightstats.hub.dao.aws.DynamoChannelConfigDao;
+import com.flightstats.hub.dao.aws.DynamoWebhookDao;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.IntegrationUdpServer;
 import com.flightstats.hub.webhook.Webhook;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -62,18 +61,24 @@ public class StatsdReporterIntegrationTest {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 startupCountDownLatch.await(10000, TimeUnit.MILLISECONDS);
+                writeMetrics();
+                stopServers();
+                return "done";
             } catch (InterruptedException e) {
-                fail(e.getMessage());
+                fail("timed out waiting for startup latch " + e.getMessage());
+                return e.getMessage();
             }
-            writeMetrics();
-            return "done";
         }, executorService);
     }
 
-    @SuppressWarnings("unchecked")
+    private void stopServers() {
+        udpServer.stop();
+        udpServerDD.stop();
+    }
+
     private StatsdReporter provideStatsDHandlers() {
-        Dao<ChannelConfig> channelConfigDao = (Dao<ChannelConfig>) mock(CachedLowerCaseDao.class);
-        Dao<Webhook> webhookDao =  (Dao<Webhook>) mock(CachedDao.class);
+        Dao<ChannelConfig> channelConfigDao = mock(DynamoChannelConfigDao.class);
+        Dao<Webhook> webhookDao = mock(DynamoWebhookDao.class);
         StatsDFilter statsDFilter = new StatsDFilter(metricsConfig, channelConfigDao, webhookDao);
         statsDFilter.setOperatingClients();
         StatsDReporterProvider provider = new StatsDReporterProvider(statsDFilter, metricsConfig);
@@ -84,6 +89,5 @@ public class StatsdReporterIntegrationTest {
     private void writeMetrics() {
         StatsdReporter handlers = provideStatsDHandlers();
         handlers.count("countTest", 1, tags);
-        handlers.increment("closeSocket", tags);
     }
 }
