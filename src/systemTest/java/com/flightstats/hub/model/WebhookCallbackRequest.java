@@ -10,4 +10,5 @@ public class WebhookCallbackRequest {
     private String name;
     private List<String> uris;
     private String type;
+
 }

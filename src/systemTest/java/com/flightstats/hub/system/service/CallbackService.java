@@ -1,48 +1,67 @@
-package com.flightstats.hub.testcase;
+package com.flightstats.hub.system.service;
 
-import com.flightstats.hub.callback.CallbackResource;
-import com.flightstats.hub.callback.CallbackServer;
+import com.flightstats.hub.client.CallbackClientFactory;
 import com.flightstats.hub.client.CallbackResourceClient;
-import com.flightstats.hub.model.WebhookCallbackRequest;
-import com.google.inject.name.Named;
+import com.flightstats.hub.model.ChannelItem;
+import com.flightstats.hub.model.ContentKey;
+import com.google.inject.Inject;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.HttpUrl;
 import retrofit2.Call;
 import retrofit2.Response;
-import retrofit2.Retrofit;
 
-import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.awaitility.Awaitility.await;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 @Slf4j
-public class CallbackServerHelper {
+public class CallbackService {
+
     private static final String EMPTY_STRING = "";
-    private Retrofit retrofitCallback;
     private CallbackResourceClient callbackResourceClient;
-    private CallbackServer callbackServer;
-    private CallbackResource callbackResource;
+    private WebhookService webhookResource;
+    private HttpUrl callbackBaseUrl;
 
     @Inject
-    public CallbackServerHelper(@Named("callback") Retrofit retrofitCallback, CallbackServer callbackServer, CallbackResource callbackResource){
-        this.retrofitCallback = retrofitCallback;
-        this.callbackResourceClient = getCallbackClient(CallbackResourceClient.class);
-        this.callbackServer = callbackServer;
-        this.callbackResource = callbackResource;
+    public CallbackService(CallbackClientFactory callbackClientFactory, WebhookService webhookResource) {
+        this.callbackResourceClient = callbackClientFactory.getCallbackClient(CallbackResourceClient.class);
+        this.webhookResource = webhookResource;
+        this.callbackBaseUrl = callbackClientFactory.getCallbackUrl();
     }
 
-    private <T> T getCallbackClient(Class<T> serviceClass) {
-        return retrofitCallback.create(serviceClass);
+    public HttpUrl getCallbackBaseUrl() {
+        return callbackBaseUrl;
+    }
+
+    @SneakyThrows
+    public boolean hasCallbackErrorInHub(String webhookName, String fullUrl) {
+        String itemPath = ContentKey.fromFullUrl(fullUrl).toUrl();
+        return webhookResource.getCallbackErrors(webhookName).body().getErrors()
+                .stream()
+                .filter((error) -> webhookName.equals(error.getName()))
+                .findFirst().get().getErrors()
+                .stream()
+                .anyMatch((path) -> path.contains(itemPath));
+    }
+
+    public void awaitHubHasCallbackErrorForItemPath(String webhookName, String path) {
+        try {
+            await().atMost(90, TimeUnit.SECONDS).until(() -> hasCallbackErrorInHub(webhookName, path));
+        } catch (Exception e) {
+            log.error("Unable to see callback error on hub for {} {} due to {}", webhookName, path, e.getMessage());
+        }
     }
 
     private List<String> parseItemSentToWebhook(String body) {
@@ -56,17 +75,6 @@ public class CallbackServerHelper {
         return Collections.emptyList();
     }
 
-    public void startCallbackServer() {
-        this.callbackServer.start();
-    }
-
-    public void stopCallbackServer() {
-        callbackServer.stop();
-    }
-
-    public HttpUrl getCallbackClientBaseUrl() {
-        return retrofitCallback.baseUrl();
-    }
 
     public List<String> awaitItemCountSentToWebhook(String webhookName, Optional<String> path, int expectedItemCount) {
         Call<String> call = callbackResourceClient.get(webhookName);
@@ -84,10 +92,6 @@ public class CallbackServerHelper {
                     && channelItemsPosted.size() == expectedItemCount;
         });
         return channelItemsPosted;
-    }
-
-    public void errorOnCreate(Predicate<WebhookCallbackRequest> predicate) {
-        callbackResource.errorOnCreate(predicate);
     }
 
 }
