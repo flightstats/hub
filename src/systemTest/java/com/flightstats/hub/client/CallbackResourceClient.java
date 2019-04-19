@@ -6,6 +6,7 @@ import retrofit2.http.Path;
 
 public interface CallbackResourceClient {
 
-    @GET("/callback/{webhookName}")
+    @GET("/data/{webhookName}")
     Call<String> get(@Path("webhookName") String webhookName);
+
 }
