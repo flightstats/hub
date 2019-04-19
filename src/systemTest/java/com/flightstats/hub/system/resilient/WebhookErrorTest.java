@@ -1,38 +1,54 @@
-package com.flightstats.hub.testcase;
+package com.flightstats.hub.system.resilient;
 
-import com.flightstats.hub.BaseTest;
 import com.flightstats.hub.model.Webhook;
-import com.google.inject.Inject;
+import com.flightstats.hub.system.config.DependencyInjector;
+import com.flightstats.hub.system.service.CallbackService;
+import com.flightstats.hub.system.service.ChannelService;
+import com.flightstats.hub.system.service.WebhookService;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import javax.inject.Inject;
+import java.util.Arrays;
 import java.util.Optional;
 
+import static com.flightstats.hub.kubernetes.ServiceName.CALLBACK_SERVER;
 import static com.flightstats.hub.model.ChannelContentStorageType.SINGLE;
+import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
-class WebhookErrorTest extends BaseTest {
+//@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class WebhookErrorTest extends DependencyInjector {
     @Inject
-    private HubHelper hubHelper;
+    private ChannelService channelService;
     @Inject
-    private CallbackServerHelper callbackServerHelper;
+    private WebhookService webhookService;
+    @Inject
+    private CallbackService callbackService;
+    @Inject
+    private HubLifecycle hubLifecycle;
+
     private Webhook webhook;
     private String channelName;
     private String webhookName;
 
-    @BeforeEach
-    public void before() {
-        super.before();
-        callbackServerHelper.startCallbackServer();
+    @BeforeAll
+    void hubSetup() {
+        hubLifecycle.setup();
+    }
 
-        this.channelName = generateRandomString();
-        this.webhookName = generateRandomString();
+    @BeforeEach
+    void before() {
+        this.channelName = randomAlphaNumeric(10);
+        this.webhookName = randomAlphaNumeric(10);
 
         initChannelAndWebhook();
     }
@@ -40,26 +56,26 @@ class WebhookErrorTest extends BaseTest {
     private Webhook buildWebhook() {
         return Webhook.builder()
                 .name(webhookName)
-                .channelUrl(hubHelper.getHubClientBaseUrl() + "channel/" + channelName)
-                .callbackUrl(callbackServerHelper.getCallbackClientBaseUrl() + "callback/")
+                .channelUrl(channelService.getHubBaseUrl() + "channel/" + channelName)
+                .callbackUrl(callbackService.getCallbackBaseUrl() + "callback/")
                 .batch(SINGLE.toString())
                 .build();
     }
 
     private void initChannelAndWebhook() {
-        hubHelper.createChannel(channelName);
+        channelService.create(channelName);
 
         createWebhook();
     }
 
     private void createWebhook() {
         webhook = buildWebhook().withParallelCalls(1).withMaxAttempts(0);
-        hubHelper.insertAndVerifyWebhook(webhook);
+        webhookService.insertAndVerify(webhook);
     }
 
     private void verifyHasReceivedErrorForItem(String firstUrl) {
-        hubHelper.awaitHubHasCallbackErrorForItemPath(webhookName, firstUrl);
-        assertTrue(hubHelper.hasCallbackErrorInHub(webhookName, firstUrl));
+        callbackService.awaitHubHasCallbackErrorForItemPath(webhookName, firstUrl);
+        assertTrue(callbackService.hasCallbackErrorInHub(webhookName, firstUrl));
         log.info("Found callback error for first item {} {}", webhookName, firstUrl);
     }
 
@@ -67,60 +83,62 @@ class WebhookErrorTest extends BaseTest {
     @SneakyThrows
     void testThatNewlyCreatedWebhookDoesntReceiveStaleErrors() {
         // verify that errors are created for the first item
-        String firstUrl = hubHelper.addItemToChannel(channelName, "{ name:\"item1\" }");
-        callbackServerHelper.errorOnCreate(
-                (callback) -> callback.getUris().stream().anyMatch(
-                        (uri) -> uri.contains(firstUrl)));
+        String firstUrl = channelService.addItem(channelName, "{ name:\"item1\" }");
+
+        //Inject Fault in the hub by deleting call back service
+        hubLifecycle.serviceDelete(Arrays.asList(CALLBACK_SERVER.value()));
+
         verifyHasReceivedErrorForItem(firstUrl);
 
         // adding second item to channel
-        hubHelper.addItemToChannel(channelName, "{ name:\"item2\" }");
+        channelService.addItem(channelName, "{ name:\"item2\" }");
 
         // delete webhook
         log.info("Deleting webhook {}", webhookName);
-        hubHelper.deleteWebhook(webhookName);
+        channelService.delete(webhookName);
 
         // re-add webhook
         log.info("Re-creating webhook {}", webhookName);
-        hubHelper.insertAndVerifyWebhook(webhook);
+        webhookService.insertAndVerify(webhook);
 
         // add new item and wait to hear about it
-        String thirdUrl = hubHelper.addItemToChannel(channelName, "{ name:\"item3\" }");
+        String thirdUrl = channelService.addItem(channelName, "{ name:\"item3\" }");
         log.info("Adding new item to channel {}", thirdUrl);
-        callbackServerHelper.awaitItemCountSentToWebhook(webhookName, Optional.of(thirdUrl), 1);
+        callbackService.awaitItemCountSentToWebhook(webhookName, Optional.of(thirdUrl), 1);
 
         // assert has no errors at all
-        assertFalse(hubHelper.hasCallbackErrorInHub(webhookName, firstUrl));
+        assertFalse(callbackService.hasCallbackErrorInHub(webhookName, firstUrl));
         log.info("Verified no errors exist for callback in hub.");
     }
 
     @Test
     void testSettingCursorBeyondErrorClearsErrorStateAndContinues() {
         // verify that errors are created for the first item
-        String firstUrl = hubHelper.addItemToChannel(channelName, "{ name:\"item1\" }");
-        callbackServerHelper.errorOnCreate(
-                (callback) -> callback.getUris().stream().anyMatch(
-                        (uri) -> uri.contains(firstUrl)));
+        String firstUrl = channelService.addItem(channelName, "{ name:\"item1\" }");
+
+        //Inject Fault in the hub by deleting call back service
+        hubLifecycle.serviceDelete(Arrays.asList(CALLBACK_SERVER.value()));
+
         verifyHasReceivedErrorForItem(firstUrl);
 
         // add new item
-        String secondUrl = hubHelper.addItemToChannel(channelName, "{ name:\"item2\" }");
+        String secondUrl = channelService.addItem(channelName, "{ name:\"item2\" }");
         log.info("Adding new item to channel {}", secondUrl);
 
         // move cursor to firstUrl so it skips over the error
         log.info("Updating webhook to startItem {}", firstUrl);
         webhook = webhook.withStartItem(firstUrl);
-        hubHelper.updateAndVerifyWebhook(webhook);
+        webhookService.updateAndVerify(webhook);
 
         // verify that you get the second item's data
         log.info("Verifying that data for 2nd item was sent {}", secondUrl);
-        Optional<String> opt = callbackServerHelper.awaitItemCountSentToWebhook(webhookName, Optional.of(secondUrl), 1).stream().findFirst();
+        Optional<String> opt = callbackService.awaitItemCountSentToWebhook(webhookName, Optional.of(secondUrl), 1).stream().findFirst();
         assertTrue(opt.isPresent());
         assertEquals(secondUrl, opt.get());
 
         // verify that no errors exist on the hub
         log.info("Verifying that no errors exist on the hub for webhook {}", webhookName);
-        assertFalse(hubHelper.hasCallbackErrorInHub(webhookName, firstUrl));
+        assertFalse(callbackService.hasCallbackErrorInHub(webhookName, firstUrl));
     }
 
     @Test
@@ -129,7 +147,7 @@ class WebhookErrorTest extends BaseTest {
         for (int i = 1; i <= 3; i++) {
             log.info("Iteration {}", i);
             this.testSettingCursorBeyondErrorClearsErrorStateAndContinues();
-            hubHelper.deleteWebhook(webhookName);
+            webhookService.delete(webhookName);
             this.createWebhook();
             log.info("Completed iteration {}", i);
         }
@@ -147,8 +165,13 @@ class WebhookErrorTest extends BaseTest {
 
     @AfterEach
     void after() {
-        hubHelper.deleteChannelAndWebhook(channelName, webhookName);
-        callbackServerHelper.stopCallbackServer();
+        this.channelService.delete(channelName);
+        this.webhookService.delete(webhookName);
+    }
+
+    @AfterAll
+    void hubCleanup() {
+        hubLifecycle.cleanup();
     }
 
 }
