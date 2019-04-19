@@ -3,7 +3,6 @@ package com.flightstats.hub.dao.aws;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.metrics.ActiveTraces;
@@ -30,7 +29,6 @@ import java.util.zip.ZipInputStream;
 public class S3BatchResource {
     private final static Logger logger = LoggerFactory.getLogger(S3BatchResource.class);
 
-    private static final boolean dropSomeWrites = HubProperties.getProperty("s3.dropSomeWrites", false);
     private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private static final ContentDao s3BatchContentDao = HubProvider.getInstance(ContentDao.class, ContentDao.BATCH_LONG_TERM);
     private static final StatsdReporter statsdReporter = HubProvider.getInstance(StatsdReporter.class);
@@ -90,10 +88,7 @@ public class S3BatchResource {
             String id = node.get("id").asText();
             MinutePath path = MinutePath.fromUrl(id).get();
             String batchUrl = node.get("batchUrl").asText();
-            if (dropSomeWrites && Math.random() > 0.90) {
-                logger.debug("ignoring {} {}", channel, data);
-                return Response.status(400).build();
-            } else if (!getAndWriteBatch(s3BatchContentDao, channel, path, keys, batchUrl)) {
+            if (!getAndWriteBatch(s3BatchContentDao, channel, path, keys, batchUrl)) {
                 return Response.status(400).build();
             }
             return Response.ok().build();

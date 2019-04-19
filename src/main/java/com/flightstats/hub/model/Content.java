@@ -31,7 +31,6 @@ public class Content implements Serializable {
     private transient boolean isLarge;
     private transient int threads;
     private transient boolean isHistorical;
-    private boolean forceWrite;
     private boolean replicated;
 
     private Content(Builder builder) {
@@ -40,7 +39,6 @@ public class Content implements Serializable {
         stream = builder.stream;
         contentLength = builder.contentLength;
         threads = Math.max(THREADS, builder.threads);
-        forceWrite = builder.forceWrite;
         isLarge = builder.large;
         size = builder.size;
     }
@@ -63,7 +61,6 @@ public class Content implements Serializable {
         contentBuilder.withData(content.getData());
         contentBuilder.withContentLength(content.getContentLength());
         contentBuilder.withSize(content.getSize());
-        contentBuilder.withForceWrite(content.isForceWrite());
         contentBuilder.withLarge(content.isLarge());
         contentBuilder.withThreads(content.getThreads());
 
@@ -96,10 +93,6 @@ public class Content implements Serializable {
 
     public void setHistorical(boolean isHistorical) {
         this.isHistorical = isHistorical;
-    }
-
-    public boolean isForceWrite() {
-        return forceWrite;
     }
 
     public boolean isReplicated() {
@@ -216,7 +209,6 @@ public class Content implements Serializable {
         private Optional<ContentKey> contentKey = Optional.empty();
         private InputStream stream;
         private int threads;
-        private boolean forceWrite;
         private boolean large;
 
         public Builder withContentType(String contentType) {
@@ -255,11 +247,6 @@ public class Content implements Serializable {
 
         public Builder withThreads(int threads) {
             this.threads = threads;
-            return this;
-        }
-
-        public Builder withForceWrite(boolean forceWrite) {
-            this.forceWrite = forceWrite;
             return this;
         }
 
