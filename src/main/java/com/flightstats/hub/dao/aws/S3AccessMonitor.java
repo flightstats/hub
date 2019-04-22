@@ -4,10 +4,12 @@ import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.PutObjectResult;
+import com.amazonaws.services.s3.model.S3Object;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 
@@ -78,11 +80,14 @@ public class S3AccessMonitor {
         }
     }
 
-    private CompletableFuture<String> waitForRead(String versionId) {
+    @SneakyThrows
+    private CompletableFuture<String> waitForRead() {
         try {
             return CompletableFuture.supplyAsync(() -> {
-                hubS3Client.getObject(new GetObjectRequest(s3BucketName.getS3BucketName(), key(), versionId));
-                return versionId;
+                try (S3Object s3Object = hubS3Client
+                        .getObject(new GetObjectRequest(s3BucketName.getS3BucketName(), key()))) {
+                    return s3Object.getObjectMetadata().getVersionId();
+                }
             });
         } catch(Exception e) {
             log.error("error getting object from s3", e);
@@ -94,7 +99,7 @@ public class S3AccessMonitor {
         try {
             createChannelIfNotExist();
             waitForWrite()
-                    .thenCompose(putObjectResult -> waitForRead(putObjectResult.getVersionId())).get();
+                    .thenCompose(result -> waitForRead()).get();
         } catch (Exception e) {
             log.error("error reaching S3: ", e);
             return false;
