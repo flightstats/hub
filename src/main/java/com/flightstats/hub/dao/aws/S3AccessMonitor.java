@@ -89,6 +89,7 @@ public class S3AccessMonitor {
                     return s3Object.getObjectMetadata().getVersionId();
                 } catch (IOException e) {
                     log.info("error closing connection to s3", e);
+                    return "";
                 }
             });
         } catch(Exception e) {
