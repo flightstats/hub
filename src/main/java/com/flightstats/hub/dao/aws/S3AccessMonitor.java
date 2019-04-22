@@ -15,6 +15,7 @@ import org.joda.time.DateTime;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -80,13 +81,14 @@ public class S3AccessMonitor {
         }
     }
 
-    @SneakyThrows
     private CompletableFuture<String> waitForRead() {
         try {
             return CompletableFuture.supplyAsync(() -> {
                 try (S3Object s3Object = hubS3Client
                         .getObject(new GetObjectRequest(s3BucketName.getS3BucketName(), key()))) {
                     return s3Object.getObjectMetadata().getVersionId();
+                } catch (IOException e) {
+                    log.info("error closing connection to s3", e);
                 }
             });
         } catch(Exception e) {
