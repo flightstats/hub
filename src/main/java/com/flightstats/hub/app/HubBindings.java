@@ -7,35 +7,47 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.flightstats.hub.channel.ChannelValidator;
-import com.flightstats.hub.cluster.*;
+import com.flightstats.hub.cluster.Cluster;
+import com.flightstats.hub.cluster.CuratorCluster;
+import com.flightstats.hub.cluster.DecommissionCluster;
+import com.flightstats.hub.cluster.HubClusterRegister;
+import com.flightstats.hub.cluster.LastContentPath;
+import com.flightstats.hub.cluster.SpokeDecommissionCluster;
+import com.flightstats.hub.cluster.SpokeDecommissionManager;
+import com.flightstats.hub.cluster.WatchManager;
+import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.aws.s3Verifier.VerifierConfig;
 import com.flightstats.hub.dao.aws.s3Verifier.VerifierConfigProvider;
 import com.flightstats.hub.health.HubHealthCheck;
 import com.flightstats.hub.metrics.CustomMetricsLifecycle;
+import com.flightstats.hub.metrics.InfluxdbReporterLifecycle;
 import com.flightstats.hub.metrics.InfluxdbReporterProvider;
 import com.flightstats.hub.metrics.MetricRegistryProvider;
-import com.flightstats.hub.metrics.MetricsConfigProvider;
 import com.flightstats.hub.metrics.MetricsConfig;
-import com.flightstats.hub.metrics.InfluxdbReporterLifecycle;
+import com.flightstats.hub.metrics.MetricsConfigProvider;
+import com.flightstats.hub.metrics.PeriodicMetricEmitterLifecycle;
+import com.flightstats.hub.metrics.PeriodicSpokeMetricEmitter;
 import com.flightstats.hub.metrics.StatsDFilter;
-import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.metrics.StatsDReporterLifecycle;
 import com.flightstats.hub.metrics.StatsDReporterProvider;
+import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.replication.ReplicationManager;
+import com.flightstats.hub.rest.HalLinks;
+import com.flightstats.hub.rest.HalLinksSerializer;
 import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.rest.RetryClientFilter;
-import com.flightstats.hub.rest.HalLinksSerializer;
-import com.flightstats.hub.rest.HalLinks;
 import com.flightstats.hub.rest.Rfc3339DateSerializer;
 import com.flightstats.hub.spoke.FileSpokeStore;
 import com.flightstats.hub.spoke.GCRunner;
+import com.flightstats.hub.spoke.RemoteSpokeStore;
 import com.flightstats.hub.spoke.SpokeClusterRegister;
 import com.flightstats.hub.spoke.SpokeFinalCheck;
 import com.flightstats.hub.spoke.SpokeReadContentDao;
 import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.spoke.SpokeStoreConfig;
+import com.flightstats.hub.spoke.SpokeTtlEnforcer;
 import com.flightstats.hub.spoke.SpokeWriteContentDao;
 import com.flightstats.hub.spoke.SpokeWriteStoreConfigProvider;
 import com.flightstats.hub.time.NtpMonitor;
@@ -44,6 +56,7 @@ import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.SecretFilter;
 import com.flightstats.hub.webhook.WebhookManager;
 import com.flightstats.hub.webhook.WebhookValidator;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
@@ -60,11 +73,10 @@ import org.eclipse.jetty.websocket.jsr356.ClientContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import javax.websocket.WebSocketContainer;
 import java.util.Date;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class HubBindings extends AbstractModule {
@@ -249,6 +261,26 @@ public class HubBindings extends AbstractModule {
                 .toInstance(new FileSpokeStore(
                         HubProperties.getSpokePath(SpokeStore.READ),
                         HubProperties.getSpokeTtlMinutes(SpokeStore.READ)));
+
+        // -------- Pulled back from ClusterHubBindings -----------
+        // Previously being created in single via injector.getInstance().  :`(
+        bind(RemoteSpokeStore.class).asEagerSingleton();  // ZK Cluster - Used for testing and content operations on ZK remote stores. Truly cluster-specific.
+        bind(SpokeDecommissionManager.class).asEagerSingleton();  // ZK Cluster - Decom/Re-com of node within Hub and Spoke clusters.
+
+        // Metrics
+        bind(PeriodicSpokeMetricEmitter.class).asEagerSingleton();
+        bind(PeriodicMetricEmitterLifecycle.class).asEagerSingleton();  // AWS - Lifecycle for PME.
+
+        // ZK cluster-wide operations.
+        bind(AppUrlCheck.class).asEagerSingleton();  // ZK Cluster - ZK pool healthcheck for HubCluster.
+
+        bind(SpokeTtlEnforcer.class)  // Spoke storage - Eviction based on TTL every 1m.
+                .annotatedWith(Names.named(SpokeStore.WRITE.name()))
+                .toInstance(new SpokeTtlEnforcer(SpokeStore.WRITE));
+
+        bind(SpokeTtlEnforcer.class)  // Spoke storage - Eviction based on TTL every 1m.
+                .annotatedWith(Names.named(SpokeStore.READ.name()))
+                .toInstance(new SpokeTtlEnforcer(SpokeStore.READ));
     }
 
 }

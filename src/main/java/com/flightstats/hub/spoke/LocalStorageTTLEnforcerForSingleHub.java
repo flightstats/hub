@@ -18,14 +18,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 @Singleton
-public class ChannelTtlEnforcer {
-    private final static Logger logger = LoggerFactory.getLogger(ChannelTtlEnforcer.class);
+public class LocalStorageTTLEnforcerForSingleHub {
+    private final static Logger logger = LoggerFactory.getLogger(LocalStorageTTLEnforcerForSingleHub.class);
     private final String spokePath = HubProperties.getSpokePath(SpokeStore.WRITE);
     @Inject
     private ChannelService channelService;
 
     @Inject
-    public ChannelTtlEnforcer() {
+    public LocalStorageTTLEnforcerForSingleHub() {
         if (HubProperties.getProperty("channel.enforceTTL", false)) {
             HubServices.register(new ChannelTtlEnforcerService());
         }
