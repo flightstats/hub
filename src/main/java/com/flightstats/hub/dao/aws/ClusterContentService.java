@@ -47,7 +47,6 @@ public class ClusterContentService implements ContentService {
     private static final String CHANNEL_LATEST_UPDATED = "/ChannelLatestUpdated/";
     private static final int queryMergeMaxWaitMinutes = HubProperties.getProperty("query.merge.max.wait.minutes", 2);
     private static final ExecutorService executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("ClusterContentService-%d").build());
-    private final boolean dropSomeWrites = HubProperties.getProperty("s3.dropSomeWrites", false);
     private final ContentDao spokeWriteContentDao;
     private final ContentDao s3SingleContentDao;
     private final ContentDao spokeReadContentDao;
@@ -123,17 +122,13 @@ public class ClusterContentService implements ContentService {
         }
         ContentKey key = spokeWriteContentDao.insert(channelName, spokeContent);
         if (isWriteable(channelName)) {
-            s3SingleWrite(channelName, key, content.isForceWrite());
+            s3SingleWrite(channelName, key);
         }
         return key;
     }
 
-    private void s3SingleWrite(String channelName, ContentKey key, boolean forceWrite) {
-        if (!forceWrite && dropSomeWrites && Math.random() > 0.5) {
-            log.debug("dropping {} {}", channelName, key);
-        } else {
-            s3WriteQueue.add(new ChannelContentKey(channelName, key));
-        }
+    private void s3SingleWrite(String channelName, ContentKey key) {
+        s3WriteQueue.add(new ChannelContentKey(channelName, key));
     }
 
     @Override
@@ -142,7 +137,7 @@ public class ClusterContentService implements ContentService {
         SortedSet<ContentKey> keys = spokeWriteContentDao.insert(bulkContent);
         if (isWriteable(channelName)) {
             for (ContentKey key : keys) {
-                s3SingleWrite(channelName, key, false);
+                s3SingleWrite(channelName, key);
             }
         }
         return keys;

@@ -151,7 +151,6 @@ public class ChannelResource {
                 .withContentLength(contentLength)
                 .withStream(data)
                 .withThreads(Integer.parseInt(threads))
-                .withForceWrite(forceWrite)
                 .build();
         try {
             ContentKey contentKey = channelService.insert(channelName, content);
