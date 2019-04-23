@@ -9,8 +9,8 @@ import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 
 import javax.inject.Inject;
@@ -89,10 +89,10 @@ public class S3AccessMonitor {
                     return s3Object.getObjectMetadata().getVersionId();
                 } catch (IOException e) {
                     log.info("error closing connection to s3", e);
-                    return "";
+                    return StringUtils.EMPTY;
                 }
             });
-        } catch(Exception e) {
+        } catch (Exception e) {
             log.error("error getting object from s3", e);
             throw e;
         }
