@@ -1,8 +1,7 @@
 package com.flightstats.hub.dao.aws;
 
-
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.dao.ContentDao;
+import com.flightstats.hub.dao.aws.writeQueue.WriteQueueConfig;
 import com.flightstats.hub.exception.FailedReadException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.StatsdReporter;
@@ -29,12 +28,13 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class S3WriteQueue {
 
-    private static final int THREADS = HubProperties.getS3WriteQueueThreads();
-    private static final int QUEUE_SIZE = HubProperties.getS3WriteQueueSize();
     private Retryer<Void> retryer = buildRetryer();
-    BlockingQueue<ChannelContentKey> keys = new LinkedBlockingQueue<>(QUEUE_SIZE);
-    private ExecutorService executorService = Executors.newFixedThreadPool(THREADS,
-            new ThreadFactoryBuilder().setNameFormat("S3WriteQueue-%d").build());
+
+    BlockingQueue<ChannelContentKey> keys;
+    private ExecutorService executorService;
+
+    @Inject
+    private WriteQueueConfig writeQueueConfig;
     @Inject
     @Named(ContentDao.WRITE_CACHE)
     private ContentDao spokeWriteContentDao;
@@ -44,16 +44,24 @@ public class S3WriteQueue {
     @Inject
     private StatsdReporter statsdReporter;
 
-    S3WriteQueue(ContentDao spokeWriteContentDao, ContentDao s3SingleContentDao, StatsdReporter statsdReporter) {
+    S3WriteQueue(ContentDao spokeWriteContentDao, ContentDao s3SingleContentDao, StatsdReporter statsdReporter, WriteQueueConfig writeQueueConfig) {
         this.spokeWriteContentDao = spokeWriteContentDao;
         this.s3SingleContentDao = s3SingleContentDao;
         this.statsdReporter = statsdReporter;
+        this.writeQueueConfig = writeQueueConfig;
+        keys = new LinkedBlockingQueue<>(writeQueueConfig.getQueueSize());
+        executorService = Executors.newFixedThreadPool(writeQueueConfig.getThreads(),
+                new ThreadFactoryBuilder().setNameFormat("S3WriteQueue-%d").build());
     }
 
     @Inject
     private S3WriteQueue() throws InterruptedException {
-        log.info("queue size {}", QUEUE_SIZE);
-        for (int i = 0; i < THREADS; i++) {
+        keys = new LinkedBlockingQueue<>(writeQueueConfig.getQueueSize());
+        executorService = Executors.newFixedThreadPool(writeQueueConfig.getThreads(),
+                new ThreadFactoryBuilder().setNameFormat("S3WriteQueue-%d").build());
+
+        log.info("queue size {}", writeQueueConfig.getQueueSize());
+        for (int i = 0; i < writeQueueConfig.getThreads(); i++) {
             executorService.submit(() -> {
                 try {
                     while (true) {
