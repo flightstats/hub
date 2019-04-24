@@ -1,5 +1,6 @@
 package com.flightstats.hub.app;
 
+import com.flightstats.hub.dao.aws.S3WriteQueue;
 import com.flightstats.hub.health.HubHealthCheck;
 import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.util.Sleeper;
@@ -62,6 +63,8 @@ public class ShutdownManager {
         }
 
         HubServices.stopAll();
+        S3WriteQueue s3WriteQueue = HubProvider.getInstance(S3WriteQueue.class);
+        s3WriteQueue.close();
         log.warn("completed shutdown tasks, exiting JVM");
         Executors.newSingleThreadExecutor().submit(() -> System.exit(0));
         return true;

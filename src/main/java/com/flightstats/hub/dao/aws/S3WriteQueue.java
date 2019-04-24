@@ -13,11 +13,11 @@ import com.github.rholder.retry.RetryerBuilder;
 import com.github.rholder.retry.StopStrategies;
 import com.github.rholder.retry.WaitStrategies;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.inject.Inject;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -28,23 +28,21 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class S3WriteQueue {
 
-    private Retryer<Void> retryer = buildRetryer();
+    private final Retryer<Void> retryer = buildRetryer();
 
     BlockingQueue<ChannelContentKey> keys;
     private ExecutorService executorService;
 
-    @Inject
-    private WriteQueueConfig writeQueueConfig;
-    @Inject
-    @Named(ContentDao.WRITE_CACHE)
-    private ContentDao spokeWriteContentDao;
-    @Inject
-    @Named(ContentDao.SINGLE_LONG_TERM)
-    private ContentDao s3SingleContentDao;
-    @Inject
-    private StatsdReporter statsdReporter;
+    private final WriteQueueConfig writeQueueConfig;
+    private final ContentDao spokeWriteContentDao;
+    private final ContentDao s3SingleContentDao;
+    private final StatsdReporter statsdReporter;
 
-    S3WriteQueue(ContentDao spokeWriteContentDao, ContentDao s3SingleContentDao, StatsdReporter statsdReporter, WriteQueueConfig writeQueueConfig) {
+    @Inject
+    S3WriteQueue(@Named(ContentDao.WRITE_CACHE) ContentDao spokeWriteContentDao,
+                 @Named(ContentDao.SINGLE_LONG_TERM) ContentDao s3SingleContentDao,
+                 StatsdReporter statsdReporter,
+                 WriteQueueConfig writeQueueConfig) {
         this.spokeWriteContentDao = spokeWriteContentDao;
         this.s3SingleContentDao = s3SingleContentDao;
         this.statsdReporter = statsdReporter;
@@ -54,12 +52,7 @@ public class S3WriteQueue {
                 new ThreadFactoryBuilder().setNameFormat("S3WriteQueue-%d").build());
     }
 
-    @Inject
-    private S3WriteQueue() throws InterruptedException {
-        keys = new LinkedBlockingQueue<>(writeQueueConfig.getQueueSize());
-        executorService = Executors.newFixedThreadPool(writeQueueConfig.getThreads(),
-                new ThreadFactoryBuilder().setNameFormat("S3WriteQueue-%d").build());
-
+    public void start() throws InterruptedException {
         log.info("queue size {}", writeQueueConfig.getQueueSize());
         for (int i = 0; i < writeQueueConfig.getThreads(); i++) {
             executorService.submit(() -> {
