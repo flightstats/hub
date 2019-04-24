@@ -16,8 +16,11 @@ import com.flightstats.hub.cluster.SpokeDecommissionCluster;
 import com.flightstats.hub.cluster.SpokeDecommissionManager;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.ZooKeeperState;
+import com.flightstats.hub.dao.CachedDao;
+import com.flightstats.hub.dao.CachedLowerCaseDao;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
+import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.dao.aws.s3Verifier.VerifierConfig;
 import com.flightstats.hub.dao.aws.s3Verifier.VerifierConfigProvider;
 import com.flightstats.hub.health.HubHealthCheck;
@@ -33,6 +36,7 @@ import com.flightstats.hub.metrics.StatsDFilter;
 import com.flightstats.hub.metrics.StatsDReporterLifecycle;
 import com.flightstats.hub.metrics.StatsDReporterProvider;
 import com.flightstats.hub.metrics.StatsdReporter;
+import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.replication.ReplicationManager;
 import com.flightstats.hub.rest.HalLinks;
 import com.flightstats.hub.rest.HalLinksSerializer;
@@ -54,10 +58,12 @@ import com.flightstats.hub.time.NtpMonitor;
 import com.flightstats.hub.time.TimeService;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.SecretFilter;
+import com.flightstats.hub.webhook.Webhook;
 import com.flightstats.hub.webhook.WebhookManager;
 import com.flightstats.hub.webhook.WebhookValidator;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.AbstractModule;
+import com.google.inject.Inject;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -196,6 +202,22 @@ public class HubBindings extends AbstractModule {
     public
     static ExecutorService queryThreadPool(VerifierConfig verifierConfig) {
         return Executors.newFixedThreadPool(verifierConfig.getQueryThreads(), new ThreadFactoryBuilder().setNameFormat("S3VerifierQuery-%d").build());
+    }
+
+    @Inject
+    @Singleton
+    @Provides
+    @Named("ChannelConfig")
+    public Dao<ChannelConfig> buildChannelConfigDao(WatchManager watchManager, @Named("ChannelConfigDao") Dao<ChannelConfig> dao) {
+        return new CachedLowerCaseDao<>(dao, watchManager, "/channels/cache");
+    }
+
+    @Inject
+    @Singleton
+    @Provides
+    @Named("Webhook")
+    public Dao<Webhook> buildWebhookDao(WatchManager watchManager, @Named("WebhookDao") Dao<Webhook> dao) {
+        return new CachedDao<>(dao, watchManager, "/webhooks/cache");
     }
 
     @Override

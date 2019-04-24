@@ -2,9 +2,6 @@ package com.flightstats.hub.app;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.s3.AmazonS3;
-import com.flightstats.hub.cluster.WatchManager;
-import com.flightstats.hub.dao.CachedDao;
-import com.flightstats.hub.dao.CachedLowerCaseDao;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentService;
 import com.flightstats.hub.dao.Dao;
@@ -49,8 +46,10 @@ class ClusterHubBindings extends AbstractModule {
     protected void configure() {
         logger.info("starting server {} ", HubHost.getLocalName());
 
-        bind(AwsConnectorFactory.class).asEagerSingleton();
-        bind(S3Config.class).asEagerSingleton();
+        // General AWS
+        bind(AwsConnectorFactory.class).asEagerSingleton();  // very AWS-specific...S3/Dynamo connectors, credentials, etc.
+
+        // S3-specific
         bind(ContentService.class)
                 .to(ClusterContentService.class).asEagerSingleton();
         bind(ContentDao.class)
@@ -62,35 +61,28 @@ class ClusterHubBindings extends AbstractModule {
         bind(ContentDao.class)
                 .annotatedWith(Names.named(ContentDao.LARGE_PAYLOAD))
                 .to(S3LargeContentDao.class).asEagerSingleton();
-        bind(DynamoUtils.class).asEagerSingleton();
         bind(S3BatchManager.class).asEagerSingleton();
-        bind(S3Verifier.class).asEagerSingleton();
-
         bind(DocumentationDao.class).to(S3DocumentationDao.class).asEagerSingleton();
         bind(HubS3Client.class).asEagerSingleton();
+        bind(S3Config.class).asEagerSingleton();  // sets up a lifecycle service to cull S3 of old records if channel has max items and set TTLs appropriately
+        bind(S3Verifier.class).asEagerSingleton();
+        bind(PeriodicS3MetricEmitter.class).asEagerSingleton();
         bind(S3AccessMonitor.class).asEagerSingleton();
 
-        bind(PeriodicS3MetricEmitter.class).asEagerSingleton();
+        // Dynamo-specific
+        bind(DynamoUtils.class).asEagerSingleton();
+        bind(Dao.class)
+                .annotatedWith(Names.named("ChannelConfigDao"))
+                .to(DynamoChannelConfigDao.class)
+                .asEagerSingleton();
+        bind(Dao.class)
+                .annotatedWith(Names.named("WebhookDao"))
+                .to(DynamoWebhookDao.class)
+                .asEagerSingleton();
 
         // Used only by AWS code.
         // This is S3-specific because spoke stores the full item, instead of an index.
         bind(LargeContentUtils.class).asEagerSingleton();  // Not AWS - Used only by ClusterContentService to store indexes instead of documents on S3.
-    }
-
-    @Inject
-    @Singleton
-    @Provides
-    @Named("ChannelConfig")
-    public static Dao<ChannelConfig> buildChannelConfigDao(WatchManager watchManager, DynamoChannelConfigDao dao) {
-        return new CachedLowerCaseDao<>(dao, watchManager, "/channels/cache");
-    }
-
-    @Inject
-    @Singleton
-    @Provides
-    @Named("Webhook")
-    public static Dao<Webhook> buildWebhookDao(WatchManager watchManager, DynamoWebhookDao dao) {
-        return new CachedDao<>(dao, watchManager, "/webhooks/cache");
     }
 
     @Inject
@@ -105,6 +97,22 @@ class ClusterHubBindings extends AbstractModule {
     @Singleton
     public AmazonS3 buildS3Client(AwsConnectorFactory factory) throws IOException {
         return factory.getS3Client();
+    }
+
+    @Provides
+    @Inject
+    @Singleton
+    @Named("ChannelConfigDao")
+    public Dao<ChannelConfig> buildChannelConfigDao(DynamoChannelConfigDao dao) {
+        return dao;
+    }
+
+    @Provides
+    @Inject
+    @Singleton
+    @Named("WebhookDao")
+    public Dao<Webhook> buildWebhookDao(DynamoWebhookDao dao) {
+        return dao;
     }
 
     @Provides
