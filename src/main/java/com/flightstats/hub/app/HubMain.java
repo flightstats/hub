@@ -2,6 +2,7 @@ package com.flightstats.hub.app;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.flightstats.hub.dao.aws.S3WriteQueue;
+import com.flightstats.hub.dao.aws.S3WriteQueueLifecycle;
 import com.flightstats.hub.filter.CORSFilter;
 import com.flightstats.hub.filter.StreamEncodingFilter;
 import com.flightstats.hub.metrics.CustomMetricsLifecycle;
@@ -108,8 +109,6 @@ public class HubMain {
 
         HubProvider.setInjector(injector);
         HubServices.start(HubServices.TYPE.BEFORE_HEALTH_CHECK);
-        S3WriteQueue s3WriteQueue = injector.getInstance(S3WriteQueue.class);
-        s3WriteQueue.start();
 
         // build Jetty server
         Server server = new Server();
@@ -160,6 +159,7 @@ public class HubMain {
 
     private List<Service> getBeforeHealthCheckServices(Injector injector) {
         return Stream.of(
+                S3WriteQueueLifecycle.class,
                 InfluxdbReporterLifecycle.class,
                 StatsDReporterLifecycle.class)
                 .map(injector::getInstance)

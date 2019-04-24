@@ -63,8 +63,6 @@ public class ShutdownManager {
         }
 
         HubServices.stopAll();
-        S3WriteQueue s3WriteQueue = HubProvider.getInstance(S3WriteQueue.class);
-        s3WriteQueue.close();
         log.warn("completed shutdown tasks, exiting JVM");
         Executors.newSingleThreadExecutor().submit(() -> System.exit(0));
         return true;

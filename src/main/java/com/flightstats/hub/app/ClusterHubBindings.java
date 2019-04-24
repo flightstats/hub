@@ -25,6 +25,7 @@ import com.flightstats.hub.dao.aws.DynamoUtils;
 import com.flightstats.hub.dao.aws.S3Verifier;
 import com.flightstats.hub.dao.aws.S3DocumentationDao;
 import com.flightstats.hub.dao.aws.S3WriteQueue;
+import com.flightstats.hub.dao.aws.S3WriteQueueLifecycle;
 import com.flightstats.hub.dao.aws.writeQueue.WriteQueueConfig;
 import com.flightstats.hub.dao.aws.writeQueue.WriteQueueConfigProvider;
 import com.flightstats.hub.metrics.PeriodicMetricEmitter;
@@ -58,6 +59,7 @@ class ClusterHubBindings extends AbstractModule {
         bind(LargeContentUtils.class).asEagerSingleton();
         bind(WriteQueueConfig.class).toProvider(WriteQueueConfigProvider.class).asEagerSingleton();
         bind(S3WriteQueue.class).asEagerSingleton();
+        bind(S3WriteQueueLifecycle.class).asEagerSingleton();
         bind(ContentService.class)
                 .to(ClusterContentService.class).asEagerSingleton();
         bind(RemoteSpokeStore.class).asEagerSingleton();

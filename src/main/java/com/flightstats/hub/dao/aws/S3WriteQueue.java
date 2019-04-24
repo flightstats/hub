@@ -7,21 +7,17 @@ import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.Content;
-import com.flightstats.hub.util.Sleeper;
 import com.github.rholder.retry.Retryer;
 import com.github.rholder.retry.RetryerBuilder;
 import com.github.rholder.retry.StopStrategies;
 import com.github.rholder.retry.WaitStrategies;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -33,9 +29,7 @@ public class S3WriteQueue {
 
     @VisibleForTesting
     BlockingQueue<ChannelContentKey> keys;
-    private ExecutorService executorService;
 
-    private final WriteQueueConfig writeQueueConfig;
     private final ContentDao spokeWriteContentDao;
     private final ContentDao s3SingleContentDao;
     private final StatsdReporter statsdReporter;
@@ -48,26 +42,7 @@ public class S3WriteQueue {
         this.spokeWriteContentDao = spokeWriteContentDao;
         this.s3SingleContentDao = s3SingleContentDao;
         this.statsdReporter = statsdReporter;
-        this.writeQueueConfig = writeQueueConfig;
         keys = new LinkedBlockingQueue<>(writeQueueConfig.getQueueSize());
-        executorService = Executors.newFixedThreadPool(writeQueueConfig.getThreads(),
-                new ThreadFactoryBuilder().setNameFormat("S3WriteQueue-%d").build());
-    }
-
-    public void start() throws InterruptedException {
-        log.info("queue size {}", writeQueueConfig.getQueueSize());
-        for (int i = 0; i < writeQueueConfig.getThreads(); i++) {
-            executorService.submit(() -> {
-                try {
-                    while (true) {
-                        write();
-                    }
-                } catch (Exception e) {
-                    log.warn("exited thread", e);
-                    return null;
-                }
-            });
-        }
     }
 
     @VisibleForTesting
@@ -116,19 +91,11 @@ public class S3WriteQueue {
         return value;
     }
 
-    public void close() {
-        int count = 0;
-        while (keys.size() > 0) {
-            count++;
-            log.info("waiting for keys {}", keys.size());
-            if (count >= 60) {
-                log.warn("waited too long for keys {}", keys.size());
-                return;
-            }
-            Sleeper.sleepQuietly(1000);
-        }
-        executorService.shutdown();
+
+    int getQueueSize() {
+        return keys.size();
     }
+
 
     private Retryer<Void> buildRetryer() {
         return RetryerBuilder.<Void>newBuilder()
