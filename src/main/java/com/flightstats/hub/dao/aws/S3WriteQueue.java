@@ -12,6 +12,7 @@ import com.github.rholder.retry.Retryer;
 import com.github.rholder.retry.RetryerBuilder;
 import com.github.rholder.retry.StopStrategies;
 import com.github.rholder.retry.WaitStrategies;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -30,6 +31,7 @@ public class S3WriteQueue {
 
     private final Retryer<Void> retryer = buildRetryer();
 
+    @VisibleForTesting
     BlockingQueue<ChannelContentKey> keys;
     private ExecutorService executorService;
 
@@ -68,6 +70,7 @@ public class S3WriteQueue {
         }
     }
 
+    @VisibleForTesting
     void write() throws InterruptedException {
         try {
             ChannelContentKey key = keys.poll(5, TimeUnit.SECONDS);
