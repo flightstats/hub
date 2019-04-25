@@ -1,17 +1,16 @@
 package com.flightstats.hub.app;
 
+import com.flightstats.hub.config.AppProperty;
 import com.flightstats.hub.health.HubHealthCheck;
 import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.util.Sleeper;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.util.concurrent.Executors;
 
 /**
@@ -24,16 +23,18 @@ public class ShutdownManager {
 
     private static final String PATH = "/ShutdownManager";
     private StatsdReporter statsdReporter;
+    private AppProperty appProperty;
 
     @Inject
-    public ShutdownManager(StatsdReporter statsdReporter) {
+    public ShutdownManager(StatsdReporter statsdReporter, AppProperty appProperty) {
         this.statsdReporter = statsdReporter;
+        this.appProperty = appProperty;
         HubServices.register(new ShutdownManagerService(), HubServices.TYPE.AFTER_HEALTHY_START);
     }
 
     public boolean shutdown(boolean useLock) throws Exception {
         log.warn("shutting down!");
-        String[] tags = { "restart", "shutdown" };
+        String[] tags = {"restart", "shutdown"};
         statsdReporter.event("Hub Restart Shutdown", "shutting down", tags);
         statsdReporter.mute();
 
@@ -52,7 +53,7 @@ public class ShutdownManager {
 
         //wait until it's likely the node is removed from the Load Balancer
         long end = System.currentTimeMillis();
-        int shutdown_delay_millis = HubProperties.getProperty("app.shutdown_delay_seconds", 60) * 1000;
+        int shutdown_delay_millis = appProperty.getShutdownDelayInMiilis();
         long millisStopping = end - start;
         if (millisStopping < shutdown_delay_millis) {
             long sleepTime = shutdown_delay_millis - millisStopping;

@@ -1,36 +1,36 @@
 package com.flightstats.hub.cluster;
 
-import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.config.AppProperty;
 import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.model.ContentPath;
-import com.google.inject.Inject;
+
+import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.Stat;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.function.Function;
 
+@Slf4j
 public class LastContentPath {
-    private final static Logger logger = LoggerFactory.getLogger(LastContentPath.class);
-
-    private static final String tracing = HubProperties.getProperty("LastContentPathTracing", "channelToTrace");
 
     private final CuratorFramework curator;
+    private AppProperty appProperty;
 
     @Inject
-    public LastContentPath(CuratorFramework curator) {
+    public LastContentPath(CuratorFramework curator, AppProperty appProperty) {
         this.curator = curator;
+        this.appProperty = appProperty;
     }
 
     private void trace(String nameOrPath, String text, Object... context) {
-        if (logger.isTraceEnabled()) {
-            if (nameOrPath.contains(tracing)) {
-                logger.trace(text + " nameorPath " + nameOrPath, context);
+        if (log.isTraceEnabled()) {
+            if (nameOrPath.contains(appProperty.getLastContentPathTracing())) {
+                log.trace(text + " nameorPath " + nameOrPath, context);
             }
         }
     }
@@ -41,9 +41,9 @@ public class LastContentPath {
             curator.create().creatingParentsIfNeeded().forPath(basePath + name, defaultPath.toBytes());
         } catch (KeeperException.NodeExistsException ignore) {
             //this will typically happen, except the first time
-            logger.trace("initialize exists {} {} {}", name, defaultPath, basePath);
+            log.trace("initialize exists {} {} {}", name, defaultPath, basePath);
         } catch (Exception e) {
-            logger.warn("unable to create node " + name + " " + basePath, e);
+            log.warn("unable to create node " + name + " " + basePath, e);
         }
     }
 
@@ -52,8 +52,8 @@ public class LastContentPath {
         try {
             return get(path);
         } catch (Exception e) {
-            logger.info("unable to get node {} {} {} ", name, basePath, e.getMessage());
-            logger.trace("unable to get node  " + path, e);
+            log.info("unable to get node {} {} {} ", name, basePath, e.getMessage());
+            log.trace("unable to get node  " + path, e);
             return null;
         }
     }
@@ -69,12 +69,12 @@ public class LastContentPath {
                 trace(name, "get default {} null", defaultPath);
                 return null;
             } else {
-                logger.warn("missing value for {} {}", name, basePath);
+                log.warn("missing value for {} {}", name, basePath);
                 initialize(name, defaultPath, basePath);
                 return get(name, defaultPath, basePath);
             }
         } catch (Exception e) {
-            logger.info("unable to get node {} {} {} ", name, basePath, e.getMessage());
+            log.info("unable to get node {} {} {} ", name, basePath, e.getMessage());
             return defaultPath;
         }
     }
@@ -111,7 +111,7 @@ public class LastContentPath {
                 }
             }
         } catch (KeeperException.NoNodeException e) {
-            logger.info("values does not exist, creating {}", path);
+            log.info("values does not exist, creating {}", path);
             trace(name, "updateIncrease NoNodeException {}", name);
             initialize(name, nextPath, basePath);
         } catch (ConflictException e) {
@@ -120,7 +120,7 @@ public class LastContentPath {
         } catch (ContentTooLargeException e) {
             throw e;
         } catch (Exception e) {
-            logger.warn("unable to set lastUpdated " + path, e);
+            log.warn("unable to set lastUpdated " + path, e);
         }
     }
 
@@ -131,10 +131,10 @@ public class LastContentPath {
             setValue(path, nextPath, existing);
             trace(path, "update {} next {} existing{}", path, nextPath, existing);
         } catch (KeeperException.NoNodeException e) {
-            logger.info("values does not exist, creating {}", path);
+            log.info("values does not exist, creating {}", path);
             initialize(name, nextPath, basePath);
         } catch (Exception e) {
-            logger.warn("unable to set " + path + " lastUpdated to " + nextPath, e);
+            log.warn("unable to set " + path + " lastUpdated to " + nextPath, e);
         }
     }
 
@@ -143,23 +143,23 @@ public class LastContentPath {
             curator.setData().withVersion(existing.version).forPath(path, nextPath.toBytes());
             return true;
         } catch (KeeperException.BadVersionException e) {
-            logger.debug("bad version " + path + " " + e.getMessage());
+            log.debug("bad version " + path + " " + e.getMessage());
             return false;
         } catch (Exception e) {
-            logger.info("what happened? " + path, e);
+            log.info("what happened? " + path, e);
             return false;
         }
     }
 
     public void delete(String name, String basePath) {
-        logger.info("delete {} {}", name, basePath);
+        log.info("delete {} {}", name, basePath);
         String path = basePath + name;
         try {
             curator.delete().deletingChildrenIfNeeded().forPath(path);
         } catch (KeeperException.NoNodeException e) {
-            logger.info("no node for {}", path);
+            log.info("no node for {}", path);
         } catch (Exception e) {
-            logger.warn("unable to delete {} {}", path, e.getMessage());
+            log.warn("unable to delete {} {}", path, e.getMessage());
         }
     }
 

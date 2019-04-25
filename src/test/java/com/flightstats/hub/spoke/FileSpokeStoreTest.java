@@ -1,16 +1,16 @@
 package com.flightstats.hub.spoke;
 
-import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.config.PropertyLoader;
+import com.flightstats.hub.config.SpokeProperty;
 import com.flightstats.hub.dao.ContentKeyUtil;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.io.Files;
+import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -20,24 +20,31 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
+@Slf4j
 public class FileSpokeStoreTest {
+
+    private static final SpokeProperty spokeProperty = new SpokeProperty(PropertyLoader.getInstance());
+    private static final int ttlMinutes = spokeProperty.getTtlMinutes(SpokeStore.WRITE);
     public static final byte[] BYTES = new byte[]{0, 2, 3, 4, 5, 6};
-    private final static Logger logger = LoggerFactory.getLogger(FileSpokeStoreTest.class);
-    private String tempDir;
+
     private FileSpokeStore spokeStore;
-    private static final int ttlMinutes = HubProperties.getSpokeTtlMinutes(SpokeStore.WRITE);
+    private String tempDir;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         tempDir = Files.createTempDir().getPath();
-        HubProperties.setProperty("spoke.write.path", tempDir);
+        PropertyLoader.getInstance().setProperty("spoke.write.path", tempDir);
         spokeStore = new FileSpokeStore(tempDir, ttlMinutes);
     }
 
     @Test
-    public void testWriteRead() throws Exception {
+    public void testWriteRead() {
         String path = "channelWR/" + new ContentKey().toUrl();
         assertTrue(spokeStore.insert(path, BYTES));
         byte[] read = spokeStore.read(path);
@@ -45,7 +52,7 @@ public class FileSpokeStoreTest {
     }
 
     @Test
-    public void testPathTranslation() throws Exception {
+    public void testPathTranslation() {
         String incoming = "/test_0_4274725520517677/2014/11/18/00/57/24/015/NV2cl5";
         File outputFile = spokeStore.spokeFilePathPart(incoming);
         String filePath = "/test_0_4274725520517677/2014/11/18/00/57/24015NV2cl5";
@@ -57,7 +64,7 @@ public class FileSpokeStoreTest {
     }
 
     @Test
-    public void testAdjacentPaths() throws Exception {
+    public void testAdjacentPaths() {
         String previousSecond = "testAdjacentPaths/2014/11/18/00/57/23/015/1";
         String path1 = "testAdjacentPaths/2014/11/18/00/57/24/015/1";
         String path2 = "testAdjacentPaths/2014/11/18/00/57/24/015/2";
@@ -81,7 +88,7 @@ public class FileSpokeStoreTest {
         Collection<String> keys = spokeStore.keysInBucket("/testAdjacentPaths/2014/11/18/00/57");
         assertEquals(7, keys.size());
 
-        logger.info("files " + keys);
+        log.info("files " + keys);
         assertTrue(keys.contains(path1));
         assertTrue(keys.contains(path2));
         assertTrue(keys.contains(path3));
@@ -94,7 +101,7 @@ public class FileSpokeStoreTest {
 
 
     @Test
-    public void testSpokeKeyFromFilePath() throws Exception {
+    public void testSpokeKeyFromFilePath() {
         final File file = new File(tempDir +
                 "/test_0_7475501417648047/2014/11/19/18/15/43916UD7V4N");
         String key = spokeStore.spokeKeyFromPath(file.getAbsolutePath());
@@ -143,17 +150,17 @@ public class FileSpokeStoreTest {
         String hash = "ZZZZZ";
         ContentKey limitKey = new ContentKey(start, hash);
         String found = spokeStore.getLatest(channel, limitKey.toUrl());
-        logger.info("found {}", found);
+        log.info("found {}", found);
         assertEquals(channel + "/2015/03/17/17/31/59/600/2905220", found);
 
         limitKey = new ContentKey(start.plusSeconds(15), hash);
         found = spokeStore.getLatest(channel, limitKey.toUrl());
-        logger.info("found {}", found);
+        log.info("found {}", found);
         assertEquals(channel + "/2015/03/17/17/31/59/600/2905220", found);
 
         limitKey = new ContentKey(start.plusSeconds(45), hash);
         found = spokeStore.getLatest(channel, limitKey.toUrl());
-        logger.info("found {}", found);
+        log.info("found {}", found);
         assertEquals(channel + "/2015/03/17/17/31/59/600/2905220", found);
     }
 
@@ -198,7 +205,7 @@ public class FileSpokeStoreTest {
         ContentKey limitKey = new ContentKey(startTime, "B");
 
         List<String> found = getNextTesting(name, limitKey.toUrl(), 2);
-        logger.info("found {}", found);
+        log.info("found {}", found);
         assertEquals(3, found.size());
         assertTrue(contentKeyB.toUrl(), found.contains(name + "/" + contentKeyB.toUrl()));
         assertTrue(found.contains(name + "/" + contentKeyC.toUrl()));
@@ -221,7 +228,7 @@ public class FileSpokeStoreTest {
         ContentKey limitKey = new ContentKey(startTime, "B");
 
         List<String> found = getNextTesting(name, limitKey.toUrl(), 2);
-        logger.info("found {}", found);
+        log.info("found {}", found);
         assertEquals(2, found.size());
         assertTrue(contentKeyB.toUrl(), found.contains(name + "/" + contentKeyB.toUrl()));
         assertTrue(found.contains(name + "/" + contentKeyC.toUrl()));
@@ -315,7 +322,7 @@ public class FileSpokeStoreTest {
     public void testLatestMore() {
         DateTime now = TimeUtil.now();
         DateTime time = now;
-        logger.info("ttlMinutes {} ", ttlMinutes);
+        log.info("ttlMinutes {} ", ttlMinutes);
         DateTime ttlTime = time.minusMinutes(ttlMinutes);
         while (time.isAfter(ttlTime)) {
             spokeStore.insert("testLatestMore/" + new ContentKey(time, "A").toUrl(), BYTES);

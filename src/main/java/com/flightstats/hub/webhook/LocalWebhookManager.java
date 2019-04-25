@@ -1,6 +1,6 @@
 package com.flightstats.hub.webhook;
 
-import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.config.WebhookProperty;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -10,8 +10,7 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import de.jkeylockmanager.manager.KeyLockManager;
 import de.jkeylockmanager.manager.KeyLockManagers;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Collection;
 import java.util.Map;
@@ -22,38 +21,44 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 @Singleton
+@Slf4j
 public class LocalWebhookManager {
 
-    private static final Logger logger = LoggerFactory.getLogger(LocalWebhookManager.class);
+    private Map<String, WebhookLeader> localLeaders = new ConcurrentHashMap<>();
+
     private final KeyLockManager lockManager;
     @Inject
     @Named("Webhook")
     private Dao<Webhook> webhookDao;
     @Inject
     private Provider<WebhookLeader> v2Provider;
-    private Map<String, WebhookLeader> localLeaders = new ConcurrentHashMap<>();
+
+    private static int shutdownThreadCount;
 
     @Inject
-    public LocalWebhookManager() {
+    public LocalWebhookManager(@Named("Webhook") Dao<Webhook> webhookDao,
+                                   Provider<WebhookLeader> v2Provider,
+                               WebhookProperty webhookProperty) {
+        shutdownThreadCount = webhookProperty.getShutdownThreadCount();
         lockManager = KeyLockManagers.newLock(1, TimeUnit.SECONDS);
     }
 
     static void runAndWait(String name, Collection<String> keys, Consumer<String> consumer) {
-        ExecutorService pool = Executors.newFixedThreadPool(HubProperties.getProperty("webhook.shutdown.threads", 100),
+        ExecutorService pool = Executors.newFixedThreadPool(shutdownThreadCount,
                 new ThreadFactoryBuilder().setNameFormat(name + "-%d").build());
-        logger.info("{}", keys);
+        log.info("{}", keys);
         for (String key : keys) {
             pool.submit(() -> {
                 consumer.accept(key);
             });
         }
-        logger.info("accepted all ");
+        log.info("accepted all ");
         pool.shutdown();
         try {
             boolean awaitTermination = pool.awaitTermination(5, TimeUnit.MINUTES);
-            logger.info("awaitTermination", awaitTermination);
+            log.info("awaitTermination", awaitTermination);
         } catch (InterruptedException e) {
-            logger.warn("interuppted", e);
+            log.warn("interuppted", e);
             throw new RuntimeInterruptedException(e);
         }
     }
@@ -64,19 +69,19 @@ public class LocalWebhookManager {
 
     private boolean ensureRunningWithLock(String name) {
         Webhook daoWebhook = webhookDao.get(name);
-        logger.info("ensureRunning {}", daoWebhook);
+        log.info("ensureRunning {}", daoWebhook);
         if (localLeaders.containsKey(name)) {
-            logger.info("checking for change {}", name);
+            log.info("checking for change {}", name);
             WebhookLeader webhookLeader = localLeaders.get(name);
             Webhook runningWebhook = webhookLeader.getWebhook();
             if (webhookLeader.hasLeadership() && !runningWebhook.isChanged(daoWebhook)) {
-                logger.trace("webhook unchanged {} to {}", runningWebhook, daoWebhook);
+                log.trace("webhook unchanged {} to {}", runningWebhook, daoWebhook);
                 return true;
             }
-            logger.info("webhook has changed {} to {}", runningWebhook, daoWebhook);
+            log.info("webhook has changed {} to {}", runningWebhook, daoWebhook);
             stopLocal(name, false);
         }
-        logger.info("starting {}", name);
+        log.info("starting {}", name);
         return startLocal(daoWebhook);
     }
 
@@ -94,9 +99,9 @@ public class LocalWebhookManager {
     }
 
     void stopLocal(String name, boolean delete) {
-        logger.info("stop {} {}", name, delete);
+        log.info("stop {} {}", name, delete);
         if (localLeaders.containsKey(name)) {
-            logger.info("stopping local {}", name);
+            log.info("stopping local {}", name);
             localLeaders.get(name).exit(delete);
             localLeaders.remove(name);
         }

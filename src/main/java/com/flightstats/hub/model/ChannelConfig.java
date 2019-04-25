@@ -2,7 +2,8 @@ package com.flightstats.hub.model;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.config.AppProperty;
+import com.flightstats.hub.config.PropertyLoader;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.gson.Gson;
@@ -25,6 +26,7 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 
 public class ChannelConfig implements Serializable, NamedType {
 
+    private static final AppProperty appProperty = new AppProperty(PropertyLoader.getInstance());
     public static final String SINGLE = "SINGLE";
     public static final String BATCH = "BATCH";
     public static final String BOTH = "BOTH";
@@ -99,7 +101,7 @@ public class ChannelConfig implements Serializable, NamedType {
         addTagIf(!isBlank(replicationSource), REPLICATED);
         addTagIf(isHistorical(), HISTORICAL);
 
-        if (HubProperties.isProtected()) {
+        if (appProperty.isProtected()) {
             this.protect = true;
         } else {
             this.protect = protect;
@@ -367,7 +369,7 @@ public class ChannelConfig implements Serializable, NamedType {
         private TreeSet<String> tags = new TreeSet<>();
         private String replicationSource = "";
         private String storage = "";
-        private boolean protect = HubProperties.isProtected();
+        private boolean protect = appProperty.isProtected();
         private boolean allowZeroBytes = true;
         private String name;
         private boolean keepForever = false;

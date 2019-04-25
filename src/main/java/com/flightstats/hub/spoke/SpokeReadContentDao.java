@@ -7,21 +7,23 @@ import com.flightstats.hub.exception.FailedQueryException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.SortedSet;
 
+@Slf4j
 public class SpokeReadContentDao implements ContentDao {
 
-    private final static Logger logger = LoggerFactory.getLogger(SpokeReadContentDao.class);
+    private RemoteSpokeStore spokeStore;
 
     @Inject
-    private RemoteSpokeStore spokeStore;
+    public SpokeReadContentDao(RemoteSpokeStore spokeStore){
+        this.spokeStore = spokeStore;
+    }
 
     @Override
     public ContentKey insert(String channelName, Content content) throws Exception {
@@ -48,7 +50,7 @@ public class SpokeReadContentDao implements ContentDao {
         try {
             return spokeStore.get(SpokeStore.READ, path, key);
         } catch (Exception e) {
-            logger.warn("unable to get data: " + path, e);
+            log.warn("unable to get data: " + path, e);
             return null;
         } finally {
             traces.add("SpokeReadContentDao.read completed");
@@ -57,7 +59,7 @@ public class SpokeReadContentDao implements ContentDao {
 
     @Override
     public SortedSet<ContentKey> queryByTime(TimeQuery query) {
-        logger.trace("query by time {} ", query);
+        log.trace("query by time {} ", query);
         ActiveTraces.getLocal().add("SpokeReadContentDao.queryByTime", query);
         SortedSet<ContentKey> contentKeys;
         if (query.getLimitKey() == null) {
@@ -82,7 +84,7 @@ public class SpokeReadContentDao implements ContentDao {
                 QueryResult retryResult = spokeStore.readTimeBucket(SpokeStore.READ, query.getChannelName(), timePath);
                 ActiveTraces.getLocal().add("spoke query retryResult", retryResult);
                 if (!retryResult.hadSuccess()) {
-                    ActiveTraces.getLocal().log(logger);
+                    ActiveTraces.getLocal().log(log);
                     throw new FailedQueryException("unable to execute time query " + query + " " + queryResult);
                 }
                 queryResult.getContentKeys().addAll(retryResult.getContentKeys());
@@ -92,7 +94,7 @@ public class SpokeReadContentDao implements ContentDao {
         } catch (FailedQueryException rethrow) {
             throw rethrow;
         } catch (Exception e) {
-            logger.warn("what happened? " + query, e);
+            log.warn("what happened? " + query, e);
         }
         return Collections.emptySortedSet();
     }
@@ -107,7 +109,7 @@ public class SpokeReadContentDao implements ContentDao {
         try {
             spokeStore.delete(SpokeStore.READ, channelName);
         } catch (Exception e) {
-            logger.warn("unable to delete " + channelName, e);
+            log.warn("unable to delete " + channelName, e);
         }
     }
 

@@ -2,26 +2,35 @@ package com.flightstats.hub.metrics;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.config.AppProperty;
+import com.flightstats.hub.config.PropertyLoader;
 import com.flightstats.hub.model.SingleTrace;
 import com.flightstats.hub.model.Trace;
 import com.flightstats.hub.util.ObjectRing;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.SortedSet;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 public class Traces {
 
-    private static final int LIMIT = HubProperties.getProperty("traces.limit", 50);
-    private final String id = UUID.randomUUID().toString();
+    private static final AppProperty appProperty = new AppProperty(PropertyLoader.getInstance());
     private final List<Trace> traces = Collections.synchronizedList(new ArrayList<>());
-    private final ObjectRing<Trace> lastTraces = new ObjectRing<>(LIMIT);
+    private final String id = UUID.randomUUID().toString();
     private long start = System.currentTimeMillis();
+
+    private final ObjectRing<Trace> lastTraces;
+    private final int limit;
     private long end;
 
     public Traces(Object... objects) {
+        this.limit = appProperty.getTracesLimit();
+        this.lastTraces = new ObjectRing<>(limit);
         add(objects);
     }
 
@@ -43,7 +52,7 @@ public class Traces {
     }
 
     public void add(Trace trace) {
-        if (traces.size() > LIMIT) {
+        if (traces.size() > limit) {
             lastTraces.put(trace);
         } else {
             traces.add(trace);
@@ -112,8 +121,8 @@ public class Traces {
             for (Trace trace : traces) {
                 consumer.accept(trace.toString());
             }
-            if (lastTraces.getTotalSize() > LIMIT) {
-                consumer.accept("   ...cut " + (lastTraces.getTotalSize() - LIMIT) + " lines...");
+            if (lastTraces.getTotalSize() > limit) {
+                consumer.accept("   ...cut " + (lastTraces.getTotalSize() - limit) + " lines...");
             }
             List<Trace> lastItems = lastTraces.getItems();
             for (Trace trace : lastItems) {
@@ -121,6 +130,5 @@ public class Traces {
             }
         }
     }
-
 
 }

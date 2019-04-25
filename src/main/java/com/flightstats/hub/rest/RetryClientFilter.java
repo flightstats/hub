@@ -1,25 +1,32 @@
 package com.flightstats.hub.rest;
 
-import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.config.AppProperty;
+import com.flightstats.hub.config.PropertyLoader;
 import com.flightstats.hub.util.Sleeper;
 import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientRequest;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.filter.ClientFilter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
+import javax.inject.Inject;
 import java.net.UnknownHostException;
 
 /**
  * RetryClientFilter assumes that connection issues may be transient, so retry is a good idea.
  */
+@Slf4j
 public class RetryClientFilter extends ClientFilter {
-    private static final Logger logger = LoggerFactory.getLogger(RetryClientFilter.class);
+
+    private AppProperty appProperty;
+
+    public RetryClientFilter(AppProperty appProperty){
+        this.appProperty = appProperty;
+    }
 
     public ClientResponse handle(ClientRequest clientRequest) throws ClientHandlerException {
-        int maxRetries = HubProperties.getProperty("http.maxRetries", 8);
-        int sleep = HubProperties.getProperty("http.sleep", 1000);
+        int maxRetries = appProperty.getHttpMaxRetries();
+        int sleep = appProperty.getHttpSleep();
         ClientHandlerException lastCause = null;
         int attempt = 0;
         while (attempt < maxRetries) {
@@ -27,7 +34,7 @@ public class RetryClientFilter extends ClientFilter {
             try {
                 ClientResponse response = getNext().handle(clientRequest);
                 if (response.getStatus() >= 500) {
-                    logger.info("500 level response {}  attempt={}", response, attempt);
+                    log.info("500 level response {}  attempt={}", response, attempt);
                     if (attempt >= maxRetries) {
                         return response;
                     }
@@ -43,13 +50,13 @@ public class RetryClientFilter extends ClientFilter {
                 }
                 lastCause = e;
 
-                logger.info("exception {} retry count {} ", clientRequest.getURI().toString(), attempt);
-                logger.debug(clientRequest.getURI().toString() + " stacktrace ", e);
+                log.info("exception {} retry count {} ", clientRequest.getURI().toString(), attempt);
+                log.debug(clientRequest.getURI().toString() + " stacktrace ", e);
             }
             Sleeper.sleep((int) (sleep * Math.pow(2, attempt)));
         }
         String msg = "Connection retries limit " + maxRetries + " exceeded for uri " + clientRequest.getURI();
-        logger.warn(msg);
+        log.warn(msg);
         throw lastCause;
     }
 }
