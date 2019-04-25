@@ -8,10 +8,9 @@ import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.test.Integration;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.util.Collection;
@@ -23,9 +22,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+@Slf4j
 public class HubUtilsTest {
-
-    private final static Logger logger = LoggerFactory.getLogger(HubUtilsTest.class);
 
     private static final String HUT_TEST = "test_0_HubUtilsTest" + StringUtils.randomAlphaNumeric(6);
     private static HubUtils hubUtils;
@@ -56,7 +54,7 @@ public class HubUtilsTest {
         String data = "some data " + System.currentTimeMillis();
         ContentKey key = insertItem(channelUrl, data);
 
-        logger.info("key {}", key);
+        log.info("key {}", key);
         assertNotNull(key);
 
         Content gotContent = hubUtils.get(channelUrl, key);
@@ -126,8 +124,8 @@ public class HubUtilsTest {
                 .stable(false)
                 .build();
         Collection<ContentKey> foundKeys = hubUtils.query(channelUrl, timeQuery);
-        logger.info("inserted {}", keys);
-        logger.info("foundKeys {}", foundKeys);
+        log.info("inserted {}", keys);
+        log.info("foundKeys {}", foundKeys);
         assertTrue(foundKeys.containsAll(keys));
 
         runDirectionQuery(keys, keys.first(), true);
@@ -144,8 +142,8 @@ public class HubUtilsTest {
                 .build();
         foundKeys = hubUtils.query(channelUrl, nextQuery);
         foundKeys.add(startKey);
-        logger.info("inserted {}", keys);
-        logger.info("foundKeys {}", foundKeys);
+        log.info("inserted {}", keys);
+        log.info("foundKeys {}", foundKeys);
         assertTrue(foundKeys.containsAll(keys));
 
     }

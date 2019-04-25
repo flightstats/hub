@@ -21,10 +21,7 @@ import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 public class S3AccessMonitor {
-    private final Dao<ChannelConfig> channelConfigDao;
-    private final HubS3Client hubS3Client;
-    private final S3BucketName s3BucketName;
-    private final Content content;
+
     private static final String CHANNEL_NAME = "S3_HEALTH_MONITOR";
     private static final byte[] SINGLE_BYTE_DATA = new byte[1];
     private static final ChannelConfig channelConfig = ChannelConfig
@@ -35,6 +32,11 @@ public class S3AccessMonitor {
             .description("internal use for monitoring s3 access health")
             .owner("INTERNAL")
             .build();
+
+    private final Dao<ChannelConfig> channelConfigDao;
+    private final HubS3Client hubS3Client;
+    private final S3BucketName s3BucketName;
+    private final Content content;
 
     @Inject
     public S3AccessMonitor(

@@ -2,9 +2,9 @@ package com.flightstats.hub.spoke;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.flightstats.hub.app.HubHost;
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.cluster.Cluster;
 import com.flightstats.hub.cluster.CuratorCluster;
+import com.flightstats.hub.config.AppProperty;
 import com.flightstats.hub.dao.ContentKeyUtil;
 import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.dao.QueryResult;
@@ -22,9 +22,8 @@ import com.google.inject.name.Named;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.ConnectException;
 import java.net.UnknownHostException;
@@ -40,9 +39,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @SuppressWarnings({"Convert2streamapi", "Convert2Lambda"})
+@Slf4j
 public class RemoteSpokeStore {
-
-    private final static Logger logger = LoggerFactory.getLogger(RemoteSpokeStore.class);
 
     private final static Client write_client = RestClient.createClient(1, 5, true, false);
     private final static Client query_client = RestClient.createClient(5, 15, true, true);
@@ -50,12 +48,15 @@ public class RemoteSpokeStore {
     private final CuratorCluster cluster;
     private final StatsdReporter statsdReporter;
     private final ExecutorService executorService;
-    private final int stableSeconds = HubProperties.getProperty("app.stable_seconds", 5);
+    private AppProperty appProperty;
 
     @Inject
-    public RemoteSpokeStore(@Named("SpokeCuratorCluster") CuratorCluster cluster, StatsdReporter statsdReporter) {
+    public RemoteSpokeStore(@Named("SpokeCuratorCluster") CuratorCluster cluster,
+                            StatsdReporter statsdReporter,
+                            AppProperty appProperty) {
         this.cluster = cluster;
         this.statsdReporter = statsdReporter;
+        this.appProperty = appProperty;
         executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("RemoteSpokeStore-%d").build());
     }
 
@@ -65,7 +66,7 @@ public class RemoteSpokeStore {
 
     void testOne(Collection<String> server) throws InterruptedException {
         String path = "Internal-Spoke-Health-Hook/";
-        Traces traces = new Traces(path);
+        Traces traces = new Traces(appProperty, path);
         int calls = 10;
         ExecutorService threadPool = Executors.newFixedThreadPool(2);
         CountDownLatch quorumLatch = new CountDownLatch(calls);
@@ -78,17 +79,17 @@ public class RemoteSpokeStore {
                         if (insert(SpokeStore.WRITE, path + key.toUrl(), key.toUrl().getBytes(), server, traces, "payload", path)) {
                             quorumLatch.countDown();
                         } else {
-                            traces.log(logger);
+                            traces.log(log);
                         }
                     } catch (Exception e) {
-                        logger.warn("unexpected exception " + server, e);
+                        log.warn("unexpected exception " + server, e);
                     }
                 }
             });
         }
         if (quorumLatch.await(5, TimeUnit.SECONDS)) {
             threadPool.shutdown();
-            logger.info("completed warmup calls to Spoke {}", server);
+            log.info("completed warmup calls to Spoke {}", server);
         } else {
             threadPool.shutdown();
             throw new RuntimeException("unable to properly connect to Spoke " + server);
@@ -98,29 +99,29 @@ public class RemoteSpokeStore {
     boolean testAll() throws UnknownHostException {
         Collection<String> servers = cluster.getRandomServers();
         servers.addAll(Cluster.getLocalServer());
-        logger.info("*********************************************");
-        logger.info("testing servers {}", servers);
-        logger.info("*********************************************");
+        log.info("*********************************************");
+        log.info("testing servers {}", servers);
+        log.info("*********************************************");
         String path = HubHost.getLocalAddressPort();
         for (String server : servers) {
             try {
-                logger.info("calling server {} path {}", server, path);
+                log.info("calling server {} path {}", server, path);
                 String url = HubHost.getScheme() + server + "/internal/spoke/test/" + path;
                 ClientResponse response = query_client.resource(url).get(ClientResponse.class);
                 if (response.getStatus() == 200) {
-                    logger.info("success calling {}", response);
+                    log.info("success calling {}", response);
                 } else if (response.getStatus() == 404) {
-                    logger.warn("test not yet implemented {}", response);
+                    log.warn("test not yet implemented {}", response);
                 } else {
-                    logger.warn("failed response {}", response);
+                    log.warn("failed response {}", response);
                     return false;
                 }
             } catch (Exception e) {
-                logger.warn("unable to test " + path + " with " + server, e);
+                log.warn("unable to test " + path + " with " + server, e);
                 return false;
             }
         }
-        logger.info("all startup tests succeeded  " + path);
+        log.info("all startup tests succeeded  " + path);
         return true;
     }
 
@@ -149,13 +150,13 @@ public class RemoteSpokeStore {
                                 statsdReporter.time(channel, "heisenberg", traces.getStart());
                             }
                             quorumLatch.countDown();
-                            logger.trace("server {} path {} response {}", server, path, response);
+                            log.trace("server {} path {} response {}", server, path, response);
                         } else {
-                            logger.info("write failed: server {} path {} response {}", server, path, response);
+                            log.info("write failed: server {} path {} response {}", server, path, response);
                         }
                     } catch (Exception e) {
                         traces.add(server, e.getMessage());
-                        logger.warn("write failed: " + server + " " + path, e);
+                        log.warn("write failed: " + server + " " + path, e);
                     } finally {
                         HubUtils.close(response);
                         resetThread();
@@ -165,7 +166,7 @@ public class RemoteSpokeStore {
             });
         }
         try {
-            quorumLatch.await(stableSeconds, TimeUnit.SECONDS);
+            quorumLatch.await(appProperty.getStableSeconds(), TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             throw new RuntimeInterruptedException(e);
         }
@@ -191,7 +192,7 @@ public class RemoteSpokeStore {
                 setThread(path);
                 String url = HubHost.getScheme() + server + "/internal/spoke/" + spokeStore + "/payload/" + path;
                 response = query_client.resource(url).get(ClientResponse.class);
-                logger.trace("server {} path {} response {}", server, path, response);
+                log.trace("server {} path {} response {}", server, path, response);
                 if (response.getStatus() == 200) {
                     byte[] entity = response.getEntity(byte[].class);
                     if (entity.length > 0) {
@@ -199,15 +200,15 @@ public class RemoteSpokeStore {
                     }
                 }
             } catch (JsonMappingException e) {
-                logger.info("JsonMappingException for " + path);
+                log.info("JsonMappingException for " + path);
             } catch (ClientHandlerException e) {
                 if (e.getCause() != null && e.getCause() instanceof ConnectException) {
-                    logger.warn("connection exception " + server);
+                    log.warn("connection exception " + server);
                 } else {
-                    logger.warn("unable to get content " + server + " " + path, e);
+                    log.warn("unable to get content " + server + " " + path, e);
                 }
             } catch (Exception e) {
-                logger.warn("unable to get content " + path, e);
+                log.warn("unable to get content " + path, e);
             } finally {
                 HubUtils.close(response);
                 resetThread();
@@ -248,13 +249,13 @@ public class RemoteSpokeStore {
                         }
                     } catch (ClientHandlerException e) {
                         if (e.getCause() != null && e.getCause() instanceof ConnectException) {
-                            logger.warn("connection exception " + server);
+                            log.warn("connection exception " + server);
                         } else {
-                            logger.warn("unable to get content " + path, e);
+                            log.warn("unable to get content " + path, e);
                         }
                         traces.add("ClientHandlerException", e.getMessage(), server);
                     } catch (Exception e) {
-                        logger.warn("unable to handle " + server + " " + path, e);
+                        log.warn("unable to handle " + server + " " + path, e);
                         traces.add("unable to handle ", server, path, e);
                     } finally {
                         HubUtils.close(response);
@@ -292,13 +293,13 @@ public class RemoteSpokeStore {
                         }
                     } catch (ClientHandlerException e) {
                         if (e.getCause() != null && e.getCause() instanceof ConnectException) {
-                            logger.warn("connection exception " + server);
+                            log.warn("connection exception " + server);
                         } else {
-                            logger.warn("unable to get content " + path, e);
+                            log.warn("unable to get content " + path, e);
                         }
                         traces.add("ClientHandlerException", e.getMessage(), server);
                     } catch (Exception e) {
-                        logger.warn("unable to handle " + server + " " + channel, e);
+                        log.warn("unable to handle " + server + " " + channel, e);
                         traces.add("unable to handle ", server, channel, e);
                     } finally {
                         HubUtils.close(response);
@@ -332,9 +333,9 @@ public class RemoteSpokeStore {
                         if (response.getStatus() < 400) {
                             countDownLatch.countDown();
                         }
-                        logger.trace("server {} path {} response {}", server, path, response);
+                        log.trace("server {} path {} response {}", server, path, response);
                     } catch (Exception e) {
-                        logger.warn("unable to delete " + path, e);
+                        log.warn("unable to delete " + path, e);
                     } finally {
                         HubUtils.close(response);
                         resetThread();

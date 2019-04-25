@@ -16,6 +16,7 @@ import static org.junit.Assert.assertNotNull;
 
 public class WebhookTest {
 
+    private static final int CALLBACK_TIMEOUT_DEFAULT_IN_SEC = 120;
     private Webhook webhook;
 
     @Before
@@ -88,7 +89,7 @@ public class WebhookTest {
     public void testWithDefaults() {
         assertNull(webhook.getParallelCalls());
         assertNull(webhook.getBatch());
-        webhook = webhook.withDefaults();
+        webhook = webhook.withDefaults(CALLBACK_TIMEOUT_DEFAULT_IN_SEC);
         assertEquals(1L, (long) webhook.getParallelCalls());
         assertEquals("SINGLE", webhook.getBatch());
     }
@@ -97,10 +98,10 @@ public class WebhookTest {
     public void testAllowedToChange() {
         Webhook hubA = Webhook.builder().name("name")
                 .channelUrl("http://hubA/channel/name")
-                .callbackUrl("url").build().withDefaults();
+                .callbackUrl("url").build().withDefaults(CALLBACK_TIMEOUT_DEFAULT_IN_SEC);
         Webhook hubB = Webhook.builder().name("name")
                 .channelUrl("http://hubB/channel/name")
-                .callbackUrl("url").build().withDefaults();
+                .callbackUrl("url").build().withDefaults(CALLBACK_TIMEOUT_DEFAULT_IN_SEC);
 
         assertTrue(hubA.allowedToChange(hubB));
 
@@ -112,11 +113,11 @@ public class WebhookTest {
     public void testChannelUrlChange() {
         Webhook hubA = Webhook.builder().name("name")
                 .channelUrl("http://hubA/channel/name")
-                .callbackUrl("url").build().withDefaults();
+                .callbackUrl("url").build().withDefaults(CALLBACK_TIMEOUT_DEFAULT_IN_SEC);
 
         Webhook hubC = Webhook.builder().name("name")
                 .channelUrl("http://hubC/channel/nameC")
-                .callbackUrl("url").build().withDefaults();
+                .callbackUrl("url").build().withDefaults(CALLBACK_TIMEOUT_DEFAULT_IN_SEC);
 
         assertFalse(hubA.allowedToChange(hubC));
 
@@ -126,8 +127,8 @@ public class WebhookTest {
 
     @Test
     public void testStartingKey() {
-        Webhook withDefaultsA = this.webhook.withDefaults();
-        Webhook withDefaultsB = this.webhook.withDefaults();
+        Webhook withDefaultsA = this.webhook.withDefaults(CALLBACK_TIMEOUT_DEFAULT_IN_SEC);
+        Webhook withDefaultsB = this.webhook.withDefaults(CALLBACK_TIMEOUT_DEFAULT_IN_SEC);
         assertEquals(withDefaultsA, withDefaultsB);
         Webhook withStartingKey = withDefaultsB.withStartingKey(new ContentKey());
         assertEquals(withDefaultsA, withStartingKey);
@@ -137,18 +138,18 @@ public class WebhookTest {
 
     @Test
     public void testIsTagPrototype() {
-        Webhook withDefaultsA = this.webhook.withDefaults();
+        Webhook withDefaultsA = this.webhook.withDefaults(CALLBACK_TIMEOUT_DEFAULT_IN_SEC);
         assertFalse(withDefaultsA.isTagPrototype());
         Webhook twh = Webhook.builder().name("name")
                 .callbackUrl("url")
                 .tagUrl("http://hub.com/tag/twh")
-                .build().withDefaults();
+                .build().withDefaults(CALLBACK_TIMEOUT_DEFAULT_IN_SEC);
         assertTrue(twh.isTagPrototype());
     }
 
     @Test
     public void testSecondaryMetricsReporting() {
-        Webhook withDefaults = this.webhook.withDefaults();
+        Webhook withDefaults = this.webhook.withDefaults(CALLBACK_TIMEOUT_DEFAULT_IN_SEC);
         assertFalse(withDefaults.isSecondaryMetricsReporting());
         String json = "{ \"secondaryMetricsReporting\": true }";
         Webhook newWebhook = Webhook.fromJson(json, Optional.of(withDefaults));

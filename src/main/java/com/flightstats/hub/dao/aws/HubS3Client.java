@@ -4,12 +4,27 @@ import com.amazonaws.AmazonWebServiceRequest;
 import com.amazonaws.SdkClientException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.S3ResponseMetadata;
-import com.amazonaws.services.s3.model.*;
+import com.amazonaws.services.s3.model.AbortMultipartUploadRequest;
+import com.amazonaws.services.s3.model.CompleteMultipartUploadRequest;
+import com.amazonaws.services.s3.model.CompleteMultipartUploadResult;
+import com.amazonaws.services.s3.model.DeleteObjectRequest;
+import com.amazonaws.services.s3.model.DeleteObjectsRequest;
+import com.amazonaws.services.s3.model.DeleteObjectsResult;
+import com.amazonaws.services.s3.model.GetObjectRequest;
+import com.amazonaws.services.s3.model.InitiateMultipartUploadRequest;
+import com.amazonaws.services.s3.model.InitiateMultipartUploadResult;
+import com.amazonaws.services.s3.model.ListObjectsRequest;
+import com.amazonaws.services.s3.model.ObjectListing;
+import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.s3.model.PutObjectResult;
+import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.SetBucketLifecycleConfigurationRequest;
+import com.amazonaws.services.s3.model.UploadPartRequest;
+import com.amazonaws.services.s3.model.UploadPartResult;
 import com.flightstats.hub.metrics.StatsdReporter;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,19 +32,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 public class HubS3Client {
 
-    private final static Logger logger = LoggerFactory.getLogger(HubS3Client.class);
-
-    @Inject
     private AmazonS3 s3Client;
-
-    @Inject
     private StatsdReporter statsdReporter;
-
-    @Inject
     private S3BucketName s3BucketName;
 
+    @Inject
     public HubS3Client(S3BucketName s3BucketName, AmazonS3 s3Client, StatsdReporter statsdReporter) {
         this.s3BucketName = s3BucketName;
         this.s3Client = s3Client;
@@ -45,12 +55,12 @@ public class HubS3Client {
 
     public void initialize() {
         String bucketName = s3BucketName.getS3BucketName();
-        logger.info("checking if bucket exists " + bucketName);
+        log.info("checking if bucket exists " + bucketName);
         if (s3Client.doesBucketExistV2(bucketName)) {
-            logger.info("bucket exists " + bucketName);
+            log.info("bucket exists " + bucketName);
             return;
         }
-        logger.error("EXITING! unable to find bucket " + bucketName);
+        log.error("EXITING! unable to find bucket " + bucketName);
         throw new RuntimeException("unable to find bucket " + bucketName);
     }
 

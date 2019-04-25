@@ -1,6 +1,6 @@
 package com.flightstats.hub.spoke;
 
-import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.config.SpokeProperty;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.exception.FailedWriteException;
 import com.flightstats.hub.metrics.ActiveTraces;
@@ -11,11 +11,10 @@ import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.Commander;
 import com.google.common.base.Optional;
-import com.google.inject.Inject;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
 import java.util.List;
@@ -23,15 +22,19 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.Function;
 
+@Slf4j
 public class SpokeContentDao {
+
     static final String GET_OLDEST_ITEM_COMMAND = "find %s -type f -printf '%%T+ %%p\\n' | sort | head -n 1";
     static final String GET_ITEM_COUNT_COMMAND = "find %s -type f | wc -l";
-    private static final Logger logger = LoggerFactory.getLogger(SpokeContentDao.class);
+
     private final Commander commander;
+    private SpokeProperty spokeProperty;
 
     @Inject
-    public SpokeContentDao(Commander commander) {
+    public SpokeContentDao(Commander commander, SpokeProperty spokeProperty) {
         this.commander = commander;
+        this.spokeProperty = spokeProperty;
     }
 
     public static SortedSet<ContentKey> insert(BulkContent bulkContent, Function<ByteArrayOutputStream, Boolean> inserter) throws Exception {
@@ -44,7 +47,7 @@ public class SpokeContentDao {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ObjectOutputStream stream = new ObjectOutputStream(baos);
             stream.writeInt(items.size());
-            logger.debug("writing {} items to master {}", items.size(), bulkContent.getMasterKey());
+            log.debug("writing {} items to master {}", items.size(), bulkContent.getMasterKey());
             for (Content content : items) {
                 content.packageStream();
                 String itemKey = content.getContentKey().get().toUrl();
@@ -57,25 +60,25 @@ public class SpokeContentDao {
             stream.flush();
             traces.add("writeBulk marshalled");
 
-            logger.trace("writing items {} to channel {}", items.size(), channelName);
+            log.trace("writing items {} to channel {}", items.size(), channelName);
             if (!inserter.apply(baos)) {
                 throw new FailedWriteException("unable to write bulk to spoke " + channelName);
             }
             traces.add("writeBulk completed", keys);
             return keys;
         } catch (ContentTooLargeException e) {
-            logger.info("content too large for channel " + channelName);
+            log.info("content too large for channel " + channelName);
             throw e;
         } catch (Exception e) {
             traces.add("SpokeContentDao", "error", e.getMessage());
-            logger.error("unable to write " + channelName, e);
+            log.error("unable to write " + channelName, e);
             throw e;
         }
     }
 
     Optional<ChannelContentKey> getOldestItem(SpokeStore store) {
-        String storePath = HubProperties.getSpokePath(store);
-        logger.trace("getting oldest item from " + storePath);
+        String storePath = spokeProperty.getPath(store);
+        log.trace("getting oldest item from " + storePath);
         // expected result format: YYYY-MM-DD+HH:MM:SS.SSSSSSSSSS /mnt/spoke/store/channel/yyyy/mm/dd/hh/mm/ssSSShash
         String command = String.format(GET_OLDEST_ITEM_COMMAND, storePath);
         int waitTimeSeconds = 3;
@@ -89,8 +92,8 @@ public class SpokeContentDao {
     }
 
     long getNumberOfItems(SpokeStore spokeStore) {
-        String storePath = HubProperties.getSpokePath(spokeStore);
-        logger.trace("getting the total number of items in " + storePath);
+        String storePath = spokeProperty.getPath(spokeStore);
+        log.trace("getting the total number of items in " + storePath);
         String command = String.format(GET_ITEM_COUNT_COMMAND, storePath);
         int waitTimeSeconds = 1;
         String result = StringUtils.chomp(commander.runInBash(command, waitTimeSeconds));

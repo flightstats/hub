@@ -1,6 +1,5 @@
 package com.flightstats.hub.replication;
 
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.webhook.Webhook;
@@ -14,11 +13,12 @@ public class S3BatchTest {
 
     @Test
     public void testBatchWebhookCreation() {
-        String appUrl = HubProperties.getAppUrl();
-        String appEnv = HubProperties.getAppEnv();
+        final String appUrl = "http://localhost:9080/";
+        final String appEnv = "hub-dev";
+
         HubUtils hubUtils = mock(HubUtils.class);
         ChannelConfig config = ChannelConfig.builder().name("test").build();
-        S3Batch batch = new S3Batch(config, hubUtils);
+        S3Batch batch = new S3Batch(config, hubUtils, appUrl, appEnv);
 
         Webhook webhook = batch.buildS3BatchWebhook();
 

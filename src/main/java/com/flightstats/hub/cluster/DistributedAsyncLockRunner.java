@@ -1,8 +1,8 @@
 package com.flightstats.hub.cluster;
 
-import com.google.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.inject.Inject;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;

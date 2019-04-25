@@ -1,9 +1,9 @@
 package com.flightstats.hub.dao;
 
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.InFlightService;
 import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.cluster.LastContentPath;
+import com.flightstats.hub.config.AppProperty;
 import com.flightstats.hub.dao.aws.MultiPartParser;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.exception.ForbiddenRequestException;
@@ -32,9 +32,8 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -48,6 +47,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Singleton
+@Slf4j
 public class ChannelService {
     /**
      * REPLICATED_LAST_UPDATED is set to the last second updated, inclusive of that entire second.
@@ -55,8 +55,6 @@ public class ChannelService {
     public static final String REPLICATED_LAST_UPDATED = "/ReplicatedLastUpdated/";
     private static final String HISTORICAL_EARLIEST = "/HistoricalEarliest/";
 
-    private final static Logger logger = LoggerFactory.getLogger(ChannelService.class);
-    private static final int DIR_COUNT_LIMIT = HubProperties.getProperty("app.directionCountLimit", 10000);
     @Inject
     private ContentService contentService;
     @Inject
@@ -74,13 +72,15 @@ public class ChannelService {
     private TimeService timeService;
     @Inject
     private StatsdReporter statsdReporter;
+    @Inject
+    private AppProperty appProperty;
 
     public boolean channelExists(String channelName) {
         return channelConfigDao.exists(channelName);
     }
 
     public ChannelConfig createChannel(ChannelConfig configuration) {
-        logger.info("create channel {}", configuration);
+        log.info("create channel {}", configuration);
         channelValidator.validate(configuration, null, false);
         channelConfigDao.upsert(configuration);
         notify(configuration, null);
@@ -107,13 +107,13 @@ public class ChannelService {
 
     public ChannelConfig updateChannel(ChannelConfig configuration, ChannelConfig oldConfig, boolean isLocalHost) {
         if (!configuration.equals(oldConfig)) {
-            logger.info("updating channel {} from {}", configuration, oldConfig);
+            log.info("updating channel {} from {}", configuration, oldConfig);
             channelValidator.validate(configuration, oldConfig, isLocalHost);
             channelConfigDao.upsert(configuration);
             TagWebhook.updateTagWebhooksDueToChannelConfigChange(configuration);
             notify(configuration, oldConfig);
         } else {
-            logger.info("update with no changes {}", configuration);
+            log.info("update with no changes {}", configuration);
         }
         return configuration;
     }
@@ -139,16 +139,16 @@ public class ChannelService {
                 checkZeroBytes(content, channelConfig);
                 traces.add("ContentService.insert marshalled");
                 ContentKey key = content.keyAndStart(timeService.getNow());
-                logger.trace("writing key {} to channel {}", key, channelName);
+                log.trace("writing key {} to channel {}", key, channelName);
                 key = contentService.insert(channelName, content);
                 traces.add("ContentService.insert end", key);
                 return key;
             } catch (ContentTooLargeException e) {
-                logger.info("content too large for channel " + channelName);
+                log.info("content too large for channel " + channelName);
                 throw e;
             } catch (Exception e) {
                 traces.add("ContentService.insert", "error", e.getMessage());
-                logger.warn("insertion error " + channelName, e);
+                log.warn("insertion error " + channelName, e);
                 throw e;
             }
         });
@@ -158,7 +158,7 @@ public class ChannelService {
     public boolean historicalInsert(String channelName, Content content) throws RuntimeException {
         final String normalizedChannelName = getDisplayName(channelName);
         if (!isHistorical(channelName)) {
-            logger.warn("historical inserts require a mutableTime on the channel. {}", normalizedChannelName);
+            log.warn("historical inserts require a mutableTime on the channel. {}", normalizedChannelName);
             throw new ForbiddenRequestException("historical inserts require a mutableTime on the channel.");
         }
         long start = System.currentTimeMillis();
@@ -170,7 +170,7 @@ public class ChannelService {
                 });
         if (contentKey.getTime().isAfter(channelConfig.getMutableTime())) {
             String msg = "historical inserts must not be after mutableTime" + normalizedChannelName + " " + contentKey;
-            logger.warn(msg);
+            log.warn(msg);
             throw new InvalidRequestException(msg);
         }
         boolean insert = inFlightService.inFlight(() -> {
@@ -197,7 +197,7 @@ public class ChannelService {
         }
         long start = System.currentTimeMillis();
         Collection<ContentKey> contentKeys = inFlightService.inFlight(() -> {
-            MultiPartParser multiPartParser = new MultiPartParser(bulkContent);
+            MultiPartParser multiPartParser = new MultiPartParser(bulkContent, appProperty.getMaxPayloadSizeInMB());
             multiPartParser.parse();
             return contentService.insert(bulkContent);
         });
@@ -335,7 +335,7 @@ public class ChannelService {
             return Collections.emptySortedSet();
         }
         String channelName = query.getChannelName();
-        ChannelConfig channelConfig  = getCachedChannelConfig(channelName)
+        ChannelConfig channelConfig = getCachedChannelConfig(channelName)
                 .orElse(null);
         query = query.withChannelName(getDisplayName(channelName));
         query = query.withChannelConfig(channelConfig);
@@ -371,8 +371,8 @@ public class ChannelService {
 
     private DirectionQuery configureQuery(DirectionQuery query) {
         ActiveTraces.getLocal().add("configureQuery.start", query);
-        if (query.getCount() > DIR_COUNT_LIMIT) {
-            query = query.withCount(DIR_COUNT_LIMIT);
+        if (query.getCount() > appProperty.getDirectionCountLimit()) {
+            query = query.withCount(appProperty.getDirectionCountLimit());
         }
         String channelName = query.getChannelName();
         ChannelConfig channelConfig = getExpectedCachedChannelConfig(channelName);

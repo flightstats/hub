@@ -1,41 +1,48 @@
 package com.flightstats.hub.spoke;
 
-import com.flightstats.hub.app.HubBindings;
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.cluster.Cluster;
 import com.flightstats.hub.cluster.SpokeDecommissionCluster;
+import com.flightstats.hub.config.AppProperty;
+import com.flightstats.hub.config.PropertyLoader;
+import com.flightstats.hub.config.SpokeProperty;
+import com.flightstats.hub.config.binding.HubBindings;
 import com.flightstats.hub.dao.ContentDaoUtil;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.Sleeper;
 import com.google.inject.Injector;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class SpokeWriteContentDaoTest {
 
-    private final static Logger logger = LoggerFactory.getLogger(SpokeWriteContentDaoTest.class);
     private static ContentDaoUtil util;
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        Injector injector = Integration.startAwsHub();
+
+        final Injector injector = Integration.startAwsHub();
         util = new ContentDaoUtil(injector.getInstance(SpokeWriteContentDao.class));
         CuratorFramework curator = injector.getInstance(CuratorFramework.class);
-        Cluster cluster = HubBindings.buildSpokeCluster(curator, new SpokeDecommissionCluster(curator));
+
+        final SpokeProperty spokeProperty = new SpokeProperty(PropertyLoader.getInstance());
+        Cluster cluster = HubBindings.buildSpokeCluster(curator,
+                new SpokeDecommissionCluster(curator, spokeProperty),
+                new AppProperty(PropertyLoader.getInstance()), spokeProperty);
+
         for (int i = 0; i < 10; i++) {
             if (cluster.getAllServers().size() == 0) {
-                logger.info("no servers yet...");
+                log.info("no servers yet...");
                 Sleeper.sleep(500);
             } else {
-                logger.info("servers {}", cluster.getAllServers());
+                log.info("servers {}", cluster.getAllServers());
                 return;
             }
         }
-        logger.info("no servers found");
+        log.info("no servers found");
     }
 
     @Test
@@ -66,7 +73,7 @@ public class SpokeWriteContentDaoTest {
 
     @Test
     public void testDirectionQuery() throws Exception {
-        HubProperties.setProperty("spoke.write.ttlMinutes", "240");
+        PropertyLoader.getInstance().setProperty("spoke.write.ttlMinutes", "240");
         util.testDirectionQueryTTL();
     }
 

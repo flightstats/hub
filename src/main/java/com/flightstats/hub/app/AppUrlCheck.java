@@ -1,44 +1,52 @@
 package com.flightstats.hub.app;
 
 import com.flightstats.hub.cluster.Cluster;
+import com.flightstats.hub.config.AppProperty;
 import com.flightstats.hub.rest.RestClient;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
+
+import javax.inject.Inject;
 
 @Singleton
-class AppUrlCheck extends AbstractIdleService {
+@Slf4j
+public class AppUrlCheck extends AbstractIdleService {
 
-    private final static Logger logger = LoggerFactory.getLogger(AppUrlCheck.class);
+    private Client client = RestClient.createClient(
+            1000,
+            1000,
+            true,
+            true);
+
+    private Cluster cluster;
+    private AppProperty appProperty;
 
     @Inject
-    @Named("HubCluster")
-    private Cluster cluster;
-
-    private Client client = RestClient.createClient(1000, 1000, true, true);
-
-    public AppUrlCheck() {
+    public AppUrlCheck(@Named("HubCluster") Cluster cluster,
+                       AppProperty appProperty) {
+        this.cluster = cluster;
+        this.appProperty = appProperty;
         HubServices.register(this);
     }
 
+
     @Override
-    protected void startUp() throws Exception {
+    protected void startUp() {
         if (hasHealthyServers()) {
-            String appUrl = HubProperties.getAppUrl();
+            String appUrl = appProperty.getAppUrl();
             ClientResponse response = client.resource(appUrl).get(ClientResponse.class);
-            logger.info("got response {}", response);
+            log.info("got response {}", response);
             if (response.getStatus() != 200) {
                 String msg = "unable to connect to app.url " + appUrl + " status=" + response.getStatus();
-                logger.error(msg);
+                log.error(msg);
                 throw new RuntimeException(msg);
             }
         } else {
-            logger.info("no servers to test");
+            log.info("no servers to test");
         }
     }
 
@@ -47,12 +55,12 @@ class AppUrlCheck extends AbstractIdleService {
             String serverUri = HubHost.getScheme() + server;
             if (!serverUri.equals(HubHost.getLocalHttpNameUri())) {
                 ClientResponse response = client.resource(serverUri + "/health").get(ClientResponse.class);
-                logger.info("got response {}", response);
+                log.info("got response {}", response);
                 if (response.getStatus() == 200) {
                     return true;
                 }
             } else {
-                logger.info("ignoring {}", serverUri);
+                log.info("ignoring {}", serverUri);
             }
         }
         return false;

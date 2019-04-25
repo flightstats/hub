@@ -1,6 +1,5 @@
 package com.flightstats.hub.replication;
 
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.HubUtils;
@@ -11,9 +10,16 @@ class ChannelReplicator implements Replicator {
     private static final HubUtils hubUtils = HubProvider.getInstance(HubUtils.class);
 
     private ChannelConfig channel;
+    private String appUrl;
+    private String appEnv;
 
-    ChannelReplicator(ChannelConfig channel) {
+
+    ChannelReplicator(ChannelConfig channel,
+                      String appUrl,
+                      String appEnv) {
         this.channel = channel;
+        this.appUrl = appUrl;
+        this.appEnv = appEnv;
     }
 
     public void start() {
@@ -28,11 +34,11 @@ class ChannelReplicator implements Replicator {
     }
 
     private String getCallbackUrl() {
-        return HubProperties.getAppUrl() + "internal/repls/" + channel.getDisplayName();
+        return appUrl + "internal/repls/" + channel.getDisplayName();
     }
 
     private String getGroupName() {
-        return "Repl_" + HubProperties.getAppEnv() + "_" + channel.getDisplayName();
+        return "Repl_" + appEnv + "_" + channel.getDisplayName();
     }
 
     public ChannelConfig getChannel() {

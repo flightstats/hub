@@ -3,9 +3,10 @@ package com.flightstats.hub.channel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.app.LocalHostOnly;
+import com.flightstats.hub.config.AppProperty;
+import com.flightstats.hub.config.PropertyLoader;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.events.ContentOutput;
 import com.flightstats.hub.events.EventsService;
@@ -20,6 +21,7 @@ import com.flightstats.hub.rest.Linked;
 import com.flightstats.hub.rest.PATCH;
 import com.flightstats.hub.time.NtpMonitor;
 import com.flightstats.hub.util.Sleeper;
+import com.google.inject.Inject;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -62,6 +64,7 @@ public class ChannelResource {
     private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
     private final static NtpMonitor ntpMonitor = HubProvider.getInstance(NtpMonitor.class);
     private final static EventsService eventsService = HubProvider.getInstance(EventsService.class);
+    private AppProperty appProperty = new AppProperty(PropertyLoader.getInstance());
     @Context
     private UriInfo uriInfo;
 
@@ -268,7 +271,7 @@ public class ChannelResource {
         if (!optionalChannelConfig.isPresent()) {
             return notFound(channelName);
         }
-        if (HubProperties.isProtected() || optionalChannelConfig.get().isProtect()) {
+        if (appProperty.isProtected() || optionalChannelConfig.get().isProtect()) {
             log.info("using localhost only to delete {}", channelName);
             return LocalHostOnly.getResponse(uriInfo, () -> deletion(channelName));
         }
