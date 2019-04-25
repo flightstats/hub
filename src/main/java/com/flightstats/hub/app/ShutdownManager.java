@@ -1,6 +1,5 @@
 package com.flightstats.hub.app;
 
-import com.flightstats.hub.dao.aws.S3WriteQueue;
 import com.flightstats.hub.health.HubHealthCheck;
 import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.util.Sleeper;
@@ -10,8 +9,6 @@ import com.google.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.Executors;
 
