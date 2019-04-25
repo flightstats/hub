@@ -158,12 +158,15 @@ public class HubMain {
     }
 
     private List<Service> getBeforeHealthCheckServices(Injector injector) {
-        return Stream.of(
-                S3WriteQueueLifecycle.class,
+        List<Service> services = Stream.of(
                 InfluxdbReporterLifecycle.class,
                 StatsDReporterLifecycle.class)
                 .map(injector::getInstance)
                 .collect(Collectors.toList());
+        if (storageBackend == StorageBackend.aws) {
+            services.add(injector.getInstance(S3WriteQueueLifecycle.class));
+        }
+        return services;
     }
 
     private List<Service> getAfterHealthCheckServices(Injector injector) {
