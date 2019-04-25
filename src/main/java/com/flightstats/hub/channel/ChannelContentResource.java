@@ -3,7 +3,6 @@ package com.flightstats.hub.channel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentMarshaller;
@@ -75,7 +74,7 @@ import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 
 @Path("/channel/{channel}/{Y}/{M}/{D}/")
 public class ChannelContentResource {
-    public static final String THREADS = HubProperties.getProperty("s3.large.threads", "3");
+
     static final String CREATION_DATE = "Creation-Date";
     private final static Logger logger = LoggerFactory.getLogger(ChannelContentResource.class);
     private final static TagContentResource tagContentResource = HubProvider.getInstance(TagContentResource.class);

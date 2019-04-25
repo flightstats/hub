@@ -1,10 +1,11 @@
 package com.flightstats.hub.cluster;
 
-import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.config.AppProperty;
+import com.flightstats.hub.config.SpokeProperty;
 import com.flightstats.hub.util.StringUtils;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
@@ -12,19 +13,19 @@ import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.net.UnknownHostException;
-import java.util.*;
+import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executor;
 
 @Singleton
+@Slf4j
 public class CuratorCluster implements Cluster {
 
-    private final static Logger logger = LoggerFactory.getLogger(CuratorCluster.class);
-
-    private final static int WRITE_FACTOR = HubProperties.getProperty("spoke.write.factor", 3);
     private final CuratorFramework curator;
     private final String clusterPath;
     private final boolean useName;
@@ -32,10 +33,17 @@ public class CuratorCluster implements Cluster {
     private boolean checkReadOnly;
     private DecommissionCluster decommissionCluster;
     private String fullPath;
+    private AppProperty appProperty;
+    private SpokeProperty spokeProperty;
 
     @Inject
-    public CuratorCluster(CuratorFramework curator, String clusterPath, boolean useName,
-                          boolean checkReadOnly, DecommissionCluster decommissionCluster) throws Exception {
+    public CuratorCluster(CuratorFramework curator,
+                          String clusterPath,
+                          boolean useName,
+                          boolean checkReadOnly,
+                          DecommissionCluster decommissionCluster,
+                          AppProperty appProperty,
+                          SpokeProperty spokeProperty) throws Exception {
         this.curator = curator;
         this.clusterPath = clusterPath;
         this.useName = useName;
@@ -43,11 +51,13 @@ public class CuratorCluster implements Cluster {
         this.decommissionCluster = decommissionCluster;
         clusterCache = new PathChildrenCache(curator, clusterPath, true);
         clusterCache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
+        this.appProperty = appProperty;
+        this.spokeProperty = spokeProperty;
     }
 
     public void addCacheListener() {
         addListener((client, event) -> {
-            logger.debug("event {} {}", event, clusterPath);
+            log.debug("event {} {}", event, clusterPath);
             if (event.getType().equals(PathChildrenCacheEvent.Type.CONNECTION_RECONNECTED)) {
                 register();
             }
@@ -62,35 +72,35 @@ public class CuratorCluster implements Cluster {
         clusterCache.getListenable().addListener(listener, executor);
     }
 
-    public void register() throws UnknownHostException {
-        if (checkReadOnly && HubProperties.isReadOnly()) {
-            logger.info("this hub is read only, not registering");
+    public void register() {
+        if (checkReadOnly && appProperty.isReadOnly()) {
+            log.info("this hub is read only, not registering");
             return;
         }
         String host = Cluster.getHost(useName);
         try {
-            logger.info("registering host {} {}", host, clusterPath);
+            log.info("registering host {} {}", host, clusterPath);
             curator.create().withMode(CreateMode.EPHEMERAL).forPath(getFullPath(), host.getBytes());
         } catch (KeeperException.NodeExistsException e) {
-            logger.warn("node already exists {} {} - not likely in prod", host, clusterPath);
+            log.warn("node already exists {} {} - not likely in prod", host, clusterPath);
         } catch (Exception e) {
-            logger.error("unable to register, should die", host, clusterPath, e);
+            log.error("unable to register, should die", host, clusterPath, e);
             throw new RuntimeException(e);
         }
     }
 
-    private String getFullPath() throws UnknownHostException {
+    private String getFullPath() {
         fullPath = clusterPath + "/" + Cluster.getHost(useName) + StringUtils.randomAlphaNumeric(6);
         return fullPath;
     }
 
     public List<String> getWriteServers() {
         List<String> servers = decommissionCluster.filter(getAllServers());
-        if (servers.size() <= WRITE_FACTOR) {
+        if (servers.size() <= spokeProperty.getWriteFactor()) {
             return servers;
         } else {
             Collections.shuffle(servers);
-            return servers.subList(0, WRITE_FACTOR);
+            return servers.subList(0, spokeProperty.getWriteFactor());
         }
     }
 
@@ -102,7 +112,7 @@ public class CuratorCluster implements Cluster {
             servers.add(new String(childData.getData()));
         }
         if (servers.isEmpty()) {
-            logger.warn("returning empty collection");
+            log.warn("returning empty collection");
         }
         return servers;
     }
@@ -120,13 +130,13 @@ public class CuratorCluster implements Cluster {
 
     public void delete() {
         try {
-            logger.info("removing host from cluster {} {}", Cluster.getHost(useName), fullPath);
+            log.info("removing host from cluster {} {}", Cluster.getHost(useName), fullPath);
             curator.delete().forPath(fullPath);
-            logger.info("deleted host from cluster {} {}", Cluster.getHost(useName), fullPath);
+            log.info("deleted host from cluster {} {}", Cluster.getHost(useName), fullPath);
         } catch (KeeperException.NoNodeException e) {
-            logger.info("no node for" + fullPath);
+            log.info("no node for" + fullPath);
         } catch (Exception e) {
-            logger.warn("unable to delete " + fullPath, e);
+            log.warn("unable to delete " + fullPath, e);
         }
     }
 

@@ -1,7 +1,16 @@
 package com.flightstats.hub.dao.aws;
 
-import com.amazonaws.*;
-import com.amazonaws.auth.*;
+import com.amazonaws.AmazonClientException;
+import com.amazonaws.AmazonWebServiceRequest;
+import com.amazonaws.ClientConfiguration;
+import com.amazonaws.Protocol;
+import com.amazonaws.SdkBaseException;
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.AWSCredentialsProviderChain;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.auth.PropertiesCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.retry.PredefinedRetryPolicies;
 import com.amazonaws.retry.RetryPolicy;
@@ -12,42 +21,72 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.flightstats.hub.app.HubProperties;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.flightstats.hub.config.AwsProperty;
+import com.flightstats.hub.config.DynamoProperty;
+import com.flightstats.hub.config.S3Property;
+import com.google.inject.Inject;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.UnknownHostException;
 
 import static com.amazonaws.retry.PredefinedBackoffStrategies.EqualJitterBackoffStrategy;
 import static com.amazonaws.retry.PredefinedBackoffStrategies.FullJitterBackoffStrategy;
 
+@Slf4j
 public class AwsConnectorFactory {
 
-    private final static Logger logger = LoggerFactory.getLogger(AwsConnectorFactory.class);
+    private AwsProperty awsProperty;
+    private DynamoProperty dynamoProperty;
+    private S3Property s3Property;
 
-    private final String dynamoEndpoint = HubProperties.getProperty("dynamo.endpoint", "dynamodb.us-east-1.amazonaws.com");
-    private final String s3Endpoint = HubProperties.getProperty("s3.endpoint", "s3-external-1.amazonaws.com");
-    private final String protocol = HubProperties.getProperty("aws.protocol", "HTTP");
-    private final String signingRegion = HubProperties.getSigningRegion();
+    private final String signingRegion;
+    private final String protocol;
 
-    public AmazonS3 getS3Client() throws IOException {
-        logger.info("creating for  " + protocol + " " + s3Endpoint + " " + signingRegion);
+    @Inject
+    public AwsConnectorFactory(AwsProperty awsProperty, DynamoProperty dynamoProperty, S3Property s3Property) {
+        this.awsProperty = awsProperty;
+        this.dynamoProperty = dynamoProperty;
+        this.s3Property = s3Property;
+
+        this.signingRegion = awsProperty.getSigningRegion();
+        this.protocol = awsProperty.getProtocol();
+    }
+
+    public AmazonS3 getS3Client() {
+        log.info("creating for  {} {} {}", protocol, s3Property.getEndpoint(), signingRegion);
+
+        final ClientConfiguration clientConfiguration = getClientConfiguration(
+                s3Property.getMaxConnections(),
+                s3Property.getConnectionTimeout(),
+                s3Property.getSocketTimeout(),
+                true);
+
+        log.info("using s3 config {}", clientConfiguration);
+
         return AmazonS3ClientBuilder.standard()
-                .withClientConfiguration(getClientConfiguration("s3", true))
-                .withPathStyleAccessEnabled(HubProperties.getProperty("s3.pathStyleAccessEnable", false))
-                .withChunkedEncodingDisabled(HubProperties.getProperty("s3.disableChunkedEncoding", false))
-                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(s3Endpoint, signingRegion))
+                .withClientConfiguration(clientConfiguration)
+                .withPathStyleAccessEnabled(s3Property.getPathStyleAccessEnable())
+                .withChunkedEncodingDisabled(s3Property.getDisableChunkedEncoding())
+                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(s3Property.getEndpoint(), signingRegion))
                 .withCredentials(getAwsCredentials())
                 .build();
     }
 
-    public AmazonDynamoDB getDynamoClient() throws IOException {
-        logger.info("creating for  " + protocol + " " + dynamoEndpoint + " " + signingRegion);
+    public AmazonDynamoDB getDynamoClient() {
+        log.info("creating for {} {} {}", protocol, dynamoProperty.getEndpoint(), signingRegion);
+
+        final ClientConfiguration clientConfiguration = getClientConfiguration(
+                dynamoProperty.getMaxConnections(),
+                dynamoProperty.getConnectionTimeout(),
+                dynamoProperty.getSocketTimeout(),
+                false);
+
+        log.info("using dynamo config {}", clientConfiguration);
+
         return AmazonDynamoDBClientBuilder.standard()
-                .withClientConfiguration(getClientConfiguration("dynamo", false))
-                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(dynamoEndpoint, signingRegion))
+                .withClientConfiguration(clientConfiguration)
+                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(dynamoProperty.getEndpoint(), signingRegion))
                 .withCredentials(getAwsCredentials())
                 .build();
     }
@@ -55,29 +94,28 @@ public class AwsConnectorFactory {
     private AWSCredentialsProviderChain getAwsCredentials() {
         return new AWSCredentialsProviderChain(
                 new DefaultAWSCredentialsProviderChain(),
-                new AWSStaticCredentialsProvider(loadTestCredentials(HubProperties.getProperty("aws.credentials", "hub_test_credentials.properties"))));
+                new AWSStaticCredentialsProvider(loadTestCredentials(awsProperty.getCredentialsFile())));
     }
 
     private AWSCredentials loadTestCredentials(String credentialsPath) {
-        logger.info("loading test credentials " + credentialsPath);
+        log.info("loading test credentials " + credentialsPath);
         try {
             return new PropertiesCredentials(new File(credentialsPath));
         } catch (Exception e) {
-            logger.info("unable to load test credentials " + credentialsPath + " " + e.getMessage());
+            log.info("unable to load test credentials " + credentialsPath + " " + e.getMessage());
             return new BasicAWSCredentials("noKey", "noSecret");
         }
     }
 
-    private ClientConfiguration getClientConfiguration(String name, boolean compress) {
-        RetryPolicy retryPolicy = new RetryPolicy(new HubRetryCondition(), new HubBackoffStrategy(), 6, true);
+    private ClientConfiguration getClientConfiguration(int maxConnections, int connectionTimeout, int socketTimeout, boolean compress) {
+        RetryPolicy retryPolicy = new RetryPolicy(new HubRetryCondition(), new HubBackoffStrategy(awsProperty), 6, true);
         ClientConfiguration configuration = new ClientConfiguration()
-                .withMaxConnections(HubProperties.getProperty(name + ".maxConnections", 50))
+                .withMaxConnections(maxConnections)
                 .withRetryPolicy(retryPolicy)
                 .withGzip(compress)
                 .withProtocol(Protocol.valueOf(protocol))
-                .withConnectionTimeout(HubProperties.getProperty(name + ".connectionTimeout", 10 * 1000))
-                .withSocketTimeout(HubProperties.getProperty(name + ".socketTimeout", 30 * 1000));
-        logger.info("using config {} {}", name, configuration);
+                .withConnectionTimeout(connectionTimeout)
+                .withSocketTimeout(socketTimeout);
         return configuration;
     }
 
@@ -88,11 +126,14 @@ public class AwsConnectorFactory {
 
         private final BackoffStrategy fullJitterBackoffStrategy;
         private final BackoffStrategy equalJitterBackoffStrategy;
-        int unknownHostDelay = HubProperties.getProperty("aws.retry.unknown.host.delay.millis", 5000);
+        private int unknownHostDelay;
 
-        HubBackoffStrategy() {
-            int delayMillis = HubProperties.getProperty("aws.retry.delay.millis", 100);
-            int maxBackoffTime = HubProperties.getProperty("aws.retry.max.delay.millis", 20 * 1000);
+        HubBackoffStrategy(AwsProperty awsProperty) {
+            this.unknownHostDelay = awsProperty.getRetryUnknownHostDelayInMillis();
+
+            int delayMillis = awsProperty.getRetryDelayInMillis();
+            int maxBackoffTime = awsProperty.getRetryMaxDelayInMillis();
+
             fullJitterBackoffStrategy = new FullJitterBackoffStrategy(delayMillis, maxBackoffTime);
             equalJitterBackoffStrategy = new EqualJitterBackoffStrategy(delayMillis * 10, maxBackoffTime);  // bc doubling base delay
         }
@@ -125,7 +166,7 @@ public class AwsConnectorFactory {
 
         @Override
         public boolean shouldRetry(AmazonWebServiceRequest originalRequest, AmazonClientException exception, int retriesAttempted) {
-            logger.warn("exception {} from request {} attempts {}", exception, originalRequest, retriesAttempted);
+            log.warn("exception {} from request {} attempts {}", exception, originalRequest, retriesAttempted);
             return retryCondition.shouldRetry(originalRequest, exception, retriesAttempted);
         }
 

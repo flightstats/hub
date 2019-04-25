@@ -1,45 +1,54 @@
 package com.flightstats.hub.metrics;
 
 import com.flightstats.hub.app.HubHost;
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubVersion;
-import com.google.inject.Inject;
+import com.flightstats.hub.config.AppProperty;
+import com.flightstats.hub.config.DatadogMetricsProperty;
+import com.flightstats.hub.config.TickMetricsProperty;
 import com.google.inject.Provider;
 
+import javax.inject.Inject;
+
 public class MetricsConfigProvider implements Provider<MetricsConfig> {
+
     private HubVersion hubVersion;
+    private AppProperty appProperty;
+    private TickMetricsProperty tickMetricsProperty;
+    private DatadogMetricsProperty datadogMetricsProperty;
 
     @Inject
-    public MetricsConfigProvider(HubVersion hubVersion) {
+    public MetricsConfigProvider(HubVersion hubVersion,
+                                 AppProperty appProperty,
+                                 TickMetricsProperty tickMetricsProperty,
+                                 DatadogMetricsProperty datadogMetricsProperty) {
         this.hubVersion = hubVersion;
+        this.appProperty = appProperty;
+        this.tickMetricsProperty = tickMetricsProperty;
+        this.datadogMetricsProperty = datadogMetricsProperty;
     }
 
     @Override
-    public  MetricsConfig get() {
+    public MetricsConfig get() {
         return MetricsConfig.builder()
                 .appVersion(hubVersion.getVersion())
-                .clusterTag(
-                        HubProperties.getProperty("cluster.location", "local") +
-                                "-" +
-                                HubProperties.getProperty("app.environment", "dev")
-                )
-                .env(HubProperties.getProperty("app.environment", "dev"))
-                .enabled(HubProperties.getProperty("metrics.enable", false))
+                .clusterTag(appProperty.getClusterLocation() + "-" + appProperty.getEnv())
+                .env(appProperty.getEnv())
+                .enabled(tickMetricsProperty.isMetricsEnable())
+                .team(tickMetricsProperty.getMetricsTagsTeam())
+                .role(tickMetricsProperty.getMetricsTagsRole())
+                .reportingIntervalSeconds(tickMetricsProperty.getMetricsSeconds())
                 .hostTag(HubHost.getLocalName())
-                .influxdbDatabaseName(HubProperties.getProperty("metrics.influxdb.database.name", "hub_tick"))
-                .influxdbHost(HubProperties.getProperty("metrics.influxdb.host", "localhost"))
-                .influxdbPass(HubProperties.getProperty("metrics.influxdb.database.password", ""))
-                .influxdbPort(HubProperties.getProperty("metrics.influxdb.port", 8086))
-                .influxdbProtocol(HubProperties.getProperty("metrics.influxdb.protocol", "http"))
-                .influxdbUser(HubProperties.getProperty("metrics.influxdb.database.user", ""))
-                .reportingIntervalSeconds(HubProperties.getProperty("metrics.seconds", 15))
-                .role(HubProperties.getProperty("metrics.tags.role", "hub"))
-                .statsdPort(HubProperties.getProperty("metrics.statsd.port", 8124))
-                .dogstatsdPort(HubProperties.getProperty("metrics.dogstatsd.port", 8125))
-                .datadogApiUrl(HubProperties.getProperty("metrics.datadog.url", "https://app.datadoghq.com/api/v1"))
-                .dataDogAppKey(HubProperties.getProperty("metrics.data_dog.app_key", ""))
-                .dataDogAPIKey(HubProperties.getProperty("metrics.data_dog.api_key", ""))
-                .team(HubProperties.getProperty("metrics.tags.team", "development"))
+                .influxdbDatabaseName(tickMetricsProperty.getInfluxDbName())
+                .influxdbHost(tickMetricsProperty.getInfluxDbHost())
+                .influxdbPass(tickMetricsProperty.getInfluxDbPassword())
+                .influxdbPort(tickMetricsProperty.getInfluxDbPort())
+                .influxdbProtocol(tickMetricsProperty.getInfluxDbProtocol())
+                .influxdbUser(tickMetricsProperty.getInfluxDbUser())
+                .statsdPort(tickMetricsProperty.getStatsdPort())
+                .dogstatsdPort(datadogMetricsProperty.getStatsdPort())
+                .datadogApiUrl(datadogMetricsProperty.getUrl())
+                .dataDogAppKey(datadogMetricsProperty.getAppKey())
+                .dataDogAPIKey(datadogMetricsProperty.getApiKey())
                 .build();
     }
 }

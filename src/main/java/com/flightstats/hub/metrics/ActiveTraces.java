@@ -2,25 +2,24 @@ package com.flightstats.hub.metrics;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.config.AppProperty;
+import com.flightstats.hub.config.PropertyLoader;
 import com.flightstats.hub.util.ObjectRing;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Collection;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Slf4j
 public class ActiveTraces {
 
-    private final static Logger logger = LoggerFactory.getLogger(ActiveTraces.class);
-
+    private static final AppProperty appProperty = new AppProperty(PropertyLoader.getInstance());
     private static final Map<String, Traces> activeTraces = new ConcurrentHashMap<>();
     private static final ObjectRing<Traces> recent = new ObjectRing<>(100);
     private static final TopSortedSet<Traces> slowest = new TopSortedSet<>(100, Traces::getTime, new DescendingTracesComparator());
     private static final ThreadLocal<Traces> threadLocal = new ThreadLocal<>();
-    private static long logSlowTraces = HubProperties.getProperty("logSlowTracesSeconds", 10) * 1000;
 
     public static void start(Object... objects) {
         start(new Traces(objects));
@@ -29,7 +28,7 @@ public class ActiveTraces {
     private static void start(Traces traces) {
         activeTraces.put(traces.getId(), traces);
         setLocal(traces);
-        logger.trace("setting {}", traces);
+        log.trace("setting {}", traces);
     }
 
     public static boolean end() {
@@ -39,14 +38,14 @@ public class ActiveTraces {
     public static boolean end(boolean trace, int status) {
         Traces traces = threadLocal.get();
         if (null == traces) {
-            logger.trace("no Traces found");
+            log.trace("no Traces found");
             return false;
         } else {
-            logger.trace("removing {}", traces.getId());
+            log.trace("removing {}", traces.getId());
             activeTraces.remove(traces.getId());
             threadLocal.remove();
             traces.end(status);
-            traces.log(logSlowTraces, trace, logger);
+            traces.log(appProperty.getLogSlowTracesInSec(), trace, log);
             recent.put(traces);
             slowest.add(traces);
             return true;
@@ -56,7 +55,7 @@ public class ActiveTraces {
     public static Traces getLocal() {
         Traces traces = threadLocal.get();
         if (traces == null) {
-            traces = new Traces("error: missing initial context");
+            traces = new Traces(appProperty, "error: missing initial context");
             StackTraceElement[] elements = new Exception().getStackTrace();
             for (StackTraceElement element : elements) {
                 traces.add(element.toString());

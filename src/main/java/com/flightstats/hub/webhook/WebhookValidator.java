@@ -1,19 +1,32 @@
 package com.flightstats.hub.webhook;
 
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.channel.ChannelValidator;
+import com.flightstats.hub.config.AppProperty;
+import com.flightstats.hub.config.WebhookProperty;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.util.RequestUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import javax.inject.Inject;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import static com.flightstats.hub.app.StorageBackend.aws;
+
 public class WebhookValidator {
 
-    private static void isValidCallbackTimeoutSeconds(int value) {
-        int minimum = HubProperties.getCallbackTimeoutMin();
-        int maximum = HubProperties.getCallbackTimeoutMax();
+    private AppProperty appProperty;
+    private WebhookProperty webhookProperty;
+
+    @Inject
+    public WebhookValidator(AppProperty appProperty, WebhookProperty webhookProperty) {
+        this.appProperty = appProperty;
+        this.webhookProperty = webhookProperty;
+    }
+
+    private void isValidCallbackTimeoutSeconds(int value) {
+        int minimum = this.webhookProperty.getCallbackTimeoutMin();
+        int maximum = this.webhookProperty.getCallbackTimeoutMax();
         if (isOutsideRange(value, minimum, maximum)) {
             throw new InvalidRequestException("callbackTimeoutSeconds must be between " + minimum + " and " + maximum);
         }
@@ -64,12 +77,11 @@ public class WebhookValidator {
             throw new InvalidRequestException("{\"error\": \"SINGLE webhooks can not have a heartbeat'\"}");
         }
         isValidCallbackTimeoutSeconds(webhook.getCallbackTimeoutSeconds());
-        if (HubProperties.getProperty("hub.type", "aws").equals("aws")) {
+        if (appProperty.getHubType().equals(aws.name())) {
             if (webhook.getCallbackUrl().toLowerCase().contains("localhost")) {
                 throw new InvalidRequestException("{\"error\": \"A callbackUrl to localhost will never succeed.\"}");
             }
         }
-
 
     }
 }

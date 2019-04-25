@@ -1,6 +1,7 @@
 package com.flightstats.hub.util;
 
-import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.config.AppProperty;
+import com.flightstats.hub.config.PropertyLoader;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Duration;
@@ -10,6 +11,8 @@ import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 
 public class TimeUtil {
+
+    private static final AppProperty appProperty = new AppProperty(PropertyLoader.getInstance());
     public static final DateTimeFormatter FORMATTER = ISODateTimeFormat.dateTime().withZoneUTC();
     public static final DateTime BIG_BANG = new DateTime(1, DateTimeZone.UTC);
 
@@ -22,7 +25,7 @@ public class TimeUtil {
     private static final int stableSeconds;
 
     static {
-        stableSeconds = HubProperties.getProperty("app.stable_seconds", 5);
+        stableSeconds = appProperty.getStableSeconds();
     }
 
     public static DateTime now() {
@@ -74,7 +77,7 @@ public class TimeUtil {
     }
 
     static DateTime getBirthDay() {
-        String property = HubProperties.getProperty("app.birthDay", "2015/01/01");
+        String property = appProperty.getAppBirthday();
         return daysFormatter.parseDateTime(property);
     }
 

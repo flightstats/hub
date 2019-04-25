@@ -1,10 +1,11 @@
 package com.flightstats.hub.cluster;
 
-import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.config.SpokeProperty;
 import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.util.TimeUtil;
-import com.google.inject.Inject;
+
 import com.google.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
@@ -13,25 +14,27 @@ import org.apache.zookeeper.data.Stat;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Duration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 @Singleton
+@Slf4j
 public class SpokeDecommissionCluster implements DecommissionCluster {
-
-    private static final Logger logger = LoggerFactory.getLogger(SpokeDecommissionManager.class);
+    
     private static final String WITHIN_SPOKE = "/SpokeDecommission/withinSpokeTtl";
     private static final String DO_NOT_RESTART = "/SpokeDecommission/doNotRestart";
     private final CuratorFramework curator;
     private final PathChildrenCache withinSpokeCache;
+    private SpokeProperty spokeProperty;
 
     @Inject
-    public SpokeDecommissionCluster(CuratorFramework curator) throws Exception {
+    public SpokeDecommissionCluster(CuratorFramework curator,
+                                    SpokeProperty spokeProperty) throws Exception {
         this.curator = curator;
+        this.spokeProperty = spokeProperty;
         withinSpokeCache = new PathChildrenCache(curator, WITHIN_SPOKE, true);
         withinSpokeCache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
     }
@@ -44,12 +47,12 @@ public class SpokeDecommissionCluster implements DecommissionCluster {
 
     void decommission() throws Exception {
         String server = getLocalhost();
-        logger.info("decommissioning" + withinSpokeKey(server));
+        log.info("decommissioning" + withinSpokeKey(server));
         if (!withinSpokeExists(server) && !doNotRestartExists(server)) {
-            logger.info("creating " + withinSpokeKey(server));
+            log.info("creating " + withinSpokeKey(server));
             curator.create().creatingParentsIfNeeded().forPath(withinSpokeKey(server), server.getBytes());
         }
-        logger.info("decommission started " + withinSpokeKey(server));
+        log.info("decommission started " + withinSpokeKey(server));
     }
 
     boolean withinSpokeExists() throws Exception {
@@ -120,7 +123,7 @@ public class SpokeDecommissionCluster implements DecommissionCluster {
 
     long getDoNotRestartMinutes() throws Exception {
         DateTime creationTime = new DateTime(withinSpokeStat(getLocalhost()).getCtime(), DateTimeZone.UTC);
-        DateTime ttlDateTime = TimeUtil.now().minusMinutes(HubProperties.getSpokeTtlMinutes(SpokeStore.WRITE));
+        DateTime ttlDateTime = TimeUtil.now().minusMinutes(spokeProperty.getTtlMinutes(SpokeStore.WRITE));
         return new Duration(ttlDateTime, creationTime).getStandardMinutes();
     }
 
@@ -128,29 +131,29 @@ public class SpokeDecommissionCluster implements DecommissionCluster {
         try {
             String localhost = getLocalhost();
             createQuietly(doNotRestartKey(localhost), localhost.getBytes());
-            logger.info("deleting key " + withinSpokeKey(localhost));
+            log.info("deleting key " + withinSpokeKey(localhost));
             deleteQuietly(withinSpokeKey(localhost));
-            logger.info("doNotRestart complete");
+            log.info("doNotRestart complete");
         } catch (Exception e) {
-            logger.warn("unable to complete ", e);
+            log.warn("unable to complete ", e);
         }
     }
 
     private void createQuietly(String key, byte[] bytes) throws Exception {
         try {
-            logger.info("creating key " + key);
+            log.info("creating key " + key);
             curator.create().creatingParentsIfNeeded().forPath(key, bytes);
         } catch (KeeperException.NodeExistsException e) {
-            logger.info(" key already exists " + key);
+            log.info(" key already exists " + key);
         }
     }
 
     private void deleteQuietly(String key) throws Exception {
         try {
-            logger.info("deleting key " + key);
+            log.info("deleting key " + key);
             curator.delete().forPath(key);
         } catch (Exception e) {
-            logger.info(" issue trying to delete " + key, e);
+            log.info(" issue trying to delete " + key, e);
         }
     }
 }

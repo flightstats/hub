@@ -1,6 +1,7 @@
 package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.cluster.LastContentPath;
+import com.flightstats.hub.config.WebhookProperty;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.exception.ConflictException;
@@ -28,20 +29,26 @@ public class WebhookService {
     private final WebhookManager webhookManager;
     private final LastContentPath lastContentPath;
     private ChannelService channelService;
+    private WebhookProperty webhookProperty;
 
     @Inject
-    public WebhookService(@Named("Webhook") Dao<Webhook> webhookDao, WebhookValidator webhookValidator,
-                          WebhookManager webhookManager, LastContentPath lastContentPath, ChannelService channelService) {
+    public WebhookService(@Named("Webhook") Dao<Webhook> webhookDao,
+                          WebhookValidator webhookValidator,
+                          WebhookManager webhookManager,
+                          LastContentPath lastContentPath,
+                          ChannelService channelService,
+                          WebhookProperty webhookProperty) {
         this.webhookDao = webhookDao;
         this.webhookValidator = webhookValidator;
         this.webhookManager = webhookManager;
         this.lastContentPath = lastContentPath;
         this.channelService = channelService;
+        this.webhookProperty = webhookProperty;
     }
 
     public Optional<Webhook> upsert(Webhook webhook) {
         logger.info("incoming webhook {} ", webhook);
-        webhook = webhook.withDefaults();
+        webhook = webhook.withDefaults(webhookProperty.getCallbackTimeoutDefaultInSec());
         webhookValidator.validate(webhook);
         Optional<Webhook> preExisting = get(webhook.getName());
         if (webhook.isTagPrototype()) {

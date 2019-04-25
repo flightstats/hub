@@ -1,29 +1,45 @@
 package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.dynamodbv2.model.*;
-import com.flightstats.hub.app.HubProperties;
+import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+import com.amazonaws.services.dynamodbv2.model.DeleteItemRequest;
+import com.amazonaws.services.dynamodbv2.model.GetItemResult;
+import com.amazonaws.services.dynamodbv2.model.ResourceNotFoundException;
+import com.amazonaws.services.dynamodbv2.model.ScanRequest;
+import com.amazonaws.services.dynamodbv2.model.ScanResult;
 import com.flightstats.hub.app.HubServices;
+import com.flightstats.hub.config.DynamoProperty;
+import com.flightstats.hub.config.WebhookProperty;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.webhook.Webhook;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
+@Slf4j
 public class DynamoWebhookDao implements Dao<Webhook> {
-    private final static Logger logger = LoggerFactory.getLogger(DynamoWebhookDao.class);
 
     private final AmazonDynamoDB dbClient;
     private final DynamoUtils dynamoUtils;
+    private final DynamoProperty dynamoProperty;
+    private final WebhookProperty webhookProperty;
 
     @Inject
-    public DynamoWebhookDao(AmazonDynamoDB dbClient, DynamoUtils dynamoUtils) {
+    public DynamoWebhookDao(AmazonDynamoDB dbClient,
+                            DynamoUtils dynamoUtils,
+                            DynamoProperty dynamoProperty,
+                            WebhookProperty webhookProperty) {
         this.dbClient = dbClient;
         this.dynamoUtils = dynamoUtils;
+        this.dynamoProperty = dynamoProperty;
+        this.webhookProperty = webhookProperty;
         HubServices.register(new DynamoGroupDaoInit());
     }
 
@@ -70,7 +86,7 @@ public class DynamoWebhookDao implements Dao<Webhook> {
             }
             return mapItem(result.getItem());
         } catch (ResourceNotFoundException e) {
-            logger.info("group not found " + name + " " + e.getMessage());
+            log.info("group not found " + name + " " + e.getMessage());
             return null;
         }
     }
@@ -115,7 +131,8 @@ public class DynamoWebhookDao implements Dao<Webhook> {
         if (item.containsKey("errorChannelUrl")) {
             builder.errorChannelUrl(item.get("errorChannelUrl").getS());
         }
-        return builder.build().withDefaults();
+        return builder.build().withDefaults(webhookProperty.getCallbackTimeoutDefaultInSec());
+
     }
 
     @Override
@@ -148,8 +165,8 @@ public class DynamoWebhookDao implements Dao<Webhook> {
     }
 
     private String getTableName() {
-        String legacyTableName = dynamoUtils.getLegacyTableName("GroupConfig");
-        return HubProperties.getProperty("dynamo.table_name.webhook_configs", legacyTableName);
+        final String legacyTableName = dynamoUtils.getLegacyTableName("GroupConfig");
+        return dynamoProperty.getWebhookConfigTableName(legacyTableName);
     }
 
     private class DynamoGroupDaoInit extends AbstractIdleService {
