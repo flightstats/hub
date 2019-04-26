@@ -16,7 +16,7 @@ public class S3WriteQueueLifecycle extends AbstractService {
     private final S3WriteQueue s3WriteQueue;
     private final WriteQueueConfig writeQueueConfig;
     private ExecutorService executorService;
-    private AtomicBoolean started = new AtomicBoolean(false);
+    private final AtomicBoolean started = new AtomicBoolean(false);
 
     @Inject
     public S3WriteQueueLifecycle(S3WriteQueue s3WriteQueue, WriteQueueConfig writeQueueConfig) {

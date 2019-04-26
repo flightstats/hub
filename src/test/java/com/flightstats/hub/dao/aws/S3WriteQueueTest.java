@@ -27,17 +27,17 @@ import static org.mockito.MockitoAnnotations.initMocks;
 @Slf4j
 public class S3WriteQueueTest {
 
-    private @Mock SpokeWriteContentDao spokeWriteContentDao;
-    private @Mock S3SingleContentDao s3SingleContentDao;
-    private @Mock StatsdReporter statsdReporter;
-    private @Mock ChannelContentKey key;
-    private @Mock ContentKey contentKey;
+    @Mock private SpokeWriteContentDao spokeWriteContentDao;
+    @Mock private S3SingleContentDao s3SingleContentDao;
+    @Mock private StatsdReporter statsdReporter;
+    @Mock private ChannelContentKey key;
+    @Mock private ContentKey contentKey;
     private WriteQueueConfig writeQueueConfig = WriteQueueConfig.builder()
             .queueSize(20)
             .threads(2)
             .build();
-    private final static String CHANNEL_NAME = "testy_test";
-    private final static long AGE_MILLIS = 666;
+    private static final String CHANNEL_NAME = "testy_test";
+    private static final long AGE_MILLIS = 666;
     private S3WriteQueue s3WriteQueue;
 
     @Before
