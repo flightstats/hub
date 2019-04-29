@@ -11,12 +11,12 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class ContentKeySetTest {
+class ContentKeySetTest {
 
     private final static Logger logger = LoggerFactory.getLogger(ContentKeySetTest.class);
 
     @Test
-    public void testSizeAndLimitKey() {
+    void testSizeAndLimitKey() {
         long millis = System.currentTimeMillis();
         List<ContentKey> keys = new ArrayList<>();
 
@@ -35,7 +35,7 @@ public class ContentKeySetTest {
     }
 
     @Test
-    public void testLimitKey() {
+    void testLimitKey() {
         long millis = System.currentTimeMillis();
         List<ContentKey> keys = new ArrayList<>();
 

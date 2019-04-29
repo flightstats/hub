@@ -19,7 +19,7 @@ import java.util.SortedSet;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class SpokeS3SingleContentDaoTest {
+class SpokeS3SingleContentDaoTest {
 
     private final static Logger logger = LoggerFactory.getLogger(SpokeS3SingleContentDaoTest.class);
 
@@ -27,14 +27,14 @@ public class SpokeS3SingleContentDaoTest {
     private static SpokeWriteContentDao spokeWriteContentDao;
 
     @BeforeAll
-    public static void setUpClass() throws Exception {
+    static void setUpClass() throws Exception {
         Injector injector = Integration.startAwsHub();
         s3SingleContentDao = injector.getInstance(S3SingleContentDao.class);
         spokeWriteContentDao = injector.getInstance(SpokeWriteContentDao.class);
     }
 
     @Test
-    public void testSpokeReadWrite() throws Exception {
+    void testSpokeReadWrite() throws Exception {
         String channel = "testSpokeReadWrite";
         byte[] bytes = StringUtils.randomAlphaNumeric(10 * 1024).getBytes();
         Content firstContent = Content.builder()
@@ -56,7 +56,7 @@ public class SpokeS3SingleContentDaoTest {
     }
 
     @Test
-    public void testBulkSpokeReadWrite() throws Exception {
+    void testBulkSpokeReadWrite() throws Exception {
         String channel = "testBulkSpokeReadWrite";
         List<Content> items = Arrays.asList(ContentDaoUtil.createContent(), ContentDaoUtil.createContent(), ContentDaoUtil.createContent());
         BulkContent bulkContent = BulkContent.builder().channel(channel).isNew(false).build();

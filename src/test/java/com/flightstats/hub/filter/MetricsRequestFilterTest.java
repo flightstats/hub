@@ -14,14 +14,14 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 
-public class MetricsRequestFilterTest {
+class MetricsRequestFilterTest {
     @BeforeAll
-    public static void integrationSetup() throws Exception {
+    static void integrationSetup() throws Exception {
         Integration.startAwsHub();
     }
 
     @Test
-    public void testGetRequestTemplate() {
+    void testGetRequestTemplate() {
         // GIVEN
         UriTemplate uriTemplate = new UriTemplate("/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}/{direction:[n|p].*}/{count:.+}");
         UriRoutingContext uriInfo = mock(UriRoutingContext.class);

@@ -22,22 +22,22 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class FileSpokeStoreTest {
-    public static final byte[] BYTES = new byte[]{0, 2, 3, 4, 5, 6};
+class FileSpokeStoreTest {
+    static final byte[] BYTES = new byte[]{0, 2, 3, 4, 5, 6};
     private final static Logger logger = LoggerFactory.getLogger(FileSpokeStoreTest.class);
     private String tempDir;
     private FileSpokeStore spokeStore;
     private static final int ttlMinutes = HubProperties.getSpokeTtlMinutes(SpokeStore.WRITE);
 
     @BeforeEach
-    public void setUp() throws Exception {
+    void setUp() throws Exception {
         tempDir = Files.createTempDir().getPath();
         HubProperties.setProperty("spoke.write.path", tempDir);
         spokeStore = new FileSpokeStore(tempDir, ttlMinutes);
     }
 
     @Test
-    public void testWriteRead() throws Exception {
+    void testWriteRead() throws Exception {
         String path = "channelWR/" + new ContentKey().toUrl();
         assertTrue(spokeStore.insert(path, BYTES));
         byte[] read = spokeStore.read(path);
@@ -45,7 +45,7 @@ public class FileSpokeStoreTest {
     }
 
     @Test
-    public void testPathTranslation() throws Exception {
+    void testPathTranslation() throws Exception {
         String incoming = "/test_0_4274725520517677/2014/11/18/00/57/24/015/NV2cl5";
         File outputFile = spokeStore.spokeFilePathPart(incoming);
         String filePath = "/test_0_4274725520517677/2014/11/18/00/57/24015NV2cl5";
@@ -57,7 +57,7 @@ public class FileSpokeStoreTest {
     }
 
     @Test
-    public void testAdjacentPaths() throws Exception {
+    void testAdjacentPaths() throws Exception {
         String previousSecond = "testAdjacentPaths/2014/11/18/00/57/23/015/1";
         String path1 = "testAdjacentPaths/2014/11/18/00/57/24/015/1";
         String path2 = "testAdjacentPaths/2014/11/18/00/57/24/015/2";
@@ -94,7 +94,7 @@ public class FileSpokeStoreTest {
 
 
     @Test
-    public void testSpokeKeyFromFilePath() throws Exception {
+    void testSpokeKeyFromFilePath() throws Exception {
         final File file = new File(tempDir +
                 "/test_0_7475501417648047/2014/11/19/18/15/43916UD7V4N");
         String key = spokeStore.spokeKeyFromPath(file.getAbsolutePath());
@@ -108,7 +108,7 @@ public class FileSpokeStoreTest {
     }
 
     @Test
-    public void testLastFile() {
+    void testLastFile() {
         DateTime time = new DateTime(2014, 12, 31, 23, 30, 1, 2, DateTimeZone.UTC);
         for (int i = 0; i < 30; i++) {
             time = time.plusMinutes(2);
@@ -132,7 +132,7 @@ public class FileSpokeStoreTest {
     }
 
     @Test
-    public void testLatestBugNumber127() {
+    void testLatestBugNumber127() {
         String channel = "testBugNumber127";
 
         spokeStore.insert(channel + "/2015/03/17/17/31/13/686/2905180", BYTES);
@@ -158,7 +158,7 @@ public class FileSpokeStoreTest {
     }
 
     @Test
-    public void testNextN() throws IOException {
+    void testNextN() throws IOException {
         String name = "testNextN";
 
         DateTime startTime = TimeUtil.now().minusMinutes(59);
@@ -182,7 +182,7 @@ public class FileSpokeStoreTest {
     }
 
     @Test
-    public void testNextNFilterSeconds() throws IOException {
+    void testNextNFilterSeconds() throws IOException {
         String name = "testNextNFilterSeconds";
 
         DateTime startTime = TimeUtil.now().withSecondOfMinute(10).minusMinutes(10);
@@ -205,7 +205,7 @@ public class FileSpokeStoreTest {
     }
 
     @Test
-    public void testNextNFilterMinutes() throws IOException {
+    void testNextNFilterMinutes() throws IOException {
         String name = "testNextNFilterMinutes";
 
         DateTime startTime = TimeUtil.now().minusMinutes(10);
@@ -235,27 +235,27 @@ public class FileSpokeStoreTest {
     }
 
     @Test
-    public void testEnforceTtlYear() {
+    void testEnforceTtlYear() {
         enforceVerify("testEnforceTtlYear", new DateTime(2014, 12, 31, 23, 45, 1, 2, DateTimeZone.UTC));
     }
 
     @Test
-    public void testEnforceTtlMonth() {
+    void testEnforceTtlMonth() {
         enforceVerify("testEnforceTtlMonth", new DateTime(2015, 1, 31, 23, 45, 1, 2, DateTimeZone.UTC));
     }
 
     @Test
-    public void testEnforceTtlDay() {
+    void testEnforceTtlDay() {
         enforceVerify("testEnforceTtlDay", new DateTime(2015, 2, 1, 23, 45, 1, 2, DateTimeZone.UTC));
     }
 
     @Test
-    public void testEnforceTtlHour() {
+    void testEnforceTtlHour() {
         enforceVerify("testEnforceTtlHour", new DateTime(2015, 2, 1, 12, 45, 1, 2, DateTimeZone.UTC));
     }
 
     @Test
-    public void testLatestBug() {
+    void testLatestBug() {
         DateTime now = TimeUtil.now();
         DateTime afterTheHour = now.withMinuteOfHour(0).withSecondOfMinute(0).withMillisOfSecond(1);
         DateTime beforeTheHour = now.minusHours(1).withMinuteOfHour(59).withSecondOfMinute(59).withMillisOfSecond(999);
@@ -269,7 +269,7 @@ public class FileSpokeStoreTest {
     }
 
     @Test
-    public void testLatestCycle() {
+    void testLatestCycle() {
         DateTime now = TimeUtil.now();
         String latest = spokeStore.getLatest("testLatestCycle", ContentKey.lastKey(now).toUrl());
         assertNull(latest);
@@ -285,7 +285,7 @@ public class FileSpokeStoreTest {
     }
 
     @Test
-    public void testLatestBugStable() {
+    void testLatestBugStable() {
         /**
          * add one item before the latest hour
          * add one item after the latest hour
@@ -312,7 +312,7 @@ public class FileSpokeStoreTest {
     }
 
     @Test
-    public void testLatestMore() {
+    void testLatestMore() {
         DateTime now = TimeUtil.now();
         DateTime time = now;
         logger.info("ttlMinutes {} ", ttlMinutes);

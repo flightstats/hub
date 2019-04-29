@@ -11,50 +11,50 @@ import java.io.IOException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class ContentMarshallerTest {
+class ContentMarshallerTest {
 
     @Test
-    public void testAllFieldsZero() throws IOException {
+    void testAllFieldsZero() throws IOException {
         verify(getContent(0), 0);
     }
 
     @Test
-    public void testAllFieldsSmall() throws IOException {
+    void testAllFieldsSmall() throws IOException {
         verify(getContent(10), 10);
     }
 
     @Test
-    public void testAllFields10K() throws IOException {
+    void testAllFields10K() throws IOException {
         int size = 10 * 1024;
         verify(getContent(size), size);
     }
 
     @Test
-    public void testAllFields100K() throws IOException {
+    void testAllFields100K() throws IOException {
         int size = 100 * 1024;
         verify(getContent(size), size);
     }
 
     @Test
-    public void testAllFields1MB() throws IOException {
+    void testAllFields1MB() throws IOException {
         int size = 1024 * 1024;
         verify(getContent(size), size);
     }
 
     @Test
-    public void testAllFields10MB() throws IOException {
+    void testAllFields10MB() throws IOException {
         int size = 10 * 1024 * 1024;
         verify(getContent(size), size);
     }
 
     @Test
-    public void testAllFields40MB() throws IOException {
+    void testAllFields40MB() throws IOException {
         int size = 40 * 1024 * 1024;
         verify(getContent(size), size);
     }
 
     @Test
-    public void testJustData() throws IOException {
+    void testJustData() throws IOException {
         Content content = Content.builder()
                 .withData(StringUtils.randomAlphaNumeric(1024).getBytes())
                 .withContentKey(new ContentKey())

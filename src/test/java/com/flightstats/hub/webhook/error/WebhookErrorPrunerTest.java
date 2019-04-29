@@ -18,12 +18,12 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class WebhookErrorPrunerTest {
+class WebhookErrorPrunerTest {
     private final WebhookErrorRepository errorRepo = mock(WebhookErrorRepository.class);
     private final DateTime nowish = TimeUtil.now();
 
     @Test
-    public void testAddCleansUpOldestExcessiveErrors() {
+    void testAddCleansUpOldestExcessiveErrors() {
         String webhookName = "webhookName";
 
         // insert errors in the list in reverse order newest-to-oldest
@@ -41,7 +41,7 @@ public class WebhookErrorPrunerTest {
     }
 
     @Test
-    public void testAddCleansUpErrorsOlderThanADay() {
+    void testAddCleansUpErrorsOlderThanADay() {
         String webhookName = "webhookName";
 
         List<WebhookError> webhookErrors = setupErrorMocks(webhookName, 2, errorIndex -> nowish.minus(Duration.ofDays(1 - errorIndex).plusMinutes(1).toMillis()));

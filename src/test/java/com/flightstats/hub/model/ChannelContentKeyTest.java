@@ -8,10 +8,10 @@ import java.util.TreeSet;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-public class ChannelContentKeyTest {
+class ChannelContentKeyTest {
 
     @Test
-    public void test() {
+    void test() {
         ContentKey contentKey = new ContentKey();
         ChannelContentKey A1 = new ChannelContentKey("A", contentKey);
         ChannelContentKey B1 = new ChannelContentKey("B", contentKey);
@@ -28,7 +28,7 @@ public class ChannelContentKeyTest {
     }
 
     @Test
-    public void testCycle() {
+    void testCycle() {
         ContentKey contentKey = new ContentKey();
         ChannelContentKey channelContentKey = new ChannelContentKey("name", contentKey);
         ChannelContentKey cycled = ChannelContentKey.fromResourcePath(channelContentKey.toUrl());
@@ -36,7 +36,7 @@ public class ChannelContentKeyTest {
     }
 
     @Test
-    public void fromResourcePath() {
+    void fromResourcePath() {
         String url = "http://hub/channel/foo/1999/12/31/23/59/59/999/l33t";
         ChannelContentKey key = ChannelContentKey.fromResourcePath(url);
         assertEquals(key.getChannel(), "foo");
@@ -44,7 +44,7 @@ public class ChannelContentKeyTest {
     }
 
     @Test
-    public void fromSpokePathValid() {
+    void fromSpokePathValid() {
         String filePath = "/some/arbitrary/directory/structure/foo/1999/12/31/23/59/59999l33t";
         ChannelContentKey key = ChannelContentKey.fromSpokePath(filePath);
         assertEquals(key.getChannel(), "foo");
@@ -52,7 +52,7 @@ public class ChannelContentKeyTest {
     }
 
     @Test
-    public void fromSpokePathInvalidFormat() {
+    void fromSpokePathInvalidFormat() {
         try {
             String filePath = "/some/arbitrary/directory/structure/foo/1999/12/31/bar/23/59/59999l33t";
                     ChannelContentKey.fromSpokePath(filePath);
@@ -62,7 +62,7 @@ public class ChannelContentKeyTest {
     }
 
     @Test
-    public void fromSpokePathInvalidDepth() {
+    void fromSpokePathInvalidDepth() {
         try {
             String filePath = "/foo/bar/23/59/59999l33t";
             ChannelContentKey.fromSpokePath(filePath);
@@ -73,7 +73,7 @@ public class ChannelContentKeyTest {
     }
 
     @Test
-    public void fromChannelPath() {
+    void fromChannelPath() {
         String path = "foo/1999/12/31/23/59/59/999/l33t";
         ChannelContentKey key = ChannelContentKey.fromChannelPath(path);
         assertNotNull(key);

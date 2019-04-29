@@ -14,23 +14,23 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class S3ConfigStrategyTest {
+class S3ConfigStrategyTest {
 
     private TreeSet<String> allRules = new TreeSet<>();
     private final List<ChannelConfig> channelConfigs = new ArrayList<>();
 
     @Test
-    public void testThree() {
+    void testThree() {
         verify(240, 3);
     }
 
     @Test
-    public void testTwo() {
+    void testTwo() {
         verify(160, 2);
     }
 
     @Test
-    public void testOne() {
+    void testOne() {
         verify(100, 1);
     }
 

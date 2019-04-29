@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class SpokeContentDaoTest {
+class SpokeContentDaoTest {
 
     private Commander commander;
     private SpokeStore spokeStore;
@@ -21,7 +21,7 @@ public class SpokeContentDaoTest {
     private String getItemCountCommand;
 
     @BeforeEach
-    public void initialize() {
+    void initialize() {
         commander = mock(Commander.class);
         spokeStore = SpokeStore.WRITE;
         spokeStorePath = HubProperties.getSpokePath(spokeStore);
@@ -30,7 +30,7 @@ public class SpokeContentDaoTest {
     }
 
     @Test
-    public void getOldestItemDoesExist() {
+    void getOldestItemDoesExist() {
         when(commander.runInBash(getOldestItemCommand, 3)).thenReturn("1999-12-31+23:59:59.9999999999 /spoke/write/foo/1999/12/31/23/59/59999l33t");
         SpokeContentDao dao = new SpokeContentDao(commander);
         Optional<ChannelContentKey> potentialKey = dao.getOldestItem(spokeStore);
@@ -41,7 +41,7 @@ public class SpokeContentDaoTest {
     }
 
     @Test
-    public void getOldestItemDoesNotExist() {
+    void getOldestItemDoesNotExist() {
         when(commander.runInBash(getOldestItemCommand, 3)).thenReturn("");
         SpokeContentDao dao = new SpokeContentDao(commander);
         Optional<ChannelContentKey> potentialKey = dao.getOldestItem(spokeStore);
@@ -49,7 +49,7 @@ public class SpokeContentDaoTest {
     }
 
     @Test
-    public void getNumberOfItems() {
+    void getNumberOfItems() {
         when(commander.runInBash(getItemCountCommand, 1)).thenReturn("12345");
         SpokeContentDao dao = new SpokeContentDao(commander);
         assertEquals(12345, dao.getNumberOfItems(spokeStore));

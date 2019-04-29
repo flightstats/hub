@@ -13,19 +13,19 @@ import java.util.Collection;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-public class CuratorClusterTest {
+class CuratorClusterTest {
 
     private final static Logger logger = LoggerFactory.getLogger(CuratorClusterTest.class);
 
     private static CuratorFramework curator;
 
     @BeforeAll
-    public static void setUpClass() throws Exception {
+    static void setUpClass() throws Exception {
         curator = Integration.startZooKeeper();
     }
 
     @Test
-    public void testPath() throws Exception {
+    void testPath() throws Exception {
         logger.info("starting testPath");
         CuratorCluster cluster = new CuratorCluster(curator, "/SpokeCluster", false, true, new SpokeDecommissionCluster(curator));
 

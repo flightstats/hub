@@ -6,15 +6,15 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class TimeQueryTest {
+class TimeQueryTest {
     @Test
-    public void testDefault() throws Exception {
+    void testDefault() throws Exception {
         TimeQuery timeQuery = TimeQuery.builder().channelName("stuff").build();
         assertEquals(Location.ALL, timeQuery.getLocation());
     }
 
     @Test
-    public void testOutsideOfCache() {
+    void testOutsideOfCache() {
         DateTime start = TimeUtil.now();
         TimeQuery query = TimeQuery.builder().startTime(start).build();
         assertTrue(query.outsideOfCache(start));

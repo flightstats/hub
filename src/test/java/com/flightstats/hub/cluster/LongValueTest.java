@@ -8,23 +8,23 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class LongValueTest {
+class LongValueTest {
 
     private static CuratorFramework curator;
     private LongValue longValue;
 
     @BeforeAll
-    public static void setUpClass() throws Exception {
+    static void setUpClass() throws Exception {
         curator = Integration.startZooKeeper();
     }
 
     @BeforeEach
-    public void setUp() throws Exception {
+    void setUp() throws Exception {
         longValue = new LongValue(curator);
     }
 
     @Test
-    public void testLifeCycle() throws Exception {
+    void testLifeCycle() throws Exception {
         String path = "/LVT/testLifeCycle";
         longValue.initialize(path, 10);
         assertEquals(10, longValue.get(path, 0));
@@ -35,14 +35,14 @@ public class LongValueTest {
     }
 
     @Test
-    public void testCreateIfMissing() throws Exception {
+    void testCreateIfMissing() throws Exception {
         String path = "/LVT/testCreateIfMissing";
         assertEquals(10, longValue.get(path, 10));
         assertEquals(10, longValue.get(path, 20));
     }
 
     @Test
-    public void testUpdateIncrease() throws Exception {
+    void testUpdateIncrease() throws Exception {
         String path = "/LVT/testUpdateIncrease";
         longValue.initialize(path, 10);
         longValue.updateIncrease(5, path);

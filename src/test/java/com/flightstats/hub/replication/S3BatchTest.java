@@ -10,10 +10,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
-public class S3BatchTest {
+class S3BatchTest {
 
     @Test
-    public void testBatchWebhookCreation() {
+    void testBatchWebhookCreation() {
         String appUrl = HubProperties.getAppUrl();
         String appEnv = HubProperties.getAppEnv();
         HubUtils hubUtils = mock(HubUtils.class);

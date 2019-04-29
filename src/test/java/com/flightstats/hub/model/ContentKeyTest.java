@@ -8,17 +8,17 @@ import java.util.TreeSet;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class ContentKeyTest {
+class ContentKeyTest {
 
     @Test
-    public void testUrlKey() throws Exception {
+    void testUrlKey() throws Exception {
         ContentKey contentKey = new ContentKey();
         ContentKey cycled = ContentKey.fromUrl(contentKey.toUrl()).get();
         assertEquals(contentKey, cycled);
     }
 
     @Test
-    public void testCompareTime() throws Exception {
+    void testCompareTime() throws Exception {
         DateTime now = TimeUtil.now();
         TreeSet<ContentKey> keys = new TreeSet<>();
         for (int i = 0; i < 10; i++) {
@@ -34,7 +34,7 @@ public class ContentKeyTest {
     }
 
     @Test
-    public void testCompareHash() throws Exception {
+    void testCompareHash() throws Exception {
         DateTime now = TimeUtil.now();
         TreeSet<ContentKey> keys = new TreeSet<>();
         for (int i = 0; i < 10; i++) {
@@ -50,20 +50,20 @@ public class ContentKeyTest {
     }
 
     @Test
-    public void testZkCycle() throws Exception {
+    void testZkCycle() throws Exception {
         ContentKey key = new ContentKey();
         assertEquals(key, key.fromZk(key.toZk()));
     }
 
     @Test
-    public void testFullUrl() {
+    void testFullUrl() {
         ContentKey contentKey = ContentKey.fromFullUrl("http://hub/channel/load_test_2/2015/01/23/21/11/19/407/L7QtaY");
         assertNotNull(contentKey);
         assertEquals("2015/01/23/21/11/19/407/L7QtaY", contentKey.toString());
     }
 
     @Test
-    public void testCompareMinutePath() {
+    void testCompareMinutePath() {
         MinutePath minutePath = new MinutePath();
         ContentKey contentKey = new ContentKey(minutePath.getTime(), "0");
         assertTrue(contentKey.compareTo(minutePath) < 0);

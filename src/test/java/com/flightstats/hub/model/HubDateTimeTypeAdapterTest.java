@@ -6,35 +6,35 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class HubDateTimeTypeAdapterTest {
+class HubDateTimeTypeAdapterTest {
 
     @Test
-    public void testDeserialize() throws Exception {
+    void testDeserialize() throws Exception {
         doTest("2016-11-09T21:23:20.123Z", "2016-11-09T21:23:20.123Z");
     }
 
     @Test
-    public void testDeserializeNoMillis() throws Exception {
+    void testDeserializeNoMillis() throws Exception {
         doTest("2016-11-09T21:23:20Z", "2016-11-09T21:23:20.000Z");
     }
 
     @Test
-    public void testNoTimeZone() throws Exception {
+    void testNoTimeZone() throws Exception {
         doTest("2016-11-09T13:16:35.865", "2016-11-09T13:16:35.865Z");
     }
 
     @Test
-    public void testDateOnly() throws Exception {
+    void testDateOnly() throws Exception {
         doTest("2016-11-09", "2016-11-09T00:00:00.000Z");
     }
 
     @Test
-    public void testDateHour() throws Exception {
+    void testDateHour() throws Exception {
         doTest("2016-11-09T12", "2016-11-09T12:00:00.000Z");
     }
 
     @Test
-    public void testDateHourMinute() throws Exception {
+    void testDateHourMinute() throws Exception {
         doTest("2016-11-09T12:10", "2016-11-09T12:10:00.000Z");
     }
 

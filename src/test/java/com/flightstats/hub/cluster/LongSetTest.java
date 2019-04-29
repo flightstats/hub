@@ -11,18 +11,18 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class LongSetTest {
+class LongSetTest {
 
     private CuratorFramework curator;
     private LongSet longSet;
 
     @BeforeEach
-    public void setUp() throws Exception {
+    void setUp() throws Exception {
         curator = Integration.startZooKeeper();
     }
 
     @Test
-    public void testLifecycle() throws Exception {
+    void testLifecycle() throws Exception {
         String path = "/test/longs/lifecycle";
         longSet = new LongSet(path, curator);
         Set<Long> firstSet = Sets.newHashSet(100L, 101L, 102L);

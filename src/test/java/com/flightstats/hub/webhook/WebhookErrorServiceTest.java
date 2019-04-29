@@ -14,12 +14,12 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
-public class WebhookErrorServiceTest {
+class WebhookErrorServiceTest {
 
     private static WebhookErrorService webhookErrorService;
 
     @BeforeAll
-    public static void setUpClass() throws Exception {
+    static void setUpClass() throws Exception {
         ChannelService channelService = mock(ChannelService.class);
         CuratorFramework curator = Integration.startZooKeeper();
         SafeZooKeeperUtils zooKeeperUtils = new SafeZooKeeperUtils(curator);
@@ -30,7 +30,7 @@ public class WebhookErrorServiceTest {
     }
 
     @Test
-    public void testErrors() {
+    void testErrors() {
         for (int i = 0; i < 20; i++) {
             webhookErrorService.add("testErrors", "stuff" + i);
         }

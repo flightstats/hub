@@ -8,10 +8,10 @@ import javax.ws.rs.core.Response;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class NoSuchChannelExceptionMapperTest {
+class NoSuchChannelExceptionMapperTest {
 
     @Test
-    public void testMap() throws Exception {
+    void testMap() throws Exception {
         //GIVEN
         NoSuchChannelExceptionMapper testClass = new NoSuchChannelExceptionMapper();
         NoSuchChannelException exception = new NoSuchChannelException("No such channel: flimflam", new RuntimeException("boom"));

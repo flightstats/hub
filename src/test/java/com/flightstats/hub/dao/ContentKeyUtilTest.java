@@ -13,10 +13,10 @@ import java.util.TreeSet;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class ContentKeyUtilTest {
+class ContentKeyUtilTest {
 
     @Test
-    public void testConvertKeysToMinutes() {
+    void testConvertKeysToMinutes() {
         DateTime start = TimeUtil.now();
         SortedSet<ContentKey> keys = new TreeSet<>();
         for (int i = 0; i < 100; i += 2) {
@@ -34,7 +34,7 @@ public class ContentKeyUtilTest {
     }
 
     @Test
-    public void testFilterStartKey() throws Exception {
+    void testFilterStartKey() throws Exception {
         ContentKey startKey = new ContentKey(new DateTime().minusDays(60), "B");
         List<ContentKey> items = getEpochItems(startKey);
         DirectionQuery query = DirectionQuery.builder()
@@ -62,7 +62,7 @@ public class ContentKeyUtilTest {
     }
 
     @Test
-    public void testFilterStable() throws Exception {
+    void testFilterStable() throws Exception {
         DateTime stable = TimeUtil.stable();
         ContentKey startKey = new ContentKey(stable.minusSeconds(5), "B");
 
@@ -98,7 +98,7 @@ public class ContentKeyUtilTest {
     }
 
     @Test
-    public void testFilterNextEpoch() throws Exception {
+    void testFilterNextEpoch() throws Exception {
         ContentKey mutableItem = new ContentKey(new DateTime(2016, 12, 7, 17, 8), "B");
         List<ContentKey> items = getEpochItems(mutableItem);
         DirectionQuery query = buildEpochQuery(mutableItem, "testFilterNextEpoch", true);
@@ -124,7 +124,7 @@ public class ContentKeyUtilTest {
     }
 
     @Test
-    public void testFilterPreviousEpoch() throws Exception {
+    void testFilterPreviousEpoch() throws Exception {
         ContentKey mutableItem = new ContentKey(new DateTime(2016, 12, 7, 17, 8), "B");
         List<ContentKey> items = getEpochItems(mutableItem);
         DirectionQuery query = buildEpochQuery(mutableItem, "testFilterPreviousEpoch", false);

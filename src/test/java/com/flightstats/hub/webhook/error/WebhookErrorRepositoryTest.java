@@ -17,15 +17,15 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class WebhookErrorRepositoryTest {
+class WebhookErrorRepositoryTest {
     private final SafeZooKeeperUtils zooKeeperUtils = mock(SafeZooKeeperUtils.class);
     private final WebhookErrorRepository.ErrorNodeNameGenerator errorNameGenerator = mock(WebhookErrorRepository.ErrorNodeNameGenerator.class);
 
     private final static String ZK_BASE_PATH = "/GroupError";
-    public static final String WEBHOOK_NAME = "webhookName";
+    static final String WEBHOOK_NAME = "webhookName";
 
     @Test
-    public void testAdd() {
+    void testAdd() {
         String errorMessage = "someError";
         String newErrorId = "error10";
 
@@ -38,14 +38,14 @@ public class WebhookErrorRepositoryTest {
     }
 
     @Test
-    public void testDeleteWebhook() {
+    void testDeleteWebhook() {
         WebhookErrorRepository errorRepo = new WebhookErrorRepository(zooKeeperUtils, errorNameGenerator);
         errorRepo.deleteWebhook(WEBHOOK_NAME);
         verify(zooKeeperUtils).deletePathAndChildren(ZK_BASE_PATH, WEBHOOK_NAME);
     }
 
     @Test
-    public void testDelete() {
+    void testDelete() {
         String errorId = "error10";
 
         WebhookErrorRepository errorRepo = new WebhookErrorRepository(zooKeeperUtils, errorNameGenerator);
@@ -54,7 +54,7 @@ public class WebhookErrorRepositoryTest {
     }
 
     @Test
-    public void testGetWebhooks() {
+    void testGetWebhooks() {
         List<String> webhooks = newArrayList("1", "2", "3");
         when(zooKeeperUtils.getChildren(ZK_BASE_PATH))
                 .thenReturn(webhooks);
@@ -65,7 +65,7 @@ public class WebhookErrorRepositoryTest {
     }
 
     @Test
-    public void testGetErrors() {
+    void testGetErrors() {
         List<String> errors = newArrayList("1", "2", "3");
         when(zooKeeperUtils.getChildren(ZK_BASE_PATH, WEBHOOK_NAME))
                 .thenReturn(errors);

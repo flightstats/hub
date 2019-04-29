@@ -20,7 +20,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class InternalWebhookClientTest {
+
+class InternalWebhookClientTest {
     private final CuratorCluster hubCluster = mock(CuratorCluster.class);
     private final Client restClient = mock(Client.class);
 
@@ -30,7 +31,8 @@ public class InternalWebhookClientTest {
     private static final String SERVER3 = "123.3.1";
 
     @Test
-    public void testRunOnServerWithFewestWebhooks() {
+
+    void testRunOnServerWithFewestWebhooks() {
         when(hubCluster.getRandomServers()).thenReturn(newArrayList(SERVER1, SERVER3, SERVER2));
         mockServerWebhookCount(SERVER2, 6);
         mockServerWebhookCount(SERVER1, 1);
@@ -49,7 +51,8 @@ public class InternalWebhookClientTest {
     }
 
     @Test
-    public void testRunOnServerWithFewestWebhooks_withFailureFromServerWithFewest() {
+
+    void testRunOnServerWithFewestWebhooks_withFailureFromServerWithFewest() {
         when(hubCluster.getRandomServers()).thenReturn(newArrayList(SERVER1, SERVER3, SERVER2));
         mockServerWebhookCount(SERVER2, 6);
         mockServerWebhookCount(SERVER1, 1);
@@ -68,7 +71,8 @@ public class InternalWebhookClientTest {
     }
 
     @Test
-    public void testRunOnServerWithFewestWebhooks_picksOneIfServersAreTied() {
+
+    void testRunOnServerWithFewestWebhooks_picksOneIfServersAreTied() {
         when(hubCluster.getRandomServers()).thenReturn(newArrayList(SERVER1, SERVER3, SERVER2));
         mockServerWebhookCount(SERVER2, 6);
         mockServerWebhookCount(SERVER1, 1);
@@ -87,7 +91,8 @@ public class InternalWebhookClientTest {
     }
 
     @Test
-    public void testRunOnServerWithFewestWebhooks_picksOneEvenIfACountRequestFails() {
+
+    void testRunOnServerWithFewestWebhooks_picksOneEvenIfACountRequestFails() {
         when(hubCluster.getRandomServers()).thenReturn(newArrayList(SERVER1, SERVER3, SERVER2));
         mockServerWebhookCount(SERVER1, 1);
         mockServerWebhookCount(SERVER2, 6);
@@ -106,7 +111,8 @@ public class InternalWebhookClientTest {
     }
 
     @Test
-    public void testRunOnServerWithFewestWebhooks_returnsEmptyIfAllServersFailToRun() {
+
+    void testRunOnServerWithFewestWebhooks_returnsEmptyIfAllServersFailToRun() {
         when(hubCluster.getRandomServers()).thenReturn(newArrayList(SERVER1, SERVER3, SERVER2));
         mockServerWebhookCount(SERVER1, 1);
         mockServerWebhookCount(SERVER2, 6);
@@ -126,7 +132,8 @@ public class InternalWebhookClientTest {
     }
 
     @Test
-    public void testRunOnOneServer_runsInOrderUntilOneSucceeds() {
+
+    void testRunOnOneServer_runsInOrderUntilOneSucceeds() {
         mockWebhookRun(newArrayList(SERVER2, SERVER1, SERVER3), SERVER1);
 
         InternalWebhookClient client = new InternalWebhookClient(restClient, hubCluster);
@@ -141,7 +148,8 @@ public class InternalWebhookClientTest {
     }
 
     @Test
-    public void testDelete_success() {
+
+    void testDelete_success() {
         mockWebhookDelete(SERVER1, true);
 
         InternalWebhookClient client = new InternalWebhookClient(restClient, hubCluster);
@@ -151,7 +159,8 @@ public class InternalWebhookClientTest {
     }
 
     @Test
-    public void testDelete_fails() {
+
+    void testDelete_fails() {
         mockWebhookDelete(SERVER1, false);
 
         InternalWebhookClient client = new InternalWebhookClient(restClient, hubCluster);
@@ -161,7 +170,8 @@ public class InternalWebhookClientTest {
     }
 
     @Test
-    public void testDeleteAll_success() {
+
+    void testDeleteAll_success() {
         mockWebhookDelete(SERVER1, true);
         mockWebhookDelete(SERVER2, true);
         mockWebhookDelete(SERVER3, true);
@@ -177,7 +187,8 @@ public class InternalWebhookClientTest {
     }
 
     @Test
-    public void testDeleteAll_withSomeFailure_continuesToCallDeleteonAllServers() {
+
+    void testDeleteAll_withSomeFailure_continuesToCallDeleteonAllServers() {
         mockWebhookDelete(SERVER1, false);
         mockWebhookDelete(SERVER2, false);
         mockWebhookDelete(SERVER3, true);

@@ -11,13 +11,13 @@ import org.slf4j.LoggerFactory;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-public class DynamoChannelConfigDaoTest {
+class DynamoChannelConfigDaoTest {
 
     private static final Logger logger = LoggerFactory.getLogger(DynamoChannelConfigDaoTest.class);
     private static DynamoChannelConfigDao channelConfigDao;
 
     @BeforeAll
-    public static void setUpClass() throws Exception {
+    static void setUpClass() throws Exception {
         logger.info("setting up ...");
         Injector injector = Integration.startAwsHub();
         channelConfigDao = HubProvider.getInstance(DynamoChannelConfigDao.class);
@@ -25,7 +25,7 @@ public class DynamoChannelConfigDaoTest {
     }
 
     @Test
-    public void testSimple() {
+    void testSimple() {
         logger.info("DynamoChannelConfigDao {}", channelConfigDao);
         assertNotNull(channelConfigDao);
         ChannelConfig channelConfig = ChannelConfig.builder().name("testsimple").build();

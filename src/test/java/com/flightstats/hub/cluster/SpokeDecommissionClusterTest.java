@@ -10,24 +10,24 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class SpokeDecommissionClusterTest {
+class SpokeDecommissionClusterTest {
 
     private static CuratorFramework curator;
     private static SpokeDecommissionCluster cluster;
 
     @BeforeAll
-    public static void setUpClass() throws Exception {
+    static void setUpClass() throws Exception {
         curator = Integration.startZooKeeper();
         cluster = new SpokeDecommissionCluster(curator);
     }
 
     @AfterEach
-    public void afterTest() throws Exception {
+    void afterTest() throws Exception {
         cluster.doNotRestart();
     }
 
     @Test
-    public void testDecommission() throws Exception {
+    void testDecommission() throws Exception {
         cluster.decommission();
         assertTrue(cluster.withinSpokeExists());
         assertFalse(cluster.doNotRestartExists());

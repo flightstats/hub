@@ -18,7 +18,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class WebhookErrorServiceUnitTest {
+class WebhookErrorServiceUnitTest {
     private final ChannelService channelService = mock(ChannelService.class);
     private final WebhookErrorPruner errorPruner = mock(WebhookErrorPruner.class);
     private final WebhookErrorRepository errorRepo = mock(WebhookErrorRepository.class);
@@ -26,7 +26,7 @@ public class WebhookErrorServiceUnitTest {
     private final DateTime startingTime = TimeUtil.now();
 
     @Test
-    public void testAdd() {
+    void testAdd() {
         String webhookName = "webhookName";
         String errorMessage = "someError";
 
@@ -42,7 +42,7 @@ public class WebhookErrorServiceUnitTest {
     }
 
     @Test
-    public void testGet() {
+    void testGet() {
         String webhookName = "webhookName";
 
         List<WebhookError> webhookErrors = setupErrorMocks(webhookName, 6);
@@ -57,7 +57,7 @@ public class WebhookErrorServiceUnitTest {
     }
 
     @Test
-    public void testGet_withStrangelyOrderedErrors() {
+    void testGet_withStrangelyOrderedErrors() {
         String webhookName = "webhookName";
 
         List<WebhookError> webhookErrors = newArrayList(

@@ -10,10 +10,10 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class LinkedTest {
+class LinkedTest {
 
     @Test
-    public void testBuilder() throws Exception {
+    void testBuilder() throws Exception {
         List<HalLink> expectedLinks = Arrays.asList(new HalLink("foo", URI.create("http://lycos.com")),
                 new HalLink("bar", URI.create("http://yahoo.com")),
                 new HalLink("foo", URI.create("http://hotmail.com")));

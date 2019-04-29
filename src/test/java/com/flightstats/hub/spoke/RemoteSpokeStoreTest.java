@@ -4,10 +4,10 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class RemoteSpokeStoreTest {
+class RemoteSpokeStoreTest {
 
     @Test
-    public void testQuorum() {
+    void testQuorum() {
 
         assertEquals(1, RemoteSpokeStore.getQuorum(1));
         assertEquals(1, RemoteSpokeStore.getQuorum(2));

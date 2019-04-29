@@ -6,9 +6,9 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class ObjectRingTest {
+class ObjectRingTest {
     @Test
-    public void testCycle() {
+    void testCycle() {
         ObjectRing<String> objectRing = new ObjectRing(5);
         for (int i = 0; i < 20; i++) {
             objectRing.put("i=" + i);

@@ -14,24 +14,24 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-public class LastContentPathTest {
+class LastContentPathTest {
 
     private static final String BASE_PATH = "/GroupLastCompleted/";
     private static CuratorFramework curator;
     private LastContentPath lastContentPath;
 
     @BeforeAll
-    public static void setUpClass() throws Exception {
+    static void setUpClass() throws Exception {
         curator = Integration.startZooKeeper();
     }
 
     @BeforeEach
-    public void setUp() throws Exception {
+    void setUp() throws Exception {
         lastContentPath = new LastContentPath(curator);
     }
 
     @Test
-    public void testLifeCycle() throws Exception {
+    void testLifeCycle() throws Exception {
         String name = "testLifeCycle";
         DateTime start = new DateTime(2014, 12, 3, 20, 45, DateTimeZone.UTC);
         ContentKey key1 = new ContentKey(start, "B");
@@ -56,7 +56,7 @@ public class LastContentPathTest {
     }
 
     @Test
-    public void testCreateNull() throws Exception {
+    void testCreateNull() throws Exception {
         String name = "testCreateNull";
         DateTime start = new DateTime(2014, 12, 3, 20, 45, DateTimeZone.UTC);
         ContentKey key1 = new ContentKey(start, "B");
@@ -65,7 +65,7 @@ public class LastContentPathTest {
     }
 
     @Test
-    public void testCreateIfMissing() throws Exception {
+    void testCreateIfMissing() throws Exception {
         String name = "testCreateIfMissing";
         ContentKey key = new ContentKey();
         assertEquals(key, lastContentPath.get(name, key, BASE_PATH));
@@ -73,7 +73,7 @@ public class LastContentPathTest {
     }
 
     @Test
-    public void testMinutePath() {
+    void testMinutePath() {
         String name = "testMinutePath";
 
         MinutePath minutePath = new MinutePath();
@@ -90,7 +90,7 @@ public class LastContentPathTest {
     }
 
     @Test
-    public void testUpdateDecrease() throws Exception {
+    void testUpdateDecrease() throws Exception {
         String name = "testUpdateDecrease";
         DateTime start = new DateTime(2014, 12, 3, 20, 45, DateTimeZone.UTC);
 

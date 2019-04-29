@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class S3SingleContentDaoTest {
+class S3SingleContentDaoTest {
 
     private final static Logger logger = LoggerFactory.getLogger(S3SingleContentDaoTest.class);
 
@@ -21,7 +21,7 @@ public class S3SingleContentDaoTest {
     private static S3SingleContentDao s3SingleContentDao;
 
     @BeforeAll
-    public static void setUpClass() throws Exception {
+    static void setUpClass() throws Exception {
         HubProperties.loadProperties("useDefault");
         Injector injector = Integration.startAwsHub();
         s3SingleContentDao = injector.getInstance(S3SingleContentDao.class);
@@ -29,47 +29,47 @@ public class S3SingleContentDaoTest {
     }
 
     @Test
-    public void testWriteRead() throws Exception {
+    void testWriteRead() throws Exception {
         util.testWriteRead(ContentDaoUtil.createContent());
     }
 
     @Test
-    public void testQueryRangeDay() throws Exception {
+    void testQueryRangeDay() throws Exception {
         util.testQueryRangeDay();
     }
 
     @Test
-    public void testQueryRangeHour() throws Exception {
+    void testQueryRangeHour() throws Exception {
         util.testQueryRangeHour();
     }
 
     @Test
-    public void testQueryRangeMinute() throws Exception {
+    void testQueryRangeMinute() throws Exception {
         util.testQueryRangeMinute();
     }
 
     @Test
-    public void testQuery15Minutes() throws Exception {
+    void testQuery15Minutes() throws Exception {
         util.testQuery15Minutes();
     }
 
     @Test
-    public void testDirectionQuery() throws Exception {
+    void testDirectionQuery() throws Exception {
         util.testDirectionQuery();
     }
 
     @Test
-    public void testDelete() throws Exception {
+    void testDelete() throws Exception {
         util.testDeleteMaxItems();
     }
 
     @Test
-    public void testPreviousFromBulk_Issue753() throws Exception {
+    void testPreviousFromBulk_Issue753() throws Exception {
         util.testPreviousFromBulk_Issue753();
     }
 
     @Test
-    public void testWriteReadOld() throws Exception {
+    void testWriteReadOld() throws Exception {
         String channel = "testWriteReadOld";
         Content content = ContentDaoUtil.createContent();
         ContentKey key = s3SingleContentDao.insertOld(channel, content);
@@ -81,7 +81,7 @@ public class S3SingleContentDaoTest {
     }
 
     @Test
-    public void testHistorical() throws Exception {
+    void testHistorical() throws Exception {
         util.testWriteHistorical();
     }
 }

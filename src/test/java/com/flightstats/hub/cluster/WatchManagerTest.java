@@ -12,19 +12,19 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class WatchManagerTest {
+class WatchManagerTest {
 
     private static WatchManager watchManager;
 
     @BeforeAll
-    public static void setUpClass() throws Exception {
+    static void setUpClass() throws Exception {
         CuratorFramework curator = Integration.startZooKeeper();
         watchManager = new WatchManager(curator);
         watchManager.addCuratorListener();
     }
 
     @Test
-    public void testCallback() throws Exception {
+    void testCallback() throws Exception {
         final CountDownLatch countDownLatch = new CountDownLatch(1);
 
         Watcher watcher = new Watcher() {
@@ -45,7 +45,7 @@ public class WatchManagerTest {
     }
 
     @Test
-    public void testNoCallback() throws Exception {
+    void testNoCallback() throws Exception {
         final CountDownLatch countDownLatch = new CountDownLatch(1);
 
         Watcher watcher = new Watcher() {
