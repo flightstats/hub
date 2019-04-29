@@ -3,13 +3,16 @@ package com.flightstats.hub.webhook;
 import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.SafeZooKeeperUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 
 import java.util.List;
 
+import static org.apache.zookeeper.KeeperException.NodeExistsException;
 import static com.google.common.collect.Sets.newHashSet;
 import static java.lang.String.format;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -18,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 
+@Slf4j
 class ActiveWebhooksIntTest {
     private static final String WEBHOOK_LEADER_PATH = "/WebhookLeader";
 
@@ -33,6 +37,14 @@ class ActiveWebhooksIntTest {
     private static CuratorFramework curator;
     private static SafeZooKeeperUtils zooKeeperUtils;
 
+    void createPath() throws Exception {
+        curator.create().creatingParentsIfNeeded().forPath(WEBHOOK_LEADER_PATH);
+    }
+
+    void deletePath() throws Exception {
+        curator.delete().deletingChildrenIfNeeded().forPath(WEBHOOK_LEADER_PATH);
+    }
+
     @BeforeAll
     static void setup() throws Exception {
         curator = Integration.startZooKeeper();
@@ -41,7 +53,18 @@ class ActiveWebhooksIntTest {
 
     @BeforeEach
     void createWebhookLeader() throws Exception {
-        curator.create().creatingParentsIfNeeded().forPath(WEBHOOK_LEADER_PATH);
+        try {
+            createPath();
+        } catch (NodeExistsException e) {
+            log.error(e.getMessage());
+            deletePath();
+            createPath();
+        }
+    }
+
+    @AfterEach
+    void destroyWebhookLeaders() throws Exception {
+        deletePath();
     }
 
     @Test
