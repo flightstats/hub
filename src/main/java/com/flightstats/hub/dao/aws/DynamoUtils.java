@@ -9,6 +9,7 @@ import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -91,23 +92,35 @@ public class DynamoUtils {
         }
     }
 
+    public boolean doesTableExist(String tableName) {
+        return getTableDescription(tableName, TableStatus.ACTIVE).isPresent();
+    }
+
     private TableDescription waitForTableStatus(String tableName, TableStatus status) {
         long endTime = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(tableCreationWaitMinutes);
         while (System.currentTimeMillis() < endTime) {
-            try {
-                TableDescription tableDescription = dbClient.describeTable(tableName).getTable();
-                if (status.equals(TableStatus.fromValue(tableDescription.getTableStatus()))) {
-                    logger.info("table " + tableName + " is " + status.toString());
-                    return tableDescription;
-                }
-            } catch (AmazonServiceException ase) {
-                logger.info("exception creating table " + tableName + " " + ase.getMessage());
-                throw ase;
+            Optional<TableDescription> existing = getTableDescription(tableName, status);
+            if (existing.isPresent()) {
+                return existing.get();
             }
             sleep();
         }
         logger.warn("table never went active " + tableName);
         throw new RuntimeException("Table " + tableName + " never went active");
+    }
+
+    private Optional<TableDescription> getTableDescription(String tableName, TableStatus status) {
+        try {
+            TableDescription tableDescription = dbClient.describeTable(tableName).getTable();
+            if (status.equals(TableStatus.fromValue(tableDescription.getTableStatus()))) {
+                logger.info("table " + tableName + " is " + status.toString());
+                return Optional.of(tableDescription);
+            }
+        } catch (AmazonServiceException ase) {
+            logger.info("exception creating table " + tableName + " " + ase.getMessage());
+            throw ase;
+        }
+        return Optional.empty();
     }
 
     private void sleep() {

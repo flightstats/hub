@@ -1,5 +1,6 @@
 package com.flightstats.hub.dao.aws;
 
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfig;
@@ -34,7 +35,9 @@ public class S3BatchManager {
 
     @Inject
     public S3BatchManager() {
-        HubServices.register(new S3BatchManagerService(), HubServices.TYPE.AFTER_HEALTHY_START);
+        if (HubProperties.isS3BatchManagementEnabled()) {
+            HubServices.register(new S3BatchManagerService(), HubServices.TYPE.AFTER_HEALTHY_START);
+        }
     }
 
     private void setupBatch() {

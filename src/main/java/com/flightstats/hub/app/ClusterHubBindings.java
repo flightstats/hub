@@ -9,6 +9,9 @@ import com.flightstats.hub.dao.ContentService;
 import com.flightstats.hub.dao.DocumentationDao;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.dao.CachedDao;
+import com.flightstats.hub.dao.ReadOnlyContentDao;
+import com.flightstats.hub.dao.ReadOnlyDao;
+import com.flightstats.hub.dao.ReadOnlyDocumentationDao;
 import com.flightstats.hub.dao.aws.DynamoWebhookDao;
 import com.flightstats.hub.dao.aws.DynamoChannelConfigDao;
 import com.flightstats.hub.dao.CachedLowerCaseDao   ;
@@ -56,15 +59,6 @@ class ClusterHubBindings extends AbstractModule {
         bind(ContentService.class)
                 .to(ClusterContentService.class).asEagerSingleton();
         bind(RemoteSpokeStore.class).asEagerSingleton();
-        bind(ContentDao.class)
-                .annotatedWith(Names.named(ContentDao.SINGLE_LONG_TERM))
-                .to(S3SingleContentDao.class).asEagerSingleton();
-        bind(ContentDao.class)
-                .annotatedWith(Names.named(ContentDao.BATCH_LONG_TERM))
-                .to(S3BatchContentDao.class).asEagerSingleton();
-        bind(ContentDao.class)
-                .annotatedWith(Names.named(ContentDao.LARGE_PAYLOAD))
-                .to(S3LargeContentDao.class).asEagerSingleton();
         bind(DynamoUtils.class).asEagerSingleton();
         bind(S3BatchManager.class).asEagerSingleton();
         bind(S3Verifier.class).asEagerSingleton();
@@ -78,7 +72,6 @@ class ClusterHubBindings extends AbstractModule {
                 .annotatedWith(Names.named(SpokeStore.READ.name()))
                 .toInstance(new SpokeTtlEnforcer(SpokeStore.READ));
 
-        bind(DocumentationDao.class).to(S3DocumentationDao.class).asEagerSingleton();
         bind(SpokeDecommissionManager.class).asEagerSingleton();
         bind(HubS3Client.class).asEagerSingleton();
         bind(S3AccessMonitor.class).asEagerSingleton();
@@ -89,9 +82,41 @@ class ClusterHubBindings extends AbstractModule {
     @Inject
     @Singleton
     @Provides
+    public DocumentationDao buildDocumentationDao(S3DocumentationDao base) {
+        return HubProperties.isReadOnly() ? new ReadOnlyDocumentationDao(base) : base;
+    }
+
+    @Inject
+    @Singleton
+    @Provides
+    @Named(ContentDao.SINGLE_LONG_TERM)
+    public ContentDao buildSingleLongTermContentDao(S3SingleContentDao base) {
+        return HubProperties.isReadOnly() ? new ReadOnlyContentDao(base) : base;
+    }
+
+    @Inject
+    @Singleton
+    @Provides
+    @Named(ContentDao.LARGE_PAYLOAD)
+    public ContentDao buildLargePayloadContentDao(S3LargeContentDao base) {
+        return HubProperties.isReadOnly() ? new ReadOnlyContentDao(base) : base;
+    }
+
+    @Inject
+    @Singleton
+    @Provides
+    @Named(ContentDao.BATCH_LONG_TERM)
+    public ContentDao buildBatchLongTermContentDao(S3BatchContentDao base) {
+        return HubProperties.isReadOnly() ? new ReadOnlyContentDao(base) : base;
+    }
+
+    @Inject
+    @Singleton
+    @Provides
     @Named("ChannelConfig")
     public static Dao<ChannelConfig> buildChannelConfigDao(WatchManager watchManager, DynamoChannelConfigDao dao) {
-        return new CachedLowerCaseDao<>(dao, watchManager, "/channels/cache");
+        Dao<ChannelConfig> cfgDao = new CachedLowerCaseDao<>(dao, watchManager, "/channels/cache");
+        return HubProperties.isReadOnly() ? new ReadOnlyDao<>(cfgDao) : cfgDao;
     }
 
     @Inject
@@ -99,7 +124,8 @@ class ClusterHubBindings extends AbstractModule {
     @Provides
     @Named("Webhook")
     public static Dao<Webhook> buildWebhookDao(WatchManager watchManager, DynamoWebhookDao dao) {
-        return new CachedDao<>(dao, watchManager, "/webhooks/cache");
+        Dao<Webhook> whDao = new CachedDao<>(dao, watchManager, "/webhooks/cache");
+        return HubProperties.isReadOnly() ? new ReadOnlyDao<>(whDao) : whDao;
     }
 
     @Inject

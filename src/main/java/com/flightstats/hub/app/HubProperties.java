@@ -19,7 +19,10 @@ public class HubProperties {
     private static Properties properties = new Properties();
 
     public enum HubProps {
-        WEBHOOK_LEADERSHIP_ENABLED("webhook.leadership.enabled");
+        WEBHOOK_LEADERSHIP_ENABLED("webhook.leadership.enabled"),
+        REPLICATION_ENABLED("replication.enabled"),
+        S3_BATCH_MANAGEMENT_ENABLED("s3.batch.management.enabled"),
+        S3_CONFIG_MANAGEMENT_ENABLED("s3.config.management.enabled");
         private final String key;
         HubProps(String key) {
             this.key = key;
@@ -54,6 +57,18 @@ public class HubProperties {
 
     public static boolean isProtected() {
         return HubProperties.getProperty("hub.protect.channels", true);
+    }
+
+    public static boolean isS3ConfigManagementEnabled() {
+        return getProperty(HubProps.S3_CONFIG_MANAGEMENT_ENABLED.getKey(), true);
+    }
+
+    public static boolean isS3BatchManagementEnabled() {
+        return getProperty(HubProps.S3_BATCH_MANAGEMENT_ENABLED.getKey(), true);
+    }
+
+    public static boolean isReplicationServiceEnabled() {
+        return getProperty(HubProps.REPLICATION_ENABLED.getKey(), true);
     }
 
     public static boolean isWebHookLeadershipEnabled() {

@@ -48,7 +48,9 @@ public class S3Config {
         this.channelConfigDao = channelConfigDao;
         this.channelService = channelService;
         this.s3BucketName = s3BucketName.getS3BucketName();
-        HubServices.register(new S3ConfigInit());
+        if (HubProperties.isS3ConfigManagementEnabled()) {
+            HubServices.register(new S3ConfigInit());
+        }
     }
 
     private void run() {
