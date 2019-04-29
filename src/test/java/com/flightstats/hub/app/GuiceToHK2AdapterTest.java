@@ -18,7 +18,7 @@ import static com.google.common.collect.Lists.newArrayList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-public class GuiceToHK2AdapterTest {
+class GuiceToHK2AdapterTest {
 
     @Value
     private static class SimpleService {
@@ -64,7 +64,7 @@ public class GuiceToHK2AdapterTest {
     private static class ComplicatedSimpleService<T extends SimpleService> {
         List<T> list;
         @com.google.inject.Inject
-        public ComplicatedSimpleService(List<T> whateverList) {
+        ComplicatedSimpleService(List<T> whateverList) {
             this.list = whateverList;
         }
 
@@ -77,13 +77,13 @@ public class GuiceToHK2AdapterTest {
         final ComplicatedSimpleService<SimpleService> dependency;
 
         @javax.inject.Inject
-        public WithComplicatedDependencyService(ComplicatedSimpleService<SimpleService> dependency) {
+        WithComplicatedDependencyService(ComplicatedSimpleService<SimpleService> dependency) {
             this.dependency = dependency;
         }
     }
 
     @Test
-    public void testSimple() {
+    void testSimple() {
         Injector injector = Guice.createInjector(new AbstractModule() {
             @Override
             protected void configure() {
@@ -101,7 +101,7 @@ public class GuiceToHK2AdapterTest {
     }
 
     @Test
-    public void testProvides() {
+    void testProvides() {
         Injector injector = Guice.createInjector(new AbstractModule() {
             @Override
             protected void configure() {}
@@ -117,7 +117,7 @@ public class GuiceToHK2AdapterTest {
     }
 
     @Test
-    public void testProvidesNamed() {
+    void testProvidesNamed() {
         Injector injector = Guice.createInjector(new AbstractModule() {
             @Override
             protected void configure() {}
@@ -141,7 +141,7 @@ public class GuiceToHK2AdapterTest {
     }
 
     @Test
-    public void testNativeEagerSingleton() {
+    void testNativeEagerSingleton() {
         Injector injector = Guice.createInjector(new AbstractModule() {
             @Override
             protected void configure() {
@@ -158,7 +158,7 @@ public class GuiceToHK2AdapterTest {
     }
 
     @Test
-    public void testGuicedEagerSingleton() {
+    void testGuicedEagerSingleton() {
         Injector injector = Guice.createInjector(new AbstractModule() {
             @Override
             protected void configure() {
@@ -175,7 +175,7 @@ public class GuiceToHK2AdapterTest {
     }
 
     @Test
-    public void testNativeAnnotatedSingleton() {
+    void testNativeAnnotatedSingleton() {
         Injector injector = Guice.createInjector(new AbstractModule() {
             @Override
             protected void configure() {
@@ -191,7 +191,7 @@ public class GuiceToHK2AdapterTest {
     }
 
     @Test
-    public void testGuicedAnnotatedSingleton() {
+    void testGuicedAnnotatedSingleton() {
         Injector injector = Guice.createInjector(new AbstractModule() {
             @Override
             protected void configure() {
@@ -207,7 +207,7 @@ public class GuiceToHK2AdapterTest {
     }
 
     @Test
-    public void testComplicatedDependencyWithGenericAndProvider() {
+    void testComplicatedDependencyWithGenericAndProvider() {
         Injector injector = Guice.createInjector(new AbstractModule() {
             @Override
             protected void configure() {
@@ -215,7 +215,7 @@ public class GuiceToHK2AdapterTest {
             }
 
             @Provides
-            public ComplicatedSimpleService<SimpleService> buildSomeServices() {
+            ComplicatedSimpleService<SimpleService> buildSomeServices() {
                 return new ComplicatedSimpleService<>(newArrayList(new SimpleService("just one")));
             }
         });
@@ -227,25 +227,25 @@ public class GuiceToHK2AdapterTest {
     }
 
     @Test
-    public void testNamedComplicatedDependencyWithGenericAndProvider() {
+    void testNamedComplicatedDependencyWithGenericAndProvider() {
         Injector injector = Guice.createInjector(new AbstractModule() {
             @Override
             protected void configure() { }
 
             @Provides
-            public WithComplicatedDependencyService buildComplicatedService(@Named("aDependency") ComplicatedSimpleService<SimpleService> aDependency) {
+            WithComplicatedDependencyService buildComplicatedService(@Named("aDependency") ComplicatedSimpleService<SimpleService> aDependency) {
                 return new WithComplicatedDependencyService(aDependency);
             }
 
             @Named("aDependency")
             @Provides
-            public ComplicatedSimpleService<SimpleService> buildAService() {
+            ComplicatedSimpleService<SimpleService> buildAService() {
                 return new ComplicatedSimpleService<>(newArrayList(new SimpleService("just one")));
             }
 
             @Named("anotherDependency")
             @Provides
-            public ComplicatedSimpleService<SimpleService> buildAnotherService() {
+            ComplicatedSimpleService<SimpleService> buildAnotherService() {
                 return new ComplicatedSimpleService<>(newArrayList(new SimpleService("one"), new SimpleService("two")));
             }
         });

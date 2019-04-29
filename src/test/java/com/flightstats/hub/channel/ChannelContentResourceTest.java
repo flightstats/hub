@@ -8,21 +8,21 @@ import javax.ws.rs.core.MediaType;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
-public class ChannelContentResourceTest {
+class ChannelContentResourceTest {
 
     @BeforeAll
-    public static void setUpClass() throws Exception {
+    static void setUpClass() throws Exception {
         Integration.startAwsHub();
     }
 
     @Test
-    public void testHttpURLConnection() {
+    void testHttpURLConnection() {
         String accept = "text/html, image/gif, image/jpeg, *; q=.2, */*; q=.2";
         assertFalse(ChannelContentResource.contentTypeIsNotCompatible(accept, MediaType.WILDCARD_TYPE));
     }
 
     @Test
-    public void testMost() {
+    void testMost() {
         String accept = "text/html, image/gif, image/jpeg, */*; q=.2";
         assertFalse(ChannelContentResource.contentTypeIsNotCompatible(accept, MediaType.WILDCARD_TYPE));
     }

@@ -27,7 +27,7 @@ class TimedWebhookStrategyTest {
     private void compare(DateTime start, String expected) {
         SecondPath secondPath = new SecondPath(start);
         DateTime stable = TimedWebhookStrategy.replicatingStable_minute(secondPath);
-        assertEquals(start.toString(), expected, stable.toString());
+        assertEquals(expected, stable.toString(), start.toString());
     }
 
     @Test
@@ -41,7 +41,7 @@ class TimedWebhookStrategyTest {
     private void compareContentKey(DateTime start, String expected) {
         ContentKey secondPath = new ContentKey(start);
         DateTime stable = TimedWebhookStrategy.replicatingStable_minute(secondPath);
-        assertEquals(start.toString(), expected, stable.toString());
+        assertEquals(expected, stable.toString(), start.toString());
     }
 
 }

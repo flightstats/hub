@@ -2,6 +2,7 @@ package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.SafeZooKeeperUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,11 +14,13 @@ import java.util.Set;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Sets.newHashSet;
+import static org.apache.zookeeper.KeeperException.NodeExistsException;
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
+@Slf4j
 class WebhookLeaderLocksTest {
     private static final String WEBHOOK_LEADER_PATH = "/WebhookLeader";
 
@@ -32,6 +35,14 @@ class WebhookLeaderLocksTest {
     private static CuratorFramework curator;
     private static SafeZooKeeperUtils zooKeeperUtils;
 
+    void createPath() throws Exception {
+        curator.create().creatingParentsIfNeeded().forPath(WEBHOOK_LEADER_PATH);
+    }
+
+    void deletePath() throws Exception {
+        curator.delete().deletingChildrenIfNeeded().forPath(WEBHOOK_LEADER_PATH);
+    }
+
     @BeforeAll
     static void setup() throws Exception {
         curator = Integration.startZooKeeper();
@@ -40,12 +51,18 @@ class WebhookLeaderLocksTest {
 
     @BeforeEach
     void createWebhookLeader() throws Exception {
-        curator.create().creatingParentsIfNeeded().forPath(WEBHOOK_LEADER_PATH);
+        try {
+            createPath();
+        } catch (NodeExistsException e) {
+            log.error(e.getMessage());
+            deletePath();
+            createPath();
+        }
     }
 
     @AfterEach
     void destroyWebhookLeaders() throws Exception {
-        curator.delete().deletingChildrenIfNeeded().forPath(WEBHOOK_LEADER_PATH);
+        deletePath();
     }
 
     @Test
