@@ -1,6 +1,8 @@
 package com.flightstats.hub.app;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
+import com.flightstats.hub.dao.aws.S3WriteQueue;
+import com.flightstats.hub.dao.aws.S3WriteQueueLifecycle;
 import com.flightstats.hub.filter.CORSFilter;
 import com.flightstats.hub.filter.StreamEncodingFilter;
 import com.flightstats.hub.metrics.CustomMetricsLifecycle;
@@ -156,11 +158,15 @@ public class HubMain {
     }
 
     private List<Service> getBeforeHealthCheckServices(Injector injector) {
-        return Stream.of(
+        List<Service> services = Stream.of(
                 InfluxdbReporterLifecycle.class,
                 StatsDReporterLifecycle.class)
                 .map(injector::getInstance)
                 .collect(Collectors.toList());
+        if (storageBackend == StorageBackend.aws) {
+            services.add(injector.getInstance(S3WriteQueueLifecycle.class));
+        }
+        return services;
     }
 
     private List<Service> getAfterHealthCheckServices(Injector injector) {
