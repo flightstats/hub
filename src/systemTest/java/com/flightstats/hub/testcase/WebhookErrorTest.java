@@ -5,19 +5,19 @@ import com.flightstats.hub.model.Webhook;
 import com.google.inject.Inject;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
 
 import static com.flightstats.hub.model.ChannelContentStorageType.SINGLE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
-public class WebhookErrorTest extends BaseTest {
+class WebhookErrorTest extends BaseTest {
     @Inject
     private HubHelper hubHelper;
     @Inject
@@ -26,7 +26,7 @@ public class WebhookErrorTest extends BaseTest {
     private String channelName;
     private String webhookName;
 
-    @Before
+    @BeforeEach
     public void before() {
         super.before();
         callbackServerHelper.startCallbackServer();
@@ -65,7 +65,7 @@ public class WebhookErrorTest extends BaseTest {
 
     @Test
     @SneakyThrows
-    public void testThatNewlyCreatedWebhookDoesntReceiveStaleErrors() {
+    void testThatNewlyCreatedWebhookDoesntReceiveStaleErrors() {
         // verify that errors are created for the first item
         String firstUrl = hubHelper.addItemToChannel(channelName, "{ name:\"item1\" }");
         callbackServerHelper.errorOnCreate(
@@ -95,7 +95,7 @@ public class WebhookErrorTest extends BaseTest {
     }
 
     @Test
-    public void testSettingCursorBeyondErrorClearsErrorStateAndContinues() {
+    void testSettingCursorBeyondErrorClearsErrorStateAndContinues() {
         // verify that errors are created for the first item
         String firstUrl = hubHelper.addItemToChannel(channelName, "{ name:\"item1\" }");
         callbackServerHelper.errorOnCreate(
@@ -125,7 +125,7 @@ public class WebhookErrorTest extends BaseTest {
 
     @Test
     @SneakyThrows
-    public void testWebhookCursorUpdateLoopDoesntCorruptState() {
+    void testWebhookCursorUpdateLoopDoesntCorruptState() {
         for (int i = 1; i <= 3; i++) {
             log.info("Iteration {}", i);
             this.testSettingCursorBeyondErrorClearsErrorStateAndContinues();
@@ -137,7 +137,7 @@ public class WebhookErrorTest extends BaseTest {
 
     @Test
     @SneakyThrows
-    public void testWebhookRecreationLoopDoesntCorruptState() {
+    void testWebhookRecreationLoopDoesntCorruptState() {
         for (int i = 1; i <= 3; i++) {
             log.info("Iteration {}", i);
             this.testThatNewlyCreatedWebhookDoesntReceiveStaleErrors();
@@ -145,8 +145,8 @@ public class WebhookErrorTest extends BaseTest {
         }
     }
 
-    @After
-    public void after() {
+    @AfterEach
+    void after() {
         hubHelper.deleteChannelAndWebhook(channelName, webhookName);
         callbackServerHelper.stopCallbackServer();
     }
