@@ -1,5 +1,6 @@
 package com.flightstats.hub.webhook;
 
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.cluster.LastContentPath;
 import lombok.extern.slf4j.Slf4j;
 
@@ -28,11 +29,13 @@ class WebhookStateReaper {
     }
 
     void delete(String webhook) {
-        log.info("deleting " + webhook);
-        webhookInProcess.delete(webhook);
-        lastContentPath.delete(webhook, WEBHOOK_LAST_COMPLETED);
-        webhookErrorService.delete(webhook);
-        webhookLeaderLocks.deleteWebhookLeader(webhook);
-        log.info("deleted " + webhook);
+        if (HubProperties.isWebHookLeadershipEnabled()) {
+            log.info("deleting " + webhook);
+            webhookInProcess.delete(webhook);
+            lastContentPath.delete(webhook, WEBHOOK_LAST_COMPLETED);
+            webhookErrorService.delete(webhook);
+            webhookLeaderLocks.deleteWebhookLeader(webhook);
+            log.info("deleted " + webhook);
+        }
     }
 }

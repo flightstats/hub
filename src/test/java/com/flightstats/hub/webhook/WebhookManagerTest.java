@@ -1,40 +1,57 @@
 package com.flightstats.hub.webhook;
 
+import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.dao.Dao;
+import com.google.common.util.concurrent.Service;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Sets.newHashSet;
 import static java.lang.String.format;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyCollectionOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.matches;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@RunWith(MockitoJUnitRunner.class)
 public class WebhookManagerTest {
-    private final WatchManager watchManager = mock(WatchManager.class);
-    private final Dao<Webhook> webhookDao = getWebhookDao();
-    private final LastContentPath lastContentPath = mock(LastContentPath.class);
-    private final ActiveWebhooks activeWebhooks = mock(ActiveWebhooks.class);
-    private final WebhookErrorService webhookErrorService = mock(WebhookErrorService.class);
-    private final WebhookContentPathSet webhookContentPathSet = mock(WebhookContentPathSet.class);
-    private final InternalWebhookClient webhookClient = mock(InternalWebhookClient.class);
+    @Mock private WatchManager watchManager;
+    @Mock private Dao<Webhook> webhookDao;
+    @Mock private LastContentPath lastContentPath;
+    @Mock private ActiveWebhooks activeWebhooks;
+    @Mock private WebhookErrorService webhookErrorService;
+    @Mock private WebhookContentPathSet webhookContentPathSet;
+    @Mock private InternalWebhookClient webhookClient;
 
     private static final String SERVER1 = "123.1.1";
     private static final String SERVER2 = "123.2.1";
     private static final String SERVER3 = "123.3.1";
 
     private static final String WEBHOOK_NAME = "w3bh00k";
+
+    @Before
+    public void setup() {
+        HubProperties.setProperty(HubProperties.HubProps.WEBHOOK_LEADERSHIP_ENABLED.getKey(), "true");
+        HubServices.clear();
+    }
 
     @Test
     public void testWhenWebhookIsManagedOnExactlyOneServer_doesNothing() {
@@ -146,12 +163,24 @@ public class WebhookManagerTest {
         verify(webhookClient, never()).remove(eq(WEBHOOK_NAME), anyString());
     }
 
+    @Test
+    public void testRegistersServices() {
+        getWebhookManager();
+        Map<HubServices.TYPE, List<Service>> services = HubServices.getServices();
+        assertEquals(2, services.get(HubServices.TYPE.AFTER_HEALTHY_START).size());
+        assertEquals(1, services.get(HubServices.TYPE.PRE_STOP).size());
+    }
+
+    @Test
+    public void testIfNotLeaderWontRegisterServices() {
+        HubProperties.setProperty(HubProperties.HubProps.WEBHOOK_LEADERSHIP_ENABLED.getKey(), "false");
+        getWebhookManager();
+        Map<HubServices.TYPE, List<Service>> services = HubServices.getServices();
+        services.forEach((type, svcs) -> assertTrue(type + " has services registered", svcs.isEmpty()));
+    }
+
     private WebhookManager getWebhookManager() {
         return new WebhookManager(watchManager, webhookDao, lastContentPath, activeWebhooks, webhookErrorService, webhookContentPathSet, webhookClient);
     }
 
-    @SuppressWarnings("unchecked")
-    private Dao<Webhook> getWebhookDao() {
-        return (Dao<Webhook>) mock(Dao.class);
-    }
 }

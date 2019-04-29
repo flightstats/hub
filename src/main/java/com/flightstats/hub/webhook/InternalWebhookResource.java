@@ -3,8 +3,10 @@ package com.flightstats.hub.webhook;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.model.ContentPath;
+import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 
 import javax.ws.rs.GET;
@@ -20,6 +22,7 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
@@ -27,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 import static com.flightstats.hub.util.StaleUtil.addStaleEntities;
 
 @Path("/internal/webhook")
+@Slf4j
 public class InternalWebhookResource {
 
     public static final String DESCRIPTION = "Get all webhooks, or stale or erroring webhooks.";
@@ -138,24 +142,42 @@ public class InternalWebhookResource {
     @Path("/run/{name}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response run(@PathParam("name") String name) {
-        if (LOCAL_WEBHOOK_MANAGER.ensureRunning(name)) {
-            return Response.ok().build();
-        }
-        return Response.status(400).build();
+        return checkPermission("run", name)
+                .orElseGet(() -> attemptRun(name));
     }
 
     @PUT
     @Path("/delete/{name}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response delete(@PathParam("name") String name) {
-        LOCAL_WEBHOOK_MANAGER.stopLocal(name, true);
-        return Response.ok().build();
+        return checkPermission("delete", name)
+                .orElseGet(() -> attemptDelete(name));
     }
 
     @GET
     @Path("/count")
     public Response count() {
         return Response.ok(LOCAL_WEBHOOK_MANAGER.getCount()).build();
+    }
+
+    private Response attemptRun(String name) {
+        if (LOCAL_WEBHOOK_MANAGER.ensureRunning(name)) {
+            return Response.ok().build();
+        }
+        return Response.status(400).build();
+    }
+
+    private Response attemptDelete(String name) {
+        LOCAL_WEBHOOK_MANAGER.stopLocal(name, true);
+        return Response.ok().build();
+    }
+
+    private Optional<Response> checkPermission(String task, String name) {
+        if (!HubProperties.isWebHookLeadershipEnabled()) {
+            log.warn("attempted to internally {} for webhook on node with leadership disabled {}", task, name);
+            return Optional.of(Response.status(Response.Status.FORBIDDEN).build());
+        }
+        return Optional.empty();
     }
 
 }

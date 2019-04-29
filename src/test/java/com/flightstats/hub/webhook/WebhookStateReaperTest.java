@@ -1,5 +1,6 @@
 package com.flightstats.hub.webhook;
 
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ContentKey;
@@ -48,6 +49,7 @@ public class WebhookStateReaperTest {
         WebhookErrorRepository webhookErrorRepository = new WebhookErrorRepository(zooKeeperUtils, nameGenerator);
         WebhookErrorPruner webhookErrorPruner = new WebhookErrorPruner(webhookErrorRepository);
 
+        HubProperties.setProperty(HubProperties.HubProps.WEBHOOK_LEADERSHIP_ENABLED.getKey(), "true");
         webhookLeaderLocks = new WebhookLeaderLocks(zooKeeperUtils);
         lastContentPath = new LastContentPath(curator);
         webhookErrorService = new WebhookErrorService(webhookErrorRepository, webhookErrorPruner, channelService);
@@ -148,6 +150,26 @@ public class WebhookStateReaperTest {
         assertErrorDeleted(webhookName);
         assertWebhookInProcessDeleted(webhookName);
         assertWebhookLeaderDeleted(webhookName);
+    }
+
+    @Test
+    public void testDoesNothingIfLeadershipDisabled() throws Exception {
+        HubProperties.setProperty(HubProperties.HubProps.WEBHOOK_LEADERSHIP_ENABLED.getKey(), "false");
+        // GIVEN
+        addLastCompleted(webhookName);
+        addWebhookInProcess(webhookName);
+        addError(webhookName);
+        addWebhookLeader(webhookName);
+
+        // WHEN
+        WebhookStateReaper reaper = new WebhookStateReaper(lastContentPath, webhookInProcess, webhookErrorService, webhookLeaderLocks);
+        reaper.delete(webhookName);
+
+        // THEN
+        assertLastCompletedExists(webhookName);
+        assertErrorExists(webhookName);
+        assertWebhookInProcessExists(webhookName);
+        assertWebhookLeaderExists(webhookName);
     }
 
 

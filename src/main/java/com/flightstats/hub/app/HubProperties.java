@@ -18,6 +18,15 @@ public class HubProperties {
     private final static Logger logger = LoggerFactory.getLogger(HubProperties.class);
     private static Properties properties = new Properties();
 
+    public enum HubProps {
+        WEBHOOK_LEADERSHIP_ENABLED("webhook.leadership.enabled");
+        private final String key;
+        HubProps(String key) {
+            this.key = key;
+        }
+        public String getKey() { return key; }
+    }
+
     public static boolean isReadOnly() {
         String readOnlyNodes = HubProperties.getProperty("hub.read.only", "");
         return Arrays.asList(readOnlyNodes.split(","))
@@ -45,6 +54,10 @@ public class HubProperties {
 
     public static boolean isProtected() {
         return HubProperties.getProperty("hub.protect.channels", true);
+    }
+
+    public static boolean isWebHookLeadershipEnabled() {
+        return getProperty(HubProps.WEBHOOK_LEADERSHIP_ENABLED.getKey(), true);
     }
 
     public static String getSpokePath(SpokeStore spokeStore) {
