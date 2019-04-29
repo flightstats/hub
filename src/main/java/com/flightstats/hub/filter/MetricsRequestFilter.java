@@ -1,7 +1,8 @@
 package com.flightstats.hub.filter;
 
 import com.flightstats.hub.app.HubProvider;
-import com.flightstats.hub.metrics.MetricsService;
+import com.flightstats.hub.metrics.StatsDFilter;
+import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.util.RequestUtils;
 import com.google.common.annotations.VisibleForTesting;
 import org.glassfish.jersey.server.internal.routing.UriRoutingContext;
@@ -27,22 +28,11 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 public class MetricsRequestFilter implements ContainerRequestFilter, ContainerResponseFilter {
 
     private static final Logger logger = LoggerFactory.getLogger(MetricsRequestFilter.class);
-    private static final MetricsService metricsService = HubProvider.getInstance(MetricsService.class);
+    private static final StatsdReporter statsdReporter = HubProvider.getInstance(StatsdReporter.class);
+    private static final StatsDFilter statsdFilter = HubProvider.getInstance(StatsDFilter.class);
     private static final ThreadLocal<RequestState> threadLocal = new ThreadLocal<>();
     private static final String CHARACTERS_TO_REMOVE = "[\\[\\]|.*+]";
     private static final String CHARACTERS_TO_REPLACE = "[:\\{\\}]";
-
-    @Override
-    public void filter(ContainerRequestContext request, ContainerResponseContext response) {
-        try {
-            RequestState requestState = threadLocal.get();
-            if (null != requestState) {
-                requestState.setResponse(response);
-            }
-        } catch (Exception e) {
-            logger.error("DataDog request error", e);
-        }
-    }
 
     public static void finalStats() {
         try {
@@ -71,12 +61,12 @@ public class MetricsRequestFilter implements ContainerRequestFilter, ContainerRe
             if (isBlank(endpoint)) {
                 logger.trace("no endpoint, path: {}", request.getUriInfo().getPath());
             } else if (tags.get("call").endsWith("/shutdown")) {
-                logger.info("call to shutdown, ignoring datadog time {}", time);
+                logger.info("call to shutdown, ignoring statsd time {}", time);
             } else {
                 String[] tagArray = getTagArray(tags);
-                logger.trace("DataDog data sent: {}", Arrays.toString(tagArray));
-                if (metricsService.shouldLog(channel)) {
-                    metricsService.time("request", requestState.getStart(), tagArray);
+                if (!statsdFilter.isTestChannel(channel)) {
+                    logger.trace("statsdReporter data sent: {}", Arrays.toString(tagArray));
+                    statsdReporter.requestTime(requestState.getStart(), tagArray);
                 }
             }
             logger.trace("request {}, time: {}", tags.get("endpoint"), time);
@@ -85,18 +75,13 @@ public class MetricsRequestFilter implements ContainerRequestFilter, ContainerRe
                 tags.put("errorCode", String.valueOf(returnCode));
                 String[] tagArray = getTagArray(tags, "errorCode", "call", "channel");
                 logger.trace("data sent: {}", Arrays.toString(tagArray));
-                metricsService.count("errors", 1, tagArray);
+                statsdReporter.count("errors", 1, tagArray);
             }
         } catch (Exception e) {
             logger.error("metrics request error", e);
         } finally {
             threadLocal.remove();
         }
-    }
-
-    @Override
-    public void filter(ContainerRequestContext request) throws IOException {
-        threadLocal.set(new RequestState(request));
     }
 
     private static String[] getTagArray(Map<String, String> tags, String... tagsOnly) {
@@ -123,6 +108,23 @@ public class MetricsRequestFilter implements ContainerRequestFilter, ContainerRe
                 .map(template -> template.replaceAll(CHARACTERS_TO_REMOVE, ""))
                 .map(template -> template.replaceAll(CHARACTERS_TO_REPLACE, "_"))
                 .collect(Collectors.joining(""));
+    }
+
+    @Override
+    public void filter(ContainerRequestContext request, ContainerResponseContext response) {
+        try {
+            RequestState requestState = threadLocal.get();
+            if (null != requestState) {
+                requestState.setResponse(response);
+            }
+        } catch (Exception e) {
+            logger.error("DataDog request error", e);
+        }
+    }
+
+    @Override
+    public void filter(ContainerRequestContext request) throws IOException {
+        threadLocal.set(new RequestState(request));
     }
 
     private class RequestState {

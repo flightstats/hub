@@ -8,18 +8,27 @@ import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.ContentPath;
+import com.flightstats.hub.model.MinutePath;
+import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
-import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
-import java.util.concurrent.*;
+import java.util.Optional;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -73,7 +82,7 @@ class SingleWebhookStrategy implements WebhookStrategy {
             response.put("id", contentPath.toUrl());
             response.put("type", "heartbeat");
         }
-        return response; 
+        return response;
     }
 
     @Override
@@ -87,7 +96,7 @@ class SingleWebhookStrategy implements WebhookStrategy {
             logger.error("unable to determine next " + webhook.getName(), e);
             throw e;
         }
-        return Optional.fromNullable(queue.poll(10, TimeUnit.SECONDS));
+        return Optional.ofNullable(queue.poll(1, TimeUnit.SECONDS));
     }
 
     public void start(Webhook webhook, ContentPath startingPath) {
@@ -98,7 +107,6 @@ class SingleWebhookStrategy implements WebhookStrategy {
         executorService.submit(new Runnable() {
 
             ContentPath lastAdded = startingPath;
-            ChannelConfig channelConfig = channelService.getChannelConfig(channel, true);
 
             @Override
             public void run() {
@@ -111,6 +119,7 @@ class SingleWebhookStrategy implements WebhookStrategy {
                 } catch (InterruptedException | RuntimeInterruptedException e) {
                     exceptionReference.set(e);
                     logger.info("InterruptedException with " + webhook.getName());
+                    Thread.currentThread().interrupt();
                 } catch (NoSuchChannelException e) {
                     exceptionReference.set(e);
                     logger.debug("NoSuchChannelException for " + webhook.getName());
@@ -124,7 +133,7 @@ class SingleWebhookStrategy implements WebhookStrategy {
                 ActiveTraces.start("SingleWebhookStrategy", webhook);
                 try {
                     DateTime latestStableInChannel = TimeUtil.stable();
-                    if (!channelConfig.isLive()) {
+                    if (!channelService.isLiveChannel(channel)) {
                         latestStableInChannel = channelService.getLastUpdated(channel, MinutePath.NONE).getTime();
                     }
                     TimeQuery timeQuery = queryGenerator.getQuery(latestStableInChannel);

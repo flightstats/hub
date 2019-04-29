@@ -25,17 +25,37 @@ import java.util.function.Consumer;
 public class LocalWebhookManager {
 
     private static final Logger logger = LoggerFactory.getLogger(LocalWebhookManager.class);
+    private final KeyLockManager lockManager;
     @Inject
     @Named("Webhook")
     private Dao<Webhook> webhookDao;
     @Inject
     private Provider<WebhookLeader> v2Provider;
     private Map<String, WebhookLeader> localLeaders = new ConcurrentHashMap<>();
-    private final KeyLockManager lockManager;
 
     @Inject
     public LocalWebhookManager() {
         lockManager = KeyLockManagers.newLock(1, TimeUnit.SECONDS);
+    }
+
+    static void runAndWait(String name, Collection<String> keys, Consumer<String> consumer) {
+        ExecutorService pool = Executors.newFixedThreadPool(HubProperties.getProperty("webhook.shutdown.threads", 100),
+                new ThreadFactoryBuilder().setNameFormat(name + "-%d").build());
+        logger.info("{}", keys);
+        for (String key : keys) {
+            pool.submit(() -> {
+                consumer.accept(key);
+            });
+        }
+        logger.info("accepted all ");
+        pool.shutdown();
+        try {
+            boolean awaitTermination = pool.awaitTermination(5, TimeUnit.MINUTES);
+            logger.info("awaitTermination", awaitTermination);
+        } catch (InterruptedException e) {
+            logger.warn("interuppted", e);
+            throw new RuntimeInterruptedException(e);
+        }
     }
 
     boolean ensureRunning(String name) {
@@ -71,26 +91,6 @@ public class LocalWebhookManager {
 
     void stopAllLocal() throws InterruptedException {
         runAndWait("LocalWebhookManager.stopAll", localLeaders.keySet(), (name) -> stopLocal(name, false));
-    }
-
-    static void runAndWait(String name, Collection<String> keys, Consumer<String> consumer) {
-        ExecutorService pool = Executors.newFixedThreadPool(HubProperties.getProperty("webhook.shutdown.threads", 100),
-                new ThreadFactoryBuilder().setNameFormat(name + "-%d").build());
-        logger.info("{}", keys);
-        for (String key : keys) {
-            pool.submit(() -> {
-                consumer.accept(key);
-            });
-        }
-        logger.info("accepted all ");
-        pool.shutdown();
-        try {
-            boolean awaitTermination = pool.awaitTermination(5, TimeUnit.MINUTES);
-            logger.info("awaitTermination", awaitTermination);
-        } catch (InterruptedException e) {
-            logger.warn("interuppted", e);
-            throw new RuntimeInterruptedException(e);
-        }
     }
 
     void stopLocal(String name, boolean delete) {

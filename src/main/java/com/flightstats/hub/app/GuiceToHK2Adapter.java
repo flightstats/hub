@@ -15,11 +15,11 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
-class GuiceToHK2Adapter extends AbstractBinder {
+public class GuiceToHK2Adapter extends AbstractBinder {
 
     private final Injector injector;
 
-    GuiceToHK2Adapter(Injector injector) {
+    public GuiceToHK2Adapter(Injector injector) {
         this.injector = injector;
     }
 

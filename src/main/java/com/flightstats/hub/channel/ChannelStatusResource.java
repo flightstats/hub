@@ -6,35 +6,36 @@ import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.HubUtils;
-import com.google.common.base.Optional;
+import lombok.SneakyThrows;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.util.Optional;
 import java.util.SortedSet;
 
 @SuppressWarnings("WeakerAccess")
 @Path("/channel/{channel}/status")
 public class ChannelStatusResource {
 
-    @Context
-    private UriInfo uriInfo;
-
     private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
     private final static HubUtils hubUtils = HubProvider.getInstance(HubUtils.class);
     private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    @Context
+    private UriInfo uriInfo;
 
+    @SneakyThrows
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getLatest(@PathParam("channel") String channel,
                               @QueryParam("stable") @DefaultValue("true") boolean stable,
                               @QueryParam("trace") @DefaultValue("false") boolean trace) {
-        ChannelConfig channelConfig = channelService.getCachedChannelConfig(channel);
-        if (null == channelConfig) {
-            return Response.status(404).build();
-        }
+        ChannelConfig channelConfig = channelService.getCachedChannelConfig(channel)
+                .orElseThrow(() -> {
+                    throw new WebApplicationException(Response.status(404).build());
+                });
         ObjectNode root = mapper.createObjectNode();
         ObjectNode links = root.putObject("_links");
         ObjectNode self = links.putObject("self");
@@ -47,7 +48,7 @@ public class ChannelStatusResource {
                 Location.ALL.name(), Epoch.IMMUTABLE.name());
         SortedSet<ContentKey> earliest = channelService.query(directionQuery);
         if (earliest.isEmpty()) {
-            addLink("earliest", Optional.absent(), channel, links);
+            addLink("earliest", Optional.empty(), channel, links);
         } else {
             addLink("earliest", Optional.of(earliest.first()), channel, links);
         }

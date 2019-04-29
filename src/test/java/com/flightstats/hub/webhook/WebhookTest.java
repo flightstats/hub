@@ -2,24 +2,29 @@ package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.MinutePath;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-public class WebhookTest {
+class WebhookTest {
 
     private Webhook webhook;
 
     @BeforeEach
-    public void setUp() throws Exception {
+    void setUp() {
         webhook = Webhook.builder()
                 .channelUrl("url").callbackUrl("end").build();
     }
 
     @Test
-    public void testSimple() throws Exception {
+    void testSimple() {
         Webhook webhook = Webhook.fromJson(this.webhook.toJson());
         assertEquals("end", webhook.getCallbackUrl());
         assertEquals("url", webhook.getChannelUrl());
@@ -27,7 +32,7 @@ public class WebhookTest {
     }
 
     @Test
-    public void testTag() throws Exception {
+    void testTag() {
         String tagUrl = "http://hub/tag/allTheThings";
         Webhook aWebhook = Webhook.builder()
                 .tagUrl(tagUrl)
@@ -38,7 +43,7 @@ public class WebhookTest {
     }
 
     @Test
-    public void testWithName() throws Exception {
+    void testWithName() {
         Webhook webhook = this.webhook.withName("wither");
         webhook = Webhook.fromJson(webhook.toJson());
         assertEquals("end", webhook.getCallbackUrl());
@@ -47,14 +52,13 @@ public class WebhookTest {
     }
 
     @Test
-    public void testFromJson() {
-        System.out.println(webhook.toJson());
+    void testFromJson() {
         Webhook cycled = Webhook.fromJson(webhook.toJson());
         assertEquals(webhook, cycled);
     }
 
     @Test
-    public void testJsonStartItem() {
+    void testJsonStartItem() {
         ContentKey key = new ContentKey();
         String json = "{\"callbackUrl\":\"end\",\"channelUrl\":\"url\",\"startItem\":\"" +
                 "http://hub/channel/stuff/" + key.toUrl() +
@@ -67,7 +71,7 @@ public class WebhookTest {
     }
 
     @Test
-    public void testJsonContentPath() {
+    void testJsonContentPath() {
         MinutePath key = new MinutePath();
         String json = "{\"callbackUrl\":\"end\",\"channelUrl\":\"url\"," +
                 "\"startItem\":\"http://hub/channel/stuff/" + key.toUrl() +
@@ -80,7 +84,7 @@ public class WebhookTest {
     }
 
     @Test
-    public void testWithDefaults() {
+    void testWithDefaults() {
         assertNull(webhook.getParallelCalls());
         assertNull(webhook.getBatch());
         webhook = webhook.withDefaults();
@@ -89,7 +93,7 @@ public class WebhookTest {
     }
 
     @Test
-    public void testAllowedToChange() {
+    void testAllowedToChange() {
         Webhook hubA = Webhook.builder().name("name")
                 .channelUrl("http://hubA/channel/name")
                 .callbackUrl("url").build().withDefaults();
@@ -104,7 +108,7 @@ public class WebhookTest {
     }
 
     @Test
-    public void testChannelUrlChange() {
+    void testChannelUrlChange() {
         Webhook hubA = Webhook.builder().name("name")
                 .channelUrl("http://hubA/channel/name")
                 .callbackUrl("url").build().withDefaults();
@@ -120,7 +124,7 @@ public class WebhookTest {
     }
 
     @Test
-    public void testStartingKey() throws Exception {
+    void testStartingKey() {
         Webhook withDefaultsA = this.webhook.withDefaults();
         Webhook withDefaultsB = this.webhook.withDefaults();
         assertEquals(withDefaultsA, withDefaultsB);
@@ -131,7 +135,7 @@ public class WebhookTest {
     }
 
     @Test
-    public void testIsTagPrototype() throws Exception {
+    void testIsTagPrototype() {
         Webhook withDefaultsA = this.webhook.withDefaults();
         assertFalse(withDefaultsA.isTagPrototype());
         Webhook twh = Webhook.builder().name("name")
@@ -141,4 +145,12 @@ public class WebhookTest {
         assertTrue(twh.isTagPrototype());
     }
 
+    @Test
+    void testSecondaryMetricsReporting() {
+        Webhook withDefaults = this.webhook.withDefaults();
+        assertFalse(withDefaults.isSecondaryMetricsReporting());
+        String json = "{ \"secondaryMetricsReporting\": true }";
+        Webhook newWebhook = Webhook.fromJson(json, Optional.of(withDefaults));
+        assertTrue(newWebhook.isSecondaryMetricsReporting());
+    }
 }

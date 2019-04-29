@@ -9,31 +9,37 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.RequestUtils;
-import com.google.common.base.Optional;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import de.danielbechler.diff.ObjectDifferBuilder;
 import de.danielbechler.diff.node.DiffNode;
-import lombok.*;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.ToString;
+import lombok.EqualsAndHashCode;
 import lombok.experimental.Wither;
+import lombok.extern.slf4j.Slf4j;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.SortedSet;
 
 @Builder
 @Getter
 @ToString
 @EqualsAndHashCode
+@Slf4j
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class Webhook implements Comparable<Webhook>, NamedType {
     public static final String SINGLE = "SINGLE";
     public static final String MINUTE = "MINUTE";
     public static final String SECOND = "SECOND";
-    private final static Logger logger = LoggerFactory.getLogger(Webhook.class);
     private static final ObjectMapper mapper = new ObjectMapper();
     private static final Gson gson = new GsonBuilder().create();
     private final String callbackUrl;
@@ -67,6 +73,8 @@ public class Webhook implements Comparable<Webhook>, NamedType {
     @Wither
     private final String errorChannelUrl;
 
+    boolean secondaryMetricsReporting;
+
     static Webhook fromJson(String json, Optional<Webhook> webhookOptional) {
         WebhookBuilder builder = Webhook.builder();
         if (webhookOptional.isPresent()) {
@@ -86,12 +94,13 @@ public class Webhook implements Comparable<Webhook>, NamedType {
                     .tagUrl(existing.tagUrl)
                     .managedByTag(existing.managedByTag)
                     .maxAttempts(existing.maxAttempts)
-                    .errorChannelUrl(existing.errorChannelUrl);
+                    .errorChannelUrl(existing.errorChannelUrl)
+                    .secondaryMetricsReporting(existing.secondaryMetricsReporting);
         }
         try {
             JsonNode root = mapper.readTree(json);
             if (root.has("startItem")) {
-                Optional<ContentPath> keyOptional = Optional.absent();
+                Optional<ContentPath> keyOptional = Optional.empty();
                 String startItem = root.get("startItem").asText();
                 if (startItem.equalsIgnoreCase("previous")) {
                     keyOptional = getPrevious(keyOptional, root.get("channelUrl").asText());
@@ -153,24 +162,14 @@ public class Webhook implements Comparable<Webhook>, NamedType {
             if (root.has("errorChannelUrl")) {
                 builder.errorChannelUrl(root.get("errorChannelUrl").asText());
             }
+            if (root.has("secondaryMetricsReporting")) {
+                builder.secondaryMetricsReporting(root.get("secondaryMetricsReporting").asBoolean());
+            }
         } catch (IOException e) {
-            logger.warn("unable to parse json" + json, e);
+            log.warn("unable to parse json" + json, e);
             throw new InvalidRequestException(e.getMessage());
         }
         return builder.build();
-    }
-
-    @JsonIgnore
-    boolean isTagPrototype() {
-        return !StringUtils.isEmpty(this.tagUrl);
-    }
-
-    String getTagFromTagUrl() {
-        return RequestUtils.getTag(this.getTagUrl());
-    }
-
-    boolean isManagedByTag() {
-        return !StringUtils.isEmpty(managedByTag);
     }
 
     private static Optional<ContentPath> getPrevious(Optional<ContentPath> keyOptional, String channelUrl) {
@@ -195,13 +194,26 @@ public class Webhook implements Comparable<Webhook>, NamedType {
     }
 
     static Webhook instanceFromTagPrototype(Webhook whp, ChannelConfig channel) {
-        String channenUrl = RequestUtils.getHost(whp.getTagUrl()) + "/channel/" + channel.getName();
+        String channelUrl = RequestUtils.getHost(whp.getTagUrl()) + "/channel/" + channel.getName();
         String whName = "TAGWH_" + whp.getTagFromTagUrl() + "_" + channel.getName();
-        return new Webhook(whp.callbackUrl, channenUrl, whp.parallelCalls, whName, null, whp.batch, whp.heartbeat, whp.paused, whp.ttlMinutes, whp.maxWaitMinutes, whp.callbackTimeoutSeconds, whp.fastForwardable, null, whp.getTagFromTagUrl(), whp.maxAttempts, whp.errorChannelUrl);
+        return new Webhook(whp.callbackUrl, channelUrl, whp.parallelCalls, whName, null, whp.batch, whp.heartbeat, whp.paused, whp.ttlMinutes, whp.maxWaitMinutes, whp.callbackTimeoutSeconds, whp.fastForwardable, null, whp.getTagFromTagUrl(), whp.maxAttempts, whp.errorChannelUrl, whp.secondaryMetricsReporting);
     }
 
     public static Webhook fromJson(String json) {
-        return fromJson(json, Optional.absent());
+        return fromJson(json, Optional.empty());
+    }
+
+    @JsonIgnore
+    boolean isTagPrototype() {
+        return !StringUtils.isEmpty(this.tagUrl);
+    }
+
+    String getTagFromTagUrl() {
+        return RequestUtils.getTag(this.getTagUrl());
+    }
+
+    boolean isManagedByTag() {
+        return !StringUtils.isEmpty(managedByTag);
     }
 
     @JsonIgnore

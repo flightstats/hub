@@ -32,21 +32,6 @@ public class WatchManager {
         HubServices.register(new WatchManagerService());
     }
 
-    private class WatchManagerService extends AbstractIdleService {
-
-        @Override
-        protected void startUp() throws Exception {
-            addCuratorListener();
-        }
-
-        @Override
-        protected void shutDown() throws Exception {
-            executorService.shutdown();
-            executorService.awaitTermination(1, TimeUnit.MINUTES);
-        }
-
-    }
-
     @VisibleForTesting
     void addCuratorListener() {
         curator.getCuratorListenable().addListener((client, event) -> {
@@ -107,6 +92,21 @@ public class WatchManager {
         } catch (Exception e) {
             logger.warn("unable to start watcher", e);
         }
+    }
+
+    private class WatchManagerService extends AbstractIdleService {
+
+        @Override
+        protected void startUp() throws Exception {
+            addCuratorListener();
+        }
+
+        @Override
+        protected void shutDown() throws Exception {
+            executorService.shutdown();
+            executorService.awaitTermination(1, TimeUnit.MINUTES);
+        }
+
     }
 
 }

@@ -3,8 +3,12 @@ package com.flightstats.hub.dao;
 import com.flightstats.hub.channel.ChannelEarliestResource;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
-import com.flightstats.hub.model.*;
-import com.google.common.base.Optional;
+import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.model.ChannelContentKey;
+import com.flightstats.hub.model.Content;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.TimeQuery;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.slf4j.Logger;
@@ -12,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -79,7 +84,7 @@ public class TagService {
             }
         }
         if (orderedKeys.isEmpty()) {
-            return Optional.absent();
+            return Optional.empty();
         } else {
             return Optional.of(orderedKeys.last());
         }
@@ -109,7 +114,7 @@ public class TagService {
                 return value;
             }
         }
-        return Optional.absent();
+        return Optional.empty();
     }
 
     public ChannelService getChannelService() {

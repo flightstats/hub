@@ -5,7 +5,7 @@ import com.amazonaws.SdkClientException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.S3ResponseMetadata;
 import com.amazonaws.services.s3.model.*;
-import com.flightstats.hub.metrics.MetricsService;
+import com.flightstats.hub.metrics.StatsdReporter;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -25,18 +25,22 @@ public class HubS3Client {
     private AmazonS3 s3Client;
 
     @Inject
-    private MetricsService metricsService;
+    private StatsdReporter statsdReporter;
 
     @Inject
     private S3BucketName s3BucketName;
 
-    public HubS3Client(S3BucketName s3BucketName, AmazonS3 s3Client, MetricsService metricsService) {
+    public HubS3Client(S3BucketName s3BucketName, AmazonS3 s3Client, StatsdReporter statsdReporter) {
         this.s3BucketName = s3BucketName;
         this.s3Client = s3Client;
-        this.metricsService = metricsService;
+        this.statsdReporter = statsdReporter;
     }
 
     public HubS3Client() {
+    }
+
+    private static String[] toStringArray(List<String> list) {
+        return list.toArray(new String[0]);
     }
 
     public void initialize() {
@@ -162,10 +166,6 @@ public class HubS3Client {
         }
 
         tags.addAll(extraTags);
-        metricsService.count("s3.error", 1, toStringArray(tags));
-    }
-
-    private static String[] toStringArray(List<String> list) {
-        return list.toArray(new String[0]);
+        statsdReporter.count("s3.error", 1, toStringArray(tags));
     }
 }

@@ -1,11 +1,24 @@
 package com.flightstats.hub.dao;
 
-import com.flightstats.hub.model.*;
-import com.google.common.base.Optional;
+import com.flightstats.hub.model.BulkContent;
+import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.model.Content;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.StreamResults;
+import com.flightstats.hub.model.TimeQuery;
 
 import java.util.Collection;
+import java.util.Optional;
 
 public interface ContentService {
+
+    static Optional<ContentKey> chooseLatest(Collection<ContentKey> contentKeys, DirectionQuery query) {
+        if (contentKeys.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(contentKeys.iterator().next());
+    }
 
     ContentKey insert(String channelName, Content content) throws Exception;
 
@@ -33,12 +46,5 @@ public interface ContentService {
 
     default void notify(ChannelConfig newConfig, ChannelConfig oldConfig) {
         //do nothing
-    }
-
-    static Optional<ContentKey> chooseLatest(Collection<ContentKey> contentKeys, DirectionQuery query) {
-        if (contentKeys.isEmpty()) {
-            return Optional.absent();
-        }
-        return Optional.of(contentKeys.iterator().next());
     }
 }

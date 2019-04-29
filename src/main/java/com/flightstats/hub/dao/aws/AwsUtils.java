@@ -31,7 +31,7 @@ class AwsUtils {
              * between the device time and the server time to set the clock skew
              * and then retry the request.
              */
-            if (RetryUtils.isClockSkewError(exception)) return true;
+            return RetryUtils.isClockSkewError(exception);
         }
 
         return false;

@@ -9,14 +9,13 @@ import com.flightstats.hub.dao.ContentKeyUtil;
 import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.dao.QueryResult;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.metrics.MetricsService;
+import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
-import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -31,6 +30,7 @@ import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.CountDownLatch;
@@ -48,15 +48,19 @@ public class RemoteSpokeStore {
     private final static Client query_client = RestClient.createClient(5, 15, true, true);
 
     private final CuratorCluster cluster;
-    private final MetricsService metricsService;
+    private final StatsdReporter statsdReporter;
     private final ExecutorService executorService;
     private final int stableSeconds = HubProperties.getProperty("app.stable_seconds", 5);
 
     @Inject
-    public RemoteSpokeStore(@Named("SpokeCuratorCluster") CuratorCluster cluster, MetricsService metricsService) {
+    public RemoteSpokeStore(@Named("SpokeCuratorCluster") CuratorCluster cluster, StatsdReporter statsdReporter) {
         this.cluster = cluster;
-        this.metricsService = metricsService;
+        this.statsdReporter = statsdReporter;
         executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("RemoteSpokeStore-%d").build());
+    }
+
+    static int getQuorum(int size) {
+        return (int) Math.max(1, Math.ceil(size / 2.0));
     }
 
     void testOne(Collection<String> server) throws InterruptedException {
@@ -142,7 +146,7 @@ public class RemoteSpokeStore {
                         traces.add(server, response.getEntity(String.class));
                         if (response.getStatus() == 201) {
                             if (firstComplete.compareAndSet(false, true)) {
-                                metricsService.time(channel, "heisenberg", traces.getStart());
+                                statsdReporter.time(channel, "heisenberg", traces.getStart());
                             }
                             quorumLatch.countDown();
                             logger.trace("server {} path {} response {}", server, path, response);
@@ -165,7 +169,7 @@ public class RemoteSpokeStore {
         } catch (InterruptedException e) {
             throw new RuntimeInterruptedException(e);
         }
-        metricsService.time(channel, "consistent", traces.getStart());
+        statsdReporter.time(channel, "consistent", traces.getStart());
         return quorumLatch.getCount() != quorum;
     }
 
@@ -177,10 +181,6 @@ public class RemoteSpokeStore {
     private void resetThread() {
         Thread thread = Thread.currentThread();
         thread.setName(StringUtils.substringBefore(thread.getName(), "|"));
-    }
-
-    static int getQuorum(int size) {
-        return (int) Math.max(1, Math.ceil(size / 2.0));
     }
 
     public Content get(SpokeStore spokeStore, String path, ContentKey key) {
@@ -310,7 +310,7 @@ public class RemoteSpokeStore {
         }
         countDownLatch.await(5, TimeUnit.SECONDS);
         if (orderedKeys.isEmpty()) {
-            return Optional.absent();
+            return Optional.empty();
         }
         return Optional.of(orderedKeys.last());
     }

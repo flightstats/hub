@@ -5,7 +5,6 @@ import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.util.TimeUtil;
-import com.google.common.base.Optional;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
@@ -13,6 +12,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -22,12 +22,11 @@ import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 @Path("/channel/{channel}/latest")
 public class ChannelLatestResource {
 
-    @Context
-    private UriInfo uriInfo;
-
     private final static TagLatestResource tagLatestResource = HubProvider.getInstance(TagLatestResource.class);
     private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
+    @Context
+    private UriInfo uriInfo;
 
     @GET
     public Response getLatest(@PathParam("channel") String channel,

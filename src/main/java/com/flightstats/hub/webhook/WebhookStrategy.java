@@ -8,25 +8,13 @@ import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.model.MinutePath;
 import com.flightstats.hub.model.SecondPath;
 import com.flightstats.hub.util.TimeUtil;
-import com.google.common.base.Optional;
 
+import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 interface WebhookStrategy extends AutoCloseable {
-
-    ContentPath getStartingPath();
-
-    ContentPath getLastCompleted();
-
-    void start(Webhook webhook, ContentPath startingKey);
-
-    Optional<ContentPath> next() throws Exception;
-
-    ObjectNode createResponse(ContentPath contentPath);
-
-    ContentPath inProcess(ContentPath contentPath);
 
     static ContentPath createContentPath(Webhook webhook) {
         if (webhook.isSecond()) {
@@ -56,4 +44,16 @@ interface WebhookStrategy extends AutoCloseable {
             queue.clear();
         }
     }
+
+    ContentPath getStartingPath();
+
+    ContentPath getLastCompleted();
+
+    void start(Webhook webhook, ContentPath startingKey);
+
+    Optional<ContentPath> next() throws Exception;
+
+    ObjectNode createResponse(ContentPath contentPath);
+
+    ContentPath inProcess(ContentPath contentPath);
 }

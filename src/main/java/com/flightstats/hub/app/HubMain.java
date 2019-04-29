@@ -1,8 +1,17 @@
 package com.flightstats.hub.app;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
+import com.flightstats.hub.dao.aws.S3WriteQueue;
+import com.flightstats.hub.dao.aws.S3WriteQueueLifecycle;
 import com.flightstats.hub.filter.CORSFilter;
 import com.flightstats.hub.filter.StreamEncodingFilter;
+import com.flightstats.hub.metrics.CustomMetricsLifecycle;
+import com.flightstats.hub.metrics.InfluxdbReporterLifecycle;
+import com.flightstats.hub.metrics.StatsDReporterLifecycle;
+import com.flightstats.hub.metrics.PeriodicMetricEmitterLifecycle;
+import com.google.common.util.concurrent.Service;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import com.flightstats.hub.ws.WebSocketChannelEndpoint;
 import com.flightstats.hub.ws.WebSocketDayEndpoint;
 import com.flightstats.hub.ws.WebSocketHashEndpoint;
@@ -12,8 +21,6 @@ import com.flightstats.hub.ws.WebSocketSecondEndpoint;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.Resources;
 import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.server.ConnectionFactory;
 import org.eclipse.jetty.server.Connector;
@@ -40,13 +47,17 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.Security;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 public class HubMain {
 
     private static final DateTime startTime = new DateTime();
+    private final StorageBackend storageBackend = StorageBackend.valueOf(HubProperties.getProperty("hub.type", "aws"));
 
     public static void main(String[] args) throws Exception {
         if (args.length == 0) {
@@ -54,6 +65,10 @@ public class HubMain {
         }
         HubProperties.loadProperties(args[0]);
         new HubMain().run();
+    }
+
+    public static DateTime getStartTime() {
+        return startTime;
     }
 
     public void run() throws Exception {
@@ -88,6 +103,9 @@ public class HubMain {
     public Server startServer() throws Exception {
         List<AbstractModule> guiceModules = buildGuiceModules();
         Injector injector = Guice.createInjector(guiceModules);
+
+        registerServices(getBeforeHealthCheckServices(injector), HubServices.TYPE.BEFORE_HEALTH_CHECK);
+        registerServices(getAfterHealthCheckServices(injector), HubServices.TYPE.AFTER_HEALTHY_START);
 
         HubProvider.setInjector(injector);
         HubServices.start(HubServices.TYPE.BEFORE_HEALTH_CHECK);
@@ -139,14 +157,40 @@ public class HubMain {
         return server;
     }
 
+    private List<Service> getBeforeHealthCheckServices(Injector injector) {
+        List<Service> services = Stream.of(
+                InfluxdbReporterLifecycle.class,
+                StatsDReporterLifecycle.class)
+                .map(injector::getInstance)
+                .collect(Collectors.toList());
+        if (storageBackend == StorageBackend.aws) {
+            services.add(injector.getInstance(S3WriteQueueLifecycle.class));
+        }
+        return services;
+    }
+
+    private List<Service> getAfterHealthCheckServices(Injector injector) {
+        if (storageBackend != StorageBackend.aws) {
+            return Collections.singletonList(injector.getInstance(CustomMetricsLifecycle.class));
+        }
+        return Stream.of(
+                CustomMetricsLifecycle.class,
+                PeriodicMetricEmitterLifecycle.class)
+                .map(injector::getInstance)
+                .collect(Collectors.toList());
+    }
+
+    private void registerServices(List<Service> services, HubServices.TYPE type) {
+        services.forEach(service -> HubServices.register(service, type));
+    }
+
     private List<AbstractModule> buildGuiceModules() {
         List<AbstractModule> modules = new ArrayList<>();
         modules.add(new HubBindings());
 
-        String hubType = HubProperties.getProperty("hub.type", "aws");
-        log.info("starting with hub.type {}", hubType);
+        log.info("starting with hub.type {}", storageBackend);
 
-        modules.add(getGuiceModuleForHubType(hubType));
+        modules.add(getGuiceModuleForHubType(storageBackend.toString()));
         return modules;
     }
 
@@ -196,10 +240,6 @@ public class HubMain {
         String path = HubProperties.getProperty("app.keyStorePath", "/etc/ssl/") + HubHost.getLocalName() + ".jks";
         log.info("using key store path: {}", path);
         return path;
-    }
-
-    public static DateTime getStartTime() {
-        return startTime;
     }
 
 }

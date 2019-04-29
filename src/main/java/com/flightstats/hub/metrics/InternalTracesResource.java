@@ -17,8 +17,8 @@ import javax.ws.rs.core.Response;
 @Path("/internal/traces")
 public class InternalTracesResource {
 
-    private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     public static final String DESCRIPTION = "Shows active requests, the slowest 100, and the latest 100 with links to other hubs in the cluster";
+    private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private static final Cluster curatorCluster = HubProvider.getInstance(Cluster.class, "HubCluster");
 
     public static ObjectNode serverAndServers(String path) {

@@ -6,7 +6,11 @@ import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.BulkContent;
+import com.flightstats.hub.model.Content;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.ContentPath;
+import com.flightstats.hub.model.SecondPath;
 import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.HubUtils;
 import com.sun.jersey.api.client.ClientResponse;
@@ -28,6 +32,47 @@ public class InternalReplicationResource {
     private static final ChannelService channelService = HubProvider.getInstance(ChannelService.class);
     private static final LastContentPath lastReplicated = HubProvider.getInstance(LastContentPath.class);
     private static final HubUtils hubUtils = HubProvider.getInstance(HubUtils.class);
+
+    private static boolean attemptBatch(String channel, ContentPath path, String batchUrl) {
+        BulkContent bulkContent = null;
+        try {
+            bulkContent = getAndWriteBatch(channel, path, batchUrl);
+        } catch (Exception e) {
+            logger.warn("unexpected " + channel + " " + path, e);
+        }
+        ActiveTraces.getLocal().add("attemptBatch completed", bulkContent);
+        return bulkContent != null;
+    }
+
+    private static BulkContent getAndWriteBatch(String channel, ContentPath path,
+                                                String batchUrl) throws Exception {
+        ActiveTraces.getLocal().add("attemptBatch", path);
+        logger.trace("path {} {}", path, batchUrl);
+        ClientResponse response = null;
+        BulkContent bulkContent;
+        try {
+            response = RestClient.gzipClient()
+                    .resource(batchUrl)
+                    .accept("multipart/mixed")
+                    .get(ClientResponse.class);
+            logger.trace("response.getStatus() {}", response.getStatus());
+            if (response.getStatus() != 200) {
+                logger.warn("unable to get data for {} {}", channel, response);
+                return null;
+            }
+            ActiveTraces.getLocal().add("attemptBatch got response", response.getStatus());
+            bulkContent = BulkContent.builder()
+                    .stream(response.getEntityInputStream())
+                    .contentType(response.getHeaders().getFirst("Content-Type"))
+                    .channel(channel)
+                    .isNew(false)
+                    .build();
+            channelService.insert(bulkContent);
+        } finally {
+            HubUtils.close(response);
+        }
+        return bulkContent;
+    }
 
     @POST
     public Response putPayload(@PathParam("channel") String channel, String data) {
@@ -92,47 +137,6 @@ public class InternalReplicationResource {
     JsonNode readData(String channel, String data) throws IOException {
         logger.trace("reading {} {}", channel, data);
         return mapper.readTree(data);
-    }
-
-    private static boolean attemptBatch(String channel, ContentPath path, String batchUrl) {
-        BulkContent bulkContent = null;
-        try {
-            bulkContent = getAndWriteBatch(channel, path, batchUrl);
-        } catch (Exception e) {
-            logger.warn("unexpected " + channel + " " + path, e);
-        }
-        ActiveTraces.getLocal().add("attemptBatch completed", bulkContent);
-        return bulkContent != null;
-    }
-
-    private static BulkContent getAndWriteBatch(String channel, ContentPath path,
-                                                String batchUrl) throws Exception {
-        ActiveTraces.getLocal().add("attemptBatch", path);
-        logger.trace("path {} {}", path, batchUrl);
-        ClientResponse response = null;
-        BulkContent bulkContent;
-        try {
-            response = RestClient.gzipClient()
-                    .resource(batchUrl)
-                    .accept("multipart/mixed")
-                    .get(ClientResponse.class);
-            logger.trace("response.getStatus() {}", response.getStatus());
-            if (response.getStatus() != 200) {
-                logger.warn("unable to get data for {} {}", channel, response);
-                return null;
-            }
-            ActiveTraces.getLocal().add("attemptBatch got response", response.getStatus());
-            bulkContent = BulkContent.builder()
-                    .stream(response.getEntityInputStream())
-                    .contentType(response.getHeaders().getFirst("Content-Type"))
-                    .channel(channel)
-                    .isNew(false)
-                    .build();
-            channelService.insert(bulkContent);
-        } finally {
-            HubUtils.close(response);
-        }
-        return bulkContent;
     }
 
 

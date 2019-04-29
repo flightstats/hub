@@ -24,12 +24,10 @@ import java.util.List;
 @SuppressWarnings("WeakerAccess")
 @Path("/internal/zookeeper/")
 public class InternalZookeeperResource {
+    public static final String DESCRIPTION = "Read-only interface into the ZooKeeper hierarchy.";
     private static final Logger logger = LoggerFactory.getLogger(InternalZookeeperResource.class);
-
     private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private static final CuratorFramework curator = HubProvider.getInstance(CuratorFramework.class);
-    public static final String DESCRIPTION = "Read-only interface into the ZooKeeper hierarchy.";
-
     @Context
     private UriInfo uriInfo;
 

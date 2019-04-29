@@ -4,7 +4,7 @@ import com.amazonaws.services.s3.model.BucketLifecycleConfiguration;
 import com.amazonaws.services.s3.model.SetBucketLifecycleConfigurationRequest;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.cluster.CuratorLock;
+import com.flightstats.hub.cluster.DistributedAsyncLockRunner;
 import com.flightstats.hub.cluster.Leadership;
 import com.flightstats.hub.cluster.Lockable;
 import com.flightstats.hub.dao.ChannelService;
@@ -14,31 +14,37 @@ import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.util.TimeUtil;
-import com.google.common.base.Optional;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Random;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 public class S3Config {
-    private final static Logger logger = LoggerFactory.getLogger(S3Config.class);
 
-    private final CuratorLock curatorLock;
+    // S3 limits max lifecycle rules to 1000. 10 rules are made available for setting lifecycle rules from infrastructure code.
+    private static final Integer S3_LIFECYCLE_RULES_AVAILABLE = 990;
+
+    private final DistributedAsyncLockRunner distributedLockRunner;
     private final Dao<ChannelConfig> channelConfigDao;
     private final String s3BucketName;
-    private ChannelService channelService;
     private final HubS3Client s3Client;
+    private ChannelService channelService;
 
     @Inject
-    public S3Config(HubS3Client s3Client, S3BucketName s3BucketName, CuratorLock curatorLock,
+    public S3Config(HubS3Client s3Client, S3BucketName s3BucketName, DistributedAsyncLockRunner distributedLockRunner,
                     @Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao, ChannelService channelService) {
         this.s3Client = s3Client;
-        this.curatorLock = curatorLock;
+        this.distributedLockRunner = distributedLockRunner;
         this.channelConfigDao = channelConfigDao;
         this.channelService = channelService;
         this.s3BucketName = s3BucketName.getS3BucketName();
@@ -49,16 +55,16 @@ public class S3Config {
         try {
             doWork();
         } catch (Exception e) {
-            logger.warn("unable to update config", e);
+            log.warn("unable to update config", e);
         }
     }
 
     private void doWork() {
-        logger.info("starting work");
+        log.info("starting work");
         Iterable<ChannelConfig> channels = channelConfigDao.getAll(false);
         S3ConfigLockable lockable = new S3ConfigLockable(channels);
-        curatorLock.setLockPath("/S3ConfigLock");
-        curatorLock.runWithLock(lockable, 1, TimeUnit.MINUTES);
+        distributedLockRunner.setLockPath("/S3ConfigLock");
+        distributedLockRunner.runWithLock(lockable, 1, TimeUnit.MINUTES);
     }
 
     private class S3ConfigInit extends AbstractScheduledService {
@@ -72,7 +78,7 @@ public class S3Config {
             Random random = new Random();
             long minutes = TimeUnit.HOURS.toMinutes(6);
             long delayMinutes = minutes + (long) random.nextInt((int) minutes);
-            logger.info("scheduling S3Config with delay " + delayMinutes);
+            log.info("scheduling S3Config with delay " + delayMinutes);
             return Scheduler.newFixedDelaySchedule(0, delayMinutes, TimeUnit.MINUTES);
         }
 
@@ -92,7 +98,7 @@ public class S3Config {
         }
 
         private void updateMaxItems() {
-            logger.info("updating max items");
+            log.info("updating max items");
             for (ChannelConfig config : configurations) {
                 if (config.getMaxItems() > 0 && !config.getKeepForever()) {
                     updateMaxItems(config);
@@ -102,7 +108,7 @@ public class S3Config {
 
         private void updateMaxItems(ChannelConfig config) {
             String name = config.getDisplayName();
-            logger.info("updating max items for channel {}", name);
+            log.info("updating max items for channel {}", name);
             ActiveTraces.start("S3Config.updateMaxItems", name);
             Optional<ContentKey> optional = channelService.getLatest(name, false);
             if (optional.isPresent()) {
@@ -112,7 +118,7 @@ public class S3Config {
                 }
             }
             ActiveTraces.end();
-            logger.info("completed max items for channel {}", name);
+            log.info("completed max items for channel {}", name);
 
         }
 
@@ -131,26 +137,23 @@ public class S3Config {
             keys.addAll(channelService.query(query));
             if (keys.size() == config.getMaxItems()) {
                 ContentKey limitKey = keys.first();
-                logger.info("deleting keys before {}", limitKey);
+                log.info("deleting keys before {}", limitKey);
                 channelService.deleteBefore(name, limitKey);
             }
         }
 
         private void updateTtlDays() {
-            logger.info("updateTtlDays");
+            log.info("updateTtlDays");
             ActiveTraces.start("S3Config.updateTtlDays");
-            int maxRules = HubProperties.getProperty("s3.maxRules", 1000);
+            int maxRules = HubProperties.getProperty("s3.maxRules", S3_LIFECYCLE_RULES_AVAILABLE);
             List<BucketLifecycleConfiguration.Rule> rules = new ArrayList<>();
-            if (maxRules == 0) {
-                rules.add(new BucketLifecycleConfiguration.Rule()
-                        .withId("OneDay")
-                        .withExpirationInDays(1)
-                        .withStatus(BucketLifecycleConfiguration.ENABLED));
-            } else {
+
+            if (maxRules > 0 && maxRules <= S3_LIFECYCLE_RULES_AVAILABLE) {
                 rules = S3ConfigStrategy.apportion(configurations, new DateTime(), maxRules);
             }
-            logger.info("updating {} rules with ttl life cycle ", rules.size());
-            logger.trace("updating {} ", rules);
+
+            log.info("updating {} rules with ttl life cycle ", rules.size());
+            log.trace("updating {} ", rules);
 
             if (!rules.isEmpty()) {
                 BucketLifecycleConfiguration lifecycleConfig = new BucketLifecycleConfiguration(rules);

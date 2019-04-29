@@ -24,12 +24,10 @@ import java.util.Set;
 public class SpokeDecommissionCluster implements DecommissionCluster {
 
     private static final Logger logger = LoggerFactory.getLogger(SpokeDecommissionManager.class);
-
-    private final CuratorFramework curator;
-    private final PathChildrenCache withinSpokeCache;
-
     private static final String WITHIN_SPOKE = "/SpokeDecommission/withinSpokeTtl";
     private static final String DO_NOT_RESTART = "/SpokeDecommission/doNotRestart";
+    private final CuratorFramework curator;
+    private final PathChildrenCache withinSpokeCache;
 
     @Inject
     public SpokeDecommissionCluster(CuratorFramework curator) throws Exception {

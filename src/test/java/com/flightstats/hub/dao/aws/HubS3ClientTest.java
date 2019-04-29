@@ -7,8 +7,7 @@ import com.amazonaws.services.s3.S3ResponseMetadata;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.flightstats.hub.metrics.MetricsService;
-import com.flightstats.hub.metrics.NoOpMetricsService;
+import com.flightstats.hub.metrics.StatsdReporter;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -17,17 +16,16 @@ import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class HubS3ClientTest {
+class HubS3ClientTest {
 
     private static final String METRIC_NAME = "s3.error";
     private static final int METRIC_VALUE = 1;
 
     @Test
-    public void countError() {
+    void countError() {
         S3BucketName s3BucketName = mock(S3BucketName.class);
         S3ResponseMetadata metadata = mock(S3ResponseMetadata.class);
         String requestId = "numbers-and-letters-go-here";
@@ -35,13 +33,13 @@ public class HubS3ClientTest {
         AmazonS3Client amazonS3Client = mock(AmazonS3Client.class);
         AmazonWebServiceRequest request = mock(AmazonWebServiceRequest.class);
         when(amazonS3Client.getCachedResponseMetadata(request)).thenReturn(metadata);
-        MetricsService metricsService = spy(new NoOpMetricsService());
-        HubS3Client hubS3Client = new HubS3Client(s3BucketName, amazonS3Client, metricsService);
+        StatsdReporter statsdReporter = mock(StatsdReporter.class);
+        HubS3Client hubS3Client = new HubS3Client(s3BucketName, amazonS3Client, statsdReporter);
         SdkClientException exception = new AmazonS3Exception("something f'd up");
 
         hubS3Client.countError(exception, request, "fauxMethod", Collections.singletonList("foo:bar"));
 
-        verify(metricsService).count(
+        verify(statsdReporter).count(
                 "s3.error",
                 1,
                 "exception:com.amazonaws.services.s3.model.AmazonS3Exception",
@@ -52,11 +50,11 @@ public class HubS3ClientTest {
     }
 
     @Test
-    public void putObject() {
+    void putObject() {
         S3BucketName s3BucketName = mock(S3BucketName.class);
         AmazonS3Client amazonS3Client = mock(AmazonS3Client.class);
-        MetricsService metricsService = mock(MetricsService.class);
-        HubS3Client hubS3Client = new HubS3Client(s3BucketName, amazonS3Client, metricsService);
+        StatsdReporter statsdReporter = mock(StatsdReporter.class);
+        HubS3Client hubS3Client = new HubS3Client(s3BucketName, amazonS3Client, statsdReporter);
 
         InputStream emptyStream = new ByteArrayInputStream(new byte[0]);
         ObjectMetadata metadata = new ObjectMetadata();
@@ -78,6 +76,6 @@ public class HubS3ClientTest {
             "key:testKey"
         };
 
-        verify(metricsService).count(METRIC_NAME, METRIC_VALUE, tags);
+        verify(statsdReporter).count(METRIC_NAME, METRIC_VALUE, tags);
     }
 }

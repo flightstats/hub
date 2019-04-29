@@ -1,7 +1,12 @@
 package com.flightstats.hub.dao;
 
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.BulkContent;
+import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.model.Content;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.StringUtils;
 import com.flightstats.hub.util.TimeUtil;
 import org.joda.time.DateTime;
@@ -10,9 +15,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
-import java.util.*;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.SortedSet;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ContentDaoUtil {
 
@@ -312,7 +325,7 @@ public class ContentDaoUtil {
 
     }
 
-    public void testEmptyQuery() throws Exception {
+    public void testEmptyQuery() {
         String channel = "testEmptyQuery" + StringUtils.randomAlphaNumeric(20);
         List<ContentKey> keys = new ArrayList<>();
         DateTime start = TimeUtil.now().minusHours(10);

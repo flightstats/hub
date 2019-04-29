@@ -17,8 +17,8 @@ class ClusterEvent {
     private final String name;
     private final long creationTime;
     private final boolean added;
-    private String event;
     private final long modifiedTime;
+    private String event;
 
     ClusterEvent(String event, long modifiedTime) {
         this.event = event;
@@ -31,10 +31,6 @@ class ClusterEvent {
 
     static String encode(String name, long creationTime, boolean added) {
         return creationTime + "|" + name + "|" + (added ? "ADDED" : "REMOVED");
-    }
-
-    String encode() {
-        return encode(name, creationTime, added);
     }
 
     static Set<ClusterEvent> set() {
@@ -55,6 +51,10 @@ class ClusterEvent {
             }
             return (int) diff;
         };
+    }
+
+    String encode() {
+        return encode(name, creationTime, added);
     }
 
     public String event() {
@@ -85,7 +85,7 @@ class ClusterEvent {
         if (o == this) return true;
         if (!(o instanceof ClusterEvent)) return false;
         final ClusterEvent other = (ClusterEvent) o;
-        if (!other.canEqual((Object) this)) return false;
+        if (!other.canEqual(this)) return false;
         final Object this$name = this.getName();
         final Object other$name = other.getName();
         if (this$name == null ? other$name != null : !this$name.equals(other$name)) return false;
@@ -94,8 +94,7 @@ class ClusterEvent {
         final Object this$event = this.getEvent();
         final Object other$event = other.getEvent();
         if (this$event == null ? other$event != null : !this$event.equals(other$event)) return false;
-        if (this.getModifiedTime() != other.getModifiedTime()) return false;
-        return true;
+        return this.getModifiedTime() == other.getModifiedTime();
     }
 
     public int hashCode() {

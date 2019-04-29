@@ -1,6 +1,6 @@
 package com.flightstats.hub.webhook;
 
-import com.flightstats.hub.metrics.MetricsService;
+import com.flightstats.hub.metrics.StatsdReporter;
 import org.junit.jupiter.api.Test;
 
 import static com.google.common.collect.Lists.newArrayList;
@@ -11,17 +11,17 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class ActiveWebhookSweeperTest {
+class ActiveWebhookSweeperTest {
     private static final String WEBHOOK_WITH_LEASE = "withLease";
     private static final String WEBHOOK_WITH_A_FEW_LEASES = "severalLeases";
     private static final String WEBHOOK_WITH_LOCK = "withLock";
     private static final String EMPTY_WEBHOOK = "gotNothing";
 
     private final WebhookLeaderLocks webhookLeaderLocks = mock(WebhookLeaderLocks.class);
-    private final MetricsService metricsService = mock(MetricsService.class);
+    private final StatsdReporter statsdReporter = mock(StatsdReporter.class);
 
     @Test
-    public void testCleanupEmpty_keepsWebhooksWithLeasesAndLocksAndDiscardsOthers() throws Exception {
+    void testCleanupEmpty_keepsWebhooksWithLeasesAndLocksAndDiscardsOthers() throws Exception {
         when(webhookLeaderLocks.getWebhooks())
                 .thenReturn(newHashSet(WEBHOOK_WITH_A_FEW_LEASES, WEBHOOK_WITH_LEASE, WEBHOOK_WITH_LOCK, EMPTY_WEBHOOK));
 
@@ -35,14 +35,13 @@ public class ActiveWebhookSweeperTest {
         when(webhookLeaderLocks.getLockPaths(WEBHOOK_WITH_LOCK)).thenReturn(newArrayList("lock1b"));
         when(webhookLeaderLocks.getLockPaths(EMPTY_WEBHOOK)).thenReturn(emptyList());
 
-        ActiveWebhookSweeper sweeper = new ActiveWebhookSweeper(webhookLeaderLocks, metricsService);
+        ActiveWebhookSweeper sweeper = new ActiveWebhookSweeper(webhookLeaderLocks, statsdReporter);
         sweeper.cleanupEmpty();
 
         verify(webhookLeaderLocks, never()).deleteWebhookLeader(WEBHOOK_WITH_A_FEW_LEASES);
         verify(webhookLeaderLocks, never()).deleteWebhookLeader(WEBHOOK_WITH_LEASE);
         verify(webhookLeaderLocks, never()).deleteWebhookLeader(WEBHOOK_WITH_LOCK);
         verify(webhookLeaderLocks).deleteWebhookLeader(EMPTY_WEBHOOK);
-
-        verify(metricsService).count("webhook.leaders.cleanup", 1);
+        verify(statsdReporter).count("webhook.leaders.cleanup", 1);
     }
 }

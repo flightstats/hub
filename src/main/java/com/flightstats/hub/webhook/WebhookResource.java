@@ -9,7 +9,6 @@ import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.rest.Linked;
 import com.flightstats.hub.util.RequestUtils;
 import com.flightstats.hub.util.TimeUtil;
-import com.google.common.base.Optional;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +19,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.util.Collection;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.BiConsumer;
@@ -37,12 +37,6 @@ public class WebhookResource {
 
     @Context
     private UriInfo uriInfo;
-
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getWebhooks() {
-        return getWebhooks("webhooks", uriInfo);
-    }
 
     static Response getWebhooks(String listName, UriInfo uriInfo) {
         try {
@@ -72,13 +66,6 @@ public class WebhookResource {
             links.putObject("lastCompleted").put("href", uri + "/lastCompleted");
         }
         return links;
-    }
-
-    @Path("/{name}")
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response get(@PathParam("name") String name) {
-        return get(name, uriInfo);
     }
 
     static Response getStatus(String name, boolean includeChildren, UriInfo uriInfo, BiConsumer<WebhookStatus, ObjectNode> biConsumer) {
@@ -111,6 +98,7 @@ public class WebhookResource {
             root.put("callbackTimeoutSeconds", webhook.getCallbackTimeoutSeconds());
             root.put("maxAttempts", webhook.getMaxAttempts());
             root.put("errorChannelUrl", webhook.getErrorChannelUrl());
+            root.put("secondaryMetricsReporting", webhook.isSecondaryMetricsReporting());
             if (webhook.isTagPrototype()) {
                 root.put("tagUrl", webhook.getTagUrl());
                 root.put("isTagPrototype", webhook.isTagPrototype());
@@ -150,6 +138,58 @@ public class WebhookResource {
         Linked.Builder<Webhook> builder = Linked.linked(webhook);
         builder.withLink("self", uriInfo.getRequestUri());
         return builder.build();
+    }
+
+    static Response upsert(String name, String body, UriInfo uriInfo) {
+        logger.info("upsert webhook {} {}", name, body);
+        Webhook webhook = Webhook.fromJson(body, webhookService.get(name)).withName(name);
+        Optional<Webhook> upsert = webhookService.upsert(webhook);
+        if (upsert.isPresent()) {
+            return Response.ok(getLinked(webhook, uriInfo)).build();
+        } else {
+            return Response.created(uriInfo.getRequestUri()).entity(getLinked(webhook, uriInfo)).build();
+        }
+    }
+
+    static Response deleter(String name) {
+        Optional<Webhook> webhookOptional = webhookService.get(name);
+        logger.info("delete webhook {}", name);
+        if (!webhookOptional.isPresent()) {
+            logger.info("webhook not found for delete {} ", name);
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+        webhookService.delete(name);
+        return Response.status(Response.Status.ACCEPTED).build();
+    }
+
+    static Response cursorUpdater(String name, String body, UriInfo uriInfo) {
+        logger.info("update cursor webhook {} {}", name, body);
+        Webhook webhook = Webhook.fromJson("{}", webhookService.get(name)).withName(name);
+        try {
+            if (RequestUtils.isValidChannelUrl(body)) {
+                ContentPath item = ContentPath.fromFullUrl(body).get();
+                webhookService.updateCursor(webhook, item);
+            } else {
+                logger.info("cursor update failed.  Bad item: " + body);
+                return Response.status(Response.Status.BAD_REQUEST).build();
+            }
+        } catch (Exception e) {
+            logger.error("IO exception updating cursor", e);
+        }
+        return Response.status(Response.Status.ACCEPTED).build();
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getWebhooks() {
+        return getWebhooks("webhooks", uriInfo);
+    }
+
+    @Path("/{name}")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response get(@PathParam("name") String name) {
+        return get(name, uriInfo);
     }
 
     @Path("/{name}/errors")
@@ -210,33 +250,11 @@ public class WebhookResource {
         return upsert(name, body, uriInfo);
     }
 
-    static Response upsert(String name, String body, UriInfo uriInfo) {
-        logger.info("upsert webhook {} {}", name, body);
-        Webhook webhook = Webhook.fromJson(body, webhookService.get(name)).withName(name);
-        Optional<Webhook> upsert = webhookService.upsert(webhook);
-        if (upsert.isPresent()) {
-            return Response.ok(getLinked(webhook, uriInfo)).build();
-        } else {
-            return Response.created(uriInfo.getRequestUri()).entity(getLinked(webhook, uriInfo)).build();
-        }
-    }
-
     @Path("/{name}")
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     public Response delete(@PathParam("name") String name) {
         return deleter(name);
-    }
-
-    static Response deleter(String name) {
-        Optional<Webhook> webhookOptional = webhookService.get(name);
-        logger.info("delete webhook {}", name);
-        if (!webhookOptional.isPresent()) {
-            logger.info("webhook not found for delete {} ", name);
-            return Response.status(Response.Status.NOT_FOUND).build();
-        }
-        webhookService.delete(name);
-        return Response.status(Response.Status.ACCEPTED).build();
     }
 
     @Path("/{name}/updateCursor")
@@ -245,22 +263,5 @@ public class WebhookResource {
     @Consumes(MediaType.TEXT_PLAIN)
     public Response updateCursor(@PathParam("name") String name, String body) {
         return cursorUpdater(name, body, uriInfo);
-    }
-
-    static Response cursorUpdater(String name, String body, UriInfo uriInfo) {
-        logger.info("update cursor webhook {} {}", name, body);
-        Webhook webhook = Webhook.fromJson("{}", webhookService.get(name)).withName(name);
-        try {
-            if (RequestUtils.isValidChannelUrl(body)) {
-                ContentPath item = ContentPath.fromFullUrl(body).get();
-                webhookService.updateCursor(webhook, item);
-            } else {
-                logger.info("cursor update failed.  Bad item: " + body);
-                return Response.status(Response.Status.BAD_REQUEST).build();
-            }
-        } catch (Exception e) {
-            logger.error("IO exception updating cursor", e);
-        }
-        return Response.status(Response.Status.ACCEPTED).build();
     }
 }
