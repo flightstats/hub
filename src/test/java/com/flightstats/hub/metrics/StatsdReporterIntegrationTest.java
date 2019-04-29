@@ -7,8 +7,7 @@ import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.IntegrationUdpServer;
 import com.flightstats.hub.webhook.Webhook;
 import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -17,11 +16,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 
-public class StatsdReporterIntegrationTest {
+class StatsdReporterIntegrationTest {
     private final String[] tags = { "tag1", "tag2" };
     private final MetricsConfig metricsConfig = MetricsConfig.builder()
             .hostTag("test_host")
@@ -36,7 +35,7 @@ public class StatsdReporterIntegrationTest {
 
     @SneakyThrows
     @Test
-    public void StatsDHandlersCount_metricShape() {
+    void StatsDHandlersCount_metricShape() {
 
         CompletableFuture.allOf(
                 getMetricsWriterFuture(),

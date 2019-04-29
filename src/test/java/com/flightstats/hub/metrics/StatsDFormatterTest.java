@@ -1,15 +1,17 @@
 package com.flightstats.hub.metrics;
 
 import com.timgroup.statsd.Event;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+
 import java.util.Arrays;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class StatsDFormatterTest {
+class StatsDFormatterTest {
     @Test
-    public void testBuildCustomEvent_Event() {
+    void testBuildCustomEvent_Event() {
         MetricsConfig metricsConfig = MetricsConfig
                 .builder()
                 .hostTag("test_host")
@@ -25,17 +27,18 @@ public class StatsDFormatterTest {
         assertEquals("test_host", event.getHostname());
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void testBuildCustomEvent_Error() {
+    @Test
+    void testBuildCustomEvent_Error() {
         MetricsConfig metricsConfig = MetricsConfig
                 .builder()
                 .build();
         StatsDFormatter statsDFormatter = new StatsDFormatter(metricsConfig);
-        statsDFormatter.buildCustomEvent("", "");
+        Exception exception = assertThrows(IllegalStateException.class, () -> statsDFormatter.buildCustomEvent("", ""));
+        assertEquals("event title must be set", exception.getMessage());
     }
 
     @Test
-    public void testFormatChannelTags_formattedTagOutput() {
+    void testFormatChannelTags_formattedTagOutput() {
         MetricsConfig metricsConfig = MetricsConfig
                 .builder()
                 .hostTag("test_host")
@@ -43,6 +46,6 @@ public class StatsDFormatterTest {
 
         StatsDFormatter statsDFormatter = new StatsDFormatter(metricsConfig);
         String [] tags = statsDFormatter.formatChannelTags("testChannel", "testTagKey1:testTag1", "testTagKey2:testTag2");
-        assertArrayEquals("arrays equals", Arrays.asList("testTagKey1:testTag1", "testTagKey2:testTag2", "channel:testChannel").toArray(), tags);
+        assertArrayEquals(Arrays.asList("testTagKey1:testTag1", "testTagKey2:testTag2", "channel:testChannel").toArray(), tags);
     }
 }

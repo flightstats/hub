@@ -2,9 +2,9 @@ package com.flightstats.hub.cluster;
 
 import com.flightstats.hub.test.Integration;
 import org.apache.curator.framework.CuratorFramework;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -13,31 +13,30 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import static com.google.common.collect.Lists.newArrayList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
-public class DistributedLockRunnerTest {
+class DistributedLockRunnerTest {
     private static DistributedLeaderLockManager lockManager;
     private static AtomicReference<List<String>> lockList;
 
-    @BeforeClass
-    public static void setupCurator() throws Exception {
+    @BeforeAll
+    static void setupCurator() throws Exception {
         ZooKeeperState zooKeeperState = new ZooKeeperState();
         CuratorFramework curator = Integration.startZooKeeper(zooKeeperState);
         lockManager = new DistributedLeaderLockManager(curator, zooKeeperState);
     }
 
-    @Before
-    public void setup() {
+    @BeforeEach
+    void setup() {
         lockList = new AtomicReference<>(newArrayList());
     }
 
     @Test
-    public void test_runWithLock_executesTheRunnableCode() throws Exception {
+    void test_runWithLock_executesTheRunnableCode() throws Exception {
         DistributedLockRunner distributedLockRunner = new DistributedLockRunner(lockManager);
         CountDownLatch latch = new CountDownLatch(1);
 
@@ -56,7 +55,7 @@ public class DistributedLockRunnerTest {
     }
 
     @Test
-    public void test_runWithLock_withTwoLockables_runsOneAtATime() throws Exception {
+    void test_runWithLock_withTwoLockables_runsOneAtATime() throws Exception {
         DistributedLockRunner distributedLockRunner = new DistributedLockRunner( lockManager);
         CountDownLatch waitForMe = new CountDownLatch(1);
         CountDownLatch latch = new CountDownLatch(2);
@@ -71,10 +70,10 @@ public class DistributedLockRunnerTest {
         });
 
         executorService.execute(() -> {
-            Consumer<LeadershipLock> lockable = leadershipLock -> {
-                doAThing(0, "lockable2", latch);
-            };
-            try { waitForMe.await(90, TimeUnit.MILLISECONDS); } catch (Exception e) { }
+            Consumer<LeadershipLock> lockable = leadershipLock -> doAThing(0, "lockable2", latch);
+            try { waitForMe.await(90, TimeUnit.MILLISECONDS); } catch (Exception e) {
+                //
+            }
             distributedLockRunner.runWithLock(lockable, "/LockPath", 1, TimeUnit.MINUTES);
         });
 
@@ -83,7 +82,7 @@ public class DistributedLockRunnerTest {
     }
 
     @Test
-    public void test_runWithLock_afterAFailureToLock_continuesLocking() throws Exception {
+    void test_runWithLock_afterAFailureToLock_continuesLocking() throws Exception {
         DistributedLockRunner distributedLockRunner = new DistributedLockRunner(lockManager);
         CountDownLatch waitForMe = new CountDownLatch(1);
         CountDownLatch latch = new CountDownLatch(2);
@@ -109,9 +108,7 @@ public class DistributedLockRunnerTest {
         });
 
         executorService.execute(() -> {
-            Consumer<LeadershipLock> lockable = leadershipLock -> {
-                doAThing(0, "lockable3", latch);
-            };
+            Consumer<LeadershipLock> lockable = leadershipLock -> doAThing(0, "lockable3", latch);
             distributedLockRunner.runWithLock(lockable, "/LockPath", 1, TimeUnit.MINUTES);
         });
 
@@ -122,7 +119,7 @@ public class DistributedLockRunnerTest {
     }
 
     @Test
-    public void test_runWithLock_withTwoSeparateLocks_isAbleToLockOnBothPaths() {
+    void test_runWithLock_withTwoSeparateLocks_isAbleToLockOnBothPaths() {
         DistributedLockRunner distributedLockRunner = new DistributedLockRunner(lockManager);
         CountDownLatch waitForOne = new CountDownLatch(1);
         CountDownLatch waitForTwo = new CountDownLatch(1);
@@ -156,9 +153,7 @@ public class DistributedLockRunnerTest {
         });
 
         executorService.execute(() -> {
-            Consumer<LeadershipLock> lockable = leadershipLock -> {
-                doAThing(0, "lockable3", latch);
-            };
+            Consumer<LeadershipLock> lockable = leadershipLock -> doAThing(0, "lockable3", latch);
             try {
                 waitForOne.await(50, TimeUnit.MILLISECONDS);
             } catch (Exception e) {

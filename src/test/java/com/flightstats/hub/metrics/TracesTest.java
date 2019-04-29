@@ -7,10 +7,10 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class TracesTest {
+class TracesTest {
 
     @Test
-    public void testLimit() {
+    void testLimit() {
         Traces traces = new Traces("start");
         for (int i = 0; i < 1000; i++) {
             traces.add("" + i);

@@ -2,9 +2,9 @@ package com.flightstats.hub.cluster;
 
 import com.flightstats.hub.test.Integration;
 import org.apache.curator.framework.CuratorFramework;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,29 +13,28 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.google.common.collect.Lists.newArrayList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class DistributedAsyncLockRunnerTest {
+class DistributedAsyncLockRunnerTest {
     private static DistributedLeaderLockManager lockManager;
     private static AtomicReference<List<String>> lockList;
 
-    @BeforeClass
-    public static void setupCurator() throws Exception {
+    @BeforeAll
+    static void setupCurator() throws Exception {
         ZooKeeperState zooKeeperState = new ZooKeeperState();
         CuratorFramework curator = Integration.startZooKeeper(zooKeeperState);
         lockManager = new DistributedLeaderLockManager(curator, zooKeeperState);
     }
 
-    @Before
-    public void setup() {
+    @BeforeEach
+    void setup() {
         lockList = new AtomicReference<>(newArrayList());
     }
 
     @Test
-    public void test_runWithLock_executesTheRunnableCode() throws Exception {
+    void test_runWithLock_executesTheRunnableCode() throws Exception {
         DistributedAsyncLockRunner distributedLockRunner = new DistributedAsyncLockRunner("/LockPath", lockManager);
         CountDownLatch latch = new CountDownLatch(1);
         SimpleTestLockable lockable = new SimpleTestLockable("lockable1", latch, 0);
@@ -50,7 +49,7 @@ public class DistributedAsyncLockRunnerTest {
     }
 
     @Test
-    public void test_runWithLock_withTwoRunnables_runsOneAtATime() throws Exception {
+    void test_runWithLock_withTwoRunnables_runsOneAtATime() throws Exception {
         DistributedAsyncLockRunner distributedLockRunner = new DistributedAsyncLockRunner("/LockPath2", lockManager);
         CountDownLatch latch = new CountDownLatch(2);
         SimpleTestLockable lockable = new SimpleTestLockable("lockable1", latch, 100);
@@ -68,7 +67,7 @@ public class DistributedAsyncLockRunnerTest {
     }
 
     @Test
-    public void test_runWithLock_afterAFailureToLock_continueLocking() throws Exception {
+    void test_runWithLock_afterAFailureToLock_continueLocking() throws Exception {
         DistributedAsyncLockRunner distributedLockRunner = new DistributedAsyncLockRunner("/LockPath3", lockManager);
         CountDownLatch latch = new CountDownLatch(2);
         SimpleTestLockable lockable = new SimpleTestLockable("lockable1", latch, 1000);

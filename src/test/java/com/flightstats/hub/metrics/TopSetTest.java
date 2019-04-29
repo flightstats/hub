@@ -15,14 +15,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class TopSetTest {
+class TopSetTest {
 
     private final static Logger logger = LoggerFactory.getLogger(TopSetTest.class);
 
     @Test
-    public void testSingle() {
+    void testSingle() {
         int maxSize = 10;
         int count = 100;
         long start = System.currentTimeMillis();
@@ -50,7 +52,7 @@ public class TopSetTest {
     }
 
     @Test
-    public void testMulti() throws InterruptedException {
+    void testMulti() throws InterruptedException {
         int maxSize = 100;
         int count = 1000;
         long start = System.currentTimeMillis();
