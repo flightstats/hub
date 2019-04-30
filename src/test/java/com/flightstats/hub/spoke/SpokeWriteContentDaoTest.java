@@ -26,7 +26,7 @@ public class SpokeWriteContentDaoTest {
 
         final Injector injector = Integration.startAwsHub();
         util = new ContentDaoUtil(injector.getInstance(SpokeWriteContentDao.class));
-        CuratorFramework curator = injector.getInstance(CuratorFramework.class);
+        final CuratorFramework curator = injector.getInstance(CuratorFramework.class);
 
         final SpokeProperty spokeProperty = new SpokeProperty(PropertyLoader.getInstance());
         Cluster cluster = HubBindings.buildSpokeCluster(curator,

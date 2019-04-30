@@ -29,7 +29,7 @@ public class CuratorClusterTest {
     public void testPath() throws Exception {
         log.info("starting testPath");
 
-        CuratorCluster cluster = new CuratorCluster(curator,
+        final CuratorCluster cluster = new CuratorCluster(curator,
                 "/SpokeCluster",
                 false,
                 true,
