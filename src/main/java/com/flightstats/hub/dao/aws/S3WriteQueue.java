@@ -69,6 +69,10 @@ public class S3WriteQueue {
         }
     }
 
+    int getQueueSize() {
+        return keys.size();
+    }
+
     void write() {
         try {
             ChannelContentKey key = keys.poll(5, TimeUnit.SECONDS);

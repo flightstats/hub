@@ -6,6 +6,7 @@ import com.flightstats.hub.config.binding.ClusterHubBindings;
 import com.flightstats.hub.config.binding.HubBindings;
 import com.flightstats.hub.config.binding.PropertyBinding;
 import com.flightstats.hub.config.binding.SingleHubBindings;
+import com.flightstats.hub.dao.aws.S3WriteQueueLifecycle;
 import com.flightstats.hub.filter.CORSFilter;
 import com.flightstats.hub.filter.StreamEncodingFilter;
 import com.flightstats.hub.metrics.CustomMetricsLifecycle;
