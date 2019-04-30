@@ -18,7 +18,7 @@ public class AppProperty {
     }
 
     public String getEnv() {
-        return this.propertyLoader.getProperty("app.environment", "test");
+        return this.propertyLoader.getProperty("app.environment", "local");
     }
 
     public String getAppName() {

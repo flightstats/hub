@@ -28,6 +28,7 @@ public class CuratorClusterTest {
     @Test
     public void testPath() throws Exception {
         log.info("starting testPath");
+
         CuratorCluster cluster = new CuratorCluster(curator,
                 "/SpokeCluster",
                 false,
@@ -37,6 +38,7 @@ public class CuratorClusterTest {
                 new SpokeProperty(PropertyLoader.getInstance()));
 
         Collection<String> servers = cluster.getAllServers();
+        log.info("*****************servers {} ", servers);
         assertNotNull(servers);
         assertEquals(0, servers.size());
         log.info("got expected 0");

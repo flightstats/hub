@@ -29,12 +29,13 @@ public class CuratorCluster implements Cluster {
     private final CuratorFramework curator;
     private final String clusterPath;
     private final boolean useName;
-    private final PathChildrenCache clusterCache;
     private boolean checkReadOnly;
     private DecommissionCluster decommissionCluster;
-    private String fullPath;
     private AppProperty appProperty;
     private SpokeProperty spokeProperty;
+
+    private String fullPath;
+    private final PathChildrenCache clusterCache;
 
     @Inject
     public CuratorCluster(CuratorFramework curator,
