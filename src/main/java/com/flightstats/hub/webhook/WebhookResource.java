@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.channel.TimeLinkUtil;
+import com.flightstats.hub.exception.ForbiddenRequestException;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.rest.Linked;
 import com.flightstats.hub.util.RequestUtils;
@@ -247,16 +248,16 @@ public class WebhookResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response upsert(@PathParam("name") String name, String body) {
-        return checkPermission("upsert", name)
-                .orElseGet(() -> upsert(name, body, uriInfo));
+        checkPermission("upsert", name);
+        return upsert(name, body, uriInfo);
     }
 
     @Path("/{name}")
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     public Response delete(@PathParam("name") String name) {
-        return checkPermission("delete", name)
-                .orElseGet(() -> deleter(name));
+        checkPermission("delete", name);
+        return deleter(name);
     }
 
     @Path("/{name}/updateCursor")
@@ -264,15 +265,15 @@ public class WebhookResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.TEXT_PLAIN)
     public Response updateCursor(@PathParam("name") String name, String body) {
-        return checkPermission("update cursor", name)
-                .orElseGet(() -> cursorUpdater(name, body, uriInfo));
+        checkPermission("updateCursor", name);
+        return cursorUpdater(name, body, uriInfo);
     }
 
-    private Optional<Response> checkPermission(String task, String name) {
+    private void checkPermission(String task, String name) {
         if (!HubProperties.isWebHookLeadershipEnabled()) {
-            log.warn("attempted to {} for webhook on node with leadership disabled {}", task, name);
-            return Optional.of(Response.status(Response.Status.FORBIDDEN).build());
+            String msg = String.format("attempted to %s against /webhook on node with leadership disabled %s", task, name);
+            log.warn(msg);
+            throw new ForbiddenRequestException(msg);
         }
-        return Optional.empty();
     }
 }

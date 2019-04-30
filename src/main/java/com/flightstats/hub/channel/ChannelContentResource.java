@@ -12,6 +12,7 @@ import com.flightstats.hub.events.ContentOutput;
 import com.flightstats.hub.events.EventsService;
 import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.exception.ContentTooLargeException;
+import com.flightstats.hub.exception.ForbiddenRequestException;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.StatsdReporter;
@@ -29,13 +30,12 @@ import com.flightstats.hub.rest.Linked;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.io.ByteStreams;
 import com.sun.jersey.core.header.MediaTypes;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.media.sse.EventOutput;
 import org.glassfish.jersey.media.sse.SseFeature;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -74,10 +74,9 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 
 @Path("/channel/{channel}/{Y}/{M}/{D}/")
+@Slf4j
 public class ChannelContentResource {
-    public static final String THREADS = HubProperties.getProperty("s3.large.threads", "3");
     static final String CREATION_DATE = "Creation-Date";
-    private final static Logger logger = LoggerFactory.getLogger(ChannelContentResource.class);
     private final static TagContentResource tagContentResource = HubProvider.getInstance(TagContentResource.class);
     private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
@@ -354,7 +353,7 @@ public class ChannelContentResource {
         Optional<Content> optionalResult = channelService.get(itemRequest);
 
         if (!optionalResult.isPresent()) {
-            logger.warn("404 content not found {} {}", channel, key);
+            log.warn("404 content not found {} {}", channel, key);
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
         Content content = optionalResult.get();
@@ -369,7 +368,7 @@ public class ChannelContentResource {
             try {
                 ByteStreams.copy(content.getStream(), output);
             } catch (IOException e) {
-                logger.warn("issue streaming content " + channel + " " + key, e);
+                log.warn("issue streaming content " + channel + " " + key, e);
                 throw e;
             } finally {
                 content.close();
@@ -462,12 +461,12 @@ public class ChannelContentResource {
             contentKey = parsedKey;
         }
         try {
-            logger.info("starting events at {} for client from {}", channel, contentKey);
+            log.info("starting events at {} for client from {}", channel, contentKey);
             EventOutput eventOutput = new EventOutput();
             eventsService.register(new ContentOutput(channel, eventOutput, contentKey, uriInfo.getBaseUri()));
             return eventOutput;
         } catch (Exception e) {
-            logger.warn("unable to get events for " + channel, e);
+            log.warn("unable to get events for " + channel, e);
             throw e;
         }
     }
@@ -542,6 +541,7 @@ public class ChannelContentResource {
                                      @HeaderParam("Content-Type") String contentType,
                                      @HeaderParam("Content-Language") String contentLanguage,
                                      final InputStream data) throws Exception {
+        checkPermission("historicalInsert", channelName);
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis);
         Content content = Content.builder()
                 .withContentKey(key)
@@ -570,6 +570,7 @@ public class ChannelContentResource {
                                          @HeaderParam("Content-Type") String contentType,
                                          @HeaderParam("Content-Language") String contentLanguage,
                                          final InputStream data) throws Exception {
+        checkPermission("historicalInsertHash", channelName);
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
 
         Content content = Content.builder()
@@ -592,7 +593,7 @@ public class ChannelContentResource {
             if (!success) {
                 return Response.status(400).entity("unable to insert historical item").build();
             }
-            logger.trace("posted {}", key);
+            log.trace("posted {}", key);
             InsertedContentKey insertionResult = new InsertedContentKey(key);
             URI payloadUri = uriInfo.getBaseUriBuilder()
                     .path("channel").path(channelName)
@@ -615,7 +616,7 @@ public class ChannelContentResource {
         } catch (ContentTooLargeException e) {
             return Response.status(413).entity(e.getMessage()).build();
         } catch (Exception e) {
-            logger.warn("unable to POST to " + channelName + " key " + key, e);
+            log.warn("unable to POST to " + channelName + " key " + key, e);
             throw e;
         }
     }
@@ -651,9 +652,18 @@ public class ChannelContentResource {
                            @PathParam("ms") int millis,
                            @PathParam("hash") String hash
     ) {
-
+        checkPermission("delete", channel);
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         channelService.delete(channel, key);
         return Response.noContent().build();
     }
+
+    private void checkPermission(String task, String name) {
+        if (HubProperties.isReadOnly()) {
+            String msg = String.format("attempted to %s against /channel content on read-only node %s", task, name);
+            log.warn(msg);
+            throw new ForbiddenRequestException(msg);
+        }
+    }
+
 }

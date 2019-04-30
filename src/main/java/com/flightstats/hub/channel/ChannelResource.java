@@ -10,6 +10,7 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.events.ContentOutput;
 import com.flightstats.hub.events.EventsService;
 import com.flightstats.hub.exception.ContentTooLargeException;
+import com.flightstats.hub.exception.ForbiddenRequestException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.BulkContent;
 import com.flightstats.hub.model.ChannelConfig;
@@ -98,6 +99,7 @@ public class ChannelResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createChannel(@PathParam("channel") String channelName, String json) throws Exception {
+        checkPermission("createChannel", channelName);
         log.debug("put channel {} {}", channelName, json);
         Optional<ChannelConfig> oldConfig = channelService.getChannelConfig(channelName, false);
         ChannelConfig channelConfig = ChannelConfig.createFromJsonWithName(json, channelName);
@@ -119,6 +121,7 @@ public class ChannelResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateMetadata(@PathParam("channel") String channelName, String json) throws WebApplicationException {
+        checkPermission("updateMetadata", channelName);
         log.debug("patch channel {} {}", channelName, json);
         ChannelConfig oldConfig = channelService.getChannelConfig(channelName, false)
                 .orElseThrow(() -> {
@@ -142,6 +145,7 @@ public class ChannelResource {
                                 @QueryParam("threads") @DefaultValue("3") String threads,
                                 @QueryParam("forceWrite") @DefaultValue("false") boolean forceWrite,
                                 final InputStream data) throws Exception {
+        checkPermission("insertValue", channelName);
         if (!channelService.channelExists(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
@@ -191,6 +195,7 @@ public class ChannelResource {
     public Response insertBatch(@PathParam("channel") final String channelName,
                                 @HeaderParam("Content-Type") final String contentType,
                                 final InputStream data) throws Exception {
+        checkPermission("insertBatch", channelName);
         return insertBulk(channelName, contentType, data);
     }
 
@@ -201,6 +206,7 @@ public class ChannelResource {
     public Response insertBulk(@PathParam("channel") final String channelName,
                                @HeaderParam("Content-Type") final String contentType,
                                final InputStream data) throws Exception {
+        checkPermission("insertBulk", channelName);
         try {
             BulkContent content = BulkContent.builder()
                     .isNew(true)
@@ -264,6 +270,7 @@ public class ChannelResource {
 
     @DELETE
     public Response delete(@PathParam("channel") final String channelName) throws Exception {
+        checkPermission("delete", channelName);
         Optional<ChannelConfig> optionalChannelConfig = channelService.getChannelConfig(channelName, false);
         if (!optionalChannelConfig.isPresent()) {
             return notFound(channelName);
@@ -275,4 +282,13 @@ public class ChannelResource {
         log.info("using normal delete {}", channelName);
         return deletion(channelName);
     }
+
+    private void checkPermission(String task, String name) {
+        if (HubProperties.isReadOnly()) {
+            String msg = String.format("attempted to %s against /channel on read-only node %s", task, name);
+            log.warn(msg);
+            throw new ForbiddenRequestException(msg);
+        }
+    }
+
 }
