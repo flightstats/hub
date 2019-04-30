@@ -28,6 +28,14 @@ public class DynamoWebhookDao implements Dao<Webhook> {
     }
 
     private void initialize() {
+        if (HubProperties.isReadOnly()) {
+            if (!dynamoUtils.doesTableExist(getTableName())) {
+                String msg = String.format("Probably fatal error. Dynamo webhook config table doesn't exist for r/o node.  %s", getTableName());
+                logger.error(msg);
+                throw new IllegalArgumentException(msg);
+            }
+            return;
+        }
         dynamoUtils.createAndUpdate(getTableName(), "webhook", "name");
     }
 

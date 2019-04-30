@@ -87,7 +87,9 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
 
         if (HubProperties.isReadOnly()) {
             if (!dynamoUtils.doesTableExist(tableName)) {
-
+                String msg = String.format("Probably fatal error. Dynamo channel config table doesn't exist for r/o node.  %s", tableName);
+                log.error(msg);
+                throw new IllegalArgumentException(msg);
             }
             return;
         }
