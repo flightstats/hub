@@ -13,18 +13,17 @@ import com.github.rholder.retry.RetryerBuilder;
 import com.github.rholder.retry.StopStrategies;
 import com.github.rholder.retry.WaitStrategies;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.inject.Inject;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-@SuppressWarnings("WeakerAccess")
 @Singleton
 @Slf4j
 public class S3WriteQueue {
@@ -70,7 +69,7 @@ public class S3WriteQueue {
         }
     }
 
-    private void write() {
+    void write() {
         try {
             ChannelContentKey key = keys.poll(5, TimeUnit.SECONDS);
             if (key != null) {
