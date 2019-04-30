@@ -10,9 +10,10 @@ public class HubPropertiesTest {
     @Test
     public void testIsReadOnly() {
         assertFalse(HubProperties.isReadOnly());
-        HubProperties.setProperty("hub.read.only", "somewhere," + HubHost.getLocalName());
+        HubProperties.setProperty("hub.read.only", "true");
         assertTrue(HubProperties.isReadOnly());
         HubProperties.setProperty("hub.read.only", "");
+        assertFalse(HubProperties.isReadOnly());
     }
 
 }

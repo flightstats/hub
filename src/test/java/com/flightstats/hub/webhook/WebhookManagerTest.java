@@ -40,6 +40,7 @@ public class WebhookManagerTest {
     @Mock private WebhookErrorService webhookErrorService;
     @Mock private WebhookContentPathSet webhookContentPathSet;
     @Mock private InternalWebhookClient webhookClient;
+    @Mock private WebhookStateReaper webhookStateReaper;
 
     private static final String SERVER1 = "123.1.1";
     private static final String SERVER2 = "123.2.1";
@@ -180,7 +181,7 @@ public class WebhookManagerTest {
     }
 
     private WebhookManager getWebhookManager() {
-        return new WebhookManager(watchManager, webhookDao, lastContentPath, activeWebhooks, webhookErrorService, webhookContentPathSet, webhookClient);
+        return new WebhookManager(watchManager, webhookDao, lastContentPath, activeWebhooks, webhookErrorService, webhookContentPathSet, webhookClient, webhookStateReaper);
     }
 
 }
