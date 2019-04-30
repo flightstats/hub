@@ -85,7 +85,7 @@ public class CuratorCluster implements Cluster {
         } catch (KeeperException.NodeExistsException e) {
             log.warn("node already exists {} {} - not likely in prod", host, clusterPath);
         } catch (Exception e) {
-            log.error("unable to register, should die", host, clusterPath, e);
+            log.error("unable to register, should die {} {}", host, clusterPath, e);
             throw new RuntimeException(e);
         }
     }
