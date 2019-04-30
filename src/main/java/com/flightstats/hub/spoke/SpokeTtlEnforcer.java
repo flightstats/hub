@@ -13,9 +13,8 @@ import com.google.common.base.Optional;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
@@ -25,23 +24,22 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Singleton
+@Slf4j
 public class SpokeTtlEnforcer {
-    private final static Logger logger = LoggerFactory.getLogger(SpokeTtlEnforcer.class);
     private final SpokeStore spokeStore;
     private final String storagePath;
     private final int ttlMinutes;
 
-    @Inject
     private ChannelService channelService;
-
-    @Inject
+    private SpokeContentDao spokeContentDao;
     private StatsdReporter statsdReporter;
 
     @Inject
-    private SpokeContentDao spokeContentDao;
-
-    public SpokeTtlEnforcer(SpokeStore spokeStore) {
+    public SpokeTtlEnforcer(SpokeStore spokeStore, ChannelService channelService, SpokeContentDao spokeContentDao, StatsdReporter statsdReporter) {
         this.spokeStore = spokeStore;
+        this.channelService = channelService;
+        this.spokeContentDao = spokeContentDao;
+        this.statsdReporter = statsdReporter;
         this.storagePath = HubProperties.getSpokePath(spokeStore);
         this.ttlMinutes = HubProperties.getSpokeTtlMinutes(spokeStore) + 1;
         if (HubProperties.getProperty("spoke.enforceTTL", true)) {
@@ -93,15 +91,15 @@ public class SpokeTtlEnforcer {
             try {
                 long start = System.currentTimeMillis();
                 AtomicLong evictionCounter = new AtomicLong(0);
-                logger.info("running ttl cleanup");
+                log.info("running ttl cleanup");
                 TtlEnforcer.enforce(storagePath, channelService, handleCleanup(evictionCounter));
                 updateOldestItemMetric();
                 statsdReporter.gauge(buildMetricName("evicted"), evictionCounter.get());
                 long runtime = (System.currentTimeMillis() - start);
-                logger.info("completed ttl cleanup {}", runtime);
+                log.info("completed ttl cleanup {}", runtime);
                 statsdReporter.gauge(buildMetricName("ttl", "enforcer", "runtime"), runtime);
             } catch (Exception e) {
-                logger.info("issue cleaning up spoke", e);
+                log.info("issue cleaning up spoke", e);
             }
         }
 

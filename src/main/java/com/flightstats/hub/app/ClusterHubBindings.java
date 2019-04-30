@@ -4,6 +4,7 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.s3.AmazonS3;
 import com.flightstats.hub.cluster.SpokeDecommissionManager;
 import com.flightstats.hub.cluster.WatchManager;
+import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentService;
 import com.flightstats.hub.dao.DocumentationDao;
@@ -35,9 +36,11 @@ import com.flightstats.hub.dao.aws.writeQueue.WriteQueueConfig;
 import com.flightstats.hub.dao.aws.writeQueue.WriteQueueConfigProvider;
 import com.flightstats.hub.metrics.PeriodicMetricEmitter;
 import com.flightstats.hub.metrics.PeriodicMetricEmitterLifecycle;
+import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.LargeContentUtils;
 import com.flightstats.hub.spoke.RemoteSpokeStore;
+import com.flightstats.hub.spoke.SpokeContentDao;
 import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.spoke.SpokeTtlEnforcer;
 import com.flightstats.hub.webhook.Webhook;
@@ -70,14 +73,6 @@ class ClusterHubBindings extends AbstractModule {
         bind(DynamoUtils.class).asEagerSingleton();
         bind(AppUrlCheck.class).asEagerSingleton();
 
-        bind(SpokeTtlEnforcer.class)
-                .annotatedWith(Names.named(SpokeStore.WRITE.name()))
-                .toInstance(new SpokeTtlEnforcer(SpokeStore.WRITE));
-
-        bind(SpokeTtlEnforcer.class)
-                .annotatedWith(Names.named(SpokeStore.READ.name()))
-                .toInstance(new SpokeTtlEnforcer(SpokeStore.READ));
-
         bind(SpokeDecommissionManager.class).asEagerSingleton();
         bind(PeriodicMetricEmitter.class).asEagerSingleton();
         bind(PeriodicMetricEmitterLifecycle.class).asEagerSingleton();
@@ -95,6 +90,22 @@ class ClusterHubBindings extends AbstractModule {
             bind(S3Verifier.class).asEagerSingleton();
             bind(S3AccessMonitor.class).asEagerSingleton();
         }
+    }
+
+    @Inject
+    @Singleton
+    @Provides
+    @Named("WRITE")
+    public SpokeTtlEnforcer buildWriteSpokeTTLEnforcer(ChannelService channelService, SpokeContentDao spokeContentDao, StatsdReporter statsdReporter) {
+        return new SpokeTtlEnforcer(SpokeStore.WRITE, channelService, spokeContentDao, statsdReporter);
+    }
+
+    @Inject
+    @Singleton
+    @Provides
+    @Named("READ")
+    public SpokeTtlEnforcer buildReadSpokeTTLEnforcer(ChannelService channelService, SpokeContentDao spokeContentDao, StatsdReporter statsdReporter) {
+        return new SpokeTtlEnforcer(SpokeStore.READ, channelService, spokeContentDao, statsdReporter);
     }
 
     @Inject
