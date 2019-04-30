@@ -22,6 +22,7 @@ public class HubProperties {
         HUB_READ_ONLY("hub.read.only"),
         WEBHOOK_LEADERSHIP_ENABLED("webhook.leadership.enabled"),
         REPLICATION_ENABLED("replication.enabled"),
+        CHANNEL_LATEST_UPDATE_ENABLED("channel.latest.update.svc.enabled"),
         S3_BATCH_MANAGEMENT_ENABLED("s3.batch.management.enabled"),
         S3_CONFIG_MANAGEMENT_ENABLED("s3.config.management.enabled");
         private final String key;
@@ -72,6 +73,10 @@ public class HubProperties {
 
     public static boolean isWebHookLeadershipEnabled() {
         return getProperty(HubProps.WEBHOOK_LEADERSHIP_ENABLED.getKey(), true);
+    }
+
+    public static boolean isChannelLatestUpdateSvcEnabled() {
+        return getProperty(HubProps.CHANNEL_LATEST_UPDATE_ENABLED.getKey(), true);
     }
 
     public static String getSpokePath(SpokeStore spokeStore) {
