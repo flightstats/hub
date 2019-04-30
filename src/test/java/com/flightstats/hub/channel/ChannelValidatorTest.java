@@ -10,19 +10,16 @@ import com.google.common.base.Strings;
 import org.joda.time.DateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -41,68 +38,45 @@ class ChannelValidatorTest {
 
     @Test
     void testAllGood() {
-        try {
-            validator.validate(getBuilder().name(Strings.repeat("A", 48)).build(), null, false);
-        } catch (Exception ex) {
-            assertNull(ex);
-        }
+        validator.validate(getBuilder().name(Strings.repeat("A", 48)).build(), null, false);
     }
 
     @Test
     void testTooLong() {
-        try {
-            validator.validate(getBuilder().name(Strings.repeat("A", 49)).build(), null, false);
-        } catch (Exception ex) {
-            assertEquals(ex.getClass(), InvalidRequestException.class);
-        }
+        assertThrows(InvalidRequestException.class, () ->
+                validator.validate(getBuilder().name(Strings.repeat("A", 49)).build(), null, false));
     }
 
     @Test
     void testChannelNameNull() {
-        try {
-            validator.validate(getBuilder().name(null).build(), null, false);
-        } catch (Exception ex) {
-            assertEquals(ex.getClass(), InvalidRequestException.class);
-        }
+        assertThrows(InvalidRequestException.class, () ->
+                validator.validate(getBuilder().name(null).build(), null, false));
     }
 
     @Test
     void testChannelNameEmpty() {
-        try {
-            validator.validate(getBuilder().name("").build(), null, false);
-        } catch (Exception ex) {
-            assertEquals(ex.getClass(), InvalidRequestException.class);
-        }
+        assertThrows(InvalidRequestException.class,
+                () -> validator.validate(getBuilder().name("").build(), null, false));
     }
 
     @Test
     void testChannelNameBlank() {
-        try {
-            validator.validate(getBuilder().name("  ").build(), null, false);
-        } catch (Exception ex) {
-            assertEquals(ex.getClass(), InvalidRequestException.class);
-        }
+        assertThrows(InvalidRequestException.class, () ->
+                validator.validate(getBuilder().name("  ").build(), null, false));
     }
 
     @Test
     void testChannelExists() {
-        try {
-            String channelName = "achannel";
-            when(channelService.channelExists(channelName)).thenReturn(true);
-            ChannelConfig channelConfig = getBuilder().name(channelName).build();
-            validator.validate(channelConfig, null, false);
-        } catch (Exception ex) {
-            assertEquals(ex.getClass(), ConflictException.class);
-        }
+        String channelName = "achannel";
+        when(channelService.channelExists(channelName)).thenReturn(true);
+        ChannelConfig channelConfig = getBuilder().name(channelName).build();
+        assertThrows(ConflictException.class, () -> validator.validate(channelConfig, null, false));
     }
 
     @Test
     void testInvalidSpaceCharacter() {
-        try {
-            validator.validate(getBuilder().name("my chan").build(), null, false);
-        } catch (Exception ex) {
-            assertEquals(ex.getClass(), InvalidRequestException.class);
-        }
+        assertThrows(InvalidRequestException.class, () ->
+                validator.validate(getBuilder().name("my chan").build(), null, false));
     }
 
     @Test
@@ -117,63 +91,43 @@ class ChannelValidatorTest {
 
     @Test
     void testInvalidCharacter() {
-        try {
-            validator.validate(getBuilder().name("my#chan").build(), null, false);
-        } catch (Exception ex) {
-            assertEquals(ex.getClass(), InvalidRequestException.class);
-        }
+        assertThrows(InvalidRequestException.class, () ->
+                validator.validate(getBuilder().name("my#chan").build(), null, false));
     }
 
     @Test
     void testInvalidChannelTtlMax() {
-        try {
-            validator.validate(getBuilder()
-                    .name("mychan")
-                    .ttlDays(10)
-                    .maxItems(10)
-                    .build(), null, false);
-        } catch (Exception ex) {
-            assertEquals(ex.getClass(), InvalidRequestException.class);
-        }
+        assertThrows(InvalidRequestException.class, () -> validator.validate(getBuilder()
+                .name("mychan")
+                .ttlDays(10)
+                .maxItems(10)
+                .build(), null, false));
     }
 
-//    @Test(expected = InvalidRequestException.class)
     @Test
     void testInvalidChannelTtlMutable() {
-        try {
-            validator.validate(getBuilder()
-                    .name("mychan")
-                    .ttlDays(10)
-                    .mutableTime(new DateTime())
-                    .build(), null, false);;
-        } catch (Exception ex) {
-            assertEquals(ex.getClass(), InvalidRequestException.class);
-        }
+        assertThrows(InvalidRequestException.class, () -> validator.validate(getBuilder()
+                .name("mychan")
+                .ttlDays(10)
+                .mutableTime(new DateTime())
+                .build(), null, false));
     }
 
     @Test
     void testInvalidChannelMaxMutable() {
-        try {
-            validator.validate(getBuilder()
-                    .name("mychan")
-                    .mutableTime(new DateTime())
-                    .maxItems(10)
-                    .build(), null, false);
-        } catch (Exception ex) {
-            assertEquals(ex.getClass(), InvalidRequestException.class);
-        }
+        assertThrows(InvalidRequestException.class, () -> validator.validate(getBuilder()
+                .name("mychan")
+                .mutableTime(new DateTime())
+                .maxItems(10)
+                .build(), null, false));
     }
 
     @Test
     void testInvalidChannelMutableTime() {
-        try {
-            validator.validate(getBuilder()
-                    .name("mychan")
-                    .mutableTime(new DateTime().plusMinutes(1))
-                    .build(), null, false);
-        } catch (Exception ex) {
-            assertEquals(ex.getClass(), InvalidRequestException.class);
-        }
+        assertThrows(InvalidRequestException.class, () -> validator.validate(getBuilder()
+                .name("mychan")
+                .mutableTime(new DateTime().plusMinutes(1))
+                .build(), null, false));
     }
 
     @Test
@@ -201,48 +155,32 @@ class ChannelValidatorTest {
         validateError(second, first);
     }
 
-//    @Test(expected = InvalidRequestException.class)
     @Test
     void testMutableTimeFuture() {
-        try {
-            validator.validate(getBuilder()
-                    .name("testMutableTimeFuture")
-                    .mutableTime(new DateTime().plusMinutes(1))
-                    .build(), null, false);
-        } catch (Exception ex) {
-            assertEquals(ex.getClass(), InvalidRequestException.class);
-        }
+        assertThrows(InvalidRequestException.class, () -> validator.validate(getBuilder()
+                .name("testMutableTimeFuture")
+                .mutableTime(new DateTime().plusMinutes(1))
+                .build(), null, false));
 
     }
 
-//    @Test(expected = InvalidRequestException.class)
     @Test
     void testInvalidBatchMutable() {
-
-        try {
-            validator.validate(getBuilder()
-                    .name("mychan")
-                    .storage(ChannelConfig.BATCH)
-                    .mutableTime(new DateTime())
-                    .build(), null, false);
-        } catch (Exception ex) {
-            assertEquals(ex.getClass(), InvalidRequestException.class);
-        }
+        assertThrows(InvalidRequestException.class, () -> validator.validate(getBuilder()
+                .name("mychan")
+                .storage(ChannelConfig.BATCH)
+                .mutableTime(new DateTime())
+                .build(), null, false));
     }
 
 //    @Test(expected = InvalidRequestException.class)
     @Test
     void testInvalidBothMutable() {
-        try {
-            validator.validate(getBuilder()
-                    .name("mychan")
-                    .storage(ChannelConfig.BOTH)
-                    .mutableTime(new DateTime())
-                    .build(), null, false);
-        } catch (Exception ex) {
-            assertEquals(ex.getClass(), InvalidRequestException.class);
-        }
-
+        assertThrows(InvalidRequestException.class, () -> validator.validate(getBuilder()
+                .name("mychan")
+                .storage(ChannelConfig.BOTH)
+                .mutableTime(new DateTime())
+                .build(), null, false));
     }
 
     @Test
@@ -252,66 +190,49 @@ class ChannelValidatorTest {
 
     @Test
     void testDescriptionTooBig() {
-        try {
-            validator.validate(getBuilder().name("toobig").description(Strings.repeat("A", 1025)).build(), null, false);
-        } catch (Exception ex) {
-            assertEquals(ex.getClass(), InvalidRequestException.class);
-        }
+        assertThrows(InvalidRequestException.class, () ->
+                validator.validate(getBuilder().name("toobig").description(Strings.repeat("A", 1025)).build(), null, false));
     }
 
     @Test
     void testTagSpace() {
-        try {
-            validator.validate(getBuilder().name("space").tags(Arrays.asList("s p a c e")).build(), null, false);
-        } catch (Exception ex) {
-            assertEquals(ex.getClass(), InvalidRequestException.class);
-        }
+        assertThrows(InvalidRequestException.class, () ->
+                validator.validate(getBuilder().name("space").tags(Collections.singletonList("s p a c e")).build(), null, false));
     }
 
     @Test
     void testTagUnderscore() {
-        try {
-            validator.validate(getBuilder().name("underscore").tags(Arrays.asList("under_score")).build(), null, false);
-        } catch (Exception ex) {
-            assertEquals(ex.getClass(), InvalidRequestException.class);
-        }
+        assertThrows(InvalidRequestException.class, () ->
+                validator.validate(getBuilder().name("underscore").tags(Collections.singletonList("under_score")).build(), null, false));
     }
 
     @Test
     void testTagValid() {
-        validator.validate(getBuilder().name("valid1").tags(Arrays.asList("abcdefghijklmnopqrstuvwxyz")).build(), null, false);
-        validator.validate(getBuilder().name("valid2").tags(Arrays.asList("ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789")).build(), null, false);
+        validator.validate(getBuilder().name("valid1").tags(Collections.singletonList("abcdefghijklmnopqrstuvwxyz")).build(), null, false);
+        validator.validate(getBuilder().name("valid2").tags(Collections.singletonList("ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789")).build(), null, false);
     }
 
     @Test
     void testTagTooLong() {
-        try {
-            validator.validate(getBuilder().name("tooLongTag")
-                    .tags(Collections.singletonList(Strings.repeat("A", 49))).build(), null, false);
-        } catch (Exception ex) {
-            assertEquals(ex.getClass(), InvalidRequestException.class);
-        }
+        assertThrows(InvalidRequestException.class, () -> validator.validate(getBuilder().name("tooLongTag")
+                .tags(Collections.singletonList(Strings.repeat("A", 49))).build(), null, false));
     }
 
     @Test
     void testTooManyTags() {
-        try {
-            List<String> tags = new ArrayList<>();
-            for (int i = 0; i < 21; i++) {
-                tags.add("" + i);
-            }
-            validator.validate(getBuilder().name("tooManyTags")
-                    .tags(tags).build(), null, false);
-        } catch (Exception ex) {
-            assertEquals(ex.getClass(), InvalidRequestException.class);
+        List<String> tags = new ArrayList<>();
+        for (int i = 0; i < 21; i++) {
+            tags.add("" + i);
         }
+        assertThrows(InvalidRequestException.class, () ->
+                validator.validate(getBuilder().name("tooManyTags").tags(tags).build(), null, false));
     }
 
     @Test
     void testAllowColonAndDash() {
-        validator.validate(getBuilder().name("colon").tags(Arrays.asList("a:b")).build(), null, false);
-        validator.validate(getBuilder().name("dash").tags(Arrays.asList("a-b")).build(), null, false);
-        validator.validate(getBuilder().name("colondash").tags(Arrays.asList("a-b:c")).build(), null, false);
+        validator.validate(getBuilder().name("colon").tags(Collections.singletonList("a:b")).build(), null, false);
+        validator.validate(getBuilder().name("dash").tags(Collections.singletonList("a-b")).build(), null, false);
+        validator.validate(getBuilder().name("colondash").tags(Collections.singletonList("a-b:c")).build(), null, false);
     }
 
     @Test
@@ -328,11 +249,8 @@ class ChannelValidatorTest {
 //    @Test(expected = InvalidRequestException.class)
     @Test
     void testTooLongOwner() {
-        try {
-            validator.validate(getBuilder().name("A").owner(Strings.repeat("A", 49)).build(), null, false);
-        } catch (Exception ex) {
-            assertEquals(ex.getClass(), InvalidRequestException.class);
-        }
+        assertThrows(InvalidRequestException.class, () ->
+                validator.validate(getBuilder().name("A").owner(Strings.repeat("A", 49)).build(), null, false));
     }
 
     @Test
@@ -345,11 +263,8 @@ class ChannelValidatorTest {
 //    @Test(expected = InvalidRequestException.class)
     @Test
     void testInvalidStorage() {
-        try {
-            validator.validate(getBuilder().name("storage").storage("stuff").build(), null, false);
-        } catch (Exception ex) {
-            assertEquals(ex.getClass(), InvalidRequestException.class);
-        }
+        assertThrows(InvalidRequestException.class, () ->
+                validator.validate(getBuilder().name("storage").storage("stuff").build(), null, false));
     }
 
     @Test

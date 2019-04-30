@@ -7,6 +7,7 @@ import java.util.TreeSet;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ChannelContentKeyTest {
 
@@ -53,23 +54,14 @@ class ChannelContentKeyTest {
 
     @Test
     void fromSpokePathInvalidFormat() {
-        try {
-            String filePath = "/some/arbitrary/directory/structure/foo/1999/12/31/bar/23/59/59999l33t";
-                    ChannelContentKey.fromSpokePath(filePath);
-        } catch (Exception ex) {
-            assertEquals(ex.getClass(), IllegalArgumentException.class);
-        }
+        String filePath = "/some/arbitrary/directory/structure/foo/1999/12/31/bar/23/59/59999l33t";
+        assertThrows(IllegalArgumentException.class, () -> ChannelContentKey.fromSpokePath(filePath));
     }
 
     @Test
     void fromSpokePathInvalidDepth() {
-        try {
-            String filePath = "/foo/bar/23/59/59999l33t";
-            ChannelContentKey.fromSpokePath(filePath);
-        } catch (Exception ex) {
-            assertEquals(ex.getClass(), IllegalArgumentException.class);
-        }
-
+        String filePath = "/foo/bar/23/59/59999l33t";
+        assertThrows(IllegalArgumentException.class, () -> ChannelContentKey.fromSpokePath(filePath));
     }
 
     @Test

@@ -12,6 +12,7 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class MultiPartParserTest {
@@ -161,11 +162,7 @@ class MultiPartParserTest {
                 .contentType("multipart/mixed; boundary=boundary")
                 .build();
         MultiPartParser parser = new MultiPartParser(bulkContent);
-        try {
-            parser.parse();
-        } catch (Exception ex) {
-            assertEquals(ex.getClass(), InvalidRequestException.class);
-        }
+        assertThrows(InvalidRequestException.class, parser::parse);
     }
 
     @Test

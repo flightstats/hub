@@ -5,7 +5,7 @@ import com.flightstats.hub.exception.InvalidRequestException;
 import com.google.common.base.Strings;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class WebhookValidatorTest {
 
@@ -36,81 +36,53 @@ class WebhookValidatorTest {
 
     @Test
     void testNameSizeTooBig() {
-        try {
-            webhookValidator.validate(webhook.withName(Strings.repeat("B", 129)));
-        } catch (Exception ex) {
-            assertEquals(ex.getClass(), InvalidRequestException.class);
-        }
+        assertThrows(InvalidRequestException.class, () -> webhookValidator.validate(webhook.withName(Strings.repeat("B", 129))));
     }
 
     @Test
     void testZeroCalls() {
-        try {
-            webhookValidator.validate(webhook.withParallelCalls(0));
-        } catch (Exception ex) {
-            assertEquals(ex.getClass(), InvalidRequestException.class);
-        }
+        assertThrows(InvalidRequestException.class, () -> webhookValidator.validate(webhook.withParallelCalls(0)));
     }
 
     @Test
     void testNameChars() {
-        try {
-            webhookValidator.validate(webhook.withName("aA9:"));
-        } catch (Exception ex) {
-            assertEquals(ex.getClass(), InvalidRequestException.class);
-        }
+        assertThrows(InvalidRequestException.class, () -> webhookValidator.validate(webhook.withName("aA9:")));
     }
 
     @Test
     void testNonChannelUrl() {
-        try {
-            webhookValidator.validate(Webhook.builder()
-                    .callbackUrl("http:/client/url")
-                    .channelUrl("http:\\hub/channel/channelName")
-                    .parallelCalls(1)
-                    .name("nothing")
-                    .build());
-        } catch (Exception ex) {
-            assertEquals(ex.getClass(), InvalidRequestException.class);
-        }
+        assertThrows(InvalidRequestException.class, () -> webhookValidator.validate(Webhook.builder()
+                .callbackUrl("http:/client/url")
+                .channelUrl("http:\\hub/channel/channelName")
+                .parallelCalls(1)
+                .name("nothing")
+                .build()));
     }
 
     @Test
     void testInvalidCallbackUrl() {
-        try {
-            webhookValidator.validate(Webhook.builder()
-                    .callbackUrl("not a url")
-                    .channelUrl("http://hub/channel/channelName")
-                    .parallelCalls(1)
-                    .name("nothing")
-                    .build());
-        } catch (Exception ex) {
-            assertEquals(ex.getClass(), InvalidRequestException.class);
-        }
+        assertThrows(InvalidRequestException.class, () -> webhookValidator.validate(Webhook.builder()
+                .callbackUrl("not a url")
+                .channelUrl("http://hub/channel/channelName")
+                .parallelCalls(1)
+                .name("nothing")
+                .build()));
     }
 
     @Test
     void testInvalidChannelUrl() {
-        try {
-            webhookValidator.validate(Webhook.builder()
-                    .callbackUrl("http:/client/url")
-                    .channelUrl("http://hub/channe/channelName")
-                    .parallelCalls(1)
-                    .name("testInvalidChannelUrl")
-                    .build());
-        } catch (Exception ex) {
-            assertEquals(ex.getClass(), InvalidRequestException.class);
-        }
+        assertThrows(InvalidRequestException.class, () -> webhookValidator.validate(Webhook.builder()
+                .callbackUrl("http:/client/url")
+                .channelUrl("http://hub/channe/channelName")
+                .parallelCalls(1)
+                .name("testInvalidChannelUrl")
+                .build()));
     }
 
     @Test
     void testInvalidBatch() {
-        try {
-            webhook = webhook.withBatch("non").withName("blah");
-            webhookValidator.validate(webhook);
-        } catch (Exception ex) {
-            assertEquals(ex.getClass(), InvalidRequestException.class);
-        }
+        webhook = webhook.withBatch("non").withName("blah");
+        assertThrows(InvalidRequestException.class, () -> webhookValidator.validate(webhook));
     }
 
     @Test
@@ -127,51 +99,34 @@ class WebhookValidatorTest {
 
     @Test
     void testInvalidSingleHeartbeat() {
-        try {
-            webhook = webhook.withBatch("SINGLE").withHeartbeat(true).withName("blah").withCallbackTimeoutSeconds(10);
-            webhookValidator.validate(webhook);
-        } catch (Exception ex) {
-            assertEquals(ex.getClass(), InvalidRequestException.class);
-        }
+        webhook = webhook.withBatch("SINGLE").withHeartbeat(true).withName("blah").withCallbackTimeoutSeconds(10);
+        assertThrows(InvalidRequestException.class, () -> webhookValidator.validate(webhook));
     }
 
     @Test
     void testInvalidCallbackTimeout() {
-        try {
-            webhook = webhook.withCallbackTimeoutSeconds(10 * 1000).withBatch("SINGLE").withName("blah");
-            webhookValidator.validate(webhook);
-        } catch (Exception ex) {
-            assertEquals(ex.getClass(), InvalidRequestException.class);
-        }
+        webhook = webhook.withCallbackTimeoutSeconds(10 * 1000).withBatch("SINGLE").withName("blah");
+        assertThrows(InvalidRequestException.class, () -> webhookValidator.validate(webhook));
     }
 
     @Test
     void testInvalidCallbackTimeoutZero() {
-        try {
-            webhook = webhook.withCallbackTimeoutSeconds(0).withBatch("SINGLE").withName("blah");
-            webhookValidator.validate(webhook);
-        } catch (Exception ex) {
-            assertEquals(ex.getClass(), InvalidRequestException.class);
-        }
+        webhook = webhook.withCallbackTimeoutSeconds(0).withBatch("SINGLE").withName("blah");
+        assertThrows(InvalidRequestException.class, () -> webhookValidator.validate(webhook));
     }
 
     @Test
     void testInvalidLocalhost() {
-        try {
-            HubProperties.setProperty("hub.type", "aws");
-            webhook = Webhook.builder()
-                    .callbackUrl("http:/localhost:8080/url")
-                    .channelUrl("http://hub/channel/channelName")
-                    .parallelCalls(1)
-                    .name("testInvalidChannelUrl")
-                    .batch("SINGLE")
-                    .callbackTimeoutSeconds(1)
-                    .build();
-
-            webhookValidator.validate(webhook);
-        } catch (Exception ex) {
-            assertEquals(ex.getClass(), InvalidRequestException.class);
-        }
+        HubProperties.setProperty("hub.type", "aws");
+        webhook = Webhook.builder()
+                .callbackUrl("http:/localhost:8080/url")
+                .channelUrl("http://hub/channel/channelName")
+                .parallelCalls(1)
+                .name("testInvalidChannelUrl")
+                .batch("SINGLE")
+                .callbackTimeoutSeconds(1)
+                .build();
+        assertThrows(InvalidRequestException.class, () -> webhookValidator.validate(webhook));
     }
 
 }
