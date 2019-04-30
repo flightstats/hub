@@ -71,9 +71,7 @@ class DistributedLockRunnerTest {
 
         executorService.execute(() -> {
             Consumer<LeadershipLock> lockable = leadershipLock -> doAThing(0, "lockable2", latch);
-            try { waitForMe.await(90, TimeUnit.MILLISECONDS); } catch (Exception e) {
-                //
-            }
+            tryWait(90, waitForMe);
             distributedLockRunner.runWithLock(lockable, "/LockPath", 1, TimeUnit.MINUTES);
         });
 
@@ -98,12 +96,7 @@ class DistributedLockRunnerTest {
 
         executorService.execute(() -> {
             Consumer<LeadershipLock> lockable = leadershipLock -> doAThing(0, "lockable2", latch);
-
-            try {
-                waitForMe.await(50, TimeUnit.MILLISECONDS);
-            } catch (Exception e) {
-                fail(e.getMessage());
-            }
+            tryWait(50, waitForMe);
             distributedLockRunner.runWithLock(lockable, "/LockPath", 1, TimeUnit.MILLISECONDS);
         });
 
@@ -130,11 +123,7 @@ class DistributedLockRunnerTest {
             Consumer<LeadershipLock> lockable = leadershipLock -> {
                 waitForOne.countDown();
                 doAThing(100, "lockable1", latch);
-                try {
-                    waitForTwo.await(50, TimeUnit.MILLISECONDS);
-                } catch (Exception e) {
-                    fail(e.getMessage());
-                }
+                tryWait(50, waitForTwo);
             };
             distributedLockRunner.runWithLock(lockable, "/LockPath", 1, TimeUnit.MILLISECONDS);
         });
@@ -144,21 +133,13 @@ class DistributedLockRunnerTest {
                 doAThing(0, "lockable2", latch);
                 waitForTwo.countDown();
             };
-            try {
-                waitForOne.await(50, TimeUnit.MILLISECONDS);
-            } catch (Exception e) {
-                fail(e.getMessage());
-            }
+            tryWait(50, waitForOne);
             distributedLockRunner.runWithLock(lockable, "/LockPath2", 1, TimeUnit.MILLISECONDS);
         });
 
         executorService.execute(() -> {
             Consumer<LeadershipLock> lockable = leadershipLock -> doAThing(0, "lockable3", latch);
-            try {
-                waitForOne.await(50, TimeUnit.MILLISECONDS);
-            } catch (Exception e) {
-                fail(e.getMessage());
-            }
+            tryWait(50, waitForOne);
             distributedLockRunner.runWithLock(lockable, "/LockPath", 1, TimeUnit.MINUTES);
         });
 
@@ -168,6 +149,14 @@ class DistributedLockRunnerTest {
             fail("something went wrong waiting for all the locks to finish!");
         }
         assertEquals(newArrayList("lockable2", "lockable1", "lockable3"), lockList.get());
+    }
+
+    private void tryWait(long sleepMillis, CountDownLatch latch) {
+        try { latch.await(sleepMillis, TimeUnit.MILLISECONDS); }
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            fail(e.getMessage());
+        }
     }
 
     private void doAThing(long sleepMillis, String name, CountDownLatch latch) {
