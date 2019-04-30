@@ -30,7 +30,7 @@ public class CuratorClusterTest {
         log.info("starting testPath");
 
         CuratorCluster cluster = new CuratorCluster(curator,
-                "/SpokeCluster",
+                "/test",
                 false,
                 true,
                 new SpokeDecommissionCluster(curator, new SpokeProperty(PropertyLoader.getInstance())),
@@ -38,8 +38,6 @@ public class CuratorClusterTest {
                 new SpokeProperty(PropertyLoader.getInstance()));
 
         Collection<String> servers = cluster.getAllServers();
-        curator.delete().deletingChildrenIfNeeded().forPath("/HubCluster");
-        curator.delete().deletingChildrenIfNeeded().forPath("/SpokeCluster");
         assertNotNull(servers);
         assertEquals(0, servers.size());
         log.info("got expected 0");
