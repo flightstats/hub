@@ -38,7 +38,7 @@ public class CuratorClusterTest {
                 new SpokeProperty(PropertyLoader.getInstance()));
 
         Collection<String> servers = cluster.getAllServers();
-        log.info("*****************servers {} ", servers);
+        cluster.delete();
         assertNotNull(servers);
         assertEquals(0, servers.size());
         log.info("got expected 0");
