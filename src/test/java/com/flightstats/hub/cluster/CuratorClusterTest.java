@@ -29,8 +29,16 @@ public class CuratorClusterTest {
     public void testPath() throws Exception {
         log.info("starting testPath");
 
-        final CuratorCluster cluster = new CuratorCluster(curator,
+        final CuratorCluster clusterTest = new CuratorCluster(curator,
                 "/SpokeCluster",
+                false,
+                true,
+                new SpokeDecommissionCluster(curator, new SpokeProperty(PropertyLoader.getInstance())),
+                new AppProperty(PropertyLoader.getInstance()),
+                new SpokeProperty(PropertyLoader.getInstance()));
+
+        final CuratorCluster cluster = new CuratorCluster(curator,
+                "/CuratorClusterTest",
                 false,
                 true,
                 new SpokeDecommissionCluster(curator, new SpokeProperty(PropertyLoader.getInstance())),
