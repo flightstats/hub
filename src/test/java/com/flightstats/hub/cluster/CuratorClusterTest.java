@@ -30,7 +30,7 @@ public class CuratorClusterTest {
         log.info("starting testPath");
 
         CuratorCluster cluster = new CuratorCluster(curator,
-                "/testPath",
+                "/SpokeCluster",
                 false,
                 true,
                 new SpokeDecommissionCluster(curator, new SpokeProperty(PropertyLoader.getInstance())),
