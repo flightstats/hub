@@ -29,7 +29,7 @@ import static com.flightstats.hub.app.HubServices.register;
 @Singleton
 @Slf4j
 public class ReplicationManager {
-    private static final String REPLICATOR_WATCHER_PATH = "/replicator/watcher";
+    public static final String REPLICATOR_WATCHER_PATH = "/replicator/watcher";
     private final Map<String, ChannelReplicator> channelReplicatorMap = new HashMap<>();
     private final AtomicBoolean stopped = new AtomicBoolean();
     private final ExecutorService executor = Executors.newSingleThreadExecutor(

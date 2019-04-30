@@ -1,6 +1,7 @@
 package com.flightstats.hub.dao.aws;
 
 import com.flightstats.hub.dao.ContentDao;
+import com.flightstats.hub.dao.aws.writeQueue.WriteQueue;
 import com.flightstats.hub.dao.aws.writeQueue.WriteQueueConfig;
 import com.flightstats.hub.exception.FailedReadException;
 import com.flightstats.hub.metrics.ActiveTraces;
@@ -23,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 
 @Singleton
 @Slf4j
-public class S3WriteQueue {
+public class S3WriteQueue implements WriteQueue {
 
     private final Retryer<Void> retryer = buildRetryer();
 
@@ -46,7 +47,7 @@ public class S3WriteQueue {
     }
 
     @VisibleForTesting
-    void write() throws InterruptedException {
+    void write() {
         try {
             ChannelContentKey key = keys.poll(5, TimeUnit.SECONDS);
             if (key != null) {
@@ -79,6 +80,7 @@ public class S3WriteQueue {
         }
     }
 
+    @Override
     public boolean add(ChannelContentKey key) {
         boolean value = keys.offer(key);
         if (value) {

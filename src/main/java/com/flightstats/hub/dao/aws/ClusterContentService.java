@@ -8,10 +8,25 @@ import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentKeyUtil;
 import com.flightstats.hub.dao.ContentService;
 import com.flightstats.hub.dao.QueryResult;
+import com.flightstats.hub.dao.aws.writeQueue.WriteQueue;
 import com.flightstats.hub.exception.FailedQueryException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.BulkContent;
+import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.model.ChannelContentKey;
+import com.flightstats.hub.model.Content;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.ContentPath;
+import com.flightstats.hub.model.ContentPathKeys;
+import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.Epoch;
+import com.flightstats.hub.model.LargeContentUtils;
+import com.flightstats.hub.model.Location;
+import com.flightstats.hub.model.MinutePath;
+import com.flightstats.hub.model.Query;
+import com.flightstats.hub.model.StreamResults;
+import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.replication.S3Batch;
 import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.util.HubUtils;
@@ -52,7 +67,7 @@ public class ClusterContentService implements ContentService {
     private final ContentDao spokeReadContentDao;
     private final ContentDao s3BatchContentDao;
     private final ContentDao s3LargePayloadContentDao;
-    private final S3WriteQueue s3WriteQueue;
+    private final WriteQueue writeQueue;
     private final ChannelService channelService;
     private final LastContentPath lastContentPath;
     private final HubUtils hubUtils;
@@ -66,7 +81,7 @@ public class ClusterContentService implements ContentService {
                             @Named(ContentDao.SINGLE_LONG_TERM) ContentDao s3SingleContentDao,
                             @Named(ContentDao.LARGE_PAYLOAD) ContentDao s3LargePayloadContentDao,
                             @Named(ContentDao.BATCH_LONG_TERM) ContentDao s3BatchContentDao,
-                            S3WriteQueue s3WriteQueue,
+                            WriteQueue writeQueue,
                             LastContentPath lastContentPath,
                             HubUtils hubUtils,
                             LargeContentUtils largeContentUtils) {
@@ -78,7 +93,7 @@ public class ClusterContentService implements ContentService {
         this.s3SingleContentDao = s3SingleContentDao;
         this.s3LargePayloadContentDao = s3LargePayloadContentDao;
         this.s3BatchContentDao = s3BatchContentDao;
-        this.s3WriteQueue = s3WriteQueue;
+        this.writeQueue = writeQueue;
         this.lastContentPath = lastContentPath;
         this.hubUtils = hubUtils;
         this.largeContentUtils = largeContentUtils;
@@ -128,7 +143,7 @@ public class ClusterContentService implements ContentService {
     }
 
     private void s3SingleWrite(String channelName, ContentKey key) {
-        s3WriteQueue.add(new ChannelContentKey(channelName, key));
+        writeQueue.add(new ChannelContentKey(channelName, key));
     }
 
     @Override

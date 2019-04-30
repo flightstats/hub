@@ -52,7 +52,8 @@ public class WebhookManager {
                     ActiveWebhooks activeWebhooks,
                     WebhookErrorService webhookErrorService,
                     WebhookContentPathSet webhookInProcess,
-                    InternalWebhookClient webhookClient) {
+                    InternalWebhookClient webhookClient,
+                    WebhookStateReaper webhookStateReaper) {
         this.watchManager = watchManager;
         this.webhookDao = webhookDao;
         this.lastContentPath = lastContentPath;
@@ -60,6 +61,7 @@ public class WebhookManager {
         this.webhookErrorService = webhookErrorService;
         this.webhookInProcess = webhookInProcess;
         this.webhookClient = webhookClient;
+        this.webhookStateReaper = webhookStateReaper;
         if (HubProperties.isWebHookLeadershipEnabled()) {
             register(new WebhookIdleService(), HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
             register(new WebhookScheduledService(), HubServices.TYPE.AFTER_HEALTHY_START);

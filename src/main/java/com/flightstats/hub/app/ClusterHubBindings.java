@@ -29,6 +29,8 @@ import com.flightstats.hub.dao.aws.S3Verifier;
 import com.flightstats.hub.dao.aws.S3DocumentationDao;
 import com.flightstats.hub.dao.aws.S3WriteQueue;
 import com.flightstats.hub.dao.aws.S3WriteQueueLifecycle;
+import com.flightstats.hub.dao.aws.writeQueue.NoOpWriteQueue;
+import com.flightstats.hub.dao.aws.writeQueue.WriteQueue;
 import com.flightstats.hub.dao.aws.writeQueue.WriteQueueConfig;
 import com.flightstats.hub.dao.aws.writeQueue.WriteQueueConfigProvider;
 import com.flightstats.hub.metrics.PeriodicMetricEmitter;
@@ -58,17 +60,14 @@ class ClusterHubBindings extends AbstractModule {
         logger.info("starting server {} ", HubHost.getLocalName());
 
         bind(AwsConnectorFactory.class).asEagerSingleton();
-        bind(S3Config.class).asEagerSingleton();
+        bind(HubS3Client.class).asEagerSingleton();
+
         bind(LargeContentUtils.class).asEagerSingleton();
         bind(WriteQueueConfig.class).toProvider(WriteQueueConfigProvider.class).asEagerSingleton();
-        bind(S3WriteQueue.class).asEagerSingleton();
-        bind(S3WriteQueueLifecycle.class).asEagerSingleton();
         bind(ContentService.class)
                 .to(ClusterContentService.class).asEagerSingleton();
         bind(RemoteSpokeStore.class).asEagerSingleton();
         bind(DynamoUtils.class).asEagerSingleton();
-        bind(S3BatchManager.class).asEagerSingleton();
-        bind(S3Verifier.class).asEagerSingleton();
         bind(AppUrlCheck.class).asEagerSingleton();
 
         bind(SpokeTtlEnforcer.class)
@@ -80,10 +79,22 @@ class ClusterHubBindings extends AbstractModule {
                 .toInstance(new SpokeTtlEnforcer(SpokeStore.READ));
 
         bind(SpokeDecommissionManager.class).asEagerSingleton();
-        bind(HubS3Client.class).asEagerSingleton();
-        bind(S3AccessMonitor.class).asEagerSingleton();
         bind(PeriodicMetricEmitter.class).asEagerSingleton();
         bind(PeriodicMetricEmitterLifecycle.class).asEagerSingleton();
+
+        if (HubProperties.isS3ConfigManagementEnabled()) {
+            bind(S3Config.class).asEagerSingleton();
+        }
+
+        if (HubProperties.isReadOnly()) {
+            bind(WriteQueue.class).to(NoOpWriteQueue.class).asEagerSingleton();
+        } else {
+            bind(WriteQueue.class).to(S3WriteQueue.class).asEagerSingleton();
+            bind(S3WriteQueueLifecycle.class).asEagerSingleton();
+            bind(S3BatchManager.class).asEagerSingleton();
+            bind(S3Verifier.class).asEagerSingleton();
+            bind(S3AccessMonitor.class).asEagerSingleton();
+        }
     }
 
     @Inject

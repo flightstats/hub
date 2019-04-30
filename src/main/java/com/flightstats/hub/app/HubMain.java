@@ -163,7 +163,7 @@ public class HubMain {
                 StatsDReporterLifecycle.class)
                 .map(injector::getInstance)
                 .collect(Collectors.toList());
-        if (storageBackend == StorageBackend.aws) {
+        if (storageBackend == StorageBackend.aws && !HubProperties.isReadOnly()) {
             services.add(injector.getInstance(S3WriteQueueLifecycle.class));
         }
         return services;

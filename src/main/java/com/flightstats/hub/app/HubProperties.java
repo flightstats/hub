@@ -19,6 +19,7 @@ public class HubProperties {
     private static Properties properties = new Properties();
 
     public enum HubProps {
+        HUB_READ_ONLY("hub.read.only"),
         WEBHOOK_LEADERSHIP_ENABLED("webhook.leadership.enabled"),
         REPLICATION_ENABLED("replication.enabled"),
         S3_BATCH_MANAGEMENT_ENABLED("s3.batch.management.enabled"),
@@ -31,9 +32,7 @@ public class HubProperties {
     }
 
     public static boolean isReadOnly() {
-        String readOnlyNodes = HubProperties.getProperty("hub.read.only", "");
-        return Arrays.asList(readOnlyNodes.split(","))
-                .contains(HubHost.getLocalName());
+        return getProperty(HubProps.HUB_READ_ONLY.getKey(), false);
     }
 
     public static String getAppUrl() {
