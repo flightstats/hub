@@ -34,7 +34,7 @@ public class S3WriteQueueLifecycle extends AbstractService {
     }
 
     public void doStart() {
-        log.info("queue size {}", s3Property.getWriteQueueSize());
+        log.info("queue capacity {}", s3Property.getWriteQueueSize());
         for (int i = 0; i < s3Property.getWriteQueueThreadCount(); i++) {
             executorService.submit(() -> {
                 try {
