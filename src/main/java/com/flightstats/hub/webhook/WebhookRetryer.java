@@ -34,8 +34,8 @@ import java.util.function.Predicate;
 @Slf4j
 class WebhookRetryer {
 
-    private List<Predicate<DeliveryAttempt>> giveUpIfs = new ArrayList<>();
-    private List<Predicate<DeliveryAttempt>> tryLaterIfs = new ArrayList<>();
+    private List<Predicate<DeliveryAttempt>> giveUpIfs;
+    private List<Predicate<DeliveryAttempt>> tryLaterIfs;
 
     private WebhookErrorService webhookErrorService;
     private Client httpClient;
@@ -45,15 +45,14 @@ class WebhookRetryer {
     WebhookRetryer(@Singular List<Predicate<DeliveryAttempt>> giveUpIfs,
                    @Singular List<Predicate<DeliveryAttempt>> tryLaterIfs,
                    Integer connectTimeoutSeconds,
-                   Integer readTimeoutSeconds,
-                   WebhookProperty webhookProperty) {
+                   Integer readTimeoutSeconds) {
         this(giveUpIfs,
                 tryLaterIfs,
                 connectTimeoutSeconds,
                 readTimeoutSeconds,
                 HubProvider.getInstance(WebhookErrorService.class),
                 HubProvider.getInstance(StatsdReporter.class),
-                webhookProperty);
+                HubProvider.getInstance(WebhookProperty.class));
     }
 
     @VisibleForTesting
