@@ -7,72 +7,43 @@ import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.Content;
-import com.flightstats.hub.util.Sleeper;
 import com.github.rholder.retry.Retryer;
 import com.github.rholder.retry.RetryerBuilder;
 import com.github.rholder.retry.StopStrategies;
 import com.github.rholder.retry.WaitStrategies;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
 @Slf4j
 public class S3WriteQueue {
-
-    private Retryer<Void> retryer = buildRetryer();
-    private BlockingQueue<ChannelContentKey> keys;
-    private ExecutorService executorService;
-
-    private ContentDao spokeWriteContentDao;
-    private ContentDao s3SingleContentDao;
-    private StatsdReporter statsdReporter;
+    private final Retryer<Void> retryer = buildRetryer();
+    private final BlockingQueue<ChannelContentKey> keys;
+    private final ContentDao spokeWriteContentDao;
+    private final ContentDao s3SingleContentDao;
+    private final StatsdReporter statsdReporter;
 
     @Inject
-    public S3WriteQueue(@Named(ContentDao.WRITE_CACHE) ContentDao spokeWriteContentDao,
-                        @Named(ContentDao.SINGLE_LONG_TERM) ContentDao s3SingleContentDao,
-                        StatsdReporter statsdReporter,
-                        S3Property s3Property) {
+    S3WriteQueue(@Named(ContentDao.WRITE_CACHE) ContentDao spokeWriteContentDao,
+                 @Named(ContentDao.SINGLE_LONG_TERM) ContentDao s3SingleContentDao,
+                 StatsdReporter statsdReporter,
+                 S3Property s3property) {
         this.spokeWriteContentDao = spokeWriteContentDao;
         this.s3SingleContentDao = s3SingleContentDao;
         this.statsdReporter = statsdReporter;
-
-        this.keys = new LinkedBlockingQueue<>(s3Property.getWriteQueueSize());
-        this.executorService = Executors.newFixedThreadPool(s3Property.getWriteQueueThreadCount(),
-                new ThreadFactoryBuilder().setNameFormat("S3WriteQueue-%d").build());
-
-        log.info("queue size {}", s3Property.getWriteQueueSize());
-        write(s3Property.getWriteQueueThreadCount());
+        keys = new LinkedBlockingQueue<>(s3property.getWriteQueueSize());
     }
 
-    private void write(int queueThreadCount) {
-
-        for (int i = 0; i < queueThreadCount; i++) {
-            executorService.submit(() -> {
-                try {
-                    while (true) {
-                        write();
-                    }
-                } catch (Exception e) {
-                    log.warn("exited thread", e);
-                    return null;
-                }
-            });
-        }
-    }
-
-    int getQueueSize() {
-        return keys.size();
-    }
-
+    @VisibleForTesting
+    @SneakyThrows
     void write() {
         try {
             ChannelContentKey key = keys.poll(5, TimeUnit.SECONDS);
@@ -118,19 +89,11 @@ public class S3WriteQueue {
         return value;
     }
 
-    public void close() {
-        int count = 0;
-        while (keys.size() > 0) {
-            count++;
-            log.info("waiting for keys {}", keys.size());
-            if (count >= 60) {
-                log.warn("waited too long for keys {}", keys.size());
-                return;
-            }
-            Sleeper.sleepQuietly(1000);
-        }
-        executorService.shutdown();
+
+    int getQueueSize() {
+        return keys.size();
     }
+
 
     private Retryer<Void> buildRetryer() {
         return RetryerBuilder.<Void>newBuilder()
