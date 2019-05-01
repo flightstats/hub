@@ -1,22 +1,21 @@
 package com.flightstats.hub.util;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 
 import java.util.function.Function;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class ChunkOutputStreamTest {
+class ChunkOutputStreamTest {
 
     private static final int MEGABYTES = 1024 * 1024;
     private ChunkOutputStream chunkOutputStream;
 
-    private Function testFunction = (chunk) -> {
-        return "ok";
-    };
+    private Function testFunction = (chunk) -> "ok";
 
     @Test
-    public void testSize10() {
+    void testSize10() {
         chunkOutputStream = new ChunkOutputStream(3, 10, testFunction);
         assertEquals(5 * MEGABYTES, chunkOutputStream.getSize(1));
         assertEquals(10 * MEGABYTES, chunkOutputStream.getSize(4));
@@ -27,7 +26,7 @@ public class ChunkOutputStreamTest {
     }
 
     @Test
-    public void testSize20() {
+    void testSize20() {
         chunkOutputStream = new ChunkOutputStream(3, 20, testFunction);
         assertEquals(5 * MEGABYTES, chunkOutputStream.getSize(1));
         assertEquals(10 * MEGABYTES, chunkOutputStream.getSize(4));
@@ -38,7 +37,7 @@ public class ChunkOutputStreamTest {
     }
 
     @Test
-    public void testSize50() {
+    void testSize50() {
         chunkOutputStream = new ChunkOutputStream(3, 50, testFunction);
         assertEquals(5 * MEGABYTES, chunkOutputStream.getSize(1));
         assertEquals(10 * MEGABYTES, chunkOutputStream.getSize(4));
