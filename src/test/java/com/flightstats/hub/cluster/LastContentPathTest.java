@@ -1,5 +1,7 @@
 package com.flightstats.hub.cluster;
 
+import com.flightstats.hub.config.AppProperty;
+import com.flightstats.hub.config.PropertyLoader;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.model.MinutePath;
@@ -26,12 +28,12 @@ class LastContentPathTest {
     }
 
     @BeforeEach
-    void setUp() throws Exception {
-        lastContentPath = new LastContentPath(curator);
+    void setUp() {
+        lastContentPath = new LastContentPath(curator, new AppProperty(PropertyLoader.getInstance()));
     }
 
     @Test
-    void testLifeCycle() throws Exception {
+    void testLifeCycle() {
         String name = "testLifeCycle";
         DateTime start = new DateTime(2014, 12, 3, 20, 45, DateTimeZone.UTC);
         ContentKey key1 = new ContentKey(start, "B");
@@ -56,16 +58,14 @@ class LastContentPathTest {
     }
 
     @Test
-    void testCreateNull() throws Exception {
+    void testCreateNull() {
         String name = "testCreateNull";
-        DateTime start = new DateTime(2014, 12, 3, 20, 45, DateTimeZone.UTC);
-        ContentKey key1 = new ContentKey(start, "B");
         ContentPath contentPath = lastContentPath.get(name, null, BASE_PATH);
         assertNull(contentPath);
     }
 
     @Test
-    void testCreateIfMissing() throws Exception {
+    void testCreateIfMissing() {
         String name = "testCreateIfMissing";
         ContentKey key = new ContentKey();
         assertEquals(key, lastContentPath.get(name, key, BASE_PATH));
@@ -90,7 +90,7 @@ class LastContentPathTest {
     }
 
     @Test
-    void testUpdateDecrease() throws Exception {
+    void testUpdateDecrease() {
         String name = "testUpdateDecrease";
         DateTime start = new DateTime(2014, 12, 3, 20, 45, DateTimeZone.UTC);
 

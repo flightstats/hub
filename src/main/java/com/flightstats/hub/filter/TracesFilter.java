@@ -1,7 +1,7 @@
 package com.flightstats.hub.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flightstats.hub.app.HubBindings;
+import com.flightstats.hub.config.binding.HubBindings;
 import com.flightstats.hub.metrics.ActiveTraces;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;

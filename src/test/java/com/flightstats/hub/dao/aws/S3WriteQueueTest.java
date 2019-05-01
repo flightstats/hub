@@ -1,6 +1,6 @@
 package com.flightstats.hub.dao.aws;
 
-import com.flightstats.hub.dao.aws.writeQueue.WriteQueueConfig;
+import com.flightstats.hub.config.S3Property;
 import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.Content;
@@ -32,10 +32,7 @@ class S3WriteQueueTest {
     @Mock private StatsdReporter statsdReporter;
     @Mock private ChannelContentKey key;
     @Mock private ContentKey contentKey;
-    private WriteQueueConfig writeQueueConfig = WriteQueueConfig.builder()
-            .queueSize(20)
-            .threads(2)
-            .build();
+    @Mock private S3Property s3Property;
     private static final String CHANNEL_NAME = "testy_test";
     private static final long AGE_MILLIS = 666;
     private S3WriteQueue s3WriteQueue;
@@ -43,11 +40,13 @@ class S3WriteQueueTest {
     @BeforeEach
     void setup() {
         initMocks(this);
+        when(s3Property.getWriteQueueSize()).thenReturn(20);
+        when(s3Property.getWriteQueueThreadCount()).thenReturn(2);
         s3WriteQueue = new S3WriteQueue(
                 spokeWriteContentDao,
                 s3SingleContentDao,
                 statsdReporter,
-                writeQueueConfig);
+                s3Property);
     }
 
     @Test
@@ -64,7 +63,7 @@ class S3WriteQueueTest {
         boolean nextAddedItem = keyFactory(21)
                 .stream()
                 .allMatch(key -> s3WriteQueue.add(key));
-        assertEquals(20, s3WriteQueue.keys.size());
+        assertEquals(20, s3WriteQueue.getQueueSize());
         verify(statsdReporter).gauge("s3.writeQueue.used", 20);
         verify(statsdReporter, never()).gauge("s3.writeQueue.used", 21);
         verify(statsdReporter).increment( "s3.writeQueue.dropped");
@@ -86,13 +85,13 @@ class S3WriteQueueTest {
 
 
         // THEN
-        assertEquals(0, s3WriteQueue.keys.size());
+        assertEquals(0, s3WriteQueue.getQueueSize());
 
         // WHEN
         keys.subList(20, 40).forEach(key -> s3WriteQueue.add(key));
 
         // THEN
-        assertEquals(20, s3WriteQueue.keys.size());
+        assertEquals(20, s3WriteQueue.getQueueSize());
         verify(statsdReporter, times(40)).time("s3.writeQueue.age.added", AGE_MILLIS);
     }
 

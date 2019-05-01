@@ -18,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class MultiPartParserTest {
 
     private static final String BINARY_ITEM = "PGh0bWw+CiAgPGhlYWQ+CiAgPC9oZWFkPgogIDxib2R5PgogICAgPHA+VGhpcyBpcyB0aGUgYm9keSBvZiB0aGUgbWVzc2FnZS48L3A+CiAgPC9ib2R5Pgo8L2h0bWw+Cg==";
+    private static final int MAX_PAYLOAD_SIZE_IN_MB = 40;
 
     @Test
     void testSimple() throws IOException {
@@ -39,7 +40,7 @@ class MultiPartParserTest {
                 .contentType("multipart/mixed; boundary=frontier")
                 .isNew(true)
                 .build();
-        MultiPartParser parser = new MultiPartParser(bulkContent);
+        MultiPartParser parser = new MultiPartParser(bulkContent, MAX_PAYLOAD_SIZE_IN_MB);
         parser.parse();
         Content item = bulkContent.getItems().get(0);
         assertEquals("This is the body of the message.", new String(item.getData()));
@@ -77,7 +78,7 @@ class MultiPartParserTest {
                 .stream(inputStream)
                 .contentType("multipart/mixed; boundary=frontier")
                 .build();
-        MultiPartParser parser = new MultiPartParser(bulkContent);
+        MultiPartParser parser = new MultiPartParser(bulkContent, MAX_PAYLOAD_SIZE_IN_MB);
         parser.parse();
         assertEquals(2, bulkContent.getItems().size());
         Content item = bulkContent.getItems().get(0);
@@ -103,7 +104,7 @@ class MultiPartParserTest {
                 .stream(inputStream)
                 .contentType("multipart/mixed; boundary=boundary")
                 .build();
-        MultiPartParser parser = new MultiPartParser(bulkContent);
+        MultiPartParser parser = new MultiPartParser(bulkContent, MAX_PAYLOAD_SIZE_IN_MB);
         parser.parse();
         Content item = bulkContent.getItems().get(0);
         assertEquals("There is some message here.", new String(item.getData()));
@@ -124,7 +125,7 @@ class MultiPartParserTest {
                 .stream(inputStream)
                 .contentType("multipart/mixed; boundary=\"boundary\"")
                 .build();
-        MultiPartParser parser = new MultiPartParser(bulkContent);
+        MultiPartParser parser = new MultiPartParser(bulkContent, MAX_PAYLOAD_SIZE_IN_MB);
         parser.parse();
         Content item = bulkContent.getItems().get(0);
         assertEquals("meow.", new String(item.getData()));
@@ -145,7 +146,7 @@ class MultiPartParserTest {
                 .stream(inputStream)
                 .contentType("multipart/mixed; boundary=boundary")
                 .build();
-        MultiPartParser parser = new MultiPartParser(bulkContent);
+        MultiPartParser parser = new MultiPartParser(bulkContent, MAX_PAYLOAD_SIZE_IN_MB);
         parser.parse();
         Content item = bulkContent.getItems().get(0);
         assertEquals("\r\nThere is some message here.\r\n", new String(item.getData()));
@@ -161,7 +162,7 @@ class MultiPartParserTest {
                 .stream(inputStream)
                 .contentType("multipart/mixed; boundary=boundary")
                 .build();
-        MultiPartParser parser = new MultiPartParser(bulkContent);
+        MultiPartParser parser = new MultiPartParser(bulkContent, MAX_PAYLOAD_SIZE_IN_MB);
         assertThrows(InvalidRequestException.class, parser::parse);
     }
 
@@ -181,7 +182,7 @@ class MultiPartParserTest {
                 .contentType("multipart/mixed; boundary=boundary")
                 .build();
 
-        MultiPartParser parser = new MultiPartParser(bulkContent);
+        MultiPartParser parser = new MultiPartParser(bulkContent, MAX_PAYLOAD_SIZE_IN_MB);
         parser.parse();
         Content item = bulkContent.getItems().get(0);
         assertArrayEquals(new byte[0], item.getData());

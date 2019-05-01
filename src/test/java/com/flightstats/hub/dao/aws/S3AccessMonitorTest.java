@@ -5,6 +5,9 @@ import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.PutObjectResult;
 import com.amazonaws.services.s3.model.S3Object;
+import com.flightstats.hub.config.AppProperty;
+import com.flightstats.hub.config.PropertyLoader;
+import com.flightstats.hub.config.S3Property;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,7 +24,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class S3AccessMonitorTest {
-    private final S3BucketName s3BucketName = new S3BucketName("test", "bucket");
+    private final S3BucketName s3BucketName = new S3BucketName(
+            new AppProperty(PropertyLoader.getInstance()),
+            new S3Property(PropertyLoader.getInstance()));
     private HubS3Client s3Client;
     private S3AccessMonitor monitor;
     private PutObjectResult putObjectResult;

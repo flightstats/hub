@@ -1,7 +1,9 @@
 package com.flightstats.hub.dao.aws;
 
-import com.flightstats.hub.app.HubBindings;
 import com.flightstats.hub.cluster.LastContentPath;
+import com.flightstats.hub.config.AppProperty;
+import com.flightstats.hub.config.SpokeProperty;
+import com.flightstats.hub.config.binding.HubBindings;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.model.ChannelConfig;
@@ -24,8 +26,8 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -34,18 +36,32 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ClusterContentServiceTest {
-    @Mock private ClusterContentService ccs;
-    @Mock private ChannelService channelSvc;
-    @Mock private ContentDao mockSpokeWriteDao;
-    @Mock private ContentDao mockSpokeReadDao;
-    @Mock private ContentDao mockS3SingleDao;
-    @Mock private ContentDao mockS3LargeDao;
-    @Mock private ContentDao mockS3BatchDao;
-    @Mock private S3WriteQueue s3WriteQueue;
-    @Mock private ChannelConfig channelConfig;
-    @Mock private LastContentPath lastContentPath;
-    @Mock private HubUtils hubUtils;
-
+    @Mock
+    private ClusterContentService ccs;
+    @Mock
+    private ChannelService channelSvc;
+    @Mock
+    private ContentDao mockSpokeWriteDao;
+    @Mock
+    private ContentDao mockSpokeReadDao;
+    @Mock
+    private ContentDao mockS3SingleDao;
+    @Mock
+    private ContentDao mockS3LargeDao;
+    @Mock
+    private ContentDao mockS3BatchDao;
+    @Mock
+    private S3WriteQueue s3WriteQueue;
+    @Mock
+    private ChannelConfig channelConfig;
+    @Mock
+    private LastContentPath lastContentPath;
+    @Mock
+    private HubUtils hubUtils;
+    @Mock
+    private AppProperty appProperty;
+    @Mock
+    private SpokeProperty spokeProperty;
     private Content content;
     private ContentKey contentKey;
     private String channelName;
@@ -61,7 +77,7 @@ class ClusterContentServiceTest {
                 mockSpokeWriteDao, mockSpokeReadDao,
                 mockS3SingleDao, mockS3LargeDao, mockS3BatchDao,
                 s3WriteQueue, lastContentPath, hubUtils,
-                largeContentUtils);
+                largeContentUtils, appProperty, spokeProperty);
     }
 
     @Test

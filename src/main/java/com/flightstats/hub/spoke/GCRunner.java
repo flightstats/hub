@@ -1,38 +1,38 @@
 package com.flightstats.hub.spoke;
 
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
+import com.flightstats.hub.config.AppProperty;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.TimeUnit;
 
 @Singleton
+@Slf4j
 public class GCRunner {
-    private final static Logger logger = LoggerFactory.getLogger(GCRunner.class);
+
     private final int gcMinutes;
 
     @Inject
-    public GCRunner() {
-        this.gcMinutes = HubProperties.getProperty("hub.gcMinutes", 60);
-        if (HubProperties.getProperty("hub.runGC", false)) {
+    public GCRunner(AppProperty appProperty) {
+        this.gcMinutes = appProperty.getGCSchedulerDelayInMinutes();
+        if (appProperty.isRunGC()) {
             HubServices.register(new GCRunnerService());
         }
     }
 
     private void run() {
-        logger.info("running GC");
+        log.info("running GC");
         long start = System.currentTimeMillis();
         System.gc();
-        logger.info("ran GC {}", (System.currentTimeMillis() - start));
+        log.info("ran GC {}", (System.currentTimeMillis() - start));
     }
 
     private class GCRunnerService extends AbstractScheduledService {
         @Override
-        protected void runOneIteration() throws Exception {
+        protected void runOneIteration() {
             run();
         }
 
@@ -40,7 +40,6 @@ public class GCRunner {
         protected Scheduler scheduler() {
             return Scheduler.newFixedDelaySchedule(gcMinutes, gcMinutes, TimeUnit.MINUTES);
         }
-
     }
 
 }

@@ -1,7 +1,7 @@
 package com.flightstats.hub.dao.aws;
 
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.channel.ZipBulkBuilder;
+import com.flightstats.hub.config.PropertyLoader;
 import com.flightstats.hub.dao.ContentDaoUtil;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.ChannelConfig;
@@ -14,11 +14,11 @@ import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.StringUtils;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Injector;
+import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -33,15 +33,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@Slf4j
 class S3BatchContentDaoTest {
 
-    private final static Logger logger = LoggerFactory.getLogger(S3BatchContentDaoTest.class);
     private static S3BatchContentDao contentDao;
 
     @BeforeAll
     static void setUpClass() throws Exception {
-        HubProperties.loadProperties("useDefault");
-        HubProperties.setProperty("s3.maxQueryItems", "5");
+        PropertyLoader.getInstance().load("useDefault");
+        PropertyLoader.getInstance().setProperty("s3.maxQueryItems", "5");
         Injector injector = Integration.startAwsHub();
         contentDao = injector.getInstance(S3BatchContentDao.class);
     }
@@ -70,7 +70,7 @@ class S3BatchContentDaoTest {
         AtomicInteger count = new AtomicInteger();
         contentDao.streamMinute(channel, pathAndKeys, false, content -> {
                     ContentKey key = content.getContentKey().get();
-                    logger.info("found content {}", key);
+                    log.info("found content {}", key);
                     count.incrementAndGet();
                     assertTrue(pathAndKeys.getKeys().contains(key));
                 }
@@ -83,7 +83,7 @@ class S3BatchContentDaoTest {
         for (int i = 0; i < count; i++) {
             ContentKey contentKey = new ContentKey(minutePath.getTime().plusSeconds(i), "" + i);
             keys.add(contentKey);
-            logger.info("adding {}", contentKey);
+            log.info("adding {}", contentKey);
         }
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ZipOutputStream output = new ZipOutputStream(baos);
@@ -133,8 +133,8 @@ class S3BatchContentDaoTest {
                 .unit(unit)
                 .build();
         SortedSet<ContentKey> found = contentDao.queryByTime(timeQuery);
-        logger.info("found {}", found);
-        ActiveTraces.getLocal().log(logger);
+        log.info("found {}", found);
+        ActiveTraces.getLocal().log(log);
         assertEquals(expected, found.size());
         ActiveTraces.end();
     }
@@ -150,7 +150,7 @@ class S3BatchContentDaoTest {
 
                 .build();
         SortedSet<ContentKey> found = contentDao.queryByTime(timeQuery);
-        logger.info("minute {}", found);
+        log.info("minute {}", found);
 
         assertEquals(0, found.size());
     }
@@ -181,9 +181,9 @@ class S3BatchContentDaoTest {
         String channel = "testPreviousEdgeCase" + StringUtils.randomAlphaNumeric(20);
         DateTime start = TimeUtil.now().minusHours(2);
         List<ContentKey> contentKeys = writeBatchMinute(channel, new MinutePath(start), 4);
-        logger.info("wrote keys ", contentKeys);
+        log.info("wrote keys ", contentKeys);
         SortedSet<ContentKey> foundKeys = queryDirection(channel, contentKeys.get(3), false, 2, 2);
-        logger.info("query found {}", foundKeys);
+        log.info("query found {}", foundKeys);
         assertTrue(foundKeys.contains(contentKeys.get(1)));
         assertTrue(foundKeys.contains(contentKeys.get(2)));
     }
@@ -201,9 +201,9 @@ class S3BatchContentDaoTest {
                         .build();
 
         ActiveTraces.start(query);
-        logger.info("running query {}", query);
+        log.info("running query {}", query);
         SortedSet<ContentKey> found = contentDao.query(query);
-        ActiveTraces.getLocal().log(logger);
+        ActiveTraces.getLocal().log(log);
         ActiveTraces.end();
         assertEquals(expected, found.size());
         return found;

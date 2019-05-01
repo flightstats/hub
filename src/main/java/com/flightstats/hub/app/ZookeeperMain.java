@@ -1,5 +1,6 @@
 package com.flightstats.hub.app;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.zookeeper.server.ServerConfig;
 import org.apache.zookeeper.server.ZooKeeperServerMain;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
@@ -12,10 +13,10 @@ import java.nio.file.Path;
 import java.util.Properties;
 
 @SuppressWarnings("WeakerAccess")
+@Slf4j
 public class ZookeeperMain {
-    private final static Logger logger = LoggerFactory.getLogger(ZookeeperMain.class);
 
-    public static void main(String[] args) throws IOException, QuorumPeerConfig.ConfigException {
+    public static void main(String[] args) {
         start();
     }
 
@@ -37,7 +38,7 @@ public class ZookeeperMain {
 
             new ZooKeeperServerMain().runFromConfig(serverConfig);
         } catch (Exception e) {
-            logger.warn("unable to start zookeeper", e);
+            log.warn("unable to start zookeeper", e);
         }
     }
 }

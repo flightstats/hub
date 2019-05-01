@@ -1,9 +1,10 @@
 package com.flightstats.hub.cluster;
 
-import com.google.inject.Inject;
 import org.apache.curator.framework.CuratorFramework;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+
+import javax.inject.Inject;
 
 class DateTimeValue {
     private final LongValue longValue;

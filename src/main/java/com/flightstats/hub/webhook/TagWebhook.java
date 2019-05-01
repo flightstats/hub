@@ -6,9 +6,8 @@ import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
 import com.google.common.collect.Sets;
 import com.google.inject.TypeLiteral;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -27,8 +26,9 @@ import java.util.stream.Collectors;
  * <p>
  * When a tagged channel is deleted, the associated webhook would also be deleted.
  */
+@Slf4j
 public class TagWebhook {
-    private final static Logger logger = LoggerFactory.getLogger(WebhookResource.class);
+
     private final static WebhookService webhookService = HubProvider.getInstance(WebhookService.class);
     private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
     private final static Dao<Webhook> webhookDao = HubProvider.getInstance(
@@ -62,7 +62,7 @@ public class TagWebhook {
         Set<Webhook> managedWebHooks = allManagedWebhooksForChannel(webhookSet, channelConfig);
         if (managedWebHooks.isEmpty()) {
             Webhook newWHInstance = Webhook.instanceFromTagPrototype(wh, channelConfig);
-            logger.info("TagWebHook: Adding TagWebhook instance for " + channelConfig.getName());
+            log.info("TagWebHook: Adding TagWebhook instance for " + channelConfig.getName());
             webhookService.upsert(newWHInstance);
         }
     }
@@ -75,7 +75,7 @@ public class TagWebhook {
                 .collect(Collectors.toSet());
         Sets.SetView<Webhook> orphanedWebhooks = Sets.difference(managedWebHooks, nonOrphanWebhooks);
         for (Webhook orphan : orphanedWebhooks) {
-            logger.info("Deleting TagWebhook instance for channel " + orphan.getChannelName());
+            log.info("Deleting TagWebhook instance for channel " + orphan.getChannelName());
             webhookService.delete(orphan.getName());
         }
     }
@@ -108,7 +108,7 @@ public class TagWebhook {
     static void upsertTagWebhookInstances(Webhook webhookPrototype) {
         Collection<ChannelConfig> channels = channelService.getChannels(webhookPrototype.getTagFromTagUrl(), false);
         for (ChannelConfig channel : channels) {
-            logger.info("TagWebHook: Adding TagWebhook instance for " + channel.getName());
+            log.info("TagWebHook: Adding TagWebhook instance for " + channel.getName());
             webhookService.upsert(Webhook.instanceFromTagPrototype(webhookPrototype, channel));
         }
     }
@@ -118,7 +118,7 @@ public class TagWebhook {
         if (!webhookOptional.isPresent()) return;
         Webhook webhook = webhookOptional.get();
         if (!webhook.isTagPrototype()) return;
-        logger.info("TagWebHook: Deleting tag webhook instances for tag " + webhookName);
+        log.info("TagWebHook: Deleting tag webhook instances for tag " + webhookName);
 
         Set<String> names = webhookInstancesWithTag(webhook.getTagFromTagUrl()).stream()
                 .map((Webhook::getName))

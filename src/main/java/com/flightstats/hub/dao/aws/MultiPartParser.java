@@ -1,36 +1,35 @@
 package com.flightstats.hub.dao.aws;
 
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.model.BulkContent;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.ByteRing;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
+@Slf4j
 public class MultiPartParser {
-    private final static Logger logger = LoggerFactory.getLogger(MultiPartParser.class);
 
-    private static final int maxBytes = HubProperties.getProperty("app.maxPayloadSizeMB", 40) * 1024 * 1024 * 3;
     private static final byte[] CRLF = "\r\n".getBytes();
     private final ByteArrayOutputStream baos;
     private BulkContent bulkContent;
     private BufferedInputStream stream;
     private Content.Builder builder;
+    private final int maxBytes;
 
-    public MultiPartParser(BulkContent bulkContent) {
+    public MultiPartParser(BulkContent bulkContent, int maxPayloadSizeInMB) {
         this.bulkContent = bulkContent;
         builder = Content.builder();
         stream = new BufferedInputStream(bulkContent.getStream());
         baos = new ByteArrayOutputStream();
+        this.maxBytes = maxPayloadSizeInMB  * 1024 * 1024 * 3;
     }
 
     public void parse() throws IOException {
@@ -58,7 +57,7 @@ public class MultiPartParser {
         while (read != -1) {
             count++;
             if (count > maxBytes) {
-                logger.warn("multipart max payload exceeded {}", maxBytes, bulkContent.getChannel());
+                log.warn("multipart max payload exceeded {}", maxBytes, bulkContent.getChannel());
                 throw new ContentTooLargeException("max payload size is " + maxBytes + " bytes");
             }
             baos.write((byte) read);

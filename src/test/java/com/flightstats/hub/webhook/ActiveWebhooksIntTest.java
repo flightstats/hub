@@ -11,10 +11,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 
 import java.util.List;
-
-import static org.apache.zookeeper.KeeperException.NodeExistsException;
-import static com.google.common.collect.Sets.newHashSet;
 import static java.lang.String.format;
+import static com.google.common.collect.Sets.newHashSet;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -24,8 +22,6 @@ import static org.mockito.Mockito.mock;
 @Slf4j
 class ActiveWebhooksIntTest {
     private static final String WEBHOOK_LEADER_PATH = "/WebhookLeader";
-
-
     private static final String WEBHOOK_WITH_LEASE = "webhook1";
     private static final String WEBHOOK_WITH_A_FEW_LEASES = "webhook4";
     private static final String WEBHOOK_WITH_LOCK = "webhook3";
@@ -37,14 +33,6 @@ class ActiveWebhooksIntTest {
     private static CuratorFramework curator;
     private static SafeZooKeeperUtils zooKeeperUtils;
 
-    void createPath() throws Exception {
-        curator.create().creatingParentsIfNeeded().forPath(WEBHOOK_LEADER_PATH);
-    }
-
-    void deletePath() throws Exception {
-        curator.delete().deletingChildrenIfNeeded().forPath(WEBHOOK_LEADER_PATH);
-    }
-
     @BeforeAll
     static void setup() throws Exception {
         curator = Integration.startZooKeeper();
@@ -53,18 +41,14 @@ class ActiveWebhooksIntTest {
 
     @BeforeEach
     void createWebhookLeader() throws Exception {
-        try {
-            createPath();
-        } catch (NodeExistsException e) {
-            log.error(e.getMessage());
-            deletePath();
-            createPath();
+        if (curator.checkExists().forPath(WEBHOOK_LEADER_PATH) == null) {
+            curator.create().creatingParentsIfNeeded().forPath(WEBHOOK_LEADER_PATH);
         }
     }
 
     @AfterEach
     void destroyWebhookLeaders() throws Exception {
-        deletePath();
+        curator.delete().deletingChildrenIfNeeded().forPath(WEBHOOK_LEADER_PATH);
     }
 
     @Test
@@ -95,7 +79,7 @@ class ActiveWebhooksIntTest {
         assertFalse(activeWebhooks.isActiveWebhook(EMPTY_WEBHOOK));
     }
 
-    private static void createWebhook(String webhook) {
+    private void createWebhook(String webhook) {
         try {
             curator.create().creatingParentsIfNeeded().forPath(format("%s/%s/locks", WEBHOOK_LEADER_PATH, webhook), "".getBytes());
             curator.create().creatingParentsIfNeeded().forPath(format("%s/%s/leases", WEBHOOK_LEADER_PATH, webhook), "".getBytes());
@@ -104,7 +88,7 @@ class ActiveWebhooksIntTest {
         }
     }
 
-    private static void createWebhookLock(String webhook, String lockName, String value) {
+    private void createWebhookLock(String webhook, String lockName, String value) {
         try {
             curator.create().creatingParentsIfNeeded().forPath(format("%s/%s/locks/%s", WEBHOOK_LEADER_PATH, webhook, lockName), value.getBytes());
         } catch(Exception e) {
@@ -112,7 +96,7 @@ class ActiveWebhooksIntTest {
         }
     }
 
-    private static void createWebhookLease(String webhook, String leaseName, String value) {
+    private void createWebhookLease(String webhook, String leaseName, String value) {
         String leasePath = format("%s/%s/leases/%s", WEBHOOK_LEADER_PATH, webhook, leaseName);
         try {
             curator.create().creatingParentsIfNeeded().forPath(leasePath, value.getBytes());

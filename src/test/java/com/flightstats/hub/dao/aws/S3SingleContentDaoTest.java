@@ -1,6 +1,6 @@
 package com.flightstats.hub.dao.aws;
 
-import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.config.PropertyLoader;
 import com.flightstats.hub.dao.ContentDaoUtil;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
@@ -8,21 +8,19 @@ import com.flightstats.hub.test.Integration;
 import com.google.inject.Injector;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@Slf4j
 class S3SingleContentDaoTest {
-
-    private final static Logger logger = LoggerFactory.getLogger(S3SingleContentDaoTest.class);
 
     private static ContentDaoUtil util;
     private static S3SingleContentDao s3SingleContentDao;
 
     @BeforeAll
     static void setUpClass() throws Exception {
-        HubProperties.loadProperties("useDefault");
+        PropertyLoader.getInstance().load("useDefault");
         Injector injector = Integration.startAwsHub();
         s3SingleContentDao = injector.getInstance(S3SingleContentDao.class);
         util = new ContentDaoUtil(s3SingleContentDao);
@@ -69,14 +67,14 @@ class S3SingleContentDaoTest {
     }
 
     @Test
-    void testWriteReadOld() throws Exception {
+    void testWriteReadOld() {
         String channel = "testWriteReadOld";
         Content content = ContentDaoUtil.createContent();
         ContentKey key = s3SingleContentDao.insertOld(channel, content);
-        logger.info("key {}", key);
+        log.info("key {}", key);
         assertEquals(content.getContentKey().get(), key);
         Content read = s3SingleContentDao.get(channel, key);
-        logger.info("read {}", read.getContentKey());
+        log.info("read {}", read.getContentKey());
         ContentDaoUtil.compare(content, read, key.toString().getBytes());
     }
 

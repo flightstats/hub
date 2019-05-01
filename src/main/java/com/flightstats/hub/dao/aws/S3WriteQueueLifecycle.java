@@ -1,6 +1,6 @@
 package com.flightstats.hub.dao.aws;
 
-import com.flightstats.hub.dao.aws.writeQueue.WriteQueueConfig;
+import com.flightstats.hub.config.S3Property;
 import com.flightstats.hub.util.Sleeper;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -14,15 +14,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Slf4j
 public class S3WriteQueueLifecycle extends AbstractService {
     private final S3WriteQueue s3WriteQueue;
-    private final WriteQueueConfig writeQueueConfig;
+    private final S3Property s3Property;
     private ExecutorService executorService;
     private final AtomicBoolean started = new AtomicBoolean(false);
 
     @Inject
-    public S3WriteQueueLifecycle(S3WriteQueue s3WriteQueue, WriteQueueConfig writeQueueConfig) {
+    public S3WriteQueueLifecycle(S3WriteQueue s3WriteQueue, S3Property s3Property) {
         this.s3WriteQueue = s3WriteQueue;
-        this.writeQueueConfig = writeQueueConfig;
-        executorService = Executors.newFixedThreadPool(writeQueueConfig.getThreads(),
+        this.s3Property = s3Property;
+        executorService = Executors.newFixedThreadPool(s3Property.getWriteQueueThreadCount(),
                 new ThreadFactoryBuilder().setNameFormat("S3WriteQueue-%d").build());
     }
 
@@ -34,8 +34,8 @@ public class S3WriteQueueLifecycle extends AbstractService {
     }
 
     public void doStart() {
-        log.info("queue size {}", writeQueueConfig.getQueueSize());
-        for (int i = 0; i < writeQueueConfig.getThreads(); i++) {
+        log.info("queue capacity {}", s3Property.getWriteQueueSize());
+        for (int i = 0; i < s3Property.getWriteQueueThreadCount(); i++) {
             executorService.submit(() -> {
                 try {
                     onStart();

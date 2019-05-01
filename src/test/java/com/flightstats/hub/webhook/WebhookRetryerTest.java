@@ -1,6 +1,8 @@
 package com.flightstats.hub.webhook;
 
 import org.junit.jupiter.api.Test;
+import com.flightstats.hub.config.PropertyLoader;
+import com.flightstats.hub.config.WebhookProperty;
 import com.flightstats.hub.metrics.StatsdReporter;
 
 
@@ -20,37 +22,42 @@ class WebhookRetryerTest {
     private int readTimeoutSeconds = 10;
     private WebhookErrorService webhookErrorService = mock(WebhookErrorService.class);
     private StatsdReporter statsdReporter = mock(StatsdReporter.class);
+    private WebhookProperty webhookProperty = new WebhookProperty(PropertyLoader.getInstance());
+
+    private WebhookRetryer retryer = new WebhookRetryer(
+            giveUpIfs,
+            tryLaterIfs,
+            connectTimeoutSeconds,
+            readTimeoutSeconds,
+            webhookErrorService,
+            statsdReporter,
+            webhookProperty);
 
     @Test
     void testShouldGiveUpIf() {
         giveUpIfs.add(attempt -> true);
-        WebhookRetryer retryer = new WebhookRetryer(giveUpIfs, tryLaterIfs, connectTimeoutSeconds, readTimeoutSeconds, webhookErrorService, statsdReporter);
         assertTrue(retryer.shouldGiveUp(DeliveryAttempt.builder().build()));
     }
 
     @Test
     void testShouldTryLaterIf() {
         tryLaterIfs.add(attempt -> true);
-        WebhookRetryer retryer = new WebhookRetryer(giveUpIfs, tryLaterIfs, connectTimeoutSeconds, readTimeoutSeconds, webhookErrorService, statsdReporter);
         assertTrue(retryer.shouldTryLater(DeliveryAttempt.builder().build()));
     }
 
     @Test
-    void testDetermineResultFromStatusCode() {
-        WebhookRetryer retryer = new WebhookRetryer(giveUpIfs, tryLaterIfs, connectTimeoutSeconds, readTimeoutSeconds, webhookErrorService, statsdReporter);
+   void testDetermineResultFromStatusCode() {
         assertEquals("200 OK", retryer.determineResult(DeliveryAttempt.builder().statusCode(200).build()));
         assertEquals("400 Bad Request", retryer.determineResult(DeliveryAttempt.builder().statusCode(400).build()));
     }
 
     @Test
     void testDetermineResultFromException() {
-        WebhookRetryer retryer = new WebhookRetryer(giveUpIfs, tryLaterIfs, connectTimeoutSeconds, readTimeoutSeconds, webhookErrorService, statsdReporter);
         assertEquals("something", retryer.determineResult(DeliveryAttempt.builder().exception(new NullPointerException("something")).build()));
     }
 
     @Test
     void calculateSleepTimeMS() {
-        WebhookRetryer retryer = new WebhookRetryer(giveUpIfs, tryLaterIfs, connectTimeoutSeconds, readTimeoutSeconds, webhookErrorService, statsdReporter);
         assertEquals(2000, retryer.calculateSleepTimeMS(DeliveryAttempt.builder().number(1).build(), 1000, 10000));
         assertEquals(4000, retryer.calculateSleepTimeMS(DeliveryAttempt.builder().number(2).build(), 1000, 10000));
         assertEquals(8000, retryer.calculateSleepTimeMS(DeliveryAttempt.builder().number(3).build(), 1000, 10000));

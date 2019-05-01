@@ -1,6 +1,8 @@
 package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.cluster.LastContentPath;
+import com.flightstats.hub.config.AppProperty;
+import com.flightstats.hub.config.PropertyLoader;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.test.Integration;
@@ -47,7 +49,7 @@ class WebhookStateReaperTest {
         WebhookErrorPruner webhookErrorPruner = new WebhookErrorPruner(webhookErrorRepository);
 
         webhookLeaderLocks = new WebhookLeaderLocks(zooKeeperUtils);
-        lastContentPath = new LastContentPath(curator);
+        lastContentPath = new LastContentPath(curator, new AppProperty(PropertyLoader.getInstance()));
         webhookErrorService = new WebhookErrorService(webhookErrorRepository, webhookErrorPruner, channelService);
         webhookInProcess = new WebhookContentPathSet(zooKeeperUtils);
     }

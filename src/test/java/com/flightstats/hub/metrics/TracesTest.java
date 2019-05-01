@@ -1,6 +1,8 @@
 package com.flightstats.hub.metrics;
 
 import org.junit.jupiter.api.Test;
+import com.flightstats.hub.config.AppProperty;
+import com.flightstats.hub.config.PropertyLoader;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,7 +13,7 @@ class TracesTest {
 
     @Test
     void testLimit() {
-        Traces traces = new Traces("start");
+        Traces traces = new Traces(new AppProperty(PropertyLoader.getInstance()),"start");
         for (int i = 0; i < 1000; i++) {
             traces.add("" + i);
         }
