@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 [[ ! -z "$1" ]] && PREFIX=$1 || PREFIX="default"
+[[ ! -z "$2" ]] && IMAGE_NAME=$2 || IMAGE_NAME="hub"
 
 set -euo pipefail errfail
 
@@ -25,10 +26,10 @@ for file in docker/configs/${PREFIX}*; do
 done
 
 echo "Building the docker image."
-docker build --tag hub:local docker
+docker build --tag ${IMAGE_NAME}:local docker
 
 echo "----------"
 echo ""
 echo "Usage:"
-echo "  docker run --name hub --publish 80:80 --publish 3333:3333 hub:local"
+echo "  docker run --name ${IMAGE_NAME} --publish 80:80 --publish 3333:3333 hub:local"
 echo ""
