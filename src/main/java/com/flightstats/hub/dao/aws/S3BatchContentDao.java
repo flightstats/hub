@@ -12,8 +12,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.config.AppProperty;
-import com.flightstats.hub.config.S3Property;
+import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.S3Properties;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.metrics.ActiveTraces;
@@ -74,14 +74,14 @@ public class S3BatchContentDao implements ContentDao {
     public S3BatchContentDao(HubS3Client s3Client,
                              S3BucketName s3BucketName,
                              StatsdReporter statsdReporter,
-                             AppProperty appProperty,
-                             S3Property s3Property) {
+                             AppProperties appProperties,
+                             S3Properties s3Properties) {
         this.statsdReporter = statsdReporter;
         this.s3Client = s3Client;
         this.s3BucketName = s3BucketName;
 
-        this.useEncrypted = appProperty.isAppEncrypted();
-        this.s3MaxQueryItems = s3Property.getMaxQueryItems();
+        this.useEncrypted = appProperties.isAppEncrypted();
+        this.s3MaxQueryItems = s3Properties.getMaxQueryItems();
     }
 
 

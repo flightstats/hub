@@ -1,6 +1,6 @@
 package com.flightstats.hub.cluster;
 
-import com.flightstats.hub.config.AppProperty;
+import com.flightstats.hub.config.AppProperties;
 import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.model.ContentPath;
@@ -19,17 +19,17 @@ import java.util.function.Function;
 public class LastContentPath {
 
     private final CuratorFramework curator;
-    private AppProperty appProperty;
+    private final AppProperties appProperties;
 
     @Inject
-    public LastContentPath(CuratorFramework curator, AppProperty appProperty) {
+    public LastContentPath(CuratorFramework curator, AppProperties appProperties) {
         this.curator = curator;
-        this.appProperty = appProperty;
+        this.appProperties = appProperties;
     }
 
     private void trace(String nameOrPath, String text, Object... context) {
         if (log.isTraceEnabled()) {
-            if (nameOrPath.contains(appProperty.getLastContentPathTracing())) {
+            if (nameOrPath.contains(appProperties.getLastContentPathTracing())) {
                 log.trace(text + " nameorPath " + nameOrPath, context);
             }
         }

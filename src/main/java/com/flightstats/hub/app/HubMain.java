@@ -1,10 +1,13 @@
 package com.flightstats.hub.app;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
-import com.flightstats.hub.config.PropertyLoader;
+import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.PropertiesLoader;
+import com.flightstats.hub.config.SystemProperties;
+import com.flightstats.hub.config.ZookeeperProperties;
 import com.flightstats.hub.config.binding.ClusterHubBindings;
 import com.flightstats.hub.config.binding.HubBindings;
-import com.flightstats.hub.config.binding.PropertyBinding;
+import com.flightstats.hub.config.binding.PropertiesBinding;
 import com.flightstats.hub.config.binding.SingleHubBindings;
 import com.flightstats.hub.dao.aws.S3WriteQueueLifecycle;
 import com.flightstats.hub.filter.CORSFilter;
@@ -61,15 +64,17 @@ import java.util.stream.Stream;
 public class HubMain {
 
     private static final DateTime startTime = new DateTime();
-    private static PropertyLoader propertyLoader = PropertyLoader.getInstance();
-    private final StorageBackend storageBackend = StorageBackend.valueOf(propertyLoader.getProperty("hub.type", "aws"));
+    private static AppProperties appProperties = new AppProperties(PropertiesLoader.getInstance());
+    private static SystemProperties systemProperties = new SystemProperties(PropertiesLoader.getInstance());
+    private static ZookeeperProperties zookeeperProperties = new ZookeeperProperties(PropertiesLoader.getInstance());
+    private final StorageBackend storageBackend = StorageBackend.valueOf(appProperties.getHubType());
 
     public static void main(String[] args) throws Exception {
         if (args.length == 0) {
             throw new UnsupportedOperationException("HubMain requires a property filename, 'useDefault', or 'useEncryptedDefault'");
         }
 
-        PropertyLoader.getInstance().load(args[0]);
+        PropertiesLoader.getInstance().load(args[0]);
         new HubMain().run();
     }
 
@@ -97,7 +102,7 @@ public class HubMain {
 
     private void startZookeeperIfSingle() {
         new Thread(() -> {
-            String zkConfigFile = propertyLoader.getProperty("runSingleZookeeperInternally", "");
+            String zkConfigFile = zookeeperProperties.getZookeeperRunMode();
             if ("singleNode".equals(zkConfigFile)) {
                 log.warn("using single node zookeeper");
                 ZookeeperMain.start();
@@ -125,9 +130,9 @@ public class HubMain {
         }
         ConnectionFactory connectionFactory = new HttpConnectionFactory(httpConfig);
         ServerConnector serverConnector = new ServerConnector(server, sslContextFactory, connectionFactory);
-        serverConnector.setHost(propertyLoader.getProperty("http.bind_ip", "0.0.0.0"));
+        serverConnector.setHost(systemProperties.getHttpBindIp());
         serverConnector.setPort(HubHost.getLocalPort());
-        serverConnector.setIdleTimeout(propertyLoader.getProperty("http.idle_timeout", 30 * 1000));
+        serverConnector.setIdleTimeout(systemProperties.getHttpIdleTimeInMillis());
         server.setConnectors(new Connector[]{serverConnector});
 
         // build Jersey HTTP context
@@ -192,7 +197,7 @@ public class HubMain {
 
     private List<AbstractModule> buildGuiceModules() {
         List<AbstractModule> modules = new ArrayList<>();
-        modules.add(new PropertyBinding());
+        modules.add(new PropertiesBinding());
         modules.add(new HubBindings());
 
         log.info("starting with hub.type {}", storageBackend);
@@ -231,11 +236,11 @@ public class HubMain {
 
     private SslContextFactory getSslContextFactory() throws IOException {
         SslContextFactory sslContextFactory = null;
-        if (propertyLoader.getProperty("app.encrypted", false)) {
+        if (appProperties.isAppEncrypted()) {
             log.info("starting hub with ssl!");
             sslContextFactory = new SslContextFactory();
             sslContextFactory.setKeyStorePath(getKeyStorePath());
-            String keyStorePasswordPath = propertyLoader.getProperty("app.keyStorePasswordPath", "/etc/ssl/key");
+            String keyStorePasswordPath = appProperties.getKeyStorePasswordPath();
             URL passwordUrl = new File(keyStorePasswordPath).toURI().toURL();
             String password = Resources.readLines(passwordUrl, StandardCharsets.UTF_8).get(0);
             sslContextFactory.setKeyStorePassword(password);
@@ -244,7 +249,7 @@ public class HubMain {
     }
 
     private String getKeyStorePath() {
-        String path = propertyLoader.getProperty("app.keyStorePath", "/etc/ssl/") + HubHost.getLocalName() + ".jks";
+        final String path = appProperties.getKeyStorePath() + HubHost.getLocalName() + ".jks";
         log.info("using key store path: {}", path);
         return path;
     }

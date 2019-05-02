@@ -1,8 +1,8 @@
 package com.flightstats.hub.model;
 
-import com.flightstats.hub.config.AppProperty;
-import com.flightstats.hub.config.PropertyLoader;
-import com.flightstats.hub.config.S3Property;
+import com.flightstats.hub.config.ContentProperties;
+import com.flightstats.hub.config.PropertiesLoader;
+import com.flightstats.hub.config.S3Properties;
 import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.util.HubUtils;
@@ -20,8 +20,8 @@ import java.util.Optional;
 @Slf4j
 public class Content implements Serializable {
 
-    private static final S3Property s3Property = new S3Property(PropertyLoader.getInstance());
-    private static final AppProperty appProperty = new AppProperty(PropertyLoader.getInstance());
+    private static final S3Properties s3Properties = new S3Properties(PropertiesLoader.getInstance());
+    private static final ContentProperties contentProperties = new ContentProperties(PropertiesLoader.getInstance());
 
     private static final long serialVersionUID = 1L;
     private final Optional<String> contentType;
@@ -42,7 +42,7 @@ public class Content implements Serializable {
         contentType = builder.contentType;
         stream = builder.stream;
         contentLength = builder.contentLength;
-        threads = Math.max(s3Property.getLargeThreadCount(), builder.threads);
+        threads = Math.max(s3Properties.getLargeThreadCount(), builder.threads);
         isLarge = builder.large;
         size = builder.size;
     }
@@ -115,7 +115,7 @@ public class Content implements Serializable {
     }
 
     public void packageStream() throws IOException {
-        if (isLarge || contentLength >= appProperty.getLargePayload()) {
+        if (isLarge || contentLength >= contentProperties.getLargePayload()) {
             isLarge = true;
         } else {
             data = ContentMarshaller.toBytes(this);

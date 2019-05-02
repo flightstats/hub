@@ -1,7 +1,7 @@
 package com.flightstats.hub.metrics;
 
-import com.flightstats.hub.config.AppProperty;
-import com.flightstats.hub.config.PropertyLoader;
+import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.PropertiesLoader;
 import com.flightstats.hub.util.Sleeper;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -43,7 +43,7 @@ public class TopSetTest {
 
     private void addTraces(int count, long start, TopSortedSet topSortedSet) {
         for (int i = 0; i < count; i++) {
-            Traces traces = new Traces(new AppProperty(PropertyLoader.getInstance()), i);
+            Traces traces = new Traces(new AppProperties(PropertiesLoader.getInstance()), i);
             traces.setStart(start - i);
             traces.setEnd(start);
             topSortedSet.add(traces);

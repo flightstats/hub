@@ -1,6 +1,6 @@
 package com.flightstats.hub.dao.aws;
 
-import com.flightstats.hub.config.PropertyLoader;
+import com.flightstats.hub.config.PropertiesLoader;
 import com.flightstats.hub.dao.ContentDaoUtil;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
@@ -20,7 +20,7 @@ public class S3SingleContentDaoTest {
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        PropertyLoader.getInstance().load("useDefault");
+        PropertiesLoader.getInstance().load("useDefault");
         Injector injector = Integration.startAwsHub();
         s3SingleContentDao = injector.getInstance(S3SingleContentDao.class);
         util = new ContentDaoUtil(s3SingleContentDao);

@@ -6,7 +6,7 @@ import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.DistributedAsyncLockRunner;
 import com.flightstats.hub.cluster.Leadership;
 import com.flightstats.hub.cluster.Lockable;
-import com.flightstats.hub.config.S3Property;
+import com.flightstats.hub.config.S3Properties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.metrics.ActiveTraces;
@@ -39,7 +39,7 @@ public class S3Config {
     private final String s3BucketName;
     private final HubS3Client s3Client;
     private final ChannelService channelService;
-    private final S3Property s3Property;
+    private final S3Properties s3Properties;
 
     @Inject
     public S3Config(HubS3Client s3Client,
@@ -47,13 +47,13 @@ public class S3Config {
                     DistributedAsyncLockRunner distributedLockRunner,
                     @Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao,
                     ChannelService channelService,
-                    S3Property s3Property) {
+                    S3Properties s3Properties) {
         this.s3Client = s3Client;
         this.distributedLockRunner = distributedLockRunner;
         this.channelConfigDao = channelConfigDao;
         this.channelService = channelService;
         this.s3BucketName = s3BucketName.getS3BucketName();
-        this.s3Property = s3Property;
+        this.s3Properties = s3Properties;
         HubServices.register(new S3ConfigInit());
     }
 
@@ -151,7 +151,7 @@ public class S3Config {
         private void updateTtlDays() {
             log.info("updateTtlDays");
             ActiveTraces.start("S3Config.updateTtlDays");
-            int maxRules = s3Property.getBucketPolicyMaxRules(S3_LIFECYCLE_RULES_AVAILABLE);
+            int maxRules = s3Properties.getBucketPolicyMaxRules(S3_LIFECYCLE_RULES_AVAILABLE);
 
             List<BucketLifecycleConfiguration.Rule> rules = new ArrayList<>();
 

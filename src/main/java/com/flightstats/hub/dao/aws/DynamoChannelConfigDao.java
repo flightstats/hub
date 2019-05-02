@@ -16,7 +16,7 @@ import com.amazonaws.services.dynamodbv2.model.ScalarAttributeType;
 import com.amazonaws.services.dynamodbv2.model.ScanRequest;
 import com.amazonaws.services.dynamodbv2.model.ScanResult;
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.config.DynamoProperty;
+import com.flightstats.hub.config.DynamoProperties;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -38,15 +38,15 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
 
     private final AmazonDynamoDB dbClient;
     private final DynamoUtils dynamoUtils;
-    private final DynamoProperty dynamoProperty;
+    private final DynamoProperties dynamoProperties;
 
     @Inject
     public DynamoChannelConfigDao(AmazonDynamoDB dbClient,
                                   DynamoUtils dynamoUtils,
-                                  DynamoProperty dynamoProperty) {
+                                  DynamoProperties dynamoProperties) {
         this.dbClient = dbClient;
         this.dynamoUtils = dynamoUtils;
-        this.dynamoProperty = dynamoProperty;
+        this.dynamoProperties = dynamoProperties;
         HubServices.register(new DynamoChannelConfigurationDaoInit());
     }
 
@@ -201,7 +201,7 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
 
     private String getTableName() {
         String legacyTableName = dynamoUtils.getLegacyTableName("channelMetaData");
-        return dynamoProperty.getChannelConfigTableName(legacyTableName);
+        return dynamoProperties.getChannelConfigTableName(legacyTableName);
     }
 
     private class DynamoChannelConfigurationDaoInit extends AbstractIdleService {

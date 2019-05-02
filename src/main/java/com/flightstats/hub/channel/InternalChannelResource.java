@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.app.LocalHostOnly;
-import com.flightstats.hub.config.AppProperty;
+import com.flightstats.hub.config.ContentProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
@@ -52,11 +52,11 @@ public class InternalChannelResource {
     private static final Long DEFAULT_STALE_AGE = TimeUnit.DAYS.toMinutes(1);
     @Context
     private UriInfo uriInfo;
-    private AppProperty appProperty;
+    private final ContentProperties contentProperties;
 
     @Inject
-    public InternalChannelResource(AppProperty appProperty) {
-        this.appProperty = appProperty;
+    public InternalChannelResource(ContentProperties contentProperties) {
+        this.contentProperties = contentProperties;
     }
 
     @GET
@@ -105,7 +105,7 @@ public class InternalChannelResource {
                     Response errorResponse = ChannelResource.notFound(channelName);
                     throw new WebApplicationException(errorResponse);
                 });
-        if (appProperty.isProtected()) {
+        if (contentProperties.isChannelProtectionEnabled()) {
             log.info("using internal localhost only to delete {}", channelName);
             return LocalHostOnly.getResponse(uriInfo, () -> ChannelResource.deletion(channelName));
         }
