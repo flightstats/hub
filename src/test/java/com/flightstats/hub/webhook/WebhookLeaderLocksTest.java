@@ -36,7 +36,9 @@ class WebhookLeaderLocksTest {
     private static SafeZooKeeperUtils zooKeeperUtils;
 
     void createPath() throws Exception {
-        curator.create().creatingParentsIfNeeded().forPath(WEBHOOK_LEADER_PATH);
+        if (curator.checkExists().forPath(WEBHOOK_LEADER_PATH) == null) {
+            curator.create().creatingParentsIfNeeded().forPath(WEBHOOK_LEADER_PATH);
+        }   
     }
 
     void deletePath() throws Exception {
