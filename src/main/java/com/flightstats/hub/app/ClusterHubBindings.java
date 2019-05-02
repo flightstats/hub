@@ -4,30 +4,30 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.s3.AmazonS3;
 import com.flightstats.hub.cluster.SpokeDecommissionManager;
 import com.flightstats.hub.cluster.WatchManager;
+import com.flightstats.hub.dao.CachedDao;
+import com.flightstats.hub.dao.CachedLowerCaseDao;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentService;
-import com.flightstats.hub.dao.DocumentationDao;
 import com.flightstats.hub.dao.Dao;
-import com.flightstats.hub.dao.CachedDao;
+import com.flightstats.hub.dao.DocumentationDao;
 import com.flightstats.hub.dao.ReadOnlyContentDao;
 import com.flightstats.hub.dao.ReadOnlyDao;
 import com.flightstats.hub.dao.ReadOnlyDocumentationDao;
-import com.flightstats.hub.dao.aws.DynamoWebhookDao;
-import com.flightstats.hub.dao.aws.DynamoChannelConfigDao;
-import com.flightstats.hub.dao.CachedLowerCaseDao   ;
 import com.flightstats.hub.dao.aws.AwsConnectorFactory;
-import com.flightstats.hub.dao.aws.S3Config;
 import com.flightstats.hub.dao.aws.ClusterContentService;
-import com.flightstats.hub.dao.aws.S3SingleContentDao;
-import com.flightstats.hub.dao.aws.S3BatchContentDao;
-import com.flightstats.hub.dao.aws.S3LargeContentDao;
-import com.flightstats.hub.dao.aws.S3AccessMonitor;
-import com.flightstats.hub.dao.aws.HubS3Client;
-import com.flightstats.hub.dao.aws.S3BatchManager;
+import com.flightstats.hub.dao.aws.DynamoChannelConfigDao;
 import com.flightstats.hub.dao.aws.DynamoUtils;
-import com.flightstats.hub.dao.aws.S3Verifier;
+import com.flightstats.hub.dao.aws.DynamoWebhookDao;
+import com.flightstats.hub.dao.aws.HubS3Client;
+import com.flightstats.hub.dao.aws.S3AccessMonitor;
+import com.flightstats.hub.dao.aws.S3BatchContentDao;
+import com.flightstats.hub.dao.aws.S3BatchManager;
+import com.flightstats.hub.dao.aws.S3Config;
 import com.flightstats.hub.dao.aws.S3DocumentationDao;
+import com.flightstats.hub.dao.aws.S3LargeContentDao;
+import com.flightstats.hub.dao.aws.S3SingleContentDao;
+import com.flightstats.hub.dao.aws.S3Verifier;
 import com.flightstats.hub.dao.aws.S3WriteQueue;
 import com.flightstats.hub.dao.aws.S3WriteQueueLifecycle;
 import com.flightstats.hub.dao.aws.writeQueue.NoOpWriteQueue;
@@ -39,7 +39,6 @@ import com.flightstats.hub.metrics.PeriodicMetricEmitterLifecycle;
 import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.LargeContentUtils;
-import com.flightstats.hub.spoke.RemoteSpokeStore;
 import com.flightstats.hub.spoke.SpokeContentDao;
 import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.spoke.SpokeTtlEnforcer;
@@ -49,7 +48,6 @@ import com.google.inject.Inject;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
-import com.google.inject.name.Names;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,10 +64,8 @@ class ClusterHubBindings extends AbstractModule {
         bind(HubS3Client.class).asEagerSingleton();
 
         bind(LargeContentUtils.class).asEagerSingleton();
-        bind(WriteQueueConfig.class).toProvider(WriteQueueConfigProvider.class).asEagerSingleton();
         bind(ContentService.class)
                 .to(ClusterContentService.class).asEagerSingleton();
-        bind(RemoteSpokeStore.class).asEagerSingleton();
         bind(DynamoUtils.class).asEagerSingleton();
         bind(AppUrlCheck.class).asEagerSingleton();
 
@@ -84,6 +80,7 @@ class ClusterHubBindings extends AbstractModule {
         if (HubProperties.isReadOnly()) {
             bind(WriteQueue.class).to(NoOpWriteQueue.class).asEagerSingleton();
         } else {
+            bind(WriteQueueConfig.class).toProvider(WriteQueueConfigProvider.class).asEagerSingleton();
             bind(WriteQueue.class).to(S3WriteQueue.class).asEagerSingleton();
             bind(S3WriteQueueLifecycle.class).asEagerSingleton();
             bind(S3BatchManager.class).asEagerSingleton();

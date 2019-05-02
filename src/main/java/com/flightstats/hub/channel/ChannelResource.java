@@ -247,6 +247,7 @@ public class ChannelResource {
     @Path("/events")
     @Produces(SseFeature.SERVER_SENT_EVENTS)
     public EventOutput getEvents(@PathParam("channel") String channel, @HeaderParam("Last-Event-ID") String lastEventId) throws Exception {
+        checkPermission("getEvents", channel);
         try {
             log.info("starting events for {} at {}", channel, lastEventId);
             ContentKey contentKey = new ContentKey();

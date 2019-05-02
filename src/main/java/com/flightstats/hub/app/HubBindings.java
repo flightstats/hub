@@ -38,6 +38,9 @@ import com.flightstats.hub.rest.RetryClientFilter;
 import com.flightstats.hub.rest.Rfc3339DateSerializer;
 import com.flightstats.hub.spoke.FileSpokeStore;
 import com.flightstats.hub.spoke.GCRunner;
+import com.flightstats.hub.spoke.ReadOnlyRemoteSpokeStore;
+import com.flightstats.hub.spoke.RemoteClusterSpokeStore;
+import com.flightstats.hub.spoke.RemoteSpokeStore;
 import com.flightstats.hub.spoke.SpokeClusterRegister;
 import com.flightstats.hub.spoke.SpokeFinalCheck;
 import com.flightstats.hub.spoke.SpokeReadContentDao;
@@ -53,6 +56,7 @@ import com.flightstats.hub.webhook.WebhookManager;
 import com.flightstats.hub.webhook.WebhookValidator;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.AbstractModule;
+import com.google.inject.Inject;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -217,7 +221,8 @@ public class HubBindings extends AbstractModule {
         bind(InFlightService.class).asEagerSingleton();
         bind(ChannelService.class).asEagerSingleton();
         bind(HubVersion.class).toInstance(new HubVersion());
-        
+        bind(RemoteClusterSpokeStore.class).asEagerSingleton();
+
         // metrics
         bind(MetricsConfig.class).toProvider(MetricsConfigProvider.class).asEagerSingleton();
         bind(MetricRegistry.class).toProvider(MetricRegistryProvider.class).asEagerSingleton();
@@ -257,5 +262,13 @@ public class HubBindings extends AbstractModule {
                         HubProperties.getSpokePath(SpokeStore.READ),
                         HubProperties.getSpokeTtlMinutes(SpokeStore.READ)));
     }
+
+    @Inject
+    @Singleton
+    @Provides
+    public RemoteSpokeStore buildRemoteSpokeStore(RemoteClusterSpokeStore store) {
+        return HubProperties.isReadOnly() ? new ReadOnlyRemoteSpokeStore(store) : store;
+    }
+
 
 }
