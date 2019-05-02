@@ -1,8 +1,8 @@
 package com.flightstats.hub.spoke;
 
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.config.S3Property;
-import com.flightstats.hub.config.SpokeProperty;
+import com.flightstats.hub.config.S3Properties;
+import com.flightstats.hub.config.SpokeProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.TtlEnforcer;
 import com.flightstats.hub.model.ChannelConfig;
@@ -26,12 +26,12 @@ public class ChannelTtlEnforcer {
 
     @Inject
     public ChannelTtlEnforcer(ChannelService channelService,
-                              SpokeProperty spokeProperty,
-                              S3Property s3Property) {
+                              SpokeProperties spokeProperties,
+                              S3Properties s3Properties) {
         this.channelService = channelService;
-        this.spokePath = spokeProperty.getPath(SpokeStore.WRITE);
+        this.spokePath = spokeProperties.getPath(SpokeStore.WRITE);
 
-        if (s3Property.isChannelEnforceTTL()) {
+        if (s3Properties.isChannelEnforceTTL()) {
             HubServices.register(new ChannelTtlEnforcerService());
         }
     }

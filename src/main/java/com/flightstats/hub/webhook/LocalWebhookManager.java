@@ -1,6 +1,6 @@
 package com.flightstats.hub.webhook;
 
-import com.flightstats.hub.config.WebhookProperty;
+import com.flightstats.hub.config.WebhookProperties;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -38,8 +38,8 @@ public class LocalWebhookManager {
     @Inject
     public LocalWebhookManager(@Named("Webhook") Dao<Webhook> webhookDao,
                                    Provider<WebhookLeader> v2Provider,
-                               WebhookProperty webhookProperty) {
-        shutdownThreadCount = webhookProperty.getShutdownThreadCount();
+                               WebhookProperties webhookProperties) {
+        shutdownThreadCount = webhookProperties.getShutdownThreadCount();
         lockManager = KeyLockManagers.newLock(1, TimeUnit.SECONDS);
     }
 

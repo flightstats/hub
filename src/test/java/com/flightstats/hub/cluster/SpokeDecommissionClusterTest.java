@@ -1,7 +1,7 @@
 package com.flightstats.hub.cluster;
 
-import com.flightstats.hub.config.PropertyLoader;
-import com.flightstats.hub.config.SpokeProperty;
+import com.flightstats.hub.config.PropertiesLoader;
+import com.flightstats.hub.config.SpokeProperties;
 import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.test.Integration;
 import org.apache.curator.framework.CuratorFramework;
@@ -15,7 +15,7 @@ import static org.junit.Assert.assertTrue;
 
 public class SpokeDecommissionClusterTest {
 
-    private static final SpokeProperty spokeProperty = new SpokeProperty(PropertyLoader.getInstance());
+    private static final SpokeProperties spokeProperties = new SpokeProperties(PropertiesLoader.getInstance());
     private static CuratorFramework curator;
     private static SpokeDecommissionCluster cluster;
 
@@ -23,7 +23,7 @@ public class SpokeDecommissionClusterTest {
     public static void setUpClass() throws Exception {
         curator = Integration.startZooKeeper();
         cluster = new SpokeDecommissionCluster(curator,
-                new SpokeProperty(PropertyLoader.getInstance()));
+                new SpokeProperties(PropertiesLoader.getInstance()));
     }
 
     @After
@@ -37,7 +37,7 @@ public class SpokeDecommissionClusterTest {
         assertTrue(cluster.withinSpokeExists());
         assertFalse(cluster.doNotRestartExists());
 
-        assertEquals(spokeProperty.getTtlMinutes(SpokeStore.WRITE), cluster.getDoNotRestartMinutes(), 1);
+        assertEquals(spokeProperties.getTtlMinutes(SpokeStore.WRITE), cluster.getDoNotRestartMinutes(), 1);
 
         cluster.doNotRestart();
         assertFalse(cluster.withinSpokeExists());

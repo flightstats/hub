@@ -9,8 +9,8 @@ import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
-import com.flightstats.hub.config.AppProperty;
-import com.flightstats.hub.config.S3Property;
+import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.S3Properties;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.metrics.ActiveTraces;
@@ -55,14 +55,14 @@ public class S3SingleContentDao implements ContentDao {
     public S3SingleContentDao(HubS3Client s3Client,
                               S3BucketName s3BucketName,
                               StatsdReporter statsdReporter,
-                              AppProperty appProperty,
-                              S3Property s3Property){
+                              AppProperties appProperties,
+                              S3Properties s3Properties){
         this.s3Client = s3Client;
         this.s3BucketName = s3BucketName;
         this.statsdReporter = statsdReporter;
 
-        this.useEncrypted = appProperty.isAppEncrypted();
-        this.s3MaxQueryItems = s3Property.getMaxQueryItems();
+        this.useEncrypted = appProperties.isAppEncrypted();
+        this.s3MaxQueryItems = s3Properties.getMaxQueryItems();
     }
 
     static ObjectMetadata createObjectMetadata(Content content, boolean useEncrypted) {

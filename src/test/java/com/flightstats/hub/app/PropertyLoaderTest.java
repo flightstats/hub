@@ -1,7 +1,7 @@
 package com.flightstats.hub.app;
 
-import com.flightstats.hub.config.AppProperty;
-import com.flightstats.hub.config.PropertyLoader;
+import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.PropertiesLoader;
 import org.junit.Test;
 
 import static org.junit.Assert.assertFalse;
@@ -11,11 +11,11 @@ public class PropertyLoaderTest {
 
     @Test
     public void testIsReadOnly() {
-        AppProperty appProperty = new AppProperty(PropertyLoader.getInstance());
-        assertFalse(appProperty.isReadOnly());
-        PropertyLoader.getInstance().setProperty("hub.read.only", "somewhere," + HubHost.getLocalName());
-        assertTrue(appProperty.isReadOnly());
-        PropertyLoader.getInstance().setProperty("hub.read.only", "");
+        AppProperties appProperties = new AppProperties(PropertiesLoader.getInstance());
+        assertFalse(appProperties.isReadOnly());
+        PropertiesLoader.getInstance().setProperty("hub.read.only", "somewhere," + HubHost.getLocalName());
+        assertTrue(appProperties.isReadOnly());
+        PropertiesLoader.getInstance().setProperty("hub.read.only", "");
     }
 
 }

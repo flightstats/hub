@@ -1,6 +1,6 @@
 package com.flightstats.hub.cluster;
 
-import com.flightstats.hub.config.SpokeProperty;
+import com.flightstats.hub.config.SpokeProperties;
 import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.util.TimeUtil;
 
@@ -28,13 +28,13 @@ public class SpokeDecommissionCluster implements DecommissionCluster {
     private static final String DO_NOT_RESTART = "/SpokeDecommission/doNotRestart";
     private final CuratorFramework curator;
     private final PathChildrenCache withinSpokeCache;
-    private SpokeProperty spokeProperty;
+    private final SpokeProperties spokeProperties;
 
     @Inject
     public SpokeDecommissionCluster(CuratorFramework curator,
-                                    SpokeProperty spokeProperty) throws Exception {
+                                    SpokeProperties spokeProperties) throws Exception {
         this.curator = curator;
-        this.spokeProperty = spokeProperty;
+        this.spokeProperties = spokeProperties;
         withinSpokeCache = new PathChildrenCache(curator, WITHIN_SPOKE, true);
         withinSpokeCache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
     }
@@ -123,7 +123,7 @@ public class SpokeDecommissionCluster implements DecommissionCluster {
 
     long getDoNotRestartMinutes() throws Exception {
         DateTime creationTime = new DateTime(withinSpokeStat(getLocalhost()).getCtime(), DateTimeZone.UTC);
-        DateTime ttlDateTime = TimeUtil.now().minusMinutes(spokeProperty.getTtlMinutes(SpokeStore.WRITE));
+        DateTime ttlDateTime = TimeUtil.now().minusMinutes(spokeProperties.getTtlMinutes(SpokeStore.WRITE));
         return new Duration(ttlDateTime, creationTime).getStandardMinutes();
     }
 

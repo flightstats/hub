@@ -4,39 +4,39 @@ import com.flightstats.hub.spoke.SpokeStore;
 
 import javax.inject.Inject;
 
-public class SpokeProperty {
+public class SpokeProperties {
 
     private static int DEFAULT_SPOKE_TTL = 60;
 
-    private PropertyLoader propertyLoader;
+    private final PropertiesLoader propertiesLoader;
 
     @Inject
-    public SpokeProperty(PropertyLoader propertyLoader) {
-        this.propertyLoader = propertyLoader;
+    public SpokeProperties(PropertiesLoader propertiesLoader) {
+        this.propertiesLoader = propertiesLoader;
     }
 
     public int getTtlMinutes(SpokeStore spokeStore) {
         String property = "spoke." + spokeStore + ".ttlMinutes";
         String fallbackProperty = "spoke.ttlMinutes";
-        return this.propertyLoader.getProperty(property, this.propertyLoader.getProperty(fallbackProperty, DEFAULT_SPOKE_TTL));
+        return this.propertiesLoader.getProperty(property, this.propertiesLoader.getProperty(fallbackProperty, DEFAULT_SPOKE_TTL));
     }
 
     public String getPath(SpokeStore spokeStore) {
         String property = "spoke." + spokeStore + ".path";
         String fallbackProperty = "spoke.path";
         String defaultPath = "/spoke/" + spokeStore;
-        return this.propertyLoader.getProperty(property, this.propertyLoader.getProperty(fallbackProperty, defaultPath));
+        return this.propertiesLoader.getProperty(property, this.propertiesLoader.getProperty(fallbackProperty, defaultPath));
     }
 
     public String getStoragePath() {
-        return this.propertyLoader.getProperty("storage.path", "/file");
+        return this.propertiesLoader.getProperty("storage.path", "/file");
     }
 
     public boolean isEnforceTTL() {
-        return this.propertyLoader.getProperty("spoke.enforceTTL", true);
+        return this.propertiesLoader.getProperty("spoke.enforceTTL", true);
     }
 
     public int getWriteFactor() {
-        return this.propertyLoader.getProperty("spoke.write.factor", 3);
+        return this.propertiesLoader.getProperty("spoke.write.factor", 3);
     }
 }

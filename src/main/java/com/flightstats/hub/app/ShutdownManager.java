@@ -1,6 +1,6 @@
 package com.flightstats.hub.app;
 
-import com.flightstats.hub.config.AppProperty;
+import com.flightstats.hub.config.AppProperties;
 import com.flightstats.hub.health.HubHealthCheck;
 import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.util.Sleeper;
@@ -23,12 +23,12 @@ public class ShutdownManager {
 
     private static final String PATH = "/ShutdownManager";
     private StatsdReporter statsdReporter;
-    private AppProperty appProperty;
+    private AppProperties appProperties;
 
     @Inject
-    public ShutdownManager(StatsdReporter statsdReporter, AppProperty appProperty) {
+    public ShutdownManager(StatsdReporter statsdReporter, AppProperties appProperties) {
         this.statsdReporter = statsdReporter;
-        this.appProperty = appProperty;
+        this.appProperties = appProperties;
         HubServices.register(new ShutdownManagerService(), HubServices.TYPE.AFTER_HEALTHY_START);
     }
 
@@ -53,7 +53,7 @@ public class ShutdownManager {
 
         //wait until it's likely the node is removed from the Load Balancer
         long end = System.currentTimeMillis();
-        int shutdown_delay_millis = appProperty.getShutdownDelayInMiilis();
+        int shutdown_delay_millis = appProperties.getShutdownDelayInMiilis();
         long millisStopping = end - start;
         if (millisStopping < shutdown_delay_millis) {
             long sleepTime = shutdown_delay_millis - millisStopping;

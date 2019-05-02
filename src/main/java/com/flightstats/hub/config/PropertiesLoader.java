@@ -10,15 +10,15 @@ import java.net.URL;
 import java.util.Properties;
 
 @Slf4j
-public class PropertyLoader {
+public class PropertiesLoader {
 
     private static final String HUB_PROPERTY_FILE_NAME = "/hub.properties";
     private static final String HUB_ENCRYPTED_PROPERTY_FILE_NAME = "/hubEncrypted.properties";
-    private static final PropertyLoader propertyLoader = new PropertyLoader();
+    private static final PropertiesLoader propertiesLoader = new PropertiesLoader();
     private static Properties properties = new Properties();
 
-    public static PropertyLoader getInstance() {
-        return propertyLoader;
+    public static PropertiesLoader getInstance() {
+        return propertiesLoader;
     }
 
     public Properties getProperties() {

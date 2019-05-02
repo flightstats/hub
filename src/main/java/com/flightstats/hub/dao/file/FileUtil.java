@@ -1,7 +1,7 @@
 package com.flightstats.hub.dao.file;
 
-import com.flightstats.hub.config.PropertyLoader;
-import com.flightstats.hub.config.SpokeProperty;
+import com.flightstats.hub.config.PropertiesLoader;
+import com.flightstats.hub.config.SpokeProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -19,10 +19,10 @@ import java.util.function.Function;
 @Slf4j
 class FileUtil {
 
-    private static final SpokeProperty spokeProperty = new SpokeProperty(PropertyLoader.getInstance());
+    private static final SpokeProperties spokeProperties = new SpokeProperties(PropertiesLoader.getInstance());
 
     static String getStoragePath() {
-        return StringUtils.appendIfMissing(spokeProperty.getStoragePath(), "/");
+        return StringUtils.appendIfMissing(spokeProperties.getStoragePath(), "/");
     }
 
     public static String getContentPath() {

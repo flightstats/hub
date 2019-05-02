@@ -2,9 +2,9 @@ package com.flightstats.hub.spoke;
 
 import com.flightstats.hub.cluster.Cluster;
 import com.flightstats.hub.cluster.SpokeDecommissionCluster;
-import com.flightstats.hub.config.AppProperty;
-import com.flightstats.hub.config.PropertyLoader;
-import com.flightstats.hub.config.SpokeProperty;
+import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.PropertiesLoader;
+import com.flightstats.hub.config.SpokeProperties;
 import com.flightstats.hub.config.binding.HubBindings;
 import com.flightstats.hub.dao.ContentDaoUtil;
 import com.flightstats.hub.model.Content;
@@ -28,10 +28,10 @@ public class SpokeWriteContentDaoTest {
         util = new ContentDaoUtil(injector.getInstance(SpokeWriteContentDao.class));
         final CuratorFramework curator = injector.getInstance(CuratorFramework.class);
 
-        final SpokeProperty spokeProperty = new SpokeProperty(PropertyLoader.getInstance());
+        final SpokeProperties spokeProperties = new SpokeProperties(PropertiesLoader.getInstance());
         Cluster cluster = HubBindings.buildSpokeCluster(curator,
-                new SpokeDecommissionCluster(curator, spokeProperty),
-                new AppProperty(PropertyLoader.getInstance()), spokeProperty);
+                new SpokeDecommissionCluster(curator, spokeProperties),
+                new AppProperties(PropertiesLoader.getInstance()), spokeProperties);
 
         for (int i = 0; i < 10; i++) {
             if (cluster.getAllServers().size() == 0) {
@@ -73,7 +73,7 @@ public class SpokeWriteContentDaoTest {
 
     @Test
     public void testDirectionQuery() throws Exception {
-        PropertyLoader.getInstance().setProperty("spoke.write.ttlMinutes", "240");
+        PropertiesLoader.getInstance().setProperty("spoke.write.ttlMinutes", "240");
         util.testDirectionQueryTTL();
     }
 

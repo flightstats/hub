@@ -1,7 +1,8 @@
 package com.flightstats.hub.app;
 
-import com.flightstats.hub.config.AppProperty;
-import com.flightstats.hub.config.PropertyLoader;
+import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.PropertiesLoader;
+import com.flightstats.hub.config.SystemProperties;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetAddress;
@@ -10,13 +11,14 @@ import java.net.UnknownHostException;
 @Slf4j
 public class HubHost {
 
-    private static final AppProperty appProperty = new AppProperty(PropertyLoader.getInstance());
+    private static final AppProperties appProperties = new AppProperties(PropertiesLoader.getInstance());
+    private static final SystemProperties systemProperties = new SystemProperties(PropertiesLoader.getInstance());
     private static final int port;
     private static String scheme = "http://";
 
     static {
-        port = appProperty.getHttpBindPort();
-        if (appProperty.isAppEncrypted()) {
+        port = systemProperties.getHttpBindPort();
+        if (appProperties.isAppEncrypted()) {
             scheme = "https://";
         }
     }

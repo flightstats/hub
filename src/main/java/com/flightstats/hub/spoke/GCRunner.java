@@ -1,7 +1,7 @@
 package com.flightstats.hub.spoke;
 
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.config.AppProperty;
+import com.flightstats.hub.config.SystemProperties;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -16,9 +16,9 @@ public class GCRunner {
     private final int gcMinutes;
 
     @Inject
-    public GCRunner(AppProperty appProperty) {
-        this.gcMinutes = appProperty.getGCSchedulerDelayInMinutes();
-        if (appProperty.isRunGC()) {
+    public GCRunner(SystemProperties systemProperties) {
+        this.gcMinutes = systemProperties.getGCSchedulerDelayInMinutes();
+        if (systemProperties.isRunGC()) {
             HubServices.register(new GCRunnerService());
         }
     }

@@ -28,9 +28,9 @@ public class SpokeDecommissionManager implements DecommissionManager {
 
     private final CuratorCluster spokeCuratorCluster;
     private final CuratorCluster hubCuratorCluster;
-    private HubHealthCheck hubHealthCheck;
-    private SpokeDecommissionCluster decommissionCluster;
-    private ShutdownManager shutdownManager;
+    private final HubHealthCheck hubHealthCheck;
+    private final SpokeDecommissionCluster decommissionCluster;
+    private final ShutdownManager shutdownManager;
 
     @Inject
     public SpokeDecommissionManager(SpokeDecommissionCluster decommissionCluster,

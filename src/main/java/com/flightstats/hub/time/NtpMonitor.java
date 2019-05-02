@@ -1,7 +1,7 @@
 package com.flightstats.hub.time;
 
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.config.AppProperty;
+import com.flightstats.hub.config.AppProperties;
 import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.util.Commander;
 import com.google.common.util.concurrent.AbstractScheduledService;
@@ -18,16 +18,16 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class NtpMonitor {
 
-    private StatsdReporter statsdReporter;
-    private AppProperty appProperty;
+    private final StatsdReporter statsdReporter;
+    private final AppProperties appProperties;
     private double primaryOffset;
 
     @Inject
-    public NtpMonitor(StatsdReporter statsdReporter, AppProperty appProperty) {
+    public NtpMonitor(StatsdReporter statsdReporter, AppProperties appProperties) {
         this.statsdReporter = statsdReporter;
-        this.appProperty = appProperty;
+        this.appProperties = appProperties;
 
-        if (this.appProperty.isRunNtpMonitor()) {
+        if (this.appProperties.isRunNtpMonitor()) {
             HubServices.register(new TimeMonitorService());
         } else {
             log.info("not running NtpMonitor");
@@ -82,8 +82,8 @@ public class NtpMonitor {
     }
 
     public int getPostTimeBuffer() {
-        return Math.min(this.appProperty.getMaxPostTimeMillis(),
-                (int) (this.appProperty.getMinPostTimeMillis() + primaryOffset));
+        return Math.min(this.appProperties.getMaxPostTimeMillis(),
+                (int) (this.appProperties.getMinPostTimeMillis() + primaryOffset));
     }
 
 

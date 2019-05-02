@@ -3,7 +3,7 @@ package com.flightstats.hub.time;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.Cluster;
-import com.flightstats.hub.config.AppProperty;
+import com.flightstats.hub.config.AppProperties;
 import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.StringUtils;
@@ -37,10 +37,10 @@ public class TimeService {
     private final String remoteFile;
 
     @Inject
-    public TimeService(@Named("HubCluster") Cluster cluster, AppProperty appProperty) {
+    public TimeService(@Named("HubCluster") Cluster cluster, AppProperties appProperties) {
         this.cluster = cluster;
 
-        this.remoteFile = appProperty.getAppRemoteTimeFle();
+        this.remoteFile = appProperties.getAppRemoteTimeFle();
         HubServices.register(new TimeServiceRegister());
     }
 
