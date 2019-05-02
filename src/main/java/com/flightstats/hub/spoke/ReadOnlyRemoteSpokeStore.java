@@ -21,12 +21,20 @@ public class ReadOnlyRemoteSpokeStore implements RemoteSpokeStore {
 
     @Override
     public boolean insert(SpokeStore spokeStore, String path, byte[] payload, String spokeApi, String channel) {
-        throw new UnsupportedOperationException("Unable to insert to remote spoke store from a r/o node " + channel);
+        if (spokeStore == SpokeStore.WRITE) {
+            throw new UnsupportedOperationException("Unable to insert to remote spoke store from a r/o node " + channel);
+        } else {
+            return delegate.insert(spokeStore, path, payload, spokeApi, channel);
+        }
     }
 
     @Override
     public boolean insert(SpokeStore spokeStore, String path, byte[] payload, Collection<String> servers, Traces traces, String spokeApi, String channel) {
-        throw new UnsupportedOperationException("Unable to insert to remote spoke store on all servers from a r/o node " + channel);
+        if (spokeStore == SpokeStore.WRITE) {
+            throw new UnsupportedOperationException("Unable to insert to remote spoke store on all servers from a r/o node " + channel);
+        } else {
+            return delegate.insert(spokeStore, path, payload, servers, traces, spokeApi, channel);
+        }
     }
 
     @Override
@@ -41,7 +49,11 @@ public class ReadOnlyRemoteSpokeStore implements RemoteSpokeStore {
 
     @Override
     public boolean delete(SpokeStore spokeStore, String path) throws Exception {
-        throw new UnsupportedOperationException("Unable to delete from the remote spoke store from a r/o node " + path);
+        if (spokeStore == SpokeStore.WRITE) {
+            throw new UnsupportedOperationException("Unable to delete from the remote spoke store from a r/o node " + path);
+        } else {
+            return delegate.delete(spokeStore, path);
+        }
     }
 
     @Override

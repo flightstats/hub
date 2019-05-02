@@ -38,12 +38,19 @@ public class ReadOnlyRemoteSpokeStoreTest {
         dao.testAll();
         dao.testOne(Arrays.asList("BobsAServer"));
 
+        dao.insert(SpokeStore.READ, "path", new byte[]{}, "api", "channel");
+        dao.insert(SpokeStore.READ, "path", new byte[]{}, Arrays.asList("someServer"), mockTraces, "api", "channel");
+        dao.delete(SpokeStore.READ, "path");
+
         verify(delegate, times(1)).get(SpokeStore.READ, "somePath", ContentKey.NONE);
         verify(delegate, times(1)).getLatest("someChannel", "somePath", mockTraces);
         verify(delegate, times(1)).getNext("channel", 0, "startKey");
         verify(delegate, times(1)).readTimeBucket(SpokeStore.READ, "channel", "timePath");
         verify(delegate, times(1)).testAll();
         verify(delegate, times(1)).testOne(anyList());
+        verify(delegate, times(1)).insert(SpokeStore.READ, "path", new byte[]{}, "api", "channel");
+        verify(delegate, times(1)).insert(SpokeStore.READ, "path", new byte[]{}, Arrays.asList("someServer"), mockTraces, "api", "channel");
+        verify(delegate, times(1)).delete(SpokeStore.READ, "path");
     }
 
     @Test(expected=UnsupportedOperationException.class)
