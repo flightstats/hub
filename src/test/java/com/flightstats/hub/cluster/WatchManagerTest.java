@@ -1,7 +1,7 @@
 package com.flightstats.hub.cluster;
 
-import com.flightstats.hub.config.PropertyLoader;
-import com.flightstats.hub.config.ZookeeperProperty;
+import com.flightstats.hub.config.PropertiesLoader;
+import com.flightstats.hub.config.ZookeeperProperties;
 import com.flightstats.hub.test.Integration;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.api.CuratorEvent;
@@ -22,7 +22,7 @@ public class WatchManagerTest {
     public static void setUpClass() throws Exception {
         CuratorFramework curator = Integration.startZooKeeper();
         watchManager = new WatchManager(curator,
-                new ZookeeperProperty(PropertyLoader.getInstance()));
+                new ZookeeperProperties(PropertiesLoader.getInstance()));
         watchManager.addCuratorListener();
     }
 

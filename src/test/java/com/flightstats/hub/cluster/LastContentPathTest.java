@@ -1,7 +1,7 @@
 package com.flightstats.hub.cluster;
 
-import com.flightstats.hub.config.AppProperty;
-import com.flightstats.hub.config.PropertyLoader;
+import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.PropertiesLoader;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.model.MinutePath;
@@ -29,7 +29,7 @@ public class LastContentPathTest {
 
     @Before
     public void setUp() {
-        lastContentPath = new LastContentPath(curator, new AppProperty(PropertyLoader.getInstance()));
+        lastContentPath = new LastContentPath(curator, new AppProperties(PropertiesLoader.getInstance()));
     }
 
     @Test

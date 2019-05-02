@@ -1,6 +1,6 @@
 package com.flightstats.hub.spoke;
 
-import com.flightstats.hub.config.SpokeProperty;
+import com.flightstats.hub.config.SpokeProperties;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentKeyUtil;
 import com.flightstats.hub.dao.QueryResult;
@@ -33,13 +33,13 @@ import java.util.TreeSet;
 @Slf4j
 public class SpokeWriteContentDao implements ContentDao {
 
-    private RemoteSpokeStore spokeStore;
-    private SpokeProperty spokeProperty;
+    private final RemoteSpokeStore spokeStore;
+    private final SpokeProperties spokeProperties;
 
     @Inject
-    public SpokeWriteContentDao(RemoteSpokeStore spokeStore, SpokeProperty spokeProperty) {
+    public SpokeWriteContentDao(RemoteSpokeStore spokeStore, SpokeProperties spokeProperties) {
         this.spokeStore = spokeStore;
-        this.spokeProperty = spokeProperty;
+        this.spokeProperties = spokeProperties;
     }
 
     @Override
@@ -143,9 +143,9 @@ public class SpokeWriteContentDao implements ContentDao {
 
     @Override
     public SortedSet<ContentKey> query(DirectionQuery query) {
-        int ttlMinutes = spokeProperty.getTtlMinutes(SpokeStore.WRITE);
+        int ttlMinutes = spokeProperties.getTtlMinutes(SpokeStore.WRITE);
         DateTime spokeTtlTime = TimeUtil.BIG_BANG;
-        if (spokeProperty.isEnforceTTL()) {
+        if (spokeProperties.isTtlEnforced()) {
             spokeTtlTime = query.getChannelStable().minusMinutes(ttlMinutes);
             if (query.getChannelConfig().isLive()) {
                 if (query.getStartKey().getTime().isBefore(spokeTtlTime)) {

@@ -1,7 +1,7 @@
 package com.flightstats.hub.rest;
 
-import com.flightstats.hub.config.AppProperty;
-import com.flightstats.hub.config.PropertyLoader;
+import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.SystemProperties;
 import com.flightstats.hub.util.Sleeper;
 import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientRequest;
@@ -9,7 +9,6 @@ import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.filter.ClientFilter;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
 import java.net.UnknownHostException;
 
 /**
@@ -18,15 +17,15 @@ import java.net.UnknownHostException;
 @Slf4j
 public class RetryClientFilter extends ClientFilter {
 
-    private AppProperty appProperty;
+    private SystemProperties systemProperties;
 
-    public RetryClientFilter(AppProperty appProperty){
-        this.appProperty = appProperty;
+    public RetryClientFilter(SystemProperties systemProperties){
+        this.systemProperties = systemProperties;
     }
 
     public ClientResponse handle(ClientRequest clientRequest) throws ClientHandlerException {
-        int maxRetries = appProperty.getHttpMaxRetries();
-        int sleep = appProperty.getHttpSleep();
+        int maxRetries = systemProperties.getHttpMaxRetries();
+        int sleep = systemProperties.getHttpSleep();
         ClientHandlerException lastCause = null;
         int attempt = 0;
         while (attempt < maxRetries) {

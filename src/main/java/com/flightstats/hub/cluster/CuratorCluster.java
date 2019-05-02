@@ -1,7 +1,7 @@
 package com.flightstats.hub.cluster;
 
-import com.flightstats.hub.config.AppProperty;
-import com.flightstats.hub.config.SpokeProperty;
+import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.SpokeProperties;
 import com.flightstats.hub.util.StringUtils;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Singleton;
@@ -29,10 +29,10 @@ public class CuratorCluster implements Cluster {
     private final CuratorFramework curator;
     private final String clusterPath;
     private final boolean useName;
-    private boolean checkReadOnly;
-    private DecommissionCluster decommissionCluster;
-    private AppProperty appProperty;
-    private SpokeProperty spokeProperty;
+    private final boolean checkReadOnly;
+    private final DecommissionCluster decommissionCluster;
+    private final AppProperties appProperties;
+    private final SpokeProperties spokeProperties;
 
     private String fullPath;
     private final PathChildrenCache clusterCache;
@@ -43,8 +43,8 @@ public class CuratorCluster implements Cluster {
                           boolean useName,
                           boolean checkReadOnly,
                           DecommissionCluster decommissionCluster,
-                          AppProperty appProperty,
-                          SpokeProperty spokeProperty) throws Exception {
+                          AppProperties appProperties,
+                          SpokeProperties spokeProperties) throws Exception {
         this.curator = curator;
         this.clusterPath = clusterPath;
         this.useName = useName;
@@ -52,8 +52,8 @@ public class CuratorCluster implements Cluster {
         this.decommissionCluster = decommissionCluster;
         clusterCache = new PathChildrenCache(curator, clusterPath, true);
         clusterCache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
-        this.appProperty = appProperty;
-        this.spokeProperty = spokeProperty;
+        this.appProperties = appProperties;
+        this.spokeProperties = spokeProperties;
     }
 
     public void addCacheListener() {
@@ -74,7 +74,7 @@ public class CuratorCluster implements Cluster {
     }
 
     public void register() {
-        if (checkReadOnly && appProperty.isReadOnly()) {
+        if (checkReadOnly && appProperties.isReadOnly()) {
             log.info("this hub is read only, not registering");
             return;
         }
@@ -97,11 +97,11 @@ public class CuratorCluster implements Cluster {
 
     public List<String> getWriteServers() {
         List<String> servers = decommissionCluster.filter(getAllServers());
-        if (servers.size() <= spokeProperty.getWriteFactor()) {
+        if (servers.size() <= spokeProperties.getWriteFactor()) {
             return servers;
         } else {
             Collections.shuffle(servers);
-            return servers.subList(0, spokeProperty.getWriteFactor());
+            return servers.subList(0, spokeProperties.getWriteFactor());
         }
     }
 

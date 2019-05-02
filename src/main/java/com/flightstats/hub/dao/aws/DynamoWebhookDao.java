@@ -8,8 +8,8 @@ import com.amazonaws.services.dynamodbv2.model.ResourceNotFoundException;
 import com.amazonaws.services.dynamodbv2.model.ScanRequest;
 import com.amazonaws.services.dynamodbv2.model.ScanResult;
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.config.DynamoProperty;
-import com.flightstats.hub.config.WebhookProperty;
+import com.flightstats.hub.config.DynamoProperties;
+import com.flightstats.hub.config.WebhookProperties;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.webhook.Webhook;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -28,18 +28,18 @@ public class DynamoWebhookDao implements Dao<Webhook> {
 
     private final AmazonDynamoDB dbClient;
     private final DynamoUtils dynamoUtils;
-    private final DynamoProperty dynamoProperty;
-    private final WebhookProperty webhookProperty;
+    private final DynamoProperties dynamoProperties;
+    private final WebhookProperties webhookProperties;
 
     @Inject
     public DynamoWebhookDao(AmazonDynamoDB dbClient,
                             DynamoUtils dynamoUtils,
-                            DynamoProperty dynamoProperty,
-                            WebhookProperty webhookProperty) {
+                            DynamoProperties dynamoProperties,
+                            WebhookProperties webhookProperties) {
         this.dbClient = dbClient;
         this.dynamoUtils = dynamoUtils;
-        this.dynamoProperty = dynamoProperty;
-        this.webhookProperty = webhookProperty;
+        this.dynamoProperties = dynamoProperties;
+        this.webhookProperties = webhookProperties;
         HubServices.register(new DynamoGroupDaoInit());
     }
 
@@ -131,7 +131,7 @@ public class DynamoWebhookDao implements Dao<Webhook> {
         if (item.containsKey("errorChannelUrl")) {
             builder.errorChannelUrl(item.get("errorChannelUrl").getS());
         }
-        return builder.build().withDefaults(webhookProperty.getCallbackTimeoutDefaultInSec());
+        return builder.build().withDefaults(webhookProperties.getCallbackTimeoutDefaultInSec());
 
     }
 
@@ -166,7 +166,7 @@ public class DynamoWebhookDao implements Dao<Webhook> {
 
     private String getTableName() {
         final String legacyTableName = dynamoUtils.getLegacyTableName("GroupConfig");
-        return dynamoProperty.getWebhookConfigTableName(legacyTableName);
+        return dynamoProperties.getWebhookConfigTableName(legacyTableName);
     }
 
     private class DynamoGroupDaoInit extends AbstractIdleService {

@@ -12,8 +12,8 @@ import com.amazonaws.services.dynamodbv2.model.ResourceNotFoundException;
 import com.amazonaws.services.dynamodbv2.model.ScalarAttributeType;
 import com.amazonaws.services.dynamodbv2.model.TableDescription;
 import com.amazonaws.services.dynamodbv2.model.TableStatus;
-import com.flightstats.hub.config.AppProperty;
-import com.flightstats.hub.config.DynamoProperty;
+import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.DynamoProperties;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -24,20 +24,20 @@ import java.util.function.Function;
 public class DynamoUtils {
 
     private final AmazonDynamoDB dbClient;
-    private final AppProperty appProperty;
-    private final DynamoProperty dynamoProperty;
+    private final AppProperties appProperties;
+    private final DynamoProperties dynamoProperties;
 
     @Inject
     public DynamoUtils(AmazonDynamoDB dbClient,
-                       AppProperty appProperty,
-                       DynamoProperty dynamoProperty) {
+                       AppProperties appProperties,
+                       DynamoProperties dynamoProperties) {
         this.dbClient = dbClient;
-        this.appProperty = appProperty;
-        this.dynamoProperty = dynamoProperty;
+        this.appProperties = appProperties;
+        this.dynamoProperties = dynamoProperties;
     }
 
     String getLegacyTableName(String baseTableName) {
-        return appProperty.getAppName() + "-" + appProperty.getEnv() + "-" + baseTableName;
+        return appProperties.getAppName() + "-" + appProperties.getEnv() + "-" + baseTableName;
     }
 
 
@@ -60,8 +60,8 @@ public class DynamoUtils {
     }
 
     ProvisionedThroughput getProvisionedThroughput(String type) {
-        long readThroughput = dynamoProperty.getThroughputRead(type);
-        long writeThroughput = dynamoProperty.getThroughputWrite(type);
+        long readThroughput = dynamoProperties.getThroughputRead(type);
+        long writeThroughput = dynamoProperties.getThroughputWrite(type);
         return new ProvisionedThroughput(readThroughput, writeThroughput);
     }
 
@@ -99,7 +99,7 @@ public class DynamoUtils {
     }
 
     private TableDescription waitForTableStatus(String tableName, TableStatus status) {
-        long endTime = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(dynamoProperty.getTableCreationWaitInMinutes());
+        long endTime = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(dynamoProperties.getTableCreationWaitInMinutes());
         while (System.currentTimeMillis() < endTime) {
             try {
                 TableDescription tableDescription = dbClient.describeTable(tableName).getTable();

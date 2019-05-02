@@ -2,7 +2,7 @@ package com.flightstats.hub.replication;
 
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.Watcher;
-import com.flightstats.hub.config.AppProperty;
+import com.flightstats.hub.config.AppProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.BuiltInTag;
 import com.flightstats.hub.model.ChannelConfig;
@@ -44,18 +44,18 @@ public class ReplicationManager {
     @Inject
     private WatchManager watchManager;
     @Inject
-    private AppProperty appProperty;
+    private AppProperties appProperties;
 
     public ReplicationManager() {
         register(new ReplicationService(), TYPE.AFTER_HEALTHY_START, TYPE.PRE_STOP);
     }
 
     @VisibleForTesting
-    ReplicationManager(ChannelService channelService, WatchManager watchManager, AppProperty appProperty) {
+    ReplicationManager(ChannelService channelService, WatchManager watchManager, AppProperties appProperties) {
         this();
         this.channelService = channelService;
         this.watchManager = watchManager;
-        this.appProperty = appProperty;
+        this.appProperties = appProperties;
     }
 
     private void startManager() {
@@ -121,7 +121,7 @@ public class ReplicationManager {
 
     private ChannelReplicator createReplicator(ChannelConfig channel) {
         ChannelReplicator newReplicator =
-                new ChannelReplicator(channel, appProperty.getAppUrl(), appProperty.getAppEnv());
+                new ChannelReplicator(channel, appProperties.getAppUrl(), appProperties.getAppEnv());
         channelReplicatorMap.put(channel.getDisplayName(), newReplicator);
         return newReplicator;
     }

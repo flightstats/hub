@@ -1,8 +1,8 @@
 package com.flightstats.hub.cluster;
 
-import com.flightstats.hub.config.AppProperty;
-import com.flightstats.hub.config.PropertyLoader;
-import com.flightstats.hub.config.SpokeProperty;
+import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.PropertiesLoader;
+import com.flightstats.hub.config.SpokeProperties;
 import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.Sleeper;
 import lombok.extern.slf4j.Slf4j;
@@ -33,17 +33,17 @@ public class CuratorClusterTest {
                 "/SpokeCluster",
                 false,
                 true,
-                new SpokeDecommissionCluster(curator, new SpokeProperty(PropertyLoader.getInstance())),
-                new AppProperty(PropertyLoader.getInstance()),
-                new SpokeProperty(PropertyLoader.getInstance()));
+                new SpokeDecommissionCluster(curator, new SpokeProperties(PropertiesLoader.getInstance())),
+                new AppProperties(PropertiesLoader.getInstance()),
+                new SpokeProperties(PropertiesLoader.getInstance()));
 
         final CuratorCluster cluster = new CuratorCluster(curator,
                 "/CuratorClusterTest",
                 false,
                 true,
-                new SpokeDecommissionCluster(curator, new SpokeProperty(PropertyLoader.getInstance())),
-                new AppProperty(PropertyLoader.getInstance()),
-                new SpokeProperty(PropertyLoader.getInstance()));
+                new SpokeDecommissionCluster(curator, new SpokeProperties(PropertiesLoader.getInstance())),
+                new AppProperties(PropertiesLoader.getInstance()),
+                new SpokeProperties(PropertiesLoader.getInstance()));
 
         Collection<String> servers = cluster.getAllServers();
         assertNotNull(servers);

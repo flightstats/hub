@@ -1,6 +1,6 @@
 package com.flightstats.hub.spoke;
 
-import com.flightstats.hub.config.SpokeProperty;
+import com.flightstats.hub.config.SpokeProperties;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.exception.FailedWriteException;
 import com.flightstats.hub.metrics.ActiveTraces;
@@ -29,12 +29,12 @@ public class SpokeContentDao {
     static final String GET_ITEM_COUNT_COMMAND = "find %s -type f | wc -l";
 
     private final Commander commander;
-    private SpokeProperty spokeProperty;
+    private final SpokeProperties spokeProperties;
 
     @Inject
-    public SpokeContentDao(Commander commander, SpokeProperty spokeProperty) {
+    public SpokeContentDao(Commander commander, SpokeProperties spokeProperties) {
         this.commander = commander;
-        this.spokeProperty = spokeProperty;
+        this.spokeProperties = spokeProperties;
     }
 
     public static SortedSet<ContentKey> insert(BulkContent bulkContent, Function<ByteArrayOutputStream, Boolean> inserter) throws Exception {
@@ -77,7 +77,7 @@ public class SpokeContentDao {
     }
 
     Optional<ChannelContentKey> getOldestItem(SpokeStore store) {
-        String storePath = spokeProperty.getPath(store);
+        String storePath = spokeProperties.getPath(store);
         log.trace("getting oldest item from " + storePath);
         // expected result format: YYYY-MM-DD+HH:MM:SS.SSSSSSSSSS /mnt/spoke/store/channel/yyyy/mm/dd/hh/mm/ssSSShash
         String command = String.format(GET_OLDEST_ITEM_COMMAND, storePath);
@@ -92,7 +92,7 @@ public class SpokeContentDao {
     }
 
     long getNumberOfItems(SpokeStore spokeStore) {
-        String storePath = spokeProperty.getPath(spokeStore);
+        String storePath = spokeProperties.getPath(spokeStore);
         log.trace("getting the total number of items in " + storePath);
         String command = String.format(GET_ITEM_COUNT_COMMAND, storePath);
         int waitTimeSeconds = 1;

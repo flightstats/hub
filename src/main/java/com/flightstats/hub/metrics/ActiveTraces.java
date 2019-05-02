@@ -2,8 +2,8 @@ package com.flightstats.hub.metrics;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.config.AppProperty;
-import com.flightstats.hub.config.PropertyLoader;
+import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.PropertiesLoader;
 import com.flightstats.hub.util.ObjectRing;
 import lombok.extern.slf4j.Slf4j;
 
@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class ActiveTraces {
 
-    private static final AppProperty appProperty = new AppProperty(PropertyLoader.getInstance());
+    private static final AppProperties appProperties = new AppProperties(PropertiesLoader.getInstance());
     private static final Map<String, Traces> activeTraces = new ConcurrentHashMap<>();
     private static final ObjectRing<Traces> recent = new ObjectRing<>(100);
     private static final TopSortedSet<Traces> slowest = new TopSortedSet<>(100, Traces::getTime, new DescendingTracesComparator());
@@ -45,7 +45,7 @@ public class ActiveTraces {
             activeTraces.remove(traces.getId());
             threadLocal.remove();
             traces.end(status);
-            traces.log(appProperty.getLogSlowTracesInSec(), trace, log);
+            traces.log(appProperties.getLogSlowTracesInSec(), trace, log);
             recent.put(traces);
             slowest.add(traces);
             return true;
@@ -55,7 +55,7 @@ public class ActiveTraces {
     public static Traces getLocal() {
         Traces traces = threadLocal.get();
         if (traces == null) {
-            traces = new Traces(appProperty, "error: missing initial context");
+            traces = new Traces(appProperties, "error: missing initial context");
             StackTraceElement[] elements = new Exception().getStackTrace();
             for (StackTraceElement element : elements) {
                 traces.add(element.toString());

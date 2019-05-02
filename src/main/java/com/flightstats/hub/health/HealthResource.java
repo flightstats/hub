@@ -6,8 +6,8 @@ import com.flightstats.hub.app.HubMain;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.app.HubVersion;
 import com.flightstats.hub.channel.LinkBuilder;
-import com.flightstats.hub.config.AppProperty;
-import com.flightstats.hub.config.PropertyLoader;
+import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.PropertiesLoader;
 import com.flightstats.hub.util.TimeUtil;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
@@ -29,7 +29,7 @@ public class HealthResource {
     private static final HubVersion hubVersion = HubProvider.getInstance(HubVersion.class);
     @Context
     private UriInfo uriInfo;
-    private AppProperty appProperty = new AppProperty(PropertyLoader.getInstance());
+    private final AppProperties appProperties = new AppProperties(PropertiesLoader.getInstance());
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -39,7 +39,7 @@ public class HealthResource {
         rootNode.put("healthy", healthStatus.isHealthy());
         rootNode.put("description", healthStatus.getDescription());
         rootNode.put("version", hubVersion.getVersion());
-        rootNode.put("readOnly", appProperty.isReadOnly());
+        rootNode.put("readOnly", appProperties.isReadOnly());
         DateTime startTime = HubMain.getStartTime();
         rootNode.put("startTime", startTime.toString());
         rootNode.put("upTimeHours", new Duration(startTime, TimeUtil.now()).getStandardHours());

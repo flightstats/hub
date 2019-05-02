@@ -6,7 +6,7 @@ import com.flightstats.hub.app.AppUrlCheck;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.cluster.SpokeDecommissionManager;
 import com.flightstats.hub.cluster.WatchManager;
-import com.flightstats.hub.config.SpokeProperty;
+import com.flightstats.hub.config.SpokeProperties;
 import com.flightstats.hub.dao.CachedDao;
 import com.flightstats.hub.dao.CachedLowerCaseDao;
 import com.flightstats.hub.dao.ChannelService;
@@ -120,8 +120,8 @@ public class ClusterHubBindings extends AbstractModule {
     public SpokeTtlEnforcer spokeTtlEnforcerWrite(ChannelService channelService,
                                                   SpokeContentDao spokeContentDao,
                                                   StatsdReporter statsdReporter,
-                                                  SpokeProperty spokeProperty) {
-        return new SpokeTtlEnforcer(SpokeStore.WRITE, channelService, spokeContentDao, statsdReporter, spokeProperty);
+                                                  SpokeProperties spokeProperties) {
+        return new SpokeTtlEnforcer(SpokeStore.WRITE, channelService, spokeContentDao, statsdReporter, spokeProperties);
     }
 
     @Named(READ)
@@ -129,7 +129,7 @@ public class ClusterHubBindings extends AbstractModule {
     public SpokeTtlEnforcer spokeTtlEnforcerWriteRead(ChannelService channelService,
                                                       SpokeContentDao spokeContentDao,
                                                       StatsdReporter statsdReporter,
-                                                      SpokeProperty spokeProperty) {
-        return new SpokeTtlEnforcer(SpokeStore.READ, channelService, spokeContentDao, statsdReporter, spokeProperty);
+                                                      SpokeProperties spokeProperties) {
+        return new SpokeTtlEnforcer(SpokeStore.READ, channelService, spokeContentDao, statsdReporter, spokeProperties);
     }
 }
