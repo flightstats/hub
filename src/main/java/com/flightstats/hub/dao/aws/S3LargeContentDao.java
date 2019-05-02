@@ -13,8 +13,8 @@ import com.amazonaws.services.s3.model.PartETag;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.UploadPartRequest;
 import com.amazonaws.services.s3.model.UploadPartResult;
-import com.flightstats.hub.config.AppProperty;
-import com.flightstats.hub.config.S3Property;
+import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.S3Properties;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.StatsdReporter;
@@ -52,26 +52,26 @@ public class S3LargeContentDao implements ContentDao {
     private final S3BucketName s3BucketName;
     private final StatsdReporter statsdReporter;
 
-    private static AppProperty appProperty;
-    private static S3Property s3Property;
+    private static AppProperties appProperties;
+    private static S3Properties s3Properties;
 
     @ConstructorProperties({"statsdReporter", "s3Client", "s3BucketName"})
     @Inject
     public S3LargeContentDao(HubS3Client s3Client,
                              S3BucketName s3BucketName,
                              StatsdReporter statsdReporter,
-                             AppProperty appPropertyIn,
-                             S3Property s3Property) {
+                             AppProperties appPropertiesIn,
+                             S3Properties s3Properties) {
         this.statsdReporter = statsdReporter;
         this.s3Client = s3Client;
         this.s3BucketName = s3BucketName;
 
-        this.s3Property = s3Property;
-        appProperty = appPropertyIn;
+        this.s3Properties = s3Properties;
+        appProperties = appPropertiesIn;
     }
 
     public static S3LargeContentDaoBuilder builder() {
-        return new S3LargeContentDaoBuilder(appProperty, s3Property);
+        return new S3LargeContentDaoBuilder(appProperties, s3Properties);
     }
 
     public void initialize() {
@@ -95,11 +95,11 @@ public class S3LargeContentDao implements ContentDao {
         String uploadId = "";
         boolean completed = false;
         try {
-            ObjectMetadata metadata = S3SingleContentDao.createObjectMetadata(content, appProperty.isAppEncrypted());
+            ObjectMetadata metadata = S3SingleContentDao.createObjectMetadata(content, appProperties.isAppEncrypted());
             InitiateMultipartUploadRequest initRequest = new InitiateMultipartUploadRequest(name, s3Key, metadata);
             InitiateMultipartUploadResult initResponse = s3Client.initiateMultipartUpload(initRequest);
             uploadId = initResponse.getUploadId();
-            ChunkOutputStream outputStream = new ChunkOutputStream(content.getThreads(), s3Property.getMaxChunkInMB(), chunk -> {
+            ChunkOutputStream outputStream = new ChunkOutputStream(content.getThreads(), s3Properties.getMaxChunkInMB(), chunk -> {
                 try {
                     byte[] bytes = chunk.getBytes();
                     log.info("got bytes {} {}", s3Key, bytes.length);
@@ -275,12 +275,12 @@ public class S3LargeContentDao implements ContentDao {
         private StatsdReporter statsdReporter;
         private HubS3Client s3Client;
         private S3BucketName s3BucketName;
-        private AppProperty appProperty;
-        private S3Property s3Property;
+        private AppProperties appProperties;
+        private S3Properties s3Properties;
 
-        S3LargeContentDaoBuilder(AppProperty appProperty, S3Property s3Property) {
-            this.appProperty = appProperty;
-            this.s3Property = s3Property;
+        S3LargeContentDaoBuilder(AppProperties appProperties, S3Properties s3Properties) {
+            this.appProperties = appProperties;
+            this.s3Properties = s3Properties;
         }
 
         public S3LargeContentDaoBuilder statsdReporter(StatsdReporter statsdReporter) {
@@ -299,7 +299,7 @@ public class S3LargeContentDao implements ContentDao {
         }
 
         public S3LargeContentDao build() {
-            return new S3LargeContentDao(s3Client, s3BucketName, statsdReporter, appProperty, s3Property);
+            return new S3LargeContentDao(s3Client, s3BucketName, statsdReporter, appProperties, s3Properties);
         }
 
         public String toString() {

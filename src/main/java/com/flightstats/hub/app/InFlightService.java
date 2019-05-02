@@ -2,7 +2,7 @@ package com.flightstats.hub.app;
 
 import com.diffplug.common.base.Errors;
 import com.diffplug.common.base.Throwing;
-import com.flightstats.hub.config.AppProperty;
+import com.flightstats.hub.config.AppProperties;
 import com.flightstats.hub.util.Sleeper;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Singleton;
@@ -17,11 +17,11 @@ public class InFlightService {
 
     private final AtomicInteger inFlight = new AtomicInteger();
 
-    private AppProperty appProperty;
+    private final AppProperties appProperties;
 
     @Inject
-    public InFlightService(AppProperty appProperty) {
-        this.appProperty = appProperty;
+    public InFlightService(AppProperties appProperties) {
+        this.appProperties = appProperties;
         HubServices.registerPreStop(new InFlightServiceShutdown());
     }
 
@@ -35,16 +35,16 @@ public class InFlightService {
     }
 
     private void waitForInFlight() {
-        Integer shutdown_wait_millis = appProperty.getShutdownWaitTimeInMillis();
+        final Integer shutdownWaitTimeInMillis = appProperties.getShutdownWaitTimeInMillis();
 
         log.info("waiting for {} in-flight to complete in {} milliseconds",
-                inFlight.get(), shutdown_wait_millis);
+                inFlight.get(), shutdownWaitTimeInMillis);
         long start = System.currentTimeMillis();
 
         while (inFlight.get() > 0) {
             log.info("still waiting for in-flight to complete " + inFlight.get());
             Sleeper.sleep(1000);
-            if (System.currentTimeMillis() > (start + shutdown_wait_millis)) {
+            if (System.currentTimeMillis() > (start + shutdownWaitTimeInMillis)) {
                 break;
             }
         }

@@ -1,7 +1,7 @@
 package com.flightstats.hub.dao.aws;
 
-import com.flightstats.hub.config.AppProperty;
-import com.flightstats.hub.config.S3Property;
+import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.S3Properties;
 
 import javax.inject.Inject;
 
@@ -9,16 +9,16 @@ import javax.inject.Inject;
 public class S3BucketName {
 
     private final String legacyS3BucketName;
-    private S3Property s3Property;
+    private final S3Properties s3Properties;
 
     @Inject
-    public S3BucketName(AppProperty appProperty, S3Property s3Property) {
-        this.legacyS3BucketName = appProperty.getAppName() + "-" + s3Property.getEnv();
-        this.s3Property = s3Property;
+    public S3BucketName(AppProperties appProperties, S3Properties s3Properties) {
+        this.legacyS3BucketName = appProperties.getAppName() + "-" + s3Properties.getEnv();
+        this.s3Properties = s3Properties;
     }
 
     public String getS3BucketName() {
-        return s3Property.getBucketName(legacyS3BucketName);
+        return s3Properties.getBucketName(legacyS3BucketName);
     }
 
 }

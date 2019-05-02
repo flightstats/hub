@@ -21,9 +21,9 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.flightstats.hub.config.AwsProperty;
-import com.flightstats.hub.config.DynamoProperty;
-import com.flightstats.hub.config.S3Property;
+import com.flightstats.hub.config.AwsProperties;
+import com.flightstats.hub.config.DynamoProperties;
+import com.flightstats.hub.config.S3Properties;
 import com.google.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 
@@ -36,57 +36,59 @@ import static com.amazonaws.retry.PredefinedBackoffStrategies.FullJitterBackoffS
 @Slf4j
 public class AwsConnectorFactory {
 
-    private AwsProperty awsProperty;
-    private DynamoProperty dynamoProperty;
-    private S3Property s3Property;
+    private final AwsProperties awsProperties;
+    private final DynamoProperties dynamoProperties;
+    private final S3Properties s3Properties;
 
     private final String signingRegion;
     private final String protocol;
 
     @Inject
-    public AwsConnectorFactory(AwsProperty awsProperty, DynamoProperty dynamoProperty, S3Property s3Property) {
-        this.awsProperty = awsProperty;
-        this.dynamoProperty = dynamoProperty;
-        this.s3Property = s3Property;
+    public AwsConnectorFactory(AwsProperties awsProperties,
+                               DynamoProperties dynamoProperties,
+                               S3Properties s3Properties) {
+        this.awsProperties = awsProperties;
+        this.dynamoProperties = dynamoProperties;
+        this.s3Properties = s3Properties;
 
-        this.signingRegion = awsProperty.getSigningRegion();
-        this.protocol = awsProperty.getProtocol();
+        this.signingRegion = awsProperties.getSigningRegion();
+        this.protocol = awsProperties.getProtocol();
     }
 
     public AmazonS3 getS3Client() {
-        log.info("creating for  {} {} {}", protocol, s3Property.getEndpoint(), signingRegion);
+        log.info("creating for  {} {} {}", protocol, s3Properties.getEndpoint(), signingRegion);
 
         final ClientConfiguration clientConfiguration = getClientConfiguration(
-                s3Property.getMaxConnections(),
-                s3Property.getConnectionTimeout(),
-                s3Property.getSocketTimeout(),
+                s3Properties.getMaxConnections(),
+                s3Properties.getConnectionTimeout(),
+                s3Properties.getSocketTimeout(),
                 true);
 
         log.info("using s3 config {}", clientConfiguration);
 
         return AmazonS3ClientBuilder.standard()
                 .withClientConfiguration(clientConfiguration)
-                .withPathStyleAccessEnabled(s3Property.getPathStyleAccessEnable())
-                .withChunkedEncodingDisabled(s3Property.getDisableChunkedEncoding())
-                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(s3Property.getEndpoint(), signingRegion))
+                .withPathStyleAccessEnabled(s3Properties.isPathStyleAccessEnabled())
+                .withChunkedEncodingDisabled(s3Properties.getDisableChunkedEncoding())
+                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(s3Properties.getEndpoint(), signingRegion))
                 .withCredentials(getAwsCredentials())
                 .build();
     }
 
     public AmazonDynamoDB getDynamoClient() {
-        log.info("creating for {} {} {}", protocol, dynamoProperty.getEndpoint(), signingRegion);
+        log.info("creating for {} {} {}", protocol, dynamoProperties.getEndpoint(), signingRegion);
 
         final ClientConfiguration clientConfiguration = getClientConfiguration(
-                dynamoProperty.getMaxConnections(),
-                dynamoProperty.getConnectionTimeout(),
-                dynamoProperty.getSocketTimeout(),
+                dynamoProperties.getMaxConnections(),
+                dynamoProperties.getConnectionTimeout(),
+                dynamoProperties.getSocketTimeout(),
                 false);
 
         log.info("using dynamo config {}", clientConfiguration);
 
         return AmazonDynamoDBClientBuilder.standard()
                 .withClientConfiguration(clientConfiguration)
-                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(dynamoProperty.getEndpoint(), signingRegion))
+                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(dynamoProperties.getEndpoint(), signingRegion))
                 .withCredentials(getAwsCredentials())
                 .build();
     }
@@ -94,7 +96,7 @@ public class AwsConnectorFactory {
     private AWSCredentialsProviderChain getAwsCredentials() {
         return new AWSCredentialsProviderChain(
                 new DefaultAWSCredentialsProviderChain(),
-                new AWSStaticCredentialsProvider(loadTestCredentials(awsProperty.getCredentialsFile())));
+                new AWSStaticCredentialsProvider(loadTestCredentials(awsProperties.getCredentialsFile())));
     }
 
     private AWSCredentials loadTestCredentials(String credentialsPath) {
@@ -108,7 +110,7 @@ public class AwsConnectorFactory {
     }
 
     private ClientConfiguration getClientConfiguration(int maxConnections, int connectionTimeout, int socketTimeout, boolean compress) {
-        RetryPolicy retryPolicy = new RetryPolicy(new HubRetryCondition(), new HubBackoffStrategy(awsProperty), 6, true);
+        RetryPolicy retryPolicy = new RetryPolicy(new HubRetryCondition(), new HubBackoffStrategy(awsProperties), 6, true);
         ClientConfiguration configuration = new ClientConfiguration()
                 .withMaxConnections(maxConnections)
                 .withRetryPolicy(retryPolicy)
@@ -128,11 +130,11 @@ public class AwsConnectorFactory {
         private final BackoffStrategy equalJitterBackoffStrategy;
         private int unknownHostDelay;
 
-        HubBackoffStrategy(AwsProperty awsProperty) {
-            this.unknownHostDelay = awsProperty.getRetryUnknownHostDelayInMillis();
+        HubBackoffStrategy(AwsProperties awsProperties) {
+            this.unknownHostDelay = awsProperties.getRetryUnknownHostDelayInMillis();
 
-            int delayMillis = awsProperty.getRetryDelayInMillis();
-            int maxBackoffTime = awsProperty.getRetryMaxDelayInMillis();
+            int delayMillis = awsProperties.getRetryDelayInMillis();
+            int maxBackoffTime = awsProperties.getRetryMaxDelayInMillis();
 
             fullJitterBackoffStrategy = new FullJitterBackoffStrategy(delayMillis, maxBackoffTime);
             equalJitterBackoffStrategy = new EqualJitterBackoffStrategy(delayMillis * 10, maxBackoffTime);  // bc doubling base delay

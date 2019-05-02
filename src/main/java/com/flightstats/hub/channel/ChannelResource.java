@@ -5,8 +5,8 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.app.LocalHostOnly;
-import com.flightstats.hub.config.AppProperty;
-import com.flightstats.hub.config.PropertyLoader;
+import com.flightstats.hub.config.ContentProperties;
+import com.flightstats.hub.config.PropertiesLoader;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.events.ContentOutput;
 import com.flightstats.hub.events.EventsService;
@@ -63,7 +63,7 @@ public class ChannelResource {
     private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
     private final static NtpMonitor ntpMonitor = HubProvider.getInstance(NtpMonitor.class);
     private final static EventsService eventsService = HubProvider.getInstance(EventsService.class);
-    private AppProperty appProperty = new AppProperty(PropertyLoader.getInstance());
+    private final ContentProperties contentProperties = new ContentProperties(PropertiesLoader.getInstance());
     @Context
     private UriInfo uriInfo;
 
@@ -270,7 +270,7 @@ public class ChannelResource {
         if (!optionalChannelConfig.isPresent()) {
             return notFound(channelName);
         }
-        if (appProperty.isProtected() || optionalChannelConfig.get().isProtect()) {
+        if (contentProperties.isChannelProtectionEnabled() || optionalChannelConfig.get().isProtect()) {
             log.info("using localhost only to delete {}", channelName);
             return LocalHostOnly.getResponse(uriInfo, () -> deletion(channelName));
         }

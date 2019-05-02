@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.cluster.Cluster;
 import com.flightstats.hub.cluster.CuratorCluster;
-import com.flightstats.hub.config.AppProperty;
+import com.flightstats.hub.config.ContentProperties;
 import com.flightstats.hub.dao.ContentKeyUtil;
 import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.dao.QueryResult;
@@ -48,15 +48,15 @@ public class RemoteSpokeStore {
     private final CuratorCluster cluster;
     private final StatsdReporter statsdReporter;
     private final ExecutorService executorService;
-    private AppProperty appProperty;
+    private final ContentProperties contentProperties;
 
     @Inject
     public RemoteSpokeStore(@Named("SpokeCuratorCluster") CuratorCluster cluster,
                             StatsdReporter statsdReporter,
-                            AppProperty appProperty) {
+                            ContentProperties contentProperties) {
         this.cluster = cluster;
         this.statsdReporter = statsdReporter;
-        this.appProperty = appProperty;
+        this.contentProperties = contentProperties;
         executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("RemoteSpokeStore-%d").build());
     }
 
@@ -66,7 +66,7 @@ public class RemoteSpokeStore {
 
     void testOne(Collection<String> server) throws InterruptedException {
         String path = "Internal-Spoke-Health-Hook/";
-        Traces traces = new Traces(appProperty, path);
+        Traces traces = new Traces(path);
         int calls = 10;
         ExecutorService threadPool = Executors.newFixedThreadPool(2);
         CountDownLatch quorumLatch = new CountDownLatch(calls);
@@ -166,7 +166,7 @@ public class RemoteSpokeStore {
             });
         }
         try {
-            quorumLatch.await(appProperty.getStableSeconds(), TimeUnit.SECONDS);
+            quorumLatch.await(contentProperties.getStableSeconds(), TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             throw new RuntimeInterruptedException(e);
         }

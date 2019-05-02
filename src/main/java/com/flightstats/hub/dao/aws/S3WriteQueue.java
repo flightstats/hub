@@ -1,6 +1,6 @@
 package com.flightstats.hub.dao.aws;
 
-import com.flightstats.hub.config.S3Property;
+import com.flightstats.hub.config.S3Properties;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.exception.FailedReadException;
 import com.flightstats.hub.metrics.ActiveTraces;
@@ -35,7 +35,7 @@ public class S3WriteQueue {
     S3WriteQueue(@Named(ContentDao.WRITE_CACHE) ContentDao spokeWriteContentDao,
                  @Named(ContentDao.SINGLE_LONG_TERM) ContentDao s3SingleContentDao,
                  StatsdReporter statsdReporter,
-                 S3Property s3property) {
+                 S3Properties s3property) {
         this.spokeWriteContentDao = spokeWriteContentDao;
         this.s3SingleContentDao = s3SingleContentDao;
         this.statsdReporter = statsdReporter;

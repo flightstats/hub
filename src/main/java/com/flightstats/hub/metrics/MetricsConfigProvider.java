@@ -2,9 +2,9 @@ package com.flightstats.hub.metrics;
 
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubVersion;
-import com.flightstats.hub.config.AppProperty;
-import com.flightstats.hub.config.DatadogMetricsProperty;
-import com.flightstats.hub.config.TickMetricsProperty;
+import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.DatadogMetricsProperties;
+import com.flightstats.hub.config.TickMetricsProperties;
 import com.google.inject.Provider;
 
 import javax.inject.Inject;
@@ -12,27 +12,27 @@ import javax.inject.Inject;
 public class MetricsConfigProvider implements Provider<MetricsConfig> {
 
     private HubVersion hubVersion;
-    private AppProperty appProperty;
-    private TickMetricsProperty tickMetricsProperty;
-    private DatadogMetricsProperty datadogMetricsProperty;
+    private final AppProperties appProperties;
+    private final TickMetricsProperties tickMetricsProperty;
+    private final DatadogMetricsProperties datadogMetricsProperties;
 
     @Inject
     public MetricsConfigProvider(HubVersion hubVersion,
-                                 AppProperty appProperty,
-                                 TickMetricsProperty tickMetricsProperty,
-                                 DatadogMetricsProperty datadogMetricsProperty) {
+                                 AppProperties appProperties,
+                                 TickMetricsProperties tickMetricsProperty,
+                                 DatadogMetricsProperties datadogMetricsProperties) {
         this.hubVersion = hubVersion;
-        this.appProperty = appProperty;
+        this.appProperties = appProperties;
         this.tickMetricsProperty = tickMetricsProperty;
-        this.datadogMetricsProperty = datadogMetricsProperty;
+        this.datadogMetricsProperties = datadogMetricsProperties;
     }
 
     @Override
     public MetricsConfig get() {
         return MetricsConfig.builder()
                 .appVersion(hubVersion.getVersion())
-                .clusterTag(appProperty.getClusterLocation() + "-" + appProperty.getEnv())
-                .env(appProperty.getEnv())
+                .clusterTag(appProperties.getClusterLocation() + "-" + appProperties.getEnv())
+                .env(appProperties.getEnv())
                 .enabled(tickMetricsProperty.isMetricsEnable())
                 .team(tickMetricsProperty.getMetricsTagsTeam())
                 .role(tickMetricsProperty.getMetricsTagsRole())
@@ -45,10 +45,10 @@ public class MetricsConfigProvider implements Provider<MetricsConfig> {
                 .influxdbProtocol(tickMetricsProperty.getInfluxDbProtocol())
                 .influxdbUser(tickMetricsProperty.getInfluxDbUser())
                 .statsdPort(tickMetricsProperty.getStatsdPort())
-                .dogstatsdPort(datadogMetricsProperty.getStatsdPort())
-                .datadogApiUrl(datadogMetricsProperty.getUrl())
-                .dataDogAppKey(datadogMetricsProperty.getAppKey())
-                .dataDogAPIKey(datadogMetricsProperty.getApiKey())
+                .dogstatsdPort(datadogMetricsProperties.getStatsdPort())
+                .datadogApiUrl(datadogMetricsProperties.getUrl())
+                .dataDogAppKey(datadogMetricsProperties.getAppKey())
+                .dataDogAPIKey(datadogMetricsProperties.getApiKey())
                 .build();
     }
 }

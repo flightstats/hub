@@ -3,7 +3,7 @@ package com.flightstats.hub.webhook;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubProvider;
-import com.flightstats.hub.config.WebhookProperty;
+import com.flightstats.hub.config.WebhookProperties;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.metrics.Traces;
@@ -22,7 +22,6 @@ import org.joda.time.DateTime;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
@@ -34,12 +33,12 @@ import java.util.function.Predicate;
 @Slf4j
 class WebhookRetryer {
 
-    private List<Predicate<DeliveryAttempt>> giveUpIfs;
-    private List<Predicate<DeliveryAttempt>> tryLaterIfs;
+    private final List<Predicate<DeliveryAttempt>> giveUpIfs;
+    private final List<Predicate<DeliveryAttempt>> tryLaterIfs;
 
-    private WebhookErrorService webhookErrorService;
-    private Client httpClient;
-    private StatsdReporter statsdHandlers;
+    private final WebhookErrorService webhookErrorService;
+    private final Client httpClient;
+    private final StatsdReporter statsdHandlers;
 
     @Builder
     WebhookRetryer(@Singular List<Predicate<DeliveryAttempt>> giveUpIfs,
@@ -52,7 +51,7 @@ class WebhookRetryer {
                 readTimeoutSeconds,
                 HubProvider.getInstance(WebhookErrorService.class),
                 HubProvider.getInstance(StatsdReporter.class),
-                HubProvider.getInstance(WebhookProperty.class));
+                HubProvider.getInstance(WebhookProperties.class));
     }
 
     @VisibleForTesting
@@ -62,14 +61,14 @@ class WebhookRetryer {
                    Integer readTimeoutSeconds,
                    WebhookErrorService webhookErrorService,
                    StatsdReporter statsdReporter,
-                   WebhookProperty webhookProperty) {
+                   WebhookProperties webhookProperties) {
         this.giveUpIfs = giveUpIfs;
         this.tryLaterIfs = tryLaterIfs;
         this.webhookErrorService = webhookErrorService;
         if (connectTimeoutSeconds == null)
-            connectTimeoutSeconds = webhookProperty.getConnectTimeoutSeconds();
+            connectTimeoutSeconds = webhookProperties.getConnectTimeoutSeconds();
         if (readTimeoutSeconds == null)
-            readTimeoutSeconds = webhookProperty.getReadTimeoutSeconds();
+            readTimeoutSeconds = webhookProperties.getReadTimeoutSeconds();
         this.httpClient = RestClient.createClient(connectTimeoutSeconds, readTimeoutSeconds, true, false);
         this.statsdHandlers = statsdReporter;
     }

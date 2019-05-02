@@ -1,7 +1,7 @@
 package com.flightstats.hub.webhook;
 
-import com.flightstats.hub.config.PropertyLoader;
-import com.flightstats.hub.config.WebhookProperty;
+import com.flightstats.hub.config.PropertiesLoader;
+import com.flightstats.hub.config.WebhookProperties;
 import com.flightstats.hub.metrics.StatsdReporter;
 import org.junit.Test;
 
@@ -21,7 +21,7 @@ public class WebhookRetryerTest {
     private int readTimeoutSeconds = 10;
     private WebhookErrorService webhookErrorService = mock(WebhookErrorService.class);
     private StatsdReporter statsdReporter = mock(StatsdReporter.class);
-    private WebhookProperty webhookProperty = new WebhookProperty(PropertyLoader.getInstance());
+    private WebhookProperties webhookProperties = new WebhookProperties(PropertiesLoader.getInstance());
 
     private WebhookRetryer retryer = new WebhookRetryer(
             giveUpIfs,
@@ -30,7 +30,7 @@ public class WebhookRetryerTest {
             readTimeoutSeconds,
             webhookErrorService,
             statsdReporter,
-            webhookProperty);
+            webhookProperties);
 
     @Test
     public void testShouldGiveUpIf() {
@@ -48,7 +48,7 @@ public class WebhookRetryerTest {
                 readTimeoutSeconds,
                 webhookErrorService,
                 statsdReporter,
-                webhookProperty);
+                webhookProperties);
         assertTrue(retryer.shouldTryLater(DeliveryAttempt.builder().build()));
     }
 

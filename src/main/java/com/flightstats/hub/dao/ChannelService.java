@@ -3,7 +3,7 @@ package com.flightstats.hub.dao;
 import com.flightstats.hub.app.InFlightService;
 import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.cluster.LastContentPath;
-import com.flightstats.hub.config.AppProperty;
+import com.flightstats.hub.config.ContentProperties;
 import com.flightstats.hub.dao.aws.MultiPartParser;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.exception.ForbiddenRequestException;
@@ -73,7 +73,7 @@ public class ChannelService {
     @Inject
     private StatsdReporter statsdReporter;
     @Inject
-    private AppProperty appProperty;
+    private ContentProperties contentProperties;
 
     public boolean channelExists(String channelName) {
         return channelConfigDao.exists(channelName);
@@ -197,7 +197,7 @@ public class ChannelService {
         }
         long start = System.currentTimeMillis();
         Collection<ContentKey> contentKeys = inFlightService.inFlight(() -> {
-            MultiPartParser multiPartParser = new MultiPartParser(bulkContent, appProperty.getMaxPayloadSizeInMB());
+            MultiPartParser multiPartParser = new MultiPartParser(bulkContent, contentProperties.getMaxPayloadSizeInMB());
             multiPartParser.parse();
             return contentService.insert(bulkContent);
         });
@@ -371,8 +371,8 @@ public class ChannelService {
 
     private DirectionQuery configureQuery(DirectionQuery query) {
         ActiveTraces.getLocal().add("configureQuery.start", query);
-        if (query.getCount() > appProperty.getDirectionCountLimit()) {
-            query = query.withCount(appProperty.getDirectionCountLimit());
+        if (query.getCount() > contentProperties.getDirectionCountLimit()) {
+            query = query.withCount(contentProperties.getDirectionCountLimit());
         }
         String channelName = query.getChannelName();
         ChannelConfig channelConfig = getExpectedCachedChannelConfig(channelName);
