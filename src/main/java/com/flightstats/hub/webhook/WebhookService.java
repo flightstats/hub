@@ -12,23 +12,28 @@ import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.util.RequestUtils;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.flightstats.hub.webhook.WebhookLeader.WEBHOOK_LAST_COMPLETED;
 
+@Slf4j
 public class WebhookService {
-    private final static Logger logger = LoggerFactory.getLogger(WebhookService.class);
+
+    private static final DateTime START_DATE_TIME = new DateTime(1980, 1, 1, 1, 1);
 
     private final Dao<Webhook> webhookDao;
     private final WebhookValidator webhookValidator;
     private final WebhookManager webhookManager;
     private final LastContentPath lastContentPath;
     private final ChannelService channelService;
+    private final LocalWebhookManager localWebhookManager;
     private final WebhookProperties webhookProperties;
 
     @Inject
@@ -37,17 +42,19 @@ public class WebhookService {
                           WebhookManager webhookManager,
                           LastContentPath lastContentPath,
                           ChannelService channelService,
+                          LocalWebhookManager localWebhookManager,
                           WebhookProperties webhookProperties) {
         this.webhookDao = webhookDao;
         this.webhookValidator = webhookValidator;
         this.webhookManager = webhookManager;
         this.lastContentPath = lastContentPath;
         this.channelService = channelService;
+        this.localWebhookManager = localWebhookManager;
         this.webhookProperties = webhookProperties;
     }
 
     public Optional<Webhook> upsert(Webhook webhook) {
-        logger.info("incoming webhook {} ", webhook);
+        log.info("incoming webhook {} ", webhook);
         webhook = webhook.withDefaults(webhookProperties.getCallbackTimeoutDefaultInSec());
         webhookValidator.validate(webhook);
         Optional<Webhook> preExisting = get(webhook.getName());
@@ -57,7 +64,8 @@ public class WebhookService {
         if (preExisting.isPresent()) {
             Webhook existing = preExisting.get();
             ContentPath newStartingKey = webhook.getStartingKey();
-            if (newStartingKey != null && newStartingKey.getTime().compareTo(new DateTime(1980, 1, 1, 1, 1)) >= 0
+            if (newStartingKey != null
+                    && newStartingKey.getTime().compareTo(START_DATE_TIME) >= 0
                     && !newStartingKey.equals(existing.getStartingKey())) {
                 updateCursor(webhook, webhook.getStartingKey());
             } else if (existing.equals(webhook)) {
@@ -70,11 +78,11 @@ public class WebhookService {
                 webhook = webhook.withStartingKey(WebhookStrategy.createContentPath(webhook));
             }
         }
-        logger.info("upsert webhook {} ", webhook);
+        log.info("upsert webhook {} ", webhook);
         ContentPath existingContentPath = lastContentPath.getOrNull(webhook.getName(), WEBHOOK_LAST_COMPLETED);
-        logger.info("webhook {} existing {} startingKey {}", webhook.getName(), existingContentPath, webhook.getStartingKey());
+        log.info("webhook {} existing {} startingKey {}", webhook.getName(), existingContentPath, webhook.getStartingKey());
         if (existingContentPath == null || webhook.getStartingKey() != null) {
-            logger.info("initializing {} with startingKey {}", webhook.getName(), webhook.getStartingKey());
+            log.info("initializing {} with startingKey {}", webhook.getName(), webhook.getStartingKey());
             lastContentPath.initialize(webhook.getName(), webhook.getStartingKey(), WEBHOOK_LAST_COMPLETED);
         }
 
@@ -93,6 +101,13 @@ public class WebhookService {
         return preExisting;
     }
 
+    private Optional<Webhook> upsertTagWebhook(Webhook webhook, Optional<Webhook> preExisting) {
+        webhookDao.upsert(webhook);
+        webhookManager.notifyWatchers(webhook);
+        upsertTagWebhookInstances(webhook);
+        return preExisting;
+    }
+
     private void createErrorChannel(String channelURL) {
         String channelName = RequestUtils.getChannelName(channelURL);
         if (!channelService.channelExists(channelName)) {
@@ -100,27 +115,16 @@ public class WebhookService {
         }
     }
 
-    private Optional<Webhook> upsertTagWebhook(Webhook webhook, Optional<Webhook> preExisting) {
-        webhookDao.upsert(webhook);
-        webhookManager.notifyWatchers(webhook);
-        TagWebhook.upsertTagWebhookInstances(webhook);
-        return preExisting;
-    }
-
     public Optional<Webhook> get(String name) {
         return Optional.ofNullable(webhookDao.get(name));
     }
 
-    Optional<Webhook> getCached(String name) {
-        return Optional.ofNullable(webhookDao.getCached(name));
-    }
-
     public Collection<Webhook> getAll() {
-        return webhookDao.getAll(false);
+        return this.webhookDao.getAll(false);
     }
 
     public Collection<Webhook> getAllCached() {
-        return webhookDao.getAll(true);
+        return this.webhookDao.getAll(true);
     }
 
     WebhookStatus getStatus(Webhook webhook) {
@@ -135,21 +139,53 @@ public class WebhookService {
                 builder.channelLatest(lastKey.get());
             }
         } catch (NoSuchChannelException e) {
-            logger.info("no channel found for " + channel);
+            log.info("no channel found for " + channel);
         }
         webhookManager.getStatus(webhook, builder);
         return builder.build();
     }
 
     public void delete(String name) {
-        logger.info("deleting webhook " + name);
-        TagWebhook.deleteInstancesIfTagWebhook(name);
-        webhookDao.delete(name);
-        webhookManager.delete(name);
+        log.info("deleting webhook " + name);
+        deleteInstancesIfTagWebhook(name);
+        this.webhookDao.delete(name);
+        this.webhookManager.delete(name);
     }
 
     void updateCursor(Webhook webhook, ContentPath item) {
         this.delete(webhook.getName());
         this.upsert(webhook.withStartingKey(item));
     }
+
+    void deleteInstancesIfTagWebhook(String webhookName) {
+        Optional<Webhook> webhookOptional = get(webhookName);
+        if (!webhookOptional.isPresent()) return;
+        Webhook webhook = webhookOptional.get();
+        if (!webhook.isTagPrototype()) return;
+        log.info("TagWebHook: Deleting tag webhook instances for tag " + webhookName);
+
+        Set<String> names = webhookInstancesWithTag(webhook.getTagFromTagUrl()).stream()
+                .map((Webhook::getName))
+                .collect(Collectors.toSet());
+
+        localWebhookManager.runAndWait("TagWebhook.deleteAll", names, this::delete);
+    }
+
+    // Add new wh instances for new or updated tag webhook
+    void upsertTagWebhookInstances(Webhook webhookPrototype) {
+        Collection<ChannelConfig> channels = channelService.getChannels(webhookPrototype.getTagFromTagUrl(), false);
+        for (ChannelConfig channel : channels) {
+            log.info("TagWebHook: Adding TagWebhook instance for " + channel.getName());
+            upsert(Webhook.instanceFromTagPrototype(webhookPrototype, channel));
+        }
+    }
+
+    Set<Webhook> webhookInstancesWithTag(String tag) {
+        Set<Webhook> webhookSet = new HashSet<>(this.webhookDao.getAll(false));
+
+        return webhookSet.stream()
+                .filter(wh -> !wh.isTagPrototype() && Objects.equals(tag, wh.getManagedByTag()))
+                .collect(Collectors.toSet());
+    }
+
 }

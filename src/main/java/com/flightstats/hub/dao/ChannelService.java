@@ -74,6 +74,8 @@ public class ChannelService {
     private StatsdReporter statsdReporter;
     @Inject
     private ContentProperties contentProperties;
+    @Inject
+    private TagWebhook tagWebhook;
 
     public boolean channelExists(String channelName) {
         return channelConfigDao.exists(channelName);
@@ -84,7 +86,7 @@ public class ChannelService {
         channelValidator.validate(configuration, null, false);
         channelConfigDao.upsert(configuration);
         notify(configuration, null);
-        TagWebhook.updateTagWebhooksDueToChannelConfigChange(configuration);
+        tagWebhook.updateTagWebhooksDueToChannelConfigChange(configuration);
         return configuration;
     }
 
@@ -110,7 +112,7 @@ public class ChannelService {
             log.info("updating channel {} from {}", configuration, oldConfig);
             channelValidator.validate(configuration, oldConfig, isLocalHost);
             channelConfigDao.upsert(configuration);
-            TagWebhook.updateTagWebhooksDueToChannelConfigChange(configuration);
+            tagWebhook.updateTagWebhooksDueToChannelConfigChange(configuration);
             notify(configuration, oldConfig);
         } else {
             log.info("update with no changes {}", configuration);
@@ -436,7 +438,7 @@ public class ChannelService {
             lastContentPath.delete(channelName, REPLICATED_LAST_UPDATED);
         }
         lastContentPath.delete(channelName, HISTORICAL_EARLIEST);
-        TagWebhook.deleteAllTagWebhooksForChannel(channelConfig);
+        tagWebhook.deleteAllTagWebhooksForChannel(channelConfig);
         return true;
     }
 
