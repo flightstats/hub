@@ -19,7 +19,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
 
-import static com.flightstats.hub.dao.ChannelService.REPLICATED_LAST_UPDATED;
+import static com.flightstats.hub.util.Constants.REPLICATED_LAST_UPDATED;
 import static com.flightstats.hub.dao.aws.S3Verifier.LAST_SINGLE_VERIFIED;
 import static org.junit.Assert.assertEquals;
 

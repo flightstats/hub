@@ -26,12 +26,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.flightstats.hub.app.HubServices.TYPE;
 import static com.flightstats.hub.app.HubServices.register;
+import static com.flightstats.hub.util.Constants.REPLICATOR_WATCHER_PATH;
 
 @Singleton
 @Slf4j
 public class ReplicationManager {
 
-    private static final String REPLICATOR_WATCHER_PATH = "/replicator/watcher";
     private final Map<String, ChannelReplicator> channelReplicatorMap = new HashMap<>();
     private final AtomicBoolean stopped = new AtomicBoolean();
     private final ExecutorService executor = Executors.newSingleThreadExecutor(
@@ -152,10 +152,6 @@ public class ReplicationManager {
             channelReplicatorMap.remove(replicator.getChannel().getDisplayName());
             log.warn("unexpected replication issue " + replicator.getChannel().getDisplayName(), e);
         }
-    }
-
-    public void notifyWatchers() {
-        watchManager.notifyWatcher(REPLICATOR_WATCHER_PATH);
     }
 
     private class ReplicationService extends AbstractIdleService {

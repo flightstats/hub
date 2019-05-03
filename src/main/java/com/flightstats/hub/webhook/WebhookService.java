@@ -33,7 +33,7 @@ public class WebhookService {
     private final WebhookValidator webhookValidator;
     private final WebhookManager webhookManager;
     private final LastContentPath lastContentPath;
-    private final ChannelService channelService;
+   // private final ChannelService channelService;
     private final LocalWebhookManager localWebhookManager;
     private final WebhookProperties webhookProperties;
 

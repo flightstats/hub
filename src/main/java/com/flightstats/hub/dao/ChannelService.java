@@ -3,6 +3,7 @@ package com.flightstats.hub.dao;
 import com.flightstats.hub.app.InFlightService;
 import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.cluster.LastContentPath;
+import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.config.ContentProperties;
 import com.flightstats.hub.dao.aws.MultiPartParser;
 import com.flightstats.hub.exception.ContentTooLargeException;
@@ -24,17 +25,16 @@ import com.flightstats.hub.model.Epoch;
 import com.flightstats.hub.model.SecondPath;
 import com.flightstats.hub.model.StreamResults;
 import com.flightstats.hub.model.TimeQuery;
-import com.flightstats.hub.replication.ReplicationManager;
 import com.flightstats.hub.time.TimeService;
 import com.flightstats.hub.util.TimeUtil;
 import com.flightstats.hub.webhook.TagWebhook;
-import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -46,36 +46,52 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.flightstats.hub.util.Constants.REPLICATED_LAST_UPDATED;
+import static com.flightstats.hub.util.Constants.REPLICATOR_WATCHER_PATH;
+
 @Singleton
 @Slf4j
 public class ChannelService {
-    /**
-     * REPLICATED_LAST_UPDATED is set to the last second updated, inclusive of that entire second.
-     */
-    public static final String REPLICATED_LAST_UPDATED = "/ReplicatedLastUpdated/";
+
     private static final String HISTORICAL_EARLIEST = "/HistoricalEarliest/";
 
     @Inject
     private ContentService contentService;
+
+    private final Dao<ChannelConfig> channelConfigDao;
+    private final ChannelValidator channelValidator;
+    private final WatchManager watchManager;
+    private final LastContentPath lastContentPath;
+    private final InFlightService inFlightService;
+    private final TimeService timeService;
+    private final StatsdReporter statsdReporter;
+    private final ContentProperties contentProperties;
+
+
+  private TagWebhook tagWebhook;
+
     @Inject
-    @Named("ChannelConfig")
-    private Dao<ChannelConfig> channelConfigDao;
-    @Inject
-    private ChannelValidator channelValidator;
-    @Inject
-    private ReplicationManager replicationManager;
-    @Inject
-    private LastContentPath lastContentPath;
-    @Inject
-    private InFlightService inFlightService;
-    @Inject
-    private TimeService timeService;
-    @Inject
-    private StatsdReporter statsdReporter;
-    @Inject
-    private ContentProperties contentProperties;
-    @Inject
-    private TagWebhook tagWebhook;
+    public ChannelService(//ContentService contentService,
+                          @Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao,
+                          ChannelValidator channelValidator,
+                          WatchManager watchManager,
+                          LastContentPath lastContentPath,
+                          InFlightService inFlightService,
+                          TimeService timeService,
+                          StatsdReporter statsdReporter,
+                          ContentProperties contentProperties,
+                          TagWebhook tagWebhook) {
+     //   this.contentService = contentService;
+        this.channelConfigDao = channelConfigDao;
+        this.channelValidator = channelValidator;
+        this.watchManager = watchManager;
+        this.lastContentPath = lastContentPath;
+        this.inFlightService = inFlightService;
+        this.timeService = timeService;
+        this.statsdReporter = statsdReporter;
+        this.contentProperties = contentProperties;
+        this.tagWebhook = tagWebhook;
+    }
 
     public boolean channelExists(String channelName) {
         return channelConfigDao.exists(channelName);
@@ -92,10 +108,10 @@ public class ChannelService {
 
     private void notify(ChannelConfig newConfig, ChannelConfig oldConfig) {
         if (newConfig.isReplicating()) {
-            replicationManager.notifyWatchers();
+            watchManager.notifyWatcher(REPLICATOR_WATCHER_PATH);
         } else if (oldConfig != null) {
             if (oldConfig.isReplicating()) {
-                replicationManager.notifyWatchers();
+                watchManager.notifyWatcher(REPLICATOR_WATCHER_PATH);
             }
         }
         if (newConfig.isHistorical()) {
@@ -434,7 +450,7 @@ public class ChannelService {
         contentService.delete(channelConfig.getDisplayName());
         channelConfigDao.delete(channelConfig.getDisplayName());
         if (channelConfig.isReplicating()) {
-            replicationManager.notifyWatchers();
+            watchManager.notifyWatcher(REPLICATOR_WATCHER_PATH);
             lastContentPath.delete(channelName, REPLICATED_LAST_UPDATED);
         }
         lastContentPath.delete(channelName, HISTORICAL_EARLIEST);

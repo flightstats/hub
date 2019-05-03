@@ -23,6 +23,8 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 
+import static com.flightstats.hub.util.Constants.REPLICATED_LAST_UPDATED;
+
 @Path("/internal/repls/{channel}")
 public class InternalReplicationResource {
 
@@ -95,7 +97,7 @@ public class InternalReplicationResource {
                     }
                 }
             }
-            lastReplicated.updateIncrease(path, channel, ChannelService.REPLICATED_LAST_UPDATED);
+            lastReplicated.updateIncrease(path, channel, REPLICATED_LAST_UPDATED);
             logger.trace("handled {} {} ", channel, uris);
             return Response.ok().build();
         } catch (Exception e) {

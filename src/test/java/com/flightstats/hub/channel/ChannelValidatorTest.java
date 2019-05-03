@@ -2,6 +2,7 @@ package com.flightstats.hub.channel;
 
 import com.flightstats.hub.config.PropertiesLoader;
 import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.exception.ForbiddenRequestException;
 import com.flightstats.hub.exception.InvalidRequestException;
@@ -23,14 +24,14 @@ import static org.mockito.Mockito.when;
 
 public class ChannelValidatorTest {
 
-    private ChannelService channelService;
+    private Dao<ChannelConfig> channelConfigDao;
     private ChannelValidator validator;
 
     @Before
     public void setUp() throws Exception {
-        channelService = mock(ChannelService.class);
-        validator = new ChannelValidator(channelService);
-        when(channelService.channelExists(any(String.class))).thenReturn(false);
+        channelConfigDao = mock(Dao.class);
+        validator = new ChannelValidator(channelConfigDao);
+        when(channelConfigDao.exists(any(String.class))).thenReturn(false);
         PropertiesLoader.getInstance().setProperty("hub.protect.channels", "false");
     }
 
@@ -62,7 +63,7 @@ public class ChannelValidatorTest {
     @Test(expected = ConflictException.class)
     public void testChannelExists() throws Exception {
         String channelName = "achannel";
-        when(channelService.channelExists(channelName)).thenReturn(true);
+        when(channelConfigDao.exists(channelName)).thenReturn(true);
         ChannelConfig channelConfig = getBuilder().name(channelName).build();
         validator.validate(channelConfig, null, false);
     }
@@ -327,6 +328,5 @@ public class ChannelValidatorTest {
             //this is expected
         }
     }
-
 
 }

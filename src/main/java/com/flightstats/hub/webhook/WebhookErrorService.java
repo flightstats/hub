@@ -37,7 +37,9 @@ class WebhookErrorService {
     private final WebhookErrorPruner webhookErrorPruner;
 
     @Inject
-    public WebhookErrorService(WebhookErrorRepository webhookErrorRepository, WebhookErrorPruner webhookErrorPruner, ChannelService channelService) {
+    public WebhookErrorService(WebhookErrorRepository webhookErrorRepository,
+                               WebhookErrorPruner webhookErrorPruner,
+                               ChannelService channelService) {
         this.webhookErrorRepository = webhookErrorRepository;
         this.webhookErrorPruner = webhookErrorPruner;
         this.channelService = channelService;
