@@ -1,11 +1,21 @@
 package com.flightstats.hub.channel;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.TagService;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.ChannelContentKey;
+import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.Epoch;
+import com.flightstats.hub.model.Location;
+import com.flightstats.hub.model.Order;
 
-import javax.ws.rs.*;
+import javax.inject.Inject;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -21,8 +31,14 @@ import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 @Path("/tag/{tag}/latest")
 public class TagLatestResource {
 
-    private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private TagService tagService = HubProvider.getInstance(TagService.class);
+    private final TagService tagService;
+    private final ObjectMapper objectMapper;
+
+    @Inject
+    public TagLatestResource(TagService tagService, ObjectMapper objectMapper) {
+        this.tagService = tagService;
+        this.objectMapper = objectMapper;
+    }
 
     @GET
     public Response getLatest(@PathParam("tag") String tag,
@@ -31,7 +47,7 @@ public class TagLatestResource {
                               @QueryParam("location") @DefaultValue(Location.DEFAULT) String location,
                               @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
                               @Context UriInfo uriInfo) {
-        Optional<ChannelContentKey> latest = tagService.getLatest(getQuery(tag, stable, location, epoch));
+        final Optional<ChannelContentKey> latest = tagService.getLatest(getQuery(tag, stable, location, epoch));
         if (latest.isPresent()) {
             URI uri = uriInfo.getBaseUriBuilder()
                     .path(latest.get().toUrl())
@@ -71,7 +87,7 @@ public class TagLatestResource {
         if (!latest.isPresent()) {
             return Response.status(NOT_FOUND).build();
         }
-        DirectionQuery query = DirectionQuery.builder()
+        final DirectionQuery query = DirectionQuery.builder()
                 .tagName(tag)
                 .startKey(latest.get().getContentKey())
                 .next(false)
@@ -80,13 +96,13 @@ public class TagLatestResource {
                 .epoch(Epoch.valueOf(epoch))
                 .count(count - 1)
                 .build();
-        SortedSet<ChannelContentKey> keys = tagService.getKeys(query);
+        final SortedSet<ChannelContentKey> keys = tagService.getKeys(query);
         keys.add(latest.get());
         if (bulk || batch) {
             //todo - gfm -
             return BulkBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo, accept);
         }
-        return LinkBuilder.directionalTagResponse(tag, keys, count, query, mapper, uriInfo, true, trace, Order.isDescending(order));
+        return LinkBuilder.directionalTagResponse(tag, keys, count, query, objectMapper, uriInfo, true, trace, Order.isDescending(order));
     }
 
 }

@@ -1,6 +1,5 @@
 package com.flightstats.hub.webhook;
 
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.cluster.WatchManager;
@@ -10,12 +9,12 @@ import com.flightstats.hub.model.ContentPath;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.AbstractScheduledService;
-import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.google.inject.name.Named;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.api.CuratorEvent;
 
+import javax.inject.Inject;
+import javax.inject.Named;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -25,54 +24,46 @@ import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
 import static com.flightstats.hub.app.HubServices.register;
+import static com.flightstats.hub.util.Constants.WEBHOOK_LAST_COMPLETED;
 
 @Singleton
 @Slf4j
 public class WebhookManager {
+
     private static final String WATCHER_PATH = "/groupCallback/watcher";
 
-    @Inject
-    private WatchManager watchManager;
-    @Inject
-    @Named("Webhook")
-    private Dao<Webhook> webhookDao;
-    @Inject
-    private LastContentPath lastContentPath;
-    @Inject
-    private ActiveWebhooks activeWebhooks;
+    private final LocalWebhookManager localWebhookManager;
+    private final WebhookErrorService webhookErrorService;
+    private final WebhookContentPathSet webhookContentPathSet;
+    private final InternalWebhookClient webhookClient;
+    private final WebhookStateReaper webhookStateReaper;
+    private final LastContentPath lastContentPath;
+    private final ActiveWebhooks activeWebhooks;
+    private final WatchManager watchManager;
+    private final Dao<Webhook> webhookDao;
 
     @Inject
-    private WebhookErrorService webhookErrorService;
-    @Inject
-    private WebhookContentPathSet webhookInProcess;
-
-    @Inject
-    private InternalWebhookClient webhookClient;
-
-    @Inject
-    private WebhookStateReaper webhookStateReaper;
-
-    @Inject
-    public WebhookManager() {
-        register(new WebhookIdleService(), HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
-        register(new WebhookScheduledService(), HubServices.TYPE.AFTER_HEALTHY_START);
-    }
-
-    @VisibleForTesting
-    WebhookManager(WatchManager watchManager,
-                   Dao<Webhook> webhookDao,
-                   LastContentPath lastContentPath,
-                   ActiveWebhooks activeWebhooks,
-                   WebhookErrorService webhookErrorService,
-                   WebhookContentPathSet webhookInProcess,
-                   InternalWebhookClient webhookClient) {
-        this.watchManager = watchManager;
-        this.webhookDao = webhookDao;
+    public WebhookManager(LocalWebhookManager localWebhookManager,
+                          WebhookErrorService webhookErrorService,
+                          WebhookContentPathSet webhookContentPathSet,
+                          InternalWebhookClient webhookClient,
+                          WebhookStateReaper webhookStateReaper,
+                          LastContentPath lastContentPath,
+                          ActiveWebhooks activeWebhooks,
+                          WatchManager watchManager,
+                          @Named("Webhook") Dao<Webhook> webhookDao) {
+        this.localWebhookManager = localWebhookManager;
+        this.webhookErrorService = webhookErrorService;
+        this.webhookContentPathSet = webhookContentPathSet;
+        this.webhookClient = webhookClient;
+        this.webhookStateReaper = webhookStateReaper;
         this.lastContentPath = lastContentPath;
         this.activeWebhooks = activeWebhooks;
-        this.webhookErrorService = webhookErrorService;
-        this.webhookInProcess = webhookInProcess;
-        this.webhookClient = webhookClient;
+        this.watchManager = watchManager;
+        this.webhookDao = webhookDao;
+
+        register(new WebhookIdleService(), HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
+        register(new WebhookScheduledService(), HubServices.TYPE.AFTER_HEALTHY_START);
     }
 
     private void start() {
@@ -93,7 +84,7 @@ public class WebhookManager {
     }
 
     private synchronized void manageWebhooks(boolean useCache) {
-        Set<Webhook> daoWebhooks = new HashSet<>(webhookDao.getAll(useCache));
+        final Set<Webhook> daoWebhooks = new HashSet<>(webhookDao.getAll(useCache));
         for (Webhook daoWebhook : daoWebhooks) {
             manageWebhook(daoWebhook, false);
         }
@@ -112,10 +103,10 @@ public class WebhookManager {
             // associated with a tag webhook
             return;
         }
-        String name = daoWebhook.getName();
+        final String name = daoWebhook.getName();
         if (activeWebhooks.isActiveWebhook(name)) {
             log.debug("found existing v2 webhook {}", name);
-            List<String> servers = new ArrayList<>(activeWebhooks.getServers(name));
+            final List<String> servers = new ArrayList<>(activeWebhooks.getServers(name));
             if (servers.size() >= 2) {
                 log.warn("found multiple servers! {}", servers);
                 Collections.shuffle(servers);
@@ -144,10 +135,10 @@ public class WebhookManager {
     }
 
     public void getStatus(Webhook webhook, WebhookStatus.WebhookStatusBuilder statusBuilder) {
-        statusBuilder.lastCompleted(lastContentPath.get(webhook.getName(), WebhookStrategy.createContentPath(webhook), WebhookLeader.WEBHOOK_LAST_COMPLETED));
+        statusBuilder.lastCompleted(lastContentPath.get(webhook.getName(), WebhookStrategy.createContentPath(webhook), WEBHOOK_LAST_COMPLETED));
         try {
             statusBuilder.errors(webhookErrorService.lookup(webhook.getName()));
-            ArrayList<ContentPath> inFlight = new ArrayList<>(new TreeSet<>(webhookInProcess.getSet(webhook.getName(), WebhookStrategy.createContentPath(webhook))));
+            final ArrayList<ContentPath> inFlight = new ArrayList<>(new TreeSet<>(webhookContentPathSet.getSet(webhook.getName(), WebhookStrategy.createContentPath(webhook))));
             statusBuilder.inFlight(inFlight);
         } catch (Exception e) {
             log.warn("unable to get status " + webhook.getName(), e);
@@ -159,13 +150,13 @@ public class WebhookManager {
     private class WebhookIdleService extends AbstractIdleService {
 
         @Override
-        protected void startUp() throws Exception {
+        protected void startUp() {
             start();
         }
 
         @Override
-        protected void shutDown() throws Exception {
-            HubProvider.getInstance(LocalWebhookManager.class).stopAllLocal();
+        protected void shutDown() {
+            localWebhookManager.stopAllLocal();
             notifyWatchers();
         }
 
@@ -173,7 +164,7 @@ public class WebhookManager {
 
     private class WebhookScheduledService extends AbstractScheduledService {
         @Override
-        protected void runOneIteration() throws Exception {
+        protected void runOneIteration() {
             manageWebhooks(false);
         }
 

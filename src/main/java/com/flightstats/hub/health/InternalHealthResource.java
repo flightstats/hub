@@ -3,12 +3,12 @@ package com.flightstats.hub.health;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.metrics.InternalTracesResource;
 import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.HubUtils;
 import com.sun.jersey.api.client.ClientResponse;
 
+import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -17,20 +17,28 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-@SuppressWarnings("WeakerAccess")
 @Path("/internal/health")
 public class InternalHealthResource {
-    public static final String DESCRIPTION = "See status of all hubs in a cluster.";
-    private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+
+    private final InternalTracesResource internalTracesResource;
+    private final ObjectMapper objectMapper;
+
+    @Inject
+    public InternalHealthResource(InternalTracesResource internalTracesResource,
+                                  ObjectMapper objectMapper) {
+        this.internalTracesResource = internalTracesResource;
+        this.objectMapper = objectMapper;
+    }
+
     @Context
     private UriInfo uriInfo;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response checkHealth(@Context UriInfo uriInfo) {
-        ObjectNode healthRoot = InternalTracesResource.serverAndServers("/health");
-        ObjectNode root = mapper.createObjectNode();
-        JsonNode servers = healthRoot.get("servers");
+        final ObjectNode healthRoot = this.internalTracesResource.serverAndServers("/health");
+        final ObjectNode root = this.objectMapper.createObjectNode();
+        final JsonNode servers = healthRoot.get("servers");
         for (JsonNode server : servers) {
             callHealth(root, server.asText());
         }
@@ -41,8 +49,8 @@ public class InternalHealthResource {
         ClientResponse response = null;
         try {
             response = RestClient.defaultClient().resource(link).get(ClientResponse.class);
-            String string = response.getEntity(String.class);
-            JsonNode jsonNode = mapper.readTree(string);
+            final String string = response.getEntity(String.class);
+            final JsonNode jsonNode = this.objectMapper.readTree(string);
             root.set(link, jsonNode);
         } catch (Exception e) {
             root.put(link, "unable to get response " + e.getMessage());
@@ -50,6 +58,5 @@ public class InternalHealthResource {
             HubUtils.close(response);
         }
     }
-
 
 }

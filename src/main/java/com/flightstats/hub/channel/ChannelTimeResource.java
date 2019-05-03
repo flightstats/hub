@@ -1,29 +1,36 @@
 package com.flightstats.hub.channel;
 
-import com.flightstats.hub.app.HubProvider;
-import com.flightstats.hub.dao.ChannelService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.flightstats.hub.dao.aws.ContentRetriever;
 
-import javax.ws.rs.*;
+import javax.inject.Inject;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-@SuppressWarnings("WeakerAccess")
 @Path("/channel/{channel}/time")
 public class ChannelTimeResource {
 
-    private final static Logger logger = LoggerFactory.getLogger(ChannelTimeResource.class);
-    private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
+    private final ContentRetriever contentRetriever;
+
     @Context
     private UriInfo uriInfo;
+
+    @Inject
+    public ChannelTimeResource(ContentRetriever contentRetriever) {
+        this.contentRetriever = contentRetriever;
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getDefault(@PathParam("channel") String channel) {
-        if (!channelService.channelExists(channel)) {
+        if (!this.contentRetriever.isExistingChannel(channel)) {
             return Response.status(404).build();
         }
         return TimeLinkUtil.getDefault(uriInfo);

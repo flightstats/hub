@@ -1,14 +1,13 @@
 package com.flightstats.hub.channel;
 
-import com.flightstats.hub.app.HubProvider;
-import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.DocumentationDao;
+import com.flightstats.hub.dao.aws.ContentRetriever;
+import lombok.extern.slf4j.Slf4j;
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
@@ -17,18 +16,25 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 
+@Slf4j
 @Path("/channel/{channel}/doc")
 public class ChannelDocumentationResource {
 
-    private final static Logger logger = LoggerFactory.getLogger(ChannelDocumentationResource.class);
-    private final static DocumentationDao documentationDao = HubProvider.getInstance(DocumentationDao.class);
-    private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
     private final static Parser markdownParser = Parser.builder().build();
     private final static HtmlRenderer markdownRenderer = HtmlRenderer.builder().build();
 
+    private final DocumentationDao documentationDao;
+    private final ContentRetriever contentRetriever;
+
+    @Inject
+    public ChannelDocumentationResource(DocumentationDao documentationDao, ContentRetriever contentRetriever) {
+        this.documentationDao = documentationDao;
+        this.contentRetriever = contentRetriever;
+    }
+
     @GET
     public Response get(@PathParam("channel") String channel, @HeaderParam("accept") String accept) {
-        if (!channelService.channelExists(channel)) {
+        if (!this.contentRetriever.isExistingChannel(channel)) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
 
@@ -46,14 +52,14 @@ public class ChannelDocumentationResource {
     }
 
     private String markdown(String raw) {
-        logger.debug("marking down {}", raw);
+        log.debug("marking down {}", raw);
         Node document = markdownParser.parse(raw);
         return markdownRenderer.render(document);
     }
 
     @PUT
     public Response put(@PathParam("channel") String channel, String content) {
-        if (!channelService.channelExists(channel)) {
+        if (!this.contentRetriever.isExistingChannel(channel)) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
 
@@ -67,7 +73,7 @@ public class ChannelDocumentationResource {
 
     @DELETE
     public Response delete(@PathParam("channel") String channel) {
-        if (!channelService.channelExists(channel)) {
+        if (!this.contentRetriever.isExistingChannel(channel)) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
 

@@ -1,8 +1,11 @@
 package com.flightstats.hub.model;
 
-
 import com.flightstats.hub.util.TimeUtil;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.ToString;
 import lombok.experimental.Wither;
 import org.joda.time.DateTime;
 

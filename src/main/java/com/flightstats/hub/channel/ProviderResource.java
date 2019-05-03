@@ -1,15 +1,15 @@
 package com.flightstats.hub.channel;
 
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.dao.aws.ContentRetriever;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.model.BulkContent;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
+import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
@@ -24,17 +24,23 @@ import java.util.Collection;
  * This is a convenience interface for external data Providers.
  * It supports automatic channel creation and does not return links they can not access.
  */
-@SuppressWarnings("WeakerAccess")
+@Slf4j
 @Path("/provider")
 public class ProviderResource {
-    private final static Logger logger = LoggerFactory.getLogger(ProviderResource.class);
 
-    private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
+    private final ChannelService channelService;
+    private final ContentRetriever contentRetriever;
 
-    protected void ensureChannel(String channelName) {
-        if (!channelService.channelExists(channelName)) {
-            logger.info("creating new Provider channel " + channelName);
-            ChannelConfig configuration = ChannelConfig.builder()
+    @Inject
+    public ProviderResource(ChannelService channelService, ContentRetriever contentRetriever) {
+        this.channelService = channelService;
+        this.contentRetriever = contentRetriever;
+    }
+
+    private void ensureChannel(String channelName) {
+        if (!this.contentRetriever.isExistingChannel(channelName)) {
+            log.info("creating new Provider channel " + channelName);
+            final ChannelConfig configuration = ChannelConfig.builder()
                     .name(channelName)
                     .build();
             channelService.createChannel(configuration);
@@ -45,11 +51,11 @@ public class ProviderResource {
     @Produces(MediaType.TEXT_PLAIN)
     public Response insertValue(@HeaderParam("channelName") final String channelName,
                                 @HeaderParam("Content-Type") final String contentType,
-                                final InputStream data) throws Exception {
+                                final InputStream data) {
 
         ensureChannel(channelName);
 
-        Content content = Content.builder()
+        final Content content = Content.builder()
                 .withContentType(contentType)
                 .withStream(data).build();
         try {
@@ -62,7 +68,7 @@ public class ProviderResource {
             if (content.getContentKey().isPresent()) {
                 key = content.getContentKey().get().toString();
             }
-            logger.warn("unable to POST to " + channelName + " key " + key, e);
+            log.warn("unable to POST to " + channelName + " key " + key, e);
             throw e;
         }
     }
@@ -73,27 +79,26 @@ public class ProviderResource {
     @Path("/bulk")
     public Response insertBulk(@HeaderParam("channelName") final String channelName,
                                @HeaderParam("Content-Type") final String contentType,
-                               final InputStream data) throws Exception {
+                               final InputStream data) {
         try {
             ensureChannel(channelName);
 
-            BulkContent content = BulkContent.builder()
+            final BulkContent content = BulkContent.builder()
                     .isNew(true)
                     .contentType(contentType)
                     .stream(data)
                     .channel(channelName)
                     .build();
 
-            Collection<ContentKey> keys = channelService.insert(content);
-            logger.trace("posted {}", keys);
+            final Collection<ContentKey> keys = channelService.insert(content);
+            log.trace("posted {}", keys);
             return Response.status(Response.Status.OK).build();
         } catch (ContentTooLargeException e) {
             return Response.status(413).entity(e.getMessage()).build();
         } catch (Exception e) {
-            logger.warn("unable to bulk POST to " + channelName, e);
+            log.warn("unable to bulk POST to {}", channelName, e);
             throw e;
         }
     }
-
 
 }

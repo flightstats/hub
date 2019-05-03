@@ -1,11 +1,11 @@
 package com.flightstats.hub.time;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.app.LocalHostOnly;
 import com.flightstats.hub.metrics.InternalTracesResource;
 import com.flightstats.hub.util.TimeUtil;
 
+import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -15,33 +15,41 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-@SuppressWarnings("WeakerAccess")
+import static com.flightstats.hub.util.Constants.TIME_DESCRIPTION;
+
 @Path("/internal/time")
 public class InternalTimeResource {
 
-    public static final String DESCRIPTION = "Links for managing time in a hub cluster.";
-    private final static TimeService timeService = HubProvider.getInstance(TimeService.class);
+    private final InternalTracesResource internalTracesResource;
+    private final TimeService timeService;
+
     @Context
     private UriInfo uriInfo;
+
+    @Inject
+    public InternalTimeResource(InternalTracesResource internalTracesResource, TimeService timeService) {
+        this.internalTracesResource = internalTracesResource;
+        this.timeService = timeService;
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response get() {
 
-        ObjectNode root = InternalTracesResource.serverAndServers("/internal/time");
-        root.put("description", DESCRIPTION);
+        final ObjectNode root = this.internalTracesResource.serverAndServers("/internal/time");
+        root.put("description", TIME_DESCRIPTION);
         root.put("details", "There are occasions when we know a particular hub system will not have the correct cluster " +
                 "time.  This interface allows an admin to tell a hub instance to use a remote system instead of trusting " +
                 "it's local clock for time sensitive operations.");
 
         root.put("restrictions", "All HTTP PUT calls must be made from localhost. ");
 
-        ObjectNode directions = root.putObject("directions");
+        final ObjectNode directions = root.putObject("directions");
         directions.put("millis", "HTTP GET to /internal/time/millis to system time in millis if local.");
         directions.put("local", "HTTP GET to /internal/time/local to local system time.  HTTP PUT to change system to use local time.");
         directions.put("remote", "HTTP GET to /internal/time/remote to a remote systems time. HTTP PUT to change system to use remote time.");
 
-        ObjectNode links = root.putObject("_links");
+        final ObjectNode links = root.putObject("_links");
         String uri = uriInfo.getRequestUri().toString();
         addLink(links, "self", uri);
         addLink(links, "millis", uri + "/millis");
@@ -54,7 +62,7 @@ public class InternalTimeResource {
     }
 
     private void addLink(ObjectNode node, String key, String value) {
-        ObjectNode link = node.putObject(key);
+        final ObjectNode link = node.putObject(key);
         link.put("href", value);
     }
 

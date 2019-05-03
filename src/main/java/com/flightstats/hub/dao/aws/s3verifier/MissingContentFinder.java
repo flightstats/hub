@@ -1,6 +1,5 @@
 package com.flightstats.hub.dao.aws.s3Verifier;
 
-import com.flightstats.hub.app.NamedDependencies;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.QueryResult;
 import com.flightstats.hub.metrics.ActiveTraces;
@@ -11,9 +10,8 @@ import com.flightstats.hub.model.MinutePath;
 import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.TimeUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.joda.time.Duration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -27,8 +25,10 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import static com.flightstats.hub.util.Constants.S3_VERIFIER_QUERY_THREAD_POOL;
+
+@Slf4j
 public class MissingContentFinder {
-    private static final Logger logger = LoggerFactory.getLogger(MissingContentFinder.class);
 
     private final VerifierConfig verifierConfig;
     private final ExecutorService queryThreadPool;
@@ -41,7 +41,7 @@ public class MissingContentFinder {
                                 @Named(ContentDao.SINGLE_LONG_TERM) ContentDao s3SingleContentDao,
                                 VerifierConfig verifierConfig,
                                 StatsdReporter statsdReporter,
-                                @Named(NamedDependencies.S3_VERIFIER_QUERY_THREAD_POOL) ExecutorService queryThreadPool) {
+                                @Named(S3_VERIFIER_QUERY_THREAD_POOL) ExecutorService queryThreadPool) {
         this.spokeWriteContentDao = spokeWriteContentDao;
         this.s3SingleContentDao = s3SingleContentDao;
         this.verifierConfig = verifierConfig;
@@ -63,7 +63,7 @@ public class MissingContentFinder {
         } catch (InterruptedException e) {
             throw new RuntimeInterruptedException(e);
         } catch (TimeoutException e) {
-            logger.error("s3 verifier timed out while finding missing items, write queue is backing up");
+            log.error("s3 verifier timed out while finding missing items, write queue is backing up");
             statsdReporter.increment(VerifierMetrics.TIMEOUT.getName());
             return new TreeSet<>();
         } catch (ExecutionException e) {
@@ -79,8 +79,8 @@ public class MissingContentFinder {
         SortedSet<ContentKey> missingKeys = new TreeSet<>(spokeQueryResult.getContentKeys());
         missingKeys.removeAll(s3QueryResult.getContentKeys());
         if (missingKeys.size() > 0) {
-            logger.info("{} missing items found for {}!", missingKeys.size(), channelName);
-            missingKeys.forEach(key -> logger.info("{} missing item {}"));
+            log.info("{} missing items found for {}!", missingKeys.size(), channelName);
+            missingKeys.forEach(key -> log.info("missing item {}", key));
         }
         return missingKeys;
     }
@@ -108,7 +108,7 @@ public class MissingContentFinder {
                 .map(MinutePath::getTime)
                 .map(endTime -> new Duration(startPath.getTime(), endTime))
                 .map(Duration::getStandardDays)
-                .orElse(0L) ;
+                .orElse(0L);
         return timeout + timeoutAdjustmentForExcessiveDelays;
     }
 

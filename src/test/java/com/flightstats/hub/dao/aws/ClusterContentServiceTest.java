@@ -5,7 +5,6 @@ import com.flightstats.hub.config.AppProperties;
 import com.flightstats.hub.config.ContentProperties;
 import com.flightstats.hub.config.SpokeProperties;
 import com.flightstats.hub.config.binding.HubBindings;
-import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ChannelContentKey;
@@ -38,7 +37,7 @@ public class ClusterContentServiceTest {
     @Mock
     private ClusterContentService ccs;
     @Mock
-    private ChannelService channelSvc;
+    private ContentRetriever contentRetriever;
     @Mock
     private ContentDao mockSpokeWriteDao;
     @Mock
@@ -72,14 +71,13 @@ public class ClusterContentServiceTest {
     @Before
     public void initClusterContentService() {
         channelName = "/testChannel";
-        when(channelSvc.getCachedChannelConfig(channelName)).thenReturn(Optional.of(channelConfig));
+        when(contentRetriever.getCachedChannelConfig(channelName)).thenReturn(Optional.of(channelConfig));
         largeContentUtils = new LargeContentUtils(HubBindings.objectMapper());
         ccs = new ClusterContentService(
-                channelSvc,
                 mockSpokeWriteDao, mockSpokeReadDao,
                 mockS3SingleDao, mockS3LargeDao, mockS3BatchDao,
                 s3WriteQueue, lastContentPath, hubUtils,
-                largeContentUtils, appProperties, contentProperties, spokeProperties);
+                largeContentUtils, contentRetriever, appProperties, contentProperties, spokeProperties);
     }
 
     @Test

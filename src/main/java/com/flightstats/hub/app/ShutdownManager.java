@@ -22,11 +22,19 @@ import java.util.concurrent.Executors;
 public class ShutdownManager {
 
     private static final String PATH = "/ShutdownManager";
+
+    private final HubHealthCheck hubHealthCheck;
+    private final CuratorFramework curatorFramework;
     private final StatsdReporter statsdReporter;
     private final AppProperties appProperties;
 
     @Inject
-    public ShutdownManager(StatsdReporter statsdReporter, AppProperties appProperties) {
+    public ShutdownManager(HubHealthCheck hubHealthCheck,
+                           CuratorFramework curatorFramework,
+                           StatsdReporter statsdReporter,
+                           AppProperties appProperties) {
+        this.hubHealthCheck = hubHealthCheck;
+        this.curatorFramework = curatorFramework;
         this.statsdReporter = statsdReporter;
         this.appProperties = appProperties;
         HubServices.register(new ShutdownManagerService(), HubServices.TYPE.AFTER_HEALTHY_START);
@@ -34,12 +42,11 @@ public class ShutdownManager {
 
     public boolean shutdown(boolean useLock) throws Exception {
         log.warn("shutting down!");
-        String[] tags = {"restart", "shutdown"};
+        final String[] tags = {"restart", "shutdown"};
         statsdReporter.event("Hub Restart Shutdown", "shutting down", tags);
         statsdReporter.mute();
 
-        HubHealthCheck healthCheck = HubProvider.getInstance(HubHealthCheck.class);
-        if (healthCheck.isShuttingDown()) {
+        if (this.hubHealthCheck.isShuttingDown()) {
             return true;
         }
         if (useLock) {
@@ -47,16 +54,16 @@ public class ShutdownManager {
         }
 
         //this call will get the node removed from the Load Balancer
-        healthCheck.shutdown();
-        long start = System.currentTimeMillis();
+        this.hubHealthCheck.shutdown();
+        final long start = System.currentTimeMillis();
         HubServices.preStop();
 
         //wait until it's likely the node is removed from the Load Balancer
-        long end = System.currentTimeMillis();
-        int shutdownDelayInMiilis = appProperties.getShutdownDelayInMiilis();
-        long millisStopping = end - start;
+        final long end = System.currentTimeMillis();
+        final int shutdownDelayInMiilis = appProperties.getShutdownDelayInMiilis();
+        final long millisStopping = end - start;
         if (millisStopping < shutdownDelayInMiilis) {
-            long sleepTime = shutdownDelayInMiilis - millisStopping;
+            final long sleepTime = shutdownDelayInMiilis - millisStopping;
             log.warn("sleeping for " + sleepTime);
             Sleeper.sleep(sleepTime);
             log.warn("slept for " + sleepTime);
@@ -69,14 +76,14 @@ public class ShutdownManager {
     }
 
     public String getLockData() throws Exception {
-        byte[] bytes = getCurator().getData().forPath(PATH);
+        final byte[] bytes = this.curatorFramework.getData().forPath(PATH);
         return new String(bytes);
     }
 
     public boolean resetLock() throws Exception {
         try {
             log.info("resetting lock " + PATH);
-            getCurator().delete().forPath(PATH);
+            this.curatorFramework.delete().forPath(PATH);
             return true;
         } catch (KeeperException.NoNodeException e) {
             log.info("node not found for ..." + PATH);
@@ -84,20 +91,16 @@ public class ShutdownManager {
         }
     }
 
-    private CuratorFramework getCurator() {
-        return HubProvider.getInstance(CuratorFramework.class);
-    }
-
     private void waitForLock() throws Exception {
         while (true) {
             try {
-                String lockData = getLockData();
+                final String lockData = getLockData();
                 log.info("waiting for shutdown lock {}", lockData);
                 Sleeper.sleep(1000);
             } catch (KeeperException.NoNodeException e) {
                 log.info("creating shutdown lock");
                 try {
-                    getCurator().create().forPath(PATH, HubHost.getLocalAddress().getBytes());
+                    this.curatorFramework.create().forPath(PATH, HubHost.getLocalAddress().getBytes());
                     return;
                 } catch (Exception e1) {
                     log.info("why did this fail?", e1);
@@ -111,7 +114,7 @@ public class ShutdownManager {
         @Override
         protected void startUp() throws Exception {
             try {
-                String foundIpAddress = getLockData();
+                final String foundIpAddress = getLockData();
                 log.info("found shutdown lock {} local {}", foundIpAddress, HubHost.getLocalAddress());
                 if (HubHost.getLocalAddress().equals(foundIpAddress)) {
                     log.info("deleting shutdown lock {} local {}", foundIpAddress, HubHost.getLocalAddress());
@@ -123,7 +126,7 @@ public class ShutdownManager {
         }
 
         @Override
-        protected void shutDown() throws Exception {
+        protected void shutDown() {
             //do nothing, ShutdownManager should have already been shutdown.
         }
     }

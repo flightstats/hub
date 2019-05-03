@@ -18,7 +18,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-
+import static com.flightstats.hub.util.Constants.WEBHOOK_LAST_COMPLETED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
@@ -154,7 +154,7 @@ public class WebhookStateReaperTest {
 
 
     private void addLastCompleted(String webhook) throws Exception {
-        lastContentPath.initialize(webhook, key, WebhookLeader.WEBHOOK_LAST_COMPLETED);
+        lastContentPath.initialize(webhook, key, WEBHOOK_LAST_COMPLETED);
         assertLastCompletedExists(webhook);
     }
 
@@ -176,7 +176,7 @@ public class WebhookStateReaperTest {
     }
 
     private void assertLastCompletedExists(String webhook) throws Exception {
-        assertTrue(curator.getData().forPath(WebhookLeader.WEBHOOK_LAST_COMPLETED + webhook).length > 0);
+        assertTrue(curator.getData().forPath(WEBHOOK_LAST_COMPLETED + webhook).length > 0);
     }
 
     private void assertWebhookInProcessExists(String webhook) {
@@ -193,7 +193,7 @@ public class WebhookStateReaperTest {
 
     private void assertLastCompletedDeleted(String webhook) {
         assertThrows(KeeperException.NoNodeException.class,
-                () -> curator.getData().forPath(WebhookLeader.WEBHOOK_LAST_COMPLETED + webhook));
+                () -> curator.getData().forPath(WEBHOOK_LAST_COMPLETED + webhook));
     }
 
     private void assertErrorDeleted(String webhook) {

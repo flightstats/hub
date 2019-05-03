@@ -1,7 +1,7 @@
 package com.flightstats.hub.dao.aws.s3Verifier;
 
 import com.flightstats.hub.cluster.LastContentPath;
-import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.dao.aws.ContentRetriever;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.MinutePath;
 import com.flightstats.hub.spoke.SpokeStoreConfig;
@@ -13,29 +13,29 @@ import javax.inject.Named;
 import static com.flightstats.hub.dao.aws.S3Verifier.LAST_SINGLE_VERIFIED;
 
 public class VerifierRangeLookup {
+
     private final VerifierConfig verifierConfig;
     private final SpokeStoreConfig spokeWriteStoreConfig;
-
+    private final ContentRetriever contentRetriever;
     private final LastContentPath lastContentPath;
-    private final ChannelService channelService;
 
     @Inject
     public VerifierRangeLookup(LastContentPath lastContentPath,
-                               ChannelService channelService,
                                VerifierConfig verifierConfig,
+                               ContentRetriever contentRetriever,
                                @Named("spokeWriteStoreConfig") SpokeStoreConfig spokeWriteStoreConfig) {
         this.lastContentPath = lastContentPath;
-        this.channelService = channelService;
         this.verifierConfig = verifierConfig;
+        this.contentRetriever = contentRetriever;
         this.spokeWriteStoreConfig = spokeWriteStoreConfig;
     }
 
     public VerifierRange getSingleVerifierRange(DateTime now, ChannelConfig channelConfig) {
-        MinutePath spokeTtlTime = getSpokeTtlPath(now);
-        now = channelService.getLastUpdated(channelConfig.getDisplayName(), new MinutePath(now)).getTime();
-        DateTime start = now.minusMinutes(1);
-        MinutePath endPath = new MinutePath(start);
-        MinutePath defaultStart = new MinutePath(start.minusMinutes(verifierConfig.getOffsetMinutes()));
+        final MinutePath spokeTtlTime = getSpokeTtlPath(now);
+        now = contentRetriever.getLastUpdated(channelConfig.getDisplayName(), new MinutePath(now)).getTime();
+        final DateTime start = now.minusMinutes(1);
+        final MinutePath endPath = new MinutePath(start);
+        final MinutePath defaultStart = new MinutePath(start.minusMinutes(verifierConfig.getOffsetMinutes()));
         MinutePath startPath = (MinutePath) lastContentPath.get(channelConfig.getDisplayName(), defaultStart, LAST_SINGLE_VERIFIED);
         if (channelConfig.isLive() && isStartTimeBeforeSpokeTtl(startPath, spokeTtlTime)) {
             startPath = spokeTtlTime;

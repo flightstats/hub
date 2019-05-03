@@ -38,6 +38,7 @@ public class S3Config {
     private final Dao<ChannelConfig> channelConfigDao;
     private final String s3BucketName;
     private final HubS3Client s3Client;
+    private final ContentRetriever contentRetriever;
     private final ChannelService channelService;
     private final S3Properties s3Properties;
 
@@ -46,12 +47,14 @@ public class S3Config {
                     S3BucketName s3BucketName,
                     DistributedAsyncLockRunner distributedLockRunner,
                     @Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao,
+                    ContentRetriever contentRetriever,
                     ChannelService channelService,
                     S3Properties s3Properties) {
         this.s3Client = s3Client;
         this.distributedLockRunner = distributedLockRunner;
         this.channelConfigDao = channelConfigDao;
         this.channelService = channelService;
+        this.contentRetriever = contentRetriever;
         this.s3BucketName = s3BucketName.getS3BucketName();
         this.s3Properties = s3Properties;
         HubServices.register(new S3ConfigInit());
@@ -116,7 +119,7 @@ public class S3Config {
             String name = config.getDisplayName();
             log.info("updating max items for channel {}", name);
             ActiveTraces.start("S3Config.updateMaxItems", name);
-            Optional<ContentKey> optional = channelService.getLatest(name, false);
+            Optional<ContentKey> optional = contentRetriever.getLatest(name, false);
             if (optional.isPresent()) {
                 ContentKey latest = optional.get();
                 if (latest.getTime().isAfter(TimeUtil.now().minusDays(1))) {
@@ -140,7 +143,7 @@ public class S3Config {
                     .earliestTime(config.getTtlTime())
                     .count((int) (config.getMaxItems() - 1))
                     .build();
-            keys.addAll(channelService.query(query));
+            keys.addAll(contentRetriever.query(query));
             if (keys.size() == config.getMaxItems()) {
                 ContentKey limitKey = keys.first();
                 log.info("deleting keys before {}", limitKey);

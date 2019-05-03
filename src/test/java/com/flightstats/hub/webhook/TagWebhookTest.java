@@ -1,22 +1,25 @@
 package com.flightstats.hub.webhook;
 
+import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.test.Integration;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 
 import java.util.Arrays;
 import java.util.Set;
 import java.util.TreeSet;
-
-import static com.flightstats.hub.webhook.TagWebhook.allManagedWebhooksForChannel;
 
 public class TagWebhookTest {
 
     private static final String host = "http://hub.com";
     private ChannelConfig c1, c2, c3;
     private Set<Webhook> allWebhooks;
+
+    @Mock
+    private WebhookService webhookService;
 
     private String createChannelUrl(String channel) {
         return host + "/channel/" + channel;
@@ -69,12 +72,16 @@ public class TagWebhookTest {
 
     @Test
     public void testAllManagedWebhooksForChannel() throws Exception {
-        Set<Webhook> s = allManagedWebhooksForChannel(allWebhooks, c2);
-        assert s.size() == 1 : "Should be only 1 tag webhook for c2";
-        s = allManagedWebhooksForChannel(allWebhooks, c3);
-        assert s.size() == 1 : "c2 has one managed webhooks, the other is a prototype";
-        s = allManagedWebhooksForChannel(allWebhooks, c1);
-        assert s.size() == 0 : "c1 has no tag webhooks";
+        final TagWebhook tagWebhook = new TagWebhook(webhookService);
+
+        Set<Webhook> webhooks = tagWebhook.allManagedWebhooksForChannel(allWebhooks, c2);
+        assert webhooks.size() == 1 : "Should be only 1 tag webhook for c2";
+
+        webhooks = tagWebhook.allManagedWebhooksForChannel(allWebhooks, c3);
+        assert webhooks.size() == 1 : "c2 has one managed webhooks, the other is a prototype";
+
+        webhooks = tagWebhook.allManagedWebhooksForChannel(allWebhooks, c1);
+        assert webhooks.size() == 0 : "c1 has no tag webhooks";
     }
 
 }

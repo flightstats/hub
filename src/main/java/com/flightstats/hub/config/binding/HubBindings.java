@@ -9,7 +9,6 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.flightstats.hub.app.FinalCheck;
 import com.flightstats.hub.app.HubVersion;
 import com.flightstats.hub.app.InFlightService;
-import com.flightstats.hub.app.NamedDependencies;
 import com.flightstats.hub.app.ShutdownManager;
 import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.cluster.Cluster;
@@ -26,8 +25,10 @@ import com.flightstats.hub.config.SystemProperties;
 import com.flightstats.hub.config.ZookeeperProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
+import com.flightstats.hub.dao.aws.ContentRetriever;
 import com.flightstats.hub.dao.aws.s3Verifier.VerifierConfig;
 import com.flightstats.hub.dao.aws.s3Verifier.VerifierConfigProvider;
+import com.flightstats.hub.events.EventsService;
 import com.flightstats.hub.health.HubHealthCheck;
 import com.flightstats.hub.metrics.CustomMetricsLifecycle;
 import com.flightstats.hub.metrics.InfluxdbReporterLifecycle;
@@ -81,6 +82,9 @@ import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+
+import static com.flightstats.hub.util.Constants.S3_VERIFIER_CHANNEL_THREAD_POOL;
+import static com.flightstats.hub.util.Constants.S3_VERIFIER_QUERY_THREAD_POOL;
 
 @Slf4j
 public class HubBindings extends AbstractModule {
@@ -215,14 +219,14 @@ public class HubBindings extends AbstractModule {
         return mapper;
     }
 
-    @Named(NamedDependencies.S3_VERIFIER_CHANNEL_THREAD_POOL)
+    @Named(S3_VERIFIER_CHANNEL_THREAD_POOL)
     @Singleton
     @Provides
     public static ExecutorService channelThreadPool(VerifierConfig verifierConfig) {
         return Executors.newFixedThreadPool(verifierConfig.getChannelThreads(), new ThreadFactoryBuilder().setNameFormat("S3VerifierChannel-%d").build());
     }
 
-    @Named(NamedDependencies.S3_VERIFIER_QUERY_THREAD_POOL)
+    @Named(S3_VERIFIER_QUERY_THREAD_POOL)
     @Singleton
     @Provides
     public
@@ -251,6 +255,8 @@ public class HubBindings extends AbstractModule {
         bind(FinalCheck.class).to(SpokeFinalCheck.class).asEagerSingleton();
         bind(InFlightService.class).asEagerSingleton();
         bind(ChannelService.class).asEagerSingleton();
+        bind(EventsService.class).asEagerSingleton();
+        bind(ContentRetriever.class).asEagerSingleton();
         bind(HubVersion.class).toInstance(new HubVersion());
 
         // metrics
@@ -278,7 +284,7 @@ public class HubBindings extends AbstractModule {
     @Provides
     @Singleton
     public ContentDao contentDao(RemoteSpokeStore remoteSpokeStore,
-                                                     SpokeProperties spokeProperties) {
+                                 SpokeProperties spokeProperties) {
         return new SpokeWriteContentDao(remoteSpokeStore, spokeProperties);
     }
 

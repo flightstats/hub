@@ -16,28 +16,29 @@ import java.util.Properties;
 import java.util.TreeSet;
 
 @Slf4j
-@SuppressWarnings("WeakerAccess")
 @Path("/internal/properties")
 public class InternalPropertiesResource {
 
-    public static final String DESCRIPTION = "Get hub properties with links to other hubs in the cluster.";
+    private InternalTracesResource internalTracesResource;
     private final SecretFilter secretFilter;
 
     @Inject
-    public InternalPropertiesResource(SecretFilter secretFilter) {
+    public InternalPropertiesResource(InternalTracesResource internalTracesResource,
+                                      SecretFilter secretFilter) {
+        this.internalTracesResource = internalTracesResource;
         this.secretFilter = secretFilter;
     }
 
     @GET
     @Produces({MediaType.APPLICATION_JSON})
     public Response getTraces() {
-        ObjectNode root = InternalTracesResource.serverAndServers("/internal/properties");
+        final ObjectNode root = this.internalTracesResource.serverAndServers("/internal/properties");
         try {
-            ObjectNode propertyNode = root.putObject("properties");
-            Properties properties = PropertiesLoader.getInstance().getProperties();
+            final ObjectNode propertyNode = root.putObject("properties");
+            final Properties properties = PropertiesLoader.getInstance().getProperties();
             for (Object key : new TreeSet<>(properties.keySet())) {
-                String value = properties.get(key).toString();
-                String possiblySensitiveValue = secretFilter.redact(key.toString(), value);
+                final String value = properties.get(key).toString();
+                final String possiblySensitiveValue = secretFilter.redact(key.toString(), value);
                 propertyNode.put(key.toString(), possiblySensitiveValue);
             }
         } catch (Exception e) {

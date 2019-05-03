@@ -1,36 +1,33 @@
 package com.flightstats.hub.channel;
 
-import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.exception.ForbiddenRequestException;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.TimeUtil;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Optional;
+import java.util.Optional;
 import com.google.common.base.Strings;
-import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.apache.commons.lang3.StringUtils;
+
+import javax.inject.Inject;
 
 public class ChannelValidator {
     public static final String VALID_NAME = "^[a-zA-Z0-9_-]+$";
 
+    private final Dao<ChannelConfig> channelConfigDao;
+
     @Inject
-    private ChannelService channelService;
-
-    // required for Guice
-    ChannelValidator() {
-    }
-
-    @VisibleForTesting
-    ChannelValidator(ChannelService channelService) {
-        this.channelService = channelService;
+    ChannelValidator(@Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao) {
+        this.channelConfigDao = channelConfigDao;
     }
 
     public void validate(ChannelConfig config, ChannelConfig oldConfig, boolean isLocalHost) throws InvalidRequestException, ConflictException {
-        Optional<String> channelNameOptional = Optional.absent();
+        Optional<String> channelNameOptional = Optional.empty();
+
         if (config != null) {
-            channelNameOptional = Optional.fromNullable(config.getDisplayName());
+            channelNameOptional = Optional.ofNullable(config.getDisplayName());
         }
 
         validateNameWasGiven(channelNameOptional);
@@ -181,7 +178,7 @@ public class ChannelValidator {
     }
 
     private void validateChannelUniqueness(String channelName) throws ConflictException {
-        if (channelService.channelExists(channelName)) {
+        if (channelConfigDao.exists(channelName)) {
             throw new ConflictException("{\"error\": \"Channel name " + channelName + " already exists\"}");
         }
     }

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.app.HubProvider;
-import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.dao.aws.ContentRetriever;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ContentKey;
@@ -109,14 +109,10 @@ public class Webhook implements Comparable<Webhook>, NamedType {
                 } else {
                     keyOptional = ContentPath.fromFullUrl(startItem);
                 }
-                if (keyOptional.isPresent()) {
-                    builder.startingKey(keyOptional.get());
-                }
+                keyOptional.ifPresent(builder::startingKey);
             } else if (root.has("lastCompleted")) {
-                Optional<ContentPath> keyOptional = ContentPath.fromFullUrl(root.get("lastCompleted").asText());
-                if (keyOptional.isPresent()) {
-                    builder.startingKey(keyOptional.get());
-                }
+                final Optional<ContentPath> keyOptional = ContentPath.fromFullUrl(root.get("lastCompleted").asText());
+                keyOptional.ifPresent(builder::startingKey);
             }
             if (root.has("name")) {
                 builder.name(root.get("name").asText());
@@ -175,9 +171,9 @@ public class Webhook implements Comparable<Webhook>, NamedType {
     }
 
     private static Optional<ContentPath> getPrevious(Optional<ContentPath> keyOptional, String channelUrl) {
-        ChannelService channelService = HubProvider.getInstance(ChannelService.class);
-        String channel = RequestUtils.getChannelName(channelUrl);
-        Optional<ContentKey> latest = channelService.getLatest(channel, true);
+        final ContentRetriever contentRetriever = HubProvider.getInstance(ContentRetriever.class);
+        final String channel = RequestUtils.getChannelName(channelUrl);
+        final Optional<ContentKey> latest = contentRetriever.getLatest(channel, true);
         if (latest.isPresent()) {
             DirectionQuery query = DirectionQuery.builder()
                     .channelName(channel)
@@ -185,7 +181,7 @@ public class Webhook implements Comparable<Webhook>, NamedType {
                     .next(false)
                     .count(1)
                     .build();
-            SortedSet<ContentKey> keys = channelService.query(query);
+            SortedSet<ContentKey> keys = contentRetriever.query(query);
             if (keys.isEmpty()) {
                 keyOptional = Optional.of(new ContentKey(latest.get().getTime().minusMillis(1), "A"));
             } else {

@@ -32,12 +32,15 @@ import static java.util.stream.Collectors.toList;
 @Singleton
 @Slf4j
 class WebhookErrorService {
+
     private final WebhookErrorRepository webhookErrorRepository;
     private final ChannelService channelService;
     private final WebhookErrorPruner webhookErrorPruner;
 
     @Inject
-    public WebhookErrorService(WebhookErrorRepository webhookErrorRepository, WebhookErrorPruner webhookErrorPruner, ChannelService channelService) {
+    public WebhookErrorService(WebhookErrorRepository webhookErrorRepository,
+                               WebhookErrorPruner webhookErrorPruner,
+                               ChannelService channelService) {
         this.webhookErrorRepository = webhookErrorRepository;
         this.webhookErrorPruner = webhookErrorPruner;
         this.channelService = channelService;
@@ -53,18 +56,18 @@ class WebhookErrorService {
         webhookErrorRepository.deleteWebhook(webhook);
     }
 
-    public List<String> lookup(String webhook) {
+    List<String> lookup(String webhook) {
         return trimAndLookup(webhook).stream()
                 .map(WebhookError::getData)
                 .collect(toList());
     }
 
     private List<WebhookError> trimAndLookup(String webhook) {
-        List<WebhookError> errors = webhookErrorRepository.getErrors(webhook).stream()
+        final List<WebhookError> errors = webhookErrorRepository.getErrors(webhook).stream()
                 .sorted(Comparator.comparing(WebhookError::getCreationTime))
                 .collect(toList());
 
-        List<WebhookError> prunedErrors = webhookErrorPruner.pruneErrors(webhook, errors);
+        final List<WebhookError> prunedErrors = webhookErrorPruner.pruneErrors(webhook, errors);
 
         return errors.stream()
                 .filter(error -> !prunedErrors.contains(error))
@@ -74,15 +77,15 @@ class WebhookErrorService {
     void publishToErrorChannel(DeliveryAttempt attempt) {
         if (attempt.getWebhook().getErrorChannelUrl() == null) return;
 
-        List<String> errors = lookup(attempt.getWebhook().getName());
+        final List<String> errors = lookup(attempt.getWebhook().getName());
         if (errors.size() < 1) {
             log.debug("no errors found for", attempt.getWebhook().getName());
             return;
         }
 
-        String error = errors.get(errors.size() - 1);
+        final String error = errors.get(errors.size() - 1);
         byte[] bytes = buildPayload(attempt, error);
-        Content content = Content.builder()
+        final Content content = Content.builder()
                 .withContentType("application/json")
                 .withContentLength((long) bytes.length)
                 .withData(bytes)
@@ -96,8 +99,8 @@ class WebhookErrorService {
     }
 
     private byte[] buildPayload(DeliveryAttempt attempt, String error) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        ObjectNode root = objectMapper.createObjectNode();
+        final ObjectMapper objectMapper = new ObjectMapper();
+        final ObjectNode root = objectMapper.createObjectNode();
         root.put("webhookUrl", buildWebhookUrl(attempt));
         root.put("failedItemUrl", attempt.getWebhook().getChannelUrl() + "/" + attempt.getContentPath().toUrl());
         root.put("callbackUrl", attempt.getWebhook().getCallbackUrl());
@@ -109,7 +112,7 @@ class WebhookErrorService {
 
     private String buildWebhookUrl(DeliveryAttempt attempt) {
         // todo - workaround for HubHost.getLocalNamePort and AppProperties.getAppUrl not returning usable URLs for dockerized single hub
-        String host = RequestUtils.getHost(attempt.getWebhook().getChannelUrl());
+        final String host = RequestUtils.getHost(attempt.getWebhook().getChannelUrl());
         return host + "/webhook/" + attempt.getWebhook().getName();
     }
 

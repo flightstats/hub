@@ -3,7 +3,9 @@ package com.flightstats.hub.webhook;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.dao.Dao;
+import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 
 import java.util.Optional;
 
@@ -15,26 +17,43 @@ import static org.mockito.Matchers.anyCollectionOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.matches;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 public class WebhookManagerTest {
-    private final WatchManager watchManager = mock(WatchManager.class);
-    private final Dao<Webhook> webhookDao = getWebhookDao();
-    private final LastContentPath lastContentPath = mock(LastContentPath.class);
-    private final ActiveWebhooks activeWebhooks = mock(ActiveWebhooks.class);
-    private final WebhookErrorService webhookErrorService = mock(WebhookErrorService.class);
-    private final WebhookContentPathSet webhookContentPathSet = mock(WebhookContentPathSet.class);
-    private final InternalWebhookClient webhookClient = mock(InternalWebhookClient.class);
+
+    @Mock
+    private LocalWebhookManager localWebhookManager;
+    @Mock
+    private WebhookErrorService webhookErrorService;
+    @Mock
+    private WebhookContentPathSet webhookContentPathSet;
+    @Mock
+    private InternalWebhookClient webhookClient;
+    @Mock
+    private WebhookStateReaper webhookStateReaper;
+    @Mock
+    private LastContentPath lastContentPath;
+    @Mock
+    private ActiveWebhooks activeWebhooks;
+    @Mock
+    private WatchManager watchManager;
+    @Mock
+    private Dao<Webhook> webhookDao;
 
     private static final String SERVER1 = "123.1.1";
     private static final String SERVER2 = "123.2.1";
     private static final String SERVER3 = "123.3.1";
 
     private static final String WEBHOOK_NAME = "w3bh00k";
+
+    @Before
+    public void setup() {
+        initMocks(this);
+    }
 
     @Test
     public void testWhenWebhookIsManagedOnExactlyOneServer_doesNothing() {
@@ -147,11 +166,15 @@ public class WebhookManagerTest {
     }
 
     private WebhookManager getWebhookManager() {
-        return new WebhookManager(watchManager, webhookDao, lastContentPath, activeWebhooks, webhookErrorService, webhookContentPathSet, webhookClient);
-    }
-
-    @SuppressWarnings("unchecked")
-    private Dao<Webhook> getWebhookDao() {
-        return (Dao<Webhook>) mock(Dao.class);
+        return new WebhookManager(
+                localWebhookManager,
+                webhookErrorService,
+                webhookContentPathSet,
+                webhookClient,
+                webhookStateReaper,
+                lastContentPath,
+                activeWebhooks,
+                watchManager,
+                webhookDao);
     }
 }
