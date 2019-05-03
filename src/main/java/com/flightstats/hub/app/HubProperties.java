@@ -10,7 +10,6 @@ import java.io.File;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.Properties;
 
 @Deprecated
@@ -24,7 +23,8 @@ public class HubProperties {
         REPLICATION_ENABLED("replication.enabled"),
         CHANNEL_LATEST_UPDATE_ENABLED("channel.latest.update.svc.enabled"),
         S3_BATCH_MANAGEMENT_ENABLED("s3.batch.management.enabled"),
-        S3_CONFIG_MANAGEMENT_ENABLED("s3.config.management.enabled");
+        S3_CONFIG_MANAGEMENT_ENABLED("s3.config.management.enabled"),
+        S3_VERIFIER_ENABLED("s3Verifier.run");
         private final String key;
         HubProps(String key) {
             this.key = key;
@@ -49,6 +49,10 @@ public class HubProperties {
         String fallbackProperty = "spoke.ttlMinutes";
         int defaultTTL = 60;
         return getProperty(property, getProperty(fallbackProperty, defaultTTL));
+    }
+
+    public static boolean isS3VerifierEnabled() {
+        return getProperty(HubProps.S3_VERIFIER_ENABLED.getKey(), true);
     }
 
     public static String getAppEnv() {
@@ -149,7 +153,19 @@ public class HubProperties {
             properties = loadProperties(new File(fileName).toURI().toURL(), true);
         }
         HubProperties.setProperties(properties);
+        ensureSubsystemsDisabledIfReadOnly();
         return properties;
+    }
+
+    private static void ensureSubsystemsDisabledIfReadOnly() {
+        if (isReadOnly()) {
+            setProperty(HubProps.CHANNEL_LATEST_UPDATE_ENABLED.getKey(), "false");
+            setProperty(HubProps.REPLICATION_ENABLED.getKey(), "false");
+            setProperty(HubProps.S3_CONFIG_MANAGEMENT_ENABLED.getKey(), "false");
+            setProperty(HubProps.S3_BATCH_MANAGEMENT_ENABLED.getKey(), "false");
+            setProperty(HubProps.S3_VERIFIER_ENABLED.getKey(), "false");
+            setProperty(HubProps.WEBHOOK_LEADERSHIP_ENABLED.getKey(), "false");
+        }
     }
 
     private static Properties getLocalProperties(String fileNameRoot) {
@@ -191,7 +207,7 @@ public class HubProperties {
             properties.put("runSingleZookeeperInternally", "singleNode");
             properties.put("hub.protect.channels", "false");
             properties.put("metrics.enable", "false");
-            properties.put("s3Verifier.run", "false");
+            properties.put(HubProps.S3_VERIFIER_ENABLED.getKey(), "false");
             properties.put("aws.signing_region", "us-east-1");
             return properties;
         }
