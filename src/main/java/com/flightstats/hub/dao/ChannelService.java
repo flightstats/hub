@@ -74,6 +74,8 @@ public class ChannelService {
     private StatsdReporter statsdReporter;
     @Inject
     private ContentProperties contentProperties;
+    @Inject
+    private TagWebhook tagWebhook;
 
     public boolean channelExists(String channelName) {
         return channelConfigDao.exists(channelName);
@@ -84,7 +86,7 @@ public class ChannelService {
         channelValidator.validate(configuration, null, false);
         channelConfigDao.upsert(configuration);
         notify(configuration, null);
-        TagWebhook.updateTagWebhooksDueToChannelConfigChange(configuration);
+        tagWebhook.updateTagWebhooksDueToChannelConfigChange(configuration);
         return configuration;
     }
 
@@ -110,7 +112,7 @@ public class ChannelService {
             log.info("updating channel {} from {}", configuration, oldConfig);
             channelValidator.validate(configuration, oldConfig, isLocalHost);
             channelConfigDao.upsert(configuration);
-            TagWebhook.updateTagWebhooksDueToChannelConfigChange(configuration);
+            tagWebhook.updateTagWebhooksDueToChannelConfigChange(configuration);
             notify(configuration, oldConfig);
         } else {
             log.info("update with no changes {}", configuration);
@@ -123,14 +125,14 @@ public class ChannelService {
         if (content.isNew() && isReplicating(channelName)) {
             throw new ForbiddenRequestException(channelName + " cannot modified while replicating");
         }
-        long start = System.currentTimeMillis();
-        ContentKey contentKey = insertInternal(channelName, content);
+        final long start = System.currentTimeMillis();
+        final ContentKey contentKey = insertInternal(channelName, content);
         statsdReporter.insert(channelName, start, ChannelType.SINGLE, 1, content.getSize());
         return contentKey;
     }
 
     private ContentKey insertInternal(String channelName, Content content) throws Exception {
-        ChannelConfig channelConfig = getExpectedCachedChannelConfig(channelName);
+        final ChannelConfig channelConfig = getExpectedCachedChannelConfig(channelName);
         return inFlightService.inFlight(() -> {
             Traces traces = ActiveTraces.getLocal();
             traces.add("ContentService.insert");
@@ -163,8 +165,8 @@ public class ChannelService {
         }
         long start = System.currentTimeMillis();
 
-        ChannelConfig channelConfig = getExpectedCachedChannelConfig(channelName);
-        ContentKey contentKey = content.getContentKey()
+        final ChannelConfig channelConfig = getExpectedCachedChannelConfig(channelName);
+        final ContentKey contentKey = content.getContentKey()
                 .orElseThrow(() -> {
                     throw new RuntimeException("internal error: invalid content key on historical insert to channel: " + channelName);
                 });
@@ -173,7 +175,7 @@ public class ChannelService {
             log.warn(msg);
             throw new InvalidRequestException(msg);
         }
-        boolean insert = inFlightService.inFlight(() -> {
+        final boolean insert = inFlightService.inFlight(() -> {
             content.packageStream();
             checkZeroBytes(content, channelConfig);
             return contentService.historicalInsert(normalizedChannelName, content);
@@ -191,12 +193,12 @@ public class ChannelService {
 
     public Collection<ContentKey> insert(BulkContent content) throws Exception {
         final BulkContent bulkContent = content.withChannel(getDisplayName(content.getChannel()));
-        String channel = bulkContent.getChannel();
+        final String channel = bulkContent.getChannel();
         if (bulkContent.isNew() && isReplicating(channel)) {
             throw new ForbiddenRequestException(channel + " cannot modified while replicating");
         }
         long start = System.currentTimeMillis();
-        Collection<ContentKey> contentKeys = inFlightService.inFlight(() -> {
+        final Collection<ContentKey> contentKeys = inFlightService.inFlight(() -> {
             MultiPartParser multiPartParser = new MultiPartParser(bulkContent, contentProperties.getMaxPayloadSizeInMB());
             multiPartParser.parse();
             return contentService.insert(bulkContent);
@@ -219,13 +221,13 @@ public class ChannelService {
 
     public Optional<ContentKey> getLatest(DirectionQuery query) {
         query = query.withChannelName(getDisplayName(query.getChannelName()));
-        String channel = query.getChannelName();
+        final String channel = query.getChannelName();
         if (!channelExists(channel)) {
             return Optional.empty();
         }
         query = query.withStartKey(getLatestLimit(query.getChannelName(), query.isStable()));
         query = configureQuery(query);
-        Optional<ContentKey> latest = contentService.getLatest(query);
+        final Optional<ContentKey> latest = contentService.getLatest(query);
         ActiveTraces.getLocal().add("before filter", channel, latest);
         if (latest.isPresent()) {
             SortedSet<ContentKey> filtered = ContentKeyUtil.filter(latest
@@ -240,7 +242,7 @@ public class ChannelService {
 
     public Optional<ContentKey> getLatest(String channel, boolean stable) {
         channel = getDisplayName(channel);
-        DirectionQuery query = DirectionQuery.builder()
+        final DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
                 .next(false)
                 .stable(stable)
@@ -250,7 +252,7 @@ public class ChannelService {
     }
 
     private DirectionQuery configureStable(DirectionQuery query) {
-        ContentPath lastUpdated = getLatestLimit(query.getChannelName(), query.isStable());
+        final ContentPath lastUpdated = getLatestLimit(query.getChannelName(), query.isStable());
         return query.withChannelStable(lastUpdated.getTime());
     }
 
@@ -269,7 +271,7 @@ public class ChannelService {
 
     public Optional<Content> get(ItemRequest itemRequest) {
         itemRequest = itemRequest.withChannel(getDisplayName(itemRequest.getChannel()));
-        DateTime limitTime = getChannelLimitTime(itemRequest.getChannel()).minusMinutes(15);
+        final DateTime limitTime = getChannelLimitTime(itemRequest.getChannel()).minusMinutes(15);
         if (itemRequest.getKey().getTime().isBefore(limitTime)) {
             return Optional.empty();
         }
@@ -284,7 +286,7 @@ public class ChannelService {
     }
 
     public Optional<ChannelConfig> getCachedChannelConfig(String channelName) {
-        ChannelConfig channelConfig = channelConfigDao.getCached(channelName);
+        final ChannelConfig channelConfig = channelConfigDao.getCached(channelName);
         return Optional.ofNullable(channelConfig);
     }
 
@@ -311,8 +313,8 @@ public class ChannelService {
     }
 
     public Collection<ChannelConfig> getChannels(String tag, boolean useCache) {
-        Collection<ChannelConfig> matchingChannels = new ArrayList<>();
-        Iterable<ChannelConfig> channels = getChannels(useCache);
+        final Collection<ChannelConfig> matchingChannels = new ArrayList<>();
+        final Iterable<ChannelConfig> channels = getChannels(useCache);
         for (ChannelConfig channel : channels) {
             if (channel.getTags().contains(tag)) {
                 matchingChannels.add(channel);
@@ -322,8 +324,8 @@ public class ChannelService {
     }
 
     public Iterable<String> getTags() {
-        Collection<String> matchingChannels = new HashSet<>();
-        Iterable<ChannelConfig> channels = getChannels();
+        final Collection<String> matchingChannels = new HashSet<>();
+        final Iterable<ChannelConfig> channels = getChannels();
         for (ChannelConfig channel : channels) {
             matchingChannels.addAll(channel.getTags());
         }
@@ -334,12 +336,12 @@ public class ChannelService {
         if (query == null) {
             return Collections.emptySortedSet();
         }
-        String channelName = query.getChannelName();
-        ChannelConfig channelConfig = getCachedChannelConfig(channelName)
+        final String channelName = query.getChannelName();
+        final ChannelConfig channelConfig = getCachedChannelConfig(channelName)
                 .orElse(null);
         query = query.withChannelName(getDisplayName(channelName));
         query = query.withChannelConfig(channelConfig);
-        ContentPath lastUpdated = getLastUpdated(query.getChannelName(), new ContentKey(TimeUtil.time(query.isStable())));
+        final ContentPath lastUpdated = getLastUpdated(query.getChannelName(), new ContentKey(TimeUtil.time(query.isStable())));
         query = query.withChannelStable(lastUpdated.getTime());
         Stream<ContentKey> stream = contentService.queryByTime(query).stream();
         stream = ContentKeyUtil.enforceLimits(query, stream);
@@ -354,7 +356,7 @@ public class ChannelService {
         query = configureQuery(query);
         List<ContentKey> keys = new ArrayList<>(contentService.queryDirection(query));
 
-        SortedSet<ContentKey> contentKeys = ContentKeyUtil.filter(keys, query);
+        final SortedSet<ContentKey> contentKeys = ContentKeyUtil.filter(keys, query);
         if (query.isInclusive()) {
             if (!contentKeys.isEmpty()) {
                 if (query.isNext()) {
@@ -374,10 +376,10 @@ public class ChannelService {
         if (query.getCount() > contentProperties.getDirectionCountLimit()) {
             query = query.withCount(contentProperties.getDirectionCountLimit());
         }
-        String channelName = query.getChannelName();
-        ChannelConfig channelConfig = getExpectedCachedChannelConfig(channelName);
+        final String channelName = query.getChannelName();
+        final ChannelConfig channelConfig = getExpectedCachedChannelConfig(channelName);
         query = query.withChannelConfig(channelConfig);
-        DateTime ttlTime = getChannelTtl(channelConfig, query.getEpoch());
+        final DateTime ttlTime = getChannelTtl(channelConfig, query.getEpoch());
         query = query.withEarliestTime(ttlTime);
 
         if (query.getStartKey() == null || query.getStartKey().getTime().isBefore(ttlTime)) {
@@ -402,7 +404,7 @@ public class ChannelService {
             if (epoch.equals(Epoch.IMMUTABLE)) {
                 ttlTime = channelConfig.getMutableTime().plusMillis(1);
             } else {
-                ContentKey lastKey = ContentKey.lastKey(channelConfig.getMutableTime());
+                final ContentKey lastKey = ContentKey.lastKey(channelConfig.getMutableTime());
                 return lastContentPath.get(channelConfig.getDisplayName(), lastKey, HISTORICAL_EARLIEST).getTime();
             }
         }
@@ -415,7 +417,7 @@ public class ChannelService {
     }
 
     private DateTime getChannelLimitTime(String channelName) {
-        ChannelConfig channelConfig = getExpectedCachedChannelConfig(channelName);
+        final ChannelConfig channelConfig = getExpectedCachedChannelConfig(channelName);
         if (channelConfig.isHistorical()) {
             return TimeUtil.BIG_BANG;
         }
@@ -424,11 +426,11 @@ public class ChannelService {
 
     public boolean delete(String channelName) {
         channelName = getDisplayName(channelName);
-        Optional<ChannelConfig> optionalChannelConfig = getCachedChannelConfig(channelName);
+        final Optional<ChannelConfig> optionalChannelConfig = getCachedChannelConfig(channelName);
         if (!optionalChannelConfig.isPresent()) {
             return false;
         }
-        ChannelConfig channelConfig = optionalChannelConfig.get();
+        final ChannelConfig channelConfig = optionalChannelConfig.get();
         contentService.delete(channelConfig.getDisplayName());
         channelConfigDao.delete(channelConfig.getDisplayName());
         if (channelConfig.isReplicating()) {
@@ -436,20 +438,20 @@ public class ChannelService {
             lastContentPath.delete(channelName, REPLICATED_LAST_UPDATED);
         }
         lastContentPath.delete(channelName, HISTORICAL_EARLIEST);
-        TagWebhook.deleteAllTagWebhooksForChannel(channelConfig);
+        tagWebhook.deleteAllTagWebhooksForChannel(channelConfig);
         return true;
     }
 
     public boolean delete(String channelName, ContentKey contentKey) {
         channelName = getDisplayName(channelName);
-        ChannelConfig channelConfig = getExpectedCachedChannelConfig(channelName);
+        final ChannelConfig channelConfig = getExpectedCachedChannelConfig(channelName);
         if (channelConfig.isHistorical()) {
             if (!contentKey.getTime().isAfter(channelConfig.getMutableTime())) {
                 contentService.delete(channelName, contentKey);
                 return true;
             }
         }
-        String message = "item is not within the channels mutableTime";
+        final String message = "item is not within the channels mutableTime";
         ActiveTraces.getLocal().add(message, channelName, contentKey);
         throw new MethodNotAllowedException(message);
     }
@@ -468,7 +470,7 @@ public class ChannelService {
     }
 
     private String getDisplayName(String channelName) {
-        ChannelConfig channelConfig = getExpectedCachedChannelConfig(channelName);
+        final ChannelConfig channelConfig = getExpectedCachedChannelConfig(channelName);
         return channelConfig.getDisplayName();
     }
 }

@@ -1,6 +1,5 @@
 package com.flightstats.hub.webhook;
 
-import com.flightstats.hub.config.PropertiesLoader;
 import com.flightstats.hub.config.WebhookProperties;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.util.RuntimeInterruptedException;
@@ -27,18 +26,23 @@ public class LocalWebhookManager {
 
     private final Map<String, WebhookLeader> localLeaders = new ConcurrentHashMap<>();
 
-    private final KeyLockManager lockManager = KeyLockManagers.newLock(1, TimeUnit.SECONDS);
-    private static WebhookProperties webhookProperties = new WebhookProperties(PropertiesLoader.getInstance());
-    private static int shutdownThreadCount = webhookProperties.getShutdownThreadCount();
-    @Inject
-    @Named("Webhook")
-    private Dao<Webhook> webhookDao;
-    @Inject
-    private Provider<WebhookLeader> v2Provider;
+    private final Dao<Webhook> webhookDao;
+    private final Provider<WebhookLeader> v2Provider;
+    private final KeyLockManager lockManager;
+    private final int shutdownThreadCount;
 
+    @Inject
+    public LocalWebhookManager(@Named("Webhook") Dao<Webhook> webhookDao,
+                               Provider<WebhookLeader> v2Provider,
+                               WebhookProperties webhookProperties) {
+        this.webhookDao = webhookDao;
+        this.v2Provider = v2Provider;
+        this.lockManager = KeyLockManagers.newLock(1, TimeUnit.SECONDS);
+        this.shutdownThreadCount = webhookProperties.getShutdownThreadCount();
+    }
 
-    static void runAndWait(String name, Collection<String> keys, Consumer<String> consumer) {
-        ExecutorService pool = Executors.newFixedThreadPool(shutdownThreadCount,
+    public void runAndWait(String name, Collection<String> keys, Consumer<String> consumer) {
+        final ExecutorService pool = Executors.newFixedThreadPool(shutdownThreadCount,
                 new ThreadFactoryBuilder().setNameFormat(name + "-%d").build());
         log.info("{}", keys);
         for (String key : keys) {
@@ -49,7 +53,7 @@ public class LocalWebhookManager {
         log.info("accepted all ");
         pool.shutdown();
         try {
-            boolean awaitTermination = pool.awaitTermination(5, TimeUnit.MINUTES);
+            final boolean awaitTermination = pool.awaitTermination(5, TimeUnit.MINUTES);
             log.info("awaitTermination", awaitTermination);
         } catch (InterruptedException e) {
             log.warn("interuppted", e);
@@ -62,12 +66,12 @@ public class LocalWebhookManager {
     }
 
     private boolean ensureRunningWithLock(String name) {
-        Webhook daoWebhook = webhookDao.get(name);
+        final Webhook daoWebhook = webhookDao.get(name);
         log.info("ensureRunning {}", daoWebhook);
         if (localLeaders.containsKey(name)) {
             log.info("checking for change {}", name);
-            WebhookLeader webhookLeader = localLeaders.get(name);
-            Webhook runningWebhook = webhookLeader.getWebhook();
+            final WebhookLeader webhookLeader = localLeaders.get(name);
+            final Webhook runningWebhook = webhookLeader.getWebhook();
             if (webhookLeader.hasLeadership() && !runningWebhook.isChanged(daoWebhook)) {
                 log.trace("webhook unchanged {} to {}", runningWebhook, daoWebhook);
                 return true;
@@ -80,15 +84,15 @@ public class LocalWebhookManager {
     }
 
     private boolean startLocal(Webhook daoWebhook) {
-        WebhookLeader webhookLeader = v2Provider.get();
-        boolean hasLeadership = webhookLeader.tryLeadership(daoWebhook);
+        final WebhookLeader webhookLeader = v2Provider.get();
+        final boolean hasLeadership = webhookLeader.tryLeadership(daoWebhook);
         if (hasLeadership) {
             localLeaders.put(daoWebhook.getName(), webhookLeader);
         }
         return hasLeadership;
     }
 
-    void stopAllLocal() throws InterruptedException {
+    void stopAllLocal() {
         runAndWait("LocalWebhookManager.stopAll", localLeaders.keySet(), (name) -> stopLocal(name, false));
     }
 
