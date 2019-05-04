@@ -8,6 +8,7 @@ import com.flightstats.hub.app.LocalHostOnly;
 import com.flightstats.hub.config.ContentProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Dao;
+import com.flightstats.hub.dao.aws.ContentRetriever;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.HubUtils;
@@ -48,6 +49,7 @@ public class InternalChannelResource {
             }, "ChannelConfig");
     private final static HubUtils hubUtils = HubProvider.getInstance(HubUtils.class);
     private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
+    private final static ContentRetriever contentRetriever = HubProvider.getInstance(ContentRetriever.class);
     private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private static final Long DEFAULT_STALE_AGE = TimeUnit.DAYS.toMinutes(1);
     @Context
@@ -123,7 +125,7 @@ public class InternalChannelResource {
         addStaleEntities(root, age, (staleCutoff) -> {
             Map<DateTime, URI> staleChannels = new TreeMap<>();
             channelService.getChannels().forEach(channelConfig -> {
-                Optional<ContentKey> optionalContentKey = channelService.getLatest(channelConfig.getDisplayName(), false);
+                Optional<ContentKey> optionalContentKey = contentRetriever.getLatest(channelConfig.getDisplayName(), false);
                 if (!optionalContentKey.isPresent()) return;
 
                 ContentKey contentKey = optionalContentKey.get();
@@ -157,7 +159,7 @@ public class InternalChannelResource {
         addStaleEntities(root, age, (staleCutoff) -> {
             Map<DateTime, URI> staleChannels = new TreeMap<>();
             channelService.getChannels().forEach(channelConfig -> {
-                Optional<ContentKey> optionalContentKey = channelService.getLatest(channelConfig.getDisplayName(), false);
+                Optional<ContentKey> optionalContentKey = contentRetriever.getLatest(channelConfig.getDisplayName(), false);
                 if (!optionalContentKey.isPresent()) return;
 
                 ContentKey contentKey = optionalContentKey.get();

@@ -123,7 +123,7 @@ public class MetricsRequestFilter implements ContainerRequestFilter, ContainerRe
     }
 
     @Override
-    public void filter(ContainerRequestContext request) throws IOException {
+    public void filter(ContainerRequestContext request) {
         threadLocal.set(new RequestState(request));
     }
 

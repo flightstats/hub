@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.dao.aws.ContentRetriever;
 import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.ChannelConfig;
@@ -38,19 +39,17 @@ class SingleWebhookStrategy implements WebhookStrategy {
     private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private final Webhook webhook;
     private final LastContentPath lastContentPath;
-    private final ChannelService channelService;
     private AtomicBoolean shouldExit = new AtomicBoolean(false);
     private AtomicReference<Exception> exceptionReference = new AtomicReference<>();
     private BlockingQueue<ContentPath> queue;
     private String channel;
     private QueryGenerator queryGenerator;
     private ExecutorService executorService;
+    private final static ContentRetriever contentRetriever = HubProvider.getInstance(ContentRetriever.class);
 
-
-    SingleWebhookStrategy(Webhook webhook, LastContentPath lastContentPath, ChannelService channelService) {
+    SingleWebhookStrategy(Webhook webhook, LastContentPath lastContentPath) {
         this.webhook = webhook;
         this.lastContentPath = lastContentPath;
-        this.channelService = channelService;
         this.queue = new ArrayBlockingQueue<>(webhook.getParallelCalls() * 2);
     }
 
@@ -133,12 +132,12 @@ class SingleWebhookStrategy implements WebhookStrategy {
                 ActiveTraces.start("SingleWebhookStrategy", webhook);
                 try {
                     DateTime latestStableInChannel = TimeUtil.stable();
-                    if (!channelService.isLiveChannel(channel)) {
-                        latestStableInChannel = channelService.getLastUpdated(channel, MinutePath.NONE).getTime();
+                    if (!contentRetriever.isLiveChannel(channel)) {
+                        latestStableInChannel = contentRetriever.getLastUpdated(channel, MinutePath.NONE).getTime();
                     }
                     TimeQuery timeQuery = queryGenerator.getQuery(latestStableInChannel);
                     if (timeQuery != null) {
-                        addKeys(channelService.queryByTime(timeQuery));
+                        addKeys(contentRetriever.queryByTime(timeQuery));
                         if (webhook.isHeartbeat() && queryGenerator.getLastQueryTime().getSecondOfMinute() == 0) {
                             MinutePath minutePath = new MinutePath(queryGenerator.getLastQueryTime().minusMinutes(1));
                             logger.debug("sending heartbeat {}", minutePath);

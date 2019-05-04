@@ -30,7 +30,7 @@ interface WebhookStrategy extends AutoCloseable {
         if (webhook.isMinute() || webhook.isSecond()) {
             return new TimedWebhookStrategy(webhook, lastContentPath, channelService);
         }
-        return new SingleWebhookStrategy(webhook, lastContentPath, channelService);
+        return new SingleWebhookStrategy(webhook, lastContentPath);
     }
 
     static void close(AtomicBoolean shouldExit, ExecutorService executorService, BlockingQueue queue) {

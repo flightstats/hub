@@ -8,6 +8,7 @@ import com.flightstats.hub.app.LocalHostOnly;
 import com.flightstats.hub.config.ContentProperties;
 import com.flightstats.hub.config.PropertiesLoader;
 import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.dao.aws.ContentRetriever;
 import com.flightstats.hub.events.ContentOutput;
 import com.flightstats.hub.events.EventsService;
 import com.flightstats.hub.exception.ContentTooLargeException;
@@ -61,6 +62,7 @@ import static com.flightstats.hub.rest.Linked.linked;
 public class ChannelResource {
     private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
+    private final static ContentRetriever contentRetriever = HubProvider.getInstance(ContentRetriever.class);
     private final static NtpMonitor ntpMonitor = HubProvider.getInstance(NtpMonitor.class);
     private final static EventsService eventsService = HubProvider.getInstance(EventsService.class);
     private final ContentProperties contentProperties = new ContentProperties(PropertiesLoader.getInstance());
@@ -249,8 +251,8 @@ public class ChannelResource {
             ContentKey fromUrl = ContentKey.fromFullUrl(lastEventId);
             if (fromUrl != null) {
                 contentKey = fromUrl;
-            } else if (channelService.isReplicating(channel)) {
-                Optional<ContentKey> latest = channelService.getLatest(channel, true);
+            } else if (contentRetriever.isReplicating(channel)) {
+                Optional<ContentKey> latest = contentRetriever.getLatest(channel, true);
                 if (latest.isPresent()) {
                     contentKey = latest.get();
                 }

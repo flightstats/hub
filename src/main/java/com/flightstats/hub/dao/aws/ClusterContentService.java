@@ -5,7 +5,6 @@ import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.config.AppProperties;
 import com.flightstats.hub.config.ContentProperties;
 import com.flightstats.hub.config.SpokeProperties;
-import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentKeyUtil;
 import com.flightstats.hub.dao.ContentService;
@@ -69,7 +68,7 @@ public class ClusterContentService implements ContentService {
     private final ContentDao s3BatchContentDao;
     private final ContentDao s3LargePayloadContentDao;
     private final S3WriteQueue s3WriteQueue;
-    private final ChannelService channelService;
+    private final ContentRetriever contentRetriever;
     private final LastContentPath lastContentPath;
     private final HubUtils hubUtils;
     private final LargeContentUtils largeContentUtils;
@@ -79,7 +78,6 @@ public class ClusterContentService implements ContentService {
 
     @Inject
     public ClusterContentService(
-            ChannelService channelService,
             @Named(ContentDao.WRITE_CACHE) ContentDao spokeWriteContentDao,
             @Named(ContentDao.READ_CACHE) ContentDao spokeReadContentDao,
             @Named(ContentDao.SINGLE_LONG_TERM) ContentDao s3SingleContentDao,
@@ -89,12 +87,12 @@ public class ClusterContentService implements ContentService {
             LastContentPath lastContentPath,
             HubUtils hubUtils,
             LargeContentUtils largeContentUtils,
+            ContentRetriever contentRetriever,
             AppProperties appProperties,
             ContentProperties contentProperties,
             SpokeProperties spokeProperties) {
         HubServices.registerPreStop(new SpokeS3ContentServiceInit());
         HubServices.register(new ChannelLatestUpdatedService(contentProperties), HubServices.TYPE.AFTER_HEALTHY_START);
-        this.channelService = channelService;
         this.spokeWriteContentDao = spokeWriteContentDao;
         this.spokeReadContentDao = spokeReadContentDao;
         this.s3SingleContentDao = s3SingleContentDao;
@@ -104,6 +102,7 @@ public class ClusterContentService implements ContentService {
         this.lastContentPath = lastContentPath;
         this.hubUtils = hubUtils;
         this.largeContentUtils = largeContentUtils;
+        this.contentRetriever = contentRetriever;
         this.appProperties = appProperties;
         this.contentProperties = contentProperties;
         this.spokeProperties = spokeProperties;
@@ -182,7 +181,7 @@ public class ClusterContentService implements ContentService {
     @Override
     public Optional<Content> get(String channelName, ContentKey key, boolean remoteOnly) {
         log.trace("fetching {} from channel {} ", key.toString(), channelName);
-        Optional<ChannelConfig> optionalChannelConfig = channelService.getCachedChannelConfig(channelName);
+        Optional<ChannelConfig> optionalChannelConfig = contentRetriever.getCachedChannelConfig(channelName);
         if (!optionalChannelConfig.isPresent()) return Optional.empty();
         ChannelConfig channelConfig = optionalChannelConfig.get();
         if (!remoteOnly && key.getTime().isAfter(getSpokeTtlTime(channelName))) {
@@ -252,7 +251,7 @@ public class ClusterContentService implements ContentService {
     }
 
     private DateTime getSpokeTtlTime(String channelName) {
-        DateTime startTime = channelService.getLastUpdated(channelName, new ContentKey(TimeUtil.now())).getTime();
+        DateTime startTime = contentRetriever.getLastUpdated(channelName, new ContentKey(TimeUtil.now())).getTime();
         return startTime.minusMinutes(spokeProperties.getTtlMinutes(SpokeStore.WRITE));
     }
 
@@ -264,7 +263,7 @@ public class ClusterContentService implements ContentService {
         if (streamResults.isDescending()) {
             Collections.reverse(minutePaths);
         }
-        Optional<ChannelConfig> optionalChannelConfig = channelService.getCachedChannelConfig(channelName);
+        Optional<ChannelConfig> optionalChannelConfig = contentRetriever.getCachedChannelConfig(channelName);
         boolean isSingleChannel = optionalChannelConfig.isPresent() &&
                 optionalChannelConfig.get().isSingle();
         DateTime spokeTtlTime = getSpokeTtlTime(channelName);
@@ -321,7 +320,7 @@ public class ClusterContentService implements ContentService {
         } else {
             daos.add(spokeWriteContentDao);
 //            ChannelConfig channel = channelService.getCachedChannelConfig(query.getChannelName());
-            Optional<ChannelConfig> optionalChannelConfig = channelService.getCachedChannelConfig(query.getChannelName());
+            Optional<ChannelConfig> optionalChannelConfig = contentRetriever.getCachedChannelConfig(query.getChannelName());
             if (!optionalChannelConfig.isPresent()) return new TreeSet<>();
             ChannelConfig channelConfig = optionalChannelConfig.get();
             DateTime spokeTtlTime = getSpokeTtlTime(query.getChannelName());
@@ -362,7 +361,7 @@ public class ClusterContentService implements ContentService {
         DateTime cacheTtlTime = getSpokeTtlTime(channel);
         Optional<ContentKey> latest = spokeWriteContentDao.getLatest(channel, latestQuery.getStartKey(), ActiveTraces.getLocal());
 
-        Optional<ChannelConfig> optionalChannelConfig = channelService.getCachedChannelConfig(channel);
+        Optional<ChannelConfig> optionalChannelConfig = contentRetriever.getCachedChannelConfig(channel);
         if (!optionalChannelConfig.isPresent()) return Optional.empty();
         ChannelConfig cachedChannelConfig = optionalChannelConfig.get();
 
@@ -393,7 +392,7 @@ public class ClusterContentService implements ContentService {
                 .location(latestQuery.getLocation())
                 .count(1)
                 .build();
-        Collection<ContentKey> keys = channelService.query(query);
+        Collection<ContentKey> keys = new ArrayList<>();//= channelService.query(query);
         if (keys.isEmpty()) {
             ActiveTraces.getLocal().add("updating channel empty", channel);
             lastContentPath.updateIncrease(ContentKey.NONE, channel, CHANNEL_LATEST_UPDATED);
@@ -421,7 +420,7 @@ public class ClusterContentService implements ContentService {
         s3LargePayloadContentDao.delete(channelName);
         lastContentPath.delete(channelName, CHANNEL_LATEST_UPDATED);
         lastContentPath.delete(channelName, S3Verifier.LAST_SINGLE_VERIFIED);
-        Optional<ChannelConfig> optionalChannelConfig = channelService.getCachedChannelConfig(channelName);
+        Optional<ChannelConfig> optionalChannelConfig = contentRetriever.getCachedChannelConfig(channelName);
         if (optionalChannelConfig.isPresent() && !optionalChannelConfig.get().isSingle()) {
             new S3Batch(optionalChannelConfig.get(), hubUtils, appProperties.getAppUrl(), appProperties.getAppEnv()).stop();
         }
@@ -494,7 +493,7 @@ public class ClusterContentService implements ContentService {
     }
 
     private boolean isWriteable(String channelName) {
-        Optional<ChannelConfig> optionalChannelConfig = channelService.getCachedChannelConfig(channelName);
+        Optional<ChannelConfig> optionalChannelConfig = contentRetriever.getCachedChannelConfig(channelName);
         return optionalChannelConfig.isPresent() && !optionalChannelConfig.get().isBatch();
     }
 
@@ -517,7 +516,7 @@ public class ClusterContentService implements ContentService {
 
         private ContentProperties contentProperties;
 
-        public ChannelLatestUpdatedService(ContentProperties contentProperties){
+        public ChannelLatestUpdatedService(ContentProperties contentProperties) {
             this.contentProperties = contentProperties;
         }
 
@@ -525,7 +524,7 @@ public class ClusterContentService implements ContentService {
         protected synchronized void runOneIteration() throws Exception {
             log.debug("running...");
             ActiveTraces.start("ChannelLatestUpdatedService");
-            channelService.getChannels().forEach(channelConfig -> {
+            contentRetriever.getChannelConfig().forEach(channelConfig -> {
                 try {
                     DateTime time = TimeUtil.stable().plusMinutes(1);
                     Traces traces = new Traces(contentProperties, channelConfig.getDisplayName(), time);

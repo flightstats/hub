@@ -2,7 +2,7 @@ package com.flightstats.hub.dao.aws;
 
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.config.AppProperties;
-import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.replication.S3Batch;
 import com.flightstats.hub.util.HubUtils;
@@ -12,6 +12,7 @@ import com.flightstats.hub.webhook.WebhookService;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashSet;
@@ -23,19 +24,19 @@ import java.util.concurrent.Executors;
 public class S3BatchManager {
 
     private final WebhookService webhookService;
-    private final ChannelService channelService;
+    private final Dao<ChannelConfig> channelConfigDao;
     private final HubUtils hubUtils;
     private final ActiveWebhooks activeWebhooks;
     private final AppProperties appProperties;
 
     @Inject
     public S3BatchManager(WebhookService webhookService,
-                          ChannelService channelService,
+                          @Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao,
                           HubUtils hubUtils,
                           ActiveWebhooks activeWebhooks,
                           AppProperties appProperties) {
         this.webhookService = webhookService;
-        this.channelService = channelService;
+        this.channelConfigDao = channelConfigDao;
         this.hubUtils = hubUtils;
         this.activeWebhooks = activeWebhooks;
         this.appProperties = appProperties;
@@ -51,7 +52,7 @@ public class S3BatchManager {
                 existingBatchGroups.add(webhook.getName());
             }
         }
-        for (ChannelConfig channel : channelService.getChannels()) {
+        for (ChannelConfig channel : channelConfigDao.getAll(false)) {
             S3Batch s3Batch = new S3Batch(channel, hubUtils, appProperties.getAppUrl(), appProperties.getAppEnv());
             if (channel.isSingle()) {
                 if (!activeWebhooks.getServers(channel.getName()).isEmpty()) {

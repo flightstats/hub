@@ -7,4 +7,5 @@ public class Constants {
      */
     public static final String REPLICATOR_WATCHER_PATH = "/replicator/watcher";
     public static final String REPLICATED_LAST_UPDATED = "/ReplicatedLastUpdated/";
+    public static final String HISTORICAL_EARLIEST = "/HistoricalEarliest/";
 }

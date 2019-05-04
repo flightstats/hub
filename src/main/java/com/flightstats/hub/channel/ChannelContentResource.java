@@ -6,7 +6,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentMarshaller;
+import com.flightstats.hub.dao.ContentService;
 import com.flightstats.hub.dao.ItemRequest;
+import com.flightstats.hub.dao.aws.ContentRetriever;
 import com.flightstats.hub.events.ContentOutput;
 import com.flightstats.hub.events.EventsService;
 import com.flightstats.hub.exception.ConflictException;
@@ -82,6 +84,8 @@ public class ChannelContentResource {
     private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
     private final static StatsdReporter statsdReporter = HubProvider.getInstance(StatsdReporter.class);
     private final static EventsService eventsService = HubProvider.getInstance(EventsService.class);
+    private final static ContentRetriever contentRetriever = HubProvider.getInstance(ContentRetriever.class);
+
     @Context
     private UriInfo uriInfo;
 
@@ -213,7 +217,7 @@ public class ChannelContentResource {
                 .location(Location.valueOf(location))
                 .epoch(Epoch.valueOf(epoch))
                 .build();
-        SortedSet<ContentKey> keys = channelService.queryByTime(query);
+        SortedSet<ContentKey> keys = contentRetriever.queryByTime(query);
         DateTime current = stable ? stable() : now();
         DateTime next = startTime.plus(unit.getDuration());
         DateTime previous = startTime.minus(unit.getDuration());
@@ -430,7 +434,7 @@ public class ChannelContentResource {
                 .epoch(Epoch.valueOf(epoch))
                 .count(1)
                 .build();
-        Collection<ContentKey> keys = channelService.query(query);
+        Collection<ContentKey> keys = contentRetriever.query(query);
         if (keys.isEmpty()) {
             return Response.status(NOT_FOUND).build();
         }
@@ -511,7 +515,7 @@ public class ChannelContentResource {
                 .epoch(Epoch.valueOf(epoch))
                 .count(count)
                 .build();
-        SortedSet<ContentKey> keys = channelService.query(query);
+        SortedSet<ContentKey> keys = contentRetriever.query(query);
         if (bulk || batch) {
             return BulkBuilder.build(keys, channel, channelService, uriInfo, accept, descending, (builder) -> {
                 if (!keys.isEmpty()) {

@@ -4,6 +4,7 @@ import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.config.WebhookProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Dao;
+import com.flightstats.hub.dao.aws.ContentRetriever;
 import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.model.ChannelConfig;
@@ -33,7 +34,8 @@ public class WebhookService {
     private final WebhookValidator webhookValidator;
     private final WebhookManager webhookManager;
     private final LastContentPath lastContentPath;
-   // private final ChannelService channelService;
+    private final ChannelService channelService;
+    private final ContentRetriever contentRetriever;
     private final LocalWebhookManager localWebhookManager;
     private final WebhookProperties webhookProperties;
 
@@ -43,6 +45,7 @@ public class WebhookService {
                           WebhookManager webhookManager,
                           LastContentPath lastContentPath,
                           ChannelService channelService,
+                          ContentRetriever contentRetriever,
                           LocalWebhookManager localWebhookManager,
                           WebhookProperties webhookProperties) {
         this.webhookDao = webhookDao;
@@ -50,6 +53,7 @@ public class WebhookService {
         this.webhookManager = webhookManager;
         this.lastContentPath = lastContentPath;
         this.channelService = channelService;
+        this.contentRetriever = contentRetriever;
         this.localWebhookManager = localWebhookManager;
         this.webhookProperties = webhookProperties;
     }
@@ -136,7 +140,7 @@ public class WebhookService {
         }
         final String channel = webhook.getChannelName();
         try {
-            Optional<ContentKey> lastKey = channelService.getLatest(channel, true);
+            Optional<ContentKey> lastKey = contentRetriever.getLatest(channel, true);
             if (lastKey.isPresent()) {
                 builder.channelLatest(lastKey.get());
             }

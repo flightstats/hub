@@ -1,12 +1,23 @@
 package com.flightstats.hub.channel;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.dao.aws.ContentRetriever;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.Epoch;
+import com.flightstats.hub.model.Location;
+import com.flightstats.hub.model.Order;
 import com.flightstats.hub.util.TimeUtil;
 
-import javax.ws.rs.*;
+import javax.inject.Inject;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -22,11 +33,24 @@ import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 @Path("/channel/{channel}/latest")
 public class ChannelLatestResource {
 
-    private final static TagLatestResource tagLatestResource = HubProvider.getInstance(TagLatestResource.class);
-    private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
+    private final TagLatestResource tagLatestResource;
+    private final ChannelService channelService;
+    private final ContentRetriever contentRetriever;
+    private final ObjectMapper objectMapper;
+
     @Context
     private UriInfo uriInfo;
+
+    @Inject
+    public ChannelLatestResource(TagLatestResource tagLatestResource,
+                                 ChannelService channelService,
+                                 ContentRetriever contentRetriever,
+                                 ObjectMapper objectMapper) {
+        this.tagLatestResource = tagLatestResource;
+        this.channelService = channelService;
+        this.contentRetriever = contentRetriever;
+        this.objectMapper = objectMapper;
+    }
 
     @GET
     public Response getLatest(@PathParam("channel") String channel,
@@ -46,7 +70,7 @@ public class ChannelLatestResource {
                 .epoch(Epoch.valueOf(epoch))
                 .count(1)
                 .build();
-        Optional<ContentKey> latest = channelService.getLatest(query);
+        Optional<ContentKey> latest = contentRetriever.getLatest(query);
         if (latest.isPresent()) {
             return Response.status(SEE_OTHER)
                     .location(URI.create(uriInfo.getBaseUri() + "channel/" + channel + "/" + latest.get().toUrl()))
@@ -82,7 +106,7 @@ public class ChannelLatestResource {
                 .epoch(Epoch.valueOf(epoch))
                 .count(1)
                 .build();
-        Optional<ContentKey> latest = channelService.getLatest(latestQuery);
+        Optional<ContentKey> latest = contentRetriever.getLatest(latestQuery);
         if (!latest.isPresent()) {
             return Response.status(NOT_FOUND).build();
         }
@@ -95,7 +119,7 @@ public class ChannelLatestResource {
                 .epoch(Epoch.valueOf(epoch))
                 .count(count - 1)
                 .build();
-        SortedSet<ContentKey> keys = new TreeSet<>(channelService.query(query));
+        SortedSet<ContentKey> keys = new TreeSet<>(contentRetriever.query(query));
         keys.add(latest.get());
         return getResponse(channel, count, trace, batch, bulk, accept, query, keys, Order.isDescending(order));
     }
@@ -105,7 +129,7 @@ public class ChannelLatestResource {
         if (bulk || batch) {
             return BulkBuilder.build(keys, channel, channelService, uriInfo, accept, descending);
         } else {
-            return LinkBuilder.directionalResponse(keys, count, query, mapper, uriInfo, true, trace, descending);
+            return LinkBuilder.directionalResponse(keys, count, query, objectMapper, uriInfo, true, trace, descending);
         }
     }
 

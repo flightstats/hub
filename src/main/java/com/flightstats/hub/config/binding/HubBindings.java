@@ -26,6 +26,7 @@ import com.flightstats.hub.config.SystemProperties;
 import com.flightstats.hub.config.ZookeeperProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
+import com.flightstats.hub.dao.aws.ContentRetriever;
 import com.flightstats.hub.dao.aws.s3Verifier.VerifierConfig;
 import com.flightstats.hub.dao.aws.s3Verifier.VerifierConfigProvider;
 import com.flightstats.hub.health.HubHealthCheck;
@@ -251,6 +252,7 @@ public class HubBindings extends AbstractModule {
         bind(FinalCheck.class).to(SpokeFinalCheck.class).asEagerSingleton();
         bind(InFlightService.class).asEagerSingleton();
         bind(ChannelService.class).asEagerSingleton();
+        bind(ContentRetriever.class).asEagerSingleton();
         bind(HubVersion.class).toInstance(new HubVersion());
 
         // metrics
