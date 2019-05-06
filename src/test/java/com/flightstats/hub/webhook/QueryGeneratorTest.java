@@ -4,14 +4,14 @@ import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.TimeUtil;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class QueryGeneratorTest {
+class QueryGeneratorTest {
 
     @Test
-    public void testNormal() {
+    void testNormal() {
         DateTime startTime = new DateTime(2015, 5, 7, 11, 5, 1, 2, DateTimeZone.UTC);
         DateTime latestStableInChannel = new DateTime(2015, 5, 7, 11, 6, 1, 2, DateTimeZone.UTC);
         QueryGenerator generator = new QueryGenerator(startTime, "test");
@@ -30,7 +30,7 @@ public class QueryGeneratorTest {
     }
 
     @Test
-    public void testMinuteOffsetTransition() {
+    void testMinuteOffsetTransition() {
         DateTime startTime = new DateTime(2015, 5, 7, 11, 30, 10, 55, DateTimeZone.UTC);
         DateTime latestStableInChannel = new DateTime(2015, 5, 7, 11, 33, 10, 851, DateTimeZone.UTC);
         QueryGenerator generator = new QueryGenerator(startTime, "test");
@@ -57,7 +57,7 @@ public class QueryGeneratorTest {
     }
 
     @Test
-    public void testHourOffsetTransition() {
+    void testHourOffsetTransition() {
         DateTime startTime = new DateTime(2015, 5, 7, 8, 30, 10, 55, DateTimeZone.UTC);
         DateTime latestStableInChannel = new DateTime(2015, 5, 7, 11, 33, 10, 851, DateTimeZone.UTC);
         QueryGenerator generator = new QueryGenerator(startTime, "test");

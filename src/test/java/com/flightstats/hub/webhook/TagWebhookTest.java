@@ -3,8 +3,8 @@ package com.flightstats.hub.webhook;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.test.Integration;
 import org.apache.commons.lang3.StringUtils;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -12,7 +12,7 @@ import java.util.TreeSet;
 
 import static com.flightstats.hub.webhook.TagWebhook.allManagedWebhooksForChannel;
 
-public class TagWebhookTest {
+class TagWebhookTest {
 
     private static final String host = "http://hub.com";
     private ChannelConfig c1, c2, c3;
@@ -54,8 +54,8 @@ public class TagWebhookTest {
                 .build();
     }
 
-    @Before
-    public void initialize() {
+    @BeforeEach
+    void initialize() {
         try {
             Integration.startAwsHub();
         } catch (Exception e) {
@@ -68,7 +68,7 @@ public class TagWebhookTest {
     }
 
     @Test
-    public void testAllManagedWebhooksForChannel() throws Exception {
+    void testAllManagedWebhooksForChannel() throws Exception {
         Set<Webhook> s = allManagedWebhooksForChannel(allWebhooks, c2);
         assert s.size() == 1 : "Should be only 1 tag webhook for c2";
         s = allManagedWebhooksForChannel(allWebhooks, c3);

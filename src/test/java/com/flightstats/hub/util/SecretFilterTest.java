@@ -1,16 +1,16 @@
 package com.flightstats.hub.util;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.stream.Stream;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class SecretFilterTest {
+class SecretFilterTest {
     private final static SecretFilter secretFilter = new SecretFilter();
     @Test
-    public void testRedactionFilter_sensitivePatterns_redacted() {
+    void testRedactionFilter_sensitivePatterns_redacted() {
         assertEquals("[REDACTED]", secretFilter.redact("app_key", "test_secret"));
         assertEquals("[REDACTED]", secretFilter.redact("api_key", "test_secret"));
         assertEquals("[REDACTED]", secretFilter.redact("password", "test_secret"));
@@ -20,7 +20,7 @@ public class SecretFilterTest {
     }
 
     @Test
-    public void testRedactionFilter_nonSensitivePatterns_identity() {
+    void testRedactionFilter_nonSensitivePatterns_identity() {
         assertTrue(Stream.of("nonsensitive", "arbitrary", "strings", "arbitrary.|||.pattern", "arbitrary.|||.pass")
                 .allMatch((str) -> secretFilter.redact(str, "identity").equals("identity")));
     }

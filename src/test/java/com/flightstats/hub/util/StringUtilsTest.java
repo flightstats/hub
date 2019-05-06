@@ -1,15 +1,15 @@
 package com.flightstats.hub.util;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class StringUtilsTest {
+class StringUtilsTest {
     @Test
-    public void testRandomAlphaNumeric() throws Exception {
+    void testRandomAlphaNumeric() throws Exception {
         Pattern p = Pattern.compile("^\\w+$");
         String ranStr = StringUtils.randomAlphaNumeric(1000);
         Matcher m = p.matcher(ranStr);

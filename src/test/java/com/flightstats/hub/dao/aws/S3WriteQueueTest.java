@@ -7,16 +7,16 @@ import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.spoke.SpokeWriteContentDao;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -25,7 +25,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 @Slf4j
-public class S3WriteQueueTest {
+class S3WriteQueueTest {
 
     @Mock private SpokeWriteContentDao spokeWriteContentDao;
     @Mock private S3SingleContentDao s3SingleContentDao;
@@ -37,8 +37,8 @@ public class S3WriteQueueTest {
     private static final long AGE_MILLIS = 666;
     private S3WriteQueue s3WriteQueue;
 
-    @Before
-    public void setup() {
+    @BeforeEach
+    void setup() {
         initMocks(this);
         when(s3Properties.getWriteQueueSize()).thenReturn(20);
         when(s3Properties.getWriteQueueThreadCount()).thenReturn(2);
@@ -50,7 +50,7 @@ public class S3WriteQueueTest {
     }
 
     @Test
-    public void testS3WriteQueue_add_addsItemToQueue() {
+    void testS3WriteQueue_add_addsItemToQueue() {
         ChannelContentKey key = keyFactory(1).get(0);
         boolean addedItem = s3WriteQueue.add(key);
         verify(statsdReporter).gauge("s3.writeQueue.used", 1);
@@ -59,7 +59,7 @@ public class S3WriteQueueTest {
     }
 
     @Test
-    public void testS3WriteQueue_add_dropsWhenQueueFull() {
+    void testS3WriteQueue_add_dropsWhenQueueFull() {
         boolean nextAddedItem = keyFactory(21)
                 .stream()
                 .allMatch(key -> s3WriteQueue.add(key));
@@ -73,7 +73,7 @@ public class S3WriteQueueTest {
     }
 
     @Test
-    public void testS3WriteQueue_add_recoversFromQueueFullWithMultipleRuns() {
+    void testS3WriteQueue_add_recoversFromQueueFullWithMultipleRuns() {
         // GIVEN
         List<ChannelContentKey> keys = keyFactory(40);
 

@@ -7,26 +7,27 @@ import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.Sleeper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collection;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 
 @Slf4j
-public class CuratorClusterTest {
+class CuratorClusterTest {
 
     private static CuratorFramework curator;
 
-    @BeforeClass
-    public static void setUpClass() throws Exception {
+    @BeforeAll
+    static void setUpClass() throws Exception {
         curator = Integration.startZooKeeper();
     }
 
     @Test
-    public void testPath() throws Exception {
+    void testPath() throws Exception {
         log.info("starting testPath");
 
         final CuratorCluster clusterTest = new CuratorCluster(curator,

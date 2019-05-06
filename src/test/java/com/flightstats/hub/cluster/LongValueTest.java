@@ -2,29 +2,29 @@ package com.flightstats.hub.cluster;
 
 import com.flightstats.hub.test.Integration;
 import org.apache.curator.framework.CuratorFramework;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class LongValueTest {
+class LongValueTest {
 
     private static CuratorFramework curator;
     private LongValue longValue;
 
-    @BeforeClass
-    public static void setUpClass() throws Exception {
+    @BeforeAll
+    static void setUpClass() throws Exception {
         curator = Integration.startZooKeeper();
     }
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp() throws Exception {
         longValue = new LongValue(curator);
     }
 
     @Test
-    public void testLifeCycle() throws Exception {
+    void testLifeCycle() throws Exception {
         String path = "/LVT/testLifeCycle";
         longValue.initialize(path, 10);
         assertEquals(10, longValue.get(path, 0));
@@ -35,14 +35,14 @@ public class LongValueTest {
     }
 
     @Test
-    public void testCreateIfMissing() throws Exception {
+    void testCreateIfMissing() throws Exception {
         String path = "/LVT/testCreateIfMissing";
         assertEquals(10, longValue.get(path, 10));
         assertEquals(10, longValue.get(path, 20));
     }
 
     @Test
-    public void testUpdateIncrease() throws Exception {
+    void testUpdateIncrease() throws Exception {
         String path = "/LVT/testUpdateIncrease";
         longValue.initialize(path, 10);
         longValue.updateIncrease(5, path);

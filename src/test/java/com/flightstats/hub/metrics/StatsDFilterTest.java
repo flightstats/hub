@@ -1,39 +1,36 @@
 package com.flightstats.hub.metrics;
 
-import com.flightstats.hub.dao.CachedDao;
-import com.flightstats.hub.dao.CachedLowerCaseDao;
 import com.flightstats.hub.dao.Dao;
+import com.flightstats.hub.dao.aws.DynamoChannelConfigDao;
+import com.flightstats.hub.dao.aws.DynamoWebhookDao;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.webhook.Webhook;
 import com.timgroup.statsd.NoOpStatsDClient;
 import com.timgroup.statsd.NonBlockingStatsDClient;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Random;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class StatsDFilterTest {
+class StatsDFilterTest {
 
-    @SuppressWarnings("unchecked")
-    // suppressing the unchecked warning here, the cast to Dao<ChannelConfig> is safe in this case
     private Dao<ChannelConfig> getMockedChannelConfigDao() {
-        return (Dao<ChannelConfig>) mock(CachedLowerCaseDao.class);
+        return mock(DynamoChannelConfigDao.class);
     }
 
-    @SuppressWarnings("unchecked")
-    // suppressing the unchecked warning here, the cast to Dao<Webhook> is safe in this case
     private Dao<Webhook> getMockedWebhookConfigDao() {
-        return (Dao<Webhook>) mock(CachedDao.class);
+        return mock(DynamoWebhookDao.class);
     }
 
     @Test
-    public void testStatsDFilterShouldChannelReport_falseNoChannel() {
+    void testStatsDFilterShouldChannelReport_falseNoChannel() {
         // GIVEN
         MetricsConfig metricsConfig = MetricsConfig.builder().build();
         Dao<ChannelConfig> channelConfigDao = getMockedChannelConfigDao();
@@ -49,7 +46,7 @@ public class StatsDFilterTest {
     }
 
     @Test
-    public void testStatsDFilterShouldChannelReport_falseNoWebhook() {
+    void testStatsDFilterShouldChannelReport_falseNoWebhook() {
         // GIVEN
         MetricsConfig metricsConfig = MetricsConfig.builder().build();
         Dao<ChannelConfig> channelConfigDao = getMockedChannelConfigDao();
@@ -65,7 +62,7 @@ public class StatsDFilterTest {
     }
 
     @Test
-    public void testStatsDFilterShouldChannelReport_falseChannelNotReporting() {
+    void testStatsDFilterShouldChannelReport_falseChannelNotReporting() {
         // GIVEN
         MetricsConfig metricsConfig = MetricsConfig.builder().build();
         Dao<ChannelConfig> channelConfigDao = getMockedChannelConfigDao();
@@ -83,7 +80,7 @@ public class StatsDFilterTest {
     }
 
     @Test
-    public void testStatsDFilterShouldChannelReport_trueChannelReporting() {
+    void testStatsDFilterShouldChannelReport_trueChannelReporting() {
         // GIVEN
         MetricsConfig metricsConfig = MetricsConfig.builder().build();
         Dao<ChannelConfig> channelConfigDao = getMockedChannelConfigDao();
@@ -101,7 +98,7 @@ public class StatsDFilterTest {
     }
 
     @Test
-    public void testStatsDFilterShouldChannelReport_falseWebhookNotReporting() {
+    void testStatsDFilterShouldChannelReport_falseWebhookNotReporting() {
         // GIVEN
         MetricsConfig metricsConfig = MetricsConfig.builder().build();
         Dao<ChannelConfig> channelConfigDao = getMockedChannelConfigDao();
@@ -119,7 +116,7 @@ public class StatsDFilterTest {
     }
 
     @Test
-    public void testStatsDFilterShouldChannelReport_trueWebhookReporting() {
+    void testStatsDFilterShouldChannelReport_trueWebhookReporting() {
         // GIVEN
         MetricsConfig metricsConfig = MetricsConfig.builder().build();
         Dao<ChannelConfig> channelConfigDao = getMockedChannelConfigDao();
@@ -137,7 +134,7 @@ public class StatsDFilterTest {
     }
 
     @Test
-    public void testStatsDFilterGetAllClients_twoNoOpClients() {
+    void testStatsDFilterGetAllClients_twoNoOpClients() {
         MetricsConfig metricsConfig = MetricsConfig.builder().build();
         Dao<ChannelConfig> channelConfigDao = getMockedChannelConfigDao();
         Dao<Webhook> webhookDao =  getMockedWebhookConfigDao();
@@ -148,7 +145,7 @@ public class StatsDFilterTest {
     }
 
     @Test
-    public void testStatsDFilterGetAllClients_twoCustomClients() {
+    void testStatsDFilterGetAllClients_twoCustomClients() {
         MetricsConfig metricsConfig = MetricsConfig.builder().build();
         Dao<ChannelConfig> channelConfigDao = getMockedChannelConfigDao();
         Dao<Webhook> webhookDao =  getMockedWebhookConfigDao();
@@ -160,7 +157,7 @@ public class StatsDFilterTest {
     }
 
     @Test
-    public void testStatsDFilterGetFilteredClients_oneClient() {
+    void testStatsDFilterGetFilteredClients_oneClient() {
         MetricsConfig metricsConfig = MetricsConfig.builder().build();
         Dao<ChannelConfig> channelConfigDao = getMockedChannelConfigDao();
         Dao<Webhook> webhookDao =  getMockedWebhookConfigDao();
@@ -170,7 +167,7 @@ public class StatsDFilterTest {
     }
 
     @Test
-    public void testStatsDFilterGetFilteredClients_twoClientsFiltered() {
+    void testStatsDFilterGetFilteredClients_twoClientsFiltered() {
         MetricsConfig metricsConfig = MetricsConfig.builder().build();
         Dao<ChannelConfig> channelConfigDao = getMockedChannelConfigDao();
         Dao<Webhook> webhookDao =  getMockedWebhookConfigDao();
@@ -180,7 +177,7 @@ public class StatsDFilterTest {
     }
 
     @Test
-    public void testStatsdFilterIsSecondaryReporting_false() {
+    void testStatsdFilterIsSecondaryReporting_false() {
         // GIVEN
         MetricsConfig metricsConfig = MetricsConfig.builder().build();
         Dao<ChannelConfig> channelConfigDao = getMockedChannelConfigDao();
@@ -200,7 +197,7 @@ public class StatsDFilterTest {
     }
 
     @Test
-    public void testStatsdFilterIsSecondaryReporting_handlesNull() {
+    void testStatsdFilterIsSecondaryReporting_handlesNull() {
         // GIVEN
         MetricsConfig metricsConfig = MetricsConfig.builder().build();
         Dao<ChannelConfig> channelConfigDao = getMockedChannelConfigDao();
@@ -216,7 +213,7 @@ public class StatsDFilterTest {
     }
 
     @Test
-    public void testStatsdFilterIsSecondaryReporting_trueIfAnyTrue() {
+    void testStatsdFilterIsSecondaryReporting_trueIfAnyTrue() {
         // GIVEN
         boolean trueOrFalse = new Random().nextBoolean();
         boolean opposite = !trueOrFalse;
@@ -240,7 +237,7 @@ public class StatsDFilterTest {
     }
 
     @Test
-    public void testStatsdFilterIsSecondaryReporting_handleNullAndTrue() {
+    void testStatsdFilterIsSecondaryReporting_handleNullAndTrue() {
         // GIVEN
         MetricsConfig metricsConfig = MetricsConfig.builder().build();
 
@@ -260,7 +257,7 @@ public class StatsDFilterTest {
     }
 
     @Test
-    public void testStatsdFilterExtractName_handleNull() {
+    void testStatsdFilterExtractName_handleNull() {
         // GIVEN
         MetricsConfig metricsConfig = MetricsConfig.builder().build();
 
@@ -274,7 +271,7 @@ public class StatsDFilterTest {
     }
 
     @Test
-    public void testStatsdFilterExtractName_handleNullTags() {
+    void testStatsdFilterExtractName_handleNullTags() {
         // GIVEN
         MetricsConfig metricsConfig = MetricsConfig.builder().build();
 
@@ -289,7 +286,7 @@ public class StatsDFilterTest {
     }
 
     @Test
-    public void testStatsdFilterExtractName_handleIrrelevantTags() {
+    void testStatsdFilterExtractName_handleIrrelevantTags() {
         // GIVEN
         MetricsConfig metricsConfig = MetricsConfig.builder().build();
 
@@ -304,7 +301,7 @@ public class StatsDFilterTest {
     }
 
     @Test
-    public void testStatsdFilterExtractName_handleExtractChannelTags() {
+    void testStatsdFilterExtractName_handleExtractChannelTags() {
         // GIVEN
         MetricsConfig metricsConfig = MetricsConfig.builder().build();
 
@@ -319,7 +316,7 @@ public class StatsDFilterTest {
     }
 
     @Test
-    public void testStatsdFilterExtractName_handleExtractWebhookTags() {
+    void testStatsdFilterExtractName_handleExtractWebhookTags() {
         // GIVEN
         MetricsConfig metricsConfig = MetricsConfig.builder().build();
 
@@ -333,8 +330,8 @@ public class StatsDFilterTest {
         assertEquals("test1", statsDFilter.extractName(tags));
     }
 
-    @Test(expected = NullPointerException.class)
-    public void testStatsdFilterParseName_NullThrows() {
+    @Test
+    void testStatsdFilterParseName_NullThrows() {
         // GIVEN
         MetricsConfig metricsConfig = MetricsConfig.builder().build();
 
@@ -344,11 +341,12 @@ public class StatsDFilterTest {
 
         // THEN
         StatsDFilter statsDFilter = new StatsDFilter(metricsConfig, channelConfigDao, webhookDao);
-        statsDFilter.parseName.apply(null);
+        Exception exception = assertThrows(NullPointerException.class, () -> statsDFilter.parseName.apply(null));
+        assertEquals("java.lang.NullPointerException", exception.toString());
     }
 
     @Test
-    public void testStatsdFilterParseName_parsesName() {
+    void testStatsdFilterParseName_parsesName() {
         // GIVEN
         MetricsConfig metricsConfig = MetricsConfig.builder().build();
 
@@ -362,7 +360,7 @@ public class StatsDFilterTest {
     }
 
     @Test
-    public void testStatsdFilterParseName_ignore() {
+    void testStatsdFilterParseName_ignore() {
         // GIVEN
         MetricsConfig metricsConfig = MetricsConfig.builder().build();
 

@@ -13,19 +13,18 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.Mockito.mock;
 
-public class WebhookStateReaperTest {
+class WebhookStateReaperTest {
     private static CuratorFramework curator;
     private LastContentPath lastContentPath;
     private WebhookContentPathSet webhookInProcess;
@@ -36,14 +35,13 @@ public class WebhookStateReaperTest {
     private static final DateTime start = new DateTime(2014, 12, 3, 20, 45, DateTimeZone.UTC);
     private static final ContentKey key = new ContentKey(start, "B");
 
-    @BeforeClass
-    public static void setupCurator() throws Exception {
+    @BeforeAll
+    static void setupCurator() throws Exception {
         curator = Integration.startZooKeeper();
     }
 
-    @Before
-    @SuppressWarnings("unchecked")
-    public void setup() throws Exception {
+    @BeforeEach
+    void setup() throws Exception {
         ChannelService channelService = mock(ChannelService.class);
         SafeZooKeeperUtils zooKeeperUtils = new SafeZooKeeperUtils(curator);
         WebhookErrorRepository.ErrorNodeNameGenerator nameGenerator = new WebhookErrorRepository.ErrorNodeNameGenerator();
@@ -56,13 +54,8 @@ public class WebhookStateReaperTest {
         webhookInProcess = new WebhookContentPathSet(zooKeeperUtils);
     }
 
-    @After
-    public void teardown() throws Exception {
-        curator.delete().deletingChildrenIfNeeded().forPath("/");
-    }
-
     @Test
-    public void testCleansUpZookeeperNodesRelatedToState() throws Exception {
+    void testCleansUpZookeeperNodesRelatedToState() throws Exception {
         // GIVEN
         addLastCompleted(webhookName);
         addWebhookInProcess(webhookName);
@@ -81,7 +74,7 @@ public class WebhookStateReaperTest {
     }
 
     @Test
-    public void testCleansUpZookeeperNodesRelatedToState_whenNoWebhookErrors() throws Exception {
+    void testCleansUpZookeeperNodesRelatedToState_whenNoWebhookErrors() throws Exception {
         // GIVEN
         addLastCompleted(webhookName);
         addWebhookInProcess(webhookName);
@@ -99,7 +92,7 @@ public class WebhookStateReaperTest {
     }
 
     @Test
-    public void testCleansUpZookeeperNodesRelatedToState_whenNoWebhookInProcess() throws Exception {
+    void testCleansUpZookeeperNodesRelatedToState_whenNoWebhookInProcess() throws Exception {
         // GIVEN
         addLastCompleted(webhookName);
         addError(webhookName);
@@ -117,7 +110,7 @@ public class WebhookStateReaperTest {
     }
 
     @Test
-    public void testCleansUpZookeeperNodesRelatedToState_whenNoContentWasAdded() throws Exception {
+    void testCleansUpZookeeperNodesRelatedToState_whenNoContentWasAdded() throws Exception {
         // GIVEN
         addWebhookInProcess(webhookName);
         addError(webhookName);
@@ -135,7 +128,7 @@ public class WebhookStateReaperTest {
     }
 
     @Test
-    public void testCleansUpZookeeperNodesRelatedToState_whenNoWebhookLeader() throws Exception {
+    void testCleansUpZookeeperNodesRelatedToState_whenNoWebhookLeader() throws Exception {
         // GIVEN
         addLastCompleted(webhookName);
         addWebhookInProcess(webhookName);

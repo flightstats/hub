@@ -3,25 +3,25 @@ package com.flightstats.hub.filter;
 import com.flightstats.hub.test.Integration;
 import org.glassfish.jersey.server.internal.routing.UriRoutingContext;
 import org.glassfish.jersey.uri.UriTemplate;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import javax.ws.rs.container.ContainerRequestContext;
 import java.util.Collections;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 
-public class MetricsRequestFilterTest {
-    @BeforeClass
-    public static void integrationSetup() throws Exception {
+class MetricsRequestFilterTest {
+    @BeforeAll
+    static void integrationSetup() throws Exception {
         Integration.startAwsHub();
     }
 
     @Test
-    public void testGetRequestTemplate() {
+    void testGetRequestTemplate() {
         // GIVEN
         UriTemplate uriTemplate = new UriTemplate("/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}/{direction:[n|p].*}/{count:.+}");
         UriRoutingContext uriInfo = mock(UriRoutingContext.class);

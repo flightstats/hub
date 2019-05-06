@@ -1,21 +1,23 @@
 package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.app.HubHost;
-import org.junit.Test;
 
 import java.util.Set;
 import java.util.stream.Stream;
+import org.junit.jupiter.api.Test;
 
 import static com.google.common.collect.Sets.newHashSet;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toSet;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class ActiveWebhooksTest {
+class ActiveWebhooksTest {
     private static final int HUB_PORT = HubHost.getLocalPort();
 
     private static final String WEBHOOK_WITH_LEASE = "webhook1";
@@ -30,7 +32,7 @@ public class ActiveWebhooksTest {
     private final ActiveWebhookSweeper activeWebhookSweeper = mock(ActiveWebhookSweeper.class);
 
     @Test
-    public void testGetServers_returnsSeveralForAWebhook() throws Exception {
+    void testGetServers_returnsSeveralForAWebhook() throws Exception {
         when(webhookLeaderLocks.getServerLeases(WEBHOOK_WITH_A_FEW_LEASES))
                 .thenReturn(newHashSet(SERVER_IP2, SERVER_IP1));
 
@@ -42,7 +44,7 @@ public class ActiveWebhooksTest {
 
 
     @Test
-    public void testGetServers_returnsAnEmptyListIfThereAreNoLeases() throws Exception {
+    void testGetServers_returnsAnEmptyListIfThereAreNoLeases() throws Exception {
         when(webhookLeaderLocks.getServerLeases(EMPTY_WEBHOOK))
                 .thenReturn(newHashSet());
 
@@ -53,7 +55,7 @@ public class ActiveWebhooksTest {
     }
 
     @Test
-    public void testIsActiveWebhook_isTrueIfWebhookIsPresent() throws Exception {
+    void testIsActiveWebhook_isTrueIfWebhookIsPresent() throws Exception {
         when(webhookLeaderLocks.getWebhooks())
                 .thenReturn(newHashSet(WEBHOOK_WITH_A_FEW_LEASES, WEBHOOK_WITH_LEASE, WEBHOOK_WITH_LOCK));
 
@@ -63,7 +65,7 @@ public class ActiveWebhooksTest {
 
 
     @Test
-    public void testIsActiveWebhook_isFalseIfWebhookIsNotPresent() throws Exception{
+    void testIsActiveWebhook_isFalseIfWebhookIsNotPresent() throws Exception{
         when(webhookLeaderLocks.getWebhooks())
                 .thenReturn(newHashSet(WEBHOOK_WITH_A_FEW_LEASES, WEBHOOK_WITH_LEASE, WEBHOOK_WITH_LOCK));
 

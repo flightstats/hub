@@ -2,18 +2,18 @@ package com.flightstats.hub.metrics;
 
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubVersion;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 
 
-public class MetricsConfigTest {
+class MetricsConfigTest {
     @Test
-    public void testExpectedValues_customBuiltTags() {
+    void testExpectedValues_customBuiltTags() {
         HubVersion hubVersion = mock(HubVersion.class);
         when(hubVersion.getVersion()).thenReturn("local");
 

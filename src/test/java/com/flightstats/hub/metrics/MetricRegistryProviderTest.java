@@ -3,16 +3,17 @@ package com.flightstats.hub.metrics;
 import com.codahale.metrics.MetricRegistry;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubVersion;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+
 import java.util.SortedSet;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class MetricRegistryProviderTest {
+class MetricRegistryProviderTest {
     @Test
-    public void testMetricRegistryProvider_metricNames() {
+    void testMetricRegistryProvider_metricNames() {
         HubVersion hubVersion = mock(HubVersion.class);
         when(hubVersion.getVersion()).thenReturn("local");
         MetricsConfig metricsConfig = MetricsConfig.builder()

@@ -8,8 +8,8 @@ import com.flightstats.hub.spoke.SpokeWriteContentDao;
 import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.StringUtils;
 import com.google.inject.Injector;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,24 +17,24 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.SortedSet;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class SpokeS3SingleContentDaoTest {
+class SpokeS3SingleContentDaoTest {
 
     private final static Logger logger = LoggerFactory.getLogger(SpokeS3SingleContentDaoTest.class);
 
     private static S3SingleContentDao s3SingleContentDao;
     private static SpokeWriteContentDao spokeWriteContentDao;
 
-    @BeforeClass
-    public static void setUpClass() throws Exception {
+    @BeforeAll
+    static void setUpClass() throws Exception {
         Injector injector = Integration.startAwsHub();
         s3SingleContentDao = injector.getInstance(S3SingleContentDao.class);
         spokeWriteContentDao = injector.getInstance(SpokeWriteContentDao.class);
     }
 
     @Test
-    public void testSpokeReadWrite() throws Exception {
+    void testSpokeReadWrite() throws Exception {
         String channel = "testSpokeReadWrite";
         byte[] bytes = StringUtils.randomAlphaNumeric(10 * 1024).getBytes();
         Content firstContent = Content.builder()
@@ -56,7 +56,7 @@ public class SpokeS3SingleContentDaoTest {
     }
 
     @Test
-    public void testBulkSpokeReadWrite() throws Exception {
+    void testBulkSpokeReadWrite() throws Exception {
         String channel = "testBulkSpokeReadWrite";
         List<Content> items = Arrays.asList(ContentDaoUtil.createContent(), ContentDaoUtil.createContent(), ContentDaoUtil.createContent());
         BulkContent bulkContent = BulkContent.builder().channel(channel).isNew(false).build();

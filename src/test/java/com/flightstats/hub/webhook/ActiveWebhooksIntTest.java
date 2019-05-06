@@ -3,24 +3,25 @@ package com.flightstats.hub.webhook;
 import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.SafeZooKeeperUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 
 import java.util.List;
-
-import static com.google.common.collect.Sets.newHashSet;
 import static java.lang.String.format;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static com.google.common.collect.Sets.newHashSet;
+import static org.apache.zookeeper.KeeperException.NodeExistsException;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 
-public class ActiveWebhooksIntTest {
-
+@Slf4j
+class ActiveWebhooksIntTest {
     private static final String WEBHOOK_LEADER_PATH = "/WebhookLeader";
     private static final String WEBHOOK_WITH_LEASE = "webhook1";
     private static final String WEBHOOK_WITH_A_FEW_LEASES = "webhook4";
@@ -33,27 +34,38 @@ public class ActiveWebhooksIntTest {
     private static CuratorFramework curator;
     private static SafeZooKeeperUtils zooKeeperUtils;
 
-    @BeforeClass
-    public static void setup() throws Exception {
+    void createPath() throws Exception {
+        curator.create().creatingParentsIfNeeded().forPath(WEBHOOK_LEADER_PATH);
+    }
+
+    void deletePath() throws Exception {
+        curator.delete().deletingChildrenIfNeeded().forPath(WEBHOOK_LEADER_PATH);
+    }
+
+    @BeforeAll
+    static void setup() throws Exception {
         curator = Integration.startZooKeeper();
         zooKeeperUtils = new SafeZooKeeperUtils(curator);
     }
 
-    @Before
-    public void createWebhookLeader() throws Exception {
-        if (curator.checkExists().forPath(WEBHOOK_LEADER_PATH) != null) {
-            curator.delete().deletingChildrenIfNeeded().forPath(WEBHOOK_LEADER_PATH);
+    @BeforeEach
+    void createWebhookLeader() throws Exception {
+        try {
+            createPath();
+        } catch (NodeExistsException e) {
+            log.error(e.getMessage());
+            deletePath();
+            createPath();
         }
-        curator.create().creatingParentsIfNeeded().forPath(WEBHOOK_LEADER_PATH);
     }
 
-    @After
-    public void destroyWebhookLeaders() throws Exception {
-        curator.delete().deletingChildrenIfNeeded().forPath(WEBHOOK_LEADER_PATH);
+    @AfterEach
+    void destroyWebhookLeaders() throws Exception {
+        deletePath();
     }
 
     @Test
-    public void testCleanupEmpty_keepsWebhooksWithLeasesAndLocksAndDiscardsOthers() throws Exception {
+    void testCleanupEmpty_keepsWebhooksWithLeasesAndLocksAndDiscardsOthers() throws Exception {
         createWebhookLease(WEBHOOK_WITH_A_FEW_LEASES, "someLease", SERVER_IP1);
         createWebhookLease(WEBHOOK_WITH_A_FEW_LEASES, "someLease2", SERVER_IP2);
         createWebhookLease(WEBHOOK_WITH_A_FEW_LEASES, "someLease3", SERVER_IP2);

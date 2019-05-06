@@ -16,8 +16,9 @@ import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Injector;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -27,18 +28,18 @@ import java.util.SortedSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.ZipOutputStream;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
-public class S3BatchContentDaoTest {
-    
+class S3BatchContentDaoTest {
+
     private static S3BatchContentDao contentDao;
 
-    @BeforeClass
-    public static void setUpClass() throws Exception {
+    @BeforeAll
+    static void setUpClass() throws Exception {
         PropertiesLoader.getInstance().load("useDefault");
         PropertiesLoader.getInstance().setProperty("s3.maxQueryItems", "5");
         Injector injector = Integration.startAwsHub();
@@ -46,7 +47,7 @@ public class S3BatchContentDaoTest {
     }
 
     @Test
-    public void testBatchWriteRead() throws Exception {
+    void testBatchWriteRead() throws Exception {
         String channel = "testBatchWriteRead";
         MinutePath minutePath = new MinutePath();
         List<ContentKey> keys = writeBatchMinute(channel, minutePath, 5);
@@ -98,10 +99,9 @@ public class S3BatchContentDaoTest {
     }
 
     @Test
-    public void testQueryMinute() throws IOException {
+    void testQueryMinute() throws IOException {
         String channel = "testQueryMinute" + StringUtils.randomAlphaNumeric(20);
         DateTime start = TimeUtil.now().minusMinutes(10);
-        ContentKey key = new ContentKey(start, "start");
         for (int i = 0; i < 5; i++) {
             writeBatchMinute(channel, new MinutePath(start.plusMinutes(i)), 2);
         }
@@ -115,10 +115,9 @@ public class S3BatchContentDaoTest {
     }
 
     @Test
-    public void testQueryHour() throws IOException {
+    void testQueryHour() throws IOException {
         String channel = "testQueryHour" + StringUtils.randomAlphaNumeric(20);
         DateTime start = TimeUtil.now().withMinuteOfHour(54);
-        ContentKey key = new ContentKey(start, "start");
         for (int i = 0; i < 12; i++) {
             writeBatchMinute(channel, new MinutePath(start.plusMinutes(i * 6)), 2);
         }
@@ -141,7 +140,7 @@ public class S3BatchContentDaoTest {
     }
 
     @Test
-    public void testMissing() {
+    void testMissing() {
         String channel = "testMissing";
         Content content = contentDao.get(channel, new ContentKey());
         assertNull(content);
@@ -157,7 +156,7 @@ public class S3BatchContentDaoTest {
     }
 
     @Test
-    public void testDirectionQueryAndDelete() throws Exception {
+    void testDirectionQueryAndDelete() throws Exception {
         String channel = "testDirectionQuery" + StringUtils.randomAlphaNumeric(20);
         DateTime start = TimeUtil.now().minusHours(2);
         ContentKey key = new ContentKey(new MinutePath(start).getTime(), "-");
@@ -178,7 +177,7 @@ public class S3BatchContentDaoTest {
     }
 
     @Test
-    public void testPreviousEdgeCase() throws Exception {
+    void testPreviousEdgeCase() throws Exception {
         String channel = "testPreviousEdgeCase" + StringUtils.randomAlphaNumeric(20);
         DateTime start = TimeUtil.now().minusHours(2);
         List<ContentKey> contentKeys = writeBatchMinute(channel, new MinutePath(start), 4);
@@ -211,7 +210,7 @@ public class S3BatchContentDaoTest {
     }
 
     @Test
-    public void testDirectionQueryBug() throws Exception {
+    void testDirectionQueryBug() throws Exception {
         String channel = "testDirectionQueryBug" + StringUtils.randomAlphaNumeric(20);
         DateTime start = TimeUtil.now().minusHours(2);
         MinutePath startItem = new MinutePath(start);

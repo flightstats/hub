@@ -15,17 +15,18 @@ import com.flightstats.hub.model.LargeContentUtils;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.TimeUtil;
 import lombok.SneakyThrows;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.times;
@@ -33,8 +34,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
-public class ClusterContentServiceTest {
+
+@ExtendWith(MockitoExtension.class)
+class ClusterContentServiceTest {
     @Mock
     private ClusterContentService ccs;
     @Mock
@@ -63,14 +65,13 @@ public class ClusterContentServiceTest {
     private SpokeProperties spokeProperties;
     @Mock
     private ContentProperties contentProperties;
-
     private Content content;
     private ContentKey contentKey;
     private String channelName;
     private LargeContentUtils largeContentUtils;
 
-    @Before
-    public void initClusterContentService() {
+    @BeforeEach
+    void initClusterContentService() {
         channelName = "/testChannel";
         when(channelSvc.getCachedChannelConfig(channelName)).thenReturn(Optional.of(channelConfig));
         largeContentUtils = new LargeContentUtils(HubBindings.objectMapper());
@@ -84,7 +85,7 @@ public class ClusterContentServiceTest {
 
     @Test
     @SneakyThrows
-    public void testSingleNormalInsertWritesContentToSpokeAndEnqueuesS3Write() {
+    void testSingleNormalInsertWritesContentToSpokeAndEnqueuesS3Write() {
         initSimpleContent(false);
         when(channelConfig.isBatch()).thenReturn(false);
 
@@ -104,7 +105,7 @@ public class ClusterContentServiceTest {
 
     @Test
     @SneakyThrows
-    public void testSingleNormalInsertDoesntWriteToS3IfBatch() {
+    void testSingleNormalInsertDoesntWriteToS3IfBatch() {
         initSimpleContent(false);
         when(channelConfig.isBatch()).thenReturn(true);
 
@@ -114,7 +115,7 @@ public class ClusterContentServiceTest {
 
     @Test
     @SneakyThrows
-    public void testLargePayloadWritesContentToS3AndIndexToSpokeAndS3() {
+    void testLargePayloadWritesContentToS3AndIndexToSpokeAndS3() {
         initSimpleContent(true);
         when(channelConfig.isBatch()).thenReturn(false);
 

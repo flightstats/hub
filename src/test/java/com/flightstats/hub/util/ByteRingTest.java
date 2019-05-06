@@ -1,14 +1,14 @@
 package com.flightstats.hub.util;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class ByteRingTest {
+class ByteRingTest {
 
     @Test
-    public void testCompare() {
+    void testCompare() {
         ByteRing byteRing = new ByteRing(8);
         for (int i = 0; i < 8; i++) {
             byteRing.put((byte) i);
@@ -18,7 +18,7 @@ public class ByteRingTest {
     }
 
     @Test
-    public void testCompareSmall() {
+    void testCompareSmall() {
         ByteRing byteRing = new ByteRing(8);
         for (int i = 0; i < 4; i++) {
             byteRing.put((byte) i);
@@ -28,7 +28,7 @@ public class ByteRingTest {
     }
 
     @Test
-    public void testCircleCompare() {
+    void testCircleCompare() {
         ByteRing byteRing = new ByteRing(8);
         for (int i = 0; i < 12; i++) {
             byteRing.put((byte) i);

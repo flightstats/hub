@@ -6,7 +6,7 @@ import com.flightstats.hub.rest.HalLinks;
 import com.flightstats.hub.rest.HalLinksSerializer;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
 
 import java.net.URI;
@@ -15,10 +15,10 @@ import java.util.Collections;
 
 import static org.mockito.Mockito.*;
 
-public class HalLinksSerializerTest {
+class HalLinksSerializerTest {
 
     @Test
-    public void testSerialize() throws Exception {
+    void testSerialize() throws Exception {
         String fooUri = "/path/to/foo";
         String barUri = "http://bar.com";
         String channel1Uri = "http://hub/channel/ch1";
@@ -68,8 +68,8 @@ public class HalLinksSerializerTest {
     }
 
     @Test
-    public void testSerializeNoLinks() throws Exception {
-        HalLinks halLinks = new HalLinks(Collections.EMPTY_LIST);
+    void testSerializeNoLinks() throws Exception {
+        HalLinks halLinks = new HalLinks(Collections.emptyList());
 
         JsonGenerator jgen = mock(JsonGenerator.class);
 

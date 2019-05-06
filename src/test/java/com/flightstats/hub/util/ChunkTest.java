@@ -1,13 +1,13 @@
 package com.flightstats.hub.util;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class ChunkTest {
+class ChunkTest {
 
     @Test
-    public void testPartial() {
+    void testPartial() {
         Chunk chunk = new Chunk(1, 4);
         byte[] expected = {1, 2, 3};
         for (byte b : expected) {
@@ -18,7 +18,7 @@ public class ChunkTest {
     }
 
     @Test
-    public void testFull() {
+    void testFull() {
         Chunk chunk = new Chunk(1, 4);
         byte[] expected = {1, 2, 3, 4};
         for (byte b : expected) {

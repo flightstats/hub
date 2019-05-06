@@ -1,15 +1,15 @@
 package com.flightstats.hub.time;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class NtpMonitorTest {
+class NtpMonitorTest {
 
     @Test
-    public void testPositive() throws Exception {
+    void testPositive() throws Exception {
         String[] output = {
                 "     remote           refid      st t when poll reach   delay   offset  jitter",
                 "==============================================================================",
@@ -23,7 +23,7 @@ public class NtpMonitorTest {
     }
 
     @Test
-    public void testNegative() throws Exception {
+    void testNegative() throws Exception {
         String[] output = {
                 "     remote           refid      st t when poll reach   delay   offset  jitter",
                 "==============================================================================",
@@ -37,7 +37,7 @@ public class NtpMonitorTest {
     }
 
     @Test
-    public void testPlusMinus() throws Exception {
+    void testPlusMinus() throws Exception {
         String[] output = {
                 "     remote           refid      st t when poll reach   delay   offset  jitter",
                 "==============================================================================",
@@ -51,7 +51,7 @@ public class NtpMonitorTest {
     }
 
     @Test
-    public void testSingleServer() throws Exception {
+    void testSingleServer() throws Exception {
         String[] output = {
                 "remote           refid      st t when poll reach   delay   offset  jitter",
                 "==============================================================================",
@@ -62,7 +62,7 @@ public class NtpMonitorTest {
     }
 
     @Test
-    public void testPositiveSelf() throws Exception {
+    void testPositiveSelf() throws Exception {
         String[] output = {
                 "     remote           refid      st t when poll reach   delay   offset  jitter",
                 "==============================================================================",
@@ -77,7 +77,7 @@ public class NtpMonitorTest {
     }
 
     @Test
-    public void testIps() {
+    void testIps() {
 
         String[] output = {
                 "     remote           refid      st t when poll reach   delay   offset  jitter",

@@ -5,26 +5,26 @@ import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.SafeZooKeeperUtils;
 import org.apache.curator.framework.CuratorFramework;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Set;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class WebhookContentPathSetTest {
+class WebhookContentPathSetTest {
     private SafeZooKeeperUtils zooKeeperUtils;
     private WebhookContentPathSet groupSet;
     private String groupName;
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp() throws Exception {
         CuratorFramework curator = Integration.startZooKeeper();
         zooKeeperUtils = new SafeZooKeeperUtils(curator);
     }
 
     @Test
-    public void testLifecycle() throws Exception {
+    void testLifecycle() throws Exception {
         groupSet = new WebhookContentPathSet(zooKeeperUtils);
         ContentKey first = new ContentKey();
         ContentKey second = new ContentKey();
@@ -53,7 +53,7 @@ public class WebhookContentPathSetTest {
     }
 
     @Test
-    public void testDelete() throws Exception {
+    void testDelete() throws Exception {
         groupSet = new WebhookContentPathSet(zooKeeperUtils);
         groupName = "testDelete";
         ContentKey contentKey = new ContentKey();

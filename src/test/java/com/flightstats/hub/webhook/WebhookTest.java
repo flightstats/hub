@@ -2,39 +2,38 @@ package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.MinutePath;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.util.Optional;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertNotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class WebhookTest {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+class WebhookTest {
 
     private static final int CALLBACK_TIMEOUT_DEFAULT_IN_SEC = 120;
     private Webhook webhook;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         webhook = Webhook.builder()
                 .channelUrl("url").callbackUrl("end").build();
     }
 
     @Test
-    public void testSimple() {
+    void testSimple() {
         Webhook webhook = Webhook.fromJson(this.webhook.toJson());
         assertEquals("end", webhook.getCallbackUrl());
         assertEquals("url", webhook.getChannelUrl());
-        Assert.assertNull(webhook.getName());
+        assertNull(webhook.getName());
     }
 
     @Test
-    public void testTag() {
+    void testTag() {
         String tagUrl = "http://hub/tag/allTheThings";
         Webhook aWebhook = Webhook.builder()
                 .tagUrl(tagUrl)
@@ -45,7 +44,7 @@ public class WebhookTest {
     }
 
     @Test
-    public void testWithName() {
+    void testWithName() {
         Webhook webhook = this.webhook.withName("wither");
         webhook = Webhook.fromJson(webhook.toJson());
         assertEquals("end", webhook.getCallbackUrl());
@@ -54,13 +53,13 @@ public class WebhookTest {
     }
 
     @Test
-    public void testFromJson() {
+    void testFromJson() {
         Webhook cycled = Webhook.fromJson(webhook.toJson());
         assertEquals(webhook, cycled);
     }
 
     @Test
-    public void testJsonStartItem() {
+    void testJsonStartItem() {
         ContentKey key = new ContentKey();
         String json = "{\"callbackUrl\":\"end\",\"channelUrl\":\"url\",\"startItem\":\"" +
                 "http://hub/channel/stuff/" + key.toUrl() +
@@ -73,7 +72,7 @@ public class WebhookTest {
     }
 
     @Test
-    public void testJsonContentPath() {
+    void testJsonContentPath() {
         MinutePath key = new MinutePath();
         String json = "{\"callbackUrl\":\"end\",\"channelUrl\":\"url\"," +
                 "\"startItem\":\"http://hub/channel/stuff/" + key.toUrl() +
@@ -86,7 +85,7 @@ public class WebhookTest {
     }
 
     @Test
-    public void testWithDefaults() {
+    void testWithDefaults() {
         assertNull(webhook.getParallelCalls());
         assertNull(webhook.getBatch());
         webhook = webhook.withDefaults(CALLBACK_TIMEOUT_DEFAULT_IN_SEC);
@@ -95,7 +94,7 @@ public class WebhookTest {
     }
 
     @Test
-    public void testAllowedToChange() {
+    void testAllowedToChange() {
         Webhook hubA = Webhook.builder().name("name")
                 .channelUrl("http://hubA/channel/name")
                 .callbackUrl("url").build().withDefaults(CALLBACK_TIMEOUT_DEFAULT_IN_SEC);
@@ -110,7 +109,7 @@ public class WebhookTest {
     }
 
     @Test
-    public void testChannelUrlChange() {
+    void testChannelUrlChange() {
         Webhook hubA = Webhook.builder().name("name")
                 .channelUrl("http://hubA/channel/name")
                 .callbackUrl("url").build().withDefaults(CALLBACK_TIMEOUT_DEFAULT_IN_SEC);
@@ -126,7 +125,7 @@ public class WebhookTest {
     }
 
     @Test
-    public void testStartingKey() {
+    void testStartingKey() {
         Webhook withDefaultsA = this.webhook.withDefaults(CALLBACK_TIMEOUT_DEFAULT_IN_SEC);
         Webhook withDefaultsB = this.webhook.withDefaults(CALLBACK_TIMEOUT_DEFAULT_IN_SEC);
         assertEquals(withDefaultsA, withDefaultsB);
@@ -137,7 +136,7 @@ public class WebhookTest {
     }
 
     @Test
-    public void testIsTagPrototype() {
+    void testIsTagPrototype() {
         Webhook withDefaultsA = this.webhook.withDefaults(CALLBACK_TIMEOUT_DEFAULT_IN_SEC);
         assertFalse(withDefaultsA.isTagPrototype());
         Webhook twh = Webhook.builder().name("name")
@@ -148,7 +147,7 @@ public class WebhookTest {
     }
 
     @Test
-    public void testSecondaryMetricsReporting() {
+    void testSecondaryMetricsReporting() {
         Webhook withDefaults = this.webhook.withDefaults(CALLBACK_TIMEOUT_DEFAULT_IN_SEC);
         assertFalse(withDefaults.isSecondaryMetricsReporting());
         String json = "{ \"secondaryMetricsReporting\": true }";

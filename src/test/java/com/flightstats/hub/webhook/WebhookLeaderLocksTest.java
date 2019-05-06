@@ -1,25 +1,27 @@
 package com.flightstats.hub.webhook;
 
-import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.SafeZooKeeperUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Set;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Sets.newHashSet;
+import static org.apache.zookeeper.KeeperException.NodeExistsException;
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
-public class WebhookLeaderLocksTest {
+@Slf4j
+class WebhookLeaderLocksTest {
     private static final String WEBHOOK_LEADER_PATH = "/WebhookLeader";
 
     private static final String WEBHOOK_WITH_LEASE = "webhook1";
@@ -33,25 +35,40 @@ public class WebhookLeaderLocksTest {
     private static CuratorFramework curator;
     private static SafeZooKeeperUtils zooKeeperUtils;
 
-    @BeforeClass
-    public static void setup() throws Exception {
-        ZooKeeperState zooKeeperState = new ZooKeeperState();
+    void createPath() throws Exception {
+        if (curator.checkExists().forPath(WEBHOOK_LEADER_PATH) == null) {
+            curator.create().creatingParentsIfNeeded().forPath(WEBHOOK_LEADER_PATH);
+        }
+    }
+
+    void deletePath() throws Exception {
+        curator.delete().deletingChildrenIfNeeded().forPath(WEBHOOK_LEADER_PATH);
+    }
+
+    @BeforeAll
+    static void setup() throws Exception {
         curator = Integration.startZooKeeper();
         zooKeeperUtils = new SafeZooKeeperUtils(curator);
     }
 
-    @Before
-    public void createWebhookLeader() throws Exception {
-        curator.create().creatingParentsIfNeeded().forPath(WEBHOOK_LEADER_PATH);
+    @BeforeEach
+    void createWebhookLeader() throws Exception {
+        try {
+            createPath();
+        } catch (NodeExistsException e) {
+            log.error(e.getMessage());
+            deletePath();
+            createPath();
+        }
     }
 
-    @After
-    public void destroyWebhookLeaders() throws Exception {
-        curator.delete().deletingChildrenIfNeeded().forPath(WEBHOOK_LEADER_PATH);
+    @AfterEach
+    void destroyWebhookLeaders() throws Exception {
+        deletePath();
     }
 
     @Test
-    public void testDeleteWebhook() throws Exception {
+    void testDeleteWebhook() throws Exception {
         createWebhook(EMPTY_WEBHOOK);
 
         createWebhookLock(WEBHOOK_WITH_A_FEW_LEASES, "someLock", SERVER_IP1);
@@ -59,7 +76,7 @@ public class WebhookLeaderLocksTest {
         createWebhookLease(WEBHOOK_WITH_A_FEW_LEASES, "someLease3", SERVER_IP2);
 
         List<String> initialWebhooks = curator.getChildren().forPath(WEBHOOK_LEADER_PATH);
-        assertEquals("givens should have created 2 webhooks", 2, initialWebhooks.size());
+        assertEquals(2, initialWebhooks.size());
 
         WebhookLeaderLocks webhookLeaderLocks = new WebhookLeaderLocks(zooKeeperUtils);
         webhookLeaderLocks.deleteWebhookLeader(WEBHOOK_WITH_A_FEW_LEASES);
@@ -70,7 +87,7 @@ public class WebhookLeaderLocksTest {
     }
 
     @Test
-    public void testGetServers_returnsSeveralDistinctServersForAWebhook() throws Exception {
+    void testGetServers_returnsSeveralDistinctServersForAWebhook() throws Exception {
         createWebhookLease(WEBHOOK_WITH_A_FEW_LEASES, "someLease", SERVER_IP1);
         createWebhookLease(WEBHOOK_WITH_A_FEW_LEASES, "someLease2", SERVER_IP2);
         createWebhookLease(WEBHOOK_WITH_A_FEW_LEASES, "someLease3", SERVER_IP2);
@@ -82,7 +99,7 @@ public class WebhookLeaderLocksTest {
     }
 
     @Test
-    public void testGetServers_returnsSingleServerForAWebhook() throws Exception {
+    void testGetServers_returnsSingleServerForAWebhook() throws Exception {
         createWebhookLock(WEBHOOK_WITH_LEASE, "someLock", "");
         createWebhookLease(WEBHOOK_WITH_LEASE, "someLease", SERVER_IP1);
 
@@ -93,7 +110,7 @@ public class WebhookLeaderLocksTest {
     }
 
     @Test
-    public void testGetServers_returnsAnEmptyListIfThereAreNoLeases()  throws Exception {
+    void testGetServers_returnsAnEmptyListIfThereAreNoLeases()  throws Exception {
         createWebhookLock(WEBHOOK_WITH_LOCK, "aLock", "???");
 
         WebhookLeaderLocks webhookLeaders = new WebhookLeaderLocks(zooKeeperUtils);
@@ -103,7 +120,7 @@ public class WebhookLeaderLocksTest {
     }
 
     @Test
-    public void testGetServers_returnsAnEmptyListIfTheWebhookWasEmpty() throws Exception{
+    void testGetServers_returnsAnEmptyListIfTheWebhookWasEmpty() throws Exception{
         createWebhook(EMPTY_WEBHOOK);
 
         WebhookLeaderLocks webhookLeaders = new WebhookLeaderLocks(zooKeeperUtils);
@@ -113,7 +130,7 @@ public class WebhookLeaderLocksTest {
     }
 
     @Test
-    public void testGetServers_returnsAnEmptyListForNonExistentWebhook() throws Exception {
+    void testGetServers_returnsAnEmptyListForNonExistentWebhook() throws Exception {
         WebhookLeaderLocks webhookLeaders = new WebhookLeaderLocks(zooKeeperUtils);
         Set<String> servers = webhookLeaders.getServerLeases("bogusWebhook");
 
@@ -121,7 +138,7 @@ public class WebhookLeaderLocksTest {
     }
 
     @Test
-    public void testGetWebhooks_returnsAllWebhooksRegardlessOfLocksOrLeases() throws Exception {
+    void testGetWebhooks_returnsAllWebhooksRegardlessOfLocksOrLeases() throws Exception {
         createWebhookLease(WEBHOOK_WITH_A_FEW_LEASES, "someLease", SERVER_IP1);
         createWebhookLease(WEBHOOK_WITH_A_FEW_LEASES, "someLease2", SERVER_IP2);
         createWebhookLease(WEBHOOK_WITH_A_FEW_LEASES, "someLease3", SERVER_IP2);
@@ -139,7 +156,7 @@ public class WebhookLeaderLocksTest {
     }
 
     @Test
-    public void testGetLocks() throws Exception {
+    void testGetLocks() throws Exception {
         createWebhookLock(WEBHOOK_WITH_LOCK, "someLock", "");
         createWebhookLease(WEBHOOK_WITH_LOCK, "someLease", SERVER_IP1);
 
@@ -150,7 +167,7 @@ public class WebhookLeaderLocksTest {
     }
 
     @Test
-    public void testGetLocks_withNoLocks() throws Exception {
+    void testGetLocks_withNoLocks() throws Exception {
         createWebhookLease(WEBHOOK_WITH_LEASE, "someLease", SERVER_IP1);
 
         WebhookLeaderLocks webhookLeaders = new WebhookLeaderLocks(zooKeeperUtils);
@@ -160,7 +177,7 @@ public class WebhookLeaderLocksTest {
     }
 
     @Test
-    public void testGetLocks_noWebhook() throws Exception {
+    void testGetLocks_noWebhook() throws Exception {
         WebhookLeaderLocks webhookLeaders = new WebhookLeaderLocks(zooKeeperUtils);
         List<String> locks = webhookLeaders.getLockPaths("dunno");
 
@@ -168,7 +185,7 @@ public class WebhookLeaderLocksTest {
     }
 
     @Test
-    public void testGetLeases() throws Exception {
+    void testGetLeases() throws Exception {
         createWebhookLock(WEBHOOK_WITH_A_FEW_LEASES, "someLock", "");
         createWebhookLease(WEBHOOK_WITH_A_FEW_LEASES, "someLease", SERVER_IP1);
         createWebhookLease(WEBHOOK_WITH_A_FEW_LEASES, "someLease2", SERVER_IP2);
@@ -182,7 +199,7 @@ public class WebhookLeaderLocksTest {
     }
 
     @Test
-    public void testGetLeases_withNoLeases() throws Exception {
+    void testGetLeases_withNoLeases() throws Exception {
         createWebhookLock(WEBHOOK_WITH_LOCK, "someLock", "");
 
         WebhookLeaderLocks webhookLeaders = new WebhookLeaderLocks(zooKeeperUtils);
@@ -192,7 +209,7 @@ public class WebhookLeaderLocksTest {
     }
 
     @Test
-    public void testGetLeases_noWebhook() throws Exception {
+    void testGetLeases_noWebhook() throws Exception {
         WebhookLeaderLocks webhookLeaders = new WebhookLeaderLocks(zooKeeperUtils);
         List<String> leases = webhookLeaders.getLeasePaths("dunno");
 

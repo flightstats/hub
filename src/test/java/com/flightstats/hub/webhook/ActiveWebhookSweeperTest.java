@@ -1,7 +1,7 @@
 package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.metrics.StatsdReporter;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Sets.newHashSet;
@@ -11,7 +11,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class ActiveWebhookSweeperTest {
+class ActiveWebhookSweeperTest {
     private static final String WEBHOOK_WITH_LEASE = "withLease";
     private static final String WEBHOOK_WITH_A_FEW_LEASES = "severalLeases";
     private static final String WEBHOOK_WITH_LOCK = "withLock";
@@ -21,7 +21,7 @@ public class ActiveWebhookSweeperTest {
     private final StatsdReporter statsdReporter = mock(StatsdReporter.class);
 
     @Test
-    public void testCleanupEmpty_keepsWebhooksWithLeasesAndLocksAndDiscardsOthers() throws Exception {
+    void testCleanupEmpty_keepsWebhooksWithLeasesAndLocksAndDiscardsOthers() throws Exception {
         when(webhookLeaderLocks.getWebhooks())
                 .thenReturn(newHashSet(WEBHOOK_WITH_A_FEW_LEASES, WEBHOOK_WITH_LEASE, WEBHOOK_WITH_LOCK, EMPTY_WEBHOOK));
 
