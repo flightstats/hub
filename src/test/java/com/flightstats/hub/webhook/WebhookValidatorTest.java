@@ -1,8 +1,8 @@
 package com.flightstats.hub.webhook;
 
-import com.flightstats.hub.config.AppProperty;
-import com.flightstats.hub.config.PropertyLoader;
-import com.flightstats.hub.config.WebhookProperty;
+import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.PropertiesLoader;
+import com.flightstats.hub.config.WebhookProperties;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.google.common.base.Strings;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,15 +11,15 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class WebhookValidatorTest {
 
+    private AppProperties appProperties = new AppProperties(PropertiesLoader.getInstance());
+    private WebhookProperties webhookProperties = new WebhookProperties(PropertiesLoader.getInstance());
     private static final int CALLBACK_TIMEOUT_DEFAULT_IN_SEC = 120;
     private WebhookValidator webhookValidator;
     private Webhook webhook;
 
     @BeforeEach
     void setUp() {
-        AppProperty appProperty = new AppProperty(PropertyLoader.getInstance());;
-        WebhookProperty webhookProperty = new WebhookProperty(PropertyLoader.getInstance());;
-        webhookValidator = new WebhookValidator(appProperty, webhookProperty);
+        webhookValidator = new WebhookValidator(appProperties, webhookProperties);
         webhook = Webhook.builder()
                 .callbackUrl("http://client/url")
                 .channelUrl("http://hub/channel/channelName")
@@ -122,8 +122,8 @@ class WebhookValidatorTest {
 
     @Test
     void testInvalidLocalhost() {
-            PropertyLoader.getInstance().setProperty("hub.type", "aws");
-            webhook = Webhook.builder()
+        PropertiesLoader.getInstance().setProperty("hub.type", "aws");
+        webhook = Webhook.builder()
                 .callbackUrl("http:/localhost:8080/url")
                 .channelUrl("http://hub/channel/channelName")
                 .parallelCalls(1)

@@ -2,8 +2,8 @@ package com.flightstats.hub.metrics;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.config.AppProperty;
-import com.flightstats.hub.config.PropertyLoader;
+import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.PropertiesLoader;
 import com.flightstats.hub.model.SingleTrace;
 import com.flightstats.hub.model.Trace;
 import com.flightstats.hub.util.ObjectRing;
@@ -19,7 +19,7 @@ import java.util.function.Consumer;
 
 public class Traces {
 
-    private static final AppProperty appProperty = new AppProperty(PropertyLoader.getInstance());
+    private static final AppProperties appProperties = new AppProperties(PropertiesLoader.getInstance());
     private final List<Trace> traces = Collections.synchronizedList(new ArrayList<>());
     private final String id = UUID.randomUUID().toString();
     private long start = System.currentTimeMillis();
@@ -29,7 +29,7 @@ public class Traces {
     private long end;
 
     public Traces(Object... objects) {
-        this.limit = appProperty.getTracesLimit();
+        this.limit = appProperties.getTracesLimit();
         this.lastTraces = new ObjectRing<>(limit);
         add(objects);
     }

@@ -1,6 +1,6 @@
 package com.flightstats.hub.app;
 
-import com.flightstats.hub.config.PropertyLoader;
+import com.flightstats.hub.config.PropertiesLoader;
 import com.google.common.io.Files;
 
 /**
@@ -18,39 +18,39 @@ public class SingleHubMain {
         System.out.println("starting up single Hub");
         System.out.println("***************************");
 
-        final PropertyLoader propertyLoader = PropertyLoader.getInstance();
+        final PropertiesLoader propertiesLoader = PropertiesLoader.getInstance();
 
-        setProperty(propertyLoader, "hub.type", "test");
-        setProperty(propertyLoader, "app.name", "hub");
-        setProperty(propertyLoader, "app.environment", "single");
+        setProperty(propertiesLoader, "hub.type", "test");
+        setProperty(propertiesLoader, "app.name", "hub");
+        setProperty(propertiesLoader, "app.environment", "single");
 
-        setProperty(propertyLoader, "zookeeper.connection", "localhost:2181");
-        setProperty(propertyLoader, "runSingleZookeeperInternally", "singleNode");
-        setProperty(propertyLoader, "app.lib_path", "");
-        setProperty(propertyLoader, "alert.run", "false");
-        setProperty(propertyLoader, "app.url", "http://localhost:8080/");
-        setProperty(propertyLoader, "http.bind_port", "8080");
-        setProperty(propertyLoader, "spoke.enforceTTL", "true");
-        setProperty(propertyLoader, "channel.enforceTTL", "false");
-        setProperty(propertyLoader, "app.stable_seconds", "2");
-        setProperty(propertyLoader, "app.shutdown_delay_seconds", "0");
-        setProperty(propertyLoader, "hub.protect.channels", "false");
-        setProperty(propertyLoader, "app.runNtpMonitor", "false");
-        setProperty(propertyLoader, "metrics.enable", "false");
-        setProperty(propertyLoader, "app.large.payload.MB", "10000");
+        setProperty(propertiesLoader, "zookeeper.connection", "localhost:2181");
+        setProperty(propertiesLoader, "runSingleZookeeperInternally", "singleNode");
+        setProperty(propertiesLoader, "app.lib_path", "");
+        setProperty(propertiesLoader, "alert.run", "false");
+        setProperty(propertiesLoader, "app.url", "http://localhost:8080/");
+        setProperty(propertiesLoader, "http.bind_port", "8080");
+        setProperty(propertiesLoader, "spoke.enforceTTL", "true");
+        setProperty(propertiesLoader, "channel.enforceTTL", "false");
+        setProperty(propertiesLoader, "app.stable_seconds", "2");
+        setProperty(propertiesLoader, "app.shutdown_delay_seconds", "0");
+        setProperty(propertiesLoader, "hub.protect.channels", "false");
+        setProperty(propertiesLoader, "app.runNtpMonitor", "false");
+        setProperty(propertiesLoader, "metrics.enable", "false");
+        setProperty(propertiesLoader, "app.large.payload.MB", "10000");
 
         String storagePath = Files.createTempDir().getAbsolutePath();
-        setProperty(propertyLoader, "storage.path", storagePath);
+        setProperty(propertiesLoader, "storage.path", storagePath);
         String spokePath = Files.createTempDir().getAbsolutePath();
-        setProperty(propertyLoader, "spoke.path", spokePath);
-        setProperty(propertyLoader, "app.remoteTimeFile", storagePath + "/remoteTime");
+        setProperty(propertiesLoader, "spoke.path", spokePath);
+        setProperty(propertiesLoader, "app.remoteTimeFile", storagePath + "/remoteTime");
 
         new HubMain().run();
     }
 
-    private static void setProperty(PropertyLoader propertyLoader, String name, String defaultValue) {
+    private static void setProperty(PropertiesLoader propertiesLoader, String name, String defaultValue) {
         String value = System.getProperty(name, defaultValue);
-        propertyLoader.setProperty(name, value);
+        propertiesLoader.setProperty(name, value);
         System.out.println("setting " + name + "=" + value + " . over ride this value with -D" + name + "=value");
     }
 

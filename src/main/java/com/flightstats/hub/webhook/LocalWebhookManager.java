@@ -1,6 +1,7 @@
 package com.flightstats.hub.webhook;
 
-import com.flightstats.hub.config.WebhookProperty;
+import com.flightstats.hub.config.PropertiesLoader;
+import com.flightstats.hub.config.WebhookProperties;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -24,24 +25,17 @@ import java.util.function.Consumer;
 @Slf4j
 public class LocalWebhookManager {
 
-    private Map<String, WebhookLeader> localLeaders = new ConcurrentHashMap<>();
+    private final Map<String, WebhookLeader> localLeaders = new ConcurrentHashMap<>();
 
-    private final KeyLockManager lockManager;
+    private final KeyLockManager lockManager = KeyLockManagers.newLock(1, TimeUnit.SECONDS);
+    private static WebhookProperties webhookProperties = new WebhookProperties(PropertiesLoader.getInstance());
+    private static int shutdownThreadCount = webhookProperties.getShutdownThreadCount();
     @Inject
     @Named("Webhook")
     private Dao<Webhook> webhookDao;
     @Inject
     private Provider<WebhookLeader> v2Provider;
 
-    private static int shutdownThreadCount;
-
-    @Inject
-    public LocalWebhookManager(@Named("Webhook") Dao<Webhook> webhookDao,
-                                   Provider<WebhookLeader> v2Provider,
-                               WebhookProperty webhookProperty) {
-        shutdownThreadCount = webhookProperty.getShutdownThreadCount();
-        lockManager = KeyLockManagers.newLock(1, TimeUnit.SECONDS);
-    }
 
     static void runAndWait(String name, Collection<String> keys, Consumer<String> consumer) {
         ExecutorService pool = Executors.newFixedThreadPool(shutdownThreadCount,

@@ -1,7 +1,7 @@
 package com.flightstats.hub.app;
 
 import com.flightstats.hub.cluster.Cluster;
-import com.flightstats.hub.config.AppProperty;
+import com.flightstats.hub.config.AppProperties;
 import com.flightstats.hub.rest.RestClient;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Singleton;
@@ -16,20 +16,20 @@ import javax.inject.Inject;
 @Slf4j
 public class AppUrlCheck extends AbstractIdleService {
 
-    private Client client = RestClient.createClient(
+    private final Client client = RestClient.createClient(
             1000,
             1000,
             true,
             true);
 
-    private Cluster cluster;
-    private AppProperty appProperty;
+    private final Cluster cluster;
+    private final AppProperties appProperties;
 
     @Inject
     public AppUrlCheck(@Named("HubCluster") Cluster cluster,
-                       AppProperty appProperty) {
+                       AppProperties appProperties) {
         this.cluster = cluster;
-        this.appProperty = appProperty;
+        this.appProperties = appProperties;
         HubServices.register(this);
     }
 
@@ -37,7 +37,7 @@ public class AppUrlCheck extends AbstractIdleService {
     @Override
     protected void startUp() {
         if (hasHealthyServers()) {
-            String appUrl = appProperty.getAppUrl();
+            String appUrl = appProperties.getAppUrl();
             ClientResponse response = client.resource(appUrl).get(ClientResponse.class);
             log.info("got response {}", response);
             if (response.getStatus() != 200) {

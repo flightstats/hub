@@ -12,9 +12,9 @@ class EventWebhook {
     private final WebhookService webhookService = HubProvider.getInstance(WebhookService.class);
     private final String random = StringUtils.randomAlphaNumeric(6);
 
-    private ContentOutput contentOutput;
-    private String appUrl;
-    private String appEnv;
+    private final ContentOutput contentOutput;
+    private final String appUrl;
+    private final String appEnv;
 
     EventWebhook(ContentOutput contentOutput,
                  String appUrl,

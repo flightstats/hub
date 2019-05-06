@@ -1,6 +1,6 @@
 package com.flightstats.hub.channel;
 
-import com.flightstats.hub.config.PropertyLoader;
+import com.flightstats.hub.config.PropertiesLoader;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.exception.ForbiddenRequestException;
@@ -33,7 +33,7 @@ class ChannelValidatorTest {
         channelService = mock(ChannelService.class);
         validator = new ChannelValidator(channelService);
         when(channelService.channelExists(any(String.class))).thenReturn(false);
-        PropertyLoader.getInstance().setProperty("hub.protect.channels", "false");
+        PropertiesLoader.getInstance().setProperty("hub.protect.channels", "false");
     }
 
     @Test
@@ -246,7 +246,6 @@ class ChannelValidatorTest {
         validator.validate(getBuilder().name("A").owner(Strings.repeat("A", 48)).build(), null, false);
     }
 
-//    @Test(expected = InvalidRequestException.class)
     @Test
     void testTooLongOwner() {
         assertThrows(InvalidRequestException.class, () ->
@@ -260,7 +259,6 @@ class ChannelValidatorTest {
         validator.validate(getBuilder().name("storage").storage("BoTh").build(), null, false);
     }
 
-//    @Test(expected = InvalidRequestException.class)
     @Test
     void testInvalidStorage() {
         assertThrows(InvalidRequestException.class, () ->
@@ -268,8 +266,8 @@ class ChannelValidatorTest {
     }
 
     @Test
-    void testChangeStorageLoss() {
-        PropertyLoader.getInstance().setProperty("hub.protect.channels", "true");
+    void testChangeStorageLoss() throws Exception {
+        PropertiesLoader.getInstance().setProperty("hub.protect.channels", "true");
         ChannelConfig single = getBuilder().name("storage").storage(ChannelConfig.SINGLE).build();
         ChannelConfig batch = getBuilder().name("storage").storage(ChannelConfig.BATCH).build();
         ChannelConfig both = getBuilder().name("storage").storage(ChannelConfig.BOTH).build();
@@ -286,8 +284,8 @@ class ChannelValidatorTest {
     }
 
     @Test
-   void testRemoveTagsLoss() {
-        PropertyLoader.getInstance().setProperty("hub.protect.channels", "true");
+    void testRemoveTagsLoss() {
+        PropertiesLoader.getInstance().setProperty("hub.protect.channels", "true");
         ChannelConfig oneTwo = getBuilder().name("testRemoveTags").tags(Arrays.asList("one", "two")).build();
         ChannelConfig oneThree = getBuilder().name("testRemoveTags").tags(Arrays.asList("one", "three")).build();
         ChannelConfig oneTwoThree = getBuilder().name("testRemoveTags").tags(Arrays.asList("one", "two", "three")).build();
@@ -298,7 +296,7 @@ class ChannelValidatorTest {
 
     @Test
     void testTtlDaysLoss() {
-        PropertyLoader.getInstance().setProperty("hub.protect.channels", "true");
+        PropertiesLoader.getInstance().setProperty("hub.protect.channels", "true");
         ChannelConfig ten = getBuilder().name("testTtlDays").ttlDays(10).build();
         ChannelConfig eleven = getBuilder().name("testTtlDays").ttlDays(11).build();
         validator.validate(ten, ten, false);
@@ -307,7 +305,7 @@ class ChannelValidatorTest {
 
     @Test
     void testMaxItemsLoss() {
-        PropertyLoader.getInstance().setProperty("hub.protect.channels", "true");
+        PropertiesLoader.getInstance().setProperty("hub.protect.channels", "true");
         ChannelConfig ten = getBuilder().name("testMaxItems").maxItems(10).build();
         ChannelConfig eleven = getBuilder().name("testMaxItems").maxItems(11).build();
         validator.validate(ten, ten, false);
@@ -316,7 +314,7 @@ class ChannelValidatorTest {
 
     @Test
     void testReplicationLoss() {
-        PropertyLoader.getInstance().setProperty("hub.protect.channels", "true");
+        PropertiesLoader.getInstance().setProperty("hub.protect.channels", "true");
         ChannelConfig changed = getBuilder().name("testReplication").replicationSource("http://hub/channel/name1").build();
         ChannelConfig replication = getBuilder().name("testReplication").replicationSource("http://hub/channel/name").build();
         validator.validate(changed, changed, false);
@@ -326,7 +324,7 @@ class ChannelValidatorTest {
 
     @Test
     void testDataLossChange() {
-        PropertyLoader.getInstance().setProperty("hub.protect.channels", "false");
+        PropertiesLoader.getInstance().setProperty("hub.protect.channels", "false");
         ChannelConfig dataLoss = getBuilder().name("testDataLossChange").protect(false).build();
         ChannelConfig noLoss = getBuilder().name("testDataLossChange").protect(true).build();
 

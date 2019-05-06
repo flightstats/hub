@@ -1,8 +1,8 @@
 package com.flightstats.hub.webhook;
 
 import org.junit.jupiter.api.Test;
-import com.flightstats.hub.config.PropertyLoader;
-import com.flightstats.hub.config.WebhookProperty;
+import com.flightstats.hub.config.PropertiesLoader;
+import com.flightstats.hub.config.WebhookProperties;
 import com.flightstats.hub.metrics.StatsdReporter;
 
 
@@ -22,7 +22,7 @@ class WebhookRetryerTest {
     private int readTimeoutSeconds = 10;
     private WebhookErrorService webhookErrorService = mock(WebhookErrorService.class);
     private StatsdReporter statsdReporter = mock(StatsdReporter.class);
-    private WebhookProperty webhookProperty = new WebhookProperty(PropertyLoader.getInstance());
+    private WebhookProperties webhookProperties = new WebhookProperties(PropertiesLoader.getInstance());
 
     private WebhookRetryer retryer = new WebhookRetryer(
             giveUpIfs,
@@ -31,7 +31,7 @@ class WebhookRetryerTest {
             readTimeoutSeconds,
             webhookErrorService,
             statsdReporter,
-            webhookProperty);
+            webhookProperties);
 
     @Test
     void testShouldGiveUpIf() {

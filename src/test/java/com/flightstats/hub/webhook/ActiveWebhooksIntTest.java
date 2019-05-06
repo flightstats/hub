@@ -96,7 +96,7 @@ class ActiveWebhooksIntTest {
         try {
             curator.create().creatingParentsIfNeeded().forPath(format("%s/%s/locks", WEBHOOK_LEADER_PATH, webhook), "".getBytes());
             curator.create().creatingParentsIfNeeded().forPath(format("%s/%s/leases", WEBHOOK_LEADER_PATH, webhook), "".getBytes());
-        } catch(Exception e) {
+        } catch (Exception e) {
             fail(e.getMessage());
         }
     }
@@ -104,7 +104,7 @@ class ActiveWebhooksIntTest {
     private void createWebhookLock(String webhook, String lockName, String value) {
         try {
             curator.create().creatingParentsIfNeeded().forPath(format("%s/%s/locks/%s", WEBHOOK_LEADER_PATH, webhook, lockName), value.getBytes());
-        } catch(Exception e) {
+        } catch (Exception e) {
             fail(e.getMessage());
         }
     }
@@ -113,7 +113,7 @@ class ActiveWebhooksIntTest {
         String leasePath = format("%s/%s/leases/%s", WEBHOOK_LEADER_PATH, webhook, leaseName);
         try {
             curator.create().creatingParentsIfNeeded().forPath(leasePath, value.getBytes());
-        } catch(Exception e) {
+        } catch (Exception e) {
             fail(e.getMessage());
         }
     }

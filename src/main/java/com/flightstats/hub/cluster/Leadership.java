@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
 public class Leadership {
-    private ZooKeeperState zooKeeperState;
+    private final ZooKeeperState zooKeeperState;
 
     private final AtomicBoolean hasLeadership = new AtomicBoolean(false);
 

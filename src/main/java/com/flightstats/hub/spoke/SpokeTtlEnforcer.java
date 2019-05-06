@@ -1,7 +1,7 @@
 package com.flightstats.hub.spoke;
 
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.config.SpokeProperty;
+import com.flightstats.hub.config.SpokeProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.TtlEnforcer;
 import com.flightstats.hub.metrics.StatsdReporter;
@@ -40,15 +40,15 @@ public class SpokeTtlEnforcer {
                             ChannelService channelService,
                             SpokeContentDao spokeContentDao,
                             StatsdReporter statsdReporter,
-                            SpokeProperty spokeProperty) {
+                            SpokeProperties spokeProperties) {
         this.spokeStore = spokeStore;
         this.channelService = channelService;
         this.spokeContentDao = spokeContentDao;
         this.statsdReporter = statsdReporter;
 
-        this.storagePath = spokeProperty.getPath(spokeStore);
-        this.ttlMinutes = spokeProperty.getTtlMinutes(spokeStore) + 1;
-        if (spokeProperty.isEnforceTTL()) {
+        this.storagePath = spokeProperties.getPath(spokeStore);
+        this.ttlMinutes = spokeProperties.getTtlMinutes(spokeStore) + 1;
+        if (spokeProperties.isTtlEnforced()) {
             HubServices.register(new SpokeTtlEnforcerService());
         }
     }

@@ -6,7 +6,7 @@ import com.google.inject.Inject;
 import java.util.concurrent.TimeUnit;
 
 public class PeriodicMetricEmitterLifecycle extends AbstractScheduledService{
-    private PeriodicMetricEmitter periodicMetricEmitter;
+    private final PeriodicMetricEmitter periodicMetricEmitter;
 
     @Inject
     public PeriodicMetricEmitterLifecycle(PeriodicMetricEmitter periodicMetricEmitter) {

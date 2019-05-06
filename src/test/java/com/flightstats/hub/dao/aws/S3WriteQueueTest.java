@@ -1,6 +1,6 @@
 package com.flightstats.hub.dao.aws;
 
-import com.flightstats.hub.config.S3Property;
+import com.flightstats.hub.config.S3Properties;
 import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.Content;
@@ -32,7 +32,7 @@ class S3WriteQueueTest {
     @Mock private StatsdReporter statsdReporter;
     @Mock private ChannelContentKey key;
     @Mock private ContentKey contentKey;
-    @Mock private S3Property s3Property;
+    @Mock private S3Properties s3Properties;
     private static final String CHANNEL_NAME = "testy_test";
     private static final long AGE_MILLIS = 666;
     private S3WriteQueue s3WriteQueue;
@@ -40,13 +40,13 @@ class S3WriteQueueTest {
     @BeforeEach
     void setup() {
         initMocks(this);
-        when(s3Property.getWriteQueueSize()).thenReturn(20);
-        when(s3Property.getWriteQueueThreadCount()).thenReturn(2);
+        when(s3Properties.getWriteQueueSize()).thenReturn(20);
+        when(s3Properties.getWriteQueueThreadCount()).thenReturn(2);
         s3WriteQueue = new S3WriteQueue(
                 spokeWriteContentDao,
                 s3SingleContentDao,
                 statsdReporter,
-                s3Property);
+                s3Properties);
     }
 
     @Test

@@ -20,9 +20,10 @@ import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.cluster.SpokeDecommissionCluster;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.ZooKeeperState;
-import com.flightstats.hub.config.AppProperty;
-import com.flightstats.hub.config.SpokeProperty;
-import com.flightstats.hub.config.ZookeeperProperty;
+import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.SpokeProperties;
+import com.flightstats.hub.config.SystemProperties;
+import com.flightstats.hub.config.ZookeeperProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.aws.s3Verifier.VerifierConfig;
@@ -92,19 +93,19 @@ public class HubBindings extends AbstractModule {
     @Singleton
     @Provides
     public static CuratorFramework buildCurator(ZooKeeperState zooKeeperState,
-                                                AppProperty appProperty,
-                                                ZookeeperProperty zookeeperProperty) {
+                                                AppProperties appProperties,
+                                                ZookeeperProperties zookeeperProperties) {
 
         log.info("connecting to zookeeper(s) at {} with name {} env {}",
-                zookeeperProperty.getConnection(),
-                appProperty.getAppName(),
-                appProperty.getEnv());
+                zookeeperProperties.getConnection(),
+                appProperties.getAppName(),
+                appProperties.getEnv());
 
-        FixedEnsembleProvider ensembleProvider = new FixedEnsembleProvider(zookeeperProperty.getConnection());
+        FixedEnsembleProvider ensembleProvider = new FixedEnsembleProvider(zookeeperProperties.getConnection());
         CuratorFramework curatorFramework = CuratorFrameworkFactory.builder()
-                .namespace(appProperty.getAppName() + "-" + appProperty.getEnv())
+                .namespace(appProperties.getAppName() + "-" + appProperties.getEnv())
                 .ensembleProvider(ensembleProvider)
-                .retryPolicy(buildRetryPolicy(zookeeperProperty)).build();
+                .retryPolicy(buildRetryPolicy(zookeeperProperties)).build();
         curatorFramework.getConnectionStateListenable().addListener(zooKeeperState.getStateListener());
         curatorFramework.start();
 
@@ -117,31 +118,31 @@ public class HubBindings extends AbstractModule {
         return curatorFramework;
     }
 
-    private static RetryPolicy buildRetryPolicy(ZookeeperProperty zookeeperProperty) {
+    private static RetryPolicy buildRetryPolicy(ZookeeperProperties zookeeperProperties) {
         return new BoundedExponentialBackoffRetry(
-                zookeeperProperty.getBaseSleepTimeInMillis(),
-                zookeeperProperty.getMaxSleepTimeInMillis(),
-                zookeeperProperty.getMaxRetries());
+                zookeeperProperties.getBaseSleepTimeInMillis(),
+                zookeeperProperties.getMaxSleepTimeInMillis(),
+                zookeeperProperties.getMaxRetries());
     }
 
     @Singleton
     @Provides
-    public static Client buildJerseyClient(AppProperty appProperty) {
-        return create(appProperty, true);
+    public static Client buildJerseyClient(SystemProperties systemProperties) {
+        return create(systemProperties, true);
     }
 
     @Named("NoRedirects")
     @Singleton
     @Provides
-    public static Client buildJerseyClientNoRedirects(AppProperty appProperty) {
-        return create(appProperty, false);
+    public static Client buildJerseyClientNoRedirects(SystemProperties systemProperties) {
+        return create(systemProperties, false);
     }
 
-    private static Client create(AppProperty appProperty, boolean followRedirects) {
-        int connectTimeoutMillis = (int) TimeUnit.SECONDS.toMillis(appProperty.getHttpConnectTimeoutInSec());
-        int readTimeoutMillis = (int) TimeUnit.SECONDS.toMillis(appProperty.getHttpReadTimeoutInSec());
+    private static Client create(SystemProperties systemProperties, boolean followRedirects) {
+        int connectTimeoutMillis = (int) TimeUnit.SECONDS.toMillis(systemProperties.getHttpConnectTimeoutInSec());
+        int readTimeoutMillis = (int) TimeUnit.SECONDS.toMillis(systemProperties.getHttpReadTimeoutInSec());
         Client client = RestClient.createClient(connectTimeoutMillis, readTimeoutMillis, followRedirects, true);
-        client.addFilter(new RetryClientFilter(appProperty));
+        client.addFilter(new RetryClientFilter(systemProperties));
         return client;
     }
 
@@ -149,16 +150,16 @@ public class HubBindings extends AbstractModule {
     @Singleton
     @Provides
     public static Cluster buildHubCluster(CuratorFramework curator,
-                                          AppProperty appProperty,
-                                          SpokeProperty spokeProperty) throws Exception {
+                                          AppProperties appProperties,
+                                          SpokeProperties spokeProperties) throws Exception {
         return new CuratorCluster(curator,
                 "/HubCluster",
                 true,
                 false,
                 new DecommissionCluster() {
                 },
-                appProperty,
-                spokeProperty);
+                appProperties,
+                spokeProperties);
     }
 
     @Named("SpokeCuratorCluster")
@@ -180,16 +181,16 @@ public class HubBindings extends AbstractModule {
     @Provides
     public static Cluster buildSpokeCluster(CuratorFramework curator,
                                             SpokeDecommissionCluster spokeDecommissionCluster,
-                                            AppProperty appProperty,
-                                            SpokeProperty spokeProperty) throws Exception {
+                                            AppProperties appProperties,
+                                            SpokeProperties spokeProperties) throws Exception {
         return new CuratorCluster(
                 curator,
                 "/SpokeCluster",
                 false,
                 true,
                 spokeDecommissionCluster,
-                appProperty,
-                spokeProperty);
+                appProperties,
+                spokeProperties);
     }
 
 
@@ -277,8 +278,8 @@ public class HubBindings extends AbstractModule {
     @Provides
     @Singleton
     public ContentDao contentDao(RemoteSpokeStore remoteSpokeStore,
-                                                     SpokeProperty spokeProperty) {
-        return new SpokeWriteContentDao(remoteSpokeStore, spokeProperty);
+                                                     SpokeProperties spokeProperties) {
+        return new SpokeWriteContentDao(remoteSpokeStore, spokeProperties);
     }
 
     @Named(READ_CACHE)
@@ -290,18 +291,18 @@ public class HubBindings extends AbstractModule {
 
     @Named(WRITE)
     @Provides
-    public FileSpokeStore fileSpokeStoreWrite(SpokeProperty spokeProperty) {
+    public FileSpokeStore fileSpokeStoreWrite(SpokeProperties spokeProperties) {
         return new FileSpokeStore(
-                spokeProperty.getPath(SpokeStore.WRITE),
-                spokeProperty.getTtlMinutes(SpokeStore.WRITE));
+                spokeProperties.getPath(SpokeStore.WRITE),
+                spokeProperties.getTtlMinutes(SpokeStore.WRITE));
     }
 
     @Named(READ)
     @Provides
-    public FileSpokeStore fileSpokeStoreRead(SpokeProperty spokeProperty) {
+    public FileSpokeStore fileSpokeStoreRead(SpokeProperties spokeProperties) {
         return new FileSpokeStore(
-                spokeProperty.getPath(SpokeStore.READ),
-                spokeProperty.getTtlMinutes(SpokeStore.READ));
+                spokeProperties.getPath(SpokeStore.READ),
+                spokeProperties.getTtlMinutes(SpokeStore.READ));
     }
 
 }

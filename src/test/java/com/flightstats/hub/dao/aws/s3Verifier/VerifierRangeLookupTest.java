@@ -1,8 +1,8 @@
 package com.flightstats.hub.dao.aws.s3Verifier;
 
 import com.flightstats.hub.cluster.LastContentPath;
-import com.flightstats.hub.config.PropertyLoader;
-import com.flightstats.hub.config.SpokeProperty;
+import com.flightstats.hub.config.PropertiesLoader;
+import com.flightstats.hub.config.SpokeProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.MinutePath;
@@ -28,8 +28,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
 class VerifierRangeLookupTest {
-
-    private static final SpokeProperty spokeProperty = new SpokeProperty(PropertyLoader.getInstance());
     private static VerifierRangeLookup verifierRangeLookup;
     private static LastContentPath lastContentPath;
     private static int ttlMinutes;
@@ -42,8 +40,9 @@ class VerifierRangeLookupTest {
 
     @BeforeAll
     static void setUpClass() throws Exception {
+        final SpokeProperties spokeProperties = new SpokeProperties(PropertiesLoader.getInstance());
         Injector injector = Integration.startAwsHub();
-        ttlMinutes =  spokeProperty.getTtlMinutes(SpokeStore.WRITE);
+        ttlMinutes =  spokeProperties.getTtlMinutes(SpokeStore.WRITE);
         verifierRangeLookup = injector.getInstance(VerifierRangeLookup.class);
         lastContentPath = injector.getInstance(LastContentPath.class);
         channelService = injector.getInstance(ChannelService.class);

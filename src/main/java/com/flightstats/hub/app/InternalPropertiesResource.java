@@ -1,7 +1,7 @@
 package com.flightstats.hub.app;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.config.PropertyLoader;
+import com.flightstats.hub.config.PropertiesLoader;
 import com.flightstats.hub.metrics.InternalTracesResource;
 import com.flightstats.hub.util.SecretFilter;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +34,7 @@ public class InternalPropertiesResource {
         ObjectNode root = InternalTracesResource.serverAndServers("/internal/properties");
         try {
             ObjectNode propertyNode = root.putObject("properties");
-            Properties properties = PropertyLoader.getInstance().getProperties();
+            Properties properties = PropertiesLoader.getInstance().getProperties();
             for (Object key : new TreeSet<>(properties.keySet())) {
                 String value = properties.get(key).toString();
                 String possiblySensitiveValue = secretFilter.redact(key.toString(), value);

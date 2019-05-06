@@ -1,7 +1,7 @@
 package com.flightstats.hub.dao.aws;
 
 import com.flightstats.hub.channel.ZipBulkBuilder;
-import com.flightstats.hub.config.PropertyLoader;
+import com.flightstats.hub.config.PropertiesLoader;
 import com.flightstats.hub.dao.ContentDaoUtil;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.ChannelConfig;
@@ -40,8 +40,8 @@ class S3BatchContentDaoTest {
 
     @BeforeAll
     static void setUpClass() throws Exception {
-        PropertyLoader.getInstance().load("useDefault");
-        PropertyLoader.getInstance().setProperty("s3.maxQueryItems", "5");
+        PropertiesLoader.getInstance().load("useDefault");
+        PropertiesLoader.getInstance().setProperty("s3.maxQueryItems", "5");
         Injector injector = Integration.startAwsHub();
         contentDao = injector.getInstance(S3BatchContentDao.class);
     }
