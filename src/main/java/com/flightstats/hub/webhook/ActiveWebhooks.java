@@ -1,6 +1,7 @@
 package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.app.HubHost;
+import com.flightstats.hub.app.HubProperties;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -16,7 +17,9 @@ public class ActiveWebhooks {
     public ActiveWebhooks(WebhookLeaderLocks webhookLeaderLocks, ActiveWebhookSweeper activeWebhookSweeper) {
         this.webhookLeaderLocks = webhookLeaderLocks;
 
-        activeWebhookSweeper.cleanupEmpty();
+        if (HubProperties.isWebHookLeadershipEnabled()) {
+            activeWebhookSweeper.cleanupEmpty();
+        }
     }
 
     public boolean isActiveWebhook(String webhookName) {

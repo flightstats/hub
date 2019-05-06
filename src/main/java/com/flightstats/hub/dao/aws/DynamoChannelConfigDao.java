@@ -93,9 +93,10 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
             } else {
                 createTable(tableName, throughput);
             }
+        } else if (!HubProperties.isReadOnly()){
+            dynamoUtils.updateTable(tableName, throughput);
         }
 
-        dynamoUtils.updateTable(tableName, throughput);
     }
 
     private void createTable(String tableName, ProvisionedThroughput throughput) {
