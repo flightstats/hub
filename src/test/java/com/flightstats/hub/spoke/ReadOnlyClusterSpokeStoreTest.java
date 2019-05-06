@@ -27,8 +27,8 @@ public class ReadOnlyClusterSpokeStoreTest {
         dao.getFromWriteCluster("path", ContentKey.NONE);
         dao.readTimeBucketFromWriteCluster("channel", "timePath");
 
-        verify(dao, times(1)).getFromWriteCluster("path", ContentKey.NONE);
-        verify(dao, times(1)).readTimeBucketFromWriteCluster("channel", "timePath");
+        verify(writeSpoke, times(1)).getFromWriteCluster("path", ContentKey.NONE);
+        verify(writeSpoke, times(1)).readTimeBucketFromWriteCluster("channel", "timePath");
     }
 
     @Test(expected=UnsupportedOperationException.class)
