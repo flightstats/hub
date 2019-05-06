@@ -1,21 +1,22 @@
 package com.flightstats.hub.cluster;
 
+import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.PropertiesLoader;
+import com.flightstats.hub.config.SpokeProperties;
 import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.Sleeper;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+@Slf4j
 public class CuratorClusterTest {
-
-    private final static Logger logger = LoggerFactory.getLogger(CuratorClusterTest.class);
 
     private static CuratorFramework curator;
 
@@ -26,20 +27,35 @@ public class CuratorClusterTest {
 
     @Test
     public void testPath() throws Exception {
-        logger.info("starting testPath");
-        CuratorCluster cluster = new CuratorCluster(curator, "/SpokeCluster", false, true, new SpokeDecommissionCluster(curator));
+        log.info("starting testPath");
+
+        final CuratorCluster clusterTest = new CuratorCluster(curator,
+                "/SpokeCluster",
+                false,
+                true,
+                new SpokeDecommissionCluster(curator, new SpokeProperties(PropertiesLoader.getInstance())),
+                new AppProperties(PropertiesLoader.getInstance()),
+                new SpokeProperties(PropertiesLoader.getInstance()));
+
+        final CuratorCluster cluster = new CuratorCluster(curator,
+                "/CuratorClusterTest",
+                false,
+                true,
+                new SpokeDecommissionCluster(curator, new SpokeProperties(PropertiesLoader.getInstance())),
+                new AppProperties(PropertiesLoader.getInstance()),
+                new SpokeProperties(PropertiesLoader.getInstance()));
 
         Collection<String> servers = cluster.getAllServers();
         assertNotNull(servers);
         assertEquals(0, servers.size());
-        logger.info("got expected 0");
+        log.info("got expected 0");
         cluster.register();
         Sleeper.sleep(5000);
-        logger.info("slept 5000");
+        log.info("slept 5000");
         servers = cluster.getAllServers();
         assertNotNull(servers);
         assertEquals(1, servers.size());
-        logger.info("got expected 1");
+        log.info("got expected 1");
         cluster.delete();
         Sleeper.sleep(5000);
         servers = cluster.getAllServers();

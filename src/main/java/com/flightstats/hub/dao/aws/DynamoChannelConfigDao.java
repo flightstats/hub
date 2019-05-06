@@ -1,31 +1,52 @@
 package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.dynamodbv2.model.*;
-import com.flightstats.hub.app.HubProperties;
+import com.amazonaws.services.dynamodbv2.model.AttributeDefinition;
+import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+import com.amazonaws.services.dynamodbv2.model.CreateTableRequest;
+import com.amazonaws.services.dynamodbv2.model.DeleteItemRequest;
+import com.amazonaws.services.dynamodbv2.model.GetItemRequest;
+import com.amazonaws.services.dynamodbv2.model.GetItemResult;
+import com.amazonaws.services.dynamodbv2.model.KeySchemaElement;
+import com.amazonaws.services.dynamodbv2.model.KeyType;
+import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
+import com.amazonaws.services.dynamodbv2.model.PutItemRequest;
+import com.amazonaws.services.dynamodbv2.model.ResourceNotFoundException;
+import com.amazonaws.services.dynamodbv2.model.ScalarAttributeType;
+import com.amazonaws.services.dynamodbv2.model.ScanRequest;
+import com.amazonaws.services.dynamodbv2.model.ScanResult;
 import com.flightstats.hub.app.HubServices;
+import com.flightstats.hub.config.DynamoProperties;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
+@Slf4j
 public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
-    private final static Logger logger = LoggerFactory.getLogger(DynamoChannelConfigDao.class);
+
+    private final AmazonDynamoDB dbClient;
+    private final DynamoUtils dynamoUtils;
+    private final DynamoProperties dynamoProperties;
 
     @Inject
-    private AmazonDynamoDB dbClient;
-    @Inject
-    private DynamoUtils dynamoUtils;
-
-    @Inject
-    public DynamoChannelConfigDao() {
+    public DynamoChannelConfigDao(AmazonDynamoDB dbClient,
+                                  DynamoUtils dynamoUtils,
+                                  DynamoProperties dynamoProperties) {
+        this.dbClient = dbClient;
+        this.dynamoUtils = dynamoUtils;
+        this.dynamoProperties = dynamoProperties;
         HubServices.register(new DynamoChannelConfigurationDaoInit());
     }
 
@@ -68,7 +89,7 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
     void initialize() throws InterruptedException {
         String tableName = getTableName();
         ProvisionedThroughput throughput = dynamoUtils.getProvisionedThroughput("channel");
-        logger.info("creating table {} ", tableName);
+        log.info("creating table {} ", tableName);
         List<AttributeDefinition> attributes = new ArrayList<>();
         attributes.add(new AttributeDefinition("key", ScalarAttributeType.S));
 
@@ -97,7 +118,7 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
             }
             return mapItem(result.getItem());
         } catch (ResourceNotFoundException e) {
-            logger.info("channel not found " + e.getMessage());
+            log.info("channel not found " + e.getMessage());
             return null;
         }
     }
@@ -180,7 +201,7 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
 
     private String getTableName() {
         String legacyTableName = dynamoUtils.getLegacyTableName("channelMetaData");
-        return HubProperties.getProperty("dynamo.table_name.channel_configs", legacyTableName);
+        return dynamoProperties.getChannelConfigTableName(legacyTableName);
     }
 
     private class DynamoChannelConfigurationDaoInit extends AbstractIdleService {
@@ -190,7 +211,7 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
         }
 
         @Override
-        protected void shutDown() throws Exception {
+        protected void shutDown() {
         }
 
     }

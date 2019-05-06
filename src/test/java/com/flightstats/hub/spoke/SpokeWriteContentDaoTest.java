@@ -1,41 +1,21 @@
 package com.flightstats.hub.spoke;
 
-import com.flightstats.hub.app.HubBindings;
-import com.flightstats.hub.app.HubProperties;
-import com.flightstats.hub.cluster.Cluster;
-import com.flightstats.hub.cluster.SpokeDecommissionCluster;
+import com.flightstats.hub.config.PropertiesLoader;
 import com.flightstats.hub.dao.ContentDaoUtil;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.test.Integration;
-import com.flightstats.hub.util.Sleeper;
-import com.google.inject.Injector;
-import org.apache.curator.framework.CuratorFramework;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class SpokeWriteContentDaoTest {
 
-    private final static Logger logger = LoggerFactory.getLogger(SpokeWriteContentDaoTest.class);
     private static ContentDaoUtil util;
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        Injector injector = Integration.startAwsHub();
-        util = new ContentDaoUtil(injector.getInstance(SpokeWriteContentDao.class));
-        CuratorFramework curator = injector.getInstance(CuratorFramework.class);
-        Cluster cluster = HubBindings.buildSpokeCluster(curator, new SpokeDecommissionCluster(curator));
-        for (int i = 0; i < 10; i++) {
-            if (cluster.getAllServers().size() == 0) {
-                logger.info("no servers yet...");
-                Sleeper.sleep(500);
-            } else {
-                logger.info("servers {}", cluster.getAllServers());
-                return;
-            }
-        }
-        logger.info("no servers found");
+        util = new ContentDaoUtil(Integration.startAwsHub().getInstance(SpokeWriteContentDao.class));
     }
 
     @Test
@@ -66,7 +46,7 @@ public class SpokeWriteContentDaoTest {
 
     @Test
     public void testDirectionQuery() throws Exception {
-        HubProperties.setProperty("spoke.write.ttlMinutes", "240");
+        PropertiesLoader.getInstance().setProperty("spoke.write.ttlMinutes", "240");
         util.testDirectionQueryTTL();
     }
 

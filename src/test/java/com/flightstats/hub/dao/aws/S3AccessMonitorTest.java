@@ -5,6 +5,9 @@ import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.PutObjectResult;
 import com.amazonaws.services.s3.model.S3Object;
+import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.PropertiesLoader;
+import com.flightstats.hub.config.S3Properties;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
 import org.junit.Before;
@@ -12,16 +15,18 @@ import org.junit.Test;
 
 import java.io.IOException;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
-import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class S3AccessMonitorTest {
-    private final S3BucketName s3BucketName = new S3BucketName("test", "bucket");
+    private final S3BucketName s3BucketName = new S3BucketName(
+            new AppProperties(PropertiesLoader.getInstance()),
+            new S3Properties(PropertiesLoader.getInstance()));
     private HubS3Client s3Client;
     private S3AccessMonitor monitor;
     private PutObjectResult putObjectResult;

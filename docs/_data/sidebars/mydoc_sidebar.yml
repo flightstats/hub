@@ -36,6 +36,10 @@ entries:
       output: web, pdf
       type: homepage
 
+    - title: Hub properties
+      url: /hub_properties.html
+      output: web, pdf
+
     - title: API Reference
       url: /hub_api_reference.html
       output: web, pdf

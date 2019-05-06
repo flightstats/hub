@@ -1,11 +1,15 @@
 package com.flightstats.hub.cluster;
 
 import com.flightstats.hub.test.Integration;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
+import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -13,32 +17,33 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+@Slf4j
 public class DistributedLockRunnerTest {
     private static DistributedLeaderLockManager lockManager;
     private static AtomicReference<List<String>> lockList;
+    private DistributedLockRunner distributedLockRunner;
 
     @BeforeClass
     public static void setupCurator() throws Exception {
-        ZooKeeperState zooKeeperState = new ZooKeeperState();
-        CuratorFramework curator = Integration.startZooKeeper(zooKeeperState);
+        final ZooKeeperState zooKeeperState = new ZooKeeperState();
+        final CuratorFramework curator = Integration.startZooKeeper(zooKeeperState);
         lockManager = new DistributedLeaderLockManager(curator, zooKeeperState);
     }
 
     @Before
     public void setup() {
-        lockList = new AtomicReference<>(newArrayList());
+        lockList = new AtomicReference<>(Collections.synchronizedList(new ArrayList<>()));
+        this.distributedLockRunner = new DistributedLockRunner(lockManager);
     }
 
     @Test
     public void test_runWithLock_executesTheRunnableCode() throws Exception {
-        DistributedLockRunner distributedLockRunner = new DistributedLockRunner(lockManager);
         CountDownLatch latch = new CountDownLatch(1);
 
         Consumer<LeadershipLock> lockable = leadershipLock -> {
@@ -57,11 +62,11 @@ public class DistributedLockRunnerTest {
 
     @Test
     public void test_runWithLock_withTwoLockables_runsOneAtATime() throws Exception {
-        DistributedLockRunner distributedLockRunner = new DistributedLockRunner( lockManager);
-        CountDownLatch waitForMe = new CountDownLatch(1);
-        CountDownLatch latch = new CountDownLatch(2);
 
-        ExecutorService executorService = Executors.newFixedThreadPool(3);
+        final CountDownLatch waitForMe = new CountDownLatch(1);
+        final CountDownLatch latch = new CountDownLatch(2);
+        final ExecutorService executorService = Executors.newFixedThreadPool(3);
+
         executorService.execute(() -> {
             Consumer<LeadershipLock> lockable = leadershipLock -> {
                 waitForMe.countDown();
@@ -74,7 +79,10 @@ public class DistributedLockRunnerTest {
             Consumer<LeadershipLock> lockable = leadershipLock -> {
                 doAThing(0, "lockable2", latch);
             };
-            try { waitForMe.await(90, TimeUnit.MILLISECONDS); } catch (Exception e) { }
+            try {
+                waitForMe.await(90, TimeUnit.MILLISECONDS);
+            } catch (Exception e) {
+            }
             distributedLockRunner.runWithLock(lockable, "/LockPath", 1, TimeUnit.MINUTES);
         });
 
@@ -84,17 +92,17 @@ public class DistributedLockRunnerTest {
 
     @Test
     public void test_runWithLock_afterAFailureToLock_continuesLocking() throws Exception {
-        DistributedLockRunner distributedLockRunner = new DistributedLockRunner(lockManager);
-        CountDownLatch waitForMe = new CountDownLatch(1);
-        CountDownLatch latch = new CountDownLatch(2);
 
-        ExecutorService executorService = Executors.newFixedThreadPool(3);
+        final CountDownLatch waitForMe = new CountDownLatch(1);
+        final CountDownLatch latch = new CountDownLatch(2);
+        final ExecutorService executorService = Executors.newFixedThreadPool(3);
+
         executorService.execute(() -> {
             Consumer<LeadershipLock> lockable = leadershipLock -> {
                 waitForMe.countDown();
                 doAThing(100, "lockable1", latch);
             };
-            distributedLockRunner.runWithLock(lockable, "/LockPath", 1, TimeUnit.MILLISECONDS);
+            distributedLockRunner.runWithLock(lockable, "/LockPath", 1, TimeUnit.MINUTES);
         });
 
         executorService.execute(() -> {
@@ -110,36 +118,36 @@ public class DistributedLockRunnerTest {
 
         executorService.execute(() -> {
             Consumer<LeadershipLock> lockable = leadershipLock -> {
-                doAThing(0, "lockable3", latch);
+                doAThing(100, "lockable3", latch);
             };
             distributedLockRunner.runWithLock(lockable, "/LockPath", 1, TimeUnit.MINUTES);
         });
 
         latch.await(5, TimeUnit.MINUTES);
+        assertEquals(2, lockList.get().size());
         assertTrue(lockList.get().contains("lockable1"));
         assertTrue(lockList.get().contains("lockable3"));
-        assertEquals(2, lockList.get().size());
     }
 
     @Test
     public void test_runWithLock_withTwoSeparateLocks_isAbleToLockOnBothPaths() {
-        DistributedLockRunner distributedLockRunner = new DistributedLockRunner(lockManager);
-        CountDownLatch waitForOne = new CountDownLatch(1);
-        CountDownLatch waitForTwo = new CountDownLatch(1);
-        CountDownLatch latch = new CountDownLatch(3);
 
-        ExecutorService executorService = Executors.newFixedThreadPool(3);
+        final CountDownLatch waitForOne = new CountDownLatch(1);
+        final CountDownLatch waitForTwo = new CountDownLatch(1);
+        final CountDownLatch latch = new CountDownLatch(3);
+        final ExecutorService executorService = Executors.newFixedThreadPool(3);
         executorService.execute(() -> {
             Consumer<LeadershipLock> lockable = leadershipLock -> {
                 waitForOne.countDown();
-                doAThing(100, "lockable1", latch);
+                doAThing(200, "lockable1", latch);
                 try {
                     waitForTwo.await(50, TimeUnit.MILLISECONDS);
                 } catch (Exception e) {
                     fail(e.getMessage());
                 }
             };
-            distributedLockRunner.runWithLock(lockable, "/LockPath", 1, TimeUnit.MILLISECONDS);
+
+            distributedLockRunner.runWithLock(lockable, "/LockPath", 1, TimeUnit.MINUTES);
         });
 
         executorService.execute(() -> {
@@ -147,6 +155,7 @@ public class DistributedLockRunnerTest {
                 doAThing(0, "lockable2", latch);
                 waitForTwo.countDown();
             };
+
             try {
                 waitForOne.await(50, TimeUnit.MILLISECONDS);
             } catch (Exception e) {
@@ -159,6 +168,7 @@ public class DistributedLockRunnerTest {
             Consumer<LeadershipLock> lockable = leadershipLock -> {
                 doAThing(0, "lockable3", latch);
             };
+
             try {
                 waitForOne.await(50, TimeUnit.MILLISECONDS);
             } catch (Exception e) {
@@ -172,7 +182,8 @@ public class DistributedLockRunnerTest {
         } catch (InterruptedException e) {
             fail("something went wrong waiting for all the locks to finish!");
         }
-        assertEquals(newArrayList("lockable2", "lockable1", "lockable3"), lockList.get());
+        assertEquals("lockable2", lockList.get().get(0));
+        assertTrue(lockList.get().containsAll(newArrayList("lockable1", "lockable2", "lockable3")));
     }
 
     private void doAThing(long sleepMillis, String name, CountDownLatch latch) {
@@ -182,10 +193,11 @@ public class DistributedLockRunnerTest {
             fail(e.getMessage());
         }
 
-        List<String> newLockList = lockList.get();
-        newLockList.add(name);
-
-        lockList.set(newLockList);
+        log.debug("Updating list {} at {}",name, DateTime.now().toString());
+        lockList.getAndUpdate(list -> {
+            list.add(name);
+            return list;
+        });
 
         latch.countDown();
     }

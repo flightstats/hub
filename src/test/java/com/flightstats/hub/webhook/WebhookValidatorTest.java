@@ -1,6 +1,8 @@
 package com.flightstats.hub.webhook;
 
-import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.PropertiesLoader;
+import com.flightstats.hub.config.WebhookProperties;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.google.common.base.Strings;
 import org.junit.Before;
@@ -8,12 +10,16 @@ import org.junit.Test;
 
 public class WebhookValidatorTest {
 
+    private static final int CALLBACK_TIMEOUT_DEFAULT_IN_SEC = 120;
     private WebhookValidator webhookValidator;
     private Webhook webhook;
 
+    private AppProperties appProperties = new AppProperties(PropertiesLoader.getInstance());;
+    private WebhookProperties webhookProperties = new WebhookProperties(PropertiesLoader.getInstance());;
+
     @Before
-    public void setUp() throws Exception {
-        webhookValidator = new WebhookValidator();
+    public void setUp() {
+        webhookValidator = new WebhookValidator(appProperties, webhookProperties);
         webhook = Webhook.builder()
                 .callbackUrl("http://client/url")
                 .channelUrl("http://hub/channel/channelName")
@@ -22,34 +28,34 @@ public class WebhookValidatorTest {
     }
 
     @Test
-    public void testName() throws Exception {
-        webhook = webhook.withDefaults();
+    public void testName() {
+        webhook = webhook.withDefaults(CALLBACK_TIMEOUT_DEFAULT_IN_SEC);
         webhookValidator.validate(webhook.withName("aA9_-"));
     }
 
     @Test
-    public void testNameLarge() throws Exception {
-        webhook = webhook.withDefaults();
+    public void testNameLarge() {
+        webhook = webhook.withDefaults(CALLBACK_TIMEOUT_DEFAULT_IN_SEC);
         webhookValidator.validate(webhook.withName(Strings.repeat("B", 128)));
     }
 
     @Test(expected = InvalidRequestException.class)
-    public void testNameSizeTooBig() throws Exception {
+    public void testNameSizeTooBig() {
         webhookValidator.validate(webhook.withName(Strings.repeat("B", 129)));
     }
 
     @Test(expected = InvalidRequestException.class)
-    public void testZeroCalls() throws Exception {
+    public void testZeroCalls() {
         webhookValidator.validate(webhook.withParallelCalls(0));
     }
 
     @Test(expected = InvalidRequestException.class)
-    public void testNameChars() throws Exception {
+    public void testNameChars() {
         webhookValidator.validate(webhook.withName("aA9:"));
     }
 
     @Test(expected = InvalidRequestException.class)
-    public void testNonChannelUrl() throws Exception {
+    public void testNonChannelUrl() {
         webhookValidator.validate(Webhook.builder()
                 .callbackUrl("http:/client/url")
                 .channelUrl("http:\\hub/channel/channelName")
@@ -97,26 +103,26 @@ public class WebhookValidatorTest {
     }
 
     @Test(expected = InvalidRequestException.class)
-    public void testInvalidSingleHeartbeat() throws Exception {
+    public void testInvalidSingleHeartbeat() {
         webhook = webhook.withBatch("SINGLE").withHeartbeat(true).withName("blah").withCallbackTimeoutSeconds(10);
         webhookValidator.validate(webhook);
     }
 
     @Test(expected = InvalidRequestException.class)
-    public void testInvalidCallbackTimeout() throws Exception {
+    public void testInvalidCallbackTimeout() {
         webhook = webhook.withCallbackTimeoutSeconds(10 * 1000).withBatch("SINGLE").withName("blah");
         webhookValidator.validate(webhook);
     }
 
     @Test(expected = InvalidRequestException.class)
-    public void testInvalidCallbackTimeoutZero() throws Exception {
+    public void testInvalidCallbackTimeoutZero() {
         webhook = webhook.withCallbackTimeoutSeconds(0).withBatch("SINGLE").withName("blah");
         webhookValidator.validate(webhook);
     }
 
     @Test(expected = InvalidRequestException.class)
-    public void testInvalidLocalhost() throws Exception {
-        HubProperties.setProperty("hub.type", "aws");
+    public void testInvalidLocalhost() {
+        PropertiesLoader.getInstance().setProperty("hub.type", "aws");
         webhook = Webhook.builder()
                 .callbackUrl("http:/localhost:8080/url")
                 .channelUrl("http://hub/channel/channelName")

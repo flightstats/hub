@@ -14,15 +14,14 @@ import java.util.List;
 import static com.google.common.collect.Sets.newHashSet;
 import static java.lang.String.format;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 
 public class ActiveWebhooksIntTest {
+
     private static final String WEBHOOK_LEADER_PATH = "/WebhookLeader";
-
-
     private static final String WEBHOOK_WITH_LEASE = "webhook1";
     private static final String WEBHOOK_WITH_A_FEW_LEASES = "webhook4";
     private static final String WEBHOOK_WITH_LOCK = "webhook3";
@@ -42,6 +41,9 @@ public class ActiveWebhooksIntTest {
 
     @Before
     public void createWebhookLeader() throws Exception {
+        if (curator.checkExists().forPath(WEBHOOK_LEADER_PATH) != null) {
+            curator.delete().deletingChildrenIfNeeded().forPath(WEBHOOK_LEADER_PATH);
+        }
         curator.create().creatingParentsIfNeeded().forPath(WEBHOOK_LEADER_PATH);
     }
 
@@ -78,28 +80,28 @@ public class ActiveWebhooksIntTest {
         assertFalse(activeWebhooks.isActiveWebhook(EMPTY_WEBHOOK));
     }
 
-    private static void createWebhook(String webhook) {
+    private void createWebhook(String webhook) {
         try {
             curator.create().creatingParentsIfNeeded().forPath(format("%s/%s/locks", WEBHOOK_LEADER_PATH, webhook), "".getBytes());
             curator.create().creatingParentsIfNeeded().forPath(format("%s/%s/leases", WEBHOOK_LEADER_PATH, webhook), "".getBytes());
-        } catch(Exception e) {
+        } catch (Exception e) {
             fail(e.getMessage());
         }
     }
 
-    private static void createWebhookLock(String webhook, String lockName, String value) {
+    private void createWebhookLock(String webhook, String lockName, String value) {
         try {
             curator.create().creatingParentsIfNeeded().forPath(format("%s/%s/locks/%s", WEBHOOK_LEADER_PATH, webhook, lockName), value.getBytes());
-        } catch(Exception e) {
+        } catch (Exception e) {
             fail(e.getMessage());
         }
     }
 
-    private static void createWebhookLease(String webhook, String leaseName, String value) {
+    private void createWebhookLease(String webhook, String leaseName, String value) {
         String leasePath = format("%s/%s/leases/%s", WEBHOOK_LEADER_PATH, webhook, leaseName);
         try {
             curator.create().creatingParentsIfNeeded().forPath(leasePath, value.getBytes());
-        } catch(Exception e) {
+        } catch (Exception e) {
             fail(e.getMessage());
         }
     }

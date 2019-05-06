@@ -1,29 +1,33 @@
 package com.flightstats.hub.dao.aws.s3Verifier;
 
-import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.S3Properties;
 import com.google.inject.Provider;
 
+import javax.inject.Inject;
 import java.util.concurrent.TimeUnit;
 
 public class VerifierConfigProvider implements Provider<VerifierConfig> {
+
+    private final AppProperties appProperties;
+    private final S3Properties s3Properties;
+
+    @Inject
+    public VerifierConfigProvider(AppProperties appProperties, S3Properties s3Properties){
+        this.appProperties = appProperties;
+        this.s3Properties = s3Properties;
+    }
+
     @Override
     public VerifierConfig get() {
         return VerifierConfig.builder()
-                .enabled(HubProperties.getProperty("s3Verifier.run", true))
-                .baseTimeoutValue(HubProperties.getProperty("s3Verifier.baseTimeoutMinutes", 2))
+                .enabled(s3Properties.isVerifierEnabled())
+                .baseTimeoutValue(s3Properties.getVerifierBaseTimeoutInMins())
                 .baseTimeoutUnit(TimeUnit.MINUTES)
-                .offsetMinutes(HubProperties.getProperty("s3Verifier.offsetMinutes", 15))
-                .channelThreads(getChannelThreads())
-                .queryThreads(getQueryThreads())
-                .endpointUrlGenerator(channelName -> HubProperties.getAppUrl() + "internal/s3Verifier/" + channelName)
+                .offsetMinutes(s3Properties.getVerifierOffsetInInMins())
+                .channelThreads(s3Properties.getVerifierChannelThreads())
+                .queryThreads(s3Properties.getVerifierChannelThreads() * 2)
+                .endpointUrlGenerator(channelName -> appProperties.getAppUrl() + "internal/s3Verifier/" + channelName)
                 .build();
-    }
-
-    private int getChannelThreads() {
-        return HubProperties.getProperty("s3Verifier.channelThreads", 3);
-    }
-
-    private int getQueryThreads() {
-        return getChannelThreads() * 2;
     }
 }

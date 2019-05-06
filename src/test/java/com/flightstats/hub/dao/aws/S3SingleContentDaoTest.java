@@ -1,28 +1,26 @@
 package com.flightstats.hub.dao.aws;
 
-import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.config.PropertiesLoader;
 import com.flightstats.hub.dao.ContentDaoUtil;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.test.Integration;
 import com.google.inject.Injector;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static org.junit.Assert.assertEquals;
 
+@Slf4j
 public class S3SingleContentDaoTest {
-
-    private final static Logger logger = LoggerFactory.getLogger(S3SingleContentDaoTest.class);
 
     private static ContentDaoUtil util;
     private static S3SingleContentDao s3SingleContentDao;
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        HubProperties.loadProperties("useDefault");
+        PropertiesLoader.getInstance().load("useDefault");
         Injector injector = Integration.startAwsHub();
         s3SingleContentDao = injector.getInstance(S3SingleContentDao.class);
         util = new ContentDaoUtil(s3SingleContentDao);
@@ -69,14 +67,14 @@ public class S3SingleContentDaoTest {
     }
 
     @Test
-    public void testWriteReadOld() throws Exception {
+    public void testWriteReadOld() {
         String channel = "testWriteReadOld";
         Content content = ContentDaoUtil.createContent();
         ContentKey key = s3SingleContentDao.insertOld(channel, content);
-        logger.info("key {}", key);
+        log.info("key {}", key);
         assertEquals(content.getContentKey().get(), key);
         Content read = s3SingleContentDao.get(channel, key);
-        logger.info("read {}", read.getContentKey());
+        log.info("read {}", read.getContentKey());
         ContentDaoUtil.compare(content, read, key.toString().getBytes());
     }
 

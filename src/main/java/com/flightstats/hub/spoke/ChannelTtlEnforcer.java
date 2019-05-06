@@ -1,7 +1,8 @@
 package com.flightstats.hub.spoke;
 
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
+import com.flightstats.hub.config.S3Properties;
+import com.flightstats.hub.config.SpokeProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.TtlEnforcer;
 import com.flightstats.hub.model.ChannelConfig;
@@ -10,23 +11,27 @@ import com.flightstats.hub.util.TimeUtil;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 @Singleton
+@Slf4j
 public class ChannelTtlEnforcer {
-    private final static Logger logger = LoggerFactory.getLogger(ChannelTtlEnforcer.class);
-    private final String spokePath = HubProperties.getSpokePath(SpokeStore.WRITE);
-    @Inject
-    private ChannelService channelService;
+
+    private final ChannelService channelService;
+    private final String spokePath;
 
     @Inject
-    public ChannelTtlEnforcer() {
-        if (HubProperties.getProperty("channel.enforceTTL", false)) {
+    public ChannelTtlEnforcer(ChannelService channelService,
+                              SpokeProperties spokeProperties,
+                              S3Properties s3Properties) {
+        this.channelService = channelService;
+        this.spokePath = spokeProperties.getPath(SpokeStore.WRITE);
+
+        if (s3Properties.isChannelTtlEnforced()) {
             HubServices.register(new ChannelTtlEnforcerService());
         }
     }
@@ -48,11 +53,11 @@ public class ChannelTtlEnforcer {
         protected void runOneIteration() throws Exception {
             try {
                 long start = System.currentTimeMillis();
-                logger.info("running channel cleanup");
+                log.info("running channel cleanup");
                 TtlEnforcer.enforce(spokePath, channelService, handleCleanup());
-                logger.info("completed channel cleanup {}", (System.currentTimeMillis() - start));
+                log.info("completed channel cleanup {}", (System.currentTimeMillis() - start));
             } catch (Exception e) {
-                logger.info("issue cleaning up channels in spoke", e);
+                log.info("issue cleaning up channels in spoke", e);
             }
         }
 

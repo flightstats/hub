@@ -3,27 +3,28 @@ package com.flightstats.hub.webhook;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.InvalidRequestException;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.ContentPath;
+import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.NamedType;
 import com.flightstats.hub.util.RequestUtils;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import de.danielbechler.diff.ObjectDifferBuilder;
 import de.danielbechler.diff.node.DiffNode;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.ToString;
-import lombok.EqualsAndHashCode;
-import lombok.experimental.Wither;
-import lombok.extern.slf4j.Slf4j;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
+import lombok.experimental.Wither;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -37,6 +38,7 @@ import java.util.SortedSet;
 @Slf4j
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class Webhook implements Comparable<Webhook>, NamedType {
+
     public static final String SINGLE = "SINGLE";
     public static final String MINUTE = "MINUTE";
     public static final String SECOND = "SECOND";
@@ -238,27 +240,27 @@ public class Webhook implements Comparable<Webhook>, NamedType {
     /**
      * Returns a Webhook with all optional values set to the default.
      */
-    public Webhook withDefaults() {
+    public Webhook withDefaults(Integer callbackTimeoutSeconds) {
         Webhook webhook = this;
-        if (parallelCalls == null) {
+        if (this.parallelCalls == null) {
             webhook = webhook.withParallelCalls(1);
         }
-        if (batch == null) {
+        if (this.batch == null) {
             webhook = webhook.withBatch("SINGLE");
         }
         if (webhook.isMinute() || webhook.isSecond()) {
             webhook = webhook.withHeartbeat(true);
         }
-        if (ttlMinutes == null) {
+        if (this.ttlMinutes == null) {
             webhook = webhook.withTtlMinutes(0);
         }
-        if (maxWaitMinutes == null) {
+        if (this.maxWaitMinutes == null) {
             webhook = webhook.withMaxWaitMinutes(1);
         }
-        if (callbackTimeoutSeconds == null) {
-            webhook = webhook.withCallbackTimeoutSeconds(HubProperties.getCallbackTimeoutDefault());
+        if (this.callbackTimeoutSeconds == null) {
+            webhook = webhook.withCallbackTimeoutSeconds(callbackTimeoutSeconds);
         }
-        if (maxAttempts == null) {
+        if (this.maxAttempts == null) {
             webhook = webhook.withMaxAttempts(0);
         }
         return webhook;

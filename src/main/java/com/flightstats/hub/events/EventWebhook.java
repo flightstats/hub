@@ -1,7 +1,6 @@
 package com.flightstats.hub.events;
 
 import com.flightstats.hub.app.HubHost;
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.StringUtils;
@@ -12,10 +11,17 @@ class EventWebhook {
 
     private final WebhookService webhookService = HubProvider.getInstance(WebhookService.class);
     private final String random = StringUtils.randomAlphaNumeric(6);
-    private ContentOutput contentOutput;
 
-    EventWebhook(ContentOutput contentOutput) {
+    private final ContentOutput contentOutput;
+    private final String appUrl;
+    private final String appEnv;
+
+    EventWebhook(ContentOutput contentOutput,
+                 String appUrl,
+                 String appEnv) {
         this.contentOutput = contentOutput;
+        this.appUrl = appUrl;
+        this.appEnv = appEnv;
     }
 
     public void start() {
@@ -25,7 +31,7 @@ class EventWebhook {
                 .channelUrl(getChannelUrl())
                 .heartbeat(true)
                 .startingKey(contentOutput.getContentKey())
-                .batch(Webhook.SECOND);
+                .batch(Webhook.SECOND);/**/
         Webhook webhook = builder.build();
         webhookService.upsert(webhook);
     }
@@ -35,7 +41,7 @@ class EventWebhook {
     }
 
     private String getChannelUrl() {
-        return HubProperties.getAppUrl() + "channel/" + contentOutput.getChannel();
+        return appUrl + "channel/" + contentOutput.getChannel();
     }
 
     private String getCallbackUrl() {
@@ -43,7 +49,7 @@ class EventWebhook {
     }
 
     public String getGroupName() {
-        return "Events_" + HubProperties.getAppEnv() + "_" + contentOutput.getChannel() + "_" + random;
+        return "Events_" + appEnv + "_" + contentOutput.getChannel() + "_" + random;
     }
 
     public void stop() {

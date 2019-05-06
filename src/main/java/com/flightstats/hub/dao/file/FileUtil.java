@@ -1,10 +1,10 @@
 package com.flightstats.hub.dao.file;
 
-import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.config.PropertiesLoader;
+import com.flightstats.hub.config.SpokeProperties;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -16,12 +16,13 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 
+@Slf4j
 class FileUtil {
 
-    private final static Logger logger = LoggerFactory.getLogger(FileUtil.class);
+    private static final SpokeProperties spokeProperties = new SpokeProperties(PropertiesLoader.getInstance());
 
     static String getStoragePath() {
-        return StringUtils.appendIfMissing(HubProperties.getProperty("storage.path", "/file"), "/");
+        return StringUtils.appendIfMissing(spokeProperties.getStoragePath(), "/");
     }
 
     public static String getContentPath() {
@@ -37,7 +38,7 @@ class FileUtil {
             FileUtils.writeByteArrayToFile(new File(path + filename), bytes);
             return true;
         } catch (IOException e) {
-            logger.warn("unable to write file " + filename, e);
+            log.warn("unable to write file " + filename, e);
             return false;
         }
     }
@@ -51,9 +52,9 @@ class FileUtil {
             byte[] bytes = FileUtils.readFileToByteArray(file);
             return function.apply(new String(bytes));
         } catch (FileNotFoundException e) {
-            logger.info("file not found {} {} ", file.getName(), e.getMessage());
+            log.info("file not found {} {} ", file.getName(), e.getMessage());
         } catch (IOException e) {
-            logger.warn("unable to find for " + file.getName(), e);
+            log.warn("unable to find for " + file.getName(), e);
         }
         return null;
     }
