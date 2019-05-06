@@ -263,7 +263,6 @@ public class HubBindings extends AbstractModule {
                         HubProperties.getSpokeTtlMinutes(SpokeStore.READ)));
     }
 
-    @Inject
     @Singleton
     @Provides
     public RemoteSpokeStore buildRemoteSpokeStore(RemoteClusterSpokeStore store) {

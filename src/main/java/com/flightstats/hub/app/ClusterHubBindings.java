@@ -89,7 +89,6 @@ class ClusterHubBindings extends AbstractModule {
         }
     }
 
-    @Inject
     @Singleton
     @Provides
     @Named(SpokeStore.WRITE_SPOKE_NAME)
@@ -97,7 +96,6 @@ class ClusterHubBindings extends AbstractModule {
         return new SpokeTtlEnforcer(SpokeStore.WRITE, channelService, spokeContentDao, statsdReporter);
     }
 
-    @Inject
     @Singleton
     @Provides
     @Named(SpokeStore.READ_SPOKE_NAME)
@@ -105,14 +103,12 @@ class ClusterHubBindings extends AbstractModule {
         return new SpokeTtlEnforcer(SpokeStore.READ, channelService, spokeContentDao, statsdReporter);
     }
 
-    @Inject
     @Singleton
     @Provides
     public DocumentationDao buildDocumentationDao(S3DocumentationDao base) {
         return HubProperties.isReadOnly() ? new ReadOnlyDocumentationDao(base) : base;
     }
 
-    @Inject
     @Singleton
     @Provides
     @Named(ContentDao.SINGLE_LONG_TERM)
@@ -120,7 +116,6 @@ class ClusterHubBindings extends AbstractModule {
         return HubProperties.isReadOnly() ? new ReadOnlyContentDao(base) : base;
     }
 
-    @Inject
     @Singleton
     @Provides
     @Named(ContentDao.LARGE_PAYLOAD)
@@ -128,7 +123,6 @@ class ClusterHubBindings extends AbstractModule {
         return HubProperties.isReadOnly() ? new ReadOnlyContentDao(base) : base;
     }
 
-    @Inject
     @Singleton
     @Provides
     @Named(ContentDao.BATCH_LONG_TERM)
@@ -136,7 +130,6 @@ class ClusterHubBindings extends AbstractModule {
         return HubProperties.isReadOnly() ? new ReadOnlyContentDao(base) : base;
     }
 
-    @Inject
     @Singleton
     @Provides
     @Named("ChannelConfig")
@@ -145,7 +138,6 @@ class ClusterHubBindings extends AbstractModule {
         return HubProperties.isReadOnly() ? new ReadOnlyDao<>(cfgDao) : cfgDao;
     }
 
-    @Inject
     @Singleton
     @Provides
     @Named("Webhook")
@@ -154,14 +146,12 @@ class ClusterHubBindings extends AbstractModule {
         return HubProperties.isReadOnly() ? new ReadOnlyDao<>(whDao) : whDao;
     }
 
-    @Inject
     @Provides
     @Singleton
     public AmazonDynamoDB buildDynamoClient(AwsConnectorFactory factory) throws IOException {
         return factory.getDynamoClient();
     }
 
-    @Inject
     @Provides
     @Singleton
     public AmazonS3 buildS3Client(AwsConnectorFactory factory) throws IOException {
