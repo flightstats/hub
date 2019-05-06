@@ -38,7 +38,7 @@ class WebhookLeaderLocksTest {
     void createPath() throws Exception {
         if (curator.checkExists().forPath(WEBHOOK_LEADER_PATH) == null) {
             curator.create().creatingParentsIfNeeded().forPath(WEBHOOK_LEADER_PATH);
-        }   
+        }
     }
 
     void deletePath() throws Exception {
