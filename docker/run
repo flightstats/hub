@@ -10,6 +10,7 @@ CONFIG_DIR=/etc/hub
 # LOG_DIR also exists in logback.xml
 LOG_DIR=/mnt/log
 DEBUG_PORT=3333
+HOST_IP=${HUB_RMI_HOST_IP:=disabled.host.for.rmi}
 JMXREMOTE_PORT=8888
 
 # extract the port from hub.properties
@@ -40,7 +41,10 @@ JAVA_OPTS="
  -agentlib:jdwp=transport=dt_socket,address=$DEBUG_PORT,server=y,suspend=n
  -Djboss.platform.mbeanserver
  -Dcom.sun.management.jmxremote
+ -Dcom.sun.management.jmxremote.local.only=false
+ -Djava.rmi.server.hostname=$HOST_IP
  -Dcom.sun.management.jmxremote.port=$JMXREMOTE_PORT
+ -Dcom.sun.management.jmxremote.rmi.port=$JMXREMOTE_PORT
  -Dcom.sun.management.jmxremote.ssl=false
  -Dcom.sun.management.jmxremote.authenticate=false
  -XX:+PrintGCDetails
