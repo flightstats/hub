@@ -81,33 +81,34 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
         dbClient.putItem(putItemRequest);
     }
 
-    void initialize() throws InterruptedException {
+    void initialize() {
         String tableName = getTableName();
         ProvisionedThroughput throughput = dynamoUtils.getProvisionedThroughput("channel");
 
-        if (HubProperties.isReadOnly()) {
-            if (!dynamoUtils.doesTableExist(tableName)) {
+        if (!dynamoUtils.doesTableExist(tableName)) {
+            if (HubProperties.isReadOnly()) {
                 String msg = String.format("Probably fatal error. Dynamo channel config table doesn't exist for r/o node.  %s", tableName);
                 log.error(msg);
                 throw new IllegalArgumentException(msg);
+            } else {
+                createTable(tableName, throughput);
             }
-            return;
-        }
-
-        if (!dynamoUtils.doesTableExist(tableName)) {
-            log.info("creating table {} ", tableName);
-            List<AttributeDefinition> attributes = new ArrayList<>();
-            attributes.add(new AttributeDefinition("key", ScalarAttributeType.S));
-            CreateTableRequest request = new CreateTableRequest()
-                    .withTableName(tableName)
-                    .withAttributeDefinitions(attributes)
-                    .withKeySchema(new KeySchemaElement("key", KeyType.HASH))
-                    .withProvisionedThroughput(throughput);
-
-            dynamoUtils.createTable(request);
         }
 
         dynamoUtils.updateTable(tableName, throughput);
+    }
+
+    private void createTable(String tableName, ProvisionedThroughput throughput) {
+        log.info("creating table {} ", tableName);
+        List<AttributeDefinition> attributes = new ArrayList<>();
+        attributes.add(new AttributeDefinition("key", ScalarAttributeType.S));
+        CreateTableRequest request = new CreateTableRequest()
+                .withTableName(tableName)
+                .withAttributeDefinitions(attributes)
+                .withKeySchema(new KeySchemaElement("key", KeyType.HASH))
+                .withProvisionedThroughput(throughput);
+
+        dynamoUtils.createTable(request);
     }
 
     @Override
