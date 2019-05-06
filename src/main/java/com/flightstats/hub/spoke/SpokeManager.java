@@ -26,7 +26,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import java.net.ConnectException;
-import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
@@ -40,7 +39,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @SuppressWarnings({"Convert2streamapi", "Convert2Lambda"})
 @Slf4j
-public class RemoteClusterSpokeStore implements RemoteSpokeStore {
+/* TODO:  This is a god class that should be broken out along its interface seams. */
+public class SpokeManager implements SpokeClusterHealthCheck, SpokeChronologyStore, ClusterWriteSpoke, LocalReadSpoke {
 
     private final static Client write_client = RestClient.createClient(1, 5, true, false);
     private final static Client query_client = RestClient.createClient(5, 15, true, true);
@@ -51,7 +51,7 @@ public class RemoteClusterSpokeStore implements RemoteSpokeStore {
     private final int stableSeconds = HubProperties.getProperty("app.stable_seconds", 5);
 
     @Inject
-    public RemoteClusterSpokeStore(@Named("SpokeCuratorCluster") CuratorCluster cluster, StatsdReporter statsdReporter) {
+    public SpokeManager(@Named("SpokeCuratorCluster") CuratorCluster cluster, StatsdReporter statsdReporter) {
         this.cluster = cluster;
         this.statsdReporter = statsdReporter;
         executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("RemoteSpokeStore-%d").build());
@@ -62,7 +62,7 @@ public class RemoteClusterSpokeStore implements RemoteSpokeStore {
     }
 
     @Override
-    public void testOne(Collection<String> server) throws InterruptedException {
+    public void testOne(Collection<String> servers) throws InterruptedException {
         String path = "Internal-Spoke-Health-Hook/";
         Traces traces = new Traces(path);
         int calls = 10;
@@ -74,28 +74,28 @@ public class RemoteClusterSpokeStore implements RemoteSpokeStore {
                 public void run() {
                     try {
                         ContentKey key = new ContentKey();
-                        if (insert(SpokeStore.WRITE, path + key.toUrl(), key.toUrl().getBytes(), server, traces, "payload", path)) {
+                        if (insertToStore(SpokeStore.WRITE, path + key.toUrl(), key.toUrl().getBytes(), servers, traces, "payload", path)) {
                             quorumLatch.countDown();
                         } else {
                             traces.log(log);
                         }
                     } catch (Exception e) {
-                        log.warn("unexpected exception " + server, e);
+                        log.warn("unexpected exception " + servers, e);
                     }
                 }
             });
         }
         if (quorumLatch.await(5, TimeUnit.SECONDS)) {
             threadPool.shutdown();
-            log.info("completed warmup calls to Spoke {}", server);
+            log.info("completed warmup calls to Spoke {}", servers);
         } else {
             threadPool.shutdown();
-            throw new RuntimeException("unable to properly connect to Spoke " + server);
+            throw new RuntimeException("unable to properly connect to Spoke " + servers);
         }
     }
 
     @Override
-    public boolean testAll() throws UnknownHostException {
+    public boolean testAll() {
         Collection<String> servers = cluster.getRandomServers();
         servers.addAll(Cluster.getLocalServer());
         log.info("*********************************************");
@@ -125,13 +125,17 @@ public class RemoteClusterSpokeStore implements RemoteSpokeStore {
     }
 
     @Override
-    public boolean insert(SpokeStore spokeStore, String path, byte[] payload, String spokeApi, String channel) {
-        return insert(spokeStore, path, payload, cluster.getWriteServers(), ActiveTraces.getLocal(), spokeApi, channel);
+    public boolean insertToWriteCluster(String path, byte[] payload, String spokeApi, String channel) {
+        return insertToStore(SpokeStore.WRITE, path, payload, cluster.getWriteServers(), ActiveTraces.getLocal(), spokeApi, channel);
     }
 
     @Override
-    public boolean insert(SpokeStore spokeStore, String path, byte[] payload, Collection<String> servers, Traces traces,
+    public boolean insertToLocalReadStore(String path, byte[] payload, Traces traces,
                           String spokeApi, String channel) {
+        return insertToStore(SpokeStore.READ, path, payload, Cluster.getLocalServer(), traces, spokeApi, channel);
+    }
+
+    private boolean insertToStore(SpokeStore spokeStore, String path, byte[] payload, Collection<String> servers, Traces traces, String spokeApi, String channel) {
         int quorum = getQuorum(servers.size());
         CountDownLatch quorumLatch = new CountDownLatch(quorum);
         AtomicBoolean firstComplete = new AtomicBoolean();
@@ -186,7 +190,16 @@ public class RemoteClusterSpokeStore implements RemoteSpokeStore {
     }
 
     @Override
-    public Content get(SpokeStore spokeStore, String path, ContentKey key) {
+    public Content getFromLocalReadStore(String path, ContentKey key) {
+        return get(SpokeStore.READ, path, key);
+    }
+
+    @Override
+    public Content getFromWriteCluster(String path, ContentKey key) {
+        return get(SpokeStore.WRITE, path, key);
+    }
+
+    private Content get(SpokeStore spokeStore, String path, ContentKey key) {
         Collection<String> servers = cluster.getRandomServers();
         for (String server : servers) {
             ClientResponse response = null;
@@ -220,12 +233,17 @@ public class RemoteClusterSpokeStore implements RemoteSpokeStore {
     }
 
     @Override
-    public QueryResult readTimeBucket(SpokeStore spokeStore, String channel, String timePath) throws InterruptedException {
-        return getKeys("/internal/spoke/" + spokeStore + "/time/" + channel + "/" + timePath);
+    public QueryResult readTimeBucketFromLocalReadStore(String channel, String timePath) throws InterruptedException {
+        return getKeys("/internal/spoke/" + SpokeStore.READ + "/time/" + channel + "/" + timePath);
     }
 
     @Override
-    public SortedSet<ContentKey> getNext(String channel, int count, String startKey) throws InterruptedException {
+    public QueryResult readTimeBucketFromWriteCluster(String channel, String timePath) throws InterruptedException {
+        return getKeys("/internal/spoke/" + SpokeStore.WRITE + "/time/" + channel + "/" + timePath);
+    }
+
+    @Override
+    public SortedSet<ContentKey> getNextKeysFromCluster(String channel, int count, String startKey) throws InterruptedException {
         return getKeys("/internal/spoke/next/" + channel + "/" + count + "/" + startKey).getContentKeys();
     }
 
@@ -274,7 +292,7 @@ public class RemoteClusterSpokeStore implements RemoteSpokeStore {
     }
 
     @Override
-    public Optional<ContentKey> getLatest(String channel, String path, Traces traces) throws InterruptedException {
+    public Optional<ContentKey> getLatestFromCluster(String channel, String path, Traces traces) throws InterruptedException {
         Collection<String> servers = cluster.getAllServers();
         CountDownLatch countDownLatch = new CountDownLatch(servers.size());
         SortedSet<ContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
@@ -322,7 +340,16 @@ public class RemoteClusterSpokeStore implements RemoteSpokeStore {
     }
 
     @Override
-    public boolean delete(SpokeStore spokeStore, String path) throws Exception {
+    public boolean deleteFromLocalReadStore(String path) throws Exception {
+        return delete(SpokeStore.READ, path);
+    }
+
+    @Override
+    public boolean deleteFromWriteCluster(String path) throws Exception {
+        return delete(SpokeStore.WRITE, path);
+    }
+
+    private boolean delete(SpokeStore spokeStore, String path) throws Exception {
         Collection<String> servers = cluster.getAllServers();
         int quorum = servers.size();
         CountDownLatch countDownLatch = new CountDownLatch(quorum);

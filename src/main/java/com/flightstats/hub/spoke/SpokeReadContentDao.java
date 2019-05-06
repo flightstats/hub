@@ -1,12 +1,15 @@
 package com.flightstats.hub.spoke;
 
-import com.flightstats.hub.cluster.Cluster;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.QueryResult;
 import com.flightstats.hub.exception.FailedQueryException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.BulkContent;
+import com.flightstats.hub.model.Content;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.TimeQuery;
 import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +24,7 @@ public class SpokeReadContentDao implements ContentDao {
     private final static Logger logger = LoggerFactory.getLogger(SpokeReadContentDao.class);
 
     @Inject
-    private RemoteSpokeStore spokeStore;
+    private LocalReadSpoke localReadSpoke;
 
     @Override
     public ContentKey insert(String channelName, Content content) throws Exception {
@@ -32,7 +35,7 @@ public class SpokeReadContentDao implements ContentDao {
     public SortedSet<ContentKey> insert(BulkContent bulkContent) throws Exception {
         return SpokeContentDao.insert(bulkContent, (baos) -> {
             String channel = bulkContent.getChannel();
-            return spokeStore.insert(SpokeStore.READ, channel, baos.toByteArray(), Cluster.getLocalServer(), ActiveTraces.getLocal(), "bulkKey", channel);
+            return localReadSpoke.insertToLocalReadStore(channel, baos.toByteArray(), ActiveTraces.getLocal(), "bulkKey", channel);
         });
     }
 
@@ -46,7 +49,7 @@ public class SpokeReadContentDao implements ContentDao {
         Traces traces = ActiveTraces.getLocal();
         traces.add("SpokeReadContentDao.read");
         try {
-            return spokeStore.get(SpokeStore.READ, path, key);
+            return localReadSpoke.getFromLocalReadStore(path, key);
         } catch (Exception e) {
             logger.warn("unable to get data: " + path, e);
             return null;
@@ -76,10 +79,10 @@ public class SpokeReadContentDao implements ContentDao {
     private SortedSet<ContentKey> queryByTimeKeys(TimeQuery query) {
         try {
             String timePath = query.getUnit().format(query.getStartTime());
-            QueryResult queryResult = spokeStore.readTimeBucket(SpokeStore.READ, query.getChannelName(), timePath);
+            QueryResult queryResult = localReadSpoke.readTimeBucketFromLocalReadStore(query.getChannelName(), timePath);
             ActiveTraces.getLocal().add("spoke query result", queryResult);
             if (!queryResult.hadSuccess()) {
-                QueryResult retryResult = spokeStore.readTimeBucket(SpokeStore.READ, query.getChannelName(), timePath);
+                QueryResult retryResult = localReadSpoke.readTimeBucketFromLocalReadStore(query.getChannelName(), timePath);
                 ActiveTraces.getLocal().add("spoke query retryResult", retryResult);
                 if (!retryResult.hadSuccess()) {
                     ActiveTraces.getLocal().log(logger);
@@ -105,7 +108,7 @@ public class SpokeReadContentDao implements ContentDao {
     @Override
     public void delete(String channelName) {
         try {
-            spokeStore.delete(SpokeStore.READ, channelName);
+            localReadSpoke.deleteFromLocalReadStore(channelName);
         } catch (Exception e) {
             logger.warn("unable to delete " + channelName, e);
         }

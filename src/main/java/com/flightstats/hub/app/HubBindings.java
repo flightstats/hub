@@ -36,11 +36,14 @@ import com.flightstats.hub.rest.HalLinksSerializer;
 import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.rest.RetryClientFilter;
 import com.flightstats.hub.rest.Rfc3339DateSerializer;
+import com.flightstats.hub.spoke.SpokeChronologyStore;
+import com.flightstats.hub.spoke.ClusterWriteSpoke;
 import com.flightstats.hub.spoke.FileSpokeStore;
 import com.flightstats.hub.spoke.GCRunner;
-import com.flightstats.hub.spoke.ReadOnlyRemoteSpokeStore;
-import com.flightstats.hub.spoke.RemoteClusterSpokeStore;
-import com.flightstats.hub.spoke.RemoteSpokeStore;
+import com.flightstats.hub.spoke.LocalReadSpoke;
+import com.flightstats.hub.spoke.ReadOnlyClusterSpokeStore;
+import com.flightstats.hub.spoke.SpokeManager;
+import com.flightstats.hub.spoke.SpokeClusterHealthCheck;
 import com.flightstats.hub.spoke.SpokeClusterRegister;
 import com.flightstats.hub.spoke.SpokeFinalCheck;
 import com.flightstats.hub.spoke.SpokeReadContentDao;
@@ -56,7 +59,6 @@ import com.flightstats.hub.webhook.WebhookManager;
 import com.flightstats.hub.webhook.WebhookValidator;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.AbstractModule;
-import com.google.inject.Inject;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -197,6 +199,12 @@ public class HubBindings extends AbstractModule {
         return Executors.newFixedThreadPool(verifierConfig.getQueryThreads(), new ThreadFactoryBuilder().setNameFormat("S3VerifierQuery-%d").build());
     }
 
+    @Singleton
+    @Provides
+    public ClusterWriteSpoke buildClusterWriterSpokeStore(SpokeManager store) {
+        return HubProperties.isReadOnly() ? new ReadOnlyClusterSpokeStore(store) : store;
+    }
+
     @Override
     protected void configure() {
         Names.bindProperties(binder(), HubProperties.getProperties());
@@ -221,7 +229,10 @@ public class HubBindings extends AbstractModule {
         bind(InFlightService.class).asEagerSingleton();
         bind(ChannelService.class).asEagerSingleton();
         bind(HubVersion.class).toInstance(new HubVersion());
-        bind(RemoteClusterSpokeStore.class).asEagerSingleton();
+        bind(SpokeManager.class).asEagerSingleton();
+        bind(LocalReadSpoke.class).to(SpokeManager.class);
+        bind(SpokeChronologyStore.class).to(SpokeManager.class);
+        bind(SpokeClusterHealthCheck.class).to(SpokeManager.class);
 
         // metrics
         bind(MetricsConfig.class).toProvider(MetricsConfigProvider.class).asEagerSingleton();
@@ -262,12 +273,5 @@ public class HubBindings extends AbstractModule {
                         HubProperties.getSpokePath(SpokeStore.READ),
                         HubProperties.getSpokeTtlMinutes(SpokeStore.READ)));
     }
-
-    @Singleton
-    @Provides
-    public RemoteSpokeStore buildRemoteSpokeStore(RemoteClusterSpokeStore store) {
-        return HubProperties.isReadOnly() ? new ReadOnlyRemoteSpokeStore(store) : store;
-    }
-
 
 }

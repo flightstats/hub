@@ -36,13 +36,16 @@ public class SpokeWriteContentDao implements ContentDao {
     private final static Logger logger = LoggerFactory.getLogger(SpokeWriteContentDao.class);
 
     @Inject
-    private RemoteSpokeStore spokeStore;
+    private ClusterWriteSpoke clusterWriteSpoke;
+
+    @Inject
+    private SpokeChronologyStore chronoStore;
 
     @Override
     public ContentKey insert(String channelName, Content content) throws Exception {
         ContentKey key = content.getContentKey().get();
         String path = getPath(channelName, key);
-        if (!spokeStore.insert(SpokeStore.WRITE, path, content.getData(), "payload", channelName)) {
+        if (!clusterWriteSpoke.insertToWriteCluster(path, content.getData(), "payload", channelName)) {
             throw new FailedWriteException("unable to write to spoke " + path);
         }
         return key;
@@ -52,7 +55,7 @@ public class SpokeWriteContentDao implements ContentDao {
     public SortedSet<ContentKey> insert(BulkContent bulkContent) throws Exception {
         return SpokeContentDao.insert(bulkContent, (baos) -> {
             String channel = bulkContent.getChannel();
-            return spokeStore.insert(SpokeStore.WRITE, channel, baos.toByteArray(), "bulkKey", channel);
+            return clusterWriteSpoke.insertToWriteCluster(channel, baos.toByteArray(), "bulkKey", channel);
         });
     }
 
@@ -66,7 +69,7 @@ public class SpokeWriteContentDao implements ContentDao {
         Traces traces = ActiveTraces.getLocal();
         traces.add("SpokeWriteContentDao.read");
         try {
-            return spokeStore.get(SpokeStore.WRITE, path, key);
+            return clusterWriteSpoke.getFromWriteCluster(path, key);
         } catch (Exception e) {
             logger.warn("unable to get data: " + path, e);
             return null;
@@ -81,7 +84,7 @@ public class SpokeWriteContentDao implements ContentDao {
         logger.trace("latest {} {}", channel, path);
         traces.add("SpokeWriteContentDao.latest", channel, path);
         try {
-            Optional<ContentKey> key = spokeStore.getLatest(channel, path, traces);
+            Optional<ContentKey> key = chronoStore.getLatestFromCluster(channel, path, traces);
             traces.add("SpokeWriteContentDao.latest", key);
             return key;
         } catch (Exception e) {
@@ -116,10 +119,10 @@ public class SpokeWriteContentDao implements ContentDao {
     private SortedSet<ContentKey> queryByTimeKeys(TimeQuery query) {
         try {
             String timePath = query.getUnit().format(query.getStartTime());
-            QueryResult queryResult = spokeStore.readTimeBucket(SpokeStore.WRITE, query.getChannelName(), timePath);
+            QueryResult queryResult = clusterWriteSpoke.readTimeBucketFromWriteCluster(query.getChannelName(), timePath);
             ActiveTraces.getLocal().add("spoke query result", queryResult);
             if (!queryResult.hadSuccess()) {
-                QueryResult retryResult = spokeStore.readTimeBucket(SpokeStore.WRITE, query.getChannelName(), timePath);
+                QueryResult retryResult = clusterWriteSpoke.readTimeBucketFromWriteCluster(query.getChannelName(), timePath);
                 ActiveTraces.getLocal().add("spoke query retryResult", retryResult);
                 if (!retryResult.hadSuccess()) {
                     ActiveTraces.getLocal().log(logger);
@@ -155,7 +158,7 @@ public class SpokeWriteContentDao implements ContentDao {
         SortedSet<ContentKey> contentKeys = Collections.emptySortedSet();
         if (query.isNext()) {
             try {
-                contentKeys = spokeStore.getNext(query.getChannelName(), query.getCount(), query.getStartKey().toUrl());
+                contentKeys = chronoStore.getNextKeysFromCluster(query.getChannelName(), query.getCount(), query.getStartKey().toUrl());
             } catch (InterruptedException e) {
                 logger.warn("what happened? " + query, e);
             }
@@ -183,7 +186,7 @@ public class SpokeWriteContentDao implements ContentDao {
     @Override
     public void delete(String channelName) {
         try {
-            spokeStore.delete(SpokeStore.WRITE, channelName);
+            clusterWriteSpoke.deleteFromWriteCluster(channelName);
         } catch (Exception e) {
             logger.warn("unable to delete " + channelName, e);
         }
