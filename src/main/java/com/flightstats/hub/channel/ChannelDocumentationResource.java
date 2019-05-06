@@ -1,10 +1,9 @@
 package com.flightstats.hub.channel;
 
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubProvider;
+import com.flightstats.hub.app.PermissionsChecker;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.DocumentationDao;
-import com.flightstats.hub.exception.ForbiddenRequestException;
 import lombok.extern.slf4j.Slf4j;
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
@@ -25,6 +24,7 @@ public class ChannelDocumentationResource {
     private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
     private final static Parser markdownParser = Parser.builder().build();
     private final static HtmlRenderer markdownRenderer = HtmlRenderer.builder().build();
+    public static final String READ_ONLY_FAILURE_MESSAGE = "attempted to %s against /channel documentation on read-only node %s";
 
     @GET
     public Response get(@PathParam("channel") String channel, @HeaderParam("accept") String accept) {
@@ -53,7 +53,7 @@ public class ChannelDocumentationResource {
 
     @PUT
     public Response put(@PathParam("channel") String channel, String content) {
-        checkPermission("put", channel);
+        PermissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "put", channel));
         if (!channelService.channelExists(channel)) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
@@ -68,7 +68,7 @@ public class ChannelDocumentationResource {
 
     @DELETE
     public Response delete(@PathParam("channel") String channel) {
-        checkPermission("delete", channel);
+        PermissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "delete", channel));
         if (!channelService.channelExists(channel)) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
@@ -81,11 +81,4 @@ public class ChannelDocumentationResource {
         }
     }
 
-    private void checkPermission(String task, String name) {
-        if (HubProperties.isReadOnly()) {
-            String msg = String.format("attempted to %s against /channel documentation on read-only node %s", task, name);
-            log.warn(msg);
-            throw new ForbiddenRequestException(msg);
-        }
-    }
 }

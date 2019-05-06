@@ -1,11 +1,10 @@
 package com.flightstats.hub.channel;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubProvider;
+import com.flightstats.hub.app.PermissionsChecker;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.ConflictException;
-import com.flightstats.hub.exception.ForbiddenRequestException;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.rest.Linked;
@@ -34,7 +33,8 @@ import static com.flightstats.hub.channel.LinkBuilder.buildChannelConfigResponse
 @Slf4j
 public class ChannelsResource {
     private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
-    
+    public static final String READ_ONLY_FAILURE_MESSAGE = "attempted to %s against /channels on read-only node %s";
+
     @Context
     private UriInfo uriInfo;
 
@@ -54,7 +54,7 @@ public class ChannelsResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createChannel(String json) throws InvalidRequestException, ConflictException {
-        checkPermission("createChannel", json);
+        PermissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "createChannel", json));
         log.debug("post channel {}", json);
         ChannelConfig channelConfig = ChannelConfig.createFromJson(json);
         channelConfig = channelService.createChannel(channelConfig);
@@ -62,12 +62,5 @@ public class ChannelsResource {
         ObjectNode output = buildChannelConfigResponse(channelConfig, uriInfo, channelConfig.getDisplayName());
         return Response.created(channelUri).entity(output).build();
     }
-
-    private void checkPermission(String task, String name) {
-        if (HubProperties.isReadOnly()) {
-            String msg = String.format("attempted to %s against /channels on read-only node %s", task, name);
-            log.warn(msg);
-            throw new ForbiddenRequestException(msg);
-        }
-    }
+    
 }

@@ -3,10 +3,9 @@ package com.flightstats.hub.webhook;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubProvider;
+import com.flightstats.hub.app.PermissionsChecker;
 import com.flightstats.hub.channel.TimeLinkUtil;
-import com.flightstats.hub.exception.ForbiddenRequestException;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.rest.Linked;
 import com.flightstats.hub.util.RequestUtils;
@@ -14,7 +13,13 @@ import com.flightstats.hub.util.TimeUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -35,6 +40,7 @@ public class WebhookResource {
 
     private final static WebhookService webhookService = HubProvider.getInstance(WebhookService.class);
     private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    public static final String READ_ONLY_FAILURE_MESSAGE = "attempted to %s against /webhook on node with leadership disabled %s";
 
     @Context
     private UriInfo uriInfo;
@@ -248,7 +254,7 @@ public class WebhookResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response upsert(@PathParam("name") String name, String body) {
-        checkPermission("upsert", name);
+        PermissionsChecker.checkWebhookLeadershipPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "upsert", name));
         return upsert(name, body, uriInfo);
     }
 
@@ -256,7 +262,7 @@ public class WebhookResource {
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     public Response delete(@PathParam("name") String name) {
-        checkPermission("delete", name);
+        PermissionsChecker.checkWebhookLeadershipPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "delete", name));
         return deleter(name);
     }
 
@@ -265,15 +271,8 @@ public class WebhookResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.TEXT_PLAIN)
     public Response updateCursor(@PathParam("name") String name, String body) {
-        checkPermission("updateCursor", name);
+        PermissionsChecker.checkWebhookLeadershipPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "updateCursor", name));
         return cursorUpdater(name, body, uriInfo);
     }
-
-    private void checkPermission(String task, String name) {
-        if (!HubProperties.isWebHookLeadershipEnabled()) {
-            String msg = String.format("attempted to %s against /webhook on node with leadership disabled %s", task, name);
-            log.warn(msg);
-            throw new ForbiddenRequestException(msg);
-        }
-    }
+    
 }

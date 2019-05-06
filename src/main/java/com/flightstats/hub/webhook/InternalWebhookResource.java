@@ -3,8 +3,8 @@ package com.flightstats.hub.webhook;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubProvider;
+import com.flightstats.hub.app.PermissionsChecker;
 import com.flightstats.hub.model.ContentPath;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
@@ -22,7 +22,6 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Map;
-import java.util.Optional;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
@@ -39,6 +38,7 @@ public class InternalWebhookResource {
     private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private final static WebhookService webhookService = HubProvider.getInstance(WebhookService.class);
     private final static LocalWebhookManager LOCAL_WEBHOOK_MANAGER = HubProvider.getInstance(LocalWebhookManager.class);
+    public static final String READ_ONLY_FAILURE_MESSAGE = "attempted to internally %s for webhook on node with leadership disabled %s";
 
     @Context
     private UriInfo uriInfo;
@@ -142,16 +142,16 @@ public class InternalWebhookResource {
     @Path("/run/{name}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response run(@PathParam("name") String name) {
-        return checkPermission("run", name)
-                .orElseGet(() -> attemptRun(name));
+        PermissionsChecker.checkWebhookLeadershipPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "run", name));
+        return attemptRun(name);
     }
 
     @PUT
     @Path("/delete/{name}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response delete(@PathParam("name") String name) {
-        return checkPermission("delete", name)
-                .orElseGet(() -> attemptDelete(name));
+        PermissionsChecker.checkWebhookLeadershipPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "delete", name));
+        return attemptDelete(name);
     }
 
     @GET
@@ -170,14 +170,6 @@ public class InternalWebhookResource {
     private Response attemptDelete(String name) {
         LOCAL_WEBHOOK_MANAGER.stopLocal(name, true);
         return Response.ok().build();
-    }
-
-    private Optional<Response> checkPermission(String task, String name) {
-        if (!HubProperties.isWebHookLeadershipEnabled()) {
-            log.warn("attempted to internally {} for webhook on node with leadership disabled {}", task, name);
-            return Optional.of(Response.status(Response.Status.FORBIDDEN).build());
-        }
-        return Optional.empty();
     }
 
 }

@@ -3,8 +3,8 @@ package com.flightstats.hub.channel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubProvider;
+import com.flightstats.hub.app.PermissionsChecker;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.dao.ItemRequest;
@@ -12,7 +12,6 @@ import com.flightstats.hub.events.ContentOutput;
 import com.flightstats.hub.events.EventsService;
 import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.exception.ContentTooLargeException;
-import com.flightstats.hub.exception.ForbiddenRequestException;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.StatsdReporter;
@@ -82,6 +81,7 @@ public class ChannelContentResource {
     private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
     private final static StatsdReporter statsdReporter = HubProvider.getInstance(StatsdReporter.class);
     private final static EventsService eventsService = HubProvider.getInstance(EventsService.class);
+    public static final String READ_ONLY_FAILURE_MESSAGE = "attempted to %s against /channel content on read-only node %s";
     @Context
     private UriInfo uriInfo;
 
@@ -541,7 +541,7 @@ public class ChannelContentResource {
                                      @HeaderParam("Content-Type") String contentType,
                                      @HeaderParam("Content-Language") String contentLanguage,
                                      final InputStream data) throws Exception {
-        checkPermission("historicalInsert", channelName);
+        PermissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "historicalInsert", channelName));
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis);
         Content content = Content.builder()
                 .withContentKey(key)
@@ -570,7 +570,7 @@ public class ChannelContentResource {
                                          @HeaderParam("Content-Type") String contentType,
                                          @HeaderParam("Content-Language") String contentLanguage,
                                          final InputStream data) throws Exception {
-        checkPermission("historicalInsertHash", channelName);
+        PermissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "historicalInsertHash", channelName));
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
 
         Content content = Content.builder()
@@ -652,18 +652,10 @@ public class ChannelContentResource {
                            @PathParam("ms") int millis,
                            @PathParam("hash") String hash
     ) {
-        checkPermission("delete", channel);
+        PermissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "delete", channel));
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         channelService.delete(channel, key);
         return Response.noContent().build();
-    }
-
-    private void checkPermission(String task, String name) {
-        if (HubProperties.isReadOnly()) {
-            String msg = String.format("attempted to %s against /channel content on read-only node %s", task, name);
-            log.warn(msg);
-            throw new ForbiddenRequestException(msg);
-        }
     }
 
 }
