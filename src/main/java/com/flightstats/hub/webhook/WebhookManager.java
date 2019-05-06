@@ -32,17 +32,17 @@ import static com.flightstats.hub.app.HubServices.register;
 public class WebhookManager {
     private static final String WATCHER_PATH = "/groupCallback/watcher";
 
-    private WatchManager watchManager;
-    private Dao<Webhook> webhookDao;
-    private LastContentPath lastContentPath;
-    private ActiveWebhooks activeWebhooks;
+    private final WatchManager watchManager;
+    private final Dao<Webhook> webhookDao;
+    private final LastContentPath lastContentPath;
+    private final ActiveWebhooks activeWebhooks;
 
-    private WebhookErrorService webhookErrorService;
-    private WebhookContentPathSet webhookInProcess;
+    private final WebhookErrorService webhookErrorService;
+    private final WebhookContentPathSet webhookInProcess;
 
-    private InternalWebhookClient webhookClient;
+    private final InternalWebhookClient webhookClient;
 
-    private WebhookStateReaper webhookStateReaper;
+    private final WebhookStateReaper webhookStateReaper;
 
     @Inject
     public WebhookManager(

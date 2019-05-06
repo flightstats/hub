@@ -30,9 +30,9 @@ public class SpokeTtlEnforcer {
     private final String storagePath;
     private final int ttlMinutes;
 
-    private ChannelService channelService;
-    private SpokeContentDao spokeContentDao;
-    private StatsdReporter statsdReporter;
+    private final ChannelService channelService;
+    private final SpokeContentDao spokeContentDao;
+    private final StatsdReporter statsdReporter;
 
     @Inject
     public SpokeTtlEnforcer(SpokeStore spokeStore, ChannelService channelService, SpokeContentDao spokeContentDao, StatsdReporter statsdReporter) {
