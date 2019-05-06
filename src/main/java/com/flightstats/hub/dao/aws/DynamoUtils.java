@@ -112,7 +112,7 @@ public class DynamoUtils {
     private Optional<TableDescription> getTableDescription(String tableName, TableStatus status) {
         try {
             TableDescription tableDescription = dbClient.describeTable(tableName).getTable();
-            if (status.equals(TableStatus.fromValue(tableDescription.getTableStatus()))) {
+            if (status == TableStatus.fromValue(tableDescription.getTableStatus())) {
                 logger.info("table " + tableName + " is " + status.toString());
                 return Optional.of(tableDescription);
             }
