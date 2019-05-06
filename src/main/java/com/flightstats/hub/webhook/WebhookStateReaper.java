@@ -29,13 +29,14 @@ class WebhookStateReaper {
     }
 
     void delete(String webhook) {
-        if (HubProperties.isWebHookLeadershipEnabled()) {
-            log.info("deleting " + webhook);
-            webhookInProcess.delete(webhook);
-            lastContentPath.delete(webhook, WEBHOOK_LAST_COMPLETED);
-            webhookErrorService.delete(webhook);
-            webhookLeaderLocks.deleteWebhookLeader(webhook);
-            log.info("deleted " + webhook);
+        if (!HubProperties.isWebHookLeadershipEnabled()) {
+            return;
         }
+        log.info("deleting " + webhook);
+        webhookInProcess.delete(webhook);
+        lastContentPath.delete(webhook, WEBHOOK_LAST_COMPLETED);
+        webhookErrorService.delete(webhook);
+        webhookLeaderLocks.deleteWebhookLeader(webhook);
+        log.info("deleted " + webhook);
     }
 }
