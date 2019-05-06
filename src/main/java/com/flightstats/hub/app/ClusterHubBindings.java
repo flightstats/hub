@@ -92,7 +92,7 @@ class ClusterHubBindings extends AbstractModule {
     @Inject
     @Singleton
     @Provides
-    @Named("WRITE")
+    @Named(SpokeStore.WRITE_SPOKE_NAME)
     public SpokeTtlEnforcer buildWriteSpokeTTLEnforcer(ChannelService channelService, SpokeContentDao spokeContentDao, StatsdReporter statsdReporter) {
         return new SpokeTtlEnforcer(SpokeStore.WRITE, channelService, spokeContentDao, statsdReporter);
     }
@@ -100,7 +100,7 @@ class ClusterHubBindings extends AbstractModule {
     @Inject
     @Singleton
     @Provides
-    @Named("READ")
+    @Named(SpokeStore.READ_SPOKE_NAME)
     public SpokeTtlEnforcer buildReadSpokeTTLEnforcer(ChannelService channelService, SpokeContentDao spokeContentDao, StatsdReporter statsdReporter) {
         return new SpokeTtlEnforcer(SpokeStore.READ, channelService, spokeContentDao, statsdReporter);
     }
