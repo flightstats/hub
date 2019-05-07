@@ -112,15 +112,17 @@ public class HubMain {
 
     @VisibleForTesting
     public Server startServer() throws Exception {
+
+        log.info("**********************************************add guice DI");
         List<AbstractModule> guiceModules = buildGuiceModules();
         Injector injector = Guice.createInjector(guiceModules);
-
+        log.info("**********************************************completed guice DI");
         registerServices(getBeforeHealthCheckServices(injector), HubServices.TYPE.BEFORE_HEALTH_CHECK);
         registerServices(getAfterHealthCheckServices(injector), HubServices.TYPE.AFTER_HEALTHY_START);
 
         HubProvider.setInjector(injector);
         HubServices.start(HubServices.TYPE.BEFORE_HEALTH_CHECK);
-
+        log.info("*********************************************start server");
         // build Jetty server
         Server server = new Server();
         HttpConfiguration httpConfig = new HttpConfiguration();
@@ -134,11 +136,11 @@ public class HubMain {
         serverConnector.setPort(HubHost.getLocalPort());
         serverConnector.setIdleTimeout(systemProperties.getHttpIdleTimeInMillis());
         server.setConnectors(new Connector[]{serverConnector});
-
+        log.info("*********************************************before resource config");
         // build Jersey HTTP context
         ResourceConfig resourceConfig = buildResourceConfig(injector);
         JettyHttpContainer httpContainer = ContainerFactory.createContainer(JettyHttpContainer.class, resourceConfig);
-
+        log.info("*********************************************after resource config");
         // build Jetty WebSocket context
         ServletContextHandler wsContext = new ServletContextHandler(server, "/", ServletContextHandler.SESSIONS);
         wsContext.setContextPath("/");
@@ -155,7 +157,7 @@ public class HubMain {
         handler.addHttpHandler(httpContainer);
         handler.addWSHandler(wsContext);
         server.setHandler(handler);
-
+        log.info("*********************************************start server with start");
         // start everything up
         server.start();
 
@@ -209,9 +211,12 @@ public class HubMain {
     private AbstractModule getGuiceModuleForHubType(String type) {
         switch (type) {
             case "aws":
+                log.info("*********************************************cluster hub binding {}", type);
                 return new ClusterHubBindings();
             case "nas":
+                log.info("*********************************************nas hub binding{}", type);
             case "test":
+                log.info("*********************************************single hub binding{}", type);
                 return new SingleHubBindings();
             default:
                 throw new RuntimeException("unsupported hub.type " + type);
