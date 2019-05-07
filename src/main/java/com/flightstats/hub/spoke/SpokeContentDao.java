@@ -10,7 +10,6 @@ import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.Commander;
-import com.google.common.base.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
@@ -18,6 +17,7 @@ import javax.inject.Inject;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
 import java.util.List;
+import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.Function;
@@ -83,11 +83,11 @@ public class SpokeContentDao {
         String command = String.format(GET_OLDEST_ITEM_COMMAND, storePath);
         int waitTimeSeconds = 3;
         String result = StringUtils.chomp(commander.runInBash(command, waitTimeSeconds));
-        if (StringUtils.isEmpty(result)) return Optional.absent();
+        if (StringUtils.isEmpty(result)) return Optional.empty();
         try {
             return Optional.of(ChannelContentKey.fromSpokePath(result));
         } catch (IllegalArgumentException e) {
-            return Optional.absent();
+            return Optional.empty();
         }
     }
 

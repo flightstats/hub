@@ -65,6 +65,8 @@ public class PropertiesLoader {
                 throw new RuntimeException(e.getMessage());
             }
         }
+
+        log.info("Successfully loaded properties {}", properties);
     }
 
     private void setDefaultProperties() {
