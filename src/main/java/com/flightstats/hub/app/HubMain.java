@@ -3,6 +3,7 @@ package com.flightstats.hub.app;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.flightstats.hub.config.AppProperties;
 import com.flightstats.hub.config.PropertiesLoader;
+import com.flightstats.hub.config.SpokeProperties;
 import com.flightstats.hub.config.SystemProperties;
 import com.flightstats.hub.config.ZookeeperProperties;
 import com.flightstats.hub.config.binding.ClusterHubBindings;
@@ -16,6 +17,8 @@ import com.flightstats.hub.metrics.CustomMetricsLifecycle;
 import com.flightstats.hub.metrics.InfluxdbReporterLifecycle;
 import com.flightstats.hub.metrics.PeriodicMetricEmitterLifecycle;
 import com.flightstats.hub.metrics.StatsDReporterLifecycle;
+import com.flightstats.hub.spoke.SpokeStore;
+import com.flightstats.hub.spoke.SpokeTtlEnforcerService;
 import com.flightstats.hub.ws.WebSocketChannelEndpoint;
 import com.flightstats.hub.ws.WebSocketDayEndpoint;
 import com.flightstats.hub.ws.WebSocketHashEndpoint;
@@ -64,10 +67,11 @@ import java.util.stream.Stream;
 public class HubMain {
 
     private static final DateTime startTime = new DateTime();
-    private static AppProperties appProperties = new AppProperties(PropertiesLoader.getInstance());
-    private static SystemProperties systemProperties = new SystemProperties(PropertiesLoader.getInstance());
-    private static ZookeeperProperties zookeeperProperties = new ZookeeperProperties(PropertiesLoader.getInstance());
-    private final StorageBackend storageBackend = StorageBackend.valueOf(appProperties.getHubType());
+    private static final AppProperties appProperties = new AppProperties(PropertiesLoader.getInstance());
+    private static final SpokeProperties spokeProperties = new SpokeProperties(PropertiesLoader.getInstance());
+    private static final SystemProperties systemProperties = new SystemProperties(PropertiesLoader.getInstance());
+    private static final ZookeeperProperties zookeeperProperties = new ZookeeperProperties(PropertiesLoader.getInstance());
+    private static final StorageBackend storageBackend = StorageBackend.valueOf(appProperties.getHubType());
 
     public static void main(String[] args) throws Exception {
         if (args.length == 0) {
@@ -118,6 +122,7 @@ public class HubMain {
         registerServices(getBeforeHealthCheckServices(injector), HubServices.TYPE.BEFORE_HEALTH_CHECK);
         registerServices(getAfterHealthCheckServices(injector), HubServices.TYPE.AFTER_HEALTHY_START);
 
+
         HubProvider.setInjector(injector);
         HubServices.start(HubServices.TYPE.BEFORE_HEALTH_CHECK);
 
@@ -165,18 +170,27 @@ public class HubMain {
         log.info("completed initial post start");
         HubServices.start(HubServices.TYPE.AFTER_HEALTHY_START);
 
+
         return server;
     }
 
     private List<Service> getBeforeHealthCheckServices(Injector injector) {
-        List<Service> services = Stream.of(
+
+        final List<Service> services = Stream.of(
                 InfluxdbReporterLifecycle.class,
                 StatsDReporterLifecycle.class)
                 .map(injector::getInstance)
                 .collect(Collectors.toList());
+
         if (storageBackend == StorageBackend.aws) {
             services.add(injector.getInstance(S3WriteQueueLifecycle.class));
         }
+
+        if (spokeProperties.isTtlEnforced()) {
+            services.add(new SpokeTtlEnforcerService(SpokeStore.WRITE));
+            services.add(new SpokeTtlEnforcerService(SpokeStore.READ));
+        }
+
         return services;
     }
 

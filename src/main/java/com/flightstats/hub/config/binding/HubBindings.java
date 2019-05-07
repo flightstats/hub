@@ -264,6 +264,13 @@ public class HubBindings extends AbstractModule {
         bind(StatsDReporterLifecycle.class).asEagerSingleton();
         bind(CustomMetricsLifecycle.class).asEagerSingleton();
 
+        bind(ContentDao.class)
+                .annotatedWith(Names.named(WRITE_CACHE))
+                .to(SpokeWriteContentDao.class).asEagerSingleton();
+        bind(ContentDao.class)
+                .annotatedWith(Names.named(READ_CACHE))
+                .to(SpokeReadContentDao.class).asEagerSingleton();
+
         bind(VerifierConfig.class)
                 .toProvider(VerifierConfigProvider.class)
                 .asEagerSingleton();
@@ -272,21 +279,7 @@ public class HubBindings extends AbstractModule {
                 .annotatedWith(Names.named("spokeWriteStoreConfig"))
                 .toProvider(SpokeWriteStoreConfigProvider.class)
                 .asEagerSingleton();
-    }
 
-    @Named(WRITE_CACHE)
-    @Provides
-    @Singleton
-    public ContentDao contentDao(RemoteSpokeStore remoteSpokeStore,
-                                                     SpokeProperties spokeProperties) {
-        return new SpokeWriteContentDao(remoteSpokeStore, spokeProperties);
-    }
-
-    @Named(READ_CACHE)
-    @Provides
-    @Singleton
-    public ContentDao contentDao(RemoteSpokeStore remoteSpokeStore) {
-        return new SpokeReadContentDao(remoteSpokeStore);
     }
 
     @Named(WRITE)
