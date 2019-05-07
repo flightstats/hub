@@ -6,10 +6,8 @@ import com.flightstats.hub.app.AppUrlCheck;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.cluster.SpokeDecommissionManager;
 import com.flightstats.hub.cluster.WatchManager;
-import com.flightstats.hub.config.SpokeProperties;
 import com.flightstats.hub.dao.CachedDao;
 import com.flightstats.hub.dao.CachedLowerCaseDao;
-import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentService;
 import com.flightstats.hub.dao.Dao;
@@ -32,12 +30,9 @@ import com.flightstats.hub.dao.aws.S3WriteQueue;
 import com.flightstats.hub.dao.aws.S3WriteQueueLifecycle;
 import com.flightstats.hub.metrics.PeriodicMetricEmitter;
 import com.flightstats.hub.metrics.PeriodicMetricEmitterLifecycle;
-import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.LargeContentUtils;
 import com.flightstats.hub.spoke.RemoteSpokeStore;
-import com.flightstats.hub.spoke.SpokeContentDao;
-import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.spoke.SpokeTtlEnforcer;
 import com.flightstats.hub.webhook.Webhook;
 import com.google.inject.AbstractModule;
@@ -49,9 +44,6 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ClusterHubBindings extends AbstractModule {
-
-    private static final String READ = "READ";
-    private static final String WRITE = "WRITE";
 
     @Override
     protected void configure() {
@@ -82,9 +74,11 @@ public class ClusterHubBindings extends AbstractModule {
         bind(DocumentationDao.class).to(S3DocumentationDao.class).asEagerSingleton();
         bind(SpokeDecommissionManager.class).asEagerSingleton();
         bind(HubS3Client.class).asEagerSingleton();
+        bind(SpokeTtlEnforcer.class).asEagerSingleton();
         bind(S3AccessMonitor.class).asEagerSingleton();
         bind(PeriodicMetricEmitter.class).asEagerSingleton();
         bind(PeriodicMetricEmitterLifecycle.class).asEagerSingleton();
+
     }
 
     @Singleton
@@ -113,23 +107,5 @@ public class ClusterHubBindings extends AbstractModule {
     @Singleton
     public AmazonS3 buildS3Client(AwsConnectorFactory factory) {
         return factory.getS3Client();
-    }
-
-    @Named(WRITE)
-    @Provides
-    public SpokeTtlEnforcer spokeTtlEnforcerWrite(ChannelService channelService,
-                                                  SpokeContentDao spokeContentDao,
-                                                  StatsdReporter statsdReporter,
-                                                  SpokeProperties spokeProperties) {
-        return new SpokeTtlEnforcer(SpokeStore.WRITE, channelService, spokeContentDao, statsdReporter, spokeProperties);
-    }
-
-    @Named(READ)
-    @Provides
-    public SpokeTtlEnforcer spokeTtlEnforcerWriteRead(ChannelService channelService,
-                                                      SpokeContentDao spokeContentDao,
-                                                      StatsdReporter statsdReporter,
-                                                      SpokeProperties spokeProperties) {
-        return new SpokeTtlEnforcer(SpokeStore.READ, channelService, spokeContentDao, statsdReporter, spokeProperties);
     }
 }
