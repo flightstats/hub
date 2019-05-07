@@ -1,26 +1,39 @@
 package com.flightstats.hub.dao.aws;
 
-import com.amazonaws.services.s3.model.*;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
+import com.amazonaws.services.s3.model.GetObjectRequest;
+import com.amazonaws.services.s3.model.ListObjectsRequest;
+import com.amazonaws.services.s3.model.ObjectListing;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.S3Properties;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.metrics.Traces;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.Content;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.ContentPath;
+import com.flightstats.hub.model.ContentPathKeys;
+import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.MinutePath;
+import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.io.ByteStreams;
-import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -28,28 +41,49 @@ import java.io.InputStream;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableSet;
+import java.util.Optional;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 @Singleton
+@Slf4j
 public class S3BatchContentDao implements ContentDao {
 
-    private final static Logger logger = LoggerFactory.getLogger(S3BatchContentDao.class);
     private static final String BATCH_INDEX = "Batch/index/";
     private static final String BATCH_ITEMS = "Batch/items/";
     private static final ObjectMapper mapper = new ObjectMapper();
 
-    private final boolean useEncrypted = HubProperties.isAppEncrypted();
-    private final int s3MaxQueryItems = HubProperties.getProperty("s3.maxQueryItems", 1000);
+    private final boolean useEncrypted;
+    private final int s3MaxQueryItems;
+
+    private final HubS3Client s3Client;
+    private final S3BucketName s3BucketName;
+    private final StatsdReporter statsdReporter;
+
     @Inject
-    private HubS3Client s3Client;
-    @Inject
-    private S3BucketName s3BucketName;
-    @Inject
-    private StatsdReporter statsdReporter;
+    public S3BatchContentDao(HubS3Client s3Client,
+                             S3BucketName s3BucketName,
+                             StatsdReporter statsdReporter,
+                             AppProperties appProperties,
+                             S3Properties s3Properties) {
+        this.statsdReporter = statsdReporter;
+        this.s3Client = s3Client;
+        this.s3BucketName = s3BucketName;
+
+        this.useEncrypted = appProperties.isAppEncrypted();
+        this.s3MaxQueryItems = s3Properties.getMaxQueryItems();
+    }
+
 
     @Override
     public ContentKey insert(String channelName, Content content) throws Exception {
@@ -61,21 +95,21 @@ public class S3BatchContentDao implements ContentDao {
         try {
             return getS3Object(channelName, key);
         } catch (SocketTimeoutException | SocketException e) {
-            logger.warn("Socket Exception : unable to read " + channelName + " " + key + " " + e.getMessage() + " " + e.getClass());
+            log.warn("Socket Exception : unable to read " + channelName + " " + key + " " + e.getMessage() + " " + e.getClass());
             try {
                 return getS3Object(channelName, key);
             } catch (Exception e2) {
-                logger.warn("unable to read second time " + channelName + " " + key + " " + e.getMessage(), e2);
+                log.warn("unable to read second time " + channelName + " " + key + " " + e.getMessage(), e2);
                 return null;
             }
         } catch (Exception e) {
-            logger.warn("unable to read " + channelName + " " + key, e);
+            log.warn("unable to read " + channelName + " " + key, e);
             throw new RuntimeException(e);
         }
     }
 
     private Content getS3Object(String channel, ContentKey key) throws IOException {
-        logger.trace("S3BatchContentDao.getS3Object {} {}", channel, key);
+        log.trace("S3BatchContentDao.getS3Object {} {}", channel, key);
         return readBatch(channel, key).get(key);
     }
 
@@ -90,14 +124,14 @@ public class S3BatchContentDao implements ContentDao {
         try (ZipInputStream zipStream = getZipInputStream(channel, minutePath)) {
             ZipEntry nextEntry = zipStream.getNextEntry();
             while (nextEntry != null) {
-                logger.trace("found zip entry {} in {}", nextEntry.getName(), minutePath);
+                log.trace("found zip entry {} in {}", nextEntry.getName(), minutePath);
                 ContentKey contentKey = ContentKey.fromUrl(nextEntry.getName()).get();
                 map.put(contentKey, getContent(contentKey, zipStream, nextEntry));
                 nextEntry = zipStream.getNextEntry();
             }
         } catch (AmazonS3Exception e) {
             if (e.getStatusCode() != 404) {
-                logger.warn("AmazonS3Exception : unable to read " + channel + " " + minutePath, e);
+                log.warn("AmazonS3Exception : unable to read " + channel + " " + minutePath, e);
             }
         } finally {
             ActiveTraces.getLocal().add("S3BatchContentDao.getS3Object completed");
@@ -109,7 +143,7 @@ public class S3BatchContentDao implements ContentDao {
         Content.Builder builder = Content.builder()
                 .withContentKey(key);
         byte[] bytes = ByteStreams.toByteArray(zipStream);
-        logger.trace("returning content {} bytes {}", key, bytes.length);
+        log.trace("returning content {} bytes {}", key, bytes.length);
         String comment = new String(nextEntry.getExtra());
         ContentMarshaller.setMetaData(comment, builder);
         builder.withData(bytes);
@@ -148,7 +182,7 @@ public class S3BatchContentDao implements ContentDao {
                 }
             }
         } catch (IOException e) {
-            logger.warn("unexpected IOException for " + channel + " " + minutePath, e);
+            log.warn("unexpected IOException for " + channel + " " + minutePath, e);
         }
         return found;
     }
@@ -162,7 +196,7 @@ public class S3BatchContentDao implements ContentDao {
         try (ZipInputStream zipStream = getZipInputStream(channel, minutePath)) {
             ZipEntry nextEntry = zipStream.getNextEntry();
             while (nextEntry != null) {
-                logger.trace("found zip entry {} in {}", nextEntry.getName(), minutePath);
+                log.trace("found zip entry {} in {}", nextEntry.getName(), minutePath);
                 ContentKey key = keyMap.get(nextEntry.getName());
                 if (key != null) {
                     callback.accept(getContent(key, zipStream, nextEntry));
@@ -172,10 +206,10 @@ public class S3BatchContentDao implements ContentDao {
             }
         } catch (AmazonS3Exception e) {
             if (e.getStatusCode() != 404) {
-                logger.warn("AmazonS3Exception : unable to read " + channel + " " + minutePath, e);
+                log.warn("AmazonS3Exception : unable to read " + channel + " " + minutePath, e);
             }
         } catch (IOException e) {
-            logger.warn("unexpected IOException for " + channel + " " + minutePath, e);
+            log.warn("unexpected IOException for " + channel + " " + minutePath, e);
         } finally {
             ActiveTraces.getLocal().add("S3BatchContentDao.streamMinute completed");
         }
@@ -250,13 +284,13 @@ public class S3BatchContentDao implements ContentDao {
             traces.add("S3BatchContentDao.getKeysForMinute ", minutePath, items.size());
         } catch (AmazonS3Exception e) {
             if (e.getStatusCode() != 404) {
-                logger.warn("unable to get index " + channel, minutePath, e);
+                log.warn("unable to get index " + channel, minutePath, e);
                 traces.add("S3BatchContentDao.getKeysForMinute issue with getting keys", e);
             } else {
                 traces.add("S3BatchContentDao.getKeysForMinute no keys ", minutePath);
             }
         } catch (IOException e) {
-            logger.warn("unable to get index " + channel, minutePath, e);
+            log.warn("unable to get index " + channel, minutePath, e);
             traces.add("issue with getting keys", e);
         } finally {
             statsdReporter.time(channel, "s3.get", start, "type:batch");
@@ -276,7 +310,7 @@ public class S3BatchContentDao implements ContentDao {
             }
             traces.add("S3BatchContentDao.query completed", contentKeys);
         } catch (Exception e) {
-            logger.warn("query exception" + query, e);
+            log.warn("query exception" + query, e);
             traces.add("S3BatchContentDao.query exception", e);
         }
         return contentKeys;
@@ -345,9 +379,9 @@ public class S3BatchContentDao implements ContentDao {
         try {
             S3Util.delete(channel + BATCH_ITEMS, limitKey, s3BucketName.getS3BucketName(), s3Client);
             S3Util.delete(channel + BATCH_INDEX, limitKey, s3BucketName.getS3BucketName(), s3Client);
-            logger.info("completed deleteBefore of " + channel);
+            log.info("completed deleteBefore of " + channel);
         } catch (Exception e) {
-            logger.warn("unable to delete " + channel + " in " + s3BucketName.getS3BucketName(), e);
+            log.warn("unable to delete " + channel + " in " + s3BucketName.getS3BucketName(), e);
         }
     }
 
@@ -376,11 +410,11 @@ public class S3BatchContentDao implements ContentDao {
     public void writeBatch(String channel, ContentPath path, Collection<ContentKey> keys, byte[] bytes) {
         ActiveTraces.getLocal().add("S3BatchContentDao.writeBatch", channel, path);
         try {
-            logger.debug("writing {} batch {} keys {} bytes {}", channel, path, keys.size(), bytes.length);
+            log.debug("writing {} batch {} keys {} bytes {}", channel, path, keys.size(), bytes.length);
             writeBatchItems(channel, path, bytes);
             writeBatchIndex(channel, path, keys);
         } catch (Exception e) {
-            logger.warn("unable to write batch to S3 " + channel + " " + path, e);
+            log.warn("unable to write batch to S3 " + channel + " " + path, e);
             throw e;
         } finally {
             ActiveTraces.getLocal().add("S3BatchContentDao.writeBatch completed", channel, path);
@@ -396,7 +430,7 @@ public class S3BatchContentDao implements ContentDao {
             items.add(key.toUrl());
         }
         String index = root.toString();
-        logger.trace("index is {} {}", batchIndexKey, index);
+        log.trace("index is {} {}", batchIndexKey, index);
         byte[] bytes = index.getBytes(StandardCharsets.UTF_8);
         putObject(channel, batchIndexKey, bytes);
     }

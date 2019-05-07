@@ -2,38 +2,44 @@ package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.dynamodbv2.model.*;
-import com.flightstats.hub.app.HubProperties;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import com.amazonaws.services.dynamodbv2.model.AttributeDefinition;
+import com.amazonaws.services.dynamodbv2.model.CreateTableRequest;
+import com.amazonaws.services.dynamodbv2.model.KeySchemaElement;
+import com.amazonaws.services.dynamodbv2.model.KeyType;
+import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
+import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughputDescription;
+import com.amazonaws.services.dynamodbv2.model.ResourceNotFoundException;
+import com.amazonaws.services.dynamodbv2.model.ScalarAttributeType;
+import com.amazonaws.services.dynamodbv2.model.TableDescription;
+import com.amazonaws.services.dynamodbv2.model.TableStatus;
+import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.DynamoProperties;
+import lombok.extern.slf4j.Slf4j;
 import java.util.Optional;
+import javax.inject.Inject;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
+@Slf4j
 public class DynamoUtils {
 
-    private final static Logger logger = LoggerFactory.getLogger(DynamoUtils.class);
-
     private final AmazonDynamoDB dbClient;
-    private final String environment;
-    private final String appName;
-    private final int tableCreationWaitMinutes;
+    private final AppProperties appProperties;
+    private final DynamoProperties dynamoProperties;
 
     @Inject
     public DynamoUtils(AmazonDynamoDB dbClient,
-                       @Named("app.environment") String environment, @Named("app.name") String appName) {
+                       AppProperties appProperties,
+                       DynamoProperties dynamoProperties) {
         this.dbClient = dbClient;
-        this.environment = environment;
-        this.appName = appName;
-        this.tableCreationWaitMinutes = HubProperties.getProperty("dynamo.table_creation_wait_minutes", 10);
+        this.appProperties = appProperties;
+        this.dynamoProperties = dynamoProperties;
     }
 
     String getLegacyTableName(String baseTableName) {
-        return appName + "-" + environment + "-" + baseTableName;
+        return appProperties.getAppName() + "-" + appProperties.getEnv() + "-" + baseTableName;
     }
+
 
     void createAndUpdate(String tableName, String type, String keyName) {
         createAndUpdate(tableName, type, keyName, createTableRequest -> createTableRequest);
@@ -42,7 +48,7 @@ public class DynamoUtils {
     private void createAndUpdate(String tableName, String type, String keyName,
                                  Function<CreateTableRequest, CreateTableRequest> function) {
         ProvisionedThroughput throughput = getProvisionedThroughput(type);
-        logger.info("creating table {} ", tableName);
+        log.info("creating table {} ", tableName);
         CreateTableRequest request = new CreateTableRequest()
                 .withTableName(tableName)
                 .withAttributeDefinitions(new AttributeDefinition(keyName, ScalarAttributeType.S))
@@ -54,8 +60,8 @@ public class DynamoUtils {
     }
 
     ProvisionedThroughput getProvisionedThroughput(String type) {
-        long readThroughput = HubProperties.getProperty("dynamo.throughput." + type + ".read", 100);
-        long writeThroughput = HubProperties.getProperty("dynamo.throughput." + type + ".write", 10);
+        long readThroughput = dynamoProperties.getThroughputRead(type);
+        long writeThroughput = dynamoProperties.getThroughputWrite(type);
         return new ProvisionedThroughput(readThroughput, writeThroughput);
     }
 
@@ -69,7 +75,7 @@ public class DynamoUtils {
             waitForTableStatus(tableName, TableStatus.ACTIVE);
         } catch (ResourceNotFoundException e) {
             dbClient.createTable(request);
-            logger.info("Creating " + tableName + " ...");
+            log.info("Creating " + tableName + " ...");
             waitForTableStatus(tableName, TableStatus.ACTIVE);
         }
     }
@@ -80,14 +86,14 @@ public class DynamoUtils {
             ProvisionedThroughputDescription provisionedThroughput = tableDescription.getProvisionedThroughput();
             if (provisionedThroughput.getReadCapacityUnits().equals(throughput.getReadCapacityUnits())
                     && provisionedThroughput.getWriteCapacityUnits().equals(throughput.getWriteCapacityUnits())) {
-                logger.info("table is already at provisioned throughput {} {}", tableName, throughput);
+                log.info("table is already at provisioned throughput {} {}", tableName, throughput);
             } else {
-                logger.info("updating table {} to {}", tableName, throughput);
+                log.info("updating table {} to {}", tableName, throughput);
                 dbClient.updateTable(tableName, throughput);
                 waitForTableStatus(tableName, TableStatus.ACTIVE);
             }
         } catch (ResourceNotFoundException e) {
-            logger.warn("update presumes the table exists " + tableName, e);
+            log.warn("update presumes the table exists " + tableName, e);
             throw new RuntimeException("unable to update table " + tableName);
         }
     }
@@ -97,7 +103,7 @@ public class DynamoUtils {
     }
 
     private TableDescription waitForTableStatus(String tableName, TableStatus status) {
-        long endTime = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(tableCreationWaitMinutes);
+        long endTime = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(dynamoProperties.getTableCreationWaitInMinutes());
         while (System.currentTimeMillis() < endTime) {
             Optional<TableDescription> existing = getTableDescription(tableName, status);
             if (existing.isPresent()) {

@@ -1,7 +1,7 @@
 package com.flightstats.hub.dao.aws;
 
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.channel.ZipBulkBuilder;
+import com.flightstats.hub.config.PropertiesLoader;
 import com.flightstats.hub.dao.ContentDaoUtil;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.ChannelConfig;
@@ -14,11 +14,11 @@ import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.StringUtils;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Injector;
+import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -28,26 +28,26 @@ import java.util.SortedSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.ZipOutputStream;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class S3BatchContentDaoTest {
+@Slf4j
+class S3BatchContentDaoTest {
 
-    private final static Logger logger = LoggerFactory.getLogger(S3BatchContentDaoTest.class);
     private static S3BatchContentDao contentDao;
 
-    @BeforeClass
-    public static void setUpClass() throws Exception {
-        HubProperties.loadProperties("useDefault");
-        HubProperties.setProperty("s3.maxQueryItems", "5");
+    @BeforeAll
+    static void setUpClass() throws Exception {
+        PropertiesLoader.getInstance().load("useDefault");
+        PropertiesLoader.getInstance().setProperty("s3.maxQueryItems", "5");
         Injector injector = Integration.startAwsHub();
         contentDao = injector.getInstance(S3BatchContentDao.class);
     }
 
     @Test
-    public void testBatchWriteRead() throws Exception {
+    void testBatchWriteRead() throws Exception {
         String channel = "testBatchWriteRead";
         MinutePath minutePath = new MinutePath();
         List<ContentKey> keys = writeBatchMinute(channel, minutePath, 5);
@@ -70,7 +70,7 @@ public class S3BatchContentDaoTest {
         AtomicInteger count = new AtomicInteger();
         contentDao.streamMinute(channel, pathAndKeys, false, content -> {
                     ContentKey key = content.getContentKey().get();
-                    logger.info("found content {}", key);
+                    log.info("found content {}", key);
                     count.incrementAndGet();
                     assertTrue(pathAndKeys.getKeys().contains(key));
                 }
@@ -83,7 +83,7 @@ public class S3BatchContentDaoTest {
         for (int i = 0; i < count; i++) {
             ContentKey contentKey = new ContentKey(minutePath.getTime().plusSeconds(i), "" + i);
             keys.add(contentKey);
-            logger.info("adding {}", contentKey);
+            log.info("adding {}", contentKey);
         }
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ZipOutputStream output = new ZipOutputStream(baos);
@@ -99,10 +99,9 @@ public class S3BatchContentDaoTest {
     }
 
     @Test
-    public void testQueryMinute() throws IOException {
+    void testQueryMinute() throws IOException {
         String channel = "testQueryMinute" + StringUtils.randomAlphaNumeric(20);
         DateTime start = TimeUtil.now().minusMinutes(10);
-        ContentKey key = new ContentKey(start, "start");
         for (int i = 0; i < 5; i++) {
             writeBatchMinute(channel, new MinutePath(start.plusMinutes(i)), 2);
         }
@@ -116,10 +115,9 @@ public class S3BatchContentDaoTest {
     }
 
     @Test
-    public void testQueryHour() throws IOException {
+    void testQueryHour() throws IOException {
         String channel = "testQueryHour" + StringUtils.randomAlphaNumeric(20);
         DateTime start = TimeUtil.now().withMinuteOfHour(54);
-        ContentKey key = new ContentKey(start, "start");
         for (int i = 0; i < 12; i++) {
             writeBatchMinute(channel, new MinutePath(start.plusMinutes(i * 6)), 2);
         }
@@ -135,14 +133,14 @@ public class S3BatchContentDaoTest {
                 .unit(unit)
                 .build();
         SortedSet<ContentKey> found = contentDao.queryByTime(timeQuery);
-        logger.info("found {}", found);
-        ActiveTraces.getLocal().log(logger);
+        log.info("found {}", found);
+        ActiveTraces.getLocal().log(log);
         assertEquals(expected, found.size());
         ActiveTraces.end();
     }
 
     @Test
-    public void testMissing() {
+    void testMissing() {
         String channel = "testMissing";
         Content content = contentDao.get(channel, new ContentKey());
         assertNull(content);
@@ -152,13 +150,13 @@ public class S3BatchContentDaoTest {
 
                 .build();
         SortedSet<ContentKey> found = contentDao.queryByTime(timeQuery);
-        logger.info("minute {}", found);
+        log.info("minute {}", found);
 
         assertEquals(0, found.size());
     }
 
     @Test
-    public void testDirectionQueryAndDelete() throws Exception {
+    void testDirectionQueryAndDelete() throws Exception {
         String channel = "testDirectionQuery" + StringUtils.randomAlphaNumeric(20);
         DateTime start = TimeUtil.now().minusHours(2);
         ContentKey key = new ContentKey(new MinutePath(start).getTime(), "-");
@@ -179,13 +177,13 @@ public class S3BatchContentDaoTest {
     }
 
     @Test
-    public void testPreviousEdgeCase() throws Exception {
+    void testPreviousEdgeCase() throws Exception {
         String channel = "testPreviousEdgeCase" + StringUtils.randomAlphaNumeric(20);
         DateTime start = TimeUtil.now().minusHours(2);
         List<ContentKey> contentKeys = writeBatchMinute(channel, new MinutePath(start), 4);
-        logger.info("wrote keys ", contentKeys);
+        log.info("wrote keys ", contentKeys);
         SortedSet<ContentKey> foundKeys = queryDirection(channel, contentKeys.get(3), false, 2, 2);
-        logger.info("query found {}", foundKeys);
+        log.info("query found {}", foundKeys);
         assertTrue(foundKeys.contains(contentKeys.get(1)));
         assertTrue(foundKeys.contains(contentKeys.get(2)));
     }
@@ -203,16 +201,16 @@ public class S3BatchContentDaoTest {
                         .build();
 
         ActiveTraces.start(query);
-        logger.info("running query {}", query);
+        log.info("running query {}", query);
         SortedSet<ContentKey> found = contentDao.query(query);
-        ActiveTraces.getLocal().log(logger);
+        ActiveTraces.getLocal().log(log);
         ActiveTraces.end();
         assertEquals(expected, found.size());
         return found;
     }
 
     @Test
-    public void testDirectionQueryBug() throws Exception {
+    void testDirectionQueryBug() throws Exception {
         String channel = "testDirectionQueryBug" + StringUtils.randomAlphaNumeric(20);
         DateTime start = TimeUtil.now().minusHours(2);
         MinutePath startItem = new MinutePath(start);

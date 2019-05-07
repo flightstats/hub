@@ -1,33 +1,32 @@
 package com.flightstats.hub.cluster;
 
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
+import com.flightstats.hub.config.ZookeeperProperties;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.google.inject.Inject;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 public class WatchManager {
-    private final static Logger logger = LoggerFactory.getLogger(WatchManager.class);
 
+    private final ConcurrentHashMap<String, Watcher> watcherMap = new ConcurrentHashMap<>();
     private final CuratorFramework curator;
     private final ExecutorService executorService;
-    private final ConcurrentHashMap<String, Watcher> watcherMap = new ConcurrentHashMap<>();
 
     @Inject
-    public WatchManager(CuratorFramework curator) {
+    public WatchManager(CuratorFramework curator, ZookeeperProperties zookeeperProperties) {
         this.curator = curator;
-        executorService = Executors.newFixedThreadPool(HubProperties.getProperty("watchManager.threads", 10),
+        this.executorService = Executors.newFixedThreadPool(zookeeperProperties.getWatchManagerThreadCount(),
                 new ThreadFactoryBuilder().setNameFormat("watch-manager-%d").build());
         HubServices.register(new WatchManagerService());
     }
@@ -35,12 +34,12 @@ public class WatchManager {
     @VisibleForTesting
     void addCuratorListener() {
         curator.getCuratorListenable().addListener((client, event) -> {
-            logger.info("event {}", event);
+            log.info("event {}", event);
             final Watcher watcher = watcherMap.get(event.getPath());
             if (watcher != null) {
                 addWatch(watcher);
                 if (executorService.isShutdown()) {
-                    logger.warn("service is shutdown, skipping event {}", event);
+                    log.warn("service is shutdown, skipping event {}", event);
                 } else {
                     executorService.submit(() -> {
                         Thread thread = Thread.currentThread();
@@ -67,7 +66,7 @@ public class WatchManager {
             try {
                 curator.setData().forPath(path, Longs.toByteArray(System.currentTimeMillis()));
             } catch (Exception e) {
-                logger.warn("unable to set watcher path", e);
+                log.warn("unable to set watcher path", e);
             }
         }
     }
@@ -78,7 +77,7 @@ public class WatchManager {
         } catch (KeeperException.NodeExistsException ignore) {
             //this will typically happen, except the first time
         } catch (Exception e) {
-            logger.warn("unable to create node", e);
+            log.warn("unable to create node", e);
         }
     }
 
@@ -90,14 +89,14 @@ public class WatchManager {
                 curator.getData().watched().forPath(watcher.getPath());
             }
         } catch (Exception e) {
-            logger.warn("unable to start watcher", e);
+            log.warn("unable to start watcher", e);
         }
     }
 
     private class WatchManagerService extends AbstractIdleService {
 
         @Override
-        protected void startUp() throws Exception {
+        protected void startUp() {
             addCuratorListener();
         }
 

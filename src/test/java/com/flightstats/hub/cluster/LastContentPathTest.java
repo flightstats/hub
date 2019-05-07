@@ -1,5 +1,7 @@
 package com.flightstats.hub.cluster;
 
+import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.PropertiesLoader;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.model.MinutePath;
@@ -7,31 +9,31 @@ import com.flightstats.hub.test.Integration;
 import org.apache.curator.framework.CuratorFramework;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
-public class LastContentPathTest {
+class LastContentPathTest {
 
     private static final String BASE_PATH = "/GroupLastCompleted/";
     private static CuratorFramework curator;
     private LastContentPath lastContentPath;
 
-    @BeforeClass
-    public static void setUpClass() throws Exception {
+    @BeforeAll
+    static void setUpClass() throws Exception {
         curator = Integration.startZooKeeper();
     }
 
-    @Before
-    public void setUp() throws Exception {
-        lastContentPath = new LastContentPath(curator);
+    @BeforeEach
+    void setUp() {
+        lastContentPath = new LastContentPath(curator, new AppProperties(PropertiesLoader.getInstance()));
     }
 
     @Test
-    public void testLifeCycle() throws Exception {
+    void testLifeCycle() {
         String name = "testLifeCycle";
         DateTime start = new DateTime(2014, 12, 3, 20, 45, DateTimeZone.UTC);
         ContentKey key1 = new ContentKey(start, "B");
@@ -56,16 +58,14 @@ public class LastContentPathTest {
     }
 
     @Test
-    public void testCreateNull() throws Exception {
+    void testCreateNull() {
         String name = "testCreateNull";
-        DateTime start = new DateTime(2014, 12, 3, 20, 45, DateTimeZone.UTC);
-        ContentKey key1 = new ContentKey(start, "B");
         ContentPath contentPath = lastContentPath.get(name, null, BASE_PATH);
         assertNull(contentPath);
     }
 
     @Test
-    public void testCreateIfMissing() throws Exception {
+    void testCreateIfMissing() {
         String name = "testCreateIfMissing";
         ContentKey key = new ContentKey();
         assertEquals(key, lastContentPath.get(name, key, BASE_PATH));
@@ -73,7 +73,7 @@ public class LastContentPathTest {
     }
 
     @Test
-    public void testMinutePath() {
+    void testMinutePath() {
         String name = "testMinutePath";
 
         MinutePath minutePath = new MinutePath();
@@ -90,7 +90,7 @@ public class LastContentPathTest {
     }
 
     @Test
-    public void testUpdateDecrease() throws Exception {
+    void testUpdateDecrease() {
         String name = "testUpdateDecrease";
         DateTime start = new DateTime(2014, 12, 3, 20, 45, DateTimeZone.UTC);
 

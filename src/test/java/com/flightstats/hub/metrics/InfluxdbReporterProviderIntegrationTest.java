@@ -9,10 +9,10 @@ import com.flightstats.hub.util.IntegrationServer;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpHandler;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -24,11 +24,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class InfluxdbReporterProviderIntegrationTest {
+class InfluxdbReporterProviderIntegrationTest {
     private HttpServer httpServer;
     private ScheduledReporter influxdbReporter;
     private static List<String> writeResult;
@@ -55,8 +55,8 @@ public class InfluxdbReporterProviderIntegrationTest {
         }
     }
 
-    @Before
-    public void setupServer() throws IOException {
+    @BeforeEach
+    void setupServer() throws IOException {
         httpServer = IntegrationServer
                 .builder()
                 .testHandler(new TestHandler())
@@ -69,7 +69,7 @@ public class InfluxdbReporterProviderIntegrationTest {
     }
 
     @Test
-    public void testInfluxdbReporterGet_reportsConfiguredTags() throws InterruptedException {
+    void testInfluxdbReporterGet_reportsConfiguredTags() throws InterruptedException {
         HubVersion hubVersion = mock(HubVersion.class);
         when(hubVersion.getVersion()).thenReturn("local");
         MetricsConfig metricsConfig = MetricsConfig.builder()
@@ -102,8 +102,8 @@ public class InfluxdbReporterProviderIntegrationTest {
         });
     }
 
-    @After
-    public void shutdownServer() {
+    @AfterEach
+    void shutdownServer() {
         influxdbReporter.stop();
         httpServer.stop(0);
     }

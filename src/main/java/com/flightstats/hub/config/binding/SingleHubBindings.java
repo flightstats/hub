@@ -1,4 +1,4 @@
-package com.flightstats.hub.app;
+package com.flightstats.hub.config.binding;
 
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.dao.*;
@@ -15,7 +15,7 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 
-class SingleHubBindings extends AbstractModule {
+public class SingleHubBindings extends AbstractModule {
 
     @Override
     protected void configure() {

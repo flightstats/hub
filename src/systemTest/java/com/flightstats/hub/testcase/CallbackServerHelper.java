@@ -34,7 +34,7 @@ public class CallbackServerHelper {
     private CallbackResource callbackResource;
 
     @Inject
-    public CallbackServerHelper(@Named("callback") Retrofit retrofitCallback, CallbackServer callbackServer, CallbackResource callbackResource){
+    CallbackServerHelper(@Named("callback") Retrofit retrofitCallback, CallbackServer callbackServer, CallbackResource callbackResource){
         this.retrofitCallback = retrofitCallback;
         this.callbackResourceClient = getCallbackClient(CallbackResourceClient.class);
         this.callbackServer = callbackServer;
@@ -56,19 +56,19 @@ public class CallbackServerHelper {
         return Collections.emptyList();
     }
 
-    public void startCallbackServer() {
+    void startCallbackServer() {
         this.callbackServer.start();
     }
 
-    public void stopCallbackServer() {
+    void stopCallbackServer() {
         callbackServer.stop();
     }
 
-    public HttpUrl getCallbackClientBaseUrl() {
+    HttpUrl getCallbackClientBaseUrl() {
         return retrofitCallback.baseUrl();
     }
 
-    public List<String> awaitItemCountSentToWebhook(String webhookName, Optional<String> path, int expectedItemCount) {
+    List<String> awaitItemCountSentToWebhook(String webhookName, Optional<String> path, int expectedItemCount) {
         Call<String> call = callbackResourceClient.get(webhookName);
         final List<String> channelItemsPosted = new ArrayList<>();
         await().atMost(90, TimeUnit.SECONDS).until(() -> {
@@ -86,7 +86,7 @@ public class CallbackServerHelper {
         return channelItemsPosted;
     }
 
-    public void errorOnCreate(Predicate<WebhookCallbackRequest> predicate) {
+    void errorOnCreate(Predicate<WebhookCallbackRequest> predicate) {
         callbackResource.errorOnCreate(predicate);
     }
 

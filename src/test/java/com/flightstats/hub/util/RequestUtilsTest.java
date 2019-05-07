@@ -1,6 +1,6 @@
 package com.flightstats.hub.util;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.MultivaluedHashMap;
@@ -10,28 +10,28 @@ import javax.ws.rs.core.UriInfo;
 import static com.flightstats.hub.util.RequestUtils.*;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class RequestUtilsTest {
+class RequestUtilsTest {
 
     @Test
-    public void testGetChannelNameFromString() {
+    void testGetChannelNameFromString() {
         assertEquals("foobar", getChannelName("http://location:8080/channel/foobar"));
         assertEquals("foobar", getChannelName("http://location:8080/channel/foobar/"));
         assertEquals("foobar", getChannelName("http://hub.prod/channel/foobar/"));
     }
 
     @Test
-    public void testGetTagFromString() {
+    void testGetTagFromString() {
         assertEquals("foobar", getTag("http://location:8080/tag/foobar"));
         assertEquals("foobar", getTag("http://location:8080/tag/foobar/"));
         assertEquals("foobar", getTag("http://hub.prod/tag/foobar/"));
     }
 
     @Test
-    public void testGetChannelNameFromRequest() {
+    void testGetChannelNameFromRequest() {
         MultivaluedMap<String, String> emptyMap = new MultivaluedHashMap<>();
         MultivaluedMap<String, String> parameters = new MultivaluedHashMap<>();
         MultivaluedMap<String, String> headers = new MultivaluedHashMap<>();
@@ -56,7 +56,7 @@ public class RequestUtilsTest {
     }
 
     @Test
-    public void testGetTagFromRequest() {
+    void testGetTagFromRequest() {
         MultivaluedMap<String, String> emptyMap = new MultivaluedHashMap<>();
         MultivaluedMap<String, String> parameters = new MultivaluedHashMap<>();
 
@@ -82,14 +82,14 @@ public class RequestUtilsTest {
     }
 
     @Test
-    public void testIsValidChannelUrl() {
+    void testIsValidChannelUrl() {
         assertTrue(isValidChannelUrl("http://location:8080/channel/foobar"));
         assertFalse(isValidChannelUrl("http://location:8080/chann/foobar"));
         assertFalse(isValidChannelUrl("not a url"));
     }
 
     @Test
-    public void testGetHost() {
+    void testGetHost() {
         String host1 = "http://stuff.com";
         String host2 = "http://stuff.com:99";
 

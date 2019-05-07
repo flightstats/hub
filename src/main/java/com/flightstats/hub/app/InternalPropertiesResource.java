@@ -1,6 +1,7 @@
 package com.flightstats.hub.app;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.config.PropertiesLoader;
 import com.flightstats.hub.metrics.InternalTracesResource;
 import com.flightstats.hub.util.SecretFilter;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +19,7 @@ import java.util.TreeSet;
 @SuppressWarnings("WeakerAccess")
 @Path("/internal/properties")
 public class InternalPropertiesResource {
+
     public static final String DESCRIPTION = "Get hub properties with links to other hubs in the cluster.";
     private final SecretFilter secretFilter;
 
@@ -32,7 +34,7 @@ public class InternalPropertiesResource {
         ObjectNode root = InternalTracesResource.serverAndServers("/internal/properties");
         try {
             ObjectNode propertyNode = root.putObject("properties");
-            Properties properties = HubProperties.getProperties();
+            Properties properties = PropertiesLoader.getInstance().getProperties();
             for (Object key : new TreeSet<>(properties.keySet())) {
                 String value = properties.get(key).toString();
                 String possiblySensitiveValue = secretFilter.redact(key.toString(), value);

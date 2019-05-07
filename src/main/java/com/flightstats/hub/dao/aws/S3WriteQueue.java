@@ -1,8 +1,8 @@
 package com.flightstats.hub.dao.aws;
 
+import com.flightstats.hub.config.S3Properties;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.aws.writeQueue.WriteQueue;
-import com.flightstats.hub.dao.aws.writeQueue.WriteQueueConfig;
 import com.flightstats.hub.exception.FailedReadException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.StatsdReporter;
@@ -15,6 +15,7 @@ import com.github.rholder.retry.WaitStrategies;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -27,10 +28,7 @@ import java.util.concurrent.TimeUnit;
 public class S3WriteQueue implements WriteQueue {
 
     private final Retryer<Void> retryer = buildRetryer();
-
-    @VisibleForTesting
-    BlockingQueue<ChannelContentKey> keys;
-
+    private final BlockingQueue<ChannelContentKey> keys;
     private final ContentDao spokeWriteContentDao;
     private final ContentDao s3SingleContentDao;
     private final StatsdReporter statsdReporter;
@@ -39,14 +37,15 @@ public class S3WriteQueue implements WriteQueue {
     S3WriteQueue(@Named(ContentDao.WRITE_CACHE) ContentDao spokeWriteContentDao,
                  @Named(ContentDao.SINGLE_LONG_TERM) ContentDao s3SingleContentDao,
                  StatsdReporter statsdReporter,
-                 WriteQueueConfig writeQueueConfig) {
+                 S3Properties s3property) {
         this.spokeWriteContentDao = spokeWriteContentDao;
         this.s3SingleContentDao = s3SingleContentDao;
         this.statsdReporter = statsdReporter;
-        keys = new LinkedBlockingQueue<>(writeQueueConfig.getQueueSize());
+        keys = new LinkedBlockingQueue<>(s3property.getWriteQueueSize());
     }
 
     @VisibleForTesting
+    @SneakyThrows
     void write() {
         try {
             ChannelContentKey key = keys.poll(5, TimeUnit.SECONDS);

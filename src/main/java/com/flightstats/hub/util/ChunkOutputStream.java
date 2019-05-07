@@ -4,8 +4,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -15,26 +14,34 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
 
+@Slf4j
 public class ChunkOutputStream extends OutputStream {
-    private static final Logger logger = LoggerFactory.getLogger(ChunkOutputStream.class);
 
-    private ListeningExecutorService service;
+    private static final int MEGABYTES = 1024 * 1024;
+
     private List<ListenableFuture<String>> futures = new ArrayList<>();
     private int count = 1;
-    private Chunk chunk = new Chunk(count, ChunkStrategy.getSize(count));
-    private Function<Chunk, String> chunkFunction;
+    private Chunk chunk;
 
-    public ChunkOutputStream(int threads, Function<Chunk, String> chunkFunction) {
+    private ListeningExecutorService service;
+    private Function<Chunk, String> chunkFunction;
+    private int maxChunkInMB;
+
+
+    public ChunkOutputStream(int threads, int maxChunkInMB, Function<Chunk, String> chunkFunction) {
+        this.maxChunkInMB = maxChunkInMB;
         this.chunkFunction = chunkFunction;
+
+        this.chunk = new Chunk(count, getSize(count));
         service = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(threads));
-        logger.info("creating ChunkOutputStream with {} threads", threads);
+        log.info("creating ChunkOutputStream with {} threads", threads);
     }
 
     public void write(int b) throws IOException {
         if (!chunk.add(b)) {
             sendChunk(chunk);
             count++;
-            chunk = new Chunk(count, ChunkStrategy.getSize(count));
+            chunk = new Chunk(count, getSize(count));
             chunk.add(b);
         }
     }
@@ -58,5 +65,10 @@ public class ChunkOutputStream extends OutputStream {
         } finally {
             service.shutdown();
         }
+    }
+
+     int getSize(int count) {
+        int chunkMB = (Math.floorDiv(count, 3) + 1) * 5;
+        return Math.min(chunkMB, maxChunkInMB) * MEGABYTES;
     }
 }

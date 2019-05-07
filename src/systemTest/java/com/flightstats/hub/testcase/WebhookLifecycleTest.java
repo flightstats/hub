@@ -5,19 +5,19 @@ import com.flightstats.hub.model.Webhook;
 import com.google.inject.Inject;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import static com.flightstats.hub.model.ChannelContentStorageType.SINGLE;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
-public class WebhookLifecycleTest extends BaseTest {
+class WebhookLifecycleTest extends BaseTest {
     @Inject
     private HubHelper hubHelper;
     @Inject
@@ -25,7 +25,7 @@ public class WebhookLifecycleTest extends BaseTest {
     private String channelName;
     private String webhookName;
 
-    @Before
+    @BeforeEach
     public void before() {
         super.before();
         callbackServerHelper.startCallbackServer();
@@ -45,7 +45,7 @@ public class WebhookLifecycleTest extends BaseTest {
 
     @Test
     @SneakyThrows
-    public void testWebhookWithNoStartItem() {
+    void testWebhookWithNoStartItem() {
         final String data = "{\"fn\": \"first\", \"ln\":\"last\"}";
 
         hubHelper.createChannel(channelName);
@@ -63,7 +63,7 @@ public class WebhookLifecycleTest extends BaseTest {
 
     @Test
     @SneakyThrows
-    public void testWebhookWithStartItem() {
+    void testWebhookWithStartItem() {
         final String data = "{\"key1\": \"value1\", \"key2\":\"value2\"}";
 
         hubHelper.createChannel(channelName);
@@ -83,7 +83,7 @@ public class WebhookLifecycleTest extends BaseTest {
 
     @Test
     @SneakyThrows
-    public void testWebhookWithStartItem_expectItemsInOrder() {
+    void testWebhookWithStartItem_expectItemsInOrder() {
         final String data = "{\"city\": \"portland\", \"state\":\"or\"}";
 
         hubHelper.createChannel(channelName);
@@ -99,9 +99,9 @@ public class WebhookLifecycleTest extends BaseTest {
         assertEquals(channelItemsExpected, channelItemsPosted);
     }
 
-    @After
+    @AfterEach
     @SneakyThrows
-    public void after() {
+    void after() {
         hubHelper.deleteChannelAndWebhook(channelName, webhookName);
         callbackServerHelper.stopCallbackServer();
     }

@@ -1,17 +1,18 @@
 package com.flightstats.hub.model;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class ChannelContentKeyTest {
+class ChannelContentKeyTest {
 
     @Test
-    public void test() {
+    void test() {
         ContentKey contentKey = new ContentKey();
         ChannelContentKey A1 = new ChannelContentKey("A", contentKey);
         ChannelContentKey B1 = new ChannelContentKey("B", contentKey);
@@ -28,7 +29,7 @@ public class ChannelContentKeyTest {
     }
 
     @Test
-    public void testCycle() {
+    void testCycle() {
         ContentKey contentKey = new ContentKey();
         ChannelContentKey channelContentKey = new ChannelContentKey("name", contentKey);
         ChannelContentKey cycled = ChannelContentKey.fromResourcePath(channelContentKey.toUrl());
@@ -36,7 +37,7 @@ public class ChannelContentKeyTest {
     }
 
     @Test
-    public void fromResourcePath() {
+    void fromResourcePath() {
         String url = "http://hub/channel/foo/1999/12/31/23/59/59/999/l33t";
         ChannelContentKey key = ChannelContentKey.fromResourcePath(url);
         assertEquals(key.getChannel(), "foo");
@@ -44,27 +45,27 @@ public class ChannelContentKeyTest {
     }
 
     @Test
-    public void fromSpokePathValid() {
+    void fromSpokePathValid() {
         String filePath = "/some/arbitrary/directory/structure/foo/1999/12/31/23/59/59999l33t";
         ChannelContentKey key = ChannelContentKey.fromSpokePath(filePath);
         assertEquals(key.getChannel(), "foo");
         assertEquals(key.getContentKey(), new ContentKey(1999, 12, 31, 23, 59, 59, 999, "l33t"));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void fromSpokePathInvalidFormat() {
+    @Test
+    void fromSpokePathInvalidFormat() {
         String filePath = "/some/arbitrary/directory/structure/foo/1999/12/31/bar/23/59/59999l33t";
-        ChannelContentKey.fromSpokePath(filePath);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void fromSpokePathInvalidDepth() {
-        String filePath = "/foo/bar/23/59/59999l33t";
-        ChannelContentKey.fromSpokePath(filePath);
+        assertThrows(IllegalArgumentException.class, () -> ChannelContentKey.fromSpokePath(filePath));
     }
 
     @Test
-    public void fromChannelPath() {
+    void fromSpokePathInvalidDepth() {
+        String filePath = "/foo/bar/23/59/59999l33t";
+        assertThrows(IllegalArgumentException.class, () -> ChannelContentKey.fromSpokePath(filePath));
+    }
+
+    @Test
+    void fromChannelPath() {
         String path = "foo/1999/12/31/23/59/59/999/l33t";
         ChannelContentKey key = ChannelContentKey.fromChannelPath(path);
         assertNotNull(key);

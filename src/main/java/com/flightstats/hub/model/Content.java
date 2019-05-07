@@ -1,13 +1,14 @@
 package com.flightstats.hub.model;
 
-import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.config.ContentProperties;
+import com.flightstats.hub.config.PropertiesLoader;
+import com.flightstats.hub.config.S3Properties;
 import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.util.HubUtils;
 import com.google.common.io.ByteStreams;
+import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.EOFException;
@@ -16,9 +17,12 @@ import java.io.InputStream;
 import java.io.Serializable;
 import java.util.Optional;
 
+@Slf4j
 public class Content implements Serializable {
-    public static final int THREADS = HubProperties.getProperty("s3.large.threads", 3);
-    private final static Logger logger = LoggerFactory.getLogger(Content.class);
+
+    private static final S3Properties s3Properties = new S3Properties(PropertiesLoader.getInstance());
+    private static final ContentProperties contentProperties = new ContentProperties(PropertiesLoader.getInstance());
+
     private static final long serialVersionUID = 1L;
     private final Optional<String> contentType;
     //contentLength is the number of bytes in the total compressed payload (meta & item)
@@ -38,7 +42,7 @@ public class Content implements Serializable {
         contentType = builder.contentType;
         stream = builder.stream;
         contentLength = builder.contentLength;
-        threads = Math.max(THREADS, builder.threads);
+        threads = Math.max(s3Properties.getLargeThreadCount(), builder.threads);
         isLarge = builder.large;
         size = builder.size;
     }
@@ -111,7 +115,7 @@ public class Content implements Serializable {
     }
 
     public void packageStream() throws IOException {
-        if (isLarge || contentLength >= HubProperties.getLargePayload()) {
+        if (isLarge || contentLength >= contentProperties.getLargePayload()) {
             isLarge = true;
         } else {
             data = ContentMarshaller.toBytes(this);
@@ -125,9 +129,9 @@ public class Content implements Serializable {
                 data = ByteStreams.toByteArray(stream);
                 stream = null;
             } catch (EOFException e) {
-                logger.info("file ended early {}", contentKey);
+                log.info("file ended early {}", contentKey);
             } catch (Exception e) {
-                logger.warn("no data " + contentKey, e);
+                log.warn("no data " + contentKey, e);
             }
         }
         return data;

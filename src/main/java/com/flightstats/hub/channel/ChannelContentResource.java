@@ -541,7 +541,6 @@ public class ChannelContentResource {
                                      @HeaderParam("Content-Type") String contentType,
                                      @HeaderParam("Content-Language") String contentLanguage,
                                      final InputStream data) throws Exception {
-        PermissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "historicalInsert", channelName));
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis);
         Content content = Content.builder()
                 .withContentKey(key)
@@ -570,7 +569,6 @@ public class ChannelContentResource {
                                          @HeaderParam("Content-Type") String contentType,
                                          @HeaderParam("Content-Language") String contentLanguage,
                                          final InputStream data) throws Exception {
-        PermissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "historicalInsertHash", channelName));
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
 
         Content content = Content.builder()

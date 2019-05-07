@@ -1,7 +1,10 @@
 package com.flightstats.hub.dao.aws;
 
-import com.flightstats.hub.app.HubBindings;
 import com.flightstats.hub.cluster.LastContentPath;
+import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.ContentProperties;
+import com.flightstats.hub.config.SpokeProperties;
+import com.flightstats.hub.config.binding.HubBindings;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.model.ChannelConfig;
@@ -12,39 +15,63 @@ import com.flightstats.hub.model.LargeContentUtils;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.TimeUtil;
 import lombok.SneakyThrows;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
-public class ClusterContentServiceTest {
-    @Mock private ClusterContentService ccs;
-    @Mock private ChannelService channelSvc;
-    @Mock private ContentDao mockSpokeWriteDao;
-    @Mock private ContentDao mockSpokeReadDao;
-    @Mock private ContentDao mockS3SingleDao;
-    @Mock private ContentDao mockS3LargeDao;
-    @Mock private ContentDao mockS3BatchDao;
-    @Mock private S3WriteQueue s3WriteQueue;
-    @Mock private ChannelConfig channelConfig;
-    @Mock private LastContentPath lastContentPath;
-    @Mock private HubUtils hubUtils;
 
+@ExtendWith(MockitoExtension.class)
+class ClusterContentServiceTest {
+    @Mock
+    private ClusterContentService ccs;
+    @Mock
+    private ChannelService channelSvc;
+    @Mock
+    private ContentDao mockSpokeWriteDao;
+    @Mock
+    private ContentDao mockSpokeReadDao;
+    @Mock
+    private ContentDao mockS3SingleDao;
+    @Mock
+    private ContentDao mockS3LargeDao;
+    @Mock
+    private ContentDao mockS3BatchDao;
+    @Mock
+    private S3WriteQueue s3WriteQueue;
+    @Mock
+    private ChannelConfig channelConfig;
+    @Mock
+    private LastContentPath lastContentPath;
+    @Mock
+    private HubUtils hubUtils;
+    @Mock
+    private AppProperties appProperties;
+    @Mock
+    private SpokeProperties spokeProperties;
+    @Mock
+    private ContentProperties contentProperties;
     private Content content;
     private ContentKey contentKey;
     private String channelName;
     private LargeContentUtils largeContentUtils;
 
-    @Before
-    public void initClusterContentService() {
+    @BeforeEach
+    void initClusterContentService() {
         channelName = "/testChannel";
         when(channelSvc.getCachedChannelConfig(channelName)).thenReturn(Optional.of(channelConfig));
         largeContentUtils = new LargeContentUtils(HubBindings.objectMapper());
@@ -53,12 +80,12 @@ public class ClusterContentServiceTest {
                 mockSpokeWriteDao, mockSpokeReadDao,
                 mockS3SingleDao, mockS3LargeDao, mockS3BatchDao,
                 s3WriteQueue, lastContentPath, hubUtils,
-                largeContentUtils);
+                largeContentUtils, appProperties, contentProperties, spokeProperties);
     }
 
     @Test
     @SneakyThrows
-    public void testSingleNormalInsertWritesContentToSpokeAndEnqueuesS3Write() {
+    void testSingleNormalInsertWritesContentToSpokeAndEnqueuesS3Write() {
         initSimpleContent(false);
         when(channelConfig.isBatch()).thenReturn(false);
 
@@ -78,7 +105,7 @@ public class ClusterContentServiceTest {
 
     @Test
     @SneakyThrows
-    public void testSingleNormalInsertDoesntWriteToS3IfBatch() {
+    void testSingleNormalInsertDoesntWriteToS3IfBatch() {
         initSimpleContent(false);
         when(channelConfig.isBatch()).thenReturn(true);
 
@@ -88,7 +115,7 @@ public class ClusterContentServiceTest {
 
     @Test
     @SneakyThrows
-    public void testLargePayloadWritesContentToS3AndIndexToSpokeAndS3() {
+    void testLargePayloadWritesContentToS3AndIndexToSpokeAndS3() {
         initSimpleContent(true);
         when(channelConfig.isBatch()).thenReturn(false);
 

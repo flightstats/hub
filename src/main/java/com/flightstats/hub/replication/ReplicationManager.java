@@ -3,6 +3,7 @@ package com.flightstats.hub.replication;
 import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.Watcher;
+import com.flightstats.hub.config.AppProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.BuiltInTag;
 import com.flightstats.hub.model.ChannelConfig;
@@ -38,11 +39,14 @@ public class ReplicationManager {
             new ThreadFactoryBuilder().setNameFormat("ReplicationManager-%d").build());
     private ChannelService channelService;
     private WatchManager watchManager;
+    private AppProperties appProperties;
 
-    @Inject
-    public ReplicationManager(ChannelService channelService, WatchManager watchManager) {
+    public ReplicationManager(
+            ChannelService channelService, WatchManager watchManager,
+            AppProperties appProperties) {
         this.channelService = channelService;
         this.watchManager = watchManager;
+        this.appProperties = appProperties;
         if (HubProperties.isReplicationServiceEnabled()) {
             register(new ReplicationService(), TYPE.AFTER_HEALTHY_START, TYPE.PRE_STOP);
         }
@@ -110,7 +114,8 @@ public class ReplicationManager {
     }
 
     private ChannelReplicator createReplicator(ChannelConfig channel) {
-        ChannelReplicator newReplicator = new ChannelReplicator(channel);
+        ChannelReplicator newReplicator =
+                new ChannelReplicator(channel, appProperties.getAppUrl(), appProperties.getAppEnv());
         channelReplicatorMap.put(channel.getDisplayName(), newReplicator);
         return newReplicator;
     }
@@ -150,12 +155,12 @@ public class ReplicationManager {
     private class ReplicationService extends AbstractIdleService {
 
         @Override
-        protected void startUp() throws Exception {
+        protected void startUp() {
             startManager();
         }
 
         @Override
-        protected void shutDown() throws Exception {
+        protected void shutDown() {
             stopped.set(true);
         }
 

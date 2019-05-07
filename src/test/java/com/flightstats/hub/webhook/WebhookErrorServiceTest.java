@@ -6,20 +6,20 @@ import com.flightstats.hub.util.SafeZooKeeperUtils;
 import com.flightstats.hub.webhook.error.WebhookErrorPruner;
 import com.flightstats.hub.webhook.error.WebhookErrorRepository;
 import org.apache.curator.framework.CuratorFramework;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
-public class WebhookErrorServiceTest {
+class WebhookErrorServiceTest {
 
     private static WebhookErrorService webhookErrorService;
 
-    @BeforeClass
-    public static void setUpClass() throws Exception {
+    @BeforeAll
+    static void setUpClass() throws Exception {
         ChannelService channelService = mock(ChannelService.class);
         CuratorFramework curator = Integration.startZooKeeper();
         SafeZooKeeperUtils zooKeeperUtils = new SafeZooKeeperUtils(curator);
@@ -30,7 +30,7 @@ public class WebhookErrorServiceTest {
     }
 
     @Test
-    public void testErrors() {
+    void testErrors() {
         for (int i = 0; i < 20; i++) {
             webhookErrorService.add("testErrors", "stuff" + i);
         }

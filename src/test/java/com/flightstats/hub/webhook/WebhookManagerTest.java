@@ -55,7 +55,7 @@ public class WebhookManagerTest {
     }
 
     @Test
-    public void testWhenWebhookIsManagedOnExactlyOneServer_doesNothing() {
+    void testWhenWebhookIsManagedOnExactlyOneServer_doesNothing() {
         when(activeWebhooks.isActiveWebhook(WEBHOOK_NAME)).thenReturn(true);
         when(activeWebhooks.getServers(WEBHOOK_NAME)).thenReturn(newHashSet("hub-01"));
 
@@ -69,7 +69,7 @@ public class WebhookManagerTest {
     }
 
     @Test
-    public void testWhenNewWebhook_getsAddedToServerManagingFewestWebhooks() {
+    void testWhenNewWebhook_getsAddedToServerManagingFewestWebhooks() {
         when(activeWebhooks.isActiveWebhook(WEBHOOK_NAME)).thenReturn(true);
         when(activeWebhooks.getServers(WEBHOOK_NAME)).thenReturn(newHashSet());
 
@@ -84,7 +84,7 @@ public class WebhookManagerTest {
     }
 
     @Test
-    public void testWhenInactiveWebhook_getsAddedToServerManagingFewestWebhooks() {
+    void testWhenInactiveWebhook_getsAddedToServerManagingFewestWebhooks() {
         when(activeWebhooks.isActiveWebhook(WEBHOOK_NAME)).thenReturn(false);
 
         when(webhookClient.runOnServerWithFewestWebhooks(WEBHOOK_NAME)).thenReturn(Optional.of(SERVER1));
@@ -98,7 +98,7 @@ public class WebhookManagerTest {
     }
 
     @Test
-    public void testWhenWebhookIsManagedByMultipleServers_isRemovedFromAllButOneServer() {
+    void testWhenWebhookIsManagedByMultipleServers_isRemovedFromAllButOneServer() {
         when(activeWebhooks.isActiveWebhook(WEBHOOK_NAME)).thenReturn(true);
         when(activeWebhooks.getServers(WEBHOOK_NAME)).thenReturn(newHashSet(SERVER1, SERVER2, SERVER3));
 
@@ -116,7 +116,7 @@ public class WebhookManagerTest {
     }
 
     @Test
-    public void testWhenWebhookHasChanged_isRunOnAServerThatItWasAlreadyRunningOn() {
+    void testWhenWebhookHasChanged_isRunOnAServerThatItWasAlreadyRunningOn() {
         when(activeWebhooks.isActiveWebhook(WEBHOOK_NAME)).thenReturn(true);
         when(activeWebhooks.getServers(WEBHOOK_NAME)).thenReturn(newHashSet(SERVER1));
         when(webhookClient.runOnOneServer(WEBHOOK_NAME, newArrayList(SERVER1))).thenReturn(Optional.of(SERVER1));
@@ -129,7 +129,7 @@ public class WebhookManagerTest {
     }
 
     @Test
-    public void testWhenWebhookHasChanged_isRunOnAServerThatItWasAlreadyRunningOnAndOnlyOneServer() {
+    void testWhenWebhookHasChanged_isRunOnAServerThatItWasAlreadyRunningOnAndOnlyOneServer() {
         // TODO: this is a weird case, because it doesn't check that it's trying to run on a server that hasn't been removed;
         // it just picks one that it was running on before it was deleted
         when(activeWebhooks.isActiveWebhook(WEBHOOK_NAME)).thenReturn(true);
@@ -149,7 +149,7 @@ public class WebhookManagerTest {
     }
 
     @Test
-    public void testSkipsTagWebhooks() {
+    void testSkipsTagWebhooks() {
         Webhook tagWebhook = Webhook.builder()
                 .name(WEBHOOK_NAME)
                 .tagUrl("http://some.tag")

@@ -1,19 +1,24 @@
 package com.flightstats.hub.dao.aws;
 
-import com.flightstats.hub.app.HubProperties;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
+import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.S3Properties;
+
+import javax.inject.Inject;
+
 
 public class S3BucketName {
+
     private final String legacyS3BucketName;
+    private final S3Properties s3Properties;
 
     @Inject
-    public S3BucketName(@Named("s3.environment") String environment, @Named("app.name") String appName) {
-        this.legacyS3BucketName = appName + "-" + environment;
+    public S3BucketName(AppProperties appProperties, S3Properties s3Properties) {
+        this.legacyS3BucketName = appProperties.getAppName() + "-" + s3Properties.getEnv();
+        this.s3Properties = s3Properties;
     }
 
     public String getS3BucketName() {
-        return HubProperties.getProperty("s3.bucket_name", legacyS3BucketName);
+        return s3Properties.getBucketName(legacyS3BucketName);
     }
 
 }

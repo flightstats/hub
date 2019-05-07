@@ -2,22 +2,23 @@ package com.flightstats.hub.model;
 
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.collect.Sets;
+import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
-import org.junit.Test;
-
+import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
-public class ChannelConfigTest {
+@Slf4j
+class ChannelConfigTest {
 
     @Test
-    public void testDefaults() {
+    void testDefaults() {
         ChannelConfig config = ChannelConfig.builder().name("defaults").build();
         assertDefaults(config);
         ChannelConfig copy = config.toBuilder().build();
@@ -26,7 +27,7 @@ public class ChannelConfigTest {
     }
 
     @Test
-    public void testJsonDefaults() {
+    void testJsonDefaults() {
         assertDefaults(ChannelConfig.createFromJson("{\"name\": \"defaults\"}"));
     }
 
@@ -42,13 +43,13 @@ public class ChannelConfigTest {
     }
 
     @Test
-    public void testDescription() {
+    void testDescription() {
         ChannelConfig config = ChannelConfig.builder().description("some thing").build();
         assertEquals("some thing", config.getDescription());
     }
 
     @Test
-    public void testDescriptionCopy() {
+    void testDescriptionCopy() {
         ChannelConfig config = ChannelConfig.builder().description("some copy").build();
         ChannelConfig copy = config.toBuilder().build();
         assertEquals("some copy", copy.getDescription());
@@ -56,7 +57,7 @@ public class ChannelConfigTest {
     }
 
     @Test
-    public void testTags() {
+    void testTags() {
         List<String> tags = Arrays.asList("one", "two", "three", "4 four");
         ChannelConfig config = ChannelConfig.builder().tags(tags).build();
         assertEquals(4, config.getTags().size());
@@ -64,7 +65,7 @@ public class ChannelConfigTest {
     }
 
     @Test
-    public void testTagsCopy() {
+    void testTagsCopy() {
         List<String> tags = Arrays.asList("one", "two", "three", "4 four");
         ChannelConfig config = ChannelConfig.builder().tags(tags).build();
         ChannelConfig copy = config.toBuilder().build();
@@ -73,14 +74,14 @@ public class ChannelConfigTest {
     }
 
     @Test
-    public void testReplicationSource() {
+    void testReplicationSource() {
         String replicationSource = "http://hub/channel/blah";
         ChannelConfig config = ChannelConfig.builder().replicationSource(replicationSource).build();
         assertEquals(replicationSource, config.getReplicationSource());
     }
 
     @Test
-    public void testReplicationSourceCopy() {
+    void testReplicationSourceCopy() {
         String replicationSource = "http://hub/channel/blah";
         ChannelConfig config = ChannelConfig.builder().replicationSource(replicationSource).build();
         ChannelConfig copy = config.toBuilder().build();
@@ -89,7 +90,7 @@ public class ChannelConfigTest {
     }
 
     @Test
-    public void testTypeCopy() {
+    void testTypeCopy() {
         ChannelConfig config = ChannelConfig.builder().storage("BOTH").build();
         ChannelConfig copy = config.toBuilder().build();
         assertEquals("BOTH", copy.getStorage());
@@ -97,7 +98,7 @@ public class ChannelConfigTest {
     }
 
     @Test
-    public void testHasChanged() {
+    void testHasChanged() {
         ChannelConfig defaults = ChannelConfig.builder().name("defaults").build();
         ChannelConfig hasCheez = ChannelConfig.builder().name("hasCheez").build();
 
@@ -124,7 +125,7 @@ public class ChannelConfigTest {
     }
 
     @Test
-    public void testCopy() {
+    void testCopy() {
         ChannelConfig config = ChannelConfig.builder()
                 .owner("ABC")
                 .description("something something")
@@ -143,7 +144,7 @@ public class ChannelConfigTest {
     }
 
     @Test
-    public void testEnforceChannelRetention() {
+    void testEnforceChannelRetention() {
         ChannelConfig config = ChannelConfig.builder()
                 .owner("ABC")
                 .description("something something")
@@ -168,7 +169,7 @@ public class ChannelConfigTest {
     }
 
     @Test
-    public void testMutableTime() {
+    void testMutableTime() {
         ChannelConfig defaults = ChannelConfig.builder().name("defaults").build();
         DateTime mutableTime = TimeUtil.now();
         ChannelConfig channelConfig = defaults.toBuilder().mutableTime(mutableTime).build();
@@ -184,13 +185,13 @@ public class ChannelConfigTest {
     }
 
     @Test
-    public void testZeroBytes() {
+    void testZeroBytes() {
         ChannelConfig testZeroBytes = ChannelConfig.builder().name("testZeroBytes").allowZeroBytes(false).build();
         assertFalse(testZeroBytes.isAllowZeroBytes());
     }
 
     @Test
-    public void testSecondaryMetricsReporting_defaultEmpty() {
+    void testSecondaryMetricsReporting_defaultEmpty() {
         ChannelConfig testSecondaryMetricsNull = ChannelConfig
                 .builder()
                 .name("testSecondaryMetrics0")
@@ -199,7 +200,7 @@ public class ChannelConfigTest {
     }
 
     @Test
-    public void testSecondaryMetricsReporting_built() {
+    void testSecondaryMetricsReporting_built() {
         ChannelConfig testSecondaryMetrics = ChannelConfig
                 .builder()
                 .name("testSecondaryMetrics1")
@@ -209,7 +210,7 @@ public class ChannelConfigTest {
     }
 
     @Test
-    public void testSecondaryMetricsReportingUpdateFromJson_updated() {
+    void testSecondaryMetricsReportingUpdateFromJson_updated() {
         ChannelConfig testSecondaryMetrics = ChannelConfig
                 .builder()
                 .name("testSecondaryMetrics2")

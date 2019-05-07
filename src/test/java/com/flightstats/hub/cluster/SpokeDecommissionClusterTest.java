@@ -1,38 +1,41 @@
 package com.flightstats.hub.cluster;
 
-import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.config.PropertiesLoader;
+import com.flightstats.hub.config.SpokeProperties;
 import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.test.Integration;
 import org.apache.curator.framework.CuratorFramework;
-import org.junit.After;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class SpokeDecommissionClusterTest {
-
-    private static CuratorFramework curator;
+class SpokeDecommissionClusterTest {
+    private static final SpokeProperties spokeProperties = new SpokeProperties(PropertiesLoader.getInstance());
     private static SpokeDecommissionCluster cluster;
 
-    @BeforeClass
-    public static void setUpClass() throws Exception {
-        curator = Integration.startZooKeeper();
-        cluster = new SpokeDecommissionCluster(curator);
+    @BeforeAll
+    static void setUpClass() throws Exception {
+        CuratorFramework curator = Integration.startZooKeeper();
+        cluster = new SpokeDecommissionCluster(curator,
+                new SpokeProperties(PropertiesLoader.getInstance()));
     }
 
-    @After
-    public void afterTest() throws Exception {
+    @AfterEach
+    void afterTest() {
         cluster.doNotRestart();
     }
 
     @Test
-    public void testDecommission() throws Exception {
+    void testDecommission() throws Exception {
         cluster.decommission();
         assertTrue(cluster.withinSpokeExists());
         assertFalse(cluster.doNotRestartExists());
 
-        assertEquals(HubProperties.getSpokeTtlMinutes(SpokeStore.WRITE), cluster.getDoNotRestartMinutes(), 1);
+        assertEquals(spokeProperties.getTtlMinutes(SpokeStore.WRITE), cluster.getDoNotRestartMinutes(), 1);
 
         cluster.doNotRestart();
         assertFalse(cluster.withinSpokeExists());

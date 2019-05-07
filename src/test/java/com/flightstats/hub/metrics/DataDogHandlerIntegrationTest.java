@@ -7,9 +7,9 @@ import com.flightstats.hub.util.TimeUtil;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -19,13 +19,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.StringContains.containsString;
 import static org.hamcrest.number.IsCloseTo.closeTo;
 
-public class DataDogHandlerIntegrationTest {
+class DataDogHandlerIntegrationTest {
     private static List<String> writeResult;
     private static String queryResult;
     private static HttpServer httpServer;
@@ -62,8 +62,8 @@ public class DataDogHandlerIntegrationTest {
         }
     }
 
-    @Before
-    public void startMockDataDogServer() throws IOException {
+    @BeforeAll
+    static void startMockDataDogServer() throws IOException {
         httpServer = IntegrationServer.builder()
                 .testHandler(new TestHandler())
                 .bindAddress("localhost")
@@ -75,7 +75,7 @@ public class DataDogHandlerIntegrationTest {
     }
 
     @Test
-    public void testDatadogMute_mute() throws IOException {
+    void testDatadogMute_mute() throws IOException {
         MetricsConfig metricsConfig = MetricsConfig.builder()
                 .dataDogAPIKey("apiKey")
                 .dataDogAppKey("appKey")
@@ -101,8 +101,8 @@ public class DataDogHandlerIntegrationTest {
         assertThat(queryResult, containsString("application_key=appKey"));
     }
 
-    @After
-    public void shutDownServer() {
+    @AfterAll
+    static void shutDownServer() {
         httpServer.stop(0);
     }
 

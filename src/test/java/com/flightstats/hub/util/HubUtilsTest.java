@@ -8,31 +8,29 @@ import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.test.Integration;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.ByteArrayInputStream;
 import java.util.Collection;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class HubUtilsTest {
-
-    private final static Logger logger = LoggerFactory.getLogger(HubUtilsTest.class);
+@Slf4j
+class HubUtilsTest {
 
     private static final String HUT_TEST = "test_0_HubUtilsTest" + StringUtils.randomAlphaNumeric(6);
     private static HubUtils hubUtils;
     private static String channelUrl;
 
-    @BeforeClass
-    public static void setUpClass() throws Exception {
+    @BeforeAll
+    static void setUpClass() throws Exception {
         Integration.startAwsHub();
         hubUtils = HubProvider.getInstance(HubUtils.class);
         channelUrl = create();
@@ -40,14 +38,14 @@ public class HubUtilsTest {
 
     /*
     Use this to test a remote hub instance.
-    @BeforeClass
-    public static void setUpClass() throws Exception {
+    @BeforeAll
+    static void setUpClass() throws Exception {
         hubUtils = new HubUtils(null, HubBindings.buildJerseyClient());
         channelUrl = create();
     }*/
 
     @Test
-    public void testCreateInsert() {
+    void testCreateInsert() {
         ChannelConfig channel = hubUtils.getChannel(channelUrl);
         assertNotNull(channel);
         assertEquals(HUT_TEST, channel.getName());
@@ -56,7 +54,7 @@ public class HubUtilsTest {
         String data = "some data " + System.currentTimeMillis();
         ContentKey key = insertItem(channelUrl, data);
 
-        logger.info("key {}", key);
+        log.info("key {}", key);
         assertNotNull(key);
 
         Content gotContent = hubUtils.get(channelUrl, key);
@@ -82,7 +80,7 @@ public class HubUtilsTest {
     }
 
     @Test
-    public void testBulkInsert() {
+    void testBulkInsert() {
         String data = "--abcdefg\r\n" +
                 "Content-Type: text/plain\r\n" +
                 " \r\n" +
@@ -115,7 +113,7 @@ public class HubUtilsTest {
     }
 
     @Test
-    public void testQuery() {
+    void testQuery() {
         SortedSet<ContentKey> keys = new TreeSet<>();
         for (int i = 0; i < 10; i++) {
             keys.add(insertItem(channelUrl, "testQuery " + System.currentTimeMillis()));
@@ -126,8 +124,8 @@ public class HubUtilsTest {
                 .stable(false)
                 .build();
         Collection<ContentKey> foundKeys = hubUtils.query(channelUrl, timeQuery);
-        logger.info("inserted {}", keys);
-        logger.info("foundKeys {}", foundKeys);
+        log.info("inserted {}", keys);
+        log.info("foundKeys {}", foundKeys);
         assertTrue(foundKeys.containsAll(keys));
 
         runDirectionQuery(keys, keys.first(), true);
@@ -144,8 +142,8 @@ public class HubUtilsTest {
                 .build();
         foundKeys = hubUtils.query(channelUrl, nextQuery);
         foundKeys.add(startKey);
-        logger.info("inserted {}", keys);
-        logger.info("foundKeys {}", foundKeys);
+        log.info("inserted {}", keys);
+        log.info("foundKeys {}", foundKeys);
         assertTrue(foundKeys.containsAll(keys));
 
     }

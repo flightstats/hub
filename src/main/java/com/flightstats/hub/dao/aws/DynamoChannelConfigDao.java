@@ -15,8 +15,8 @@ import com.amazonaws.services.dynamodbv2.model.ResourceNotFoundException;
 import com.amazonaws.services.dynamodbv2.model.ScalarAttributeType;
 import com.amazonaws.services.dynamodbv2.model.ScanRequest;
 import com.amazonaws.services.dynamodbv2.model.ScanResult;
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
+import com.flightstats.hub.config.DynamoProperties;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -35,13 +35,17 @@ import java.util.Map;
 
 @Slf4j
 public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
-    private AmazonDynamoDB dbClient;
-    private DynamoUtils dynamoUtils;
+    private final AmazonDynamoDB dbClient;
+    private final DynamoUtils dynamoUtils;
+    private final DynamoProperties dynamoProperties;
 
     @Inject
-    public DynamoChannelConfigDao(AmazonDynamoDB dbClient, DynamoUtils dynamoUtils) {
+    public DynamoChannelConfigDao(AmazonDynamoDB dbClient,
+                                  DynamoUtils dynamoUtils,
+                                  DynamoProperties dynamoProperties) {
         this.dbClient = dbClient;
         this.dynamoUtils = dynamoUtils;
+        this.dynamoProperties = dynamoProperties;
         HubServices.register(new DynamoChannelConfigurationDaoInit());
     }
 
@@ -210,7 +214,7 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
 
     private String getTableName() {
         String legacyTableName = dynamoUtils.getLegacyTableName("channelMetaData");
-        return HubProperties.getProperty("dynamo.table_name.channel_configs", legacyTableName);
+        return dynamoProperties.getChannelConfigTableName(legacyTableName);
     }
 
     private class DynamoChannelConfigurationDaoInit extends AbstractIdleService {
@@ -220,7 +224,7 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
         }
 
         @Override
-        protected void shutDown() throws Exception {
+        protected void shutDown() {
         }
 
     }

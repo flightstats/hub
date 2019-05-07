@@ -15,16 +15,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.SortedSet;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ContentDaoUtil {
 
@@ -324,7 +325,7 @@ public class ContentDaoUtil {
 
     }
 
-    public void testEmptyQuery() throws Exception {
+    public void testEmptyQuery() {
         String channel = "testEmptyQuery" + StringUtils.randomAlphaNumeric(20);
         List<ContentKey> keys = new ArrayList<>();
         DateTime start = TimeUtil.now().minusHours(10);

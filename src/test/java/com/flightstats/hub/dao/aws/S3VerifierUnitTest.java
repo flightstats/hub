@@ -14,7 +14,7 @@ import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.MinutePath;
 import com.sun.jersey.api.client.Client;
 import org.joda.time.DateTime;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -27,7 +27,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-public class S3VerifierUnitTest {
+class S3VerifierUnitTest {
     private final LastContentPath lastContentPath = mock(LastContentPath.class);
     private final ChannelService channelService = mock(ChannelService.class);
     private final S3WriteQueue s3WriteQueue = mock(S3WriteQueue.class);
@@ -39,7 +39,7 @@ public class S3VerifierUnitTest {
     private final StatsdReporter statsdReporter = mock(StatsdReporter.class);
 
     @Test
-    public void testZKDoesNotUpdateOnAbsoluteFailure() {
+    void testZKDoesNotUpdateOnAbsoluteFailure() {
         VerifierConfig config = VerifierConfig.builder().build();
         S3Verifier s3Verifier = new S3Verifier(lastContentPath, channelService, s3WriteQueue, httpClient,  missingContentFinder, verifierRangeLookup, config, channelThreadPool, lockManager, statsdReporter);
 
@@ -61,7 +61,7 @@ public class S3VerifierUnitTest {
     }
 
     @Test
-    public void testZKUpdatesWithPartialCompletionIfVerifierFailsPartwayThroughAndLastSuccessfulWasADifferentMinute() {
+    void testZKUpdatesWithPartialCompletionIfVerifierFailsPartwayThroughAndLastSuccessfulWasADifferentMinute() {
         VerifierConfig config = VerifierConfig.builder().build();
         S3Verifier s3Verifier = new S3Verifier(lastContentPath, channelService, s3WriteQueue, httpClient,  missingContentFinder, verifierRangeLookup, config, channelThreadPool, lockManager, statsdReporter);
 
@@ -87,7 +87,7 @@ public class S3VerifierUnitTest {
     }
 
     @Test
-    public void testZKUpdatesWithPartialCompletionIfVerifierFailsPartwayThroughAMinute() {
+    void testZKUpdatesWithPartialCompletionIfVerifierFailsPartwayThroughAMinute() {
         VerifierConfig config = VerifierConfig.builder().build();
         S3Verifier s3Verifier = new S3Verifier(lastContentPath, channelService, s3WriteQueue, httpClient,  missingContentFinder, verifierRangeLookup, config, channelThreadPool, lockManager, statsdReporter);
 
@@ -120,7 +120,7 @@ public class S3VerifierUnitTest {
     }
 
     @Test
-    public void testZKUpdatedOnSuccess() {
+    void testZKUpdatedOnSuccess() {
         VerifierConfig config = VerifierConfig.builder().build();
         S3Verifier s3Verifier = new S3Verifier(lastContentPath, channelService, s3WriteQueue, httpClient,  missingContentFinder, verifierRangeLookup, config, channelThreadPool, lockManager, statsdReporter);
 

@@ -2,9 +2,9 @@ package com.flightstats.hub.spoke;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.flightstats.hub.app.HubHost;
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.cluster.Cluster;
 import com.flightstats.hub.cluster.CuratorCluster;
+import com.flightstats.hub.config.ContentProperties;
 import com.flightstats.hub.dao.ContentKeyUtil;
 import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.dao.QueryResult;
@@ -48,12 +48,15 @@ public class SpokeManager implements SpokeClusterHealthCheck, SpokeChronologySto
     private final CuratorCluster cluster;
     private final StatsdReporter statsdReporter;
     private final ExecutorService executorService;
-    private final int stableSeconds = HubProperties.getProperty("app.stable_seconds", 5);
+    private final ContentProperties contentProperties;
 
     @Inject
-    public SpokeManager(@Named("SpokeCuratorCluster") CuratorCluster cluster, StatsdReporter statsdReporter) {
+    public SpokeManager(@Named("SpokeCuratorCluster") CuratorCluster cluster,
+                        StatsdReporter statsdReporter,
+                        ContentProperties contentProperties) {
         this.cluster = cluster;
         this.statsdReporter = statsdReporter;
+        this.contentProperties = contentProperties;
         executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("RemoteSpokeStore-%d").build());
     }
 
@@ -80,14 +83,14 @@ public class SpokeManager implements SpokeClusterHealthCheck, SpokeChronologySto
                             traces.log(log);
                         }
                     } catch (Exception e) {
-                        log.warn("unexpected exception " + servers, e);
+                        logger.warn("unexpected exception " + servers, e);
                     }
                 }
             });
         }
         if (quorumLatch.await(5, TimeUnit.SECONDS)) {
             threadPool.shutdown();
-            log.info("completed warmup calls to Spoke {}", servers);
+            logger.info("completed warmup calls to Spoke {}", servers);
         } else {
             threadPool.shutdown();
             throw new RuntimeException("unable to properly connect to Spoke " + servers);
@@ -171,7 +174,7 @@ public class SpokeManager implements SpokeClusterHealthCheck, SpokeChronologySto
             });
         }
         try {
-            quorumLatch.await(stableSeconds, TimeUnit.SECONDS);
+            quorumLatch.await(contentProperties.getStableSeconds(), TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             throw new RuntimeInterruptedException(e);
         }

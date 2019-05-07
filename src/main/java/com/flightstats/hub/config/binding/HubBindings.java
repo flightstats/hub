@@ -1,4 +1,4 @@
-package com.flightstats.hub.app;
+package com.flightstats.hub.config.binding;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ScheduledReporter;
@@ -6,6 +6,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.flightstats.hub.app.FinalCheck;
+import com.flightstats.hub.app.HubVersion;
+import com.flightstats.hub.app.InFlightService;
+import com.flightstats.hub.app.NamedDependencies;
+import com.flightstats.hub.app.ShutdownManager;
 import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.cluster.Cluster;
 import com.flightstats.hub.cluster.CuratorCluster;
@@ -15,6 +20,10 @@ import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.cluster.SpokeDecommissionCluster;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.ZooKeeperState;
+import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.SpokeProperties;
+import com.flightstats.hub.config.SystemProperties;
+import com.flightstats.hub.config.ZookeeperProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.aws.s3Verifier.VerifierConfig;
@@ -64,15 +73,13 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.sun.jersey.api.client.Client;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.ensemble.fixed.FixedEnsembleProvider;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.BoundedExponentialBackoffRetry;
-import org.apache.zookeeper.data.Stat;
 import org.eclipse.jetty.websocket.jsr356.ClientContainer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.websocket.WebSocketContainer;
 import java.util.Date;
@@ -80,66 +87,90 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 public class HubBindings extends AbstractModule {
-    private final static Logger logger = LoggerFactory.getLogger(HubBindings.class);
+    private static final String READ = "READ";
+    private static final String WRITE = "WRITE";
+    private static final String READ_CACHE = "ReadCache";
+    private static final String WRITE_CACHE = "WriteCache";
 
     @Singleton
     @Provides
-    public static CuratorFramework buildCurator(@Named("app.name") String appName, @Named("app.environment") String environment,
-                                                @Named("zookeeper.connection") String zkConnection,
-                                                ZooKeeperState zooKeeperState) {
-        logger.info("connecting to zookeeper(s) at {} with name {} env {}", zkConnection, appName, environment);
-        FixedEnsembleProvider ensembleProvider = new FixedEnsembleProvider(zkConnection);
+    public static CuratorFramework buildCurator(ZooKeeperState zooKeeperState,
+                                                AppProperties appProperties,
+                                                ZookeeperProperties zookeeperProperties) {
+
+        log.info("connecting to zookeeper(s) at {} with name {} env {}",
+                zookeeperProperties.getConnection(),
+                appProperties.getAppName(),
+                appProperties.getEnv());
+
+        FixedEnsembleProvider ensembleProvider = new FixedEnsembleProvider(zookeeperProperties.getConnection());
         CuratorFramework curatorFramework = CuratorFrameworkFactory.builder()
-                .namespace(appName + "-" + environment)
+                .namespace(appProperties.getAppName() + "-" + appProperties.getEnv())
                 .ensembleProvider(ensembleProvider)
-                .retryPolicy(buildRetryPolicy()).build();
+                .retryPolicy(buildRetryPolicy(zookeeperProperties)).build();
         curatorFramework.getConnectionStateListenable().addListener(zooKeeperState.getStateListener());
         curatorFramework.start();
 
         try {
-            Stat stat = curatorFramework.checkExists().forPath("/startup");
+            curatorFramework.checkExists().forPath("/startup");
         } catch (Exception e) {
-            logger.warn("unable to access zookeeper");
+            log.warn("unable to access zookeeper");
             throw new RuntimeException("unable to access zookeeper");
         }
         return curatorFramework;
     }
 
-    private static RetryPolicy buildRetryPolicy() {
+    private static RetryPolicy buildRetryPolicy(ZookeeperProperties zookeeperProperties) {
         return new BoundedExponentialBackoffRetry(
-                HubProperties.getProperty("zookeeper.baseSleepTimeMs", 10),
-                HubProperties.getProperty("zookeeper.maxSleepTimeMs", 10000),
-                HubProperties.getProperty("zookeeper.maxRetries", 20));
+                zookeeperProperties.getBaseSleepTimeInMillis(),
+                zookeeperProperties.getMaxSleepTimeInMillis(),
+                zookeeperProperties.getMaxRetries());
     }
 
     @Singleton
     @Provides
-    public static Client buildJerseyClient() {
-        return create(true);
+    public static Client buildJerseyClient(SystemProperties systemProperties) {
+        return create(systemProperties, true);
     }
 
     @Named("NoRedirects")
     @Singleton
     @Provides
-    public static Client buildJerseyClientNoRedirects() {
-        return create(false);
+    public static Client buildJerseyClientNoRedirects(SystemProperties systemProperties) {
+        return create(systemProperties, false);
     }
 
-    private static Client create(boolean followRedirects) {
-        int connectTimeoutMillis = (int) TimeUnit.SECONDS.toMillis(HubProperties.getProperty("http.connect.timeout.seconds", 30));
-        int readTimeoutMillis = (int) TimeUnit.SECONDS.toMillis(HubProperties.getProperty("http.read.timeout.seconds", 120));
+    private static Client create(SystemProperties systemProperties, boolean followRedirects) {
+        int connectTimeoutMillis = (int) TimeUnit.SECONDS.toMillis(systemProperties.getHttpConnectTimeoutInSec());
+        int readTimeoutMillis = (int) TimeUnit.SECONDS.toMillis(systemProperties.getHttpReadTimeoutInSec());
         Client client = RestClient.createClient(connectTimeoutMillis, readTimeoutMillis, followRedirects, true);
-        client.addFilter(new RetryClientFilter());
+        client.addFilter(new RetryClientFilter(systemProperties));
         return client;
     }
 
     @Named("HubCluster")
     @Singleton
     @Provides
-    public static Cluster buildHubCluster(CuratorFramework curator) throws Exception {
-        return new CuratorCluster(curator, "/HubCluster", true, false, new DecommissionCluster() {
-        });
+    public static Cluster buildHubCluster(CuratorFramework curator,
+                                          AppProperties appProperties,
+                                          SpokeProperties spokeProperties) throws Exception {
+        return new CuratorCluster(curator,
+                "/HubCluster",
+                true,
+                false,
+                new DecommissionCluster() {
+                },
+                appProperties,
+                spokeProperties);
+    }
+
+    @Named("SpokeCuratorCluster")
+    @Singleton
+    @Provides
+    public static CuratorCluster buildSpokeCuratorCluster(@Named("SpokeCluster") Cluster cluster) throws Exception {
+        return (CuratorCluster) cluster;
     }
 
     @Named("HubCuratorCluster")
@@ -152,16 +183,20 @@ public class HubBindings extends AbstractModule {
     @Named("SpokeCluster")
     @Singleton
     @Provides
-    public static Cluster buildSpokeCluster(CuratorFramework curator, SpokeDecommissionCluster spokeDecommissionCluster) throws Exception {
-        return new CuratorCluster(curator, "/SpokeCluster", false, true, spokeDecommissionCluster);
+    public static Cluster buildSpokeCluster(CuratorFramework curator,
+                                            SpokeDecommissionCluster spokeDecommissionCluster,
+                                            AppProperties appProperties,
+                                            SpokeProperties spokeProperties) throws Exception {
+        return new CuratorCluster(
+                curator,
+                "/SpokeCluster",
+                false,
+                true,
+                spokeDecommissionCluster,
+                appProperties,
+                spokeProperties);
     }
 
-    @Named("SpokeCuratorCluster")
-    @Singleton
-    @Provides
-    public static CuratorCluster buildSpokeCuratorCluster(@Named("SpokeCluster") Cluster cluster) throws Exception {
-        return (CuratorCluster) cluster;
-    }
 
     @Singleton
     @Provides
@@ -207,8 +242,6 @@ public class HubBindings extends AbstractModule {
 
     @Override
     protected void configure() {
-        Names.bindProperties(binder(), HubProperties.getProperties());
-
         bind(SecretFilter.class).asEagerSingleton();
         bind(HubHealthCheck.class).asEagerSingleton();
         bind(HubClusterRegister.class).asEagerSingleton();
@@ -245,13 +278,6 @@ public class HubBindings extends AbstractModule {
         bind(StatsDReporterLifecycle.class).asEagerSingleton();
         bind(CustomMetricsLifecycle.class).asEagerSingleton();
 
-        bind(ContentDao.class)
-                .annotatedWith(Names.named(ContentDao.WRITE_CACHE))
-                .to(SpokeWriteContentDao.class).asEagerSingleton();
-        bind(ContentDao.class)
-                .annotatedWith(Names.named(ContentDao.READ_CACHE))
-                .to(SpokeReadContentDao.class).asEagerSingleton();
-
         bind(VerifierConfig.class)
                 .toProvider(VerifierConfigProvider.class)
                 .asEagerSingleton();
@@ -260,18 +286,38 @@ public class HubBindings extends AbstractModule {
                 .annotatedWith(Names.named("spokeWriteStoreConfig"))
                 .toProvider(SpokeWriteStoreConfigProvider.class)
                 .asEagerSingleton();
+    }
 
-        bind(FileSpokeStore.class)
-                .annotatedWith(Names.named(SpokeStore.WRITE.name()))
-                .toInstance(new FileSpokeStore(
-                        HubProperties.getSpokePath(SpokeStore.WRITE),
-                        HubProperties.getSpokeTtlMinutes(SpokeStore.WRITE)));
+    a;  // This is broken.
+    @Named(WRITE_CACHE)
+    @Provides
+    @Singleton
+    public ContentDao contentDao(RemoteSpokeStore remoteSpokeStore,
+                                                     SpokeProperties spokeProperties) {
+        return new SpokeWriteContentDao(remoteSpokeStore, spokeProperties);
+    }
 
-        bind(FileSpokeStore.class)
-                .annotatedWith(Names.named(SpokeStore.READ.name()))
-                .toInstance(new FileSpokeStore(
-                        HubProperties.getSpokePath(SpokeStore.READ),
-                        HubProperties.getSpokeTtlMinutes(SpokeStore.READ)));
+    @Named(READ_CACHE)
+    @Provides
+    @Singleton
+    public ContentDao contentDao(RemoteSpokeStore remoteSpokeStore) {
+        return new SpokeReadContentDao(remoteSpokeStore);
+    }
+
+    @Named(WRITE)
+    @Provides
+    public FileSpokeStore fileSpokeStoreWrite(SpokeProperties spokeProperties) {
+        return new FileSpokeStore(
+                spokeProperties.getPath(SpokeStore.WRITE),
+                spokeProperties.getTtlMinutes(SpokeStore.WRITE));
+    }
+
+    @Named(READ)
+    @Provides
+    public FileSpokeStore fileSpokeStoreRead(SpokeProperties spokeProperties) {
+        return new FileSpokeStore(
+                spokeProperties.getPath(SpokeStore.READ),
+                spokeProperties.getTtlMinutes(SpokeStore.READ));
     }
 
 }
