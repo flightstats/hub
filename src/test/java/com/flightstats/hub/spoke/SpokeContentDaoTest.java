@@ -5,9 +5,10 @@ import com.flightstats.hub.config.SpokeProperties;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.Commander;
-import com.google.common.base.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;

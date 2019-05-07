@@ -272,13 +272,14 @@ public class HubBindings extends AbstractModule {
                 .annotatedWith(Names.named("spokeWriteStoreConfig"))
                 .toProvider(SpokeWriteStoreConfigProvider.class)
                 .asEagerSingleton();
+
     }
 
     @Named(WRITE_CACHE)
     @Provides
     @Singleton
     public ContentDao contentDao(RemoteSpokeStore remoteSpokeStore,
-                                                     SpokeProperties spokeProperties) {
+                                 SpokeProperties spokeProperties) {
         return new SpokeWriteContentDao(remoteSpokeStore, spokeProperties);
     }
 
