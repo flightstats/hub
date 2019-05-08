@@ -65,6 +65,19 @@ public class PropertiesLoader {
                 throw new RuntimeException(e.getMessage());
             }
         }
+
+        if (getProperty("hub.read.only", false)) {
+            ensureReadOnlyPropertiesAreSet();
+        }
+    }
+
+    private void ensureReadOnlyPropertiesAreSet() {
+        properties.put("webhook.leadership.enabled", "false");
+        properties.put("replication.enabled", "false");
+        properties.put("s3.batch.management.enabled", "false");
+        properties.put("s3.config.management.enabled", "false");
+        properties.put("channel.latest.update.svc.enabled", "true");
+        properties.put("s3Verifier.run", "false");
     }
 
     private void setDefaultProperties() {

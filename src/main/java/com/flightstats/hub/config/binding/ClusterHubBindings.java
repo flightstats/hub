@@ -78,8 +78,6 @@ public class ClusterHubBindings extends AbstractModule {
         bind(PeriodicMetricEmitter.class).asEagerSingleton();
         bind(PeriodicMetricEmitterLifecycle.class).asEagerSingleton();
 
-        // TODO:  Is anything creating the SpokeTTLEnforcers now?
-
         bind(S3WriteQueue.class);
         bind(S3Config.class).asEagerSingleton();
         bind(S3WriteQueueLifecycle.class).asEagerSingleton();

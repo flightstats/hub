@@ -27,9 +27,18 @@ public class PermissionsChecker {
     }
 
     public void checkWebhookLeadershipPermission(String failureMessage) {
+        this.checkWebhookLeadershipPermission(failureMessage, true);
+    }
+
+    public boolean checkWebhookLeadershipPermission(String failureMessage, boolean errorOnFalse) {
         if (!webhookProperties.isWebhookLeadershipEnabled()) {
-            throw new ForbiddenRequestException(failureMessage);
+            if (errorOnFalse) {
+                throw new ForbiddenRequestException(failureMessage);
+            } else {
+                return false;
+            }
         }
+        return true;
     }
 
 }
