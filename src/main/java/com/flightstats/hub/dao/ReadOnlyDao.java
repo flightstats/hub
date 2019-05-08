@@ -31,4 +31,9 @@ public class ReadOnlyDao<T extends NamedType> implements Dao<T> {
     public void delete(String name) {
         throw new UnsupportedOperationException("Unable to delete type due to r/o DAO: " + name);
     }
+
+    @Override
+    public boolean refresh() {
+        return delegate.refresh();
+    }
 }
