@@ -26,7 +26,6 @@ import java.util.stream.Stream;
 @Singleton
 @Slf4j
 public class SpokeTtlEnforcer {
-
     private final SpokeStore spokeStore;
     private final ChannelService channelService;
     private final SpokeContentDao spokeContentDao;
@@ -45,7 +44,6 @@ public class SpokeTtlEnforcer {
         this.channelService = channelService;
         this.spokeContentDao = spokeContentDao;
         this.statsdReporter = statsdReporter;
-
         this.storagePath = spokeProperties.getPath(spokeStore);
         this.ttlMinutes = spokeProperties.getTtlMinutes(spokeStore) + 1;
         if (spokeProperties.isTtlEnforced()) {

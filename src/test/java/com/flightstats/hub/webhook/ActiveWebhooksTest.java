@@ -4,7 +4,13 @@ import com.flightstats.hub.app.HubHost;
 
 import java.util.Set;
 import java.util.stream.Stream;
+
+import com.flightstats.hub.config.WebhookProperties;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static com.google.common.collect.Sets.newHashSet;
 import static java.lang.String.format;
@@ -17,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class ActiveWebhooksTest {
     private static final int HUB_PORT = HubHost.getLocalPort();
 
@@ -30,13 +37,20 @@ class ActiveWebhooksTest {
 
     private final WebhookLeaderLocks webhookLeaderLocks = mock(WebhookLeaderLocks.class);
     private final ActiveWebhookSweeper activeWebhookSweeper = mock(ActiveWebhookSweeper.class);
+    @Mock
+    private WebhookProperties webhookProperties;
+
+    @BeforeEach
+    public void setup() {
+        when(webhookProperties.isWebhookLeadershipEnabled()).thenReturn(true);
+    }
 
     @Test
     void testGetServers_returnsSeveralForAWebhook() throws Exception {
         when(webhookLeaderLocks.getServerLeases(WEBHOOK_WITH_A_FEW_LEASES))
                 .thenReturn(newHashSet(SERVER_IP2, SERVER_IP1));
 
-        ActiveWebhooks activeWebhooks = new ActiveWebhooks(webhookLeaderLocks, activeWebhookSweeper);
+        ActiveWebhooks activeWebhooks = new ActiveWebhooks(webhookLeaderLocks, activeWebhookSweeper, webhookProperties);
         Set<String> servers = activeWebhooks.getServers(WEBHOOK_WITH_A_FEW_LEASES);
 
         assertEquals(getServersWithPort(SERVER_IP1, SERVER_IP2), servers);
@@ -48,7 +62,7 @@ class ActiveWebhooksTest {
         when(webhookLeaderLocks.getServerLeases(EMPTY_WEBHOOK))
                 .thenReturn(newHashSet());
 
-        ActiveWebhooks activeWebhooks = new ActiveWebhooks(webhookLeaderLocks, activeWebhookSweeper);
+        ActiveWebhooks activeWebhooks = new ActiveWebhooks(webhookLeaderLocks, activeWebhookSweeper, webhookProperties);
         Set<String> servers = activeWebhooks.getServers(EMPTY_WEBHOOK);
 
         assertEquals(newHashSet(), servers);
@@ -59,7 +73,7 @@ class ActiveWebhooksTest {
         when(webhookLeaderLocks.getWebhooks())
                 .thenReturn(newHashSet(WEBHOOK_WITH_A_FEW_LEASES, WEBHOOK_WITH_LEASE, WEBHOOK_WITH_LOCK));
 
-        ActiveWebhooks activeWebhooks = new ActiveWebhooks(webhookLeaderLocks, activeWebhookSweeper);
+        ActiveWebhooks activeWebhooks = new ActiveWebhooks(webhookLeaderLocks, activeWebhookSweeper, webhookProperties);
         assertTrue(activeWebhooks.isActiveWebhook(WEBHOOK_WITH_LEASE));
     }
 
@@ -69,7 +83,7 @@ class ActiveWebhooksTest {
         when(webhookLeaderLocks.getWebhooks())
                 .thenReturn(newHashSet(WEBHOOK_WITH_A_FEW_LEASES, WEBHOOK_WITH_LEASE, WEBHOOK_WITH_LOCK));
 
-        ActiveWebhooks activeWebhooks = new ActiveWebhooks(webhookLeaderLocks, activeWebhookSweeper);
+        ActiveWebhooks activeWebhooks = new ActiveWebhooks(webhookLeaderLocks, activeWebhookSweeper, webhookProperties);
         assertFalse(activeWebhooks.isActiveWebhook(EMPTY_WEBHOOK));
     }
 

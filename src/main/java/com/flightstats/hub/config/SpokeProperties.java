@@ -15,6 +15,8 @@ public class SpokeProperties {
         this.propertiesLoader = propertiesLoader;
     }
 
+    public boolean isReplicationEnabled() { return this.propertiesLoader.getProperty("replication.enabled", true); }
+
     public int getTtlMinutes(SpokeStore spokeStore) {
         String property = "spoke." + spokeStore + ".ttlMinutes";
         String fallbackProperty = "spoke.ttlMinutes";

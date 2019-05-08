@@ -174,7 +174,7 @@ public class HubMain {
                 StatsDReporterLifecycle.class)
                 .map(injector::getInstance)
                 .collect(Collectors.toList());
-        if (storageBackend == StorageBackend.aws) {
+        if (storageBackend == StorageBackend.aws && !appProperties.isReadOnly()) {
             services.add(injector.getInstance(S3WriteQueueLifecycle.class));
         }
         return services;
@@ -203,6 +203,7 @@ public class HubMain {
         log.info("starting with hub.type {}", storageBackend);
 
         modules.add(getGuiceModuleForHubType(storageBackend.toString()));
+
         return modules;
     }
 
