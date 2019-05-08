@@ -3,6 +3,7 @@ package com.flightstats.hub.dao;
 import com.flightstats.hub.app.InFlightService;
 import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.cluster.LastContentPath;
+import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.config.ContentProperties;
 import com.flightstats.hub.dao.aws.MultiPartParser;
 import com.flightstats.hub.exception.ContentTooLargeException;
@@ -75,6 +76,7 @@ public class ChannelService {
             LastContentPath lastContentPath,
             InFlightService inFlightService,
             TimeService timeService,
+            ContentProperties contentProperties,
             StatsdReporter statsdReporter) {
         this.contentService = contentService;
         this.channelConfigDao = channelConfigDao;
@@ -83,6 +85,7 @@ public class ChannelService {
         this.lastContentPath = lastContentPath;
         this.inFlightService = inFlightService;
         this.timeService = timeService;
+        this.contentProperties = contentProperties;
         this.statsdReporter = statsdReporter;
     }
 
@@ -101,10 +104,10 @@ public class ChannelService {
 
     private void notify(ChannelConfig newConfig, ChannelConfig oldConfig) {
         if (newConfig.isReplicating()) {
-            replicationManager.notifyWatchers();
+            notifyReplicationWatchers();
         } else if (oldConfig != null) {
             if (oldConfig.isReplicating()) {
-                replicationManager.notifyWatchers();
+                notifyReplicationWatchers();
             }
         }
         if (newConfig.isHistorical()) {

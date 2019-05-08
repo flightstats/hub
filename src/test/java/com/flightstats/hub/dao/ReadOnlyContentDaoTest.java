@@ -6,24 +6,25 @@ import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.model.TimeQuery;
 import lombok.SneakyThrows;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class ReadOnlyContentDaoTest {
     @Mock private Traces traces;
     @Mock private ContentDao delegate;
     private ReadOnlyContentDao dao;
 
-    @Before
+    @BeforeEach
     public void setup() {
         this.dao = new ReadOnlyContentDao(delegate);
     }
@@ -45,19 +46,19 @@ public class ReadOnlyContentDaoTest {
         verify(delegate, times(1)).queryByTime(any(TimeQuery.class));
     }
 
-    @Test(expected=UnsupportedOperationException.class)
+    @Test
     @SneakyThrows
     public void testPreventsInsert() {
-        dao.insert("channelName", mock(Content.class));
+        assertThrows(UnsupportedOperationException.class, () -> dao.insert("channelName", mock(Content.class)));
     }
 
-    @Test(expected=UnsupportedOperationException.class)
+    @Test
     public void testPreventsDelete() {
-        dao.delete("channelName");
+        assertThrows(UnsupportedOperationException.class, () -> dao.delete("channelName"));
     }
 
-    @Test(expected=UnsupportedOperationException.class)
+    @Test
     public void testPreventsDeleteBefore() {
-        dao.deleteBefore("channelName", ContentKey.NONE);
+        assertThrows(UnsupportedOperationException.class, () -> dao.deleteBefore("channelName", ContentKey.NONE));
     }
 }

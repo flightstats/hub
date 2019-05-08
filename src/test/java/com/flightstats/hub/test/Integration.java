@@ -45,8 +45,8 @@ public class Integration {
     }
 
     public static synchronized Injector startAwsHub() throws Exception {
-
         PropertiesLoader.getInstance().setProperty("spoke.ttlMinutes", "240");
+
         if (injector != null) {
             testingServer.restart();
             return injector;

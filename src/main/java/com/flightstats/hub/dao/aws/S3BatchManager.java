@@ -1,8 +1,8 @@
 package com.flightstats.hub.dao.aws;
 
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.S3Properties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.replication.S3Batch;
@@ -34,14 +34,15 @@ public class S3BatchManager {
                           ChannelService channelService,
                           HubUtils hubUtils,
                           ActiveWebhooks activeWebhooks,
-                          AppProperties appProperties) {
+                          AppProperties appProperties,
+                          S3Properties s3Properties) {
         this.webhookService = webhookService;
         this.channelService = channelService;
         this.hubUtils = hubUtils;
         this.activeWebhooks = activeWebhooks;
         this.appProperties = appProperties;
 
-        if (HubProperties.isS3BatchManagementEnabled()) {
+        if (s3Properties.isBatchManagementEnabled()) {
             HubServices.register(new S3BatchManagerService(), HubServices.TYPE.AFTER_HEALTHY_START);
         }
     }

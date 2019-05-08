@@ -9,6 +9,7 @@ import com.flightstats.hub.model.ContentPath;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 
+import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -38,10 +39,16 @@ public class InternalWebhookResource {
     private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private final static WebhookService webhookService = HubProvider.getInstance(WebhookService.class);
     private final static LocalWebhookManager LOCAL_WEBHOOK_MANAGER = HubProvider.getInstance(LocalWebhookManager.class);
-    public static final String READ_ONLY_FAILURE_MESSAGE = "attempted to internally %s for webhook on node with leadership disabled %s";
+    private final static String READ_ONLY_FAILURE_MESSAGE = "attempted to internally %s for webhook on node with leadership disabled %s";
+    private final PermissionsChecker permissionsChecker;
 
     @Context
     private UriInfo uriInfo;
+
+    @Inject
+    public InternalWebhookResource(PermissionsChecker permissionsChecker) {
+        this.permissionsChecker = permissionsChecker;
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -142,7 +149,7 @@ public class InternalWebhookResource {
     @Path("/run/{name}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response run(@PathParam("name") String name) {
-        PermissionsChecker.checkWebhookLeadershipPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "run", name));
+        permissionsChecker.checkWebhookLeadershipPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "run", name));
         return attemptRun(name);
     }
 
@@ -150,7 +157,7 @@ public class InternalWebhookResource {
     @Path("/delete/{name}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response delete(@PathParam("name") String name) {
-        PermissionsChecker.checkWebhookLeadershipPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "delete", name));
+        permissionsChecker.checkWebhookLeadershipPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "delete", name));
         return attemptDelete(name);
     }
 

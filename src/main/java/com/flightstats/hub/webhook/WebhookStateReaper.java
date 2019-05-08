@@ -1,7 +1,7 @@
 package com.flightstats.hub.webhook;
 
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.cluster.LastContentPath;
+import com.flightstats.hub.config.WebhookProperties;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -16,20 +16,23 @@ class WebhookStateReaper {
     private final WebhookContentPathSet webhookInProcess;
     private final WebhookErrorService webhookErrorService;
     private final WebhookLeaderLocks webhookLeaderLocks;
+    private final WebhookProperties webhookProperties;
 
     @Inject
     WebhookStateReaper(LastContentPath lastContentPath,
                        WebhookContentPathSet webhookInProcess,
                        WebhookErrorService webhookErrorService,
-                       WebhookLeaderLocks webhookLeaderLocks) {
+                       WebhookLeaderLocks webhookLeaderLocks,
+                       WebhookProperties webhookProperties) {
         this.lastContentPath = lastContentPath;
         this.webhookInProcess = webhookInProcess;
         this.webhookErrorService = webhookErrorService;
         this.webhookLeaderLocks = webhookLeaderLocks;
+        this.webhookProperties = webhookProperties;
     }
 
     void delete(String webhook) {
-        if (!HubProperties.isWebHookLeadershipEnabled()) {
+        if (!webhookProperties.isWebhookLeadershipEnabled()) {
             return;
         }
         log.info("deleting " + webhook);

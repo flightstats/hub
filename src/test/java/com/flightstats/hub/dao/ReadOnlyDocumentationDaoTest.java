@@ -1,20 +1,21 @@
 package com.flightstats.hub.dao;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class ReadOnlyDocumentationDaoTest {
     @Mock private DocumentationDao delegate;
     private ReadOnlyDocumentationDao dao;
 
-    @Before
+    @BeforeEach
     public void setup() {
         dao = new ReadOnlyDocumentationDao(delegate);
     }
@@ -25,14 +26,14 @@ public class ReadOnlyDocumentationDaoTest {
         verify(delegate, times(1)).get("channelName");
     }
 
-    @Test(expected=UnsupportedOperationException.class)
+    @Test
     public void testPreventsInsert() {
-        dao.upsert("channelName", new byte[]{});
+        assertThrows(UnsupportedOperationException.class, () -> dao.upsert("channelName", new byte[]{}));
     }
 
-    @Test(expected=UnsupportedOperationException.class)
+    @Test
     public void testPreventsDelete() {
-        dao.delete("channelName");
+        assertThrows(UnsupportedOperationException.class, () -> dao.delete("channelName"));
     }
 
 }

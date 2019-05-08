@@ -2,21 +2,22 @@ package com.flightstats.hub.spoke;
 
 import com.flightstats.hub.model.ContentKey;
 import lombok.SneakyThrows;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class ReadOnlyClusterSpokeStoreTest {
     @Mock ClusterWriteSpoke writeSpoke;
     private ReadOnlyClusterSpokeStore dao;
 
-    @Before
+    @BeforeEach
     public void setup() {
         dao = new ReadOnlyClusterSpokeStore(writeSpoke);
     }
@@ -31,15 +32,15 @@ public class ReadOnlyClusterSpokeStoreTest {
         verify(writeSpoke, times(1)).readTimeBucketFromWriteCluster("channel", "timePath");
     }
 
-    @Test(expected=UnsupportedOperationException.class)
+    @Test
     public void testPreventsInsert() {
-        dao.insertToWriteCluster( "path", new byte[]{}, "api", "channel");
+        assertThrows(UnsupportedOperationException.class, () -> dao.insertToWriteCluster( "path", new byte[]{}, "api", "channel"));
     }
 
-    @Test(expected=UnsupportedOperationException.class)
+    @Test
     @SneakyThrows
     public void testPreventsDelete() {
-        dao.deleteFromWriteCluster( "path");
+        assertThrows(UnsupportedOperationException.class, () -> dao.deleteFromWriteCluster( "path"));
     }
 
 }

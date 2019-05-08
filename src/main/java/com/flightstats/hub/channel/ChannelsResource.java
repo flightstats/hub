@@ -10,6 +10,7 @@ import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.rest.Linked;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -20,6 +21,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.security.Permission;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -34,6 +36,7 @@ import static com.flightstats.hub.channel.LinkBuilder.buildChannelConfigResponse
 public class ChannelsResource {
     private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
     public static final String READ_ONLY_FAILURE_MESSAGE = "attempted to %s against /channels on read-only node %s";
+    private final PermissionsChecker permissionsChecker = HubProvider.getInstance(PermissionsChecker.class);
 
     @Context
     private UriInfo uriInfo;
@@ -54,7 +57,7 @@ public class ChannelsResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createChannel(String json) throws InvalidRequestException, ConflictException {
-        PermissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "createChannel", json));
+        permissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "createChannel", json));
         log.debug("post channel {}", json);
         ChannelConfig channelConfig = ChannelConfig.createFromJson(json);
         channelConfig = channelService.createChannel(channelConfig);

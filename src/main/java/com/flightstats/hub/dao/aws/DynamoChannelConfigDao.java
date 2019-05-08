@@ -16,6 +16,7 @@ import com.amazonaws.services.dynamodbv2.model.ScalarAttributeType;
 import com.amazonaws.services.dynamodbv2.model.ScanRequest;
 import com.amazonaws.services.dynamodbv2.model.ScanResult;
 import com.flightstats.hub.app.HubServices;
+import com.flightstats.hub.config.AppProperties;
 import com.flightstats.hub.config.DynamoProperties;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
@@ -37,14 +38,17 @@ import java.util.Map;
 public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
     private final AmazonDynamoDB dbClient;
     private final DynamoUtils dynamoUtils;
+    private final AppProperties appProperties;
     private final DynamoProperties dynamoProperties;
 
     @Inject
     public DynamoChannelConfigDao(AmazonDynamoDB dbClient,
                                   DynamoUtils dynamoUtils,
+                                  AppProperties appProperties,
                                   DynamoProperties dynamoProperties) {
         this.dbClient = dbClient;
         this.dynamoUtils = dynamoUtils;
+        this.appProperties = appProperties;
         this.dynamoProperties = dynamoProperties;
         HubServices.register(new DynamoChannelConfigurationDaoInit());
     }
@@ -90,14 +94,14 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
         ProvisionedThroughput throughput = dynamoUtils.getProvisionedThroughput("channel");
 
         if (!dynamoUtils.doesTableExist(tableName)) {
-            if (HubProperties.isReadOnly()) {
+            if (appProperties.isReadOnly()) {
                 String msg = String.format("Probably fatal error. Dynamo channel config table doesn't exist for r/o node.  %s", tableName);
                 log.error(msg);
                 throw new IllegalArgumentException(msg);
             } else {
                 createTable(tableName, throughput);
             }
-        } else if (!HubProperties.isReadOnly()){
+        } else if (!appProperties.isReadOnly()){
             dynamoUtils.updateTable(tableName, throughput);
         }
 

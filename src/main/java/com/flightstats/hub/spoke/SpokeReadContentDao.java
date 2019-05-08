@@ -24,8 +24,8 @@ public class SpokeReadContentDao implements ContentDao {
     private LocalReadSpoke localReadSpoke;
 
     @Inject
-    public SpokeReadContentDao(RemoteSpokeStore spokeStore){
-        this.spokeStore = spokeStore;
+    public SpokeReadContentDao(LocalReadSpoke localReadSpoke){
+        this.localReadSpoke = localReadSpoke;
     }
 
     @Override

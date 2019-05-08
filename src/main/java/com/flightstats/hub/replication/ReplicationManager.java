@@ -1,19 +1,19 @@
 package com.flightstats.hub.replication;
 
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.Watcher;
 import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.SpokeProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.BuiltInTag;
 import com.flightstats.hub.model.ChannelConfig;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.api.CuratorEvent;
 
+import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -41,13 +41,15 @@ public class ReplicationManager {
     private WatchManager watchManager;
     private AppProperties appProperties;
 
+    @Inject
     public ReplicationManager(
             ChannelService channelService, WatchManager watchManager,
-            AppProperties appProperties) {
+            AppProperties appProperties,
+            SpokeProperties spokeProperties) {
         this.channelService = channelService;
         this.watchManager = watchManager;
         this.appProperties = appProperties;
-        if (HubProperties.isReplicationServiceEnabled()) {
+        if (spokeProperties.isReplicationEnabled()) {
             register(new ReplicationService(), TYPE.AFTER_HEALTHY_START, TYPE.PRE_STOP);
         }
     }

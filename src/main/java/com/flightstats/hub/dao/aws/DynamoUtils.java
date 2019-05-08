@@ -15,8 +15,9 @@ import com.amazonaws.services.dynamodbv2.model.TableStatus;
 import com.flightstats.hub.config.AppProperties;
 import com.flightstats.hub.config.DynamoProperties;
 import lombok.extern.slf4j.Slf4j;
-import java.util.Optional;
+
 import javax.inject.Inject;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -111,7 +112,7 @@ public class DynamoUtils {
             }
             sleep();
         }
-        logger.warn("table never went active " + tableName);
+        log.warn("table never went active " + tableName);
         throw new RuntimeException("Table " + tableName + " never went active");
     }
 
@@ -119,11 +120,11 @@ public class DynamoUtils {
         try {
             TableDescription tableDescription = dbClient.describeTable(tableName).getTable();
             if (status == TableStatus.fromValue(tableDescription.getTableStatus())) {
-                logger.info("table " + tableName + " is " + status.toString());
+                log.info("table " + tableName + " is " + status.toString());
                 return Optional.of(tableDescription);
             }
         } catch (AmazonServiceException ase) {
-            logger.info("exception creating table " + tableName + " " + ase.getMessage());
+            log.info("exception creating table " + tableName + " " + ase.getMessage());
             throw ase;
         }
         return Optional.empty();

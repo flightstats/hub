@@ -1,16 +1,16 @@
 package com.flightstats.hub.dao;
 
 import com.flightstats.hub.webhook.Webhook;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.mockito.Mockito.atMost;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class ReadOnlyDaoTest {
     @Mock Dao<Webhook> delegate;
     @Mock Webhook webhook;
@@ -34,14 +34,14 @@ public class ReadOnlyDaoTest {
         //verify(delegate, atMost(5));
     }
 
-    @Test(expected=UnsupportedOperationException.class)
+    @Test
     public void testPreventsUpsert() {
-        new ReadOnlyDao<>(delegate).upsert(webhook);
+        assertThrows(UnsupportedOperationException.class, () -> new ReadOnlyDao<>(delegate).upsert(webhook));
     }
 
-    @Test(expected=UnsupportedOperationException.class)
+    @Test
     public void testPreventsDelete() {
-        new ReadOnlyDao<>(delegate).delete("delete");
+        assertThrows(UnsupportedOperationException.class, () -> new ReadOnlyDao<>(delegate).delete("delete"));
     }
 
 }

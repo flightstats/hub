@@ -13,6 +13,7 @@ import com.flightstats.hub.util.TimeUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 
+import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -40,10 +41,16 @@ public class WebhookResource {
 
     private final static WebhookService webhookService = HubProvider.getInstance(WebhookService.class);
     private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    public static final String READ_ONLY_FAILURE_MESSAGE = "attempted to %s against /webhook on node with leadership disabled %s";
+    private final static String READ_ONLY_FAILURE_MESSAGE = "attempted to %s against /webhook on node with leadership disabled %s";
+    private final PermissionsChecker permissionsChecker;
 
     @Context
     private UriInfo uriInfo;
+
+    @Inject
+    public WebhookResource(PermissionsChecker permissionsChecker) {
+        this.permissionsChecker = permissionsChecker;
+    }
 
     static Response getWebhooks(String listName, UriInfo uriInfo) {
         try {
@@ -254,7 +261,7 @@ public class WebhookResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response upsert(@PathParam("name") String name, String body) {
-        PermissionsChecker.checkWebhookLeadershipPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "upsert", name));
+        permissionsChecker.checkWebhookLeadershipPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "upsert", name));
         return upsert(name, body, uriInfo);
     }
 
@@ -262,7 +269,7 @@ public class WebhookResource {
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     public Response delete(@PathParam("name") String name) {
-        PermissionsChecker.checkWebhookLeadershipPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "delete", name));
+        permissionsChecker.checkWebhookLeadershipPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "delete", name));
         return deleter(name);
     }
 
@@ -271,7 +278,7 @@ public class WebhookResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.TEXT_PLAIN)
     public Response updateCursor(@PathParam("name") String name, String body) {
-        PermissionsChecker.checkWebhookLeadershipPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "updateCursor", name));
+        permissionsChecker.checkWebhookLeadershipPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "updateCursor", name));
         return cursorUpdater(name, body, uriInfo);
     }
     

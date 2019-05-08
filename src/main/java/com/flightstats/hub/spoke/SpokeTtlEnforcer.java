@@ -46,7 +46,7 @@ public class SpokeTtlEnforcer {
         this.statsdReporter = statsdReporter;
         this.storagePath = spokeProperties.getPath(spokeStore);
         this.ttlMinutes = spokeProperties.getTtlMinutes(spokeStore) + 1;
-        if (HubProperties.getProperty("spoke.enforceTTL", true)) {
+        if (spokeProperties.isTtlEnforced()) {
             HubServices.register(new SpokeTtlEnforcerService());
         }
     }

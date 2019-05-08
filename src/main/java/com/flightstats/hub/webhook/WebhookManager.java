@@ -1,11 +1,11 @@
 package com.flightstats.hub.webhook;
 
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.Watcher;
+import com.flightstats.hub.config.WebhookProperties;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ContentPath;
 import com.google.common.annotations.VisibleForTesting;
@@ -46,14 +46,15 @@ public class WebhookManager {
 
     @Inject
     public WebhookManager(
-                    WatchManager watchManager,
-                    @Named("Webhook") Dao<Webhook> webhookDao,
-                    LastContentPath lastContentPath,
-                    ActiveWebhooks activeWebhooks,
-                    WebhookErrorService webhookErrorService,
-                    WebhookContentPathSet webhookInProcess,
-                    InternalWebhookClient webhookClient,
-                    WebhookStateReaper webhookStateReaper) {
+            WatchManager watchManager,
+            @Named("Webhook") Dao<Webhook> webhookDao,
+            LastContentPath lastContentPath,
+            ActiveWebhooks activeWebhooks,
+            WebhookErrorService webhookErrorService,
+            WebhookContentPathSet webhookInProcess,
+            InternalWebhookClient webhookClient,
+            WebhookStateReaper webhookStateReaper,
+            WebhookProperties webhookProps) {
         this.watchManager = watchManager;
         this.webhookDao = webhookDao;
         this.lastContentPath = lastContentPath;
@@ -62,7 +63,7 @@ public class WebhookManager {
         this.webhookInProcess = webhookInProcess;
         this.webhookClient = webhookClient;
         this.webhookStateReaper = webhookStateReaper;
-        if (HubProperties.isWebHookLeadershipEnabled()) {
+        if (webhookProps.isWebhookLeadershipEnabled()) {
             register(new WebhookIdleService(), HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
             register(new WebhookScheduledService(), HubServices.TYPE.AFTER_HEALTHY_START);
         }

@@ -1,16 +1,18 @@
 package com.flightstats.hub.webhook;
 
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.cluster.WatchManager;
+import com.flightstats.hub.config.WebhookProperties;
 import com.flightstats.hub.dao.Dao;
 import com.google.common.util.concurrent.Service;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.util.List;
 import java.util.Map;
@@ -19,8 +21,8 @@ import java.util.Optional;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Sets.newHashSet;
 import static java.lang.String.format;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static junit.framework.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyCollectionOf;
 import static org.mockito.Matchers.anyString;
@@ -31,7 +33,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith({MockitoExtension.class})
+@MockitoSettings(strictness= Strictness.LENIENT)
 public class WebhookManagerTest {
     @Mock private WatchManager watchManager;
     @Mock private Dao<Webhook> webhookDao;
@@ -41,6 +44,7 @@ public class WebhookManagerTest {
     @Mock private WebhookContentPathSet webhookContentPathSet;
     @Mock private InternalWebhookClient webhookClient;
     @Mock private WebhookStateReaper webhookStateReaper;
+    @Mock private WebhookProperties webhookProperties;
 
     private static final String SERVER1 = "123.1.1";
     private static final String SERVER2 = "123.2.1";
@@ -48,9 +52,9 @@ public class WebhookManagerTest {
 
     private static final String WEBHOOK_NAME = "w3bh00k";
 
-    @Before
+    @BeforeEach
     public void setup() {
-        HubProperties.setProperty(HubProperties.HubProps.WEBHOOK_LEADERSHIP_ENABLED.getKey(), "true");
+        when(webhookProperties.isWebhookLeadershipEnabled()).thenReturn(true);
         HubServices.clear();
     }
 
@@ -174,14 +178,18 @@ public class WebhookManagerTest {
 
     @Test
     public void testIfNotLeaderWontRegisterServices() {
-        HubProperties.setProperty(HubProperties.HubProps.WEBHOOK_LEADERSHIP_ENABLED.getKey(), "false");
+        when(webhookProperties.isWebhookLeadershipEnabled()).thenReturn(false);
         getWebhookManager();
         Map<HubServices.TYPE, List<Service>> services = HubServices.getServices();
         services.forEach((type, svcs) -> assertTrue(type + " has services registered", svcs.isEmpty()));
     }
 
     private WebhookManager getWebhookManager() {
-        return new WebhookManager(watchManager, webhookDao, lastContentPath, activeWebhooks, webhookErrorService, webhookContentPathSet, webhookClient, webhookStateReaper);
+        return new WebhookManager(
+                watchManager, webhookDao,
+                lastContentPath, activeWebhooks,
+                webhookErrorService, webhookContentPathSet,
+                webhookClient, webhookStateReaper, webhookProperties);
     }
 
 }

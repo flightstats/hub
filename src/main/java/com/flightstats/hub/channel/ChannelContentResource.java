@@ -28,6 +28,7 @@ import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.rest.Linked;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.io.ByteStreams;
+import com.google.inject.Inject;
 import com.sun.jersey.core.header.MediaTypes;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -81,7 +82,8 @@ public class ChannelContentResource {
     private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
     private final static StatsdReporter statsdReporter = HubProvider.getInstance(StatsdReporter.class);
     private final static EventsService eventsService = HubProvider.getInstance(EventsService.class);
-    public static final String READ_ONLY_FAILURE_MESSAGE = "attempted to %s against /channel content on read-only node %s";
+    private final static String READ_ONLY_FAILURE_MESSAGE = "attempted to %s against /channel content on read-only node %s";
+    private final PermissionsChecker permissionsChecker = HubProvider.getInstance(PermissionsChecker.class);
     @Context
     private UriInfo uriInfo;
 
@@ -650,7 +652,7 @@ public class ChannelContentResource {
                            @PathParam("ms") int millis,
                            @PathParam("hash") String hash
     ) {
-        PermissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "delete", channel));
+        permissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "delete", channel));
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         channelService.delete(channel, key);
         return Response.noContent().build();

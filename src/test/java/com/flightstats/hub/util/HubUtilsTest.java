@@ -1,6 +1,7 @@
 package com.flightstats.hub.util;
 
 import com.flightstats.hub.app.HubProvider;
+import com.flightstats.hub.config.PropertiesLoader;
 import com.flightstats.hub.model.BulkContent;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.Content;

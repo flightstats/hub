@@ -83,14 +83,14 @@ public class SpokeManager implements SpokeClusterHealthCheck, SpokeChronologySto
                             traces.log(log);
                         }
                     } catch (Exception e) {
-                        logger.warn("unexpected exception " + servers, e);
+                        log.warn("unexpected exception " + servers, e);
                     }
                 }
             });
         }
         if (quorumLatch.await(5, TimeUnit.SECONDS)) {
             threadPool.shutdown();
-            logger.info("completed warmup calls to Spoke {}", servers);
+            log.info("completed warmup calls to Spoke {}", servers);
         } else {
             threadPool.shutdown();
             throw new RuntimeException("unable to properly connect to Spoke " + servers);

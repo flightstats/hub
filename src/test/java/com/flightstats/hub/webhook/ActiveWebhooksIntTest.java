@@ -1,5 +1,6 @@
 package com.flightstats.hub.webhook;
 
+import com.flightstats.hub.config.WebhookProperties;
 import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.SafeZooKeeperUtils;
@@ -9,6 +10,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import static java.lang.String.format;
@@ -19,8 +23,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @Slf4j
+@ExtendWith(MockitoExtension.class)
 class ActiveWebhooksIntTest {
     private static final String WEBHOOK_LEADER_PATH = "/WebhookLeader";
     private static final String WEBHOOK_WITH_LEASE = "webhook1";
@@ -33,6 +39,7 @@ class ActiveWebhooksIntTest {
 
     private static CuratorFramework curator;
     private static SafeZooKeeperUtils zooKeeperUtils;
+    @Mock private WebhookProperties webhookProperties;
 
     void createPath() throws Exception {
         curator.create().creatingParentsIfNeeded().forPath(WEBHOOK_LEADER_PATH);
@@ -57,6 +64,7 @@ class ActiveWebhooksIntTest {
             deletePath();
             createPath();
         }
+        when(webhookProperties.isWebhookLeadershipEnabled()).thenReturn(true);
     }
 
     @AfterEach
@@ -79,7 +87,7 @@ class ActiveWebhooksIntTest {
 
         WebhookLeaderLocks webhookLeaderLocks = new WebhookLeaderLocks(zooKeeperUtils);
         ActiveWebhookSweeper activeWebhookSweeper = new ActiveWebhookSweeper(webhookLeaderLocks, mock(StatsdReporter.class));
-        ActiveWebhooks activeWebhooks = new ActiveWebhooks(webhookLeaderLocks, activeWebhookSweeper);
+        ActiveWebhooks activeWebhooks = new ActiveWebhooks(webhookLeaderLocks, activeWebhookSweeper, webhookProperties);
 
         List<String> webhooks = curator.getChildren().forPath(WEBHOOK_LEADER_PATH);
         assertEquals(3, webhooks.size());

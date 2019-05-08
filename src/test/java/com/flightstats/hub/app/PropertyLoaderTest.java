@@ -9,13 +9,15 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PropertyLoaderTest {
+
     @Test
     void testIsReadOnly() {
         AppProperties appProperties = new AppProperties(PropertiesLoader.getInstance());
         assertFalse(appProperties.isReadOnly());
-        PropertiesLoader.getInstance().setProperty("hub.read.only", "somewhere," + HubHost.getLocalName());
+        PropertiesLoader.getInstance().setProperty("hub.read.only", "true");
         assertTrue(appProperties.isReadOnly());
         PropertiesLoader.getInstance().setProperty("hub.read.only", "");
+        assertFalse(appProperties.isReadOnly());
     }
 
 }

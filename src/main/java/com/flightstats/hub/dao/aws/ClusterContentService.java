@@ -94,8 +94,8 @@ public class ClusterContentService implements ContentService {
                             ContentProperties contentProperties,
                             SpokeProperties spokeProperties) {
         HubServices.registerPreStop(new SpokeS3ContentServiceInit());
-        if (HubProperties.isChannelLatestUpdateSvcEnabled()) {
-            HubServices.register(new ChannelLatestUpdatedService(), HubServices.TYPE.AFTER_HEALTHY_START);
+        if (contentProperties.isChannelProtectionSvcEnabled()) {
+            HubServices.register(new ChannelLatestUpdatedService(contentProperties), HubServices.TYPE.AFTER_HEALTHY_START);
         }
         this.channelService = channelService;
         this.spokeWriteContentDao = spokeWriteContentDao;

@@ -1,7 +1,6 @@
 package com.flightstats.hub.app;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
-import com.flightstats.hub.dao.aws.S3WriteQueue;
 import com.flightstats.hub.config.AppProperties;
 import com.flightstats.hub.config.PropertiesLoader;
 import com.flightstats.hub.config.SystemProperties;
@@ -175,7 +174,7 @@ public class HubMain {
                 StatsDReporterLifecycle.class)
                 .map(injector::getInstance)
                 .collect(Collectors.toList());
-        if (storageBackend == StorageBackend.aws && !HubProperties.isReadOnly()) {
+        if (storageBackend == StorageBackend.aws && !appProperties.isReadOnly()) {
             services.add(injector.getInstance(S3WriteQueueLifecycle.class));
         }
         return services;
@@ -204,6 +203,7 @@ public class HubMain {
         log.info("starting with hub.type {}", storageBackend);
 
         modules.add(getGuiceModuleForHubType(storageBackend.toString()));
+
         return modules;
     }
 
