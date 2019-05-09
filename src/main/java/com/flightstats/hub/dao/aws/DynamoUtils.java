@@ -37,11 +37,6 @@ public class DynamoUtils {
         this.dynamoProperties = dynamoProperties;
     }
 
-    String getLegacyTableName(String baseTableName) {
-        return appProperties.getAppName() + "-" + appProperties.getEnv() + "-" + baseTableName;
-    }
-
-
     void createAndUpdate(String tableName, String type, String keyName) {
         createAndUpdate(tableName, type, keyName, createTableRequest -> createTableRequest);
     }

@@ -9,6 +9,8 @@ import com.flightstats.hub.config.binding.ClusterHubBindings;
 import com.flightstats.hub.config.binding.HubBindings;
 import com.flightstats.hub.config.binding.PropertiesBinding;
 import com.flightstats.hub.config.binding.SingleHubBindings;
+import com.flightstats.hub.dao.aws.DynamoChannelConfigDaoLifecycle;
+import com.flightstats.hub.dao.aws.DynamoWebhookDaoLifecycle;
 import com.flightstats.hub.dao.aws.S3WriteQueueLifecycle;
 import com.flightstats.hub.filter.CORSFilter;
 import com.flightstats.hub.filter.StreamEncodingFilter;
@@ -169,15 +171,23 @@ public class HubMain {
     }
 
     private List<Service> getBeforeHealthCheckServices(Injector injector) {
-        List<Service> services = Stream.of(
+        List<Service> services = createInstanceList(
+                injector,
                 InfluxdbReporterLifecycle.class,
-                StatsDReporterLifecycle.class)
-                .map(injector::getInstance)
-                .collect(Collectors.toList());
-        if (storageBackend == StorageBackend.aws && !appProperties.isReadOnly()) {
-            services.add(injector.getInstance(S3WriteQueueLifecycle.class));
+                StatsDReporterLifecycle.class);
+        if (storageBackend == StorageBackend.aws) {
+            if (!appProperties.isReadOnly()) {
+                services.addAll(createInstanceList(injector, S3WriteQueueLifecycle.class));
+            }
+            services.addAll(createInstanceList(injector,
+                    DynamoChannelConfigDaoLifecycle.class,
+                    DynamoWebhookDaoLifecycle.class));
         }
         return services;
+    }
+
+    private List<Service> createInstanceList(Injector injector, Class<? extends Service> ... classes) {
+        return Stream.of(classes).map(injector::getInstance).collect(Collectors.toList());
     }
 
     private List<Service> getAfterHealthCheckServices(Injector injector) {

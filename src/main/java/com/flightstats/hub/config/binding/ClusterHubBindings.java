@@ -8,14 +8,12 @@ import com.flightstats.hub.cluster.SpokeDecommissionManager;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.config.AppProperties;
 import com.flightstats.hub.config.SpokeProperties;
+import com.flightstats.hub.dao.CachedDao;
+import com.flightstats.hub.dao.CachedLowerCaseDao;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentService;
 import com.flightstats.hub.dao.Dao;
-import com.flightstats.hub.dao.CachedDao;
-import com.flightstats.hub.dao.aws.DynamoWebhookDao;
-import com.flightstats.hub.dao.aws.DynamoChannelConfigDao;
-import com.flightstats.hub.dao.CachedLowerCaseDao   ;
 import com.flightstats.hub.dao.DocumentationDao;
 import com.flightstats.hub.dao.ReadOnlyContentDao;
 import com.flightstats.hub.dao.ReadOnlyDao;
@@ -51,7 +49,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
-import com.google.inject.name.Names;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
