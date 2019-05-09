@@ -10,6 +10,7 @@ import com.flightstats.hub.app.FinalCheck;
 import com.flightstats.hub.app.HubVersion;
 import com.flightstats.hub.app.InFlightService;
 import com.flightstats.hub.app.NamedDependencies;
+import com.flightstats.hub.app.PermissionsChecker;
 import com.flightstats.hub.app.ShutdownManager;
 import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.cluster.Cluster;
@@ -45,9 +46,14 @@ import com.flightstats.hub.rest.HalLinksSerializer;
 import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.rest.RetryClientFilter;
 import com.flightstats.hub.rest.Rfc3339DateSerializer;
+import com.flightstats.hub.spoke.SpokeChronologyStore;
+import com.flightstats.hub.spoke.ClusterWriteSpoke;
 import com.flightstats.hub.spoke.FileSpokeStore;
 import com.flightstats.hub.spoke.GCRunner;
-import com.flightstats.hub.spoke.RemoteSpokeStore;
+import com.flightstats.hub.spoke.LocalReadSpoke;
+import com.flightstats.hub.spoke.ReadOnlyClusterSpokeStore;
+import com.flightstats.hub.spoke.SpokeManager;
+import com.flightstats.hub.spoke.SpokeClusterHealthCheck;
 import com.flightstats.hub.spoke.SpokeClusterRegister;
 import com.flightstats.hub.spoke.SpokeFinalCheck;
 import com.flightstats.hub.spoke.SpokeReadContentDao;
@@ -84,7 +90,6 @@ import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class HubBindings extends AbstractModule {
-
     private static final String READ = "READ";
     private static final String WRITE = "WRITE";
     private static final String READ_CACHE = "ReadCache";
@@ -193,7 +198,6 @@ public class HubBindings extends AbstractModule {
                 spokeProperties);
     }
 
-
     @Singleton
     @Provides
     public static WebSocketContainer buildWebSocketContainer() throws Exception {
@@ -230,6 +234,42 @@ public class HubBindings extends AbstractModule {
         return Executors.newFixedThreadPool(verifierConfig.getQueryThreads(), new ThreadFactoryBuilder().setNameFormat("S3VerifierQuery-%d").build());
     }
 
+    @Singleton
+    @Provides
+    public ClusterWriteSpoke buildClusterWriterSpokeStore(SpokeManager store, AppProperties appProperties) {
+        return appProperties.isReadOnly() ? new ReadOnlyClusterSpokeStore(store) : store;
+    }
+
+    @Named(WRITE_CACHE)
+    @Provides
+    @Singleton
+    public ContentDao contentDao(ClusterWriteSpoke writeSpoke, SpokeChronologyStore chronoStore, SpokeProperties spokeProperties) {
+        return new SpokeWriteContentDao(writeSpoke, chronoStore, spokeProperties);
+    }
+
+    @Named(READ_CACHE)
+    @Provides
+    @Singleton
+    public ContentDao contentDao(LocalReadSpoke localReadSpoke) {
+        return new SpokeReadContentDao(localReadSpoke);
+    }
+
+    @Named(WRITE)
+    @Provides
+    public FileSpokeStore fileSpokeStoreWrite(SpokeProperties spokeProperties) {
+        return new FileSpokeStore(
+                spokeProperties.getPath(SpokeStore.WRITE),
+                spokeProperties.getTtlMinutes(SpokeStore.WRITE));
+    }
+
+    @Named(READ)
+    @Provides
+    public FileSpokeStore fileSpokeStoreRead(SpokeProperties spokeProperties) {
+        return new FileSpokeStore(
+                spokeProperties.getPath(SpokeStore.READ),
+                spokeProperties.getTtlMinutes(SpokeStore.READ));
+    }
+
     @Override
     protected void configure() {
         bind(SecretFilter.class).asEagerSingleton();
@@ -252,6 +292,11 @@ public class HubBindings extends AbstractModule {
         bind(InFlightService.class).asEagerSingleton();
         bind(ChannelService.class).asEagerSingleton();
         bind(HubVersion.class).toInstance(new HubVersion());
+        bind(SpokeManager.class).asEagerSingleton();
+        bind(LocalReadSpoke.class).to(SpokeManager.class);
+        bind(SpokeChronologyStore.class).to(SpokeManager.class);
+        bind(SpokeClusterHealthCheck.class).to(SpokeManager.class);
+        bind(PermissionsChecker.class).asEagerSingleton();
 
         // metrics
         bind(MetricsConfig.class).toProvider(MetricsConfigProvider.class).asEagerSingleton();
@@ -274,36 +319,4 @@ public class HubBindings extends AbstractModule {
                 .asEagerSingleton();
 
     }
-
-    @Named(WRITE_CACHE)
-    @Provides
-    @Singleton
-    public ContentDao contentDao(RemoteSpokeStore remoteSpokeStore,
-                                 SpokeProperties spokeProperties) {
-        return new SpokeWriteContentDao(remoteSpokeStore, spokeProperties);
-    }
-
-    @Named(READ_CACHE)
-    @Provides
-    @Singleton
-    public ContentDao contentDao(RemoteSpokeStore remoteSpokeStore) {
-        return new SpokeReadContentDao(remoteSpokeStore);
-    }
-
-    @Named(WRITE)
-    @Provides
-    public FileSpokeStore fileSpokeStoreWrite(SpokeProperties spokeProperties) {
-        return new FileSpokeStore(
-                spokeProperties.getPath(SpokeStore.WRITE),
-                spokeProperties.getTtlMinutes(SpokeStore.WRITE));
-    }
-
-    @Named(READ)
-    @Provides
-    public FileSpokeStore fileSpokeStoreRead(SpokeProperties spokeProperties) {
-        return new FileSpokeStore(
-                spokeProperties.getPath(SpokeStore.READ),
-                spokeProperties.getTtlMinutes(SpokeStore.READ));
-    }
-
 }

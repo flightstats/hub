@@ -4,16 +4,23 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProvider;
+import com.flightstats.hub.app.PermissionsChecker;
 import com.flightstats.hub.channel.TimeLinkUtil;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.rest.Linked;
 import com.flightstats.hub.util.RequestUtils;
 import com.flightstats.hub.util.TimeUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.*;
+import javax.inject.Inject;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -29,14 +36,21 @@ import java.util.function.BiConsumer;
  */
 @SuppressWarnings("WeakerAccess")
 @Path("/webhook")
+@Slf4j
 public class WebhookResource {
 
-    private final static Logger logger = LoggerFactory.getLogger(WebhookResource.class);
     private final static WebhookService webhookService = HubProvider.getInstance(WebhookService.class);
     private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private final static String READ_ONLY_FAILURE_MESSAGE = "attempted to %s against /webhook on node with leadership disabled %s";
+    private final PermissionsChecker permissionsChecker;
 
     @Context
     private UriInfo uriInfo;
+
+    @Inject
+    public WebhookResource(PermissionsChecker permissionsChecker) {
+        this.permissionsChecker = permissionsChecker;
+    }
 
     static Response getWebhooks(String listName, UriInfo uriInfo) {
         try {
@@ -51,7 +65,7 @@ public class WebhookResource {
             }
             return Response.ok(root).build();
         } catch (Exception e) {
-            logger.warn("wtf?", e);
+            log.warn("wtf?", e);
             throw e;
         }
     }
@@ -71,10 +85,10 @@ public class WebhookResource {
     static Response getStatus(String name, boolean includeChildren, UriInfo uriInfo, BiConsumer<WebhookStatus, ObjectNode> biConsumer) {
         Optional<Webhook> webhookOptional = webhookService.get(name);
         if (!webhookOptional.isPresent()) {
-            logger.info("webhook not found {} ", name);
+            log.info("webhook not found {} ", name);
             return Response.status(Response.Status.NOT_FOUND).build();
         }
-        logger.info("get webhook {} ", name);
+        log.info("get webhook {} ", name);
         Webhook webhook = webhookOptional.get();
         WebhookStatus status = webhookService.getStatus(webhook);
         ObjectNode root = mapper.createObjectNode();
@@ -141,7 +155,7 @@ public class WebhookResource {
     }
 
     static Response upsert(String name, String body, UriInfo uriInfo) {
-        logger.info("upsert webhook {} {}", name, body);
+        log.info("upsert webhook {} {}", name, body);
         Webhook webhook = Webhook.fromJson(body, webhookService.get(name)).withName(name);
         Optional<Webhook> upsert = webhookService.upsert(webhook);
         if (upsert.isPresent()) {
@@ -153,9 +167,9 @@ public class WebhookResource {
 
     static Response deleter(String name) {
         Optional<Webhook> webhookOptional = webhookService.get(name);
-        logger.info("delete webhook {}", name);
+        log.info("delete webhook {}", name);
         if (!webhookOptional.isPresent()) {
-            logger.info("webhook not found for delete {} ", name);
+            log.info("webhook not found for delete {} ", name);
             return Response.status(Response.Status.NOT_FOUND).build();
         }
         webhookService.delete(name);
@@ -163,18 +177,18 @@ public class WebhookResource {
     }
 
     static Response cursorUpdater(String name, String body, UriInfo uriInfo) {
-        logger.info("update cursor webhook {} {}", name, body);
+        log.info("update cursor webhook {} {}", name, body);
         Webhook webhook = Webhook.fromJson("{}", webhookService.get(name)).withName(name);
         try {
             if (RequestUtils.isValidChannelUrl(body)) {
                 ContentPath item = ContentPath.fromFullUrl(body).get();
                 webhookService.updateCursor(webhook, item);
             } else {
-                logger.info("cursor update failed.  Bad item: " + body);
+                log.info("cursor update failed.  Bad item: " + body);
                 return Response.status(Response.Status.BAD_REQUEST).build();
             }
         } catch (Exception e) {
-            logger.error("IO exception updating cursor", e);
+            log.error("IO exception updating cursor", e);
         }
         return Response.status(Response.Status.ACCEPTED).build();
     }
@@ -247,6 +261,7 @@ public class WebhookResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response upsert(@PathParam("name") String name, String body) {
+        permissionsChecker.checkWebhookLeadershipPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "upsert", name));
         return upsert(name, body, uriInfo);
     }
 
@@ -254,6 +269,7 @@ public class WebhookResource {
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     public Response delete(@PathParam("name") String name) {
+        permissionsChecker.checkWebhookLeadershipPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "delete", name));
         return deleter(name);
     }
 
@@ -262,6 +278,8 @@ public class WebhookResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.TEXT_PLAIN)
     public Response updateCursor(@PathParam("name") String name, String body) {
+        permissionsChecker.checkWebhookLeadershipPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "updateCursor", name));
         return cursorUpdater(name, body, uriInfo);
     }
+    
 }

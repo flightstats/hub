@@ -2,7 +2,6 @@ package com.flightstats.hub.model;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flightstats.hub.config.AppProperties;
 import com.flightstats.hub.config.ContentProperties;
 import com.flightstats.hub.config.PropertiesLoader;
 import com.flightstats.hub.exception.InvalidRequestException;
@@ -102,7 +101,7 @@ public class ChannelConfig implements Serializable, NamedType {
         addTagIf(!isBlank(replicationSource), REPLICATED);
         addTagIf(isHistorical(), HISTORICAL);
 
-        if (contentProperties.isChannelProtectionEnabled()) {
+        if (contentProperties.isChannelProtectionSvcEnabled()) {
             this.protect = true;
         } else {
             this.protect = protect;
@@ -370,7 +369,7 @@ public class ChannelConfig implements Serializable, NamedType {
         private TreeSet<String> tags = new TreeSet<>();
         private String replicationSource = "";
         private String storage = "";
-        private boolean protect = contentProperties.isChannelProtectionEnabled();
+        private boolean protect = contentProperties.isChannelProtectionSvcEnabled();
         private boolean allowZeroBytes = true;
         private String name;
         private boolean keepForever = false;

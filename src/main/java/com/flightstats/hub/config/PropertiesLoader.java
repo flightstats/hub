@@ -67,6 +67,18 @@ public class PropertiesLoader {
         }
 
         log.info("Successfully loaded properties {}", properties);
+        if (getProperty("hub.read.only", false)) {
+            ensureReadOnlyPropertiesAreSet();
+        }
+    }
+
+    private void ensureReadOnlyPropertiesAreSet() {
+        properties.put("webhook.leadership.enabled", "false");
+        properties.put("replication.enabled", "false");
+        properties.put("s3.batch.management.enabled", "false");
+        properties.put("s3.config.management.enabled", "false");
+        properties.putIfAbsent("channel.latest.update.svc.enabled", "false");
+        properties.put("s3Verifier.run", "false");
     }
 
     private void setDefaultProperties() {
@@ -95,6 +107,6 @@ public class PropertiesLoader {
         propertiesDefault.put("s3Verifier.run", "false");
         propertiesDefault.put("aws.signing_region", "us-east-1");
 
-        this.properties = propertiesDefault;
+       properties = propertiesDefault;
     }
 }

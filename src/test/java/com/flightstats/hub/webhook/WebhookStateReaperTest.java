@@ -3,6 +3,7 @@ package com.flightstats.hub.webhook;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.config.AppProperties;
 import com.flightstats.hub.config.PropertiesLoader;
+import com.flightstats.hub.config.WebhookProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.test.Integration;
@@ -13,30 +14,39 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness= Strictness.LENIENT)
 class WebhookStateReaperTest {
     private static CuratorFramework curator;
     private LastContentPath lastContentPath;
     private WebhookContentPathSet webhookInProcess;
     private WebhookErrorService webhookErrorService;
     private WebhookLeaderLocks webhookLeaderLocks;
+    @Mock
+    private WebhookProperties webhookProperties;
 
     private static final String webhookName = "onTheHook";
     private static final DateTime start = new DateTime(2014, 12, 3, 20, 45, DateTimeZone.UTC);
     private static final ContentKey key = new ContentKey(start, "B");
 
     @BeforeAll
-    static void setupCurator() throws Exception {
+    static void runFirst() throws Exception {
         curator = Integration.startZooKeeper();
     }
 
@@ -48,11 +58,12 @@ class WebhookStateReaperTest {
         WebhookErrorRepository webhookErrorRepository = new WebhookErrorRepository(zooKeeperUtils, nameGenerator);
         WebhookErrorPruner webhookErrorPruner = new WebhookErrorPruner(webhookErrorRepository);
 
+        when(webhookProperties.isWebhookLeadershipEnabled()).thenReturn(true);
         webhookLeaderLocks = new WebhookLeaderLocks(zooKeeperUtils);
         lastContentPath = new LastContentPath(curator, new AppProperties(PropertiesLoader.getInstance()));
         webhookErrorService = new WebhookErrorService(webhookErrorRepository, webhookErrorPruner, channelService);
         webhookInProcess = new WebhookContentPathSet(zooKeeperUtils);
-    }
+   }
 
     @Test
     void testCleansUpZookeeperNodesRelatedToState() throws Exception {
@@ -63,7 +74,7 @@ class WebhookStateReaperTest {
         addWebhookLeader(webhookName);
 
         // WHEN
-        WebhookStateReaper reaper = new WebhookStateReaper(lastContentPath, webhookInProcess, webhookErrorService, webhookLeaderLocks);
+        WebhookStateReaper reaper = new WebhookStateReaper(lastContentPath, webhookInProcess, webhookErrorService, webhookLeaderLocks, webhookProperties);
         reaper.delete(webhookName);
 
         // THEN
@@ -81,7 +92,7 @@ class WebhookStateReaperTest {
         addWebhookLeader(webhookName);
 
         // WHEN
-        WebhookStateReaper reaper = new WebhookStateReaper(lastContentPath, webhookInProcess, webhookErrorService, webhookLeaderLocks);
+        WebhookStateReaper reaper = new WebhookStateReaper(lastContentPath, webhookInProcess, webhookErrorService, webhookLeaderLocks, webhookProperties);
         reaper.delete(webhookName);
 
         // THEN
@@ -99,7 +110,7 @@ class WebhookStateReaperTest {
         addWebhookLeader(webhookName);
 
         // WHEN
-        WebhookStateReaper reaper = new WebhookStateReaper(lastContentPath, webhookInProcess, webhookErrorService, webhookLeaderLocks);
+        WebhookStateReaper reaper = new WebhookStateReaper(lastContentPath, webhookInProcess, webhookErrorService, webhookLeaderLocks, webhookProperties);
         reaper.delete(webhookName);
 
         // THEN
@@ -117,7 +128,7 @@ class WebhookStateReaperTest {
         addWebhookLeader(webhookName);
 
         // WHEN
-        WebhookStateReaper reaper = new WebhookStateReaper(lastContentPath, webhookInProcess, webhookErrorService, webhookLeaderLocks);
+        WebhookStateReaper reaper = new WebhookStateReaper(lastContentPath, webhookInProcess, webhookErrorService, webhookLeaderLocks, webhookProperties);
         reaper.delete(webhookName);
 
         // THEN
@@ -135,7 +146,7 @@ class WebhookStateReaperTest {
         addError(webhookName);
 
         // WHEN
-        WebhookStateReaper reaper = new WebhookStateReaper(lastContentPath, webhookInProcess, webhookErrorService, webhookLeaderLocks);
+        WebhookStateReaper reaper = new WebhookStateReaper(lastContentPath, webhookInProcess, webhookErrorService, webhookLeaderLocks, webhookProperties);
         reaper.delete(webhookName);
 
         // THEN
@@ -145,6 +156,30 @@ class WebhookStateReaperTest {
         assertWebhookLeaderDeleted(webhookName);
     }
 
+    @Test
+    public void testDoesNothingIfLeadershipDisabled() throws Exception {
+        when(webhookProperties.isWebhookLeadershipEnabled()).thenReturn(false);
+        // GIVEN
+        addLastCompleted(webhookName);
+        addWebhookInProcess(webhookName);
+        addError(webhookName);
+        addWebhookLeader(webhookName);
+
+        // WHEN
+        WebhookStateReaper reaper = new WebhookStateReaper(lastContentPath, webhookInProcess, webhookErrorService, webhookLeaderLocks, webhookProperties);
+        reaper.delete(webhookName);
+
+        // THEN
+        assertLastCompletedExists(webhookName);
+        assertErrorExists(webhookName);
+        assertWebhookInProcessExists(webhookName);
+        assertWebhookLeaderExists(webhookName);
+
+        // ...AND then clean up the state so the next test can run.  Eww.
+        when(webhookProperties.isWebhookLeadershipEnabled()).thenReturn(true);
+        reaper = new WebhookStateReaper(lastContentPath, webhookInProcess, webhookErrorService, webhookLeaderLocks, webhookProperties);
+        reaper.delete(webhookName);
+    }
 
     private void addLastCompleted(String webhook) throws Exception {
         lastContentPath.initialize(webhook, key, WebhookLeader.WEBHOOK_LAST_COMPLETED);

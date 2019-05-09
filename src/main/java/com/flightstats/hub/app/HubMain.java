@@ -69,10 +69,10 @@ public class HubMain {
 
     private static DateTime startTime = new DateTime();
     private final AppProperties appProperties = new AppProperties(PropertiesLoader.getInstance());
-    private final SpokeProperties spokeProperties = new SpokeProperties(PropertiesLoader.getInstance());;
-    private final SystemProperties systemProperties = new SystemProperties(PropertiesLoader.getInstance());;
-    private final ZookeeperProperties zookeeperProperties = new ZookeeperProperties(PropertiesLoader.getInstance());;
-    private final StorageBackend storageBackend = StorageBackend.valueOf(appProperties.getHubType());;
+    private final SpokeProperties spokeProperties = new SpokeProperties(PropertiesLoader.getInstance());
+    private final SystemProperties systemProperties = new SystemProperties(PropertiesLoader.getInstance());
+    private final ZookeeperProperties zookeeperProperties = new ZookeeperProperties(PropertiesLoader.getInstance());
+    private final StorageBackend storageBackend = StorageBackend.valueOf(appProperties.getHubType());
 
     public static void main(String[] args) throws Exception {
         if (args.length == 0) {
@@ -183,7 +183,7 @@ public class HubMain {
                 .map(injector::getInstance)
                 .collect(Collectors.toList());
 
-        if (storageBackend == StorageBackend.aws) {
+        if (storageBackend == StorageBackend.aws && !appProperties.isReadOnly()) {
             services.add(injector.getInstance(S3WriteQueueLifecycle.class));
             if (spokeProperties.isTtlEnforced()) {
                 services.add(new SpokeTtlEnforcerService(SpokeStore.WRITE,
@@ -219,6 +219,7 @@ public class HubMain {
         log.info("starting with hub.type {}", storageBackend);
 
         modules.add(getGuiceModuleForHubType(storageBackend.toString()));
+
         return modules;
     }
 
