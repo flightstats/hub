@@ -7,13 +7,13 @@ import javax.inject.Inject;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
-public class SpokeTtlEnforcerService extends AbstractScheduledService {
+public class SpokeTtlEnforcerLifecycle extends AbstractScheduledService {
 
     private SpokeTtlEnforcer spokeTtlEnforcer;
 
     private SpokeStore spokeStore;
 
-    public SpokeTtlEnforcerService(SpokeStore spokeStore, SpokeTtlEnforcer spokeTtlEnforcer) {
+    public SpokeTtlEnforcerLifecycle(SpokeStore spokeStore, SpokeTtlEnforcer spokeTtlEnforcer) {
         this.spokeStore = spokeStore;
         this.spokeTtlEnforcer = spokeTtlEnforcer;
     }

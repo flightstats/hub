@@ -19,7 +19,7 @@ import com.flightstats.hub.metrics.PeriodicMetricEmitterLifecycle;
 import com.flightstats.hub.metrics.StatsDReporterLifecycle;
 import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.spoke.SpokeTtlEnforcer;
-import com.flightstats.hub.spoke.SpokeTtlEnforcerService;
+import com.flightstats.hub.spoke.SpokeTtlEnforcerLifecycle;
 import com.flightstats.hub.ws.WebSocketChannelEndpoint;
 import com.flightstats.hub.ws.WebSocketDayEndpoint;
 import com.flightstats.hub.ws.WebSocketHashEndpoint;
@@ -67,7 +67,7 @@ import java.util.stream.Stream;
 @Slf4j
 public class HubMain {
 
-    private static DateTime startTime = new DateTime();
+    private final static DateTime startTime = new DateTime();
     private final AppProperties appProperties = new AppProperties(PropertiesLoader.getInstance());
     private final SpokeProperties spokeProperties = new SpokeProperties(PropertiesLoader.getInstance());
     private final SystemProperties systemProperties = new SystemProperties(PropertiesLoader.getInstance());
@@ -185,12 +185,13 @@ public class HubMain {
 
         if (storageBackend == StorageBackend.aws && !appProperties.isReadOnly()) {
             services.add(injector.getInstance(S3WriteQueueLifecycle.class));
-            if (spokeProperties.isTtlEnforced()) {
-                services.add(new SpokeTtlEnforcerService(SpokeStore.WRITE,
-                        injector.getInstance(SpokeTtlEnforcer.class)));
-                services.add(new SpokeTtlEnforcerService(SpokeStore.READ,
-                        injector.getInstance(SpokeTtlEnforcer.class)));
-            }
+        }
+
+        if (spokeProperties.isTtlEnforced()) {
+            services.add(new SpokeTtlEnforcerLifecycle(SpokeStore.WRITE,
+                    injector.getInstance(SpokeTtlEnforcer.class)));
+            services.add(new SpokeTtlEnforcerLifecycle(SpokeStore.READ,
+                    injector.getInstance(SpokeTtlEnforcer.class)));
         }
 
         return services;
