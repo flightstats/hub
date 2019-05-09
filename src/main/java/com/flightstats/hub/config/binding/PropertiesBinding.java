@@ -7,6 +7,7 @@ import com.flightstats.hub.config.DatadogMetricsProperties;
 import com.flightstats.hub.config.DynamoProperties;
 import com.flightstats.hub.config.PropertiesLoader;
 import com.flightstats.hub.config.S3Properties;
+import com.flightstats.hub.config.SpokeProperties;
 import com.flightstats.hub.config.SystemProperties;
 import com.flightstats.hub.config.TickMetricsProperties;
 import com.flightstats.hub.config.WebhookProperties;
@@ -29,6 +30,7 @@ public class PropertiesBinding extends AbstractModule {
         bind(DatadogMetricsProperties.class).asEagerSingleton();
         bind(DynamoProperties.class).asEagerSingleton();
         bind(S3Properties.class).asEagerSingleton();
+        bind(SpokeProperties.class).asEagerSingleton();
         bind(SystemProperties.class).asEagerSingleton();
         bind(TickMetricsProperties.class).asEagerSingleton();
         bind(WebhookProperties.class).asEagerSingleton();

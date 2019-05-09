@@ -3,6 +3,7 @@ package com.flightstats.hub.app;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.flightstats.hub.config.AppProperties;
 import com.flightstats.hub.config.PropertiesLoader;
+import com.flightstats.hub.config.SpokeProperties;
 import com.flightstats.hub.config.SystemProperties;
 import com.flightstats.hub.config.ZookeeperProperties;
 import com.flightstats.hub.config.binding.ClusterHubBindings;
@@ -18,6 +19,9 @@ import com.flightstats.hub.metrics.CustomMetricsLifecycle;
 import com.flightstats.hub.metrics.InfluxdbReporterLifecycle;
 import com.flightstats.hub.metrics.PeriodicMetricEmitterLifecycle;
 import com.flightstats.hub.metrics.StatsDReporterLifecycle;
+import com.flightstats.hub.spoke.SpokeStore;
+import com.flightstats.hub.spoke.SpokeTtlEnforcer;
+import com.flightstats.hub.spoke.SpokeTtlEnforcerLifecycle;
 import com.flightstats.hub.ws.WebSocketChannelEndpoint;
 import com.flightstats.hub.ws.WebSocketDayEndpoint;
 import com.flightstats.hub.ws.WebSocketHashEndpoint;
@@ -65,10 +69,11 @@ import java.util.stream.Stream;
 @Slf4j
 public class HubMain {
 
-    private static final DateTime startTime = new DateTime();
-    private static AppProperties appProperties = new AppProperties(PropertiesLoader.getInstance());
-    private static SystemProperties systemProperties = new SystemProperties(PropertiesLoader.getInstance());
-    private static ZookeeperProperties zookeeperProperties = new ZookeeperProperties(PropertiesLoader.getInstance());
+    private final static DateTime startTime = new DateTime();
+    private final AppProperties appProperties = new AppProperties(PropertiesLoader.getInstance());
+    private final SpokeProperties spokeProperties = new SpokeProperties(PropertiesLoader.getInstance());
+    private final SystemProperties systemProperties = new SystemProperties(PropertiesLoader.getInstance());
+    private final ZookeeperProperties zookeeperProperties = new ZookeeperProperties(PropertiesLoader.getInstance());
     private final StorageBackend storageBackend = StorageBackend.valueOf(appProperties.getHubType());
 
     public static void main(String[] args) throws Exception {
@@ -114,6 +119,7 @@ public class HubMain {
 
     @VisibleForTesting
     public Server startServer() throws Exception {
+
         List<AbstractModule> guiceModules = buildGuiceModules();
         Injector injector = Guice.createInjector(guiceModules);
 
@@ -175,14 +181,23 @@ public class HubMain {
                 injector,
                 InfluxdbReporterLifecycle.class,
                 StatsDReporterLifecycle.class);
+
         if (storageBackend == StorageBackend.aws) {
             if (!appProperties.isReadOnly()) {
-                services.addAll(createInstanceList(injector, S3WriteQueueLifecycle.class));
+                services.add(injector.getInstance(S3WriteQueueLifecycle.class));
             }
             services.addAll(createInstanceList(injector,
                     DynamoChannelConfigDaoLifecycle.class,
                     DynamoWebhookDaoLifecycle.class));
         }
+
+        if (spokeProperties.isTtlEnforced()) {
+            services.add(new SpokeTtlEnforcerLifecycle(SpokeStore.WRITE,
+                    injector.getInstance(SpokeTtlEnforcer.class)));
+            services.add(new SpokeTtlEnforcerLifecycle(SpokeStore.READ,
+                    injector.getInstance(SpokeTtlEnforcer.class)));
+        }
+
         return services;
     }
 
@@ -194,11 +209,10 @@ public class HubMain {
         if (storageBackend != StorageBackend.aws) {
             return Collections.singletonList(injector.getInstance(CustomMetricsLifecycle.class));
         }
-        return Stream.of(
+        return createInstanceList(injector,
                 CustomMetricsLifecycle.class,
-                PeriodicMetricEmitterLifecycle.class)
-                .map(injector::getInstance)
-                .collect(Collectors.toList());
+                PeriodicMetricEmitterLifecycle.class
+        );
     }
 
     private void registerServices(List<Service> services, HubServices.TYPE type) {
