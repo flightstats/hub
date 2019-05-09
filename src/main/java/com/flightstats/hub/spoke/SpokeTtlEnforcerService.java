@@ -9,18 +9,20 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class SpokeTtlEnforcerService extends AbstractScheduledService {
 
-    @Inject
     private SpokeTtlEnforcer spokeTtlEnforcer;
 
     private SpokeStore spokeStore;
 
-    public SpokeTtlEnforcerService(SpokeStore spokeStore) {
+    public SpokeTtlEnforcerService(SpokeStore spokeStore, SpokeTtlEnforcer spokeTtlEnforcer) {
         this.spokeStore = spokeStore;
+        this.spokeTtlEnforcer = spokeTtlEnforcer;
     }
 
     @Override
     protected void runOneIteration() {
+        log.info("*****************************************SpokeTtlEnforcerService  cleaning up start*****************");
         this.spokeTtlEnforcer.cleanup(spokeStore);
+        log.info("*****************************************SpokeTtlEnforcerService  cleaning up done*****************");
     }
 
     @Override

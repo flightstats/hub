@@ -91,15 +91,19 @@ public class SpokeTtlEnforcer {
     void cleanup(SpokeStore spokeStore) {
         try {
             initSpokeStore(spokeStore);
-            long start = System.currentTimeMillis();
-            AtomicLong evictionCounter = new AtomicLong(0);
+
+            final long start = System.currentTimeMillis();
+            final AtomicLong evictionCounter = new AtomicLong(0);
+
             log.info("running ttl cleanup");
             TtlEnforcer.enforce(storagePath, channelService, handleCleanup(evictionCounter));
             updateOldestItemMetric();
             statsdReporter.gauge(buildMetricName("evicted"), evictionCounter.get());
-            long runtime = (System.currentTimeMillis() - start);
+
+            final long runtime = (System.currentTimeMillis() - start);
             log.info("completed ttl cleanup {}", runtime);
             statsdReporter.gauge(buildMetricName("ttl", "enforcer", "runtime"), runtime);
+
         } catch (Exception e) {
             log.info("issue cleaning up spoke", e);
         }

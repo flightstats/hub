@@ -18,6 +18,7 @@ import com.flightstats.hub.metrics.InfluxdbReporterLifecycle;
 import com.flightstats.hub.metrics.PeriodicMetricEmitterLifecycle;
 import com.flightstats.hub.metrics.StatsDReporterLifecycle;
 import com.flightstats.hub.spoke.SpokeStore;
+import com.flightstats.hub.spoke.SpokeTtlEnforcer;
 import com.flightstats.hub.spoke.SpokeTtlEnforcerService;
 import com.flightstats.hub.ws.WebSocketChannelEndpoint;
 import com.flightstats.hub.ws.WebSocketDayEndpoint;
@@ -184,11 +185,10 @@ public class HubMain {
 
         if (storageBackend == StorageBackend.aws) {
             services.add(injector.getInstance(S3WriteQueueLifecycle.class));
-        }
-
-        if (spokeProperties.isTtlEnforced()) {
-            services.add(new SpokeTtlEnforcerService(SpokeStore.WRITE));
-            services.add(new SpokeTtlEnforcerService(SpokeStore.READ));
+            if (spokeProperties.isTtlEnforced()) {
+                services.add(new SpokeTtlEnforcerService(SpokeStore.WRITE, injector.getInstance(SpokeTtlEnforcer.class)));
+                services.add(new SpokeTtlEnforcerService(SpokeStore.READ, injector.getInstance(SpokeTtlEnforcer.class)));
+            }
         }
 
         return services;
