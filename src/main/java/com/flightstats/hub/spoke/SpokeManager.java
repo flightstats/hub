@@ -47,8 +47,8 @@ public class SpokeManager implements SpokeClusterHealthCheck, SpokeChronologySto
 
     private final CuratorCluster cluster;
     private final StatsdReporter statsdReporter;
-    private final ExecutorService executorService;
     private final ContentProperties contentProperties;
+    private final ExecutorService executorService;
 
     @Inject
     public SpokeManager(@Named("SpokeCuratorCluster") CuratorCluster cluster,
@@ -57,7 +57,7 @@ public class SpokeManager implements SpokeClusterHealthCheck, SpokeChronologySto
         this.cluster = cluster;
         this.statsdReporter = statsdReporter;
         this.contentProperties = contentProperties;
-        executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("RemoteSpokeStore-%d").build());
+        this.executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("RemoteSpokeStore-%d").build());
     }
 
     static int getQuorum(int size) {

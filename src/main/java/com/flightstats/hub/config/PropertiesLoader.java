@@ -66,6 +66,7 @@ public class PropertiesLoader {
             }
         }
 
+        log.info("Successfully loaded properties {}", properties);
         if (getProperty("hub.read.only", false)) {
             ensureReadOnlyPropertiesAreSet();
         }
@@ -106,6 +107,6 @@ public class PropertiesLoader {
         propertiesDefault.put("s3Verifier.run", "false");
         propertiesDefault.put("aws.signing_region", "us-east-1");
 
-        this.properties = propertiesDefault;
+       properties = propertiesDefault;
     }
 }
