@@ -1,35 +1,35 @@
 package com.flightstats.hub.model;
 
 import org.joda.time.DateTime;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class SecondPathTest {
+class SecondPathTest {
 
     @Test
-    public void testCycleBytes() {
+    void testCycleBytes() {
         SecondPath path = new SecondPath();
         ContentPath cycled = path.fromBytes(path.toBytes());
         assertEquals(0, path.compareTo(cycled));
     }
 
     @Test
-    public void testCycleZk() {
+    void testCycleZk() {
         SecondPath path = new SecondPath();
         ContentPath cycled = path.fromZk(path.toZk());
         assertEquals(0, path.compareTo(cycled));
     }
 
     @Test
-    public void testToUrl() {
+    void testToUrl() {
         SecondPath path = new SecondPath(new DateTime(123456789));
         assertEquals("1970/01/02/10/17/36", path.toUrl());
     }
 
     @Test
-    public void testCompareContentKey() {
+    void testCompareContentKey() {
         SecondPath secondPath = new SecondPath();
         ContentKey contentKey = new ContentKey(secondPath.getTime(), "0");
         assertTrue(secondPath.compareTo(contentKey) > 0);
@@ -43,7 +43,7 @@ public class SecondPathTest {
     }
 
     @Test
-    public void testCompareMinutePath() {
+    void testCompareMinutePath() {
         DateTime time = new DateTime().withSecondOfMinute(1);
 
         SecondPath secondPath = new SecondPath(time);

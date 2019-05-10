@@ -27,11 +27,19 @@ public class S3Properties {
         return this.propertiesLoader.getProperty("s3.maxRules", defaultValue);
     }
 
+    public boolean isBatchManagementEnabled() {
+        return this.propertiesLoader.getProperty("s3.batch.management.enabled", true);
+    }
+
+    public boolean isConfigManagementEnabled() {
+        return this.propertiesLoader.getProperty("s3.config.management.enabled", true);
+    }
+
     public boolean isPathStyleAccessEnabled() {
         return this.propertiesLoader.getProperty("s3.pathStyleAccessEnable", false);
     }
 
-    public boolean getDisableChunkedEncoding() {
+    public boolean isChunkedEncodingEnabled() {
         return this.propertiesLoader.getProperty("s3.disableChunkedEncoding", false);
     }
 

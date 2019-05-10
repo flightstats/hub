@@ -4,6 +4,7 @@ import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.Watcher;
+import com.flightstats.hub.config.WebhookProperties;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ContentPath;
 import com.google.common.annotations.VisibleForTesting;
@@ -26,8 +27,8 @@ import java.util.concurrent.TimeUnit;
 import static com.flightstats.hub.app.HubServices.register;
 import static com.flightstats.hub.util.Constants.WEBHOOK_LAST_COMPLETED;
 
-@Singleton
 @Slf4j
+@Singleton
 public class WebhookManager {
 
     private static final String WATCHER_PATH = "/groupCallback/watcher";
@@ -50,6 +51,7 @@ public class WebhookManager {
                           WebhookStateReaper webhookStateReaper,
                           LastContentPath lastContentPath,
                           ActiveWebhooks activeWebhooks,
+                          WebhookProperties webhookProperties,
                           WatchManager watchManager,
                           @Named("Webhook") Dao<Webhook> webhookDao) {
         this.localWebhookManager = localWebhookManager;
@@ -62,8 +64,10 @@ public class WebhookManager {
         this.watchManager = watchManager;
         this.webhookDao = webhookDao;
 
-        register(new WebhookIdleService(), HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
-        register(new WebhookScheduledService(), HubServices.TYPE.AFTER_HEALTHY_START);
+        if (webhookProperties.isWebhookLeadershipEnabled()) {
+            register(new WebhookIdleService(), HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
+            register(new WebhookScheduledService(), HubServices.TYPE.AFTER_HEALTHY_START);
+        }
     }
 
     private void start() {

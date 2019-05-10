@@ -11,7 +11,7 @@ import spark.Spark;
  */
 public class SparkUtil {
 
-    public static void sleep() {
+    private static void sleep() {
         Sleeper.sleep(50);
     }
 

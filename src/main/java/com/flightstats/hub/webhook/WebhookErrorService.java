@@ -112,7 +112,7 @@ class WebhookErrorService {
 
     private String buildWebhookUrl(DeliveryAttempt attempt) {
         // todo - workaround for HubHost.getLocalNamePort and AppProperties.getAppUrl not returning usable URLs for dockerized single hub
-        final String host = RequestUtils.getHost(attempt.getWebhook().getChannelUrl());
+        String host = RequestUtils.getHost(attempt.getWebhook().getChannelUrl());
         return host + "/webhook/" + attempt.getWebhook().getName();
     }
 

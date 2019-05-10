@@ -24,9 +24,8 @@ import java.util.concurrent.TimeUnit;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.awaitility.Awaitility.await;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @Slf4j
 public class HubHelper {
@@ -36,7 +35,7 @@ public class HubHelper {
     private WebhookResourceClient webhookResourceClient;
 
     @Inject
-    public HubHelper(@Named("hub") Retrofit retrofitHub) {
+    HubHelper(@Named("hub") Retrofit retrofitHub) {
         this.retrofitHub = retrofitHub;
         this.channelItemResourceClient = getHubClient(ChannelItemResourceClient.class);
         this.channelResourceClient = getHubClient(ChannelResourceClient.class);
@@ -62,12 +61,12 @@ public class HubHelper {
         return response.code();
     }
 
-    public HttpUrl getHubClientBaseUrl() {
+    HttpUrl getHubClientBaseUrl() {
         return retrofitHub.baseUrl();
     }
 
     @SneakyThrows
-    public boolean hasCallbackErrorInHub(String webhookName, String fullUrl) {
+    boolean hasCallbackErrorInHub(String webhookName, String fullUrl) {
         String itemPath = ContentKey.fromFullUrl(fullUrl).toUrl();
         return getCallbackErrorsForCurrentWebhook(webhookName).body().getErrors()
                 .stream()
@@ -77,7 +76,7 @@ public class HubHelper {
                 .anyMatch((path) -> path.contains(itemPath));
     }
 
-    public void awaitHubHasCallbackErrorForItemPath(String webhookName, String path) {
+    void awaitHubHasCallbackErrorForItemPath(String webhookName, String path) {
         try {
             await().atMost(90, TimeUnit.SECONDS).until(() -> hasCallbackErrorInHub(webhookName, path));
         } catch (Exception e) {
@@ -86,7 +85,7 @@ public class HubHelper {
     }
 
     @SneakyThrows
-    public void createChannel(String channelName) {
+    void createChannel(String channelName) {
         log.info("Create channel name {} ", channelName);
 
         Call<Object> call = channelResourceClient.create(Channel.builder().name(channelName).build());
@@ -96,16 +95,16 @@ public class HubHelper {
     }
 
     @SneakyThrows
-    public void insertAndVerifyWebhook(Webhook webhook) {
+    void insertAndVerifyWebhook(Webhook webhook) {
         assertEquals(CREATED.getStatusCode(), upsertWebhook(webhook));
     }
 
     @SneakyThrows
-    public void updateAndVerifyWebhook(Webhook webhook) {
+    void updateAndVerifyWebhook(Webhook webhook) {
         assertEquals(OK.getStatusCode(), upsertWebhook(webhook));
     }
 
-    public List<String> addItemsToChannel(String channelName, Object data, int count) {
+    List<String> addItemsToChannel(String channelName, Object data, int count) {
         final List<String> channelItems = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             channelItems.add(addItemToChannel(channelName, data));
@@ -114,7 +113,7 @@ public class HubHelper {
     }
 
     @SneakyThrows
-    public String addItemToChannel(String channelName, Object data) {
+    String addItemToChannel(String channelName, Object data) {
         Call<ChannelItem> call = channelItemResourceClient.add(channelName, data);
         Response<ChannelItem> response = call.execute();
 
@@ -126,13 +125,13 @@ public class HubHelper {
     }
 
     @SneakyThrows
-    public void deleteChannelAndWebhook(String channelName, String webhookName) {
+    void deleteChannelAndWebhook(String channelName, String webhookName) {
         deleteWebhook(webhookName);
         this.channelResourceClient.delete(channelName).execute();
     }
 
     @SneakyThrows
-    public void deleteWebhook(String webhookName) {
+    void deleteWebhook(String webhookName) {
         webhookResourceClient.delete(webhookName).execute();
     }
 }

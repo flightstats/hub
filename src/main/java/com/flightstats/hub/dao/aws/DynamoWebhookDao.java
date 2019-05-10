@@ -8,6 +8,7 @@ import com.amazonaws.services.dynamodbv2.model.ResourceNotFoundException;
 import com.amazonaws.services.dynamodbv2.model.ScanRequest;
 import com.amazonaws.services.dynamodbv2.model.ScanResult;
 import com.flightstats.hub.app.HubServices;
+import com.flightstats.hub.config.AppProperties;
 import com.flightstats.hub.config.DynamoProperties;
 import com.flightstats.hub.config.WebhookProperties;
 import com.flightstats.hub.dao.Dao;
@@ -29,21 +30,32 @@ public class DynamoWebhookDao implements Dao<Webhook> {
     private final AmazonDynamoDB dbClient;
     private final DynamoUtils dynamoUtils;
     private final DynamoProperties dynamoProperties;
+    private final AppProperties appProperties;
     private final WebhookProperties webhookProperties;
 
     @Inject
     public DynamoWebhookDao(AmazonDynamoDB dbClient,
                             DynamoUtils dynamoUtils,
                             DynamoProperties dynamoProperties,
+                            AppProperties appProperties,
                             WebhookProperties webhookProperties) {
         this.dbClient = dbClient;
         this.dynamoUtils = dynamoUtils;
         this.dynamoProperties = dynamoProperties;
+        this.appProperties = appProperties;
         this.webhookProperties = webhookProperties;
         HubServices.register(new DynamoGroupDaoInit());
     }
 
     private void initialize() {
+        if (appProperties.isReadOnly()) {
+            if (!dynamoUtils.doesTableExist(getTableName())) {
+                String msg = String.format("Probably fatal error. Dynamo webhook config table doesn't exist for r/o node.  %s", getTableName());
+                log.error(msg);
+                throw new IllegalArgumentException(msg);
+            }
+            return;
+        }
         dynamoUtils.createAndUpdate(getTableName(), "webhook", "name");
     }
 
@@ -171,12 +183,12 @@ public class DynamoWebhookDao implements Dao<Webhook> {
 
     private class DynamoGroupDaoInit extends AbstractIdleService {
         @Override
-        protected void startUp() throws Exception {
+        protected void startUp() {
             initialize();
         }
 
         @Override
-        protected void shutDown() throws Exception {
+        protected void shutDown() {
         }
     }
 }

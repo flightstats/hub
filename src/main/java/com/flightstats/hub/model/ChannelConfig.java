@@ -2,7 +2,6 @@ package com.flightstats.hub.model;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flightstats.hub.config.AppProperties;
 import com.flightstats.hub.config.ContentProperties;
 import com.flightstats.hub.config.PropertiesLoader;
 import com.flightstats.hub.exception.InvalidRequestException;
@@ -14,10 +13,10 @@ import org.joda.time.DateTime;
 
 import java.io.Serializable;
 import java.util.Date;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -282,7 +281,9 @@ public class ChannelConfig implements Serializable, NamedType {
         return getDisplayName().toLowerCase();
     }
 
-    public boolean isSecondaryMetricsReporting() { return secondaryMetricsReporting; }
+    public boolean isSecondaryMetricsReporting() {
+        return secondaryMetricsReporting;
+    }
 
     public boolean equals(Object o) {
         if (o == this) return true;
@@ -321,7 +322,7 @@ public class ChannelConfig implements Serializable, NamedType {
         if (this$mutableTime == null ? other$mutableTime != null : !this$mutableTime.equals(other$mutableTime))
             return false;
         return this.isSecondaryMetricsReporting() == other.isSecondaryMetricsReporting() &&
-        this.isAllowZeroBytes() == other.isAllowZeroBytes();
+                this.isAllowZeroBytes() == other.isAllowZeroBytes();
     }
 
     public int hashCode() {
@@ -370,6 +371,7 @@ public class ChannelConfig implements Serializable, NamedType {
         private TreeSet<String> tags = new TreeSet<>();
         private String replicationSource = "";
         private String storage = "";
+
         private boolean protect = contentProperties.isChannelProtectionEnabled();
         private boolean allowZeroBytes = true;
         private String name;

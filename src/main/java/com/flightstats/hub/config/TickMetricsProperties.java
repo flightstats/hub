@@ -40,7 +40,7 @@ public class TickMetricsProperties {
     }
 
     //These properties are used for both datadog and Tick
-    public boolean isMetricsEnable() {
+    public boolean isMetricsEnabled() {
         return this.propertiesLoader.getProperty("metrics.enable", false);
     }
 

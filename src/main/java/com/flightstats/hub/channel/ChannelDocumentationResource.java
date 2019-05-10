@@ -1,13 +1,14 @@
 package com.flightstats.hub.channel;
 
+import com.flightstats.hub.app.PermissionsChecker;
 import com.flightstats.hub.dao.DocumentationDao;
 import com.flightstats.hub.dao.aws.ContentRetriever;
+import com.google.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 
-import javax.inject.Inject;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
@@ -20,16 +21,21 @@ import javax.ws.rs.core.Response;
 @Path("/channel/{channel}/doc")
 public class ChannelDocumentationResource {
 
+    private final static String READ_ONLY_FAILURE_MESSAGE = "attempted to %s against /channel documentation on read-only node %s";
     private final static Parser markdownParser = Parser.builder().build();
     private final static HtmlRenderer markdownRenderer = HtmlRenderer.builder().build();
 
     private final DocumentationDao documentationDao;
     private final ContentRetriever contentRetriever;
+    private final PermissionsChecker permissionsChecker;
 
     @Inject
-    public ChannelDocumentationResource(DocumentationDao documentationDao, ContentRetriever contentRetriever) {
+    public ChannelDocumentationResource(DocumentationDao documentationDao,
+                                        ContentRetriever contentRetriever,
+                                        PermissionsChecker permissionsChecker) {
         this.documentationDao = documentationDao;
         this.contentRetriever = contentRetriever;
+        this.permissionsChecker = permissionsChecker;
     }
 
     @GET
@@ -59,6 +65,7 @@ public class ChannelDocumentationResource {
 
     @PUT
     public Response put(@PathParam("channel") String channel, String content) {
+        permissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "put", channel));
         if (!this.contentRetriever.isExistingChannel(channel)) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
@@ -73,6 +80,7 @@ public class ChannelDocumentationResource {
 
     @DELETE
     public Response delete(@PathParam("channel") String channel) {
+        permissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "delete", channel));
         if (!this.contentRetriever.isExistingChannel(channel)) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
@@ -84,4 +92,5 @@ public class ChannelDocumentationResource {
             return Response.serverError().build();
         }
     }
+
 }

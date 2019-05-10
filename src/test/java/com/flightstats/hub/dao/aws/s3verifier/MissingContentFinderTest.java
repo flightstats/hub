@@ -8,7 +8,7 @@ import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.TimeUtil;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.SortedSet;
@@ -22,14 +22,14 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Collections.emptyList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class MissingContentFinderTest {
+class MissingContentFinderTest {
     private final StatsdReporter statsdReporter = mock(StatsdReporter.class);
     private final CurrentThreadExecutor queryThreadPool = new CurrentThreadExecutor();
     private final ContentDao spokeWriteContentDao = mock(ContentDao.class);
@@ -49,7 +49,7 @@ public class MissingContentFinderTest {
     private final ContentKey contentKey3 = new ContentKey(now.minusMinutes(3));
 
     @Test
-    public void testReturnsContentKeysThatAreInSpokeButNotS3() {
+    void testReturnsContentKeysThatAreInSpokeButNotS3() {
         TimeQuery timeQuery = TimeQuery.builder()
                 .channelName(channelName)
                 .startTime(startPath.getTime())
@@ -66,7 +66,7 @@ public class MissingContentFinderTest {
     }
 
     @Test
-    public void testWithoutEndPath_returnsContentKeysThatAreInSpokeButNotS3() {
+    void testWithoutEndPath_returnsContentKeysThatAreInSpokeButNotS3() {
         TimeQuery timeQuery = TimeQuery.builder()
                 .channelName(channelName)
                 .startTime(startPath.getTime())
@@ -82,7 +82,7 @@ public class MissingContentFinderTest {
     }
 
     @Test
-    public void testWithExcessivelyLongDurationBetweenStartAndEnd_waitsAnExtraBaseTimeoutUnitPerDayBehind_and_returnsContentKeysThatAreInSpokeButNotS3() {
+    void testWithExcessivelyLongDurationBetweenStartAndEnd_waitsAnExtraBaseTimeoutUnitPerDayBehind_and_returnsContentKeysThatAreInSpokeButNotS3() {
         int daysBehindInVerification = 3;
         MinutePath ancientStartPath = new MinutePath(now.minusDays(daysBehindInVerification));
 
@@ -111,7 +111,7 @@ public class MissingContentFinderTest {
     }
 
     @Test
-    public void testWithExecutionExceedingTimeout_returnsAnEmptySet_and_logsTheError() {
+    void testWithExecutionExceedingTimeout_returnsAnEmptySet_and_logsTheError() {
         int baseTimeoutInSeconds = 1;
         VerifierConfig configWithShortTimeout = defaultConfig
                 .withBaseTimeoutUnit(TimeUnit.SECONDS)

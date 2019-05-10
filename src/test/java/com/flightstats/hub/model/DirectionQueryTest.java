@@ -2,15 +2,15 @@ package com.flightstats.hub.model;
 
 import com.flightstats.hub.util.TimeUtil;
 import org.joda.time.DateTime;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class DirectionQueryTest {
+ class DirectionQueryTest {
 
     @Test
-    public void testOutsideOfCachePrevious() {
+     void testOutsideOfCachePrevious() {
         DateTime start = TimeUtil.now();
         ContentKey contentKey = new ContentKey(start, "a");
         DirectionQuery query = DirectionQuery.builder()
@@ -23,7 +23,7 @@ public class DirectionQueryTest {
     }
 
     @Test
-    public void testOutsideOfCacheNext() {
+     void testOutsideOfCacheNext() {
         DateTime start = TimeUtil.now();
         ContentKey contentKey = new ContentKey(start, "a");
         DirectionQuery query = DirectionQuery.builder()

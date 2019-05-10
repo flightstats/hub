@@ -7,12 +7,22 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.*;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.OutputStream;
 import java.util.Arrays;
 
 @SuppressWarnings("WeakerAccess")
@@ -22,7 +32,7 @@ public class InternalSpokeResource {
     private final static Logger logger = LoggerFactory.getLogger(InternalSpokeResource.class);
     private static final FileSpokeStore writeSpokeStore = HubProvider.getInstance(FileSpokeStore.class, SpokeStore.WRITE.name());
     private static final FileSpokeStore readSpokeStore = HubProvider.getInstance(FileSpokeStore.class, SpokeStore.READ.name());
-    private static final RemoteSpokeStore remoteSpokeStore = HubProvider.getInstance(RemoteSpokeStore.class);
+    private static final SpokeClusterHealthCheck healthCheck = HubProvider.getInstance(SpokeClusterHealthCheck.class);
 
     @Context
     private UriInfo uriInfo;
@@ -245,7 +255,7 @@ public class InternalSpokeResource {
     public Response test(@PathParam("server") String server) {
         logger.info("testing server {}", server);
         try {
-            remoteSpokeStore.testOne(Arrays.asList(server));
+            healthCheck.testOne(Arrays.asList(server));
             return Response.ok().build();
         } catch (Exception e) {
             logger.warn("unable to complete calls " + server, e);

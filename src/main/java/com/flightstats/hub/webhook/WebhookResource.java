@@ -3,6 +3,7 @@ package com.flightstats.hub.webhook;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.app.PermissionsChecker;
 import com.flightstats.hub.channel.TimeLinkUtil;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.rest.Linked;
@@ -11,7 +12,6 @@ import com.flightstats.hub.util.TimeUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 
-import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -32,20 +32,22 @@ import java.util.function.BiConsumer;
 /**
  * WebhookResource represents all of the interactions for Webhook Management.
  */
-@SuppressWarnings("WeakerAccess")
 @Slf4j
 @Path("/webhook")
 public class WebhookResource {
 
+    private final static String READ_ONLY_FAILURE_MESSAGE = "attempted to %s against /webhook on node with leadership disabled %s";
+    private final PermissionsChecker permissionsChecker;
     private final WebhookService webhookService;
     private final ObjectMapper objectMapper;
 
     @Context
     private UriInfo uriInfo;
 
-    @Inject
-    public WebhookResource(WebhookService webhookService,
+    public WebhookResource(PermissionsChecker permissionsChecker,
+                           WebhookService webhookService,
                            ObjectMapper objectMapper) {
+        this.permissionsChecker = permissionsChecker;
         this.webhookService = webhookService;
         this.objectMapper = objectMapper;
     }
@@ -87,9 +89,9 @@ public class WebhookResource {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
         log.info("get webhook {} ", name);
-        final Webhook webhook = webhookOptional.get();
-        final WebhookStatus status = this.webhookService.getStatus(webhook);
-        final ObjectNode root = this.objectMapper.createObjectNode();
+        Webhook webhook = webhookOptional.get();
+        WebhookStatus status = this.webhookService.getStatus(webhook);
+        ObjectNode root = this.objectMapper.createObjectNode();
         addSelfLink(root, uriInfo, includeChildren);
         biConsumer.accept(status, root);
         return Response.ok(root).build();
@@ -154,8 +156,8 @@ public class WebhookResource {
 
     Response upsert(String name, String body, UriInfo uriInfo) {
         log.info("upsert webhook {} {}", name, body);
-        final Webhook webhook = Webhook.fromJson(body, this.webhookService.get(name)).withName(name);
-        final Optional<Webhook> upsert = this.webhookService.upsert(webhook);
+        Webhook webhook = Webhook.fromJson(body, this.webhookService.get(name)).withName(name);
+        Optional<Webhook> upsert = this.webhookService.upsert(webhook);
         if (upsert.isPresent()) {
             return Response.ok(getLinked(webhook, uriInfo)).build();
         } else {
@@ -164,7 +166,7 @@ public class WebhookResource {
     }
 
     Response deleter(String name) {
-        final Optional<Webhook> webhookOptional = this.webhookService.get(name);
+        Optional<Webhook> webhookOptional = this.webhookService.get(name);
         log.info("delete webhook {}", name);
         if (!webhookOptional.isPresent()) {
             log.info("webhook not found for delete {} ", name);
@@ -174,13 +176,13 @@ public class WebhookResource {
         return Response.status(Response.Status.ACCEPTED).build();
     }
 
-    Response cursorUpdater(String name, String body, UriInfo uriInfo) {
+    private Response cursorUpdater(String name, String body) {
         log.info("update cursor webhook {} {}", name, body);
-        final Webhook webhook = Webhook.fromJson("{}", this.webhookService.get(name)).withName(name);
+        Webhook webhook = Webhook.fromJson("{}", webhookService.get(name)).withName(name);
         try {
             if (RequestUtils.isValidChannelUrl(body)) {
                 ContentPath item = ContentPath.fromFullUrl(body).get();
-                this.webhookService.updateCursor(webhook, item);
+                webhookService.updateCursor(webhook, item);
             } else {
                 log.info("cursor update failed.  Bad item: " + body);
                 return Response.status(Response.Status.BAD_REQUEST).build();
@@ -259,6 +261,7 @@ public class WebhookResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response upsert(@PathParam("name") String name, String body) {
+        permissionsChecker.checkWebhookLeadershipPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "upsert", name));
         return upsert(name, body, uriInfo);
     }
 
@@ -266,6 +269,7 @@ public class WebhookResource {
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     public Response delete(@PathParam("name") String name) {
+        permissionsChecker.checkWebhookLeadershipPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "delete", name));
         return deleter(name);
     }
 
@@ -274,6 +278,8 @@ public class WebhookResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.TEXT_PLAIN)
     public Response updateCursor(@PathParam("name") String name, String body) {
-        return cursorUpdater(name, body, uriInfo);
+        permissionsChecker.checkWebhookLeadershipPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "updateCursor", name));
+        return cursorUpdater(name, body);
     }
+
 }

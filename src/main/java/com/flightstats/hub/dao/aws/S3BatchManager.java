@@ -2,6 +2,7 @@ package com.flightstats.hub.dao.aws;
 
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.S3Properties;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.replication.S3Batch;
@@ -34,14 +35,17 @@ public class S3BatchManager {
                           @Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao,
                           HubUtils hubUtils,
                           ActiveWebhooks activeWebhooks,
-                          AppProperties appProperties) {
+                          AppProperties appProperties,
+                          S3Properties s3Properties) {
         this.webhookService = webhookService;
         this.channelConfigDao = channelConfigDao;
         this.hubUtils = hubUtils;
         this.activeWebhooks = activeWebhooks;
         this.appProperties = appProperties;
 
-        HubServices.register(new S3BatchManagerService(), HubServices.TYPE.AFTER_HEALTHY_START);
+        if (s3Properties.isBatchManagementEnabled()) {
+            HubServices.register(new S3BatchManagerService(), HubServices.TYPE.AFTER_HEALTHY_START);
+        }
     }
 
     private void setupBatch() {
@@ -52,8 +56,10 @@ public class S3BatchManager {
                 existingBatchGroups.add(webhook.getName());
             }
         }
+
         for (ChannelConfig channel : channelConfigDao.getAll(false)) {
             final S3Batch s3Batch = new S3Batch(channel, hubUtils, appProperties.getAppUrl(), appProperties.getAppEnv());
+
             if (channel.isSingle()) {
                 if (!activeWebhooks.getServers(channel.getName()).isEmpty()) {
                     log.debug("turning off batch webhook {}", channel.getDisplayName());

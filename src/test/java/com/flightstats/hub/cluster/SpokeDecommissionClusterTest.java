@@ -5,34 +5,32 @@ import com.flightstats.hub.config.SpokeProperties;
 import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.test.Integration;
 import org.apache.curator.framework.CuratorFramework;
-import org.junit.After;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class SpokeDecommissionClusterTest {
-
+class SpokeDecommissionClusterTest {
     private static final SpokeProperties spokeProperties = new SpokeProperties(PropertiesLoader.getInstance());
-    private static CuratorFramework curator;
     private static SpokeDecommissionCluster cluster;
 
-    @BeforeClass
-    public static void setUpClass() throws Exception {
-        curator = Integration.startZooKeeper();
+    @BeforeAll
+    static void setUpClass() throws Exception {
+        CuratorFramework curator = Integration.startZooKeeper();
         cluster = new SpokeDecommissionCluster(curator,
                 new SpokeProperties(PropertiesLoader.getInstance()));
     }
 
-    @After
-    public void afterTest() throws Exception {
+    @AfterEach
+    void afterTest() {
         cluster.doNotRestart();
     }
 
     @Test
-    public void testDecommission() throws Exception {
+    void testDecommission() throws Exception {
         cluster.decommission();
         assertTrue(cluster.withinSpokeExists());
         assertFalse(cluster.doNotRestartExists());

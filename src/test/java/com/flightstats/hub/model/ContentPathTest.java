@@ -1,16 +1,15 @@
 package com.flightstats.hub.model;
 
-import org.junit.Test;
-
 import java.util.Optional;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class ContentPathTest {
+class ContentPathTest {
 
     @Test
-    public void testContentKeyFromFullUrl() {
+    void testContentKeyFromFullUrl() {
         Optional<ContentPath> optional = ContentPath.fromFullUrl("http://hub/channel/load_test_2/2015/01/23/21/11/19/407/L7QtaY");
         assertTrue(optional.isPresent());
         ContentPath path = optional.get();
@@ -19,7 +18,7 @@ public class ContentPathTest {
     }
 
     @Test
-    public void testMinutePathFromFullUrl() {
+    void testMinutePathFromFullUrl() {
         Optional<ContentPath> optional = ContentPath.fromFullUrl("http://hub/channel/load_test_2/2015/01/23/21/11");
         assertTrue(optional.isPresent());
         ContentPath path = optional.get();
@@ -28,7 +27,7 @@ public class ContentPathTest {
     }
 
     @Test
-    public void testContentKeyFromUrl() {
+    void testContentKeyFromUrl() {
         Optional<ContentPath> optional = ContentPath.fromUrl("2015/01/23/21/11/19/407/L7QtaY");
         assertTrue(optional.isPresent());
         ContentPath path = optional.get();
@@ -37,7 +36,7 @@ public class ContentPathTest {
     }
 
     @Test
-    public void testMinutePathFromUrl() {
+    void testMinutePathFromUrl() {
         Optional<ContentPath> optional = ContentPath.fromUrl("2015/01/23/21/11");
         assertTrue(optional.isPresent());
         ContentPath path = optional.get();

@@ -1,10 +1,10 @@
 package com.flightstats.hub.config;
 
 import com.flightstats.hub.app.HubHost;
-import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
+import javax.inject.Inject;
 import java.util.Arrays;
 
 @Slf4j
@@ -46,9 +46,7 @@ public class AppProperties {
     }
 
     public boolean isReadOnly() {
-        String readOnlyNodes = this.propertiesLoader.getProperty("hub.read.only", "");
-        return Arrays.asList(readOnlyNodes.split(","))
-                .contains(HubHost.getLocalName());
+        return this.propertiesLoader.getProperty("hub.read.only", false);
     }
 
     public int getMinPostTimeMillis() {
@@ -96,7 +94,7 @@ public class AppProperties {
     }
 
     public String getKeyStorePath() {
-        return this.propertiesLoader.getProperty( "app.keyStorePath", "/etc/ssl/");
+        return this.propertiesLoader.getProperty("app.keyStorePath", "/etc/ssl/");
     }
 
 }

@@ -64,6 +64,7 @@ public class ShutdownManager {
         final long millisStopping = end - start;
         if (millisStopping < shutdownDelayInMiilis) {
             final long sleepTime = shutdownDelayInMiilis - millisStopping;
+
             log.warn("sleeping for " + sleepTime);
             Sleeper.sleep(sleepTime);
             log.warn("slept for " + sleepTime);

@@ -69,7 +69,7 @@ public class AwsConnectorFactory {
         return AmazonS3ClientBuilder.standard()
                 .withClientConfiguration(clientConfiguration)
                 .withPathStyleAccessEnabled(s3Properties.isPathStyleAccessEnabled())
-                .withChunkedEncodingDisabled(s3Properties.getDisableChunkedEncoding())
+                .withChunkedEncodingDisabled(s3Properties.isChunkedEncodingEnabled())
                 .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(s3Properties.getEndpoint(), signingRegion))
                 .withCredentials(getAwsCredentials())
                 .build();

@@ -5,19 +5,19 @@ import com.flightstats.hub.model.SecondPath;
 import com.flightstats.hub.test.Integration;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class TimedWebhookStrategyTest {
-    @BeforeClass
-    public static void setupIntegration() throws Exception {
+class TimedWebhookStrategyTest {
+    @BeforeAll
+    static void setupIntegration() throws Exception {
         Integration.startAwsHub();
     }
 
     @Test
-    public void testRoundingSecondPath() {
+    void testRoundingSecondPath() {
         compare(new DateTime(2016, 4, 21, 17, 22, 0, 0, DateTimeZone.UTC), "2016-04-21T17:21:00.000Z");
         compare(new DateTime(2016, 4, 21, 17, 22, 1, 0, DateTimeZone.UTC), "2016-04-21T17:21:00.000Z");
         compare(new DateTime(2016, 4, 21, 17, 22, 58, 0, DateTimeZone.UTC), "2016-04-21T17:21:00.000Z");
@@ -27,11 +27,11 @@ public class TimedWebhookStrategyTest {
     private void compare(DateTime start, String expected) {
         SecondPath secondPath = new SecondPath(start);
         DateTime stable = TimedWebhookStrategy.replicatingStable_minute(secondPath);
-        assertEquals(start.toString(), expected, stable.toString());
+        assertEquals(expected, stable.toString(), start.toString());
     }
 
     @Test
-    public void testRoundingContentKey() {
+    void testRoundingContentKey() {
         compareContentKey(new DateTime(2016, 4, 21, 17, 22, 0, 0, DateTimeZone.UTC), "2016-04-21T17:21:00.000Z");
         compareContentKey(new DateTime(2016, 4, 21, 17, 22, 1, 0, DateTimeZone.UTC), "2016-04-21T17:21:00.000Z");
         compareContentKey(new DateTime(2016, 4, 21, 17, 22, 58, 0, DateTimeZone.UTC), "2016-04-21T17:21:00.000Z");
@@ -41,7 +41,7 @@ public class TimedWebhookStrategyTest {
     private void compareContentKey(DateTime start, String expected) {
         ContentKey secondPath = new ContentKey(start);
         DateTime stable = TimedWebhookStrategy.replicatingStable_minute(secondPath);
-        assertEquals(start.toString(), expected, stable.toString());
+        assertEquals(expected, stable.toString(), start.toString());
     }
 
 }

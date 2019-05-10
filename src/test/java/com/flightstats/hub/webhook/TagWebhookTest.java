@@ -1,19 +1,17 @@
 package com.flightstats.hub.webhook;
 
-import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.test.Integration;
 import org.apache.commons.lang3.StringUtils;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Set;
 import java.util.TreeSet;
 
-public class TagWebhookTest {
-
+class TagWebhookTest {
     private static final String host = "http://hub.com";
     private ChannelConfig c1, c2, c3;
     private Set<Webhook> allWebhooks;
@@ -53,12 +51,12 @@ public class TagWebhookTest {
     private ChannelConfig createChannelConfig(String name, String tag) {
         return ChannelConfig.builder()
                 .name(name)
-                .tags(StringUtils.isEmpty(tag) ? Arrays.asList() : Arrays.asList(tag))
+                .tags(StringUtils.isEmpty(tag) ? Collections.EMPTY_LIST : Collections.singletonList(tag))
                 .build();
     }
 
-    @Before
-    public void initialize() {
+    @BeforeEach
+    void initialize() {
         try {
             Integration.startAwsHub();
         } catch (Exception e) {
@@ -71,7 +69,7 @@ public class TagWebhookTest {
     }
 
     @Test
-    public void testAllManagedWebhooksForChannel() throws Exception {
+    void testAllManagedWebhooksForChannel() {
         final TagWebhook tagWebhook = new TagWebhook(webhookService);
 
         Set<Webhook> webhooks = tagWebhook.allManagedWebhooksForChannel(allWebhooks, c2);

@@ -33,7 +33,7 @@ public class MetricsConfigProvider implements Provider<MetricsConfig> {
                 .appVersion(hubVersion.getVersion())
                 .clusterTag(appProperties.getClusterLocation() + "-" + appProperties.getEnv())
                 .env(appProperties.getEnv())
-                .enabled(tickMetricsProperty.isMetricsEnable())
+                .enabled(tickMetricsProperty.isMetricsEnabled())
                 .team(tickMetricsProperty.getMetricsTagsTeam())
                 .role(tickMetricsProperty.getMetricsTagsRole())
                 .reportingIntervalSeconds(tickMetricsProperty.getMetricsSeconds())

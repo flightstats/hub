@@ -4,17 +4,17 @@ import com.codahale.metrics.MetricRegistry;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubVersion;
 import metrics_influxdb.measurements.MeasurementReporter;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 ;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class InfluxdbReporterProviderTest {
+class InfluxdbReporterProviderTest {
 
     @Test
-    public void testInfluxdbReporterGet_throwsOnBadConfig() {
+    void testInfluxdbReporterGet_throwsOnBadConfig() {
         MetricRegistry metricRegistry = mock(MetricRegistry.class);
         MetricsConfig metricsConfig = MetricsConfig.builder().build();
 
@@ -23,7 +23,7 @@ public class InfluxdbReporterProviderTest {
     }
 
     @Test
-    public void testInfluxdbReporterGet_scheduledReporter() {
+    void testInfluxdbReporterGet_scheduledReporter() {
         // GIVEN
         MetricRegistry metricRegistry = mock(MetricRegistry.class);
         HubVersion hubVersion = mock(HubVersion.class);

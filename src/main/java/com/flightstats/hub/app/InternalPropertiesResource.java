@@ -34,8 +34,8 @@ public class InternalPropertiesResource {
     public Response getTraces() {
         final ObjectNode root = this.internalTracesResource.serverAndServers("/internal/properties");
         try {
-            final ObjectNode propertyNode = root.putObject("properties");
-            final Properties properties = PropertiesLoader.getInstance().getProperties();
+            ObjectNode propertyNode = root.putObject("properties");
+            Properties properties = PropertiesLoader.getInstance().getProperties();
             for (Object key : new TreeSet<>(properties.keySet())) {
                 final String value = properties.get(key).toString();
                 final String possiblySensitiveValue = secretFilter.redact(key.toString(), value);

@@ -2,18 +2,18 @@ package com.flightstats.hub.metrics;
 
 import com.flightstats.hub.config.AppProperties;
 import com.flightstats.hub.config.PropertiesLoader;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class TracesTest {
+class TracesTest {
 
     @Test
-    public void testLimit() {
-        Traces traces = new Traces(new AppProperties(PropertiesLoader.getInstance()),"start");
+    void testLimit() {
+        Traces traces = new Traces(new AppProperties(PropertiesLoader.getInstance()), "start");
         for (int i = 0; i < 1000; i++) {
             traces.add("" + i);
         }

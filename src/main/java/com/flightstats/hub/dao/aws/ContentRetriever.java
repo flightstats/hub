@@ -138,7 +138,8 @@ public class ContentRetriever {
         ActiveTraces.getLocal().add("ChannelService.query", contentKeys);
         return contentKeys;
     }
-    public DirectionQuery configureQuery(DirectionQuery query) {
+
+    DirectionQuery configureQuery(DirectionQuery query) {
         ActiveTraces.getLocal().add("configureQuery.start", query);
         if (query.getCount() > contentProperties.getDirectionCountLimit()) {
             query = query.withCount(contentProperties.getDirectionCountLimit());
@@ -234,7 +235,5 @@ public class ContentRetriever {
         }
         return defaultValue;
     }
-
-
 
 }

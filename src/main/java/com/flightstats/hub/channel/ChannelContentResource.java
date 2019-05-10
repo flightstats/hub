@@ -3,6 +3,8 @@ package com.flightstats.hub.channel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.app.HubProvider;
+import com.flightstats.hub.app.PermissionsChecker;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.dao.ItemRequest;
@@ -77,29 +79,35 @@ import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 @Path("/channel/{channel}/{Y}/{M}/{D}/")
 public class ChannelContentResource {
 
-    private final TagContentResource tagContentResource;
+    private final static String READ_ONLY_FAILURE_MESSAGE = "attempted to %s against /channel content on read-only node %s";
+
+    @Inject
+    private TagContentResource tagContentResource;
     private final ObjectMapper objectMapper;
     private final ChannelService channelService;
     private final StatsdReporter statsdReporter;
     private final EventsService eventsService;
     private final ContentRetriever contentRetriever;
+    private final PermissionsChecker permissionsChecker;
 
     @Context
     private UriInfo uriInfo;
 
     @Inject
-    public ChannelContentResource(TagContentResource tagContentResource,
+    public ChannelContentResource(//TagContentResource tagContentResource,
                                   ObjectMapper objectMapper,
                                   ChannelService channelService,
                                   StatsdReporter statsdReporter,
                                   EventsService eventsService,
-                                  ContentRetriever contentRetriever) {
-        this.tagContentResource = tagContentResource;
+                                  ContentRetriever contentRetriever,
+                                  PermissionsChecker permissionsChecker) {
+     //   this.tagContentResource = tagContentResource;
         this.objectMapper = objectMapper;
         this.channelService = channelService;
         this.statsdReporter = statsdReporter;
         this.eventsService = eventsService;
         this.contentRetriever = contentRetriever;
+        this.permissionsChecker = permissionsChecker;
     }
 
     public static MediaType getContentType(Content content) {
@@ -665,9 +673,12 @@ public class ChannelContentResource {
                            @PathParam("m") int minute,
                            @PathParam("s") int second,
                            @PathParam("ms") int millis,
-                           @PathParam("hash") String hash) {
-        final ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
+                           @PathParam("hash") String hash
+    ) {
+        permissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "delete", channel));
+        ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         channelService.delete(channel, key);
         return Response.noContent().build();
     }
+
 }

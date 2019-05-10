@@ -1,5 +1,6 @@
 package com.flightstats.hub.app;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,6 +55,16 @@ public class HubServices {
             logger.error("unable to start services, exiting", e);
             System.exit(-1);
         }
+    }
+
+    @VisibleForTesting
+    public static Map<TYPE, List<Service>> getServices() {
+        return serviceMap;
+    }
+
+    @VisibleForTesting
+    public static void clear() {
+        serviceMap.forEach((type, list) -> list.clear());
     }
 
     static void stopAll() {

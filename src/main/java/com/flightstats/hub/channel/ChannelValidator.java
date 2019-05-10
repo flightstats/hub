@@ -14,8 +14,8 @@ import org.apache.commons.lang3.StringUtils;
 import javax.inject.Inject;
 
 public class ChannelValidator {
-    public static final String VALID_NAME = "^[a-zA-Z0-9_-]+$";
 
+    public static final String VALID_NAME = "^[a-zA-Z0-9_-]+$";
     private final Dao<ChannelConfig> channelConfigDao;
 
     @Inject

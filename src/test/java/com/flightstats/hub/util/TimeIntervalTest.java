@@ -2,15 +2,15 @@ package com.flightstats.hub.util;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class TimeIntervalTest {
+class TimeIntervalTest {
 
     @Test
-    public void testSingle() {
+    void testSingle() {
         DateTime start = new DateTime().minusMinutes(5);
         TimeInterval timeInterval = new TimeInterval(start);
         assertTrue(timeInterval.contains(start));
@@ -24,7 +24,7 @@ public class TimeIntervalTest {
     }
 
     @Test
-    public void testSingleNow() {
+    void testSingleNow() {
         DateTime start = new DateTime();
         TimeInterval timeInterval = new TimeInterval(start);
         assertTrue(timeInterval.contains(start));
@@ -40,7 +40,7 @@ public class TimeIntervalTest {
     }
 
     @Test
-    public void testRange() {
+    void testRange() {
         DateTime start = new DateTime().minusHours(2);
         DateTime end = start.plusHours(1);
         TimeInterval timeInterval = new TimeInterval(start, end);
@@ -63,7 +63,7 @@ public class TimeIntervalTest {
     }
 
     @Test
-    public void testSimple() {
+    void testSimple() {
         TimeInterval interval = new TimeInterval(getTime(20));
         assertTrue(interval.overlaps(getTime(10), getTime(20)));
 

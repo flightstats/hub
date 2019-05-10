@@ -14,8 +14,8 @@ import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.MinutePath;
 import com.sun.jersey.api.client.Client;
 import org.joda.time.DateTime;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -28,8 +28,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-public class S3VerifierUnitTest {
-
+class S3VerifierUnitTest {
     private final LastContentPath lastContentPath = mock(LastContentPath.class);
     private final S3WriteQueue s3WriteQueue = mock(S3WriteQueue.class);
     private final Client httpClient = mock(Client.class);
@@ -43,7 +42,7 @@ public class S3VerifierUnitTest {
 
     private S3Verifier s3Verifier;
 
-    @Before
+    @BeforeEach
     public void setup() {
         final VerifierConfig config = VerifierConfig.builder().build();
         s3Verifier = new S3Verifier(
@@ -61,7 +60,7 @@ public class S3VerifierUnitTest {
     }
 
     @Test
-    public void testZKDoesNotUpdateOnAbsoluteFailure() {
+    void testZKDoesNotUpdateOnAbsoluteFailure() {
         ChannelContentKey key = ChannelContentKey.fromResourcePath("http://hub/channel/foo/1999/12/31/23/59/59/999/bar");
         VerifierRange verifierRange = VerifierRange.builder()
                 .channelConfig(ChannelConfig.builder().name("foo").build())
@@ -80,7 +79,7 @@ public class S3VerifierUnitTest {
     }
 
     @Test
-    public void testZKUpdatesWithPartialCompletionIfVerifierFailsPartwayThroughAndLastSuccessfulWasADifferentMinute() {
+    void testZKUpdatesWithPartialCompletionIfVerifierFailsPartwayThroughAndLastSuccessfulWasADifferentMinute() {
         ChannelContentKey key = ChannelContentKey.fromResourcePath("http://hub/channel/foo/1999/12/31/23/58/59/999/bar");
         ChannelContentKey secondKey = ChannelContentKey.fromResourcePath("http://hub/channel/foo/1999/12/31/23/59/59/999/bar");
         VerifierRange verifierRange = VerifierRange.builder()
@@ -103,7 +102,7 @@ public class S3VerifierUnitTest {
     }
 
     @Test
-    public void testZKUpdatesWithPartialCompletionIfVerifierFailsPartwayThroughAMinute() {
+    void testZKUpdatesWithPartialCompletionIfVerifierFailsPartwayThroughAMinute() {
         ChannelContentKey key = ChannelContentKey.fromResourcePath("http://hub/channel/foo/1999/12/31/23/57/59/999/bar");
         ChannelContentKey secondKey = ChannelContentKey.fromResourcePath("http://hub/channel/foo/1999/12/31/23/59/59/999/bar");
         ChannelContentKey thirdKey = ChannelContentKey.fromResourcePath("http://hub/channel/foo/1999/12/31/23/59/59/999/baz");
@@ -133,7 +132,7 @@ public class S3VerifierUnitTest {
     }
 
     @Test
-    public void testZKUpdatedOnSuccess() {
+    void testZKUpdatedOnSuccess() {
         ChannelContentKey key = ChannelContentKey.fromResourcePath("http://hub/channel/foo/1999/12/31/23/59/59/999/bar");
         VerifierRange verifierRange = VerifierRange.builder()
                 .channelConfig(ChannelConfig.builder().name("foo").build())

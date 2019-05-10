@@ -20,7 +20,7 @@ public class ActiveWebhookSweeper {
     public ActiveWebhookSweeper(WebhookLeaderLocks webhookLeaderLocks,
                                 StatsdReporter statsdReporter) {
         this.webhookLeaderLocks = webhookLeaderLocks;
-            this.statsdReporter = statsdReporter;
+        this.statsdReporter = statsdReporter;
     }
 
     void cleanupEmpty() {

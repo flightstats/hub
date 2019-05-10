@@ -39,12 +39,13 @@ import java.util.concurrent.TimeUnit;
 import static com.flightstats.hub.util.Constants.CHANNEL_DESCRIPTION;
 import static com.flightstats.hub.util.StaleUtil.addStaleEntities;
 
+
 @Path("/internal/channel")
 @Slf4j
 public class InternalChannelResource {
 
     private static final Long DEFAULT_STALE_AGE = TimeUnit.DAYS.toMinutes(1);
-    
+
     private final Dao<ChannelConfig> channelConfigDao;
     private final HubUtils hubUtils;
     private final ChannelService channelService;
@@ -57,10 +58,10 @@ public class InternalChannelResource {
 
     @Inject
     public InternalChannelResource(@Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao,
-                                   HubUtils hubUtils, 
-                                   ChannelService channelService, 
-                                   ContentRetriever contentRetriever, 
-                                   ObjectMapper objectMapper, 
+                                   HubUtils hubUtils,
+                                   ChannelService channelService,
+                                   ContentRetriever contentRetriever,
+                                   ObjectMapper objectMapper,
                                    ContentProperties contentProperties) {
         this.channelConfigDao = channelConfigDao;
         this.hubUtils = hubUtils;
@@ -72,6 +73,7 @@ public class InternalChannelResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
+
     public Response get(@Context UriInfo uriInfo) {
         final ObjectNode root = objectMapper.createObjectNode();
         root.put("description", CHANNEL_DESCRIPTION);
@@ -116,6 +118,7 @@ public class InternalChannelResource {
                     Response errorResponse = ChannelResource.notFound(channelName);
                     throw new WebApplicationException(errorResponse);
                 });
+
         if (contentProperties.isChannelProtectionEnabled()) {
             log.info("using internal localhost only to delete {}", channelName);
             return LocalHostOnly.getResponse(uriInfo, () -> deleteChannel(channelName));

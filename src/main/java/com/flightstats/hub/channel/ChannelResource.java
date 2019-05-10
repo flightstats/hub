@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.LocalHostOnly;
+import com.flightstats.hub.app.PermissionsChecker;
 import com.flightstats.hub.config.ContentProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.aws.ContentRetriever;
@@ -60,12 +61,15 @@ import static com.flightstats.hub.rest.Linked.linked;
 @Path("/channel/{channel}")
 public class ChannelResource {
 
+    private final static String READ_ONLY_FAILURE_MESSAGE = "attempted to %s against /channel on read-only node %s";
+
     private final ObjectMapper objectMapper;
-    private ChannelService channelService;
+    private final ChannelService channelService;
     private final ContentRetriever contentRetriever;
     private final NtpMonitor ntpMonitor;
-    private EventsService eventsService;
+    private final EventsService eventsService;
     private final ContentProperties contentProperties;
+    private final PermissionsChecker permissionsChecker;
 
     @Context
     private UriInfo uriInfo;
@@ -76,13 +80,15 @@ public class ChannelResource {
                            ContentRetriever contentRetriever,
                            NtpMonitor ntpMonitor,
                            EventsService eventsService,
-                           ContentProperties contentProperties) {
+                           ContentProperties contentProperties,
+                           PermissionsChecker permissionsChecker) {
         this.objectMapper = objectMapper;
         this.channelService = channelService;
         this.contentRetriever = contentRetriever;
         this.ntpMonitor = ntpMonitor;
         this.eventsService = eventsService;
         this.contentProperties = contentProperties;
+        this.permissionsChecker = permissionsChecker;
     }
 
     public Response deletion(@PathParam("channel") String channelName) {
@@ -118,6 +124,7 @@ public class ChannelResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createChannel(@PathParam("channel") String channelName, String json) {
+        permissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "createChannel", channelName));
         log.debug("put channel {} {}", channelName, json);
         final Optional<ChannelConfig> oldConfig = channelService.getChannelConfig(channelName, false);
         ChannelConfig channelConfig = ChannelConfig.createFromJsonWithName(json, channelName);
@@ -139,6 +146,7 @@ public class ChannelResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateMetadata(@PathParam("channel") String channelName, String json) throws WebApplicationException {
+        permissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "updateMetadata", channelName));
         log.debug("patch channel {} {}", channelName, json);
         final ChannelConfig oldConfig = channelService.getChannelConfig(channelName, false)
                 .orElseThrow(() -> {
@@ -162,6 +170,7 @@ public class ChannelResource {
                                 @QueryParam("threads") @DefaultValue("3") String threads,
                                 @QueryParam("forceWrite") @DefaultValue("false") boolean forceWrite,
                                 final InputStream data) {
+        permissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "insertValue", channelName));
         if (!this.contentRetriever.isExistingChannel(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
@@ -211,6 +220,8 @@ public class ChannelResource {
     public Response insertBatch(@PathParam("channel") final String channelName,
                                 @HeaderParam("Content-Type") final String contentType,
                                 final InputStream data) {
+
+        permissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "insertBatch", channelName));
         return insertBulk(channelName, contentType, data);
     }
 
@@ -221,6 +232,7 @@ public class ChannelResource {
     public Response insertBulk(@PathParam("channel") final String channelName,
                                @HeaderParam("Content-Type") final String contentType,
                                final InputStream data) {
+        permissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "insertBulk", channelName));
         try {
             final BulkContent content = BulkContent.builder()
                     .isNew(true)
@@ -262,6 +274,7 @@ public class ChannelResource {
     @Produces(SseFeature.SERVER_SENT_EVENTS)
     public EventOutput getEvents(@PathParam("channel") String channel,
                                  @HeaderParam("Last-Event-ID") String lastEventId) {
+        permissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "getEvents", channel));
         try {
             log.info("starting events for {} at {}", channel, lastEventId);
             ContentKey contentKey = new ContentKey();
@@ -285,7 +298,8 @@ public class ChannelResource {
 
     @DELETE
     public Response delete(@PathParam("channel") final String channelName) throws Exception {
-        final Optional<ChannelConfig> optionalChannelConfig = channelService.getChannelConfig(channelName, false);
+        permissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "delete", channelName));
+        Optional<ChannelConfig> optionalChannelConfig = channelService.getChannelConfig(channelName, false);
         if (!optionalChannelConfig.isPresent()) {
             return notFound(channelName);
         }
@@ -296,4 +310,5 @@ public class ChannelResource {
         log.info("using normal delete {}", channelName);
         return deletion(channelName);
     }
+
 }

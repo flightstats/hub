@@ -3,7 +3,9 @@ package com.flightstats.hub.webhook;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.app.PermissionsChecker;
 import com.flightstats.hub.model.ContentPath;
+import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 
 import javax.inject.Inject;
@@ -28,10 +30,13 @@ import static com.flightstats.hub.util.Constants.WEBHOOK_DESCRIPTION;
 import static com.flightstats.hub.util.StaleUtil.addStaleEntities;
 
 @Path("/internal/webhook")
+@Slf4j
 public class InternalWebhookResource {
 
+    private final static String READ_ONLY_FAILURE_MESSAGE = "attempted to internally %s for webhook on node with leadership disabled %s";
     private static final Long DEFAULT_STALE_AGE = TimeUnit.HOURS.toMinutes(1);
 
+    private final PermissionsChecker permissionsChecker;
     private final WebhookService webhookService;
     private final LocalWebhookManager localWebhookManager;
     private final ObjectMapper objectMapper;
@@ -40,9 +45,11 @@ public class InternalWebhookResource {
     private UriInfo uriInfo;
 
     @Inject
-    public InternalWebhookResource(WebhookService webhookService,
+    public InternalWebhookResource(PermissionsChecker permissionsChecker,
+                                   WebhookService webhookService,
                                    LocalWebhookManager localWebhookManager,
                                    ObjectMapper objectMapper) {
+        this.permissionsChecker = permissionsChecker;
         this.webhookService = webhookService;
         this.localWebhookManager = localWebhookManager;
         this.objectMapper = objectMapper;
@@ -147,24 +154,36 @@ public class InternalWebhookResource {
     @Path("/run/{name}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response run(@PathParam("name") String name) {
-        if (this.localWebhookManager.ensureRunning(name)) {
-            return Response.ok().build();
+        if (!permissionsChecker.checkWebhookLeadershipPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "run", name), false)) {
+            return Response.status(400).build();  // TODO: Fix Hub cluster being assumed to contain only webhook-leadership-eligible nodes.
         }
-        return Response.status(400).build();
+        return attemptRun(name);
     }
 
     @PUT
     @Path("/delete/{name}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response delete(@PathParam("name") String name) {
-        this.localWebhookManager.stopLocal(name, true);
-        return Response.ok().build();
+        permissionsChecker.checkWebhookLeadershipPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "delete", name));
+        return attemptDelete(name);
     }
 
     @GET
     @Path("/count")
     public Response count() {
         return Response.ok(this.localWebhookManager.getCount()).build();
+    }
+
+    private Response attemptRun(String name) {
+        if (this.localWebhookManager.ensureRunning(name)) {
+            return Response.ok().build();
+        }
+        return Response.status(400).build();
+    }
+
+    private Response attemptDelete(String name) {
+        this.localWebhookManager.stopLocal(name, true);
+        return Response.ok().build();
     }
 
 }

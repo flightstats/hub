@@ -1,6 +1,7 @@
 package com.flightstats.hub.channel;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.app.PermissionsChecker;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.exception.InvalidRequestException;
@@ -31,14 +32,19 @@ import static com.flightstats.hub.channel.LinkBuilder.buildChannelConfigResponse
 @Path("/channel")
 public class ChannelsResource {
 
+    public static final String READ_ONLY_FAILURE_MESSAGE = "attempted to %s against /channels on read-only node %s";
+
     private final ChannelService channelService;
+    private final PermissionsChecker permissionsChecker;
 
     @Context
     private UriInfo uriInfo;
 
     @Inject
-    private ChannelsResource(ChannelService channelService) {
+    private ChannelsResource(ChannelService channelService,
+                             PermissionsChecker permissionsChecker) {
         this.channelService = channelService;
+        this.permissionsChecker = permissionsChecker;
     }
 
     @GET
@@ -57,6 +63,7 @@ public class ChannelsResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createChannel(String json) throws InvalidRequestException, ConflictException {
+        permissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "createChannel", json));
         log.debug("post channel {}", json);
         ChannelConfig channelConfig = ChannelConfig.createFromJson(json);
         channelConfig = channelService.createChannel(channelConfig);
@@ -64,4 +71,5 @@ public class ChannelsResource {
         final ObjectNode output = buildChannelConfigResponse(channelConfig, uriInfo, channelConfig.getDisplayName());
         return Response.created(channelUri).entity(output).build();
     }
+
 }

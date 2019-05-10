@@ -30,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -45,14 +46,14 @@ public class ChannelService {
 
     private final ContentService contentService;
     private final Dao<ChannelConfig> channelConfigDao;
-    private final ChannelValidator channelValidator;
+    private Provider<ChannelValidator> channelValidator;
     private final WatchManager watchManager;
     private final LastContentPath lastContentPath;
     private final InFlightService inFlightService;
     private final TimeService timeService;
     private final StatsdReporter statsdReporter;
     private final ContentRetriever contentRetriever;
-    private ContentProperties contentProperties;
+    private final ContentProperties contentProperties;
 
     @Inject
     private TagWebhook tagWebhook;
@@ -60,7 +61,7 @@ public class ChannelService {
     @Inject
     public ChannelService(ContentService contentService,
                           @Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao,
-                          ChannelValidator channelValidator,
+                          Provider<ChannelValidator> channelValidator,
                           WatchManager watchManager,
                           LastContentPath lastContentPath,
                           InFlightService inFlightService,
@@ -82,7 +83,7 @@ public class ChannelService {
 
     public ChannelConfig createChannel(ChannelConfig configuration) {
         log.info("create channel {}", configuration);
-        channelValidator.validate(configuration, null, false);
+        channelValidator.get().validate(configuration, null, false);
         channelConfigDao.upsert(configuration);
         notify(configuration, null);
         tagWebhook.updateTagWebhooksDueToChannelConfigChange(configuration);
@@ -91,10 +92,10 @@ public class ChannelService {
 
     private void notify(ChannelConfig newConfig, ChannelConfig oldConfig) {
         if (newConfig.isReplicating()) {
-            watchManager.notifyWatcher(REPLICATOR_WATCHER_PATH);
+            notifyReplicationWatchers();
         } else if (oldConfig != null) {
             if (oldConfig.isReplicating()) {
-                watchManager.notifyWatcher(REPLICATOR_WATCHER_PATH);
+                notifyReplicationWatchers();
             }
         }
         if (newConfig.isHistorical()) {
@@ -109,7 +110,7 @@ public class ChannelService {
     public ChannelConfig updateChannel(ChannelConfig configuration, ChannelConfig oldConfig, boolean isLocalHost) {
         if (!configuration.equals(oldConfig)) {
             log.info("updating channel {} from {}", configuration, oldConfig);
-            channelValidator.validate(configuration, oldConfig, isLocalHost);
+            channelValidator.get().validate(configuration, oldConfig, isLocalHost);
             channelConfigDao.upsert(configuration);
             tagWebhook.updateTagWebhooksDueToChannelConfigChange(configuration);
             notify(configuration, oldConfig);
@@ -197,7 +198,7 @@ public class ChannelService {
             throw new ForbiddenRequestException(channel + " cannot modified while replicating");
         }
         long start = System.currentTimeMillis();
-        final Collection<ContentKey> contentKeys = inFlightService.inFlight(() -> {
+        Collection<ContentKey> contentKeys = inFlightService.inFlight(() -> {
             MultiPartParser multiPartParser = new MultiPartParser(bulkContent, contentProperties.getMaxPayloadSizeInMB());
             multiPartParser.parse();
             return contentService.insert(bulkContent);
@@ -277,7 +278,7 @@ public class ChannelService {
         contentService.delete(channelConfig.getDisplayName());
         channelConfigDao.delete(channelConfig.getDisplayName());
         if (channelConfig.isReplicating()) {
-            watchManager.notifyWatcher(REPLICATOR_WATCHER_PATH);
+            notifyReplicationWatchers();
             lastContentPath.delete(channelName, REPLICATED_LAST_UPDATED);
         }
         lastContentPath.delete(channelName, HISTORICAL_EARLIEST);
@@ -310,4 +311,9 @@ public class ChannelService {
         ChannelConfig channelConfig = channelConfigDao.getCached(channelName);
         return Optional.ofNullable(channelConfig);
     }
+
+    private void notifyReplicationWatchers() {
+        watchManager.notifyWatcher(REPLICATOR_WATCHER_PATH);
+    }
+
 }

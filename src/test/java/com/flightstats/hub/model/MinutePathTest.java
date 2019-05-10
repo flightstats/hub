@@ -1,35 +1,35 @@
 package com.flightstats.hub.model;
 
 import org.joda.time.DateTime;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class MinutePathTest {
+class MinutePathTest {
 
     @Test
-    public void testCycleBytes() {
+    void testCycleBytes() {
         MinutePath minutePath = new MinutePath();
         ContentPath cycled = minutePath.fromBytes(minutePath.toBytes());
         assertEquals(0, minutePath.compareTo(cycled));
     }
 
     @Test
-    public void testCycleZk() {
+    void testCycleZk() {
         MinutePath minutePath = new MinutePath();
         ContentPath cycled = minutePath.fromZk(minutePath.toZk());
         assertEquals(0, minutePath.compareTo(cycled));
     }
 
     @Test
-    public void testToUrl() {
+    void testToUrl() {
         MinutePath minutePath = new MinutePath(new DateTime(123456789));
         assertEquals("1970/01/02/10/17", minutePath.toUrl());
     }
 
     @Test
-    public void testCompareContentKey() {
+    void testCompareContentKey() {
         MinutePath minutePath = new MinutePath();
         ContentKey contentKey = new ContentKey(minutePath.getTime(), "0");
         assertTrue(minutePath.compareTo(contentKey) > 0);

@@ -24,7 +24,6 @@ public class SingleHubBindings extends AbstractModule {
         bind(ChannelTtlEnforcer.class).asEagerSingleton();
     }
 
-    @Inject
     @Singleton
     @Provides
     @Named("ChannelConfig")
@@ -32,7 +31,6 @@ public class SingleHubBindings extends AbstractModule {
         return new CachedLowerCaseDao<>(dao, watchManager, "/channels/cache");
     }
 
-    @Inject
     @Singleton
     @Provides
     @Named("Webhook")
