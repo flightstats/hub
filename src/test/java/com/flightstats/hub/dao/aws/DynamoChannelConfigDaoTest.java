@@ -100,8 +100,8 @@ class DynamoChannelConfigDaoTest {
         assertNotNull(cfgs);
         assertEquals(2, cfgs.size());
         assertThat(cfgs, hasItems(
-                DynamoChannelConfigDao.mapItem(channel1).get(),
-                DynamoChannelConfigDao.mapItem(channel2).get()
+                channelConfigDao.mapItem(channel1).get(),
+                channelConfigDao.mapItem(channel2).get()
         ));
     }
 

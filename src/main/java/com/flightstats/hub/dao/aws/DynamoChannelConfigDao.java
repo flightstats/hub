@@ -106,7 +106,7 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
     }
 
     @VisibleForTesting
-    static Optional<ChannelConfig> mapItem(Map<String, AttributeValue> item) {
+    Optional<ChannelConfig> mapItem(Map<String, AttributeValue> item) {
         ChannelConfig cfg = null;
         try {
             ChannelConfig.ChannelConfigBuilder builder = ChannelConfig.builder()
