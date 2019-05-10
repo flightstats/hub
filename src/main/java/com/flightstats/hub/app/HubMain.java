@@ -12,6 +12,7 @@ import com.flightstats.hub.config.binding.PropertiesBinding;
 import com.flightstats.hub.config.binding.SingleHubBindings;
 import com.flightstats.hub.dao.aws.S3WriteQueueLifecycle;
 import com.flightstats.hub.filter.CORSFilter;
+import com.flightstats.hub.filter.MetricsRequestFilter;
 import com.flightstats.hub.filter.StreamEncodingFilter;
 import com.flightstats.hub.metrics.CustomMetricsLifecycle;
 import com.flightstats.hub.metrics.InfluxdbReporterLifecycle;
@@ -158,7 +159,7 @@ public class HubMain {
         wsContainer.addEndpoint(WebSocketHashEndpoint.class);
 
         // use handler collection to choose the proper context
-        HttpAndWSHandler handler = new HttpAndWSHandler();
+        HttpAndWSHandler handler = new HttpAndWSHandler(injector.getInstance(MetricsRequestFilter.class));
         handler.addHttpHandler(httpContainer);
         handler.addWSHandler(wsContext);
         server.setHandler(handler);

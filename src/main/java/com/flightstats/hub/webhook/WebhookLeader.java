@@ -7,6 +7,7 @@ import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.cluster.Leadership;
 import com.flightstats.hub.cluster.LeadershipLock;
 import com.flightstats.hub.cluster.Lockable;
+import com.flightstats.hub.config.WebhookProperties;
 import com.flightstats.hub.dao.aws.ContentRetriever;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.StatsdReporter;
@@ -37,7 +38,7 @@ class WebhookLeader implements Lockable {
     private AtomicReference<ContentPath> lastUpdated = new AtomicReference<>();
     private final AtomicBoolean deleteOnExit = new AtomicBoolean();
 
-    private ContentRetriever contentRetriever;
+    private final ContentRetriever contentRetriever;
     private final WebhookService webhookService;
     private final StatsdReporter statsdReporter;
     private final LastContentPath lastContentPath;
@@ -45,6 +46,7 @@ class WebhookLeader implements Lockable {
     private final WebhookErrorService webhookErrorService;
     private final WebhookStateReaper webhookStateReaper;
     private final DistributedLeaderLockManager lockManager;
+    private final WebhookProperties webhookProperties;
     private final ObjectMapper objectMapper;
 
     private DistributedAsyncLockRunner distributedLockRunner;
@@ -64,6 +66,7 @@ class WebhookLeader implements Lockable {
                          WebhookErrorService webhookErrorService,
                          WebhookStateReaper webhookStateReaper,
                          DistributedLeaderLockManager lockManager,
+                         WebhookProperties webhookProperties,
                          ObjectMapper objectMapper) {
         this.contentRetriever = contentRetriever;
         this.webhookService = webhookService;
@@ -73,6 +76,7 @@ class WebhookLeader implements Lockable {
         this.webhookErrorService = webhookErrorService;
         this.webhookStateReaper = webhookStateReaper;
         this.lockManager = lockManager;
+        this.webhookProperties = webhookProperties;
         this.objectMapper = objectMapper;
     }
 
@@ -115,6 +119,9 @@ class WebhookLeader implements Lockable {
                 .giveUpIf(this::webhookTTLExceeded)
                 .giveUpIf(this::channelTTLExceeded)
                 .giveUpIf(this::maxAttemptsReached)
+                .webhookErrorService(webhookErrorService)
+                .statsdReporter(statsdReporter)
+                .webhookProperties(webhookProperties)
                 .build();
         webhookStrategy = WebhookStrategy.getStrategy(contentRetriever, lastContentPath, objectMapper, webhook);
         try {

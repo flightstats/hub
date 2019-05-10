@@ -1,6 +1,5 @@
 package com.flightstats.hub.channel;
 
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.rest.Linked;
 
@@ -18,13 +17,17 @@ import java.util.TreeMap;
 /**
  * This resource represents operations on tags.
  */
-@SuppressWarnings("WeakerAccess")
 @Path("/tag")
 public class TagResource {
 
-    private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
+    private final ChannelService channelService;
+
     @Context
     private UriInfo uriInfo;
+
+    public TagResource(ChannelService channelService) {
+        this.channelService = channelService;
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

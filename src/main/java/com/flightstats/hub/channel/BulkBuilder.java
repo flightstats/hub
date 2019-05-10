@@ -9,7 +9,7 @@ import javax.ws.rs.core.UriInfo;
 import java.util.SortedSet;
 import java.util.function.Consumer;
 
-class BulkBuilder {
+public class BulkBuilder {
 
     public static Response build(SortedSet<ContentKey> keys, String channel,
                                  ChannelService channelService, UriInfo uriInfo, String accept, boolean descending) {
@@ -35,7 +35,7 @@ class BulkBuilder {
         });
     }
 
-    static Response buildTag(String tag, SortedSet<ChannelContentKey> keys,
+    public static Response buildTag(String tag, SortedSet<ChannelContentKey> keys,
                              ChannelService channelService, UriInfo uriInfo, String accept,
                              Consumer<Response.ResponseBuilder> headerBuilder) {
         //todo - gfm - order

@@ -29,6 +29,10 @@ public class AppProperties {
         return (getAppName() + "_" + getEnv()).replace("-", "_");
     }
 
+    public String getAppLibPath() {
+        return this.propertiesLoader.getProperty(" app.lib_path", "");
+    }
+
     public String getAppUrl() {
         return StringUtils.appendIfMissing(this.propertiesLoader.getProperty("app.url", ""), "/");
     }

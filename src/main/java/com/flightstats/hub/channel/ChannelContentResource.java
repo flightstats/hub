@@ -3,11 +3,11 @@ package com.flightstats.hub.channel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.app.PermissionsChecker;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.dao.ItemRequest;
+import com.flightstats.hub.dao.TagService;
 import com.flightstats.hub.dao.aws.ContentRetriever;
 import com.flightstats.hub.events.ContentOutput;
 import com.flightstats.hub.events.EventsService;
@@ -81,8 +81,7 @@ public class ChannelContentResource {
 
     private final static String READ_ONLY_FAILURE_MESSAGE = "attempted to %s against /channel content on read-only node %s";
 
-    @Inject
-    private TagContentResource tagContentResource;
+    private final TagService tagService;
     private final ObjectMapper objectMapper;
     private final ChannelService channelService;
     private final StatsdReporter statsdReporter;
@@ -94,14 +93,14 @@ public class ChannelContentResource {
     private UriInfo uriInfo;
 
     @Inject
-    public ChannelContentResource(//TagContentResource tagContentResource,
+    public ChannelContentResource(TagService tagService,
                                   ObjectMapper objectMapper,
                                   ChannelService channelService,
                                   StatsdReporter statsdReporter,
                                   EventsService eventsService,
                                   ContentRetriever contentRetriever,
                                   PermissionsChecker permissionsChecker) {
-     //   this.tagContentResource = tagContentResource;
+        this.tagService = tagService;
         this.objectMapper = objectMapper;
         this.channelService = channelService;
         this.statsdReporter = statsdReporter;
@@ -228,7 +227,7 @@ public class ChannelContentResource {
     private Response getTimeQueryResponse(String channel, DateTime startTime, String location, boolean trace, boolean stable,
                                           Unit unit, String tag, boolean bulk, String accept, String epoch, boolean descending) {
         if (tag != null) {
-            return tagContentResource.getTimeQueryResponse(tag, startTime, location, trace, stable, unit, bulk, accept, uriInfo, epoch, descending);
+            return this.tagService.getTimeQueryResponse(tag, startTime, location, trace, stable, unit, bulk, accept, uriInfo, epoch, descending);
         }
         final TimeQuery query = TimeQuery.builder()
                 .channelName(channel)
@@ -444,7 +443,7 @@ public class ChannelContentResource {
         final ContentKey contentKey = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         boolean next = direction.startsWith("n");
         if (null != tag) {
-            return tagContentResource.adjacent(tag, contentKey, stable, next, uriInfo, location, epoch);
+            return this.tagService.adjacent(tag, contentKey, stable, next, uriInfo, location, epoch);
         }
         final DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
@@ -524,7 +523,7 @@ public class ChannelContentResource {
         final boolean next = direction.startsWith("n");
         final boolean descending = Order.isDescending(order);
         if (null != tag) {
-            return tagContentResource.adjacentCount(tag, count, stable, trace, location, next, key, bulk || batch, accept, uriInfo, epoch, descending);
+            return this.tagService.adjacentCount(tag, count, stable, trace, location, next, key, bulk || batch, accept, uriInfo, epoch, descending);
         }
         final DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
@@ -673,8 +672,7 @@ public class ChannelContentResource {
                            @PathParam("m") int minute,
                            @PathParam("s") int second,
                            @PathParam("ms") int millis,
-                           @PathParam("hash") String hash
-    ) {
+                           @PathParam("hash") String hash) {
         permissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "delete", channel));
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         channelService.delete(channel, key);

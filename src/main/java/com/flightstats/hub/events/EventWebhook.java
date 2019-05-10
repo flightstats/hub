@@ -9,17 +9,19 @@ import com.flightstats.hub.webhook.WebhookService;
 
 class EventWebhook {
 
-    private final WebhookService webhookService = HubProvider.getInstance(WebhookService.class);
     private final String random = StringUtils.randomAlphaNumeric(6);
 
     private final ContentOutput contentOutput;
+    private final WebhookService webhookService;
     private final String appUrl;
     private final String appEnv;
 
     EventWebhook(ContentOutput contentOutput,
+                 WebhookService webhookService,
                  String appUrl,
                  String appEnv) {
         this.contentOutput = contentOutput;
+        this.webhookService = webhookService;
         this.appUrl = appUrl;
         this.appEnv = appEnv;
     }

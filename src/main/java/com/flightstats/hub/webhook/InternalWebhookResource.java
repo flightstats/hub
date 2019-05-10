@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.PermissionsChecker;
 import com.flightstats.hub.model.ContentPath;
+import com.flightstats.hub.util.StaleEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 
@@ -27,7 +28,6 @@ import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
 import static com.flightstats.hub.util.Constants.WEBHOOK_DESCRIPTION;
-import static com.flightstats.hub.util.StaleUtil.addStaleEntities;
 
 @Path("/internal/webhook")
 @Slf4j
@@ -39,6 +39,7 @@ public class InternalWebhookResource {
     private final PermissionsChecker permissionsChecker;
     private final WebhookService webhookService;
     private final LocalWebhookManager localWebhookManager;
+    private final StaleEntity staleEntity;
     private final ObjectMapper objectMapper;
 
     @Context
@@ -48,10 +49,12 @@ public class InternalWebhookResource {
     public InternalWebhookResource(PermissionsChecker permissionsChecker,
                                    WebhookService webhookService,
                                    LocalWebhookManager localWebhookManager,
+                                   StaleEntity staleEntity,
                                    ObjectMapper objectMapper) {
         this.permissionsChecker = permissionsChecker;
         this.webhookService = webhookService;
         this.localWebhookManager = localWebhookManager;
+        this.staleEntity = staleEntity;
         this.objectMapper = objectMapper;
     }
 
@@ -84,7 +87,7 @@ public class InternalWebhookResource {
         final ObjectNode root = objectMapper.createObjectNode();
         final ObjectNode links = root.putObject("_links");
         addLink(links, "self", uriInfo.getRequestUri().toString());
-        addStaleEntities(root, age, (staleCutoff) -> {
+        this.staleEntity.add(root, age, (staleCutoff) -> {
             Map<DateTime, URI> staleWebhooks = new TreeMap<>();
             webhookService.getAll().forEach(webhook -> {
                 final WebhookStatus status = webhookService.getStatus(webhook);

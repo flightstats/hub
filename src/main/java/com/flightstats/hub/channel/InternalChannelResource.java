@@ -11,6 +11,7 @@ import com.flightstats.hub.dao.aws.ContentRetriever;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.HubUtils;
+import com.flightstats.hub.util.StaleEntity;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
@@ -37,7 +38,6 @@ import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 import static com.flightstats.hub.util.Constants.CHANNEL_DESCRIPTION;
-import static com.flightstats.hub.util.StaleUtil.addStaleEntities;
 
 
 @Path("/internal/channel")
@@ -50,6 +50,7 @@ public class InternalChannelResource {
     private final HubUtils hubUtils;
     private final ChannelService channelService;
     private final ContentRetriever contentRetriever;
+    private final StaleEntity staleEntity;
     private final ObjectMapper objectMapper;
     private final ContentProperties contentProperties;
 
@@ -61,12 +62,14 @@ public class InternalChannelResource {
                                    HubUtils hubUtils,
                                    ChannelService channelService,
                                    ContentRetriever contentRetriever,
+                                   StaleEntity staleEntity,
                                    ObjectMapper objectMapper,
                                    ContentProperties contentProperties) {
         this.channelConfigDao = channelConfigDao;
         this.hubUtils = hubUtils;
         this.channelService = channelService;
         this.contentRetriever = contentRetriever;
+        this.staleEntity = staleEntity;
         this.objectMapper = objectMapper;
         this.contentProperties = contentProperties;
     }
@@ -134,7 +137,7 @@ public class InternalChannelResource {
         final ObjectNode root = objectMapper.createObjectNode();
         final ObjectNode links = root.putObject("_links");
         addLink(links, "self", uriInfo.getRequestUri().toString());
-        addStaleEntities(root, age, (staleCutoff) -> {
+        this.staleEntity.add(root, age, (staleCutoff) -> {
             final Map<DateTime, URI> staleChannels = new TreeMap<>();
             channelService.getChannels().forEach(channelConfig -> {
                 final Optional<ContentKey> optionalContentKey = contentRetriever.getLatest(channelConfig.getDisplayName(), false);
@@ -168,7 +171,7 @@ public class InternalChannelResource {
         final ObjectNode root = objectMapper.createObjectNode();
         final ObjectNode links = root.putObject("_links");
         addLink(links, "self", uriInfo.getRequestUri().toString());
-        addStaleEntities(root, age, (staleCutoff) -> {
+        this.staleEntity.add(root, age, (staleCutoff) -> {
             final Map<DateTime, URI> staleChannels = new TreeMap<>();
             channelService.getChannels().forEach(channelConfig -> {
                 final Optional<ContentKey> optionalContentKey = contentRetriever.getLatest(channelConfig.getDisplayName(), false);

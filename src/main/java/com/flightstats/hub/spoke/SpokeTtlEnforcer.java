@@ -101,7 +101,7 @@ public class SpokeTtlEnforcer {
             statsdReporter.gauge(buildMetricName("evicted"), evictionCounter.get());
 
             final long runtime = (System.currentTimeMillis() - start);
-            log.info("completed ttl cleanup {}", runtime);
+                log.info("completed ttl cleanup {}", runtime);
             statsdReporter.gauge(buildMetricName("ttl", "enforcer", "runtime"), runtime);
 
         } catch (Exception e) {

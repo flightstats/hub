@@ -1,35 +1,34 @@
 package com.flightstats.hub.app;
 
-import com.google.inject.Inject;
+import com.flightstats.hub.config.AppProperties;
 import com.google.inject.Singleton;
-import com.google.inject.name.Named;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.io.File;
 
+@Slf4j
 @Singleton
 public class HubVersion {
-    private final static Logger logger = LoggerFactory.getLogger(HubVersion.class);
 
+    private final AppProperties appProperties;
     private static String version;
 
     @Inject
-    @Named("app.lib_path")
-    private String libPath;
+    public HubVersion(AppProperties appProperties) {
+        this.appProperties = appProperties;
+    }
 
     public synchronized String getVersion() {
         if (version != null) {
             return version;
         }
         try {
-            File libDir = new File(libPath);
-            File[] files = libDir.listFiles((dir, name) -> {
-                return name.startsWith("hub");
-            });
+            final File libDir = new File(appProperties.getAppLibPath());
+            final File[] files = libDir.listFiles((dir, name) -> name.startsWith("hub"));
             if (files.length == 1) {
-                String name = files[0].getName();
+                final String name = files[0].getName();
                 version = StringUtils.removeEnd(StringUtils.removeStart(name, "hub-"), ".jar");
                 if (version.equals("null")) {
                     throw new NullPointerException();
@@ -37,17 +36,17 @@ public class HubVersion {
             } else if (files.length == 0) {
                 version = "no hub jar file found";
             } else {
-                String fileNames = "";
+                final StringBuilder stringBuilder = new StringBuilder();
                 for (File file : files) {
-                    fileNames += file.getName() + ";";
+                    stringBuilder.append(file.getName()).append(";");
                 }
-                version = "multiple hub jar files found: " + fileNames;
+                version = "multiple hub jar files found: " + stringBuilder.toString();
             }
         } catch (NullPointerException e) {
-            logger.info("unable to get version, presume local");
+            log.info("unable to get version, presume local");
             version = "local";
         } catch (Exception e) {
-            logger.info("unable to get version ", e);
+            log.info("unable to get version ", e);
             version = "hub";
         }
         return version;

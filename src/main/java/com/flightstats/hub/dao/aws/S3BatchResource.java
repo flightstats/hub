@@ -3,7 +3,6 @@ package com.flightstats.hub.dao.aws;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.StatsdReporter;
@@ -11,9 +10,9 @@ import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.MinutePath;
 import com.flightstats.hub.rest.RestClient;
 import com.sun.jersey.api.client.ClientResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
+import javax.inject.Inject;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -24,32 +23,40 @@ import java.util.Collection;
 import java.util.List;
 import java.util.zip.ZipInputStream;
 
-@SuppressWarnings("WeakerAccess")
+@Slf4j
 @Path("/internal/s3Batch/{channel}")
 public class S3BatchResource {
-    private final static Logger logger = LoggerFactory.getLogger(S3BatchResource.class);
 
-    private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private static final ContentDao s3BatchContentDao = HubProvider.getInstance(ContentDao.class, ContentDao.BATCH_LONG_TERM);
-    private static final StatsdReporter statsdReporter = HubProvider.getInstance(StatsdReporter.class);
+    private final ContentDao s3BatchContentDao;
+    private final StatsdReporter statsdReporter;
+    private final ObjectMapper objectMapper;
 
-    public static boolean getAndWriteBatch(ContentDao contentDao, String channel, MinutePath path,
-                                           Collection<ContentKey> keys, String batchUrl) {
+    @Inject
+    public S3BatchResource(ContentDao s3BatchContentDao,
+                           StatsdReporter statsdReporter,
+                           ObjectMapper objectMapper) {
+        this.s3BatchContentDao = s3BatchContentDao;
+        this.statsdReporter = statsdReporter;
+        this.objectMapper = objectMapper;
+    }
+
+    private boolean getAndWriteBatch(ContentDao contentDao, String channel, MinutePath path,
+                                     Collection<ContentKey> keys, String batchUrl) {
         ActiveTraces.getLocal().add("S3BatchResource.getAndWriteBatch", path);
-        ClientResponse response = RestClient.defaultClient()
+        final ClientResponse response = RestClient.defaultClient()
                 .resource(batchUrl + "&location=CACHE_WRITE")
                 .accept("application/zip")
                 .get(ClientResponse.class);
         if (response.getStatus() != 200) {
-            logger.warn("unable to get data for {} {}", channel, response);
+            log.warn("unable to get data for {} {}", channel, response);
             return false;
         }
         ActiveTraces.getLocal().add("S3BatchResource.getAndWriteBatch got response");
-        byte[] bytes = response.getEntity(byte[].class);
+        final byte[] bytes = response.getEntity(byte[].class);
 
         if(!verifyZipBytes(bytes)) {
-            statsdReporter.increment("batch.invalid_zip");
-            logger.warn("S3BatchResource failed zip verification for keys: {}, channel: {}", keys, channel);
+            this.statsdReporter.increment("batch.invalid_zip");
+            log.warn("S3BatchResource failed zip verification for keys: {}, channel: {}", keys, channel);
             return false;
         }
 
@@ -58,8 +65,8 @@ public class S3BatchResource {
         return true;
     }
 
-    private static boolean verifyZipBytes(byte[] bytes) {
-        ZipInputStream zis = new ZipInputStream(new ByteArrayInputStream(bytes));
+    private boolean verifyZipBytes(byte[] bytes) {
+        final ZipInputStream zis = new ZipInputStream(new ByteArrayInputStream(bytes));
         try {
             while (zis.getNextEntry() != null) ;
         } catch (Exception exception) {
@@ -74,27 +81,27 @@ public class S3BatchResource {
     @POST
     public Response post(@PathParam("channel") String channel, String data) {
         try {
-            logger.debug("processing {} {}", channel, data);
-            JsonNode node = mapper.readTree(data);
-            ArrayNode uris = (ArrayNode) node.get("uris");
+            log.debug("processing {} {}", channel, data);
+            final JsonNode node = objectMapper.readTree(data);
+            final ArrayNode uris = (ArrayNode) node.get("uris");
             if (uris.size() == 0) {
                 return Response.ok().build();
             }
-            List<ContentKey> keys = new ArrayList<>();
+            final List<ContentKey> keys = new ArrayList<>();
             for (JsonNode uri : uris) {
                 keys.add(ContentKey.fromFullUrl(uri.asText()));
             }
 
-            String id = node.get("id").asText();
-            MinutePath path = MinutePath.fromUrl(id).get();
-            String batchUrl = node.get("batchUrl").asText();
+            final String id = node.get("id").asText();
+            final MinutePath path = MinutePath.fromUrl(id).get();
+            final String batchUrl = node.get("batchUrl").asText();
             if (!getAndWriteBatch(s3BatchContentDao, channel, path, keys, batchUrl)) {
                 return Response.status(400).build();
             }
             return Response.ok().build();
 
         } catch (Exception e) {
-            logger.warn("unable to handle " + channel + " " + data, e);
+            log.warn("unable to handle " + channel + " " + data, e);
         }
         return Response.status(400).build();
     }

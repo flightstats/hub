@@ -26,6 +26,7 @@ import com.flightstats.hub.config.SystemProperties;
 import com.flightstats.hub.config.ZookeeperProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
+import com.flightstats.hub.dao.TagService;
 import com.flightstats.hub.dao.aws.ContentRetriever;
 import com.flightstats.hub.dao.aws.s3Verifier.VerifierConfig;
 import com.flightstats.hub.dao.aws.s3Verifier.VerifierConfigProvider;
@@ -89,15 +90,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import static com.flightstats.hub.util.Constants.READ;
+import static com.flightstats.hub.util.Constants.READ_CACHE;
+import static com.flightstats.hub.util.Constants.WRITE;
+import static com.flightstats.hub.util.Constants.WRITE_CACHE;
 import static com.flightstats.hub.util.Constants.S3_VERIFIER_CHANNEL_THREAD_POOL;
 import static com.flightstats.hub.util.Constants.S3_VERIFIER_QUERY_THREAD_POOL;
 
 @Slf4j
 public class HubBindings extends AbstractModule {
-    private static final String READ = "READ";
-    private static final String WRITE = "WRITE";
-    private static final String READ_CACHE = "ReadCache";
-    private static final String WRITE_CACHE = "WriteCache";
 
     @Singleton
     @Provides
@@ -174,14 +175,14 @@ public class HubBindings extends AbstractModule {
     @Named("SpokeCuratorCluster")
     @Singleton
     @Provides
-    public static CuratorCluster buildSpokeCuratorCluster(@Named("SpokeCluster") Cluster cluster) throws Exception {
+    public static CuratorCluster buildSpokeCuratorCluster(@Named("SpokeCluster") Cluster cluster) {
         return (CuratorCluster) cluster;
     }
 
     @Named("HubCuratorCluster")
     @Singleton
     @Provides
-    public static CuratorCluster buildHubCuratorCluster(@Named("HubCluster") Cluster cluster) throws Exception {
+    public static CuratorCluster buildHubCuratorCluster(@Named("HubCluster") Cluster cluster) {
         return (CuratorCluster) cluster;
     }
 
@@ -275,29 +276,37 @@ public class HubBindings extends AbstractModule {
     }
 
     @Override
+
     protected void configure() {
+
         bind(SecretFilter.class).asEagerSingleton();
         bind(HubHealthCheck.class).asEagerSingleton();
         bind(HubClusterRegister.class).asEagerSingleton();
         bind(ZooKeeperState.class).asEagerSingleton();
-        bind(ReplicationManager.class).asEagerSingleton();
         bind(HubUtils.class).asEagerSingleton();
         bind(GCRunner.class).asEagerSingleton();
-        bind(ChannelValidator.class).asEagerSingleton();
-        bind(WebhookValidator.class).asEagerSingleton();
-        bind(WebhookManager.class).asEagerSingleton();
         bind(LastContentPath.class).asEagerSingleton();
-        bind(WatchManager.class).asEagerSingleton();
         bind(NtpMonitor.class).asEagerSingleton();
-        bind(TimeService.class).asEagerSingleton();
         bind(ShutdownManager.class).asEagerSingleton();
         bind(SpokeClusterRegister.class).asEagerSingleton();
         bind(FinalCheck.class).to(SpokeFinalCheck.class).asEagerSingleton();
+        bind(HubVersion.class).asEagerSingleton();
+
+        bind(ReplicationManager.class).asEagerSingleton();
+        bind(WatchManager.class).asEagerSingleton();
+        bind(WebhookManager.class).asEagerSingleton();
+
+        bind(ChannelValidator.class).asEagerSingleton();
+        bind(WebhookValidator.class).asEagerSingleton();
+
+        bind(TimeService.class).asEagerSingleton();
         bind(InFlightService.class).asEagerSingleton();
         bind(ChannelService.class).asEagerSingleton();
+        bind(TagService.class).asEagerSingleton();
         bind(EventsService.class).asEagerSingleton();
         bind(ContentRetriever.class).asEagerSingleton();
-        bind(HubVersion.class).toInstance(new HubVersion());
+
+        bind(HubVersion.class).asEagerSingleton();
         bind(SpokeManager.class).asEagerSingleton();
         bind(LocalReadSpoke.class).to(SpokeManager.class);
         bind(SpokeChronologyStore.class).to(SpokeManager.class);

@@ -2,9 +2,12 @@ package com.flightstats.hub.test;
 
 import com.flightstats.hub.app.HubMain;
 import com.flightstats.hub.app.HubProvider;
+import com.flightstats.hub.cluster.CuratorCluster;
+import com.flightstats.hub.cluster.SpokeDecommissionCluster;
 import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.config.AppProperties;
 import com.flightstats.hub.config.PropertiesLoader;
+import com.flightstats.hub.config.SpokeProperties;
 import com.flightstats.hub.config.ZookeeperProperties;
 import com.flightstats.hub.config.binding.HubBindings;
 import com.google.inject.Injector;

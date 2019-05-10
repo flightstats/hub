@@ -84,7 +84,11 @@ public class EventsService {
     }
 
     public void register(ContentOutput contentOutput) {
-        final EventWebhook eventWebhook = new EventWebhook(contentOutput, appProperties.getAppUrl(), appProperties.getAppEnv());
+        EventWebhook eventWebhook = new EventWebhook(
+                contentOutput,
+                webhookService,
+                appProperties.getAppUrl(),
+                appProperties.getAppEnv());
         log.info("registering events {}", eventWebhook.getGroupName());
         outputStreamMap.put(eventWebhook.getGroupName(), eventWebhook);
         eventWebhook.start();

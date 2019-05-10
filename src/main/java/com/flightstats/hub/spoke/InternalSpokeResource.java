@@ -3,9 +3,8 @@ package com.flightstats.hub.spoke;
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.model.SingleTrace;
 import com.google.common.io.ByteStreams;
+import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -25,11 +24,10 @@ import java.io.ObjectInputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
 
-@SuppressWarnings("WeakerAccess")
+@Slf4j
 @Path("/internal/spoke")
 public class InternalSpokeResource {
 
-    private final static Logger logger = LoggerFactory.getLogger(InternalSpokeResource.class);
     private static final FileSpokeStore writeSpokeStore = HubProvider.getInstance(FileSpokeStore.class, SpokeStore.WRITE.name());
     private static final FileSpokeStore readSpokeStore = HubProvider.getInstance(FileSpokeStore.class, SpokeStore.READ.name());
     private static final SpokeClusterHealthCheck healthCheck = HubProvider.getInstance(SpokeClusterHealthCheck.class);
@@ -47,12 +45,12 @@ public class InternalSpokeResource {
                 try (OutputStream output = new BufferedOutputStream(os)) {
                     store.read(path, output);
                 } catch (NotFoundException e) {
-                    logger.debug("not found {}", e.getMessage());
+                    log.debug("not found {}", e.getMessage());
                 }
             });
             return builder.build();
         } catch (Exception e) {
-            logger.warn("unable to get " + path, e);
+            log.warn("unable to get " + path, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -68,7 +66,7 @@ public class InternalSpokeResource {
             if (store.insert(path, input)) {
                 long end = System.currentTimeMillis();
                 if ((end - start) > 4000) {
-                    logger.info("slow write response {} {}", path, new DateTime(start));
+                    log.info("slow write response {} {}", path, new DateTime(start));
                 }
                 return Response
                         .created(uriInfo.getRequestUri())
@@ -80,7 +78,7 @@ public class InternalSpokeResource {
                     .entity(new SingleTrace("failed", start).toString())
                     .build();
         } catch (Exception e) {
-            logger.warn("unable to write " + path, e);
+            log.warn("unable to write " + path, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -100,7 +98,7 @@ public class InternalSpokeResource {
                 byte[] data = readByesFully(stream);
                 String itemPath = channel + "/" + keyPath;
                 if (!store.insert(itemPath, new ByteArrayInputStream(data))) {
-                    logger.warn("what happened?!?! {}", channel);
+                    log.warn("what happened?!?! {}", channel);
                     return Response
                             .status(Response.Status.INTERNAL_SERVER_ERROR)
                             .entity(new SingleTrace("failed", start).toString())
@@ -109,14 +107,14 @@ public class InternalSpokeResource {
             }
             long end = System.currentTimeMillis();
             if ((end - start) > 4000) {
-                logger.info("slow bulk write response {} {}", channel, new DateTime(start));
+                log.info("slow bulk write response {} {}", channel, new DateTime(start));
             }
             return Response
                     .created(uriInfo.getRequestUri())
                     .entity(new SingleTrace("success", start).toString())
                     .build();
         } catch (Exception e) {
-            logger.warn("unable to write " + channel, e);
+            log.warn("unable to write " + channel, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -129,7 +127,7 @@ public class InternalSpokeResource {
     }
 
     private Response getResponse(FileSpokeStore store, String path) {
-        logger.trace("time {}", path);
+        log.trace("time {}", path);
         try {
             Response.ResponseBuilder builder = Response.ok((StreamingOutput) os -> {
                 BufferedOutputStream output = new BufferedOutputStream(os);
@@ -138,7 +136,7 @@ public class InternalSpokeResource {
             });
             return builder.build();
         } catch (Exception e) {
-            logger.warn("unable to get " + path, e);
+            log.warn("unable to get " + path, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -213,7 +211,7 @@ public class InternalSpokeResource {
             store.delete(path);
             return Response.ok().build();
         } catch (Exception e) {
-            logger.warn("unable to write " + path, e);
+            log.warn("unable to write " + path, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -228,7 +226,7 @@ public class InternalSpokeResource {
             }
             return Response.ok(read).build();
         } catch (Exception e) {
-            logger.warn("unable to get latest " + channel + " " + path, e);
+            log.warn("unable to get latest " + channel + " " + path, e);
         }
         return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
     }
@@ -245,7 +243,7 @@ public class InternalSpokeResource {
             });
             return builder.build();
         } catch (Exception e) {
-            logger.warn("unable to get next " + channel + " " + startKey, e);
+            log.warn("unable to get next " + channel + " " + startKey, e);
         }
         return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
     }
@@ -253,12 +251,12 @@ public class InternalSpokeResource {
     @Path("/test/{server}")
     @GET
     public Response test(@PathParam("server") String server) {
-        logger.info("testing server {}", server);
+        log.info("testing server {}", server);
         try {
             healthCheck.testOne(Arrays.asList(server));
             return Response.ok().build();
         } catch (Exception e) {
-            logger.warn("unable to complete calls " + server, e);
+            log.warn("unable to complete calls " + server, e);
         }
         return Response.status(417).build();
     }

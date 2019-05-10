@@ -30,7 +30,7 @@ public class LinkBuilder {
 
     private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
 
-    static URI buildChannelUri(String channelName, UriInfo uriInfo) {
+    public static URI buildChannelUri(String channelName, UriInfo uriInfo) {
         return uriInfo.getBaseUriBuilder().path("channel").path(channelName).build();
     }
 
@@ -152,7 +152,7 @@ public class LinkBuilder {
         return Response.ok(root).build();
     }
 
-    static Response directionalTagResponse(String tag, SortedSet<ChannelContentKey> keys, int count,
+    public static Response directionalTagResponse(String tag, SortedSet<ChannelContentKey> keys, int count,
                                            DirectionQuery query, ObjectMapper mapper, UriInfo uriInfo,
                                            boolean includePrevious, boolean trace, boolean descending) {
         ObjectNode root = mapper.createObjectNode();
