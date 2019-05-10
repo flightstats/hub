@@ -12,6 +12,7 @@ import com.flightstats.hub.util.TimeUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 
+import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -44,6 +45,7 @@ public class WebhookResource {
     @Context
     private UriInfo uriInfo;
 
+    @Inject
     public WebhookResource(PermissionsChecker permissionsChecker,
                            WebhookService webhookService,
                            ObjectMapper objectMapper) {

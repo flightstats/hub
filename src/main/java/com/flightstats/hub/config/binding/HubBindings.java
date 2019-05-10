@@ -12,6 +12,7 @@ import com.flightstats.hub.app.InFlightService;
 import com.flightstats.hub.app.PermissionsChecker;
 import com.flightstats.hub.app.ShutdownManager;
 import com.flightstats.hub.channel.ChannelValidator;
+import com.flightstats.hub.channel.TagEarliestResource;
 import com.flightstats.hub.cluster.Cluster;
 import com.flightstats.hub.cluster.CuratorCluster;
 import com.flightstats.hub.cluster.DecommissionCluster;
@@ -67,7 +68,9 @@ import com.flightstats.hub.time.NtpMonitor;
 import com.flightstats.hub.time.TimeService;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.SecretFilter;
+import com.flightstats.hub.util.StaleEntity;
 import com.flightstats.hub.webhook.WebhookManager;
+import com.flightstats.hub.webhook.WebhookService;
 import com.flightstats.hub.webhook.WebhookValidator;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.AbstractModule;
@@ -92,10 +95,10 @@ import java.util.concurrent.TimeUnit;
 
 import static com.flightstats.hub.util.Constants.READ;
 import static com.flightstats.hub.util.Constants.READ_CACHE;
-import static com.flightstats.hub.util.Constants.WRITE;
-import static com.flightstats.hub.util.Constants.WRITE_CACHE;
 import static com.flightstats.hub.util.Constants.S3_VERIFIER_CHANNEL_THREAD_POOL;
 import static com.flightstats.hub.util.Constants.S3_VERIFIER_QUERY_THREAD_POOL;
+import static com.flightstats.hub.util.Constants.WRITE;
+import static com.flightstats.hub.util.Constants.WRITE_CACHE;
 
 @Slf4j
 public class HubBindings extends AbstractModule {
@@ -287,30 +290,33 @@ public class HubBindings extends AbstractModule {
         bind(GCRunner.class).asEagerSingleton();
         bind(LastContentPath.class).asEagerSingleton();
         bind(NtpMonitor.class).asEagerSingleton();
-        bind(ShutdownManager.class).asEagerSingleton();
-        bind(SpokeClusterRegister.class).asEagerSingleton();
+        bind(StaleEntity.class).asEagerSingleton();
+
         bind(FinalCheck.class).to(SpokeFinalCheck.class).asEagerSingleton();
         bind(HubVersion.class).asEagerSingleton();
 
         bind(ReplicationManager.class).asEagerSingleton();
         bind(WatchManager.class).asEagerSingleton();
         bind(WebhookManager.class).asEagerSingleton();
+        bind(SpokeManager.class).asEagerSingleton();
+        bind(ShutdownManager.class).asEagerSingleton();
 
         bind(ChannelValidator.class).asEagerSingleton();
         bind(WebhookValidator.class).asEagerSingleton();
 
-        bind(TimeService.class).asEagerSingleton();
-        bind(InFlightService.class).asEagerSingleton();
-        bind(ChannelService.class).asEagerSingleton();
-        bind(TagService.class).asEagerSingleton();
-        bind(EventsService.class).asEagerSingleton();
         bind(ContentRetriever.class).asEagerSingleton();
 
+        bind(ChannelService.class).asEagerSingleton();
+        bind(InFlightService.class).asEagerSingleton();
+        bind(TagService.class).asEagerSingleton();
+        bind(TimeService.class).asEagerSingleton();
+        bind(EventsService.class).asEagerSingleton();
+
         bind(HubVersion.class).asEagerSingleton();
-        bind(SpokeManager.class).asEagerSingleton();
         bind(LocalReadSpoke.class).to(SpokeManager.class);
         bind(SpokeChronologyStore.class).to(SpokeManager.class);
         bind(SpokeClusterHealthCheck.class).to(SpokeManager.class);
+        bind(SpokeClusterRegister.class).asEagerSingleton();
         bind(PermissionsChecker.class).asEagerSingleton();
 
         // metrics

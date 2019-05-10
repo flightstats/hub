@@ -3,6 +3,7 @@ package com.flightstats.hub.channel;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.rest.Linked;
 
+import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -25,6 +26,7 @@ public class TagResource {
     @Context
     private UriInfo uriInfo;
 
+    @Inject
     public TagResource(ChannelService channelService) {
         this.channelService = channelService;
     }

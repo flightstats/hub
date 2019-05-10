@@ -1,6 +1,7 @@
 package com.flightstats.hub.channel;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.aws.ContentRetriever;
 import com.flightstats.hub.model.ContentKey;
@@ -8,6 +9,8 @@ import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.model.Epoch;
 import com.flightstats.hub.model.Location;
 import com.flightstats.hub.model.Order;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.ws.rs.DefaultValue;

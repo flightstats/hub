@@ -1,7 +1,5 @@
 package com.flightstats.hub.util;
 
-import com.flightstats.hub.app.HubProvider;
-import com.flightstats.hub.config.PropertiesLoader;
 import com.flightstats.hub.model.BulkContent;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.Content;
@@ -9,9 +7,10 @@ import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.test.Integration;
+import com.google.inject.Injector;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import lombok.extern.slf4j.Slf4j;
 
 import java.io.ByteArrayInputStream;
 import java.util.Collection;
@@ -32,8 +31,8 @@ class HubUtilsTest {
 
     @BeforeAll
     static void setUpClass() throws Exception {
-        Integration.startAwsHub();
-        hubUtils = HubProvider.getInstance(HubUtils.class);
+        Injector injector = Integration.startAwsHub();
+        hubUtils = injector.getInstance(HubUtils.class);
         channelUrl = create();
     }
 

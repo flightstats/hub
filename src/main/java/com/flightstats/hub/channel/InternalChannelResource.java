@@ -6,7 +6,6 @@ import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.LocalHostOnly;
 import com.flightstats.hub.config.ContentProperties;
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.dao.aws.ContentRetriever;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ContentKey;
@@ -17,7 +16,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -46,7 +44,6 @@ public class InternalChannelResource {
 
     private static final Long DEFAULT_STALE_AGE = TimeUnit.DAYS.toMinutes(1);
 
-    private final Dao<ChannelConfig> channelConfigDao;
     private final HubUtils hubUtils;
     private final ChannelService channelService;
     private final ContentRetriever contentRetriever;
@@ -58,14 +55,12 @@ public class InternalChannelResource {
     private UriInfo uriInfo;
 
     @Inject
-    public InternalChannelResource(@Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao,
-                                   HubUtils hubUtils,
+    public InternalChannelResource(HubUtils hubUtils,
                                    ChannelService channelService,
                                    ContentRetriever contentRetriever,
                                    StaleEntity staleEntity,
                                    ObjectMapper objectMapper,
                                    ContentProperties contentProperties) {
-        this.channelConfigDao = channelConfigDao;
         this.hubUtils = hubUtils;
         this.channelService = channelService;
         this.contentRetriever = contentRetriever;
@@ -104,7 +99,7 @@ public class InternalChannelResource {
         if (all) {
             return Response.ok(hubUtils.refreshAll()).build();
         } else {
-            if (channelConfigDao.refresh()) {
+            if (this.channelService.refresh()) {
                 return Response.ok(HubHost.getLocalNamePort()).build();
             } else {
                 return Response.status(400).entity(HubHost.getLocalNamePort()).build();

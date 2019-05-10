@@ -6,6 +6,7 @@ import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.StringUtils;
 import com.flightstats.hub.webhook.Webhook;
 import com.flightstats.hub.webhook.WebhookService;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,12 +18,12 @@ import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 class WebSocketService {
 
-    private final static Logger logger = LoggerFactory.getLogger(WebSocketService.class);
+    private final Map<String, Session> sessionMap = new HashMap<>();
     private static WebSocketService instance;
     private final WebhookService webhookService;
-    private final Map<String, Session> sessionMap = new HashMap<>();
 
     private WebSocketService() {
         webhookService = HubProvider.getInstance(WebhookService.class);
@@ -42,7 +43,7 @@ class WebSocketService {
     void createCallback(Session session, String channel, ContentKey startingKey) throws UnknownHostException {
         String id = setId(session, channel);
         URI uri = session.getRequestURI();
-        logger.info("creating callback {} {} {}", channel, id, uri);
+        log.info("creating callback {} {} {}", channel, id, uri);
         sessionMap.put(id, session);
         Webhook webhook = Webhook.builder()
                 .channelUrl(getChannelUrl(uri))
@@ -82,17 +83,17 @@ class WebSocketService {
     public void call(String id, String uri) {
         Session session = sessionMap.get(id);
         if (session == null) {
-            logger.info("attempting to send to missing session {} {}", id, uri);
+            log.info("attempting to send to missing session {} {}", id, uri);
             close(id);
             return;
         }
         try {
             session.getBasicRemote().sendText(uri);
         } catch (IOException e) {
-            logger.warn("unable to send to session " + id + " uri " + uri + " " + e.getMessage());
+            log.warn("unable to send to session " + id + " uri " + uri + " " + e.getMessage());
             close(id);
         } catch (Exception e) {
-            logger.warn("unable to send to session " + id + " uri " + uri, e);
+            log.warn("unable to send to session " + id + " uri " + uri, e);
             close(id);
         }
     }
@@ -103,11 +104,11 @@ class WebSocketService {
 
     private void close(String id) {
         try {
-            logger.info("deleting ws group {}", id);
+            log.info("deleting ws group {}", id);
             webhookService.delete(id);
             sessionMap.remove(id);
         } catch (Exception e) {
-            logger.info("unable to close ws group " + id, e);
+            log.info("unable to close ws group " + id, e);
         }
     }
 }

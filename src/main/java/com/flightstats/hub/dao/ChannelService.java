@@ -46,7 +46,7 @@ public class ChannelService {
 
     private final ContentService contentService;
     private final Dao<ChannelConfig> channelConfigDao;
-    private Provider<ChannelValidator> channelValidator;
+    private final Provider<ChannelValidator> channelValidator;
     private final WatchManager watchManager;
     private final LastContentPath lastContentPath;
     private final InFlightService inFlightService;
@@ -314,6 +314,10 @@ public class ChannelService {
 
     private void notifyReplicationWatchers() {
         watchManager.notifyWatcher(REPLICATOR_WATCHER_PATH);
+    }
+
+    public boolean refresh(){
+        return this.channelConfigDao.refresh();
     }
 
 }

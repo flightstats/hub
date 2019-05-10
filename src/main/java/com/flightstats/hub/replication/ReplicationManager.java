@@ -7,6 +7,7 @@ import com.flightstats.hub.config.SpokeProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.BuiltInTag;
 import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.util.HubUtils;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Singleton;
@@ -38,17 +39,21 @@ public class ReplicationManager {
             new ThreadFactoryBuilder().setNameFormat("ReplicationManager").build());
     private final ExecutorService executorPool = Executors.newFixedThreadPool(40,
             new ThreadFactoryBuilder().setNameFormat("ReplicationManager-%d").build());
-    private ChannelService channelService;
-    private WatchManager watchManager;
-    private AppProperties appProperties;
+
+    private final ChannelService channelService;
+    private final WatchManager watchManager;
+    private final HubUtils hubUtils;
+    private final AppProperties appProperties;
 
     @Inject
     public ReplicationManager(ChannelService channelService,
                               WatchManager watchManager,
+                              HubUtils hubUtils,
                               AppProperties appProperties,
                               SpokeProperties spokeProperties) {
         this.channelService = channelService;
         this.watchManager = watchManager;
+        this.hubUtils = hubUtils;
         this.appProperties = appProperties;
         if (spokeProperties.isReplicationEnabled()) {
             register(new ReplicationService(), TYPE.AFTER_HEALTHY_START, TYPE.PRE_STOP);
@@ -118,7 +123,7 @@ public class ReplicationManager {
 
     private ChannelReplicator createReplicator(ChannelConfig channel) {
         ChannelReplicator newReplicator =
-                new ChannelReplicator(channel, appProperties.getAppUrl(), appProperties.getAppEnv());
+                new ChannelReplicator(hubUtils, channel, appProperties.getAppUrl(), appProperties.getAppEnv());
         channelReplicatorMap.put(channel.getDisplayName(), newReplicator);
         return newReplicator;
     }
