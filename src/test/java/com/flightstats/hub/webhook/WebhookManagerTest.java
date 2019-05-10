@@ -1,7 +1,7 @@
 package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.cluster.LastContentPath;
+import com.flightstats.hub.cluster.ClusterStateDao;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.config.WebhookProperties;
 import com.flightstats.hub.dao.Dao;
@@ -38,7 +38,7 @@ import static org.mockito.Mockito.when;
 public class WebhookManagerTest {
     @Mock private WatchManager watchManager;
     @Mock private Dao<Webhook> webhookDao;
-    @Mock private LastContentPath lastContentPath;
+    @Mock private ClusterStateDao clusterStateDao;
     @Mock private ActiveWebhooks activeWebhooks;
     @Mock private WebhookErrorService webhookErrorService;
     @Mock private WebhookContentPathSet webhookContentPathSet;
@@ -187,7 +187,7 @@ public class WebhookManagerTest {
     private WebhookManager getWebhookManager() {
         return new WebhookManager(
                 watchManager, webhookDao,
-                lastContentPath, activeWebhooks,
+                clusterStateDao, activeWebhooks,
                 webhookErrorService, webhookContentPathSet,
                 webhookClient, webhookStateReaper, webhookProperties);
     }

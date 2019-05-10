@@ -1,7 +1,7 @@
 package com.flightstats.hub.dao.aws;
 
 import com.flightstats.hub.cluster.DistributedLeaderLockManager;
-import com.flightstats.hub.cluster.LastContentPath;
+import com.flightstats.hub.cluster.ClusterStateDao;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.aws.s3Verifier.MissingContentFinder;
 import com.flightstats.hub.dao.aws.s3Verifier.VerifierConfig;
@@ -28,7 +28,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 class S3VerifierUnitTest {
-    private final LastContentPath lastContentPath = mock(LastContentPath.class);
+    private final ClusterStateDao clusterStateDao = mock(ClusterStateDao.class);
     private final ChannelService channelService = mock(ChannelService.class);
     private final S3WriteQueue s3WriteQueue = mock(S3WriteQueue.class);
     private final Client httpClient = mock(Client.class);
@@ -41,7 +41,7 @@ class S3VerifierUnitTest {
     @Test
     void testZKDoesNotUpdateOnAbsoluteFailure() {
         VerifierConfig config = VerifierConfig.builder().build();
-        S3Verifier s3Verifier = new S3Verifier(lastContentPath, channelService, s3WriteQueue, httpClient,  missingContentFinder, verifierRangeLookup, config, channelThreadPool, lockManager, statsdReporter);
+        S3Verifier s3Verifier = new S3Verifier(clusterStateDao, channelService, s3WriteQueue, httpClient,  missingContentFinder, verifierRangeLookup, config, channelThreadPool, lockManager, statsdReporter);
 
         ChannelContentKey key = ChannelContentKey.fromResourcePath("http://hub/channel/foo/1999/12/31/23/59/59/999/bar");
         VerifierRange verifierRange = VerifierRange.builder()
@@ -57,13 +57,13 @@ class S3VerifierUnitTest {
 
         s3Verifier.verifyChannel(verifierRange);
 
-        verifyZeroInteractions(lastContentPath);
+        verifyZeroInteractions(clusterStateDao);
     }
 
     @Test
     void testZKUpdatesWithPartialCompletionIfVerifierFailsPartwayThroughAndLastSuccessfulWasADifferentMinute() {
         VerifierConfig config = VerifierConfig.builder().build();
-        S3Verifier s3Verifier = new S3Verifier(lastContentPath, channelService, s3WriteQueue, httpClient,  missingContentFinder, verifierRangeLookup, config, channelThreadPool, lockManager, statsdReporter);
+        S3Verifier s3Verifier = new S3Verifier(clusterStateDao, channelService, s3WriteQueue, httpClient,  missingContentFinder, verifierRangeLookup, config, channelThreadPool, lockManager, statsdReporter);
 
         ChannelContentKey key = ChannelContentKey.fromResourcePath("http://hub/channel/foo/1999/12/31/23/58/59/999/bar");
         ChannelContentKey secondKey = ChannelContentKey.fromResourcePath("http://hub/channel/foo/1999/12/31/23/59/59/999/bar");
@@ -83,13 +83,13 @@ class S3VerifierUnitTest {
         s3Verifier.verifyChannel(verifierRange);
 
         MinutePath firstKeyMinute = new MinutePath(key.getContentKey().getTime());
-        verify(lastContentPath, times(1)).updateIncrease(firstKeyMinute, verifierRange.getChannelConfig().getDisplayName(), LAST_SINGLE_VERIFIED);
+        verify(clusterStateDao, times(1)).setIfAfter(firstKeyMinute, verifierRange.getChannelConfig().getDisplayName(), LAST_SINGLE_VERIFIED);
     }
 
     @Test
     void testZKUpdatesWithPartialCompletionIfVerifierFailsPartwayThroughAMinute() {
         VerifierConfig config = VerifierConfig.builder().build();
-        S3Verifier s3Verifier = new S3Verifier(lastContentPath, channelService, s3WriteQueue, httpClient,  missingContentFinder, verifierRangeLookup, config, channelThreadPool, lockManager, statsdReporter);
+        S3Verifier s3Verifier = new S3Verifier(clusterStateDao, channelService, s3WriteQueue, httpClient,  missingContentFinder, verifierRangeLookup, config, channelThreadPool, lockManager, statsdReporter);
 
         ChannelContentKey key = ChannelContentKey.fromResourcePath("http://hub/channel/foo/1999/12/31/23/57/59/999/bar");
         ChannelContentKey secondKey = ChannelContentKey.fromResourcePath("http://hub/channel/foo/1999/12/31/23/59/59/999/bar");
@@ -116,13 +116,13 @@ class S3VerifierUnitTest {
         verify(s3WriteQueue, times(1)).add(thirdKey);
 
         MinutePath minuteBeforeFailure = new MinutePath(DateTime.parse("1999-12-31T23:58:00.000Z"));
-        verify(lastContentPath, times(1)).updateIncrease(minuteBeforeFailure, verifierRange.getChannelConfig().getDisplayName(), LAST_SINGLE_VERIFIED);
+        verify(clusterStateDao, times(1)).setIfAfter(minuteBeforeFailure, verifierRange.getChannelConfig().getDisplayName(), LAST_SINGLE_VERIFIED);
     }
 
     @Test
     void testZKUpdatedOnSuccess() {
         VerifierConfig config = VerifierConfig.builder().build();
-        S3Verifier s3Verifier = new S3Verifier(lastContentPath, channelService, s3WriteQueue, httpClient,  missingContentFinder, verifierRangeLookup, config, channelThreadPool, lockManager, statsdReporter);
+        S3Verifier s3Verifier = new S3Verifier(clusterStateDao, channelService, s3WriteQueue, httpClient,  missingContentFinder, verifierRangeLookup, config, channelThreadPool, lockManager, statsdReporter);
 
         ChannelContentKey key = ChannelContentKey.fromResourcePath("http://hub/channel/foo/1999/12/31/23/59/59/999/bar");
         VerifierRange verifierRange = VerifierRange.builder()
@@ -138,6 +138,6 @@ class S3VerifierUnitTest {
 
         s3Verifier.verifyChannel(verifierRange);
 
-        verify(lastContentPath, times(1)).updateIncrease(verifierRange.getEndPath(), verifierRange.getChannelConfig().getDisplayName(), LAST_SINGLE_VERIFIED);
+        verify(clusterStateDao, times(1)).setIfAfter(verifierRange.getEndPath(), verifierRange.getChannelConfig().getDisplayName(), LAST_SINGLE_VERIFIED);
     }
 }

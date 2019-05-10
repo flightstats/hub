@@ -4,11 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubProvider;
-import com.flightstats.hub.cluster.LastContentPath;
+import com.flightstats.hub.cluster.ClusterStateDao;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.model.MinutePath;
@@ -37,7 +36,7 @@ class SingleWebhookStrategy implements WebhookStrategy {
     private final static Logger logger = LoggerFactory.getLogger(SingleWebhookStrategy.class);
     private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private final Webhook webhook;
-    private final LastContentPath lastContentPath;
+    private final ClusterStateDao clusterStateDao;
     private final ChannelService channelService;
     private AtomicBoolean shouldExit = new AtomicBoolean(false);
     private AtomicReference<Exception> exceptionReference = new AtomicReference<>();
@@ -47,9 +46,9 @@ class SingleWebhookStrategy implements WebhookStrategy {
     private ExecutorService executorService;
 
 
-    SingleWebhookStrategy(Webhook webhook, LastContentPath lastContentPath, ChannelService channelService) {
+    SingleWebhookStrategy(Webhook webhook, ClusterStateDao clusterStateDao, ChannelService channelService) {
         this.webhook = webhook;
-        this.lastContentPath = lastContentPath;
+        this.clusterStateDao = clusterStateDao;
         this.channelService = channelService;
         this.queue = new ArrayBlockingQueue<>(webhook.getParallelCalls() * 2);
     }
@@ -60,14 +59,14 @@ class SingleWebhookStrategy implements WebhookStrategy {
         if (null == startingKey) {
             startingKey = new ContentKey();
         }
-        ContentPath contentPath = lastContentPath.get(webhook.getName(), startingKey, WebhookLeader.WEBHOOK_LAST_COMPLETED);
+        ContentPath contentPath = clusterStateDao.get(webhook.getName(), startingKey, WebhookLeader.WEBHOOK_LAST_COMPLETED);
         logger.info("getStartingPath startingKey {} contentPath {}", startingKey, contentPath);
         return contentPath;
     }
 
     @Override
     public ContentPath getLastCompleted() {
-        return lastContentPath.getOrNull(webhook.getName(), WebhookLeader.WEBHOOK_LAST_COMPLETED);
+        return clusterStateDao.getOrNull(webhook.getName(), WebhookLeader.WEBHOOK_LAST_COMPLETED);
     }
 
     @Override

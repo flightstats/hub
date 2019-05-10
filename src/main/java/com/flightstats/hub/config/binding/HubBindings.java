@@ -17,7 +17,7 @@ import com.flightstats.hub.cluster.Cluster;
 import com.flightstats.hub.cluster.CuratorCluster;
 import com.flightstats.hub.cluster.DecommissionCluster;
 import com.flightstats.hub.cluster.HubClusterRegister;
-import com.flightstats.hub.cluster.LastContentPath;
+import com.flightstats.hub.cluster.ClusterStateDao;
 import com.flightstats.hub.cluster.SpokeDecommissionCluster;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.ZooKeeperState;
@@ -282,7 +282,7 @@ public class HubBindings extends AbstractModule {
         bind(ChannelValidator.class).asEagerSingleton();
         bind(WebhookValidator.class).asEagerSingleton();
         bind(WebhookManager.class).asEagerSingleton();
-        bind(LastContentPath.class).asEagerSingleton();
+        bind(ClusterStateDao.class).asEagerSingleton();
         bind(WatchManager.class).asEagerSingleton();
         bind(NtpMonitor.class).asEagerSingleton();
         bind(TimeService.class).asEagerSingleton();

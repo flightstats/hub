@@ -2,7 +2,7 @@ package com.flightstats.hub.dao;
 
 import com.flightstats.hub.app.InFlightService;
 import com.flightstats.hub.channel.ChannelValidator;
-import com.flightstats.hub.cluster.LastContentPath;
+import com.flightstats.hub.cluster.ClusterStateDao;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.config.ContentProperties;
 import com.flightstats.hub.dao.aws.MultiPartParser;
@@ -61,7 +61,7 @@ public class ChannelService {
     private Dao<ChannelConfig> channelConfigDao;
     private Provider<ChannelValidator> channelValidator;
     private WatchManager watchManager;
-    private LastContentPath lastContentPath;
+    private ClusterStateDao clusterStateDao;
     private InFlightService inFlightService;
     private TimeService timeService;
     private StatsdReporter statsdReporter;
@@ -73,7 +73,7 @@ public class ChannelService {
             @Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao,
             Provider<ChannelValidator> channelValidator,
             WatchManager watchManager,
-            LastContentPath lastContentPath,
+            ClusterStateDao clusterStateDao,
             InFlightService inFlightService,
             TimeService timeService,
             ContentProperties contentProperties,
@@ -82,7 +82,7 @@ public class ChannelService {
         this.channelConfigDao = channelConfigDao;
         this.channelValidator = channelValidator;
         this.watchManager = watchManager;
-        this.lastContentPath = lastContentPath;
+        this.clusterStateDao = clusterStateDao;
         this.inFlightService = inFlightService;
         this.timeService = timeService;
         this.contentProperties = contentProperties;
@@ -113,7 +113,7 @@ public class ChannelService {
         if (newConfig.isHistorical()) {
             if (oldConfig == null || !oldConfig.isHistorical()) {
                 ContentKey lastKey = ContentKey.lastKey(newConfig.getMutableTime());
-                lastContentPath.update(lastKey, newConfig.getDisplayName(), HISTORICAL_EARLIEST);
+                clusterStateDao.update(lastKey, newConfig.getDisplayName(), HISTORICAL_EARLIEST);
             }
         }
         contentService.notify(newConfig, oldConfig);
@@ -192,7 +192,7 @@ public class ChannelService {
             checkZeroBytes(content, channelConfig);
             return contentService.historicalInsert(normalizedChannelName, content);
         });
-        lastContentPath.updateDecrease(contentKey, normalizedChannelName, HISTORICAL_EARLIEST);
+        clusterStateDao.setIfBefore(contentKey, normalizedChannelName, HISTORICAL_EARLIEST);
         statsdReporter.insert(normalizedChannelName, start, ChannelType.HISTORICAL, 1, content.getSize());
         return insert;
     }
@@ -417,7 +417,7 @@ public class ChannelService {
                 ttlTime = channelConfig.getMutableTime().plusMillis(1);
             } else {
                 ContentKey lastKey = ContentKey.lastKey(channelConfig.getMutableTime());
-                return lastContentPath.get(channelConfig.getDisplayName(), lastKey, HISTORICAL_EARLIEST).getTime();
+                return clusterStateDao.get(channelConfig.getDisplayName(), lastKey, HISTORICAL_EARLIEST).getTime();
             }
         }
         return ttlTime;
@@ -447,9 +447,9 @@ public class ChannelService {
         channelConfigDao.delete(channelConfig.getDisplayName());
         if (channelConfig.isReplicating()) {
             notifyReplicationWatchers();
-            lastContentPath.delete(channelName, REPLICATED_LAST_UPDATED);
+            clusterStateDao.delete(channelName, REPLICATED_LAST_UPDATED);
         }
-        lastContentPath.delete(channelName, HISTORICAL_EARLIEST);
+        clusterStateDao.delete(channelName, HISTORICAL_EARLIEST);
         TagWebhook.deleteAllTagWebhooksForChannel(channelConfig);
         return true;
     }
@@ -471,7 +471,7 @@ public class ChannelService {
     public ContentPath getLastUpdated(String channelName, ContentPath defaultValue) {
         channelName = getDisplayName(channelName);
         if (isReplicating(channelName)) {
-            ContentPath contentPath = lastContentPath.get(channelName, defaultValue, REPLICATED_LAST_UPDATED);
+            ContentPath contentPath = clusterStateDao.get(channelName, defaultValue, REPLICATED_LAST_UPDATED);
             //REPLICATED_LAST_UPDATED is inclusive, and we want to be exclusive.
             if (!contentPath.equals(defaultValue)) {
                 contentPath = new SecondPath(contentPath.getTime().plusSeconds(1));

@@ -1,6 +1,6 @@
 package com.flightstats.hub.webhook;
 
-import com.flightstats.hub.cluster.LastContentPath;
+import com.flightstats.hub.cluster.ClusterStateDao;
 import com.flightstats.hub.config.WebhookProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Dao;
@@ -27,7 +27,7 @@ public class WebhookService {
     private final Dao<Webhook> webhookDao;
     private final WebhookValidator webhookValidator;
     private final WebhookManager webhookManager;
-    private final LastContentPath lastContentPath;
+    private final ClusterStateDao clusterStateDao;
     private final ChannelService channelService;
     private final WebhookProperties webhookProperties;
 
@@ -35,13 +35,13 @@ public class WebhookService {
     public WebhookService(@Named("Webhook") Dao<Webhook> webhookDao,
                           WebhookValidator webhookValidator,
                           WebhookManager webhookManager,
-                          LastContentPath lastContentPath,
+                          ClusterStateDao clusterStateDao,
                           ChannelService channelService,
                           WebhookProperties webhookProperties) {
         this.webhookDao = webhookDao;
         this.webhookValidator = webhookValidator;
         this.webhookManager = webhookManager;
-        this.lastContentPath = lastContentPath;
+        this.clusterStateDao = clusterStateDao;
         this.channelService = channelService;
         this.webhookProperties = webhookProperties;
     }
@@ -71,11 +71,11 @@ public class WebhookService {
             }
         }
         logger.info("upsert webhook {} ", webhook);
-        ContentPath existingContentPath = lastContentPath.getOrNull(webhook.getName(), WEBHOOK_LAST_COMPLETED);
+        ContentPath existingContentPath = clusterStateDao.getOrNull(webhook.getName(), WEBHOOK_LAST_COMPLETED);
         logger.info("webhook {} existing {} startingKey {}", webhook.getName(), existingContentPath, webhook.getStartingKey());
         if (existingContentPath == null || webhook.getStartingKey() != null) {
             logger.info("initializing {} with startingKey {}", webhook.getName(), webhook.getStartingKey());
-            lastContentPath.initialize(webhook.getName(), webhook.getStartingKey(), WEBHOOK_LAST_COMPLETED);
+            clusterStateDao.initialize(webhook.getName(), webhook.getStartingKey(), WEBHOOK_LAST_COMPLETED);
         }
 
         if (preExisting.isPresent()) {

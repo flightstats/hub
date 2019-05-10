@@ -3,7 +3,7 @@ package com.flightstats.hub.replication;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.app.HubProvider;
-import com.flightstats.hub.cluster.LastContentPath;
+import com.flightstats.hub.cluster.ClusterStateDao;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.BulkContent;
@@ -30,7 +30,7 @@ public class InternalReplicationResource {
 
     private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private static final ChannelService channelService = HubProvider.getInstance(ChannelService.class);
-    private static final LastContentPath lastReplicated = HubProvider.getInstance(LastContentPath.class);
+    private static final ClusterStateDao clusterStateDao = HubProvider.getInstance(ClusterStateDao.class);
     private static final HubUtils hubUtils = HubProvider.getInstance(HubUtils.class);
 
     private static boolean attemptBatch(String channel, ContentPath path, String batchUrl) {
@@ -95,7 +95,7 @@ public class InternalReplicationResource {
                     }
                 }
             }
-            lastReplicated.updateIncrease(path, channel, ChannelService.REPLICATED_LAST_UPDATED);
+            clusterStateDao.setIfAfter(path, channel, ChannelService.REPLICATED_LAST_UPDATED);
             logger.trace("handled {} {} ", channel, uris);
             return Response.ok().build();
         } catch (Exception e) {

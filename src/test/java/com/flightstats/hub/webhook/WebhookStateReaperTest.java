@@ -1,6 +1,6 @@
 package com.flightstats.hub.webhook;
 
-import com.flightstats.hub.cluster.LastContentPath;
+import com.flightstats.hub.cluster.ClusterStateDao;
 import com.flightstats.hub.config.AppProperties;
 import com.flightstats.hub.config.PropertiesLoader;
 import com.flightstats.hub.config.WebhookProperties;
@@ -34,7 +34,7 @@ import static org.mockito.Mockito.when;
 @MockitoSettings(strictness= Strictness.LENIENT)
 class WebhookStateReaperTest {
     private static CuratorFramework curator;
-    private LastContentPath lastContentPath;
+    private ClusterStateDao clusterStateDao;
     private WebhookContentPathSet webhookInProcess;
     private WebhookErrorService webhookErrorService;
     private WebhookLeaderLocks webhookLeaderLocks;
@@ -60,7 +60,7 @@ class WebhookStateReaperTest {
 
         when(webhookProperties.isWebhookLeadershipEnabled()).thenReturn(true);
         webhookLeaderLocks = new WebhookLeaderLocks(zooKeeperUtils);
-        lastContentPath = new LastContentPath(curator, new AppProperties(PropertiesLoader.getInstance()));
+        clusterStateDao = new ClusterStateDao(curator, new AppProperties(PropertiesLoader.getInstance()));
         webhookErrorService = new WebhookErrorService(webhookErrorRepository, webhookErrorPruner, channelService);
         webhookInProcess = new WebhookContentPathSet(zooKeeperUtils);
    }
@@ -74,7 +74,7 @@ class WebhookStateReaperTest {
         addWebhookLeader(webhookName);
 
         // WHEN
-        WebhookStateReaper reaper = new WebhookStateReaper(lastContentPath, webhookInProcess, webhookErrorService, webhookLeaderLocks, webhookProperties);
+        WebhookStateReaper reaper = new WebhookStateReaper(clusterStateDao, webhookInProcess, webhookErrorService, webhookLeaderLocks, webhookProperties);
         reaper.delete(webhookName);
 
         // THEN
@@ -92,7 +92,7 @@ class WebhookStateReaperTest {
         addWebhookLeader(webhookName);
 
         // WHEN
-        WebhookStateReaper reaper = new WebhookStateReaper(lastContentPath, webhookInProcess, webhookErrorService, webhookLeaderLocks, webhookProperties);
+        WebhookStateReaper reaper = new WebhookStateReaper(clusterStateDao, webhookInProcess, webhookErrorService, webhookLeaderLocks, webhookProperties);
         reaper.delete(webhookName);
 
         // THEN
@@ -110,7 +110,7 @@ class WebhookStateReaperTest {
         addWebhookLeader(webhookName);
 
         // WHEN
-        WebhookStateReaper reaper = new WebhookStateReaper(lastContentPath, webhookInProcess, webhookErrorService, webhookLeaderLocks, webhookProperties);
+        WebhookStateReaper reaper = new WebhookStateReaper(clusterStateDao, webhookInProcess, webhookErrorService, webhookLeaderLocks, webhookProperties);
         reaper.delete(webhookName);
 
         // THEN
@@ -128,7 +128,7 @@ class WebhookStateReaperTest {
         addWebhookLeader(webhookName);
 
         // WHEN
-        WebhookStateReaper reaper = new WebhookStateReaper(lastContentPath, webhookInProcess, webhookErrorService, webhookLeaderLocks, webhookProperties);
+        WebhookStateReaper reaper = new WebhookStateReaper(clusterStateDao, webhookInProcess, webhookErrorService, webhookLeaderLocks, webhookProperties);
         reaper.delete(webhookName);
 
         // THEN
@@ -146,7 +146,7 @@ class WebhookStateReaperTest {
         addError(webhookName);
 
         // WHEN
-        WebhookStateReaper reaper = new WebhookStateReaper(lastContentPath, webhookInProcess, webhookErrorService, webhookLeaderLocks, webhookProperties);
+        WebhookStateReaper reaper = new WebhookStateReaper(clusterStateDao, webhookInProcess, webhookErrorService, webhookLeaderLocks, webhookProperties);
         reaper.delete(webhookName);
 
         // THEN
@@ -166,7 +166,7 @@ class WebhookStateReaperTest {
         addWebhookLeader(webhookName);
 
         // WHEN
-        WebhookStateReaper reaper = new WebhookStateReaper(lastContentPath, webhookInProcess, webhookErrorService, webhookLeaderLocks, webhookProperties);
+        WebhookStateReaper reaper = new WebhookStateReaper(clusterStateDao, webhookInProcess, webhookErrorService, webhookLeaderLocks, webhookProperties);
         reaper.delete(webhookName);
 
         // THEN
@@ -177,12 +177,12 @@ class WebhookStateReaperTest {
 
         // ...AND then clean up the state so the next test can run.  Eww.
         when(webhookProperties.isWebhookLeadershipEnabled()).thenReturn(true);
-        reaper = new WebhookStateReaper(lastContentPath, webhookInProcess, webhookErrorService, webhookLeaderLocks, webhookProperties);
+        reaper = new WebhookStateReaper(clusterStateDao, webhookInProcess, webhookErrorService, webhookLeaderLocks, webhookProperties);
         reaper.delete(webhookName);
     }
 
     private void addLastCompleted(String webhook) throws Exception {
-        lastContentPath.initialize(webhook, key, WebhookLeader.WEBHOOK_LAST_COMPLETED);
+        clusterStateDao.initialize(webhook, key, WebhookLeader.WEBHOOK_LAST_COMPLETED);
         assertLastCompletedExists(webhook);
     }
 

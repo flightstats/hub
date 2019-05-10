@@ -4,7 +4,6 @@ import com.flightstats.hub.config.AppProperties;
 import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.model.ContentPath;
-
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
@@ -16,13 +15,13 @@ import java.util.Optional;
 import java.util.function.Function;
 
 @Slf4j
-public class LastContentPath {
+public class ClusterStateDao {
 
     private final CuratorFramework curator;
     private final AppProperties appProperties;
 
     @Inject
-    public LastContentPath(CuratorFramework curator, AppProperties appProperties) {
+    public ClusterStateDao(CuratorFramework curator, AppProperties appProperties) {
         this.curator = curator;
         this.appProperties = appProperties;
     }
@@ -50,7 +49,7 @@ public class LastContentPath {
     public ContentPath getOrNull(String name, String basePath) {
         String path = basePath + name;
         try {
-            return get(path);
+            return getMostRecentData(path).getKey();
         } catch (Exception e) {
             log.info("unable to get node {} {} {} ", name, basePath, e.getMessage());
             log.trace("unable to get node  " + path, e);
@@ -61,7 +60,7 @@ public class LastContentPath {
     public ContentPath get(String name, ContentPath defaultPath, String basePath) {
         String path = basePath + name;
         try {
-            ContentPath contentPath = get(path);
+            ContentPath contentPath = getMostRecentData(path).getKey();
             trace(name, "get default {} found {}", defaultPath, contentPath);
             return contentPath;
         } catch (KeeperException.NoNodeException e) {
@@ -79,29 +78,22 @@ public class LastContentPath {
         }
     }
 
-    private ContentPath get(String path) throws Exception {
-        byte[] bytes = curator.getData().forPath(path);
-        String found = new String(bytes, StandardCharsets.UTF_8);
-        trace(path, "get found {}", found);
-        return ContentPath.fromUrl(found).get();
+    public void setIfBefore(ContentPath nextPath, String name, String basePath) {
+        setPathValueIf(nextPath, name, basePath, (existing) -> nextPath.compareTo(existing.key) < 0);
     }
 
-    public void updateDecrease(ContentPath nextPath, String name, String basePath) {
-        update(nextPath, name, basePath, (existing) -> nextPath.compareTo(existing.key) < 0);
+    public void setIfAfter(ContentPath nextPath, String name, String basePath) {
+        setPathValueIf(nextPath, name, basePath, (existing) -> nextPath.compareTo(existing.key) > 0);
     }
 
-    public void updateIncrease(ContentPath nextPath, String name, String basePath) {
-        update(nextPath, name, basePath, (existing) -> nextPath.compareTo(existing.key) > 0);
-    }
-
-    private void update(ContentPath nextPath, String name, String basePath, Function<LastUpdated, Boolean> compare) {
+    private void setPathValueIf(ContentPath nextPath, String name, String basePath, Function<MostRecentData, Boolean> compare) {
         String path = basePath + name;
         try {
             while (true) {
                 trace(name, "update {}", name);
-                LastUpdated existing = getLastUpdated(path);
+                MostRecentData existing = getMostRecentData(path);
                 if (compare.apply(existing)) {
-                    if (setValue(path, nextPath, existing)) {
+                    if (setValueForExistingVersion(path, nextPath, existing)) {
                         trace(name, "update set {} next {} existing {}", name, nextPath, existing);
                         return;
                     }
@@ -127,8 +119,8 @@ public class LastContentPath {
     public void update(ContentPath nextPath, String name, String basePath) {
         String path = basePath + name;
         try {
-            LastUpdated existing = getLastUpdated(path);
-            setValue(path, nextPath, existing);
+            MostRecentData existing = getMostRecentData(path);
+            setValueForExistingVersion(path, nextPath, existing);
             trace(path, "update {} next {} existing{}", path, nextPath, existing);
         } catch (KeeperException.NoNodeException e) {
             log.info("values does not exist, creating {}", path);
@@ -138,9 +130,11 @@ public class LastContentPath {
         }
     }
 
-    private boolean setValue(String path, ContentPath nextPath, LastUpdated existing) throws Exception {
+    private boolean setValueForExistingVersion(String path, ContentPath nextPath, MostRecentData existing) {
         try {
-            curator.setData().withVersion(existing.version).forPath(path, nextPath.toBytes());
+            curator.setData()
+                    .withVersion(existing.getVersion())
+                    .forPath(path, nextPath.toBytes());
             return true;
         } catch (KeeperException.BadVersionException e) {
             log.debug("bad version " + path + " " + e.getMessage());
@@ -163,20 +157,28 @@ public class LastContentPath {
         }
     }
 
-    private LastUpdated getLastUpdated(String path) throws Exception {
+    private MostRecentData getMostRecentData(String path) throws Exception {
         Stat stat = new Stat();
         byte[] bytes = curator.getData().storingStatIn(stat).forPath(path);
         Optional<ContentPath> pathOptional = ContentPath.fromUrl(new String(bytes, StandardCharsets.UTF_8));
-        return new LastUpdated(pathOptional.get(), stat.getVersion());
+        return new MostRecentData(pathOptional.get(), stat.getVersion());
     }
 
-    private class LastUpdated {
-        ContentPath key;
-        int version;
+    private class MostRecentData {
+        private ContentPath key;
+        private int version;
 
-        private LastUpdated(ContentPath key, int version) {
+        private MostRecentData(ContentPath key, int version) {
             this.key = key;
             this.version = version;
+        }
+
+        public ContentPath getKey() {
+            return key;
+        }
+
+        public int getVersion() {
+            return version;
         }
     }
 }

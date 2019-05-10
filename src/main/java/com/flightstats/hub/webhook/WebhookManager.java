@@ -2,7 +2,7 @@ package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.cluster.LastContentPath;
+import com.flightstats.hub.cluster.ClusterStateDao;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.Watcher;
 import com.flightstats.hub.config.WebhookProperties;
@@ -34,7 +34,7 @@ public class WebhookManager {
 
     private final WatchManager watchManager;
     private final Dao<Webhook> webhookDao;
-    private final LastContentPath lastContentPath;
+    private final ClusterStateDao clusterStateDao;
     private final ActiveWebhooks activeWebhooks;
 
     private final WebhookErrorService webhookErrorService;
@@ -48,7 +48,7 @@ public class WebhookManager {
     public WebhookManager(
             WatchManager watchManager,
             @Named("Webhook") Dao<Webhook> webhookDao,
-            LastContentPath lastContentPath,
+            ClusterStateDao clusterStateDao,
             ActiveWebhooks activeWebhooks,
             WebhookErrorService webhookErrorService,
             WebhookContentPathSet webhookInProcess,
@@ -57,7 +57,7 @@ public class WebhookManager {
             WebhookProperties webhookProps) {
         this.watchManager = watchManager;
         this.webhookDao = webhookDao;
-        this.lastContentPath = lastContentPath;
+        this.clusterStateDao = clusterStateDao;
         this.activeWebhooks = activeWebhooks;
         this.webhookErrorService = webhookErrorService;
         this.webhookInProcess = webhookInProcess;
@@ -138,7 +138,7 @@ public class WebhookManager {
     }
 
     public void getStatus(Webhook webhook, WebhookStatus.WebhookStatusBuilder statusBuilder) {
-        statusBuilder.lastCompleted(lastContentPath.get(webhook.getName(), WebhookStrategy.createContentPath(webhook), WebhookLeader.WEBHOOK_LAST_COMPLETED));
+        statusBuilder.lastCompleted(clusterStateDao.get(webhook.getName(), WebhookStrategy.createContentPath(webhook), WebhookLeader.WEBHOOK_LAST_COMPLETED));
         try {
             statusBuilder.errors(webhookErrorService.lookup(webhook.getName()));
             ArrayList<ContentPath> inFlight = new ArrayList<>(new TreeSet<>(webhookInProcess.getSet(webhook.getName(), WebhookStrategy.createContentPath(webhook))));

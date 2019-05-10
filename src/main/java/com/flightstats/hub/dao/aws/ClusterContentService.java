@@ -1,7 +1,7 @@
 package com.flightstats.hub.dao.aws;
 
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.cluster.LastContentPath;
+import com.flightstats.hub.cluster.ClusterStateDao;
 import com.flightstats.hub.config.AppProperties;
 import com.flightstats.hub.config.ContentProperties;
 import com.flightstats.hub.config.SpokeProperties;
@@ -71,7 +71,7 @@ public class ClusterContentService implements ContentService {
     private final ContentDao s3LargePayloadContentDao;
     private final WriteQueue writeQueue;
     private final ChannelService channelService;
-    private final LastContentPath lastContentPath;
+    private final ClusterStateDao clusterStateDao;
     private final HubUtils hubUtils;
     private final LargeContentUtils largeContentUtils;
     private final AppProperties appProperties;
@@ -87,7 +87,7 @@ public class ClusterContentService implements ContentService {
                             @Named(ContentDao.LARGE_PAYLOAD) ContentDao s3LargePayloadContentDao,
                             @Named(ContentDao.BATCH_LONG_TERM) ContentDao s3BatchContentDao,
                             WriteQueue writeQueue,
-                            LastContentPath lastContentPath,
+                            ClusterStateDao clusterStateDao,
                             HubUtils hubUtils,
                             LargeContentUtils largeContentUtils,
                             AppProperties appProperties,
@@ -104,7 +104,7 @@ public class ClusterContentService implements ContentService {
         this.s3LargePayloadContentDao = s3LargePayloadContentDao;
         this.s3BatchContentDao = s3BatchContentDao;
         this.writeQueue = writeQueue;
-        this.lastContentPath = lastContentPath;
+        this.clusterStateDao = clusterStateDao;
         this.hubUtils = hubUtils;
         this.largeContentUtils = largeContentUtils;
         this.appProperties = appProperties;
@@ -361,24 +361,35 @@ public class ClusterContentService implements ContentService {
 
     private Optional<ContentKey> getLatestImmutable(DirectionQuery latestQuery) {
         String channel = latestQuery.getChannelName();
-        DateTime cacheTtlTime = getSpokeTtlTime(channel);
-        Optional<ContentKey> latest = spokeWriteContentDao.getLatest(channel, latestQuery.getStartKey(), ActiveTraces.getLocal());
 
         Optional<ChannelConfig> optionalChannelConfig = channelService.getCachedChannelConfig(channel);
         if (!optionalChannelConfig.isPresent()) return Optional.empty();
         ChannelConfig cachedChannelConfig = optionalChannelConfig.get();
 
+        // If we find a more recent entry in the WRITE cluster use it.
+        // ...and DELETE the channel latest updated record?  WTF sense does that make?
+        // ...that would imply the record is a marker that no nodes have read an update yet?  huh?
+        // Maybe LATEST means synced-to-S3 and we're saying we just found a newer entry on the WRITE cluster?
+        //      It originally meant "latest item written to channel in Cassandra", so maybe now it means S3 is up-to-date and this is the latest entry
+        //          ..unless no-one's searched recently and newer data is sitting undiscovered on the write spokes.
+        DateTime cacheTtlTime = getSpokeTtlTime(channel);
+        Optional<ContentKey> latest = spokeWriteContentDao.getLatest(channel, latestQuery.getStartKey(), ActiveTraces.getLocal());
         if (latest.isPresent()) {
             ActiveTraces.getLocal().add("found spoke latest", channel, latest);
-            lastContentPath.delete(channel, CHANNEL_LATEST_UPDATED);
+            clusterStateDao.delete(channel, CHANNEL_LATEST_UPDATED);
             return latest;
         }
-        ContentPath latestCache = lastContentPath.get(channel, null, CHANNEL_LATEST_UPDATED);
+
+        // Isn't the above, by definition the latest cached (in a WRITE spoke)?
+        // What is this then?
+        // Latest cached in S3?
+        ContentPath latestCache = clusterStateDao.get(channel, null, CHANNEL_LATEST_UPDATED);
         ActiveTraces.getLocal().add("found latestCache", channel, latestCache);
         if (latestCache != null) {
             DateTime channelTtlTime = cachedChannelConfig.getTtlTime();
+            // If the "latest" from ZK is within the spoke TTL time, blank the latest in ZK (but not delete it?).
             if (latestCache.getTime().isBefore(channelTtlTime)) {
-                lastContentPath.update(ContentKey.NONE, channel, CHANNEL_LATEST_UPDATED);
+                clusterStateDao.update(ContentKey.NONE, channel, CHANNEL_LATEST_UPDATED);
             }
             ActiveTraces.getLocal().add("found cached latest", channel, latest);
             if (latestCache.equals(ContentKey.NONE)) {
@@ -386,6 +397,8 @@ public class ClusterContentService implements ContentService {
             }
             return Optional.of((ContentKey) latestCache);
         }
+
+        // If we haven't already found the latest on the WRITE cluster or in ZK's latest content path.
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
                 .startKey(latestQuery.getStartKey())
@@ -395,19 +408,24 @@ public class ClusterContentService implements ContentService {
                 .location(latestQuery.getLocation())
                 .count(1)
                 .build();
+        // Find all keys in the channel after the given start key.
         Collection<ContentKey> keys = channelService.query(query);
         if (keys.isEmpty()) {
+            // Mark the channel as empty.
             ActiveTraces.getLocal().add("updating channel empty", channel);
-            lastContentPath.updateIncrease(ContentKey.NONE, channel, CHANNEL_LATEST_UPDATED);
+            clusterStateDao.setIfAfter(ContentKey.NONE, channel, CHANNEL_LATEST_UPDATED);
             return Optional.empty();
         } else {
+            // If we find something.
             ContentKey latestKey = keys.iterator().next();
             if (latestKey.getTime().isAfter(cacheTtlTime)) {
                 ActiveTraces.getLocal().add("latestKey within spoke window {} {}", channel, latestKey);
-                lastContentPath.delete(channel, CHANNEL_LATEST_UPDATED);
+                // Delete the path if it's after the spoke write TTL.
+                clusterStateDao.delete(channel, CHANNEL_LATEST_UPDATED);
             } else {
                 ActiveTraces.getLocal().add("updating cache with latestKey {} {}", channel, latestKey);
-                lastContentPath.update(latestKey, channel, CHANNEL_LATEST_UPDATED);
+                // Otherwise set the path to this key.
+                clusterStateDao.update(latestKey, channel, CHANNEL_LATEST_UPDATED);
             }
             return Optional.of(latestKey);
         }
@@ -421,8 +439,8 @@ public class ClusterContentService implements ContentService {
         s3SingleContentDao.delete(channelName);
         s3BatchContentDao.delete(channelName);
         s3LargePayloadContentDao.delete(channelName);
-        lastContentPath.delete(channelName, CHANNEL_LATEST_UPDATED);
-        lastContentPath.delete(channelName, S3Verifier.LAST_SINGLE_VERIFIED);
+        clusterStateDao.delete(channelName, CHANNEL_LATEST_UPDATED);
+        clusterStateDao.delete(channelName, S3Verifier.LAST_SINGLE_VERIFIED);
         Optional<ChannelConfig> optionalChannelConfig = channelService.getCachedChannelConfig(channelName);
         if (optionalChannelConfig.isPresent() && !optionalChannelConfig.get().isSingle()) {
             new S3Batch(optionalChannelConfig.get(), hubUtils, appProperties.getAppUrl(), appProperties.getAppEnv()).stop();
@@ -445,7 +463,8 @@ public class ClusterContentService implements ContentService {
     @Override
     public void notify(ChannelConfig newConfig, ChannelConfig oldConfig) {
         if (oldConfig == null) {
-            lastContentPath.updateIncrease(ContentKey.NONE, newConfig.getDisplayName(), CHANNEL_LATEST_UPDATED);
+            // If we DIDN'T HAVE a prior config, set the next entry marker to NONE +1.
+            clusterStateDao.setIfAfter(ContentKey.NONE, newConfig.getDisplayName(), CHANNEL_LATEST_UPDATED);
         }
 
         final S3Batch s3Batch = new S3Batch(
@@ -468,9 +487,11 @@ public class ClusterContentService implements ContentService {
         }
     }
 
+    /* If you've moved mutable time boundary back, then set latest to 1+ old channel's latest entry (it's immutable now for sure). */
     private void handleMutableTimeChange(ChannelConfig newConfig, ChannelConfig oldConfig) {
-        ContentPath latest = lastContentPath.get(newConfig.getDisplayName(), ContentKey.NONE, CHANNEL_LATEST_UPDATED);
+        ContentPath latest = clusterStateDao.get(newConfig.getDisplayName(), ContentKey.NONE, CHANNEL_LATEST_UPDATED);
         log.info("handleMutableTimeChange {}", latest);
+        // If ZK doesn't have a latest key for the new config.
         if (latest.equals(ContentKey.NONE)) {
             DirectionQuery query = DirectionQuery.builder()
                     .startKey(ContentKey.lastKey(oldConfig.getMutableTime().plusMillis(1)))
@@ -483,13 +504,15 @@ public class ClusterContentService implements ContentService {
                     .location(Location.LONG_TERM_SINGLE)
                     .count(1)
                     .build();
+            // Find the latest (in S3 single) for the old channel.
             Optional<ContentKey> mutableLatest = getLatest(query);
             ActiveTraces.getLocal().log(log);
             if (mutableLatest.isPresent()) {
                 ContentKey mutableKey = mutableLatest.get();
                 if (mutableKey.getTime().isAfter(newConfig.getMutableTime())) {
                     log.info("handleMutableTimeChange.updateIncrease {}", mutableKey);
-                    lastContentPath.updateIncrease(mutableKey, newConfig.getDisplayName(), CHANNEL_LATEST_UPDATED);
+                    // If the latest in the old channel is after the new mutable time, set the next entry to after the old channel's latest.
+                    clusterStateDao.setIfAfter(mutableKey, newConfig.getDisplayName(), CHANNEL_LATEST_UPDATED);
                 }
             }
         }
@@ -502,7 +525,9 @@ public class ClusterContentService implements ContentService {
 
     private class SpokeS3ContentServiceInit extends AbstractIdleService {
         @Override
-        protected void startUp() throws Exception {
+        protected void startUp() {
+            // and stuff that has nothing to do with S3, 'cuz...why not?
+            // ...oh I know, because having a local cache and being backed by AWS mean the same thing, clearly.
             spokeWriteContentDao.initialize();
             spokeReadContentDao.initialize();
             s3SingleContentDao.initialize();
@@ -510,7 +535,7 @@ public class ClusterContentService implements ContentService {
         }
 
         @Override
-        protected void shutDown() throws Exception {
+        protected void shutDown() {
             //do nothing
         }
     }
@@ -524,7 +549,7 @@ public class ClusterContentService implements ContentService {
         }
 
         @Override
-        protected synchronized void runOneIteration() throws Exception {
+        protected synchronized void runOneIteration() {
             log.debug("running...");
             ActiveTraces.start("ChannelLatestUpdatedService");
             channelService.getChannels().forEach(channelConfig -> {

@@ -2,11 +2,10 @@ package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.cluster.DistributedAsyncLockRunner;
 import com.flightstats.hub.cluster.DistributedLeaderLockManager;
-import com.flightstats.hub.cluster.LastContentPath;
+import com.flightstats.hub.cluster.ClusterStateDao;
 import com.flightstats.hub.cluster.Leadership;
 import com.flightstats.hub.cluster.LeadershipLock;
 import com.flightstats.hub.cluster.Lockable;
-import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.StatsdReporter;
@@ -17,7 +16,6 @@ import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.curator.framework.CuratorFramework;
 import org.joda.time.DateTime;
 
 import java.util.Optional;
@@ -43,7 +41,7 @@ class WebhookLeader implements Lockable {
     @Inject
     private StatsdReporter statsdReporter;
     @Inject
-    private LastContentPath lastContentPath;
+    private ClusterStateDao clusterStateDao;
     @Inject
     private WebhookContentPathSet webhookInProcess;
     @Inject
@@ -106,7 +104,7 @@ class WebhookLeader implements Lockable {
                 .giveUpIf(this::channelTTLExceeded)
                 .giveUpIf(this::maxAttemptsReached)
                 .build();
-        webhookStrategy = WebhookStrategy.getStrategy(webhook, lastContentPath, channelService);
+        webhookStrategy = WebhookStrategy.getStrategy(webhook, clusterStateDao, channelService);
         try {
             ContentPath lastCompletedPath = webhookStrategy.getStartingPath();
             lastUpdated.set(lastCompletedPath);
@@ -236,7 +234,7 @@ class WebhookLeader implements Lockable {
                 if (shouldGoToNextItem) {
                     if (increaseLastUpdated(contentPath)) {
                         if (!deleteOnExit.get()) {
-                            lastContentPath.updateIncrease(contentPath, webhook.getName(), WEBHOOK_LAST_COMPLETED);
+                            clusterStateDao.setIfAfter(contentPath, webhook.getName(), WEBHOOK_LAST_COMPLETED);
                         }
                     }
                 }
