@@ -176,9 +176,9 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
     }
 
     private void mapItems(List<ChannelConfig> configurations, ScanResult result) {
-        for (Map<String, AttributeValue> item : result.getItems()) {
-            mapItem(item).ifPresent(parsed -> configurations.add(parsed));
-        }
+        result.getItems().forEach(
+                item -> mapItem(item).ifPresent(configurations::add)
+        );
     }
 
     @Override
