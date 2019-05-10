@@ -7,8 +7,6 @@ import com.amazonaws.services.dynamodbv2.model.GetItemResult;
 import com.amazonaws.services.dynamodbv2.model.ResourceNotFoundException;
 import com.amazonaws.services.dynamodbv2.model.ScanRequest;
 import com.amazonaws.services.dynamodbv2.model.ScanResult;
-import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.config.AppProperties;
 import com.flightstats.hub.config.DynamoProperties;
 import com.flightstats.hub.config.WebhookProperties;
 import com.flightstats.hub.dao.Dao;
@@ -27,21 +25,15 @@ import java.util.Map;
 public class DynamoWebhookDao implements Dao<Webhook> {
 
     private final AmazonDynamoDB dbClient;
-    private final DynamoUtils dynamoUtils;
     private final DynamoProperties dynamoProperties;
-    private final AppProperties appProperties;
     private final WebhookProperties webhookProperties;
 
     @Inject
     public DynamoWebhookDao(AmazonDynamoDB dbClient,
-                            DynamoUtils dynamoUtils,
                             DynamoProperties dynamoProperties,
-                            AppProperties appProperties,
                             WebhookProperties webhookProperties) {
         this.dbClient = dbClient;
-        this.dynamoUtils = dynamoUtils;
         this.dynamoProperties = dynamoProperties;
-        this.appProperties = appProperties;
         this.webhookProperties = webhookProperties;
     }
 
