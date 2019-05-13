@@ -17,6 +17,8 @@ public class AppProperties {
         this.propertiesLoader = propertiesLoader;
     }
 
+    public boolean isReadOnly() { return this.propertiesLoader.getProperty("hub.read.only", false); }
+
     public String getEnv() {
         return this.propertiesLoader.getProperty("app.environment", "test");
     }
@@ -43,12 +45,6 @@ public class AppProperties {
 
     public boolean isAppEncrypted() {
         return this.propertiesLoader.getProperty("app.encrypted", false);
-    }
-
-    public boolean isReadOnly() {
-        String readOnlyNodes = this.propertiesLoader.getProperty("hub.read.only", "");
-        return Arrays.asList(readOnlyNodes.split(","))
-                .contains(HubHost.getLocalName());
     }
 
     public int getMinPostTimeMillis() {

@@ -23,8 +23,12 @@ public class ContentProperties {
         return this.propertiesLoader.getProperty("app.directionCountLimit", 10000);
     }
 
-    public boolean isChannelProtectionEnabled() {
+    public boolean isChannelProtectionSvcEnabled() {
         return this.propertiesLoader.getProperty("hub.protect.channels", true);
+    }
+
+    public boolean isLatestUpdateServiceEnabled() {
+        return this.propertiesLoader.getProperty("channel.latest.update.svc.enabled", true);
     }
 
     public int getStableSeconds() {

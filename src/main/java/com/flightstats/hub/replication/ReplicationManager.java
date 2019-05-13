@@ -3,17 +3,17 @@ package com.flightstats.hub.replication;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.Watcher;
 import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.SpokeProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.BuiltInTag;
 import com.flightstats.hub.model.ChannelConfig;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.api.CuratorEvent;
 
+import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -30,32 +30,28 @@ import static com.flightstats.hub.app.HubServices.register;
 @Singleton
 @Slf4j
 public class ReplicationManager {
-
-    private static final String REPLICATOR_WATCHER_PATH = "/replicator/watcher";
+    public static final String REPLICATOR_WATCHER_PATH = "/replicator/watcher";
     private final Map<String, ChannelReplicator> channelReplicatorMap = new HashMap<>();
     private final AtomicBoolean stopped = new AtomicBoolean();
     private final ExecutorService executor = Executors.newSingleThreadExecutor(
             new ThreadFactoryBuilder().setNameFormat("ReplicationManager").build());
     private final ExecutorService executorPool = Executors.newFixedThreadPool(40,
             new ThreadFactoryBuilder().setNameFormat("ReplicationManager-%d").build());
-
-    @Inject
     private ChannelService channelService;
-    @Inject
     private WatchManager watchManager;
-    @Inject
     private AppProperties appProperties;
 
-    public ReplicationManager() {
-        register(new ReplicationService(), TYPE.AFTER_HEALTHY_START, TYPE.PRE_STOP);
-    }
-
-    @VisibleForTesting
-    ReplicationManager(ChannelService channelService, WatchManager watchManager, AppProperties appProperties) {
-        this();
+    @Inject
+    public ReplicationManager(
+            ChannelService channelService, WatchManager watchManager,
+            AppProperties appProperties,
+            SpokeProperties spokeProperties) {
         this.channelService = channelService;
         this.watchManager = watchManager;
         this.appProperties = appProperties;
+        if (spokeProperties.isReplicationEnabled()) {
+            register(new ReplicationService(), TYPE.AFTER_HEALTHY_START, TYPE.PRE_STOP);
+        }
     }
 
     private void startManager() {

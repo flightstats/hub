@@ -11,6 +11,10 @@ public class WebhookProperties {
         this.propertiesLoader = propertiesLoader;
     }
 
+    public boolean isWebhookLeadershipEnabled() {
+        return this.propertiesLoader.getProperty("webhook.leadership.enabled", true);
+    }
+
     public int getCallbackTimeoutMinimum() {
         return this.propertiesLoader.getProperty("webhook.callbackTimeoutSeconds.min", 1);
     }

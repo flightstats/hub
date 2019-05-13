@@ -10,6 +10,7 @@ import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentKeyUtil;
 import com.flightstats.hub.dao.ContentService;
 import com.flightstats.hub.dao.QueryResult;
+import com.flightstats.hub.dao.aws.writeQueue.WriteQueue;
 import com.flightstats.hub.exception.FailedQueryException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
@@ -68,7 +69,7 @@ public class ClusterContentService implements ContentService {
     private final ContentDao spokeReadContentDao;
     private final ContentDao s3BatchContentDao;
     private final ContentDao s3LargePayloadContentDao;
-    private final S3WriteQueue s3WriteQueue;
+    private final WriteQueue writeQueue;
     private final ChannelService channelService;
     private final LastContentPath lastContentPath;
     private final HubUtils hubUtils;
@@ -79,35 +80,36 @@ public class ClusterContentService implements ContentService {
 
     @Inject
     public ClusterContentService(
-            ChannelService channelService,
-            @Named(ContentDao.WRITE_CACHE) ContentDao spokeWriteContentDao,
-            @Named(ContentDao.READ_CACHE) ContentDao spokeReadContentDao,
-            @Named(ContentDao.SINGLE_LONG_TERM) ContentDao s3SingleContentDao,
-            @Named(ContentDao.LARGE_PAYLOAD) ContentDao s3LargePayloadContentDao,
-            @Named(ContentDao.BATCH_LONG_TERM) ContentDao s3BatchContentDao,
-            S3WriteQueue s3WriteQueue,
-            LastContentPath lastContentPath,
-            HubUtils hubUtils,
-            LargeContentUtils largeContentUtils,
-            AppProperties appProperties,
-            ContentProperties contentProperties,
-            SpokeProperties spokeProperties) {
+                            ChannelService channelService,
+                            @Named(ContentDao.WRITE_CACHE) ContentDao spokeWriteContentDao,
+                            @Named(ContentDao.READ_CACHE) ContentDao spokeReadContentDao,
+                            @Named(ContentDao.SINGLE_LONG_TERM) ContentDao s3SingleContentDao,
+                            @Named(ContentDao.LARGE_PAYLOAD) ContentDao s3LargePayloadContentDao,
+                            @Named(ContentDao.BATCH_LONG_TERM) ContentDao s3BatchContentDao,
+                            WriteQueue writeQueue,
+                            LastContentPath lastContentPath,
+                            HubUtils hubUtils,
+                            LargeContentUtils largeContentUtils,
+                            AppProperties appProperties,
+                            ContentProperties contentProperties,
+                            SpokeProperties spokeProperties) {
         HubServices.registerPreStop(new SpokeS3ContentServiceInit());
-        HubServices.register(new ChannelLatestUpdatedService(contentProperties), HubServices.TYPE.AFTER_HEALTHY_START);
+        if (contentProperties.isChannelProtectionSvcEnabled() || contentProperties.isLatestUpdateServiceEnabled()) {
+            HubServices.register(new ChannelLatestUpdatedService(contentProperties), HubServices.TYPE.AFTER_HEALTHY_START);
+        }
         this.channelService = channelService;
         this.spokeWriteContentDao = spokeWriteContentDao;
         this.spokeReadContentDao = spokeReadContentDao;
         this.s3SingleContentDao = s3SingleContentDao;
         this.s3LargePayloadContentDao = s3LargePayloadContentDao;
         this.s3BatchContentDao = s3BatchContentDao;
-        this.s3WriteQueue = s3WriteQueue;
+        this.writeQueue = writeQueue;
         this.lastContentPath = lastContentPath;
         this.hubUtils = hubUtils;
         this.largeContentUtils = largeContentUtils;
         this.appProperties = appProperties;
         this.contentProperties = contentProperties;
         this.spokeProperties = spokeProperties;
-
     }
 
     private SortedSet<ContentKey> query(Function<ContentDao, SortedSet<ContentKey>> daoQuery, List<ContentDao> contentDaos) {
@@ -154,7 +156,7 @@ public class ClusterContentService implements ContentService {
     }
 
     private void s3SingleWrite(String channelName, ContentKey key) {
-        s3WriteQueue.add(new ChannelContentKey(channelName, key));
+        writeQueue.add(new ChannelContentKey(channelName, key));
     }
 
     @Override

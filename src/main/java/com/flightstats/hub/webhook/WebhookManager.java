@@ -5,6 +5,7 @@ import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.Watcher;
+import com.flightstats.hub.config.WebhookProperties;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ContentPath;
 import com.google.common.annotations.VisibleForTesting;
@@ -31,41 +32,29 @@ import static com.flightstats.hub.app.HubServices.register;
 public class WebhookManager {
     private static final String WATCHER_PATH = "/groupCallback/watcher";
 
-    @Inject
-    private WatchManager watchManager;
-    @Inject
-    @Named("Webhook")
-    private Dao<Webhook> webhookDao;
-    @Inject
-    private LastContentPath lastContentPath;
-    @Inject
-    private ActiveWebhooks activeWebhooks;
+    private final WatchManager watchManager;
+    private final Dao<Webhook> webhookDao;
+    private final LastContentPath lastContentPath;
+    private final ActiveWebhooks activeWebhooks;
+
+    private final WebhookErrorService webhookErrorService;
+    private final WebhookContentPathSet webhookInProcess;
+
+    private final InternalWebhookClient webhookClient;
+
+    private final WebhookStateReaper webhookStateReaper;
 
     @Inject
-    private WebhookErrorService webhookErrorService;
-    @Inject
-    private WebhookContentPathSet webhookInProcess;
-
-    @Inject
-    private InternalWebhookClient webhookClient;
-
-    @Inject
-    private WebhookStateReaper webhookStateReaper;
-
-    @Inject
-    public WebhookManager() {
-        register(new WebhookIdleService(), HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
-        register(new WebhookScheduledService(), HubServices.TYPE.AFTER_HEALTHY_START);
-    }
-
-    @VisibleForTesting
-    WebhookManager(WatchManager watchManager,
-                   Dao<Webhook> webhookDao,
-                   LastContentPath lastContentPath,
-                   ActiveWebhooks activeWebhooks,
-                   WebhookErrorService webhookErrorService,
-                   WebhookContentPathSet webhookInProcess,
-                   InternalWebhookClient webhookClient) {
+    public WebhookManager(
+            WatchManager watchManager,
+            @Named("Webhook") Dao<Webhook> webhookDao,
+            LastContentPath lastContentPath,
+            ActiveWebhooks activeWebhooks,
+            WebhookErrorService webhookErrorService,
+            WebhookContentPathSet webhookInProcess,
+            InternalWebhookClient webhookClient,
+            WebhookStateReaper webhookStateReaper,
+            WebhookProperties webhookProps) {
         this.watchManager = watchManager;
         this.webhookDao = webhookDao;
         this.lastContentPath = lastContentPath;
@@ -73,6 +62,11 @@ public class WebhookManager {
         this.webhookErrorService = webhookErrorService;
         this.webhookInProcess = webhookInProcess;
         this.webhookClient = webhookClient;
+        this.webhookStateReaper = webhookStateReaper;
+        if (webhookProps.isWebhookLeadershipEnabled()) {
+            register(new WebhookIdleService(), HubServices.TYPE.AFTER_HEALTHY_START, HubServices.TYPE.PRE_STOP);
+            register(new WebhookScheduledService(), HubServices.TYPE.AFTER_HEALTHY_START);
+        }
     }
 
     private void start() {

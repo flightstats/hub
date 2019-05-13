@@ -1,40 +1,62 @@
 package com.flightstats.hub.webhook;
 
+import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.cluster.WatchManager;
+import com.flightstats.hub.config.WebhookProperties;
 import com.flightstats.hub.dao.Dao;
+import com.google.common.util.concurrent.Service;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Sets.newHashSet;
 import static java.lang.String.format;
+import static junit.framework.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyCollectionOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.matches;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-class WebhookManagerTest {
-    private final WatchManager watchManager = mock(WatchManager.class);
-    private final Dao<Webhook> webhookDao = getWebhookDao();
-    private final LastContentPath lastContentPath = mock(LastContentPath.class);
-    private final ActiveWebhooks activeWebhooks = mock(ActiveWebhooks.class);
-    private final WebhookErrorService webhookErrorService = mock(WebhookErrorService.class);
-    private final WebhookContentPathSet webhookContentPathSet = mock(WebhookContentPathSet.class);
-    private final InternalWebhookClient webhookClient = mock(InternalWebhookClient.class);
+@ExtendWith({MockitoExtension.class})
+@MockitoSettings(strictness= Strictness.LENIENT)
+public class WebhookManagerTest {
+    @Mock private WatchManager watchManager;
+    @Mock private Dao<Webhook> webhookDao;
+    @Mock private LastContentPath lastContentPath;
+    @Mock private ActiveWebhooks activeWebhooks;
+    @Mock private WebhookErrorService webhookErrorService;
+    @Mock private WebhookContentPathSet webhookContentPathSet;
+    @Mock private InternalWebhookClient webhookClient;
+    @Mock private WebhookStateReaper webhookStateReaper;
+    @Mock private WebhookProperties webhookProperties;
 
     private static final String SERVER1 = "123.1.1";
     private static final String SERVER2 = "123.2.1";
     private static final String SERVER3 = "123.3.1";
 
     private static final String WEBHOOK_NAME = "w3bh00k";
+
+    @BeforeEach
+    public void setup() {
+        when(webhookProperties.isWebhookLeadershipEnabled()).thenReturn(true);
+        HubServices.clear();
+    }
 
     @Test
     void testWhenWebhookIsManagedOnExactlyOneServer_doesNothing() {
@@ -146,12 +168,28 @@ class WebhookManagerTest {
         verify(webhookClient, never()).remove(eq(WEBHOOK_NAME), anyString());
     }
 
-    private WebhookManager getWebhookManager() {
-        return new WebhookManager(watchManager, webhookDao, lastContentPath, activeWebhooks, webhookErrorService, webhookContentPathSet, webhookClient);
+    @Test
+    public void testRegistersServices() {
+        getWebhookManager();
+        Map<HubServices.TYPE, List<Service>> services = HubServices.getServices();
+        assertEquals(2, services.get(HubServices.TYPE.AFTER_HEALTHY_START).size());
+        assertEquals(1, services.get(HubServices.TYPE.PRE_STOP).size());
     }
 
-    @SuppressWarnings("unchecked")
-    private Dao<Webhook> getWebhookDao() {
-        return (Dao<Webhook>) mock(Dao.class);
+    @Test
+    public void testIfNotLeaderWontRegisterServices() {
+        when(webhookProperties.isWebhookLeadershipEnabled()).thenReturn(false);
+        getWebhookManager();
+        Map<HubServices.TYPE, List<Service>> services = HubServices.getServices();
+        services.forEach((type, svcs) -> assertTrue(type + " has services registered", svcs.isEmpty()));
     }
+
+    private WebhookManager getWebhookManager() {
+        return new WebhookManager(
+                watchManager, webhookDao,
+                lastContentPath, activeWebhooks,
+                webhookErrorService, webhookContentPathSet,
+                webhookClient, webhookStateReaper, webhookProperties);
+    }
+
 }

@@ -6,10 +6,11 @@ import com.google.inject.Inject;
 public class SpokeFinalCheck implements FinalCheck {
 
     @Inject
-    private RemoteSpokeStore remoteSpokeStore;
+    private SpokeClusterHealthCheck healthCheck;
 
     @Override
     public boolean check() throws Exception {
-        return remoteSpokeStore.testAll();
+        return healthCheck.testAll();
     }
+
 }

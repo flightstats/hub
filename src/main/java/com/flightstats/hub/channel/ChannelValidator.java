@@ -15,15 +15,10 @@ import org.apache.commons.lang3.StringUtils;
 public class ChannelValidator {
     public static final String VALID_NAME = "^[a-zA-Z0-9_-]+$";
 
-    @Inject
     private ChannelService channelService;
 
-    // required for Guice
-    ChannelValidator() {
-    }
-
-    @VisibleForTesting
-    ChannelValidator(ChannelService channelService) {
+    @Inject
+    public ChannelValidator(ChannelService channelService) {
         this.channelService = channelService;
     }
 
