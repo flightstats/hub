@@ -74,7 +74,6 @@ class HubUtilsTest {
                 .withContentType("text/plain")
                 .withStream(stream)
                 .build();
-        stream.close();
         return hubUtils.insert(channelUrl, content);
     }
 
