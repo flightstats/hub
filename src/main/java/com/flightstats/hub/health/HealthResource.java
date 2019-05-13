@@ -27,6 +27,7 @@ public class HealthResource {
     private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private static final HubHealthCheck healthCheck = HubProvider.getInstance(HubHealthCheck.class);
     private static final HubVersion hubVersion = HubProvider.getInstance(HubVersion.class);
+    private static final LinkBuilder linkBuilder = HubProvider.getInstance(LinkBuilder.class);
     @Context
     private UriInfo uriInfo;
     private final AppProperties appProperties = new AppProperties(PropertiesLoader.getInstance());
@@ -44,7 +45,7 @@ public class HealthResource {
         rootNode.put("startTime", startTime.toString());
         rootNode.put("upTimeHours", new Duration(startTime, TimeUtil.now()).getStandardHours());
         ObjectNode links = rootNode.putObject("_links");
-        LinkBuilder.addLink(links, "metrics", uriInfo.getBaseUriBuilder().path("health").path("metrics").build());
+        linkBuilder.addLink(links, "metrics", uriInfo.getBaseUriBuilder().path("health").path("metrics").build());
         if (healthStatus.isHealthy()) {
             return Response.ok(rootNode).build();
         } else if (healthCheck.isShuttingDown()) {

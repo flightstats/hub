@@ -23,8 +23,6 @@ import java.net.URI;
 import java.util.Map;
 import java.util.TreeMap;
 
-import static com.flightstats.hub.channel.LinkBuilder.buildChannelConfigResponse;
-
 /**
  * This resource represents the collection of all channels in the Hub.
  */
@@ -32,9 +30,10 @@ import static com.flightstats.hub.channel.LinkBuilder.buildChannelConfigResponse
 @Path("/channel")
 public class ChannelsResource {
 
-    public static final String READ_ONLY_FAILURE_MESSAGE = "attempted to %s against /channels on read-only node %s";
+    private static final String READ_ONLY_FAILURE_MESSAGE = "attempted to %s against /channels on read-only node %s";
 
     private final ChannelService channelService;
+    private final LinkBuilder linkBuilder;
     private final PermissionsChecker permissionsChecker;
 
     @Context
@@ -42,8 +41,10 @@ public class ChannelsResource {
 
     @Inject
     private ChannelsResource(ChannelService channelService,
+                             LinkBuilder linkBuilder,
                              PermissionsChecker permissionsChecker) {
         this.channelService = channelService;
+        this.linkBuilder = linkBuilder;
         this.permissionsChecker = permissionsChecker;
     }
 
@@ -53,9 +54,9 @@ public class ChannelsResource {
         final Map<String, URI> mappedUris = new TreeMap<>();
         for (ChannelConfig channelConfig : channelService.getChannels()) {
             final String channelName = channelConfig.getDisplayName();
-            mappedUris.put(channelName, LinkBuilder.buildChannelUri(channelName, uriInfo));
+            mappedUris.put(channelName, this.linkBuilder.buildChannelUri(channelName, uriInfo));
         }
-        final Linked<?> result = LinkBuilder.buildLinks(uriInfo, mappedUris, "channels");
+        final Linked<?> result = this.linkBuilder.buildLinks(uriInfo, mappedUris, "channels");
         return Response.ok(result).build();
     }
 
@@ -67,8 +68,8 @@ public class ChannelsResource {
         log.debug("post channel {}", json);
         ChannelConfig channelConfig = ChannelConfig.createFromJson(json);
         channelConfig = channelService.createChannel(channelConfig);
-        final URI channelUri = LinkBuilder.buildChannelUri(channelConfig.getDisplayName(), uriInfo);
-        final ObjectNode output = buildChannelConfigResponse(channelConfig, uriInfo, channelConfig.getDisplayName());
+        final URI channelUri = this.linkBuilder.buildChannelUri(channelConfig.getDisplayName(), uriInfo);
+        final ObjectNode output = this.linkBuilder.buildChannelConfigResponse(channelConfig, uriInfo, channelConfig.getDisplayName());
         return Response.created(channelUri).entity(output).build();
     }
 

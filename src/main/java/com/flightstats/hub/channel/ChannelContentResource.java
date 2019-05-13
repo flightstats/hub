@@ -86,6 +86,9 @@ public class ChannelContentResource {
     private final ChannelService channelService;
     private final StatsdReporter statsdReporter;
     private final EventsService eventsService;
+    private final LinkBuilder linkBuilder;
+    private final TimeLinkBuilder timeLinkBuilder;
+    private final BulkBuilder bulkBuilder;
     private final ContentRetriever contentRetriever;
     private final PermissionsChecker permissionsChecker;
 
@@ -98,13 +101,18 @@ public class ChannelContentResource {
                                   ChannelService channelService,
                                   StatsdReporter statsdReporter,
                                   EventsService eventsService,
-                                  ContentRetriever contentRetriever,
+                                  LinkBuilder linkBuilder,
+                                  TimeLinkBuilder timeLinkBuilder,
+                                  BulkBuilder bulkBuilder, ContentRetriever contentRetriever,
                                   PermissionsChecker permissionsChecker) {
         this.tagService = tagService;
         this.objectMapper = objectMapper;
         this.channelService = channelService;
         this.statsdReporter = statsdReporter;
         this.eventsService = eventsService;
+        this.linkBuilder = linkBuilder;
+        this.timeLinkBuilder = timeLinkBuilder;
+        this.bulkBuilder = bulkBuilder;
         this.contentRetriever = contentRetriever;
         this.permissionsChecker = permissionsChecker;
     }
@@ -242,12 +250,12 @@ public class ChannelContentResource {
         final DateTime next = startTime.plus(unit.getDuration());
         final DateTime previous = startTime.minus(unit.getDuration());
         if (bulk) {
-            return BulkBuilder.build(keys, channel, channelService, uriInfo, accept, descending, (builder) -> {
+            return this.bulkBuilder.build(keys, channel, channelService, uriInfo, accept, descending, (builder) -> {
                 if (next.isBefore(current)) {
-                    builder.header("Link", "<" + TimeLinkUtil.getUri(channel, uriInfo, unit, next) +
+                    builder.header("Link", "<" + this.linkBuilder.getUri(channel, uriInfo, unit, next) +
                             ">;rel=\"" + "next" + "\"");
                 }
-                builder.header("Link", "<" + TimeLinkUtil.getUri(channel, uriInfo, unit, previous) +
+                builder.header("Link", "<" + this.linkBuilder.getUri(channel, uriInfo, unit, previous) +
                         ">;rel=\"" + "previous" + "\"");
             });
         } else {
@@ -256,17 +264,17 @@ public class ChannelContentResource {
             final ObjectNode self = links.putObject("self");
             self.put("href", uriInfo.getRequestUri().toString());
             if (next.isBefore(current)) {
-                links.putObject("next").put("href", TimeLinkUtil.getUri(channel, uriInfo, unit, next).toString());
+                links.putObject("next").put("href", this.linkBuilder.getUri(channel, uriInfo, unit, next).toString());
             }
-            links.putObject("previous").put("href", TimeLinkUtil.getUri(channel, uriInfo, unit, previous).toString());
+            links.putObject("previous").put("href", this.linkBuilder.getUri(channel, uriInfo, unit, previous).toString());
             final ArrayNode ids = links.putArray("uris");
-            final URI channelUri = LinkBuilder.buildChannelUri(channel, uriInfo);
+            final URI channelUri = this.linkBuilder.buildChannelUri(channel, uriInfo);
             final ArrayList<ContentKey> list = new ArrayList<>(keys);
             if (descending) {
                 Collections.reverse(list);
             }
             for (ContentKey key : list) {
-                final URI uri = LinkBuilder.buildItemUri(key, channelUri);
+                final URI uri = this.linkBuilder.buildItemUri(key, channelUri);
                 ids.add(uri.toString());
             }
             if (trace) {
@@ -318,7 +326,7 @@ public class ChannelContentResource {
         final ObjectNode self = links.putObject("self");
         self.put("href", uriInfo.getRequestUri().toString());
         if (keys.size() == count) {
-            final URI uri = LinkBuilder.uriBuilder(channel, uriInfo)
+            final URI uri = this.linkBuilder.uriBuilder(channel, uriInfo)
                     .path(Unit.SECONDS.format(keys.last().getTime()))
                     .path("next")
                     .path("" + count)
@@ -326,7 +334,7 @@ public class ChannelContentResource {
             links.putObject("next").put("href", uri.toString());
         }
         if (!keys.isEmpty()) {
-            final URI uri = LinkBuilder.uriBuilder(channel, uriInfo)
+            final URI uri = this.linkBuilder.uriBuilder(channel, uriInfo)
                     .path(Unit.SECONDS.format(keys.first().getTime()))
                     .path("previous")
                     .path("" + count)
@@ -335,14 +343,14 @@ public class ChannelContentResource {
         }
 
         final ArrayNode ids = links.putArray("uris");
-        final URI channelUri = LinkBuilder.buildChannelUri(channel, uriInfo);
+        final URI channelUri = this.linkBuilder.buildChannelUri(channel, uriInfo);
 
         final ArrayList<ContentPath> list = new ArrayList<>(keys);
         if (Order.isDescending(order)) {
             Collections.reverse(list);
         }
         for (ContentPath path : list) {
-            final URI uri = LinkBuilder.buildItemUri(path, channelUri);
+            final URI uri = this.linkBuilder.buildItemUri(path, channelUri);
             ids.add(uri.toString());
         }
         if (trace) {
@@ -487,7 +495,7 @@ public class ChannelContentResource {
         try {
             log.info("starting events at {} for client from {}", channel, contentKey);
             EventOutput eventOutput = new EventOutput();
-            eventsService.register(new ContentOutput(channel, eventOutput, contentKey, uriInfo.getBaseUri()));
+            eventsService.register(new ContentOutput(channel, eventOutput, contentKey, uriInfo.getBaseUri(), linkBuilder));
             return eventOutput;
         } catch (Exception e) {
             log.warn("unable to get events for " + channel, e);
@@ -537,16 +545,16 @@ public class ChannelContentResource {
                 .build();
         final SortedSet<ContentKey> keys = contentRetriever.query(query);
         if (bulk || batch) {
-            return BulkBuilder.build(keys, channel, channelService, uriInfo, accept, descending, (builder) -> {
+            return this.bulkBuilder.build(keys, channel, channelService, uriInfo, accept, descending, (builder) -> {
                 if (!keys.isEmpty()) {
-                    builder.header("Link", "<" + LinkBuilder.getDirection("previous", channel, uriInfo, keys.first(), count) +
+                    builder.header("Link", "<" + this.linkBuilder.getDirection("previous", channel, uriInfo, keys.first(), count) +
                             ">;rel=\"" + "previous" + "\"");
-                    builder.header("Link", "<" + LinkBuilder.getDirection("next", channel, uriInfo, keys.last(), count) +
+                    builder.header("Link", "<" + this.linkBuilder.getDirection("next", channel, uriInfo, keys.last(), count) +
                             ">;rel=\"" + "next" + "\"");
                 }
             });
         } else {
-            return LinkBuilder.directionalResponse(keys, count, query, objectMapper, uriInfo, true, trace, descending);
+            return this.linkBuilder.directionalResponse(keys, count, query, uriInfo, true, trace, descending);
         }
     }
 
@@ -623,7 +631,7 @@ public class ChannelContentResource {
                     .build();
 
             final Linked<InsertedContentKey> linkedResult = linked(insertionResult)
-                    .withLink("channel", LinkBuilder.buildChannelUri(channelName, uriInfo))
+                    .withLink("channel", this.linkBuilder.buildChannelUri(channelName, uriInfo))
                     .withLink("self", payloadUri)
                     .build();
 
@@ -658,7 +666,7 @@ public class ChannelContentResource {
                 .path(channel)
                 .path(year).path(month).path(day)
                 .path(hour).path(minute).path(second);
-        TimeLinkUtil.addQueryParams(uriInfo, builder);
+        this.timeLinkBuilder.addQueryParams(uriInfo, builder);
         return Response.seeOther(builder.build()).build();
     }
 

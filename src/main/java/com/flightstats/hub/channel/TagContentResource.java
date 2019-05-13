@@ -42,13 +42,16 @@ import static com.flightstats.hub.util.TimeUtil.Unit;
 public class TagContentResource {
 
     private final TagService tagService;
+    private final LinkBuilder linkBuilder;
 
     @Context
     private UriInfo uriInfo;
 
     @Inject
-    public TagContentResource(TagService tagService) {
+    public TagContentResource(TagService tagService,
+                              LinkBuilder linkBuilder) {
         this.tagService = tagService;
+        this.linkBuilder = linkBuilder;
     }
 
     @GET
@@ -58,9 +61,9 @@ public class TagContentResource {
         final Map<String, URI> mappedUris = new HashMap<>();
         for (ChannelConfig channelConfig : channels) {
             final String channelName = channelConfig.getDisplayName();
-            mappedUris.put(channelName, LinkBuilder.buildChannelUri(channelName, uriInfo));
+            mappedUris.put(channelName, this.linkBuilder.buildChannelUri(channelName, uriInfo));
         }
-        final Linked<?> result = LinkBuilder.buildLinks(mappedUris, "channels", builder ->
+        final Linked<?> result = this.linkBuilder.buildLinks(mappedUris, "channels", builder ->
                 builder.withLink("self", uriInfo.getRequestUri())
                         .withRelativeLink("latest", uriInfo)
                         .withRelativeLink("earliest", uriInfo)

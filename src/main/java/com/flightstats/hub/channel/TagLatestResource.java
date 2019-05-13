@@ -1,6 +1,5 @@
 package com.flightstats.hub.channel;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.dao.TagService;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.DirectionQuery;
@@ -27,17 +26,18 @@ import java.util.SortedSet;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 
-@SuppressWarnings("WeakerAccess")
 @Path("/tag/{tag}/latest")
 public class TagLatestResource {
 
     private final TagService tagService;
-    private final ObjectMapper objectMapper;
+    private final LinkBuilder linkBuilder;
+    private final BulkBuilder bulkBuilder;
 
     @Inject
-    public TagLatestResource(TagService tagService, ObjectMapper objectMapper) {
+    public TagLatestResource(TagService tagService, LinkBuilder linkBuilder, BulkBuilder bulkBuilder) {
         this.tagService = tagService;
-        this.objectMapper = objectMapper;
+        this.linkBuilder = linkBuilder;
+        this.bulkBuilder = bulkBuilder;
     }
 
     @GET
@@ -100,9 +100,9 @@ public class TagLatestResource {
         keys.add(latest.get());
         if (bulk || batch) {
             //todo - gfm -
-            return BulkBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo, accept);
+            return this.bulkBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo, accept);
         }
-        return LinkBuilder.directionalTagResponse(tag, keys, count, query, objectMapper, uriInfo, true, trace, Order.isDescending(order));
+        return this.linkBuilder.directionalTagResponse(tag, keys, count, query, uriInfo, true, trace, Order.isDescending(order));
     }
 
 }

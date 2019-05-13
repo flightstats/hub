@@ -36,11 +36,13 @@ import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 public class TagEarliestResource {
 
     private final TagService tagService;
+    private final BulkBuilder bulkBuilder;
     private final ObjectMapper objectMapper;
 
     @Inject
-    public TagEarliestResource(TagService tagService, ObjectMapper objectMapper) {
+    public TagEarliestResource(TagService tagService, BulkBuilder bulkBuilder, ObjectMapper objectMapper) {
         this.tagService = tagService;
+        this.bulkBuilder = bulkBuilder;
         this.objectMapper = objectMapper;
     }
 
@@ -91,7 +93,7 @@ public class TagEarliestResource {
         final SortedSet<ChannelContentKey> keys = tagService.getEarliest(query);
         if (bulk || batch) {
             //todo - gfm - order
-            return BulkBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo, accept);
+            return this.bulkBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo, accept);
         }
         final ObjectNode root = objectMapper.createObjectNode();
         final ObjectNode links = root.putObject("_links");

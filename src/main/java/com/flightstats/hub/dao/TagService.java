@@ -42,16 +42,21 @@ import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 @Singleton
 public class TagService {
 
-    private ChannelService channelService;
-    private ContentRetriever contentRetriever;
-    private ObjectMapper objectMapper;
+    private final ChannelService channelService;
+    private final ContentRetriever contentRetriever;
+    private final LinkBuilder linkBuilder;
+    private final BulkBuilder bulkBuilder;
+    private final ObjectMapper objectMapper;
 
     @Inject
     public TagService(ChannelService channelService,
                       ContentRetriever contentRetriever,
-                      ObjectMapper objectMapper) {
+                      LinkBuilder linkBuilder,
+                      BulkBuilder bulkBuilder, ObjectMapper objectMapper) {
         this.channelService = channelService;
         this.contentRetriever = contentRetriever;
+        this.linkBuilder = linkBuilder;
+        this.bulkBuilder = bulkBuilder;
         this.objectMapper = objectMapper;
     }
 
@@ -162,7 +167,7 @@ public class TagService {
         final String baseUri = uriInfo.getBaseUri() + "tag/" + tag + "/";
         if (bulk) {
             //todo - gfm - order
-            return BulkBuilder.buildTag(tag, keys, getChannelService(), uriInfo, accept, (builder) -> {
+            return this.bulkBuilder.buildTag(tag, keys, getChannelService(), uriInfo, accept, (builder) -> {
                 if (next.isBefore(current)) {
                     builder.header("Link", "<" + baseUri + unit.format(next) + "?bulk=true&stable=" + stable + ">;rel=\"" + "next" + "\"");
                 }
@@ -183,8 +188,8 @@ public class TagService {
             Collections.reverse(list);
         }
         for (ChannelContentKey key : list) {
-            final URI channelUri = LinkBuilder.buildChannelUri(key.getChannel(), uriInfo);
-            final URI uri = LinkBuilder.buildItemUri(key.getContentKey(), channelUri);
+            final URI channelUri = this.linkBuilder.buildChannelUri(key.getChannel(), uriInfo);
+            final URI uri = this.linkBuilder.buildItemUri(key.getContentKey(), channelUri);
             ids.add(uri.toString() + "?tag=" + tag);
         }
         if (trace) {
@@ -233,7 +238,7 @@ public class TagService {
         final SortedSet<ChannelContentKey> keys = getKeys(query);
         if (bulk) {
             //todo - gfm - order
-            return BulkBuilder.buildTag(tag, keys, getChannelService(), uriInfo, accept, (builder) -> {
+            return this.bulkBuilder.buildTag(tag, keys, getChannelService(), uriInfo, accept, (builder) -> {
                 String baseUri = uriInfo.getBaseUri() + "tag/" + tag + "/";
                 if (!keys.isEmpty()) {
                     builder.header("Link", "<" + baseUri + keys.first().getContentKey().toUrl() + "/previous/" + count + "?bulk=true>;rel=\"" + "previous" + "\"");
@@ -241,6 +246,6 @@ public class TagService {
                 }
             });
         }
-        return LinkBuilder.directionalTagResponse(tag, keys, count, query, objectMapper, uriInfo, true, trace, descending);
+        return this.linkBuilder.directionalTagResponse(tag, keys, count, query, uriInfo, true, trace, descending);
     }
 }

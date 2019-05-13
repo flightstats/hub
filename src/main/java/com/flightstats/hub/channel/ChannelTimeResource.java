@@ -18,13 +18,15 @@ import javax.ws.rs.core.UriInfo;
 public class ChannelTimeResource {
 
     private final ContentRetriever contentRetriever;
+    private final TimeLinkBuilder timeLinkBuilder;
 
     @Context
     private UriInfo uriInfo;
 
     @Inject
-    public ChannelTimeResource(ContentRetriever contentRetriever) {
+    public ChannelTimeResource(ContentRetriever contentRetriever, TimeLinkBuilder timeLinkBuilder) {
         this.contentRetriever = contentRetriever;
+        this.timeLinkBuilder = timeLinkBuilder;
     }
 
     @GET
@@ -33,31 +35,31 @@ public class ChannelTimeResource {
         if (!this.contentRetriever.isExistingChannel(channel)) {
             return Response.status(404).build();
         }
-        return TimeLinkUtil.getDefault(uriInfo);
+        return this.timeLinkBuilder.getDefault(uriInfo);
     }
 
     @Path("/second")
     @GET
     public Response getSecond(@QueryParam("stable") @DefaultValue("true") boolean stable) {
-        return TimeLinkUtil.getSecond(stable, uriInfo);
+        return this.timeLinkBuilder.getSecond(stable, uriInfo);
     }
 
     @Path("/minute")
     @GET
     public Response getMinute(@QueryParam("stable") @DefaultValue("true") boolean stable) {
-        return TimeLinkUtil.getMinute(stable, uriInfo);
+        return this.timeLinkBuilder.getMinute(stable, uriInfo);
     }
 
     @Path("/hour")
     @GET
     public Response getHour(@QueryParam("stable") @DefaultValue("true") boolean stable) {
-        return TimeLinkUtil.getHour(stable, uriInfo);
+        return this.timeLinkBuilder.getHour(stable, uriInfo);
     }
 
     @Path("/day")
     @GET
     public Response getDay(@QueryParam("stable") @DefaultValue("true") boolean stable) {
-        return TimeLinkUtil.getDay(stable, uriInfo);
+        return this.timeLinkBuilder.getDay(stable, uriInfo);
     }
 
 }

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.PermissionsChecker;
-import com.flightstats.hub.channel.TimeLinkUtil;
+import com.flightstats.hub.channel.TimeLinkBuilder;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.rest.Linked;
 import com.flightstats.hub.util.RequestUtils;
@@ -38,8 +38,10 @@ import java.util.function.BiConsumer;
 public class WebhookResource {
 
     private final static String READ_ONLY_FAILURE_MESSAGE = "attempted to %s against /webhook on node with leadership disabled %s";
+
     private final PermissionsChecker permissionsChecker;
     private final WebhookService webhookService;
+    private final TimeLinkBuilder timeLinkBuilder;
     private final ObjectMapper objectMapper;
 
     @Context
@@ -48,9 +50,11 @@ public class WebhookResource {
     @Inject
     public WebhookResource(PermissionsChecker permissionsChecker,
                            WebhookService webhookService,
+                           TimeLinkBuilder timeLinkBuilder,
                            ObjectMapper objectMapper) {
         this.permissionsChecker = permissionsChecker;
         this.webhookService = webhookService;
+        this.timeLinkBuilder = timeLinkBuilder;
         this.objectMapper = objectMapper;
     }
 
@@ -84,7 +88,7 @@ public class WebhookResource {
         return links;
     }
 
-    Response getStatus(String name, boolean includeChildren, UriInfo uriInfo, BiConsumer<WebhookStatus, ObjectNode> biConsumer) {
+    private Response getStatus(String name, boolean includeChildren, UriInfo uriInfo, BiConsumer<WebhookStatus, ObjectNode> biConsumer) {
         final Optional<Webhook> webhookOptional = this.webhookService.get(name);
         if (!webhookOptional.isPresent()) {
             log.info("webhook not found {} ", name);
@@ -121,7 +125,7 @@ public class WebhookResource {
             } else {
                 root.put("channelUrl", webhook.getChannelUrl());
                 addLatest(status, root);
-                TimeLinkUtil.addTime(root, stable, "stableTime");
+                this.timeLinkBuilder.addTime(root, stable, "stableTime");
                 ArrayNode inFlight = root.putArray("inFlight");
                 for (ContentPath contentPath : status.getInFlight()) {
                     inFlight.add(webhook.getChannelUrl() + "/" + contentPath.toUrl());

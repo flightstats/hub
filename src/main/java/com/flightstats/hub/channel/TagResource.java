@@ -22,13 +22,15 @@ import java.util.TreeMap;
 public class TagResource {
 
     private final ChannelService channelService;
+    private final LinkBuilder linkBuilder;
 
     @Context
     private UriInfo uriInfo;
 
     @Inject
-    public TagResource(ChannelService channelService) {
+    public TagResource(ChannelService channelService, LinkBuilder linkBuilder) {
         this.channelService = channelService;
+        this.linkBuilder = linkBuilder;
     }
 
     @GET
@@ -38,7 +40,7 @@ public class TagResource {
         for (String tag : channelService.getTags()) {
             tagUriMap.put(tag, URI.create(uriInfo.getBaseUri() + "tag/" + tag));
         }
-        Linked<?> result = LinkBuilder.buildLinks(uriInfo, tagUriMap, "tags");
+        Linked<?> result = this.linkBuilder.buildLinks(uriInfo, tagUriMap, "tags");
         return Response.ok(result).build();
     }
 

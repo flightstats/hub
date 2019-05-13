@@ -1,6 +1,5 @@
 package com.flightstats.hub.channel;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.aws.ContentRetriever;
 import com.flightstats.hub.model.ContentKey;
@@ -35,8 +34,9 @@ public class ChannelLatestResource {
 
     private final TagLatestResource tagLatestResource;
     private final ChannelService channelService;
+    private final LinkBuilder linkBuilder;
+    private final BulkBuilder bulkBuilder;
     private final ContentRetriever contentRetriever;
-    private final ObjectMapper objectMapper;
 
     @Context
     private UriInfo uriInfo;
@@ -44,12 +44,13 @@ public class ChannelLatestResource {
     @Inject
     public ChannelLatestResource(TagLatestResource tagLatestResource,
                                  ChannelService channelService,
-                                 ContentRetriever contentRetriever,
-                                 ObjectMapper objectMapper) {
+                                 LinkBuilder linkBuilder,
+                                 BulkBuilder bulkBuilder, ContentRetriever contentRetriever) {
         this.tagLatestResource = tagLatestResource;
         this.channelService = channelService;
+        this.linkBuilder = linkBuilder;
+        this.bulkBuilder = bulkBuilder;
         this.contentRetriever = contentRetriever;
-        this.objectMapper = objectMapper;
     }
 
     @GET
@@ -127,9 +128,9 @@ public class ChannelLatestResource {
     private Response getResponse(String channel, int count, boolean trace, boolean batch, boolean bulk,
                                  String accept, DirectionQuery query, SortedSet<ContentKey> keys, boolean descending) {
         if (bulk || batch) {
-            return BulkBuilder.build(keys, channel, channelService, uriInfo, accept, descending);
+            return this.bulkBuilder.build(keys, channel, channelService, uriInfo, accept, descending);
         } else {
-            return LinkBuilder.directionalResponse(keys, count, query, objectMapper, uriInfo, true, trace, descending);
+            return this.linkBuilder.directionalResponse(keys, count, query, uriInfo, true, trace, descending);
         }
     }
 

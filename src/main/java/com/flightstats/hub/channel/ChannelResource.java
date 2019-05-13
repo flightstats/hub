@@ -49,8 +49,6 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.Optional;
 
-import static com.flightstats.hub.channel.LinkBuilder.buildChannelConfigResponse;
-import static com.flightstats.hub.channel.LinkBuilder.buildChannelUri;
 import static com.flightstats.hub.rest.Linked.linked;
 
 /**
@@ -68,6 +66,7 @@ public class ChannelResource {
     private final ContentRetriever contentRetriever;
     private final NtpMonitor ntpMonitor;
     private final EventsService eventsService;
+    private final LinkBuilder linkBuilder;
     private final ContentProperties contentProperties;
     private final PermissionsChecker permissionsChecker;
 
@@ -80,6 +79,7 @@ public class ChannelResource {
                            ContentRetriever contentRetriever,
                            NtpMonitor ntpMonitor,
                            EventsService eventsService,
+                           LinkBuilder linkBuilder,
                            ContentProperties contentProperties,
                            PermissionsChecker permissionsChecker) {
         this.objectMapper = objectMapper;
@@ -87,6 +87,7 @@ public class ChannelResource {
         this.contentRetriever = contentRetriever;
         this.ntpMonitor = ntpMonitor;
         this.eventsService = eventsService;
+        this.linkBuilder = linkBuilder;
         this.contentProperties = contentProperties;
         this.permissionsChecker = permissionsChecker;
     }
@@ -116,7 +117,7 @@ public class ChannelResource {
                     throw new WebApplicationException(Response.Status.NOT_FOUND);
                 });
 
-        ObjectNode output = buildChannelConfigResponse(channelConfig, uriInfo, channelName);
+        ObjectNode output = this.linkBuilder.buildChannelConfigResponse(channelConfig, uriInfo, channelName);
         return Response.ok(output).build();
     }
 
@@ -136,8 +137,8 @@ public class ChannelResource {
         log.info("creating channel {} {}", channelConfig, channelConfig.getCreationDate().getTime());
         channelConfig = channelService.updateChannel(channelConfig, oldConfig.orElse(null), LocalHostOnly.isLocalhost(uriInfo));
 
-        URI channelUri = buildChannelUri(channelConfig.getDisplayName(), uriInfo);
-        ObjectNode output = buildChannelConfigResponse(channelConfig, uriInfo, channelName);
+        URI channelUri = this.linkBuilder.buildChannelUri(channelConfig.getDisplayName(), uriInfo);
+        ObjectNode output = this.linkBuilder.buildChannelConfigResponse(channelConfig, uriInfo, channelName);
         return Response.created(channelUri).entity(output).build();
     }
 
@@ -157,8 +158,8 @@ public class ChannelResource {
         ChannelConfig newConfig = ChannelConfig.updateFromJson(oldConfig, json);
         newConfig = channelService.updateChannel(newConfig, oldConfig, LocalHostOnly.isLocalhost(uriInfo));
 
-        URI channelUri = buildChannelUri(newConfig.getDisplayName(), uriInfo);
-        ObjectNode output = buildChannelConfigResponse(newConfig, uriInfo, channelName);
+        URI channelUri = this.linkBuilder.buildChannelUri(newConfig.getDisplayName(), uriInfo);
+        ObjectNode output = this.linkBuilder.buildChannelConfigResponse(newConfig, uriInfo, channelName);
         return Response.ok(channelUri).entity(output).build();
     }
 
@@ -185,9 +186,9 @@ public class ChannelResource {
             final ContentKey contentKey = channelService.insert(channelName, content);
             log.trace("posted {}", contentKey);
             final InsertedContentKey insertionResult = new InsertedContentKey(contentKey);
-            final URI payloadUri = LinkBuilder.buildItemUri(contentKey, uriInfo.getAbsolutePath());
+            final URI payloadUri = this.linkBuilder.buildItemUri(contentKey, uriInfo.getAbsolutePath());
             final Linked<InsertedContentKey> linkedResult = linked(insertionResult)
-                    .withLink("channel", buildChannelUri(channelName, uriInfo))
+                    .withLink("channel", this.linkBuilder.buildChannelUri(channelName, uriInfo))
                     .withLink("self", payloadUri)
                     .build();
 
@@ -251,12 +252,12 @@ public class ChannelResource {
                 final ContentKey first = keys.iterator().next();
                 final ContentKey trimmedKey = new ContentKey(first.getTime(), first.getHash().substring(0, 6)
                         + "/next/" + keys.size() + "?stable=false");
-                final URI payloadUri = LinkBuilder.buildItemUri(trimmedKey, buildChannelUri(channelName, uriInfo));
+                final URI payloadUri = this.linkBuilder.buildItemUri(trimmedKey, this.linkBuilder.buildChannelUri(channelName, uriInfo));
                 self.put("href", payloadUri.toString());
                 final ArrayNode uris = links.putArray("uris");
-                final URI channelUri = buildChannelUri(channelName, uriInfo);
+                final URI channelUri = this.linkBuilder.buildChannelUri(channelName, uriInfo);
                 for (ContentKey key : keys) {
-                    URI uri = LinkBuilder.buildItemUri(key, channelUri);
+                    URI uri = this.linkBuilder.buildItemUri(key, channelUri);
                     uris.add(uri.toString());
                 }
                 return Response.created(payloadUri).entity(root).build();
@@ -288,7 +289,7 @@ public class ChannelResource {
                 }
             }
             EventOutput eventOutput = new EventOutput();
-            eventsService.register(new ContentOutput(channel, eventOutput, contentKey, uriInfo.getBaseUri()));
+            eventsService.register(new ContentOutput(channel, eventOutput, contentKey, uriInfo.getBaseUri(), linkBuilder));
             return eventOutput;
         } catch (Exception e) {
             log.warn("unable to events to " + channel, e);
