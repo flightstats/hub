@@ -3,15 +3,12 @@ package com.flightstats.hub.metrics;
 import com.google.inject.Singleton;
 import lombok.Builder;
 import lombok.Value;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 @Singleton
 @Builder
 @Value
 public class MetricsConfig {
-    private final static Logger logger = LoggerFactory.getLogger(MetricsConfig.class);
 
     String appVersion;
     String clusterTag;
