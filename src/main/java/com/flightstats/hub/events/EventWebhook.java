@@ -1,7 +1,6 @@
 package com.flightstats.hub.events;
 
 import com.flightstats.hub.app.HubHost;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.StringUtils;
 import com.flightstats.hub.webhook.Webhook;

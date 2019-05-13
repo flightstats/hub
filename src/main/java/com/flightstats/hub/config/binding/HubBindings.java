@@ -12,7 +12,6 @@ import com.flightstats.hub.app.InFlightService;
 import com.flightstats.hub.app.PermissionsChecker;
 import com.flightstats.hub.app.ShutdownManager;
 import com.flightstats.hub.channel.ChannelValidator;
-import com.flightstats.hub.channel.TagEarliestResource;
 import com.flightstats.hub.cluster.Cluster;
 import com.flightstats.hub.cluster.CuratorCluster;
 import com.flightstats.hub.cluster.DecommissionCluster;
@@ -70,8 +69,8 @@ import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.SecretFilter;
 import com.flightstats.hub.util.StaleEntity;
 import com.flightstats.hub.webhook.WebhookManager;
-import com.flightstats.hub.webhook.WebhookService;
 import com.flightstats.hub.webhook.WebhookValidator;
+import com.flightstats.hub.ws.WebSocketService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -311,6 +310,7 @@ public class HubBindings extends AbstractModule {
         bind(TagService.class).asEagerSingleton();
         bind(TimeService.class).asEagerSingleton();
         bind(EventsService.class).asEagerSingleton();
+        bind(WebSocketService.class).asEagerSingleton();
 
         bind(HubVersion.class).asEagerSingleton();
         bind(LocalReadSpoke.class).to(SpokeManager.class);

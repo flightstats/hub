@@ -1,46 +1,37 @@
 package com.flightstats.hub.ws;
 
 import com.flightstats.hub.app.HubHost;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.StringUtils;
 import com.flightstats.hub.webhook.Webhook;
 import com.flightstats.hub.webhook.WebhookService;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import javax.websocket.Session;
 import javax.ws.rs.core.UriBuilder;
 import java.io.IOException;
 import java.net.URI;
-import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
-class WebSocketService {
+public class WebSocketService {
 
     private final Map<String, Session> sessionMap = new HashMap<>();
-    private static WebSocketService instance;
+
     private final WebhookService webhookService;
 
-    private WebSocketService() {
-        webhookService = HubProvider.getInstance(WebhookService.class);
+    @Inject
+    public WebSocketService(WebhookService webhookService) {
+        this.webhookService = webhookService;
     }
 
-    public static synchronized WebSocketService getInstance() {
-        if (null == instance) {
-            instance = new WebSocketService();
-        }
-        return instance;
-    }
-
-    void createCallback(Session session, String channel) throws UnknownHostException {
+    void createCallback(Session session, String channel) {
         createCallback(session, channel, new ContentKey());
     }
 
-    void createCallback(Session session, String channel, ContentKey startingKey) throws UnknownHostException {
+    void createCallback(Session session, String channel, ContentKey startingKey) {
         String id = setId(session, channel);
         URI uri = session.getRequestURI();
         log.info("creating callback {} {} {}", channel, id, uri);
@@ -64,7 +55,7 @@ class WebSocketService {
         return channelUrl.toString();
     }
 
-    private String getCallbackUrl(String id) throws UnknownHostException {
+    private String getCallbackUrl(String id) {
         return HubHost.getLocalHttpIpUri() + "/internal/ws/" + id;
     }
 

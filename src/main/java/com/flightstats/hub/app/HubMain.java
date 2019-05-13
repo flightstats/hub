@@ -75,6 +75,8 @@ public class HubMain {
     private final ZookeeperProperties zookeeperProperties = new ZookeeperProperties(PropertiesLoader.getInstance());
     private final StorageBackend storageBackend = StorageBackend.valueOf(appProperties.getHubType());
 
+    private Injector injector;
+
     public static void main(String[] args) throws Exception {
         if (args.length == 0) {
             throw new UnsupportedOperationException("HubMain requires a property filename, 'useDefault', or 'useEncryptedDefault'");
@@ -102,7 +104,7 @@ public class HubMain {
         latch.await();
 
         log.warn("calling shutdown");
-        HubProvider.getInstance(ShutdownManager.class).shutdown(true);
+        injector.getInstance(ShutdownManager.class).shutdown(true);
 
         server.stop();
     }
@@ -121,12 +123,11 @@ public class HubMain {
     public Server startServer() throws Exception {
 
         List<AbstractModule> guiceModules = buildGuiceModules();
-        Injector injector = Guice.createInjector(guiceModules);
+        injector = Guice.createInjector(guiceModules);
 
         registerServices(getBeforeHealthCheckServices(injector), HubServices.TYPE.BEFORE_HEALTH_CHECK);
         registerServices(getAfterHealthCheckServices(injector), HubServices.TYPE.AFTER_HEALTHY_START);
 
-        HubProvider.setInjector(injector);
         HubServices.start(HubServices.TYPE.BEFORE_HEALTH_CHECK);
 
         // build Jetty server
@@ -271,6 +272,10 @@ public class HubMain {
         final String path = appProperties.getKeyStorePath() + HubHost.getLocalName() + ".jks";
         log.info("using key store path: {}", path);
         return path;
+    }
+
+    public Injector getInjector() {
+        return injector;
     }
 
 }

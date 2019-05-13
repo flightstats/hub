@@ -1,11 +1,12 @@
 package com.flightstats.hub.spoke;
 
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.model.SingleTrace;
 import com.google.common.io.ByteStreams;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 
+import javax.inject.Inject;
+import javax.inject.Named;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
@@ -22,18 +23,30 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.OutputStream;
-import java.util.Arrays;
+import java.util.Collections;
+
+import static com.flightstats.hub.util.Constants.READ;
+import static com.flightstats.hub.util.Constants.WRITE;
 
 @Slf4j
 @Path("/internal/spoke")
 public class InternalSpokeResource {
 
-    private static final FileSpokeStore writeSpokeStore = HubProvider.getInstance(FileSpokeStore.class, SpokeStore.WRITE.name());
-    private static final FileSpokeStore readSpokeStore = HubProvider.getInstance(FileSpokeStore.class, SpokeStore.READ.name());
-    private static final SpokeClusterHealthCheck healthCheck = HubProvider.getInstance(SpokeClusterHealthCheck.class);
+    private final FileSpokeStore writeSpokeStore;
+    private final FileSpokeStore readSpokeStore;
+    private final SpokeClusterHealthCheck healthCheck;
 
     @Context
     private UriInfo uriInfo;
+
+    @Inject
+    public InternalSpokeResource(@Named(WRITE) FileSpokeStore writeSpokeStore,
+                                 @Named(READ) FileSpokeStore readSpokeStore,
+                                 SpokeClusterHealthCheck healthCheck) {
+        this.writeSpokeStore = writeSpokeStore;
+        this.readSpokeStore = readSpokeStore;
+        this.healthCheck = healthCheck;
+    }
 
     @GET
     @Path("/{storeName}/payload/{path:.+}")
@@ -253,7 +266,7 @@ public class InternalSpokeResource {
     public Response test(@PathParam("server") String server) {
         log.info("testing server {}", server);
         try {
-            healthCheck.testOne(Arrays.asList(server));
+            healthCheck.testOne(Collections.singletonList(server));
             return Response.ok().build();
         } catch (Exception e) {
             log.warn("unable to complete calls " + server, e);

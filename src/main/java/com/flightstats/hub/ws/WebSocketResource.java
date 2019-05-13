@@ -16,10 +16,12 @@ import java.io.IOException;
 @Path("/internal/ws/{id}")
 public class WebSocketResource {
 
+    private final WebSocketService webSocketService;
     private final ObjectMapper objectMapper;
 
     @Inject
-    public WebSocketResource(ObjectMapper objectMapper) {
+    public WebSocketResource(WebSocketService webSocketService, ObjectMapper objectMapper) {
+        this.webSocketService = webSocketService;
         this.objectMapper = objectMapper;
     }
 
@@ -30,7 +32,7 @@ public class WebSocketResource {
             JsonNode node = objectMapper.readTree(data);
             ArrayNode uris = (ArrayNode) node.get("uris");
             for (JsonNode uri : uris) {
-                WebSocketService.getInstance().call(id, uri.asText());
+                this.webSocketService.call(id, uri.asText());
             }
         } catch (IOException e) {
             log.warn("unable to parse " + data, e);
