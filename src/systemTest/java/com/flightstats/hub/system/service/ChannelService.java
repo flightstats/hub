@@ -33,6 +33,10 @@ public class ChannelService {
         this.hubBaseUrl = hubClientFactory.getHubBaseUrl();
     }
 
+    public String getChannelUrl(String channelName) {
+        return getHubBaseUrl() + "channel/" + channelName;
+    }
+
     public HttpUrl getHubBaseUrl() {
         return hubBaseUrl;
     }

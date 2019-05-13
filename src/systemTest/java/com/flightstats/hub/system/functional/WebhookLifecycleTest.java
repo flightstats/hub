@@ -1,6 +1,7 @@
 package com.flightstats.hub.system.functional;
 
 import com.flightstats.hub.model.Webhook;
+import com.flightstats.hub.system.ModelBuilder;
 import com.flightstats.hub.system.config.DependencyInjector;
 import com.flightstats.hub.system.resilient.HubLifecycle;
 import com.flightstats.hub.system.service.CallbackService;
@@ -37,6 +38,8 @@ class WebhookLifecycleTest extends DependencyInjector {
     private String webhookName;
     @javax.inject.Inject
     private HubLifecycle hubLifecycle;
+    @Inject
+    private ModelBuilder modelBuilder;
 
     @BeforeAll
     void hubSetup() {
@@ -50,11 +53,9 @@ class WebhookLifecycleTest extends DependencyInjector {
     }
 
     private Webhook buildWebhook() {
-        return Webhook.builder()
-                .name(webhookName)
-                .channelUrl(channelResource.getHubBaseUrl() + "channel/" + channelName)
-                .callbackUrl(callbackResource.getCallbackBaseUrl() + "callback/")
-                .batch(SINGLE.toString())
+        return modelBuilder.webhookBuilder()
+                .channelName(channelName)
+                .webhookName(webhookName)
                 .build();
     }
 
