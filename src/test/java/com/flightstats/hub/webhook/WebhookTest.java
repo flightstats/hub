@@ -1,32 +1,38 @@
 package com.flightstats.hub.webhook;
 
+import com.flightstats.hub.dao.aws.ContentRetriever;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.MinutePath;
-import java.util.Optional;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class WebhookTest {
 
     private static final int CALLBACK_TIMEOUT_DEFAULT_IN_SEC = 120;
+    @Mock
+    private ContentRetriever contentRetriever;
     private Webhook webhook;
 
     @BeforeEach
     void setUp() {
+        MockitoAnnotations.initMocks(this);
         webhook = Webhook.builder()
                 .channelUrl("url").callbackUrl("end").build();
     }
 
     @Test
     void testSimple() {
-        Webhook webhook = Webhook.fromJson(this.webhook.toJson());
+        Webhook webhook = Webhook.fromJson(this.webhook.toJson(), contentRetriever);
         assertEquals("end", webhook.getCallbackUrl());
         assertEquals("url", webhook.getChannelUrl());
         assertNull(webhook.getName());
@@ -38,7 +44,7 @@ class WebhookTest {
         Webhook aWebhook = Webhook.builder()
                 .tagUrl(tagUrl)
                 .callbackUrl("end").build();
-        Webhook webhook = Webhook.fromJson(aWebhook.toJson());
+        Webhook webhook = Webhook.fromJson(aWebhook.toJson(), contentRetriever);
         assertEquals("allTheThings", webhook.getTagFromTagUrl());
         assertEquals(tagUrl, webhook.getTagUrl());
     }
@@ -46,7 +52,7 @@ class WebhookTest {
     @Test
     void testWithName() {
         Webhook webhook = this.webhook.withName("wither");
-        webhook = Webhook.fromJson(webhook.toJson());
+        webhook = Webhook.fromJson(webhook.toJson(), contentRetriever);
         assertEquals("end", webhook.getCallbackUrl());
         assertEquals("url", webhook.getChannelUrl());
         assertEquals("wither", webhook.getName());
@@ -54,7 +60,7 @@ class WebhookTest {
 
     @Test
     void testFromJson() {
-        Webhook cycled = Webhook.fromJson(webhook.toJson());
+        Webhook cycled = Webhook.fromJson(webhook.toJson(), contentRetriever);
         assertEquals(webhook, cycled);
     }
 
@@ -64,7 +70,7 @@ class WebhookTest {
         String json = "{\"callbackUrl\":\"end\",\"channelUrl\":\"url\",\"startItem\":\"" +
                 "http://hub/channel/stuff/" + key.toUrl() +
                 "\"}";
-        Webhook cycled = Webhook.fromJson(json);
+        Webhook cycled = Webhook.fromJson(json, contentRetriever);
         assertEquals(webhook, cycled);
         assertEquals(key, cycled.getStartingKey());
         String toJson = cycled.toJson();
@@ -77,7 +83,7 @@ class WebhookTest {
         String json = "{\"callbackUrl\":\"end\",\"channelUrl\":\"url\"," +
                 "\"startItem\":\"http://hub/channel/stuff/" + key.toUrl() +
                 "\"}";
-        Webhook cycled = Webhook.fromJson(json);
+        Webhook cycled = Webhook.fromJson(json, contentRetriever);
         assertEquals(webhook, cycled);
         assertEquals(key, cycled.getStartingKey());
         String toJson = cycled.toJson();
@@ -151,7 +157,7 @@ class WebhookTest {
         Webhook withDefaults = this.webhook.withDefaults(CALLBACK_TIMEOUT_DEFAULT_IN_SEC);
         assertFalse(withDefaults.isSecondaryMetricsReporting());
         String json = "{ \"secondaryMetricsReporting\": true }";
-        Webhook newWebhook = Webhook.fromJson(json, Optional.of(withDefaults));
+        Webhook newWebhook = Webhook.fromJson(json, Optional.of(withDefaults), contentRetriever);
         assertTrue(newWebhook.isSecondaryMetricsReporting());
     }
 }

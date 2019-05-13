@@ -47,7 +47,7 @@ public class TagLatestResource {
                               @QueryParam("location") @DefaultValue(Location.DEFAULT) String location,
                               @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
                               @Context UriInfo uriInfo) {
-        final Optional<ChannelContentKey> latest = tagService.getLatest(getQuery(tag, stable, location, epoch));
+        Optional<ChannelContentKey> latest = tagService.getLatest(getQuery(tag, stable, location, epoch));
         if (latest.isPresent()) {
             URI uri = uriInfo.getBaseUriBuilder()
                     .path(latest.get().toUrl())
@@ -87,7 +87,7 @@ public class TagLatestResource {
         if (!latest.isPresent()) {
             return Response.status(NOT_FOUND).build();
         }
-        final DirectionQuery query = DirectionQuery.builder()
+        DirectionQuery query = DirectionQuery.builder()
                 .tagName(tag)
                 .startKey(latest.get().getContentKey())
                 .next(false)
@@ -96,7 +96,7 @@ public class TagLatestResource {
                 .epoch(Epoch.valueOf(epoch))
                 .count(count - 1)
                 .build();
-        final SortedSet<ChannelContentKey> keys = tagService.getKeys(query);
+        SortedSet<ChannelContentKey> keys = tagService.getKeys(query);
         keys.add(latest.get());
         if (bulk || batch) {
             //todo - gfm -

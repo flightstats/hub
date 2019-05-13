@@ -69,8 +69,8 @@ public class TagService {
     }
 
     public SortedSet<ChannelContentKey> queryByTime(TimeQuery timeQuery) {
-        final Iterable<ChannelConfig> channels = getChannels(timeQuery.getTagName());
-        final SortedSet<ChannelContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
+        Iterable<ChannelConfig> channels = getChannels(timeQuery.getTagName());
+        SortedSet<ChannelContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
         for (ChannelConfig channel : channels) {
             final Collection<ContentKey> contentKeys = contentRetriever.queryByTime(timeQuery.withChannelName(channel.getDisplayName()));
             for (ContentKey contentKey : contentKeys) {
@@ -81,9 +81,9 @@ public class TagService {
     }
 
     public SortedSet<ChannelContentKey> getKeys(DirectionQuery query) {
-        final Iterable<ChannelConfig> channels = getChannels(query.getTagName());
-        final SortedSet<ChannelContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
-        final Traces traces = ActiveTraces.getLocal();
+        Iterable<ChannelConfig> channels = getChannels(query.getTagName());
+        SortedSet<ChannelContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
+        Traces traces = ActiveTraces.getLocal();
         for (ChannelConfig channel : channels) {
             traces.add("query for channel", channel.getDisplayName());
             final Collection<ContentKey> contentKeys = contentRetriever.query(query.withChannelName(channel.getDisplayName()));
@@ -106,8 +106,8 @@ public class TagService {
     }
 
     public Optional<ChannelContentKey> getLatest(DirectionQuery tagQuery) {
-        final Iterable<ChannelConfig> channels = getChannels(tagQuery.getTagName());
-        final SortedSet<ChannelContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
+        Iterable<ChannelConfig> channels = getChannels(tagQuery.getTagName());
+        SortedSet<ChannelContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
         for (ChannelConfig channel : channels) {
             Optional<ContentKey> contentKey = contentRetriever.getLatest(tagQuery.withChannelName(channel.getDisplayName()));
             contentKey.ifPresent(contentKey1 -> orderedKeys.add(new ChannelContentKey(channel.getDisplayName(), contentKey1)));
@@ -120,10 +120,10 @@ public class TagService {
     }
 
     public SortedSet<ChannelContentKey> getEarliest(DirectionQuery tagQuery) {
-        final Iterable<ChannelConfig> channels = getChannels(tagQuery.getTagName());
-        final Traces traces = ActiveTraces.getLocal();
+        Iterable<ChannelConfig> channels = getChannels(tagQuery.getTagName());
+        Traces traces = ActiveTraces.getLocal();
         traces.add("TagService.getEarliest", tagQuery.getTagName());
-        final SortedSet<ChannelContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
+        SortedSet<ChannelContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
         for (ChannelConfig channel : channels) {
             DirectionQuery query = ChannelEarliestResource.getDirectionQuery(channel.getDisplayName(), tagQuery.getCount(),
                     tagQuery.isStable(), tagQuery.getLocation().name(), tagQuery.getEpoch().name());
@@ -136,7 +136,7 @@ public class TagService {
     }
 
     public Optional<Content> getValue(ItemRequest itemRequest) {
-        final Iterable<ChannelConfig> channels = getChannels(itemRequest.getTag());
+        Iterable<ChannelConfig> channels = getChannels(itemRequest.getTag());
         for (ChannelConfig channel : channels) {
             Optional<Content> value = channelService.get(itemRequest.withChannel(channel.getDisplayName()));
             if (value.isPresent()) {
@@ -152,7 +152,7 @@ public class TagService {
 
     public Response getTimeQueryResponse(String tag, DateTime startTime, String location, boolean trace, boolean stable,
                                          TimeUtil.Unit unit, boolean bulk, String accept, UriInfo uriInfo, String epoch, boolean descending) {
-        final TimeQuery query = TimeQuery.builder()
+        TimeQuery query = TimeQuery.builder()
                 .tagName(tag)
                 .startTime(startTime)
                 .stable(stable)
@@ -160,11 +160,11 @@ public class TagService {
                 .location(Location.valueOf(location))
                 .epoch(Epoch.valueOf(epoch))
                 .build();
-        final SortedSet<ChannelContentKey> keys = queryByTime(query);
-        final DateTime current = TimeUtil.time(stable);
-        final DateTime next = startTime.plus(unit.getDuration());
-        final DateTime previous = startTime.minus(unit.getDuration());
-        final String baseUri = uriInfo.getBaseUri() + "tag/" + tag + "/";
+        SortedSet<ChannelContentKey> keys = queryByTime(query);
+        DateTime current = TimeUtil.time(stable);
+        DateTime next = startTime.plus(unit.getDuration());
+        DateTime previous = startTime.minus(unit.getDuration());
+        String baseUri = uriInfo.getBaseUri() + "tag/" + tag + "/";
         if (bulk) {
             //todo - gfm - order
             return this.bulkBuilder.buildTag(tag, keys, getChannelService(), uriInfo, accept, (builder) -> {
@@ -174,16 +174,16 @@ public class TagService {
                 builder.header("Link", "<" + baseUri + unit.format(previous) + "?bulk=true&stable=" + stable + ">;rel=\"" + "previous" + "\"");
             });
         }
-        final ObjectNode root = objectMapper.createObjectNode();
-        final ObjectNode links = root.putObject("_links");
-        final ObjectNode self = links.putObject("self");
+        ObjectNode root = objectMapper.createObjectNode();
+        ObjectNode links = root.putObject("_links");
+        ObjectNode self = links.putObject("self");
         self.put("href", uriInfo.getRequestUri().toString());
         if (next.isBefore(current)) {
             links.putObject("next").put("href", baseUri + unit.format(next) + "?stable=" + stable);
         }
         links.putObject("previous").put("href", baseUri + unit.format(previous) + "?stable=" + stable);
-        final ArrayNode ids = links.putArray("uris");
-        final ArrayList<ChannelContentKey> list = new ArrayList<>(keys);
+        ArrayNode ids = links.putArray("uris");
+        ArrayList<ChannelContentKey> list = new ArrayList<>(keys);
         if (descending) {
             Collections.reverse(list);
         }
@@ -199,7 +199,7 @@ public class TagService {
     }
 
     public Response adjacent(String tag, ContentKey contentKey, boolean stable, boolean next, UriInfo uriInfo, String location, String epoch) {
-        final DirectionQuery query = DirectionQuery.builder()
+        DirectionQuery query = DirectionQuery.builder()
                 .tagName(tag)
                 .startKey(contentKey)
                 .next(next)
@@ -207,13 +207,13 @@ public class TagService {
                 .location(Location.valueOf(location))
                 .epoch(Epoch.valueOf(epoch))
                 .count(1).build();
-        final Collection<ChannelContentKey> keys = getKeys(query);
+        Collection<ChannelContentKey> keys = getKeys(query);
         if (keys.isEmpty()) {
             return Response.status(NOT_FOUND).build();
         }
-        final Response.ResponseBuilder builder = Response.status(SEE_OTHER);
-        final ChannelContentKey foundKey = keys.iterator().next();
-        final URI uri = uriInfo.getBaseUriBuilder()
+        Response.ResponseBuilder builder = Response.status(SEE_OTHER);
+        ChannelContentKey foundKey = keys.iterator().next();
+        URI uri = uriInfo.getBaseUriBuilder()
                 .path("channel")
                 .path(foundKey.getChannel())
                 .path(foundKey.getContentKey().toUrl())
@@ -227,7 +227,7 @@ public class TagService {
 
     public Response adjacentCount(String tag, int count, boolean stable, boolean trace, String location,
                                   boolean next, ContentKey contentKey, boolean bulk, String accept, UriInfo uriInfo, String epoch, boolean descending) {
-        final DirectionQuery query = DirectionQuery.builder()
+        DirectionQuery query = DirectionQuery.builder()
                 .tagName(tag)
                 .startKey(contentKey)
                 .next(next)
@@ -235,7 +235,7 @@ public class TagService {
                 .location(Location.valueOf(location))
                 .epoch(Epoch.valueOf(epoch))
                 .count(count).build();
-        final SortedSet<ChannelContentKey> keys = getKeys(query);
+        SortedSet<ChannelContentKey> keys = getKeys(query);
         if (bulk) {
             //todo - gfm - order
             return this.bulkBuilder.buildTag(tag, keys, getChannelService(), uriInfo, accept, (builder) -> {

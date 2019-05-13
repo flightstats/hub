@@ -51,21 +51,21 @@ public class ChannelStatusResource {
     public Response getLatest(@PathParam("channel") String channel,
                               @QueryParam("stable") @DefaultValue("true") boolean stable,
                               @QueryParam("trace") @DefaultValue("false") boolean trace) {
-        final ChannelConfig channelConfig = contentRetriever.getCachedChannelConfig(channel)
+        ChannelConfig channelConfig = contentRetriever.getCachedChannelConfig(channel)
                 .orElseThrow(() -> {
                     throw new WebApplicationException(Response.status(404).build());
                 });
-        final ObjectNode root = objectMapper.createObjectNode();
-        final ObjectNode links = root.putObject("_links");
-        final ObjectNode self = links.putObject("self");
-        final String baseUri = uriInfo.getRequestUri().toString();
+        ObjectNode root = objectMapper.createObjectNode();
+        ObjectNode links = root.putObject("_links");
+        ObjectNode self = links.putObject("self");
+        String baseUri = uriInfo.getRequestUri().toString();
         self.put("href", baseUri);
 
         addLink("latest", contentRetriever.getLatest(channel, stable), channel, links);
 
-        final DirectionQuery directionQuery = ChannelEarliestResource.getDirectionQuery(channel, 1, stable,
+        DirectionQuery directionQuery = ChannelEarliestResource.getDirectionQuery(channel, 1, stable,
                 Location.ALL.name(), Epoch.IMMUTABLE.name());
-        final SortedSet<ContentKey> earliest = contentRetriever.query(directionQuery);
+        SortedSet<ContentKey> earliest = contentRetriever.query(directionQuery);
         if (earliest.isEmpty()) {
             addLink("earliest", Optional.empty(), channel, links);
         } else {
@@ -73,8 +73,8 @@ public class ChannelStatusResource {
         }
 
         if (contentRetriever.isReplicating(channel)) {
-            final ObjectNode replicationSourceLatest = links.putObject("replicationSourceLatest");
-            final Optional<String> sourceLatest = hubUtils.getLatest(channelConfig.getReplicationSource());
+            ObjectNode replicationSourceLatest = links.putObject("replicationSourceLatest");
+            Optional<String> sourceLatest = hubUtils.getLatest(channelConfig.getReplicationSource());
             if (sourceLatest.isPresent()) {
                 replicationSourceLatest.put("href", sourceLatest.get());
             } else {
@@ -86,8 +86,11 @@ public class ChannelStatusResource {
         return Response.ok(root).build();
     }
 
-    private void addLink(String name, Optional<ContentKey> contentKey, String channel, ObjectNode links) {
-        final ObjectNode latestNode = links.putObject(name);
+    private void addLink(String name,
+                         Optional<ContentKey> contentKey,
+                         String channel,
+                         ObjectNode links) {
+        ObjectNode latestNode = links.putObject(name);
         if (contentKey.isPresent()) {
             latestNode.put("href", uriInfo.getBaseUri() + "channel/" + channel + "/" + contentKey.get().toUrl());
         } else {

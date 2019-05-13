@@ -39,7 +39,8 @@ public class ChannelDocumentationResource {
     }
 
     @GET
-    public Response get(@PathParam("channel") String channel, @HeaderParam("accept") String accept) {
+    public Response get(@PathParam("channel") String channel,
+                        @HeaderParam("accept") String accept) {
         if (!this.contentRetriever.isExistingChannel(channel)) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }

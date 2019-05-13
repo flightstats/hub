@@ -51,12 +51,12 @@ public class ChannelsResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getChannels() {
-        final Map<String, URI> mappedUris = new TreeMap<>();
+        Map<String, URI> mappedUris = new TreeMap<>();
         for (ChannelConfig channelConfig : channelService.getChannels()) {
-            final String channelName = channelConfig.getDisplayName();
+            String channelName = channelConfig.getDisplayName();
             mappedUris.put(channelName, this.linkBuilder.buildChannelUri(channelName, uriInfo));
         }
-        final Linked<?> result = this.linkBuilder.buildLinks(uriInfo, mappedUris, "channels");
+        Linked<?> result = this.linkBuilder.buildLinks(uriInfo, mappedUris, "channels");
         return Response.ok(result).build();
     }
 
@@ -68,8 +68,8 @@ public class ChannelsResource {
         log.debug("post channel {}", json);
         ChannelConfig channelConfig = ChannelConfig.createFromJson(json);
         channelConfig = channelService.createChannel(channelConfig);
-        final URI channelUri = this.linkBuilder.buildChannelUri(channelConfig.getDisplayName(), uriInfo);
-        final ObjectNode output = this.linkBuilder.buildChannelConfigResponse(channelConfig, uriInfo, channelConfig.getDisplayName());
+        URI channelUri = this.linkBuilder.buildChannelUri(channelConfig.getDisplayName(), uriInfo);
+        ObjectNode output = this.linkBuilder.buildChannelConfigResponse(channelConfig, uriInfo, channelConfig.getDisplayName());
         return Response.created(channelUri).entity(output).build();
     }
 

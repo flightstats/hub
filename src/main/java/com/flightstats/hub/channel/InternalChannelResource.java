@@ -73,17 +73,17 @@ public class InternalChannelResource {
     @Produces(MediaType.APPLICATION_JSON)
 
     public Response get(@Context UriInfo uriInfo) {
-        final ObjectNode root = objectMapper.createObjectNode();
+        ObjectNode root = objectMapper.createObjectNode();
         root.put("description", CHANNEL_DESCRIPTION);
 
-        final ObjectNode directions = root.putObject("directions");
+        ObjectNode directions = root.putObject("directions");
         directions.put("delete", "HTTP DELETE to /internal/channel/{name} to override channel protection in an unprotected cluster.");
         directions.put("refresh", "HTTP GET to /internal/channel/refresh to refresh Channel Cache within the hub cluster.");
-        final ObjectNode stale = directions.putObject("stale");
+        ObjectNode stale = directions.putObject("stale");
         stale.put("by age", "HTTP GET to /internal/channel/stale/{age} to list channels with no inserts for {age} minutes.");
         stale.put("by age, owner", "HTTP GET to /internal/channel/stale/{age}/{owner} to list channels with no inserts for {age} minutes, owned by {owner}.");
 
-        final ObjectNode links = root.putObject("_links");
+        ObjectNode links = root.putObject("_links");
         addLink(links, "self", uriInfo.getRequestUri().toString());
         addLink(links, "refresh", uriInfo.getRequestUri().toString() + "/refresh");
         addLink(links, "stale", uriInfo.getRequestUri().toString() + "/stale/" + DEFAULT_STALE_AGE.intValue());
@@ -129,19 +129,19 @@ public class InternalChannelResource {
     @Path("/stale/{age}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response stale(@PathParam("age") int age) {
-        final ObjectNode root = objectMapper.createObjectNode();
-        final ObjectNode links = root.putObject("_links");
+        ObjectNode root = objectMapper.createObjectNode();
+        ObjectNode links = root.putObject("_links");
         addLink(links, "self", uriInfo.getRequestUri().toString());
         this.staleEntity.add(root, age, (staleCutoff) -> {
-            final Map<DateTime, URI> staleChannels = new TreeMap<>();
+            Map<DateTime, URI> staleChannels = new TreeMap<>();
             channelService.getChannels().forEach(channelConfig -> {
-                final Optional<ContentKey> optionalContentKey = contentRetriever.getLatest(channelConfig.getDisplayName(), false);
+                Optional<ContentKey> optionalContentKey = contentRetriever.getLatest(channelConfig.getDisplayName(), false);
                 if (!optionalContentKey.isPresent()) return;
 
-                final ContentKey contentKey = optionalContentKey.get();
+                ContentKey contentKey = optionalContentKey.get();
                 if (contentKey.getTime().isAfter(staleCutoff)) return;
 
-                final URI channelURI = constructChannelURI(channelConfig);
+                URI channelURI = constructChannelURI(channelConfig);
                 staleChannels.put(contentKey.getTime(), channelURI);
             });
             return staleChannels;
@@ -163,11 +163,11 @@ public class InternalChannelResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response staleForOwner(@PathParam("age") int age,
                                   @PathParam("owner") String owner) {
-        final ObjectNode root = objectMapper.createObjectNode();
-        final ObjectNode links = root.putObject("_links");
+        ObjectNode root = objectMapper.createObjectNode();
+        ObjectNode links = root.putObject("_links");
         addLink(links, "self", uriInfo.getRequestUri().toString());
         this.staleEntity.add(root, age, (staleCutoff) -> {
-            final Map<DateTime, URI> staleChannels = new TreeMap<>();
+            Map<DateTime, URI> staleChannels = new TreeMap<>();
             channelService.getChannels().forEach(channelConfig -> {
                 final Optional<ContentKey> optionalContentKey = contentRetriever.getLatest(channelConfig.getDisplayName(), false);
                 if (!optionalContentKey.isPresent()) return;

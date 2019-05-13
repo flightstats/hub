@@ -45,24 +45,24 @@ public class MetricsRequestFilter implements ContainerRequestFilter, ContainerRe
 
     public void finalStats() {
         try {
-            final RequestState requestState = threadLocal.get();
+            RequestState requestState = threadLocal.get();
             if (null == requestState) {
                 return;
             }
 
-            final ContainerRequestContext request = requestState.getRequest();
-            final long time = System.currentTimeMillis() - requestState.getStart();
-            final String endpoint = getRequestTemplate(request);
+            ContainerRequestContext request = requestState.getRequest();
+            long time = System.currentTimeMillis() - requestState.getStart();
+            String endpoint = getRequestTemplate(request);
 
-            final Map<String, String> tags = new HashMap<>();
+            Map<String, String> tags = new HashMap<>();
             tags.put("method", request.getMethod());
             tags.put("call", tags.get("method") + endpoint);
 
-            final String channel = RequestUtils.getChannelName(request);
+            String channel = RequestUtils.getChannelName(request);
             if (!isBlank(channel)) {
                 tags.put("channel", channel);
             }
-            final String tag = RequestUtils.getTag(request);
+            String tag = RequestUtils.getTag(request);
             if (!isBlank(tag)) {
                 tags.put("tag", tag);
             }

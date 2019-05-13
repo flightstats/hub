@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.PermissionsChecker;
 import com.flightstats.hub.channel.TimeLinkBuilder;
+import com.flightstats.hub.dao.aws.ContentRetriever;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.rest.Linked;
 import com.flightstats.hub.util.RequestUtils;
@@ -42,6 +43,7 @@ public class WebhookResource {
     private final PermissionsChecker permissionsChecker;
     private final WebhookService webhookService;
     private final TimeLinkBuilder timeLinkBuilder;
+    private final ContentRetriever contentRetriever;
     private final ObjectMapper objectMapper;
 
     @Context
@@ -51,10 +53,11 @@ public class WebhookResource {
     public WebhookResource(PermissionsChecker permissionsChecker,
                            WebhookService webhookService,
                            TimeLinkBuilder timeLinkBuilder,
-                           ObjectMapper objectMapper) {
+                           ContentRetriever contentRetriever, ObjectMapper objectMapper) {
         this.permissionsChecker = permissionsChecker;
         this.webhookService = webhookService;
         this.timeLinkBuilder = timeLinkBuilder;
+        this.contentRetriever = contentRetriever;
         this.objectMapper = objectMapper;
     }
 
@@ -162,7 +165,7 @@ public class WebhookResource {
 
     Response upsert(String name, String body, UriInfo uriInfo) {
         log.info("upsert webhook {} {}", name, body);
-        Webhook webhook = Webhook.fromJson(body, this.webhookService.get(name)).withName(name);
+        Webhook webhook = Webhook.fromJson(body, this.webhookService.get(name), contentRetriever).withName(name);
         Optional<Webhook> upsert = this.webhookService.upsert(webhook);
         if (upsert.isPresent()) {
             return Response.ok(getLinked(webhook, uriInfo)).build();
@@ -184,7 +187,7 @@ public class WebhookResource {
 
     private Response cursorUpdater(String name, String body) {
         log.info("update cursor webhook {} {}", name, body);
-        Webhook webhook = Webhook.fromJson("{}", webhookService.get(name)).withName(name);
+        Webhook webhook = Webhook.fromJson("{}", webhookService.get(name), contentRetriever).withName(name);
         try {
             if (RequestUtils.isValidChannelUrl(body)) {
                 ContentPath item = ContentPath.fromFullUrl(body).get();

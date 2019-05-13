@@ -43,9 +43,12 @@ class MultiPartBulkBuilder {
         this.linkBuilder = linkBuilder;
     }
 
-    public Response build(SortedSet<ContentKey> keys, String channel,
-                          ChannelService channelService, UriInfo uriInfo,
-                          Consumer<Response.ResponseBuilder> headerBuilder, boolean descending) {
+    public Response build(SortedSet<ContentKey> keys,
+                          String channel,
+                          ChannelService channelService,
+                          UriInfo uriInfo,
+                          Consumer<Response.ResponseBuilder> headerBuilder,
+                          boolean descending) {
         Traces traces = ActiveTraces.getLocal();
         return write((BufferedOutputStream output) -> {
             ActiveTraces.setLocal(traces);
@@ -60,7 +63,8 @@ class MultiPartBulkBuilder {
     }
 
     Response buildTag(SortedSet<ChannelContentKey> keys,
-                      ChannelService channelService, UriInfo uriInfo,
+                      ChannelService channelService,
+                      UriInfo uriInfo,
                       Consumer<Response.ResponseBuilder> headerBuilder) {
         Traces traces = ActiveTraces.getLocal();
         return write((BufferedOutputStream output) -> {
@@ -86,7 +90,10 @@ class MultiPartBulkBuilder {
         return builder.build();
     }
 
-    private void writeContent(UriInfo uriInfo, BufferedOutputStream output, ContentKey key, String channel,
+    private void writeContent(UriInfo uriInfo,
+                              BufferedOutputStream output,
+                              ContentKey key,
+                              String channel,
                               ChannelService channelService) {
         ItemRequest itemRequest = ItemRequest.builder()
                 .channel(channel)
@@ -103,8 +110,12 @@ class MultiPartBulkBuilder {
         writeContent(content, output, channelUri, name, true, false);
     }
 
-    private void writeContent(Content content, OutputStream output, URI channelUri, String name,
-                              boolean startBoundary, boolean endBoundary) {
+    private void writeContent(Content content,
+                              OutputStream output,
+                              URI channelUri,
+                              String name,
+                              boolean startBoundary,
+                              boolean endBoundary) {
         try {
             if (startBoundary) output.write(START_BOUNDARY);
             if (content.getContentType().isPresent()) {

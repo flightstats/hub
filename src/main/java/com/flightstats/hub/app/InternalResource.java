@@ -43,7 +43,7 @@ public class InternalResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getChannels() {
-        final ObjectNode root = objectMapper.createObjectNode();
+        ObjectNode root = objectMapper.createObjectNode();
         root.put("WARNING", "Internal APIs may change at any time. They are intended to be used interactively, and scripts might break at any time.");
         links = root.with("_links");
 
@@ -65,7 +65,7 @@ public class InternalResource {
     }
 
     private void addLink(String name, String description) {
-        final ObjectNode node = links.with(name);
+        ObjectNode node = links.with(name);
         node.put("description", description);
         node.put("href", requestUri + name);
     }

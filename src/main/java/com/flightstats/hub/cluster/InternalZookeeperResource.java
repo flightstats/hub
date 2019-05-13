@@ -59,7 +59,9 @@ public class InternalZookeeperResource {
         return returnData(path, depth, olderThanDays);
     }
 
-    private Response returnData(String path, int depth, int olderThanDays) {
+    private Response returnData(String path,
+                                int depth,
+                                int olderThanDays) {
         log.info("path {}, depth {}, olderThanDays {}", path, depth, olderThanDays);
         depth = Math.max(1, Math.min(2, depth));
         try {
@@ -89,7 +91,8 @@ public class InternalZookeeperResource {
 
     }
 
-    private void handleData(String path, ObjectNode root) throws Exception {
+    private void handleData(String path,
+                            ObjectNode root) throws Exception {
         Stat stat = new Stat();
         byte[] bytes = curator.getData().storingStatIn(stat).forPath(path);
         ObjectNode data = root.putObject("data");
@@ -109,7 +112,10 @@ public class InternalZookeeperResource {
         }
     }
 
-    private void handleChildren(String path, ObjectNode root, int depth, int olderThanDays) throws Exception {
+    private void handleChildren(String path,
+                                ObjectNode root,
+                                int depth,
+                                int olderThanDays) throws Exception {
         DateTime olderThanTime = TimeUtil.now().minusDays(olderThanDays);
         List<String> children = curator.getChildren().forPath(path);
         Collections.sort(children);

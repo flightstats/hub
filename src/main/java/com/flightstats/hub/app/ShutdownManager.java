@@ -42,7 +42,7 @@ public class ShutdownManager {
 
     public boolean shutdown(boolean useLock) throws Exception {
         log.warn("shutting down!");
-        final String[] tags = {"restart", "shutdown"};
+        String[] tags = {"restart", "shutdown"};
         statsdReporter.event("Hub Restart Shutdown", "shutting down", tags);
         statsdReporter.mute();
 
@@ -59,9 +59,9 @@ public class ShutdownManager {
         HubServices.preStop();
 
         //wait until it's likely the node is removed from the Load Balancer
-        final long end = System.currentTimeMillis();
-        final int shutdownDelayInMiilis = appProperties.getShutdownDelayInMiilis();
-        final long millisStopping = end - start;
+        long end = System.currentTimeMillis();
+        int shutdownDelayInMiilis = appProperties.getShutdownDelayInMiilis();
+        long millisStopping = end - start;
         if (millisStopping < shutdownDelayInMiilis) {
             final long sleepTime = shutdownDelayInMiilis - millisStopping;
 
@@ -77,7 +77,7 @@ public class ShutdownManager {
     }
 
     public String getLockData() throws Exception {
-        final byte[] bytes = this.curatorFramework.getData().forPath(PATH);
+        byte[] bytes = this.curatorFramework.getData().forPath(PATH);
         return new String(bytes);
     }
 
@@ -95,7 +95,7 @@ public class ShutdownManager {
     private void waitForLock() throws Exception {
         while (true) {
             try {
-                final String lockData = getLockData();
+                String lockData = getLockData();
                 log.info("waiting for shutdown lock {}", lockData);
                 Sleeper.sleep(1000);
             } catch (KeeperException.NoNodeException e) {
@@ -115,7 +115,7 @@ public class ShutdownManager {
         @Override
         protected void startUp() throws Exception {
             try {
-                final String foundIpAddress = getLockData();
+                String foundIpAddress = getLockData();
                 log.info("found shutdown lock {} local {}", foundIpAddress, HubHost.getLocalAddress());
                 if (HubHost.getLocalAddress().equals(foundIpAddress)) {
                     log.info("deleting shutdown lock {} local {}", foundIpAddress, HubHost.getLocalAddress());

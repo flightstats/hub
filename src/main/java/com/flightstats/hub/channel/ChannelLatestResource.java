@@ -63,7 +63,7 @@ public class ChannelLatestResource {
         if (tag != null) {
             return tagLatestResource.getLatest(tag, stable, trace, location, epoch, uriInfo);
         }
-        final DirectionQuery query = DirectionQuery.builder()
+        DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
                 .next(false)
                 .stable(stable)
@@ -71,7 +71,7 @@ public class ChannelLatestResource {
                 .epoch(Epoch.valueOf(epoch))
                 .count(1)
                 .build();
-        final Optional<ContentKey> latest = contentRetriever.getLatest(query);
+        Optional<ContentKey> latest = contentRetriever.getLatest(query);
         if (latest.isPresent()) {
             return Response.status(SEE_OTHER)
                     .location(URI.create(uriInfo.getBaseUri() + "channel/" + channel + "/" + latest.get().toUrl()))
@@ -98,7 +98,7 @@ public class ChannelLatestResource {
         if (tag != null) {
             return tagLatestResource.getLatestCount(tag, count, stable, batch, bulk, trace, location, epoch, order, accept, uriInfo);
         }
-        final DirectionQuery latestQuery = DirectionQuery.builder()
+        DirectionQuery latestQuery = DirectionQuery.builder()
                 .channelName(channel)
                 .next(false)
                 .stable(stable)
@@ -107,7 +107,7 @@ public class ChannelLatestResource {
                 .epoch(Epoch.valueOf(epoch))
                 .count(1)
                 .build();
-        final Optional<ContentKey> latest = contentRetriever.getLatest(latestQuery);
+        Optional<ContentKey> latest = contentRetriever.getLatest(latestQuery);
         if (!latest.isPresent()) {
             return Response.status(NOT_FOUND).build();
         }
@@ -120,13 +120,20 @@ public class ChannelLatestResource {
                 .epoch(Epoch.valueOf(epoch))
                 .count(count - 1)
                 .build();
-        final SortedSet<ContentKey> keys = new TreeSet<>(contentRetriever.query(query));
+        SortedSet<ContentKey> keys = new TreeSet<>(contentRetriever.query(query));
         keys.add(latest.get());
         return getResponse(channel, count, trace, batch, bulk, accept, query, keys, Order.isDescending(order));
     }
 
-    private Response getResponse(String channel, int count, boolean trace, boolean batch, boolean bulk,
-                                 String accept, DirectionQuery query, SortedSet<ContentKey> keys, boolean descending) {
+    private Response getResponse(String channel,
+                                 int count,
+                                 boolean trace,
+                                 boolean batch,
+                                 boolean bulk,
+                                 String accept,
+                                 DirectionQuery query,
+                                 SortedSet<ContentKey> keys,
+                                 boolean descending) {
         if (bulk || batch) {
             return this.bulkBuilder.build(keys, channel, channelService, uriInfo, accept, descending);
         } else {

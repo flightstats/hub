@@ -36,9 +36,9 @@ public class InternalHealthResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response checkHealth(@Context UriInfo uriInfo) {
-        final ObjectNode healthRoot = this.internalTracesResource.serverAndServers("/health");
-        final ObjectNode root = this.objectMapper.createObjectNode();
-        final JsonNode servers = healthRoot.get("servers");
+        ObjectNode healthRoot = this.internalTracesResource.serverAndServers("/health");
+        ObjectNode root = this.objectMapper.createObjectNode();
+        JsonNode servers = healthRoot.get("servers");
         for (JsonNode server : servers) {
             callHealth(root, server.asText());
         }
@@ -49,8 +49,8 @@ public class InternalHealthResource {
         ClientResponse response = null;
         try {
             response = RestClient.defaultClient().resource(link).get(ClientResponse.class);
-            final String string = response.getEntity(String.class);
-            final JsonNode jsonNode = this.objectMapper.readTree(string);
+            String string = response.getEntity(String.class);
+            JsonNode jsonNode = this.objectMapper.readTree(string);
             root.set(link, jsonNode);
         } catch (Exception e) {
             root.put(link, "unable to get response " + e.getMessage());

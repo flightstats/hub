@@ -53,7 +53,7 @@ public class TagEarliestResource {
                                 @QueryParam("location") @DefaultValue(Location.DEFAULT) String location,
                                 @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
                                 @Context UriInfo uriInfo) {
-        final Collection<ChannelContentKey> contentKeys = tagService.getEarliest(getQuery(tag, 1, stable, location, epoch));
+        Collection<ChannelContentKey> contentKeys = tagService.getEarliest(getQuery(tag, 1, stable, location, epoch));
         if (!contentKeys.isEmpty()) {
             final URI uri = uriInfo.getBaseUriBuilder()
                     .path(contentKeys.iterator().next().toUrl())
@@ -89,23 +89,23 @@ public class TagEarliestResource {
                                      @QueryParam("order") @DefaultValue(Order.DEFAULT) String order,
                                      @HeaderParam("Accept") String accept,
                                      @Context UriInfo uriInfo) {
-        final DirectionQuery query = getQuery(tag, count, stable, location, epoch);
-        final SortedSet<ChannelContentKey> keys = tagService.getEarliest(query);
+        DirectionQuery query = getQuery(tag, count, stable, location, epoch);
+        SortedSet<ChannelContentKey> keys = tagService.getEarliest(query);
         if (bulk || batch) {
             //todo - gfm - order
             return this.bulkBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo, accept);
         }
-        final ObjectNode root = objectMapper.createObjectNode();
-        final ObjectNode links = root.putObject("_links");
-        final ObjectNode self = links.putObject("self");
+        ObjectNode root = objectMapper.createObjectNode();
+        ObjectNode links = root.putObject("_links");
+        ObjectNode self = links.putObject("self");
         self.put("href", uriInfo.getRequestUri().toString());
-        final List<ChannelContentKey> list = new ArrayList<>(keys);
-        final String baseUri = uriInfo.getBaseUri() + "tag/" + tag + "/";
+        List<ChannelContentKey> list = new ArrayList<>(keys);
+        String baseUri = uriInfo.getBaseUri() + "tag/" + tag + "/";
         if (!list.isEmpty()) {
             ObjectNode next = links.putObject("next");
             next.put("href", baseUri + list.get(list.size() - 1).getContentKey().toUrl() + "/next/" + count);
         }
-        final ArrayNode ids = links.putArray("uris");
+        ArrayNode ids = links.putArray("uris");
         if (Order.isDescending(order)) {
             Collections.reverse(list);
         }

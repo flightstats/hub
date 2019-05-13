@@ -78,7 +78,7 @@ public class ContentRetriever {
     }
 
     public String getDisplayName(String channelName) {
-        final ChannelConfig channelConfig = getExpectedCachedChannelConfig(channelName);
+        ChannelConfig channelConfig = getExpectedCachedChannelConfig(channelName);
         return channelConfig.getDisplayName();
     }
 
@@ -124,7 +124,7 @@ public class ContentRetriever {
         query = configureQuery(query);
         List<ContentKey> keys = new ArrayList<>(contentService.queryDirection(query));
 
-        final SortedSet<ContentKey> contentKeys = filter(keys, query);
+        SortedSet<ContentKey> contentKeys = filter(keys, query);
         if (query.isInclusive()) {
             if (!contentKeys.isEmpty()) {
                 if (query.isNext()) {
@@ -144,10 +144,10 @@ public class ContentRetriever {
         if (query.getCount() > contentProperties.getDirectionCountLimit()) {
             query = query.withCount(contentProperties.getDirectionCountLimit());
         }
-        final String channelName = query.getChannelName();
-        final ChannelConfig channelConfig = getExpectedCachedChannelConfig(channelName);
+        String channelName = query.getChannelName();
+        ChannelConfig channelConfig = getExpectedCachedChannelConfig(channelName);
         query = query.withChannelConfig(channelConfig);
-        final DateTime ttlTime = getChannelTtl(channelConfig, query.getEpoch());
+        DateTime ttlTime = getChannelTtl(channelConfig, query.getEpoch());
         query = query.withEarliestTime(ttlTime);
 
         if (query.getStartKey() == null || query.getStartKey().getTime().isBefore(ttlTime)) {
@@ -171,12 +171,12 @@ public class ContentRetriever {
         if (query == null) {
             return Collections.emptySortedSet();
         }
-        final String channelName = query.getChannelName();
-        final ChannelConfig channelConfig = getCachedChannelConfig(channelName)
+        String channelName = query.getChannelName();
+        ChannelConfig channelConfig = getCachedChannelConfig(channelName)
                 .orElse(null);
         query = query.withChannelName(getDisplayName(channelName));
         query = query.withChannelConfig(channelConfig);
-        final ContentPath lastUpdated = getLastUpdated(query.getChannelName(), new ContentKey(TimeUtil.time(query.isStable())));
+        ContentPath lastUpdated = getLastUpdated(query.getChannelName(), new ContentKey(TimeUtil.time(query.isStable())));
         query = query.withChannelStable(lastUpdated.getTime());
         Stream<ContentKey> stream = contentService.queryByTime(query).stream();
         stream = enforceLimits(query, stream);
@@ -185,7 +185,7 @@ public class ContentRetriever {
 
     public Optional<ContentKey> getLatest(String channel, boolean stable) {
         channel = getDisplayName(channel);
-        final DirectionQuery query = DirectionQuery.builder()
+        DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
                 .next(false)
                 .stable(stable)
@@ -196,13 +196,13 @@ public class ContentRetriever {
 
     public Optional<ContentKey> getLatest(DirectionQuery query) {
         query = query.withChannelName(getDisplayName(query.getChannelName()));
-        final String channelName = query.getChannelName();
+        String channelName = query.getChannelName();
         if (!this.channelConfigDao.exists(channelName)) {
             return Optional.empty();
         }
         query = query.withStartKey(getLatestLimit(query.getChannelName(), query.isStable()));
         query = configureQuery(query);
-        final Optional<ContentKey> latest = contentService.getLatest(query);
+        Optional<ContentKey> latest = contentService.getLatest(query);
         ActiveTraces.getLocal().add("before filter", channelName, latest);
         if (latest.isPresent()) {
             SortedSet<ContentKey> filtered = filter(latest

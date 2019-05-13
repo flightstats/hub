@@ -32,13 +32,13 @@ public class InternalPropertiesResource {
     @GET
     @Produces({MediaType.APPLICATION_JSON})
     public Response getTraces() {
-        final ObjectNode root = this.internalTracesResource.serverAndServers("/internal/properties");
+        ObjectNode root = this.internalTracesResource.serverAndServers("/internal/properties");
         try {
             ObjectNode propertyNode = root.putObject("properties");
             Properties properties = PropertiesLoader.getInstance().getProperties();
             for (Object key : new TreeSet<>(properties.keySet())) {
-                final String value = properties.get(key).toString();
-                final String possiblySensitiveValue = secretFilter.redact(key.toString(), value);
+                String value = properties.get(key).toString();
+                String possiblySensitiveValue = secretFilter.redact(key.toString(), value);
                 propertyNode.put(key.toString(), possiblySensitiveValue);
             }
         } catch (Exception e) {

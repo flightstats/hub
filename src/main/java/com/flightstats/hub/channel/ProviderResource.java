@@ -32,7 +32,8 @@ public class ProviderResource {
     private final ContentRetriever contentRetriever;
 
     @Inject
-    public ProviderResource(ChannelService channelService, ContentRetriever contentRetriever) {
+    public ProviderResource(ChannelService channelService,
+                            ContentRetriever contentRetriever) {
         this.channelService = channelService;
         this.contentRetriever = contentRetriever;
     }

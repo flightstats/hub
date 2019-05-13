@@ -13,7 +13,6 @@ import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
-import java.net.URI;
 import java.util.List;
 
 import static com.flightstats.hub.util.TimeUtil.days;
@@ -47,14 +46,19 @@ public class TimeLinkBuilder {
         return Response.ok(root).build();
     }
 
-    private ObjectNode addSelfLink(ObjectNode root, UriInfo uriInfo) {
+    private ObjectNode addSelfLink(ObjectNode root,
+                                   UriInfo uriInfo) {
         ObjectNode links = root.putObject("_links");
         ObjectNode self = links.putObject("self");
         self.put("href", uriInfo.getRequestUri().toString());
         return links;
     }
 
-    private void addNode(ObjectNode links, String name, String template, TimeUtil.Unit unit, UriInfo uriInfo) {
+    private void addNode(ObjectNode links,
+                         String name,
+                         String template,
+                         TimeUtil.Unit unit,
+                         UriInfo uriInfo) {
         ObjectNode node = links.putObject(name);
         MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
         String stable = "";
@@ -94,7 +98,8 @@ public class TimeLinkBuilder {
         return getResponse(days(TimeUtil.time(stable)), uriInfo);
     }
 
-    private Response getResponse(String timePath, UriInfo uriInfo) {
+    private Response getResponse(String timePath,
+                                 UriInfo uriInfo) {
         List<PathSegment> segments = uriInfo.getPathSegments();
         UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
         uriBuilder.path(segments.get(0).getPath())
@@ -106,7 +111,8 @@ public class TimeLinkBuilder {
         return builder.build();
     }
 
-    void addQueryParams(UriInfo uriInfo, UriBuilder uriBuilder) {
+    void addQueryParams(UriInfo uriInfo,
+                        UriBuilder uriBuilder) {
         MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
         for (String param : queryParameters.keySet()) {
             List<String> strings = queryParameters.get(param);

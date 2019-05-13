@@ -19,16 +19,23 @@ public class BulkBuilder {
         this.multiPartBulkBuilder = multiPartBulkBuilder;
     }
 
-    public Response build(SortedSet<ContentKey> keys, String channel,
-                          ChannelService channelService, UriInfo uriInfo, String accept, boolean descending) {
+    public Response build(SortedSet<ContentKey> keys,
+                          String channel,
+                          ChannelService channelService,
+                          UriInfo uriInfo,
+                          String accept,
+                          boolean descending) {
         return build(keys, channel, channelService, uriInfo, accept, descending, (builder) -> {
         });
     }
 
-    public Response build(SortedSet<ContentKey> keys, String channel,
-                          ChannelService channelService, UriInfo uriInfo, String accept,
-                          boolean descending, Consumer<Response.ResponseBuilder> headerBuilder) {
-
+    public Response build(SortedSet<ContentKey> keys,
+                          String channel,
+                          ChannelService channelService,
+                          UriInfo uriInfo,
+                          String accept,
+                          boolean descending,
+                          Consumer<Response.ResponseBuilder> headerBuilder) {
         if ("application/zip".equalsIgnoreCase(accept)) {
             return ZipBulkBuilder.build(keys, channel, channelService, descending, headerBuilder);
         } else {
@@ -36,15 +43,22 @@ public class BulkBuilder {
         }
     }
 
-    Response buildTag(String tag, SortedSet<ChannelContentKey> keys,
-                      ChannelService channelService, UriInfo uriInfo, String accept) {
+    Response buildTag(String tag,
+                      SortedSet<ChannelContentKey> keys,
+                      ChannelService channelService,
+                      UriInfo uriInfo,
+                      String accept) {
         //todo - gfm - order
         return buildTag(tag, keys, channelService, uriInfo, accept, (builder) -> {
         });
+
     }
 
-    public Response buildTag(String tag, SortedSet<ChannelContentKey> keys,
-                             ChannelService channelService, UriInfo uriInfo, String accept,
+    public Response buildTag(String tag,
+                             SortedSet<ChannelContentKey> keys,
+                             ChannelService channelService,
+                             UriInfo uriInfo,
+                             String accept,
                              Consumer<Response.ResponseBuilder> headerBuilder) {
         //todo - gfm - order
         if ("application/zip".equalsIgnoreCase(accept)) {

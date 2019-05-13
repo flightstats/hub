@@ -76,8 +76,8 @@ public class InternalClusterResource {
     }
 
     private void addNodes(String name, Collection<String> servers, ObjectNode root) {
-        final ArrayNode cluster = root.putArray(name);
-        final Set<String> allServers = new TreeSet<>(servers);
+        ArrayNode cluster = root.putArray(name);
+        Set<String> allServers = new TreeSet<>(servers);
         for (String server : allServers) {
             ObjectNode node = cluster.addObject();
             node.put("server", server);

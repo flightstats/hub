@@ -37,15 +37,18 @@ public class LinkBuilder {
         this.objectMapper = objectMapper;
     }
 
-    public URI buildChannelUri(String channelName, UriInfo uriInfo) {
+    public URI buildChannelUri(String channelName,
+                               UriInfo uriInfo) {
         return uriInfo.getBaseUriBuilder().path("channel").path(channelName).build();
     }
 
-    public URI buildItemUri(ContentPath key, URI channelUri) {
+    public URI buildItemUri(ContentPath key,
+                            URI channelUri) {
         return buildItemUri(key.toUrl(), channelUri);
     }
 
-    private URI buildItemUri(String key, URI channelUri) {
+    private URI buildItemUri(String key,
+                             URI channelUri) {
         return URI.create(channelUri.toString() + "/" + key);
     }
 
@@ -86,12 +89,16 @@ public class LinkBuilder {
         return root;
     }
 
-    Linked<?> buildLinks(UriInfo uriInfo, Map<String, URI> nameToUriMap, String name) {
+    Linked<?> buildLinks(UriInfo uriInfo,
+                         Map<String, URI> nameToUriMap,
+                         String name) {
         return buildLinks(nameToUriMap, name, builder ->
                 builder.withLink("self", uriInfo.getRequestUri()));
     }
 
-    Linked<?> buildLinks(Map<String, URI> nameToUriMap, String name, Consumer<Linked.Builder> consumer) {
+    Linked<?> buildLinks(Map<String, URI> nameToUriMap,
+                         String name,
+                         Consumer<Linked.Builder> consumer) {
         Linked.Builder responseBuilder = Linked.justLinks();
         consumer.accept(responseBuilder);
         List<HalLink> halLinks = new ArrayList<>(nameToUriMap.size());
@@ -110,16 +117,24 @@ public class LinkBuilder {
         return uriBuilder;
     }
 
-    URI getDirection(String name, String channel, UriInfo uriInfo, ContentKey key, int count) {
+    URI getDirection(String name,
+                     String channel,
+                     UriInfo uriInfo,
+                     ContentKey key,
+                     int count) {
         return uriBuilder(channel, uriInfo)
                 .path(key.toUrl())
                 .path(name).path("" + count)
                 .build();
     }
 
-    Response directionalResponse(SortedSet<ContentKey> keys, int count,
-                                 DirectionQuery query, UriInfo uriInfo,
-                                 boolean includePrevious, boolean trace, boolean descending) {
+    Response directionalResponse(SortedSet<ContentKey> keys,
+                                 int count,
+                                 DirectionQuery query,
+                                 UriInfo uriInfo,
+                                 boolean includePrevious,
+                                 boolean trace,
+                                 boolean descending) {
         String channel = query.getChannelName();
         ObjectNode root = this.objectMapper.createObjectNode();
         ObjectNode links = root.putObject("_links");
@@ -158,9 +173,14 @@ public class LinkBuilder {
         return Response.ok(root).build();
     }
 
-    public Response directionalTagResponse(String tag, SortedSet<ChannelContentKey> keys, int count,
-                                           DirectionQuery query, UriInfo uriInfo,
-                                           boolean includePrevious, boolean trace, boolean descending) {
+    public Response directionalTagResponse(String tag,
+                                           SortedSet<ChannelContentKey> keys,
+                                           int count,
+                                           DirectionQuery query,
+                                           UriInfo uriInfo,
+                                           boolean includePrevious,
+                                           boolean trace,
+                                           boolean descending) {
         ObjectNode root = this.objectMapper.createObjectNode();
         ObjectNode links = root.putObject("_links");
         ObjectNode self = links.putObject("self");
@@ -196,11 +216,16 @@ public class LinkBuilder {
         return Response.ok(root).build();
     }
 
-    public void addLink(ObjectNode parent, String name, URI link) {
+    public void addLink(ObjectNode parent,
+                        String name,
+                        URI link) {
         parent.putObject(name).put("href", link.toString());
     }
 
-    URI getUri(String channel, UriInfo uriInfo, TimeUtil.Unit unit, DateTime time) {
+    URI getUri(String channel,
+               UriInfo uriInfo,
+               TimeUtil.Unit unit,
+               DateTime time) {
         return uriBuilder(channel, uriInfo).path(unit.format(time)).build();
     }
 }

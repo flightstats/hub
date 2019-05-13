@@ -49,8 +49,8 @@ public class S3BatchManager {
     }
 
     private void setupBatch() {
-        final Set<String> existingBatchGroups = new HashSet<>();
-        final Iterable<Webhook> groups = webhookService.getAllCached();
+        Set<String> existingBatchGroups = new HashSet<>();
+        Iterable<Webhook> groups = webhookService.getAllCached();
         for (Webhook webhook : groups) {
             if (S3Batch.isS3BatchCallback(webhook.getName())) {
                 existingBatchGroups.add(webhook.getName());
@@ -58,7 +58,11 @@ public class S3BatchManager {
         }
 
         for (ChannelConfig channel : channelConfigDao.getAll(false)) {
-            final S3Batch s3Batch = new S3Batch(channel, hubUtils, appProperties.getAppUrl(), appProperties.getAppEnv());
+            S3Batch s3Batch = new S3Batch(
+                    channel,
+                    hubUtils,
+                    appProperties.getAppUrl(),
+                    appProperties.getAppEnv());
 
             if (channel.isSingle()) {
                 if (!activeWebhooks.getServers(channel.getName()).isEmpty()) {

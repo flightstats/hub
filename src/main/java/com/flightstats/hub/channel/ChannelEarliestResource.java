@@ -1,6 +1,5 @@
 package com.flightstats.hub.channel;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.aws.ContentRetriever;
 import com.flightstats.hub.model.ContentKey;
@@ -53,7 +52,11 @@ public class ChannelEarliestResource {
         this.bulkBuilder = bulkBuilder;
     }
 
-    public static DirectionQuery getDirectionQuery(String channel, int count, boolean stable, String location, String epoch) {
+    public static DirectionQuery getDirectionQuery(String channel,
+                                                   int count,
+                                                   boolean stable,
+                                                   String location,
+                                                   String epoch) {
         return DirectionQuery.builder()
                 .channelName(channel)
                 .next(true)
