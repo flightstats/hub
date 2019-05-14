@@ -255,7 +255,7 @@ public class ClusterContentService implements ContentService {
     }
 
     private DateTime getSpokeTtlTime(String channelName) {
-        DateTime startTime = channelService.getLastUpdated(channelName, new ContentKey(TimeUtil.now())).getTime();
+        DateTime startTime = channelService.adjustLastUpdatePathIfReplicating(channelName, new ContentKey(TimeUtil.now())).getTime();
         return startTime.minusMinutes(spokeProperties.getTtlMinutes(SpokeStore.WRITE));
     }
 
@@ -383,6 +383,13 @@ public class ClusterContentService implements ContentService {
     Change #2
     We could cache the spoke entries as well, so we have "updateLatestContentCache" and "getLatestContent" as separate paths.
     ...where get is get-if-exists-else-update-then-get.
+
+    How does stability affect this?
+            * if we're looking for stable, we want what's been written to a majority of the cluster
+            * if we're okay with unstable, we'll accept something if it's on any spoke member
+            * this is accomplished by a 5s fudge factor after writes
+    Currently, all getLatestIm
+
      */
     private Optional<ContentKey> getLatestImmutable(DirectionQuery latestQuery) {
         String channel = latestQuery.getChannelName();

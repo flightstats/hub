@@ -133,7 +133,7 @@ class SingleWebhookStrategy implements WebhookStrategy {
                 try {
                     DateTime latestStableInChannel = TimeUtil.stable();
                     if (!channelService.isLiveChannel(channel)) {
-                        latestStableInChannel = channelService.getLastUpdated(channel, MinutePath.NONE).getTime();
+                        latestStableInChannel = channelService.adjustLastUpdatePathIfReplicating(channel, MinutePath.NONE).getTime();
                     }
                     TimeQuery timeQuery = queryGenerator.getQuery(latestStableInChannel);
                     if (timeQuery != null) {

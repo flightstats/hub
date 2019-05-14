@@ -269,9 +269,14 @@ public class ChannelService {
     }
 
     private ContentKey getLatestLimit(String channelName, boolean stable) {
-        DateTime time = TimeUtil.now().plusMinutes(1);
-        if (stable || !isLiveChannel(channelName)) {
-            time = getLastUpdated(channelName, new ContentKey(TimeUtil.stable())).getTime();
+        ContentKey stableKey = new ContentKey(TimeUtil.stable());
+        DateTime time;
+        if (stable) {
+            time = TimeUtil.now();
+        } else if (!isLiveChannel(channelName)) {
+            time = adjustLastUpdatePathIfReplicating(channelName, stableKey).getTime();
+        } else {
+            time = TimeUtil.now().plusMinutes(1);
         }
         return ContentKey.lastKey(time);
     }
@@ -353,7 +358,7 @@ public class ChannelService {
                 .orElse(null);
         query = query.withChannelName(getDisplayName(channelName));
         query = query.withChannelConfig(channelConfig);
-        ContentPath lastUpdated = getLastUpdated(query.getChannelName(), new ContentKey(TimeUtil.time(query.isStable())));
+        ContentPath lastUpdated = adjustLastUpdatePathIfReplicating(query.getChannelName(), new ContentKey(TimeUtil.time(query.isStable())));
         query = query.withChannelStable(lastUpdated.getTime());
         Stream<ContentKey> stream = contentService.queryByTime(query).stream();
         stream = ContentKeyUtil.enforceLimits(query, stream);
@@ -468,7 +473,7 @@ public class ChannelService {
         throw new MethodNotAllowedException(message);
     }
 
-    public ContentPath getLastUpdated(String channelName, ContentPath defaultValue) {
+    public ContentPath adjustLastUpdatePathIfReplicating(String channelName, ContentPath defaultValue) {
         channelName = getDisplayName(channelName);
         if (isReplicating(channelName)) {
             ContentPath contentPath = clusterStateDao.get(channelName, defaultValue, REPLICATED_LAST_UPDATED);
