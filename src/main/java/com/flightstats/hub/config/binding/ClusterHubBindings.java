@@ -63,7 +63,7 @@ public class ClusterHubBindings extends AbstractModule {
         bind(AppUrlCheck.class).asEagerSingleton();
 
         bind(SpokeDecommissionManager.class).asEagerSingleton();
-        bind(SpokeTtlEnforcer.class).asEagerSingleton();
+        bind(SpokeTtlEnforcer.class);
 
         bind(PeriodicMetricEmitter.class).asEagerSingleton();
         bind(PeriodicMetricEmitterLifecycle.class).asEagerSingleton();
@@ -73,7 +73,6 @@ public class ClusterHubBindings extends AbstractModule {
         bind(S3WriteQueueLifecycle.class).asEagerSingleton();
         bind(S3BatchManager.class).asEagerSingleton();
         bind(S3Verifier.class).asEagerSingleton();
-        bind(S3AccessMonitor.class).asEagerSingleton();
         bind(S3AccessMonitor.class).asEagerSingleton();
         bind(HubS3Client.class).asEagerSingleton();
         bind(S3DocumentationDao.class).asEagerSingleton();
