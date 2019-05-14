@@ -61,12 +61,7 @@ import java.util.function.Function;
 @Slf4j
 public class ClusterContentService implements ContentService {
 
-    /* If a channel's latest written item is:
-    *       * on spoke - path should be null
-    *       * if after spoke TTL
-    *       *       AND on S3 - path should be content key
-    *       *       AND absent on S3 (or expired wrt channel TTL) - should be NONE
-    */
+    /** The latest item on the channel that is older than stable time, older than spoke's TTL, and younger than the channel's TTL. i.e. the "cached" latest */
     private static final String LAST_COMMITTED_CONTENT_KEY = "/ChannelLatestUpdated/";
     private static final ExecutorService executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("ClusterContentService-%d").build());
 
@@ -367,54 +362,75 @@ public class ClusterContentService implements ContentService {
     }
 
     /*
-    Re-write to:
-        * getLatest()
-        * updateLastContentCache() ...
+    So ultimately this is a performance optimization:
+            * always check all write spokes for the latest key
+            * if present, use it and clear cache
+            * if not present
+                * check for a cached key
+                * if present, use it
+                * if not present
+                    * fetch and cache the latest key from S3
+
+    Unfortunately, this means that
+            * recently written-to channels never benefit from the cache
+            * /latest calls ALWAYS poll the entire cluster to see if a newer entry has been written
+            * channels with latest items on S3
+
+    Change #1
+    Service update could just do the S3 scan and could occur from just one node.
+    ...OR we could just let the first read for a latest take longer and avoid the periodic scan cost.
+
+    Change #2
+    We could cache the spoke entries as well, so we have "updateLatestContentCache" and "getLatestContent" as separate paths.
+    ...where get is get-if-exists-else-update-then-get.
      */
     private Optional<ContentKey> getLatestImmutable(DirectionQuery latestQuery) {
         String channel = latestQuery.getChannelName();
 
         Optional<ChannelConfig> optionalChannelConfig = channelService.getCachedChannelConfig(channel);
         if (!optionalChannelConfig.isPresent()) return Optional.empty();
-        ChannelConfig cachedChannelConfig = optionalChannelConfig.get();
 
-        // If we find a more recent entry somewhere in the WRITE cluster use it.
-        // ...and DELETE the channel latest updated record to indicate there is
-        // Maybe LATEST means synced-to-S3 and we're saying we just found a newer entry on the WRITE cluster?
-        //      It originally meant "latest item written to channel in Cassandra", so maybe now it means S3 is up-to-date and this is the latest entry
-        //          ..unless no-one's searched recently and newer data is sitting undiscovered on the write spokes.
+        Optional<ContentKey> latestSpokeKey = getLatestKeyFromSpoke(latestQuery, channel);
+        if (latestSpokeKey.isPresent()) {
+            return latestSpokeKey;
+        }
+
+        DateTime channelTtlTime = optionalChannelConfig.get().getTtlTime();
+        Optional<ContentKey> cachedKey = getLatestCachedKeyIfNotExpired(channel, channelTtlTime);
+        if (cachedKey.isPresent()) {
+            return cachedKey;
+        }
+
         DateTime spokeTtlTime = getSpokeTtlTime(channel);
+        return findAndCacheLatestKey(latestQuery, channel, spokeTtlTime);
+   }
+
+    private Optional<ContentKey> getLatestKeyFromSpoke(DirectionQuery latestQuery, String channel) {
         Optional<ContentKey> latest = spokeWriteContentDao.getLatest(channel, latestQuery.getStartKey(), ActiveTraces.getLocal());
         if (latest.isPresent()) {
             ActiveTraces.getLocal().add("found spoke latest", channel, latest);
             clusterStateDao.delete(channel, LAST_COMMITTED_CONTENT_KEY);
-            return latest;
         }
+        return latest;
+    }
 
-        // So we do use this, here and only here.
-        // If ZK has a "latest update" entry that is within the channel's TTL
-        //      and we don't have anything newer in our spoke (see above) that's within the spoke TTL
-        //      then we return it.
-        // If not, we proceed on to scan S3 to find it.
+    private Optional<ContentKey> getLatestCachedKeyIfNotExpired(String channel, DateTime channelTtlTime) {
         ContentPath latestCache = clusterStateDao.get(channel, null, LAST_COMMITTED_CONTENT_KEY);
         ActiveTraces.getLocal().add("found latestCache", channel, latestCache);
         if (latestCache != null) {
-            DateTime channelTtlTime = cachedChannelConfig.getTtlTime();
             // TODO: Inconsistent read.  This uses a value it considers stale, but guarantees subsequent reads will not use it.
             if (latestCache.getTime().isBefore(channelTtlTime)) {
                 clusterStateDao.update(ContentKey.NONE, channel, LAST_COMMITTED_CONTENT_KEY);
             }
-            ActiveTraces.getLocal().add("found cached latest", channel, latest);
+            ActiveTraces.getLocal().add("found cached latest", channel, latestCache);
             if (latestCache.equals(ContentKey.NONE)) {
                 return Optional.empty();
             }
-            return Optional.of((ContentKey) latestCache);
         }
+        return Optional.ofNullable((ContentKey) latestCache);
+    }
 
-        return fetchLatestItem(latestQuery, channel, spokeTtlTime);
-   }
-
-    private Optional<ContentKey> fetchLatestItem(DirectionQuery latestQuery, String channel, DateTime spokeTtlTime) {
+    private Optional<ContentKey> findAndCacheLatestKey(DirectionQuery latestQuery, String channel, DateTime spokeTtlTime) {
         // If we haven't already found the latest on the WRITE cluster or in ZK's latest content path.
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
@@ -428,7 +444,7 @@ public class ClusterContentService implements ContentService {
         // Find all keys in the channel after the given start key.
         Collection<ContentKey> keys = channelService.query(query);
         if (keys.isEmpty()) {
-            // Mark the channel as empty.
+            // Mark the channel as empty IFF there's nothing in it.
             ActiveTraces.getLocal().add("updating channel empty", channel);
             clusterStateDao.setIfAfter(ContentKey.NONE, channel, LAST_COMMITTED_CONTENT_KEY);
             return Optional.empty();
@@ -436,9 +452,8 @@ public class ClusterContentService implements ContentService {
             // If we find something.
             ContentKey latestKey = keys.iterator().next();
             if (latestKey.getTime().isAfter(spokeTtlTime)) {
-                // TODO: Assumes we just fetched this from spoke, but that should've been caught earlier.  We should only hit this if we're fetching from S3.
                 ActiveTraces.getLocal().add("latestKey within spoke window {} {}", channel, latestKey);
-                // Delete the path if it's after the spoke write TTL.
+                // Ensure the path is deleted if it's within the spoke's TTL time, because spoke could get a new entry at any minute.
                 clusterStateDao.delete(channel, LAST_COMMITTED_CONTENT_KEY);
             } else {
                 ActiveTraces.getLocal().add("updating cache with latestKey {} {}", channel, latestKey);
@@ -481,7 +496,6 @@ public class ClusterContentService implements ContentService {
     @Override
     public void notify(ChannelConfig newConfig, ChannelConfig oldConfig) {
         if (oldConfig == null) {
-            // If we DIDN'T HAVE a prior config, set the "latest entry" marker to NONE.
             clusterStateDao.setIfAfter(ContentKey.NONE, newConfig.getDisplayName(), LAST_COMMITTED_CONTENT_KEY);
         }
 
@@ -522,7 +536,7 @@ public class ClusterContentService implements ContentService {
                     .build();
             Optional<ContentKey> mutableLatest = getLatest(query);
             ActiveTraces.getLocal().log(log);
-            if (mutableLatest.isPresent()) {  // TODO: This "knows" that mutable entries are written directly to S3.  If we got one back from spoke, this ZK state would be set incorrectly.
+            if (mutableLatest.isPresent()) {  // TODO: This "knows" that mutable entries are written directly to S3.  If one was sitting in spoke, this ZK state would be set incorrectly.
                 ContentKey mutableKey = mutableLatest.get();
                 if (mutableKey.getTime().isAfter(newConfig.getMutableTime())) {
                     log.info("handleMutableTimeChange.updateIncrease {}", mutableKey);
@@ -565,18 +579,14 @@ public class ClusterContentService implements ContentService {
             log.debug("running...");
             ActiveTraces.start("ChannelLatestUpdatedService");
             // For every channel:
-            //      Get the latest immutable entry in the channel.
+            //      Get the latest immutable entry in the channel (with a stable()+1m fudge factor)
             //      Which incidentally (and critically...it's the only reason this svc exists)
             //      updates the ZK pointer to
-            //          the latest record in S3
+            //          the latest record in S3 (if it's old enough that it can't be on the spokes)
             //          or blanks it out if the latest is sitting in the spoke cluster
             //          or sets it to NONE if no entries are in the spoke cluster or S3
             // Presumably this is a performance optimization, expecting that anyone wanting the latest will hit the get() code and trigger a refresh anyway.
             // This doesn't actually move anything off the node-specific spoke, so it only really needs one runner cluster-wide.
-
-            /*
-                This is an optimization because if the cluster doesn't (or can't re:TTL) we avoid the S3 hit if this entry is set.
-             */
             channelService.getChannels().forEach(channelConfig -> {
                 try {
                     DateTime time = TimeUtil.stable().plusMinutes(1);
