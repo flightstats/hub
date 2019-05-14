@@ -7,6 +7,8 @@ import org.joda.time.DateTime;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -21,7 +23,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+
 @Slf4j
+@Execution(ExecutionMode.SAME_THREAD)
 class DistributedLockRunnerTest {
 
     private static DistributedLeaderLockManager lockManager;

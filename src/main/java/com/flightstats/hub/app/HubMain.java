@@ -10,6 +10,8 @@ import com.flightstats.hub.config.binding.ClusterHubBindings;
 import com.flightstats.hub.config.binding.HubBindings;
 import com.flightstats.hub.config.binding.PropertiesBinding;
 import com.flightstats.hub.config.binding.SingleHubBindings;
+import com.flightstats.hub.dao.aws.DynamoChannelConfigDaoLifecycle;
+import com.flightstats.hub.dao.aws.DynamoWebhookDaoLifecycle;
 import com.flightstats.hub.dao.aws.S3WriteQueueLifecycle;
 import com.flightstats.hub.filter.CORSFilter;
 import com.flightstats.hub.filter.StreamEncodingFilter;
@@ -88,7 +90,6 @@ public class HubMain {
     }
 
     public void run() throws Exception {
-
         Security.setProperty("networkaddress.cache.ttl", "60");
         startZookeeperIfSingle();
         Server server = startServer();
@@ -176,15 +177,18 @@ public class HubMain {
     }
 
     private List<Service> getBeforeHealthCheckServices(Injector injector) {
-
-        final List<Service> services = Stream.of(
+        List<Service> services = createInstanceList(
+                injector,
                 InfluxdbReporterLifecycle.class,
-                StatsDReporterLifecycle.class)
-                .map(injector::getInstance)
-                .collect(Collectors.toList());
+                StatsDReporterLifecycle.class);
 
-        if (storageBackend == StorageBackend.aws && !appProperties.isReadOnly()) {
-            services.add(injector.getInstance(S3WriteQueueLifecycle.class));
+        if (storageBackend == StorageBackend.aws) {
+            if (!appProperties.isReadOnly()) {
+                services.add(injector.getInstance(S3WriteQueueLifecycle.class));
+            }
+            services.addAll(createInstanceList(injector,
+                    DynamoChannelConfigDaoLifecycle.class,
+                    DynamoWebhookDaoLifecycle.class));
         }
 
         if (spokeProperties.isTtlEnforced()) {
@@ -197,15 +201,18 @@ public class HubMain {
         return services;
     }
 
+    private List<Service> createInstanceList(Injector injector, Class<? extends Service> ... classes) {
+        return Stream.of(classes).map(injector::getInstance).collect(Collectors.toList());
+    }
+
     private List<Service> getAfterHealthCheckServices(Injector injector) {
         if (storageBackend != StorageBackend.aws) {
             return Collections.singletonList(injector.getInstance(CustomMetricsLifecycle.class));
         }
-        return Stream.of(
+        return createInstanceList(injector,
                 CustomMetricsLifecycle.class,
-                PeriodicMetricEmitterLifecycle.class)
-                .map(injector::getInstance)
-                .collect(Collectors.toList());
+                PeriodicMetricEmitterLifecycle.class
+        );
     }
 
     private void registerServices(List<Service> services, HubServices.TYPE type) {
