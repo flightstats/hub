@@ -310,7 +310,7 @@ public class HubBindings extends AbstractModule {
         bind(TagService.class).asEagerSingleton();
         bind(TimeService.class).asEagerSingleton();
         bind(EventsService.class).asEagerSingleton();
-        bind(WebSocketService.class);
+        bind(WebSocketService.class).asEagerSingleton();
 
         bind(HubVersion.class).asEagerSingleton();
         bind(LocalReadSpoke.class).to(SpokeManager.class);

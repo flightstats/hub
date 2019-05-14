@@ -10,6 +10,7 @@ import com.flightstats.hub.config.binding.ClusterHubBindings;
 import com.flightstats.hub.config.binding.HubBindings;
 import com.flightstats.hub.config.binding.PropertiesBinding;
 import com.flightstats.hub.config.binding.SingleHubBindings;
+import com.flightstats.hub.config.binding.WebSocketBinding;
 import com.flightstats.hub.dao.aws.S3WriteQueueLifecycle;
 import com.flightstats.hub.filter.CORSFilter;
 import com.flightstats.hub.filter.MetricsRequestFilter;
@@ -124,6 +125,7 @@ public class HubMain {
 
         List<AbstractModule> guiceModules = buildGuiceModules();
         injector = Guice.createInjector(guiceModules);
+        injector.createChildInjector(new WebSocketBinding());
 
         registerServices(getBeforeHealthCheckServices(injector), HubServices.TYPE.BEFORE_HEALTH_CHECK);
         registerServices(getAfterHealthCheckServices(injector), HubServices.TYPE.AFTER_HEALTHY_START);

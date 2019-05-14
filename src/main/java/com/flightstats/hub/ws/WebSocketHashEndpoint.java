@@ -1,5 +1,6 @@
 package com.flightstats.hub.ws;
 
+import com.flightstats.hub.config.binding.WebSocketConfigurator;
 import com.flightstats.hub.model.ContentKey;
 import lombok.extern.slf4j.Slf4j;
 
@@ -12,7 +13,9 @@ import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 
 @Slf4j
-@ServerEndpoint(value = "/channel/{channel}/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}/ws")
+@ServerEndpoint(
+        value = "/channel/{channel}/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}/ws",
+        configurator = WebSocketConfigurator.class)
 public class WebSocketHashEndpoint {
 
     private final WebSocketService webSocketService;

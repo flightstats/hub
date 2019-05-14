@@ -1,8 +1,7 @@
 package com.flightstats.hub.ws;
 
+import com.flightstats.hub.config.binding.WebSocketConfigurator;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.websocket.OnClose;
@@ -11,10 +10,11 @@ import javax.websocket.OnOpen;
 import javax.websocket.Session;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
-import java.io.IOException;
 
 @Slf4j
-@ServerEndpoint(value = "/channel/{channel}/ws")
+@ServerEndpoint(
+        value = "/channel/{channel}/ws",
+        configurator = WebSocketConfigurator.class)
 public class WebSocketChannelEndpoint {
 
     private final WebSocketService webSocketService;
@@ -25,7 +25,7 @@ public class WebSocketChannelEndpoint {
     }
 
     @OnOpen
-    public void onOpen(Session session, @PathParam("channel") String channel) throws IOException {
+    public void onOpen(Session session, @PathParam("channel") String channel) {
         webSocketService.createCallback(session, channel);
     }
 
