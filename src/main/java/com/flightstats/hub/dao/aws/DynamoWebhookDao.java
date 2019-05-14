@@ -7,17 +7,14 @@ import com.amazonaws.services.dynamodbv2.model.GetItemResult;
 import com.amazonaws.services.dynamodbv2.model.ResourceNotFoundException;
 import com.amazonaws.services.dynamodbv2.model.ScanRequest;
 import com.amazonaws.services.dynamodbv2.model.ScanResult;
-import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.config.AppProperties;
 import com.flightstats.hub.config.DynamoProperties;
 import com.flightstats.hub.config.WebhookProperties;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.webhook.Webhook;
-import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -28,35 +25,16 @@ import java.util.Map;
 public class DynamoWebhookDao implements Dao<Webhook> {
 
     private final AmazonDynamoDB dbClient;
-    private final DynamoUtils dynamoUtils;
     private final DynamoProperties dynamoProperties;
-    private final AppProperties appProperties;
     private final WebhookProperties webhookProperties;
 
     @Inject
     public DynamoWebhookDao(AmazonDynamoDB dbClient,
-                            DynamoUtils dynamoUtils,
                             DynamoProperties dynamoProperties,
-                            AppProperties appProperties,
                             WebhookProperties webhookProperties) {
         this.dbClient = dbClient;
-        this.dynamoUtils = dynamoUtils;
         this.dynamoProperties = dynamoProperties;
-        this.appProperties = appProperties;
         this.webhookProperties = webhookProperties;
-        HubServices.register(new DynamoGroupDaoInit());
-    }
-
-    private void initialize() {
-        if (appProperties.isReadOnly()) {
-            if (!dynamoUtils.doesTableExist(getTableName())) {
-                String msg = String.format("Probably fatal error. Dynamo webhook config table doesn't exist for r/o node.  %s", getTableName());
-                log.error(msg);
-                throw new IllegalArgumentException(msg);
-            }
-            return;
-        }
-        dynamoUtils.createAndUpdate(getTableName(), "webhook", "name");
     }
 
     @Override
@@ -84,7 +62,7 @@ public class DynamoWebhookDao implements Dao<Webhook> {
         if (!StringUtils.isEmpty(webhook.getManagedByTag())) {
             item.put("tag", new AttributeValue(webhook.getManagedByTag()));
         }
-        dbClient.putItem(getTableName(), item);
+        dbClient.putItem(dynamoProperties.getWebhookConfigTableName(), item);
     }
 
     @Override
@@ -92,7 +70,7 @@ public class DynamoWebhookDao implements Dao<Webhook> {
         HashMap<String, AttributeValue> keyMap = new HashMap<>();
         keyMap.put("name", new AttributeValue(name));
         try {
-            GetItemResult result = dbClient.getItem(getTableName(), keyMap, true);
+            GetItemResult result = dbClient.getItem(dynamoProperties.getWebhookConfigTableName(), keyMap, true);
             if (result.getItem() == null) {
                 return null;
             }
@@ -151,12 +129,12 @@ public class DynamoWebhookDao implements Dao<Webhook> {
     public Collection<Webhook> getAll(boolean useCache) {
         List<Webhook> configurations = new ArrayList<>();
 
-        ScanResult result = dbClient.scan(new ScanRequest(getTableName()).withConsistentRead(true));
+        ScanResult result = dbClient.scan(new ScanRequest(dynamoProperties.getWebhookConfigTableName()).withConsistentRead(true));
         mapItems(configurations, result);
 
         while (result.getLastEvaluatedKey() != null) {
-            new ScanRequest(getTableName()).setExclusiveStartKey(result.getLastEvaluatedKey());
-            result = dbClient.scan(new ScanRequest(getTableName()));
+            new ScanRequest(dynamoProperties.getWebhookConfigTableName()).setExclusiveStartKey(result.getLastEvaluatedKey());
+            result = dbClient.scan(new ScanRequest(dynamoProperties.getWebhookConfigTableName()));
             mapItems(configurations, result);
         }
 
@@ -173,22 +151,7 @@ public class DynamoWebhookDao implements Dao<Webhook> {
     public void delete(String name) {
         Map<String, AttributeValue> key = new HashMap<>();
         key.put("name", new AttributeValue(name));
-        dbClient.deleteItem(new DeleteItemRequest(getTableName(), key));
+        dbClient.deleteItem(new DeleteItemRequest(dynamoProperties.getWebhookConfigTableName(), key));
     }
 
-    private String getTableName() {
-        final String legacyTableName = dynamoUtils.getLegacyTableName("GroupConfig");
-        return dynamoProperties.getWebhookConfigTableName(legacyTableName);
-    }
-
-    private class DynamoGroupDaoInit extends AbstractIdleService {
-        @Override
-        protected void startUp() {
-            initialize();
-        }
-
-        @Override
-        protected void shutDown() {
-        }
-    }
 }

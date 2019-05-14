@@ -5,10 +5,28 @@ import javax.inject.Inject;
 public class DynamoProperties {
 
     private final PropertiesLoader propertiesLoader;
+    private final AppProperties appProperties;
 
     @Inject
-    public DynamoProperties(PropertiesLoader propertiesLoader) {
+    public DynamoProperties(PropertiesLoader propertiesLoader, AppProperties appProperties) {
         this.propertiesLoader = propertiesLoader;
+        this.appProperties = appProperties;
+    }
+
+    private String getLegacyChannelTableName() {
+        return appProperties.getAppName() + "-" + appProperties.getEnv() + "-" + "channelMetaData";
+    }
+
+    private String getLegacyWebhookTableName() {
+        return appProperties.getAppName() + "-" + appProperties.getEnv() + "-" + "GroupConfig";
+    }
+
+    public String getWebhookConfigTableName(){
+        return this.propertiesLoader.getProperty("dynamo.table_name.webhook_configs", getLegacyWebhookTableName());
+    }
+
+    public String getChannelConfigTableName(){
+        return this.propertiesLoader.getProperty("dynamo.table_name.channel_configs", getLegacyChannelTableName());
     }
 
     public String getEndpoint() {
@@ -37,14 +55,6 @@ public class DynamoProperties {
 
     public int getSocketTimeout() {
         return this.propertiesLoader.getProperty("dynamo.socketTimeout", 30 * 1000);
-    }
-
-    public String getWebhookConfigTableName(String legacyTableName){
-        return this.propertiesLoader.getProperty("dynamo.table_name.webhook_configs", legacyTableName);
-    }
-
-    public String getChannelConfigTableName(String legacyTableName){
-        return this.propertiesLoader.getProperty("dynamo.table_name.channel_configs", legacyTableName);
     }
 
 }

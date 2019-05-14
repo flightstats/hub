@@ -8,9 +8,12 @@ import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.test.Integration;
 import com.google.inject.Injector;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.io.ByteArrayInputStream;
 import java.util.Collection;
@@ -23,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
+@Execution(ExecutionMode.SAME_THREAD)
 class HubUtilsTest {
 
     private static final String HUT_TEST = "test_0_HubUtilsTest" + StringUtils.randomAlphaNumeric(6);
@@ -63,6 +67,7 @@ class HubUtilsTest {
         assertArrayEquals(data.getBytes(), gotContent.getData());
     }
 
+    @SneakyThrows
     private ContentKey insertItem(String channelUrl, String data) {
         ByteArrayInputStream stream = new ByteArrayInputStream(data.getBytes());
         Content content = Content.builder()
@@ -145,6 +150,5 @@ class HubUtilsTest {
         log.info("inserted {}", keys);
         log.info("foundKeys {}", foundKeys);
         assertTrue(foundKeys.containsAll(keys));
-
     }
 }

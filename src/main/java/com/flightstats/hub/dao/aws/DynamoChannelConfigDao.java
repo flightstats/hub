@@ -20,6 +20,7 @@ import com.flightstats.hub.config.AppProperties;
 import com.flightstats.hub.config.DynamoProperties;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
@@ -33,25 +34,19 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
 
     private final AmazonDynamoDB dbClient;
-    private final DynamoUtils dynamoUtils;
-    private final AppProperties appProperties;
     private final DynamoProperties dynamoProperties;
 
     @Inject
     public DynamoChannelConfigDao(AmazonDynamoDB dbClient,
-                                  DynamoUtils dynamoUtils,
-                                  AppProperties appProperties,
                                   DynamoProperties dynamoProperties) {
         this.dbClient = dbClient;
-        this.dynamoUtils = dynamoUtils;
-        this.appProperties = appProperties;
         this.dynamoProperties = dynamoProperties;
-        HubServices.register(new DynamoChannelConfigurationDaoInit());
     }
 
     @Override
@@ -85,40 +80,9 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
             item.put("storage", new AttributeValue(config.getStorage()));
         }
         PutItemRequest putItemRequest = new PutItemRequest()
-                .withTableName(getTableName())
+                .withTableName(dynamoProperties.getChannelConfigTableName())
                 .withItem(item);
         dbClient.putItem(putItemRequest);
-    }
-
-    void initialize() {
-        String tableName = getTableName();
-        ProvisionedThroughput throughput = dynamoUtils.getProvisionedThroughput("channel");
-
-        if (!dynamoUtils.doesTableExist(tableName)) {
-            if (appProperties.isReadOnly()) {
-                String msg = String.format("Probably fatal error. Dynamo channel config table doesn't exist for r/o node.  %s", tableName);
-                log.error(msg);
-                throw new IllegalArgumentException(msg);
-            } else {
-                createTable(tableName, throughput);
-            }
-        } else if (!appProperties.isReadOnly()) {
-            dynamoUtils.updateTable(tableName, throughput);
-        }
-
-    }
-
-    private void createTable(String tableName, ProvisionedThroughput throughput) {
-        log.info("creating table {} ", tableName);
-        List<AttributeDefinition> attributes = new ArrayList<>();
-        attributes.add(new AttributeDefinition("key", ScalarAttributeType.S));
-        CreateTableRequest request = new CreateTableRequest()
-                .withTableName(tableName)
-                .withAttributeDefinitions(attributes)
-                .withKeySchema(new KeySchemaElement("key", KeyType.HASH))
-                .withProvisionedThroughput(throughput);
-
-        dynamoUtils.createTable(request);
     }
 
     @Override
@@ -127,62 +91,70 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
         keyMap.put("key", new AttributeValue().withS(name));
         GetItemRequest getItemRequest = new GetItemRequest()
                 .withConsistentRead(true)
-                .withTableName(getTableName())
+                .withTableName(dynamoProperties.getChannelConfigTableName())
                 .withKey(keyMap);
         try {
             GetItemResult result = dbClient.getItem(getItemRequest);
             if (result.getItem() == null) {
                 return null;
             }
-            return mapItem(result.getItem());
+            return mapItem(result.getItem())
+                    .orElseThrow(() -> new ResourceNotFoundException("Unable to read channel config from dynamo " + name));
         } catch (ResourceNotFoundException e) {
             log.info("channel not found " + e.getMessage());
             return null;
         }
     }
 
-    private ChannelConfig mapItem(Map<String, AttributeValue> item) {
-        ChannelConfig.ChannelConfigBuilder builder = ChannelConfig.builder()
-                .creationDate(new Date(Long.parseLong(item.get("date").getN())))
-                .name(item.get("key").getS())
-                .displayName(item.get("displayName").getS());
-        if (item.get("ttlDays") != null) {
-            builder.ttlDays(Long.parseLong(item.get("ttlDays").getN()));
+    @VisibleForTesting
+    Optional<ChannelConfig> mapItem(Map<String, AttributeValue> item) {
+        ChannelConfig cfg = null;
+        try {
+            ChannelConfig.ChannelConfigBuilder builder = ChannelConfig.builder()
+                    .creationDate(new Date(Long.parseLong(item.get("date").getN())))
+                    .name(item.get("key").getS())
+                    .displayName(item.get("displayName").getS());
+            if (item.get("ttlDays") != null) {
+                builder.ttlDays(Long.parseLong(item.get("ttlDays").getN()));
+            }
+            if (item.get("keepForever") != null) {
+                builder.keepForever(item.get("keepForever").getBOOL());
+            }
+            if (item.containsKey("description")) {
+                builder.description(item.get("description").getS());
+            }
+            if (item.containsKey("tags")) {
+                builder.tags(item.get("tags").getSS());
+            }
+            if (item.containsKey("replicationSource")) {
+                builder.replicationSource(item.get("replicationSource").getS());
+            }
+            if (item.get("maxItems") != null) {
+                builder.maxItems(Long.parseLong(item.get("maxItems").getN()));
+            }
+            if (item.containsKey("owner")) {
+                builder.owner(item.get("owner").getS());
+            }
+            if (item.containsKey("storage")) {
+                builder.storage(item.get("storage").getS());
+            }
+            if (item.containsKey("protect")) {
+                builder.protect(item.get("protect").getBOOL());
+            }
+            if (item.containsKey("allowZeroBytes")) {
+                builder.allowZeroBytes(item.get("allowZeroBytes").getBOOL());
+            }
+            if (item.containsKey("secondaryMetricsReporting")) {
+                builder.secondaryMetricsReporting(item.get("secondaryMetricsReporting").getBOOL());
+            }
+            if (item.containsKey("mutableTime")) {
+                builder.mutableTime(new DateTime(Long.parseLong(item.get("mutableTime").getN()), DateTimeZone.UTC));
+            }
+            cfg = builder.build();
+        } catch (Exception e) {
+            log.warn("Unable to map channel {} {}", item.get("key"), e.getMessage());
         }
-        if (item.get("keepForever") != null) {
-            builder.keepForever(item.get("keepForever").getBOOL());
-        }
-        if (item.containsKey("description")) {
-            builder.description(item.get("description").getS());
-        }
-        if (item.containsKey("tags")) {
-            builder.tags(item.get("tags").getSS());
-        }
-        if (item.containsKey("replicationSource")) {
-            builder.replicationSource(item.get("replicationSource").getS());
-        }
-        if (item.get("maxItems") != null) {
-            builder.maxItems(Long.parseLong(item.get("maxItems").getN()));
-        }
-        if (item.containsKey("owner")) {
-            builder.owner(item.get("owner").getS());
-        }
-        if (item.containsKey("storage")) {
-            builder.storage(item.get("storage").getS());
-        }
-        if (item.containsKey("protect")) {
-            builder.protect(item.get("protect").getBOOL());
-        }
-        if (item.containsKey("allowZeroBytes")) {
-            builder.allowZeroBytes(item.get("allowZeroBytes").getBOOL());
-        }
-        if (item.containsKey("secondaryMetricsReporting")) {
-            builder.secondaryMetricsReporting(item.get("secondaryMetricsReporting").getBOOL());
-        }
-        if (item.containsKey("mutableTime")) {
-            builder.mutableTime(new DateTime(Long.parseLong(item.get("mutableTime").getN()), DateTimeZone.UTC));
-        }
-        return builder.build();
+        return Optional.ofNullable(cfg);
     }
 
     @Override
@@ -190,7 +162,7 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
         List<ChannelConfig> configurations = new ArrayList<>();
         ScanRequest scanRequest = new ScanRequest()
                 .withConsistentRead(true)
-                .withTableName(getTableName());
+                .withTableName(dynamoProperties.getChannelConfigTableName());
 
         ScanResult result = dbClient.scan(scanRequest);
         mapItems(configurations, result);
@@ -205,32 +177,16 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
     }
 
     private void mapItems(List<ChannelConfig> configurations, ScanResult result) {
-        for (Map<String, AttributeValue> item : result.getItems()) {
-            configurations.add(mapItem(item));
-        }
+        result.getItems().forEach(
+                item -> mapItem(item).ifPresent(configurations::add)
+        );
     }
 
     @Override
     public void delete(String name) {
         Map<String, AttributeValue> key = new HashMap<>();
         key.put("key", new AttributeValue().withS(name));
-        dbClient.deleteItem(new DeleteItemRequest(getTableName(), key));
+        dbClient.deleteItem(new DeleteItemRequest(dynamoProperties.getChannelConfigTableName(), key));
     }
 
-    private String getTableName() {
-        String legacyTableName = dynamoUtils.getLegacyTableName("channelMetaData");
-        return dynamoProperties.getChannelConfigTableName(legacyTableName);
-    }
-
-    private class DynamoChannelConfigurationDaoInit extends AbstractIdleService {
-        @Override
-        protected void startUp() throws Exception {
-            initialize();
-        }
-
-        @Override
-        protected void shutDown() {
-        }
-
-    }
 }

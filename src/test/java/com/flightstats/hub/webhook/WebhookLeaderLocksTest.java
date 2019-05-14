@@ -8,6 +8,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.util.List;
 import java.util.Set;
@@ -21,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
 @Slf4j
+@Execution(ExecutionMode.SAME_THREAD)
 class WebhookLeaderLocksTest {
     private static final String WEBHOOK_LEADER_PATH = "/WebhookLeader";
 
@@ -36,9 +39,7 @@ class WebhookLeaderLocksTest {
     private static SafeZooKeeperUtils zooKeeperUtils;
 
     void createPath() throws Exception {
-        if (curator.checkExists().forPath(WEBHOOK_LEADER_PATH) == null) {
-            curator.create().creatingParentsIfNeeded().forPath(WEBHOOK_LEADER_PATH);
-        }
+        curator.create().creatingParentsIfNeeded().forPath(WEBHOOK_LEADER_PATH);
     }
 
     void deletePath() throws Exception {

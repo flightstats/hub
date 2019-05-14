@@ -17,6 +17,8 @@ import org.joda.time.DateTimeZone;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -31,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@Execution(ExecutionMode.SAME_THREAD)
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class WebhookStateReaperTest {
@@ -158,7 +161,7 @@ class WebhookStateReaperTest {
     }
 
     @Test
-    public void testDoesNothingIfLeadershipDisabled() throws Exception {
+    void testDoesNothingIfLeadershipDisabled() throws Exception {
         when(webhookProperties.isWebhookLeadershipEnabled()).thenReturn(false);
         // GIVEN
         addLastCompleted(webhookName);
