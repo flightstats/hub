@@ -38,9 +38,9 @@ public class DynamoWebhookDaoLifecycle extends AbstractIdleService {
                 log.error(msg);
                 throw new IllegalArgumentException(msg);
             }
-            return;
+        } else {
+            dynamoUtils.createAndUpdate(dynamoProperties.getWebhookConfigTableName(), "webhook", "name");
         }
-        dynamoUtils.createAndUpdate(dynamoProperties.getWebhookConfigTableName(), "webhook", "name");
     }
 
 }
