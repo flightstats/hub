@@ -42,8 +42,10 @@ class DynamoChannelConfigDaoTest {
 
     private static final Logger logger = LoggerFactory.getLogger(DynamoChannelConfigDaoTest.class);
     private static DynamoChannelConfigDao channelConfigDao;
-    @Mock private AmazonDynamoDB dbClient;
-    @Mock private DynamoProperties dynamoProperties;
+    @Mock
+    private AmazonDynamoDB dbClient;
+    @Mock
+    private DynamoProperties dynamoProperties;
     private DynamoChannelConfigDao mockedDao;
 
     @BeforeAll
