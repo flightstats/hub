@@ -10,7 +10,7 @@ CONFIG_DIR=/etc/hub
 # LOG_DIR also exists in logback.xml
 LOG_DIR=/mnt/log
 DEBUG_PORT=3333
-HOST_IP=${HUB_RMI_HOST_IP:=disabled.host.for.rmi}
+HOST_IP=${HUB_RMI_HOST_IP:=localhost}
 JMXREMOTE_PORT=8888
 
 # extract the port from hub.properties
