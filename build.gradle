@@ -52,11 +52,15 @@ task nasTest(type: Test) {
 test {
     useJUnitPlatform()
     testLogging {
-        events "passed", "skipped", "failed"
+        events "failed"
     }
 }
 
 task systemTest(type: Test, description: 'Runs the system tests.', group: 'Verification') {
+    useJUnitPlatform()
+    testLogging {
+        events "failed"
+    }
     testClassesDirs = sourceSets.systemTest.output.classesDirs
     classpath = sourceSets.systemTest.runtimeClasspath
     mustRunAfter tasks.test
