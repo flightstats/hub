@@ -13,7 +13,7 @@ import java.util.Optional;
 
 public interface ContentService {
 
-    static Optional<ContentKey> chooseLatest(Collection<ContentKey> contentKeys, DirectionQuery query) {
+    static Optional<ContentKey> chooseLatest(Collection<ContentKey> contentKeys) {
         if (contentKeys.isEmpty()) {
             return Optional.empty();
         }
