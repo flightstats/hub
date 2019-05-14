@@ -41,18 +41,19 @@ public class DynamoChannelConfigDaoLifecycle extends AbstractIdleService {
         String tableName = dynamoProperties.getChannelConfigTableName();
         ProvisionedThroughput throughput = dynamoUtils.getProvisionedThroughput("channel");
 
-        if (!dynamoUtils.doesTableExist(tableName)) {
-            if (appProperties.isReadOnly()) {
+        if (appProperties.isReadOnly()) {
+            if (!dynamoUtils.doesTableExist(tableName)) {
                 String msg = String.format("Probably fatal error. Dynamo channel config table doesn't exist for r/o node.  %s", tableName);
                 log.error(msg);
                 throw new IllegalArgumentException(msg);
-            } else {
-                createTable(tableName, throughput);
             }
-        } else if (!appProperties.isReadOnly()){
-            dynamoUtils.updateTable(tableName, throughput);
+        } else {
+            if (!dynamoUtils.doesTableExist(tableName)) {
+                createTable(tableName, throughput);
+            } else {
+                dynamoUtils.updateTable(tableName, throughput);
+            }
         }
-
     }
 
     private void createTable(String tableName, ProvisionedThroughput throughput) {
