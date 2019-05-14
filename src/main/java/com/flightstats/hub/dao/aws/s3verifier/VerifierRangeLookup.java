@@ -32,7 +32,7 @@ public class VerifierRangeLookup {
 
     public VerifierRange getSingleVerifierRange(DateTime now, ChannelConfig channelConfig) {
         MinutePath spokeTtlTime = getSpokeTtlPath(now);
-        now = channelService.getLastUpdated(channelConfig.getDisplayName(), new MinutePath(now)).getTime();
+        now = channelService.adjustLastUpdatePathIfReplicating(channelConfig.getDisplayName(), new MinutePath(now)).getTime();
         DateTime start = now.minusMinutes(1);
         MinutePath endPath = new MinutePath(start);
         MinutePath defaultStart = new MinutePath(start.minusMinutes(verifierConfig.getOffsetMinutes()));
