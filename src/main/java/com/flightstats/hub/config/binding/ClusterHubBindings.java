@@ -38,7 +38,6 @@ import com.flightstats.hub.metrics.PeriodicMetricEmitter;
 import com.flightstats.hub.metrics.PeriodicMetricEmitterLifecycle;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.LargeContentUtils;
-import com.flightstats.hub.spoke.SpokeTtlEnforcer;
 import com.flightstats.hub.webhook.Webhook;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -63,12 +62,10 @@ public class ClusterHubBindings extends AbstractModule {
         bind(AppUrlCheck.class).asEagerSingleton();
 
         bind(SpokeDecommissionManager.class).asEagerSingleton();
-        bind(SpokeTtlEnforcer.class);
 
         bind(PeriodicMetricEmitter.class).asEagerSingleton();
         bind(PeriodicMetricEmitterLifecycle.class).asEagerSingleton();
 
-        bind(S3WriteQueue.class);
         bind(S3Config.class).asEagerSingleton();
         bind(S3WriteQueueLifecycle.class).asEagerSingleton();
         bind(S3BatchManager.class).asEagerSingleton();
