@@ -8,7 +8,6 @@ import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.util.FileUtils;
 import com.flightstats.hub.util.TimeUtil;
-import com.google.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 
@@ -20,7 +19,6 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@Singleton
 @Slf4j
 public class SpokeTtlEnforcer {
 

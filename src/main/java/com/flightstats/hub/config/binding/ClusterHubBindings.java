@@ -63,7 +63,7 @@ public class ClusterHubBindings extends AbstractModule {
         bind(AppUrlCheck.class).asEagerSingleton();
 
         bind(SpokeDecommissionManager.class).asEagerSingleton();
-        bind(SpokeTtlEnforcer.class).asEagerSingleton();
+        bind(SpokeTtlEnforcer.class);
 
         bind(PeriodicMetricEmitter.class).asEagerSingleton();
         bind(PeriodicMetricEmitterLifecycle.class).asEagerSingleton();
