@@ -361,36 +361,6 @@ public class ClusterContentService implements ContentService {
         }
     }
 
-    /*
-    So ultimately this is a performance optimization:
-            * always check all write spokes for the latest key
-            * if present, use it and clear cache
-            * if not present
-                * check for a cached key
-                * if present, use it
-                * if not present
-                    * fetch and cache the latest key from S3
-
-    Unfortunately, this means that
-            * recently written-to channels never benefit from the cache
-            * /latest calls ALWAYS poll the entire cluster to see if a newer entry has been written
-            * channels with latest items on S3
-
-    Change #1
-    Service update could just do the S3 scan and could occur from just one node.
-    ...OR we could just let the first read for a latest take longer and avoid the periodic scan cost.
-
-    Change #2
-    We could cache the spoke entries as well, so we have "updateLatestContentCache" and "getLatestContent" as separate paths.
-    ...where get is get-if-exists-else-update-then-get.
-
-    How does stability affect this?
-            * if we're looking for stable, we want what's been written to a majority of the cluster
-            * if we're okay with unstable, we'll accept something if it's on any spoke member
-            * this is accomplished by a 5s fudge factor after writes
-    Currently, all getLatestIm
-
-     */
     private Optional<ContentKey> getLatestImmutable(DirectionQuery latestQuery) {
         String channel = latestQuery.getChannelName();
 
@@ -585,15 +555,6 @@ public class ClusterContentService implements ContentService {
         protected synchronized void runOneIteration() {
             log.debug("running...");
             ActiveTraces.start("ChannelLatestUpdatedService");
-            // For every channel:
-            //      Get the latest immutable entry in the channel (with a stable()+1m fudge factor)
-            //      Which incidentally (and critically...it's the only reason this svc exists)
-            //      updates the ZK pointer to
-            //          the latest record in S3 (if it's old enough that it can't be on the spokes)
-            //          or blanks it out if the latest is sitting in the spoke cluster
-            //          or sets it to NONE if no entries are in the spoke cluster or S3
-            // Presumably this is a performance optimization, expecting that anyone wanting the latest will hit the get() code and trigger a refresh anyway.
-            // This doesn't actually move anything off the node-specific spoke, so it only really needs one runner cluster-wide.
             channelService.getChannels().forEach(channelConfig -> {
                 try {
                     DateTime time = TimeUtil.stable().plusMinutes(1);
