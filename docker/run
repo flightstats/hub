@@ -40,7 +40,7 @@ JAVA_OPTS="
  -Dsun.rmi.dgc.server.gcInterval=300000
  -agentlib:jdwp=transport=dt_socket,address=$DEBUG_PORT,server=y,suspend=n
  -Djboss.platform.mbeanserver
- -Dcom.sun.management.jmxremote
+ -Dcom.sun.management.jmxremote=true
  -Dcom.sun.management.jmxremote.local.only=false
  -Djava.rmi.server.hostname=$HOST_IP
  -Dcom.sun.management.jmxremote.port=$JMXREMOTE_PORT
