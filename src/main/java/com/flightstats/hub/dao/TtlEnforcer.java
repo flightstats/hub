@@ -22,7 +22,7 @@ public class TtlEnforcer {
             Iterable<ChannelConfig> channels = channelService.getChannels();
             Set<String> channelSet = new HashSet<>();
             for (ChannelConfig channel : channels) {
-                channelSet.add(channel.getDisplayName());
+                channelSet.add(channel.getLowerCaseName());
                 channelConsumer.accept(channel);
             }
             dirSet.removeAll(channelSet);
