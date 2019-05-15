@@ -113,7 +113,7 @@ public class ChannelService {
         if (newConfig.isHistorical()) {
             if (oldConfig == null || !oldConfig.isHistorical()) {
                 ContentKey lastKey = ContentKey.lastKey(newConfig.getMutableTime());
-                clusterStateDao.update(lastKey, newConfig.getDisplayName(), HISTORICAL_EARLIEST);
+                clusterStateDao.set(lastKey, newConfig.getDisplayName(), HISTORICAL_EARLIEST);
             }
         }
         contentService.notify(newConfig, oldConfig);

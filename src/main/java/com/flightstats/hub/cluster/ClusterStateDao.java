@@ -93,7 +93,7 @@ public class ClusterStateDao {
                 trace(name, "update {}", name);
                 MostRecentData existing = getMostRecentData(path);
                 if (compare.apply(existing)) {
-                    if (setValueForExistingVersion(path, nextPath, existing)) {
+                    if (setValue(path, nextPath, existing)) {
                         trace(name, "update set {} next {} existing {}", name, nextPath, existing);
                         return;
                     }
@@ -116,11 +116,11 @@ public class ClusterStateDao {
         }
     }
 
-    public void update(ContentPath nextPath, String name, String basePath) {
+    public void set(ContentPath nextPath, String name, String basePath) {
         String path = basePath + name;
         try {
             MostRecentData existing = getMostRecentData(path);
-            setValueForExistingVersion(path, nextPath, existing);
+            setValue(path, nextPath, existing);
             trace(path, "update {} next {} existing{}", path, nextPath, existing);
         } catch (KeeperException.NoNodeException e) {
             log.info("values does not exist, creating {}", path);
@@ -130,7 +130,7 @@ public class ClusterStateDao {
         }
     }
 
-    private boolean setValueForExistingVersion(String path, ContentPath nextPath, MostRecentData existing) {
+    private boolean setValue(String path, ContentPath nextPath, MostRecentData existing) {
         try {
             curator.setData()
                     .withVersion(existing.getVersion())

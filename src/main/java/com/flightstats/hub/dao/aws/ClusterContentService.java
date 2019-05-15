@@ -393,7 +393,7 @@ public class ClusterContentService implements ContentService {
         if (latestCache != null) {
             // TODO: Inconsistent read.  This uses a value it considers stale, but guarantees subsequent reads will not use it.
             if (latestCache.getTime().isBefore(channelTtlTime)) {
-                clusterStateDao.update(ContentKey.NONE, channel, LAST_COMMITTED_CONTENT_KEY);
+                clusterStateDao.set(ContentKey.NONE, channel, LAST_COMMITTED_CONTENT_KEY);
             }
             ActiveTraces.getLocal().add("found cached latest", channel, latestCache);
             if (latestCache.equals(ContentKey.NONE)) {
@@ -425,7 +425,7 @@ public class ClusterContentService implements ContentService {
                 clusterStateDao.delete(channel, LAST_COMMITTED_CONTENT_KEY);
             } else {
                 ActiveTraces.getLocal().add("updating cache with latestKey {} {}", channel, latestKey);
-                clusterStateDao.update(latestKey, channel, LAST_COMMITTED_CONTENT_KEY);
+                clusterStateDao.set(latestKey, channel, LAST_COMMITTED_CONTENT_KEY);
             }
             return Optional.of(latestKey);
         }
