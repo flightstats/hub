@@ -408,7 +408,6 @@ public class ClusterContentService implements ContentService {
     }
 
     private Optional<ContentKey> findAndCacheLatestKey(DirectionQuery latestQuery, String channel, DateTime spokeTtlTime) {
-        // If we haven't already found the latest on the WRITE cluster or in ZK's latest content path.
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
                 .startKey(latestQuery.getStartKey())
@@ -418,23 +417,18 @@ public class ClusterContentService implements ContentService {
                 .location(latestQuery.getLocation())
                 .count(1)
                 .build();
-        // Find all keys in the channel after the given start key.
         Collection<ContentKey> keys = channelService.query(query);
         if (keys.isEmpty()) {
-            // Mark the channel as empty IFF there's nothing in it.
             ActiveTraces.getLocal().add("updating channel empty", channel);
             clusterStateDao.setIfAfter(ContentKey.NONE, channel, LAST_COMMITTED_CONTENT_KEY);
             return Optional.empty();
         } else {
-            // If we find something.
             ContentKey latestKey = keys.iterator().next();
             if (latestKey.getTime().isAfter(spokeTtlTime)) {
                 ActiveTraces.getLocal().add("latestKey within spoke window {} {}", channel, latestKey);
-                // Ensure the path is deleted if it's within the spoke's TTL time, because spoke could get a new entry at any minute.
                 clusterStateDao.delete(channel, LAST_COMMITTED_CONTENT_KEY);
             } else {
                 ActiveTraces.getLocal().add("updating cache with latestKey {} {}", channel, latestKey);
-                // Otherwise set the path to this key.
                 clusterStateDao.update(latestKey, channel, LAST_COMMITTED_CONTENT_KEY);
             }
             return Optional.of(latestKey);
@@ -513,7 +507,7 @@ public class ClusterContentService implements ContentService {
                     .build();
             Optional<ContentKey> mutableLatest = getLatest(query);
             ActiveTraces.getLocal().log(log);
-            if (mutableLatest.isPresent()) {  // TODO: This "knows" that mutable entries are written directly to S3.  If one was sitting in spoke, this ZK state would be set incorrectly.
+            if (mutableLatest.isPresent()) {
                 ContentKey mutableKey = mutableLatest.get();
                 if (mutableKey.getTime().isAfter(newConfig.getMutableTime())) {
                     log.info("handleMutableTimeChange.updateIncrease {}", mutableKey);
