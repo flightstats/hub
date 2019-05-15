@@ -95,9 +95,6 @@ public class ClusterContentService implements ContentService {
                             ContentProperties contentProperties,
                             SpokeProperties spokeProperties) {
         HubServices.registerPreStop(new SpokeS3ContentServiceInit());
-        if (contentProperties.isChannelProtectionSvcEnabled() || contentProperties.isLatestUpdateServiceEnabled()) {
-            HubServices.register(new ChannelLatestUpdatedService(contentProperties), HubServices.TYPE.AFTER_HEALTHY_START);
-        }
         this.channelService = channelService;
         this.spokeWriteContentDao = spokeWriteContentDao;
         this.spokeReadContentDao = spokeReadContentDao;
@@ -363,7 +360,6 @@ public class ClusterContentService implements ContentService {
 
     private Optional<ContentKey> getLatestImmutable(DirectionQuery latestQuery) {
         String channel = latestQuery.getChannelName();
-
         Optional<ChannelConfig> optionalChannelConfig = channelService.getCachedChannelConfig(channel);
         if (!optionalChannelConfig.isPresent()) return Optional.empty();
 
@@ -535,48 +531,6 @@ public class ClusterContentService implements ContentService {
         protected void shutDown() {
             //do nothing
         }
-    }
-
-    private class ChannelLatestUpdatedService extends AbstractScheduledService {
-
-        private ContentProperties contentProperties;
-
-        public ChannelLatestUpdatedService(ContentProperties contentProperties){
-            this.contentProperties = contentProperties;
-        }
-
-        @Override
-        protected synchronized void runOneIteration() {
-            log.debug("running...");
-            ActiveTraces.start("ChannelLatestUpdatedService");
-            channelService.getChannels().forEach(channelConfig -> {
-                try {
-                    DateTime time = TimeUtil.stable().plusMinutes(1);
-                    Traces traces = new Traces(contentProperties, channelConfig.getDisplayName(), time);
-                    DirectionQuery latestQuery = DirectionQuery.builder()
-                            .channelName(channelConfig.getDisplayName())
-                            .next(false)
-                            .stable(false)
-                            .location(Location.ALL)
-                            .epoch(Epoch.IMMUTABLE)
-                            .startKey(ContentKey.lastKey(time))
-                            .count(1)
-                            .build();
-                    Optional<ContentKey> latest = getLatest(latestQuery);
-                    log.debug("latest updated {} {}", channelConfig.getDisplayName(), latest);
-                    traces.log(log);
-                } catch (Exception e) {
-                    log.warn("unexpected ChannelLatestUpdatedService issue " + channelConfig.getDisplayName(), e);
-                }
-            });
-            ActiveTraces.end();
-        }
-
-        @Override
-        protected Scheduler scheduler() {
-            return Scheduler.newFixedDelaySchedule(2, 59, TimeUnit.MINUTES);
-        }
-
     }
 
 }
