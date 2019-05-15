@@ -2,16 +2,17 @@ package com.flightstats.hub.dao.aws;
 
 import com.flightstats.hub.config.DynamoProperties;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.inject.Inject;
+
 @Slf4j
-public class DynamoChannelConfigDaoLifecycle extends AbstractIdleService {
+public class DynamoWebhookExistenceCheckLifecycle extends AbstractIdleService {
     private final DynamoUtils dynamoUtils;
     private final DynamoProperties dynamoProperties;
 
     @Inject
-    public DynamoChannelConfigDaoLifecycle(DynamoUtils dynamoUtils, DynamoProperties dynamoProperties) {
+    public DynamoWebhookExistenceCheckLifecycle(DynamoUtils dynamoUtils, DynamoProperties dynamoProperties) {
         this.dynamoUtils = dynamoUtils;
         this.dynamoProperties = dynamoProperties;
     }
@@ -25,11 +26,11 @@ public class DynamoChannelConfigDaoLifecycle extends AbstractIdleService {
     protected void shutDown() {
     }
 
-    void initialize() {
-        String tableName = dynamoProperties.getChannelConfigTableName();
-
-        if (!dynamoUtils.doesTableExist(tableName)) {
-            String msg = String.format("Dynamo channel config table doesn't exist.  %s", tableName);
+    private void initialize() {
+        if (!dynamoUtils.doesTableExist(dynamoProperties.getWebhookConfigTableName())) {
+            String msg = String.format(
+                    "Dynamo webhook config table doesn't exist.  %s",
+                    dynamoProperties.getWebhookConfigTableName());
             log.error(msg);
             throw new IllegalArgumentException(msg);
         }

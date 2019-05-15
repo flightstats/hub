@@ -10,8 +10,8 @@ import com.flightstats.hub.config.binding.ClusterHubBindings;
 import com.flightstats.hub.config.binding.HubBindings;
 import com.flightstats.hub.config.binding.PropertiesBinding;
 import com.flightstats.hub.config.binding.SingleHubBindings;
-import com.flightstats.hub.dao.aws.DynamoChannelConfigDaoLifecycle;
-import com.flightstats.hub.dao.aws.DynamoWebhookDaoLifecycle;
+import com.flightstats.hub.dao.aws.DynamoChannelConfigExistenceCheckLifecycle;
+import com.flightstats.hub.dao.aws.DynamoWebhookExistenceCheckLifecycle;
 import com.flightstats.hub.dao.aws.S3WriteQueueLifecycle;
 import com.flightstats.hub.filter.CORSFilter;
 import com.flightstats.hub.filter.StreamEncodingFilter;
@@ -187,8 +187,8 @@ public class HubMain {
                 services.add(injector.getInstance(S3WriteQueueLifecycle.class));
             }
             services.addAll(createInstanceList(injector,
-                    DynamoChannelConfigDaoLifecycle.class,
-                    DynamoWebhookDaoLifecycle.class));
+                    DynamoChannelConfigExistenceCheckLifecycle.class,
+                    DynamoWebhookExistenceCheckLifecycle.class));
         }
 
         if (spokeProperties.isTtlEnforced()) {
