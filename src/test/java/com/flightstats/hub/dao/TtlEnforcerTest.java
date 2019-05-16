@@ -31,7 +31,6 @@ class TtlEnforcerTest {
     @Mock
     private ChannelService channelService;
 
-    private String path;
     private Consumer<ChannelConfig> callback = config -> {
     };
     private String uniqueParentPath;
@@ -40,10 +39,10 @@ class TtlEnforcerTest {
         return Optional.ofNullable(spokePath.list()).orElse(new String[] {});
     }
 
-    private boolean createMockSpokeFiles(String... fileNames) {
+    private boolean createMockSpokeFiles(Path tempDir, String... fileNames) {
         return Stream.of(fileNames).allMatch(str -> {
             try {
-                return new File(path + "/" + uniqueParentPath + "/" + str).createNewFile();
+                return new File(tempDir.toRealPath().toString() + "/" + uniqueParentPath + "/" + str).createNewFile();
             } catch (Exception e) {
                 log.error("error adding files to spoke path {}", e);
                 return false;
@@ -54,7 +53,7 @@ class TtlEnforcerTest {
     @SneakyThrows
     private File spokeDirectoryFactory(Path tempDir) {
         uniqueParentPath = StringUtils.randomAlphaNumeric(4);
-        path = tempDir.toRealPath().toString();
+        String path = tempDir.toRealPath().toString();
         File spokePath = new File(path + "/" + uniqueParentPath);
 
         return spokePath.mkdir() ? spokePath : spokePath;
@@ -70,7 +69,7 @@ class TtlEnforcerTest {
     void enforce_deletesFiles_affirmThreeFilesDeleted(@TempDir Path tempDir) {
         File spokePath = spokeDirectoryFactory(tempDir);
         assertEquals(0, getSpokePathDirs(spokePath).length);
-        assertTrue(createMockSpokeFiles("a", "b", "c", "lost+found"));
+        assertTrue(createMockSpokeFiles(tempDir, "a", "b", "c", "lost+found"));
         assertEquals(4, getSpokePathDirs(spokePath).length);
         TtlEnforcer.enforce(spokePath.getPath(), channelService, callback);
         assertEquals(1, getSpokePathDirs(spokePath).length);
@@ -80,7 +79,7 @@ class TtlEnforcerTest {
     void enforce_deletesUpperCaseFiles_affirmTwoFilesDeleted(@TempDir Path tempDir) {
         File spokePath = spokeDirectoryFactory(tempDir);
         assertEquals(0, getSpokePathDirs(spokePath).length);
-        assertTrue(createMockSpokeFiles("BacA", "aCaB", "lost+found"));
+        assertTrue(createMockSpokeFiles(tempDir, "BacA", "aCaB", "lost+found"));
         assertEquals(3, getSpokePathDirs(spokePath).length);
         TtlEnforcer.enforce(spokePath.getPath(), channelService, callback);
         assertEquals(1, getSpokePathDirs(spokePath).length);
@@ -103,7 +102,7 @@ class TtlEnforcerTest {
         when(channelService.getChannels()).thenReturn(Arrays.asList(channelConfig1, channelConfig2));
 
         // THEN
-        assertTrue(createMockSpokeFiles(names[0], names[1], "lost+found"));
+        assertTrue(createMockSpokeFiles(tempDir, names[0], names[1], "lost+found"));
         assertEquals(3, getSpokePathDirs(spokePath).length);
         TtlEnforcer.enforce(spokePath.getPath(), channelService, callback);
         assertEquals(3, getSpokePathDirs(spokePath).length);
