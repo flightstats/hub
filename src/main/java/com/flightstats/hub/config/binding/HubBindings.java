@@ -244,8 +244,8 @@ public class HubBindings extends AbstractModule {
     @Named(WRITE_CACHE)
     @Provides
     @Singleton
-    public ContentDao contentDao(ClusterWriteSpoke writeSpoke, SpokeChronologyStore chronoStore, SpokeProperties spokeProperties, LatestContentCache lastCache) {
-        return new SpokeWriteContentDao(writeSpoke, chronoStore, spokeProperties, lastCache);
+    public ContentDao contentDao(ClusterWriteSpoke writeSpoke, SpokeChronologyStore chronoStore, SpokeProperties spokeProperties) {
+        return new SpokeWriteContentDao(writeSpoke, chronoStore, spokeProperties);
     }
 
     @Named(READ_CACHE)

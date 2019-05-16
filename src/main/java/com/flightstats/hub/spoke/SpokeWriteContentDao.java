@@ -1,6 +1,5 @@
 package com.flightstats.hub.spoke;
 
-import com.flightstats.hub.cluster.LatestContentCache;
 import com.flightstats.hub.config.SpokeProperties;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentKeyUtil;
@@ -35,7 +34,6 @@ import java.util.TreeSet;
 public class SpokeWriteContentDao implements ContentDao {
 
     private final SpokeProperties spokeProperties;
-    private final LatestContentCache latestContentCache;
     private ClusterWriteSpoke clusterWriteSpoke;
     private SpokeChronologyStore chronoStore;
 
@@ -43,12 +41,10 @@ public class SpokeWriteContentDao implements ContentDao {
     public SpokeWriteContentDao(
             ClusterWriteSpoke clusterWriteSpoke,
             SpokeChronologyStore chronoStore,
-            SpokeProperties spokeProperties,
-            LatestContentCache latestContentCache) {
+            SpokeProperties spokeProperties) {
         this.clusterWriteSpoke = clusterWriteSpoke;
         this.chronoStore = chronoStore;
         this.spokeProperties = spokeProperties;
-        this.latestContentCache = latestContentCache;
     }
 
     @Override
@@ -58,7 +54,6 @@ public class SpokeWriteContentDao implements ContentDao {
         if (!clusterWriteSpoke.insertToWriteCluster(path, content.getData(), "payload", channelName)) {
             throw new FailedWriteException("unable to write to spoke " + path);
         }
-        latestContentCache.setIfAfter(channelName, key);
         return key;
     }
 
@@ -68,7 +63,6 @@ public class SpokeWriteContentDao implements ContentDao {
             String channel = bulkContent.getChannel();
             return clusterWriteSpoke.insertToWriteCluster(channel, baos.toByteArray(), "bulkKey", channel);
         });
-        latestContentCache.setIfAfter(bulkContent.getChannel(), keys.last());
         return keys;
     }
 
@@ -201,7 +195,6 @@ public class SpokeWriteContentDao implements ContentDao {
     public void delete(String channelName) {
         try {
             clusterWriteSpoke.deleteFromWriteCluster(channelName);
-            latestContentCache.deleteCache(channelName);
         } catch (Exception e) {
             log.warn("unable to delete " + channelName, e);
         }

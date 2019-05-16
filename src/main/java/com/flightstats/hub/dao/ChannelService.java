@@ -272,7 +272,7 @@ public class ChannelService {
         ContentKey stableKey = new ContentKey(TimeUtil.stable());
         DateTime time;
         if (stable) {
-            time = TimeUtil.now();
+            time = stableKey.getTime();
         } else if (!isLiveChannel(channelName)) {
             time = adjustLastUpdatePathIfReplicating(channelName, stableKey).getTime();
         } else {

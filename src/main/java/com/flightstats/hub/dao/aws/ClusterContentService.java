@@ -148,6 +148,7 @@ public class ClusterContentService implements ContentService {
             spokeContent = largeContentUtils.createIndex(content);
         }
         ContentKey key = spokeWriteContentDao.insert(channelName, spokeContent);
+        latestContentCache.setIfAfter(channelName, key);
         if (isWriteable(channelName)) {
             s3SingleWrite(channelName, key);
         }
@@ -345,6 +346,7 @@ public class ClusterContentService implements ContentService {
 
     @Override
     public Optional<ContentKey> getLatest(DirectionQuery query) {
+        // Why are these different?  MUTABLE knows it only has to look at S3, but should the logic be different, or just the daos used in the query later?
         switch (query.getEpoch()) {
             case IMMUTABLE:
                 return getLatestImmutable(query);
@@ -385,7 +387,7 @@ public class ClusterContentService implements ContentService {
 
 
     Cache needs to know about both the spoke and the s3 DAOs as sources for latest items and that it should use spoke first, then S3.
-
+    That means it's really a concept applied at this level that shouldn't be in the spokeWriteDao.  WriteSpoke shouldn't know about caching.
 
      */
     private Optional<ContentKey> getLatestImmutable(DirectionQuery latestQuery) {
