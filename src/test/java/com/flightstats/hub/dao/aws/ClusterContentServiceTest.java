@@ -1,6 +1,7 @@
 package com.flightstats.hub.dao.aws;
 
 import com.flightstats.hub.cluster.ClusterStateDao;
+import com.flightstats.hub.cluster.LatestContentCache;
 import com.flightstats.hub.config.AppProperties;
 import com.flightstats.hub.config.ContentProperties;
 import com.flightstats.hub.config.SpokeProperties;
@@ -52,6 +53,8 @@ class ClusterContentServiceTest {
     @Mock
     private ContentDao mockS3BatchDao;
     @Mock
+    private LatestContentCache latestContentCache;
+    @Mock
     private S3WriteQueue s3WriteQueue;
     @Mock
     private ChannelConfig channelConfig;
@@ -79,6 +82,7 @@ class ClusterContentServiceTest {
                 channelSvc,
                 mockSpokeWriteDao, mockSpokeReadDao,
                 mockS3SingleDao, mockS3LargeDao, mockS3BatchDao,
+                latestContentCache,
                 s3WriteQueue, clusterStateDao, hubUtils,
                 largeContentUtils, appProperties, contentProperties, spokeProperties);
     }
