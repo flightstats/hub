@@ -16,6 +16,7 @@ import java.util.stream.Stream;
 @Slf4j
 public class TtlEnforcer {
 
+    private static final String LOST_AND_FOUND_DIR = "lost+found";
     private final Commander commander;
 
     @Inject
@@ -24,9 +25,9 @@ public class TtlEnforcer {
     }
 
     public void enforce(String path, ChannelService channelService,
-                               Consumer<ChannelConfig> channelConsumer) {
+                        Consumer<ChannelConfig> channelConsumer) {
         try {
-            String[] pathArray = Optional.ofNullable(new File(path).list()).orElse(new String[] {});
+            String[] pathArray = Optional.ofNullable(new File(path).list()).orElse(new String[]{});
             Collection<ChannelConfig> channels = channelService.getChannels();
             channels.forEach(channelConsumer);
             Set<String> channelSet = channels.stream()
@@ -34,11 +35,11 @@ public class TtlEnforcer {
                     .collect(Collectors.toSet());
             Stream.of(pathArray)
                     .map(String::toLowerCase)
-                    .filter(channel -> !channelSet.contains(channel.toLowerCase()) && !channel.equals("lost+found"))
+                    .filter(channel -> !channelSet.contains(channel.toLowerCase()) && !channel.equals(LOST_AND_FOUND_DIR))
                     .forEach(dir -> {
                         String dirPath = path + "/" + dir;
                         log.info("removing dir without channel {}", dirPath);
-                        commander.runInBash("rm " +  " -rf " +  dirPath, 1);
+                        commander.runInBash("rm " + " -rf " + dirPath, 1);
                     });
         } catch (Exception e) {
             log.warn("unable to run " + path, e);

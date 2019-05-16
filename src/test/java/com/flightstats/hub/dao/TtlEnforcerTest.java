@@ -30,6 +30,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
 class TtlEnforcerTest {
+    // verify each time that the enforcer ignores this file
+    private static final String LOST_AND_FOUND_DIR = "lost+found";
 
     @Mock
     private ChannelService channelService;
@@ -65,7 +67,7 @@ class TtlEnforcerTest {
     @Test
     void enforce_deletesFiles_affirmThreeFilesDeleted(@TempDir File spoke) {
         assertEquals(0, getSpokePathList(spoke).length);
-        assertTrue(createMockSpokeFiles(spoke, "a", "b", "c", "lost+found"));
+        assertTrue(createMockSpokeFiles(spoke, "a", "b", "c", LOST_AND_FOUND_DIR));
         ttlEnforcer.enforce(spoke.getPath(), channelService, callback);
         verify(commander, times(3)).runInBash(anyString(), anyInt());
     }
@@ -73,7 +75,7 @@ class TtlEnforcerTest {
     @Test
     void enforce_deletesUpperCaseFiles_affirmTwoFilesDeleted(@TempDir File spoke) {
         assertEquals(0, getSpokePathList(spoke).length);
-        assertTrue(createMockSpokeFiles(spoke, "BacA", "aCaB", "lost+found"));
+        assertTrue(createMockSpokeFiles(spoke, "BacA", "aCaB", LOST_AND_FOUND_DIR));
         ttlEnforcer.enforce(spoke.getPath(), channelService, callback);
         verify(commander, times(2)).runInBash(anyString(), anyInt());
     }
@@ -94,7 +96,7 @@ class TtlEnforcerTest {
         when(channelService.getChannels()).thenReturn(Arrays.asList(channelConfig1, channelConfig2));
 
         // THEN
-        assertTrue(createMockSpokeFiles(spoke, names[0], names[1], "lost+found"));
+        assertTrue(createMockSpokeFiles(spoke, names[0], names[1], LOST_AND_FOUND_DIR));
         ttlEnforcer.enforce(spoke.getPath(), channelService, callback);
         verify(commander, never()).runInBash(anyString(), anyInt());
     }
