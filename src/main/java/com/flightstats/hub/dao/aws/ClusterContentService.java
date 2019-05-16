@@ -383,8 +383,12 @@ public class ClusterContentService implements ContentService {
 
     That way we could just say, if you want STABLE, hit ZK and crawl if missing, and if you want UNSTABLE just skip ZK.
 
+
+    Cache needs to know about both the spoke and the s3 DAOs as sources for latest items and that it should use spoke first, then S3.
+
+
      */
-    private Optional<ContentKey> getDamonLatestImmutable(DirectionQuery latestQuery) {
+    private Optional<ContentKey> getLatestImmutable(DirectionQuery latestQuery) {
         String channel = latestQuery.getChannelName();
         Optional<ChannelConfig> optionalChannelConfig = channelService.getCachedChannelConfig(channel);
         if (!channelService.getCachedChannelConfig(channel).isPresent()) {
@@ -397,61 +401,7 @@ public class ClusterContentService implements ContentService {
             return cachedKey;
         }
 
-        // if query.stable and cache hit, use
-        //      if none, return none
-        //      if something, return something
-        // elif, fetch, cache, and use --covers both non-stable and cache miss
-
-        /*
-        String channel = latestQuery.getChannelName();
-        Optional<ChannelConfig> optionalChannelConfig = channelService.getCachedChannelConfig(channel);
-        if (!optionalChannelConfig.isPresent()) return Optional.empty();
-
-        Optional<ContentKey> latestSpokeKey = getLatestKeyFromSpoke(latestQuery, channel);
-        if (latestSpokeKey.isPresent()) {
-            return latestSpokeKey;
-        }
-
-        DateTime channelTtlTime = optionalChannelConfig.get().getTtlTime();
-        Optional<ContentKey> cachedKey = getLatestCachedKeyIfNotExpired(channel, channelTtlTime);
-        if (cachedKey.isPresent()) {
-            return cachedKey;
-        }
-
-        DateTime spokeTtlTime = getSpokeTtlTime(channel);
-        return findAndCacheLatestKey(latestQuery, channel, spokeTtlTime);
-
-         */
-        return Optional.empty();
-    }
-
-    private Optional<ContentKey> getLatestImmutable(DirectionQuery latestQuery) {
-        String channel = latestQuery.getChannelName();
-        Optional<ChannelConfig> optionalChannelConfig = channelService.getCachedChannelConfig(channel);
-        if (!optionalChannelConfig.isPresent()) return Optional.empty();
-
-        Optional<ContentKey> latestSpokeKey = getLatestKeyFromSpoke(latestQuery, channel);
-        if (latestSpokeKey.isPresent()) {
-            return latestSpokeKey;
-        }
-
-        DateTime channelTtlTime = optionalChannelConfig.get().getTtlTime();
-        Optional<ContentKey> cachedKey = getLatestCachedKeyIfNotExpired(channel, channelTtlTime);
-        if (cachedKey.isPresent()) {
-            return cachedKey;
-        }
-
-        DateTime spokeTtlTime = getSpokeTtlTime(channel);
-        return findAndCacheLatestKey(latestQuery, channel, spokeTtlTime);
-   }
-
-    private Optional<ContentKey> getLatestKeyFromSpoke(DirectionQuery latestQuery, String channel) {
-        Optional<ContentKey> latest = spokeWriteContentDao.getLatest(channel, latestQuery.getStartKey(), ActiveTraces.getLocal());
-        if (latest.isPresent()) {
-            ActiveTraces.getLocal().add("found spoke latest", channel, latest);
-            latestContentCache.deleteCache(channel);
-        }
-        return latest;
+        return findAndCacheLatestKey(latestQuery, channel);
     }
 
     private Optional<ContentKey> getLatestCachedKeyIfNotExpired(String channel, DateTime channelTtlTime) {
@@ -460,8 +410,8 @@ public class ClusterContentService implements ContentService {
         if (latestCache != null) {
             // TODO: Inconsistent read.  This uses a value it considers stale, but guarantees subsequent reads will not use it.
             if (latestCache.getTime().isBefore(channelTtlTime)) {
-                latestContentCache.setLatest(channel, ContentKey.NONE);
-            }  // if the newest thing (latest) is expired, then the channel is now empty
+                latestContentCache.setLatest(channel, ContentKey.NONE);   // if the newest thing (latest) is expired, then the channel is now empty
+            }
             ActiveTraces.getLocal().add("found cached latest", channel, latestCache);
             if (latestCache.equals(ContentKey.NONE)) {
                 return Optional.empty();
@@ -470,7 +420,7 @@ public class ClusterContentService implements ContentService {
         return Optional.ofNullable((ContentKey) latestCache);
     }
 
-    private Optional<ContentKey> findAndCacheLatestKey(DirectionQuery latestQuery, String channel, DateTime spokeTtlTime) {
+    private Optional<ContentKey> findAndCacheLatestKey(DirectionQuery latestQuery, String channel) {
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
                 .startKey(latestQuery.getStartKey())
@@ -487,13 +437,8 @@ public class ClusterContentService implements ContentService {
             return Optional.empty();
         } else {
             ContentKey latestKey = keys.iterator().next();
-            if (latestKey.getTime().isAfter(spokeTtlTime)) {
-                ActiveTraces.getLocal().add("latestKey within spoke window {} {}", channel, latestKey);
-                latestContentCache.deleteCache(channel);
-            } else {
-                ActiveTraces.getLocal().add("updating cache with latestKey {} {}", channel, latestKey);
-                latestContentCache.setLatest(channel, latestKey);
-            }
+            ActiveTraces.getLocal().add("updating cache with latestKey {} {}", channel, latestKey);
+            latestContentCache.setIfAfter(channel, latestKey);
             return Optional.of(latestKey);
         }
     }

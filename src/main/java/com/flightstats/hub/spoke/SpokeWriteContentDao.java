@@ -1,5 +1,6 @@
 package com.flightstats.hub.spoke;
 
+import com.flightstats.hub.cluster.LatestContentCache;
 import com.flightstats.hub.config.SpokeProperties;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentKeyUtil;
@@ -34,20 +35,20 @@ import java.util.TreeSet;
 public class SpokeWriteContentDao implements ContentDao {
 
     private final SpokeProperties spokeProperties;
-
-    @Inject
+    private final LatestContentCache latestContentCache;
     private ClusterWriteSpoke clusterWriteSpoke;
-    @Inject
     private SpokeChronologyStore chronoStore;
 
     @Inject
     public SpokeWriteContentDao(
             ClusterWriteSpoke clusterWriteSpoke,
             SpokeChronologyStore chronoStore,
-            SpokeProperties spokeProperties) {
+            SpokeProperties spokeProperties,
+            LatestContentCache latestContentCache) {
         this.clusterWriteSpoke = clusterWriteSpoke;
         this.chronoStore = chronoStore;
         this.spokeProperties = spokeProperties;
+        this.latestContentCache = latestContentCache;
     }
 
     @Override
@@ -57,15 +58,18 @@ public class SpokeWriteContentDao implements ContentDao {
         if (!clusterWriteSpoke.insertToWriteCluster(path, content.getData(), "payload", channelName)) {
             throw new FailedWriteException("unable to write to spoke " + path);
         }
+        latestContentCache.setIfAfter(channelName, key);
         return key;
     }
 
     @Override
     public SortedSet<ContentKey> insert(BulkContent bulkContent) throws Exception {
-        return SpokeContentDao.insert(bulkContent, (baos) -> {
+        SortedSet<ContentKey> keys = SpokeContentDao.insert(bulkContent, (baos) -> {
             String channel = bulkContent.getChannel();
             return clusterWriteSpoke.insertToWriteCluster(channel, baos.toByteArray(), "bulkKey", channel);
         });
+        latestContentCache.setIfAfter(bulkContent.getChannel(), keys.last());
+        return keys;
     }
 
     private String getPath(String channelName, ContentKey key) {
@@ -92,14 +96,15 @@ public class SpokeWriteContentDao implements ContentDao {
         String path = getPath(channel, limitKey);
         log.trace("latest {} {}", channel, path);
         traces.add("SpokeWriteContentDao.latest", channel, path);
+        Optional<ContentKey> key;
         try {
-            Optional<ContentKey> key = chronoStore.getLatestFromCluster(channel, path, traces);
+            key = chronoStore.getLatestFromCluster(channel, path, traces);
             traces.add("SpokeWriteContentDao.latest", key);
-            return key;
         } catch (Exception e) {
             log.warn("what happened? " + channel, e);
+            key = Optional.empty();
         }
-        return Optional.empty();
+        return key;
     }
 
     @Override
@@ -196,6 +201,7 @@ public class SpokeWriteContentDao implements ContentDao {
     public void delete(String channelName) {
         try {
             clusterWriteSpoke.deleteFromWriteCluster(channelName);
+            latestContentCache.deleteCache(channelName);
         } catch (Exception e) {
             log.warn("unable to delete " + channelName, e);
         }

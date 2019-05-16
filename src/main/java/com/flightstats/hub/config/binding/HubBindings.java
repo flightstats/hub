@@ -18,6 +18,7 @@ import com.flightstats.hub.cluster.CuratorCluster;
 import com.flightstats.hub.cluster.DecommissionCluster;
 import com.flightstats.hub.cluster.HubClusterRegister;
 import com.flightstats.hub.cluster.ClusterStateDao;
+import com.flightstats.hub.cluster.LatestContentCache;
 import com.flightstats.hub.cluster.SpokeDecommissionCluster;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.ZooKeeperState;
@@ -243,8 +244,8 @@ public class HubBindings extends AbstractModule {
     @Named(WRITE_CACHE)
     @Provides
     @Singleton
-    public ContentDao contentDao(ClusterWriteSpoke writeSpoke, SpokeChronologyStore chronoStore, SpokeProperties spokeProperties) {
-        return new SpokeWriteContentDao(writeSpoke, chronoStore, spokeProperties);
+    public ContentDao contentDao(ClusterWriteSpoke writeSpoke, SpokeChronologyStore chronoStore, SpokeProperties spokeProperties, LatestContentCache lastCache) {
+        return new SpokeWriteContentDao(writeSpoke, chronoStore, spokeProperties, lastCache);
     }
 
     @Named(READ_CACHE)
