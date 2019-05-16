@@ -6,6 +6,7 @@ import com.flightstats.hub.dao.TtlEnforcer;
 import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ChannelContentKey;
+import com.flightstats.hub.util.Commander;
 import com.flightstats.hub.util.FileUtils;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Singleton;
@@ -28,6 +29,7 @@ public class SpokeTtlEnforcer {
     private final SpokeContentDao spokeContentDao;
     private final StatsdReporter statsdReporter;
     private final SpokeProperties spokeProperties;
+    private final TtlEnforcer ttlEnforcer;
 
     private SpokeStore spokeStore;
     private String storagePath;
@@ -37,11 +39,13 @@ public class SpokeTtlEnforcer {
     public SpokeTtlEnforcer(ChannelService channelService,
                             SpokeContentDao spokeContentDao,
                             StatsdReporter statsdReporter,
-                            SpokeProperties spokeProperties) {
+                            SpokeProperties spokeProperties,
+                            TtlEnforcer ttlEnforcer) {
         this.channelService = channelService;
         this.spokeContentDao = spokeContentDao;
         this.statsdReporter = statsdReporter;
         this.spokeProperties = spokeProperties;
+        this.ttlEnforcer = ttlEnforcer;
     }
 
     private Consumer<ChannelConfig> handleCleanup(AtomicLong evictionCounter) {
@@ -96,7 +100,7 @@ public class SpokeTtlEnforcer {
             final AtomicLong evictionCounter = new AtomicLong(0);
 
             log.info("running ttl cleanup");
-            TtlEnforcer.enforce(storagePath, channelService, handleCleanup(evictionCounter));
+            ttlEnforcer.enforce(storagePath, channelService, handleCleanup(evictionCounter));
             updateOldestItemMetric();
             statsdReporter.gauge(buildMetricName("evicted"), evictionCounter.get());
 

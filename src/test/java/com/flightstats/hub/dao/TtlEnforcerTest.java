@@ -1,8 +1,7 @@
 package com.flightstats.hub.dao;
 
 import com.flightstats.hub.model.ChannelConfig;
-import com.flightstats.hub.util.StringUtils;
-import lombok.SneakyThrows;
+import com.flightstats.hub.util.Commander;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,6 +14,11 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -29,12 +33,16 @@ class TtlEnforcerTest {
 
     @Mock
     private ChannelService channelService;
+    @Mock
+    private Commander commander;
+
+    private TtlEnforcer ttlEnforcer;
 
     private final Consumer<ChannelConfig> callback = config -> {
     };
 
-    private String[] getSpokePathList(File spokePath) {
-        return Optional.ofNullable(spokePath.list()).orElse(new String[] {});
+    private String[] getSpokePathList(File spoke) {
+        return Optional.ofNullable(spoke.list()).orElse(new String[] {});
     }
 
     private boolean createMockSpokeFiles(File dir, String... fileNames) {
@@ -48,45 +56,32 @@ class TtlEnforcerTest {
         });
     }
 
-    @SneakyThrows
-    private File createUniqueParentDir(File tempDir) {
-        String uniqueParentPath = StringUtils.randomAlphaNumeric(4);
-        File spokePath = new File(tempDir.getPath() + "/" + uniqueParentPath);
-        spokePath.mkdir();
-        return spokePath;
-    }
-
     @BeforeEach
-    @SneakyThrows
     void setup() {
         initMocks(this);
+        ttlEnforcer = new TtlEnforcer(commander);
     }
 
     @Test
-    void enforce_deletesFiles_affirmThreeFilesDeleted(@TempDir File tempDir) {
-        File spokePath = createUniqueParentDir(tempDir);
-        assertEquals(0, getSpokePathList(spokePath).length);
-        assertTrue(createMockSpokeFiles(spokePath, "a", "b", "c", "lost+found"));
-        assertEquals(4, getSpokePathList(spokePath).length);
-        TtlEnforcer.enforce(spokePath.getPath(), channelService, callback);
-        assertEquals(1, getSpokePathList(spokePath).length);
+    void enforce_deletesFiles_affirmThreeFilesDeleted(@TempDir File spoke) {
+        assertEquals(0, getSpokePathList(spoke).length);
+        assertTrue(createMockSpokeFiles(spoke, "a", "b", "c", "lost+found"));
+        ttlEnforcer.enforce(spoke.getPath(), channelService, callback);
+        verify(commander, times(3)).runInBash(anyString(), anyInt());
     }
 
     @Test
-    void enforce_deletesUpperCaseFiles_affirmTwoFilesDeleted(@TempDir File tempDir) {
-        File spokePath = createUniqueParentDir(tempDir);
-        assertEquals(0, getSpokePathList(spokePath).length);
-        assertTrue(createMockSpokeFiles(spokePath, "BacA", "aCaB", "lost+found"));
-        assertEquals(3, getSpokePathList(spokePath).length);
-        TtlEnforcer.enforce(spokePath.getPath(), channelService, callback);
-        assertEquals(1, getSpokePathList(spokePath).length);
+    void enforce_deletesUpperCaseFiles_affirmTwoFilesDeleted(@TempDir File spoke) {
+        assertEquals(0, getSpokePathList(spoke).length);
+        assertTrue(createMockSpokeFiles(spoke, "BacA", "aCaB", "lost+found"));
+        ttlEnforcer.enforce(spoke.getPath(), channelService, callback);
+        verify(commander, times(2)).runInBash(anyString(), anyInt());
     }
 
     @Test
-    void enforce_ignoresDeleteOfRegisteredFiles_affirmNoFilesDeleted(@TempDir File tempDir) {
+    void enforce_ignoresDeleteOfRegisteredFiles_affirmNoFilesDeleted(@TempDir File spoke) {
         // GIVEN
-        File spokePath = createUniqueParentDir(tempDir);
-        assertEquals(0, getSpokePathList(spokePath).length);
+        assertEquals(0, getSpokePathList(spoke).length);
         String[] names = new String[]{ "AoAo", "CCCp" };
         ChannelConfig channelConfig1 = mock(ChannelConfig.class);
         ChannelConfig channelConfig2 = mock(ChannelConfig.class);
@@ -99,9 +94,8 @@ class TtlEnforcerTest {
         when(channelService.getChannels()).thenReturn(Arrays.asList(channelConfig1, channelConfig2));
 
         // THEN
-        assertTrue(createMockSpokeFiles(spokePath, names[0], names[1], "lost+found"));
-        assertEquals(3, getSpokePathList(spokePath).length);
-        TtlEnforcer.enforce(spokePath.getPath(), channelService, callback);
-        assertEquals(3, getSpokePathList(spokePath).length);
+        assertTrue(createMockSpokeFiles(spoke, names[0], names[1], "lost+found"));
+        ttlEnforcer.enforce(spoke.getPath(), channelService, callback);
+        verify(commander, never()).runInBash(anyString(), anyInt());
     }
 }
