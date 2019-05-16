@@ -2,6 +2,7 @@ package com.flightstats.hub.dao.aws;
 
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.ClusterStateDao;
+import com.flightstats.hub.cluster.LatestContentCache;
 import com.flightstats.hub.config.AppProperties;
 import com.flightstats.hub.config.ContentProperties;
 import com.flightstats.hub.config.SpokeProperties;
@@ -35,7 +36,6 @@ import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -61,8 +61,6 @@ import java.util.function.Function;
 @Slf4j
 public class ClusterContentService implements ContentService {
 
-    /** The latest item on the channel that is older than stable time, older than spoke's TTL, and younger than the channel's TTL. i.e. the "cached" latest */
-    private static final String LAST_COMMITTED_CONTENT_KEY = "/ChannelLatestUpdated/";
     private static final ExecutorService executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("ClusterContentService-%d").build());
 
     private final ContentDao spokeWriteContentDao;
@@ -70,6 +68,7 @@ public class ClusterContentService implements ContentService {
     private final ContentDao spokeReadContentDao;
     private final ContentDao s3BatchContentDao;
     private final ContentDao s3LargePayloadContentDao;
+    private final LatestContentCache latestContentCache;
     private final WriteQueue writeQueue;
     private final ChannelService channelService;
     private final ClusterStateDao clusterStateDao;
@@ -87,6 +86,7 @@ public class ClusterContentService implements ContentService {
                             @Named(ContentDao.SINGLE_LONG_TERM) ContentDao s3SingleContentDao,
                             @Named(ContentDao.LARGE_PAYLOAD) ContentDao s3LargePayloadContentDao,
                             @Named(ContentDao.BATCH_LONG_TERM) ContentDao s3BatchContentDao,
+                            LatestContentCache latestContentCache,
                             WriteQueue writeQueue,
                             ClusterStateDao clusterStateDao,
                             HubUtils hubUtils,
@@ -101,6 +101,7 @@ public class ClusterContentService implements ContentService {
         this.s3SingleContentDao = s3SingleContentDao;
         this.s3LargePayloadContentDao = s3LargePayloadContentDao;
         this.s3BatchContentDao = s3BatchContentDao;
+        this.latestContentCache = latestContentCache;
         this.writeQueue = writeQueue;
         this.clusterStateDao = clusterStateDao;
         this.hubUtils = hubUtils;
@@ -358,6 +359,72 @@ public class ClusterContentService implements ContentService {
         }
     }
 
+    /*
+
+    If we use ZK as a pure cache, what happens?
+
+    On write of a record on any node, we update latest for that channel.
+    If latest does not exist, we use the existing fetch routine and update with the record we get back.
+    We should not apply special meaning to the absence of a path.
+    NONE should be true, only if we've scanned and their is nothing.
+
+    On write in spoke updateIfLaterThanCurrent after quorum write.
+    On read, if latest is present and STABLE, use it.
+    On delete in spoke find latest and cache.
+    On read, if latest is present and UNSTABLE, find latest and cache.
+
+    This means that an it takes less than stable time to get through quorum write and ZK update, STABLE queries might get UNSTABLE data.
+    Who actually cares about STABLE?
+            Does/should anyone?
+            We're either okay with eventual consistency or we want proper consistency,
+                    which Hub does not provide with its 5s aspirational fudge factor.
+
+    Can we avoid even this by ensuring that ZK's state is always past the stable time?
+
+    That way we could just say, if you want STABLE, hit ZK and crawl if missing, and if you want UNSTABLE just skip ZK.
+
+     */
+    private Optional<ContentKey> getDamonLatestImmutable(DirectionQuery latestQuery) {
+        String channel = latestQuery.getChannelName();
+        Optional<ChannelConfig> optionalChannelConfig = channelService.getCachedChannelConfig(channel);
+        if (!channelService.getCachedChannelConfig(channel).isPresent()) {
+            return Optional.empty();
+        }
+
+        DateTime channelTtlTime = optionalChannelConfig.get().getTtlTime();
+        Optional<ContentKey> cachedKey = getLatestCachedKeyIfNotExpired(channel, channelTtlTime);
+        if (cachedKey.isPresent()) {
+            return cachedKey;
+        }
+
+        // if query.stable and cache hit, use
+        //      if none, return none
+        //      if something, return something
+        // elif, fetch, cache, and use --covers both non-stable and cache miss
+
+        /*
+        String channel = latestQuery.getChannelName();
+        Optional<ChannelConfig> optionalChannelConfig = channelService.getCachedChannelConfig(channel);
+        if (!optionalChannelConfig.isPresent()) return Optional.empty();
+
+        Optional<ContentKey> latestSpokeKey = getLatestKeyFromSpoke(latestQuery, channel);
+        if (latestSpokeKey.isPresent()) {
+            return latestSpokeKey;
+        }
+
+        DateTime channelTtlTime = optionalChannelConfig.get().getTtlTime();
+        Optional<ContentKey> cachedKey = getLatestCachedKeyIfNotExpired(channel, channelTtlTime);
+        if (cachedKey.isPresent()) {
+            return cachedKey;
+        }
+
+        DateTime spokeTtlTime = getSpokeTtlTime(channel);
+        return findAndCacheLatestKey(latestQuery, channel, spokeTtlTime);
+
+         */
+        return Optional.empty();
+    }
+
     private Optional<ContentKey> getLatestImmutable(DirectionQuery latestQuery) {
         String channel = latestQuery.getChannelName();
         Optional<ChannelConfig> optionalChannelConfig = channelService.getCachedChannelConfig(channel);
@@ -382,19 +449,19 @@ public class ClusterContentService implements ContentService {
         Optional<ContentKey> latest = spokeWriteContentDao.getLatest(channel, latestQuery.getStartKey(), ActiveTraces.getLocal());
         if (latest.isPresent()) {
             ActiveTraces.getLocal().add("found spoke latest", channel, latest);
-            clusterStateDao.delete(channel, LAST_COMMITTED_CONTENT_KEY);
+            latestContentCache.deleteCache(channel);
         }
         return latest;
     }
 
     private Optional<ContentKey> getLatestCachedKeyIfNotExpired(String channel, DateTime channelTtlTime) {
-        ContentPath latestCache = clusterStateDao.get(channel, null, LAST_COMMITTED_CONTENT_KEY);
+        ContentPath latestCache = latestContentCache.getLatest(channel, null);
         ActiveTraces.getLocal().add("found latestCache", channel, latestCache);
         if (latestCache != null) {
             // TODO: Inconsistent read.  This uses a value it considers stale, but guarantees subsequent reads will not use it.
             if (latestCache.getTime().isBefore(channelTtlTime)) {
-                clusterStateDao.set(ContentKey.NONE, channel, LAST_COMMITTED_CONTENT_KEY);
-            }
+                latestContentCache.setLatest(channel, ContentKey.NONE);
+            }  // if the newest thing (latest) is expired, then the channel is now empty
             ActiveTraces.getLocal().add("found cached latest", channel, latestCache);
             if (latestCache.equals(ContentKey.NONE)) {
                 return Optional.empty();
@@ -416,16 +483,16 @@ public class ClusterContentService implements ContentService {
         Collection<ContentKey> keys = channelService.query(query);
         if (keys.isEmpty()) {
             ActiveTraces.getLocal().add("updating channel empty", channel);
-            clusterStateDao.setIfAfter(ContentKey.NONE, channel, LAST_COMMITTED_CONTENT_KEY);
+            latestContentCache.setIfAfter(channel, ContentKey.NONE);
             return Optional.empty();
         } else {
             ContentKey latestKey = keys.iterator().next();
             if (latestKey.getTime().isAfter(spokeTtlTime)) {
                 ActiveTraces.getLocal().add("latestKey within spoke window {} {}", channel, latestKey);
-                clusterStateDao.delete(channel, LAST_COMMITTED_CONTENT_KEY);
+                latestContentCache.deleteCache(channel);
             } else {
                 ActiveTraces.getLocal().add("updating cache with latestKey {} {}", channel, latestKey);
-                clusterStateDao.set(latestKey, channel, LAST_COMMITTED_CONTENT_KEY);
+                latestContentCache.setLatest(channel, latestKey);
             }
             return Optional.of(latestKey);
         }
@@ -439,7 +506,7 @@ public class ClusterContentService implements ContentService {
         s3SingleContentDao.delete(channelName);
         s3BatchContentDao.delete(channelName);
         s3LargePayloadContentDao.delete(channelName);
-        clusterStateDao.delete(channelName, LAST_COMMITTED_CONTENT_KEY);
+        latestContentCache.deleteCache(channelName);
         clusterStateDao.delete(channelName, S3Verifier.LAST_SINGLE_VERIFIED);
         Optional<ChannelConfig> optionalChannelConfig = channelService.getCachedChannelConfig(channelName);
         if (optionalChannelConfig.isPresent() && !optionalChannelConfig.get().isSingle()) {
@@ -463,7 +530,7 @@ public class ClusterContentService implements ContentService {
     @Override
     public void notify(ChannelConfig newConfig, ChannelConfig oldConfig) {
         if (oldConfig == null) {
-            clusterStateDao.setIfAfter(ContentKey.NONE, newConfig.getDisplayName(), LAST_COMMITTED_CONTENT_KEY);
+            latestContentCache.setLatest(newConfig.getDisplayName(), ContentKey.NONE);
         }
 
         final S3Batch s3Batch = new S3Batch(
@@ -487,7 +554,7 @@ public class ClusterContentService implements ContentService {
     }
 
     private void updateLastEntryPointerToNewlyImmutableEntry(ChannelConfig newConfig, ChannelConfig oldConfig) {
-        ContentPath latestOrNoneIfEmpty = clusterStateDao.get(newConfig.getDisplayName(), ContentKey.NONE, LAST_COMMITTED_CONTENT_KEY);
+        ContentPath latestOrNoneIfEmpty = latestContentCache.getLatest(newConfig.getDisplayName(), ContentKey.NONE);
         log.info("handleMutableTimeChange {}", latestOrNoneIfEmpty);
         if (latestOrNoneIfEmpty.equals(ContentKey.NONE)) {
             DirectionQuery query = DirectionQuery.builder()
@@ -507,7 +574,7 @@ public class ClusterContentService implements ContentService {
                 ContentKey mutableKey = mutableLatest.get();
                 if (mutableKey.getTime().isAfter(newConfig.getMutableTime())) {
                     log.info("handleMutableTimeChange.updateIncrease {}", mutableKey);
-                    clusterStateDao.setIfAfter(mutableKey, newConfig.getDisplayName(), LAST_COMMITTED_CONTENT_KEY);
+                    latestContentCache.setIfAfter(newConfig.getDisplayName(), mutableKey);
                 }
             }
         }
