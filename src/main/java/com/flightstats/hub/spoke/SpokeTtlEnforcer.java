@@ -6,7 +6,6 @@ import com.flightstats.hub.dao.TtlEnforcer;
 import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ChannelContentKey;
-import com.flightstats.hub.util.Commander;
 import com.flightstats.hub.util.FileUtils;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Singleton;

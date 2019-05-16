@@ -3,8 +3,6 @@ package com.flightstats.hub.dao;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.Commander;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.io.File;
