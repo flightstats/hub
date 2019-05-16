@@ -25,21 +25,24 @@ public class SpokeTtlEnforcer {
     private final ChannelService channelService;
     private final SpokeContentDao spokeContentDao;
     private final StatsdReporter statsdReporter;
-    private final SpokeProperties spokeProperties;
 
-    private SpokeStore spokeStore;
-    private String storagePath;
-    private int ttlMinutes;
+    private final SpokeStore spokeStore;
+    private final String storagePath;
+    private final int ttlMinutes;
 
     @Inject
-    public SpokeTtlEnforcer(ChannelService channelService,
+    public SpokeTtlEnforcer(SpokeStore spokeStore,
+                            ChannelService channelService,
                             SpokeContentDao spokeContentDao,
                             StatsdReporter statsdReporter,
                             SpokeProperties spokeProperties) {
+        this.spokeStore = spokeStore;
         this.channelService = channelService;
         this.spokeContentDao = spokeContentDao;
         this.statsdReporter = statsdReporter;
-        this.spokeProperties = spokeProperties;
+
+        this.storagePath = spokeProperties.getStoragePath();
+        this.ttlMinutes = spokeProperties.getTtlMinutes(spokeStore);
     }
 
     private Consumer<ChannelConfig> handleCleanup(AtomicLong evictionCounter) {
@@ -80,16 +83,8 @@ public class SpokeTtlEnforcer {
         return stream.collect(Collectors.joining("."));
     }
 
-    private void initSpokeStore(SpokeStore spokeStore) {
-        this.spokeStore = spokeStore;
-        this.storagePath = spokeProperties.getPath(spokeStore);
-        this.ttlMinutes = spokeProperties.getTtlMinutes(spokeStore) + 1;
-    }
-
-    void cleanup(SpokeStore spokeStore) {
+    void cleanup() {
         try {
-            initSpokeStore(spokeStore);
-
             final long start = System.currentTimeMillis();
             final AtomicLong evictionCounter = new AtomicLong(0);
 
