@@ -7,8 +7,10 @@ import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.cluster.SpokeDecommissionManager;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.SpokeProperties;
 import com.flightstats.hub.dao.CachedDao;
 import com.flightstats.hub.dao.CachedLowerCaseDao;
+import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentService;
 import com.flightstats.hub.dao.Dao;
@@ -36,8 +38,12 @@ import com.flightstats.hub.dao.aws.writeQueue.NoOpWriteQueue;
 import com.flightstats.hub.dao.aws.writeQueue.WriteQueue;
 import com.flightstats.hub.metrics.PeriodicMetricEmitter;
 import com.flightstats.hub.metrics.PeriodicMetricEmitterLifecycle;
+import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.LargeContentUtils;
+import com.flightstats.hub.spoke.SpokeContentDao;
+import com.flightstats.hub.spoke.SpokeStore;
+import com.flightstats.hub.spoke.SpokeTtlEnforcer;
 import com.flightstats.hub.webhook.Webhook;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -74,6 +80,24 @@ public class ClusterHubBindings extends AbstractModule {
         bind(S3AccessMonitor.class).asEagerSingleton();
         bind(HubS3Client.class).asEagerSingleton();
         bind(S3DocumentationDao.class).asEagerSingleton();
+    }
+
+    @Named("READ")
+    @Provides
+    public static SpokeTtlEnforcer spokeTtlEnforcerRead(ChannelService channelService,
+                                                        SpokeContentDao spokeContentDao,
+                                                        StatsdReporter statsdReporter,
+                                                        SpokeProperties spokeProperties) {
+        return new SpokeTtlEnforcer(SpokeStore.READ, channelService, spokeContentDao, statsdReporter, spokeProperties);
+    }
+
+    @Named("WRITE")
+    @Provides
+    public static SpokeTtlEnforcer spokeTtlEnforcerWrite(ChannelService channelService,
+                                                         SpokeContentDao spokeContentDao,
+                                                         StatsdReporter statsdReporter,
+                                                         SpokeProperties spokeProperties) {
+        return new SpokeTtlEnforcer(SpokeStore.WRITE, channelService, spokeContentDao, statsdReporter, spokeProperties);
     }
 
     @Singleton

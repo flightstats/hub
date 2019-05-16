@@ -54,13 +54,11 @@ import com.flightstats.hub.spoke.ReadOnlyClusterSpokeStore;
 import com.flightstats.hub.spoke.SpokeChronologyStore;
 import com.flightstats.hub.spoke.SpokeClusterHealthCheck;
 import com.flightstats.hub.spoke.SpokeClusterRegister;
-import com.flightstats.hub.spoke.SpokeContentDao;
 import com.flightstats.hub.spoke.SpokeFinalCheck;
 import com.flightstats.hub.spoke.SpokeManager;
 import com.flightstats.hub.spoke.SpokeReadContentDao;
 import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.spoke.SpokeStoreConfig;
-import com.flightstats.hub.spoke.SpokeTtlEnforcer;
 import com.flightstats.hub.spoke.SpokeWriteContentDao;
 import com.flightstats.hub.spoke.SpokeWriteStoreConfigProvider;
 import com.flightstats.hub.time.NtpMonitor;
@@ -152,25 +150,6 @@ public class HubBindings extends AbstractModule {
         client.addFilter(new RetryClientFilter(systemProperties));
         return client;
     }
-
-    @Named("READ")
-    @Provides
-    public static SpokeTtlEnforcer spokeTtlEnforcerRead(ChannelService channelService,
-                                                        SpokeContentDao spokeContentDao,
-                                                        StatsdReporter statsdReporter,
-                                                        SpokeProperties spokeProperties) {
-        return new SpokeTtlEnforcer(SpokeStore.READ, channelService, spokeContentDao, statsdReporter, spokeProperties);
-    }
-
-    @Named("WRITE")
-    @Provides
-    public static SpokeTtlEnforcer spokeTtlEnforcerWrite(ChannelService channelService,
-                                                         SpokeContentDao spokeContentDao,
-                                                         StatsdReporter statsdReporter,
-                                                         SpokeProperties spokeProperties) {
-        return new SpokeTtlEnforcer(SpokeStore.WRITE, channelService, spokeContentDao, statsdReporter, spokeProperties);
-    }
-
 
     @Named("HubCluster")
     @Singleton
