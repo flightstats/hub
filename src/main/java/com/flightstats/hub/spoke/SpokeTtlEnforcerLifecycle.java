@@ -10,16 +10,13 @@ public class SpokeTtlEnforcerLifecycle extends AbstractScheduledService {
 
     private SpokeTtlEnforcer spokeTtlEnforcer;
 
-    private SpokeStore spokeStore;
-
-    public SpokeTtlEnforcerLifecycle(SpokeStore spokeStore, SpokeTtlEnforcer spokeTtlEnforcer) {
-        this.spokeStore = spokeStore;
+    public SpokeTtlEnforcerLifecycle(SpokeTtlEnforcer spokeTtlEnforcer) {
         this.spokeTtlEnforcer = spokeTtlEnforcer;
     }
 
     @Override
     protected void runOneIteration() {
-        this.spokeTtlEnforcer.cleanup(spokeStore);
+        this.spokeTtlEnforcer.cleanup();
     }
 
     @Override
