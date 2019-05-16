@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
-import static com.flightstats.hub.util.Constants.CLUSTER_DESCRIPTION;
+import static com.flightstats.hub.constant.InternalResourceDescription.CLUSTER_DESCRIPTION;
 
 @Path("/internal/cluster")
 public class InternalClusterResource {

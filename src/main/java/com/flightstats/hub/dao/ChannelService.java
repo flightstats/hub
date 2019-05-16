@@ -12,7 +12,6 @@ import com.flightstats.hub.exception.ForbiddenRequestException;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.exception.MethodNotAllowedException;
 import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.metrics.ChannelType;
 import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.BulkContent;
@@ -36,9 +35,13 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Optional;
 
-import static com.flightstats.hub.util.Constants.HISTORICAL_EARLIEST;
-import static com.flightstats.hub.util.Constants.REPLICATED_LAST_UPDATED;
-import static com.flightstats.hub.util.Constants.REPLICATOR_WATCHER_PATH;
+import static com.flightstats.hub.constant.ZookeeperNodes.HISTORICAL_EARLIEST;
+import static com.flightstats.hub.constant.ZookeeperNodes.REPLICATED_LAST_UPDATED;
+import static com.flightstats.hub.constant.ZookeeperNodes.REPLICATOR_WATCHER_PATH;
+
+import static com.flightstats.hub.metrics.ChannelMetricTag.BULK;
+import static com.flightstats.hub.metrics.ChannelMetricTag.HISTORICAL;
+import static com.flightstats.hub.metrics.ChannelMetricTag.SINGLE;
 
 @Singleton
 @Slf4j
@@ -127,7 +130,7 @@ public class ChannelService {
         }
         final long start = System.currentTimeMillis();
         final ContentKey contentKey = insertInternal(channelName, content);
-        statsdReporter.insert(channelName, start, ChannelType.SINGLE, 1, content.getSize());
+        statsdReporter.insert(channelName, start, SINGLE, 1, content.getSize());
         return contentKey;
     }
 
@@ -181,7 +184,7 @@ public class ChannelService {
             return contentService.historicalInsert(normalizedChannelName, content);
         });
         lastContentPath.updateDecrease(contentKey, normalizedChannelName, HISTORICAL_EARLIEST);
-        statsdReporter.insert(normalizedChannelName, start, ChannelType.HISTORICAL, 1, content.getSize());
+        statsdReporter.insert(normalizedChannelName, start, HISTORICAL, 1, content.getSize());
         return insert;
     }
 
@@ -203,7 +206,7 @@ public class ChannelService {
             multiPartParser.parse();
             return contentService.insert(bulkContent);
         });
-        statsdReporter.insert(channel, start, ChannelType.BULK, bulkContent.getItems().size(), bulkContent.getSize());
+        statsdReporter.insert(channel, start, BULK, bulkContent.getItems().size(), bulkContent.getSize());
         return contentKeys;
     }
 
@@ -307,7 +310,7 @@ public class ChannelService {
         return Optional.ofNullable(channelConfigDao.get(channelName));
     }
 
-    public Optional<ChannelConfig> getCachedChannelConfig(String channelName) {
+    private Optional<ChannelConfig> getCachedChannelConfig(String channelName) {
         ChannelConfig channelConfig = channelConfigDao.getCached(channelName);
         return Optional.ofNullable(channelConfig);
     }
@@ -316,7 +319,7 @@ public class ChannelService {
         watchManager.notifyWatcher(REPLICATOR_WATCHER_PATH);
     }
 
-    public boolean refresh(){
+    public boolean refresh() {
         return this.channelConfigDao.refresh();
     }
 

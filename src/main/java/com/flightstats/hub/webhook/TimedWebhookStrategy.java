@@ -38,7 +38,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import static com.flightstats.hub.util.Constants.WEBHOOK_LAST_COMPLETED;
+import static com.flightstats.hub.constant.ZookeeperNodes.WEBHOOK_LAST_COMPLETED;
 
 @Slf4j
 class TimedWebhookStrategy implements WebhookStrategy {

@@ -6,6 +6,8 @@ import com.flightstats.hub.webhook.Webhook;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.lang3.StringUtils;
 
+import static com.flightstats.hub.model.WebhookType.MINUTE;
+
 public class S3Batch {
 
     @VisibleForTesting
@@ -47,7 +49,7 @@ public class S3Batch {
                 .parallelCalls(2)
                 .ttlMinutes(TTL_MINUTES)
                 .maxAttempts(MAX_ATTEMPTS)
-                .batch(Webhook.MINUTE)
+                .batch(MINUTE.name())
                 .build();
     }
 

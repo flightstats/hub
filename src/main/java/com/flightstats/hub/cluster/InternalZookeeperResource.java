@@ -25,7 +25,7 @@ import javax.ws.rs.core.UriInfo;
 import java.util.Collections;
 import java.util.List;
 
-import static com.flightstats.hub.util.Constants.ZOOKEEPER_DESCRIPTION;
+import static com.flightstats.hub.constant.InternalResourceDescription.ZOOKEEPER_DESCRIPTION;
 
 @Slf4j
 @Path("/internal/zookeeper/")

@@ -5,8 +5,9 @@ import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.MinutePath;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 
@@ -16,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@ExtendWith(MockitoExtension.class)
 class WebhookTest {
 
     private static final int CALLBACK_TIMEOUT_DEFAULT_IN_SEC = 120;
@@ -25,7 +27,6 @@ class WebhookTest {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.initMocks(this);
         webhook = Webhook.builder()
                 .channelUrl("url").callbackUrl("end").build();
     }

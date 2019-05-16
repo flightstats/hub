@@ -30,6 +30,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.SortedSet;
 
+import static com.flightstats.hub.model.WebhookType.MINUTE;
+import static com.flightstats.hub.model.WebhookType.SECOND;
+
 @Builder
 @Getter
 @ToString
@@ -38,9 +41,6 @@ import java.util.SortedSet;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class Webhook implements Comparable<Webhook>, NamedType {
 
-    public static final String SINGLE = "SINGLE";
-    public static final String MINUTE = "MINUTE";
-    public static final String SECOND = "SECOND";
     private static final ObjectMapper mapper = new ObjectMapper();
     private static final Gson gson = new GsonBuilder().create();
     private final String callbackUrl;
@@ -261,11 +261,11 @@ public class Webhook implements Comparable<Webhook>, NamedType {
     }
 
     public boolean isMinute() {
-        return MINUTE.equalsIgnoreCase(getBatch());
+        return MINUTE.name().equalsIgnoreCase(getBatch());
     }
 
     public boolean isSecond() {
-        return SECOND.equalsIgnoreCase(getBatch());
+        return SECOND.name().equalsIgnoreCase(getBatch());
     }
 
     public Integer getTtlMinutes() {

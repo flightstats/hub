@@ -27,7 +27,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
-import static com.flightstats.hub.util.Constants.WEBHOOK_DESCRIPTION;
+import static com.flightstats.hub.constant.InternalResourceDescription.WEBHOOK_DESCRIPTION;
 
 @Path("/internal/webhook")
 @Slf4j

@@ -15,7 +15,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 
-import static com.flightstats.hub.util.Constants.SHUTDOWN_DESCRIPTION;
+import static com.flightstats.hub.constant.InternalResourceDescription.SHUTDOWN_DESCRIPTION;
 
 /**
  * ShutdownResource should only be called from the localhost.

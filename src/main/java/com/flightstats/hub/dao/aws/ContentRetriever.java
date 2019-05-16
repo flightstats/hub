@@ -31,8 +31,8 @@ import java.util.stream.Stream;
 
 import static com.flightstats.hub.dao.ContentKeyUtil.enforceLimits;
 import static com.flightstats.hub.dao.ContentKeyUtil.filter;
-import static com.flightstats.hub.util.Constants.HISTORICAL_EARLIEST;
-import static com.flightstats.hub.util.Constants.REPLICATED_LAST_UPDATED;
+import static com.flightstats.hub.constant.ZookeeperNodes.HISTORICAL_EARLIEST;
+import static com.flightstats.hub.constant.ZookeeperNodes.REPLICATED_LAST_UPDATED;
 
 public class ContentRetriever {
 

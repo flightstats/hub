@@ -15,7 +15,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import static com.flightstats.hub.util.Constants.TIME_DESCRIPTION;
+import static com.flightstats.hub.constant.InternalResourceDescription.TIME_DESCRIPTION;
 
 @Path("/internal/time")
 public class InternalTimeResource {

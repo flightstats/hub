@@ -21,8 +21,8 @@ import org.junit.jupiter.api.TestInfo;
 import java.lang.reflect.Method;
 import java.util.Optional;
 
-import static com.flightstats.hub.dao.aws.S3Verifier.LAST_SINGLE_VERIFIED;
-import static com.flightstats.hub.util.Constants.REPLICATED_LAST_UPDATED;
+import static com.flightstats.hub.constant.ZookeeperNodes.LAST_SINGLE_VERIFIED;
+import static com.flightstats.hub.constant.ZookeeperNodes.REPLICATED_LAST_UPDATED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j

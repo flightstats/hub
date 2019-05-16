@@ -13,17 +13,17 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import static com.flightstats.hub.util.Constants.CHANNEL_DESCRIPTION;
-import static com.flightstats.hub.util.Constants.CLUSTER_DESCRIPTION;
-import static com.flightstats.hub.util.Constants.DEPLOY_DESCRIPTION;
-import static com.flightstats.hub.util.Constants.HEALTH_DESCRIPTION;
-import static com.flightstats.hub.util.Constants.PROPERTIES_DESCRIPTION;
-import static com.flightstats.hub.util.Constants.SHUTDOWN_DESCRIPTION;
-import static com.flightstats.hub.util.Constants.STACKTRACE_DESCRIPTION;
-import static com.flightstats.hub.util.Constants.TIME_DESCRIPTION;
-import static com.flightstats.hub.util.Constants.TRACES_DESCRIPTION;
-import static com.flightstats.hub.util.Constants.WEBHOOK_DESCRIPTION;
-import static com.flightstats.hub.util.Constants.ZOOKEEPER_DESCRIPTION;
+import static com.flightstats.hub.constant.InternalResourceDescription.CHANNEL_DESCRIPTION;
+import static com.flightstats.hub.constant.InternalResourceDescription.CLUSTER_DESCRIPTION;
+import static com.flightstats.hub.constant.InternalResourceDescription.DEPLOY_DESCRIPTION;
+import static com.flightstats.hub.constant.InternalResourceDescription.HEALTH_DESCRIPTION;
+import static com.flightstats.hub.constant.InternalResourceDescription.PROPERTIES_DESCRIPTION;
+import static com.flightstats.hub.constant.InternalResourceDescription.SHUTDOWN_DESCRIPTION;
+import static com.flightstats.hub.constant.InternalResourceDescription.STACKTRACE_DESCRIPTION;
+import static com.flightstats.hub.constant.InternalResourceDescription.TIME_DESCRIPTION;
+import static com.flightstats.hub.constant.InternalResourceDescription.TRACES_DESCRIPTION;
+import static com.flightstats.hub.constant.InternalResourceDescription.WEBHOOK_DESCRIPTION;
+import static com.flightstats.hub.constant.InternalResourceDescription.ZOOKEEPER_DESCRIPTION;
 
 @Path("/internal")
 public class InternalResource {

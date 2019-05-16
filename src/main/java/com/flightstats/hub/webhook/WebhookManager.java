@@ -25,7 +25,7 @@ import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
 import static com.flightstats.hub.app.HubServices.register;
-import static com.flightstats.hub.util.Constants.WEBHOOK_LAST_COMPLETED;
+import static com.flightstats.hub.constant.ZookeeperNodes.WEBHOOK_LAST_COMPLETED;
 
 @Slf4j
 @Singleton

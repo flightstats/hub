@@ -4,6 +4,8 @@ import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.webhook.Webhook;
 
+import static com.flightstats.hub.model.WebhookType.SECOND;
+
 class ChannelReplicator implements Replicator {
 
     private final HubUtils hubUtils;
@@ -29,7 +31,7 @@ class ChannelReplicator implements Replicator {
                 .channelUrl(channel.getReplicationSource())
                 .heartbeat(true)
                 .callbackTimeoutSeconds(5 * 60)
-                .batch(Webhook.SECOND);
+                .batch(SECOND.name());
         hubUtils.startWebhook(builder.build());
     }
 

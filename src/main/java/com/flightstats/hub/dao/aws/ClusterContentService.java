@@ -57,6 +57,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static com.flightstats.hub.constant.ZookeeperNodes.LAST_SINGLE_VERIFIED;
+
 @Slf4j
 public class ClusterContentService implements ContentService {
 
@@ -418,7 +420,7 @@ public class ClusterContentService implements ContentService {
         s3BatchContentDao.delete(channelName);
         s3LargePayloadContentDao.delete(channelName);
         lastContentPath.delete(channelName, CHANNEL_LATEST_UPDATED);
-        lastContentPath.delete(channelName, S3Verifier.LAST_SINGLE_VERIFIED);
+        lastContentPath.delete(channelName, LAST_SINGLE_VERIFIED);
         final Optional<ChannelConfig> optionalChannelConfig = contentRetriever.getCachedChannelConfig(channelName);
         if (optionalChannelConfig.isPresent() && !optionalChannelConfig.get().isSingle()) {
             new S3Batch(optionalChannelConfig.get(), hubUtils, appProperties.getAppUrl(), appProperties.getAppEnv()).stop();

@@ -6,16 +6,18 @@ import com.flightstats.hub.exception.ForbiddenRequestException;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.TimeUtil;
-import java.util.Optional;
 import com.google.common.base.Strings;
 import com.google.inject.name.Named;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.inject.Inject;
+import java.util.Optional;
+
+import static com.flightstats.hub.constant.ContentConstant.VALID_NAME;
+import static com.flightstats.hub.model.ChannelType.BOTH;
 
 public class ChannelValidator {
 
-    public static final String VALID_NAME = "^[a-zA-Z0-9_-]+$";
     private final Dao<ChannelConfig> channelConfigDao;
 
     @Inject
@@ -60,7 +62,7 @@ public class ChannelValidator {
         }
         if (config.isProtect()) {
             if (!config.getStorage().equals(oldConfig.getStorage())) {
-                if (!config.getStorage().equals(ChannelConfig.BOTH)) {
+                if (!config.getStorage().equals(BOTH.name())) {
                     throw new ForbiddenRequestException("{\"error\": \"A channels storage is not allowed to remove a storage source in this environment\"}");
                 }
             }

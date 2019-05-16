@@ -20,6 +20,10 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import static com.flightstats.hub.model.ChannelType.SINGLE;
+import static com.flightstats.hub.model.ChannelType.BATCH;
+import static com.flightstats.hub.model.ChannelType.BOTH;
+
 import static com.flightstats.hub.model.BuiltInTag.HISTORICAL;
 import static com.flightstats.hub.model.BuiltInTag.REPLICATED;
 import static org.apache.commons.lang3.StringUtils.isBlank;
@@ -27,10 +31,6 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 public class ChannelConfig implements Serializable, NamedType {
 
     private static final ContentProperties contentProperties = new ContentProperties(PropertiesLoader.getInstance());
-    public static final String SINGLE = "SINGLE";
-    public static final String BATCH = "BATCH";
-    public static final String BOTH = "BOTH";
-
     private static final long serialVersionUID = 1L;
 
     private static final Gson gson = new GsonBuilder()
@@ -93,7 +93,7 @@ public class ChannelConfig implements Serializable, NamedType {
         }
 
         if (isBlank(storage)) {
-            this.storage = SINGLE;
+            this.storage = SINGLE.name();
         } else {
             this.storage = StringUtils.upperCase(storage);
         }
@@ -202,19 +202,19 @@ public class ChannelConfig implements Serializable, NamedType {
     }
 
     public boolean isValidStorage() {
-        return storage.equals(SINGLE) || storage.equals(BATCH) || storage.equals(BOTH);
+        return storage.equals(SINGLE.name()) || storage.equals(BATCH.name()) || storage.equals(BOTH.name());
     }
 
     public boolean isSingle() {
-        return storage.equals(SINGLE);
+        return storage.equals(SINGLE.name());
     }
 
     public boolean isBatch() {
-        return storage.equals(BATCH);
+        return storage.equals(BATCH.name());
     }
 
     public boolean isBoth() {
-        return storage.equals(BOTH);
+        return storage.equals(BOTH.name());
     }
 
     public boolean isHistorical() {

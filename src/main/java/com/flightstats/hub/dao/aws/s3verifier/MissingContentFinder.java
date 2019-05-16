@@ -25,7 +25,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import static com.flightstats.hub.util.Constants.S3_VERIFIER_QUERY_THREAD_POOL;
+import static com.flightstats.hub.constant.NamedBinding.S3_VERIFIER_QUERY_THREAD_POOL;
 
 @Slf4j
 public class MissingContentFinder {

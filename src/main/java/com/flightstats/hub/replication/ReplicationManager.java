@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.flightstats.hub.app.HubServices.TYPE;
 import static com.flightstats.hub.app.HubServices.register;
-import static com.flightstats.hub.util.Constants.REPLICATOR_WATCHER_PATH;
+import static com.flightstats.hub.constant.ZookeeperNodes.REPLICATOR_WATCHER_PATH;
 
 @Singleton
 @Slf4j

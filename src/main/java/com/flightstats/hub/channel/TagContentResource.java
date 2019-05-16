@@ -34,7 +34,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import static com.flightstats.hub.util.Constants.CREATION_DATE;
+import static com.flightstats.hub.constant.ContentConstant.CREATION_DATE;
 import static com.flightstats.hub.util.TimeUtil.Unit;
 
 @Slf4j

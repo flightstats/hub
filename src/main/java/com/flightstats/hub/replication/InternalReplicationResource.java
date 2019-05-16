@@ -21,7 +21,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 
-import static com.flightstats.hub.util.Constants.REPLICATED_LAST_UPDATED;
+import static com.flightstats.hub.constant.ZookeeperNodes.REPLICATED_LAST_UPDATED;
 
 @Slf4j
 @Path("/internal/repls/{channel}")

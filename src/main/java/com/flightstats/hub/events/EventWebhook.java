@@ -6,6 +6,8 @@ import com.flightstats.hub.util.StringUtils;
 import com.flightstats.hub.webhook.Webhook;
 import com.flightstats.hub.webhook.WebhookService;
 
+import static com.flightstats.hub.model.WebhookType.SECOND;
+
 class EventWebhook {
 
     private final String random = StringUtils.randomAlphaNumeric(6);
@@ -32,7 +34,7 @@ class EventWebhook {
                 .channelUrl(getChannelUrl())
                 .heartbeat(true)
                 .startingKey(contentOutput.getContentKey())
-                .batch(Webhook.SECOND);/**/
+                .batch(SECOND.name());/**/
         Webhook webhook = builder.build();
         webhookService.upsert(webhook);
     }

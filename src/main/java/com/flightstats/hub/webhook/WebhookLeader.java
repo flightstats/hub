@@ -29,8 +29,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.flightstats.hub.util.Constants.WEBHOOK_LAST_COMPLETED;
-import static com.flightstats.hub.webhook.WebhookLeaderLocks.WEBHOOK_LEADER;
+import static com.flightstats.hub.constant.ZookeeperNodes.WEBHOOK_LAST_COMPLETED;
+import static com.flightstats.hub.constant.ZookeeperNodes.WEBHOOK_LEADER;
 
 @Slf4j
 class WebhookLeader implements Lockable {

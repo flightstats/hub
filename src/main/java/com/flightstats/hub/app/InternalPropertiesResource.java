@@ -19,7 +19,7 @@ import java.util.TreeSet;
 @Path("/internal/properties")
 public class InternalPropertiesResource {
 
-    private InternalTracesResource internalTracesResource;
+    private final InternalTracesResource internalTracesResource;
     private final SecretFilter secretFilter;
 
     @Inject

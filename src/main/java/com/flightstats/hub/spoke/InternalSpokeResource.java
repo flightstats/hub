@@ -25,8 +25,8 @@ import java.io.ObjectInputStream;
 import java.io.OutputStream;
 import java.util.Collections;
 
-import static com.flightstats.hub.util.Constants.READ;
-import static com.flightstats.hub.util.Constants.WRITE;
+import static com.flightstats.hub.constant.NamedBinding.READ;
+import static com.flightstats.hub.constant.NamedBinding.WRITE;
 
 @Slf4j
 @Path("/internal/spoke")

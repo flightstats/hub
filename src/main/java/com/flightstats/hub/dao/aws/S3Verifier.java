@@ -34,12 +34,12 @@ import java.util.SortedSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import static com.flightstats.hub.util.Constants.S3_VERIFIER_CHANNEL_THREAD_POOL;
+import static com.flightstats.hub.constant.NamedBinding.S3_VERIFIER_CHANNEL_THREAD_POOL;
+import static com.flightstats.hub.constant.ZookeeperNodes.LAST_SINGLE_VERIFIED;
 
 @Slf4j
 @Singleton
 public class S3Verifier {
-    public static final String LAST_SINGLE_VERIFIED = "/S3VerifierSingleLastVerified/";
     private static final String LEADER_PATH = "/S3VerifierSingleService";
 
     private final VerifierConfig verifierConfig;

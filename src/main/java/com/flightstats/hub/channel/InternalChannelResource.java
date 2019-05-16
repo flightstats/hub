@@ -35,7 +35,7 @@ import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
-import static com.flightstats.hub.util.Constants.CHANNEL_DESCRIPTION;
+import static com.flightstats.hub.constant.InternalResourceDescription.CHANNEL_DESCRIPTION;
 
 
 @Path("/internal/channel")

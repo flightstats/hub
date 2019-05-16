@@ -17,10 +17,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static com.flightstats.hub.model.ChannelType.BATCH;
+import static com.flightstats.hub.model.ChannelType.BOTH;
+import static com.flightstats.hub.model.ChannelType.SINGLE;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -31,7 +34,7 @@ class ChannelValidatorTest {
     private ChannelValidator validator;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         initMocks(this);
         validator = new ChannelValidator(channelConfigDao);
         when(channelConfigDao.exists(any(String.class))).thenReturn(false);
@@ -106,7 +109,6 @@ class ChannelValidatorTest {
                 .build(), null, false));
     }
 
-
     @Test
     void testInvalidChannelTtlMutable() {
         assertThrows(InvalidRequestException.class, () -> validator.validate(getBuilder()
@@ -115,7 +117,6 @@ class ChannelValidatorTest {
                 .mutableTime(new DateTime())
                 .build(), null, false));
     }
-
 
     @Test
     void testInvalidChannelMaxMutable() {
@@ -172,7 +173,7 @@ class ChannelValidatorTest {
     void testInvalidBatchMutable() {
         assertThrows(InvalidRequestException.class, () -> validator.validate(getBuilder()
                 .name("mychan")
-                .storage(ChannelConfig.BATCH)
+                .storage(BATCH.name())
                 .mutableTime(new DateTime())
                 .build(), null, false));
     }
@@ -181,7 +182,7 @@ class ChannelValidatorTest {
     void testInvalidBothMutable() {
         assertThrows(InvalidRequestException.class, () -> validator.validate(getBuilder()
                 .name("mychan")
-                .storage(ChannelConfig.BOTH)
+                .storage(BOTH.name())
                 .mutableTime(new DateTime())
                 .build(), null, false));
     }
@@ -257,7 +258,7 @@ class ChannelValidatorTest {
 
     @Test
     void testValidStorage() {
-        validator.validate(getBuilder().name("storage").storage(ChannelConfig.SINGLE).build(), null, false);
+        validator.validate(getBuilder().name("storage").storage(SINGLE.name()).build(), null, false);
         validator.validate(getBuilder().name("storage").storage("batch").build(), null, false);
         validator.validate(getBuilder().name("storage").storage("BoTh").build(), null, false);
     }
@@ -269,11 +270,11 @@ class ChannelValidatorTest {
     }
 
     @Test
-    void testChangeStorageLoss() throws Exception {
+    void testChangeStorageLoss() {
         PropertiesLoader.getInstance().setProperty("hub.protect.channels", "true");
-        ChannelConfig single = getBuilder().name("storage").storage(ChannelConfig.SINGLE).build();
-        ChannelConfig batch = getBuilder().name("storage").storage(ChannelConfig.BATCH).build();
-        ChannelConfig both = getBuilder().name("storage").storage(ChannelConfig.BOTH).build();
+        ChannelConfig single = getBuilder().name("storage").storage(SINGLE.name()).build();
+        ChannelConfig batch = getBuilder().name("storage").storage(BATCH.name()).build();
+        ChannelConfig both = getBuilder().name("storage").storage(BOTH.name()).build();
         validator.validate(both, single, false);
         validator.validate(both, batch, false);
         validateError(single, both);

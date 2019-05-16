@@ -92,12 +92,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import static com.flightstats.hub.util.Constants.READ;
-import static com.flightstats.hub.util.Constants.READ_CACHE;
-import static com.flightstats.hub.util.Constants.S3_VERIFIER_CHANNEL_THREAD_POOL;
-import static com.flightstats.hub.util.Constants.S3_VERIFIER_QUERY_THREAD_POOL;
-import static com.flightstats.hub.util.Constants.WRITE;
-import static com.flightstats.hub.util.Constants.WRITE_CACHE;
+import static com.flightstats.hub.constant.NamedBinding.READ;
+import static com.flightstats.hub.constant.NamedBinding.READ_CACHE;
+import static com.flightstats.hub.constant.NamedBinding.S3_VERIFIER_CHANNEL_THREAD_POOL;
+import static com.flightstats.hub.constant.NamedBinding.S3_VERIFIER_QUERY_THREAD_POOL;
+import static com.flightstats.hub.constant.NamedBinding.WRITE;
+import static com.flightstats.hub.constant.NamedBinding.WRITE_CACHE;
 
 @Slf4j
 public class HubBindings extends AbstractModule {

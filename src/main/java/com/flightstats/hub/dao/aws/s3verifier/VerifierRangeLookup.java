@@ -10,7 +10,7 @@ import org.joda.time.DateTime;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import static com.flightstats.hub.dao.aws.S3Verifier.LAST_SINGLE_VERIFIED;
+import static com.flightstats.hub.constant.ZookeeperNodes.LAST_SINGLE_VERIFIED;
 
 public class VerifierRangeLookup {
 

@@ -65,8 +65,8 @@ import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import static com.flightstats.hub.constant.ContentConstant.CREATION_DATE;
 import static com.flightstats.hub.rest.Linked.linked;
-import static com.flightstats.hub.util.Constants.CREATION_DATE;
 import static com.flightstats.hub.util.TimeUtil.FORMATTER;
 import static com.flightstats.hub.util.TimeUtil.Unit;
 import static com.flightstats.hub.util.TimeUtil.now;

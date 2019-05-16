@@ -25,7 +25,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-import static com.flightstats.hub.util.Constants.WEBHOOK_LAST_COMPLETED;
+import static com.flightstats.hub.constant.ZookeeperNodes.WEBHOOK_LAST_COMPLETED;
+import static com.flightstats.hub.constant.ZookeeperNodes.WEBHOOK_LEADER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -201,7 +202,7 @@ class WebhookStateReaperTest {
     }
 
     private void addWebhookLeader(String webhook) throws Exception {
-        String path = WebhookLeaderLocks.WEBHOOK_LEADER + "/" + webhook + "/leases/someLease";
+        String path = WEBHOOK_LEADER + "/" + webhook + "/leases/someLease";
         curator.create().creatingParentContainersIfNeeded().forPath(path);
         curator.setData().forPath(path, "foo".getBytes());
         assertWebhookLeaderExists(webhook);
