@@ -117,7 +117,7 @@ public class WebhookService {
 
     private void createErrorChannel(String channelURL) {
         String channelName = RequestUtils.getChannelName(channelURL);
-        if (!this.contentRetriever.isExistingChannel(channelName)) {
+        if (!contentRetriever.isExistingChannel(channelName)) {
             channelService.createChannel(ChannelConfig.builder().name(channelName).build());
         }
     }

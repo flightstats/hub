@@ -39,7 +39,7 @@ public class BulkBuilder {
         if ("application/zip".equalsIgnoreCase(accept)) {
             return ZipBulkBuilder.build(keys, channel, channelService, descending, headerBuilder);
         } else {
-            return this.multiPartBulkBuilder.build(keys, channel, channelService, uriInfo, headerBuilder, descending);
+            return multiPartBulkBuilder.build(keys, channel, channelService, uriInfo, headerBuilder, descending);
         }
     }
 
@@ -64,7 +64,7 @@ public class BulkBuilder {
         if ("application/zip".equalsIgnoreCase(accept)) {
             return ZipBulkBuilder.buildTag(tag, keys, channelService, headerBuilder);
         } else {
-            return this.multiPartBulkBuilder.buildTag(keys, channelService, uriInfo, headerBuilder);
+            return multiPartBulkBuilder.buildTag(keys, channelService, uriInfo, headerBuilder);
         }
     }
 

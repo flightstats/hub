@@ -87,7 +87,7 @@ public class InternalWebhookResource {
         final ObjectNode root = objectMapper.createObjectNode();
         final ObjectNode links = root.putObject("_links");
         addLink(links, "self", uriInfo.getRequestUri().toString());
-        this.staleEntity.add(root, age, (staleCutoff) -> {
+        staleEntity.add(root, age, (staleCutoff) -> {
             Map<DateTime, URI> staleWebhooks = new TreeMap<>();
             webhookService.getAll().forEach(webhook -> {
                 final WebhookStatus status = webhookService.getStatus(webhook);
@@ -106,9 +106,9 @@ public class InternalWebhookResource {
     @Path("/configs")
     @Produces(MediaType.APPLICATION_JSON)
     public Response configs() {
-        final ObjectNode root = objectMapper.createObjectNode();
-        final ArrayNode arrayNode = root.putArray("webhooks");
-        final Collection<Webhook> webhooks = new TreeSet<>(webhookService.getAll());
+        ObjectNode root = objectMapper.createObjectNode();
+        ArrayNode arrayNode = root.putArray("webhooks");
+        Collection<Webhook> webhooks = new TreeSet<>(webhookService.getAll());
         for (Webhook webhook : webhooks) {
             ObjectNode objectNode = arrayNode.addObject();
             objectNode.put("name", webhook.getName());
@@ -128,8 +128,8 @@ public class InternalWebhookResource {
     @Path("/errors")
     @Produces(MediaType.APPLICATION_JSON)
     public Response errors() {
-        final ObjectNode root = objectMapper.createObjectNode();
-        final ArrayNode uris = root.putArray("webhooks");
+        ObjectNode root = objectMapper.createObjectNode();
+        ArrayNode uris = root.putArray("webhooks");
         webhookService.getAll().forEach(webhook -> {
             final WebhookStatus status = webhookService.getStatus(webhook);
             if (status.getErrors().size() > 0) {
@@ -174,18 +174,18 @@ public class InternalWebhookResource {
     @GET
     @Path("/count")
     public Response count() {
-        return Response.ok(this.localWebhookManager.getCount()).build();
+        return Response.ok(localWebhookManager.getCount()).build();
     }
 
     private Response attemptRun(String name) {
-        if (this.localWebhookManager.ensureRunning(name)) {
+        if (localWebhookManager.ensureRunning(name)) {
             return Response.ok().build();
         }
         return Response.status(400).build();
     }
 
     private Response attemptDelete(String name) {
-        this.localWebhookManager.stopLocal(name, true);
+        localWebhookManager.stopLocal(name, true);
         return Response.ok().build();
     }
 

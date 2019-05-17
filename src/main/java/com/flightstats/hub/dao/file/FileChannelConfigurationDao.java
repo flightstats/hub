@@ -18,23 +18,23 @@ public class FileChannelConfigurationDao implements Dao<ChannelConfig> {
     @Inject
     public FileChannelConfigurationDao(FileUtil fileUtil) {
         this.fileUtil = fileUtil;
-        channelPath = this.fileUtil.getStoragePath() + "channel/";
+        this.channelPath = fileUtil.getStoragePath() + "channel/";
         log.info("using channel path {}", channelPath);
     }
 
     @Override
     public void upsert(ChannelConfig config) {
-        this.fileUtil.write(config.toJson(), config.getLowerCaseName(), channelPath);
+        fileUtil.write(config.toJson(), config.getLowerCaseName(), channelPath);
     }
 
     @Override
     public ChannelConfig get(String name) {
-        return this.fileUtil.read(channelPath, name.toLowerCase(), ChannelConfig::createFromJson);
+        return fileUtil.read(channelPath, name.toLowerCase(), ChannelConfig::createFromJson);
     }
 
     @Override
     public Collection<ChannelConfig> getAll(boolean useCache) {
-        return this.fileUtil.getIterable(channelPath, ChannelConfig::createFromJson);
+        return fileUtil.getIterable(channelPath, ChannelConfig::createFromJson);
     }
 
     @Override

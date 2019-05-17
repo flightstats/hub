@@ -32,7 +32,7 @@ public class TagWebhook {
     }
 
     private Set<Webhook> webhookPrototypesWithTag(String tag) {
-        final Set<Webhook> webhookSet = new HashSet<>(this.webhookService.getAll());
+        final Set<Webhook> webhookSet = new HashSet<>(webhookService.getAll());
 
         return webhookSet.stream()
                 .filter(wh -> wh.isTagPrototype() && Objects.equals(tag, wh.getTagFromTagUrl()))
@@ -71,7 +71,7 @@ public class TagWebhook {
     }
 
     public void updateTagWebhooksDueToChannelConfigChange(ChannelConfig channelConfig) {
-        final Set<Webhook> webhookSet = new HashSet<>(this.webhookService.getAll());
+        final Set<Webhook> webhookSet = new HashSet<>(webhookService.getAll());
 
         final Set<String> tags = channelConfig.getTags();
         for (String tag : tags) {
@@ -85,7 +85,7 @@ public class TagWebhook {
     }
 
     public void deleteAllTagWebhooksForChannel(ChannelConfig channelConfig) {
-        final Set<Webhook> webhookSet = new HashSet<>(this.webhookService.getAll());
+        final Set<Webhook> webhookSet = new HashSet<>(webhookService.getAll());
         final Set<Webhook> managedWebHooks = allManagedWebhooksForChannel(webhookSet, channelConfig);
 
         for (Webhook wh : allManagedWebhooksForChannel(managedWebHooks, channelConfig)) {

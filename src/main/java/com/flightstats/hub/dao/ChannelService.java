@@ -320,7 +320,7 @@ public class ChannelService {
     }
 
     public boolean refresh() {
-        return this.channelConfigDao.refresh();
+        return channelConfigDao.refresh();
     }
 
 }

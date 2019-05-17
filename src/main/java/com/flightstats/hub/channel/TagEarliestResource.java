@@ -93,7 +93,7 @@ public class TagEarliestResource {
         SortedSet<ChannelContentKey> keys = tagService.getEarliest(query);
         if (bulk || batch) {
             //todo - gfm - order
-            return this.bulkBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo, accept);
+            return bulkBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo, accept);
         }
         ObjectNode root = objectMapper.createObjectNode();
         ObjectNode links = root.putObject("_links");

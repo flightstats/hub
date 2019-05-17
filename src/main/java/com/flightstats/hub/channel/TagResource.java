@@ -40,7 +40,7 @@ public class TagResource {
         for (String tag : channelService.getTags()) {
             tagUriMap.put(tag, URI.create(uriInfo.getBaseUri() + "tag/" + tag));
         }
-        Linked<?> result = this.linkBuilder.buildLinks(uriInfo, tagUriMap, "tags");
+        Linked<?> result = linkBuilder.buildLinks(uriInfo, tagUriMap, "tags");
         return Response.ok(result).build();
     }
 

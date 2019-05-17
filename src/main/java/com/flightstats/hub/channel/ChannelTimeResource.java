@@ -32,34 +32,34 @@ public class ChannelTimeResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getDefault(@PathParam("channel") String channel) {
-        if (!this.contentRetriever.isExistingChannel(channel)) {
+        if (!contentRetriever.isExistingChannel(channel)) {
             return Response.status(404).build();
         }
-        return this.timeLinkBuilder.getDefault(uriInfo);
+        return timeLinkBuilder.getDefault(uriInfo);
     }
 
     @Path("/second")
     @GET
     public Response getSecond(@QueryParam("stable") @DefaultValue("true") boolean stable) {
-        return this.timeLinkBuilder.getSecond(stable, uriInfo);
+        return timeLinkBuilder.getSecond(stable, uriInfo);
     }
 
     @Path("/minute")
     @GET
     public Response getMinute(@QueryParam("stable") @DefaultValue("true") boolean stable) {
-        return this.timeLinkBuilder.getMinute(stable, uriInfo);
+        return timeLinkBuilder.getMinute(stable, uriInfo);
     }
 
     @Path("/hour")
     @GET
     public Response getHour(@QueryParam("stable") @DefaultValue("true") boolean stable) {
-        return this.timeLinkBuilder.getHour(stable, uriInfo);
+        return timeLinkBuilder.getHour(stable, uriInfo);
     }
 
     @Path("/day")
     @GET
     public Response getDay(@QueryParam("stable") @DefaultValue("true") boolean stable) {
-        return this.timeLinkBuilder.getDay(stable, uriInfo);
+        return timeLinkBuilder.getDay(stable, uriInfo);
     }
 
 }

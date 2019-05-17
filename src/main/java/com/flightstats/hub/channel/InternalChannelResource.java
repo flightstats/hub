@@ -99,7 +99,7 @@ public class InternalChannelResource {
         if (all) {
             return Response.ok(hubUtils.refreshAll()).build();
         } else {
-            if (this.channelService.refresh()) {
+            if (channelService.refresh()) {
                 return Response.ok(HubHost.getLocalNamePort()).build();
             } else {
                 return Response.status(400).entity(HubHost.getLocalNamePort()).build();
@@ -132,7 +132,7 @@ public class InternalChannelResource {
         ObjectNode root = objectMapper.createObjectNode();
         ObjectNode links = root.putObject("_links");
         addLink(links, "self", uriInfo.getRequestUri().toString());
-        this.staleEntity.add(root, age, (staleCutoff) -> {
+        staleEntity.add(root, age, (staleCutoff) -> {
             Map<DateTime, URI> staleChannels = new TreeMap<>();
             channelService.getChannels().forEach(channelConfig -> {
                 Optional<ContentKey> optionalContentKey = contentRetriever.getLatest(channelConfig.getDisplayName(), false);
@@ -166,7 +166,7 @@ public class InternalChannelResource {
         ObjectNode root = objectMapper.createObjectNode();
         ObjectNode links = root.putObject("_links");
         addLink(links, "self", uriInfo.getRequestUri().toString());
-        this.staleEntity.add(root, age, (staleCutoff) -> {
+        staleEntity.add(root, age, (staleCutoff) -> {
             Map<DateTime, URI> staleChannels = new TreeMap<>();
             channelService.getChannels().forEach(channelConfig -> {
                 final Optional<ContentKey> optionalContentKey = contentRetriever.getLatest(channelConfig.getDisplayName(), false);
@@ -186,7 +186,7 @@ public class InternalChannelResource {
     }
 
     private Response deleteChannel(String channelName) {
-        if (this.channelService.delete(channelName)) {
+        if (channelService.delete(channelName)) {
             return Response.status(Response.Status.ACCEPTED).build();
         } else {
             return Response.status(Response.Status.NOT_FOUND).entity("channel " + channelName + " not found").build();

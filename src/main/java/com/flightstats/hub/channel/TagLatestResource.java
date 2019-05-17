@@ -100,9 +100,9 @@ public class TagLatestResource {
         keys.add(latest.get());
         if (bulk || batch) {
             //todo - gfm -
-            return this.bulkBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo, accept);
+            return bulkBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo, accept);
         }
-        return this.linkBuilder.directionalTagResponse(tag, keys, count, query, uriInfo, true, trace, Order.isDescending(order));
+        return linkBuilder.directionalTagResponse(tag, keys, count, query, uriInfo, true, trace, Order.isDescending(order));
     }
 
 }

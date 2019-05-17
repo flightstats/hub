@@ -46,7 +46,7 @@ public class ShutdownManager {
         statsdReporter.event("Hub Restart Shutdown", "shutting down", tags);
         statsdReporter.mute();
 
-        if (this.hubHealthCheck.isShuttingDown()) {
+        if (hubHealthCheck.isShuttingDown()) {
             return true;
         }
         if (useLock) {
@@ -54,7 +54,7 @@ public class ShutdownManager {
         }
 
         //this call will get the node removed from the Load Balancer
-        this.hubHealthCheck.shutdown();
+        hubHealthCheck.shutdown();
         final long start = System.currentTimeMillis();
         HubServices.preStop();
 
@@ -77,14 +77,14 @@ public class ShutdownManager {
     }
 
     public String getLockData() throws Exception {
-        byte[] bytes = this.curatorFramework.getData().forPath(PATH);
+        byte[] bytes = curatorFramework.getData().forPath(PATH);
         return new String(bytes);
     }
 
     public boolean resetLock() throws Exception {
         try {
             log.info("resetting lock " + PATH);
-            this.curatorFramework.delete().forPath(PATH);
+            curatorFramework.delete().forPath(PATH);
             return true;
         } catch (KeeperException.NoNodeException e) {
             log.info("node not found for ..." + PATH);
@@ -101,7 +101,7 @@ public class ShutdownManager {
             } catch (KeeperException.NoNodeException e) {
                 log.info("creating shutdown lock");
                 try {
-                    this.curatorFramework.create().forPath(PATH, HubHost.getLocalAddress().getBytes());
+                    curatorFramework.create().forPath(PATH, HubHost.getLocalAddress().getBytes());
                     return;
                 } catch (Exception e1) {
                     log.info("why did this fail?", e1);

@@ -32,14 +32,14 @@ public class GroupResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getGroups() {
-        return this.webhookResource.getWebhooks("groups", uriInfo);
+        return webhookResource.getWebhooks("groups", uriInfo);
     }
 
     @Path("/{name}")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getGroup(@PathParam("name") String name) {
-        return this.webhookResource.get(name, uriInfo);
+        return webhookResource.get(name, uriInfo);
     }
 
     @Path("/{name}")
@@ -47,13 +47,13 @@ public class GroupResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response upsertGroup(@PathParam("name") String name, String body) {
-        return this.webhookResource.upsert(name, body, uriInfo);
+        return webhookResource.upsert(name, body, uriInfo);
     }
 
     @Path("/{name}")
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     public Response deleteGroup(@PathParam("name") String name) {
-        return this.webhookResource.deleter(name);
+        return webhookResource.deleter(name);
     }
 }

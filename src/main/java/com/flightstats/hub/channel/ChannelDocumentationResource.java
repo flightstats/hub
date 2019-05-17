@@ -41,7 +41,7 @@ public class ChannelDocumentationResource {
     @GET
     public Response get(@PathParam("channel") String channel,
                         @HeaderParam("accept") String accept) {
-        if (!this.contentRetriever.isExistingChannel(channel)) {
+        if (!contentRetriever.isExistingChannel(channel)) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
 
@@ -67,7 +67,7 @@ public class ChannelDocumentationResource {
     @PUT
     public Response put(@PathParam("channel") String channel, String content) {
         permissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "put", channel));
-        if (!this.contentRetriever.isExistingChannel(channel)) {
+        if (!contentRetriever.isExistingChannel(channel)) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
 
@@ -82,7 +82,7 @@ public class ChannelDocumentationResource {
     @DELETE
     public Response delete(@PathParam("channel") String channel) {
         permissionsChecker.checkReadOnlyPermission(String.format(READ_ONLY_FAILURE_MESSAGE, "delete", channel));
-        if (!this.contentRetriever.isExistingChannel(channel)) {
+        if (!contentRetriever.isExistingChannel(channel)) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
 

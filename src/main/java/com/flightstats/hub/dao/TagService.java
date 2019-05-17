@@ -167,7 +167,7 @@ public class TagService {
         String baseUri = uriInfo.getBaseUri() + "tag/" + tag + "/";
         if (bulk) {
             //todo - gfm - order
-            return this.bulkBuilder.buildTag(tag, keys, getChannelService(), uriInfo, accept, (builder) -> {
+            return bulkBuilder.buildTag(tag, keys, getChannelService(), uriInfo, accept, (builder) -> {
                 if (next.isBefore(current)) {
                     builder.header("Link", "<" + baseUri + unit.format(next) + "?bulk=true&stable=" + stable + ">;rel=\"" + "next" + "\"");
                 }
@@ -238,7 +238,7 @@ public class TagService {
         SortedSet<ChannelContentKey> keys = getKeys(query);
         if (bulk) {
             //todo - gfm - order
-            return this.bulkBuilder.buildTag(tag, keys, getChannelService(), uriInfo, accept, (builder) -> {
+            return bulkBuilder.buildTag(tag, keys, getChannelService(), uriInfo, accept, (builder) -> {
                 String baseUri = uriInfo.getBaseUri() + "tag/" + tag + "/";
                 if (!keys.isEmpty()) {
                     builder.header("Link", "<" + baseUri + keys.first().getContentKey().toUrl() + "/previous/" + count + "?bulk=true>;rel=\"" + "previous" + "\"");
@@ -246,6 +246,6 @@ public class TagService {
                 }
             });
         }
-        return this.linkBuilder.directionalTagResponse(tag, keys, count, query, uriInfo, true, trace, descending);
+        return linkBuilder.directionalTagResponse(tag, keys, count, query, uriInfo, true, trace, descending);
     }
 }

@@ -135,9 +135,9 @@ public class ChannelLatestResource {
                                  SortedSet<ContentKey> keys,
                                  boolean descending) {
         if (bulk || batch) {
-            return this.bulkBuilder.build(keys, channel, channelService, uriInfo, accept, descending);
+            return bulkBuilder.build(keys, channel, channelService, uriInfo, accept, descending);
         } else {
-            return this.linkBuilder.directionalResponse(keys, count, query, uriInfo, true, trace, descending);
+            return linkBuilder.directionalResponse(keys, count, query, uriInfo, true, trace, descending);
         }
     }
 

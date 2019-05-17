@@ -50,7 +50,7 @@ public class InternalHealthResource {
         try {
             response = RestClient.defaultClient().resource(link).get(ClientResponse.class);
             String string = response.getEntity(String.class);
-            JsonNode jsonNode = this.objectMapper.readTree(string);
+            JsonNode jsonNode = objectMapper.readTree(string);
             root.set(link, jsonNode);
         } catch (Exception e) {
             root.put(link, "unable to get response " + e.getMessage());

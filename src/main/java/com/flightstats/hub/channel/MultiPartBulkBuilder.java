@@ -56,7 +56,7 @@ class MultiPartBulkBuilder {
                     .channel(channel)
                     .keys(keys)
                     .callback(content -> writeContent(content, output,
-                            this.linkBuilder.buildChannelUri(channel, uriInfo), channel))
+                            linkBuilder.buildChannelUri(channel, uriInfo), channel))
                     .descending(descending)
                     .build());
         }, headerBuilder);
@@ -102,7 +102,7 @@ class MultiPartBulkBuilder {
         Optional<Content> content = channelService.get(itemRequest);
         if (content.isPresent()) {
             Content item = content.get();
-            writeContent(item, output, this.linkBuilder.buildChannelUri(channel, uriInfo), channel);
+            writeContent(item, output, linkBuilder.buildChannelUri(channel, uriInfo), channel);
         }
     }
 
@@ -123,7 +123,7 @@ class MultiPartBulkBuilder {
                 output.write(content.getContentType().get().getBytes());
                 output.write(CRLF);
             }
-            URI uri = this.linkBuilder.buildItemUri(content.getContentKey().get(), channelUri);
+            URI uri = linkBuilder.buildItemUri(content.getContentKey().get(), channelUri);
             output.write(CONTENT_KEY);
             output.write(uri.toString().getBytes());
             output.write(CRLF);

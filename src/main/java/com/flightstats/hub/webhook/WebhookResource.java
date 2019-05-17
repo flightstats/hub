@@ -92,15 +92,15 @@ public class WebhookResource {
     }
 
     private Response getStatus(String name, boolean includeChildren, UriInfo uriInfo, BiConsumer<WebhookStatus, ObjectNode> biConsumer) {
-        final Optional<Webhook> webhookOptional = this.webhookService.get(name);
+        final Optional<Webhook> webhookOptional = webhookService.get(name);
         if (!webhookOptional.isPresent()) {
             log.info("webhook not found {} ", name);
             return Response.status(Response.Status.NOT_FOUND).build();
         }
         log.info("get webhook {} ", name);
         Webhook webhook = webhookOptional.get();
-        WebhookStatus status = this.webhookService.getStatus(webhook);
-        ObjectNode root = this.objectMapper.createObjectNode();
+        WebhookStatus status = webhookService.getStatus(webhook);
+        ObjectNode root = objectMapper.createObjectNode();
         addSelfLink(root, uriInfo, includeChildren);
         biConsumer.accept(status, root);
         return Response.ok(root).build();
@@ -128,7 +128,7 @@ public class WebhookResource {
             } else {
                 root.put("channelUrl", webhook.getChannelUrl());
                 addLatest(status, root);
-                this.timeLinkBuilder.addTime(root, stable, "stableTime");
+                timeLinkBuilder.addTime(root, stable, "stableTime");
                 ArrayNode inFlight = root.putArray("inFlight");
                 for (ContentPath contentPath : status.getInFlight()) {
                     inFlight.add(webhook.getChannelUrl() + "/" + contentPath.toUrl());
@@ -166,7 +166,7 @@ public class WebhookResource {
     Response upsert(String name, String body, UriInfo uriInfo) {
         log.info("upsert webhook {} {}", name, body);
         Webhook webhook = Webhook.fromJson(body, this.webhookService.get(name), contentRetriever).withName(name);
-        Optional<Webhook> upsert = this.webhookService.upsert(webhook);
+        Optional<Webhook> upsert = webhookService.upsert(webhook);
         if (upsert.isPresent()) {
             return Response.ok(getLinked(webhook, uriInfo)).build();
         } else {
@@ -175,13 +175,13 @@ public class WebhookResource {
     }
 
     Response deleter(String name) {
-        Optional<Webhook> webhookOptional = this.webhookService.get(name);
+        Optional<Webhook> webhookOptional = webhookService.get(name);
         log.info("delete webhook {}", name);
         if (!webhookOptional.isPresent()) {
             log.info("webhook not found for delete {} ", name);
             return Response.status(Response.Status.NOT_FOUND).build();
         }
-        this.webhookService.delete(name);
+        webhookService.delete(name);
         return Response.status(Response.Status.ACCEPTED).build();
     }
 
@@ -224,9 +224,9 @@ public class WebhookResource {
             final ArrayNode errorsNode = root.putArray("errors");
             if (webhook.isTagPrototype()) {
                 final String tag = RequestUtils.getTag(webhook.getTagUrl());
-                final Set<Webhook> tagWebhooks = this.webhookService.webhookInstancesWithTag(tag);
+                final Set<Webhook> tagWebhooks = webhookService.webhookInstancesWithTag(tag);
                 for (Webhook tagWebhook : tagWebhooks) {
-                    addError(this.webhookService.getStatus(tagWebhook), errorsNode);
+                    addError(webhookService.getStatus(tagWebhook), errorsNode);
                 }
             } else {
                 addError(status, errorsNode);
@@ -249,9 +249,9 @@ public class WebhookResource {
             final ArrayNode lastCompleted = root.putArray("lastCompleted");
             if (webhook.isTagPrototype()) {
                 final String tag = RequestUtils.getTag(webhook.getTagUrl());
-                final Set<Webhook> tagWebhooks = this.webhookService.webhookInstancesWithTag(tag);
+                final Set<Webhook> tagWebhooks = webhookService.webhookInstancesWithTag(tag);
                 for (Webhook tagWebhook : tagWebhooks) {
-                    addLatest(this.webhookService.getStatus(tagWebhook), lastCompleted);
+                    addLatest(webhookService.getStatus(tagWebhook), lastCompleted);
                 }
             } else {
                 addLatest(status, lastCompleted);

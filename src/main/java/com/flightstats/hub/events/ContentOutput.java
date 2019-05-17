@@ -37,7 +37,7 @@ public class ContentOutput implements Closeable {
     }
 
     public void write(Content content) throws IOException {
-        URI uri = this.linkBuilder.buildItemUri(content.getContentKey().get(), channelUri);
+        URI uri = linkBuilder.buildItemUri(content.getContentKey().get(), channelUri);
         OutboundEvent.Builder builder = new OutboundEvent.Builder().id(uri.toString());
         if (content.getContentType().isPresent()) {
             builder.name(content.getContentType().get());

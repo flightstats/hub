@@ -24,17 +24,17 @@ public class FileWebhookDao implements Dao<Webhook> {
 
     @Override
     public void upsert(Webhook webhook) {
-        this.fileUtil.write(webhook.toJson(), webhook.getName(), groupPath);
+        fileUtil.write(webhook.toJson(), webhook.getName(), groupPath);
     }
 
     @Override
     public Webhook get(String name) {
-        return this.fileUtil.read(groupPath, name, Webhook::fromJson);
+        return fileUtil.read(groupPath, name, Webhook::fromJson);
     }
 
     @Override
     public Collection<Webhook> getAll(boolean useCache) {
-        return this.fileUtil.getIterable(groupPath, Webhook::fromJson);
+        return fileUtil.getIterable(groupPath, Webhook::fromJson);
     }
 
     @Override

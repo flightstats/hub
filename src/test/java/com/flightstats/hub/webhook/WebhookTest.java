@@ -133,8 +133,8 @@ class WebhookTest {
 
     @Test
     void testStartingKey() {
-        Webhook withDefaultsA = this.webhook.withDefaults(CALLBACK_TIMEOUT_DEFAULT_IN_SEC);
-        Webhook withDefaultsB = this.webhook.withDefaults(CALLBACK_TIMEOUT_DEFAULT_IN_SEC);
+        Webhook withDefaultsA = webhook.withDefaults(CALLBACK_TIMEOUT_DEFAULT_IN_SEC);
+        Webhook withDefaultsB = webhook.withDefaults(CALLBACK_TIMEOUT_DEFAULT_IN_SEC);
         assertEquals(withDefaultsA, withDefaultsB);
         Webhook withStartingKey = withDefaultsB.withStartingKey(new ContentKey());
         assertEquals(withDefaultsA, withStartingKey);
@@ -144,7 +144,7 @@ class WebhookTest {
 
     @Test
     void testIsTagPrototype() {
-        Webhook withDefaultsA = this.webhook.withDefaults(CALLBACK_TIMEOUT_DEFAULT_IN_SEC);
+        Webhook withDefaultsA = webhook.withDefaults(CALLBACK_TIMEOUT_DEFAULT_IN_SEC);
         assertFalse(withDefaultsA.isTagPrototype());
         Webhook twh = Webhook.builder().name("name")
                 .callbackUrl("url")
@@ -155,7 +155,7 @@ class WebhookTest {
 
     @Test
     void testSecondaryMetricsReporting() {
-        Webhook withDefaults = this.webhook.withDefaults(CALLBACK_TIMEOUT_DEFAULT_IN_SEC);
+        Webhook withDefaults = webhook.withDefaults(CALLBACK_TIMEOUT_DEFAULT_IN_SEC);
         assertFalse(withDefaults.isSecondaryMetricsReporting());
         String json = "{ \"secondaryMetricsReporting\": true }";
         Webhook newWebhook = Webhook.fromJson(json, Optional.of(withDefaults), contentRetriever);

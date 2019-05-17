@@ -61,9 +61,9 @@ public class TagContentResource {
         final Map<String, URI> mappedUris = new HashMap<>();
         for (ChannelConfig channelConfig : channels) {
             final String channelName = channelConfig.getDisplayName();
-            mappedUris.put(channelName, this.linkBuilder.buildChannelUri(channelName, uriInfo));
+            mappedUris.put(channelName, linkBuilder.buildChannelUri(channelName, uriInfo));
         }
-        final Linked<?> result = this.linkBuilder.buildLinks(mappedUris, "channels", builder ->
+        final Linked<?> result = linkBuilder.buildLinks(mappedUris, "channels", builder ->
                 builder.withLink("self", uriInfo.getRequestUri())
                         .withRelativeLink("latest", uriInfo)
                         .withRelativeLink("earliest", uriInfo)
@@ -88,7 +88,7 @@ public class TagContentResource {
                            @QueryParam("stable") @DefaultValue("true") boolean stable,
                            @HeaderParam("Accept") String accept) {
         final DateTime startTime = new DateTime(year, month, day, 0, 0, 0, 0, DateTimeZone.UTC);
-        return this.tagService.getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.DAYS, bulk || batch, accept, uriInfo, epoch, Order.isDescending(order));
+        return tagService.getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.DAYS, bulk || batch, accept, uriInfo, epoch, Order.isDescending(order));
     }
 
     @Path("/{Y}/{M}/{D}/{hour}")
@@ -108,7 +108,7 @@ public class TagContentResource {
                             @QueryParam("stable") @DefaultValue("true") boolean stable,
                             @HeaderParam("Accept") String accept) {
         final DateTime startTime = new DateTime(year, month, day, hour, 0, 0, 0, DateTimeZone.UTC);
-        return this.tagService.getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.HOURS, bulk || batch, accept, uriInfo, epoch, Order.isDescending(order));
+        return tagService.getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.HOURS, bulk || batch, accept, uriInfo, epoch, Order.isDescending(order));
     }
 
     @Path("/{Y}/{M}/{D}/{h}/{minute}")
@@ -129,7 +129,7 @@ public class TagContentResource {
                               @QueryParam("stable") @DefaultValue("true") boolean stable,
                               @HeaderParam("Accept") String accept) {
         final DateTime startTime = new DateTime(year, month, day, hour, minute, 0, 0, DateTimeZone.UTC);
-        return this.tagService.getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.MINUTES, bulk || batch, accept, uriInfo, epoch, Order.isDescending(order));
+        return tagService.getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.MINUTES, bulk || batch, accept, uriInfo, epoch, Order.isDescending(order));
     }
 
     @Path("/{Y}/{M}/{D}/{h}/{m}/{second}")
@@ -151,7 +151,7 @@ public class TagContentResource {
                               @QueryParam("stable") @DefaultValue("true") boolean stable,
                               @HeaderParam("Accept") String accept) {
         final DateTime startTime = new DateTime(year, month, day, hour, minute, second, 0, DateTimeZone.UTC);
-        return this.tagService.getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.SECONDS, bulk || batch, accept, uriInfo, epoch, Order.isDescending(order));
+        return tagService.getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.SECONDS, bulk || batch, accept, uriInfo, epoch, Order.isDescending(order));
     }
 
     @Path("/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}")
@@ -211,7 +211,7 @@ public class TagContentResource {
                                  @PathParam("direction") String direction,
                                  @QueryParam("stable") @DefaultValue("true") boolean stable) {
         final ContentKey contentKey = new ContentKey(year, month, day, hour, minute, second, millis, hash);
-        return this.tagService.adjacent(tag, contentKey, stable, direction.startsWith("n"), uriInfo, location, epoch);
+        return tagService.adjacent(tag, contentKey, stable, direction.startsWith("n"), uriInfo, location, epoch);
     }
 
     @Path("/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}/{direction:[n|p].*}/{count}")
@@ -237,6 +237,6 @@ public class TagContentResource {
                                       @QueryParam("order") @DefaultValue(Order.DEFAULT) String order,
                                       @HeaderParam("Accept") String accept) {
         final ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
-        return this.tagService.adjacentCount(tag, count, stable, trace, location, direction.startsWith("n"), key, bulk || batch, accept, uriInfo, epoch, Order.isDescending(order));
+        return tagService.adjacentCount(tag, count, stable, trace, location, direction.startsWith("n"), key, bulk || batch, accept, uriInfo, epoch, Order.isDescending(order));
     }
 }

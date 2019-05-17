@@ -28,8 +28,8 @@ public class WebhookValidator {
     }
 
     private void isValidCallbackTimeoutSeconds(int value) {
-        int minimum = this.webhookProperties.getCallbackTimeoutMinimum();
-        int maximum = this.webhookProperties.getCallbackTimeoutMaximum();
+        int minimum = webhookProperties.getCallbackTimeoutMinimum();
+        int maximum = webhookProperties.getCallbackTimeoutMaximum();
         if (isOutsideRange(value, minimum, maximum)) {
             throw new InvalidRequestException("callbackTimeoutSeconds must be between " + minimum + " and " + maximum);
         }

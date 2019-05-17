@@ -76,7 +76,7 @@ class SingleWebhookStrategy implements WebhookStrategy {
 
     @Override
     public ObjectNode createResponse(ContentPath contentPath) {
-        final ObjectNode response = this.objectMapper.createObjectNode();
+        final ObjectNode response = objectMapper.createObjectNode();
         response.put("name", webhook.getName());
         if (contentPath instanceof ContentKey) {
             final ArrayNode uris = response.putArray("uris");

@@ -247,7 +247,7 @@ class TimedWebhookStrategy implements WebhookStrategy {
 
     @Override
     public ObjectNode createResponse(ContentPath contentPath) {
-        ObjectNode response = this.objectMapper.createObjectNode();
+        ObjectNode response = objectMapper.createObjectNode();
         response.put("name", webhook.getName());
         String url = contentPath.toUrl();
         response.put("id", url);

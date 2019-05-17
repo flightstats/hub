@@ -55,7 +55,7 @@ public class S3BatchResource {
         final byte[] bytes = response.getEntity(byte[].class);
 
         if(!verifyZipBytes(bytes)) {
-            this.statsdReporter.increment("batch.invalid_zip");
+            statsdReporter.increment("batch.invalid_zip");
             log.warn("S3BatchResource failed zip verification for keys: {}, channel: {}", keys, channel);
             return false;
         }

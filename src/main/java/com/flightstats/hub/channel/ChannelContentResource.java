@@ -235,7 +235,7 @@ public class ChannelContentResource {
     private Response getTimeQueryResponse(String channel, DateTime startTime, String location, boolean trace, boolean stable,
                                           Unit unit, String tag, boolean bulk, String accept, String epoch, boolean descending) {
         if (tag != null) {
-            return this.tagService.getTimeQueryResponse(tag, startTime, location, trace, stable, unit, bulk, accept, uriInfo, epoch, descending);
+            return tagService.getTimeQueryResponse(tag, startTime, location, trace, stable, unit, bulk, accept, uriInfo, epoch, descending);
         }
         final TimeQuery query = TimeQuery.builder()
                 .channelName(channel)
@@ -250,31 +250,31 @@ public class ChannelContentResource {
         final DateTime next = startTime.plus(unit.getDuration());
         final DateTime previous = startTime.minus(unit.getDuration());
         if (bulk) {
-            return this.bulkBuilder.build(keys, channel, channelService, uriInfo, accept, descending, (builder) -> {
+            return bulkBuilder.build(keys, channel, channelService, uriInfo, accept, descending, (builder) -> {
                 if (next.isBefore(current)) {
-                    builder.header("Link", "<" + this.linkBuilder.getUri(channel, uriInfo, unit, next) +
+                    builder.header("Link", "<" + linkBuilder.getUri(channel, uriInfo, unit, next) +
                             ">;rel=\"" + "next" + "\"");
                 }
-                builder.header("Link", "<" + this.linkBuilder.getUri(channel, uriInfo, unit, previous) +
+                builder.header("Link", "<" + linkBuilder.getUri(channel, uriInfo, unit, previous) +
                         ">;rel=\"" + "previous" + "\"");
             });
         } else {
-            final ObjectNode root = objectMapper.createObjectNode();
-            final ObjectNode links = root.putObject("_links");
-            final ObjectNode self = links.putObject("self");
+            ObjectNode root = objectMapper.createObjectNode();
+            ObjectNode links = root.putObject("_links");
+            ObjectNode self = links.putObject("self");
             self.put("href", uriInfo.getRequestUri().toString());
             if (next.isBefore(current)) {
-                links.putObject("next").put("href", this.linkBuilder.getUri(channel, uriInfo, unit, next).toString());
+                links.putObject("next").put("href", linkBuilder.getUri(channel, uriInfo, unit, next).toString());
             }
-            links.putObject("previous").put("href", this.linkBuilder.getUri(channel, uriInfo, unit, previous).toString());
-            final ArrayNode ids = links.putArray("uris");
-            final URI channelUri = this.linkBuilder.buildChannelUri(channel, uriInfo);
-            final ArrayList<ContentKey> list = new ArrayList<>(keys);
+            links.putObject("previous").put("href", linkBuilder.getUri(channel, uriInfo, unit, previous).toString());
+            ArrayNode ids = links.putArray("uris");
+            URI channelUri = linkBuilder.buildChannelUri(channel, uriInfo);
+            ArrayList<ContentKey> list = new ArrayList<>(keys);
             if (descending) {
                 Collections.reverse(list);
             }
             for (ContentKey key : list) {
-                final URI uri = this.linkBuilder.buildItemUri(key, channelUri);
+                URI uri = linkBuilder.buildItemUri(key, channelUri);
                 ids.add(uri.toString());
             }
             if (trace) {
@@ -326,7 +326,7 @@ public class ChannelContentResource {
         final ObjectNode self = links.putObject("self");
         self.put("href", uriInfo.getRequestUri().toString());
         if (keys.size() == count) {
-            final URI uri = this.linkBuilder.uriBuilder(channel, uriInfo)
+            final URI uri = linkBuilder.uriBuilder(channel, uriInfo)
                     .path(Unit.SECONDS.format(keys.last().getTime()))
                     .path("next")
                     .path("" + count)
@@ -334,7 +334,7 @@ public class ChannelContentResource {
             links.putObject("next").put("href", uri.toString());
         }
         if (!keys.isEmpty()) {
-            final URI uri = this.linkBuilder.uriBuilder(channel, uriInfo)
+            URI uri = linkBuilder.uriBuilder(channel, uriInfo)
                     .path(Unit.SECONDS.format(keys.first().getTime()))
                     .path("previous")
                     .path("" + count)
@@ -342,15 +342,15 @@ public class ChannelContentResource {
             links.putObject("previous").put("href", uri.toString());
         }
 
-        final ArrayNode ids = links.putArray("uris");
-        final URI channelUri = this.linkBuilder.buildChannelUri(channel, uriInfo);
+        ArrayNode ids = links.putArray("uris");
+        URI channelUri = linkBuilder.buildChannelUri(channel, uriInfo);
 
-        final ArrayList<ContentPath> list = new ArrayList<>(keys);
+        ArrayList<ContentPath> list = new ArrayList<>(keys);
         if (Order.isDescending(order)) {
             Collections.reverse(list);
         }
         for (ContentPath path : list) {
-            final URI uri = this.linkBuilder.buildItemUri(path, channelUri);
+            URI uri = linkBuilder.buildItemUri(path, channelUri);
             ids.add(uri.toString());
         }
         if (trace) {
@@ -451,7 +451,7 @@ public class ChannelContentResource {
         final ContentKey contentKey = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         boolean next = direction.startsWith("n");
         if (null != tag) {
-            return this.tagService.adjacent(tag, contentKey, stable, next, uriInfo, location, epoch);
+            return tagService.adjacent(tag, contentKey, stable, next, uriInfo, location, epoch);
         }
         final DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
@@ -531,7 +531,7 @@ public class ChannelContentResource {
         final boolean next = direction.startsWith("n");
         final boolean descending = Order.isDescending(order);
         if (null != tag) {
-            return this.tagService.adjacentCount(tag, count, stable, trace, location, next, key, bulk || batch, accept, uriInfo, epoch, descending);
+            return tagService.adjacentCount(tag, count, stable, trace, location, next, key, bulk || batch, accept, uriInfo, epoch, descending);
         }
         final DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
@@ -545,16 +545,16 @@ public class ChannelContentResource {
                 .build();
         final SortedSet<ContentKey> keys = contentRetriever.query(query);
         if (bulk || batch) {
-            return this.bulkBuilder.build(keys, channel, channelService, uriInfo, accept, descending, (builder) -> {
+            return bulkBuilder.build(keys, channel, channelService, uriInfo, accept, descending, (builder) -> {
                 if (!keys.isEmpty()) {
-                    builder.header("Link", "<" + this.linkBuilder.getDirection("previous", channel, uriInfo, keys.first(), count) +
+                    builder.header("Link", "<" + linkBuilder.getDirection("previous", channel, uriInfo, keys.first(), count) +
                             ">;rel=\"" + "previous" + "\"");
-                    builder.header("Link", "<" + this.linkBuilder.getDirection("next", channel, uriInfo, keys.last(), count) +
+                    builder.header("Link", "<" + linkBuilder.getDirection("next", channel, uriInfo, keys.last(), count) +
                             ">;rel=\"" + "next" + "\"");
                 }
             });
         } else {
-            return this.linkBuilder.directionalResponse(keys, count, query, uriInfo, true, trace, descending);
+            return linkBuilder.directionalResponse(keys, count, query, uriInfo, true, trace, descending);
         }
     }
 
@@ -614,28 +614,28 @@ public class ChannelContentResource {
     }
 
     private Response historicalResponse(String channelName, Content content) {
-        if (!this.contentRetriever.isExistingChannel(channelName)) {
+        if (!contentRetriever.isExistingChannel(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
         final ContentKey key = content.getContentKey().get();
         try {
-            final boolean success = channelService.historicalInsert(channelName, content);
+            boolean success = channelService.historicalInsert(channelName, content);
             if (!success) {
                 return Response.status(400).entity("unable to insert historical item").build();
             }
             log.trace("posted {}", key);
-            final InsertedContentKey insertionResult = new InsertedContentKey(key);
-            final URI payloadUri = uriInfo.getBaseUriBuilder()
+            InsertedContentKey insertionResult = new InsertedContentKey(key);
+            URI payloadUri = uriInfo.getBaseUriBuilder()
                     .path("channel").path(channelName)
                     .path(key.toUrl())
                     .build();
 
-            final Linked<InsertedContentKey> linkedResult = linked(insertionResult)
-                    .withLink("channel", this.linkBuilder.buildChannelUri(channelName, uriInfo))
+            Linked<InsertedContentKey> linkedResult = linked(insertionResult)
+                    .withLink("channel", linkBuilder.buildChannelUri(channelName, uriInfo))
                     .withLink("self", payloadUri)
                     .build();
 
-            final Response.ResponseBuilder builder = Response.status(Response.Status.CREATED);
+            Response.ResponseBuilder builder = Response.status(Response.Status.CREATED);
             builder.entity(linkedResult);
             builder.location(payloadUri);
             return builder.build();
@@ -661,12 +661,12 @@ public class ChannelContentResource {
                               @PathParam("m") String minute,
                               @PathParam("s") String second,
                               @PathParam("ms") String millis) {
-        final UriBuilder builder = UriBuilder.fromUri(uriInfo.getBaseUri())
+        UriBuilder builder = UriBuilder.fromUri(uriInfo.getBaseUri())
                 .path("channel")
                 .path(channel)
                 .path(year).path(month).path(day)
                 .path(hour).path(minute).path(second);
-        this.timeLinkBuilder.addQueryParams(uriInfo, builder);
+        timeLinkBuilder.addQueryParams(uriInfo, builder);
         return Response.seeOther(builder.build()).build();
     }
 

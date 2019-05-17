@@ -53,7 +53,7 @@ public class LinkBuilder {
     }
 
     ObjectNode buildChannelConfigResponse(ChannelConfig config, UriInfo uriInfo, String channel) {
-        ObjectNode root = this.objectMapper.createObjectNode();
+        ObjectNode root = objectMapper.createObjectNode();
 
         root.put("name", config.getDisplayName());
         root.put("allowZeroBytes", config.isAllowZeroBytes());
@@ -113,7 +113,7 @@ public class LinkBuilder {
     UriBuilder uriBuilder(String channel, UriInfo uriInfo) {
         UriBuilder uriBuilder = uriInfo.getBaseUriBuilder()
                 .path("channel").path(channel);
-        this.timeLinkBuilder.addQueryParams(uriInfo, uriBuilder);
+        timeLinkBuilder.addQueryParams(uriInfo, uriBuilder);
         return uriBuilder;
     }
 
@@ -181,7 +181,7 @@ public class LinkBuilder {
                                            boolean includePrevious,
                                            boolean trace,
                                            boolean descending) {
-        ObjectNode root = this.objectMapper.createObjectNode();
+        ObjectNode root = objectMapper.createObjectNode();
         ObjectNode links = root.putObject("_links");
         ObjectNode self = links.putObject("self");
         self.put("href", uriInfo.getRequestUri().toString());

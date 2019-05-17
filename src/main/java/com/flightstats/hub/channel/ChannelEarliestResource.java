@@ -112,9 +112,9 @@ public class ChannelEarliestResource {
         }
         final boolean descending = Order.isDescending(order);
         if (bulk || batch) {
-            return this.bulkBuilder.build(keys, channel, channelService, uriInfo, accept, descending);
+            return bulkBuilder.build(keys, channel, channelService, uriInfo, accept, descending);
         } else {
-            return this.linkBuilder.directionalResponse(keys, count, query, uriInfo, false, trace, descending);
+            return linkBuilder.directionalResponse(keys, count, query, uriInfo, false, trace, descending);
         }
     }
 

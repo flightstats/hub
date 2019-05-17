@@ -39,7 +39,7 @@ public class ProviderResource {
     }
 
     private void ensureChannel(String channelName) {
-        if (!this.contentRetriever.isExistingChannel(channelName)) {
+        if (!contentRetriever.isExistingChannel(channelName)) {
             log.info("creating new Provider channel " + channelName);
             final ChannelConfig configuration = ChannelConfig.builder()
                     .name(channelName)

@@ -32,7 +32,7 @@ public class InternalPropertiesResource {
     @GET
     @Produces({MediaType.APPLICATION_JSON})
     public Response getTraces() {
-        ObjectNode root = this.internalTracesResource.serverAndServers("/internal/properties");
+        ObjectNode root = internalTracesResource.serverAndServers("/internal/properties");
         try {
             ObjectNode propertyNode = root.putObject("properties");
             Properties properties = PropertiesLoader.getInstance().getProperties();

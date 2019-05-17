@@ -29,17 +29,17 @@ public class FileDocumentationDao implements DocumentationDao {
     public boolean upsert(String channel, byte[] bytes) {
         String path = getDocumentationPath(channel);
         log.trace("saving {} bytes to {}", path + FILENAME);
-        return this.fileUtil.write(bytes, FILENAME, path);
+        return fileUtil.write(bytes, FILENAME, path);
     }
 
     @Override
     public boolean delete(String channel) {
         log.trace("deleting documentation for {}", channel);
         String path = getDocumentationPath(channel);
-        return this.fileUtil.delete(path + FILENAME);
+        return fileUtil.delete(path + FILENAME);
     }
 
     private String getDocumentationPath(String channel) {
-        return this.fileUtil.getStoragePath() + "content/" + channel + "/";
+        return fileUtil.getStoragePath() + "content/" + channel + "/";
     }
 }
