@@ -65,23 +65,23 @@ class TtlEnforcerTest {
     }
 
     @Test
-    void enforce_deletesFiles_affirmThreeFilesDeleted(@TempDir File spoke) {
+    void enforce_deletesFilteredChildPaths_affirmThreeFilesDeleted(@TempDir File spoke) {
         assertEquals(0, getSpokePathList(spoke).length);
         assertTrue(createMockSpokeFiles(spoke, "a", "b", "c", LOST_AND_FOUND_DIR));
-        ttlEnforcer.enforce(spoke.getPath(), channelService, callback);
+        ttlEnforcer.deleteFilteredPaths(spoke.getPath(), channelService, callback);
         verify(commander, times(3)).runInBash(anyString(), anyInt());
     }
 
     @Test
-    void enforce_deletesUpperCaseFiles_affirmTwoFilesDeleted(@TempDir File spoke) {
+    void enforce_deletesFilteredUpperCaseChildPaths_affirmTwoFilesDeleted(@TempDir File spoke) {
         assertEquals(0, getSpokePathList(spoke).length);
         assertTrue(createMockSpokeFiles(spoke, "BacA", "aCaB", LOST_AND_FOUND_DIR));
-        ttlEnforcer.enforce(spoke.getPath(), channelService, callback);
+        ttlEnforcer.deleteFilteredPaths(spoke.getPath(), channelService, callback);
         verify(commander, times(2)).runInBash(anyString(), anyInt());
     }
 
     @Test
-    void enforce_ignoresDeleteOfRegisteredFiles_affirmNoFilesDeleted(@TempDir File spoke) {
+    void enforce_ignoresDeleteOfRegisteredPaths_affirmNoFilesDeleted(@TempDir File spoke) {
         // GIVEN
         assertEquals(0, getSpokePathList(spoke).length);
         String[] names = new String[]{ "AoAo", "CCCp" };
@@ -97,7 +97,7 @@ class TtlEnforcerTest {
 
         // THEN
         assertTrue(createMockSpokeFiles(spoke, names[0], names[1], LOST_AND_FOUND_DIR));
-        ttlEnforcer.enforce(spoke.getPath(), channelService, callback);
+        ttlEnforcer.deleteFilteredPaths(spoke.getPath(), channelService, callback);
         verify(commander, never()).runInBash(anyString(), anyInt());
     }
 }

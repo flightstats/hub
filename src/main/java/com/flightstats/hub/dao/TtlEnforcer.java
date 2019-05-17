@@ -24,8 +24,8 @@ public class TtlEnforcer {
         this.commander = commander;
     }
 
-    public void enforce(String path, ChannelService channelService,
-                        Consumer<ChannelConfig> channelConsumer) {
+    public void deleteFilteredPaths(String path, ChannelService channelService,
+                                    Consumer<ChannelConfig> channelConsumer) {
         try {
             String[] pathArray = Optional.ofNullable(new File(path).list()).orElse(new String[]{});
             Collection<ChannelConfig> channels = channelService.getChannels();

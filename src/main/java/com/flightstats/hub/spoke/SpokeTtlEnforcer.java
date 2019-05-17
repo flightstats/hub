@@ -90,7 +90,7 @@ public class SpokeTtlEnforcer {
             final AtomicLong evictionCounter = new AtomicLong(0);
 
             log.info("running ttl cleanup");
-            ttlEnforcer.enforce(storagePath, channelService, handleCleanup(evictionCounter));
+            ttlEnforcer.deleteFilteredPaths(storagePath, channelService, handleCleanup(evictionCounter));
             updateOldestItemMetric();
             statsdReporter.gauge(buildMetricName("evicted"), evictionCounter.get());
 
