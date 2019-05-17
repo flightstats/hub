@@ -10,10 +10,13 @@ import java.io.File;
 @Slf4j
 public class HubVersion {
 
-    @Inject
-    private AppProperties appProperties;
-
+    private final AppProperties appProperties;
     private static String version;
+
+    @Inject
+    public HubVersion(AppProperties appProperties) {
+        this.appProperties = appProperties;
+    }
 
     public synchronized String getVersion() {
         if (version != null) {

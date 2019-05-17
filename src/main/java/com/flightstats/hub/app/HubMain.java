@@ -131,6 +131,7 @@ public class HubMain {
         List<AbstractModule> guiceModules = buildGuiceModules();
         injector = Guice.createInjector(guiceModules);
         injector.createChildInjector(new WebSocketBinding());
+        injector.getInstance(HubVersion.class);
 
         registerServices(getBeforeHealthCheckServices(injector), HubServices.TYPE.BEFORE_HEALTH_CHECK);
         registerServices(getAfterHealthCheckServices(injector), HubServices.TYPE.AFTER_HEALTHY_START);

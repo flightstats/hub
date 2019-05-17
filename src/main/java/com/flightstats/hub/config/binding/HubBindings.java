@@ -277,8 +277,12 @@ public class HubBindings extends AbstractModule {
                 spokeProperties.getTtlMinutes(SpokeStore.READ));
     }
 
-    @Override
+    @Provides
+    public HubVersion hubVersion(AppProperties appProperties) {
+        return new HubVersion(appProperties);
+    }
 
+    @Override
     protected void configure() {
 
         bind(SecretFilter.class).asEagerSingleton();
@@ -290,7 +294,6 @@ public class HubBindings extends AbstractModule {
         bind(LastContentPath.class).asEagerSingleton();
         bind(NtpMonitor.class).asEagerSingleton();
         bind(StaleEntity.class).asEagerSingleton();
-        bind(HubVersion.class).toInstance(new HubVersion());
 
         bind(FinalCheck.class).to(SpokeFinalCheck.class).asEagerSingleton();
 
