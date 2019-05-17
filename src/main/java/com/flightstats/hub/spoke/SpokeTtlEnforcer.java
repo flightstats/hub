@@ -41,7 +41,7 @@ public class SpokeTtlEnforcer {
         this.spokeContentDao = spokeContentDao;
         this.statsdReporter = statsdReporter;
 
-        this.storagePath = spokeProperties.getStoragePath();
+        this.storagePath = spokeProperties.getPath(spokeStore);
         this.ttlMinutes = spokeProperties.getTtlMinutes(spokeStore);
     }
 
