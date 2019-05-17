@@ -21,7 +21,6 @@ import com.flightstats.hub.metrics.CustomMetricsLifecycle;
 import com.flightstats.hub.metrics.InfluxdbReporterLifecycle;
 import com.flightstats.hub.metrics.PeriodicMetricEmitterLifecycle;
 import com.flightstats.hub.metrics.StatsDReporterLifecycle;
-import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.spoke.SpokeTtlEnforcer;
 import com.flightstats.hub.spoke.SpokeTtlEnforcerLifecycle;
 import com.flightstats.hub.ws.WebSocketChannelEndpoint;
@@ -36,6 +35,8 @@ import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.name.Names;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.server.ConnectionFactory;
 import org.eclipse.jetty.server.Connector;
@@ -67,6 +68,9 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.flightstats.hub.spoke.SpokeStore.READ;
+import static com.flightstats.hub.spoke.SpokeStore.WRITE;
 
 @Slf4j
 public class HubMain {
@@ -193,13 +197,16 @@ public class HubMain {
             services.addAll(createInstanceList(injector,
                     DynamoChannelConfigDaoLifecycle.class,
                     DynamoWebhookDaoLifecycle.class));
-        }
 
-        if (spokeProperties.isTtlEnforced()) {
-            services.add(new SpokeTtlEnforcerLifecycle(SpokeStore.WRITE,
-                    injector.getInstance(SpokeTtlEnforcer.class)));
-            services.add(new SpokeTtlEnforcerLifecycle(SpokeStore.READ,
-                    injector.getInstance(SpokeTtlEnforcer.class)));
+            if (spokeProperties.isTtlEnforced()) {
+                SpokeTtlEnforcer spokeTtlEnforcerRead =
+                        injector.getInstance(Key.get(SpokeTtlEnforcer.class, Names.named(READ.name())));
+                services.add(new SpokeTtlEnforcerLifecycle(spokeTtlEnforcerRead));
+
+                SpokeTtlEnforcer spokeTtlEnforcerWrite =
+                        injector.getInstance(Key.get(SpokeTtlEnforcer.class, Names.named(WRITE.name())));
+                services.add(new SpokeTtlEnforcerLifecycle(spokeTtlEnforcerWrite));
+            }
         }
 
         return services;
