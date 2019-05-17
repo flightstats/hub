@@ -28,7 +28,7 @@ public class AppProperties {
     }
 
     public String getAppLibPath() {
-        return propertiesLoader.getProperty(" app.lib_path", "");
+        return propertiesLoader.getProperty("app.lib_path", "");
     }
 
     public String getAppUrl() {

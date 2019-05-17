@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.flightstats.hub.app.FinalCheck;
-import com.flightstats.hub.app.HubVersion;
 import com.flightstats.hub.app.InFlightService;
 import com.flightstats.hub.app.PermissionsChecker;
 import com.flightstats.hub.app.ShutdownManager;
@@ -290,7 +289,6 @@ public class HubBindings extends AbstractModule {
         bind(LastContentPath.class).asEagerSingleton();
         bind(NtpMonitor.class).asEagerSingleton();
         bind(StaleEntity.class).asEagerSingleton();
-        bind(HubVersion.class).toInstance(new HubVersion());
 
         bind(FinalCheck.class).to(SpokeFinalCheck.class).asEagerSingleton();
 
