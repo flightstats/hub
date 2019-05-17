@@ -290,9 +290,9 @@ public class HubBindings extends AbstractModule {
         bind(LastContentPath.class).asEagerSingleton();
         bind(NtpMonitor.class).asEagerSingleton();
         bind(StaleEntity.class).asEagerSingleton();
+        bind(HubVersion.class).toInstance(new HubVersion());
 
         bind(FinalCheck.class).to(SpokeFinalCheck.class).asEagerSingleton();
-        bind(HubVersion.class).asEagerSingleton();
 
         bind(ReplicationManager.class).asEagerSingleton();
         bind(WatchManager.class).asEagerSingleton();
@@ -312,7 +312,6 @@ public class HubBindings extends AbstractModule {
         bind(EventsService.class).asEagerSingleton();
         bind(WebSocketService.class).asEagerSingleton();
 
-        bind(HubVersion.class).asEagerSingleton();
         bind(LocalReadSpoke.class).to(SpokeManager.class);
         bind(SpokeChronologyStore.class).to(SpokeManager.class);
         bind(SpokeClusterHealthCheck.class).to(SpokeManager.class);

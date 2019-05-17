@@ -1,7 +1,6 @@
 package com.flightstats.hub.app;
 
 import com.flightstats.hub.config.AppProperties;
-import com.google.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
@@ -9,16 +8,12 @@ import javax.inject.Inject;
 import java.io.File;
 
 @Slf4j
-@Singleton
 public class HubVersion {
 
-    private final AppProperties appProperties;
-    private static String version;
-
     @Inject
-    public HubVersion(AppProperties appProperties) {
-        this.appProperties = appProperties;
-    }
+    private AppProperties appProperties;
+
+    private static String version;
 
     public synchronized String getVersion() {
         if (version != null) {
