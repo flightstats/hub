@@ -9,10 +9,9 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.TimeUnit;
 
-@Singleton
 @Slf4j
+@Singleton
 public class GCRunner {
-
     private final int gcMinutes;
 
     @Inject
@@ -24,10 +23,10 @@ public class GCRunner {
     }
 
     private void run() {
-        log.info("running GC");
+        log.debug("running GC");
         long start = System.currentTimeMillis();
         System.gc();
-        log.info("ran GC {}", (System.currentTimeMillis() - start));
+        log.debug("ran GC {}", (System.currentTimeMillis() - start));
     }
 
     private class GCRunnerService extends AbstractScheduledService {

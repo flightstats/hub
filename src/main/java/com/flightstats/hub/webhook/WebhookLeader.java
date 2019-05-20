@@ -85,7 +85,7 @@ class WebhookLeader implements Lockable {
         Optional<Webhook> foundWebhook = webhookService.get(webhook.getName());
         channelName = webhook.getChannelName();
         if (!foundWebhook.isPresent() || !channelService.channelExists(channelName)) {
-            log.info("webhook or channel is missing, exiting " + webhook.getName());
+            log.warn("webhook or channel is missing, exiting " + webhook.getName());
             Sleeper.sleep(60 * 1000);
             return;
         }
@@ -110,7 +110,7 @@ class WebhookLeader implements Lockable {
         try {
             ContentPath lastCompletedPath = webhookStrategy.getStartingPath();
             lastUpdated.set(lastCompletedPath);
-            log.info("last completed at {} {}", lastCompletedPath, webhook.getName());
+            log.debug("last completed at {} {}", lastCompletedPath, webhook.getName());
             if (leadership.hasLeadership()) {
                 sendInProcess(lastCompletedPath);
                 webhookStrategy.start(webhook, lastCompletedPath);
@@ -122,11 +122,11 @@ class WebhookLeader implements Lockable {
                 }
             }
         } catch (RuntimeInterruptedException | InterruptedException e) {
-            log.info("saw InterruptedException for " + webhook.getName());
+            log.warn("saw InterruptedException for " + webhook.getName());
         } catch (Exception e) {
-            log.warn("Execption for " + webhook.getName(), e);
+            log.error("Execption for " + webhook.getName(), e);
         } finally {
-            log.info("stopping last completed at {} {}", webhookStrategy.getLastCompleted(), webhook.getName());
+            log.debug("stopping last completed at {} {}", webhookStrategy.getLastCompleted(), webhook.getName());
             leadership.setLeadership(false);
             closeStrategy();
             stopExecutor();
@@ -268,7 +268,7 @@ class WebhookLeader implements Lockable {
 
     void exit(boolean delete) {
         String name = webhook.getName();
-        log.info("exiting webhook " + name + "deleting " + delete);
+        log.debug("exiting webhook " + name + "deleting " + delete);
         deleteOnExit.set(delete);
         leadershipLock.ifPresent(distributedLockRunner::delete);
         closeStrategy();
@@ -281,14 +281,14 @@ class WebhookLeader implements Lockable {
             return;
         }
         String name = webhook.getName();
-        log.info("stopExecutor " + name);
+        log.debug("stopExecutor " + name);
         try {
-            log.info("awating termination " + name);
+            log.debug("awating termination " + name);
             executorService.shutdownNow();
             executorService.awaitTermination(webhook.getCallbackTimeoutSeconds() + 10, TimeUnit.SECONDS);
             log.info("stopped Executor " + name);
         } catch (InterruptedException e) {
-            log.warn("unable to stop?" + name, e);
+            log.error("unable to stop?" + name, e);
             Thread.currentThread().interrupt();
         }
     }
