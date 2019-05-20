@@ -22,14 +22,17 @@ import java.util.function.Consumer;
 public class ChannelTtlEnforcer {
 
     private final ChannelService channelService;
+    private final TtlEnforcer ttlEnforcer;
     private final String spokePath;
 
     @Inject
     public ChannelTtlEnforcer(ChannelService channelService,
                               SpokeProperties spokeProperties,
-                              S3Properties s3Properties) {
+                              S3Properties s3Properties,
+                              TtlEnforcer ttlEnforcer) {
         this.channelService = channelService;
         this.spokePath = spokeProperties.getPath(SpokeStore.WRITE);
+        this.ttlEnforcer = ttlEnforcer;
 
         if (s3Properties.isChannelTtlEnforced()) {
             HubServices.register(new ChannelTtlEnforcerService());
@@ -54,7 +57,7 @@ public class ChannelTtlEnforcer {
             try {
                 long start = System.currentTimeMillis();
                 log.info("running channel cleanup");
-                TtlEnforcer.enforce(spokePath, channelService, handleCleanup());
+                ttlEnforcer.deleteFilteredPaths(spokePath, channelService, handleCleanup());
                 log.info("completed channel cleanup {}", (System.currentTimeMillis() - start));
             } catch (Exception e) {
                 log.info("issue cleaning up channels in spoke", e);

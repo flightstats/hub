@@ -25,8 +25,8 @@ public class SpokeTtlEnforcer {
     private final ChannelService channelService;
     private final SpokeContentDao spokeContentDao;
     private final StatsdReporter statsdReporter;
-
     private final SpokeStore spokeStore;
+    private final TtlEnforcer ttlEnforcer;
     private final String storagePath;
     private final int ttlMinutes;
 
@@ -35,14 +35,15 @@ public class SpokeTtlEnforcer {
                             ChannelService channelService,
                             SpokeContentDao spokeContentDao,
                             StatsdReporter statsdReporter,
-                            SpokeProperties spokeProperties) {
+                            SpokeProperties spokeProperties,
+                            TtlEnforcer ttlEnforcer) {
         this.spokeStore = spokeStore;
         this.channelService = channelService;
         this.spokeContentDao = spokeContentDao;
         this.statsdReporter = statsdReporter;
-
-        this.storagePath = spokeProperties.getStoragePath();
+        this.storagePath = spokeProperties.getPath(spokeStore);
         this.ttlMinutes = spokeProperties.getTtlMinutes(spokeStore);
+        this.ttlEnforcer = ttlEnforcer;
     }
 
     private Consumer<ChannelConfig> handleCleanup(AtomicLong evictionCounter) {
@@ -89,7 +90,7 @@ public class SpokeTtlEnforcer {
             final AtomicLong evictionCounter = new AtomicLong(0);
 
             log.info("running ttl cleanup");
-            TtlEnforcer.enforce(storagePath, channelService, handleCleanup(evictionCounter));
+            ttlEnforcer.deleteFilteredPaths(storagePath, channelService, handleCleanup(evictionCounter));
             updateOldestItemMetric();
             statsdReporter.gauge(buildMetricName("evicted"), evictionCounter.get());
 
