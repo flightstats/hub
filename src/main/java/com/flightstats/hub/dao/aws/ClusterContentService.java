@@ -415,7 +415,7 @@ public class ClusterContentService implements ContentService {
         if (latestCache != null) {
             // TODO: Inconsistent read.  This uses a value it considers stale, but guarantees subsequent reads will not use it.
             if (latestCache.getTime().isBefore(channelTtlTime)) {
-                latestContentCache.setLatest(channel, ContentKey.NONE);   // if the newest thing (latest) is expired, then the channel is now empty
+                latestContentCache.setEmpty(channel);   // if the newest thing (latest) is expired, then the channel is now empty
             }
             ActiveTraces.getLocal().add("found cached latest", channel, latestCache);
             if (latestCache.equals(ContentKey.NONE)) {
@@ -482,7 +482,7 @@ public class ClusterContentService implements ContentService {
     @Override
     public void notify(ChannelConfig newConfig, ChannelConfig oldConfig) {
         if (oldConfig == null) {
-            latestContentCache.setLatest(newConfig.getDisplayName(), ContentKey.NONE);
+            latestContentCache.setEmpty(newConfig.getDisplayName());
         }
 
         final S3Batch s3Batch = new S3Batch(

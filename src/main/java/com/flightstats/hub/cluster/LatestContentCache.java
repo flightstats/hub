@@ -21,8 +21,8 @@ public class LatestContentCache {
         return clusterStateDao.get(channelName, defValue, LAST_COMMITTED_CONTENT_KEY);
     }
 
-    public void setLatest(String channelName, ContentKey key) {
-        clusterStateDao.set(key, channelName, LAST_COMMITTED_CONTENT_KEY);
+    public void setEmpty(String channelName) {
+        clusterStateDao.set(ContentKey.NONE, channelName, LAST_COMMITTED_CONTENT_KEY);
     }
 
     public void setIfAfter(String channelName, ContentKey key) {
