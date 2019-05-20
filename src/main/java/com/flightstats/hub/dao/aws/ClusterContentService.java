@@ -55,6 +55,7 @@ import java.util.TreeSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -81,6 +82,7 @@ public class ClusterContentService implements ContentService {
     private final AppProperties appProperties;
     private final ContentProperties contentProperties;
     private final SpokeProperties spokeProperties;
+    private ScheduledExecutorService zkCacheStateUpdateExecutor;
 
     @Inject
     public ClusterContentService(
@@ -113,6 +115,7 @@ public class ClusterContentService implements ContentService {
         this.appProperties = appProperties;
         this.contentProperties = contentProperties;
         this.spokeProperties = spokeProperties;
+        this.zkCacheStateUpdateExecutor = Executors.newScheduledThreadPool(4);
     }
 
     private SortedSet<ContentKey> query(Function<ContentDao, SortedSet<ContentKey>> daoQuery, List<ContentDao> contentDaos) {
@@ -172,7 +175,7 @@ public class ClusterContentService implements ContentService {
         // after stable() seconds, we want to write the cache entry if the write succeeded
         AtomicReference<ContentKey> ref = new AtomicReference<>();
 
-        ScheduledFuture future = Executors.newScheduledThreadPool(1).schedule(() -> {
+        ScheduledFuture future = zkCacheStateUpdateExecutor.schedule(() -> {
             if (ref.get() != null) {
                 latestContentCache.setIfAfter(channelName, ref.get());
             }
@@ -405,15 +408,13 @@ public class ClusterContentService implements ContentService {
             return Optional.empty();
         }
 
-        if (latestQuery.isStable()) {
-            DateTime channelTtlTime = optionalChannelConfig.get().getTtlTime();
-            Optional<ContentKey> cachedKey = getLatestCachedKeyIfNotExpired(channel, channelTtlTime);
-            if (cachedKey.isPresent()) {
-                return cachedKey;
-            }
+        DateTime channelTtlTime = optionalChannelConfig.get().getTtlTime();
+        Optional<ContentKey> cachedKey = getLatestCachedKeyIfNotExpired(channel, channelTtlTime);
+        if (latestQuery.isStable() && cachedKey.isPresent()) {
+            return cachedKey;
         }
 
-        return findLatestKey(latestQuery, channel);
+        return findLatestKey(latestQuery, channel, cachedKey);
     }
 
     private Optional<ContentKey> getLatestCachedKeyIfNotExpired(String channel, DateTime channelTtlTime) {
@@ -432,12 +433,29 @@ public class ClusterContentService implements ContentService {
         return Optional.ofNullable((ContentKey) latestCache);
     }
 
-    private Optional<ContentKey> findLatestKey(DirectionQuery latestQuery, String channel) {
+    private Optional<ContentKey> findLatestKey(DirectionQuery latestQuery, String channel, Optional<ContentKey> cachedKey) {
         Optional<ContentKey> latest = spokeWriteContentDao.getLatest(channel, latestQuery.getStartKey(), ActiveTraces.getLocal());
-        if (latest.isPresent()) {
-            return latest;
+        boolean shouldUpdateCache = latestQuery.isStable();
+
+        if (!latest.isPresent()) {
+            if (cachedKey.isPresent()) {
+                latest = cachedKey;
+            } else {
+                latest = findLatestFromAllSources(latestQuery, channel);
+                shouldUpdateCache = true;
+            }
         }
-        return findLatestFromAllSources(latestQuery, channel);
+
+        if (shouldUpdateCache) {
+            if (latest.isPresent()) {
+                ActiveTraces.getLocal().add("updating cache with latestKey {} {}", channel, latest.get());
+                latestContentCache.setIfAfter(channel, latest.get());
+            } else {
+                ActiveTraces.getLocal().add("updating channel empty", channel);
+                latestContentCache.setIfAfter(channel, ContentKey.NONE);
+            }
+        }
+        return latest;
     }
 
     private Optional<ContentKey> findLatestFromAllSources(DirectionQuery latestQuery, String channel) {
@@ -450,19 +468,8 @@ public class ClusterContentService implements ContentService {
                 .location(latestQuery.getLocation())
                 .count(1)
                 .build();
-        Collection<ContentKey> keys = channelService.query(query);
-        if (keys.isEmpty()) {
-            ActiveTraces.getLocal().add("updating channel empty", channel);
-            latestContentCache.setIfAfter(channel, ContentKey.NONE);
-            return Optional.empty();
-        } else {
-            ContentKey latestKey = keys.iterator().next();
-            ActiveTraces.getLocal().add("updating cache with latestKey {} {}", channel, latestKey);
-            if (query.isStable()) {
-                latestContentCache.setIfAfter(channel, latestKey);
-            }
-            return Optional.of(latestKey);
-        }
+        SortedSet<ContentKey> keys = channelService.query(query);
+        return keys.isEmpty() ? Optional.empty() : Optional.of(keys.last());
     }
 
     @Override

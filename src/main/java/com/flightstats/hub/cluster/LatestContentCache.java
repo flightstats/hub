@@ -9,7 +9,7 @@ import javax.inject.Inject;
 @Slf4j
 public class LatestContentCache {
     /** The latest item on the channel that is older than stable time, older than spoke's TTL, and younger than the channel's TTL. i.e. the "cached" latest */
-    private static final String LAST_COMMITTED_CONTENT_KEY = "/ChannelLatestUpdated/";
+    public static final String LAST_COMMITTED_CONTENT_KEY = "/ChannelLatestUpdated/";
     private final ClusterStateDao clusterStateDao;
 
     @Inject
