@@ -203,7 +203,7 @@ public class ChannelService {
         }
     }
 
-    public Collection<ContentKey> insert(BulkContent content) throws Exception {
+    public Collection<ContentKey> insert(BulkContent content) {
         final BulkContent bulkContent = content.withChannel(getDisplayName(content.getChannel()));
         String channel = bulkContent.getChannel();
         if (bulkContent.isNew() && isReplicating(channel)) {

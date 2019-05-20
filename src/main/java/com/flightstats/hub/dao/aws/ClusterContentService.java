@@ -44,6 +44,7 @@ import org.joda.time.DateTime;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -148,12 +149,14 @@ public class ClusterContentService implements ContentService {
         final Content spokeContent = adjustContentIfLarge(channelName, content);
 
         // after stable() seconds, we want to write the cache entry if the write succeeded
-        ContentKey key = setStableCache(channelName, () -> spokeWriteContentDao.insert(channelName, spokeContent));
+        SortedSet<ContentKey> keys = setStableCache(channelName,
+                () -> new TreeSet<>(
+                        Arrays.asList(spokeWriteContentDao.insert(channelName, spokeContent))));
 
         if (isWriteable(channelName)) {
-            s3SingleWrite(channelName, key);
+            s3SingleWrite(channelName, keys.first());
         }
-        return key;
+        return keys.first();
     }
 
     private Content adjustContentIfLarge(String channelName, Content content) {
@@ -165,7 +168,7 @@ public class ClusterContentService implements ContentService {
         return spokeContent;
     }
 
-    private ContentKey setStableCache(String channelName, Supplier<ContentKey> supplier) {
+    private SortedSet<ContentKey> setStableCache(String channelName, Supplier<SortedSet<ContentKey>> supplier) {
         // after stable() seconds, we want to write the cache entry if the write succeeded
         AtomicReference<ContentKey> ref = new AtomicReference<>();
 
@@ -175,15 +178,15 @@ public class ClusterContentService implements ContentService {
             }
         }, contentProperties.getStableSeconds() +1, TimeUnit.SECONDS);
 
-        ContentKey key;
+        SortedSet<ContentKey> keys;
         try {
-            key = supplier.get();
-            ref.set(key);
+            keys = supplier.get();
+            ref.set(keys.last());
         } catch(Exception e) {
             future.cancel(true);
             throw e;
         }
-        return key;
+        return keys;
     }
 
     private void s3SingleWrite(String channelName, ContentKey key) {
@@ -193,13 +196,17 @@ public class ClusterContentService implements ContentService {
     @Override
     public Collection<ContentKey> insert(BulkContent bulkContent) {
         String channelName = bulkContent.getChannel();
-        SortedSet<ContentKey> keys = spokeWriteContentDao.insert(bulkContent);
-        if (isWriteable(channelName)) {
-            for (ContentKey key : keys) {
-                s3SingleWrite(channelName, key);
+
+        return setStableCache(channelName, () -> {
+            // set stable cache in ZK here as well
+            SortedSet<ContentKey> keys = spokeWriteContentDao.insert(bulkContent);
+            if (isWriteable(channelName)) {
+                for (ContentKey key : keys) {
+                    s3SingleWrite(channelName, key);
+                }
             }
-        }
-        return keys;
+            return keys;
+        });
     }
 
     @Override
@@ -426,6 +433,14 @@ public class ClusterContentService implements ContentService {
     }
 
     private Optional<ContentKey> findLatestKey(DirectionQuery latestQuery, String channel) {
+        Optional<ContentKey> latest = spokeWriteContentDao.getLatest(channel, latestQuery.getStartKey(), ActiveTraces.getLocal());
+        if (latest.isPresent()) {
+            return latest;
+        }
+        return findLatestFromAllSources(latestQuery, channel);
+    }
+
+    private Optional<ContentKey> findLatestFromAllSources(DirectionQuery latestQuery, String channel) {
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
                 .startKey(latestQuery.getStartKey())
