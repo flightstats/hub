@@ -144,7 +144,7 @@ public class ClusterContentService implements ContentService {
     }
 
     @Override
-    public ContentKey insert(String channelName, Content content) throws Exception {
+    public ContentKey insert(String channelName, Content content) {
         final Content spokeContent = adjustContentIfLarge(channelName, content);
 
         // after stable() seconds, we want to write the cache entry if the write succeeded
@@ -156,7 +156,7 @@ public class ClusterContentService implements ContentService {
         return key;
     }
 
-    private Content adjustContentIfLarge(String channelName, Content content) throws Exception {
+    private Content adjustContentIfLarge(String channelName, Content content) {
         Content spokeContent = content;
         if (content.isLarge()) {
             s3LargePayloadContentDao.insert(channelName, content);
@@ -406,7 +406,7 @@ public class ClusterContentService implements ContentService {
             }
         }
 
-        return findAndCacheLatestKey(latestQuery, channel);
+        return findLatestKey(latestQuery, channel);
     }
 
     private Optional<ContentKey> getLatestCachedKeyIfNotExpired(String channel, DateTime channelTtlTime) {
@@ -425,7 +425,7 @@ public class ClusterContentService implements ContentService {
         return Optional.ofNullable((ContentKey) latestCache);
     }
 
-    private Optional<ContentKey> findAndCacheLatestKey(DirectionQuery latestQuery, String channel) {
+    private Optional<ContentKey> findLatestKey(DirectionQuery latestQuery, String channel) {
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
                 .startKey(latestQuery.getStartKey())
@@ -443,7 +443,9 @@ public class ClusterContentService implements ContentService {
         } else {
             ContentKey latestKey = keys.iterator().next();
             ActiveTraces.getLocal().add("updating cache with latestKey {} {}", channel, latestKey);
-            latestContentCache.setIfAfter(channel, latestKey);
+            if (query.isStable()) {
+                latestContentCache.setIfAfter(channel, latestKey);
+            }
             return Optional.of(latestKey);
         }
     }
