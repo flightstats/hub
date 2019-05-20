@@ -29,10 +29,6 @@ public class LatestContentCache {
         clusterStateDao.setIfAfter(key, channelName, LAST_COMMITTED_CONTENT_KEY);
     }
 
-    public void setEmpty(String channelName) {
-        clusterStateDao.set(ContentKey.NONE, channelName, LAST_COMMITTED_CONTENT_KEY);
-    }
-
     public void deleteCache(String channelName) {
         clusterStateDao.delete(channelName, LAST_COMMITTED_CONTENT_KEY);
     }

@@ -10,6 +10,7 @@ import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.Commander;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
@@ -37,7 +38,8 @@ public class SpokeContentDao {
         this.spokeProperties = spokeProperties;
     }
 
-    public static SortedSet<ContentKey> insert(BulkContent bulkContent, Function<ByteArrayOutputStream, Boolean> inserter) throws Exception {
+    @SneakyThrows
+    public static SortedSet<ContentKey> insert(BulkContent bulkContent, Function<ByteArrayOutputStream, Boolean> inserter) {
         Traces traces = ActiveTraces.getLocal();
         traces.add("writeBulk");
         String channelName = bulkContent.getChannel();

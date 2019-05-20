@@ -79,6 +79,7 @@ public class S3SingleContentDao implements ContentDao {
         return metadata;
     }
 
+    @Override
     public void initialize() {
         s3Client.initialize();
     }
@@ -88,6 +89,7 @@ public class S3SingleContentDao implements ContentDao {
         throw new UnsupportedOperationException("use query interface");
     }
 
+    @Override
     public ContentKey insert(String channelName, Content content) {
         return insert(channelName, content, (metadata) -> {
             metadata.addUserMetadata("compressed", "true");
@@ -133,6 +135,7 @@ public class S3SingleContentDao implements ContentDao {
         ActiveTraces.getLocal().add("S3SingleContentDao.deleted", s3ContentKey);
     }
 
+    @Override
     public Content get(final String channelName, final ContentKey key) {
         ActiveTraces.getLocal().add("S3SingleContentDao.read", key);
         try {
@@ -298,6 +301,7 @@ public class S3SingleContentDao implements ContentDao {
         return insert(channelName, content);
     }
 
+    @Override
     public void delete(String channel) {
         Traces traces = ActiveTraces.getLocal();
         new Thread(() -> {

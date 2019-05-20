@@ -54,9 +54,12 @@ import java.util.TreeSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 @Slf4j
 public class ClusterContentService implements ContentService {
@@ -142,15 +145,43 @@ public class ClusterContentService implements ContentService {
 
     @Override
     public ContentKey insert(String channelName, Content content) throws Exception {
+        final Content spokeContent = adjustContentIfLarge(channelName, content);
+
+        // after stable() seconds, we want to write the cache entry if the write succeeded
+        ContentKey key = setStableCache(channelName, () -> spokeWriteContentDao.insert(channelName, spokeContent));
+
+        if (isWriteable(channelName)) {
+            s3SingleWrite(channelName, key);
+        }
+        return key;
+    }
+
+    private Content adjustContentIfLarge(String channelName, Content content) throws Exception {
         Content spokeContent = content;
         if (content.isLarge()) {
             s3LargePayloadContentDao.insert(channelName, content);
             spokeContent = largeContentUtils.createIndex(content);
         }
-        ContentKey key = spokeWriteContentDao.insert(channelName, spokeContent);
-        latestContentCache.setIfAfter(channelName, key);
-        if (isWriteable(channelName)) {
-            s3SingleWrite(channelName, key);
+        return spokeContent;
+    }
+
+    private ContentKey setStableCache(String channelName, Supplier<ContentKey> supplier) {
+        // after stable() seconds, we want to write the cache entry if the write succeeded
+        AtomicReference<ContentKey> ref = new AtomicReference<>();
+
+        ScheduledFuture future = Executors.newScheduledThreadPool(1).schedule(() -> {
+            if (ref.get() != null) {
+                latestContentCache.setIfAfter(channelName, ref.get());
+            }
+        }, contentProperties.getStableSeconds() +1, TimeUnit.SECONDS);
+
+        ContentKey key;
+        try {
+            key = supplier.get();
+            ref.set(key);
+        } catch(Exception e) {
+            future.cancel(true);
+            throw e;
         }
         return key;
     }
@@ -160,7 +191,7 @@ public class ClusterContentService implements ContentService {
     }
 
     @Override
-    public Collection<ContentKey> insert(BulkContent bulkContent) throws Exception {
+    public Collection<ContentKey> insert(BulkContent bulkContent) {
         String channelName = bulkContent.getChannel();
         SortedSet<ContentKey> keys = spokeWriteContentDao.insert(bulkContent);
         if (isWriteable(channelName)) {
@@ -346,7 +377,6 @@ public class ClusterContentService implements ContentService {
 
     @Override
     public Optional<ContentKey> getLatest(DirectionQuery query) {
-        // Why are these different?  MUTABLE knows it only has to look at S3, but should the logic be different, or just the daos used in the query later?
         switch (query.getEpoch()) {
             case IMMUTABLE:
                 return getLatestImmutable(query);
@@ -361,35 +391,6 @@ public class ClusterContentService implements ContentService {
         }
     }
 
-    /*
-
-    If we use ZK as a pure cache, what happens?
-
-    On write of a record on any node, we update latest for that channel.
-    If latest does not exist, we use the existing fetch routine and update with the record we get back.
-    We should not apply special meaning to the absence of a path.
-    NONE should be true, only if we've scanned and their is nothing.
-
-    On write in spoke updateIfLaterThanCurrent after quorum write.
-    On read, if latest is present and STABLE, use it.
-    On delete in spoke find latest and cache.
-    On read, if latest is present and UNSTABLE, find latest and cache.
-
-    This means that an it takes less than stable time to get through quorum write and ZK update, STABLE queries might get UNSTABLE data.
-    Who actually cares about STABLE?
-            Does/should anyone?
-            We're either okay with eventual consistency or we want proper consistency,
-                    which Hub does not provide with its 5s aspirational fudge factor.
-
-    Can we avoid even this by ensuring that ZK's state is always past the stable time?
-
-    That way we could just say, if you want STABLE, hit ZK and crawl if missing, and if you want UNSTABLE just skip ZK.
-
-
-    Cache needs to know about both the spoke and the s3 DAOs as sources for latest items and that it should use spoke first, then S3.
-    That means it's really a concept applied at this level that shouldn't be in the spokeWriteDao.  WriteSpoke shouldn't know about caching.
-
-     */
     private Optional<ContentKey> getLatestImmutable(DirectionQuery latestQuery) {
         String channel = latestQuery.getChannelName();
         Optional<ChannelConfig> optionalChannelConfig = channelService.getCachedChannelConfig(channel);
@@ -397,10 +398,12 @@ public class ClusterContentService implements ContentService {
             return Optional.empty();
         }
 
-        DateTime channelTtlTime = optionalChannelConfig.get().getTtlTime();
-        Optional<ContentKey> cachedKey = getLatestCachedKeyIfNotExpired(channel, channelTtlTime);
-        if (cachedKey.isPresent()) {
-            return cachedKey;
+        if (latestQuery.isStable()) {
+            DateTime channelTtlTime = optionalChannelConfig.get().getTtlTime();
+            Optional<ContentKey> cachedKey = getLatestCachedKeyIfNotExpired(channel, channelTtlTime);
+            if (cachedKey.isPresent()) {
+                return cachedKey;
+            }
         }
 
         return findAndCacheLatestKey(latestQuery, channel);
