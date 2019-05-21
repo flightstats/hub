@@ -2,10 +2,8 @@ package com.flightstats.hub.dao.aws;
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
 import com.amazonaws.services.dynamodbv2.model.TableDescription;
 import com.amazonaws.services.dynamodbv2.model.TableStatus;
-import com.flightstats.hub.config.DynamoProperties;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
