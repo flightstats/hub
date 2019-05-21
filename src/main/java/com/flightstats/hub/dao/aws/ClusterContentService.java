@@ -150,7 +150,7 @@ public class ClusterContentService implements ContentService {
 
     @Override
     public ContentKey insert(String channelName, Content content) {
-        final Content spokeContent = adjustContentIfLarge(channelName, content);
+        final Content spokeContent = calculateIndexIfLarge(channelName, content);
 
         // after stable() seconds, we want to write the cache entry if the write succeeded
         SortedSet<ContentKey> keys = setStableCache(channelName,
@@ -163,7 +163,7 @@ public class ClusterContentService implements ContentService {
         return keys.first();
     }
 
-    private Content adjustContentIfLarge(String channelName, Content content) {
+    private Content calculateIndexIfLarge(String channelName, Content content) {
         Content spokeContent = content;
         if (content.isLarge()) {
             s3LargePayloadContentDao.insert(channelName, content);
@@ -233,7 +233,7 @@ public class ClusterContentService implements ContentService {
             Content content = spokeWriteContentDao.get(channelName, key);
             if (content != null) {
                 log.trace("returning from spoke {} {}", key.toString(), channelName);
-                return checkForLargeIndex(channelName, content);
+                return fetchLargeContentIfIndex(channelName, content);
             }
         }
         Content content;
@@ -253,7 +253,7 @@ public class ClusterContentService implements ContentService {
                 content = s3SingleContentDao.get(channelName, key);
             }
         }
-        return checkForLargeIndex(channelName, content);
+        return fetchLargeContentIfIndex(channelName, content);
     }
 
     private Content getFromS3BatchAndStoreInReadCache(String channelName, ContentKey key) {
@@ -281,7 +281,7 @@ public class ClusterContentService implements ContentService {
         }
     }
 
-    private Optional<Content> checkForLargeIndex(String channelName, Content content) {
+    private Optional<Content> fetchLargeContentIfIndex(String channelName, Content content) {
         if (content == null) {
             return Optional.empty();
         }
