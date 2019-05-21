@@ -197,11 +197,10 @@ public class ClusterContentService implements ContentService {
     }
 
     @Override
-    public Collection<ContentKey> insert(BulkContent bulkContent) throws Exception {
+    public Collection<ContentKey> insert(BulkContent bulkContent) {
         String channelName = bulkContent.getChannel();
 
         return setStableCache(channelName, () -> {
-            // set stable cache in ZK here as well
             SortedSet<ContentKey> keys = spokeWriteContentDao.insert(bulkContent);
             if (isWriteable(channelName)) {
                 for (ContentKey key : keys) {
@@ -501,7 +500,7 @@ public class ClusterContentService implements ContentService {
     @Override
     public void notify(ChannelConfig newConfig, ChannelConfig oldConfig) {
         if (oldConfig == null) {
-            latestContentCache.setEmpty(newConfig.getDisplayName());
+            latestContentCache.setIfAfter(newConfig.getDisplayName(), ContentKey.NONE);
         }
 
         final S3Batch s3Batch = new S3Batch(
@@ -519,12 +518,12 @@ public class ClusterContentService implements ContentService {
         }
         if (newConfig.isHistorical() && oldConfig != null && oldConfig.isHistorical()) {
             if (newConfig.getMutableTime().isBefore(oldConfig.getMutableTime())) {
-                updateLastEntryPointerToNewlyImmutableEntry(newConfig, oldConfig);
+                setLastToNewlyImmutableContent(newConfig, oldConfig);
             }
         }
     }
 
-    private void updateLastEntryPointerToNewlyImmutableEntry(ChannelConfig newConfig, ChannelConfig oldConfig) {
+    private void setLastToNewlyImmutableContent(ChannelConfig newConfig, ChannelConfig oldConfig) {
         ContentPath latestOrNoneIfEmpty = latestContentCache.getLatest(newConfig.getDisplayName(), ContentKey.NONE);
         log.info("handleMutableTimeChange {}", latestOrNoneIfEmpty);
         if (latestOrNoneIfEmpty.equals(ContentKey.NONE)) {
