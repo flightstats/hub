@@ -7,12 +7,12 @@ import lombok.extern.slf4j.Slf4j;
 import javax.inject.Inject;
 
 @Slf4j
-public class DynamoWebhookExistenceCheckLifecycle extends AbstractIdleService {
+public class DynamoWebhookExistenceCheck extends AbstractIdleService {
     private final DynamoUtils dynamoUtils;
     private final DynamoProperties dynamoProperties;
 
     @Inject
-    public DynamoWebhookExistenceCheckLifecycle(DynamoUtils dynamoUtils, DynamoProperties dynamoProperties) {
+    public DynamoWebhookExistenceCheck(DynamoUtils dynamoUtils, DynamoProperties dynamoProperties) {
         this.dynamoUtils = dynamoUtils;
         this.dynamoProperties = dynamoProperties;
     }

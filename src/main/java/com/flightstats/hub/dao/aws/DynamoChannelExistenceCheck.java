@@ -6,12 +6,12 @@ import com.google.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class DynamoChannelConfigExistenceCheckLifecycle extends AbstractIdleService {
+public class DynamoChannelExistenceCheck extends AbstractIdleService {
     private final DynamoUtils dynamoUtils;
     private final DynamoProperties dynamoProperties;
 
     @Inject
-    public DynamoChannelConfigExistenceCheckLifecycle(DynamoUtils dynamoUtils, DynamoProperties dynamoProperties) {
+    public DynamoChannelExistenceCheck(DynamoUtils dynamoUtils, DynamoProperties dynamoProperties) {
         this.dynamoUtils = dynamoUtils;
         this.dynamoProperties = dynamoProperties;
     }

@@ -10,8 +10,8 @@ import com.flightstats.hub.config.binding.ClusterHubBindings;
 import com.flightstats.hub.config.binding.HubBindings;
 import com.flightstats.hub.config.binding.PropertiesBinding;
 import com.flightstats.hub.config.binding.SingleHubBindings;
-import com.flightstats.hub.dao.aws.DynamoChannelConfigExistenceCheckLifecycle;
-import com.flightstats.hub.dao.aws.DynamoWebhookExistenceCheckLifecycle;
+import com.flightstats.hub.dao.aws.DynamoChannelExistenceCheck;
+import com.flightstats.hub.dao.aws.DynamoWebhookExistenceCheck;
 import com.flightstats.hub.dao.aws.S3WriteQueueLifecycle;
 import com.flightstats.hub.filter.CORSFilter;
 import com.flightstats.hub.filter.StreamEncodingFilter;
@@ -191,8 +191,8 @@ public class HubMain {
                 services.add(injector.getInstance(S3WriteQueueLifecycle.class));
             }
             services.addAll(createInstanceList(injector,
-                    DynamoChannelConfigExistenceCheckLifecycle.class,
-                    DynamoWebhookExistenceCheckLifecycle.class));
+                    DynamoChannelExistenceCheck.class,
+                    DynamoWebhookExistenceCheck.class));
 
             if (spokeProperties.isTtlEnforced()) {
                 SpokeTtlEnforcer spokeTtlEnforcerRead =
