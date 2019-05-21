@@ -1,12 +1,12 @@
 package com.flightstats.hub.webhook;
 
-import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.test.IntegrationTestSetup;
 import com.flightstats.hub.util.SafeZooKeeperUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -16,9 +16,9 @@ import java.util.Set;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Sets.newHashSet;
-import static org.apache.zookeeper.KeeperException.NodeExistsException;
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
+import static org.apache.zookeeper.KeeperException.NodeExistsException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -47,8 +47,8 @@ class WebhookLeaderLocksTest {
     }
 
     @BeforeAll
-    static void setup() throws Exception {
-        curator = Integration.startZooKeeper();
+    static void setup() {
+        curator = IntegrationTestSetup.run().getZookeeperClient();
         zooKeeperUtils = new SafeZooKeeperUtils(curator);
     }
 

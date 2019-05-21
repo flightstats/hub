@@ -5,12 +5,12 @@ import com.flightstats.hub.config.properties.PropertiesLoader;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.model.MinutePath;
-import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.test.IntegrationTestSetup;
 import org.apache.curator.framework.CuratorFramework;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -23,8 +23,8 @@ class LastContentPathTest {
     private LastContentPath lastContentPath;
 
     @BeforeAll
-    static void setUpClass() throws Exception {
-        curator = Integration.startZooKeeper();
+    static void setUpClass() {
+        curator = IntegrationTestSetup.run().getZookeeperClient();
     }
 
     @BeforeEach

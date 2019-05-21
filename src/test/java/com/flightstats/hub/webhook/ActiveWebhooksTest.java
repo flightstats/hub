@@ -1,25 +1,21 @@
 package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.app.HubHost;
-
-import java.util.Set;
-import java.util.stream.Stream;
-
 import com.flightstats.hub.config.properties.WebhookProperties;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Set;
+import java.util.stream.Stream;
+
 import static com.google.common.collect.Sets.newHashSet;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toSet;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -39,11 +35,6 @@ class ActiveWebhooksTest {
     private final ActiveWebhookSweeper activeWebhookSweeper = mock(ActiveWebhookSweeper.class);
     @Mock
     private WebhookProperties webhookProperties;
-
-    @BeforeEach
-    public void setup() {
-        when(webhookProperties.isWebhookLeadershipEnabled()).thenReturn(true);
-    }
 
     @Test
     void testGetServers_returnsSeveralForAWebhook() throws Exception {

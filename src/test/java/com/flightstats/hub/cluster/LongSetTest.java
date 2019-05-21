@@ -1,6 +1,6 @@
 package com.flightstats.hub.cluster;
 
-import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.test.IntegrationTestSetup;
 import com.google.common.collect.Sets;
 import org.apache.curator.framework.CuratorFramework;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,8 +17,8 @@ class LongSetTest {
     private LongSet longSet;
 
     @BeforeEach
-    void setUp() throws Exception {
-        curator = Integration.startZooKeeper();
+    void setUp() {
+        curator = IntegrationTestSetup.run().getZookeeperClient();
     }
 
     @Test

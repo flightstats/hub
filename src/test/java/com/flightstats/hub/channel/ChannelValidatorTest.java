@@ -10,7 +10,9 @@ import com.google.common.base.Strings;
 import org.joda.time.DateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,10 +25,9 @@ import static com.flightstats.hub.model.ChannelType.SINGLE;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 
+@ExtendWith(MockitoExtension.class)
 class ChannelValidatorTest {
 
     @Mock
@@ -35,21 +36,21 @@ class ChannelValidatorTest {
 
     @BeforeEach
     void setUp() {
-        initMocks(this);
         validator = new ChannelValidator(channelConfigDao);
-        when(channelConfigDao.exists(any(String.class))).thenReturn(false);
         PropertiesLoader.getInstance().setProperty("hub.protect.channels", "false");
     }
 
     @Test
     void testAllGood() {
-        validator.validate(getBuilder().name(Strings.repeat("A", 48)).build(), null, false);
+        ChannelConfig channelConfig = getBuilder().name(Strings.repeat("A", 48)).build();
+        validator.validate(channelConfig, null, false);
     }
 
     @Test
     void testTooLong() {
+        ChannelConfig channelConfig = getBuilder().name(Strings.repeat("A", 49)).build();
         assertThrows(InvalidRequestException.class, () ->
-                validator.validate(getBuilder().name(Strings.repeat("A", 49)).build(), null, false));
+                validator.validate(channelConfig, null, false));
     }
 
     @Test
@@ -60,14 +61,16 @@ class ChannelValidatorTest {
 
     @Test
     void testChannelNameEmpty() {
+        ChannelConfig channelConfig = getBuilder().name("").build();
         assertThrows(InvalidRequestException.class,
-                () -> validator.validate(getBuilder().name("").build(), null, false));
+                () -> validator.validate(channelConfig, null, false));
     }
 
     @Test
     void testChannelNameBlank() {
+        ChannelConfig channelConfig = getBuilder().name("  ").build();
         assertThrows(InvalidRequestException.class, () ->
-                validator.validate(getBuilder().name("  ").build(), null, false));
+                validator.validate(channelConfig, null, false));
     }
 
     @Test
@@ -80,59 +83,71 @@ class ChannelValidatorTest {
 
     @Test
     void testInvalidSpaceCharacter() {
+        ChannelConfig channelConfig = getBuilder().name("my chan").build();
         assertThrows(InvalidRequestException.class, () ->
-                validator.validate(getBuilder().name("my chan").build(), null, false));
+                validator.validate(channelConfig, null, false));
     }
 
     @Test
     void testValidUnderscore() {
-        validator.validate(getBuilder().name("my_chan").build(), null, false);
+        ChannelConfig channelConfig = getBuilder().name("my_chan").build();
+        validator.validate(channelConfig, null, false);
     }
 
     @Test
     void testValidHyphen() {
-        validator.validate(getBuilder().name("my-chan").build(), null, false);
+        ChannelConfig channelConfig = getBuilder().name("my-chan").build();
+        validator.validate(channelConfig, null, false);
     }
 
     @Test
     void testInvalidCharacter() {
+        ChannelConfig channelConfig = getBuilder().name("my#chan").build();
         assertThrows(InvalidRequestException.class, () ->
-                validator.validate(getBuilder().name("my#chan").build(), null, false));
+                validator.validate(channelConfig, null, false));
     }
 
     @Test
     void testInvalidChannelTtlMax() {
-        assertThrows(InvalidRequestException.class, () -> validator.validate(getBuilder()
+        ChannelConfig channelConfig = getBuilder()
                 .name("mychan")
                 .ttlDays(10)
                 .maxItems(10)
-                .build(), null, false));
+                .build();
+        assertThrows(InvalidRequestException.class,
+                () -> validator.validate(channelConfig, null, false));
     }
 
     @Test
     void testInvalidChannelTtlMutable() {
-        assertThrows(InvalidRequestException.class, () -> validator.validate(getBuilder()
+        ChannelConfig channelConfig = getBuilder()
                 .name("mychan")
                 .ttlDays(10)
                 .mutableTime(new DateTime())
-                .build(), null, false));
+                .build();
+        assertThrows(InvalidRequestException.class,
+                () -> validator.validate(channelConfig, null, false));
     }
 
     @Test
     void testInvalidChannelMaxMutable() {
-        assertThrows(InvalidRequestException.class, () -> validator.validate(getBuilder()
+        ChannelConfig channelConfig = getBuilder()
                 .name("mychan")
                 .mutableTime(new DateTime())
                 .maxItems(10)
-                .build(), null, false));
+                .build();
+        assertThrows(InvalidRequestException.class,
+                () -> validator.validate(channelConfig, null, false));
     }
 
     @Test
     void testInvalidChannelMutableTime() {
-        assertThrows(InvalidRequestException.class, () -> validator.validate(getBuilder()
+        ChannelConfig channelConfig = getBuilder()
                 .name("mychan")
                 .mutableTime(new DateTime().plusMinutes(1))
-                .build(), null, false));
+                .build();
+        assertThrows(InvalidRequestException.class,
+                () -> validator.validate(channelConfig, null, false));
     }
 
     @Test

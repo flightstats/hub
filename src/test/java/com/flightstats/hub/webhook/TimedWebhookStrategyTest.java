@@ -2,7 +2,7 @@ package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.SecondPath;
-import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.test.IntegrationTestSetup;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.jupiter.api.BeforeAll;
@@ -12,8 +12,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class TimedWebhookStrategyTest {
     @BeforeAll
-    static void setupIntegration() throws Exception {
-        Integration.startAwsHub();
+    static void setupIntegration() {
+        IntegrationTestSetup.run();
     }
 
     @Test

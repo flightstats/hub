@@ -2,7 +2,7 @@ package com.flightstats.hub.cluster;
 
 import com.flightstats.hub.config.properties.PropertiesLoader;
 import com.flightstats.hub.config.properties.ZooKeeperProperties;
-import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.test.IntegrationTestSetup;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.api.CuratorEvent;
 import org.junit.jupiter.api.BeforeAll;
@@ -19,8 +19,8 @@ class WatchManagerTest {
     private static WatchManager watchManager;
 
     @BeforeAll
-    static void setUpClass() throws Exception {
-        CuratorFramework curator = Integration.startZooKeeper();
+    static void setUpClass() {
+        CuratorFramework curator = IntegrationTestSetup.run().getZookeeperClient();
         watchManager = new WatchManager(curator,
                 new ZooKeeperProperties(PropertiesLoader.getInstance()));
         watchManager.addCuratorListener();

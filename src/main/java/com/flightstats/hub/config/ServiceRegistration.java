@@ -51,17 +51,17 @@ public class ServiceRegistration {
             services.addAll(createInstanceList(injector,
                     DynamoChannelConfigDaoLifecycle.class,
                     DynamoWebhookDaoLifecycle.class));
-        }
 
-        SpokeProperties spokeProperties = injector.getInstance(SpokeProperties.class);
-        if (spokeProperties.isTtlEnforced()) {
-            SpokeTtlEnforcer spokeTtlEnforcerRead =
-                    injector.getInstance(Key.get(SpokeTtlEnforcer.class, Names.named(READ.name())));
-            services.add(new SpokeTtlEnforcerLifecycle(spokeTtlEnforcerRead));
+            SpokeProperties spokeProperties = injector.getInstance(SpokeProperties.class);
+            if (spokeProperties.isTtlEnforced()) {
+                SpokeTtlEnforcer spokeTtlEnforcerRead =
+                        injector.getInstance(Key.get(SpokeTtlEnforcer.class, Names.named(READ.name())));
+                services.add(new SpokeTtlEnforcerLifecycle(spokeTtlEnforcerRead));
 
-            SpokeTtlEnforcer spokeTtlEnforcerWrite =
-                    injector.getInstance(Key.get(SpokeTtlEnforcer.class, Names.named(WRITE.name())));
-            services.add(new SpokeTtlEnforcerLifecycle(spokeTtlEnforcerWrite));
+                SpokeTtlEnforcer spokeTtlEnforcerWrite =
+                        injector.getInstance(Key.get(SpokeTtlEnforcer.class, Names.named(WRITE.name())));
+                services.add(new SpokeTtlEnforcerLifecycle(spokeTtlEnforcerWrite));
+            }
         }
 
         return services;

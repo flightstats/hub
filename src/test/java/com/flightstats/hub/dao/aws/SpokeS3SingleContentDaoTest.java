@@ -5,9 +5,8 @@ import com.flightstats.hub.model.BulkContent;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.spoke.SpokeWriteContentDao;
-import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.test.IntegrationTestSetup;
 import com.flightstats.hub.util.StringUtils;
-import com.google.inject.Injector;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -27,10 +26,10 @@ class SpokeS3SingleContentDaoTest {
     private static SpokeWriteContentDao spokeWriteContentDao;
 
     @BeforeAll
-    static void setUpClass() throws Exception {
-        Injector injector = Integration.startAwsHub();
-        s3SingleContentDao = injector.getInstance(S3SingleContentDao.class);
-        spokeWriteContentDao = injector.getInstance(SpokeWriteContentDao.class);
+    static void setUpClass() {
+        IntegrationTestSetup integrationTestSetup = IntegrationTestSetup.run();
+        s3SingleContentDao = integrationTestSetup.getInstance(S3SingleContentDao.class);
+        spokeWriteContentDao = integrationTestSetup.getInstance(SpokeWriteContentDao.class);
     }
 
     @Test
