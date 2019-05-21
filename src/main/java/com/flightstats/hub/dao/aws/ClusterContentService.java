@@ -67,8 +67,7 @@ import static com.flightstats.hub.constant.ZookeeperNodes.LAST_SINGLE_VERIFIED;
 @Slf4j
 public class ClusterContentService implements ContentService {
 
-    private static final ExecutorService executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("ClusterContentService-%d").build());
-
+    private final ExecutorService executorService;
     private final ContentDao spokeWriteContentDao;
     private final ContentDao s3SingleContentDao;
     private final ContentDao spokeReadContentDao;
@@ -116,6 +115,7 @@ public class ClusterContentService implements ContentService {
         this.appProperties = appProperties;
         this.contentProperties = contentProperties;
         this.spokeProperties = spokeProperties;
+        this.executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("ClusterContentService-%d").build());
         this.zkCacheStateUpdateExecutor = Executors.newScheduledThreadPool(4);
     }
 
