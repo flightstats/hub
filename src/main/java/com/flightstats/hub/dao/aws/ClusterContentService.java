@@ -83,7 +83,7 @@ public class ClusterContentService implements ContentService {
     private final AppProperties appProperties;
     private final ContentProperties contentProperties;
     private final SpokeProperties spokeProperties;
-    private ScheduledExecutorService zkCacheStateUpdateExecutor;
+    private final ScheduledExecutorService zkCacheStateUpdateExecutor;
 
     @Inject
     public ClusterContentService(
