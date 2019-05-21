@@ -77,7 +77,6 @@ public class ClusterHubBindings extends AbstractModule {
         bind(S3BatchManager.class).asEagerSingleton();
         bind(S3Verifier.class).asEagerSingleton();
         bind(S3AccessMonitor.class).asEagerSingleton();
-        bind(S3AccessMonitor.class).asEagerSingleton();
         bind(HubS3Client.class).asEagerSingleton();
         bind(S3DocumentationDao.class).asEagerSingleton();
     }

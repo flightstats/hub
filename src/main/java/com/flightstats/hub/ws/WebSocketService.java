@@ -1,48 +1,40 @@
 package com.flightstats.hub.ws;
 
 import com.flightstats.hub.app.HubHost;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.StringUtils;
 import com.flightstats.hub.webhook.Webhook;
 import com.flightstats.hub.webhook.WebhookService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
+import javax.inject.Inject;
 import javax.websocket.Session;
 import javax.ws.rs.core.UriBuilder;
 import java.io.IOException;
 import java.net.URI;
-import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 
-class WebSocketService {
+@Slf4j
+public class WebSocketService {
 
-    private final static Logger logger = LoggerFactory.getLogger(WebSocketService.class);
-    private static WebSocketService instance;
-    private final WebhookService webhookService;
     private final Map<String, Session> sessionMap = new HashMap<>();
 
-    private WebSocketService() {
-        webhookService = HubProvider.getInstance(WebhookService.class);
+    private final WebhookService webhookService;
+
+    @Inject
+    public WebSocketService(WebhookService webhookService) {
+        this.webhookService = webhookService;
     }
 
-    public static synchronized WebSocketService getInstance() {
-        if (null == instance) {
-            instance = new WebSocketService();
-        }
-        return instance;
-    }
-
-    void createCallback(Session session, String channel) throws UnknownHostException {
+    void createCallback(Session session, String channel) {
         createCallback(session, channel, new ContentKey());
     }
 
-    void createCallback(Session session, String channel, ContentKey startingKey) throws UnknownHostException {
+    void createCallback(Session session, String channel, ContentKey startingKey) {
         String id = setId(session, channel);
         URI uri = session.getRequestURI();
-        logger.info("creating callback {} {} {}", channel, id, uri);
+        log.info("creating callback {} {} {}", channel, id, uri);
         sessionMap.put(id, session);
         Webhook webhook = Webhook.builder()
                 .channelUrl(getChannelUrl(uri))
@@ -63,7 +55,7 @@ class WebSocketService {
         return channelUrl.toString();
     }
 
-    private String getCallbackUrl(String id) throws UnknownHostException {
+    private String getCallbackUrl(String id) {
         return HubHost.getLocalHttpIpUri() + "/internal/ws/" + id;
     }
 
@@ -82,17 +74,17 @@ class WebSocketService {
     public void call(String id, String uri) {
         Session session = sessionMap.get(id);
         if (session == null) {
-            logger.info("attempting to send to missing session {} {}", id, uri);
+            log.info("attempting to send to missing session {} {}", id, uri);
             close(id);
             return;
         }
         try {
             session.getBasicRemote().sendText(uri);
         } catch (IOException e) {
-            logger.warn("unable to send to session " + id + " uri " + uri + " " + e.getMessage());
+            log.warn("unable to send to session " + id + " uri " + uri + " " + e.getMessage());
             close(id);
         } catch (Exception e) {
-            logger.warn("unable to send to session " + id + " uri " + uri, e);
+            log.warn("unable to send to session " + id + " uri " + uri, e);
             close(id);
         }
     }
@@ -103,11 +95,11 @@ class WebSocketService {
 
     private void close(String id) {
         try {
-            logger.info("deleting ws group {}", id);
+            log.info("deleting ws group {}", id);
             webhookService.delete(id);
             sessionMap.remove(id);
         } catch (Exception e) {
-            logger.info("unable to close ws group " + id, e);
+            log.info("unable to close ws group " + id, e);
         }
     }
 }

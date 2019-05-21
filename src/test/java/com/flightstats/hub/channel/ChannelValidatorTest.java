@@ -1,7 +1,7 @@
 package com.flightstats.hub.channel;
 
 import com.flightstats.hub.config.PropertiesLoader;
-import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.exception.ForbiddenRequestException;
 import com.flightstats.hub.exception.InvalidRequestException;
@@ -10,29 +10,34 @@ import com.google.common.base.Strings;
 import org.joda.time.DateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static com.flightstats.hub.model.ChannelType.BATCH;
+import static com.flightstats.hub.model.ChannelType.BOTH;
+import static com.flightstats.hub.model.ChannelType.SINGLE;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 class ChannelValidatorTest {
 
-    private ChannelService channelService;
+    @Mock
+    private Dao<ChannelConfig> channelConfigDao;
     private ChannelValidator validator;
 
     @BeforeEach
     void setUp() {
-        channelService = mock(ChannelService.class);
-        validator = new ChannelValidator(channelService);
-        when(channelService.channelExists(any(String.class))).thenReturn(false);
+        initMocks(this);
+        validator = new ChannelValidator(channelConfigDao);
+        when(channelConfigDao.exists(any(String.class))).thenReturn(false);
         PropertiesLoader.getInstance().setProperty("hub.protect.channels", "false");
     }
 
@@ -68,7 +73,7 @@ class ChannelValidatorTest {
     @Test
     void testChannelExists() {
         String channelName = "achannel";
-        when(channelService.channelExists(channelName)).thenReturn(true);
+        when(channelConfigDao.exists(channelName)).thenReturn(true);
         ChannelConfig channelConfig = getBuilder().name(channelName).build();
         assertThrows(ConflictException.class, () -> validator.validate(channelConfig, null, false));
     }
@@ -168,17 +173,16 @@ class ChannelValidatorTest {
     void testInvalidBatchMutable() {
         assertThrows(InvalidRequestException.class, () -> validator.validate(getBuilder()
                 .name("mychan")
-                .storage(ChannelConfig.BATCH)
+                .storage(BATCH.name())
                 .mutableTime(new DateTime())
                 .build(), null, false));
     }
 
-//    @Test(expected = InvalidRequestException.class)
     @Test
     void testInvalidBothMutable() {
         assertThrows(InvalidRequestException.class, () -> validator.validate(getBuilder()
                 .name("mychan")
-                .storage(ChannelConfig.BOTH)
+                .storage(BOTH.name())
                 .mutableTime(new DateTime())
                 .build(), null, false));
     }
@@ -254,7 +258,7 @@ class ChannelValidatorTest {
 
     @Test
     void testValidStorage() {
-        validator.validate(getBuilder().name("storage").storage(ChannelConfig.SINGLE).build(), null, false);
+        validator.validate(getBuilder().name("storage").storage(SINGLE.name()).build(), null, false);
         validator.validate(getBuilder().name("storage").storage("batch").build(), null, false);
         validator.validate(getBuilder().name("storage").storage("BoTh").build(), null, false);
     }
@@ -266,11 +270,11 @@ class ChannelValidatorTest {
     }
 
     @Test
-    void testChangeStorageLoss() throws Exception {
+    void testChangeStorageLoss() {
         PropertiesLoader.getInstance().setProperty("hub.protect.channels", "true");
-        ChannelConfig single = getBuilder().name("storage").storage(ChannelConfig.SINGLE).build();
-        ChannelConfig batch = getBuilder().name("storage").storage(ChannelConfig.BATCH).build();
-        ChannelConfig both = getBuilder().name("storage").storage(ChannelConfig.BOTH).build();
+        ChannelConfig single = getBuilder().name("storage").storage(SINGLE.name()).build();
+        ChannelConfig batch = getBuilder().name("storage").storage(BATCH.name()).build();
+        ChannelConfig both = getBuilder().name("storage").storage(BOTH.name()).build();
         validator.validate(both, single, false);
         validator.validate(both, batch, false);
         validateError(single, both);

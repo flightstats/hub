@@ -5,18 +5,19 @@ import com.flightstats.hub.test.Integration;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Set;
 import java.util.TreeSet;
 
-import static com.flightstats.hub.webhook.TagWebhook.allManagedWebhooksForChannel;
-
 class TagWebhookTest {
-
     private static final String host = "http://hub.com";
     private ChannelConfig c1, c2, c3;
     private Set<Webhook> allWebhooks;
+
+    @Mock
+    private WebhookService webhookService;
 
     private String createChannelUrl(String channel) {
         return host + "/channel/" + channel;
@@ -50,7 +51,7 @@ class TagWebhookTest {
     private ChannelConfig createChannelConfig(String name, String tag) {
         return ChannelConfig.builder()
                 .name(name)
-                .tags(StringUtils.isEmpty(tag) ? Arrays.asList() : Arrays.asList(tag))
+                .tags(StringUtils.isEmpty(tag) ? Collections.EMPTY_LIST : Collections.singletonList(tag))
                 .build();
     }
 
@@ -68,13 +69,17 @@ class TagWebhookTest {
     }
 
     @Test
-    void testAllManagedWebhooksForChannel() throws Exception {
-        Set<Webhook> s = allManagedWebhooksForChannel(allWebhooks, c2);
-        assert s.size() == 1 : "Should be only 1 tag webhook for c2";
-        s = allManagedWebhooksForChannel(allWebhooks, c3);
-        assert s.size() == 1 : "c2 has one managed webhooks, the other is a prototype";
-        s = allManagedWebhooksForChannel(allWebhooks, c1);
-        assert s.size() == 0 : "c1 has no tag webhooks";
+    void testAllManagedWebhooksForChannel() {
+        final TagWebhook tagWebhook = new TagWebhook(webhookService);
+
+        Set<Webhook> webhooks = tagWebhook.allManagedWebhooksForChannel(allWebhooks, c2);
+        assert webhooks.size() == 1 : "Should be only 1 tag webhook for c2";
+
+        webhooks = tagWebhook.allManagedWebhooksForChannel(allWebhooks, c3);
+        assert webhooks.size() == 1 : "c2 has one managed webhooks, the other is a prototype";
+
+        webhooks = tagWebhook.allManagedWebhooksForChannel(allWebhooks, c1);
+        assert webhooks.size() == 0 : "c1 has no tag webhooks";
     }
 
 }

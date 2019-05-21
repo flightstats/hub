@@ -7,6 +7,7 @@ import com.flightstats.hub.config.SpokeProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.BuiltInTag;
 import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.util.HubUtils;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Singleton;
@@ -26,28 +27,33 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.flightstats.hub.app.HubServices.TYPE;
 import static com.flightstats.hub.app.HubServices.register;
+import static com.flightstats.hub.constant.ZookeeperNodes.REPLICATOR_WATCHER_PATH;
 
 @Singleton
 @Slf4j
 public class ReplicationManager {
-    public static final String REPLICATOR_WATCHER_PATH = "/replicator/watcher";
+
     private final Map<String, ChannelReplicator> channelReplicatorMap = new HashMap<>();
     private final AtomicBoolean stopped = new AtomicBoolean();
     private final ExecutorService executor = Executors.newSingleThreadExecutor(
             new ThreadFactoryBuilder().setNameFormat("ReplicationManager").build());
     private final ExecutorService executorPool = Executors.newFixedThreadPool(40,
             new ThreadFactoryBuilder().setNameFormat("ReplicationManager-%d").build());
-    private ChannelService channelService;
-    private WatchManager watchManager;
-    private AppProperties appProperties;
+
+    private final ChannelService channelService;
+    private final WatchManager watchManager;
+    private final HubUtils hubUtils;
+    private final AppProperties appProperties;
 
     @Inject
-    public ReplicationManager(
-            ChannelService channelService, WatchManager watchManager,
-            AppProperties appProperties,
-            SpokeProperties spokeProperties) {
+    public ReplicationManager(ChannelService channelService,
+                              WatchManager watchManager,
+                              HubUtils hubUtils,
+                              AppProperties appProperties,
+                              SpokeProperties spokeProperties) {
         this.channelService = channelService;
         this.watchManager = watchManager;
+        this.hubUtils = hubUtils;
         this.appProperties = appProperties;
         if (spokeProperties.isReplicationEnabled()) {
             register(new ReplicationService(), TYPE.AFTER_HEALTHY_START, TYPE.PRE_STOP);
@@ -117,7 +123,7 @@ public class ReplicationManager {
 
     private ChannelReplicator createReplicator(ChannelConfig channel) {
         ChannelReplicator newReplicator =
-                new ChannelReplicator(channel, appProperties.getAppUrl(), appProperties.getAppEnv());
+                new ChannelReplicator(hubUtils, channel, appProperties.getAppUrl(), appProperties.getAppEnv());
         channelReplicatorMap.put(channel.getDisplayName(), newReplicator);
         return newReplicator;
     }
@@ -148,10 +154,6 @@ public class ReplicationManager {
             channelReplicatorMap.remove(replicator.getChannel().getDisplayName());
             log.warn("unexpected replication issue " + replicator.getChannel().getDisplayName(), e);
         }
-    }
-
-    public void notifyWatchers() {
-        watchManager.notifyWatcher(REPLICATOR_WATCHER_PATH);
     }
 
     private class ReplicationService extends AbstractIdleService {

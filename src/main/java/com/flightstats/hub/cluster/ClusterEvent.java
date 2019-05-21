@@ -1,8 +1,5 @@
 package com.flightstats.hub.cluster;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Comparator;
 import java.util.Set;
 import java.util.TreeSet;
@@ -10,23 +7,23 @@ import java.util.regex.Pattern;
 
 class ClusterEvent {
 
-    private static final Logger logger = LoggerFactory.getLogger(ClusterEvent.class);
     private static final String PIPE = Pattern.quote("|");
     private static final String SLASH = Pattern.quote("/");
 
+    private final String event;
     private final String name;
-    private final long creationTime;
     private final boolean added;
+    private final long creationTime;
     private final long modifiedTime;
-    private String event;
+
 
     ClusterEvent(String event, long modifiedTime) {
         this.event = event;
-        this.modifiedTime = modifiedTime;
         String[] splitEvent = event.split(PIPE);
-        creationTime = Long.parseLong(splitEvent[0].split(SLASH)[2]);
-        name = splitEvent[1];
-        added = "ADDED".equalsIgnoreCase(splitEvent[2]);
+        this.name = splitEvent[1];
+        this.added = "ADDED".equalsIgnoreCase(splitEvent[2]);
+        this.creationTime = Long.parseLong(splitEvent[0].split(SLASH)[2]);
+        this.modifiedTime = modifiedTime;
     }
 
     static String encode(String name, long creationTime, boolean added) {
