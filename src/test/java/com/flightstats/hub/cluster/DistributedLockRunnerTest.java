@@ -1,6 +1,7 @@
 package com.flightstats.hub.cluster;
 
 import com.flightstats.hub.test.Integration;
+import com.google.common.collect.Range;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.joda.time.DateTime;
@@ -11,14 +12,17 @@ import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
-import static com.google.common.collect.Lists.newArrayList;
+import static java.util.stream.Collectors.toList;
+import static junit.framework.Assert.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -29,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 class DistributedLockRunnerTest {
 
     private static DistributedLeaderLockManager lockManager;
-    private static AtomicReference<List<String>> lockList;
+    private ConcurrentHashMap<String, Range<DateTime>> lockTimes;
     private DistributedLockRunner distributedLockRunner;
 
     @BeforeAll
@@ -41,7 +45,7 @@ class DistributedLockRunnerTest {
 
     @BeforeEach
     void setup() {
-        lockList = new AtomicReference<>(newArrayList());
+        lockTimes = new ConcurrentHashMap<>();
         this.distributedLockRunner = new DistributedLockRunner(lockManager);
     }
 
@@ -49,44 +53,44 @@ class DistributedLockRunnerTest {
     void test_runWithLock_executesTheRunnableCode() throws Exception {
         CountDownLatch latch = new CountDownLatch(1);
 
-        Consumer<LeadershipLock> lockable = leadershipLock -> {
-            doAThing(0, "lockable1", latch);
+        Consumer<LeadershipLock> lockable = leadershipLock -> trackLock("lockable1", latch, () ->{
+            sleep(0);
             assertTrue(leadershipLock.getLeadership().hasLeadership());
             assertTrue(leadershipLock.getMutex().isAcquiredInThisProcess());
-        };
+        });
 
         boolean runWithLock = distributedLockRunner.runWithLock(lockable, "/LockPath", 1, TimeUnit.MILLISECONDS);
 
         assertTrue(runWithLock);
 
         latch.await(1, TimeUnit.MINUTES);
-        assertEquals(newArrayList("lockable1"), lockList.get());
+        assertLocksHappened("lockable1");
     }
 
     @Test
     void test_runWithLock_withTwoLockables_runsOneAtATime() throws Exception {
-
-
-        final CountDownLatch waitForMe = new CountDownLatch(1);
-        final CountDownLatch latch = new CountDownLatch(2);
-        final ExecutorService executorService = Executors.newFixedThreadPool(3);
+        CountDownLatch waitForMe = new CountDownLatch(1);
+        CountDownLatch latch = new CountDownLatch(2);
+        ExecutorService executorService = Executors.newFixedThreadPool(3);
 
         executorService.execute(() -> {
-            Consumer<LeadershipLock> lockable = leadershipLock -> {
+            Consumer<LeadershipLock> lockable = leadershipLock -> trackLock("lockable1", latch, () -> {
                 waitForMe.countDown();
-                doAThing(100, "lockable1", latch);
-            };
+                sleep(100);
+            });
             distributedLockRunner.runWithLock(lockable, "/LockPath", 1, TimeUnit.MILLISECONDS);
         });
 
         executorService.execute(() -> {
-            Consumer<LeadershipLock> lockable = leadershipLock -> doAThing(0, "lockable2", latch);
+            Consumer<LeadershipLock> lockable = leadershipLock -> trackLock("lockable2", latch, () -> sleep(0));
             tryWait(90, waitForMe);
             distributedLockRunner.runWithLock(lockable, "/LockPath", 1, TimeUnit.MINUTES);
         });
 
         latch.await(5, TimeUnit.MINUTES);
-        assertEquals(newArrayList("lockable1", "lockable2"), lockList.get());
+
+        assertLocksHappened("lockable1", "lockable2");
+        assertLocksOccurredSerially("lockable1", "lockable2");
     }
 
     @Test
@@ -96,28 +100,31 @@ class DistributedLockRunnerTest {
         final ExecutorService executorService = Executors.newFixedThreadPool(3);
 
         executorService.execute(() -> {
-            Consumer<LeadershipLock> lockable = leadershipLock -> {
+            Consumer<LeadershipLock> lockable = leadershipLock -> trackLock("lockable1", latch, () -> {
                 waitForMe.countDown();
-                doAThing(100, "lockable1", latch);
-            };
+                sleep(100);
+            });
             distributedLockRunner.runWithLock(lockable, "/LockPath", 1, TimeUnit.MINUTES);
         });
 
         executorService.execute(() -> {
-            Consumer<LeadershipLock> lockable = leadershipLock -> doAThing(0, "lockable2", latch);
+            Consumer<LeadershipLock> lockable = leadershipLock -> trackLock("lockable2", latch, () -> {
+                sleep(0);
+            });
             tryWait(50, waitForMe);
             distributedLockRunner.runWithLock(lockable, "/LockPath", 1, TimeUnit.MILLISECONDS);
         });
 
         executorService.execute(() -> {
-            Consumer<LeadershipLock> lockable = leadershipLock -> doAThing(0, "lockable3", latch);
+            Consumer<LeadershipLock> lockable = leadershipLock -> trackLock("lockable3", latch, () -> {
+                sleep(0);
+            });
             distributedLockRunner.runWithLock(lockable, "/LockPath", 1, TimeUnit.MINUTES);
         });
 
         latch.await(5, TimeUnit.MINUTES);
-        assertEquals(2, lockList.get().size());
-        assertTrue(lockList.get().contains("lockable1"));
-        assertTrue(lockList.get().contains("lockable3"));
+        assertLocksHappened("lockable1", "lockable3");
+        assertFalse(locksOverlap("lockable1", "lockable3"));
     }
 
     @Test
@@ -127,28 +134,30 @@ class DistributedLockRunnerTest {
         final CountDownLatch latch = new CountDownLatch(3);
         final ExecutorService executorService = Executors.newFixedThreadPool(3);
         executorService.execute(() -> {
-            Consumer<LeadershipLock> lockable = leadershipLock -> {
+            Consumer<LeadershipLock> lockable = leadershipLock -> trackLock("lockable1", latch, () -> {
                 waitForOne.countDown();
-                doAThing(100, "lockable1", latch);
                 tryWait(50, waitForTwo);
-            };
+                sleep(150);
+            });
 
-            distributedLockRunner.runWithLock(lockable, "/LockPath", 1, TimeUnit.MINUTES);
+            distributedLockRunner.runWithLock(lockable, "/Lock", 1, TimeUnit.MINUTES);
         });
 
         executorService.execute(() -> {
-            Consumer<LeadershipLock> lockable = leadershipLock -> {
-                doAThing(0, "lockable2", latch);
+            Consumer<LeadershipLock> lockable = leadershipLock -> trackLock("lockable2", latch, () -> {
+                sleep(25);
                 waitForTwo.countDown();
-            };
+            });
             tryWait(50, waitForOne);
-            distributedLockRunner.runWithLock(lockable, "/LockPath2", 1, TimeUnit.MILLISECONDS);
+            distributedLockRunner.runWithLock(lockable, "/Lock2", 1, TimeUnit.MILLISECONDS);
         });
 
         executorService.execute(() -> {
-            Consumer<LeadershipLock> lockable = leadershipLock -> doAThing(0, "lockable3", latch);
-            tryWait(50, waitForOne);
-            distributedLockRunner.runWithLock(lockable, "/LockPath", 1, TimeUnit.MINUTES);
+            Consumer<LeadershipLock> lockable = leadershipLock -> trackLock("lockable3", latch, () -> {
+                sleep(75);
+            });
+            tryWait(50, waitForTwo);
+            distributedLockRunner.runWithLock(lockable, "/Lock", 1, TimeUnit.MINUTES);
         });
 
         try {
@@ -156,31 +165,59 @@ class DistributedLockRunnerTest {
         } catch (InterruptedException e) {
             fail("something went wrong waiting for all the locks to finish!");
         }
-        assertEquals("lockable2", lockList.get().get(0));
-        assertTrue(lockList.get().containsAll(newArrayList("lockable1", "lockable2", "lockable3")));
+        log.debug(lockTimes.toString());
+
+        assertLocksHappened("lockable1", "lockable2", "lockable3");
+        assertTrue(locksOverlap("lockable1", "lockable2") || locksOverlap("lockable2", "lockable3"));
+        assertFalse(locksOverlap("lockable1", "lockable3"));
     }
 
     private void tryWait(long sleepMillis, CountDownLatch latch) {
-        try { latch.await(sleepMillis, TimeUnit.MILLISECONDS); }
-        catch (InterruptedException e) {
+        try {
+            latch.await(sleepMillis, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+            log.warn("thread interrupted");
             fail(e.getMessage());
         }
     }
 
-    private void doAThing(long sleepMillis, String name, CountDownLatch latch) {
+    private void trackLock(String name, CountDownLatch latch, Runnable doTheThing) {
+        DateTime startTime = DateTime.now();
+        log.debug("{} starting at {}", name, startTime);
+
+        doTheThing.run();
+
+        DateTime endTime = DateTime.now();
+        log.debug("{} ending at {}", name, endTime);
+        lockTimes.put(name, Range.closed(startTime, endTime));
+
+        latch.countDown();
+    }
+
+    private void sleep(long sleepMillis) {
         try {
             Thread.sleep(sleepMillis);
         } catch (Exception e) {
             fail(e.getMessage());
         }
+    }
 
-        log.debug("Updating list {} at {}",name, DateTime.now().toString());
-        lockList.getAndUpdate(list -> {
-            list.add(name);
-            return list;
-        });
+    private boolean locksOverlap(String lockName1, String lockName2) {
+        return lockTimes.get(lockName1).isConnected(lockTimes.get(lockName2));
+    }
 
-        latch.countDown();
+    private void assertLocksHappened(String... lockNames) {
+        List<String> expectedLocks = Stream.of(lockNames).sorted().collect(toList());
+        log.debug(lockTimes.toString());
+        List<String> actualLocks = lockTimes.entrySet().stream().map(Map.Entry::getKey).sorted().collect(toList());
+        assertEquals(expectedLocks, actualLocks);
+    }
+
+    private void assertLocksOccurredSerially(String lock1, String lock2) {
+        DateTime lock1EndTime = lockTimes.get(lock1).upperEndpoint();
+        DateTime lock2StartTime = lockTimes.get(lock2).lowerEndpoint();
+
+        assertTrue(lock1EndTime.isBefore(lock2StartTime));
     }
 }
