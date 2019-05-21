@@ -1,11 +1,11 @@
 package com.flightstats.hub.app;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
-import com.flightstats.hub.config.AppProperties;
-import com.flightstats.hub.config.PropertiesLoader;
-import com.flightstats.hub.config.SpokeProperties;
-import com.flightstats.hub.config.SystemProperties;
-import com.flightstats.hub.config.ZooKeeperProperties;
+import com.flightstats.hub.config.properties.AppProperties;
+import com.flightstats.hub.config.properties.PropertiesLoader;
+import com.flightstats.hub.config.properties.SpokeProperties;
+import com.flightstats.hub.config.properties.SystemProperties;
+import com.flightstats.hub.config.properties.ZooKeeperProperties;
 import com.flightstats.hub.config.binding.ClusterHubBindings;
 import com.flightstats.hub.config.binding.HubBindings;
 import com.flightstats.hub.config.binding.PropertiesBinding;

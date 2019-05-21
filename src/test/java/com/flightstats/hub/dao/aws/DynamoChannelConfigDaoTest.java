@@ -6,7 +6,7 @@ import com.amazonaws.services.dynamodbv2.model.GetItemRequest;
 import com.amazonaws.services.dynamodbv2.model.GetItemResult;
 import com.amazonaws.services.dynamodbv2.model.ScanRequest;
 import com.amazonaws.services.dynamodbv2.model.ScanResult;
-import com.flightstats.hub.config.DynamoProperties;
+import com.flightstats.hub.config.properties.DynamoProperties;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.test.Integration;
 import com.google.inject.Injector;

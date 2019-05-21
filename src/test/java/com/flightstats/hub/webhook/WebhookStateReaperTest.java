@@ -1,9 +1,9 @@
 package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.cluster.LastContentPath;
-import com.flightstats.hub.config.AppProperties;
-import com.flightstats.hub.config.PropertiesLoader;
-import com.flightstats.hub.config.WebhookProperties;
+import com.flightstats.hub.config.properties.AppProperties;
+import com.flightstats.hub.config.properties.PropertiesLoader;
+import com.flightstats.hub.config.properties.WebhookProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.test.Integration;

@@ -12,8 +12,8 @@ import com.amazonaws.services.dynamodbv2.model.ResourceNotFoundException;
 import com.amazonaws.services.dynamodbv2.model.ScalarAttributeType;
 import com.amazonaws.services.dynamodbv2.model.TableDescription;
 import com.amazonaws.services.dynamodbv2.model.TableStatus;
-import com.flightstats.hub.config.AppProperties;
-import com.flightstats.hub.config.DynamoProperties;
+import com.flightstats.hub.config.properties.AppProperties;
+import com.flightstats.hub.config.properties.DynamoProperties;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;

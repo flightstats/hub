@@ -1,6 +1,6 @@
 package com.flightstats.hub.channel;
 
-import com.flightstats.hub.config.PropertiesLoader;
+import com.flightstats.hub.config.properties.PropertiesLoader;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.exception.ForbiddenRequestException;

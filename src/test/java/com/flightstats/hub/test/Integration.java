@@ -2,9 +2,9 @@ package com.flightstats.hub.test;
 
 import com.flightstats.hub.app.HubMain;
 import com.flightstats.hub.cluster.ZooKeeperState;
-import com.flightstats.hub.config.AppProperties;
-import com.flightstats.hub.config.PropertiesLoader;
-import com.flightstats.hub.config.ZooKeeperProperties;
+import com.flightstats.hub.config.properties.AppProperties;
+import com.flightstats.hub.config.properties.PropertiesLoader;
+import com.flightstats.hub.config.properties.ZooKeeperProperties;
 import com.flightstats.hub.config.binding.HubBindings;
 import com.google.inject.Injector;
 import lombok.extern.slf4j.Slf4j;

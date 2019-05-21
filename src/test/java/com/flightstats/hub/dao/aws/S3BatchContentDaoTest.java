@@ -1,7 +1,7 @@
 package com.flightstats.hub.dao.aws;
 
 import com.flightstats.hub.channel.ZipBulkBuilder;
-import com.flightstats.hub.config.PropertiesLoader;
+import com.flightstats.hub.config.properties.PropertiesLoader;
 import com.flightstats.hub.dao.ContentDaoUtil;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.ChannelConfig;

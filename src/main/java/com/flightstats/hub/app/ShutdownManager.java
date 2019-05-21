@@ -1,6 +1,6 @@
 package com.flightstats.hub.app;
 
-import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.properties.AppProperties;
 import com.flightstats.hub.health.HubHealthCheck;
 import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.util.Sleeper;

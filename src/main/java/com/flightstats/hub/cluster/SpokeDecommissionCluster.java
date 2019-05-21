@@ -1,6 +1,6 @@
 package com.flightstats.hub.cluster;
 
-import com.flightstats.hub.config.SpokeProperties;
+import com.flightstats.hub.config.properties.SpokeProperties;
 import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.util.TimeUtil;
 

@@ -1,7 +1,7 @@
 package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.cluster.LastContentPath;
-import com.flightstats.hub.config.WebhookProperties;
+import com.flightstats.hub.config.properties.WebhookProperties;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;

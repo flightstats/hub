@@ -1,7 +1,7 @@
 package com.flightstats.hub.cluster;
 
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.config.ZooKeeperProperties;
+import com.flightstats.hub.config.properties.ZooKeeperProperties;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.AbstractIdleService;

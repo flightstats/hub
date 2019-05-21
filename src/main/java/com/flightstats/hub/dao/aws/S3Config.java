@@ -6,7 +6,7 @@ import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.DistributedAsyncLockRunner;
 import com.flightstats.hub.cluster.Leadership;
 import com.flightstats.hub.cluster.Lockable;
-import com.flightstats.hub.config.S3Properties;
+import com.flightstats.hub.config.properties.S3Properties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.metrics.ActiveTraces;

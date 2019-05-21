@@ -1,7 +1,7 @@
 package com.flightstats.hub.dao.aws;
 
-import com.flightstats.hub.config.AppProperties;
-import com.flightstats.hub.config.DynamoProperties;
+import com.flightstats.hub.config.properties.AppProperties;
+import com.flightstats.hub.config.properties.DynamoProperties;
 import com.google.common.util.concurrent.AbstractIdleService;
 import lombok.extern.slf4j.Slf4j;
 

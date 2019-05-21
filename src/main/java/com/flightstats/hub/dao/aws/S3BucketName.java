@@ -1,7 +1,7 @@
 package com.flightstats.hub.dao.aws;
 
-import com.flightstats.hub.config.AppProperties;
-import com.flightstats.hub.config.S3Properties;
+import com.flightstats.hub.config.properties.AppProperties;
+import com.flightstats.hub.config.properties.S3Properties;
 
 import javax.inject.Inject;
 

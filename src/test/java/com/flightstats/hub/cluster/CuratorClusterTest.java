@@ -1,8 +1,8 @@
 package com.flightstats.hub.cluster;
 
-import com.flightstats.hub.config.AppProperties;
-import com.flightstats.hub.config.PropertiesLoader;
-import com.flightstats.hub.config.SpokeProperties;
+import com.flightstats.hub.config.properties.AppProperties;
+import com.flightstats.hub.config.properties.PropertiesLoader;
+import com.flightstats.hub.config.properties.SpokeProperties;
 import com.flightstats.hub.test.Integration;
 import com.flightstats.hub.util.Sleeper;
 import lombok.extern.slf4j.Slf4j;

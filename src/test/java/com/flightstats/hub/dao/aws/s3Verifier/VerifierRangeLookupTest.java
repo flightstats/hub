@@ -1,8 +1,8 @@
 package com.flightstats.hub.dao.aws.s3Verifier;
 
 import com.flightstats.hub.cluster.LastContentPath;
-import com.flightstats.hub.config.PropertiesLoader;
-import com.flightstats.hub.config.SpokeProperties;
+import com.flightstats.hub.config.properties.PropertiesLoader;
+import com.flightstats.hub.config.properties.SpokeProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.MinutePath;

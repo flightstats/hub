@@ -5,7 +5,7 @@ import com.flightstats.hub.app.HubHost;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import com.flightstats.hub.config.WebhookProperties;
+import com.flightstats.hub.config.properties.WebhookProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

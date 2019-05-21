@@ -1,4 +1,4 @@
-package com.flightstats.hub.config;
+package com.flightstats.hub.config.properties;
 
 import com.flightstats.hub.app.HubMain;
 import lombok.extern.slf4j.Slf4j;

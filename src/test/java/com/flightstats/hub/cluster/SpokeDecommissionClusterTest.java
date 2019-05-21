@@ -1,7 +1,7 @@
 package com.flightstats.hub.cluster;
 
-import com.flightstats.hub.config.PropertiesLoader;
-import com.flightstats.hub.config.SpokeProperties;
+import com.flightstats.hub.config.properties.PropertiesLoader;
+import com.flightstats.hub.config.properties.SpokeProperties;
 import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.test.Integration;
 import org.apache.curator.framework.CuratorFramework;

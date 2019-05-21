@@ -1,6 +1,6 @@
 package com.flightstats.hub.app;
 
-import com.flightstats.hub.config.PropertiesLoader;
+import com.flightstats.hub.config.properties.PropertiesLoader;
 import com.google.common.io.Files;
 
 /**
