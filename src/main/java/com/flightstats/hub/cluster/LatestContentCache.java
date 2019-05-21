@@ -5,11 +5,11 @@ import com.flightstats.hub.model.ContentPath;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
+import static com.flightstats.hub.constant.ZookeeperNodes.LAST_COMMITTED_CONTENT_KEY;
 
 @Slf4j
 public class LatestContentCache {
     /** The latest item on the channel that is older than stable time, older than spoke's TTL, and younger than the channel's TTL. i.e. the "cached" latest */
-    public static final String LAST_COMMITTED_CONTENT_KEY = "/ChannelLatestUpdated/";
     private final ClusterStateDao clusterStateDao;
 
     @Inject

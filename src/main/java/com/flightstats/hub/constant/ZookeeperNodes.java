@@ -11,4 +11,5 @@ public class ZookeeperNodes {
     public static final String WEBHOOK_LAST_COMPLETED = "/GroupLastCompleted/";
     public static final String WEBHOOK_LEADER = "/WebhookLeader";
     public static final String LAST_SINGLE_VERIFIED = "/S3VerifierSingleLastVerified/";
+    public static final String LAST_COMMITTED_CONTENT_KEY = "/ChannelLatestUpdated/";
 }
