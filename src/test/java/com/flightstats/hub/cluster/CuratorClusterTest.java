@@ -3,7 +3,7 @@ package com.flightstats.hub.cluster;
 import com.flightstats.hub.config.properties.AppProperties;
 import com.flightstats.hub.config.properties.PropertiesLoader;
 import com.flightstats.hub.config.properties.SpokeProperties;
-import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.test.IntegrationTestSetup;
 import com.flightstats.hub.util.Sleeper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
@@ -22,8 +22,8 @@ class CuratorClusterTest {
     private static CuratorFramework curator;
 
     @BeforeAll
-    static void setUpClass() throws Exception {
-        curator = Integration.startZooKeeper();
+    static void setUpClass() {
+        curator = IntegrationTestSetup.run().getZookeeperClient();
     }
 
     @Test

@@ -1,6 +1,6 @@
 package com.flightstats.hub.cluster;
 
-import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.test.IntegrationTestSetup;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.joda.time.DateTime;
@@ -33,10 +33,9 @@ class DistributedLockRunnerTest {
     private DistributedLockRunner distributedLockRunner;
 
     @BeforeAll
-    static void setupCurator() throws Exception {
-        ZooKeeperState zooKeeperState = new ZooKeeperState();
-        CuratorFramework curator = Integration.startZooKeeper(zooKeeperState);
-        lockManager = new DistributedLeaderLockManager(curator, zooKeeperState);
+    static void setupCurator() {
+        CuratorFramework curator = IntegrationTestSetup.run().getZookeeperClient();
+        lockManager = new DistributedLeaderLockManager(curator, new ZooKeeperState());
     }
 
     @BeforeEach

@@ -4,8 +4,7 @@ import com.flightstats.hub.config.properties.PropertiesLoader;
 import com.flightstats.hub.dao.ContentDaoUtil;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.test.Integration;
-import com.google.inject.Injector;
+import com.flightstats.hub.test.IntegrationTestSetup;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -19,10 +18,9 @@ class S3SingleContentDaoTest {
     private static S3SingleContentDao s3SingleContentDao;
 
     @BeforeAll
-    static void setUpClass() throws Exception {
+    static void setUpClass() {
         PropertiesLoader.getInstance().load("useDefault");
-        Injector injector = Integration.startAwsHub();
-        s3SingleContentDao = injector.getInstance(S3SingleContentDao.class);
+        s3SingleContentDao = IntegrationTestSetup.run().getInstance(S3SingleContentDao.class);
         util = new ContentDaoUtil(s3SingleContentDao);
     }
 

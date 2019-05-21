@@ -6,7 +6,7 @@ import com.flightstats.hub.config.properties.PropertiesLoader;
 import com.flightstats.hub.config.properties.WebhookProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.test.IntegrationTestSetup;
 import com.flightstats.hub.util.SafeZooKeeperUtils;
 import com.flightstats.hub.webhook.error.WebhookErrorPruner;
 import com.flightstats.hub.webhook.error.WebhookErrorRepository;
@@ -17,9 +17,9 @@ import org.joda.time.DateTimeZone;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -51,8 +51,8 @@ class WebhookStateReaperTest {
     private static final ContentKey key = new ContentKey(start, "B");
 
     @BeforeAll
-    static void runFirst() throws Exception {
-        curator = Integration.startZooKeeper();
+    static void runFirst() {
+        curator = IntegrationTestSetup.run().getZookeeperClient();
     }
 
     @BeforeEach
