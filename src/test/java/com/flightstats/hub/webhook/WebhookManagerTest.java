@@ -39,7 +39,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 @ExtendWith({MockitoExtension.class})
 @MockitoSettings(strictness = Strictness.LENIENT)
 @Execution(ExecutionMode.SAME_THREAD)
-public class WebhookManagerTest {
+class WebhookManagerTest {
 
     @Mock
     private LocalWebhookManager localWebhookManager;
@@ -69,7 +69,7 @@ public class WebhookManagerTest {
     private static final String WEBHOOK_NAME = "w3bh00k";
 
     @BeforeEach
-    public void setup() {
+    void setup() {
         initMocks(this);
         when(webhookProperties.isWebhookLeadershipEnabled()).thenReturn(true);
         HubServices.clear();

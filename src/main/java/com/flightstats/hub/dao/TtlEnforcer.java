@@ -2,38 +2,47 @@ package com.flightstats.hub.dao;
 
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.Commander;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
+import javax.inject.Inject;
 import java.io.File;
-import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Collection;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+@Slf4j
 public class TtlEnforcer {
-    private final static Logger logger = LoggerFactory.getLogger(TtlEnforcer.class);
 
-    public static void enforce(String path, ChannelService channelService,
-                               Consumer<ChannelConfig> channelConsumer) {
+    private static final String LOST_AND_FOUND_DIR = "lost+found";
+    private final Commander commander;
+
+    @Inject
+    public TtlEnforcer(Commander commander) {
+        this.commander = commander;
+    }
+
+    public void deleteFilteredPaths(String path, ChannelService channelService,
+                                    Consumer<ChannelConfig> channelConsumer) {
         try {
-            File spokeRoot = new File(path);
-            Set<String> dirSet = new HashSet<>(Arrays.asList(spokeRoot.list()));
-            Iterable<ChannelConfig> channels = channelService.getChannels();
-            Set<String> channelSet = new HashSet<>();
-            for (ChannelConfig channel : channels) {
-                channelSet.add(channel.getDisplayName());
-                channelConsumer.accept(channel);
-            }
-            dirSet.removeAll(channelSet);
-            dirSet.remove("lost+found");
-            for (String dir : dirSet) {
-                String dirPath = path + "/" + dir;
-                logger.info("removing dir without channel {}", dirPath);
-                Commander.run(new String[]{"rm", "-rf", dirPath}, 1);
-            }
+            String[] pathArray = Optional.ofNullable(new File(path).list()).orElse(new String[]{});
+            Collection<ChannelConfig> channels = channelService.getChannels();
+            channels.forEach(channelConsumer);
+            Set<String> channelSet = channels.stream()
+                    .map(ChannelConfig::getLowerCaseName)
+                    .collect(Collectors.toSet());
+            Stream.of(pathArray)
+                    .map(String::toLowerCase)
+                    .filter(channel -> !channelSet.contains(channel.toLowerCase()) && !channel.equals(LOST_AND_FOUND_DIR))
+                    .forEach(dir -> {
+                        String dirPath = path + "/" + dir;
+                        log.info("removing dir without channel {}", dirPath);
+                        commander.runInBash("rm " + " -rf " + dirPath, 1);
+                    });
         } catch (Exception e) {
-            logger.warn("unble to run " + path, e);
+            log.warn("unable to run " + path, e);
         }
     }
 }
