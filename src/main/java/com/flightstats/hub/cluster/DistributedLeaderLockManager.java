@@ -55,9 +55,9 @@ public class DistributedLeaderLockManager {
         try {
             lock.getMutex().release();
         } catch (IllegalStateException e) {
-            log.warn("illegal state " + lock.getLockPath() + " " + e.getMessage());
+            log.warn("illegal state {} {}", lock.getLockPath(), e.getMessage());
         } catch (Exception e) {
-            log.warn("issue releasing mutex for " + lock.getLockPath(), e);
+            log.warn("issue releasing mutex for {}", lock.getLockPath(), e);
         }
     }
 }

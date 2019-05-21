@@ -29,7 +29,7 @@ public class LastContentPath {
     private void trace(String nameOrPath, String text, Object... context) {
         if (log.isTraceEnabled()) {
             if (nameOrPath.contains(appProperties.getLastContentPathTracing())) {
-                log.trace(text + " nameorPath " + nameOrPath, context);
+                log.trace("{} nameorPath {}", text, nameOrPath, context);
             }
         }
     }
@@ -43,7 +43,7 @@ public class LastContentPath {
             //this will typically happen, except the first time
             trace("initialize exists {} {} {}", name, defaultPath, basePath);
         } catch (Exception e) {
-            log.warn("unable to create node " + name + " " + basePath, e);
+            log.warn("unable to create node {} {}", name, basePath, e);
         }
     }
 
@@ -114,12 +114,12 @@ public class LastContentPath {
             trace(name, "updateIncrease NoNodeException {}", name);
             initialize(name, nextPath, basePath);
         } catch (ConflictException e) {
-            trace(name, "ConflictException " + e.getMessage());
+            trace(name, "ConflictException {}", e.getMessage());
             throw e;
         } catch (ContentTooLargeException e) {
             throw e;
         } catch (Exception e) {
-            log.warn("unable to set path " + path, e);
+            log.warn("unable to set path {}", path, e);
         }
     }
 
@@ -133,7 +133,7 @@ public class LastContentPath {
             log.debug("values does not exist, creating {}", path);
             initialize(name, nextPath, basePath);
         } catch (Exception e) {
-            log.warn("unable to set " + path + " lastUpdated to " + nextPath, e);
+            log.warn("unable to set {} lastUpdated to {}", path, nextPath, e);
         }
     }
 
@@ -142,10 +142,10 @@ public class LastContentPath {
             curator.setData().withVersion(existing.version).forPath(path, nextPath.toBytes());
             return true;
         } catch (KeeperException.BadVersionException e) {
-            log.warn("bad version " + path + " " + e.getMessage());
+            log.warn("bad version {} {}", path, e.getMessage());
             return false;
         } catch (Exception e) {
-            log.error("what happened? " + path, e);
+            log.error("what happened? {}", path, e);
             return false;
         }
     }
