@@ -1,7 +1,7 @@
 package com.flightstats.hub.cluster;
 
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.config.ZookeeperProperties;
+import com.flightstats.hub.config.ZooKeeperProperties;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -24,7 +24,7 @@ public class WatchManager {
     private final ExecutorService executorService;
 
     @Inject
-    public WatchManager(CuratorFramework curator, ZookeeperProperties zookeeperProperties) {
+    public WatchManager(CuratorFramework curator, ZooKeeperProperties zookeeperProperties) {
         this.curator = curator;
         this.executorService = Executors.newFixedThreadPool(zookeeperProperties.getWatchManagerThreadCount(),
                 new ThreadFactoryBuilder().setNameFormat("watch-manager-%d").build());

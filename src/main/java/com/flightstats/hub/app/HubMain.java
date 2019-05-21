@@ -5,7 +5,7 @@ import com.flightstats.hub.config.AppProperties;
 import com.flightstats.hub.config.PropertiesLoader;
 import com.flightstats.hub.config.SpokeProperties;
 import com.flightstats.hub.config.SystemProperties;
-import com.flightstats.hub.config.ZookeeperProperties;
+import com.flightstats.hub.config.ZooKeeperProperties;
 import com.flightstats.hub.config.binding.ClusterHubBindings;
 import com.flightstats.hub.config.binding.HubBindings;
 import com.flightstats.hub.config.binding.PropertiesBinding;
@@ -79,7 +79,7 @@ public class HubMain {
     private final AppProperties appProperties = new AppProperties(PropertiesLoader.getInstance());
     private final SpokeProperties spokeProperties = new SpokeProperties(PropertiesLoader.getInstance());
     private final SystemProperties systemProperties = new SystemProperties(PropertiesLoader.getInstance());
-    private final ZookeeperProperties zookeeperProperties = new ZookeeperProperties(PropertiesLoader.getInstance());
+    private final ZooKeeperProperties zookeeperProperties = new ZooKeeperProperties(PropertiesLoader.getInstance());
     private final StorageBackend storageBackend = StorageBackend.valueOf(appProperties.getHubType());
 
     private Injector injector;

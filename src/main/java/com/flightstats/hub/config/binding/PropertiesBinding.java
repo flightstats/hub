@@ -11,7 +11,7 @@ import com.flightstats.hub.config.SpokeProperties;
 import com.flightstats.hub.config.SystemProperties;
 import com.flightstats.hub.config.TickMetricsProperties;
 import com.flightstats.hub.config.WebhookProperties;
-import com.flightstats.hub.config.ZookeeperProperties;
+import com.flightstats.hub.config.ZooKeeperProperties;
 import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +34,6 @@ public class PropertiesBinding extends AbstractModule {
         bind(SystemProperties.class).asEagerSingleton();
         bind(TickMetricsProperties.class).asEagerSingleton();
         bind(WebhookProperties.class).asEagerSingleton();
-        bind(ZookeeperProperties.class).asEagerSingleton();
+        bind(ZooKeeperProperties.class).asEagerSingleton();
     }
 }
