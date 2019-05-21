@@ -35,8 +35,8 @@ public class InternalShutdownResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response get(@Context UriInfo uriInfo) {
-        final URI requestUri = uriInfo.getRequestUri();
-        final ObjectNode root = objectMapper.createObjectNode();
+        URI requestUri = uriInfo.getRequestUri();
+        ObjectNode root = objectMapper.createObjectNode();
         root.put("description", SHUTDOWN_DESCRIPTION);
         root.put("directions", "Make HTTP POSTs to links below to take the desired action");
         try {
@@ -44,8 +44,8 @@ public class InternalShutdownResource {
         } catch (Exception e) {
             root.put("shutdownLock", "none");
         }
-        final String localhostLink = HubHost.getLocalhostUri() + requestUri.getPath();
-        final Linked.Builder<?> links = Linked.linked(root);
+        String localhostLink = HubHost.getLocalhostUri() + requestUri.getPath();
+        Linked.Builder<?> links = Linked.linked(root);
         links.withLink("self", requestUri);
         links.withLink("shutdown", localhostLink);
         links.withLink("resetLock", localhostLink + "/resetLock");

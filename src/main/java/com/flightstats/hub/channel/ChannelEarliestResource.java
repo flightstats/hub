@@ -77,8 +77,8 @@ public class ChannelEarliestResource {
         if (tag != null) {
             return tagEarliestResource.getEarliest(tag, stable, trace, location, epoch, uriInfo);
         }
-        final DirectionQuery query = getDirectionQuery(channel, 1, stable, location, epoch);
-        final Collection<ContentKey> keys = contentRetriever.query(query);
+        DirectionQuery query = getDirectionQuery(channel, 1, stable, location, epoch);
+        Collection<ContentKey> keys = contentRetriever.query(query);
         if (keys.isEmpty()) {
             return Response.status(NOT_FOUND).build();
         } else {
@@ -105,8 +105,8 @@ public class ChannelEarliestResource {
         if (tag != null) {
             return tagEarliestResource.getEarliestCount(tag, count, stable, bulk, batch, trace, location, epoch, order, accept, uriInfo);
         }
-        final DirectionQuery query = getDirectionQuery(channel, count, stable, location, epoch);
-        final SortedSet<ContentKey> keys = contentRetriever.query(query);
+        DirectionQuery query = getDirectionQuery(channel, count, stable, location, epoch);
+        SortedSet<ContentKey> keys = contentRetriever.query(query);
         if (keys.isEmpty()) {
             return Response.status(NOT_FOUND).build();
         }

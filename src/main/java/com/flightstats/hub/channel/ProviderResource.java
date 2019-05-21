@@ -41,7 +41,7 @@ public class ProviderResource {
     private void ensureChannel(String channelName) {
         if (!contentRetriever.isExistingChannel(channelName)) {
             log.info("creating new Provider channel " + channelName);
-            final ChannelConfig configuration = ChannelConfig.builder()
+            ChannelConfig configuration = ChannelConfig.builder()
                     .name(channelName)
                     .build();
             channelService.createChannel(configuration);
@@ -56,7 +56,7 @@ public class ProviderResource {
 
         ensureChannel(channelName);
 
-        final Content content = Content.builder()
+        Content content = Content.builder()
                 .withContentType(contentType)
                 .withStream(data).build();
         try {
@@ -84,7 +84,7 @@ public class ProviderResource {
         try {
             ensureChannel(channelName);
 
-            final BulkContent content = BulkContent.builder()
+            BulkContent content = BulkContent.builder()
                     .isNew(true)
                     .contentType(contentType)
                     .stream(data)

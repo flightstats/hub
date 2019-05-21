@@ -52,8 +52,8 @@ public class InternalClusterResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response get() throws Exception {
-        final URI requestUri = uriInfo.getRequestUri();
-        final ObjectNode root = objectMapper.createObjectNode();
+        URI requestUri = uriInfo.getRequestUri();
+        ObjectNode root = objectMapper.createObjectNode();
         root.put("description", CLUSTER_DESCRIPTION);
         root.put("directions", "Make HTTP POSTs to links below to take the desired action");
         root.put("/decommission", "POSTing to /decommission will remove the localhost from Spoke writes.  " +
@@ -61,12 +61,12 @@ public class InternalClusterResource {
         root.put("/recommission/{server}", "POSTing to /recommission/{server} with the ip address and port of a previously decommissioned " +
                 "server will allow that server to rejoin the cluster.  The new server should be started after this command.");
         addNodes("spokeCluster", spokeCluster.getAllServers(), root);
-        final ObjectNode decommissioned = root.putObject("decommissioned");
+        ObjectNode decommissioned = root.putObject("decommissioned");
         addNodes("withinSpokeTTL", decommissionCluster.getWithinSpokeTTL(), decommissioned);
-        final List<String> doNotRestart = decommissionCluster.getDoNotRestart();
+        List<String> doNotRestart = decommissionCluster.getDoNotRestart();
         addNodes("doNotStart", doNotRestart, decommissioned);
-        final String localhostLink = HubHost.getLocalhostUri() + requestUri.getPath();
-        final Linked.Builder<?> links = Linked.linked(root);
+        String localhostLink = HubHost.getLocalhostUri() + requestUri.getPath();
+        Linked.Builder<?> links = Linked.linked(root);
         links.withLink("self", requestUri);
         links.withLink("decommission", localhostLink + "/decommission");
         for (String server : doNotRestart) {

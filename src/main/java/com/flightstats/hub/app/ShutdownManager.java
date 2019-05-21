@@ -55,7 +55,7 @@ public class ShutdownManager {
 
         //this call will get the node removed from the Load Balancer
         hubHealthCheck.shutdown();
-        final long start = System.currentTimeMillis();
+        long start = System.currentTimeMillis();
         HubServices.preStop();
 
         //wait until it's likely the node is removed from the Load Balancer
@@ -63,7 +63,7 @@ public class ShutdownManager {
         int shutdownDelayInMiilis = appProperties.getShutdownDelayInMiilis();
         long millisStopping = end - start;
         if (millisStopping < shutdownDelayInMiilis) {
-            final long sleepTime = shutdownDelayInMiilis - millisStopping;
+            long sleepTime = shutdownDelayInMiilis - millisStopping;
 
             log.warn("sleeping for " + sleepTime);
             Sleeper.sleep(sleepTime);

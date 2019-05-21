@@ -118,7 +118,7 @@ public class ChannelContentResource {
     }
 
     public static MediaType getContentType(Content content) {
-        final Optional<String> contentType = content.getContentType();
+        Optional<String> contentType = content.getContentType();
         if (contentType.isPresent() && !isNullOrEmpty(contentType.get())) {
             return MediaType.valueOf(contentType.get());
         }
@@ -126,7 +126,7 @@ public class ChannelContentResource {
     }
 
     static boolean contentTypeIsNotCompatible(String acceptHeader, final MediaType actualContentType) {
-        final List<MediaType> acceptableContentTypes;
+        List<MediaType> acceptableContentTypes;
         if (StringUtils.isBlank(acceptHeader)) {
             acceptableContentTypes = MediaTypes.GENERAL_MEDIA_TYPE_LIST;
         } else {
@@ -162,7 +162,7 @@ public class ChannelContentResource {
                            @QueryParam("order") @DefaultValue(Order.DEFAULT) String order,
                            @QueryParam("tag") String tag,
                            @HeaderParam("Accept") String accept) {
-        final DateTime startTime = new DateTime(year, month, day, 0, 0, 0, 0, DateTimeZone.UTC);
+        DateTime startTime = new DateTime(year, month, day, 0, 0, 0, 0, DateTimeZone.UTC);
         return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.DAYS, tag, bulk || batch, accept, epoch, Order.isDescending(order));
     }
 
@@ -183,7 +183,7 @@ public class ChannelContentResource {
                             @QueryParam("order") @DefaultValue(Order.DEFAULT) String order,
                             @QueryParam("tag") String tag,
                             @HeaderParam("Accept") String accept) {
-        final DateTime startTime = new DateTime(year, month, day, hour, 0, 0, 0, DateTimeZone.UTC);
+        DateTime startTime = new DateTime(year, month, day, hour, 0, 0, 0, DateTimeZone.UTC);
         return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.HOURS, tag, bulk || batch, accept, epoch, Order.isDescending(order));
     }
 
@@ -205,7 +205,7 @@ public class ChannelContentResource {
                               @QueryParam("order") @DefaultValue(Order.DEFAULT) String order,
                               @QueryParam("tag") String tag,
                               @HeaderParam("Accept") String accept) {
-        final DateTime startTime = new DateTime(year, month, day, hour, minute, 0, 0, DateTimeZone.UTC);
+        DateTime startTime = new DateTime(year, month, day, hour, minute, 0, 0, DateTimeZone.UTC);
         return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.MINUTES, tag, bulk || batch, accept, epoch, Order.isDescending(order));
     }
 
@@ -228,7 +228,7 @@ public class ChannelContentResource {
                               @QueryParam("order") @DefaultValue(Order.DEFAULT) String order,
                               @QueryParam("tag") String tag,
                               @HeaderParam("Accept") String accept) {
-        final DateTime startTime = new DateTime(year, month, day, hour, minute, second, 0, DateTimeZone.UTC);
+        DateTime startTime = new DateTime(year, month, day, hour, minute, second, 0, DateTimeZone.UTC);
         return getTimeQueryResponse(channel, startTime, location, trace, stable, Unit.SECONDS, tag, bulk || batch, accept, epoch, Order.isDescending(order));
     }
 
@@ -245,10 +245,10 @@ public class ChannelContentResource {
                 .location(Location.valueOf(location))
                 .epoch(Epoch.valueOf(epoch))
                 .build();
-        final SortedSet<ContentKey> keys = contentRetriever.queryByTime(query);
-        final DateTime current = stable ? stable() : now();
-        final DateTime next = startTime.plus(unit.getDuration());
-        final DateTime previous = startTime.minus(unit.getDuration());
+        SortedSet<ContentKey> keys = contentRetriever.queryByTime(query);
+        DateTime current = stable ? stable() : now();
+        DateTime next = startTime.plus(unit.getDuration());
+        DateTime previous = startTime.minus(unit.getDuration());
         if (bulk) {
             return bulkBuilder.build(keys, channel, channelService, uriInfo, accept, descending, (builder) -> {
                 if (next.isBefore(current)) {
@@ -301,8 +301,8 @@ public class ChannelContentResource {
                                          @QueryParam("trace") @DefaultValue("false") boolean trace,
                                          @QueryParam("stable") @DefaultValue("true") boolean stable,
                                          @QueryParam("order") @DefaultValue(Order.DEFAULT) String order) {
-        final SortedSet<ContentPath> keys = new TreeSet<>();
-        final DateTime stableTime = TimeUtil.stable();
+        SortedSet<ContentPath> keys = new TreeSet<>();
+        DateTime stableTime = TimeUtil.stable();
         DateTime startTime = new DateTime(year, month, day, hour, minute, second, 999, DateTimeZone.UTC);
         boolean next = direction.startsWith("n");
         if (next) {
@@ -321,12 +321,12 @@ public class ChannelContentResource {
             }
         }
         //todo - gfm - can the following code be factored out with getTimeQueryResponse ?
-        final ObjectNode root = objectMapper.createObjectNode();
-        final ObjectNode links = root.putObject("_links");
-        final ObjectNode self = links.putObject("self");
+        ObjectNode root = objectMapper.createObjectNode();
+        ObjectNode links = root.putObject("_links");
+        ObjectNode self = links.putObject("self");
         self.put("href", uriInfo.getRequestUri().toString());
         if (keys.size() == count) {
-            final URI uri = linkBuilder.uriBuilder(channel, uriInfo)
+            URI uri = linkBuilder.uriBuilder(channel, uriInfo)
                     .path(Unit.SECONDS.format(keys.last().getTime()))
                     .path("next")
                     .path("" + count)
@@ -374,9 +374,9 @@ public class ChannelContentResource {
                             @HeaderParam("X-Item-Length-Required") @DefaultValue("false") boolean itemLengthRequired,
                             @QueryParam("remoteOnly") @DefaultValue("false") boolean remoteOnly
     ) throws Exception {
-        final long start = System.currentTimeMillis();
-        final ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
-        final ItemRequest itemRequest = ItemRequest.builder()
+        long start = System.currentTimeMillis();
+        ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
+        ItemRequest itemRequest = ItemRequest.builder()
                 .channel(channel)
                 .key(key)
                 .uri(uriInfo.getRequestUri())
@@ -388,9 +388,9 @@ public class ChannelContentResource {
             log.warn("404 content not found {} {}", channel, key);
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
-        final Content content = optionalResult.get();
+        Content content = optionalResult.get();
 
-        final MediaType actualContentType = getContentType(content);
+        MediaType actualContentType = getContentType(content);
 
         if (contentTypeIsNotCompatible(accept, actualContentType)) {
             return Response.status(Response.Status.NOT_ACCEPTABLE).build();
@@ -448,12 +448,12 @@ public class ChannelContentResource {
                                  @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
                                  @QueryParam("stable") @DefaultValue("true") boolean stable,
                                  @QueryParam("tag") String tag) {
-        final ContentKey contentKey = new ContentKey(year, month, day, hour, minute, second, millis, hash);
+        ContentKey contentKey = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         boolean next = direction.startsWith("n");
         if (null != tag) {
             return tagService.adjacent(tag, contentKey, stable, next, uriInfo, location, epoch);
         }
-        final DirectionQuery query = DirectionQuery.builder()
+        DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
                 .startKey(contentKey)
                 .next(next)
@@ -462,14 +462,14 @@ public class ChannelContentResource {
                 .epoch(Epoch.valueOf(epoch))
                 .count(1)
                 .build();
-        final Collection<ContentKey> keys = contentRetriever.query(query);
+        Collection<ContentKey> keys = contentRetriever.query(query);
         if (keys.isEmpty()) {
             return Response.status(NOT_FOUND).build();
         }
-        final Response.ResponseBuilder builder = Response.status(SEE_OTHER);
-        final String channelUri = uriInfo.getBaseUri() + "channel/" + channel;
-        final ContentKey foundKey = keys.iterator().next();
-        final URI uri = URI.create(channelUri + "/" + foundKey.toUrl());
+        Response.ResponseBuilder builder = Response.status(SEE_OTHER);
+        String channelUri = uriInfo.getBaseUri() + "channel/" + channel;
+        ContentKey foundKey = keys.iterator().next();
+        URI uri = URI.create(channelUri + "/" + foundKey.toUrl());
         builder.location(uri);
         return builder.build();
     }
@@ -488,7 +488,7 @@ public class ChannelContentResource {
                                  @PathParam("hash") String hash,
                                  @HeaderParam("Last-Event-ID") String lastEventId) {
         ContentKey contentKey = new ContentKey(year, month, day, hour, minute, second, millis, hash);
-        final ContentKey parsedKey = ContentKey.fromFullUrl(lastEventId);
+        ContentKey parsedKey = ContentKey.fromFullUrl(lastEventId);
         if (parsedKey != null) {
             contentKey = parsedKey;
         }
@@ -527,13 +527,13 @@ public class ChannelContentResource {
                                       @QueryParam("inclusive") @DefaultValue("false") boolean inclusive,
                                       @QueryParam("tag") String tag,
                                       @HeaderParam("Accept") String accept) {
-        final ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
-        final boolean next = direction.startsWith("n");
-        final boolean descending = Order.isDescending(order);
+        ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
+        boolean next = direction.startsWith("n");
+        boolean descending = Order.isDescending(order);
         if (null != tag) {
             return tagService.adjacentCount(tag, count, stable, trace, location, next, key, bulk || batch, accept, uriInfo, epoch, descending);
         }
-        final DirectionQuery query = DirectionQuery.builder()
+        DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
                 .startKey(key)
                 .inclusive(inclusive)
@@ -543,7 +543,7 @@ public class ChannelContentResource {
                 .epoch(Epoch.valueOf(epoch))
                 .count(count)
                 .build();
-        final SortedSet<ContentKey> keys = contentRetriever.query(query);
+        SortedSet<ContentKey> keys = contentRetriever.query(query);
         if (bulk || batch) {
             return bulkBuilder.build(keys, channel, channelService, uriInfo, accept, descending, (builder) -> {
                 if (!keys.isEmpty()) {
@@ -573,8 +573,8 @@ public class ChannelContentResource {
                                      @HeaderParam("Content-Type") String contentType,
                                      @HeaderParam("Content-Language") String contentLanguage,
                                      final InputStream data) {
-        final ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis);
-        final Content content = Content.builder()
+        ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis);
+        Content content = Content.builder()
                 .withContentKey(key)
                 .withContentType(contentType)
                 .withContentLength(contentLength)
@@ -601,9 +601,9 @@ public class ChannelContentResource {
                                          @HeaderParam("Content-Type") String contentType,
                                          @HeaderParam("Content-Language") String contentLanguage,
                                          final InputStream data) {
-        final ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
+        ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
 
-        final Content content = Content.builder()
+        Content content = Content.builder()
                 .withContentKey(key)
                 .withContentType(contentType)
                 .withContentLength(contentLength)
@@ -617,7 +617,7 @@ public class ChannelContentResource {
         if (!contentRetriever.isExistingChannel(channelName)) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
-        final ContentKey key = content.getContentKey().get();
+        ContentKey key = content.getContentKey().get();
         try {
             boolean success = channelService.historicalInsert(channelName, content);
             if (!success) {

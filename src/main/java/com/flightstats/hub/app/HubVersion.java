@@ -20,10 +20,10 @@ public class HubVersion {
             return version;
         }
         try {
-            final File libDir = new File(appProperties.getAppLibPath());
-            final File[] files = libDir.listFiles((dir, name) -> name.startsWith("hub"));
+            File libDir = new File(appProperties.getAppLibPath());
+            File[] files = libDir.listFiles((dir, name) -> name.startsWith("hub"));
             if (files.length == 1) {
-                final String name = files[0].getName();
+                String name = files[0].getName();
                 version = StringUtils.removeEnd(StringUtils.removeStart(name, "hub-"), ".jar");
                 if (version.equals("null")) {
                     throw new NullPointerException();
@@ -31,7 +31,7 @@ public class HubVersion {
             } else if (files.length == 0) {
                 version = "no hub jar file found";
             } else {
-                final StringBuilder stringBuilder = new StringBuilder();
+                StringBuilder stringBuilder = new StringBuilder();
                 for (File file : files) {
                     stringBuilder.append(file.getName()).append(";");
                 }

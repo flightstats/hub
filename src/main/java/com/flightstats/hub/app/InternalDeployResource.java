@@ -33,8 +33,8 @@ public class InternalDeployResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response deploy(@Context UriInfo uriInfo) {
-        final ArrayNode root = objectMapper.createArrayNode();
-        final Set<String> allServers = curatorCluster.getAllServers();
+        ArrayNode root = objectMapper.createArrayNode();
+        Set<String> allServers = curatorCluster.getAllServers();
         for (String server : allServers) {
             root.add(server);
         }
@@ -45,12 +45,12 @@ public class InternalDeployResource {
     @Produces(MediaType.TEXT_PLAIN)
     @Path("/text")
     public Response text(@Context UriInfo uriInfo) {
-        final Set<String> allServers = curatorCluster.getAllServers();
-        final ArrayList<String> list = new ArrayList<>();
+        Set<String> allServers = curatorCluster.getAllServers();
+        ArrayList<String> list = new ArrayList<>();
         for (String allServer : allServers) {
             list.add(StringUtils.substringBefore(allServer, ":"));
         }
-        final String join = StringUtils.join(list, " ");
+        String join = StringUtils.join(list, " ");
         return Response.ok(join).build();
     }
 

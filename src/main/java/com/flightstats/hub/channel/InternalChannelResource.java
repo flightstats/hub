@@ -169,7 +169,7 @@ public class InternalChannelResource {
         staleEntity.add(root, age, (staleCutoff) -> {
             Map<DateTime, URI> staleChannels = new TreeMap<>();
             channelService.getChannels().forEach(channelConfig -> {
-                final Optional<ContentKey> optionalContentKey = contentRetriever.getLatest(channelConfig.getDisplayName(), false);
+                Optional<ContentKey> optionalContentKey = contentRetriever.getLatest(channelConfig.getDisplayName(), false);
                 if (!optionalContentKey.isPresent()) return;
 
                 ContentKey contentKey = optionalContentKey.get();
@@ -177,7 +177,7 @@ public class InternalChannelResource {
 
                 if (!channelConfig.getOwner().equals(owner)) return;
 
-                final URI channelURI = constructChannelURI(channelConfig);
+                URI channelURI = constructChannelURI(channelConfig);
                 staleChannels.put(contentKey.getTime(), channelURI);
             });
             return staleChannels;

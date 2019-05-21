@@ -57,13 +57,13 @@ public class TagContentResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getTagLinks(@PathParam("tag") String tag) {
-        final Iterable<ChannelConfig> channels = tagService.getChannels(tag);
-        final Map<String, URI> mappedUris = new HashMap<>();
+        Iterable<ChannelConfig> channels = tagService.getChannels(tag);
+        Map<String, URI> mappedUris = new HashMap<>();
         for (ChannelConfig channelConfig : channels) {
-            final String channelName = channelConfig.getDisplayName();
+            String channelName = channelConfig.getDisplayName();
             mappedUris.put(channelName, linkBuilder.buildChannelUri(channelName, uriInfo));
         }
-        final Linked<?> result = linkBuilder.buildLinks(mappedUris, "channels", builder ->
+        Linked<?> result = linkBuilder.buildLinks(mappedUris, "channels", builder ->
                 builder.withLink("self", uriInfo.getRequestUri())
                         .withRelativeLink("latest", uriInfo)
                         .withRelativeLink("earliest", uriInfo)
@@ -87,7 +87,7 @@ public class TagContentResource {
                            @QueryParam("order") @DefaultValue(Order.DEFAULT) String order,
                            @QueryParam("stable") @DefaultValue("true") boolean stable,
                            @HeaderParam("Accept") String accept) {
-        final DateTime startTime = new DateTime(year, month, day, 0, 0, 0, 0, DateTimeZone.UTC);
+        DateTime startTime = new DateTime(year, month, day, 0, 0, 0, 0, DateTimeZone.UTC);
         return tagService.getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.DAYS, bulk || batch, accept, uriInfo, epoch, Order.isDescending(order));
     }
 
@@ -107,7 +107,7 @@ public class TagContentResource {
                             @QueryParam("order") @DefaultValue(Order.DEFAULT) String order,
                             @QueryParam("stable") @DefaultValue("true") boolean stable,
                             @HeaderParam("Accept") String accept) {
-        final DateTime startTime = new DateTime(year, month, day, hour, 0, 0, 0, DateTimeZone.UTC);
+        DateTime startTime = new DateTime(year, month, day, hour, 0, 0, 0, DateTimeZone.UTC);
         return tagService.getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.HOURS, bulk || batch, accept, uriInfo, epoch, Order.isDescending(order));
     }
 
@@ -128,7 +128,7 @@ public class TagContentResource {
                               @QueryParam("order") @DefaultValue(Order.DEFAULT) String order,
                               @QueryParam("stable") @DefaultValue("true") boolean stable,
                               @HeaderParam("Accept") String accept) {
-        final DateTime startTime = new DateTime(year, month, day, hour, minute, 0, 0, DateTimeZone.UTC);
+        DateTime startTime = new DateTime(year, month, day, hour, minute, 0, 0, DateTimeZone.UTC);
         return tagService.getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.MINUTES, bulk || batch, accept, uriInfo, epoch, Order.isDescending(order));
     }
 
@@ -150,7 +150,7 @@ public class TagContentResource {
                               @QueryParam("order") @DefaultValue(Order.DEFAULT) String order,
                               @QueryParam("stable") @DefaultValue("true") boolean stable,
                               @HeaderParam("Accept") String accept) {
-        final DateTime startTime = new DateTime(year, month, day, hour, minute, second, 0, DateTimeZone.UTC);
+        DateTime startTime = new DateTime(year, month, day, hour, minute, second, 0, DateTimeZone.UTC);
         return tagService.getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.SECONDS, bulk || batch, accept, uriInfo, epoch, Order.isDescending(order));
     }
 
@@ -166,26 +166,26 @@ public class TagContentResource {
                              @PathParam("ms") int millis,
                              @PathParam("hash") String hash,
                              @HeaderParam("Accept") String accept) {
-        final ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
-        final ItemRequest itemRequest = ItemRequest.builder()
+        ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
+        ItemRequest itemRequest = ItemRequest.builder()
                 .tag(tag)
                 .key(key)
                 .uri(uriInfo.getRequestUri())
                 .build();
-        final Optional<Content> optionalResult = tagService.getValue(itemRequest);
+        Optional<Content> optionalResult = tagService.getValue(itemRequest);
 
         if (!optionalResult.isPresent()) {
             log.warn("404 content not found {} {}", tag, key);
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
-        final Content content = optionalResult.get();
+        Content content = optionalResult.get();
 
-        final MediaType actualContentType = ChannelContentResource.getContentType(content);
+        MediaType actualContentType = ChannelContentResource.getContentType(content);
 
         if (ChannelContentResource.contentTypeIsNotCompatible(accept, actualContentType)) {
             return Response.status(Response.Status.NOT_ACCEPTABLE).build();
         }
-        final Response.ResponseBuilder builder = Response.ok((StreamingOutput) output -> ByteStreams.copy(content.getStream(), output));
+        Response.ResponseBuilder builder = Response.ok((StreamingOutput) output -> ByteStreams.copy(content.getStream(), output));
 
         builder.type(actualContentType)
                 .header(CREATION_DATE, TimeUtil.FORMATTER.print(new DateTime(key.getMillis())));
@@ -210,7 +210,7 @@ public class TagContentResource {
                                  @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
                                  @PathParam("direction") String direction,
                                  @QueryParam("stable") @DefaultValue("true") boolean stable) {
-        final ContentKey contentKey = new ContentKey(year, month, day, hour, minute, second, millis, hash);
+        ContentKey contentKey = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         return tagService.adjacent(tag, contentKey, stable, direction.startsWith("n"), uriInfo, location, epoch);
     }
 
@@ -236,7 +236,7 @@ public class TagContentResource {
                                       @QueryParam("epoch") @DefaultValue(Epoch.DEFAULT) String epoch,
                                       @QueryParam("order") @DefaultValue(Order.DEFAULT) String order,
                                       @HeaderParam("Accept") String accept) {
-        final ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
+        ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         return tagService.adjacentCount(tag, count, stable, trace, location, direction.startsWith("n"), key, bulk || batch, accept, uriInfo, epoch, Order.isDescending(order));
     }
 }
