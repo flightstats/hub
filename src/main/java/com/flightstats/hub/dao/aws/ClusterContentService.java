@@ -152,7 +152,6 @@ public class ClusterContentService implements ContentService {
     public ContentKey insert(String channelName, Content content) {
         final Content spokeContent = calculateIndexIfLarge(channelName, content);
 
-        // after stable() seconds, we want to write the cache entry if the write succeeded
         SortedSet<ContentKey> keys = setStableCache(channelName,
                 () -> new TreeSet<>(
                         Arrays.asList(spokeWriteContentDao.insert(channelName, spokeContent))));
