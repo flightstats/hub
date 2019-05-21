@@ -1,8 +1,8 @@
 package com.flightstats.hub.system.service;
 
-import com.flightstats.hub.client.ChannelItemResourceClient;
-import com.flightstats.hub.client.ChannelResourceClient;
-import com.flightstats.hub.client.HubClientFactory;
+import com.flightstats.hub.clients.hub.channel.ChannelItemResourceClient;
+import com.flightstats.hub.clients.hub.channel.ChannelResourceClient;
+import com.flightstats.hub.clients.hub.HubClientFactory;
 import com.flightstats.hub.model.Channel;
 import com.flightstats.hub.model.ChannelItem;
 import com.google.inject.Inject;

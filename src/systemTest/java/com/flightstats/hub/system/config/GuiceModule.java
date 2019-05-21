@@ -1,12 +1,12 @@
 package com.flightstats.hub.system.config;
 
-import com.flightstats.hub.client.CallbackClientFactory;
-import com.flightstats.hub.client.HubClientFactory;
-import com.flightstats.hub.kubernetes.ReleaseDelete;
-import com.flightstats.hub.kubernetes.ReleaseInstall;
+import com.flightstats.hub.clients.callback.CallbackClientFactory;
+import com.flightstats.hub.clients.hub.HubClientFactory;
+import com.flightstats.hub.clients.s3.S3ClientFactory;
 import com.flightstats.hub.system.service.CallbackService;
 import com.flightstats.hub.system.service.ChannelService;
 import com.flightstats.hub.system.service.WebhookService;
+import com.flightstats.hub.utility.StringHelper;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.name.Named;
@@ -24,12 +24,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
 
 @Slf4j
 public class GuiceModule extends AbstractModule {
-
-    private final String releaseName = "ddt-" + randomAlphaNumeric(10).toLowerCase();
+    private final StringHelper stringHelper = new StringHelper();
+    private final String releaseName = "ddt-" + stringHelper.randomAlphaNumeric(10).toLowerCase();
     private static final String PROPERTY_FILE_NAME = "system-test-hub.properties";
 
     @Override
@@ -39,8 +38,11 @@ public class GuiceModule extends AbstractModule {
         releaseNameProperty.put("helm.release.name", releaseName);
         Names.bindProperties(binder(), releaseNameProperty);
 
-        bind(ReleaseInstall.class);
-        bind(ReleaseDelete.class);
+        bind(String.class)
+                .annotatedWith(Names.named("release.name"))
+                .toInstance(releaseName);
+        bind(StringHelper.class).toInstance(stringHelper);
+        bind(S3ClientFactory.class);
         bind(HubClientFactory.class);
         bind(CallbackClientFactory.class);
         bind(ChannelService.class);
@@ -66,6 +68,18 @@ public class GuiceModule extends AbstractModule {
     public Retrofit retrofitCallback(@Named("callback.url") String callbackUrl) {
         return new Retrofit.Builder()
                 .baseUrl(String.format(callbackUrl, releaseName))
+                .addConverterFactory(ScalarsConverterFactory.create())
+                .addConverterFactory(GsonConverterFactory.create())
+                .client(new OkHttpClient.Builder().build())
+                .build();
+    }
+
+    @Singleton
+    @Named("s3")
+    @Provides
+    public Retrofit retrofitS3(@Named("s3.url") String s3Url) {
+        return new Retrofit.Builder()
+                .baseUrl(String.format(s3Url, releaseName))
                 .addConverterFactory(ScalarsConverterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(new OkHttpClient.Builder().build())

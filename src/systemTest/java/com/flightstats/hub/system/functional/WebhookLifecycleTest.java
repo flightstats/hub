@@ -7,7 +7,7 @@ import com.flightstats.hub.system.resilient.HubLifecycle;
 import com.flightstats.hub.system.service.CallbackService;
 import com.flightstats.hub.system.service.ChannelService;
 import com.flightstats.hub.system.service.WebhookService;
-import com.google.inject.Inject;
+import javax.inject.Inject;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterAll;
@@ -35,7 +35,7 @@ class WebhookLifecycleTest extends DependencyInjector {
     private WebhookService webhookResource;
     private String channelName;
     private String webhookName;
-    @javax.inject.Inject
+    @Inject
     private HubLifecycle hubLifecycle;
     @Inject
     private ModelBuilder modelBuilder;

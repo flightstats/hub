@@ -1,7 +1,8 @@
-package com.flightstats.hub.client;
+package com.flightstats.hub.clients.hub.channel;
 
 import com.flightstats.hub.model.Channel;
 import com.flightstats.hub.model.ContentKey;
+
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.DELETE;

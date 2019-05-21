@@ -1,7 +1,7 @@
 package com.flightstats.hub.system.service;
 
-import com.flightstats.hub.client.HubClientFactory;
-import com.flightstats.hub.client.WebhookResourceClient;
+import com.flightstats.hub.clients.hub.HubClientFactory;
+import com.flightstats.hub.clients.hub.webhook.WebhookResourceClient;
 import com.flightstats.hub.model.Webhook;
 import com.flightstats.hub.model.WebhookErrors;
 import com.google.inject.Inject;

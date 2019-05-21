@@ -1,4 +1,4 @@
-package com.flightstats.hub.client;
+package com.flightstats.hub.clients.hub.channel;
 
 import com.flightstats.hub.model.ChannelItem;
 import retrofit2.Call;

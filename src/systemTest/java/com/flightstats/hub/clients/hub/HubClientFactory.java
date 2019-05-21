@@ -1,4 +1,4 @@
-package com.flightstats.hub.client;
+package com.flightstats.hub.clients.hub;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
