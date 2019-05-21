@@ -52,8 +52,7 @@ public class Integration {
         startZooKeeper();
         PropertiesLoader.getInstance().setProperty("hub.type", "aws");
         HubMain hubMain = new HubMain();
-        hubMain.startServer();
-        injector = hubMain.getInjector();
+        injector = hubMain.run(false);
         return injector;
     }
 

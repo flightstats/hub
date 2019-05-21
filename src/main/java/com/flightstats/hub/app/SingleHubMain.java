@@ -45,7 +45,7 @@ public class SingleHubMain {
         setProperty(propertiesLoader, "spoke.path", spokePath);
         setProperty(propertiesLoader, "app.remoteTimeFile", storagePath + "/remoteTime");
 
-        new HubMain().run();
+        new HubMain().run(true);
     }
 
     private static void setProperty(PropertiesLoader propertiesLoader, String name, String defaultValue) {

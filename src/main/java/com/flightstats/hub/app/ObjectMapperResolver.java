@@ -4,10 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Singleton;
 
 import javax.ws.rs.ext.ContextResolver;
+import javax.ws.rs.ext.Provider;
 
-@javax.ws.rs.ext.Provider
+@Provider
 @Singleton
-class ObjectMapperResolver implements ContextResolver<ObjectMapper> {
+public class ObjectMapperResolver implements ContextResolver<ObjectMapper> {
     private final ObjectMapper objectMapper;
 
     public ObjectMapperResolver(ObjectMapper objectMapper) {
