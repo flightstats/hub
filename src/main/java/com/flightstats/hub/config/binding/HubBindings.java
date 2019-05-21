@@ -7,9 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.flightstats.hub.app.FinalCheck;
-import com.flightstats.hub.app.HubVersion;
 import com.flightstats.hub.app.InFlightService;
-import com.flightstats.hub.app.NamedDependencies;
 import com.flightstats.hub.app.PermissionsChecker;
 import com.flightstats.hub.app.ShutdownManager;
 import com.flightstats.hub.channel.ChannelValidator;
@@ -28,8 +26,11 @@ import com.flightstats.hub.config.SystemProperties;
 import com.flightstats.hub.config.ZookeeperProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
+import com.flightstats.hub.dao.TagService;
+import com.flightstats.hub.dao.aws.ContentRetriever;
 import com.flightstats.hub.dao.aws.s3Verifier.VerifierConfig;
 import com.flightstats.hub.dao.aws.s3Verifier.VerifierConfigProvider;
+import com.flightstats.hub.events.EventsService;
 import com.flightstats.hub.health.HubHealthCheck;
 import com.flightstats.hub.metrics.CustomMetricsLifecycle;
 import com.flightstats.hub.metrics.InfluxdbReporterLifecycle;
@@ -66,8 +67,10 @@ import com.flightstats.hub.time.NtpMonitor;
 import com.flightstats.hub.time.TimeService;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.SecretFilter;
+import com.flightstats.hub.util.StaleEntity;
 import com.flightstats.hub.webhook.WebhookManager;
 import com.flightstats.hub.webhook.WebhookValidator;
+import com.flightstats.hub.ws.WebSocketService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -89,12 +92,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import static com.flightstats.hub.constant.NamedBinding.READ;
+import static com.flightstats.hub.constant.NamedBinding.READ_CACHE;
+import static com.flightstats.hub.constant.NamedBinding.S3_VERIFIER_CHANNEL_THREAD_POOL;
+import static com.flightstats.hub.constant.NamedBinding.S3_VERIFIER_QUERY_THREAD_POOL;
+import static com.flightstats.hub.constant.NamedBinding.WRITE;
+import static com.flightstats.hub.constant.NamedBinding.WRITE_CACHE;
+
 @Slf4j
 public class HubBindings extends AbstractModule {
-    private static final String READ = "READ";
-    private static final String WRITE = "WRITE";
-    private static final String READ_CACHE = "ReadCache";
-    private static final String WRITE_CACHE = "WriteCache";
 
     @Singleton
     @Provides
@@ -171,14 +177,14 @@ public class HubBindings extends AbstractModule {
     @Named("SpokeCuratorCluster")
     @Singleton
     @Provides
-    public static CuratorCluster buildSpokeCuratorCluster(@Named("SpokeCluster") Cluster cluster) throws Exception {
+    public static CuratorCluster buildSpokeCuratorCluster(@Named("SpokeCluster") Cluster cluster) {
         return (CuratorCluster) cluster;
     }
 
     @Named("HubCuratorCluster")
     @Singleton
     @Provides
-    public static CuratorCluster buildHubCuratorCluster(@Named("HubCluster") Cluster cluster) throws Exception {
+    public static CuratorCluster buildHubCuratorCluster(@Named("HubCluster") Cluster cluster) {
         return (CuratorCluster) cluster;
     }
 
@@ -220,14 +226,14 @@ public class HubBindings extends AbstractModule {
         return mapper;
     }
 
-    @Named(NamedDependencies.S3_VERIFIER_CHANNEL_THREAD_POOL)
+    @Named(S3_VERIFIER_CHANNEL_THREAD_POOL)
     @Singleton
     @Provides
     public static ExecutorService channelThreadPool(VerifierConfig verifierConfig) {
         return Executors.newFixedThreadPool(verifierConfig.getChannelThreads(), new ThreadFactoryBuilder().setNameFormat("S3VerifierChannel-%d").build());
     }
 
-    @Named(NamedDependencies.S3_VERIFIER_QUERY_THREAD_POOL)
+    @Named(S3_VERIFIER_QUERY_THREAD_POOL)
     @Singleton
     @Provides
     public
@@ -272,31 +278,43 @@ public class HubBindings extends AbstractModule {
     }
 
     @Override
+
     protected void configure() {
+
         bind(SecretFilter.class).asEagerSingleton();
         bind(HubHealthCheck.class).asEagerSingleton();
         bind(HubClusterRegister.class).asEagerSingleton();
         bind(ZooKeeperState.class).asEagerSingleton();
-        bind(ReplicationManager.class).asEagerSingleton();
         bind(HubUtils.class).asEagerSingleton();
         bind(GCRunner.class).asEagerSingleton();
+        bind(ClusterStateDao.class).asEagerSingleton();
+        bind(NtpMonitor.class).asEagerSingleton();
+        bind(StaleEntity.class).asEagerSingleton();
+
+        bind(FinalCheck.class).to(SpokeFinalCheck.class).asEagerSingleton();
+
+        bind(ReplicationManager.class).asEagerSingleton();
+        bind(WatchManager.class).asEagerSingleton();
+        bind(WebhookManager.class).asEagerSingleton();
+        bind(SpokeManager.class).asEagerSingleton();
+        bind(ShutdownManager.class).asEagerSingleton();
+
         bind(ChannelValidator.class).asEagerSingleton();
         bind(WebhookValidator.class).asEagerSingleton();
-        bind(WebhookManager.class).asEagerSingleton();
-        bind(ClusterStateDao.class).asEagerSingleton();
-        bind(WatchManager.class).asEagerSingleton();
-        bind(NtpMonitor.class).asEagerSingleton();
-        bind(TimeService.class).asEagerSingleton();
-        bind(ShutdownManager.class).asEagerSingleton();
-        bind(SpokeClusterRegister.class).asEagerSingleton();
-        bind(FinalCheck.class).to(SpokeFinalCheck.class).asEagerSingleton();
-        bind(InFlightService.class).asEagerSingleton();
+
+        bind(ContentRetriever.class).asEagerSingleton();
+
         bind(ChannelService.class).asEagerSingleton();
-        bind(HubVersion.class).toInstance(new HubVersion());
-        bind(SpokeManager.class).asEagerSingleton();
+        bind(InFlightService.class).asEagerSingleton();
+        bind(TagService.class).asEagerSingleton();
+        bind(TimeService.class).asEagerSingleton();
+        bind(EventsService.class).asEagerSingleton();
+        bind(WebSocketService.class).asEagerSingleton();
+
         bind(LocalReadSpoke.class).to(SpokeManager.class);
         bind(SpokeChronologyStore.class).to(SpokeManager.class);
         bind(SpokeClusterHealthCheck.class).to(SpokeManager.class);
+        bind(SpokeClusterRegister.class).asEagerSingleton();
         bind(PermissionsChecker.class).asEagerSingleton();
 
         // metrics
@@ -318,6 +336,5 @@ public class HubBindings extends AbstractModule {
                 .annotatedWith(Names.named("spokeWriteStoreConfig"))
                 .toProvider(SpokeWriteStoreConfigProvider.class)
                 .asEagerSingleton();
-
     }
 }

@@ -6,7 +6,6 @@ import com.flightstats.hub.config.AppProperties;
 import com.flightstats.hub.config.ContentProperties;
 import com.flightstats.hub.config.SpokeProperties;
 import com.flightstats.hub.config.binding.HubBindings;
-import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ChannelContentKey;
@@ -16,7 +15,6 @@ import com.flightstats.hub.model.LargeContentUtils;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.TimeUtil;
 import lombok.SneakyThrows;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -41,7 +39,7 @@ class ClusterContentServiceTest {
     @Mock
     private ClusterContentService ccs;
     @Mock
-    private ChannelService channelSvc;
+    private ContentRetriever contentRetriever;
     @Mock
     private ContentDao mockSpokeWriteDao;
     @Mock
@@ -68,6 +66,7 @@ class ClusterContentServiceTest {
     private SpokeProperties spokeProperties;
     @Mock
     private ContentProperties contentProperties;
+
     private Content content;
     private ContentKey contentKey;
     private String channelName;
@@ -76,14 +75,13 @@ class ClusterContentServiceTest {
     @BeforeEach
     void initClusterContentService() {
         channelName = "/testChannel";
-        when(channelSvc.getCachedChannelConfig(channelName)).thenReturn(Optional.of(channelConfig));
+        when(contentRetriever.getCachedChannelConfig(channelName)).thenReturn(Optional.of(channelConfig));
         largeContentUtils = new LargeContentUtils(HubBindings.objectMapper());
         ccs = new ClusterContentService(
-                channelSvc,
                 mockSpokeWriteDao, mockSpokeReadDao,
                 mockS3SingleDao, mockS3LargeDao, mockS3BatchDao,
                 latestContentCache,
-                s3WriteQueue, clusterStateDao, hubUtils,
+                s3WriteQueue, contentRetriever, clusterStateDao, hubUtils,
                 largeContentUtils, appProperties, contentProperties, spokeProperties);
     }
 

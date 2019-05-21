@@ -13,17 +13,16 @@ import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Injector;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
 import java.lang.reflect.Method;
 import java.util.Optional;
 
-
-import static com.flightstats.hub.dao.ChannelService.REPLICATED_LAST_UPDATED;
-import static com.flightstats.hub.dao.aws.S3Verifier.LAST_SINGLE_VERIFIED;
+import static com.flightstats.hub.constant.ZookeeperNodes.LAST_SINGLE_VERIFIED;
+import static com.flightstats.hub.constant.ZookeeperNodes.REPLICATED_LAST_UPDATED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
@@ -42,7 +41,7 @@ class VerifierRangeLookupTest {
     static void setUpClass() throws Exception {
         final SpokeProperties spokeProperties = new SpokeProperties(PropertiesLoader.getInstance());
         Injector injector = Integration.startAwsHub();
-        ttlMinutes =  spokeProperties.getTtlMinutes(SpokeStore.WRITE);
+        ttlMinutes = spokeProperties.getTtlMinutes(SpokeStore.WRITE);
         verifierRangeLookup = injector.getInstance(VerifierRangeLookup.class);
         clusterStateDao = injector.getInstance(ClusterStateDao.class);
         channelService = injector.getInstance(ChannelService.class);

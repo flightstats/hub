@@ -3,9 +3,8 @@ package com.flightstats.hub.webhook;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.cluster.ClusterStateDao;
-import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.dao.aws.ContentRetriever;
 import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.ContentKey;
@@ -16,10 +15,10 @@ import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -31,25 +30,32 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-class SingleWebhookStrategy implements WebhookStrategy {
+import static com.flightstats.hub.constant.ZookeeperNodes.WEBHOOK_LAST_COMPLETED;
 
-    private final static Logger logger = LoggerFactory.getLogger(SingleWebhookStrategy.class);
-    private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private final Webhook webhook;
-    private final ClusterStateDao clusterStateDao;
-    private final ChannelService channelService;
-    private AtomicBoolean shouldExit = new AtomicBoolean(false);
+@Slf4j
+class SingleWebhookStrategy implements WebhookStrategy {
     private AtomicReference<Exception> exceptionReference = new AtomicReference<>();
+    private AtomicBoolean shouldExit = new AtomicBoolean(false);
+
+    private final ClusterStateDao clusterStateDao;
+    private final ContentRetriever contentRetriever;
+    private final ObjectMapper objectMapper;
+    private final Webhook webhook;
+
     private BlockingQueue<ContentPath> queue;
-    private String channel;
     private QueryGenerator queryGenerator;
     private ExecutorService executorService;
+    private String channel;
 
-
-    SingleWebhookStrategy(Webhook webhook, ClusterStateDao clusterStateDao, ChannelService channelService) {
-        this.webhook = webhook;
+    @Inject
+    SingleWebhookStrategy(ContentRetriever contentRetriever,
+                          ClusterStateDao clusterStateDao,
+                          ObjectMapper objectMapper,
+                          Webhook webhook) {
+        this.contentRetriever = contentRetriever;
         this.clusterStateDao = clusterStateDao;
-        this.channelService = channelService;
+        this.objectMapper = objectMapper;
+        this.webhook = webhook;
         this.queue = new ArrayBlockingQueue<>(webhook.getParallelCalls() * 2);
     }
 
@@ -59,22 +65,22 @@ class SingleWebhookStrategy implements WebhookStrategy {
         if (null == startingKey) {
             startingKey = new ContentKey();
         }
-        ContentPath contentPath = clusterStateDao.get(webhook.getName(), startingKey, WebhookLeader.WEBHOOK_LAST_COMPLETED);
-        logger.info("getStartingPath startingKey {} contentPath {}", startingKey, contentPath);
+        ContentPath contentPath = clusterStateDao.get(webhook.getName(), startingKey, WEBHOOK_LAST_COMPLETED);
+        log.info("getStartingPath startingKey {} contentPath {}", startingKey, contentPath);
         return contentPath;
     }
 
     @Override
     public ContentPath getLastCompleted() {
-        return clusterStateDao.getOrNull(webhook.getName(), WebhookLeader.WEBHOOK_LAST_COMPLETED);
+        return clusterStateDao.getOrNull(webhook.getName(), WEBHOOK_LAST_COMPLETED);
     }
 
     @Override
     public ObjectNode createResponse(ContentPath contentPath) {
-        ObjectNode response = mapper.createObjectNode();
+        final ObjectNode response = objectMapper.createObjectNode();
         response.put("name", webhook.getName());
         if (contentPath instanceof ContentKey) {
-            ArrayNode uris = response.putArray("uris");
+            final ArrayNode uris = response.putArray("uris");
             uris.add(webhook.getChannelUrl() + "/" + contentPath.toUrl());
             response.put("type", "item");
         } else {
@@ -90,9 +96,9 @@ class SingleWebhookStrategy implements WebhookStrategy {
     }
 
     public Optional<ContentPath> next() throws Exception {
-        Exception e = exceptionReference.get();
+        final Exception e = exceptionReference.get();
         if (e != null) {
-            logger.error("unable to determine next " + webhook.getName(), e);
+            log.error("unable to determine next " + webhook.getName(), e);
             throw e;
         }
         return Optional.ofNullable(queue.poll(1, TimeUnit.SECONDS));
@@ -117,14 +123,14 @@ class SingleWebhookStrategy implements WebhookStrategy {
                     }
                 } catch (InterruptedException | RuntimeInterruptedException e) {
                     exceptionReference.set(e);
-                    logger.info("InterruptedException with " + webhook.getName());
+                    log.info("InterruptedException with " + webhook.getName());
                     Thread.currentThread().interrupt();
                 } catch (NoSuchChannelException e) {
                     exceptionReference.set(e);
-                    logger.debug("NoSuchChannelException for " + webhook.getName());
+                    log.debug("NoSuchChannelException for " + webhook.getName());
                 } catch (Exception e) {
                     exceptionReference.set(e);
-                    logger.warn("unexpected issue with " + webhook.getName(), e);
+                    log.warn("unexpected issue with " + webhook.getName(), e);
                 }
             }
 
@@ -132,15 +138,15 @@ class SingleWebhookStrategy implements WebhookStrategy {
                 ActiveTraces.start("SingleWebhookStrategy", webhook);
                 try {
                     DateTime latestStableInChannel = TimeUtil.stable();
-                    if (!channelService.isLiveChannel(channel)) {
-                        latestStableInChannel = channelService.adjustLastUpdatePathIfReplicating(channel, MinutePath.NONE).getTime();
+                    if (!contentRetriever.isLiveChannel(channel)) {
+                        latestStableInChannel = contentRetriever.getLastUpdated(channel, MinutePath.NONE).getTime();
                     }
-                    TimeQuery timeQuery = queryGenerator.getQuery(latestStableInChannel);
+                    final TimeQuery timeQuery = queryGenerator.getQuery(latestStableInChannel);
                     if (timeQuery != null) {
-                        addKeys(channelService.queryByTime(timeQuery));
+                        addKeys(contentRetriever.queryByTime(timeQuery));
                         if (webhook.isHeartbeat() && queryGenerator.getLastQueryTime().getSecondOfMinute() == 0) {
                             MinutePath minutePath = new MinutePath(queryGenerator.getLastQueryTime().minusMinutes(1));
-                            logger.debug("sending heartbeat {}", minutePath);
+                            log.debug("sending heartbeat {}", minutePath);
                             addKey(minutePath);
                         }
                         return true;
@@ -152,9 +158,9 @@ class SingleWebhookStrategy implements WebhookStrategy {
             }
 
             private void addKeys(Collection<ContentKey> keys) throws InterruptedException {
-                logger.debug("channel {} keys {}", channel, keys);
-                if (logger.isTraceEnabled()) {
-                    ActiveTraces.getLocal().log(logger);
+                log.debug("channel {} keys {}", channel, keys);
+                if (log.isTraceEnabled()) {
+                    ActiveTraces.getLocal().log(log);
                 }
                 for (ContentKey key : keys) {
                     addKey(key);
@@ -167,11 +173,8 @@ class SingleWebhookStrategy implements WebhookStrategy {
                     lastAdded = key;
                 }
             }
-
         });
-
     }
-
 
     @Override
     public void close() {

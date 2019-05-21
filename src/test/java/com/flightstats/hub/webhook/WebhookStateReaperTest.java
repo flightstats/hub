@@ -25,6 +25,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import static com.flightstats.hub.constant.ZookeeperNodes.WEBHOOK_LAST_COMPLETED;
+import static com.flightstats.hub.constant.ZookeeperNodes.WEBHOOK_LEADER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -34,7 +36,7 @@ import static org.mockito.Mockito.when;
 
 @Execution(ExecutionMode.SAME_THREAD)
 @ExtendWith(MockitoExtension.class)
-@MockitoSettings(strictness= Strictness.LENIENT)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class WebhookStateReaperTest {
     private static CuratorFramework curator;
     private ClusterStateDao clusterStateDao;
@@ -66,7 +68,7 @@ class WebhookStateReaperTest {
         clusterStateDao = new ClusterStateDao(curator, new AppProperties(PropertiesLoader.getInstance()));
         webhookErrorService = new WebhookErrorService(webhookErrorRepository, webhookErrorPruner, channelService);
         webhookInProcess = new WebhookContentPathSet(zooKeeperUtils);
-   }
+    }
 
     @Test
     void testCleansUpZookeeperNodesRelatedToState() throws Exception {
@@ -185,7 +187,7 @@ class WebhookStateReaperTest {
     }
 
     private void addLastCompleted(String webhook) throws Exception {
-        clusterStateDao.initialize(webhook, key, WebhookLeader.WEBHOOK_LAST_COMPLETED);
+        clusterStateDao.initialize(webhook, key, WEBHOOK_LAST_COMPLETED);
         assertLastCompletedExists(webhook);
     }
 
@@ -200,14 +202,14 @@ class WebhookStateReaperTest {
     }
 
     private void addWebhookLeader(String webhook) throws Exception {
-        String path = WebhookLeaderLocks.WEBHOOK_LEADER + "/" + webhook + "/leases/someLease";
+        String path = WEBHOOK_LEADER + "/" + webhook + "/leases/someLease";
         curator.create().creatingParentContainersIfNeeded().forPath(path);
         curator.setData().forPath(path, "foo".getBytes());
         assertWebhookLeaderExists(webhook);
     }
 
     private void assertLastCompletedExists(String webhook) throws Exception {
-        assertTrue(curator.getData().forPath(WebhookLeader.WEBHOOK_LAST_COMPLETED + webhook).length > 0);
+        assertTrue(curator.getData().forPath(WEBHOOK_LAST_COMPLETED + webhook).length > 0);
     }
 
     private void assertWebhookInProcessExists(String webhook) {
@@ -224,7 +226,7 @@ class WebhookStateReaperTest {
 
     private void assertLastCompletedDeleted(String webhook) {
         assertThrows(KeeperException.NoNodeException.class,
-                () -> curator.getData().forPath(WebhookLeader.WEBHOOK_LAST_COMPLETED + webhook));
+                () -> curator.getData().forPath(WEBHOOK_LAST_COMPLETED + webhook));
     }
 
     private void assertErrorDeleted(String webhook) {

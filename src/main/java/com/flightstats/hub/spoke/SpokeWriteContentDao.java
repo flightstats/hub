@@ -33,9 +33,9 @@ import java.util.TreeSet;
 @Slf4j
 public class SpokeWriteContentDao implements ContentDao {
 
-    private final SpokeProperties spokeProperties;
     private ClusterWriteSpoke clusterWriteSpoke;
     private SpokeChronologyStore chronoStore;
+    private final SpokeProperties spokeProperties;
 
     @Inject
     public SpokeWriteContentDao(

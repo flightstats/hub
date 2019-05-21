@@ -23,11 +23,11 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.Function;
 
+import static com.flightstats.hub.constant.ContentConstant.GET_ITEM_COUNT_COMMAND;
+import static com.flightstats.hub.constant.ContentConstant.GET_OLDEST_ITEM_COMMAND;
+
 @Slf4j
 public class SpokeContentDao {
-
-    static final String GET_OLDEST_ITEM_COMMAND = "find %s -type f -printf '%%T+ %%p\\n' | sort | head -n 1";
-    static final String GET_ITEM_COUNT_COMMAND = "find %s -type f | wc -l";
 
     private final Commander commander;
     private final SpokeProperties spokeProperties;

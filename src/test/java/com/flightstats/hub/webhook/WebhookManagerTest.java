@@ -9,6 +9,8 @@ import com.google.common.util.concurrent.Service;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -32,19 +34,33 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 @ExtendWith({MockitoExtension.class})
-@MockitoSettings(strictness= Strictness.LENIENT)
+@MockitoSettings(strictness = Strictness.LENIENT)
+@Execution(ExecutionMode.SAME_THREAD)
 public class WebhookManagerTest {
-    @Mock private WatchManager watchManager;
-    @Mock private Dao<Webhook> webhookDao;
-    @Mock private ClusterStateDao clusterStateDao;
-    @Mock private ActiveWebhooks activeWebhooks;
-    @Mock private WebhookErrorService webhookErrorService;
-    @Mock private WebhookContentPathSet webhookContentPathSet;
-    @Mock private InternalWebhookClient webhookClient;
-    @Mock private WebhookStateReaper webhookStateReaper;
-    @Mock private WebhookProperties webhookProperties;
+    @Mock
+    private LocalWebhookManager localWebhookManager;
+    @Mock
+    private WebhookErrorService webhookErrorService;
+    @Mock
+    private WebhookContentPathSet webhookContentPathSet;
+    @Mock
+    private InternalWebhookClient webhookClient;
+    @Mock
+    private WebhookStateReaper webhookStateReaper;
+    @Mock
+    private ClusterStateDao clusterStateDao;
+    @Mock
+    private ActiveWebhooks activeWebhooks;
+    @Mock
+    private WatchManager watchManager;
+    @Mock
+    private Dao<Webhook> webhookDao;
+    @Mock
+    private WebhookProperties webhookProperties;
+
 
     private static final String SERVER1 = "123.1.1";
     private static final String SERVER2 = "123.2.1";
@@ -54,6 +70,7 @@ public class WebhookManagerTest {
 
     @BeforeEach
     public void setup() {
+        initMocks(this);
         when(webhookProperties.isWebhookLeadershipEnabled()).thenReturn(true);
         HubServices.clear();
     }
@@ -169,7 +186,7 @@ public class WebhookManagerTest {
     }
 
     @Test
-    public void testRegistersServices() {
+    void testRegistersServices() {
         getWebhookManager();
         Map<HubServices.TYPE, List<Service>> services = HubServices.getServices();
         assertEquals(2, services.get(HubServices.TYPE.AFTER_HEALTHY_START).size());
@@ -177,7 +194,7 @@ public class WebhookManagerTest {
     }
 
     @Test
-    public void testIfNotLeaderWontRegisterServices() {
+    void testIfNotLeaderWontRegisterServices() {
         when(webhookProperties.isWebhookLeadershipEnabled()).thenReturn(false);
         getWebhookManager();
         Map<HubServices.TYPE, List<Service>> services = HubServices.getServices();
@@ -186,10 +203,16 @@ public class WebhookManagerTest {
 
     private WebhookManager getWebhookManager() {
         return new WebhookManager(
-                watchManager, webhookDao,
-                clusterStateDao, activeWebhooks,
-                webhookErrorService, webhookContentPathSet,
-                webhookClient, webhookStateReaper, webhookProperties);
+                localWebhookManager,
+                webhookErrorService,
+                webhookContentPathSet,
+                webhookClient,
+                webhookStateReaper,
+                clusterStateDao,
+                activeWebhooks,
+                webhookProperties,
+                watchManager,
+                webhookDao);
     }
 
 }

@@ -1,56 +1,65 @@
 package com.flightstats.hub.channel;
 
-import com.flightstats.hub.app.HubProvider;
-import com.flightstats.hub.dao.ChannelService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.flightstats.hub.dao.aws.ContentRetriever;
 
-import javax.ws.rs.*;
+import javax.inject.Inject;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-@SuppressWarnings("WeakerAccess")
 @Path("/channel/{channel}/time")
 public class ChannelTimeResource {
 
-    private final static Logger logger = LoggerFactory.getLogger(ChannelTimeResource.class);
-    private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
+    private final ContentRetriever contentRetriever;
+    private final TimeLinkBuilder timeLinkBuilder;
+
     @Context
     private UriInfo uriInfo;
+
+    @Inject
+    public ChannelTimeResource(ContentRetriever contentRetriever, TimeLinkBuilder timeLinkBuilder) {
+        this.contentRetriever = contentRetriever;
+        this.timeLinkBuilder = timeLinkBuilder;
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getDefault(@PathParam("channel") String channel) {
-        if (!channelService.channelExists(channel)) {
+        if (!contentRetriever.isExistingChannel(channel)) {
             return Response.status(404).build();
         }
-        return TimeLinkUtil.getDefault(uriInfo);
+        return timeLinkBuilder.getDefault(uriInfo);
     }
 
     @Path("/second")
     @GET
     public Response getSecond(@QueryParam("stable") @DefaultValue("true") boolean stable) {
-        return TimeLinkUtil.getSecond(stable, uriInfo);
+        return timeLinkBuilder.getSecond(stable, uriInfo);
     }
 
     @Path("/minute")
     @GET
     public Response getMinute(@QueryParam("stable") @DefaultValue("true") boolean stable) {
-        return TimeLinkUtil.getMinute(stable, uriInfo);
+        return timeLinkBuilder.getMinute(stable, uriInfo);
     }
 
     @Path("/hour")
     @GET
     public Response getHour(@QueryParam("stable") @DefaultValue("true") boolean stable) {
-        return TimeLinkUtil.getHour(stable, uriInfo);
+        return timeLinkBuilder.getHour(stable, uriInfo);
     }
 
     @Path("/day")
     @GET
     public Response getDay(@QueryParam("stable") @DefaultValue("true") boolean stable) {
-        return TimeLinkUtil.getDay(stable, uriInfo);
+        return timeLinkBuilder.getDay(stable, uriInfo);
     }
 
 }

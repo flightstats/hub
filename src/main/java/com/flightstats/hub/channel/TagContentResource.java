@@ -1,39 +1,58 @@
 package com.flightstats.hub.channel;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ItemRequest;
 import com.flightstats.hub.dao.TagService;
-import com.flightstats.hub.metrics.ActiveTraces;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.model.Content;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.Epoch;
+import com.flightstats.hub.model.Location;
+import com.flightstats.hub.model.Order;
 import com.flightstats.hub.rest.Linked;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.io.ByteStreams;
+import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.*;
-import javax.ws.rs.core.*;
+import javax.inject.Inject;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
+import static com.flightstats.hub.constant.ContentConstant.CREATION_DATE;
 import static com.flightstats.hub.util.TimeUtil.Unit;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 
-@SuppressWarnings("WeakerAccess")
+@Slf4j
 @Path("/tag/{tag}")
 public class TagContentResource {
 
-    private final static Logger logger = LoggerFactory.getLogger(TagContentResource.class);
-    private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private final static TagService tagService = HubProvider.getInstance(TagService.class);
+    private final TagService tagService;
+    private final LinkBuilder linkBuilder;
+
     @Context
     private UriInfo uriInfo;
+
+    @Inject
+    public TagContentResource(TagService tagService,
+                              LinkBuilder linkBuilder) {
+        this.tagService = tagService;
+        this.linkBuilder = linkBuilder;
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -42,16 +61,14 @@ public class TagContentResource {
         Map<String, URI> mappedUris = new HashMap<>();
         for (ChannelConfig channelConfig : channels) {
             String channelName = channelConfig.getDisplayName();
-            mappedUris.put(channelName, LinkBuilder.buildChannelUri(channelName, uriInfo));
+            mappedUris.put(channelName, linkBuilder.buildChannelUri(channelName, uriInfo));
         }
-        Linked<?> result = LinkBuilder.buildLinks(mappedUris, "channels", builder -> {
-            String uri = uriInfo.getRequestUri().toString();
-            builder.withLink("self", uriInfo.getRequestUri())
-                    .withRelativeLink("latest", uriInfo)
-                    .withRelativeLink("earliest", uriInfo)
-                    .withRelativeLink("time", uriInfo);
+        Linked<?> result = linkBuilder.buildLinks(mappedUris, "channels", builder ->
+                builder.withLink("self", uriInfo.getRequestUri())
+                        .withRelativeLink("latest", uriInfo)
+                        .withRelativeLink("earliest", uriInfo)
+                        .withRelativeLink("time", uriInfo));
 
-        });
         return Response.ok(result).build();
     }
 
@@ -71,7 +88,7 @@ public class TagContentResource {
                            @QueryParam("stable") @DefaultValue("true") boolean stable,
                            @HeaderParam("Accept") String accept) {
         DateTime startTime = new DateTime(year, month, day, 0, 0, 0, 0, DateTimeZone.UTC);
-        return getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.DAYS, bulk || batch, accept, uriInfo, epoch, Order.isDescending(order));
+        return tagService.getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.DAYS, bulk || batch, accept, uriInfo, epoch, Order.isDescending(order));
     }
 
     @Path("/{Y}/{M}/{D}/{hour}")
@@ -91,7 +108,7 @@ public class TagContentResource {
                             @QueryParam("stable") @DefaultValue("true") boolean stable,
                             @HeaderParam("Accept") String accept) {
         DateTime startTime = new DateTime(year, month, day, hour, 0, 0, 0, DateTimeZone.UTC);
-        return getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.HOURS, bulk || batch, accept, uriInfo, epoch, Order.isDescending(order));
+        return tagService.getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.HOURS, bulk || batch, accept, uriInfo, epoch, Order.isDescending(order));
     }
 
     @Path("/{Y}/{M}/{D}/{h}/{minute}")
@@ -112,7 +129,7 @@ public class TagContentResource {
                               @QueryParam("stable") @DefaultValue("true") boolean stable,
                               @HeaderParam("Accept") String accept) {
         DateTime startTime = new DateTime(year, month, day, hour, minute, 0, 0, DateTimeZone.UTC);
-        return getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.MINUTES, bulk || batch, accept, uriInfo, epoch, Order.isDescending(order));
+        return tagService.getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.MINUTES, bulk || batch, accept, uriInfo, epoch, Order.isDescending(order));
     }
 
     @Path("/{Y}/{M}/{D}/{h}/{m}/{second}")
@@ -134,55 +151,7 @@ public class TagContentResource {
                               @QueryParam("stable") @DefaultValue("true") boolean stable,
                               @HeaderParam("Accept") String accept) {
         DateTime startTime = new DateTime(year, month, day, hour, minute, second, 0, DateTimeZone.UTC);
-        return getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.SECONDS, bulk || batch, accept, uriInfo, epoch, Order.isDescending(order));
-    }
-
-    public Response getTimeQueryResponse(String tag, DateTime startTime, String location, boolean trace, boolean stable,
-                                         Unit unit, boolean bulk, String accept, UriInfo uriInfo, String epoch, boolean descending) {
-        TimeQuery query = TimeQuery.builder()
-                .tagName(tag)
-                .startTime(startTime)
-                .stable(stable)
-                .unit(unit)
-                .location(Location.valueOf(location))
-                .epoch(Epoch.valueOf(epoch))
-                .build();
-        SortedSet<ChannelContentKey> keys = tagService.queryByTime(query);
-        DateTime current = TimeUtil.time(stable);
-        DateTime next = startTime.plus(unit.getDuration());
-        DateTime previous = startTime.minus(unit.getDuration());
-        String baseUri = uriInfo.getBaseUri() + "tag/" + tag + "/";
-        if (bulk) {
-            //todo - gfm - order
-            return BulkBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo, accept, (builder) -> {
-                if (next.isBefore(current)) {
-                    builder.header("Link", "<" + baseUri + unit.format(next) + "?bulk=true&stable=" + stable + ">;rel=\"" + "next" + "\"");
-                }
-                builder.header("Link", "<" + baseUri + unit.format(previous) + "?bulk=true&stable=" + stable + ">;rel=\"" + "previous" + "\"");
-            });
-        }
-        ObjectNode root = mapper.createObjectNode();
-        ObjectNode links = root.putObject("_links");
-        ObjectNode self = links.putObject("self");
-        self.put("href", uriInfo.getRequestUri().toString());
-        if (next.isBefore(current)) {
-            links.putObject("next").put("href", baseUri + unit.format(next) + "?stable=" + stable);
-        }
-        links.putObject("previous").put("href", baseUri + unit.format(previous) + "?stable=" + stable);
-        ArrayNode ids = links.putArray("uris");
-        ArrayList<ChannelContentKey> list = new ArrayList<>(keys);
-        if (descending) {
-            Collections.reverse(list);
-        }
-        for (ChannelContentKey key : list) {
-            URI channelUri = LinkBuilder.buildChannelUri(key.getChannel(), uriInfo);
-            URI uri = LinkBuilder.buildItemUri(key.getContentKey(), channelUri);
-            ids.add(uri.toString() + "?tag=" + tag);
-        }
-        if (trace) {
-            ActiveTraces.getLocal().output(root);
-        }
-        return Response.ok(root).build();
+        return tagService.getTimeQueryResponse(tag, startTime, location, trace, stable, Unit.SECONDS, bulk || batch, accept, uriInfo, epoch, Order.isDescending(order));
     }
 
     @Path("/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}")
@@ -196,9 +165,7 @@ public class TagContentResource {
                              @PathParam("s") int second,
                              @PathParam("ms") int millis,
                              @PathParam("hash") String hash,
-                             @HeaderParam("Accept") String accept
-    ) {
-        long start = System.currentTimeMillis();
+                             @HeaderParam("Accept") String accept) {
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
         ItemRequest itemRequest = ItemRequest.builder()
                 .tag(tag)
@@ -208,7 +175,7 @@ public class TagContentResource {
         Optional<Content> optionalResult = tagService.getValue(itemRequest);
 
         if (!optionalResult.isPresent()) {
-            logger.warn("404 content not found {} {}", tag, key);
+            log.warn("404 content not found {} {}", tag, key);
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
         Content content = optionalResult.get();
@@ -221,7 +188,7 @@ public class TagContentResource {
         Response.ResponseBuilder builder = Response.ok((StreamingOutput) output -> ByteStreams.copy(content.getStream(), output));
 
         builder.type(actualContentType)
-                .header(ChannelContentResource.CREATION_DATE, TimeUtil.FORMATTER.print(new DateTime(key.getMillis())));
+                .header(CREATION_DATE, TimeUtil.FORMATTER.print(new DateTime(key.getMillis())));
 
         builder.header("Link", "<" + uriInfo.getRequestUriBuilder().path("previous").build() + ">;rel=\"" + "previous" + "\"");
         builder.header("Link", "<" + uriInfo.getRequestUriBuilder().path("next").build() + ">;rel=\"" + "next" + "\"");
@@ -244,34 +211,7 @@ public class TagContentResource {
                                  @PathParam("direction") String direction,
                                  @QueryParam("stable") @DefaultValue("true") boolean stable) {
         ContentKey contentKey = new ContentKey(year, month, day, hour, minute, second, millis, hash);
-        return adjacent(tag, contentKey, stable, direction.startsWith("n"), uriInfo, location, epoch);
-    }
-
-    public Response adjacent(String tag, ContentKey contentKey, boolean stable, boolean next, UriInfo uriInfo, String location, String epoch) {
-        DirectionQuery query = DirectionQuery.builder()
-                .tagName(tag)
-                .startKey(contentKey)
-                .next(next)
-                .stable(stable)
-                .location(Location.valueOf(location))
-                .epoch(Epoch.valueOf(epoch))
-                .count(1).build();
-        Collection<ChannelContentKey> keys = tagService.getKeys(query);
-        if (keys.isEmpty()) {
-            return Response.status(NOT_FOUND).build();
-        }
-        Response.ResponseBuilder builder = Response.status(SEE_OTHER);
-        ChannelContentKey foundKey = keys.iterator().next();
-        URI uri = uriInfo.getBaseUriBuilder()
-                .path("channel")
-                .path(foundKey.getChannel())
-                .path(foundKey.getContentKey().toUrl())
-                .queryParam("tag", tag)
-                .queryParam("stable", stable)
-                .build();
-        logger.trace("returning url {}", uri);
-        builder.location(uri);
-        return builder.build();
+        return tagService.adjacent(tag, contentKey, stable, direction.startsWith("n"), uriInfo, location, epoch);
     }
 
     @Path("/{Y}/{M}/{D}/{h}/{m}/{s}/{ms}/{hash}/{direction:[n|p].*}/{count}")
@@ -297,30 +237,6 @@ public class TagContentResource {
                                       @QueryParam("order") @DefaultValue(Order.DEFAULT) String order,
                                       @HeaderParam("Accept") String accept) {
         ContentKey key = new ContentKey(year, month, day, hour, minute, second, millis, hash);
-        return adjacentCount(tag, count, stable, trace, location, direction.startsWith("n"), key, bulk || batch, accept, uriInfo, epoch, Order.isDescending(order));
-    }
-
-    public Response adjacentCount(String tag, int count, boolean stable, boolean trace, String location,
-                                  boolean next, ContentKey contentKey, boolean bulk, String accept, UriInfo uriInfo, String epoch, boolean descending) {
-        DirectionQuery query = DirectionQuery.builder()
-                .tagName(tag)
-                .startKey(contentKey)
-                .next(next)
-                .stable(stable)
-                .location(Location.valueOf(location))
-                .epoch(Epoch.valueOf(epoch))
-                .count(count).build();
-        SortedSet<ChannelContentKey> keys = tagService.getKeys(query);
-        if (bulk) {
-            //todo - gfm - order
-            return BulkBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo, accept, (builder) -> {
-                String baseUri = uriInfo.getBaseUri() + "tag/" + tag + "/";
-                if (!keys.isEmpty()) {
-                    builder.header("Link", "<" + baseUri + keys.first().getContentKey().toUrl() + "/previous/" + count + "?bulk=true>;rel=\"" + "previous" + "\"");
-                    builder.header("Link", "<" + baseUri + keys.last().getContentKey().toUrl() + "/next/" + count + "?bulk=true>;rel=\"" + "next" + "\"");
-                }
-            });
-        }
-        return LinkBuilder.directionalTagResponse(tag, keys, count, query, mapper, uriInfo, true, trace, descending);
+        return tagService.adjacentCount(tag, count, stable, trace, location, direction.startsWith("n"), key, bulk || batch, accept, uriInfo, epoch, Order.isDescending(order));
     }
 }

@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import static com.flightstats.hub.webhook.WebhookLeader.WEBHOOK_LAST_COMPLETED;
+import static com.flightstats.hub.constant.ZookeeperNodes.WEBHOOK_LAST_COMPLETED;
 
 @Singleton
 @Slf4j

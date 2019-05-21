@@ -1,12 +1,22 @@
 package com.flightstats.hub.channel;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.dao.aws.ContentRetriever;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.Epoch;
+import com.flightstats.hub.model.Location;
+import com.flightstats.hub.model.Order;
 import com.flightstats.hub.util.TimeUtil;
 
-import javax.ws.rs.*;
+import javax.inject.Inject;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -22,11 +32,26 @@ import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 @Path("/channel/{channel}/latest")
 public class ChannelLatestResource {
 
-    private final static TagLatestResource tagLatestResource = HubProvider.getInstance(TagLatestResource.class);
-    private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
+    private final TagLatestResource tagLatestResource;
+    private final ChannelService channelService;
+    private final LinkBuilder linkBuilder;
+    private final BulkBuilder bulkBuilder;
+    private final ContentRetriever contentRetriever;
+
     @Context
     private UriInfo uriInfo;
+
+    @Inject
+    public ChannelLatestResource(TagLatestResource tagLatestResource,
+                                 ChannelService channelService,
+                                 LinkBuilder linkBuilder,
+                                 BulkBuilder bulkBuilder, ContentRetriever contentRetriever) {
+        this.tagLatestResource = tagLatestResource;
+        this.channelService = channelService;
+        this.linkBuilder = linkBuilder;
+        this.bulkBuilder = bulkBuilder;
+        this.contentRetriever = contentRetriever;
+    }
 
     @GET
     public Response getLatest(@PathParam("channel") String channel,
@@ -46,7 +71,7 @@ public class ChannelLatestResource {
                 .epoch(Epoch.valueOf(epoch))
                 .count(1)
                 .build();
-        Optional<ContentKey> latest = channelService.getLatest(query);
+        Optional<ContentKey> latest = contentRetriever.getLatest(query);
         if (latest.isPresent()) {
             return Response.status(SEE_OTHER)
                     .location(URI.create(uriInfo.getBaseUri() + "channel/" + channel + "/" + latest.get().toUrl()))
@@ -82,11 +107,11 @@ public class ChannelLatestResource {
                 .epoch(Epoch.valueOf(epoch))
                 .count(1)
                 .build();
-        Optional<ContentKey> latest = channelService.getLatest(latestQuery);
+        Optional<ContentKey> latest = contentRetriever.getLatest(latestQuery);
         if (!latest.isPresent()) {
             return Response.status(NOT_FOUND).build();
         }
-        DirectionQuery query = DirectionQuery.builder()
+        final DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
                 .startKey(latest.get())
                 .next(false)
@@ -95,17 +120,24 @@ public class ChannelLatestResource {
                 .epoch(Epoch.valueOf(epoch))
                 .count(count - 1)
                 .build();
-        SortedSet<ContentKey> keys = new TreeSet<>(channelService.query(query));
+        SortedSet<ContentKey> keys = new TreeSet<>(contentRetriever.query(query));
         keys.add(latest.get());
         return getResponse(channel, count, trace, batch, bulk, accept, query, keys, Order.isDescending(order));
     }
 
-    private Response getResponse(String channel, int count, boolean trace, boolean batch, boolean bulk,
-                                 String accept, DirectionQuery query, SortedSet<ContentKey> keys, boolean descending) {
+    private Response getResponse(String channel,
+                                 int count,
+                                 boolean trace,
+                                 boolean batch,
+                                 boolean bulk,
+                                 String accept,
+                                 DirectionQuery query,
+                                 SortedSet<ContentKey> keys,
+                                 boolean descending) {
         if (bulk || batch) {
-            return BulkBuilder.build(keys, channel, channelService, uriInfo, accept, descending);
+            return bulkBuilder.build(keys, channel, channelService, uriInfo, accept, descending);
         } else {
-            return LinkBuilder.directionalResponse(keys, count, query, mapper, uriInfo, true, trace, descending);
+            return linkBuilder.directionalResponse(keys, count, query, uriInfo, true, trace, descending);
         }
     }
 

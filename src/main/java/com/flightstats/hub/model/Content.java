@@ -17,6 +17,8 @@ import java.io.InputStream;
 import java.io.Serializable;
 import java.util.Optional;
 
+import static com.flightstats.hub.constant.ContentConstant.CONTENT_TYPE;
+
 @Slf4j
 public class Content implements Serializable {
 
@@ -77,7 +79,7 @@ public class Content implements Serializable {
 
     public boolean isIndexForLarge() {
         return getContentType().isPresent()
-                && getContentType().get().equals(LargeContentUtils.CONTENT_TYPE);
+                && getContentType().get().equals(CONTENT_TYPE);
     }
 
     public ContentKey keyAndStart(DateTime effectiveNow) {

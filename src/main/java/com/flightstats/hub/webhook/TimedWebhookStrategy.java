@@ -3,9 +3,8 @@ package com.flightstats.hub.webhook;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.cluster.ClusterStateDao;
-import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.dao.aws.ContentRetriever;
 import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.ContentKey;
@@ -18,11 +17,10 @@ import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.joda.time.Minutes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -40,16 +38,18 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static com.flightstats.hub.constant.ZookeeperNodes.WEBHOOK_LAST_COMPLETED;
+
+@Slf4j
 class TimedWebhookStrategy implements WebhookStrategy {
-
-    private final static Logger logger = LoggerFactory.getLogger(TimedWebhookStrategy.class);
-
-    private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private final Webhook webhook;
-    private final ClusterStateDao clusterStateDao;
-    private final ChannelService channelService;
-    private AtomicBoolean shouldExit = new AtomicBoolean(false);
     private AtomicReference<Exception> exceptionReference = new AtomicReference<>();
+    private AtomicBoolean shouldExit = new AtomicBoolean(false);
+
+    private final ContentRetriever contentRetriever;
+    private final ClusterStateDao clusterStateDao;
+    private final ObjectMapper objectMapper;
+    private final Webhook webhook;
+
     private BlockingQueue<ContentPathKeys> queue;
     private String channel;
     private ScheduledExecutorService executorService;
@@ -64,11 +64,16 @@ class TimedWebhookStrategy implements WebhookStrategy {
     private Function<DateTime, DateTime> getNextTime;
     private Duration duration;
 
-    TimedWebhookStrategy(Webhook webhook, ClusterStateDao clusterStateDao, ChannelService channelService) {
+    TimedWebhookStrategy(ContentRetriever contentRetriever,
+                         ClusterStateDao clusterStateDao,
+                         ObjectMapper objectMapper,
+                         Webhook webhook) {
         this.webhook = webhook;
-        this.channel = webhook.getChannelName();
+        this.contentRetriever = contentRetriever;
         this.clusterStateDao = clusterStateDao;
-        this.channelService = channelService;
+        this.objectMapper = objectMapper;
+
+        this.channel = webhook.getChannelName();
         this.queue = new ArrayBlockingQueue<>(webhook.getParallelCalls() * 2);
         if (webhook.isSecond()) {
             secondConfig();
@@ -144,19 +149,19 @@ class TimedWebhookStrategy implements WebhookStrategy {
         if (null == startingKey) {
             startingKey = WebhookStrategy.createContentPath(webhook);
         }
-        return clusterStateDao.get(webhook.getName(), startingKey, WebhookLeader.WEBHOOK_LAST_COMPLETED);
+        return clusterStateDao.get(webhook.getName(), startingKey, WEBHOOK_LAST_COMPLETED);
     }
 
     @Override
     public ContentPath getLastCompleted() {
-        return clusterStateDao.getOrNull(webhook.getName(), WebhookLeader.WEBHOOK_LAST_COMPLETED);
+        return clusterStateDao.getOrNull(webhook.getName(), WEBHOOK_LAST_COMPLETED);
     }
 
     @Override
     public void start(Webhook webhook, ContentPath startingPath) {
         ThreadFactory factory = new ThreadFactoryBuilder().setNameFormat(webhook.getBatch() + "-webhook-" + webhook.getName() + "-%s").build();
         executorService = Executors.newSingleThreadScheduledExecutor(factory);
-        logger.info("starting {} with starting path {}", webhook, startingPath);
+        log.info("starting {} with starting path {}", webhook, startingPath);
         executorService.scheduleAtFixedRate(new Runnable() {
 
             ContentPath lastAdded = startingPath;
@@ -169,14 +174,14 @@ class TimedWebhookStrategy implements WebhookStrategy {
                     }
                 } catch (InterruptedException | RuntimeInterruptedException e) {
                     exceptionReference.set(e);
-                    logger.info("InterruptedException with " + webhook.getName());
+                    log.info("InterruptedException with " + webhook.getName());
                     Thread.currentThread().interrupt();
                 } catch (NoSuchChannelException e) {
                     exceptionReference.set(e);
-                    logger.debug("NoSuchChannelException for " + webhook.getName());
+                    log.debug("NoSuchChannelException for " + webhook.getName());
                 } catch (Exception e) {
                     exceptionReference.set(e);
-                    logger.warn("unexpected issue with " + webhook.getName(), e);
+                    log.warn("unexpected issue with " + webhook.getName(), e);
                 }
             }
 
@@ -186,15 +191,15 @@ class TimedWebhookStrategy implements WebhookStrategy {
                     nextTime = lastAdded.getTime();
                 }
                 DateTime stable = TimeUtil.stable().minus(duration);
-                if (!channelService.isLiveChannel(channel)) {
-                    ContentPath contentPath = channelService.adjustLastUpdatePathIfReplicating(channel, getNone.get());
+                if (!contentRetriever.isLiveChannel(channel)) {
+                    ContentPath contentPath = contentRetriever.getLastUpdated(channel, getNone.get());
                     DateTime replicatedStable = getReplicatingStable.apply(contentPath);
                     if (replicatedStable.isBefore(stable)) {
                         stable = replicatedStable;
                     }
-                    logger.debug("replicating {} stable {}", contentPath, stable);
+                    log.debug("replicating {} stable {}", contentPath, stable);
                 }
-                logger.debug("lastAdded {} nextTime {} stable {}", lastAdded, nextTime, stable);
+                log.debug("lastAdded {} nextTime {} stable {}", lastAdded, nextTime, stable);
                 while (nextTime.isBefore(stable)) {
                     try {
                         ActiveTraces.start("TimedWebhookStrategy.doWork", webhook);
@@ -204,7 +209,7 @@ class TimedWebhookStrategy implements WebhookStrategy {
                                 .collect(Collectors.toCollection(ArrayList::new));
 
                         ContentPathKeys nextPath = newTime.apply(nextTime, keys);
-                        logger.trace("results {} {} {}", channel, nextPath, nextPath.getKeys());
+                        log.trace("results {} {} {}", channel, nextPath, nextPath.getKeys());
                         queue.put(nextPath);
                         lastAdded = nextPath;
                         determineStrategy(lastAdded.getTime());
@@ -226,14 +231,14 @@ class TimedWebhookStrategy implements WebhookStrategy {
                 .stable(true)
                 .epoch(Epoch.IMMUTABLE)
                 .build();
-        return channelService.queryByTime(timeQuery);
+        return contentRetriever.queryByTime(timeQuery);
     }
 
     @Override
     public Optional<ContentPath> next() throws Exception {
         Exception e = exceptionReference.get();
         if (e != null) {
-            logger.error("unable to determine next " + webhook.getName(), e);
+            log.error("unable to determine next " + webhook.getName(), e);
             throw e;
         }
         return Optional.ofNullable(queue.poll(10, TimeUnit.MINUTES));
@@ -241,7 +246,7 @@ class TimedWebhookStrategy implements WebhookStrategy {
 
     @Override
     public ObjectNode createResponse(ContentPath contentPath) {
-        ObjectNode response = mapper.createObjectNode();
+        ObjectNode response = objectMapper.createObjectNode();
         response.put("name", webhook.getName());
         String url = contentPath.toUrl();
         response.put("id", url);
@@ -268,7 +273,7 @@ class TimedWebhookStrategy implements WebhookStrategy {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         WebhookStrategy.close(shouldExit, executorService, queue);
     }
 }

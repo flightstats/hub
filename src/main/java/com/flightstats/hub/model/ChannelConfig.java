@@ -13,12 +13,16 @@ import org.joda.time.DateTime;
 
 import java.io.Serializable;
 import java.util.Date;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+
+import static com.flightstats.hub.model.ChannelType.SINGLE;
+import static com.flightstats.hub.model.ChannelType.BATCH;
+import static com.flightstats.hub.model.ChannelType.BOTH;
 
 import static com.flightstats.hub.model.BuiltInTag.HISTORICAL;
 import static com.flightstats.hub.model.BuiltInTag.REPLICATED;
@@ -27,10 +31,6 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 public class ChannelConfig implements Serializable, NamedType {
 
     private static final ContentProperties contentProperties = new ContentProperties(PropertiesLoader.getInstance());
-    public static final String SINGLE = "SINGLE";
-    public static final String BATCH = "BATCH";
-    public static final String BOTH = "BOTH";
-
     private static final long serialVersionUID = 1L;
 
     private static final Gson gson = new GsonBuilder()
@@ -93,7 +93,7 @@ public class ChannelConfig implements Serializable, NamedType {
         }
 
         if (isBlank(storage)) {
-            this.storage = SINGLE;
+            this.storage = SINGLE.name();
         } else {
             this.storage = StringUtils.upperCase(storage);
         }
@@ -101,7 +101,7 @@ public class ChannelConfig implements Serializable, NamedType {
         addTagIf(!isBlank(replicationSource), REPLICATED);
         addTagIf(isHistorical(), HISTORICAL);
 
-        if (contentProperties.isChannelProtectionSvcEnabled()) {
+        if (contentProperties.isChannelProtectionEnabled()) {
             this.protect = true;
         } else {
             this.protect = protect;
@@ -202,19 +202,19 @@ public class ChannelConfig implements Serializable, NamedType {
     }
 
     public boolean isValidStorage() {
-        return storage.equals(SINGLE) || storage.equals(BATCH) || storage.equals(BOTH);
+        return storage.equals(SINGLE.name()) || storage.equals(BATCH.name()) || storage.equals(BOTH.name());
     }
 
     public boolean isSingle() {
-        return storage.equals(SINGLE);
+        return storage.equals(SINGLE.name());
     }
 
     public boolean isBatch() {
-        return storage.equals(BATCH);
+        return storage.equals(BATCH.name());
     }
 
     public boolean isBoth() {
-        return storage.equals(BOTH);
+        return storage.equals(BOTH.name());
     }
 
     public boolean isHistorical() {
@@ -281,7 +281,9 @@ public class ChannelConfig implements Serializable, NamedType {
         return getDisplayName().toLowerCase();
     }
 
-    public boolean isSecondaryMetricsReporting() { return secondaryMetricsReporting; }
+    public boolean isSecondaryMetricsReporting() {
+        return secondaryMetricsReporting;
+    }
 
     public boolean equals(Object o) {
         if (o == this) return true;
@@ -320,7 +322,7 @@ public class ChannelConfig implements Serializable, NamedType {
         if (this$mutableTime == null ? other$mutableTime != null : !this$mutableTime.equals(other$mutableTime))
             return false;
         return this.isSecondaryMetricsReporting() == other.isSecondaryMetricsReporting() &&
-        this.isAllowZeroBytes() == other.isAllowZeroBytes();
+                this.isAllowZeroBytes() == other.isAllowZeroBytes();
     }
 
     public int hashCode() {
@@ -369,7 +371,8 @@ public class ChannelConfig implements Serializable, NamedType {
         private TreeSet<String> tags = new TreeSet<>();
         private String replicationSource = "";
         private String storage = "";
-        private boolean protect = contentProperties.isChannelProtectionSvcEnabled();
+
+        private boolean protect = contentProperties.isChannelProtectionEnabled();
         private boolean allowZeroBytes = true;
         private String name;
         private boolean keepForever = false;

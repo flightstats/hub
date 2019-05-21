@@ -1,12 +1,14 @@
 package com.flightstats.hub.webhook;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flightstats.hub.cluster.ClusterStateDao;
 import com.flightstats.hub.cluster.DistributedAsyncLockRunner;
 import com.flightstats.hub.cluster.DistributedLeaderLockManager;
-import com.flightstats.hub.cluster.ClusterStateDao;
 import com.flightstats.hub.cluster.Leadership;
 import com.flightstats.hub.cluster.LeadershipLock;
 import com.flightstats.hub.cluster.Lockable;
-import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.config.WebhookProperties;
+import com.flightstats.hub.dao.aws.ContentRetriever;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.model.ChannelConfig;
@@ -14,10 +16,10 @@ import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
-import com.google.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 
+import javax.inject.Inject;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -27,42 +29,56 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.flightstats.hub.webhook.WebhookLeaderLocks.WEBHOOK_LEADER;
+import static com.flightstats.hub.constant.ZookeeperNodes.WEBHOOK_LAST_COMPLETED;
+import static com.flightstats.hub.constant.ZookeeperNodes.WEBHOOK_LEADER;
 
 @Slf4j
 class WebhookLeader implements Lockable {
-    static final String WEBHOOK_LAST_COMPLETED = "/GroupLastCompleted/";
+
+    private AtomicReference<ContentPath> lastUpdated = new AtomicReference<>();
     private final AtomicBoolean deleteOnExit = new AtomicBoolean();
 
-    @Inject
-    private ChannelService channelService;
-    @Inject
-    private WebhookService webhookService;
-    @Inject
-    private StatsdReporter statsdReporter;
-    @Inject
-    private ClusterStateDao clusterStateDao;
-    @Inject
-    private WebhookContentPathSet webhookInProcess;
-    @Inject
-    private WebhookErrorService webhookErrorService;
-    @Inject
-    private WebhookStateReaper webhookStateReaper;
-    @Inject
-    private DistributedLeaderLockManager lockManager;
+    private final ContentRetriever contentRetriever;
+    private final WebhookService webhookService;
+    private final StatsdReporter statsdReporter;
+    private final ClusterStateDao clusterStateDao;
+    private final WebhookContentPathSet webhookInProcess;
+    private final WebhookErrorService webhookErrorService;
+    private final WebhookStateReaper webhookStateReaper;
+    private final DistributedLeaderLockManager lockManager;
+    private final WebhookProperties webhookProperties;
+    private final ObjectMapper objectMapper;
 
-    private Webhook webhook;
-
+    private DistributedAsyncLockRunner distributedLockRunner;
+    private Optional<LeadershipLock> leadershipLock;
     private ExecutorService executorService;
     private Semaphore semaphore;
     private WebhookRetryer retryer;
-
     private WebhookStrategy webhookStrategy;
-    private AtomicReference<ContentPath> lastUpdated = new AtomicReference<>();
-    private String channelName;
+    private Webhook webhook;
 
-    private Optional<LeadershipLock> leadershipLock;
-    private DistributedAsyncLockRunner distributedLockRunner;
+    @Inject
+    public WebhookLeader(ContentRetriever contentRetriever,
+                         WebhookService webhookService,
+                         StatsdReporter statsdReporter,
+                         ClusterStateDao clusterStateDao,
+                         WebhookContentPathSet webhookInProcess,
+                         WebhookErrorService webhookErrorService,
+                         WebhookStateReaper webhookStateReaper,
+                         DistributedLeaderLockManager lockManager,
+                         WebhookProperties webhookProperties,
+                         ObjectMapper objectMapper) {
+        this.contentRetriever = contentRetriever;
+        this.webhookService = webhookService;
+        this.statsdReporter = statsdReporter;
+        this.clusterStateDao = clusterStateDao;
+        this.webhookInProcess = webhookInProcess;
+        this.webhookErrorService = webhookErrorService;
+        this.webhookStateReaper = webhookStateReaper;
+        this.lockManager = lockManager;
+        this.webhookProperties = webhookProperties;
+        this.objectMapper = objectMapper;
+    }
 
     boolean tryLeadership(Webhook webhook) {
         log.debug("starting webhook: " + webhook);
@@ -80,9 +96,9 @@ class WebhookLeader implements Lockable {
 
     @Override
     public void takeLeadership(Leadership leadership) {
-        Optional<Webhook> foundWebhook = webhookService.get(webhook.getName());
-        channelName = webhook.getChannelName();
-        if (!foundWebhook.isPresent() || !channelService.channelExists(channelName)) {
+        final Optional<Webhook> foundWebhook = webhookService.get(webhook.getName());
+        final String channelName = webhook.getChannelName();
+        if (!foundWebhook.isPresent() || !this.contentRetriever.isExistingChannel(channelName)) {
             log.info("webhook or channel is missing, exiting " + webhook.getName());
             Sleeper.sleep(60 * 1000);
             return;
@@ -103,10 +119,13 @@ class WebhookLeader implements Lockable {
                 .giveUpIf(this::webhookTTLExceeded)
                 .giveUpIf(this::channelTTLExceeded)
                 .giveUpIf(this::maxAttemptsReached)
+                .webhookErrorService(webhookErrorService)
+                .statsdReporter(statsdReporter)
+                .webhookProperties(webhookProperties)
                 .build();
-        webhookStrategy = WebhookStrategy.getStrategy(webhook, clusterStateDao, channelService);
+        webhookStrategy = WebhookStrategy.getStrategy(contentRetriever, clusterStateDao, objectMapper, webhook);
         try {
-            ContentPath lastCompletedPath = webhookStrategy.getStartingPath();
+            final ContentPath lastCompletedPath = webhookStrategy.getStartingPath();
             lastUpdated.set(lastCompletedPath);
             log.info("last completed at {} {}", lastCompletedPath, webhook.getName());
             if (leadership.hasLeadership()) {
@@ -148,9 +167,9 @@ class WebhookLeader implements Lockable {
 
     private boolean webhookTTLExceeded(DeliveryAttempt attempt) {
         if (webhook.getTtlMinutes() > 0) {
-            DateTime ttlTime = TimeUtil.now().minusMinutes(webhook.getTtlMinutes());
+            final DateTime ttlTime = TimeUtil.now().minusMinutes(webhook.getTtlMinutes());
             if (attempt.getContentPath().getTime().isBefore(ttlTime)) {
-                String message = String.format("%s is before webhook ttl %s", attempt.getContentPath().toUrl(), ttlTime);
+                final String message = String.format("%s is before webhook ttl %s", attempt.getContentPath().toUrl(), ttlTime);
                 log.debug(webhook.getName(), message);
                 webhookErrorService.add(webhook.getName(), new DateTime() + " " + message);
                 return true;
@@ -160,7 +179,8 @@ class WebhookLeader implements Lockable {
     }
 
     private boolean channelTTLExceeded(DeliveryAttempt attempt) {
-        Optional<ChannelConfig> optionalChannelConfig = channelService.getCachedChannelConfig(webhook.getChannelName());
+        final Optional<ChannelConfig> optionalChannelConfig =
+                this.contentRetriever.getCachedChannelConfig(webhook.getChannelName());
         if (!optionalChannelConfig.isPresent()) return false;
         ChannelConfig channelConfig = optionalChannelConfig.get();
         if (attempt.getContentPath().getTime().isBefore(channelConfig.getTtlTime())) {
@@ -252,7 +272,7 @@ class WebhookLeader implements Lockable {
     }
 
     private boolean increaseLastUpdated(ContentPath newPath) {
-        AtomicBoolean changed = new AtomicBoolean(false);
+        final AtomicBoolean changed = new AtomicBoolean(false);
         lastUpdated.getAndUpdate(existingPath -> {
             if (newPath.compareTo(existingPath) > 0) {
                 changed.set(true);
@@ -265,7 +285,7 @@ class WebhookLeader implements Lockable {
     }
 
     void exit(boolean delete) {
-        String name = webhook.getName();
+        final String name = webhook.getName();
         log.info("exiting webhook " + name + "deleting " + delete);
         deleteOnExit.set(delete);
         leadershipLock.ifPresent(distributedLockRunner::delete);

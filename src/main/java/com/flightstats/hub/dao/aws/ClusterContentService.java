@@ -6,7 +6,6 @@ import com.flightstats.hub.cluster.LatestContentCache;
 import com.flightstats.hub.config.AppProperties;
 import com.flightstats.hub.config.ContentProperties;
 import com.flightstats.hub.config.SpokeProperties;
-import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentKeyUtil;
 import com.flightstats.hub.dao.ContentService;
@@ -63,6 +62,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static com.flightstats.hub.constant.ZookeeperNodes.LAST_SINGLE_VERIFIED;
+
 @Slf4j
 public class ClusterContentService implements ContentService {
 
@@ -75,7 +76,7 @@ public class ClusterContentService implements ContentService {
     private final ContentDao s3LargePayloadContentDao;
     private final LatestContentCache latestContentCache;
     private final WriteQueue writeQueue;
-    private final ChannelService channelService;
+    private final ContentRetriever contentRetriever;
     private final ClusterStateDao clusterStateDao;
     private final HubUtils hubUtils;
     private final LargeContentUtils largeContentUtils;
@@ -86,7 +87,6 @@ public class ClusterContentService implements ContentService {
 
     @Inject
     public ClusterContentService(
-                            ChannelService channelService,
                             @Named(ContentDao.WRITE_CACHE) ContentDao spokeWriteContentDao,
                             @Named(ContentDao.READ_CACHE) ContentDao spokeReadContentDao,
                             @Named(ContentDao.SINGLE_LONG_TERM) ContentDao s3SingleContentDao,
@@ -94,6 +94,7 @@ public class ClusterContentService implements ContentService {
                             @Named(ContentDao.BATCH_LONG_TERM) ContentDao s3BatchContentDao,
                             LatestContentCache latestContentCache,
                             WriteQueue writeQueue,
+                            ContentRetriever contentRetriever,
                             ClusterStateDao clusterStateDao,
                             HubUtils hubUtils,
                             LargeContentUtils largeContentUtils,
@@ -101,7 +102,6 @@ public class ClusterContentService implements ContentService {
                             ContentProperties contentProperties,
                             SpokeProperties spokeProperties) {
         HubServices.registerPreStop(new SpokeS3ContentServiceInit());
-        this.channelService = channelService;
         this.spokeWriteContentDao = spokeWriteContentDao;
         this.spokeReadContentDao = spokeReadContentDao;
         this.s3SingleContentDao = s3SingleContentDao;
@@ -112,6 +112,7 @@ public class ClusterContentService implements ContentService {
         this.clusterStateDao = clusterStateDao;
         this.hubUtils = hubUtils;
         this.largeContentUtils = largeContentUtils;
+        this.contentRetriever = contentRetriever;
         this.appProperties = appProperties;
         this.contentProperties = contentProperties;
         this.spokeProperties = spokeProperties;
@@ -120,10 +121,10 @@ public class ClusterContentService implements ContentService {
 
     private SortedSet<ContentKey> query(Function<ContentDao, SortedSet<ContentKey>> daoQuery, List<ContentDao> contentDaos) {
         try {
-            QueryResult queryResult = new QueryResult(contentDaos.size());
-            CountDownLatch latch = new CountDownLatch(contentDaos.size());
-            Traces traces = ActiveTraces.getLocal();
-            String threadName = Thread.currentThread().getName();
+            final QueryResult queryResult = new QueryResult(contentDaos.size());
+            final CountDownLatch latch = new CountDownLatch(contentDaos.size());
+            final Traces traces = ActiveTraces.getLocal();
+            final String threadName = Thread.currentThread().getName();
             for (ContentDao contentDao : contentDaos) {
                 executorService.submit(() -> {
                     Thread.currentThread().setName(contentDao.getClass().getSimpleName() + "|" + threadName);
@@ -197,7 +198,7 @@ public class ClusterContentService implements ContentService {
     }
 
     @Override
-    public Collection<ContentKey> insert(BulkContent bulkContent) {
+    public Collection<ContentKey> insert(BulkContent bulkContent) throws Exception {
         String channelName = bulkContent.getChannel();
 
         return setStableCache(channelName, () -> {
@@ -225,9 +226,9 @@ public class ClusterContentService implements ContentService {
     @Override
     public Optional<Content> get(String channelName, ContentKey key, boolean remoteOnly) {
         log.trace("fetching {} from channel {} ", key.toString(), channelName);
-        Optional<ChannelConfig> optionalChannelConfig = channelService.getCachedChannelConfig(channelName);
+        final Optional<ChannelConfig> optionalChannelConfig = contentRetriever.getCachedChannelConfig(channelName);
         if (!optionalChannelConfig.isPresent()) return Optional.empty();
-        ChannelConfig channelConfig = optionalChannelConfig.get();
+        final ChannelConfig channelConfig = optionalChannelConfig.get();
         if (!remoteOnly && key.getTime().isAfter(getSpokeTtlTime(channelName))) {
             Content content = spokeWriteContentDao.get(channelName, key);
             if (content != null) {
@@ -257,12 +258,12 @@ public class ClusterContentService implements ContentService {
 
     private Content getFromS3BatchAndStoreInReadCache(String channelName, ContentKey key) {
         try {
-            Map<ContentKey, Content> map = s3BatchContentDao.readBatch(channelName, key);
-            Content content = map.get(key);
+            final Map<ContentKey, Content> map = s3BatchContentDao.readBatch(channelName, key);
+            final Content content = map.get(key);
             if (content == null) {
                 return null;
             }
-            Content copy = Content.copy(content);
+            final Content copy = Content.copy(content);
             storeBatchInReadCache(channelName, map);
             return copy;
         } catch (IOException e) {
@@ -273,7 +274,7 @@ public class ClusterContentService implements ContentService {
 
     private void storeBatchInReadCache(String channelName, Map<ContentKey, Content> map) {
         try {
-            BulkContent bulkContent = BulkContent.fromMap(channelName, map);
+            final BulkContent bulkContent = BulkContent.fromMap(channelName, map);
             spokeReadContentDao.insert(bulkContent);
         } catch (Exception e) {
             log.warn("unable to cache batch", e);
@@ -285,8 +286,8 @@ public class ClusterContentService implements ContentService {
             return Optional.empty();
         }
         if (content.isIndexForLarge()) {
-            ContentKey indexKey = content.getContentKey().get();
-            Content largeMeta = largeContentUtils.fromIndex(content);
+            final ContentKey indexKey = content.getContentKey().get();
+            final Content largeMeta = largeContentUtils.fromIndex(content);
             content = s3LargePayloadContentDao.get(channelName, largeMeta.getContentKey().get());
             content.setContentKey(indexKey);
             content.setSize(largeMeta.getSize());
@@ -295,22 +296,22 @@ public class ClusterContentService implements ContentService {
     }
 
     private DateTime getSpokeTtlTime(String channelName) {
-        DateTime startTime = channelService.adjustLastUpdatePathIfReplicating(channelName, new ContentKey(TimeUtil.now())).getTime();
+        DateTime startTime = contentRetriever.getLastUpdated(channelName, new ContentKey(TimeUtil.now())).getTime();
         return startTime.minusMinutes(spokeProperties.getTtlMinutes(SpokeStore.WRITE));
     }
 
     @Override
     public void get(StreamResults streamResults) {
-        String channelName = streamResults.getChannel();
-        Consumer<Content> callback = streamResults.getCallback();
-        List<MinutePath> minutePaths = new ArrayList<>(ContentKeyUtil.convert(streamResults.getKeys()));
+        final String channelName = streamResults.getChannel();
+        final Consumer<Content> callback = streamResults.getCallback();
+        final List<MinutePath> minutePaths = new ArrayList<>(ContentKeyUtil.convert(streamResults.getKeys()));
         if (streamResults.isDescending()) {
             Collections.reverse(minutePaths);
         }
-        Optional<ChannelConfig> optionalChannelConfig = channelService.getCachedChannelConfig(channelName);
-        boolean isSingleChannel = optionalChannelConfig.isPresent() &&
+        final Optional<ChannelConfig> optionalChannelConfig = contentRetriever.getCachedChannelConfig(channelName);
+        final boolean isSingleChannel = optionalChannelConfig.isPresent() &&
                 optionalChannelConfig.get().isSingle();
-        DateTime spokeTtlTime = getSpokeTtlTime(channelName);
+        final DateTime spokeTtlTime = getSpokeTtlTime(channelName);
         for (MinutePath minutePath : minutePaths) {
             if (minutePath.getTime().isAfter(spokeTtlTime) || isSingleChannel) {
                 getValues(channelName, streamResults.getCallback(), minutePath, streamResults.isDescending());
@@ -323,15 +324,13 @@ public class ClusterContentService implements ContentService {
     }
 
     private void getValues(String channelName, Consumer<Content> callback, ContentPathKeys contentPathKeys, boolean descending) {
-        List<ContentKey> keys = new ArrayList<>(contentPathKeys.getKeys());
+        final List<ContentKey> keys = new ArrayList<>(contentPathKeys.getKeys());
         if (descending) {
             Collections.reverse(keys);
         }
         for (ContentKey contentKey : keys) {
-            Optional<Content> contentOptional = get(channelName, contentKey, false);
-            if (contentOptional.isPresent()) {
-                callback.accept(contentOptional.get());
-            }
+            final Optional<Content> contentOptional = get(channelName, contentKey, false);
+            contentOptional.ifPresent(callback::accept);
         }
     }
 
@@ -346,7 +345,7 @@ public class ClusterContentService implements ContentService {
     }
 
     private Collection<ContentKey> handleQuery(Query query, Function<ContentDao, SortedSet<ContentKey>> daoQuery) {
-        List<ContentDao> daos = new ArrayList<>();
+        final List<ContentDao> daos = new ArrayList<>();
         if (query.getLocation().equals(Location.CACHE)) {
             daos.add(spokeWriteContentDao);
             daos.add(spokeReadContentDao);
@@ -363,10 +362,9 @@ public class ClusterContentService implements ContentService {
             daos.add(s3BatchContentDao);
         } else {
             daos.add(spokeWriteContentDao);
-//            ChannelConfig channel = channelService.getCachedChannelConfig(query.getChannelName());
-            Optional<ChannelConfig> optionalChannelConfig = channelService.getCachedChannelConfig(query.getChannelName());
+            final Optional<ChannelConfig> optionalChannelConfig = contentRetriever.getCachedChannelConfig(query.getChannelName());
             if (!optionalChannelConfig.isPresent()) return new TreeSet<>();
-            ChannelConfig channelConfig = optionalChannelConfig.get();
+            final ChannelConfig channelConfig = optionalChannelConfig.get();
             DateTime spokeTtlTime = getSpokeTtlTime(query.getChannelName());
             if (channelConfig.isHistorical() && channelConfig.getMutableTime().isAfter(spokeTtlTime)) {
                 spokeTtlTime = channelConfig.getMutableTime();
@@ -403,8 +401,8 @@ public class ClusterContentService implements ContentService {
 
     private Optional<ContentKey> getLatestImmutable(DirectionQuery latestQuery) {
         String channel = latestQuery.getChannelName();
-        Optional<ChannelConfig> optionalChannelConfig = channelService.getCachedChannelConfig(channel);
-        if (!channelService.getCachedChannelConfig(channel).isPresent()) {
+        Optional<ChannelConfig> optionalChannelConfig = contentRetriever.getCachedChannelConfig(channel);
+        if (!contentRetriever.getCachedChannelConfig(channel).isPresent()) {
             return Optional.empty();
         }
 
@@ -468,7 +466,7 @@ public class ClusterContentService implements ContentService {
                 .location(latestQuery.getLocation())
                 .count(1)
                 .build();
-        SortedSet<ContentKey> keys = channelService.query(query);
+        SortedSet<ContentKey> keys = contentRetriever.query(query);
         return keys.isEmpty() ? Optional.empty() : Optional.of(keys.last());
     }
 
@@ -481,8 +479,8 @@ public class ClusterContentService implements ContentService {
         s3BatchContentDao.delete(channelName);
         s3LargePayloadContentDao.delete(channelName);
         latestContentCache.deleteCache(channelName);
-        clusterStateDao.delete(channelName, S3Verifier.LAST_SINGLE_VERIFIED);
-        Optional<ChannelConfig> optionalChannelConfig = channelService.getCachedChannelConfig(channelName);
+        clusterStateDao.delete(channelName, LAST_SINGLE_VERIFIED);
+        Optional<ChannelConfig> optionalChannelConfig = contentRetriever.getCachedChannelConfig(channelName);
         if (optionalChannelConfig.isPresent() && !optionalChannelConfig.get().isSingle()) {
             new S3Batch(optionalChannelConfig.get(), hubUtils, appProperties.getAppUrl(), appProperties.getAppEnv()).stop();
         }
@@ -542,7 +540,7 @@ public class ClusterContentService implements ContentService {
                     .location(Location.LONG_TERM_SINGLE)
                     .count(1)
                     .build();
-            Optional<ContentKey> mutableLatest = getLatest(query);
+            final Optional<ContentKey> mutableLatest = getLatest(query);
             ActiveTraces.getLocal().log(log);
             if (mutableLatest.isPresent()) {
                 ContentKey mutableKey = mutableLatest.get();
@@ -555,7 +553,7 @@ public class ClusterContentService implements ContentService {
     }
 
     private boolean isWriteable(String channelName) {
-        Optional<ChannelConfig> optionalChannelConfig = channelService.getCachedChannelConfig(channelName);
+        final Optional<ChannelConfig> optionalChannelConfig = contentRetriever.getCachedChannelConfig(channelName);
         return optionalChannelConfig.isPresent() && !optionalChannelConfig.get().isBatch();
     }
 

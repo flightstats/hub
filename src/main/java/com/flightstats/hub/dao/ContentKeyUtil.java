@@ -27,7 +27,7 @@ public class ContentKeyUtil {
                 .collect(Collectors.toCollection(TreeSet::new));
     }
 
-    static Stream<ContentKey> enforceLimits(Query query, Stream<ContentKey> stream) {
+    public static Stream<ContentKey> enforceLimits(Query query, Stream<ContentKey> stream) {
         ChannelConfig channelConfig = query.getChannelConfig();
         if (!channelConfig.isHistorical()) {
             stream = stream.filter(key -> !key.getTime().isBefore(channelConfig.getTtlTime()));

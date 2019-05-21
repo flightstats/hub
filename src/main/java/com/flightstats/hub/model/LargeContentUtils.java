@@ -8,9 +8,11 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 
+import static com.flightstats.hub.constant.ContentConstant.CONTENT_TYPE;
+
 @Slf4j
 public class LargeContentUtils {
-    static final String CONTENT_TYPE = "application/hub";
+
     private final ObjectMapper mapper;
 
     @Inject

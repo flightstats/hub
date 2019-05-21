@@ -12,27 +12,27 @@ public class ContentProperties {
     }
 
     public int getMaxPayloadSizeInMB() {
-        return this.propertiesLoader.getProperty("app.maxPayloadSizeMB", 40);
+        return propertiesLoader.getProperty("app.maxPayloadSizeMB", 40);
     }
 
     public long getLargePayload() {
-        return this.propertiesLoader.getProperty("app.large.payload.MB", 40) * 1024 * 1024;
+        return propertiesLoader.getProperty("app.large.payload.MB", 40) * 1024 * 1024;
     }
 
     public int getDirectionCountLimit() {
-        return this.propertiesLoader.getProperty("app.directionCountLimit", 10000);
+        return propertiesLoader.getProperty("app.directionCountLimit", 10000);
     }
 
-    public boolean isChannelProtectionSvcEnabled() {
-        return this.propertiesLoader.getProperty("hub.protect.channels", true);
+    public boolean isChannelProtectionEnabled() {
+        return propertiesLoader.getProperty("hub.protect.channels", true);
     }
 
     public int getStableSeconds() {
-        return this.propertiesLoader.getProperty("app.stable_seconds", 5);
+        return propertiesLoader.getProperty("app.stable_seconds", 5);
     }
 
     public int getQueryMergeMaxWaitInMins() {
-        return this.propertiesLoader.getProperty("query.merge.max.wait.minutes", 2);
+        return propertiesLoader.getProperty("query.merge.max.wait.minutes", 2);
     }
 
 }

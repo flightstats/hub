@@ -1,8 +1,9 @@
 package com.flightstats.hub.webhook;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.cluster.ClusterStateDao;
-import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.dao.aws.ContentRetriever;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.model.MinutePath;
@@ -26,11 +27,14 @@ interface WebhookStrategy extends AutoCloseable {
         return new ContentKey(TimeUtil.now(), "initial");
     }
 
-    static WebhookStrategy getStrategy(Webhook webhook, ClusterStateDao clusterStateDao, ChannelService channelService) {
+    static WebhookStrategy getStrategy(ContentRetriever contentRetriever,
+                                       ClusterStateDao clusterStateDao,
+                                       ObjectMapper objectMapper,
+                                       Webhook webhook) {
         if (webhook.isMinute() || webhook.isSecond()) {
-            return new TimedWebhookStrategy(webhook, clusterStateDao, channelService);
+            return new TimedWebhookStrategy(contentRetriever, clusterStateDao, objectMapper, webhook);
         }
-        return new SingleWebhookStrategy(webhook, clusterStateDao, channelService);
+        return new SingleWebhookStrategy(contentRetriever, clusterStateDao, objectMapper, webhook);
     }
 
     static void close(AtomicBoolean shouldExit, ExecutorService executorService, BlockingQueue queue) {

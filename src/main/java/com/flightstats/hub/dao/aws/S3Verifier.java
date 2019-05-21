@@ -1,13 +1,12 @@
 package com.flightstats.hub.dao.aws;
 
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.app.NamedDependencies;
+import com.flightstats.hub.cluster.ClusterStateDao;
 import com.flightstats.hub.cluster.DistributedAsyncLockRunner;
 import com.flightstats.hub.cluster.DistributedLeaderLockManager;
-import com.flightstats.hub.cluster.ClusterStateDao;
 import com.flightstats.hub.cluster.Leadership;
 import com.flightstats.hub.cluster.Lockable;
-import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.dao.aws.s3Verifier.MissingContentFinder;
 import com.flightstats.hub.dao.aws.s3Verifier.VerifierConfig;
 import com.flightstats.hub.dao.aws.s3Verifier.VerifierMetrics;
@@ -35,42 +34,47 @@ import java.util.SortedSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import static com.flightstats.hub.constant.NamedBinding.S3_VERIFIER_CHANNEL_THREAD_POOL;
+import static com.flightstats.hub.constant.ZookeeperNodes.LAST_SINGLE_VERIFIED;
+
 @Slf4j
 @Singleton
 public class S3Verifier {
-    public static final String LAST_SINGLE_VERIFIED = "/S3VerifierSingleLastVerified/";
     private static final String LEADER_PATH = "/S3VerifierSingleService";
 
     private final VerifierConfig verifierConfig;
 
     private final ExecutorService channelThreadPool;
     private final ClusterStateDao clusterStateDao;
-    private final ChannelService channelService;
     private final S3WriteQueue s3WriteQueue;
     private final Client httpClient;
     private final MissingContentFinder missingContentFinder;
+    private final ContentRetriever contentRetriever;
     private final VerifierRangeLookup verifierRangeLookup;
+    private final Dao<ChannelConfig> channelConfigDao;
     private final DistributedLeaderLockManager distributedLeaderLockManager;
     private final StatsdReporter statsdReporter;
 
     @Inject
     public S3Verifier(ClusterStateDao clusterStateDao,
-                      ChannelService channelService,
                       S3WriteQueue s3WriteQueue,
                       Client httpClient,
                       MissingContentFinder missingContentFinder,
+                      ContentRetriever contentRetriever,
                       VerifierRangeLookup verifierRangeLookup,
                       VerifierConfig verifierConfig,
-                      @Named(NamedDependencies.S3_VERIFIER_CHANNEL_THREAD_POOL) ExecutorService channelThreadPool,
+                      @Named(S3_VERIFIER_CHANNEL_THREAD_POOL) ExecutorService channelThreadPool,
+                      @Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao,
                       DistributedLeaderLockManager distributedLeaderLockManager,
                       StatsdReporter statsdReporter) {
         this.clusterStateDao = clusterStateDao;
-        this.channelService = channelService;
+        this.channelConfigDao = channelConfigDao;
         this.s3WriteQueue = s3WriteQueue;
         this.httpClient = httpClient;
         this.verifierConfig = verifierConfig;
         this.channelThreadPool = channelThreadPool;
         this.missingContentFinder = missingContentFinder;
+        this.contentRetriever = contentRetriever;
         this.verifierRangeLookup = verifierRangeLookup;
         this.distributedLeaderLockManager = distributedLeaderLockManager;
         this.statsdReporter = statsdReporter;
@@ -83,7 +87,7 @@ public class S3Verifier {
     private void verifySingleChannels() {
         try {
             log.info("Verifying Single S3 data");
-            Iterable<ChannelConfig> channels = channelService.getChannels();
+            Iterable<ChannelConfig> channels = channelConfigDao.getAll(false);
             for (ChannelConfig channel : channels) {
                 if (channel.isSingle() || channel.isBoth()) {
                     channelThreadPool.submit(() -> {
@@ -110,7 +114,7 @@ public class S3Verifier {
 
     void verifyChannel(String channelName) {
         DateTime now = TimeUtil.now();
-        channelService.getChannelConfig(channelName, false)
+        contentRetriever.getChannelConfig(channelName, false)
                 .map(channel -> verifierRangeLookup.getSingleVerifierRange(now, channel))
                 .ifPresent(this::verifyChannel);
     }
@@ -154,7 +158,7 @@ public class S3Verifier {
 
     private class S3ScheduledVerifierService extends AbstractScheduledService implements Lockable {
         @Override
-        protected void runOneIteration() throws Exception {
+        protected void runOneIteration() {
             DistributedAsyncLockRunner distributedLockRunner = new DistributedAsyncLockRunner(LEADER_PATH, distributedLeaderLockManager);
             distributedLockRunner.runWithLock(this, 1, TimeUnit.SECONDS);
         }
@@ -164,7 +168,7 @@ public class S3Verifier {
         }
 
         @Override
-        public void takeLeadership(Leadership leadership) throws Exception {
+        public void takeLeadership(Leadership leadership) {
             log.info("taking leadership");
             while (leadership.hasLeadership()) {
                 long start = System.currentTimeMillis();
