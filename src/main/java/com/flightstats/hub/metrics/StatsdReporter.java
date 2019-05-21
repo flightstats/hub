@@ -2,7 +2,6 @@ package com.flightstats.hub.metrics;
 
 import com.timgroup.statsd.Event;
 import com.timgroup.statsd.StatsDClient;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -23,36 +22,11 @@ public class StatsdReporter {
         this.dataDogHandler = dataDogHandler;
     }
 
-    private void reportWithFilteredClients(String name, Consumer<StatsDClient> method) {
-        List<StatsDClient> clients = statsDFilter.getFilteredClients(statsDFilter.isSecondaryReporting(name));
-        clients.forEach(method);
-    }
-
-    private void reportWithBothClients(Consumer<StatsDClient> method) {
-        List<StatsDClient> clients = statsDFilter.getFilteredClients(true);
-        clients.forEach(method);
-    }
-
-    private void reportWithDefaultClient(Consumer<StatsDClient> method) {
-        StatsDClient statsdClient = statsDFilter
-                .getFilteredClients(false)
-                .get(0);
-        method.accept(statsdClient);
-    }
-
-    private void reportWithEitherClient(String metricTagName, Consumer<StatsDClient> method) {
-        if (StringUtils.isNotBlank(metricTagName)) {
-            reportWithFilteredClients(metricTagName, method);
-        } else {
-            reportWithDefaultClient(method);
-        }
-    }
-
-    public void insert(String channel, long start, ChannelType type, int items, long bytes) {
+    public void insert(String channel, long start, ChannelMetricTag channelMetricTag, int items, long bytes) {
         if (statsDFilter.isTestChannel(channel)) return;
 
-        time(channel, "channel", start, bytes, "type:" + type.toString());
-        count("channel.items", items, "type:" + type.toString(), "channel:" + channel);
+        time(channel, "channel", start, bytes, "type:" + channelMetricTag.name());
+        count("channel.items", items, "type:" + channelMetricTag.name(), "channel:" + channel);
     }
 
     public void event(String title, String text, String[] tags) {
@@ -76,7 +50,7 @@ public class StatsdReporter {
         reportWithBothClients(statsDClient -> statsDClient.gauge(name, value, tags));
     }
 
-    public void requestTime(long start, String ...tags) {
+    public void requestTime(long start, String... tags) {
         reportWithBothClients((statsDClient) -> statsDClient.time("request", System.currentTimeMillis() - start, tags));
     }
 
@@ -88,10 +62,10 @@ public class StatsdReporter {
         if (statsDFilter.isTestChannel(channel)) return;
 
         reportWithBothClients(statsDClient -> statsDClient.time(
-                        name,
-                        statsDFormatter.startTimeMillis(start),
-                        statsDFormatter.formatChannelTags(channel, tags)
-                ));
+                name,
+                statsDFormatter.startTimeMillis(start),
+                statsDFormatter.formatChannelTags(channel, tags)
+        ));
     }
 
     public void time(String channel, String name, long start, long bytes, String... tags) {
@@ -104,6 +78,11 @@ public class StatsdReporter {
 
     public void mute() {
         dataDogHandler.mute();
+    }
+
+    private void reportWithBothClients(Consumer<StatsDClient> method) {
+        List<StatsDClient> clients = statsDFilter.getFilteredClients(true);
+        clients.forEach(method);
     }
 
 }

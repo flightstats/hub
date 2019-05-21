@@ -1,8 +1,6 @@
 package com.flightstats.hub.dao.aws;
 
-import com.flightstats.hub.app.HubProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -11,11 +9,15 @@ import javax.ws.rs.core.Response;
 
 import static javax.ws.rs.core.Response.ok;
 
+@Slf4j
 @Path("/internal/s3Verifier")
 public class InternalS3VerifierResource {
 
-    private final static Logger logger = LoggerFactory.getLogger(InternalS3VerifierResource.class);
-    private static final S3Verifier s3Verifier = HubProvider.getInstance(S3Verifier.class);
+    private final S3Verifier s3Verifier;
+
+    public InternalS3VerifierResource(S3Verifier s3Verifier) {
+        this.s3Verifier = s3Verifier;
+    }
 
     @POST
     @Path("/{channel}")
@@ -24,7 +26,7 @@ public class InternalS3VerifierResource {
             s3Verifier.verifyChannel(channel);
             return ok().build();
         } catch (Exception e) {
-            logger.warn("unable to complete verification of " + channel, e);
+            log.warn("unable to complete verification of " + channel, e);
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getStackTrace()).build();
         }
 

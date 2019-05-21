@@ -1,7 +1,6 @@
 package com.flightstats.hub.test;
 
 import com.flightstats.hub.app.HubMain;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.config.AppProperties;
 import com.flightstats.hub.config.PropertiesLoader;
@@ -46,15 +45,15 @@ public class Integration {
 
     public static synchronized Injector startAwsHub() throws Exception {
         PropertiesLoader.getInstance().setProperty("spoke.ttlMinutes", "240");
-
         if (injector != null) {
             testingServer.restart();
             return injector;
         }
         startZooKeeper();
         PropertiesLoader.getInstance().setProperty("hub.type", "aws");
-        new HubMain().startServer();
-        injector = HubProvider.getInjector();
+        HubMain hubMain = new HubMain();
+        hubMain.startServer();
+        injector = hubMain.getInjector();
         return injector;
     }
 

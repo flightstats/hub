@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubHost;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.cluster.Cluster;
 import com.flightstats.hub.model.BulkContent;
 import com.flightstats.hub.model.ChannelConfig;
@@ -19,9 +18,8 @@ import com.google.inject.name.Named;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -35,18 +33,24 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Function;
 
+@Slf4j
 @Singleton
 public class HubUtils {
 
-    private final static Logger logger = LoggerFactory.getLogger(HubUtils.class);
-    private final ObjectMapper mapper = new ObjectMapper();
     private final Client noRedirectsClient;
     private final Client followClient;
+    private final Cluster hubCluster;
+    private final ObjectMapper objectMapper;
 
     @Inject
-    public HubUtils(@Named("NoRedirects") Client noRedirectsClient, Client followClient) {
+    public HubUtils(@Named("NoRedirects") Client noRedirectsClient,
+                    Client followClient,
+                    @Named("HubCluster") Cluster hubCluster,
+                    ObjectMapper objectMapper) {
         this.noRedirectsClient = noRedirectsClient;
         this.followClient = followClient;
+        this.hubCluster = hubCluster;
+        this.objectMapper = objectMapper;
     }
 
     public static void close(ClientResponse response) {
@@ -54,7 +58,7 @@ public class HubUtils {
             try {
                 response.close();
             } catch (Exception e) {
-                logger.warn("unable to close " + e);
+                log.warn("unable to close " + e);
             }
         }
     }
@@ -76,7 +80,7 @@ public class HubUtils {
                     .accept(MediaType.WILDCARD_TYPE)
                     .head();
             if (response.getStatus() != Response.Status.SEE_OTHER.getStatusCode()) {
-                logger.info("latest not found for " + channelUrl + " " + response);
+                log.info("latest not found for " + channelUrl + " " + response);
                 return Optional.empty();
             }
             return Optional.of(response.getLocation().toString());
@@ -92,18 +96,17 @@ public class HubUtils {
         return channelUrl;
     }
 
-    public ClientResponse startWebhook(Webhook webhook) {
+    public void startWebhook(Webhook webhook) {
         String groupUrl = getSourceUrl(webhook.getChannelUrl()) + "/group/" + webhook.getName();
         String json = webhook.toJson();
-        logger.info("starting {} with {}", groupUrl, json);
+        log.info("starting {} with {}", groupUrl, json);
         ClientResponse response = null;
         try {
             response = followClient.resource(groupUrl)
                     .accept(MediaType.APPLICATION_JSON)
                     .type(MediaType.APPLICATION_JSON)
                     .put(ClientResponse.class, json);
-            logger.info("start group response {}", response);
-            return response;
+            log.info("start group response {}", response);
         } finally {
             HubUtils.close(response);
         }
@@ -111,7 +114,7 @@ public class HubUtils {
 
     public void stopGroupCallback(String groupName, String sourceChannel) {
         String groupUrl = getSourceUrl(sourceChannel) + "/group/" + groupName;
-        logger.info("stopping {} ", groupUrl);
+        log.info("stopping {} ", groupUrl);
         ClientResponse response = null;
         try {
             response = followClient.resource(groupUrl)
@@ -121,7 +124,7 @@ public class HubUtils {
         } finally {
             HubUtils.close(response);
         }
-        logger.debug("stop group response {}", response);
+        log.debug("stop group response {}", response);
 
     }
 
@@ -129,30 +132,29 @@ public class HubUtils {
         return StringUtils.substringBefore(sourceChannel, "/channel/");
     }
 
-    public boolean putChannel(String channelUrl, ChannelConfig channelConfig) {
-        logger.debug("putting {} {}", channelUrl, channelConfig);
+    void putChannel(String channelUrl, ChannelConfig channelConfig) {
+        log.debug("putting {} {}", channelUrl, channelConfig);
         ClientResponse response = null;
         try {
             response = followClient.resource(channelUrl)
                     .accept(MediaType.APPLICATION_JSON)
                     .type(MediaType.APPLICATION_JSON)
                     .put(ClientResponse.class, channelConfig.toJson());
-            logger.info("put channel response {} {}", channelConfig, response);
-            return response.getStatus() < 400;
+            log.info("put channel response {} {}", channelConfig, response);
         } finally {
             HubUtils.close(response);
         }
     }
 
     public ChannelConfig getChannel(String channelUrl) {
-        logger.debug("getting {} {}", channelUrl);
+        log.debug("getting {} {}", channelUrl);
         ClientResponse response = null;
         try {
             response = followClient.resource(channelUrl)
                     .accept(MediaType.APPLICATION_JSON)
                     .type(MediaType.APPLICATION_JSON)
                     .get(ClientResponse.class);
-            logger.debug("get channel response {} {}", response);
+            log.debug("get channel response {} {}", response);
             if (response.getStatus() >= 400) {
                 return null;
             } else {
@@ -171,7 +173,7 @@ public class HubUtils {
         ClientResponse response = null;
         try {
             response = resource.post(ClientResponse.class, content.getData());
-            logger.trace("got repsonse {}", response);
+            log.trace("got repsonse {}", response);
             if (response.getStatus() == 201) {
                 return ContentKey.fromFullUrl(response.getLocation().toString());
             } else {
@@ -197,7 +199,7 @@ public class HubUtils {
             if (response.getStatus() == 200) {
                 return handler.apply(response);
             } else {
-                logger.info("unable to get {} {}", uri, response);
+                log.info("unable to get {} {}", uri, response);
                 return null;
             }
         } finally {
@@ -229,12 +231,12 @@ public class HubUtils {
             response = followClient.resource(channelUrl + "/bulk")
                     .type(content.getContentType())
                     .post(ClientResponse.class, ByteStreams.toByteArray(content.getStream()));
-            logger.trace("got response {}", response);
+            log.trace("got response {}", response);
             if (response.getStatus() == 201) {
                 return parseContentKeys(response);
             }
         } catch (IOException e) {
-            logger.warn("unable to insert bulk " + channelUrl, e);
+            log.warn("unable to insert bulk " + channelUrl, e);
         } finally {
             HubUtils.close(response);
         }
@@ -244,7 +246,7 @@ public class HubUtils {
     private Collection<ContentKey> parseContentKeys(ClientResponse response) throws IOException {
         Set<ContentKey> keys = new TreeSet<>();
         String entity = response.getEntity(String.class);
-        JsonNode rootNode = mapper.readTree(entity);
+        JsonNode rootNode = objectMapper.readTree(entity);
         JsonNode uris = rootNode.get("_links").get("uris");
         for (JsonNode uri : uris) {
             keys.add(ContentKey.fromFullUrl(uri.asText()));
@@ -255,16 +257,16 @@ public class HubUtils {
     public Collection<ContentKey> query(String channelUrl, Query query) {
         try {
             String queryUrl = channelUrl + query.getUrlPath();
-            logger.debug("calling {}", queryUrl);
+            log.debug("calling {}", queryUrl);
             ClientResponse response = followClient.resource(queryUrl)
                     .accept(MediaType.APPLICATION_JSON)
                     .get(ClientResponse.class);
-            logger.trace("got response {}", response);
+            log.trace("got response {}", response);
             if (response.getStatus() == 200) {
                 return parseContentKeys(response);
             }
         } catch (IOException e) {
-            logger.warn("unable to query" + channelUrl + " " + query, e);
+            log.warn("unable to query" + channelUrl + " " + query, e);
         }
         return Collections.emptyList();
     }
@@ -272,14 +274,14 @@ public class HubUtils {
     public boolean delete(String channelUrl) {
         ClientResponse response = null;
         try {
-            logger.info("deleting {}", channelUrl);
+            log.info("deleting {}", channelUrl);
             response = followClient.resource(channelUrl).delete(ClientResponse.class);
-            logger.trace("got response {}", response);
+            log.trace("got response {}", response);
             if (response.getStatus() == 202) {
                 return true;
             }
         } catch (Exception e) {
-            logger.warn("unable to delete " + channelUrl, e);
+            log.warn("unable to delete " + channelUrl, e);
         } finally {
             HubUtils.close(response);
         }
@@ -287,9 +289,8 @@ public class HubUtils {
     }
 
     public ObjectNode refreshAll() {
-        Cluster hubCluster = HubProvider.getInstance(Cluster.class, "HubCluster");
-        ObjectNode root = mapper.createObjectNode();
-        Set<String> servers = hubCluster.getAllServers();
+        ObjectNode root = objectMapper.createObjectNode();
+        Set<String> servers = this.hubCluster.getAllServers();
         for (String server : servers) {
             refreshServer(root, server);
         }
@@ -306,7 +307,7 @@ public class HubUtils {
                 root.put(response.getEntity(String.class), "failure");
             }
         } catch (Exception e) {
-            logger.warn("unable to refresh " + server, e);
+            log.warn("unable to refresh " + server, e);
         }
     }
 

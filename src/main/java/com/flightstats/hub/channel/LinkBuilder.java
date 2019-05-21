@@ -3,7 +3,6 @@ package com.flightstats.hub.channel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ChannelContentKey;
@@ -15,6 +14,7 @@ import com.flightstats.hub.rest.Linked;
 import com.flightstats.hub.util.TimeUtil;
 import org.joda.time.DateTime;
 
+import javax.inject.Inject;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
@@ -28,22 +28,32 @@ import java.util.function.Consumer;
 
 public class LinkBuilder {
 
-    private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private final TimeLinkBuilder timeLinkBuilder;
+    private final ObjectMapper objectMapper;
 
-    static URI buildChannelUri(String channelName, UriInfo uriInfo) {
+    @Inject
+    public LinkBuilder(TimeLinkBuilder timeLinkBuilder, ObjectMapper objectMapper) {
+        this.timeLinkBuilder = timeLinkBuilder;
+        this.objectMapper = objectMapper;
+    }
+
+    public URI buildChannelUri(String channelName,
+                               UriInfo uriInfo) {
         return uriInfo.getBaseUriBuilder().path("channel").path(channelName).build();
     }
 
-    public static URI buildItemUri(ContentPath key, URI channelUri) {
+    public URI buildItemUri(ContentPath key,
+                            URI channelUri) {
         return buildItemUri(key.toUrl(), channelUri);
     }
 
-    private static URI buildItemUri(String key, URI channelUri) {
+    private URI buildItemUri(String key,
+                             URI channelUri) {
         return URI.create(channelUri.toString() + "/" + key);
     }
 
-    static ObjectNode buildChannelConfigResponse(ChannelConfig config, UriInfo uriInfo, String channel) {
-        ObjectNode root = mapper.createObjectNode();
+    ObjectNode buildChannelConfigResponse(ChannelConfig config, UriInfo uriInfo, String channel) {
+        ObjectNode root = objectMapper.createObjectNode();
 
         root.put("name", config.getDisplayName());
         root.put("allowZeroBytes", config.isAllowZeroBytes());
@@ -79,13 +89,16 @@ public class LinkBuilder {
         return root;
     }
 
-    static Linked<?> buildLinks(UriInfo uriInfo, Map<String, URI> nameToUriMap, String name) {
-        return buildLinks(nameToUriMap, name, builder -> {
-            builder.withLink("self", uriInfo.getRequestUri());
-        });
+    Linked<?> buildLinks(UriInfo uriInfo,
+                         Map<String, URI> nameToUriMap,
+                         String name) {
+        return buildLinks(nameToUriMap, name, builder ->
+                builder.withLink("self", uriInfo.getRequestUri()));
     }
 
-    public static Linked<?> buildLinks(Map<String, URI> nameToUriMap, String name, Consumer<Linked.Builder> consumer) {
+    Linked<?> buildLinks(Map<String, URI> nameToUriMap,
+                         String name,
+                         Consumer<Linked.Builder> consumer) {
         Linked.Builder responseBuilder = Linked.justLinks();
         consumer.accept(responseBuilder);
         List<HalLink> halLinks = new ArrayList<>(nameToUriMap.size());
@@ -97,25 +110,33 @@ public class LinkBuilder {
         return responseBuilder.build();
     }
 
-    static UriBuilder uriBuilder(String channel, UriInfo uriInfo) {
+    UriBuilder uriBuilder(String channel, UriInfo uriInfo) {
         UriBuilder uriBuilder = uriInfo.getBaseUriBuilder()
                 .path("channel").path(channel);
-        TimeLinkUtil.addQueryParams(uriInfo, uriBuilder);
+        timeLinkBuilder.addQueryParams(uriInfo, uriBuilder);
         return uriBuilder;
     }
 
-    static URI getDirection(String name, String channel, UriInfo uriInfo, ContentKey key, int count) {
-        return LinkBuilder.uriBuilder(channel, uriInfo)
+    URI getDirection(String name,
+                     String channel,
+                     UriInfo uriInfo,
+                     ContentKey key,
+                     int count) {
+        return uriBuilder(channel, uriInfo)
                 .path(key.toUrl())
                 .path(name).path("" + count)
                 .build();
     }
 
-    static Response directionalResponse(SortedSet<ContentKey> keys, int count,
-                                        DirectionQuery query, ObjectMapper mapper, UriInfo uriInfo,
-                                        boolean includePrevious, boolean trace, boolean descending) {
+    Response directionalResponse(SortedSet<ContentKey> keys,
+                                 int count,
+                                 DirectionQuery query,
+                                 UriInfo uriInfo,
+                                 boolean includePrevious,
+                                 boolean trace,
+                                 boolean descending) {
         String channel = query.getChannelName();
-        ObjectNode root = mapper.createObjectNode();
+        ObjectNode root = this.objectMapper.createObjectNode();
         ObjectNode links = root.putObject("_links");
         ObjectNode self = links.putObject("self");
         self.put("href", uriInfo.getRequestUri().toString());
@@ -124,17 +145,17 @@ public class LinkBuilder {
             ContentKey contentKey = query.getStartKey();
             if (query.isNext()) {
                 ObjectNode previous = links.putObject("previous");
-                previous.put("href", LinkBuilder.getDirection("previous", channel, uriInfo, contentKey, count).toString());
+                previous.put("href", getDirection("previous", channel, uriInfo, contentKey, count).toString());
             } else {
                 ObjectNode next = links.putObject("next");
-                next.put("href", LinkBuilder.getDirection("next", channel, uriInfo, contentKey, count).toString());
+                next.put("href", getDirection("next", channel, uriInfo, contentKey, count).toString());
             }
         } else {
             ObjectNode next = links.putObject("next");
-            next.put("href", LinkBuilder.getDirection("next", channel, uriInfo, list.get(list.size() - 1), count).toString());
+            next.put("href", getDirection("next", channel, uriInfo, list.get(list.size() - 1), count).toString());
             if (includePrevious) {
                 ObjectNode previous = links.putObject("previous");
-                previous.put("href", LinkBuilder.getDirection("previous", channel, uriInfo, list.get(0), count).toString());
+                previous.put("href", getDirection("previous", channel, uriInfo, list.get(0), count).toString());
             }
         }
         ArrayNode ids = links.putArray("uris");
@@ -152,10 +173,15 @@ public class LinkBuilder {
         return Response.ok(root).build();
     }
 
-    static Response directionalTagResponse(String tag, SortedSet<ChannelContentKey> keys, int count,
-                                           DirectionQuery query, ObjectMapper mapper, UriInfo uriInfo,
-                                           boolean includePrevious, boolean trace, boolean descending) {
-        ObjectNode root = mapper.createObjectNode();
+    public Response directionalTagResponse(String tag,
+                                           SortedSet<ChannelContentKey> keys,
+                                           int count,
+                                           DirectionQuery query,
+                                           UriInfo uriInfo,
+                                           boolean includePrevious,
+                                           boolean trace,
+                                           boolean descending) {
+        ObjectNode root = objectMapper.createObjectNode();
         ObjectNode links = root.putObject("_links");
         ObjectNode self = links.putObject("self");
         self.put("href", uriInfo.getRequestUri().toString());
@@ -190,9 +216,16 @@ public class LinkBuilder {
         return Response.ok(root).build();
     }
 
-    public static ObjectNode addLink(ObjectNode parent, String name, URI link) {
-        ObjectNode node = parent.putObject(name);
-        node.put("href", link.toString());
-        return node;
+    public void addLink(ObjectNode parent,
+                        String name,
+                        URI link) {
+        parent.putObject(name).put("href", link.toString());
+    }
+
+    URI getUri(String channel,
+               UriInfo uriInfo,
+               TimeUtil.Unit unit,
+               DateTime time) {
+        return uriBuilder(channel, uriInfo).path(unit.format(time)).build();
     }
 }

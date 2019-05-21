@@ -3,9 +3,8 @@ package com.flightstats.hub.metrics;
 import com.flightstats.hub.config.AppProperties;
 import com.flightstats.hub.config.PropertiesLoader;
 import com.flightstats.hub.util.Sleeper;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,9 +20,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@Slf4j
 class TopSetTest {
-
-    private final static Logger logger = LoggerFactory.getLogger(TopSetTest.class);
 
     @Test
     void testSingle() {
@@ -72,7 +70,7 @@ class TopSetTest {
                     loops.incrementAndGet();
                 }
             } catch (Exception e) {
-                logger.warn("?", e);
+                log.warn("?", e);
                 exception.set(true);
             }
         });
@@ -84,9 +82,9 @@ class TopSetTest {
 
         executorService.shutdown();
         executorService.awaitTermination(1, TimeUnit.MINUTES);
-        logger.info("ids {}", ids);
-        logger.info("loops {}", loops);
-        logger.info("topSortedSet {}", topSortedSet.size());
+        log.info("ids {}", ids);
+        log.info("loops {}", loops);
+        log.info("topSortedSet {}", topSortedSet.size());
 
         for (Traces traces : topSortedSet) {
             assertTrue(traces.getTime() > 970);
@@ -95,7 +93,6 @@ class TopSetTest {
         assertTrue(loops.get() > 100);
         assertTrue(ids.get() > 1000 * 1000);
         assertFalse(exception.get());
-
     }
 
 }

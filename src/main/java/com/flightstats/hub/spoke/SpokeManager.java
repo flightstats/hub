@@ -134,7 +134,7 @@ public class SpokeManager implements SpokeClusterHealthCheck, SpokeChronologySto
 
     @Override
     public boolean insertToLocalReadStore(String path, byte[] payload, Traces traces,
-                          String spokeApi, String channel) {
+                                          String spokeApi, String channel) {
         return insertToStore(SpokeStore.READ, path, payload, Cluster.getLocalServer(), traces, spokeApi, channel);
     }
 

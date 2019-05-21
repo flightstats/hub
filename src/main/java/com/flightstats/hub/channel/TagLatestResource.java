@@ -1,11 +1,20 @@
 package com.flightstats.hub.channel;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.TagService;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.ChannelContentKey;
+import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.Epoch;
+import com.flightstats.hub.model.Location;
+import com.flightstats.hub.model.Order;
 
-import javax.ws.rs.*;
+import javax.inject.Inject;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -17,12 +26,19 @@ import java.util.SortedSet;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 
-@SuppressWarnings("WeakerAccess")
 @Path("/tag/{tag}/latest")
 public class TagLatestResource {
 
-    private ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private TagService tagService = HubProvider.getInstance(TagService.class);
+    private final TagService tagService;
+    private final LinkBuilder linkBuilder;
+    private final BulkBuilder bulkBuilder;
+
+    @Inject
+    public TagLatestResource(TagService tagService, LinkBuilder linkBuilder, BulkBuilder bulkBuilder) {
+        this.tagService = tagService;
+        this.linkBuilder = linkBuilder;
+        this.bulkBuilder = bulkBuilder;
+    }
 
     @GET
     public Response getLatest(@PathParam("tag") String tag,
@@ -84,9 +100,9 @@ public class TagLatestResource {
         keys.add(latest.get());
         if (bulk || batch) {
             //todo - gfm -
-            return BulkBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo, accept);
+            return bulkBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo, accept);
         }
-        return LinkBuilder.directionalTagResponse(tag, keys, count, query, mapper, uriInfo, true, trace, Order.isDescending(order));
+        return linkBuilder.directionalTagResponse(tag, keys, count, query, uriInfo, true, trace, Order.isDescending(order));
     }
 
 }

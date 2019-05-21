@@ -7,22 +7,23 @@ import com.flightstats.hub.util.SafeZooKeeperUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
-import static java.lang.String.format;
+
 import static com.google.common.collect.Sets.newHashSet;
+import static java.lang.String.format;
 import static org.apache.zookeeper.KeeperException.NodeExistsException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -42,7 +43,8 @@ class ActiveWebhooksIntTest {
 
     private static CuratorFramework curator;
     private static SafeZooKeeperUtils zooKeeperUtils;
-    @Mock private WebhookProperties webhookProperties;
+    @Mock
+    private WebhookProperties webhookProperties;
 
     void createPath() throws Exception {
         curator.create().creatingParentsIfNeeded().forPath(WEBHOOK_LEADER_PATH);

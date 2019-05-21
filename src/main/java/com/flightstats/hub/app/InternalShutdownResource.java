@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.rest.Linked;
 
+import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -14,28 +15,32 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 
+import static com.flightstats.hub.constant.InternalResourceDescription.SHUTDOWN_DESCRIPTION;
+
 /**
  * ShutdownResource should only be called from the localhost.
  */
-@SuppressWarnings("WeakerAccess")
 @Path("/internal/shutdown")
 public class InternalShutdownResource {
-    public static final String DESCRIPTION = "See if any server is being shutdown, shutdown a node, and reset the shutdown lock.";
-    private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
 
-    private static ShutdownManager getManager() {
-        return HubProvider.getInstance(ShutdownManager.class);
+    private final ShutdownManager shutdownManager;
+    private final ObjectMapper objectMapper;
+
+    @Inject
+    public InternalShutdownResource(ShutdownManager shutdownManager, ObjectMapper objectMapper) {
+        this.shutdownManager = shutdownManager;
+        this.objectMapper = objectMapper;
     }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response get(@Context UriInfo uriInfo) throws Exception {
+    public Response get(@Context UriInfo uriInfo) {
         URI requestUri = uriInfo.getRequestUri();
-        ObjectNode root = mapper.createObjectNode();
-        root.put("description", DESCRIPTION);
+        ObjectNode root = objectMapper.createObjectNode();
+        root.put("description", SHUTDOWN_DESCRIPTION);
         root.put("directions", "Make HTTP POSTs to links below to take the desired action");
         try {
-            root.put("shutdownLock", getManager().getLockData());
+            root.put("shutdownLock", this.shutdownManager.getLockData());
         } catch (Exception e) {
             root.put("shutdownLock", "none");
         }
@@ -49,13 +54,13 @@ public class InternalShutdownResource {
 
     @POST
     public Response shutdown(@Context UriInfo uriInfo) throws Exception {
-        return LocalHostOnly.getResponse(uriInfo, () -> getManager().shutdown(true));
+        return LocalHostOnly.getResponse(uriInfo, () -> this.shutdownManager.shutdown(true));
     }
 
     @POST
     @Path("resetLock")
     public Response resetLock(@Context UriInfo uriInfo) throws Exception {
-        return LocalHostOnly.getResponse(uriInfo, () -> getManager().resetLock());
+        return LocalHostOnly.getResponse(uriInfo, () -> this.shutdownManager.resetLock());
     }
 
 }
