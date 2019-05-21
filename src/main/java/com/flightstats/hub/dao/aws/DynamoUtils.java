@@ -15,20 +15,11 @@ import java.util.Optional;
 public class DynamoUtils {
 
     private final AmazonDynamoDB dbClient;
-    private final DynamoProperties dynamoProperties;
 
     @Inject
-    public DynamoUtils(AmazonDynamoDB dbClient,
-                       DynamoProperties dynamoProperties) {
+    public DynamoUtils(AmazonDynamoDB dbClient) {
         this.dbClient = dbClient;
-        this.dynamoProperties = dynamoProperties;
-    }
-
-    ProvisionedThroughput getProvisionedThroughput(String type) {
-        long readThroughput = dynamoProperties.getThroughputRead(type);
-        long writeThroughput = dynamoProperties.getThroughputWrite(type);
-        return new ProvisionedThroughput(readThroughput, writeThroughput);
-    }
+   }
 
     public boolean doesTableExist(String tableName) {
         return getTableDescription(tableName, TableStatus.ACTIVE).isPresent();
