@@ -90,8 +90,8 @@ class ClusterStateDaoTest {
     }
 
     @Test
-    void testUpdateDecrease() {
-        String name = "testUpdateDecrease";
+    void testSetIfBefore() {
+        String name = "testSetIfBefore";
         DateTime start = new DateTime(2014, 12, 3, 20, 45, DateTimeZone.UTC);
 
         ContentKey key1 = new ContentKey(start, "B");
@@ -113,6 +113,24 @@ class ClusterStateDaoTest {
         clusterStateDao.delete(name, BASE_PATH);
         ContentKey contentKey = new ContentKey();
         assertEquals(contentKey, clusterStateDao.get(name, contentKey, BASE_PATH));
+    }
+
+    @Test
+    void testSetIfAfter() {
+        String name = "testSetIfAfter";
+        DateTime start = new DateTime(2014, 12, 3, 20, 45, DateTimeZone.UTC);
+
+        ContentKey key1 = new ContentKey(start, "B");
+        clusterStateDao.initialize(name, key1, BASE_PATH);
+        assertEquals(key1, clusterStateDao.get(name, new ContentKey(), BASE_PATH));
+
+        ContentKey key2 = new ContentKey(start.plusMillis(1), "ImSlightlyAfter");
+        clusterStateDao.setIfAfter(key2, name, BASE_PATH);
+        assertEquals(key2, clusterStateDao.get(name, new ContentKey(), BASE_PATH));
+
+        ContentKey key3 = new ContentKey(start, "ImNowOneMilliOld");
+        clusterStateDao.setIfAfter(key3, name, BASE_PATH);
+        assertEquals(key2, clusterStateDao.get(name, new ContentKey(), BASE_PATH));
     }
 
 }
