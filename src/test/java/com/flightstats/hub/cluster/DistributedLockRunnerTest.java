@@ -5,6 +5,7 @@ import com.google.common.collect.Range;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.joda.time.DateTime;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,6 +36,7 @@ class DistributedLockRunnerTest {
     private static DistributedLeaderLockManager lockManager;
     private ConcurrentHashMap<String, Range<DateTime>> lockTimes;
     private DistributedLockRunner distributedLockRunner;
+    private ExecutorService executorService;
 
     @BeforeAll
     static void setupCurator() throws Exception {
@@ -47,6 +49,13 @@ class DistributedLockRunnerTest {
     void setup() {
         lockTimes = new ConcurrentHashMap<>();
         this.distributedLockRunner = new DistributedLockRunner(lockManager);
+    }
+
+    @AfterEach
+    void cleanup() {
+        if (executorService != null && !executorService.isShutdown()) {
+            executorService.shutdown();
+        }
     }
 
     @Test
@@ -71,7 +80,7 @@ class DistributedLockRunnerTest {
     void test_runWithLock_withTwoLockables_runsOneAtATime() throws Exception {
         CountDownLatch waitForMe = new CountDownLatch(1);
         CountDownLatch latch = new CountDownLatch(2);
-        ExecutorService executorService = Executors.newFixedThreadPool(3);
+        executorService = Executors.newFixedThreadPool(3);
 
         executorService.execute(() -> {
             Consumer<LeadershipLock> lockable = leadershipLock -> trackLock("lockable1", latch, () -> {
@@ -95,9 +104,9 @@ class DistributedLockRunnerTest {
 
     @Test
     void test_runWithLock_afterAFailureToLock_continuesLocking() throws Exception {
-        final CountDownLatch waitForMe = new CountDownLatch(1);
-        final CountDownLatch latch = new CountDownLatch(2);
-        final ExecutorService executorService = Executors.newFixedThreadPool(3);
+        CountDownLatch waitForMe = new CountDownLatch(1);
+        CountDownLatch latch = new CountDownLatch(2);
+        executorService = Executors.newFixedThreadPool(3);
 
         executorService.execute(() -> {
             Consumer<LeadershipLock> lockable = leadershipLock -> trackLock("lockable1", latch, () -> {
@@ -129,10 +138,11 @@ class DistributedLockRunnerTest {
 
     @Test
     void test_runWithLock_withTwoSeparateLocks_isAbleToLockOnBothPaths() {
-        final CountDownLatch waitForOne = new CountDownLatch(1);
-        final CountDownLatch waitForTwo = new CountDownLatch(1);
-        final CountDownLatch latch = new CountDownLatch(3);
-        final ExecutorService executorService = Executors.newFixedThreadPool(3);
+        CountDownLatch waitForOne = new CountDownLatch(1);
+        CountDownLatch waitForTwo = new CountDownLatch(1);
+        CountDownLatch latch = new CountDownLatch(3);
+        executorService = Executors.newFixedThreadPool(3);
+
         executorService.execute(() -> {
             Consumer<LeadershipLock> lockable = leadershipLock -> trackLock("lockable1", latch, () -> {
                 waitForOne.countDown();
