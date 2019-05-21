@@ -10,9 +10,9 @@ import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.StreamResults;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.io.ByteStreams;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
+import javax.inject.Inject;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
@@ -24,9 +24,8 @@ import java.util.Optional;
 import java.util.SortedSet;
 import java.util.function.Consumer;
 
+@Slf4j
 class MultiPartBulkBuilder {
-
-    private final static Logger logger = LoggerFactory.getLogger(MultiPartBulkBuilder.class);
 
     private static final byte[] CRLF = "\r\n".getBytes();
     private static final String BOUNDARY = "||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||~~~~~~||||||";
@@ -37,9 +36,19 @@ class MultiPartBulkBuilder {
     private static final byte[] CONTENT_KEY = "Content-Key: ".getBytes();
     private static final byte[] CREATION_DATE = "Creation-Date: ".getBytes();
 
-    public static Response build(SortedSet<ContentKey> keys, String channel,
-                                 ChannelService channelService, UriInfo uriInfo,
-                                 Consumer<Response.ResponseBuilder> headerBuilder, boolean descending) {
+    private final LinkBuilder linkBuilder;
+
+    @Inject
+    public MultiPartBulkBuilder(LinkBuilder linkBuilder) {
+        this.linkBuilder = linkBuilder;
+    }
+
+    public Response build(SortedSet<ContentKey> keys,
+                          String channel,
+                          ChannelService channelService,
+                          UriInfo uriInfo,
+                          Consumer<Response.ResponseBuilder> headerBuilder,
+                          boolean descending) {
         Traces traces = ActiveTraces.getLocal();
         return write((BufferedOutputStream output) -> {
             ActiveTraces.setLocal(traces);
@@ -47,15 +56,16 @@ class MultiPartBulkBuilder {
                     .channel(channel)
                     .keys(keys)
                     .callback(content -> writeContent(content, output,
-                            LinkBuilder.buildChannelUri(channel, uriInfo), channel))
+                            linkBuilder.buildChannelUri(channel, uriInfo), channel))
                     .descending(descending)
                     .build());
         }, headerBuilder);
     }
 
-    static Response buildTag(String tag, SortedSet<ChannelContentKey> keys,
-                             ChannelService channelService, UriInfo uriInfo,
-                             Consumer<Response.ResponseBuilder> headerBuilder) {
+    Response buildTag(SortedSet<ChannelContentKey> keys,
+                      ChannelService channelService,
+                      UriInfo uriInfo,
+                      Consumer<Response.ResponseBuilder> headerBuilder) {
         Traces traces = ActiveTraces.getLocal();
         return write((BufferedOutputStream output) -> {
             ActiveTraces.setLocal(traces);
@@ -65,8 +75,8 @@ class MultiPartBulkBuilder {
         }, headerBuilder);
     }
 
-    private static Response write(Consumer<BufferedOutputStream> consumer,
-                                  Consumer<Response.ResponseBuilder> headerBuilder) {
+    private Response write(Consumer<BufferedOutputStream> consumer,
+                           Consumer<Response.ResponseBuilder> headerBuilder) {
         Traces traces = ActiveTraces.getLocal();
         Response.ResponseBuilder builder = Response.ok((StreamingOutput) os -> {
             ActiveTraces.setLocal(traces);
@@ -80,8 +90,11 @@ class MultiPartBulkBuilder {
         return builder.build();
     }
 
-    private static void writeContent(UriInfo uriInfo, BufferedOutputStream output, ContentKey key, String channel,
-                                     ChannelService channelService) {
+    private void writeContent(UriInfo uriInfo,
+                              BufferedOutputStream output,
+                              ContentKey key,
+                              String channel,
+                              ChannelService channelService) {
         ItemRequest itemRequest = ItemRequest.builder()
                 .channel(channel)
                 .key(key)
@@ -89,16 +102,20 @@ class MultiPartBulkBuilder {
         Optional<Content> content = channelService.get(itemRequest);
         if (content.isPresent()) {
             Content item = content.get();
-            writeContent(item, output, LinkBuilder.buildChannelUri(channel, uriInfo), channel);
+            writeContent(item, output, linkBuilder.buildChannelUri(channel, uriInfo), channel);
         }
     }
 
-    private static void writeContent(Content content, OutputStream output, URI channelUri, String name) {
+    private void writeContent(Content content, OutputStream output, URI channelUri, String name) {
         writeContent(content, output, channelUri, name, true, false);
     }
 
-    private static void writeContent(Content content, OutputStream output, URI channelUri, String name,
-                                     boolean startBoundary, boolean endBoundary) {
+    private void writeContent(Content content,
+                              OutputStream output,
+                              URI channelUri,
+                              String name,
+                              boolean startBoundary,
+                              boolean endBoundary) {
         try {
             if (startBoundary) output.write(START_BOUNDARY);
             if (content.getContentType().isPresent()) {
@@ -106,7 +123,7 @@ class MultiPartBulkBuilder {
                 output.write(content.getContentType().get().getBytes());
                 output.write(CRLF);
             }
-            URI uri = LinkBuilder.buildItemUri(content.getContentKey().get(), channelUri);
+            URI uri = linkBuilder.buildItemUri(content.getContentKey().get(), channelUri);
             output.write(CONTENT_KEY);
             output.write(uri.toString().getBytes());
             output.write(CRLF);
@@ -120,10 +137,9 @@ class MultiPartBulkBuilder {
             output.flush();
 
         } catch (IOException e) {
-            logger.warn("io exception batching to " + name, e);
+            log.warn("io exception batching to " + name, e);
             throw new RuntimeException(e);
         }
     }
-
 
 }

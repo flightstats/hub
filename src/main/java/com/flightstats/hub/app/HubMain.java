@@ -10,10 +10,12 @@ import com.flightstats.hub.config.binding.ClusterHubBindings;
 import com.flightstats.hub.config.binding.HubBindings;
 import com.flightstats.hub.config.binding.PropertiesBinding;
 import com.flightstats.hub.config.binding.SingleHubBindings;
+import com.flightstats.hub.config.binding.WebSocketBinding;
 import com.flightstats.hub.dao.aws.DynamoChannelConfigDaoLifecycle;
 import com.flightstats.hub.dao.aws.DynamoWebhookDaoLifecycle;
 import com.flightstats.hub.dao.aws.S3WriteQueueLifecycle;
 import com.flightstats.hub.filter.CORSFilter;
+import com.flightstats.hub.filter.MetricsRequestFilter;
 import com.flightstats.hub.filter.StreamEncodingFilter;
 import com.flightstats.hub.metrics.CustomMetricsLifecycle;
 import com.flightstats.hub.metrics.InfluxdbReporterLifecycle;
@@ -80,6 +82,8 @@ public class HubMain {
     private final ZookeeperProperties zookeeperProperties = new ZookeeperProperties(PropertiesLoader.getInstance());
     private final StorageBackend storageBackend = StorageBackend.valueOf(appProperties.getHubType());
 
+    private Injector injector;
+
     public static void main(String[] args) throws Exception {
         if (args.length == 0) {
             throw new UnsupportedOperationException("HubMain requires a property filename, 'useDefault', or 'useEncryptedDefault'");
@@ -106,7 +110,7 @@ public class HubMain {
         latch.await();
 
         log.warn("calling shutdown");
-        HubProvider.getInstance(ShutdownManager.class).shutdown(true);
+        injector.getInstance(ShutdownManager.class).shutdown(true);
 
         server.stop();
     }
@@ -125,12 +129,12 @@ public class HubMain {
     public Server startServer() throws Exception {
 
         List<AbstractModule> guiceModules = buildGuiceModules();
-        Injector injector = Guice.createInjector(guiceModules);
+        injector = Guice.createInjector(guiceModules);
+        injector.createChildInjector(new WebSocketBinding());
 
         registerServices(getBeforeHealthCheckServices(injector), HubServices.TYPE.BEFORE_HEALTH_CHECK);
         registerServices(getAfterHealthCheckServices(injector), HubServices.TYPE.AFTER_HEALTHY_START);
 
-        HubProvider.setInjector(injector);
         HubServices.start(HubServices.TYPE.BEFORE_HEALTH_CHECK);
 
         // build Jetty server
@@ -163,7 +167,7 @@ public class HubMain {
         wsContainer.addEndpoint(WebSocketHashEndpoint.class);
 
         // use handler collection to choose the proper context
-        HttpAndWSHandler handler = new HttpAndWSHandler();
+        HttpAndWSHandler handler = new HttpAndWSHandler(injector.getInstance(MetricsRequestFilter.class));
         handler.addHttpHandler(httpContainer);
         handler.addWSHandler(wsContext);
         server.setHandler(handler);
@@ -284,6 +288,10 @@ public class HubMain {
         final String path = appProperties.getKeyStorePath() + HubHost.getLocalName() + ".jks";
         log.info("using key store path: {}", path);
         return path;
+    }
+
+    public Injector getInjector() {
+        return injector;
     }
 
 }

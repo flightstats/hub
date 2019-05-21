@@ -7,39 +7,58 @@ import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.ISODateTimeFormat;
 
-import javax.ws.rs.core.*;
-import java.net.URI;
+import javax.inject.Inject;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.PathSegment;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
 import java.util.List;
 
-import static com.flightstats.hub.util.TimeUtil.*;
+import static com.flightstats.hub.util.TimeUtil.days;
+import static com.flightstats.hub.util.TimeUtil.hours;
+import static com.flightstats.hub.util.TimeUtil.minutes;
+import static com.flightstats.hub.util.TimeUtil.now;
+import static com.flightstats.hub.util.TimeUtil.seconds;
+import static com.flightstats.hub.util.TimeUtil.stable;
 import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 
-public class TimeLinkUtil {
+public class TimeLinkBuilder {
 
-    private static final ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
-    static Response getDefault(UriInfo uriInfo) {
-        ObjectNode root = mapper.createObjectNode();
+    @Inject
+    public TimeLinkBuilder(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
+
+    Response getDefault(UriInfo uriInfo) {
+        ObjectNode root = objectMapper.createObjectNode();
         ObjectNode links = addSelfLink(root, uriInfo);
         addNode(links, "second", "/{year}/{month}/{day}/{hour}/{minute}/{second}", TimeUtil.Unit.SECONDS, uriInfo);
         addNode(links, "minute", "/{year}/{month}/{day}/{hour}/{minute}", TimeUtil.Unit.MINUTES, uriInfo);
         addNode(links, "hour", "/{year}/{month}/{day}/{hour}", TimeUtil.Unit.HOURS, uriInfo);
         addNode(links, "day", "/{year}/{month}/{day}", TimeUtil.Unit.DAYS, uriInfo);
-        DateTime now = TimeUtil.now();
-        DateTime stable = TimeUtil.stable();
+        DateTime now = now();
+        DateTime stable = stable();
         addTime(root, now, "now");
         addTime(root, stable, "stable");
         return Response.ok(root).build();
     }
 
-    private static ObjectNode addSelfLink(ObjectNode root, UriInfo uriInfo) {
+    private ObjectNode addSelfLink(ObjectNode root,
+                                   UriInfo uriInfo) {
         ObjectNode links = root.putObject("_links");
         ObjectNode self = links.putObject("self");
         self.put("href", uriInfo.getRequestUri().toString());
         return links;
     }
 
-    private static void addNode(ObjectNode links, String name, String template, TimeUtil.Unit unit, UriInfo uriInfo) {
+    private void addNode(ObjectNode links,
+                         String name,
+                         String template,
+                         TimeUtil.Unit unit,
+                         UriInfo uriInfo) {
         ObjectNode node = links.putObject(name);
         MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
         String stable = "";
@@ -57,29 +76,30 @@ public class TimeLinkUtil {
         node.put("redirect", uriInfo.getAbsolutePath() + "/" + name + stable);
     }
 
-    public static void addTime(ObjectNode root, DateTime time, String name) {
+    public void addTime(ObjectNode root, DateTime time, String name) {
         ObjectNode nowNode = root.putObject(name);
         nowNode.put("iso8601", ISODateTimeFormat.dateTime().print(time));
         nowNode.put("millis", time.getMillis());
     }
 
-    static Response getSecond(boolean stable, UriInfo uriInfo) {
+    Response getSecond(boolean stable, UriInfo uriInfo) {
         return getResponse(seconds(TimeUtil.time(stable)), uriInfo);
     }
 
-    static Response getMinute(boolean stable, UriInfo uriInfo) {
+    Response getMinute(boolean stable, UriInfo uriInfo) {
         return getResponse(minutes(TimeUtil.time(stable)), uriInfo);
     }
 
-    static Response getHour(boolean stable, UriInfo uriInfo) {
+    Response getHour(boolean stable, UriInfo uriInfo) {
         return getResponse(hours(TimeUtil.time(stable)), uriInfo);
     }
 
-    static Response getDay(boolean stable, UriInfo uriInfo) {
+    Response getDay(boolean stable, UriInfo uriInfo) {
         return getResponse(days(TimeUtil.time(stable)), uriInfo);
     }
 
-    private static Response getResponse(String timePath, UriInfo uriInfo) {
+    private Response getResponse(String timePath,
+                                 UriInfo uriInfo) {
         List<PathSegment> segments = uriInfo.getPathSegments();
         UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
         uriBuilder.path(segments.get(0).getPath())
@@ -91,15 +111,13 @@ public class TimeLinkUtil {
         return builder.build();
     }
 
-    static void addQueryParams(UriInfo uriInfo, UriBuilder uriBuilder) {
+    void addQueryParams(UriInfo uriInfo,
+                        UriBuilder uriBuilder) {
         MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
         for (String param : queryParameters.keySet()) {
             List<String> strings = queryParameters.get(param);
-            uriBuilder.queryParam(param, strings.toArray(new Object[strings.size()]));
+            uriBuilder.queryParam(param, strings.toArray(new Object[]{}));
         }
     }
 
-    static URI getUri(String channel, UriInfo uriInfo, Unit unit, DateTime time) {
-        return LinkBuilder.uriBuilder(channel, uriInfo).path(unit.format(time)).build();
-    }
 }

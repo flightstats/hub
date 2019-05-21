@@ -3,16 +3,14 @@ package com.flightstats.hub.channel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubHost;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.app.LocalHostOnly;
-import com.flightstats.hub.app.PermissionsChecker;
 import com.flightstats.hub.config.ContentProperties;
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.dao.Dao;
+import com.flightstats.hub.dao.aws.ContentRetriever;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.HubUtils;
-import com.google.inject.TypeLiteral;
+import com.flightstats.hub.util.StaleEntity;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
@@ -37,30 +35,46 @@ import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
-import static com.flightstats.hub.util.StaleUtil.addStaleEntities;
+import static com.flightstats.hub.constant.InternalResourceDescription.CHANNEL_DESCRIPTION;
+
 
 @Path("/internal/channel")
 @Slf4j
 public class InternalChannelResource {
 
-    public static final String DESCRIPTION = "Delete, refresh, and check the staleness of channels.";
-    private final static Dao<ChannelConfig> channelConfigDao = HubProvider.getInstance(
-            new TypeLiteral<Dao<ChannelConfig>>() {
-            }, "ChannelConfig");
-    private final static HubUtils hubUtils = HubProvider.getInstance(HubUtils.class);
-    private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
-    private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
     private static final Long DEFAULT_STALE_AGE = TimeUnit.DAYS.toMinutes(1);
-    private final ContentProperties contentProperties = HubProvider.getInstance(ContentProperties.class);
+
+    private final HubUtils hubUtils;
+    private final ChannelService channelService;
+    private final ContentRetriever contentRetriever;
+    private final StaleEntity staleEntity;
+    private final ObjectMapper objectMapper;
+    private final ContentProperties contentProperties;
 
     @Context
     private UriInfo uriInfo;
 
+    @Inject
+    public InternalChannelResource(HubUtils hubUtils,
+                                   ChannelService channelService,
+                                   ContentRetriever contentRetriever,
+                                   StaleEntity staleEntity,
+                                   ObjectMapper objectMapper,
+                                   ContentProperties contentProperties) {
+        this.hubUtils = hubUtils;
+        this.channelService = channelService;
+        this.contentRetriever = contentRetriever;
+        this.staleEntity = staleEntity;
+        this.objectMapper = objectMapper;
+        this.contentProperties = contentProperties;
+    }
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response get(@Context UriInfo uriInfo) throws Exception {
-        ObjectNode root = mapper.createObjectNode();
-        root.put("description", DESCRIPTION);
+
+    public Response get(@Context UriInfo uriInfo) {
+        ObjectNode root = objectMapper.createObjectNode();
+        root.put("description", CHANNEL_DESCRIPTION);
 
         ObjectNode directions = root.putObject("directions");
         directions.put("delete", "HTTP DELETE to /internal/channel/{name} to override channel protection in an unprotected cluster.");
@@ -80,12 +94,12 @@ public class InternalChannelResource {
     @GET
     @Path("/refresh")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response refresh(@QueryParam("all") @DefaultValue("true") boolean all) throws Exception {
+    public Response refresh(@QueryParam("all") @DefaultValue("true") boolean all) {
         log.info("refreshing all = {}", all);
         if (all) {
             return Response.ok(hubUtils.refreshAll()).build();
         } else {
-            if (channelConfigDao.refresh()) {
+            if (channelService.refresh()) {
                 return Response.ok(HubHost.getLocalNamePort()).build();
             } else {
                 return Response.status(400).entity(HubHost.getLocalNamePort()).build();
@@ -96,31 +110,32 @@ public class InternalChannelResource {
     @SneakyThrows
     @Path("{channel}")
     @DELETE
-    public Response delete(@PathParam("channel") final String channelName) throws Exception {
+    public Response delete(@PathParam("channel") final String channelName) {
         channelService.getChannelConfig(channelName, false)
                 .orElseThrow(() -> {
                     Response errorResponse = ChannelResource.notFound(channelName);
                     throw new WebApplicationException(errorResponse);
                 });
-        if (contentProperties.isChannelProtectionSvcEnabled()) {
+
+        if (contentProperties.isChannelProtectionEnabled()) {
             log.info("using internal localhost only to delete {}", channelName);
-            return LocalHostOnly.getResponse(uriInfo, () -> ChannelResource.deletion(channelName));
+            return LocalHostOnly.getResponse(uriInfo, () -> deleteChannel(channelName));
         }
         log.info("using internal delete {}", channelName);
-        return ChannelResource.deletion(channelName);
+        return deleteChannel(channelName);
     }
 
     @GET
     @Path("/stale/{age}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response stale(@PathParam("age") int age) {
-        ObjectNode root = mapper.createObjectNode();
+        ObjectNode root = objectMapper.createObjectNode();
         ObjectNode links = root.putObject("_links");
         addLink(links, "self", uriInfo.getRequestUri().toString());
-        addStaleEntities(root, age, (staleCutoff) -> {
+        staleEntity.add(root, age, (staleCutoff) -> {
             Map<DateTime, URI> staleChannels = new TreeMap<>();
             channelService.getChannels().forEach(channelConfig -> {
-                Optional<ContentKey> optionalContentKey = channelService.getLatest(channelConfig.getDisplayName(), false);
+                Optional<ContentKey> optionalContentKey = contentRetriever.getLatest(channelConfig.getDisplayName(), false);
                 if (!optionalContentKey.isPresent()) return;
 
                 ContentKey contentKey = optionalContentKey.get();
@@ -135,7 +150,7 @@ public class InternalChannelResource {
     }
 
     private void addLink(ObjectNode node, String key, String value) {
-        ObjectNode link = node.putObject(key);
+        final ObjectNode link = node.putObject(key);
         link.put("href", value);
     }
 
@@ -148,13 +163,13 @@ public class InternalChannelResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response staleForOwner(@PathParam("age") int age,
                                   @PathParam("owner") String owner) {
-        ObjectNode root = mapper.createObjectNode();
+        ObjectNode root = objectMapper.createObjectNode();
         ObjectNode links = root.putObject("_links");
         addLink(links, "self", uriInfo.getRequestUri().toString());
-        addStaleEntities(root, age, (staleCutoff) -> {
+        staleEntity.add(root, age, (staleCutoff) -> {
             Map<DateTime, URI> staleChannels = new TreeMap<>();
             channelService.getChannels().forEach(channelConfig -> {
-                Optional<ContentKey> optionalContentKey = channelService.getLatest(channelConfig.getDisplayName(), false);
+                Optional<ContentKey> optionalContentKey = contentRetriever.getLatest(channelConfig.getDisplayName(), false);
                 if (!optionalContentKey.isPresent()) return;
 
                 ContentKey contentKey = optionalContentKey.get();
@@ -168,5 +183,13 @@ public class InternalChannelResource {
             return staleChannels;
         });
         return Response.ok(root).build();
+    }
+
+    private Response deleteChannel(String channelName) {
+        if (channelService.delete(channelName)) {
+            return Response.status(Response.Status.ACCEPTED).build();
+        } else {
+            return Response.status(Response.Status.NOT_FOUND).entity("channel " + channelName + " not found").build();
+        }
     }
 }

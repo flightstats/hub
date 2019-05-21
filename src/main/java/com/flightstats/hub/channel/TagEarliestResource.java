@@ -3,27 +3,48 @@ package com.flightstats.hub.channel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.TagService;
-import com.flightstats.hub.model.*;
+import com.flightstats.hub.model.ChannelContentKey;
+import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.Epoch;
+import com.flightstats.hub.model.Location;
+import com.flightstats.hub.model.Order;
 
-import javax.ws.rs.*;
+import javax.inject.Inject;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.SortedSet;
 
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 
-@SuppressWarnings("WeakerAccess")
 @Path("/tag/{tag}/earliest")
 public class TagEarliestResource {
 
-    private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private final static TagService tagService = HubProvider.getInstance(TagService.class);
+    private final TagService tagService;
+    private final BulkBuilder bulkBuilder;
+    private final ObjectMapper objectMapper;
+
+    @Inject
+    public TagEarliestResource(TagService tagService, BulkBuilder bulkBuilder, ObjectMapper objectMapper) {
+        this.tagService = tagService;
+        this.bulkBuilder = bulkBuilder;
+        this.objectMapper = objectMapper;
+    }
 
     @GET
     public Response getEarliest(@PathParam("tag") String tag,
@@ -34,7 +55,7 @@ public class TagEarliestResource {
                                 @Context UriInfo uriInfo) {
         Collection<ChannelContentKey> contentKeys = tagService.getEarliest(getQuery(tag, 1, stable, location, epoch));
         if (!contentKeys.isEmpty()) {
-            URI uri = uriInfo.getBaseUriBuilder()
+            final URI uri = uriInfo.getBaseUriBuilder()
                     .path(contentKeys.iterator().next().toUrl())
                     .queryParam("tag", tag)
                     .build();
@@ -72,9 +93,9 @@ public class TagEarliestResource {
         SortedSet<ChannelContentKey> keys = tagService.getEarliest(query);
         if (bulk || batch) {
             //todo - gfm - order
-            return BulkBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo, accept);
+            return bulkBuilder.buildTag(tag, keys, tagService.getChannelService(), uriInfo, accept);
         }
-        ObjectNode root = mapper.createObjectNode();
+        ObjectNode root = objectMapper.createObjectNode();
         ObjectNode links = root.putObject("_links");
         ObjectNode self = links.putObject("self");
         self.put("href", uriInfo.getRequestUri().toString());
@@ -92,7 +113,6 @@ public class TagEarliestResource {
             ids.add(uriInfo.getBaseUri() + key.toUrl() + "?tag=" + tag);
         }
         return Response.ok(root).build();
-
 
     }
 

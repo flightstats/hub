@@ -16,22 +16,23 @@ import java.util.Properties;
 import java.util.TreeSet;
 
 @Slf4j
-@SuppressWarnings("WeakerAccess")
 @Path("/internal/properties")
 public class InternalPropertiesResource {
 
-    public static final String DESCRIPTION = "Get hub properties with links to other hubs in the cluster.";
+    private final InternalTracesResource internalTracesResource;
     private final SecretFilter secretFilter;
 
     @Inject
-    public InternalPropertiesResource(SecretFilter secretFilter) {
+    public InternalPropertiesResource(InternalTracesResource internalTracesResource,
+                                      SecretFilter secretFilter) {
+        this.internalTracesResource = internalTracesResource;
         this.secretFilter = secretFilter;
     }
 
     @GET
     @Produces({MediaType.APPLICATION_JSON})
     public Response getTraces() {
-        ObjectNode root = InternalTracesResource.serverAndServers("/internal/properties");
+        ObjectNode root = internalTracesResource.serverAndServers("/internal/properties");
         try {
             ObjectNode propertyNode = root.putObject("properties");
             Properties properties = PropertiesLoader.getInstance().getProperties();
