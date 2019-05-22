@@ -178,7 +178,7 @@ public class ClusterContentService implements ContentService {
 
         ScheduledFuture future = zkCacheStateUpdateExecutor.schedule(() -> {
             if (ref.get() != null) {
-                latestContentCache.setIfAfter(channelName, ref.get());
+                latestContentCache.setIfNewer(channelName, ref.get());
             }
         }, contentProperties.getStableSeconds() +1, TimeUnit.SECONDS);
 
@@ -449,10 +449,10 @@ public class ClusterContentService implements ContentService {
         if (shouldUpdateCache) {
             if (latest.isPresent()) {
                 ActiveTraces.getLocal().add("updating cache with latestKey {} {}", channel, latest.get());
-                latestContentCache.setIfAfter(channel, latest.get());
+                latestContentCache.setIfNewer(channel, latest.get());
             } else {
                 ActiveTraces.getLocal().add("updating channel empty", channel);
-                latestContentCache.setIfAfter(channel, ContentKey.NONE);
+                latestContentCache.setIfNewer(channel, ContentKey.NONE);
             }
         }
         return latest;
@@ -505,7 +505,7 @@ public class ClusterContentService implements ContentService {
     @Override
     public void notify(ChannelConfig newConfig, ChannelConfig oldConfig) {
         if (oldConfig == null) {
-            latestContentCache.setIfAfter(newConfig.getDisplayName(), ContentKey.NONE);
+            latestContentCache.setIfNewer(newConfig.getDisplayName(), ContentKey.NONE);
         }
 
         final S3Batch s3Batch = new S3Batch(
@@ -529,9 +529,8 @@ public class ClusterContentService implements ContentService {
     }
 
     private void setLastToNewlyImmutableContent(ChannelConfig newConfig, ChannelConfig oldConfig) {
-        ContentPath latestOrNoneIfEmpty = latestContentCache.getLatest(newConfig.getDisplayName(), ContentKey.NONE);
-        log.info("handleMutableTimeChange {}", latestOrNoneIfEmpty);
-        if (latestOrNoneIfEmpty.equals(ContentKey.NONE)) {
+        if (latestContentCache.isChannelEmpty(newConfig.getDisplayName())) {
+            log.info("handleMutableTimeChange for channel with no current immutable content {}", newConfig.getDisplayName());
             DirectionQuery query = DirectionQuery.builder()
                     .startKey(ContentKey.lastKey(oldConfig.getMutableTime().plusMillis(1)))
                     .earliestTime(newConfig.getMutableTime())
@@ -548,8 +547,8 @@ public class ClusterContentService implements ContentService {
             if (mutableLatest.isPresent()) {
                 ContentKey mutableKey = mutableLatest.get();
                 if (mutableKey.getTime().isAfter(newConfig.getMutableTime())) {
-                    log.info("handleMutableTimeChange.updateIncrease {}", mutableKey);
-                    latestContentCache.setIfAfter(newConfig.getDisplayName(), mutableKey);
+                    log.info("handleMutableTimeChange.setIfNewer {}", mutableKey);
+                    latestContentCache.setIfNewer(newConfig.getDisplayName(), mutableKey);
                 }
             }
         }

@@ -21,11 +21,15 @@ public class LatestContentCache {
         return clusterCacheDao.get(channelName, defValue, LAST_COMMITTED_CONTENT_KEY);
     }
 
+    public boolean isChannelEmpty(String channelName) {
+        return ContentKey.NONE.equals(getLatest(channelName, ContentKey.NONE));
+    }
+
     public void setEmpty(String channelName) {
         clusterCacheDao.set(ContentKey.NONE, channelName, LAST_COMMITTED_CONTENT_KEY);
     }
 
-    public void setIfAfter(String channelName, ContentKey key) {
+    public void setIfNewer(String channelName, ContentKey key) {
         clusterCacheDao.setIfNewer(key, channelName, LAST_COMMITTED_CONTENT_KEY);
     }
 
