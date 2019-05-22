@@ -34,6 +34,7 @@ import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.TimeUtil;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
@@ -397,7 +398,8 @@ public class ClusterContentService implements ContentService {
         }
     }
 
-    private Optional<ContentKey> getLatestImmutable(DirectionQuery latestQuery) {
+    @VisibleForTesting
+    Optional<ContentKey> getLatestImmutable(DirectionQuery latestQuery) {
         String channel = latestQuery.getChannelName();
         Optional<ChannelConfig> optionalChannelConfig = contentRetriever.getCachedChannelConfig(channel);
         if (!contentRetriever.getCachedChannelConfig(channel).isPresent()) {
@@ -413,7 +415,8 @@ public class ClusterContentService implements ContentService {
         return findLatestKey(latestQuery, channel, cachedKey);
     }
 
-    private Optional<ContentKey> getLatestCachedKeyIfNotExpired(String channel, DateTime channelTtlTime) {
+    @VisibleForTesting
+    Optional<ContentKey> getLatestCachedKeyIfNotExpired(String channel, DateTime channelTtlTime) {
         ContentPath latestCache = latestContentCache.getLatest(channel, null);
         ActiveTraces.getLocal().add("found latestCache", channel, latestCache);
         if (latestCache != null) {
@@ -429,7 +432,8 @@ public class ClusterContentService implements ContentService {
         return Optional.ofNullable((ContentKey) latestCache);
     }
 
-    private Optional<ContentKey> findLatestKey(DirectionQuery latestQuery, String channel, Optional<ContentKey> cachedKey) {
+    @VisibleForTesting
+    Optional<ContentKey> findLatestKey(DirectionQuery latestQuery, String channel, Optional<ContentKey> cachedKey) {
         Optional<ContentKey> latest = spokeWriteContentDao.getLatest(channel, latestQuery.getStartKey(), ActiveTraces.getLocal());
         boolean shouldUpdateCache = latestQuery.isStable();
 
@@ -437,7 +441,7 @@ public class ClusterContentService implements ContentService {
             if (cachedKey.isPresent()) {
                 latest = cachedKey;
             } else {
-                latest = findLatestFromAllSources(latestQuery, channel);
+                latest = findLatestAcrossLocations(latestQuery, channel);
                 shouldUpdateCache = true;
             }
         }
@@ -454,7 +458,8 @@ public class ClusterContentService implements ContentService {
         return latest;
     }
 
-    private Optional<ContentKey> findLatestFromAllSources(DirectionQuery latestQuery, String channel) {
+    @VisibleForTesting
+    Optional<ContentKey> findLatestAcrossLocations(DirectionQuery latestQuery, String channel) {
         DirectionQuery query = DirectionQuery.builder()
                 .channelName(channel)
                 .startKey(latestQuery.getStartKey())

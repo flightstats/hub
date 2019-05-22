@@ -33,24 +33,22 @@ class ClusterCacheDaoTest {
     }
 
     @Test
-    void testLifeCycle() {
+    void testInitializeCreatesPath() {
         String name = "testLifeCycle";
         DateTime start = new DateTime(2014, 12, 3, 20, 45, DateTimeZone.UTC);
         ContentKey key1 = new ContentKey(start, "B");
         clusterCacheDao.initialize(name, key1, BASE_PATH);
         assertEquals(key1, clusterCacheDao.get(name, new ContentKey(), BASE_PATH));
+    }
 
-        ContentKey key2 = new ContentKey(start.plusMillis(1), "C");
-        clusterCacheDao.setIfNewer(key2, name, BASE_PATH);
-        assertEquals(key2, clusterCacheDao.get(name, new ContentKey(), BASE_PATH));
+    @Test
+    void testGetRecreatesDeletedPath() {
+        String name = "testLifeCycle";
+        DateTime start = new DateTime(2014, 12, 3, 20, 45, DateTimeZone.UTC);
 
-        ContentKey key3 = new ContentKey(start.minusMillis(1), "A");
-        clusterCacheDao.setIfNewer(key3, name, BASE_PATH);
-        assertEquals(key2, clusterCacheDao.get(name, new ContentKey(), BASE_PATH));
-
-        ContentKey key4 = new ContentKey(start.plusMinutes(1), "D");
-        clusterCacheDao.setIfNewer(key4, name, BASE_PATH);
-        assertEquals(key4, clusterCacheDao.get(name, new ContentKey(), BASE_PATH));
+        ContentKey key1 = new ContentKey(start, "B");
+        clusterCacheDao.initialize(name, key1, BASE_PATH);
+        assertEquals(key1, clusterCacheDao.get(name, new ContentKey(), BASE_PATH));
 
         clusterCacheDao.delete(name, BASE_PATH);
         ContentKey contentKey = new ContentKey();
@@ -90,8 +88,8 @@ class ClusterCacheDaoTest {
     }
 
     @Test
-    void testSetIfBefore() {
-        String name = "testSetIfBefore";
+    void testSetIfOlder() {
+        String name = "testSetIfOlder";
         DateTime start = new DateTime(2014, 12, 3, 20, 45, DateTimeZone.UTC);
 
         ContentKey key1 = new ContentKey(start, "B");
@@ -116,15 +114,15 @@ class ClusterCacheDaoTest {
     }
 
     @Test
-    void testSetIfAfter() {
-        String name = "testSetIfAfter";
+    void testSetIfNewer() {
+        String name = "testSetIfNewer";
         DateTime start = new DateTime(2014, 12, 3, 20, 45, DateTimeZone.UTC);
 
         ContentKey key1 = new ContentKey(start, "B");
         clusterCacheDao.initialize(name, key1, BASE_PATH);
         assertEquals(key1, clusterCacheDao.get(name, new ContentKey(), BASE_PATH));
 
-        ContentKey key2 = new ContentKey(start.plusMillis(1), "ImSlightlyAfter");
+        ContentKey key2 = new ContentKey(start.plusMillis(1), "ImSlightlyNewer");
         clusterCacheDao.setIfNewer(key2, name, BASE_PATH);
         assertEquals(key2, clusterCacheDao.get(name, new ContentKey(), BASE_PATH));
 
