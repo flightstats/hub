@@ -74,6 +74,7 @@ public class CuratorCluster implements Cluster {
     }
 
     public void register() {
+        log.info("*********************************{} {} {}", checkReadOnly, appProperties.isReadOnly(), useName);
         if (checkReadOnly && appProperties.isReadOnly()) {
             log.info("this hub is read only, not registering");
             return;

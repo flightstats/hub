@@ -9,7 +9,6 @@ import com.google.common.io.Files;
  * The primary value to set here the system property 'storage.path', which is where all the local data files
  * are stored.
  */
-@SuppressWarnings("WeakerAccess")
 public class SingleHubMain {
 
     public static void main(String[] args) throws Exception {
@@ -45,7 +44,7 @@ public class SingleHubMain {
         setProperty(propertiesLoader, "spoke.path", spokePath);
         setProperty(propertiesLoader, "app.remoteTimeFile", storagePath + "/remoteTime");
 
-        new HubMain().run(true);
+        new HubMain().run();
     }
 
     private static void setProperty(PropertiesLoader propertiesLoader, String name, String defaultValue) {

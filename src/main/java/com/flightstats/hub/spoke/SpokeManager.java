@@ -142,6 +142,7 @@ public class SpokeManager implements SpokeClusterHealthCheck, SpokeChronologySto
         int quorum = getQuorum(servers.size());
         CountDownLatch quorumLatch = new CountDownLatch(quorum);
         AtomicBoolean firstComplete = new AtomicBoolean();
+        log.info("******************************************* {}", servers.toArray());
         for (final String server : servers) {
             executorService.submit(new Runnable() {
                 @Override

@@ -18,6 +18,7 @@ import com.flightstats.hub.ws.WebSocketHourEndpoint;
 import com.flightstats.hub.ws.WebSocketMinuteEndpoint;
 import com.flightstats.hub.ws.WebSocketSecondEndpoint;
 import com.google.common.io.Resources;
+import com.google.inject.Inject;
 import com.google.inject.Injector;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.server.ConnectionFactory;
@@ -46,9 +47,19 @@ import java.nio.charset.StandardCharsets;
 @Slf4j
 public class JettyServer {
 
+    private final MetricsRequestFilter metricsRequestFilter;
+    private final SystemProperties systemProperties;
+    private final AppProperties appProperties;
     private final Injector injector;
 
-    public JettyServer(Injector injector) {
+    @Inject
+    public JettyServer(MetricsRequestFilter metricsRequestFilter,
+                       SystemProperties systemProperties,
+                       AppProperties appProperties,
+                       Injector injector) {
+        this.metricsRequestFilter = metricsRequestFilter;
+        this.systemProperties = systemProperties;
+        this.appProperties = appProperties;
         this.injector = injector;
     }
 
@@ -61,7 +72,6 @@ public class JettyServer {
             httpConfig.addCustomizer(new SecureRequestCustomizer());
         }
 
-        SystemProperties systemProperties = injector.getInstance(SystemProperties.class);
         ConnectionFactory connectionFactory = new HttpConnectionFactory(httpConfig);
         ServerConnector serverConnector = new ServerConnector(server, sslContextFactory, connectionFactory);
         serverConnector.setHost(systemProperties.getHttpBindIp());
@@ -85,7 +95,7 @@ public class JettyServer {
         wsContainer.addEndpoint(WebSocketHashEndpoint.class);
 
         // use handler collection to choose the proper context
-        HttpAndWSHandler handler = new HttpAndWSHandler(injector.getInstance(MetricsRequestFilter.class));
+        HttpAndWSHandler handler = new HttpAndWSHandler(metricsRequestFilter);
         handler.addHttpHandler(httpContainer);
         handler.addWSHandler(wsContext);
         server.setHandler(handler);
@@ -113,7 +123,6 @@ public class JettyServer {
     }
 
     private SslContextFactory getSslContextFactory() throws IOException {
-        AppProperties appProperties = injector.getInstance(AppProperties.class);
 
         SslContextFactory sslContextFactory = null;
         if (appProperties.isAppEncrypted()) {

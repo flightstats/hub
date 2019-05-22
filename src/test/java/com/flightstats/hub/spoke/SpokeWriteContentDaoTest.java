@@ -1,6 +1,7 @@
 package com.flightstats.hub.spoke;
 
 import com.flightstats.hub.config.properties.PropertiesLoader;
+import com.flightstats.hub.config.server.ZooKeeperTestServer;
 import com.flightstats.hub.dao.ContentDaoUtil;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.test.IntegrationTestSetup;
@@ -17,7 +18,8 @@ class SpokeWriteContentDaoTest {
     private static ContentDaoUtil util;
 
     @BeforeAll
-    static void setUpClass() {
+    static void setUpClass() throws Exception {
+        ZooKeeperTestServer.restart();
         util = new ContentDaoUtil(IntegrationTestSetup.run().getInstance(SpokeWriteContentDao.class));
     }
 
