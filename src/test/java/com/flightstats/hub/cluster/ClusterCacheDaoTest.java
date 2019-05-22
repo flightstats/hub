@@ -41,15 +41,15 @@ class ClusterCacheDaoTest {
         assertEquals(key1, clusterCacheDao.get(name, new ContentKey(), BASE_PATH));
 
         ContentKey key2 = new ContentKey(start.plusMillis(1), "C");
-        clusterCacheDao.setIfAfter(key2, name, BASE_PATH);
+        clusterCacheDao.setIfNewer(key2, name, BASE_PATH);
         assertEquals(key2, clusterCacheDao.get(name, new ContentKey(), BASE_PATH));
 
         ContentKey key3 = new ContentKey(start.minusMillis(1), "A");
-        clusterCacheDao.setIfAfter(key3, name, BASE_PATH);
+        clusterCacheDao.setIfNewer(key3, name, BASE_PATH);
         assertEquals(key2, clusterCacheDao.get(name, new ContentKey(), BASE_PATH));
 
         ContentKey key4 = new ContentKey(start.plusMinutes(1), "D");
-        clusterCacheDao.setIfAfter(key4, name, BASE_PATH);
+        clusterCacheDao.setIfNewer(key4, name, BASE_PATH);
         assertEquals(key4, clusterCacheDao.get(name, new ContentKey(), BASE_PATH));
 
         clusterCacheDao.delete(name, BASE_PATH);
@@ -81,11 +81,11 @@ class ClusterCacheDaoTest {
         assertEquals(minutePath, clusterCacheDao.get(name, new MinutePath(), BASE_PATH));
 
         MinutePath nextPath = new MinutePath(minutePath.getTime().plusMinutes(1));
-        clusterCacheDao.setIfAfter(nextPath, name, BASE_PATH);
+        clusterCacheDao.setIfNewer(nextPath, name, BASE_PATH);
         assertEquals(nextPath, clusterCacheDao.get(name, new MinutePath(), BASE_PATH));
 
         nextPath = new MinutePath(nextPath.getTime().plusMinutes(1));
-        clusterCacheDao.setIfAfter(nextPath, name, BASE_PATH);
+        clusterCacheDao.setIfNewer(nextPath, name, BASE_PATH);
         assertEquals(nextPath, clusterCacheDao.get(name, new MinutePath(), BASE_PATH));
     }
 
@@ -99,15 +99,15 @@ class ClusterCacheDaoTest {
         assertEquals(key1, clusterCacheDao.get(name, new ContentKey(), BASE_PATH));
 
         ContentKey key2 = new ContentKey(start.minusMillis(1), "C");
-        clusterCacheDao.setIfBefore(key2, name, BASE_PATH);
+        clusterCacheDao.setIfOlder(key2, name, BASE_PATH);
         assertEquals(key2, clusterCacheDao.get(name, new ContentKey(), BASE_PATH));
 
         ContentKey key3 = new ContentKey(start.plusMillis(1), "A");
-        clusterCacheDao.setIfBefore(key3, name, BASE_PATH);
+        clusterCacheDao.setIfOlder(key3, name, BASE_PATH);
         assertEquals(key2, clusterCacheDao.get(name, new ContentKey(), BASE_PATH));
 
         ContentKey key4 = new ContentKey(start.minusMinutes(1), "D");
-        clusterCacheDao.setIfBefore(key4, name, BASE_PATH);
+        clusterCacheDao.setIfOlder(key4, name, BASE_PATH);
         assertEquals(key4, clusterCacheDao.get(name, new ContentKey(), BASE_PATH));
 
         clusterCacheDao.delete(name, BASE_PATH);
@@ -125,11 +125,11 @@ class ClusterCacheDaoTest {
         assertEquals(key1, clusterCacheDao.get(name, new ContentKey(), BASE_PATH));
 
         ContentKey key2 = new ContentKey(start.plusMillis(1), "ImSlightlyAfter");
-        clusterCacheDao.setIfAfter(key2, name, BASE_PATH);
+        clusterCacheDao.setIfNewer(key2, name, BASE_PATH);
         assertEquals(key2, clusterCacheDao.get(name, new ContentKey(), BASE_PATH));
 
         ContentKey key3 = new ContentKey(start, "ImNowOneMilliOld");
-        clusterCacheDao.setIfAfter(key3, name, BASE_PATH);
+        clusterCacheDao.setIfNewer(key3, name, BASE_PATH);
         assertEquals(key2, clusterCacheDao.get(name, new ContentKey(), BASE_PATH));
     }
 

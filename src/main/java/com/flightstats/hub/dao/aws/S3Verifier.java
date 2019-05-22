@@ -140,7 +140,7 @@ public class S3Verifier {
 
         if (isLastCompletedAfterVerifierStart(lastCompleted, range)) {
             log.debug("verifyChannel.completed {}", range);
-            clusterCacheDao.setIfAfter(lastCompleted, range.getChannelConfig().getDisplayName(), LAST_SINGLE_VERIFIED);
+            clusterCacheDao.setIfNewer(lastCompleted, range.getChannelConfig().getDisplayName(), LAST_SINGLE_VERIFIED);
             incrementMetric(VerifierMetrics.PARTIAL_UPDATE);
         } else {
             log.warn("verifyChannel completed, but start time is the same as last completed");

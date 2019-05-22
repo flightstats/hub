@@ -183,7 +183,7 @@ public class ChannelService {
             checkZeroBytes(content, channelConfig);
             return contentService.historicalInsert(normalizedChannelName, content);
         });
-        clusterCacheDao.setIfBefore(contentKey, normalizedChannelName, HISTORICAL_EARLIEST);
+        clusterCacheDao.setIfOlder(contentKey, normalizedChannelName, HISTORICAL_EARLIEST);
         statsdReporter.insert(normalizedChannelName, start, HISTORICAL, 1, content.getSize());
         return insert;
     }

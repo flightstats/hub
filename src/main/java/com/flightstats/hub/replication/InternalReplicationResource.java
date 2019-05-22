@@ -62,7 +62,7 @@ public class InternalReplicationResource {
                     }
                 }
             }
-            clusterCacheDao.setIfAfter(path, channel, REPLICATED_LAST_UPDATED);
+            clusterCacheDao.setIfNewer(path, channel, REPLICATED_LAST_UPDATED);
             log.trace("handled {} {} ", channel, uris);
             return Response.ok().build();
         } catch (Exception e) {

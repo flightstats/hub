@@ -98,7 +98,7 @@ class S3VerifierUnitTest {
         s3Verifier.verifyChannel(verifierRange);
 
         MinutePath firstKeyMinute = new MinutePath(key.getContentKey().getTime());
-        verify(clusterCacheDao, times(1)).setIfAfter(firstKeyMinute, verifierRange.getChannelConfig().getDisplayName(), LAST_SINGLE_VERIFIED);
+        verify(clusterCacheDao, times(1)).setIfNewer(firstKeyMinute, verifierRange.getChannelConfig().getDisplayName(), LAST_SINGLE_VERIFIED);
     }
 
     @Test
@@ -128,7 +128,7 @@ class S3VerifierUnitTest {
         verify(s3WriteQueue, times(1)).add(thirdKey);
 
         MinutePath minuteBeforeFailure = new MinutePath(DateTime.parse("1999-12-31T23:58:00.000Z"));
-        verify(clusterCacheDao, times(1)).setIfAfter(minuteBeforeFailure, verifierRange.getChannelConfig().getDisplayName(), LAST_SINGLE_VERIFIED);
+        verify(clusterCacheDao, times(1)).setIfNewer(minuteBeforeFailure, verifierRange.getChannelConfig().getDisplayName(), LAST_SINGLE_VERIFIED);
     }
 
     @Test
@@ -147,6 +147,6 @@ class S3VerifierUnitTest {
 
         s3Verifier.verifyChannel(verifierRange);
 
-        verify(clusterCacheDao, times(1)).setIfAfter(verifierRange.getEndPath(), verifierRange.getChannelConfig().getDisplayName(), LAST_SINGLE_VERIFIED);
+        verify(clusterCacheDao, times(1)).setIfNewer(verifierRange.getEndPath(), verifierRange.getChannelConfig().getDisplayName(), LAST_SINGLE_VERIFIED);
     }
 }

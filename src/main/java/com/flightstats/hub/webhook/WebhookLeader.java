@@ -254,7 +254,7 @@ class WebhookLeader implements Lockable {
                 if (shouldGoToNextItem) {
                     if (increaseLastUpdated(contentPath)) {
                         if (!deleteOnExit.get()) {
-                            clusterCacheDao.setIfAfter(contentPath, webhook.getName(), WEBHOOK_LAST_COMPLETED);
+                            clusterCacheDao.setIfNewer(contentPath, webhook.getName(), WEBHOOK_LAST_COMPLETED);
                         }
                     }
                 }

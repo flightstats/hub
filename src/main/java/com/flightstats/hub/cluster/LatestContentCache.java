@@ -26,7 +26,7 @@ public class LatestContentCache {
     }
 
     public void setIfAfter(String channelName, ContentKey key) {
-        clusterCacheDao.setIfAfter(key, channelName, LAST_COMMITTED_CONTENT_KEY);
+        clusterCacheDao.setIfNewer(key, channelName, LAST_COMMITTED_CONTENT_KEY);
     }
 
     public void deleteCache(String channelName) {

@@ -79,11 +79,11 @@ public class ClusterCacheDao {
         }
     }
 
-    public void setIfBefore(ContentPath nextPath, String name, String basePath) {
+    public void setIfOlder(ContentPath nextPath, String name, String basePath) {
         setPathValueIf(nextPath, name, basePath, (existing) -> nextPath.compareTo(existing.key) < 0);
     }
 
-    public void setIfAfter(ContentPath nextPath, String name, String basePath) {
+    public void setIfNewer(ContentPath nextPath, String name, String basePath) {
         setPathValueIf(nextPath, name, basePath, (existing) -> nextPath.compareTo(existing.key) > 0);
     }
 
