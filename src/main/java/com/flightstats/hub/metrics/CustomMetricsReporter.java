@@ -2,14 +2,15 @@ package com.flightstats.hub.metrics;
 
 import com.google.inject.Inject;
 import com.sun.management.UnixOperatingSystemMXBean;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
 
+@Slf4j
 public class CustomMetricsReporter {
-    private final static Logger logger = LoggerFactory.getLogger(CustomMetricsReporter.class);
     private final StatsdReporter statsdReporter;
 
     @Inject
@@ -22,7 +23,7 @@ public class CustomMetricsReporter {
         if (os instanceof UnixOperatingSystemMXBean) {
             return ((UnixOperatingSystemMXBean) os).getOpenFileDescriptorCount();
         } else {
-            logger.warn("unable to get open files from {}", os.getClass());
+            log.error("unable to get open files from {}", os.getClass());
             return -1;
         }
     }
@@ -30,7 +31,7 @@ public class CustomMetricsReporter {
     void run() {
         long openFiles = getOpenFiles();
         if (openFiles >= 0) {
-            logger.info("open files {}", openFiles);
+            log.debug("open files {}", openFiles);
             statsdReporter.count("openFiles", openFiles);
         }
     }

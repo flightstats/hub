@@ -97,7 +97,7 @@ public class WebhookResource {
             log.info("webhook not found {} ", name);
             return Response.status(Response.Status.NOT_FOUND).build();
         }
-        log.info("get webhook {} ", name);
+        log.debug("get webhook {} ", name);
         Webhook webhook = webhookOptional.get();
         WebhookStatus status = webhookService.getStatus(webhook);
         ObjectNode root = objectMapper.createObjectNode();
