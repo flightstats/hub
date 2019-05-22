@@ -3,28 +3,33 @@ package com.flightstats.hub.util;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubProvider;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
+import javax.inject.Inject;
 import java.net.URI;
 import java.util.Map;
 import java.util.function.Function;
 
-public class StaleUtil {
+public class StaleEntity {
 
-    private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+    private final ObjectMapper objectMapper;
 
-    public static void addStaleEntities(ObjectNode root, int age, Function<DateTime, Map<DateTime, URI>> entitySupplier) {
-        DateTime staleCutoff = DateTime.now().minusMinutes(age);
+    @Inject
+    public StaleEntity(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
 
-        ObjectNode stale = root.putObject("stale");
+    public void add(ObjectNode root, int age, Function<DateTime, Map<DateTime, URI>> entitySupplier) {
+        final DateTime staleCutoff = DateTime.now().minusMinutes(age);
+
+        final ObjectNode stale = root.putObject("stale");
         stale.put("stale minutes", age);
         stale.put("stale cutoff", staleCutoff.toDateTime(DateTimeZone.UTC).toString());
 
-        ArrayNode uris = stale.putArray("uris");
+        final ArrayNode uris = stale.putArray("uris");
         entitySupplier.apply(staleCutoff).forEach((channelLastUpdate, channelURI) -> {
-            ObjectNode node = mapper.createObjectNode();
+            ObjectNode node = objectMapper.createObjectNode();
             node.put("last update", channelLastUpdate.toDateTime(DateTimeZone.UTC).toString());
             node.put("uri", channelURI.toString());
             uris.add(node);

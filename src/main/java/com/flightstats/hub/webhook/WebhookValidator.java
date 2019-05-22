@@ -1,6 +1,5 @@
 package com.flightstats.hub.webhook;
 
-import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.config.AppProperties;
 import com.flightstats.hub.config.WebhookProperties;
 import com.flightstats.hub.exception.InvalidRequestException;
@@ -12,6 +11,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import static com.flightstats.hub.app.StorageBackend.aws;
+import static com.flightstats.hub.constant.ContentConstant.VALID_NAME;
+import static com.flightstats.hub.model.WebhookType.MINUTE;
+import static com.flightstats.hub.model.WebhookType.SECOND;
+import static com.flightstats.hub.model.WebhookType.SINGLE;
 
 public class WebhookValidator {
 
@@ -25,8 +28,8 @@ public class WebhookValidator {
     }
 
     private void isValidCallbackTimeoutSeconds(int value) {
-        int minimum = this.webhookProperties.getCallbackTimeoutMinimum();
-        int maximum = this.webhookProperties.getCallbackTimeoutMaximum();
+        int minimum = webhookProperties.getCallbackTimeoutMinimum();
+        int maximum = webhookProperties.getCallbackTimeoutMaximum();
         if (isOutsideRange(value, minimum, maximum)) {
             throw new InvalidRequestException("callbackTimeoutSeconds must be between " + minimum + " and " + maximum);
         }
@@ -41,7 +44,7 @@ public class WebhookValidator {
         if (StringUtils.isEmpty(name)) {
             throw new InvalidRequestException("{\"error\": \"Webhook name is required\"}");
         }
-        if (!name.matches(ChannelValidator.VALID_NAME)) {
+        if (!name.matches(VALID_NAME)) {
             throw new InvalidRequestException("{\"error\": \"Webhook name can only contain characters a-z, A-Z, _ and 0-9\"}");
         }
         if (name.length() > 128) {
@@ -68,12 +71,12 @@ public class WebhookValidator {
             }
         }
         webhook = webhook.withBatch(StringUtils.upperCase(webhook.getBatch()));
-        if (!Webhook.MINUTE.equals(webhook.getBatch())
-                && !Webhook.SECOND.equals(webhook.getBatch())
-                && !Webhook.SINGLE.equals(webhook.getBatch())) {
+        if (!MINUTE.name().equals(webhook.getBatch())
+                && !SECOND.name().equals(webhook.getBatch())
+                && !SINGLE.name().equals(webhook.getBatch())) {
             throw new InvalidRequestException("{\"error\": \"Allowed values for batch are 'SINGLE', 'SECOND' and 'MINUTE'\"}");
         }
-        if (webhook.isHeartbeat() && Webhook.SINGLE.equals(webhook.getBatch())) {
+        if (webhook.isHeartbeat() && SINGLE.name().equals(webhook.getBatch())) {
             throw new InvalidRequestException("{\"error\": \"SINGLE webhooks can not have a heartbeat'\"}");
         }
         isValidCallbackTimeoutSeconds(webhook.getCallbackTimeoutSeconds());

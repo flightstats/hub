@@ -12,18 +12,18 @@ public class DatadogMetricsProperties {
     }
 
     public String getUrl() {
-        return this.propertiesLoader.getProperty("metrics.datadog.url", "https://app.datadoghq.com/api/v1");
+        return propertiesLoader.getProperty("metrics.datadog.url", "https://app.datadoghq.com/api/v1");
     }
 
     public String getAppKey() {
-        return this.propertiesLoader.getProperty("metrics.data_dog.app_key", "");
+        return propertiesLoader.getProperty("metrics.data_dog.app_key", "");
     }
 
     public String getApiKey() {
-        return this.propertiesLoader.getProperty("metrics.data_dog.api_key", "");
+        return propertiesLoader.getProperty("metrics.data_dog.api_key", "");
     }
 
     public int getStatsdPort() {
-        return this.propertiesLoader.getProperty("metrics.dogstatsd.port", 8125);
+        return propertiesLoader.getProperty("metrics.dogstatsd.port", 8125);
     }
 }

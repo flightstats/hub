@@ -18,12 +18,18 @@ public class ContentOutput implements Closeable {
     private final EventOutput eventOutput;
     private final ContentKey contentKey;
     private final URI channelUri;
+    private final LinkBuilder linkBuilder;
 
-    public ContentOutput(String channel, EventOutput eventOutput, ContentKey contentKey, URI baseUri) {
+    public ContentOutput(String channel,
+                         EventOutput eventOutput,
+                         ContentKey contentKey,
+                         URI baseUri,
+                         LinkBuilder linkBuilder) {
         this.channel = channel;
         this.eventOutput = eventOutput;
         this.contentKey = contentKey;
-        channelUri = UriBuilder.fromUri(baseUri).path("channel/" + channel).build();
+        this.channelUri = UriBuilder.fromUri(baseUri).path("channel/" + channel).build();
+        this.linkBuilder = linkBuilder;
     }
 
     void writeHeartbeat() throws IOException {
@@ -31,7 +37,7 @@ public class ContentOutput implements Closeable {
     }
 
     public void write(Content content) throws IOException {
-        URI uri = LinkBuilder.buildItemUri(content.getContentKey().get(), channelUri);
+        URI uri = linkBuilder.buildItemUri(content.getContentKey().get(), channelUri);
         OutboundEvent.Builder builder = new OutboundEvent.Builder().id(uri.toString());
         if (content.getContentType().isPresent()) {
             builder.name(content.getContentType().get());
@@ -40,7 +46,7 @@ public class ContentOutput implements Closeable {
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
         HubUtils.closeQuietly(eventOutput);
     }
 
@@ -48,15 +54,8 @@ public class ContentOutput implements Closeable {
         return this.channel;
     }
 
-    public EventOutput getEventOutput() {
-        return this.eventOutput;
-    }
-
     public ContentKey getContentKey() {
         return this.contentKey;
     }
 
-    public URI getChannelUri() {
-        return this.channelUri;
-    }
 }

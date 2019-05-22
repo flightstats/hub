@@ -7,15 +7,20 @@ import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.Commander;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.util.Optional;
 
+import static com.flightstats.hub.constant.ContentConstant.GET_ITEM_COUNT_COMMAND;
+import static com.flightstats.hub.constant.ContentConstant.GET_OLDEST_ITEM_COMMAND;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@Execution(ExecutionMode.SAME_THREAD)
 class SpokeContentDaoTest {
 
     private SpokeProperties spokeProperties = new SpokeProperties(PropertiesLoader.getInstance());
@@ -29,8 +34,8 @@ class SpokeContentDaoTest {
         commander = mock(Commander.class);
         spokeStore = SpokeStore.WRITE;
         final String spokeStorePath = spokeProperties.getPath(spokeStore);
-        getOldestItemCommand = String.format(SpokeContentDao.GET_OLDEST_ITEM_COMMAND, spokeStorePath);
-        getItemCountCommand = String.format(SpokeContentDao.GET_ITEM_COUNT_COMMAND, spokeStorePath);
+        getOldestItemCommand = String.format(GET_OLDEST_ITEM_COMMAND, spokeStorePath);
+        getItemCountCommand = String.format(GET_ITEM_COUNT_COMMAND, spokeStorePath);
     }
 
     @Test

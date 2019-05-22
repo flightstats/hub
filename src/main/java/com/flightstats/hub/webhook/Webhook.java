@@ -3,8 +3,7 @@ package com.flightstats.hub.webhook;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flightstats.hub.app.HubProvider;
-import com.flightstats.hub.dao.ChannelService;
+import com.flightstats.hub.dao.aws.ContentRetriever;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ContentKey;
@@ -31,6 +30,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.SortedSet;
 
+import static com.flightstats.hub.model.WebhookType.MINUTE;
+import static com.flightstats.hub.model.WebhookType.SECOND;
+
 @Builder
 @Getter
 @ToString
@@ -39,9 +41,6 @@ import java.util.SortedSet;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class Webhook implements Comparable<Webhook>, NamedType {
 
-    public static final String SINGLE = "SINGLE";
-    public static final String MINUTE = "MINUTE";
-    public static final String SECOND = "SECOND";
     private static final ObjectMapper mapper = new ObjectMapper();
     private static final Gson gson = new GsonBuilder().create();
     private final String callbackUrl;
@@ -77,7 +76,7 @@ public class Webhook implements Comparable<Webhook>, NamedType {
 
     boolean secondaryMetricsReporting;
 
-    static Webhook fromJson(String json, Optional<Webhook> webhookOptional) {
+    static Webhook fromJson(String json, Optional<Webhook> webhookOptional, ContentRetriever contentRetriever) {
         WebhookBuilder builder = Webhook.builder();
         if (webhookOptional.isPresent()) {
             Webhook existing = webhookOptional.get();
@@ -105,18 +104,14 @@ public class Webhook implements Comparable<Webhook>, NamedType {
                 Optional<ContentPath> keyOptional = Optional.empty();
                 String startItem = root.get("startItem").asText();
                 if (startItem.equalsIgnoreCase("previous")) {
-                    keyOptional = getPrevious(keyOptional, root.get("channelUrl").asText());
+                    keyOptional = getPrevious(keyOptional, root.get("channelUrl").asText(), contentRetriever);
                 } else {
                     keyOptional = ContentPath.fromFullUrl(startItem);
                 }
-                if (keyOptional.isPresent()) {
-                    builder.startingKey(keyOptional.get());
-                }
+                keyOptional.ifPresent(builder::startingKey);
             } else if (root.has("lastCompleted")) {
-                Optional<ContentPath> keyOptional = ContentPath.fromFullUrl(root.get("lastCompleted").asText());
-                if (keyOptional.isPresent()) {
-                    builder.startingKey(keyOptional.get());
-                }
+                final Optional<ContentPath> keyOptional = ContentPath.fromFullUrl(root.get("lastCompleted").asText());
+                keyOptional.ifPresent(builder::startingKey);
             }
             if (root.has("name")) {
                 builder.name(root.get("name").asText());
@@ -174,10 +169,9 @@ public class Webhook implements Comparable<Webhook>, NamedType {
         return builder.build();
     }
 
-    private static Optional<ContentPath> getPrevious(Optional<ContentPath> keyOptional, String channelUrl) {
-        ChannelService channelService = HubProvider.getInstance(ChannelService.class);
-        String channel = RequestUtils.getChannelName(channelUrl);
-        Optional<ContentKey> latest = channelService.getLatest(channel, true);
+    private static Optional<ContentPath> getPrevious(Optional<ContentPath> keyOptional, String channelUrl, ContentRetriever contentRetriever) {
+        final String channel = RequestUtils.getChannelName(channelUrl);
+        final Optional<ContentKey> latest = contentRetriever.getLatest(channel, true);
         if (latest.isPresent()) {
             DirectionQuery query = DirectionQuery.builder()
                     .channelName(channel)
@@ -185,7 +179,7 @@ public class Webhook implements Comparable<Webhook>, NamedType {
                     .next(false)
                     .count(1)
                     .build();
-            SortedSet<ContentKey> keys = channelService.query(query);
+            SortedSet<ContentKey> keys = contentRetriever.query(query);
             if (keys.isEmpty()) {
                 keyOptional = Optional.of(new ContentKey(latest.get().getTime().minusMillis(1), "A"));
             } else {
@@ -201,8 +195,8 @@ public class Webhook implements Comparable<Webhook>, NamedType {
         return new Webhook(whp.callbackUrl, channelUrl, whp.parallelCalls, whName, null, whp.batch, whp.heartbeat, whp.paused, whp.ttlMinutes, whp.maxWaitMinutes, whp.callbackTimeoutSeconds, whp.fastForwardable, null, whp.getTagFromTagUrl(), whp.maxAttempts, whp.errorChannelUrl, whp.secondaryMetricsReporting);
     }
 
-    public static Webhook fromJson(String json) {
-        return fromJson(json, Optional.empty());
+    public static Webhook fromJson(String json, ContentRetriever contentRetriever) {
+        return fromJson(json, Optional.empty(), contentRetriever);
     }
 
     @JsonIgnore
@@ -267,11 +261,11 @@ public class Webhook implements Comparable<Webhook>, NamedType {
     }
 
     public boolean isMinute() {
-        return MINUTE.equalsIgnoreCase(getBatch());
+        return MINUTE.name().equalsIgnoreCase(getBatch());
     }
 
     public boolean isSecond() {
-        return SECOND.equalsIgnoreCase(getBatch());
+        return SECOND.name().equalsIgnoreCase(getBatch());
     }
 
     public Integer getTtlMinutes() {

@@ -6,18 +6,17 @@ import com.amazonaws.services.dynamodbv2.model.GetItemRequest;
 import com.amazonaws.services.dynamodbv2.model.GetItemResult;
 import com.amazonaws.services.dynamodbv2.model.ScanRequest;
 import com.amazonaws.services.dynamodbv2.model.ScanResult;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.config.DynamoProperties;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.test.Integration;
+import com.google.inject.Injector;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -33,10 +32,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@Slf4j
 @ExtendWith(MockitoExtension.class)
 class DynamoChannelConfigDaoTest {
 
-    private static final Logger logger = LoggerFactory.getLogger(DynamoChannelConfigDaoTest.class);
     private static DynamoChannelConfigDao channelConfigDao;
     @Mock
     private AmazonDynamoDB dbClient;
@@ -46,9 +45,9 @@ class DynamoChannelConfigDaoTest {
 
     @BeforeAll
     static void setUpClass() throws Exception {
-        logger.info("setting up ...");
-        Integration.startAwsHub();
-        channelConfigDao = HubProvider.getInstance(DynamoChannelConfigDao.class);
+        log.info("setting up ...");
+        Injector injector = Integration.startAwsHub();
+        channelConfigDao = injector.getInstance(DynamoChannelConfigDao.class);
     }
 
     @BeforeEach
@@ -58,18 +57,18 @@ class DynamoChannelConfigDaoTest {
 
     @Test
     void testSimple() {
-        logger.info("DynamoChannelConfigDao {}", channelConfigDao);
+        log.info("DynamoChannelConfigDao {}", channelConfigDao);
         assertNotNull(channelConfigDao);
         ChannelConfig channelConfig = ChannelConfig.builder().name("testsimple").build();
         channelConfigDao.upsert(channelConfig);
 
         ChannelConfig testSimple = channelConfigDao.get("testsimple");
-        logger.info("channel {}", testSimple);
+        log.info("channel {}", testSimple);
         assertNotNull(testSimple);
     }
 
     @Test
-    public void testSingleGetReturnsNullIfConfigIsUnparseable() {
+    void testSingleGetReturnsNullIfConfigIsUnparseable() {
         GetItemResult result = mock(GetItemResult.class);
         when(result.getItem()).thenReturn(createBogusEntry());
         when(dbClient.getItem(any(GetItemRequest.class))).thenReturn(result);
@@ -77,13 +76,13 @@ class DynamoChannelConfigDaoTest {
     }
 
     @Test
-    public void testListGetDropsUnparseableConfigs() {
+    void testListGetDropsUnparseableConfigs() {
         ScanResult result = mock(ScanResult.class);
 
         Map<String, AttributeValue> channel1 = toDynamoEntry("channel1", "Channel One", 1557433692138L);
         Map<String, AttributeValue> channel2 = toDynamoEntry("channel2", "Channel Two", 1557433692138L);
 
-        Map<String,AttributeValue> bogusRecord = createBogusEntry();
+        Map<String, AttributeValue> bogusRecord = createBogusEntry();
 
         when(result.getItems()).thenReturn(
                 Arrays.asList(
@@ -103,16 +102,16 @@ class DynamoChannelConfigDaoTest {
         ));
     }
 
-    private Map<String,AttributeValue> toDynamoEntry(String key, String displayName, long date) {
-        Map<String,AttributeValue> channel = new HashMap<>();
+    private Map<String, AttributeValue> toDynamoEntry(String key, String displayName, long date) {
+        Map<String, AttributeValue> channel = new HashMap<>();
         channel.put("key", new AttributeValue(key));
         channel.put("displayName", new AttributeValue(displayName));
         channel.put("date", new AttributeValue().withN(String.valueOf(date)));
         return channel;
     }
 
-    private Map<String,AttributeValue> createBogusEntry() {
-        Map<String,AttributeValue> bogusRecord = new HashMap<>();
+    private Map<String, AttributeValue> createBogusEntry() {
+        Map<String, AttributeValue> bogusRecord = new HashMap<>();
         bogusRecord.put("i exist", new AttributeValue("to break your code"));
         return bogusRecord;
     }

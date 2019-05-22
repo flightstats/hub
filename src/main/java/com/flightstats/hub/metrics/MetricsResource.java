@@ -2,11 +2,10 @@ package com.flightstats.hub.metrics;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.util.Commander;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
+import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -14,16 +13,23 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.Map;
 
-@SuppressWarnings("WeakerAccess")
+@Slf4j
 @Path("/health/metrics")
 public class MetricsResource {
-    private final static Logger logger = LoggerFactory.getLogger(MetricsResource.class);
-    private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private final static CustomMetricsReporter customMetricsReporter = HubProvider.getInstance(CustomMetricsReporter.class);
+
+    private final CustomMetricsReporter customMetricsReporter;
+    private final ObjectMapper objectMapper;
+
+    @Inject
+    public MetricsResource(CustomMetricsReporter customMetricsReporter, ObjectMapper objectMapper) {
+        this.customMetricsReporter = customMetricsReporter;
+        this.objectMapper = objectMapper;
+    }
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response checkHealth() {
-        ObjectNode rootNode = mapper.createObjectNode();
+        ObjectNode rootNode = this.objectMapper.createObjectNode();
         rootNode.put("openFiles", customMetricsReporter.getOpenFiles());
         return Response.ok(rootNode).build();
     }
@@ -36,9 +42,9 @@ public class MetricsResource {
     }
 
     // TODO: Move(?), test, and refactor this
-    String logFilesInfo() {
+    private String logFilesInfo() {
         String info = "";
-        logger.info("logFilesInfo starting");
+        log.info("logFilesInfo starting");
         info += "lsof -b -cjava : \r\n";
         info += Commander.run(new String[]{"lsof", "-b", "-cjava"}, 60);
         info += "thread dump \r\n";
@@ -50,7 +56,7 @@ public class MetricsResource {
                 info += "\t" + element.toString() + "\r\n";
             }
         }
-        logger.info("logFilesInfo completed");
+        log.info("logFilesInfo completed");
         return info;
     }
 }

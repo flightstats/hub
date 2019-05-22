@@ -1,25 +1,28 @@
 package com.flightstats.hub.events;
 
 import com.flightstats.hub.app.HubHost;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.StringUtils;
 import com.flightstats.hub.webhook.Webhook;
 import com.flightstats.hub.webhook.WebhookService;
 
+import static com.flightstats.hub.model.WebhookType.SECOND;
+
 class EventWebhook {
 
-    private final WebhookService webhookService = HubProvider.getInstance(WebhookService.class);
     private final String random = StringUtils.randomAlphaNumeric(6);
 
     private final ContentOutput contentOutput;
+    private final WebhookService webhookService;
     private final String appUrl;
     private final String appEnv;
 
     EventWebhook(ContentOutput contentOutput,
+                 WebhookService webhookService,
                  String appUrl,
                  String appEnv) {
         this.contentOutput = contentOutput;
+        this.webhookService = webhookService;
         this.appUrl = appUrl;
         this.appEnv = appEnv;
     }
@@ -31,7 +34,7 @@ class EventWebhook {
                 .channelUrl(getChannelUrl())
                 .heartbeat(true)
                 .startingKey(contentOutput.getContentKey())
-                .batch(Webhook.SECOND);/**/
+                .batch(SECOND.name());/**/
         Webhook webhook = builder.build();
         webhookService.upsert(webhook);
     }
