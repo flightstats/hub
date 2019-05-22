@@ -31,7 +31,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.inject.Inject;
-import java.beans.ConstructorProperties;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -52,10 +51,9 @@ public class S3LargeContentDao implements ContentDao {
     private final S3BucketName s3BucketName;
     private final StatsdReporter statsdReporter;
 
-    private static AppProperties appProperties;
-    private static S3Properties s3Properties;
+    private AppProperties appProperties;
+    private S3Properties s3Properties;
 
-    @ConstructorProperties({"statsdReporter", "s3Client", "s3BucketName"})
     @Inject
     public S3LargeContentDao(HubS3Client s3Client,
                              S3BucketName s3BucketName,
@@ -65,13 +63,8 @@ public class S3LargeContentDao implements ContentDao {
         this.statsdReporter = statsdReporter;
         this.s3Client = s3Client;
         this.s3BucketName = s3BucketName;
-
         this.s3Properties = s3Properties;
-        appProperties = appPropertiesIn;
-    }
-
-    public static S3LargeContentDaoBuilder builder() {
-        return new S3LargeContentDaoBuilder(appProperties, s3Properties);
+        this.appProperties = appPropertiesIn;
     }
 
     public void initialize() {
@@ -254,7 +247,7 @@ public class S3LargeContentDao implements ContentDao {
     }
 
     @Override
-    public ContentKey insertHistorical(String channelName, Content content) throws Exception {
+    public ContentKey insertHistorical(String channelName, Content content) {
         return insert(channelName, content);
     }
 
@@ -271,39 +264,4 @@ public class S3LargeContentDao implements ContentDao {
         }).start();
     }
 
-    public static class S3LargeContentDaoBuilder {
-        private StatsdReporter statsdReporter;
-        private HubS3Client s3Client;
-        private S3BucketName s3BucketName;
-        private AppProperties appProperties;
-        private S3Properties s3Properties;
-
-        S3LargeContentDaoBuilder(AppProperties appProperties, S3Properties s3Properties) {
-            this.appProperties = appProperties;
-            this.s3Properties = s3Properties;
-        }
-
-        public S3LargeContentDaoBuilder statsdReporter(StatsdReporter statsdReporter) {
-            this.statsdReporter = statsdReporter;
-            return this;
-        }
-
-        public S3LargeContentDaoBuilder s3Client(HubS3Client s3Client) {
-            this.s3Client = s3Client;
-            return this;
-        }
-
-        public S3LargeContentDaoBuilder s3BucketName(S3BucketName s3BucketName) {
-            this.s3BucketName = s3BucketName;
-            return this;
-        }
-
-        public S3LargeContentDao build() {
-            return new S3LargeContentDao(s3Client, s3BucketName, statsdReporter, appProperties, s3Properties);
-        }
-
-        public String toString() {
-            return "com.flightstats.hub.dao.aws.S3LargeContentDao.S3LargeContentDaoBuilder(statsdReporter=" + this.statsdReporter + ", s3Client=" + this.s3Client + ", s3BucketName=" + this.s3BucketName + ")";
-        }
-    }
 }
