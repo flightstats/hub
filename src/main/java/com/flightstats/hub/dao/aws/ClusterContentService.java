@@ -150,7 +150,7 @@ public class ClusterContentService implements ContentService {
 
     @Override
     public ContentKey insert(String channelName, Content content) {
-        final Content spokeContent = calculateIndexIfLarge(channelName, content);
+        Content spokeContent = calculateIndexIfLarge(channelName, content);
 
         SortedSet<ContentKey> keys = setStableCache(channelName,
                 () -> new TreeSet<>(
@@ -181,15 +181,15 @@ public class ClusterContentService implements ContentService {
             }
         }, contentProperties.getStableSeconds() +1, TimeUnit.SECONDS);
 
-        SortedSet<ContentKey> keys;
         try {
+            SortedSet<ContentKey> keys;
             keys = supplier.get();
             ref.set(keys.last());
+            return keys;
         } catch(Exception e) {
             future.cancel(true);
             throw e;
         }
-        return keys;
     }
 
     private void s3SingleWrite(String channelName, ContentKey key) {

@@ -59,11 +59,10 @@ public class SpokeWriteContentDao implements ContentDao {
 
     @Override
     public SortedSet<ContentKey> insert(BulkContent bulkContent) {
-        SortedSet<ContentKey> keys = SpokeContentDao.insert(bulkContent, (baos) -> {
+        return SpokeContentDao.insert(bulkContent, (baos) -> {
             String channel = bulkContent.getChannel();
             return clusterWriteSpoke.insertToWriteCluster(channel, baos.toByteArray(), "bulkKey", channel);
         });
-        return keys;
     }
 
     private String getPath(String channelName, ContentKey key) {
@@ -90,15 +89,14 @@ public class SpokeWriteContentDao implements ContentDao {
         String path = getPath(channel, limitKey);
         log.trace("latest {} {}", channel, path);
         traces.add("SpokeWriteContentDao.latest", channel, path);
-        Optional<ContentKey> key;
         try {
-            key = chronoStore.getLatestFromCluster(channel, path, traces);
+            Optional<ContentKey> key = chronoStore.getLatestFromCluster(channel, path, traces);
             traces.add("SpokeWriteContentDao.latest", key);
+            return key;
         } catch (Exception e) {
             log.warn("what happened? " + channel, e);
-            key = Optional.empty();
+            return Optional.empty();
         }
-        return key;
     }
 
     @Override

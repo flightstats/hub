@@ -4,6 +4,7 @@ import com.flightstats.hub.config.AppProperties;
 import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.model.ContentPath;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
@@ -49,7 +50,7 @@ public class ClusterCacheDao {
     public ContentPath getOrNull(String name, String basePath) {
         String path = basePath + name;
         try {
-            return getMostRecentData(path).getKey();
+            return getMostRecentKey(path).getKey();
         } catch (Exception e) {
             log.info("unable to get node {} {} {} ", name, basePath, e.getMessage());
             log.trace("unable to get node  " + path, e);
@@ -60,7 +61,7 @@ public class ClusterCacheDao {
     public ContentPath get(String name, ContentPath defaultPath, String basePath) {
         String path = basePath + name;
         try {
-            ContentPath contentPath = getMostRecentData(path).getKey();
+            ContentPath contentPath = getMostRecentKey(path).getKey();
             trace(name, "get default {} found {}", defaultPath, contentPath);
             return contentPath;
         } catch (KeeperException.NoNodeException e) {
@@ -86,12 +87,12 @@ public class ClusterCacheDao {
         setPathValueIf(nextPath, name, basePath, (existing) -> nextPath.compareTo(existing.key) > 0);
     }
 
-    private void setPathValueIf(ContentPath nextPath, String name, String basePath, Function<MostRecentData, Boolean> compare) {
+    private void setPathValueIf(ContentPath nextPath, String name, String basePath, Function<VersionedKey, Boolean> compare) {
         String path = basePath + name;
         try {
             while (true) {
                 trace(name, "update {}", name);
-                MostRecentData existing = getMostRecentData(path);
+                VersionedKey existing = getMostRecentKey(path);
                 if (compare.apply(existing)) {
                     if (setValue(path, nextPath, existing)) {
                         trace(name, "update set {} next {} existing {}", name, nextPath, existing);
@@ -119,7 +120,7 @@ public class ClusterCacheDao {
     public void set(ContentPath nextPath, String name, String basePath) {
         String path = basePath + name;
         try {
-            MostRecentData existing = getMostRecentData(path);
+            VersionedKey existing = getMostRecentKey(path);
             setValue(path, nextPath, existing);
             trace(path, "update {} next {} existing{}", path, nextPath, existing);
         } catch (KeeperException.NoNodeException e) {
@@ -130,7 +131,7 @@ public class ClusterCacheDao {
         }
     }
 
-    private boolean setValue(String path, ContentPath nextPath, MostRecentData existing) {
+    private boolean setValue(String path, ContentPath nextPath, VersionedKey existing) {
         try {
             curator.setData()
                     .withVersion(existing.getVersion())
@@ -157,28 +158,22 @@ public class ClusterCacheDao {
         }
     }
 
-    private MostRecentData getMostRecentData(String path) throws Exception {
+    private VersionedKey getMostRecentKey(String path) throws Exception {
         Stat stat = new Stat();
         byte[] bytes = curator.getData().storingStatIn(stat).forPath(path);
         Optional<ContentPath> pathOptional = ContentPath.fromUrl(new String(bytes, StandardCharsets.UTF_8));
-        return new MostRecentData(pathOptional.get(), stat.getVersion());
+        return new VersionedKey(pathOptional.get(), stat.getVersion());
     }
 
-    private class MostRecentData {
-        private ContentPath key;
-        private int version;
+    @Value
+    private class VersionedKey {
+        private final ContentPath key;
+        private final int version;
 
-        private MostRecentData(ContentPath key, int version) {
+        private VersionedKey(ContentPath key, int version) {
             this.key = key;
             this.version = version;
         }
 
-        public ContentPath getKey() {
-            return key;
-        }
-
-        public int getVersion() {
-            return version;
-        }
     }
 }
