@@ -1,6 +1,6 @@
 package com.flightstats.hub.dao.aws.s3Verifier;
 
-import com.flightstats.hub.cluster.ClusterStateDao;
+import com.flightstats.hub.cluster.ClusterCacheDao;
 import com.flightstats.hub.dao.aws.ContentRetriever;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.MinutePath;
@@ -16,15 +16,15 @@ public class VerifierRangeLookup {
 
     private final VerifierConfig verifierConfig;
     private final SpokeStoreConfig spokeWriteStoreConfig;
-    private final ClusterStateDao clusterStateDao;
+    private final ClusterCacheDao clusterCacheDao;
     private final ContentRetriever contentRetriever;
 
     @Inject
-    public VerifierRangeLookup(ClusterStateDao clusterStateDao,
+    public VerifierRangeLookup(ClusterCacheDao clusterCacheDao,
                                VerifierConfig verifierConfig,
                                ContentRetriever contentRetriever,
                                @Named("spokeWriteStoreConfig") SpokeStoreConfig spokeWriteStoreConfig) {
-        this.clusterStateDao = clusterStateDao;
+        this.clusterCacheDao = clusterCacheDao;
         this.verifierConfig = verifierConfig;
         this.contentRetriever = contentRetriever;
         this.spokeWriteStoreConfig = spokeWriteStoreConfig;
@@ -36,7 +36,7 @@ public class VerifierRangeLookup {
         DateTime start = now.minusMinutes(1);
         MinutePath endPath = new MinutePath(start);
         MinutePath defaultStart = new MinutePath(start.minusMinutes(verifierConfig.getOffsetMinutes()));
-        MinutePath startPath = (MinutePath) clusterStateDao.get(channelConfig.getDisplayName(), defaultStart, LAST_SINGLE_VERIFIED);
+        MinutePath startPath = (MinutePath) clusterCacheDao.get(channelConfig.getDisplayName(), defaultStart, LAST_SINGLE_VERIFIED);
         if (channelConfig.isLive() && isStartTimeBeforeSpokeTtl(startPath, spokeTtlTime)) {
             startPath = spokeTtlTime;
         }
