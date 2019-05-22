@@ -50,9 +50,8 @@ public class S3LargeContentDao implements ContentDao {
     private final HubS3Client s3Client;
     private final S3BucketName s3BucketName;
     private final StatsdReporter statsdReporter;
-
-    private AppProperties appProperties;
-    private S3Properties s3Properties;
+    private final AppProperties appProperties;
+    private final S3Properties s3Properties;
 
     @Inject
     public S3LargeContentDao(HubS3Client s3Client,
