@@ -20,6 +20,16 @@ public class ZooKeeperTestServer {
     }
 
     public static void stop() throws IOException {
-        testingServer.stop();
+        if (testingServer != null) {
+            log.info("Stopping zookeeper test server");
+            testingServer.stop();
+        }
+    }
+
+    public static void restart() throws Exception {
+        if (testingServer != null) {
+            log.info("Restarting zookeeper test server");
+            testingServer.restart();
+        }
     }
 }

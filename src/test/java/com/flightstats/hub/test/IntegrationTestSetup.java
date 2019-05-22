@@ -1,11 +1,12 @@
 package com.flightstats.hub.test;
 
-import com.flightstats.hub.app.HubMain;
 import com.flightstats.hub.cluster.ZooKeeperState;
+import com.flightstats.hub.config.DependencyInjection;
 import com.flightstats.hub.config.binding.HubBindings;
 import com.flightstats.hub.config.properties.AppProperties;
 import com.flightstats.hub.config.properties.PropertiesLoader;
 import com.flightstats.hub.config.properties.ZooKeeperProperties;
+import com.flightstats.hub.config.server.HubServer;
 import com.flightstats.hub.config.server.ZooKeeperTestServer;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -23,9 +24,14 @@ public class IntegrationTestSetup {
 
     private IntegrationTestSetup() {
         try {
-            startZooKeeperServer();
-            curator = buildZooKeeperClient();
-            injector = new HubMain().run(false);
+            ZooKeeperTestServer.start();
+            PropertiesLoader propertiesLoader = loadProperties();
+            curator = buildZooKeeperClient(propertiesLoader);
+
+            injector = new DependencyInjection().init();
+
+            HubServer hubServer = injector.getInstance(HubServer.class);
+            hubServer.start();
         } catch (Exception e) {
             log.info("Problem while setting up integration test environment");
         }
@@ -38,9 +44,16 @@ public class IntegrationTestSetup {
         return integrationTestSetup;
     }
 
-    private CuratorFramework buildZooKeeperClient() {
+    private static void restartZooKeeperServer() {
+        try {
+            ZooKeeperTestServer.restart();
+        } catch (Exception e) {
+            log.info("Problem restarting zookeeper test server ");
+        }
+    }
+
+    private CuratorFramework buildZooKeeperClient(PropertiesLoader propertiesLoader) {
         if (curator == null) {
-            PropertiesLoader propertiesLoader = loadProperties();
             curator = HubBindings.buildCurator(
                     new ZooKeeperState(),
                     new AppProperties(propertiesLoader),
@@ -54,10 +67,6 @@ public class IntegrationTestSetup {
         propertiesLoader.load("useDefault");
         propertiesLoader.setProperty("hub.type", "aws");
         return propertiesLoader;
-    }
-
-    private void startZooKeeperServer() throws Exception {
-        ZooKeeperTestServer.start();
     }
 
     public CuratorFramework getZookeeperClient() {

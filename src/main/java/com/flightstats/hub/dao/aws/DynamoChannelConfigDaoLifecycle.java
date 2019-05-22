@@ -22,7 +22,9 @@ public class DynamoChannelConfigDaoLifecycle extends AbstractIdleService {
     private final DynamoProperties dynamoProperties;
 
     @Inject
-    public DynamoChannelConfigDaoLifecycle(DynamoUtils dynamoUtils, AppProperties appProperties, DynamoProperties dynamoProperties) {
+    public DynamoChannelConfigDaoLifecycle(DynamoUtils dynamoUtils,
+                                           AppProperties appProperties,
+                                           DynamoProperties dynamoProperties) {
         this.dynamoUtils = dynamoUtils;
         this.appProperties = appProperties;
         this.dynamoProperties = dynamoProperties;

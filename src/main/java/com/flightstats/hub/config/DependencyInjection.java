@@ -1,21 +1,29 @@
 package com.flightstats.hub.config;
 
+import com.flightstats.hub.app.StorageBackend;
 import com.flightstats.hub.config.binding.ClusterHubBindings;
 import com.flightstats.hub.config.binding.HubBindings;
 import com.flightstats.hub.config.binding.PropertiesBinding;
 import com.flightstats.hub.config.binding.SingleHubBindings;
 import com.flightstats.hub.config.binding.WebSocketBinding;
+import com.flightstats.hub.config.properties.AppProperties;
+import com.flightstats.hub.config.properties.PropertiesLoader;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 public class DependencyInjection {
 
-    public Injector init(String storageBackend) {
-        Injector injector = Guice.createInjector(buildGuiceModules(storageBackend));
+    private final AppProperties appProperties = new AppProperties(PropertiesLoader.getInstance());
+
+    public Injector init() {
+        StorageBackend storageBackend = StorageBackend.valueOf(appProperties.getHubType());
+        Injector injector = Guice.createInjector(buildGuiceModules(storageBackend.name()));
         injector.createChildInjector(new WebSocketBinding());
         return injector;
     }
