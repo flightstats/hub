@@ -12,21 +12,18 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
 
-import static java.util.stream.Collectors.toList;
 import static junit.framework.Assert.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 
 @Slf4j
@@ -34,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 class DistributedLockRunnerTest {
 
     private static DistributedLeaderLockManager lockManager;
-    private ConcurrentHashMap<String, Range<DateTime>> lockTimes;
+    private ConcurrentHashMap<String, Range<DateTime>> lockTracker;
     private DistributedLockRunner distributedLockRunner;
     private ExecutorService executorService;
 
@@ -47,7 +44,7 @@ class DistributedLockRunnerTest {
 
     @BeforeEach
     void setup() {
-        lockTimes = new ConcurrentHashMap<>();
+        lockTracker = new ConcurrentHashMap<>();
         this.distributedLockRunner = new DistributedLockRunner(lockManager);
     }
 
@@ -73,7 +70,7 @@ class DistributedLockRunnerTest {
         assertTrue(runWithLock);
 
         latch.await(1, TimeUnit.MINUTES);
-        assertLocksHappened("lockable1");
+        assertThat(locksThatHappened(), containsInAnyOrder("lockable1"));
     }
 
     @Test
@@ -98,7 +95,7 @@ class DistributedLockRunnerTest {
 
         latch.await(5, TimeUnit.MINUTES);
 
-        assertLocksHappened("lockable1", "lockable2");
+        assertThat(locksThatHappened(), containsInAnyOrder("lockable1", "lockable2"));
         assertLocksOccurredSerially("lockable1", "lockable2");
     }
 
@@ -132,7 +129,7 @@ class DistributedLockRunnerTest {
         });
 
         latch.await(5, TimeUnit.MINUTES);
-        assertLocksHappened("lockable1", "lockable3");
+        assertThat(locksThatHappened(), containsInAnyOrder("lockable1", "lockable3"));
         assertFalse(locksOverlap("lockable1", "lockable3"));
     }
 
@@ -175,9 +172,9 @@ class DistributedLockRunnerTest {
         } catch (InterruptedException e) {
             fail("something went wrong waiting for all the locks to finish!");
         }
-        log.debug(lockTimes.toString());
+        log.debug(lockTracker.toString());
 
-        assertLocksHappened("lockable1", "lockable2", "lockable3");
+        assertThat(locksThatHappened(), containsInAnyOrder("lockable1", "lockable2", "lockable3"));
         assertTrue(locksOverlap("lockable1", "lockable2") || locksOverlap("lockable2", "lockable3"));
         assertFalse(locksOverlap("lockable1", "lockable3"));
     }
@@ -200,7 +197,7 @@ class DistributedLockRunnerTest {
 
         DateTime endTime = DateTime.now();
         log.debug("{} ending at {}", name, endTime);
-        lockTimes.put(name, Range.closed(startTime, endTime));
+        lockTracker.put(name, Range.closed(startTime, endTime));
 
         latch.countDown();
     }
@@ -213,20 +210,17 @@ class DistributedLockRunnerTest {
         }
     }
 
-    private boolean locksOverlap(String lockName1, String lockName2) {
-        return lockTimes.get(lockName1).isConnected(lockTimes.get(lockName2));
+    private ConcurrentHashMap.KeySetView<String, Range<DateTime>> locksThatHappened() {
+        return lockTracker.keySet();
     }
 
-    private void assertLocksHappened(String... lockNames) {
-        List<String> expectedLocks = Stream.of(lockNames).sorted().collect(toList());
-        log.debug(lockTimes.toString());
-        List<String> actualLocks = lockTimes.entrySet().stream().map(Map.Entry::getKey).sorted().collect(toList());
-        assertEquals(expectedLocks, actualLocks);
+    private boolean locksOverlap(String lockName1, String lockName2) {
+        return lockTracker.get(lockName1).isConnected(lockTracker.get(lockName2));
     }
 
     private void assertLocksOccurredSerially(String lock1, String lock2) {
-        DateTime lock1EndTime = lockTimes.get(lock1).upperEndpoint();
-        DateTime lock2StartTime = lockTimes.get(lock2).lowerEndpoint();
+        DateTime lock1EndTime = lockTracker.get(lock1).upperEndpoint();
+        DateTime lock2StartTime = lockTracker.get(lock2).lowerEndpoint();
 
         assertTrue(lock1EndTime.isBefore(lock2StartTime));
     }
