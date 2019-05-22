@@ -3,7 +3,7 @@ package com.flightstats.hub.webhook;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.cluster.ClusterStateDao;
+import com.flightstats.hub.cluster.ClusterCacheDao;
 import com.flightstats.hub.dao.aws.ContentRetriever;
 import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.metrics.ActiveTraces;
@@ -37,7 +37,7 @@ class SingleWebhookStrategy implements WebhookStrategy {
     private AtomicReference<Exception> exceptionReference = new AtomicReference<>();
     private AtomicBoolean shouldExit = new AtomicBoolean(false);
 
-    private final ClusterStateDao clusterStateDao;
+    private final ClusterCacheDao clusterCacheDao;
     private final ContentRetriever contentRetriever;
     private final ObjectMapper objectMapper;
     private final Webhook webhook;
@@ -49,11 +49,11 @@ class SingleWebhookStrategy implements WebhookStrategy {
 
     @Inject
     SingleWebhookStrategy(ContentRetriever contentRetriever,
-                          ClusterStateDao clusterStateDao,
+                          ClusterCacheDao clusterCacheDao,
                           ObjectMapper objectMapper,
                           Webhook webhook) {
         this.contentRetriever = contentRetriever;
-        this.clusterStateDao = clusterStateDao;
+        this.clusterCacheDao = clusterCacheDao;
         this.objectMapper = objectMapper;
         this.webhook = webhook;
         this.queue = new ArrayBlockingQueue<>(webhook.getParallelCalls() * 2);
@@ -65,14 +65,14 @@ class SingleWebhookStrategy implements WebhookStrategy {
         if (null == startingKey) {
             startingKey = new ContentKey();
         }
-        ContentPath contentPath = clusterStateDao.get(webhook.getName(), startingKey, WEBHOOK_LAST_COMPLETED);
+        ContentPath contentPath = clusterCacheDao.get(webhook.getName(), startingKey, WEBHOOK_LAST_COMPLETED);
         log.info("getStartingPath startingKey {} contentPath {}", startingKey, contentPath);
         return contentPath;
     }
 
     @Override
     public ContentPath getLastCompleted() {
-        return clusterStateDao.getOrNull(webhook.getName(), WEBHOOK_LAST_COMPLETED);
+        return clusterCacheDao.getOrNull(webhook.getName(), WEBHOOK_LAST_COMPLETED);
     }
 
     @Override

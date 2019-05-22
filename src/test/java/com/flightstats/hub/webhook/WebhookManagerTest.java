@@ -1,7 +1,7 @@
 package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.cluster.ClusterStateDao;
+import com.flightstats.hub.cluster.ClusterCacheDao;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.config.WebhookProperties;
 import com.flightstats.hub.dao.Dao;
@@ -51,7 +51,7 @@ class WebhookManagerTest {
     @Mock
     private WebhookStateReaper webhookStateReaper;
     @Mock
-    private ClusterStateDao clusterStateDao;
+    private ClusterCacheDao clusterCacheDao;
     @Mock
     private ActiveWebhooks activeWebhooks;
     @Mock
@@ -208,7 +208,7 @@ class WebhookManagerTest {
                 webhookContentPathSet,
                 webhookClient,
                 webhookStateReaper,
-                clusterStateDao,
+                clusterCacheDao,
                 activeWebhooks,
                 webhookProperties,
                 watchManager,

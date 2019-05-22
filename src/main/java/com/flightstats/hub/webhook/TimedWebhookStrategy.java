@@ -3,7 +3,7 @@ package com.flightstats.hub.webhook;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.cluster.ClusterStateDao;
+import com.flightstats.hub.cluster.ClusterCacheDao;
 import com.flightstats.hub.dao.aws.ContentRetriever;
 import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.metrics.ActiveTraces;
@@ -46,7 +46,7 @@ class TimedWebhookStrategy implements WebhookStrategy {
     private AtomicBoolean shouldExit = new AtomicBoolean(false);
 
     private final ContentRetriever contentRetriever;
-    private final ClusterStateDao clusterStateDao;
+    private final ClusterCacheDao clusterCacheDao;
     private final ObjectMapper objectMapper;
     private final Webhook webhook;
 
@@ -65,12 +65,12 @@ class TimedWebhookStrategy implements WebhookStrategy {
     private Duration duration;
 
     TimedWebhookStrategy(ContentRetriever contentRetriever,
-                         ClusterStateDao clusterStateDao,
+                         ClusterCacheDao clusterCacheDao,
                          ObjectMapper objectMapper,
                          Webhook webhook) {
         this.webhook = webhook;
         this.contentRetriever = contentRetriever;
-        this.clusterStateDao = clusterStateDao;
+        this.clusterCacheDao = clusterCacheDao;
         this.objectMapper = objectMapper;
 
         this.channel = webhook.getChannelName();
@@ -149,12 +149,12 @@ class TimedWebhookStrategy implements WebhookStrategy {
         if (null == startingKey) {
             startingKey = WebhookStrategy.createContentPath(webhook);
         }
-        return clusterStateDao.get(webhook.getName(), startingKey, WEBHOOK_LAST_COMPLETED);
+        return clusterCacheDao.get(webhook.getName(), startingKey, WEBHOOK_LAST_COMPLETED);
     }
 
     @Override
     public ContentPath getLastCompleted() {
-        return clusterStateDao.getOrNull(webhook.getName(), WEBHOOK_LAST_COMPLETED);
+        return clusterCacheDao.getOrNull(webhook.getName(), WEBHOOK_LAST_COMPLETED);
     }
 
     @Override

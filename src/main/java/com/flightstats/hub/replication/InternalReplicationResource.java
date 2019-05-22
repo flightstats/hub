@@ -2,7 +2,7 @@ package com.flightstats.hub.replication;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flightstats.hub.cluster.ClusterStateDao;
+import com.flightstats.hub.cluster.ClusterCacheDao;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.BulkContent;
@@ -27,16 +27,16 @@ import static com.flightstats.hub.constant.ZookeeperNodes.REPLICATED_LAST_UPDATE
 @Path("/internal/repls/{channel}")
 public class InternalReplicationResource {
     private final ChannelService channelService;
-    private final ClusterStateDao clusterStateDao;
+    private final ClusterCacheDao clusterCacheDao;
     private final HubUtils hubUtils;
     private final ObjectMapper objectMapper;
 
     InternalReplicationResource(ChannelService channelService,
-                                ClusterStateDao clusterStateDao,
+                                ClusterCacheDao clusterCacheDao,
                                 HubUtils hubUtils,
                                 ObjectMapper objectMapper) {
         this.channelService = channelService;
-        this.clusterStateDao = clusterStateDao;
+        this.clusterCacheDao = clusterCacheDao;
         this.hubUtils = hubUtils;
         this.objectMapper = objectMapper;
     }
@@ -62,7 +62,7 @@ public class InternalReplicationResource {
                     }
                 }
             }
-            clusterStateDao.setIfAfter(path, channel, REPLICATED_LAST_UPDATED);
+            clusterCacheDao.setIfAfter(path, channel, REPLICATED_LAST_UPDATED);
             log.trace("handled {} {} ", channel, uris);
             return Response.ok().build();
         } catch (Exception e) {

@@ -10,27 +10,27 @@ import static com.flightstats.hub.constant.ZookeeperNodes.LAST_COMMITTED_CONTENT
 @Slf4j
 public class LatestContentCache {
     /** The latest item on the channel that is older than stable time, older than spoke's TTL, and younger than the channel's TTL. i.e. the "cached" latest */
-    private final ClusterStateDao clusterStateDao;
+    private final ClusterCacheDao clusterCacheDao;
 
     @Inject
-    public LatestContentCache(ClusterStateDao clusterStateDao) {
-        this.clusterStateDao = clusterStateDao;
+    public LatestContentCache(ClusterCacheDao clusterCacheDao) {
+        this.clusterCacheDao = clusterCacheDao;
     }
 
     public ContentPath getLatest(String channelName, ContentPath defValue) {
-        return clusterStateDao.get(channelName, defValue, LAST_COMMITTED_CONTENT_KEY);
+        return clusterCacheDao.get(channelName, defValue, LAST_COMMITTED_CONTENT_KEY);
     }
 
     public void setEmpty(String channelName) {
-        clusterStateDao.set(ContentKey.NONE, channelName, LAST_COMMITTED_CONTENT_KEY);
+        clusterCacheDao.set(ContentKey.NONE, channelName, LAST_COMMITTED_CONTENT_KEY);
     }
 
     public void setIfAfter(String channelName, ContentKey key) {
-        clusterStateDao.setIfAfter(key, channelName, LAST_COMMITTED_CONTENT_KEY);
+        clusterCacheDao.setIfAfter(key, channelName, LAST_COMMITTED_CONTENT_KEY);
     }
 
     public void deleteCache(String channelName) {
-        clusterStateDao.delete(channelName, LAST_COMMITTED_CONTENT_KEY);
+        clusterCacheDao.delete(channelName, LAST_COMMITTED_CONTENT_KEY);
     }
 
 }

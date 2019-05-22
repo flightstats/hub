@@ -15,13 +15,13 @@ import java.util.Optional;
 import java.util.function.Function;
 
 @Slf4j
-public class ClusterStateDao {
+public class ClusterCacheDao {
 
     private final CuratorFramework curator;
     private final AppProperties appProperties;
 
     @Inject
-    public ClusterStateDao(CuratorFramework curator, AppProperties appProperties) {
+    public ClusterCacheDao(CuratorFramework curator, AppProperties appProperties) {
         this.curator = curator;
         this.appProperties = appProperties;
     }

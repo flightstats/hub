@@ -1,7 +1,7 @@
 package com.flightstats.hub.dao.aws;
 
 import com.flightstats.hub.cluster.DistributedLeaderLockManager;
-import com.flightstats.hub.cluster.ClusterStateDao;
+import com.flightstats.hub.cluster.ClusterCacheDao;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.dao.aws.s3Verifier.MissingContentFinder;
 import com.flightstats.hub.dao.aws.s3Verifier.VerifierConfig;
@@ -29,7 +29,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 class S3VerifierUnitTest {
-    private final ClusterStateDao clusterStateDao = mock(ClusterStateDao.class);
+    private final ClusterCacheDao clusterCacheDao = mock(ClusterCacheDao.class);
     private final S3WriteQueue s3WriteQueue = mock(S3WriteQueue.class);
     private final Client httpClient = mock(Client.class);
     private final ExecutorService channelThreadPool = mock(ExecutorService.class);
@@ -46,7 +46,7 @@ class S3VerifierUnitTest {
     public void setup() {
         final VerifierConfig config = VerifierConfig.builder().build();
         s3Verifier = new S3Verifier(
-                clusterStateDao,
+                clusterCacheDao,
                 s3WriteQueue,
                 httpClient,
                 missingContentFinder,
@@ -75,7 +75,7 @@ class S3VerifierUnitTest {
 
         s3Verifier.verifyChannel(verifierRange);
 
-        verifyZeroInteractions(clusterStateDao);
+        verifyZeroInteractions(clusterCacheDao);
     }
 
     @Test
@@ -98,7 +98,7 @@ class S3VerifierUnitTest {
         s3Verifier.verifyChannel(verifierRange);
 
         MinutePath firstKeyMinute = new MinutePath(key.getContentKey().getTime());
-        verify(clusterStateDao, times(1)).setIfAfter(firstKeyMinute, verifierRange.getChannelConfig().getDisplayName(), LAST_SINGLE_VERIFIED);
+        verify(clusterCacheDao, times(1)).setIfAfter(firstKeyMinute, verifierRange.getChannelConfig().getDisplayName(), LAST_SINGLE_VERIFIED);
     }
 
     @Test
@@ -128,7 +128,7 @@ class S3VerifierUnitTest {
         verify(s3WriteQueue, times(1)).add(thirdKey);
 
         MinutePath minuteBeforeFailure = new MinutePath(DateTime.parse("1999-12-31T23:58:00.000Z"));
-        verify(clusterStateDao, times(1)).setIfAfter(minuteBeforeFailure, verifierRange.getChannelConfig().getDisplayName(), LAST_SINGLE_VERIFIED);
+        verify(clusterCacheDao, times(1)).setIfAfter(minuteBeforeFailure, verifierRange.getChannelConfig().getDisplayName(), LAST_SINGLE_VERIFIED);
     }
 
     @Test
@@ -147,6 +147,6 @@ class S3VerifierUnitTest {
 
         s3Verifier.verifyChannel(verifierRange);
 
-        verify(clusterStateDao, times(1)).setIfAfter(verifierRange.getEndPath(), verifierRange.getChannelConfig().getDisplayName(), LAST_SINGLE_VERIFIED);
+        verify(clusterCacheDao, times(1)).setIfAfter(verifierRange.getEndPath(), verifierRange.getChannelConfig().getDisplayName(), LAST_SINGLE_VERIFIED);
     }
 }

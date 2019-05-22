@@ -1,7 +1,7 @@
 package com.flightstats.hub.dao.aws;
 
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.cluster.ClusterStateDao;
+import com.flightstats.hub.cluster.ClusterCacheDao;
 import com.flightstats.hub.cluster.LatestContentCache;
 import com.flightstats.hub.config.AppProperties;
 import com.flightstats.hub.config.ContentProperties;
@@ -76,7 +76,7 @@ public class ClusterContentService implements ContentService {
     private final LatestContentCache latestContentCache;
     private final WriteQueue writeQueue;
     private final ContentRetriever contentRetriever;
-    private final ClusterStateDao clusterStateDao;
+    private final ClusterCacheDao clusterCacheDao;
     private final HubUtils hubUtils;
     private final LargeContentUtils largeContentUtils;
     private final AppProperties appProperties;
@@ -94,7 +94,7 @@ public class ClusterContentService implements ContentService {
                             LatestContentCache latestContentCache,
                             WriteQueue writeQueue,
                             ContentRetriever contentRetriever,
-                            ClusterStateDao clusterStateDao,
+                            ClusterCacheDao clusterCacheDao,
                             HubUtils hubUtils,
                             LargeContentUtils largeContentUtils,
                             AppProperties appProperties,
@@ -108,7 +108,7 @@ public class ClusterContentService implements ContentService {
         this.s3BatchContentDao = s3BatchContentDao;
         this.latestContentCache = latestContentCache;
         this.writeQueue = writeQueue;
-        this.clusterStateDao = clusterStateDao;
+        this.clusterCacheDao = clusterCacheDao;
         this.hubUtils = hubUtils;
         this.largeContentUtils = largeContentUtils;
         this.contentRetriever = contentRetriever;
@@ -477,7 +477,7 @@ public class ClusterContentService implements ContentService {
         s3BatchContentDao.delete(channelName);
         s3LargePayloadContentDao.delete(channelName);
         latestContentCache.deleteCache(channelName);
-        clusterStateDao.delete(channelName, LAST_SINGLE_VERIFIED);
+        clusterCacheDao.delete(channelName, LAST_SINGLE_VERIFIED);
         Optional<ChannelConfig> optionalChannelConfig = contentRetriever.getCachedChannelConfig(channelName);
         if (optionalChannelConfig.isPresent() && !optionalChannelConfig.get().isSingle()) {
             new S3Batch(optionalChannelConfig.get(), hubUtils, appProperties.getAppUrl(), appProperties.getAppEnv()).stop();

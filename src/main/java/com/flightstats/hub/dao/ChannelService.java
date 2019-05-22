@@ -2,7 +2,7 @@ package com.flightstats.hub.dao;
 
 import com.flightstats.hub.app.InFlightService;
 import com.flightstats.hub.channel.ChannelValidator;
-import com.flightstats.hub.cluster.ClusterStateDao;
+import com.flightstats.hub.cluster.ClusterCacheDao;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.config.ContentProperties;
 import com.flightstats.hub.dao.aws.ContentRetriever;
@@ -50,7 +50,7 @@ public class ChannelService {
     private final Dao<ChannelConfig> channelConfigDao;
     private final Provider<ChannelValidator> channelValidator;
     private final WatchManager watchManager;
-    private final ClusterStateDao clusterStateDao;
+    private final ClusterCacheDao clusterCacheDao;
     private final InFlightService inFlightService;
     private final TimeService timeService;
     private final StatsdReporter statsdReporter;
@@ -66,7 +66,7 @@ public class ChannelService {
             @Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao,
             Provider<ChannelValidator> channelValidator,
             WatchManager watchManager,
-            ClusterStateDao clusterStateDao,
+            ClusterCacheDao clusterCacheDao,
             InFlightService inFlightService,
             TimeService timeService,
             StatsdReporter statsdReporter,
@@ -76,7 +76,7 @@ public class ChannelService {
         this.channelConfigDao = channelConfigDao;
         this.channelValidator = channelValidator;
         this.watchManager = watchManager;
-        this.clusterStateDao = clusterStateDao;
+        this.clusterCacheDao = clusterCacheDao;
         this.inFlightService = inFlightService;
         this.timeService = timeService;
         this.statsdReporter = statsdReporter;
@@ -104,7 +104,7 @@ public class ChannelService {
         if (newConfig.isHistorical()) {
             if (oldConfig == null || !oldConfig.isHistorical()) {
                 ContentKey lastKey = ContentKey.lastKey(newConfig.getMutableTime());
-                clusterStateDao.set(lastKey, newConfig.getDisplayName(), HISTORICAL_EARLIEST);
+                clusterCacheDao.set(lastKey, newConfig.getDisplayName(), HISTORICAL_EARLIEST);
             }
         }
         contentService.notify(newConfig, oldConfig);
@@ -183,7 +183,7 @@ public class ChannelService {
             checkZeroBytes(content, channelConfig);
             return contentService.historicalInsert(normalizedChannelName, content);
         });
-        clusterStateDao.setIfBefore(contentKey, normalizedChannelName, HISTORICAL_EARLIEST);
+        clusterCacheDao.setIfBefore(contentKey, normalizedChannelName, HISTORICAL_EARLIEST);
         statsdReporter.insert(normalizedChannelName, start, HISTORICAL, 1, content.getSize());
         return insert;
     }
@@ -282,9 +282,9 @@ public class ChannelService {
         channelConfigDao.delete(channelConfig.getDisplayName());
         if (channelConfig.isReplicating()) {
             notifyReplicationWatchers();
-            clusterStateDao.delete(channelName, REPLICATED_LAST_UPDATED);
+            clusterCacheDao.delete(channelName, REPLICATED_LAST_UPDATED);
         }
-        clusterStateDao.delete(channelName, HISTORICAL_EARLIEST);
+        clusterCacheDao.delete(channelName, HISTORICAL_EARLIEST);
         tagWebhook.deleteAllTagWebhooksForChannel(channelConfig);
         return true;
     }

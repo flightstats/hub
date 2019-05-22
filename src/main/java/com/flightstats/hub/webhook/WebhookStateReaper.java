@@ -1,6 +1,6 @@
 package com.flightstats.hub.webhook;
 
-import com.flightstats.hub.cluster.ClusterStateDao;
+import com.flightstats.hub.cluster.ClusterCacheDao;
 import com.flightstats.hub.config.WebhookProperties;
 import lombok.extern.slf4j.Slf4j;
 
@@ -12,19 +12,19 @@ import static com.flightstats.hub.constant.ZookeeperNodes.WEBHOOK_LAST_COMPLETED
 @Singleton
 @Slf4j
 class WebhookStateReaper {
-    private final ClusterStateDao clusterStateDao;
+    private final ClusterCacheDao clusterCacheDao;
     private final WebhookContentPathSet webhookInProcess;
     private final WebhookErrorService webhookErrorService;
     private final WebhookLeaderLocks webhookLeaderLocks;
     private final WebhookProperties webhookProperties;
 
     @Inject
-    WebhookStateReaper(ClusterStateDao clusterStateDao,
+    WebhookStateReaper(ClusterCacheDao clusterCacheDao,
                        WebhookContentPathSet webhookInProcess,
                        WebhookErrorService webhookErrorService,
                        WebhookLeaderLocks webhookLeaderLocks,
                        WebhookProperties webhookProperties) {
-        this.clusterStateDao = clusterStateDao;
+        this.clusterCacheDao = clusterCacheDao;
         this.webhookInProcess = webhookInProcess;
         this.webhookErrorService = webhookErrorService;
         this.webhookLeaderLocks = webhookLeaderLocks;
@@ -37,7 +37,7 @@ class WebhookStateReaper {
         }
         log.info("deleting " + webhook);
         webhookInProcess.delete(webhook);
-        clusterStateDao.delete(webhook, WEBHOOK_LAST_COMPLETED);
+        clusterCacheDao.delete(webhook, WEBHOOK_LAST_COMPLETED);
         webhookErrorService.delete(webhook);
         webhookLeaderLocks.deleteWebhookLeader(webhook);
         log.info("deleted " + webhook);
