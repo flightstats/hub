@@ -47,7 +47,9 @@ class BatchItemStorageTest extends DependencyInjector {
 
     @Test
     void batchChannelStorage_itemInSpoke_item() {
-
+        Awaitility.await()
+                .atMost(Duration.TEN_SECONDS)
+                .until(() -> channelService.getItem(itemUri).equals(TEST_DATA));
     }
 
     @Test
@@ -58,6 +60,7 @@ class BatchItemStorageTest extends DependencyInjector {
                 .pollInterval(Duration.TEN_SECONDS)
                 .until(() -> confirmItemsInS3(path));
     }
+
     @SneakyThrows
     private boolean confirmItemsInS3(String path) {
         try {
@@ -68,7 +71,6 @@ class BatchItemStorageTest extends DependencyInjector {
             if (!actual.equals(TEST_DATA)) {
                 throw new Exception("actual does not match expected");
             }
-            log.info("TEST_DATA: {}", actual);
             return true;
         } catch (AmazonS3Exception e) {
             if (e.getStatusCode() != 404) {

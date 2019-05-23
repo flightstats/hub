@@ -57,12 +57,9 @@ public class S3Service {
         String newPath =  Arrays.asList(pathParts)
                 .subList(0, 5)
                 .stream()
-                .map(str -> {
-                    str = str + "/";
-                    return str;
-                })
+                .map(str-> str.concat("/"))
                 .collect(Collectors.joining());
-                return newPath.substring(0, newPath.lastIndexOf("/"));
+                return newPath.substring(0, newPath.length() - 1);
     }
 
     public String formatS3BatchItemPath(String fullPath, String channelName) {
