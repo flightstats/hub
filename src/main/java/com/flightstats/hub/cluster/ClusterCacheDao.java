@@ -30,7 +30,7 @@ public class ClusterCacheDao {
     private void trace(String nameOrPath, String text, Object... context) {
         if (log.isTraceEnabled()) {
             if (nameOrPath.contains(appProperties.getLastContentPathTracing())) {
-                log.trace(text + " nameorPath " + nameOrPath, context);
+                log.trace("{} nameorPath {}", text, nameOrPath, context);
             }
         }
     }
@@ -39,11 +39,12 @@ public class ClusterCacheDao {
         try {
             trace(name, "initialize {} {}", defaultPath, basePath);
             curator.create().creatingParentsIfNeeded().forPath(basePath + name, defaultPath.toBytes());
+            log.info("initialized {} {} {}", name, defaultPath, basePath);
         } catch (KeeperException.NodeExistsException ignore) {
             //this will typically happen, except the first time
-            log.trace("initialize exists {} {} {}", name, defaultPath, basePath);
+            trace("initialize exists {} {} {}", name, defaultPath, basePath);
         } catch (Exception e) {
-            log.warn("unable to create node " + name + " " + basePath, e);
+            log.warn("unable to create node {} {}", name, basePath, e);
         }
     }
 
@@ -52,8 +53,7 @@ public class ClusterCacheDao {
         try {
             return getMostRecentKey(path).getKey();
         } catch (Exception e) {
-            log.info("unable to get node {} {} {} ", name, basePath, e.getMessage());
-            log.trace("unable to get node  " + path, e);
+            log.warn("unable to get node {} {} {} ", name, basePath, e.getMessage());
             return null;
         }
     }
@@ -69,12 +69,12 @@ public class ClusterCacheDao {
                 trace(name, "get default {} null", defaultPath);
                 return null;
             } else {
-                log.warn("missing value for {} {}", name, basePath);
+                log.debug("missing value for {} {}", name, basePath);
                 initialize(name, defaultPath, basePath);
                 return get(name, defaultPath, basePath);
             }
         } catch (Exception e) {
-            log.info("unable to get node {} {} {} ", name, basePath, e.getMessage());
+            log.warn("unable to get node {} {} {} ", name, basePath, e.getMessage());
             return defaultPath;
         }
     }
@@ -104,16 +104,16 @@ public class ClusterCacheDao {
                 }
             }
         } catch (KeeperException.NoNodeException e) {
-            log.info("values does not exist, creating {}", path);
+            log.debug("values does not exist, creating {}", path);
             trace(name, "updateIncrease NoNodeException {}", name);
             initialize(name, nextPath, basePath);
         } catch (ConflictException e) {
-            trace(name, "ConflictException " + e.getMessage());
+            trace(name, "ConflictException {}", e.getMessage());
             throw e;
         } catch (ContentTooLargeException e) {
             throw e;
         } catch (Exception e) {
-            log.warn("unable to set lastUpdated " + path, e);
+            log.warn("unable to set path {}", path, e);
         }
     }
 
@@ -124,10 +124,10 @@ public class ClusterCacheDao {
             setValue(path, nextPath, existing);
             trace(path, "update {} next {} existing{}", path, nextPath, existing);
         } catch (KeeperException.NoNodeException e) {
-            log.info("values does not exist, creating {}", path);
+            log.debug("values does not exist, creating {}", path);
             initialize(name, nextPath, basePath);
         } catch (Exception e) {
-            log.warn("unable to set " + path + " lastUpdated to " + nextPath, e);
+            log.warn("unable to set {} lastUpdated to {}", path, nextPath, e);
         }
     }
 
@@ -138,10 +138,10 @@ public class ClusterCacheDao {
                     .forPath(path, nextPath.toBytes());
             return true;
         } catch (KeeperException.BadVersionException e) {
-            log.debug("bad version " + path + " " + e.getMessage());
+            log.warn("bad version {} {}", path, e.getMessage());
             return false;
         } catch (Exception e) {
-            log.info("what happened? " + path, e);
+            log.error("what happened? {}", path, e);
             return false;
         }
     }
@@ -152,9 +152,9 @@ public class ClusterCacheDao {
         try {
             curator.delete().deletingChildrenIfNeeded().forPath(path);
         } catch (KeeperException.NoNodeException e) {
-            log.info("no node for {}", path);
+            log.debug("no node for {}", path);
         } catch (Exception e) {
-            log.warn("unable to delete {} {}", path, e.getMessage());
+            log.error("unable to delete {} {}", path, e.getMessage());
         }
     }
 
