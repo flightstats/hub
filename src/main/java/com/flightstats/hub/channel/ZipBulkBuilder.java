@@ -10,8 +10,7 @@ import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.StreamResults;
 import com.google.common.io.ByteStreams;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
@@ -23,9 +22,8 @@ import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+@Slf4j
 public class ZipBulkBuilder {
-
-    private final static Logger logger = LoggerFactory.getLogger(ZipBulkBuilder.class);
 
     public static Response build(SortedSet<ContentKey> keys, String channel,
                                  ChannelService channelService, boolean descending, Consumer<Response.ResponseBuilder> headerBuilder) {
@@ -79,7 +77,7 @@ public class ZipBulkBuilder {
         if (contentOptional.isPresent()) {
             createZipEntry(output, contentOptional.get());
         } else {
-            logger.warn("missing content for zip {} {}", channel, key);
+            log.warn("missing content for zip {} {}", channel, key);
         }
     }
 
@@ -92,7 +90,7 @@ public class ZipBulkBuilder {
             long bytesCopied = ByteStreams.copy(content.getStream(), output);
             zipEntry.setSize(bytesCopied);
         } catch (IOException e) {
-            logger.warn("exception zip batching for  " + content.getContentKey().get(), e);
+            log.warn("exception zip batching for  " + content.getContentKey().get(), e);
             throw new RuntimeException(e);
         }
     }

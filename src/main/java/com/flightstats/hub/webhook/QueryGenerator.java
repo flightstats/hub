@@ -4,13 +4,11 @@ import com.flightstats.hub.model.Epoch;
 import com.flightstats.hub.model.Location;
 import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.TimeUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class QueryGenerator {
-
-    private final static Logger logger = LoggerFactory.getLogger(QueryGenerator.class);
     private DateTime lastQueryTime;
     private String channel;
 
@@ -20,14 +18,14 @@ public class QueryGenerator {
     }
 
     TimeQuery getQuery(DateTime latestStableInChannel) {
-        logger.trace("iterating last {} stable {} ", lastQueryTime, latestStableInChannel);
+        log.trace("iterating last {} stable {} ", lastQueryTime, latestStableInChannel);
         if (lastQueryTime.isBefore(latestStableInChannel)) {
             TimeUtil.Unit unit = getStepUnit(latestStableInChannel);
             Location location = Location.ALL;
             if (unit.equals(TimeUtil.Unit.SECONDS)) {
                 location = Location.CACHE_WRITE;
             } else if (unit.equals(TimeUtil.Unit.DAYS)) {
-                logger.info("long term query unit={} lastQueryTime={}", unit, lastQueryTime);
+                log.info("long term query unit={} lastQueryTime={}", unit, lastQueryTime);
             }
             TimeQuery query = TimeQuery.builder()
                     .channelName(channel)

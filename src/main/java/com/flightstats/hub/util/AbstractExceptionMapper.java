@@ -1,22 +1,21 @@
 package com.flightstats.hub.util;
 
 import com.flightstats.hub.metrics.ActiveTraces;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 
+@Slf4j
 public abstract class AbstractExceptionMapper<T extends Throwable> implements ExceptionMapper<T> {
-    private static final Logger logger = LoggerFactory.getLogger(AbstractExceptionMapper.class);
 
     protected AbstractExceptionMapper() {
     }
 
     public Response toResponse(T exception) {
         ActiveTraces.getLocal().add(exception);
-        ActiveTraces.getLocal().log(logger);
-        logger.trace("exception", exception);
+        ActiveTraces.getLocal().log(log);
+        log.trace("exception", exception);
         ActiveTraces.end();
         Response.ResponseBuilder builder = Response.status(this.getResponseCode());
         builder.entity(exception.getMessage());

@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.api.Backgroundable;
 import org.apache.curator.framework.api.ChildrenDeletable;
@@ -13,8 +14,6 @@ import org.apache.curator.framework.api.Pathable;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.Stat;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
@@ -24,10 +23,10 @@ import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Collections.emptyList;
 
 @Singleton
+@Slf4j
 // NOTE: The purpose of this ZooKeeper wrapper is to encapsulate and standardize the logging + error-swallowing that's
 // a common hub pattern.
 public class SafeZooKeeperUtils {
-    private static final Logger logger = LoggerFactory.getLogger(SafeZooKeeperUtils.class);
     private final CuratorFramework curator;
 
     @Inject
@@ -108,11 +107,11 @@ public class SafeZooKeeperUtils {
         try {
             return curatorAction.apply(path);
         } catch (KeeperException.NodeExistsException ignore) {
-            logger.info("node exists " + path);
+            log.info("node exists " + path);
         } catch (KeeperException.NoNodeException ignore) {
-            logger.info("no node exists " + path);
+            log.info("no node exists " + path);
         } catch (Exception e) {
-            logger.warn(failureMessage + " " + path, e);
+            log.warn(failureMessage + " " + path, e);
         }
         return defaultValue;
     }

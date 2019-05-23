@@ -7,8 +7,7 @@ import com.flightstats.hub.util.HubUtils;
 import com.google.common.annotations.VisibleForTesting;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -19,9 +18,8 @@ import java.util.Optional;
 
 import static java.util.stream.Collectors.toList;
 
+@Slf4j
 public class InternalWebhookClient {
-    private final static Logger logger = LoggerFactory.getLogger(InternalWebhookClient.class);
-
     private final Client client;
     private final CuratorCluster hubCluster;
 
@@ -75,16 +73,16 @@ public class InternalWebhookClient {
         String hubUrl = HubHost.getScheme() + url;
         ClientResponse response = null;
         try {
-            logger.info("calling {}", hubUrl);
+            log.info("calling {}", hubUrl);
             response = client.resource(hubUrl).put(ClientResponse.class);
             if (response.getStatus() == 200) {
-                logger.debug("success {}", response);
+                log.debug("success {}", response);
                 return true;
             } else {
-                logger.warn("unexpected response {}", response);
+                log.warn("unexpected response {}", response);
             }
         } catch (Exception e) {
-            logger.warn("unable to put " + hubUrl, e);
+            log.warn("unable to put " + hubUrl, e);
         } finally {
             HubUtils.close(response);
         }
@@ -95,16 +93,16 @@ public class InternalWebhookClient {
         ClientResponse response = null;
         String hubUrl = HubHost.getScheme() + url;
         try {
-            logger.info("calling {}", hubUrl);
+            log.info("calling {}", hubUrl);
             response = client.resource(hubUrl).get(ClientResponse.class);
             if (response.getStatus() == 200) {
-                logger.debug("success {}", response);
+                log.debug("success {}", response);
                 return Integer.parseInt(response.getEntity(String.class));
             } else {
-                logger.warn("unexpected response {}", response);
+                log.warn("unexpected response {}", response);
             }
         } catch (Exception e) {
-            logger.warn("unable to get " + hubUrl, e);
+            log.warn("unable to get " + hubUrl, e);
         } finally {
             HubUtils.close(response);
         }

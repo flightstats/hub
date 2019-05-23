@@ -6,9 +6,8 @@ import com.flightstats.hub.cluster.Watcher;
 import com.flightstats.hub.model.NamedType;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.api.CuratorEvent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,13 +15,8 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-/**
- * //todo - gfm - this maybe temporary, until all named cache items are case insensitive.
- */
+@Slf4j
 public class CachedLowerCaseDao<T extends NamedType> implements Dao<T> {
-
-    private final static Logger logger = LoggerFactory.getLogger(CachedLowerCaseDao.class);
-
     private final Dao<T> delegate;
     private final String path;
     private final WatchManager watchManager;
@@ -73,14 +67,14 @@ public class CachedLowerCaseDao<T extends NamedType> implements Dao<T> {
     }
 
     private void updateMap() {
-        logger.trace("updating map {}", cacheMap.keySet());
+        log.trace("updating map {}", cacheMap.keySet());
         ConcurrentMap<String, T> newMap = new ConcurrentHashMap<>();
         Iterable<T> items = delegate.getAll(false);
         for (T named : items) {
             newMap.put(named.getName().toLowerCase(), named);
         }
         cacheMap = newMap;
-        logger.trace("updated map {}", newMap.keySet());
+        log.trace("updated map {}", newMap.keySet());
     }
 
     @Override
