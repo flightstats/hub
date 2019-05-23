@@ -60,7 +60,7 @@ public class S3AccessMonitor {
             use an actual channel to utilize built-in TTL strategy
             and to avoid naming collisions
         */
-        if (!this.channelConfigDao.exists(CHANNEL_NAME)) {
+        if (!channelConfigDao.exists(CHANNEL_NAME)) {
             channelConfigDao.upsert(channelConfig);
         }
     }

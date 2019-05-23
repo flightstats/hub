@@ -11,16 +11,17 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import static com.flightstats.hub.constant.ZookeeperNodes.WEBHOOK_LEADER;
 import static java.util.stream.Collectors.toSet;
 
 @Singleton
 public class WebhookLeaderLocks {
-    static final String WEBHOOK_LEADER = "/WebhookLeader";
+
     private static final String LEASE_NODE = "leases";
     private static final String LOCK_NODE = "locks";
-    private final SafeZooKeeperUtils zooKeeperUtils;
 
-    private PathChildrenCache webhooks;
+    private final SafeZooKeeperUtils zooKeeperUtils;
+    private final PathChildrenCache webhooks;
 
     @Inject
     public WebhookLeaderLocks(SafeZooKeeperUtils zooKeeperUtils) throws Exception {

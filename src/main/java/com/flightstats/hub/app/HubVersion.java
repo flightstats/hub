@@ -1,33 +1,27 @@
 package com.flightstats.hub.app;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
-import com.google.inject.name.Named;
+import com.flightstats.hub.config.AppProperties;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.io.File;
 
-@Singleton
+@Slf4j
 public class HubVersion {
-    private final static Logger logger = LoggerFactory.getLogger(HubVersion.class);
-
-    private static String version;
 
     @Inject
-    @Named("app.lib_path")
-    private String libPath;
+    private AppProperties appProperties;
+
+    private static String version;
 
     public synchronized String getVersion() {
         if (version != null) {
             return version;
         }
         try {
-            File libDir = new File(libPath);
-            File[] files = libDir.listFiles((dir, name) -> {
-                return name.startsWith("hub");
-            });
+            File libDir = new File(appProperties.getAppLibPath());
+            File[] files = libDir.listFiles((dir, name) -> name.startsWith("hub"));
             if (files.length == 1) {
                 String name = files[0].getName();
                 version = StringUtils.removeEnd(StringUtils.removeStart(name, "hub-"), ".jar");
@@ -37,17 +31,17 @@ public class HubVersion {
             } else if (files.length == 0) {
                 version = "no hub jar file found";
             } else {
-                String fileNames = "";
+                StringBuilder stringBuilder = new StringBuilder();
                 for (File file : files) {
-                    fileNames += file.getName() + ";";
+                    stringBuilder.append(file.getName()).append(";");
                 }
-                version = "multiple hub jar files found: " + fileNames;
+                version = "multiple hub jar files found: " + stringBuilder.toString();
             }
         } catch (NullPointerException e) {
-            logger.info("unable to get version, presume local");
+            log.info("unable to get version, presume local", e);
             version = "local";
         } catch (Exception e) {
-            logger.info("unable to get version ", e);
+            log.info("unable to get version ", e);
             version = "hub";
         }
         return version;

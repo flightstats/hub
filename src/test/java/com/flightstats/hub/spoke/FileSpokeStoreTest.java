@@ -26,7 +26,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-
 @Slf4j
 class FileSpokeStoreTest {
     private static final SpokeProperties spokeProperties = new SpokeProperties(PropertiesLoader.getInstance());
@@ -36,7 +35,7 @@ class FileSpokeStoreTest {
     private String tempDir;
 
     @BeforeEach
-    void setUp() throws Exception {
+    void setUp() {
         tempDir = Files.createTempDir().getPath();
         PropertiesLoader.getInstance().setProperty("spoke.write.path", tempDir);
         spokeStore = new FileSpokeStore(tempDir, ttlMinutes);

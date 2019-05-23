@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.flightstats.hub.cluster.Cluster;
 import org.apache.commons.lang3.StringUtils;
 
+import javax.inject.Inject;
+import javax.inject.Named;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -15,18 +17,23 @@ import javax.ws.rs.core.UriInfo;
 import java.util.ArrayList;
 import java.util.Set;
 
-@SuppressWarnings("WeakerAccess")
 @Path("/internal/deploy")
 public class InternalDeployResource {
-    public static final String DESCRIPTION = "Get a list of hubs to deploy to in a cluster.";
-    private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
 
-    private static final Cluster curatorCluster = HubProvider.getInstance(Cluster.class, "HubCluster");
+    private final Cluster curatorCluster;
+    private final ObjectMapper objectMapper;
+
+    @Inject
+    public InternalDeployResource(@Named("HubCluster") Cluster curatorCluster,
+                                  ObjectMapper objectMapper) {
+        this.curatorCluster = curatorCluster;
+        this.objectMapper = objectMapper;
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response deploy(@Context UriInfo uriInfo) {
-        ArrayNode root = mapper.createArrayNode();
+        ArrayNode root = objectMapper.createArrayNode();
         Set<String> allServers = curatorCluster.getAllServers();
         for (String server : allServers) {
             root.add(server);

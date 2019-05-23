@@ -3,10 +3,9 @@ package com.flightstats.hub.metrics;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
+import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -15,17 +14,25 @@ import javax.ws.rs.core.Response;
 import java.util.Map;
 import java.util.TreeMap;
 
-@SuppressWarnings("WeakerAccess")
+@Slf4j
 @Path("/internal/stacktrace")
 public class InternalStacktraceResource {
-    public static final String DESCRIPTION = "Get a condensed stacktrace with links to other hubs in the cluster.";
-    private final static Logger logger = LoggerFactory.getLogger(InternalStacktraceResource.class);
-    private static final ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
+
+    private final InternalTracesResource internalTracesResource;
+    private final ObjectMapper objectMapper;
+
+    @Inject
+    public InternalStacktraceResource(InternalTracesResource internalTracesResource,
+                                  ObjectMapper objectMapper) {
+        this.internalTracesResource = internalTracesResource;
+        this.objectMapper = objectMapper;
+    }
+
 
     @GET
     @Produces({MediaType.APPLICATION_JSON})
     public Response getTraces() {
-        ObjectNode root = InternalTracesResource.serverAndServers("/internal/stacktrace");
+        ObjectNode root = this.internalTracesResource.serverAndServers("/internal/stacktrace");
         try {
             Map<Thread, StackTraceElement[]> threadMap = Thread.getAllStackTraces();
             TreeMap<String, Map<String, ArrayNode>> threadStates = new TreeMap<>();
@@ -46,13 +53,13 @@ public class InternalStacktraceResource {
                 }
             }
         } catch (Exception e) {
-            logger.warn("?", e);
+            log.warn("?", e);
         }
         return Response.ok(root).build();
     }
 
     private void mapThread(Thread thread, StackTraceElement[] elements, Map<String, ArrayNode> threadTraces) {
-        ArrayNode stacktrace = mapper.createArrayNode();
+        ArrayNode stacktrace = this.objectMapper.createArrayNode();
         threadTraces.put(thread.getName(), stacktrace);
         if (elements.length > 0) {
             filterElements(elements, stacktrace);

@@ -12,27 +12,27 @@ public class AwsProperties {
     }
 
     public String getCredentialsFile() {
-        return this.propertiesLoader.getProperty("aws.credentials", "hub_test_credentials.properties");
+        return propertiesLoader.getProperty("aws.credentials", "hub_test_credentials.properties");
     }
 
     public String getProtocol() {
-        return this.propertiesLoader.getProperty("aws.protocol", "HTTP");
+        return propertiesLoader.getProperty("aws.protocol", "HTTP");
     }
 
     public int getRetryDelayInMillis() {
-        return this.propertiesLoader.getProperty("aws.retry.delay.millis", 100);
+        return propertiesLoader.getProperty("aws.retry.delay.millis", 100);
     }
 
     public int getRetryMaxDelayInMillis() {
-        return this.propertiesLoader.getProperty("aws.retry.max.delay.millis", 20000);
+        return propertiesLoader.getProperty("aws.retry.max.delay.millis", 20000);
     }
 
     public int getRetryUnknownHostDelayInMillis() {
-        return this.propertiesLoader.getProperty("aws.retry.unknown.host.delay.millis", 5000);
+        return propertiesLoader.getProperty("aws.retry.unknown.host.delay.millis", 5000);
     }
 
     public String getSigningRegion() {
-        return this.propertiesLoader.getProperty("aws.signing_region", "us-east-1");
+        return propertiesLoader.getProperty("aws.signing_region", "us-east-1");
     }
 
 }

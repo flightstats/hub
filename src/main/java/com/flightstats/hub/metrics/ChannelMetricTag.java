@@ -1,6 +1,6 @@
 package com.flightstats.hub.metrics;
 
-public enum ChannelType {
+public enum ChannelMetricTag {
     SINGLE,
     HISTORICAL,
     BULK

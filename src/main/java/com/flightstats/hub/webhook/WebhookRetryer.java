@@ -2,7 +2,6 @@ package com.flightstats.hub.webhook;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubHost;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.config.WebhookProperties;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.StatsdReporter;
@@ -37,40 +36,29 @@ class WebhookRetryer {
     private final List<Predicate<DeliveryAttempt>> tryLaterIfs;
 
     private final WebhookErrorService webhookErrorService;
+    private final StatsdReporter statsdReporter;
     private final Client httpClient;
-    private final StatsdReporter statsdHandlers;
 
     @Builder
     WebhookRetryer(@Singular List<Predicate<DeliveryAttempt>> giveUpIfs,
                    @Singular List<Predicate<DeliveryAttempt>> tryLaterIfs,
                    Integer connectTimeoutSeconds,
-                   Integer readTimeoutSeconds) {
-        this(giveUpIfs,
-                tryLaterIfs,
-                connectTimeoutSeconds,
-                readTimeoutSeconds,
-                HubProvider.getInstance(WebhookErrorService.class),
-                HubProvider.getInstance(StatsdReporter.class),
-                HubProvider.getInstance(WebhookProperties.class));
-    }
-
-    @VisibleForTesting
-    WebhookRetryer(List<Predicate<DeliveryAttempt>> giveUpIfs,
-                   List<Predicate<DeliveryAttempt>> tryLaterIfs,
-                   Integer connectTimeoutSeconds,
                    Integer readTimeoutSeconds,
                    WebhookErrorService webhookErrorService,
-                   StatsdReporter statsdReporter,
-                   WebhookProperties webhookProperties) {
+                   WebhookProperties webhookProperties,
+                   StatsdReporter statsdReporter) {
+
         this.giveUpIfs = giveUpIfs;
         this.tryLaterIfs = tryLaterIfs;
         this.webhookErrorService = webhookErrorService;
+        this.statsdReporter = statsdReporter;
+
         if (connectTimeoutSeconds == null)
             connectTimeoutSeconds = webhookProperties.getConnectTimeoutSeconds();
         if (readTimeoutSeconds == null)
             readTimeoutSeconds = webhookProperties.getReadTimeoutSeconds();
+
         this.httpClient = RestClient.createClient(connectTimeoutSeconds, readTimeoutSeconds, true, false);
-        this.statsdHandlers = statsdReporter;
     }
 
     boolean send(Webhook webhook, ContentPath contentPath, ObjectNode body) {
@@ -129,7 +117,7 @@ class WebhookRetryer {
                 continue;
             } else {
                 webhookErrorService.add(attempt.getWebhook().getName(), new DateTime() + " " + attempt.getContentPath() + " " + requestResult);
-                statsdHandlers.incrementCounter("webhook.errors", "name:" + attempt.getWebhook().getName(), "status:" + attempt.getStatusCode());
+                statsdReporter.incrementCounter("webhook.errors", "name:" + attempt.getWebhook().getName(), "status:" + attempt.getStatusCode());
             }
 
             try {
@@ -141,7 +129,7 @@ class WebhookRetryer {
             } catch (InterruptedException e) {
                 String message = String.format("%s %s to %s interrupted", attempt.getWebhook().getName(), attempt.getContentPath().toUrl(), attempt.getWebhook().getCallbackUrl());
                 log.debug(message, e);
-                statsdHandlers.incrementCounter("webhook.errors", "name:" + webhook.getName(), "status:500");
+                statsdReporter.incrementCounter("webhook.errors", "name:" + webhook.getName(), "status:500");
                 Thread.currentThread().interrupt();
                 isRetrying = false;
             }

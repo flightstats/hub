@@ -3,9 +3,9 @@ package com.flightstats.hub.webhook;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.app.PermissionsChecker;
 import com.flightstats.hub.model.ContentPath;
+import com.flightstats.hub.util.StaleEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 
@@ -27,43 +27,51 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
-import static com.flightstats.hub.util.StaleUtil.addStaleEntities;
+import static com.flightstats.hub.constant.InternalResourceDescription.WEBHOOK_DESCRIPTION;
 
 @Path("/internal/webhook")
 @Slf4j
 public class InternalWebhookResource {
 
-    public static final String DESCRIPTION = "Get all webhooks, or stale or erroring webhooks.";
+    private final static String READ_ONLY_FAILURE_MESSAGE = "attempted to internally %s for webhook on node with leadership disabled %s";
     private static final Long DEFAULT_STALE_AGE = TimeUnit.HOURS.toMinutes(1);
 
-    private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private final static WebhookService webhookService = HubProvider.getInstance(WebhookService.class);
-    private final static LocalWebhookManager LOCAL_WEBHOOK_MANAGER = HubProvider.getInstance(LocalWebhookManager.class);
-    private final static String READ_ONLY_FAILURE_MESSAGE = "attempted to internally %s for webhook on node with leadership disabled %s";
     private final PermissionsChecker permissionsChecker;
+    private final WebhookService webhookService;
+    private final LocalWebhookManager localWebhookManager;
+    private final StaleEntity staleEntity;
+    private final ObjectMapper objectMapper;
 
     @Context
     private UriInfo uriInfo;
 
     @Inject
-    public InternalWebhookResource(PermissionsChecker permissionsChecker) {
+    public InternalWebhookResource(PermissionsChecker permissionsChecker,
+                                   WebhookService webhookService,
+                                   LocalWebhookManager localWebhookManager,
+                                   StaleEntity staleEntity,
+                                   ObjectMapper objectMapper) {
         this.permissionsChecker = permissionsChecker;
+        this.webhookService = webhookService;
+        this.localWebhookManager = localWebhookManager;
+        this.staleEntity = staleEntity;
+        this.objectMapper = objectMapper;
     }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response get() {
-        ObjectNode root = mapper.createObjectNode();
-        root.put("description", DESCRIPTION);
+        final ObjectNode root = objectMapper.createObjectNode();
+        root.put("description", WEBHOOK_DESCRIPTION);
 
-        ObjectNode directions = root.putObject("directions");
+        final ObjectNode directions = root.putObject("directions");
         directions.put("configs", "HTTP GET to /internal/webhook/configs to list all webhook configurations");
         directions.put("stale", "HTTP GET to /internal/webhook/stale/{age} to list webhooks that are more than {age} minutes behind.");
         directions.put("errors", "HTTP GET to /internal/webhook/errors to list all webhooks with recent errors.");
         directions.put("run/{name}", "HTTP PUT to /internal/webhook/run/{name} to start processing this webhook.");
         directions.put("delete/{name}", "HTTP PUT to /internal/webhook/delete/{name} to stop processing this webhook on this server.");
 
-        ObjectNode links = root.putObject("_links");
+        final ObjectNode links = root.putObject("_links");
         addLink(links, "self", uriInfo.getRequestUri().toString());
         addLink(links, "configs", uriInfo.getRequestUri().toString() + "/configs");
         addLink(links, "stale", uriInfo.getRequestUri().toString() + "/stale/" + DEFAULT_STALE_AGE.intValue());
@@ -76,17 +84,17 @@ public class InternalWebhookResource {
     @Path("/stale/{age}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response stale(@PathParam("age") int age) {
-        ObjectNode root = mapper.createObjectNode();
-        ObjectNode links = root.putObject("_links");
+        final ObjectNode root = objectMapper.createObjectNode();
+        final ObjectNode links = root.putObject("_links");
         addLink(links, "self", uriInfo.getRequestUri().toString());
-        addStaleEntities(root, age, (staleCutoff) -> {
+        staleEntity.add(root, age, (staleCutoff) -> {
             Map<DateTime, URI> staleWebhooks = new TreeMap<>();
             webhookService.getAll().forEach(webhook -> {
-                WebhookStatus status = webhookService.getStatus(webhook);
-                ContentPath contentPath = status.getLastCompleted();
+                final WebhookStatus status = webhookService.getStatus(webhook);
+                final ContentPath contentPath = status.getLastCompleted();
                 if (contentPath.getTime().isAfter(staleCutoff)) return;
 
-                URI webhookURI = constructWebhookURI(webhook);
+                final URI webhookURI = constructWebhookURI(webhook);
                 staleWebhooks.put(contentPath.getTime(), webhookURI);
             });
             return staleWebhooks;
@@ -98,7 +106,7 @@ public class InternalWebhookResource {
     @Path("/configs")
     @Produces(MediaType.APPLICATION_JSON)
     public Response configs() {
-        ObjectNode root = mapper.createObjectNode();
+        ObjectNode root = objectMapper.createObjectNode();
         ArrayNode arrayNode = root.putArray("webhooks");
         Collection<Webhook> webhooks = new TreeSet<>(webhookService.getAll());
         for (Webhook webhook : webhooks) {
@@ -120,10 +128,10 @@ public class InternalWebhookResource {
     @Path("/errors")
     @Produces(MediaType.APPLICATION_JSON)
     public Response errors() {
-        ObjectNode root = mapper.createObjectNode();
+        ObjectNode root = objectMapper.createObjectNode();
         ArrayNode uris = root.putArray("webhooks");
         webhookService.getAll().forEach(webhook -> {
-            WebhookStatus status = webhookService.getStatus(webhook);
+            final WebhookStatus status = webhookService.getStatus(webhook);
             if (status.getErrors().size() > 0) {
                 ObjectNode node = uris.addObject();
                 node.put("name", webhook.getName());
@@ -166,18 +174,18 @@ public class InternalWebhookResource {
     @GET
     @Path("/count")
     public Response count() {
-        return Response.ok(LOCAL_WEBHOOK_MANAGER.getCount()).build();
+        return Response.ok(localWebhookManager.getCount()).build();
     }
 
     private Response attemptRun(String name) {
-        if (LOCAL_WEBHOOK_MANAGER.ensureRunning(name)) {
+        if (localWebhookManager.ensureRunning(name)) {
             return Response.ok().build();
         }
         return Response.status(400).build();
     }
 
     private Response attemptDelete(String name) {
-        LOCAL_WEBHOOK_MANAGER.stopLocal(name, true);
+        localWebhookManager.stopLocal(name, true);
         return Response.ok().build();
     }
 

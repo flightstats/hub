@@ -1,10 +1,9 @@
 package com.flightstats.hub.model;
 
 import com.flightstats.hub.util.TimeUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
@@ -15,9 +14,9 @@ import java.util.Optional;
  * A MinutePath represents the end of a minute period.
  * So any ContentKeys contained within that minute come before the MinutePath.
  */
+@Slf4j
 public class MinutePath implements ContentPathKeys {
     public static final MinutePath NONE = new MinutePath(new DateTime(1, DateTimeZone.UTC));
-    private final static Logger logger = LoggerFactory.getLogger(MinutePath.class);
     private final DateTime time;
     private final Collection<ContentKey> keys;
 
@@ -42,7 +41,7 @@ public class MinutePath implements ContentPathKeys {
         try {
             return Optional.of(new MinutePath(TimeUtil.minutes(key)));
         } catch (Exception e) {
-            logger.trace("unable to parse {} {}", key, e.getMessage());
+            log.trace("unable to parse {} {}", key, e.getMessage());
             return Optional.empty();
         }
     }

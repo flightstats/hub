@@ -1,14 +1,13 @@
 package com.flightstats.hub.app;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.util.concurrent.Callable;
 
+@Slf4j
 public class LocalHostOnly {
-    private final static Logger logger = LoggerFactory.getLogger(LocalHostOnly.class);
 
     public static Response getResponse(UriInfo uriInfo, Callable callable) throws Exception {
         if (isLocalhost(uriInfo)) {
@@ -19,7 +18,7 @@ public class LocalHostOnly {
             return Response.ok().build();
         } else {
             String msg = "only calls from localhost are allowed";
-            logger.warn(msg);
+            log.warn(msg);
             return Response.status(Response.Status.FORBIDDEN).entity(msg).build();
         }
     }
@@ -27,4 +26,5 @@ public class LocalHostOnly {
     public static boolean isLocalhost(UriInfo uriInfo) {
         return uriInfo.getBaseUri().toString().contains("localhost");
     }
+
 }

@@ -16,9 +16,8 @@ import com.flightstats.hub.spoke.FileSpokeStore;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -36,8 +35,8 @@ import java.util.function.Consumer;
  * SingleContentService allows for the singleHub to have different characteristics than using Spoke in the clustered hub.
  * Spoke is designed to hold a short period's cache, while the singleHub may hold data spanning much large periods of time.
  */
+@Slf4j
 public class SingleContentService implements ContentService {
-    private final static Logger logger = LoggerFactory.getLogger(SingleContentService.class);
 
     @Inject
     @Named("WRITE") //this isn't great, but java ¯\_(ツ)_/¯
@@ -58,9 +57,9 @@ public class SingleContentService implements ContentService {
     public Collection<ContentKey> insert(BulkContent bulkContent) throws Exception {
         bulkContent.withChannel(formatChannel(bulkContent.getChannel()));
         Collection<ContentKey> keys = new ArrayList<>();
-        logger.info("inserting {}", bulkContent);
+        log.info("inserting {}", bulkContent);
         for (Content content : bulkContent.getItems()) {
-            logger.info("inserting item key {}", content.getContentKey().get());
+            log.info("inserting item key {}", content.getContentKey().get());
             content.packageStream();
             keys.add(insert(bulkContent.getChannel(), content));
         }
@@ -86,7 +85,7 @@ public class SingleContentService implements ContentService {
                 return Optional.of(ContentMarshaller.toContent(bytes, key));
             }
         } catch (Exception e) {
-            logger.warn("unable to get data: " + path, e);
+            log.warn("unable to get data: " + path, e);
         }
         return Optional.empty();
     }
@@ -123,7 +122,7 @@ public class SingleContentService implements ContentService {
         try {
             fileSpokeStore.delete(formatChannel(channelName));
         } catch (Exception e) {
-            logger.warn("unable to delete channel " + channelName, e);
+            log.warn("unable to delete channel " + channelName, e);
         }
     }
 
@@ -138,7 +137,7 @@ public class SingleContentService implements ContentService {
             boolean delete = fileSpokeStore.deleteFile(path);
             ActiveTraces.getLocal().add("SingleContentService.delete", delete, path);
         } catch (Exception e) {
-            logger.warn("deletion error", e);
+            log.warn("deletion error", e);
         }
     }
 
@@ -168,7 +167,7 @@ public class SingleContentService implements ContentService {
             String keyString = baos.toString();
             ContentKeyUtil.convertKeyStrings(keyString, keys);
         } catch (IOException e) {
-            logger.warn("wah?" + query, e);
+            log.warn("wah?" + query, e);
         }
     }
 

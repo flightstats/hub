@@ -38,6 +38,7 @@ import java.util.Optional;
 
 @Slf4j
 public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
+
     private final AmazonDynamoDB dbClient;
     private final DynamoProperties dynamoProperties;
 

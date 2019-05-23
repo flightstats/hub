@@ -1,9 +1,9 @@
 package com.flightstats.hub.channel;
 
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.rest.Linked;
 
+import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -18,13 +18,20 @@ import java.util.TreeMap;
 /**
  * This resource represents operations on tags.
  */
-@SuppressWarnings("WeakerAccess")
 @Path("/tag")
 public class TagResource {
 
-    private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
+    private final ChannelService channelService;
+    private final LinkBuilder linkBuilder;
+
     @Context
     private UriInfo uriInfo;
+
+    @Inject
+    public TagResource(ChannelService channelService, LinkBuilder linkBuilder) {
+        this.channelService = channelService;
+        this.linkBuilder = linkBuilder;
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -33,7 +40,7 @@ public class TagResource {
         for (String tag : channelService.getTags()) {
             tagUriMap.put(tag, URI.create(uriInfo.getBaseUri() + "tag/" + tag));
         }
-        Linked<?> result = LinkBuilder.buildLinks(uriInfo, tagUriMap, "tags");
+        Linked<?> result = linkBuilder.buildLinks(uriInfo, tagUriMap, "tags");
         return Response.ok(result).build();
     }
 

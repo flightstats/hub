@@ -1,19 +1,17 @@
 package com.flightstats.hub.model;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@Slf4j
 public class ChannelContentKey implements Comparable<ChannelContentKey> {
-
-    private final static Logger logger = LoggerFactory.getLogger(ChannelContentKey.class);
     private final ContentKey contentKey;
     private final String channel;
 
@@ -48,7 +46,7 @@ public class ChannelContentKey implements Comparable<ChannelContentKey> {
             String channelPath = Stream.of(channel, year, month, day, hour, minute, second, millisecond, hash).map(String::valueOf).collect(Collectors.joining("/"));
             return fromChannelPath(channelPath);
         } catch (IllegalArgumentException | ArrayIndexOutOfBoundsException e) {
-            logger.error("cannot build key from spoke path: " + path);
+            log.error("cannot build key from spoke path: " + path);
             throw new IllegalArgumentException(e);
         }
     }

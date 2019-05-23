@@ -1,13 +1,21 @@
 package com.flightstats.hub.channel;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.model.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.flightstats.hub.dao.aws.ContentRetriever;
+import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.DirectionQuery;
+import com.flightstats.hub.model.Epoch;
+import com.flightstats.hub.model.Location;
+import com.flightstats.hub.model.Order;
 
-import javax.ws.rs.*;
+import javax.inject.Inject;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -22,14 +30,33 @@ import static javax.ws.rs.core.Response.Status.SEE_OTHER;
 @Path("/channel/{channel}/earliest")
 public class ChannelEarliestResource {
 
-    private final static Logger logger = LoggerFactory.getLogger(ChannelEarliestResource.class);
-    private final static TagEarliestResource tagEarliestResource = HubProvider.getInstance(TagEarliestResource.class);
-    private final static ObjectMapper mapper = HubProvider.getInstance(ObjectMapper.class);
-    private final static ChannelService channelService = HubProvider.getInstance(ChannelService.class);
+    private final TagEarliestResource tagEarliestResource;
+    private final ChannelService channelService;
+    private final LinkBuilder linkBuilder;
+    private final ContentRetriever contentRetriever;
+    private final BulkBuilder bulkBuilder;
+
     @Context
     private UriInfo uriInfo;
 
-    public static DirectionQuery getDirectionQuery(String channel, int count, boolean stable, String location, String epoch) {
+    @Inject
+    public ChannelEarliestResource(TagEarliestResource tagEarliestResource,
+                                   ChannelService channelService,
+                                   LinkBuilder linkBuilder,
+                                   ContentRetriever contentRetriever,
+                                   BulkBuilder bulkBuilder) {
+        this.tagEarliestResource = tagEarliestResource;
+        this.channelService = channelService;
+        this.linkBuilder = linkBuilder;
+        this.contentRetriever = contentRetriever;
+        this.bulkBuilder = bulkBuilder;
+    }
+
+    public static DirectionQuery getDirectionQuery(String channel,
+                                                   int count,
+                                                   boolean stable,
+                                                   String location,
+                                                   String epoch) {
         return DirectionQuery.builder()
                 .channelName(channel)
                 .next(true)
@@ -51,7 +78,7 @@ public class ChannelEarliestResource {
             return tagEarliestResource.getEarliest(tag, stable, trace, location, epoch, uriInfo);
         }
         DirectionQuery query = getDirectionQuery(channel, 1, stable, location, epoch);
-        Collection<ContentKey> keys = channelService.query(query);
+        Collection<ContentKey> keys = contentRetriever.query(query);
         if (keys.isEmpty()) {
             return Response.status(NOT_FOUND).build();
         } else {
@@ -79,17 +106,16 @@ public class ChannelEarliestResource {
             return tagEarliestResource.getEarliestCount(tag, count, stable, bulk, batch, trace, location, epoch, order, accept, uriInfo);
         }
         DirectionQuery query = getDirectionQuery(channel, count, stable, location, epoch);
-        SortedSet<ContentKey> keys = channelService.query(query);
+        SortedSet<ContentKey> keys = contentRetriever.query(query);
         if (keys.isEmpty()) {
             return Response.status(NOT_FOUND).build();
         }
-        boolean descending = Order.isDescending(order);
+        final boolean descending = Order.isDescending(order);
         if (bulk || batch) {
-            return BulkBuilder.build(keys, channel, channelService, uriInfo, accept, descending);
+            return bulkBuilder.build(keys, channel, channelService, uriInfo, accept, descending);
         } else {
-            return LinkBuilder.directionalResponse(keys, count, query, mapper, uriInfo, false, trace, descending);
+            return linkBuilder.directionalResponse(keys, count, query, uriInfo, false, trace, descending);
         }
     }
-
 
 }

@@ -1,10 +1,9 @@
 package com.flightstats.hub.webhook;
 
-import org.junit.jupiter.api.Test;
 import com.flightstats.hub.config.PropertiesLoader;
 import com.flightstats.hub.config.WebhookProperties;
 import com.flightstats.hub.metrics.StatsdReporter;
-
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,14 +23,15 @@ class WebhookRetryerTest {
     private StatsdReporter statsdReporter = mock(StatsdReporter.class);
     private WebhookProperties webhookProperties = new WebhookProperties(PropertiesLoader.getInstance());
 
-    private WebhookRetryer retryer = new WebhookRetryer(
+
+    private final WebhookRetryer retryer = new WebhookRetryer(
             giveUpIfs,
             tryLaterIfs,
             connectTimeoutSeconds,
             readTimeoutSeconds,
             webhookErrorService,
-            statsdReporter,
-            webhookProperties);
+            webhookProperties,
+            statsdReporter);
 
     @Test
     void testShouldGiveUpIf() {
@@ -46,7 +46,7 @@ class WebhookRetryerTest {
     }
 
     @Test
-   void testDetermineResultFromStatusCode() {
+    void testDetermineResultFromStatusCode() {
         assertEquals("200 OK", retryer.determineResult(DeliveryAttempt.builder().statusCode(200).build()));
         assertEquals("400 Bad Request", retryer.determineResult(DeliveryAttempt.builder().statusCode(400).build()));
     }

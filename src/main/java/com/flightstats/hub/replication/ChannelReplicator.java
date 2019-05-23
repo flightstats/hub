@@ -1,22 +1,24 @@
 package com.flightstats.hub.replication;
 
-import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.webhook.Webhook;
 
+import static com.flightstats.hub.model.WebhookType.SECOND;
+
 class ChannelReplicator implements Replicator {
 
-    private static final HubUtils hubUtils = HubProvider.getInstance(HubUtils.class);
+    private final HubUtils hubUtils;
+    private final ChannelConfig channel;
+    private final String appUrl;
+    private final String appEnv;
 
-    private ChannelConfig channel;
-    private String appUrl;
-    private String appEnv;
 
-
-    ChannelReplicator(ChannelConfig channel,
+    ChannelReplicator(HubUtils hubUtils,
+                      ChannelConfig channel,
                       String appUrl,
                       String appEnv) {
+        this.hubUtils = hubUtils;
         this.channel = channel;
         this.appUrl = appUrl;
         this.appEnv = appEnv;
@@ -29,7 +31,7 @@ class ChannelReplicator implements Replicator {
                 .channelUrl(channel.getReplicationSource())
                 .heartbeat(true)
                 .callbackTimeoutSeconds(5 * 60)
-                .batch(Webhook.SECOND);
+                .batch(SECOND.name());
         hubUtils.startWebhook(builder.build());
     }
 

@@ -41,10 +41,10 @@ public class DistributedLeaderLockManager {
                 log.debug("acquired {} {}", leadershipLock.getLockPath(), leadership.hasLeadership());
                 return true;
             } else {
-                log.debug("unable to acquire {} ", leadershipLock.getLockPath());
+                log.warn("unable to acquire {} ", leadershipLock.getLockPath());
             }
         } catch (Exception e) {
-            log.warn("oh no! issue with " + leadershipLock.getLockPath(), e);
+            log.error("oh no! issue with " + leadershipLock.getLockPath(), e);
             release(leadershipLock);
         }
         return false;
@@ -55,9 +55,9 @@ public class DistributedLeaderLockManager {
         try {
             lock.getMutex().release();
         } catch (IllegalStateException e) {
-            log.info("illegal state " + lock.getLockPath() + " " + e.getMessage());
+            log.warn("illegal state {} {}", lock.getLockPath(), e.getMessage());
         } catch (Exception e) {
-            log.warn("issue releasing mutex for " + lock.getLockPath(), e);
+            log.warn("issue releasing mutex for {}", lock.getLockPath(), e);
         }
     }
 }
