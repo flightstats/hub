@@ -433,20 +433,25 @@ public class ClusterContentService implements ContentService {
     }
 
     @VisibleForTesting
-    Optional<ContentKey> findLatestKey(DirectionQuery latestQuery, String channel, Optional<ContentKey> cachedKey) {
-        Optional<ContentKey> latest = spokeWriteContentDao.getLatest(channel, latestQuery.getStartKey(), ActiveTraces.getLocal());
-        boolean shouldUpdateCache = latestQuery.isStable();
-
+    Optional<ContentKey> findLatestKey(DirectionQuery latestQuery, String channel, Optional<ContentKey> latestFromZKCache) {
+        Optional<ContentKey> latest = Optional.empty();
+        boolean hadToFetchFromLongTermStorage = false;
+        
+        Optional<ContentKey> latestFromSpoke = spokeWriteContentDao.getLatest(channel, latestQuery.getStartKey(), ActiveTraces.getLocal());
+        if (latestFromSpoke.isPresent()) {
+            latest = latestFromSpoke;
+        }
+        
         if (!latest.isPresent()) {
-            if (cachedKey.isPresent()) {
-                latest = cachedKey;
-            } else {
-                latest = findLatestAcrossLocations(latestQuery, channel);
-                shouldUpdateCache = true;
-            }
+            latest = latestFromZKCache;
         }
 
-        if (shouldUpdateCache) {
+        if (!latest.isPresent()) {  // implicit assumption that anything pulled from storage is "stable"
+            latest = findLatestAcrossLocations(latestQuery, channel);
+            hadToFetchFromLongTermStorage = true;
+        }
+
+        if (latestQuery.isStable() || hadToFetchFromLongTermStorage) {
             if (latest.isPresent()) {
                 ActiveTraces.getLocal().add("updating cache with latestKey {} {}", channel, latest.get());
                 latestContentCache.setIfNewer(channel, latest.get());
@@ -455,6 +460,7 @@ public class ClusterContentService implements ContentService {
                 latestContentCache.setIfNewer(channel, ContentKey.NONE);
             }
         }
+        
         return latest;
     }
 
