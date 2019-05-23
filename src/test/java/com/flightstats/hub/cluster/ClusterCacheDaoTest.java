@@ -9,8 +9,10 @@ import com.flightstats.hub.test.Integration;
 import org.apache.curator.framework.CuratorFramework;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -34,7 +36,7 @@ class ClusterCacheDaoTest {
 
     @Test
     void testInitializeCreatesPath() {
-        String name = "testLifeCycle";
+        String name = "testCreatesPath";
         DateTime start = new DateTime(2014, 12, 3, 20, 45, DateTimeZone.UTC);
         ContentKey key1 = new ContentKey(start, "B");
         clusterCacheDao.initialize(name, key1, BASE_PATH);
@@ -43,7 +45,7 @@ class ClusterCacheDaoTest {
 
     @Test
     void testGetRecreatesDeletedPath() {
-        String name = "testLifeCycle";
+        String name = "testDeletedPath";
         DateTime start = new DateTime(2014, 12, 3, 20, 45, DateTimeZone.UTC);
 
         ContentKey key1 = new ContentKey(start, "B");
