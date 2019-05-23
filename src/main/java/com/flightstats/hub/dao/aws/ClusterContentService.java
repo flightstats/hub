@@ -117,7 +117,7 @@ public class ClusterContentService implements ContentService {
         this.contentProperties = contentProperties;
         this.spokeProperties = spokeProperties;
         this.executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("ClusterContentService-%d").build());
-        this.zkCacheStateUpdateExecutor = Executors.newScheduledThreadPool(4);
+        this.zkCacheStateUpdateExecutor = Executors.newScheduledThreadPool(4, new ThreadFactoryBuilder().setNameFormat("ZK-Latest-Updater-%d").build());
     }
 
     private SortedSet<ContentKey> query(Function<ContentDao, SortedSet<ContentKey>> daoQuery, List<ContentDao> contentDaos) {
