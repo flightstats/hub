@@ -128,14 +128,14 @@ public class ChannelService {
         if (content.isNew() && contentRetriever.isReplicating(channelName)) {
             throw new ForbiddenRequestException(channelName + " cannot modified while replicating");
         }
-        final long start = System.currentTimeMillis();
-        final ContentKey contentKey = insertInternal(channelName, content);
+        long start = System.currentTimeMillis();
+        ContentKey contentKey = insertInternal(channelName, content);
         statsdReporter.insert(channelName, start, SINGLE, 1, content.getSize());
         return contentKey;
     }
 
     private ContentKey insertInternal(String channelName, Content content) {
-        final ChannelConfig channelConfig = contentRetriever.getExpectedCachedChannelConfig(channelName);
+        ChannelConfig channelConfig = contentRetriever.getExpectedCachedChannelConfig(channelName);
         return inFlightService.inFlight(() -> {
             Traces traces = ActiveTraces.getLocal();
             traces.add("ContentService.insert");
@@ -161,15 +161,15 @@ public class ChannelService {
 
     @SneakyThrows
     public boolean historicalInsert(String channelName, Content content) throws RuntimeException {
-        final String normalizedChannelName = contentRetriever.getDisplayName(channelName);
+        String normalizedChannelName = contentRetriever.getDisplayName(channelName);
         if (!isHistorical(channelName)) {
             log.warn("historical inserts require a mutableTime on the channel. {}", normalizedChannelName);
             throw new ForbiddenRequestException("historical inserts require a mutableTime on the channel.");
         }
         long start = System.currentTimeMillis();
 
-        final ChannelConfig channelConfig = contentRetriever.getExpectedCachedChannelConfig(channelName);
-        final ContentKey contentKey = content.getContentKey()
+        ChannelConfig channelConfig = contentRetriever.getExpectedCachedChannelConfig(channelName);
+        ContentKey contentKey = content.getContentKey()
                 .orElseThrow(() -> {
                     throw new RuntimeException("internal error: invalid content key on historical insert to channel: " + channelName);
                 });
@@ -178,7 +178,7 @@ public class ChannelService {
             log.warn(msg);
             throw new InvalidRequestException(msg);
         }
-        final boolean insert = inFlightService.inFlight(() -> {
+        boolean insert = inFlightService.inFlight(() -> {
             content.packageStream();
             checkZeroBytes(content, channelConfig);
             return contentService.historicalInsert(normalizedChannelName, content);
@@ -195,7 +195,7 @@ public class ChannelService {
     }
 
     public Collection<ContentKey> insert(BulkContent content) {
-        final BulkContent bulkContent = content.withChannel(contentRetriever.getDisplayName(content.getChannel()));
+        BulkContent bulkContent = content.withChannel(contentRetriever.getDisplayName(content.getChannel()));
         String channel = bulkContent.getChannel();
         if (bulkContent.isNew() && contentRetriever.isReplicating(channel)) {
             throw new ForbiddenRequestException(channel + " cannot modified while replicating");
@@ -239,8 +239,8 @@ public class ChannelService {
     }
 
     public Collection<ChannelConfig> getChannels(String tag, boolean useCache) {
-        final Collection<ChannelConfig> matchingChannels = new ArrayList<>();
-        final Iterable<ChannelConfig> channels = getChannels(useCache);
+        Collection<ChannelConfig> matchingChannels = new ArrayList<>();
+        Iterable<ChannelConfig> channels = getChannels(useCache);
         for (ChannelConfig channel : channels) {
             if (channel.getTags().contains(tag)) {
                 matchingChannels.add(channel);
@@ -250,8 +250,8 @@ public class ChannelService {
     }
 
     public Iterable<String> getTags() {
-        final Collection<String> matchingChannels = new HashSet<>();
-        final Iterable<ChannelConfig> channels = getChannels();
+        Collection<String> matchingChannels = new HashSet<>();
+        Iterable<ChannelConfig> channels = getChannels();
         for (ChannelConfig channel : channels) {
             matchingChannels.addAll(channel.getTags());
         }
@@ -264,7 +264,7 @@ public class ChannelService {
     }
 
     private DateTime getChannelLimitTime(String channelName) {
-        final ChannelConfig channelConfig = contentRetriever.getExpectedCachedChannelConfig(channelName);
+        ChannelConfig channelConfig = contentRetriever.getExpectedCachedChannelConfig(channelName);
         if (channelConfig.isHistorical()) {
             return TimeUtil.BIG_BANG;
         }
@@ -273,11 +273,11 @@ public class ChannelService {
 
     public boolean delete(String channelName) {
         channelName = contentRetriever.getDisplayName(channelName);
-        final Optional<ChannelConfig> optionalChannelConfig = contentRetriever.getCachedChannelConfig(channelName);
+        Optional<ChannelConfig> optionalChannelConfig = contentRetriever.getCachedChannelConfig(channelName);
         if (!optionalChannelConfig.isPresent()) {
             return false;
         }
-        final ChannelConfig channelConfig = optionalChannelConfig.get();
+        ChannelConfig channelConfig = optionalChannelConfig.get();
         contentService.delete(channelConfig.getDisplayName());
         channelConfigDao.delete(channelConfig.getDisplayName());
         if (channelConfig.isReplicating()) {
@@ -291,14 +291,14 @@ public class ChannelService {
 
     public boolean delete(String channelName, ContentKey contentKey) {
         channelName = contentRetriever.getDisplayName(channelName);
-        final ChannelConfig channelConfig = contentRetriever.getExpectedCachedChannelConfig(channelName);
+        ChannelConfig channelConfig = contentRetriever.getExpectedCachedChannelConfig(channelName);
         if (channelConfig.isHistorical()) {
             if (!contentKey.getTime().isAfter(channelConfig.getMutableTime())) {
                 contentService.delete(channelName, contentKey);
                 return true;
             }
         }
-        final String message = "item is not within the channel's mutableTime";
+        String message = "item is not within the channel's mutableTime";
         ActiveTraces.getLocal().add(message, channelName, contentKey);
         throw new MethodNotAllowedException(message);
     }
