@@ -29,7 +29,7 @@ import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
 @Slf4j
 public class GuiceModule extends AbstractModule {
 
-    private final String releaseName = "ddt-" + randomAlphaNumeric(10).toLowerCase();
+    private final String releaseName = "loopy-joey"; //"ddt-" + randomAlphaNumeric(10).toLowerCase();
     private static final String PROPERTY_FILE_NAME = "system-test-hub.properties";
 
     @Override

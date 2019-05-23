@@ -31,7 +31,7 @@ public class HubLifecycle extends DependencyInjector {
     private ServiceDelete serviceDelete;
 
     public void setup() {
-        this.releaseInstall.install(this.releaseName, this.chartPath);
+        //this.releaseInstall.install(this.releaseName, this.chartPath);
     }
 
     public void serviceDelete(List<String> serviceName) {
@@ -39,7 +39,7 @@ public class HubLifecycle extends DependencyInjector {
     }
 
     public void cleanup() {
-        this.releaseDelete.delete(this.releaseName);
+        // this.releaseDelete.delete(this.releaseName);
     }
 
 }

@@ -31,7 +31,7 @@ public class ReleaseDelete {
             uninstallRequestBuilder.setTimeout(75L);
 
             final Future<UninstallReleaseResponse> releaseFuture = releaseManager.uninstall(uninstallRequestBuilder.build());
-            releaseFuture.get();
+            //releaseFuture.get();
 
             log.info("Hub release {} delete completed in {} ms", releaseName, System.currentTimeMillis() - start);
         }
