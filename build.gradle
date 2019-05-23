@@ -65,7 +65,7 @@ task systemTest(type: Test, description: 'Runs the system tests.', group: 'Verif
     }
     testClassesDirs = sourceSets.systemTest.output.classesDirs
     classpath = sourceSets.systemTest.runtimeClasspath
-    exclude  'com/flightstats/hub/system/functional/**'
+//    exclude  'com/flightstats/hub/system/functional/**'
     mustRunAfter tasks.test
 }
 
@@ -182,6 +182,8 @@ dependencies {
     systemTestCompile('org.microbean:microbean-helm:2.8.2.1.0.5') {
         exclude group: 'io.netty', module: 'netty-tcnative-boringssl-static'
     }
+
+    systemTestCompile 'com.amazonaws:aws-java-sdk:1.11.248'
 
 }
 

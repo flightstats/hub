@@ -51,6 +51,14 @@ public class ChannelService {
         assertEquals(CREATED.getStatusCode(), response.code());
     }
 
+    @SneakyThrows
+    public void createCustom(Channel channel) {
+        Call<Object> call = channelResourceClient.create(channel);
+        Response<Object> response = call.execute();
+        log.info("channel creation response {} ", response);
+        assertEquals(CREATED.getStatusCode(), response.code());
+    }
+
     public List<String> addItems(String channelName, Object data, int count) {
         final List<String> channelItems = new ArrayList<>();
         for (int i = 0; i < count; i++) {

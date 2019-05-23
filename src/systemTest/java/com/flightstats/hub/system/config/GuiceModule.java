@@ -1,5 +1,6 @@
 package com.flightstats.hub.system.config;
 
+import com.amazonaws.services.s3.AmazonS3;
 import com.flightstats.hub.clients.callback.CallbackClientFactory;
 import com.flightstats.hub.clients.hub.HubClientFactory;
 import com.flightstats.hub.clients.s3.S3ClientFactory;
@@ -36,13 +37,10 @@ public class GuiceModule extends AbstractModule {
         Names.bindProperties(binder(), loadProperties());
         final Map<String, String> releaseNameProperty = new HashMap<>();
         releaseNameProperty.put("helm.release.name", releaseName);
-        Names.bindProperties(binder(), releaseNameProperty);
 
-        bind(String.class)
-                .annotatedWith(Names.named("release.name"))
-                .toInstance(releaseName);
+        Names.bindProperties(binder(), releaseNameProperty);
         bind(StringHelper.class).toInstance(stringHelper);
-        bind(S3ClientFactory.class);
+        bind(S3ClientFactory.class).asEagerSingleton();
         bind(HubClientFactory.class);
         bind(CallbackClientFactory.class);
         bind(ChannelService.class);
@@ -75,15 +73,9 @@ public class GuiceModule extends AbstractModule {
     }
 
     @Singleton
-    @Named("s3")
     @Provides
-    public Retrofit retrofitS3(@Named("s3.url") String s3Url) {
-        return new Retrofit.Builder()
-                .baseUrl(String.format(s3Url, releaseName))
-                .addConverterFactory(ScalarsConverterFactory.create())
-                .addConverterFactory(GsonConverterFactory.create())
-                .client(new OkHttpClient.Builder().build())
-                .build();
+    public AmazonS3 s3Client(S3ClientFactory s3ClientFactory) {
+        return s3ClientFactory.getS3Client();
     }
 
     private Properties loadProperties() {

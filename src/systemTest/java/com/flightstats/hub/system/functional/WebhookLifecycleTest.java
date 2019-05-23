@@ -8,6 +8,8 @@ import com.flightstats.hub.system.service.CallbackService;
 import com.flightstats.hub.system.service.ChannelService;
 import com.flightstats.hub.system.service.WebhookService;
 import javax.inject.Inject;
+
+import com.flightstats.hub.utility.StringHelper;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterAll;
@@ -21,7 +23,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
@@ -39,6 +40,8 @@ class WebhookLifecycleTest extends DependencyInjector {
     private HubLifecycle hubLifecycle;
     @Inject
     private ModelBuilder modelBuilder;
+    @Inject
+    private StringHelper stringHelper;
 
     @BeforeAll
     void hubSetup() {
@@ -47,8 +50,8 @@ class WebhookLifecycleTest extends DependencyInjector {
 
     @BeforeEach
     void before() {
-        this.channelName = randomAlphaNumeric(10);
-        this.webhookName = randomAlphaNumeric(10);
+        this.channelName = stringHelper.randomAlphaNumeric(10);
+        this.webhookName = stringHelper.randomAlphaNumeric(10);
     }
 
     private Webhook buildWebhook() {

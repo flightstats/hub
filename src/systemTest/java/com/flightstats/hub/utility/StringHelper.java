@@ -12,4 +12,5 @@ public class StringHelper {
     public String randomAlphaNumeric(int length) {
         return generator.generate(length);
     }
+
 }
