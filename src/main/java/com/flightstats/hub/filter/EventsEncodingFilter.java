@@ -1,9 +1,8 @@
 package com.flightstats.hub.filter;
 
 import com.google.common.base.Joiner;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerResponseContext;
@@ -20,9 +19,8 @@ import java.util.List;
  */
 @SuppressWarnings("WeakerAccess")
 @PreMatching
+@Slf4j
 public final class EventsEncodingFilter implements ContainerResponseFilter {
-
-    private final static Logger logger = LoggerFactory.getLogger(EventsEncodingFilter.class);
 
     @Override
     public void filter(ContainerRequestContext request, ContainerResponseContext response) throws IOException {
@@ -34,7 +32,7 @@ public final class EventsEncodingFilter implements ContainerResponseFilter {
 
     private void handleEncoding(ContainerRequestContext request) {
         List<String> acceptEncoding = request.getHeaders().get(HttpHeaders.ACCEPT_ENCODING);
-        logger.trace("acceptEncoding {}", acceptEncoding);
+        log.trace("acceptEncoding {}", acceptEncoding);
         List<String> allowedEncoding = new ArrayList<>();
         if (acceptEncoding != null) {
             for (String encoding : acceptEncoding) {
@@ -47,7 +45,7 @@ public final class EventsEncodingFilter implements ContainerResponseFilter {
                 }
                 allowedEncoding.add(Joiner.on(",").join(innerEncoding));
             }
-            logger.debug("removing from events {} ", allowedEncoding);
+            log.debug("removing from events {} ", allowedEncoding);
             request.getHeaders().put(HttpHeaders.ACCEPT_ENCODING, allowedEncoding);
         }
     }

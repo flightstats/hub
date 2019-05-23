@@ -2,16 +2,15 @@ package com.flightstats.hub.cluster;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.state.ConnectionState;
 import org.apache.curator.framework.state.ConnectionStateListener;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@Slf4j
 @Singleton
 public class ZooKeeperState {
-    private final static Logger logger = LoggerFactory.getLogger(ZooKeeperState.class);
     private final ConnectionStateListener connectionStateListener;
     private final AtomicBoolean stopWorking = new AtomicBoolean(false);
     private ConnectionState connectionState = ConnectionState.SUSPENDED;
@@ -23,7 +22,7 @@ public class ZooKeeperState {
             connectionState = newState;
             boolean healthy = isHealthy();
             stopWorking.set(!healthy);
-            logger.info("state change from " + oldState + " to " + newState + " healthy " + healthy);
+            log.info("state change from " + oldState + " to " + newState + " healthy " + healthy);
         };
     }
 

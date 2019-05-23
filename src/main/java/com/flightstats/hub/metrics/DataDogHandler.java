@@ -4,13 +4,12 @@ import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Inject;
 import com.sun.jersey.api.client.ClientResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.ws.rs.core.MediaType;
 
+@Slf4j
 class DataDogHandler {
-    private static final Logger logger = LoggerFactory.getLogger(DataDogHandler.class);
     private MetricsConfig metricsConfig;
 
     @Inject
@@ -19,7 +18,7 @@ class DataDogHandler {
     }
 
     void mute() {
-        logger.info("Attempting to mute datadog");
+        log.info("Attempting to mute datadog");
         String datadogUrl = metricsConfig.getDatadogApiUrl() + "/downtime";
         String apiKey = metricsConfig.getDataDogAPIKey();
         String appKey = metricsConfig.getDataDogAppKey();
@@ -30,7 +29,7 @@ class DataDogHandler {
         long fourMinutesFutureInSeconds = nowMillis / 1000 + fourMinutesInSeconds;
 
         if ("".equals(apiKey) || "".equals(appKey)) {
-            logger.warn("datadog api_key or app_key not defined");
+            log.warn("datadog api_key or app_key not defined");
             return;
         }
         String dataTemplate = "{ \"message\": \"restarting\", \"scope\": \"name:%s\", \"end\": %d }";
@@ -47,12 +46,12 @@ class DataDogHandler {
 
             int status = response.getStatus();
             if (status >= 200 && status <= 299) {
-                logger.info("Muted datadog monitoring: " + name + " during restart");
+                log.info("Muted datadog monitoring: " + name + " during restart");
             } else {
-                logger.warn("Muting datadog monitoring failed: " + name + " status " + status);
+                log.warn("Muting datadog monitoring failed: " + name + " status " + status);
             }
         } catch (Exception e) {
-            logger.warn("Muting datadog error ", e);
+            log.warn("Muting datadog error ", e);
         }
     }
 }

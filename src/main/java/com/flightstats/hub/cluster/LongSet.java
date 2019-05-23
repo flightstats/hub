@@ -1,18 +1,16 @@
 package com.flightstats.hub.cluster;
 
 import com.google.inject.Inject;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@Slf4j
 public class LongSet {
-    private final static Logger logger = LoggerFactory.getLogger(LongSet.class);
-
     private final String path;
     private final CuratorFramework curator;
 
@@ -27,7 +25,7 @@ public class LongSet {
         try {
             curator.delete().deletingChildrenIfNeeded().forPath(path);
         } catch (Exception e) {
-            logger.warn("unable to delete {} {}", path, e.getMessage());
+            log.warn("unable to delete {} {}", path, e.getMessage());
         }
     }
 
@@ -37,7 +35,7 @@ public class LongSet {
         } catch (KeeperException.NodeExistsException ignore) {
             //this will typically happen, except the first time
         } catch (Exception e) {
-            logger.warn("unable to create node", e);
+            log.warn("unable to create node", e);
         }
     }
 
@@ -45,9 +43,9 @@ public class LongSet {
         try {
             curator.create().forPath(getValuePath(value));
         } catch (KeeperException.NodeExistsException ignore) {
-            logger.info("node exists " + getValuePath(value));
+            log.info("node exists " + getValuePath(value));
         } catch (Exception e) {
-            logger.warn("unable to create " + getValuePath(value), e);
+            log.warn("unable to create " + getValuePath(value), e);
         }
     }
 
@@ -55,7 +53,7 @@ public class LongSet {
         try {
             curator.delete().forPath(getValuePath(value));
         } catch (Exception e) {
-            logger.warn("unable to delete " + getValuePath(value), e);
+            log.warn("unable to delete " + getValuePath(value), e);
         }
     }
 
@@ -67,7 +65,7 @@ public class LongSet {
                 longs.add(Long.valueOf(string));
             }
         } catch (Exception e) {
-            logger.warn("unable to get set " + path, e);
+            log.warn("unable to get set " + path, e);
         }
         return longs;
     }
