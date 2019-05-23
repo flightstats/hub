@@ -56,6 +56,7 @@ public class ChannelService {
         Call<Object> call = channelResourceClient.create(channel);
         Response<Object> response = call.execute();
         log.info("channel creation response {} ", response);
+        log.info("channel creation message", response.errorBody());
         assertEquals(CREATED.getStatusCode(), response.code());
     }
 

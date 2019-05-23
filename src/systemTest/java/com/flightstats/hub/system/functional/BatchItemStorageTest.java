@@ -1,20 +1,22 @@
 package com.flightstats.hub.system.functional;
 
+import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.flightstats.hub.model.Channel;
 import com.flightstats.hub.model.ChannelStorage;
 import com.flightstats.hub.system.config.DependencyInjector;
 import com.flightstats.hub.system.service.ChannelService;
 import com.flightstats.hub.system.service.S3Service;
 import com.flightstats.hub.utility.StringHelper;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.awaitility.Awaitility;
 import org.awaitility.Duration;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 class BatchItemStorageTest extends DependencyInjector {
@@ -38,39 +40,42 @@ class BatchItemStorageTest extends DependencyInjector {
         itemUri = channelService.addItem(channelName, TEST_DATA);
     }
 
-//    @AfterEach
-//    void cleanup() {
-//        channelService.delete(channelName);
-//    }
+    @AfterEach
+    void cleanup() {
+        channelService.delete(channelName);
+    }
+
+    @Test
+    void batchChannelStorage_itemInSpoke_item() {
+
+    }
 
     @Test
     void batchChannelStorage_itemInS3_item() {
-        String path = s3Service.parseS3BatchItemsPath(itemUri, channelName);
-        log.info("!@#$!@#$!@#$!@#$!@#%#$%@#$^@#$^@#$%!@#$ {}", path);
-//        long later = System.currentTimeMillis() + (50 * 1000);
-//        Awaitility.await()
-//                .atMost(new Duration(70, TimeUnit.SECONDS))
-//                .pollInterval(Duration.TEN_SECONDS)
-//                .until(() -> {
-//                    log.info("************");
-//                    return System.currentTimeMillis() >= later;
-//                });
+        String path = s3Service.formatS3BatchItemPath(itemUri, channelName);
         Awaitility.await()
                 .atMost(Duration.TWO_MINUTES)
-                .pollInterval(Duration.FIVE_SECONDS)
-                .until(() -> {
-                    try {
-                        byte[] result = s3Service.getS3Item(path);
-                        log.error("$$$$$$$$$$$$$$$$$$$ {}", result);
-                        String actual = new String(result, StandardCharsets.UTF_8);
-//                                .replaceAll("\"", "")
-//                                .trim();
-                        log.error("@@@@@@@@@@@@@@@@@@@@@@@@", actual);
-                        return actual.equals(TEST_DATA);
-                    } catch (Exception e) {
-                        log.error("error getting item {}", e.getMessage());
-                        return false;
-                    }
-                });
+                .pollInterval(Duration.TEN_SECONDS)
+                .until(() -> confirmItemsInS3(path));
+    }
+    @SneakyThrows
+    private boolean confirmItemsInS3(String path) {
+        try {
+            byte[] result = s3Service.getS3BatchedItems(path);
+            String actual = new String(result, StandardCharsets.UTF_8)
+                    .replaceAll("\"", "")
+                    .trim();
+            if (!actual.equals(TEST_DATA)) {
+                throw new Exception("actual does not match expected");
+            }
+            log.info("TEST_DATA: {}", actual);
+            return true;
+        } catch (AmazonS3Exception e) {
+            if (e.getStatusCode() != 404) {
+                log.error("error getting item {}", e.getMessage());
+                throw e;
+            }
+            return false;
+        }
     }
 }
