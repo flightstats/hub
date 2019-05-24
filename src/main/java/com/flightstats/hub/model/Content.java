@@ -1,5 +1,6 @@
 package com.flightstats.hub.model;
 
+import com.flightstats.hub.config.properties.AppProperties;
 import com.flightstats.hub.config.properties.ContentProperties;
 import com.flightstats.hub.config.properties.PropertiesLoader;
 import com.flightstats.hub.config.properties.S3Properties;
@@ -22,7 +23,8 @@ import static com.flightstats.hub.constant.ContentConstant.CONTENT_TYPE;
 @Slf4j
 public class Content implements Serializable {
 
-    private static final S3Properties s3Properties = new S3Properties(PropertiesLoader.getInstance());
+    private static final AppProperties appProperties = new AppProperties(PropertiesLoader.getInstance());
+    private static final S3Properties s3Properties = new S3Properties(PropertiesLoader.getInstance(), appProperties);
     private static final ContentProperties contentProperties = new ContentProperties(PropertiesLoader.getInstance());
 
     private static final long serialVersionUID = 1L;
