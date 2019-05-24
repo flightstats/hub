@@ -42,7 +42,7 @@ public class ChannelService {
         return getHubBaseUrl() + "channel/" + channelName;
     }
 
-    private HttpUrl getHubBaseUrl() {
+    public HttpUrl getHubBaseUrl() {
         return hubBaseUrl;
     }
 

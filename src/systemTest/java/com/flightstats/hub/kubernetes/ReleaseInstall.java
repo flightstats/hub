@@ -36,8 +36,7 @@ public class ReleaseInstall {
              final ReleaseManager releaseManager = new ReleaseManager(tiller)) {
 
             final InstallReleaseRequest.Builder requestBuilder = InstallReleaseRequest.newBuilder();
-            long timeout = 60 * 1000 * 6;
-            requestBuilder.setTimeout(timeout);
+            requestBuilder.setTimeout(300L);
             requestBuilder.setName(releaseName);
             requestBuilder.setWait(true);
             requestBuilder.setDisableHooks(false);

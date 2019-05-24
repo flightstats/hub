@@ -1,9 +1,10 @@
 package com.flightstats.hub.system.service;
 
-import com.flightstats.hub.clients.callback.CallbackClientFactory;
-import com.flightstats.hub.clients.callback.CallbackResourceClient;
-import com.flightstats.hub.model.WebhookCallback;
+import com.flightstats.hub.client.CallbackClientFactory;
+import com.flightstats.hub.client.CallbackResourceClient;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.model.WebhookErrors;
+import com.flightstats.hub.model.WebhookCallback;
 import com.google.inject.Inject;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -12,20 +13,17 @@ import retrofit2.Call;
 import retrofit2.Response;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.Collections.emptyList;
 import static javax.ws.rs.core.Response.Status.OK;
-import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.awaitility.Awaitility.await;
 
 @Slf4j
 public class CallbackService {
 
-    private static final String EMPTY_STRING = "";
     private CallbackResourceClient callbackResourceClient;
     private WebhookService webhookResource;
     private HttpUrl callbackBaseUrl;
@@ -41,42 +39,50 @@ public class CallbackService {
         return getCallbackBaseUrl() + "callback/" + webhookName;
     }
 
-    private HttpUrl getCallbackBaseUrl() {
+    public HttpUrl getCallbackBaseUrl() {
         return callbackBaseUrl;
     }
 
     @SneakyThrows
     public boolean hasCallbackErrorInHub(String webhookName, String fullUrl) {
         String itemPath = ContentKey.fromFullUrl(fullUrl).toUrl();
-        return webhookResource.getCallbackErrors(webhookName).body().getErrors()
-                .stream()
-                .filter((error) -> webhookName.equals(error.getName()))
-                .findFirst().get().getErrors()
+        return getCallbackErrorsInHub(webhookName)
                 .stream()
                 .anyMatch((path) -> path.contains(itemPath));
     }
 
-    public void awaitHubHasCallbackErrorForItemPath(String webhookName, String path) {
+    public List<String> getCallbackErrorsInHub(String webhookName) {
+        List<WebhookErrors.Error> errors = Optional.ofNullable(webhookResource.getCallbackErrors(webhookName).body())
+                .map(WebhookErrors::getErrors)
+                .orElse(emptyList());
+        return errors.stream()
+                .filter((error) -> webhookName.equals(error.getName()))
+                .findFirst()
+                .map(WebhookErrors.Error::getErrors)
+                .orElse(emptyList());
+    }
+
+    public boolean awaitHubHasCallbackErrorForItemPath(String webhookName, String path) {
         try {
             await().atMost(90, TimeUnit.SECONDS).until(() -> hasCallbackErrorInHub(webhookName, path));
+            return true;
         } catch (Exception e) {
             log.error("Unable to see callback error on hub for {} {} due to {}", webhookName, path, e.getMessage());
+            return false;
         }
     }
 
-    private List<String> parseItemSentToWebhook(String body) {
-        if (!isBlank(body)) {
-            String parsedString = body.replace("[", EMPTY_STRING)
-                    .replace("]", EMPTY_STRING);
-            List<String> postedItems = Arrays.asList(parsedString.split(","));
-            postedItems.replaceAll(String::trim);
-            return postedItems;
+    public boolean isErrorListEventuallyCleared(String webhookName) {
+        try {
+            await().atMost(90, TimeUnit.SECONDS).until(() -> getCallbackErrorsInHub(webhookName).isEmpty());
+            return true;
+        } catch (Exception e) {
+            log.error("Unable to see callback error on hub for {} due to {}", webhookName, e.getMessage());
+            return false;
         }
-        return emptyList();
     }
 
-
-    public List<String> awaitItemCountSentToWebhook(String webhookName, Optional<String> path, int expectedItemCount) {
+    public List<String> awaitItemCountSentToWebhook(String webhookName, int expectedItemCount) {
         Call<WebhookCallback> call = callbackResourceClient.get(webhookName);
         List<String> channelItemsPosted = new ArrayList<>();
         await().atMost(90, TimeUnit.SECONDS).until(() -> {
@@ -91,5 +97,4 @@ public class CallbackService {
         });
         return channelItemsPosted;
     }
-
 }

@@ -1,7 +1,7 @@
 package com.flightstats.hub.system.config;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.flightstats.hub.clients.callback.CallbackClientFactory;
+import com.flightstats.hub.client.CallbackClientFactory;
 import com.flightstats.hub.clients.hub.HubClientFactory;
 import com.flightstats.hub.clients.s3.S3ClientFactory;
 import com.flightstats.hub.system.service.CallbackService;
@@ -25,12 +25,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-
 @Slf4j
 public class GuiceModule extends AbstractModule {
-    private static final String TEST_DATA = "TEST_DATA";
     private final StringHelper stringHelper = new StringHelper();
-    private final String releaseName = "ddt-" + stringHelper.randomAlphaNumeric(10).toLowerCase();
+    private final String releaseName = "loopy-joey"; //"ddt-" + stringHelper.randomAlphaNumeric(10).toLowerCase();
     private static final String PROPERTY_FILE_NAME = "system-test-hub.properties";
 
     @Override
@@ -38,7 +36,6 @@ public class GuiceModule extends AbstractModule {
         Names.bindProperties(binder(), loadProperties());
         final Map<String, String> releaseNameProperty = new HashMap<>();
         releaseNameProperty.put("helm.release.name", releaseName);
-
         Names.bindProperties(binder(), releaseNameProperty);
         bind(String.class).annotatedWith(Names.named("test.data")).toInstance("TEST_DATA");
         bind(StringHelper.class).toInstance(stringHelper);

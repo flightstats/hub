@@ -184,7 +184,6 @@ dependencies {
     }
 
     systemTestCompile 'com.amazonaws:aws-java-sdk:1.11.248'
-
 }
 
 

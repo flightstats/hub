@@ -7,9 +7,9 @@ import com.flightstats.hub.system.resilient.HubLifecycle;
 import com.flightstats.hub.system.service.CallbackService;
 import com.flightstats.hub.system.service.ChannelService;
 import com.flightstats.hub.system.service.WebhookService;
-import javax.inject.Inject;
-
 import com.flightstats.hub.utility.StringHelper;
+
+import javax.inject.Inject;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterAll;
@@ -21,7 +21,6 @@ import org.junit.jupiter.api.TestInstance;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -72,7 +71,7 @@ class WebhookLifecycleTest extends DependencyInjector {
         webhookResource.insertAndVerify(webhook);
 
         final List<String> channelItems = channelResource.addItems(channelName, data, 10);
-        final List<String> channelItemsPosted = callbackResource.awaitItemCountSentToWebhook(webhookName, Optional.empty(), channelItems.size());
+        final List<String> channelItemsPosted = callbackResource.awaitItemCountSentToWebhook(webhookName, channelItems.size());
 
         Collections.sort(channelItems);
         Collections.sort(channelItemsPosted);
@@ -92,7 +91,7 @@ class WebhookLifecycleTest extends DependencyInjector {
                 withParallelCalls(2);
         webhookResource.insertAndVerify(webhook);
         final List<String> channelItemsExpected = channelItems.subList(5, channelItems.size());
-        final List<String> channelItemsPosted = callbackResource.awaitItemCountSentToWebhook(webhookName, Optional.empty(), channelItemsExpected.size());
+        final List<String> channelItemsPosted = callbackResource.awaitItemCountSentToWebhook(webhookName, channelItemsExpected.size());
 
         Collections.sort(channelItemsExpected);
         Collections.sort(channelItemsPosted);
@@ -112,7 +111,7 @@ class WebhookLifecycleTest extends DependencyInjector {
                 withParallelCalls(1);
         webhookResource.insertAndVerify(webhook);
         final List<String> channelItemsExpected = channelItems.subList(5, channelItems.size());
-        final List<String> channelItemsPosted = callbackResource.awaitItemCountSentToWebhook(webhookName, Optional.empty(), channelItemsExpected.size());
+        final List<String> channelItemsPosted = callbackResource.awaitItemCountSentToWebhook(webhookName, channelItemsExpected.size());
 
         assertEquals(channelItemsExpected, channelItemsPosted);
     }

@@ -104,7 +104,7 @@ class WebhookErrorTest extends DependencyInjector {
         // add new item and wait to hear about it
         String thirdUrl = channelService.addItem(channelName, "{ name:\"item3\" }");
         log.info("Adding new item to channel {}", thirdUrl);
-        callbackService.awaitItemCountSentToWebhook(webhookName, Optional.of(thirdUrl), 1);
+        callbackService.awaitItemCountSentToWebhook(webhookName, 1);
 
         // assert has no errors at all
         assertFalse(callbackService.hasCallbackErrorInHub(webhookName, firstUrl));
@@ -132,7 +132,7 @@ class WebhookErrorTest extends DependencyInjector {
 
         // verify that you get the second item's data
         log.info("Verifying that data for 2nd item was sent {}", secondUrl);
-        Optional<String> opt = callbackService.awaitItemCountSentToWebhook(webhookName, Optional.of(secondUrl), 1).stream().findFirst();
+        Optional<String> opt = callbackService.awaitItemCountSentToWebhook(webhookName, 1).stream().findFirst();
         assertTrue(opt.isPresent());
         assertEquals(secondUrl, opt.get());
 
