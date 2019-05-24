@@ -1,7 +1,7 @@
 package com.flightstats.hub.app;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.config.PropertiesLoader;
+import com.flightstats.hub.config.properties.PropertiesLoader;
 import com.flightstats.hub.metrics.InternalTracesResource;
 import com.flightstats.hub.util.SecretFilter;
 import lombok.extern.slf4j.Slf4j;

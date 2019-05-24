@@ -1,8 +1,8 @@
 package com.flightstats.hub.model;
 
-import com.flightstats.hub.config.ContentProperties;
-import com.flightstats.hub.config.PropertiesLoader;
-import com.flightstats.hub.config.S3Properties;
+import com.flightstats.hub.config.properties.ContentProperties;
+import com.flightstats.hub.config.properties.PropertiesLoader;
+import com.flightstats.hub.config.properties.S3Properties;
 import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.util.HubUtils;

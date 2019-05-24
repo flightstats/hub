@@ -1,16 +1,15 @@
 package com.flightstats.hub.dao.aws.s3Verifier;
 
 import com.flightstats.hub.cluster.LastContentPath;
-import com.flightstats.hub.config.PropertiesLoader;
-import com.flightstats.hub.config.SpokeProperties;
+import com.flightstats.hub.config.properties.PropertiesLoader;
+import com.flightstats.hub.config.properties.SpokeProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.MinutePath;
 import com.flightstats.hub.spoke.SpokeStore;
-import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.test.IntegrationTestSetup;
 import com.flightstats.hub.util.StringUtils;
 import com.flightstats.hub.util.TimeUtil;
-import com.google.inject.Injector;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.junit.jupiter.api.BeforeAll;
@@ -38,13 +37,13 @@ class VerifierRangeLookupTest {
     private String channelName;
 
     @BeforeAll
-    static void setUpClass() throws Exception {
+    static void setUpClass() {
         final SpokeProperties spokeProperties = new SpokeProperties(PropertiesLoader.getInstance());
-        Injector injector = Integration.startAwsHub();
+        IntegrationTestSetup integrationTestSetup = IntegrationTestSetup.run();
         ttlMinutes = spokeProperties.getTtlMinutes(SpokeStore.WRITE);
-        verifierRangeLookup = injector.getInstance(VerifierRangeLookup.class);
-        lastContentPath = injector.getInstance(LastContentPath.class);
-        channelService = injector.getInstance(ChannelService.class);
+        verifierRangeLookup = integrationTestSetup.getInstance(VerifierRangeLookup.class);
+        lastContentPath = integrationTestSetup.getInstance(LastContentPath.class);
+        channelService = integrationTestSetup.getInstance(ChannelService.class);
     }
 
     @BeforeEach

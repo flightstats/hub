@@ -1,6 +1,6 @@
 package com.flightstats.hub.filter;
 
-import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.test.IntegrationTestSetup;
 import org.glassfish.jersey.server.internal.routing.UriRoutingContext;
 import org.glassfish.jersey.uri.UriTemplate;
 import org.junit.jupiter.api.BeforeAll;
@@ -16,8 +16,8 @@ import static org.mockito.Mockito.when;
 
 class MetricsRequestFilterTest {
     @BeforeAll
-    static void integrationSetup() throws Exception {
-        Integration.startAwsHub();
+    static void integrationSetup() {
+        IntegrationTestSetup.run();
     }
 
     @Test

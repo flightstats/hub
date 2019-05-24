@@ -1,13 +1,13 @@
-package com.flightstats.hub.config;
+package com.flightstats.hub.config.properties;
 
 import javax.inject.Inject;
 
-public class ZookeeperProperties {
+public class ZooKeeperProperties {
 
     private final PropertiesLoader propertiesLoader;
 
     @Inject
-    public ZookeeperProperties(PropertiesLoader propertiesLoader) {
+    public ZooKeeperProperties(PropertiesLoader propertiesLoader) {
         this.propertiesLoader = propertiesLoader;
     }
 

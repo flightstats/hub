@@ -1,6 +1,6 @@
 package com.flightstats.hub.dao.aws;
 
-import com.flightstats.hub.config.S3Properties;
+import com.flightstats.hub.config.properties.S3Properties;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.aws.writeQueue.WriteQueue;
 import com.flightstats.hub.exception.FailedReadException;

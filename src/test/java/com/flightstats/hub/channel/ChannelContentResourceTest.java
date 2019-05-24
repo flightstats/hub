@@ -1,6 +1,6 @@
 package com.flightstats.hub.channel;
 
-import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.test.IntegrationTestSetup;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -11,8 +11,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 class ChannelContentResourceTest {
 
     @BeforeAll
-    static void setUpClass() throws Exception {
-        Integration.startAwsHub();
+    static void setUpClass() {
+        IntegrationTestSetup.run();
     }
 
     @Test

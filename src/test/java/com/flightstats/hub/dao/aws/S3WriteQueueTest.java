@@ -1,6 +1,6 @@
 package com.flightstats.hub.dao.aws;
 
-import com.flightstats.hub.config.S3Properties;
+import com.flightstats.hub.config.properties.S3Properties;
 import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.Content;

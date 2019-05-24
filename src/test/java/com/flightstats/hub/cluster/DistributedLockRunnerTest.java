@@ -1,6 +1,6 @@
 package com.flightstats.hub.cluster;
 
-import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.test.IntegrationTestSetup;
 import com.google.common.collect.Range;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
@@ -20,11 +20,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import static junit.framework.Assert.assertFalse;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.hamcrest.MatcherAssert.assertThat;
-
 
 @Slf4j
 @Execution(ExecutionMode.SAME_THREAD)
@@ -36,10 +35,9 @@ class DistributedLockRunnerTest {
     private ExecutorService executorService;
 
     @BeforeAll
-    static void setupCurator() throws Exception {
-        ZooKeeperState zooKeeperState = new ZooKeeperState();
-        CuratorFramework curator = Integration.startZooKeeper(zooKeeperState);
-        lockManager = new DistributedLeaderLockManager(curator, zooKeeperState);
+    static void setupCurator() {
+        CuratorFramework curator = IntegrationTestSetup.run().getZookeeperClient();
+        lockManager = new DistributedLeaderLockManager(curator, new ZooKeeperState());
     }
 
     @BeforeEach
@@ -59,7 +57,7 @@ class DistributedLockRunnerTest {
     void test_runWithLock_executesTheRunnableCode() throws Exception {
         CountDownLatch latch = new CountDownLatch(1);
 
-        Consumer<LeadershipLock> lockable = leadershipLock -> trackLock("lockable1", latch, () ->{
+        Consumer<LeadershipLock> lockable = leadershipLock -> trackLock("lockable1", latch, () -> {
             sleep(0);
             assertTrue(leadershipLock.getLeadership().hasLeadership());
             assertTrue(leadershipLock.getMutex().isAcquiredInThisProcess());

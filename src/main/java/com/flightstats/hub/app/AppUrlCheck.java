@@ -1,7 +1,7 @@
 package com.flightstats.hub.app;
 
 import com.flightstats.hub.cluster.Cluster;
-import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.properties.AppProperties;
 import com.flightstats.hub.rest.RestClient;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Singleton;

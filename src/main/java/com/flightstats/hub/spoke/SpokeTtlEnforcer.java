@@ -1,6 +1,6 @@
 package com.flightstats.hub.spoke;
 
-import com.flightstats.hub.config.SpokeProperties;
+import com.flightstats.hub.config.properties.SpokeProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.TtlEnforcer;
 import com.flightstats.hub.metrics.StatsdReporter;

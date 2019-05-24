@@ -1,9 +1,9 @@
 package com.flightstats.hub.cluster;
 
-import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.test.IntegrationTestSetup;
 import org.apache.curator.framework.CuratorFramework;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -14,8 +14,8 @@ class LongValueTest {
     private LongValue longValue;
 
     @BeforeAll
-    static void setUpClass() throws Exception {
-        curator = Integration.startZooKeeper();
+    static void setUpClass() {
+        curator = IntegrationTestSetup.run().getZookeeperClient();
     }
 
     @BeforeEach

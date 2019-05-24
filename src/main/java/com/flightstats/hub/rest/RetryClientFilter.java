@@ -1,7 +1,6 @@
 package com.flightstats.hub.rest;
 
-import com.flightstats.hub.config.AppProperties;
-import com.flightstats.hub.config.SystemProperties;
+import com.flightstats.hub.config.properties.SystemProperties;
 import com.flightstats.hub.util.Sleeper;
 import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientRequest;

@@ -6,8 +6,10 @@ import com.flightstats.hub.app.AppUrlCheck;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.cluster.SpokeDecommissionManager;
 import com.flightstats.hub.cluster.WatchManager;
-import com.flightstats.hub.config.AppProperties;
-import com.flightstats.hub.config.SpokeProperties;
+import com.flightstats.hub.config.ClusterServicesRegistration;
+import com.flightstats.hub.config.ServiceRegistration;
+import com.flightstats.hub.config.properties.AppProperties;
+import com.flightstats.hub.config.properties.SpokeProperties;
 import com.flightstats.hub.dao.CachedDao;
 import com.flightstats.hub.dao.CachedLowerCaseDao;
 import com.flightstats.hub.dao.ChannelService;
@@ -72,6 +74,8 @@ public class ClusterHubBindings extends AbstractModule {
 
         bind(PeriodicMetricEmitter.class).asEagerSingleton();
         bind(PeriodicMetricEmitterLifecycle.class).asEagerSingleton();
+
+        bind(ServiceRegistration.class).to(ClusterServicesRegistration.class);
 
         bind(S3Config.class).asEagerSingleton();
         bind(S3WriteQueueLifecycle.class).asEagerSingleton();
@@ -162,5 +166,6 @@ public class ClusterHubBindings extends AbstractModule {
     public AmazonS3 buildS3Client(AwsConnectorFactory factory) {
         return factory.getS3Client();
     }
+
 }
 
