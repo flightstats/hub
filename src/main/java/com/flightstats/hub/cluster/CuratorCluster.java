@@ -1,7 +1,7 @@
 package com.flightstats.hub.cluster;
 
-import com.flightstats.hub.config.AppProperties;
-import com.flightstats.hub.config.SpokeProperties;
+import com.flightstats.hub.config.properties.AppProperties;
+import com.flightstats.hub.config.properties.SpokeProperties;
 import com.flightstats.hub.util.StringUtils;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Singleton;

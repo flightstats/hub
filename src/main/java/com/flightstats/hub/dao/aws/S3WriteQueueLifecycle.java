@@ -1,6 +1,6 @@
 package com.flightstats.hub.dao.aws;
 
-import com.flightstats.hub.config.S3Properties;
+import com.flightstats.hub.config.properties.S3Properties;
 import com.flightstats.hub.util.Sleeper;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;

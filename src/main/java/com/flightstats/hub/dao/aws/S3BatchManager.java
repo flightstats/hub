@@ -1,8 +1,8 @@
 package com.flightstats.hub.dao.aws;
 
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.config.AppProperties;
-import com.flightstats.hub.config.S3Properties;
+import com.flightstats.hub.config.properties.AppProperties;
+import com.flightstats.hub.config.properties.S3Properties;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.replication.S3Batch;

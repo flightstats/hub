@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubMain;
 import com.flightstats.hub.app.HubVersion;
 import com.flightstats.hub.channel.LinkBuilder;
-import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.properties.AppProperties;
 import com.flightstats.hub.util.TimeUtil;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;

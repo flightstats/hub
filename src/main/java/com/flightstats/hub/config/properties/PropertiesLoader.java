@@ -1,4 +1,4 @@
-package com.flightstats.hub.config;
+package com.flightstats.hub.config.properties;
 
 import com.flightstats.hub.app.HubMain;
 import lombok.extern.slf4j.Slf4j;
@@ -45,9 +45,14 @@ public class PropertiesLoader {
         properties.put(key, value);
     }
 
-    public void load(String file) throws MalformedURLException {
+    public void load(String file) {
 
-        URL resource = new File(file).toURI().toURL();
+        URL resource = null;
+        try {
+            resource = new File(file).toURI().toURL();
+        } catch (MalformedURLException e) {
+            log.info("Problem loading file {}", file, e);
+        }
 
         if (file.equals("useDefault")) {
             resource = HubMain.class.getResource(HUB_PROPERTY_FILE_NAME);
@@ -107,6 +112,6 @@ public class PropertiesLoader {
         propertiesDefault.put("s3Verifier.run", "false");
         propertiesDefault.put("aws.signing_region", "us-east-1");
 
-       properties = propertiesDefault;
+        properties = propertiesDefault;
     }
 }

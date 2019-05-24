@@ -2,7 +2,7 @@ package com.flightstats.hub.app;
 
 import com.diffplug.common.base.Errors;
 import com.diffplug.common.base.Throwing;
-import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.properties.AppProperties;
 import com.flightstats.hub.util.Sleeper;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Singleton;

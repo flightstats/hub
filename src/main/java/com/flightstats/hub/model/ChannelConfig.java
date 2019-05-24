@@ -2,8 +2,8 @@ package com.flightstats.hub.model;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flightstats.hub.config.ContentProperties;
-import com.flightstats.hub.config.PropertiesLoader;
+import com.flightstats.hub.config.properties.ContentProperties;
+import com.flightstats.hub.config.properties.PropertiesLoader;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.gson.Gson;

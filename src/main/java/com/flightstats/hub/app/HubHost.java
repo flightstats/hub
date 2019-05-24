@@ -1,8 +1,8 @@
 package com.flightstats.hub.app;
 
-import com.flightstats.hub.config.AppProperties;
-import com.flightstats.hub.config.PropertiesLoader;
-import com.flightstats.hub.config.SystemProperties;
+import com.flightstats.hub.config.properties.AppProperties;
+import com.flightstats.hub.config.properties.PropertiesLoader;
+import com.flightstats.hub.config.properties.SystemProperties;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetAddress;

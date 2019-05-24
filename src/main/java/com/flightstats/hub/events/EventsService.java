@@ -1,7 +1,7 @@
 package com.flightstats.hub.events;
 
 import com.diffplug.common.base.Errors;
-import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.properties.AppProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ItemRequest;
 import com.flightstats.hub.model.ChannelContentKey;

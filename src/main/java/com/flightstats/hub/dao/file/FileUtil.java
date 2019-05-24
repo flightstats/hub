@@ -1,6 +1,6 @@
 package com.flightstats.hub.dao.file;
 
-import com.flightstats.hub.config.SpokeProperties;
+import com.flightstats.hub.config.properties.SpokeProperties;
 import com.flightstats.hub.dao.aws.ContentRetriever;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;

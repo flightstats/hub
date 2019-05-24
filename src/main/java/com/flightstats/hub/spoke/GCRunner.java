@@ -1,7 +1,7 @@
 package com.flightstats.hub.spoke;
 
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.config.SystemProperties;
+import com.flightstats.hub.config.properties.SystemProperties;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;

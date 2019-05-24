@@ -1,6 +1,6 @@
 package com.flightstats.hub.webhook;
 
-import com.flightstats.hub.config.WebhookProperties;
+import com.flightstats.hub.config.properties.WebhookProperties;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;

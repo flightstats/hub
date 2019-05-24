@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.LocalHostOnly;
-import com.flightstats.hub.config.ContentProperties;
+import com.flightstats.hub.config.properties.ContentProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.aws.ContentRetriever;
 import com.flightstats.hub.model.ChannelConfig;
