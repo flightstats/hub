@@ -23,15 +23,17 @@ import java.util.zip.ZipInputStream;
 
 @Slf4j
 public class S3Service {
+    private final String testData;
     private final AmazonS3 s3Client;
     private final String bucketName;
     private final String hubBaseUrl;
 
     @Inject
-    public S3Service(AmazonS3 s3Client, @Named("hub.url") String hubBaseUrl, @Named("s3.bucket.name") String bucketName) {
+    public S3Service(AmazonS3 s3Client, @Named("hub.url") String hubBaseUrl, @Named("s3.bucket.name") String bucketName, @Named("test.data") String testData) {
         this.s3Client = s3Client;
         this.hubBaseUrl = hubBaseUrl;
         this.bucketName = bucketName;
+        this.testData = testData;
     }
 
     @SneakyThrows
@@ -106,7 +108,7 @@ public class S3Service {
                 result = getS3BatchedItems(path);
             }
             String actual = new String(result, StandardCharsets.UTF_8);
-            if (!actual.contains("TEST_DATA")) {
+            if (!actual.contains(testData)) {
                 throw new Error("actual does not match expected");
             }
             return true;

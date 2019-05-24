@@ -14,10 +14,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 
 @Slf4j
 class SingleItemStorageTest extends DependencyInjector {
-    private static final String TEST_DATA = "TEST_DATA";
+
+    @Inject @Named("test.data")
+    private String testData;
     private String channelName;
     private String itemUri;
     @Inject
@@ -30,9 +33,11 @@ class SingleItemStorageTest extends DependencyInjector {
     @BeforeEach
     void before() {
         channelName = stringHelper.randomAlphaNumeric(10);
-        Channel channel = Channel.builder().name(channelName).storage(ChannelStorage.SINGLE.toString()).build();
+        Channel channel = Channel.builder()
+                .name(channelName)
+                .storage(ChannelStorage.SINGLE.toString()).build();
         channelService.createCustom(channel);
-        itemUri = channelService.addItem(channelName, TEST_DATA);
+        itemUri = channelService.addItem(channelName, testData);
     }
 
     @AfterEach
@@ -44,7 +49,7 @@ class SingleItemStorageTest extends DependencyInjector {
     void singleChannelStorage_itemInSpoke_item() {
         Awaitility.await()
                 .atMost(Duration.TEN_SECONDS)
-                .until(() -> channelService.getItem(itemUri).equals(TEST_DATA));
+                .until(() -> channelService.getItem(itemUri).equals(testData));
     }
 
     @Test
@@ -52,6 +57,6 @@ class SingleItemStorageTest extends DependencyInjector {
         Awaitility.await()
                 .pollInterval(Duration.TEN_SECONDS)
                 .atMost(Duration.TWO_MINUTES)
-                .until(() -> s3Service.confirmItemsInS3(ChannelStorage.SINGLE, itemUri, ""));
+                .until(() -> s3Service.confirmItemsInS3(ChannelStorage.SINGLE, itemUri, "unusedForSingle"));
     }
 }

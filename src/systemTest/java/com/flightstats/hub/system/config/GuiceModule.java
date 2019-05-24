@@ -28,6 +28,7 @@ import java.util.Properties;
 
 @Slf4j
 public class GuiceModule extends AbstractModule {
+    private static final String TEST_DATA = "TEST_DATA";
     private final StringHelper stringHelper = new StringHelper();
     private final String releaseName = "ddt-" + stringHelper.randomAlphaNumeric(10).toLowerCase();
     private static final String PROPERTY_FILE_NAME = "system-test-hub.properties";
@@ -39,6 +40,7 @@ public class GuiceModule extends AbstractModule {
         releaseNameProperty.put("helm.release.name", releaseName);
 
         Names.bindProperties(binder(), releaseNameProperty);
+        bind(String.class).annotatedWith(Names.named("test.data")).toInstance("TEST_DATA");
         bind(StringHelper.class).toInstance(stringHelper);
         bind(S3ClientFactory.class).asEagerSingleton();
         bind(HubClientFactory.class);

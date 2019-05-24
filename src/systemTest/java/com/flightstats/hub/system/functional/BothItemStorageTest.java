@@ -6,7 +6,6 @@ import com.flightstats.hub.system.config.DependencyInjector;
 import com.flightstats.hub.system.service.ChannelService;
 import com.flightstats.hub.system.service.S3Service;
 import com.flightstats.hub.utility.StringHelper;
-import lombok.extern.slf4j.Slf4j;
 import org.awaitility.Awaitility;
 import org.awaitility.Duration;
 import org.junit.jupiter.api.AfterEach;
@@ -16,8 +15,7 @@ import org.junit.jupiter.api.Test;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-@Slf4j
-class BatchItemStorageTest extends DependencyInjector {
+class BothItemStorageTest extends DependencyInjector {
     @Inject @Named("test.data")
     private String testData;
     private String channelName;
@@ -33,8 +31,8 @@ class BatchItemStorageTest extends DependencyInjector {
     void before() {
         channelName = stringHelper.randomAlphaNumeric(10);
         Channel channel = Channel.builder()
-                .storage(ChannelStorage.BATCH.toString())
-                .name(channelName).build();
+                .name(channelName)
+                .storage(ChannelStorage.BOTH.toString()).build();
         channelService.createCustom(channel);
         itemUri = channelService.addItem(channelName, testData);
     }
@@ -45,17 +43,18 @@ class BatchItemStorageTest extends DependencyInjector {
     }
 
     @Test
-    void batchChannelStorage_itemInSpoke_item() {
+    void bothChannelStorage_itemInSpoke_item() {
         Awaitility.await()
                 .atMost(Duration.TEN_SECONDS)
                 .until(() -> channelService.getItem(itemUri).equals(testData));
     }
 
     @Test
-    void batchChannelStorage_itemInS3_item() {
+    void bothChannelStorage_itemInS3_item() {
         Awaitility.await()
-                .atMost(Duration.TWO_MINUTES)
                 .pollInterval(Duration.TEN_SECONDS)
-                .until(() -> s3Service.confirmItemsInS3(ChannelStorage.BATCH, itemUri, channelName));
+                .atMost(Duration.TWO_MINUTES)
+                .until(() -> s3Service.confirmItemsInS3(ChannelStorage.SINGLE, itemUri, "unusedForSingle") &&
+                        s3Service.confirmItemsInS3(ChannelStorage.BATCH, itemUri, channelName));
     }
 }
