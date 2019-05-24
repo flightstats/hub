@@ -1,27 +1,25 @@
 package com.flightstats.hub.system.resilient;
 
 import com.flightstats.hub.model.Webhook;
+import com.flightstats.hub.model.WebhookCallbackRuleChannelItem;
 import com.flightstats.hub.system.ModelBuilder;
 import com.flightstats.hub.system.config.DependencyInjector;
 import com.flightstats.hub.system.service.CallbackService;
 import com.flightstats.hub.system.service.ChannelService;
 import com.flightstats.hub.system.service.WebhookService;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.RepeatedTest;
 
 import javax.inject.Inject;
-import java.util.Arrays;
-import java.util.Optional;
 
-import static com.flightstats.hub.kubernetes.ServiceName.CALLBACK_SERVER;
+import java.util.Comparator;
+
 import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
@@ -79,14 +77,13 @@ class WebhookErrorTest extends DependencyInjector {
         log.info("Found callback error for first item {} {}", webhookName, firstUrl);
     }
 
-    @Test
-    @SneakyThrows
+    @RepeatedTest(3)
     void testThatNewlyCreatedWebhookDoesntReceiveStaleErrors() {
         // verify that errors are created for the first item
-        String firstUrl = channelService.addItem(channelName, "{ name:\"item1\" }");
-
-        //Inject Fault in the hub by deleting call back service
-        hubLifecycle.serviceDelete(Arrays.asList(CALLBACK_SERVER.value()));
+        WebhookCallbackRuleChannelItem item = WebhookCallbackRuleChannelItem.builder()
+                .failureStatusCode(500)
+                .build();
+        String firstUrl = channelService.addItem(channelName, item);
 
         verifyHasReceivedErrorForItem(firstUrl);
 
@@ -95,11 +92,12 @@ class WebhookErrorTest extends DependencyInjector {
 
         // delete webhook
         log.info("Deleting webhook {}", webhookName);
-        channelService.delete(webhookName);
+        webhookService.delete(webhookName);
 
         // re-add webhook
         log.info("Re-creating webhook {}", webhookName);
         webhookService.insertAndVerify(webhook);
+        assertTrue(callbackService.isErrorListEventuallyCleared(webhookName));
 
         // add new item and wait to hear about it
         String thirdUrl = channelService.addItem(channelName, "{ name:\"item3\" }");
@@ -107,17 +105,17 @@ class WebhookErrorTest extends DependencyInjector {
         callbackService.awaitItemCountSentToWebhook(webhookName, 1);
 
         // assert has no errors at all
-        assertFalse(callbackService.hasCallbackErrorInHub(webhookName, firstUrl));
+        assertTrue(callbackService.getCallbackErrorsInHub(webhookName).isEmpty());
         log.info("Verified no errors exist for callback in hub.");
     }
 
-    @Test
+    @RepeatedTest(3)
     void testSettingCursorBeyondErrorClearsErrorStateAndContinues() {
         // verify that errors are created for the first item
-        String firstUrl = channelService.addItem(channelName, "{ name:\"item1\" }");
-
-        //Inject Fault in the hub by deleting call back service
-        hubLifecycle.serviceDelete(Arrays.asList(CALLBACK_SERVER.value()));
+        WebhookCallbackRuleChannelItem item = WebhookCallbackRuleChannelItem.builder()
+                .failureStatusCode(500)
+                .build();
+        String firstUrl = channelService.addItem(channelName, item);
 
         verifyHasReceivedErrorForItem(firstUrl);
 
@@ -132,35 +130,14 @@ class WebhookErrorTest extends DependencyInjector {
 
         // verify that you get the second item's data
         log.info("Verifying that data for 2nd item was sent {}", secondUrl);
-        Optional<String> opt = callbackService.awaitItemCountSentToWebhook(webhookName, 1).stream().findFirst();
-        assertTrue(opt.isPresent());
-        assertEquals(secondUrl, opt.get());
+        String opt = callbackService.awaitItemCountSentToWebhook(webhookName, 2).stream()
+                .min(Comparator.reverseOrder())
+                .orElseThrow(AssertionError::new);
+        assertEquals(secondUrl, opt);
 
         // verify that no errors exist on the hub
         log.info("Verifying that no errors exist on the hub for webhook {}", webhookName);
-        assertFalse(callbackService.hasCallbackErrorInHub(webhookName, firstUrl));
-    }
-
-    @Test
-    @SneakyThrows
-    void testWebhookCursorUpdateLoopDoesntCorruptState() {
-        for (int i = 1; i <= 3; i++) {
-            log.info("Iteration {}", i);
-            this.testSettingCursorBeyondErrorClearsErrorStateAndContinues();
-            webhookService.delete(webhookName);
-            this.createWebhook();
-            log.info("Completed iteration {}", i);
-        }
-    }
-
-    @Test
-    @SneakyThrows
-    void testWebhookRecreationLoopDoesntCorruptState() {
-        for (int i = 1; i <= 3; i++) {
-            log.info("Iteration {}", i);
-            this.testThatNewlyCreatedWebhookDoesntReceiveStaleErrors();
-            log.info("Completed iteration {}", i);
-        }
+        assertTrue(callbackService.isErrorListEventuallyCleared(webhookName));
     }
 
     @AfterEach
@@ -173,5 +150,4 @@ class WebhookErrorTest extends DependencyInjector {
     void hubCleanup() {
         hubLifecycle.cleanup();
     }
-
 }
