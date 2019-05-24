@@ -1,20 +1,19 @@
 package com.flightstats.hub.model;
 
 import com.flightstats.hub.util.TimeUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormatter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.util.Optional;
 
+@Slf4j
 public class ContentKey implements ContentPath {
     public static final ContentKey NONE = new ContentKey(TimeUtil.BIG_BANG, "none");
-    private final static Logger logger = LoggerFactory.getLogger(ContentKey.class);
     private static final DecimalFormat format = new DecimalFormat("000000");
     private final DateTime time;
     private final String hash;
@@ -50,7 +49,7 @@ public class ContentKey implements ContentPath {
             substring = StringUtils.substringAfter(substring, "/");
             return fromUrl(substring).get();
         } catch (Exception e) {
-            logger.info("unable to parse " + url + " " + e.getMessage());
+            log.info("unable to parse " + url + " " + e.getMessage());
             return null;
         }
     }
@@ -68,7 +67,7 @@ public class ContentKey implements ContentPath {
             DateTime dateTime = new DateTime(year, month, day, hour, minute, second, millis, DateTimeZone.UTC);
             return Optional.of(new ContentKey(dateTime, hash));
         } catch (Exception e) {
-            logger.trace("unable to parse {} {} ", key, e.getMessage());
+            log.trace("unable to parse {} {} ", key, e.getMessage());
             return Optional.empty();
         }
     }

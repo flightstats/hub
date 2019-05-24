@@ -4,8 +4,8 @@ import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.app.StorageBackend;
 import com.flightstats.hub.config.properties.AppProperties;
 import com.flightstats.hub.config.properties.SpokeProperties;
-import com.flightstats.hub.dao.aws.DynamoChannelConfigDaoLifecycle;
-import com.flightstats.hub.dao.aws.DynamoWebhookDaoLifecycle;
+import com.flightstats.hub.dao.aws.DynamoChannelExistenceCheck;
+import com.flightstats.hub.dao.aws.DynamoWebhookExistenceCheck;
 import com.flightstats.hub.dao.aws.S3WriteQueueLifecycle;
 import com.flightstats.hub.metrics.CustomMetricsLifecycle;
 import com.flightstats.hub.metrics.InfluxdbReporterLifecycle;
@@ -30,8 +30,8 @@ public class ClusterServicesRegistration implements ServiceRegistration {
 
     private final InfluxdbReporterLifecycle influxdbReporterLifecycle;
     private final StatsDReporterLifecycle statsDReporterLifecycle;
-    private final DynamoChannelConfigDaoLifecycle dynamoChannelConfigDaoLifecycle;
-    private final DynamoWebhookDaoLifecycle dynamoWebhookDaoLifecycle;
+    private final DynamoChannelExistenceCheck dynamoChannelExistenceCheck;
+    private final DynamoWebhookExistenceCheck dynamoWebhookExistenceCheck;
     private final SpokeTtlEnforcer spokeTtlEnforcerRead;
     private final SpokeTtlEnforcer spokeTtlEnforcerWrite;
     private final S3WriteQueueLifecycle s3WriteQueueLifecycle;
@@ -43,8 +43,8 @@ public class ClusterServicesRegistration implements ServiceRegistration {
     @Inject
     public ClusterServicesRegistration(InfluxdbReporterLifecycle influxdbReporterLifecycle,
                                        StatsDReporterLifecycle statsDReporterLifecycle,
-                                       DynamoChannelConfigDaoLifecycle dynamoChannelConfigDaoLifecycle,
-                                       DynamoWebhookDaoLifecycle dynamoWebhookDaoLifecycle,
+                                       DynamoChannelExistenceCheck dynamoChannelExistenceCheck,
+                                       DynamoWebhookExistenceCheck dynamoWebhookExistenceCheck,
                                        @Named(READ) SpokeTtlEnforcer spokeTtlEnforcerRead,
                                        @Named(WRITE) SpokeTtlEnforcer spokeTtlEnforcerWrite,
                                        S3WriteQueueLifecycle s3WriteQueueLifecycle,
@@ -54,8 +54,8 @@ public class ClusterServicesRegistration implements ServiceRegistration {
                                        PeriodicMetricEmitterLifecycle periodicMetricEmitterLifecycle) {
         this.influxdbReporterLifecycle = influxdbReporterLifecycle;
         this.statsDReporterLifecycle = statsDReporterLifecycle;
-        this.dynamoChannelConfigDaoLifecycle = dynamoChannelConfigDaoLifecycle;
-        this.dynamoWebhookDaoLifecycle = dynamoWebhookDaoLifecycle;
+        this.dynamoChannelExistenceCheck = dynamoChannelExistenceCheck;
+        this.dynamoWebhookExistenceCheck = dynamoWebhookExistenceCheck;
         this.spokeTtlEnforcerRead = spokeTtlEnforcerRead;
         this.spokeTtlEnforcerWrite = spokeTtlEnforcerWrite;
         this.s3WriteQueueLifecycle = s3WriteQueueLifecycle;
@@ -89,7 +89,7 @@ public class ClusterServicesRegistration implements ServiceRegistration {
             services.add(new SpokeTtlEnforcerLifecycle(spokeTtlEnforcerWrite));
         }
 
-        services.addAll(Arrays.asList(dynamoChannelConfigDaoLifecycle, dynamoWebhookDaoLifecycle));
+        services.addAll(Arrays.asList(dynamoChannelExistenceCheck, dynamoWebhookExistenceCheck));
 
         return services;
     }

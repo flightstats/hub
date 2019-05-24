@@ -4,19 +4,17 @@ import com.amazonaws.services.s3.model.BucketLifecycleConfiguration;
 import com.amazonaws.services.s3.model.lifecycle.LifecycleFilter;
 import com.amazonaws.services.s3.model.lifecycle.LifecyclePrefixPredicate;
 import com.flightstats.hub.model.ChannelConfig;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 class S3ConfigStrategy {
-
-    private final static Logger logger = LoggerFactory.getLogger(S3ConfigStrategy.class);
 
     static List<BucketLifecycleConfiguration.Rule> apportion(Iterable<ChannelConfig> channelConfigs, DateTime timeForSharding, int max) {
         List<BucketLifecycleConfiguration.Rule> rules = new ArrayList<>();
@@ -44,9 +42,9 @@ class S3ConfigStrategy {
         }
         int days = 2;
         int activeShard = timeForSharding.getDayOfYear() / days % buckets;
-        logger.info("getDayOfYear {} buckets {} activeShard {}", timeForSharding.getDayOfYear(), buckets, activeShard);
+        log.info("getDayOfYear {} buckets {} activeShard {}", timeForSharding.getDayOfYear(), buckets, activeShard);
         List<BucketLifecycleConfiguration.Rule> rules = shardedRules.get(activeShard);
-        logger.info("base rules  {}", rules.size());
+        log.info("base rules  {}", rules.size());
         if (rules.size() < max) {
             activeShard++;
             if (activeShard == buckets) {
@@ -58,8 +56,8 @@ class S3ConfigStrategy {
                 rules.add(nextRules.get(i));
             }
         }
-        logger.info("total rules {}", rules.size());
-        logger.info("shardedRules {} keys {}", shardedRules.size(), shardedRules.keySet());
+        log.info("total rules {}", rules.size());
+        log.info("shardedRules {} keys {}", shardedRules.size(), shardedRules.keySet());
         return rules;
     }
 

@@ -3,17 +3,16 @@ package com.flightstats.hub.metrics;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Inject;
 import com.timgroup.statsd.Event;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@Slf4j
 class StatsDFormatter {
     private MetricsConfig metricsConfig;
-    private final static Logger logger = LoggerFactory.getLogger(StatsDFormatter.class);
 
     @Inject
     StatsDFormatter (MetricsConfig metricsConfig) {
@@ -25,7 +24,7 @@ class StatsDFormatter {
         boolean valid = Stream.of(title, text)
                 .allMatch((str) -> str != null && !str.equals(""));
         if (!valid) {
-            logger.error("Statsd events error: cannot build event without valid text/title strings");
+            log.error("Statsd events error: cannot build event without valid text/title strings");
             return Event.builder().build();
         }
         return Event.builder()

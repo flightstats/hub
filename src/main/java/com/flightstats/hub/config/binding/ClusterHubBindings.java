@@ -20,6 +20,7 @@ import com.flightstats.hub.dao.DocumentationDao;
 import com.flightstats.hub.dao.ReadOnlyContentDao;
 import com.flightstats.hub.dao.ReadOnlyDao;
 import com.flightstats.hub.dao.ReadOnlyDocumentationDao;
+import com.flightstats.hub.dao.TtlEnforcer;
 import com.flightstats.hub.dao.aws.AwsConnectorFactory;
 import com.flightstats.hub.dao.aws.ClusterContentService;
 import com.flightstats.hub.dao.aws.DynamoChannelConfigDao;
@@ -90,8 +91,9 @@ public class ClusterHubBindings extends AbstractModule {
     public static SpokeTtlEnforcer spokeTtlEnforcerRead(ChannelService channelService,
                                                         SpokeContentDao spokeContentDao,
                                                         StatsdReporter statsdReporter,
-                                                        SpokeProperties spokeProperties) {
-        return new SpokeTtlEnforcer(SpokeStore.READ, channelService, spokeContentDao, statsdReporter, spokeProperties);
+                                                        SpokeProperties spokeProperties,
+                                                        TtlEnforcer ttlEnforcer) {
+        return new SpokeTtlEnforcer(SpokeStore.READ, channelService, spokeContentDao, statsdReporter, spokeProperties, ttlEnforcer);
     }
 
     @Named("WRITE")
@@ -99,8 +101,9 @@ public class ClusterHubBindings extends AbstractModule {
     public static SpokeTtlEnforcer spokeTtlEnforcerWrite(ChannelService channelService,
                                                          SpokeContentDao spokeContentDao,
                                                          StatsdReporter statsdReporter,
-                                                         SpokeProperties spokeProperties) {
-        return new SpokeTtlEnforcer(SpokeStore.WRITE, channelService, spokeContentDao, statsdReporter, spokeProperties);
+                                                         SpokeProperties spokeProperties,
+                                                         TtlEnforcer ttlEnforcer) {
+        return new SpokeTtlEnforcer(SpokeStore.WRITE, channelService, spokeContentDao, statsdReporter, spokeProperties, ttlEnforcer);
     }
 
     @Singleton

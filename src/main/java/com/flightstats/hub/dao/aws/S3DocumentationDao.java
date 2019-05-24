@@ -9,8 +9,7 @@ import com.amazonaws.services.s3.model.S3Object;
 import com.flightstats.hub.dao.DocumentationDao;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -19,9 +18,8 @@ import java.io.InputStream;
 import java.util.Map;
 import java.util.zip.ZipInputStream;
 
+@Slf4j
 public class S3DocumentationDao implements DocumentationDao {
-
-    private final static Logger logger = LoggerFactory.getLogger(S3DocumentationDao.class);
 
     @Inject
     private S3BucketName s3BucketName;
@@ -31,7 +29,7 @@ public class S3DocumentationDao implements DocumentationDao {
 
     @Override
     public String get(String channel) {
-        logger.trace("getting documentation for channel {}", channel);
+        log.trace("getting documentation for channel {}", channel);
         String key = buildS3Key(channel);
         GetObjectRequest request = new GetObjectRequest(s3BucketName.getS3BucketName(), key);
         try (S3Object object = s3Client.getObject(request)) {
@@ -39,11 +37,11 @@ public class S3DocumentationDao implements DocumentationDao {
             return (isCompressed(object)) ? new String(decompress(bytes)) : new String(bytes);
         } catch (AmazonS3Exception e) {
             if (e.getStatusCode() != 404) {
-                logger.warn("S3 exception thrown", e);
+                log.warn("S3 exception thrown", e);
             }
             return null;
         } catch (Exception e) {
-            logger.error("couldn't read object data", e);
+            log.error("couldn't read object data", e);
             return null;
         }
     }
@@ -74,7 +72,7 @@ public class S3DocumentationDao implements DocumentationDao {
     public boolean upsert(String channel, byte[] bytes) {
         String key = buildS3Key(channel);
         String bucket = s3BucketName.getS3BucketName();
-        logger.trace("uploading {} bytes to {}:{}", bytes.length, bucket, key);
+        log.trace("uploading {} bytes to {}:{}", bytes.length, bucket, key);
         try {
             InputStream stream = new ByteArrayInputStream(bytes);
             ObjectMetadata metadata = new ObjectMetadata();
@@ -85,7 +83,7 @@ public class S3DocumentationDao implements DocumentationDao {
             s3Client.putObject(request);
             return true;
         } catch (AmazonS3Exception e) {
-            logger.error("unable to write to " + key, e);
+            log.error("unable to write to " + key, e);
             return false;
         }
     }
@@ -94,13 +92,13 @@ public class S3DocumentationDao implements DocumentationDao {
     public boolean delete(String channel) {
         String key = buildS3Key(channel);
         String bucket = s3BucketName.getS3BucketName();
-        logger.trace("deleting documentation for {}", channel);
+        log.trace("deleting documentation for {}", channel);
         try {
             DeleteObjectRequest request = new DeleteObjectRequest(bucket, key);
             s3Client.deleteObject(request);
             return true;
         } catch (AmazonS3Exception e) {
-            logger.error("unable to delete " + key, e);
+            log.error("unable to delete " + key, e);
             return false;
         }
     }
