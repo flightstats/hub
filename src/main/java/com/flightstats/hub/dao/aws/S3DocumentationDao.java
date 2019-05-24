@@ -6,6 +6,7 @@ import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
+import com.flightstats.hub.config.properties.S3Properties;
 import com.flightstats.hub.dao.DocumentationDao;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
@@ -21,17 +22,20 @@ import java.util.zip.ZipInputStream;
 @Slf4j
 public class S3DocumentationDao implements DocumentationDao {
 
-    @Inject
-    private S3BucketName s3BucketName;
+    private final HubS3Client s3Client;
+    private final String bucketName;
 
     @Inject
-    private HubS3Client s3Client;
+    public S3DocumentationDao(HubS3Client s3Client, S3Properties s3Properties) {
+        this.s3Client = s3Client;
+        this.bucketName = s3Properties.getBucketName();
+    }
 
     @Override
     public String get(String channel) {
         log.trace("getting documentation for channel {}", channel);
         String key = buildS3Key(channel);
-        GetObjectRequest request = new GetObjectRequest(s3BucketName.getS3BucketName(), key);
+        GetObjectRequest request = new GetObjectRequest(bucketName, key);
         try (S3Object object = s3Client.getObject(request)) {
             byte[] bytes = ByteStreams.toByteArray(object.getObjectContent());
             return (isCompressed(object)) ? new String(decompress(bytes)) : new String(bytes);
@@ -71,15 +75,14 @@ public class S3DocumentationDao implements DocumentationDao {
     @Override
     public boolean upsert(String channel, byte[] bytes) {
         String key = buildS3Key(channel);
-        String bucket = s3BucketName.getS3BucketName();
-        log.trace("uploading {} bytes to {}:{}", bytes.length, bucket, key);
+        log.trace("uploading {} bytes to {}:{}", bytes.length, bucketName, key);
         try {
             InputStream stream = new ByteArrayInputStream(bytes);
             ObjectMetadata metadata = new ObjectMetadata();
             metadata.addUserMetadata("compressed", "false");
             metadata.setContentType("text/plain");
             metadata.setContentLength(bytes.length);
-            PutObjectRequest request = new PutObjectRequest(bucket, key, stream, metadata);
+            PutObjectRequest request = new PutObjectRequest(bucketName, key, stream, metadata);
             s3Client.putObject(request);
             return true;
         } catch (AmazonS3Exception e) {
@@ -91,10 +94,9 @@ public class S3DocumentationDao implements DocumentationDao {
     @Override
     public boolean delete(String channel) {
         String key = buildS3Key(channel);
-        String bucket = s3BucketName.getS3BucketName();
         log.trace("deleting documentation for {}", channel);
         try {
-            DeleteObjectRequest request = new DeleteObjectRequest(bucket, key);
+            DeleteObjectRequest request = new DeleteObjectRequest(bucketName, key);
             s3Client.deleteObject(request);
             return true;
         } catch (AmazonS3Exception e) {
