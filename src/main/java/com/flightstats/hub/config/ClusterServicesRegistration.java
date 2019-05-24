@@ -1,7 +1,6 @@
 package com.flightstats.hub.config;
 
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.app.StorageBackend;
 import com.flightstats.hub.config.properties.AppProperties;
 import com.flightstats.hub.config.properties.SpokeProperties;
 import com.flightstats.hub.dao.aws.DynamoChannelExistenceCheck;
@@ -38,7 +37,7 @@ public class ClusterServicesRegistration implements ServiceRegistration {
     private final CustomMetricsLifecycle customMetricsLifecycle;
     private final AppProperties appProperties;
     private final SpokeProperties spokeProperties;
-    private PeriodicMetricEmitterLifecycle periodicMetricEmitterLifecycle;
+    private final PeriodicMetricEmitterLifecycle periodicMetricEmitterLifecycle;
 
     @Inject
     public ClusterServicesRegistration(InfluxdbReporterLifecycle influxdbReporterLifecycle,
@@ -67,9 +66,6 @@ public class ClusterServicesRegistration implements ServiceRegistration {
 
     @Override
     public void register() {
-        StorageBackend storageBackend = StorageBackend.valueOf(appProperties.getHubType());
-        log.info("Hub server starting with hub.type {}", storageBackend.toString());
-
         registerServices(getBeforeHealthCheckServices(), HubServices.TYPE.BEFORE_HEALTH_CHECK);
         registerServices(getAfterHealthCheckServices(), HubServices.TYPE.AFTER_HEALTHY_START);
     }
