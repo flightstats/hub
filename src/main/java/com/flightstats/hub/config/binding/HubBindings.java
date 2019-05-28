@@ -262,6 +262,7 @@ public class HubBindings extends AbstractModule {
 
     @Named(WRITE)
     @Provides
+    @Singleton
     public FileSpokeStore fileSpokeStoreWrite(SpokeProperties spokeProperties) {
         return new FileSpokeStore(
                 spokeProperties.getPath(SpokeStore.WRITE),
@@ -270,6 +271,7 @@ public class HubBindings extends AbstractModule {
 
     @Named(READ)
     @Provides
+    @Singleton
     public FileSpokeStore fileSpokeStoreRead(SpokeProperties spokeProperties) {
         return new FileSpokeStore(
                 spokeProperties.getPath(SpokeStore.READ),
