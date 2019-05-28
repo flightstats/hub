@@ -1,5 +1,7 @@
 package com.flightstats.hub.metrics;
 
+import com.flightstats.hub.config.properties.DatadogMetricsProperties;
+import com.flightstats.hub.config.properties.MetricsProperties;
 import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.inject.Inject;
@@ -10,19 +12,22 @@ import javax.ws.rs.core.MediaType;
 
 @Slf4j
 class DataDogHandler {
-    private MetricsConfig metricsConfig;
+    private final DatadogMetricsProperties datadogMetricsProperties;
+    private final MetricsProperties metricsProperties;
 
     @Inject
-    DataDogHandler(MetricsConfig metricsConfig) {
-        this.metricsConfig = metricsConfig;
+    DataDogHandler(DatadogMetricsProperties datadogMetricsProperties,
+                   MetricsProperties metricsProperties) {
+        this.datadogMetricsProperties = datadogMetricsProperties;
+        this.metricsProperties = metricsProperties;
     }
 
     void mute() {
         log.info("Attempting to mute datadog");
-        String datadogUrl = metricsConfig.getDatadogApiUrl() + "/downtime";
-        String apiKey = metricsConfig.getDataDogAPIKey();
-        String appKey = metricsConfig.getDataDogAppKey();
-        String name = metricsConfig.getHostTag();
+        String datadogUrl = datadogMetricsProperties.getApiUrl() + "/downtime";
+        String apiKey = datadogMetricsProperties.getApiKey();
+        String appKey = datadogMetricsProperties.getAppKey();
+        String name = metricsProperties.getHostTag();
 
         long fourMinutesInSeconds = 4 * 60;
         long nowMillis = TimeUtil.now().getMillis();

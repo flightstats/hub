@@ -1,10 +1,11 @@
 package com.flightstats.hub.metrics;
 
+import com.flightstats.hub.config.properties.MetricsProperties;
 import com.flightstats.hub.util.TimeUtil;
-import com.google.inject.Inject;
 import com.timgroup.statsd.Event;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -12,11 +13,12 @@ import java.util.stream.Stream;
 
 @Slf4j
 class StatsDFormatter {
-    private MetricsConfig metricsConfig;
+
+    private final MetricsProperties metricsProperties;
 
     @Inject
-    StatsDFormatter (MetricsConfig metricsConfig) {
-        this.metricsConfig = metricsConfig;
+    StatsDFormatter(MetricsProperties metricsProperties){
+        this.metricsProperties = metricsProperties;
     }
 
     Event buildCustomEvent(String title, String text) {
@@ -28,7 +30,7 @@ class StatsDFormatter {
             return Event.builder().build();
         }
         return Event.builder()
-                .withHostname(metricsConfig.getHostTag())
+                .withHostname(metricsProperties.getHostTag())
                 .withPriority(Event.Priority.NORMAL)
                 .withAlertType(Event.AlertType.WARNING)
                 .withTitle(title)
@@ -40,7 +42,7 @@ class StatsDFormatter {
         return TimeUtil.now().getMillis() - start;
     }
 
-    String [] formatChannelTags(String channel, String... tags) {
+    String[] formatChannelTags(String channel, String... tags) {
         List<String> tagList = Arrays
                 .stream(tags)
                 .collect(Collectors.toList());
