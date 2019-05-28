@@ -2,8 +2,8 @@ package com.flightstats.hub.metrics;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.config.AppProperties;
-import com.flightstats.hub.config.PropertiesLoader;
+import com.flightstats.hub.config.properties.AppProperties;
+import com.flightstats.hub.config.properties.PropertiesLoader;
 import com.flightstats.hub.util.ObjectRing;
 import lombok.extern.slf4j.Slf4j;
 

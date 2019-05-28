@@ -1,7 +1,7 @@
 package com.flightstats.hub.metrics;
 
-import com.flightstats.hub.config.S3Properties;
-import com.flightstats.hub.config.SpokeProperties;
+import com.flightstats.hub.config.properties.S3Properties;
+import com.flightstats.hub.config.properties.SpokeProperties;
 import com.flightstats.hub.dao.aws.S3AccessMonitor;
 import com.flightstats.hub.spoke.SpokeStore;
 

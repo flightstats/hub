@@ -1,7 +1,7 @@
 package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.dao.ChannelService;
-import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.test.IntegrationTestSetup;
 import com.flightstats.hub.util.SafeZooKeeperUtils;
 import com.flightstats.hub.webhook.error.WebhookErrorPruner;
 import com.flightstats.hub.webhook.error.WebhookErrorRepository;
@@ -19,9 +19,9 @@ class WebhookErrorServiceTest {
     private static WebhookErrorService webhookErrorService;
 
     @BeforeAll
-    static void setUpClass() throws Exception {
+    static void setUpClass() {
         ChannelService channelService = mock(ChannelService.class);
-        CuratorFramework curator = Integration.startZooKeeper();
+        CuratorFramework curator = IntegrationTestSetup.run().getZookeeperClient();
         SafeZooKeeperUtils zooKeeperUtils = new SafeZooKeeperUtils(curator);
         WebhookErrorRepository.ErrorNodeNameGenerator errorNameGenerator = new WebhookErrorRepository.ErrorNodeNameGenerator();
         WebhookErrorRepository webhookErrorRepository = new WebhookErrorRepository(zooKeeperUtils, errorNameGenerator);

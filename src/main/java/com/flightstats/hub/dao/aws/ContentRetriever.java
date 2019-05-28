@@ -1,7 +1,7 @@
 package com.flightstats.hub.dao.aws;
 
 import com.flightstats.hub.cluster.LastContentPath;
-import com.flightstats.hub.config.ContentProperties;
+import com.flightstats.hub.config.properties.ContentProperties;
 import com.flightstats.hub.dao.ContentService;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.exception.NoSuchChannelException;

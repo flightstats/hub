@@ -6,10 +6,9 @@ import com.amazonaws.services.dynamodbv2.model.GetItemRequest;
 import com.amazonaws.services.dynamodbv2.model.GetItemResult;
 import com.amazonaws.services.dynamodbv2.model.ScanRequest;
 import com.amazonaws.services.dynamodbv2.model.ScanResult;
-import com.flightstats.hub.config.DynamoProperties;
+import com.flightstats.hub.config.properties.DynamoProperties;
 import com.flightstats.hub.model.ChannelConfig;
-import com.flightstats.hub.test.Integration;
-import com.google.inject.Injector;
+import com.flightstats.hub.test.IntegrationTestSetup;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,10 +43,9 @@ class DynamoChannelConfigDaoTest {
     private DynamoChannelConfigDao mockedDao;
 
     @BeforeAll
-    static void setUpClass() throws Exception {
+    static void setUpClass() {
         log.info("setting up ...");
-        Injector injector = Integration.startAwsHub();
-        channelConfigDao = injector.getInstance(DynamoChannelConfigDao.class);
+        channelConfigDao = IntegrationTestSetup.run().getInstance(DynamoChannelConfigDao.class);
     }
 
     @BeforeEach

@@ -2,9 +2,9 @@ package com.flightstats.hub.dao.aws;
 
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.LastContentPath;
-import com.flightstats.hub.config.AppProperties;
-import com.flightstats.hub.config.ContentProperties;
-import com.flightstats.hub.config.SpokeProperties;
+import com.flightstats.hub.config.properties.AppProperties;
+import com.flightstats.hub.config.properties.ContentProperties;
+import com.flightstats.hub.config.properties.SpokeProperties;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentKeyUtil;
 import com.flightstats.hub.dao.ContentService;

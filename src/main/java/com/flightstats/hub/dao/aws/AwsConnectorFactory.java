@@ -21,9 +21,9 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.flightstats.hub.config.AwsProperties;
-import com.flightstats.hub.config.DynamoProperties;
-import com.flightstats.hub.config.S3Properties;
+import com.flightstats.hub.config.properties.AwsProperties;
+import com.flightstats.hub.config.properties.DynamoProperties;
+import com.flightstats.hub.config.properties.S3Properties;
 import com.google.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 

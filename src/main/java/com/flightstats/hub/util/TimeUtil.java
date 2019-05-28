@@ -1,8 +1,8 @@
 package com.flightstats.hub.util;
 
-import com.flightstats.hub.config.AppProperties;
-import com.flightstats.hub.config.ContentProperties;
-import com.flightstats.hub.config.PropertiesLoader;
+import com.flightstats.hub.config.properties.AppProperties;
+import com.flightstats.hub.config.properties.ContentProperties;
+import com.flightstats.hub.config.properties.PropertiesLoader;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Duration;

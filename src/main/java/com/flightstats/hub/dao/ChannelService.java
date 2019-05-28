@@ -4,7 +4,7 @@ import com.flightstats.hub.app.InFlightService;
 import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.cluster.WatchManager;
-import com.flightstats.hub.config.ContentProperties;
+import com.flightstats.hub.config.properties.ContentProperties;
 import com.flightstats.hub.dao.aws.ContentRetriever;
 import com.flightstats.hub.dao.aws.MultiPartParser;
 import com.flightstats.hub.exception.ContentTooLargeException;

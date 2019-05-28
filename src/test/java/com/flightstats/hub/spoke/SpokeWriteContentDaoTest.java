@@ -1,9 +1,9 @@
 package com.flightstats.hub.spoke;
 
-import com.flightstats.hub.config.PropertiesLoader;
+import com.flightstats.hub.config.properties.PropertiesLoader;
 import com.flightstats.hub.dao.ContentDaoUtil;
 import com.flightstats.hub.model.Content;
-import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.test.IntegrationTestSetup;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -18,7 +18,7 @@ class SpokeWriteContentDaoTest {
 
     @BeforeAll
     static void setUpClass() throws Exception {
-        util = new ContentDaoUtil(Integration.startAwsHub().getInstance(SpokeWriteContentDao.class));
+        util = new ContentDaoUtil(IntegrationTestSetup.run().getInstance(SpokeWriteContentDao.class));
     }
 
     @Test

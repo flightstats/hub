@@ -1,7 +1,7 @@
 package com.flightstats.hub.app;
 
-import com.flightstats.hub.config.AppProperties;
-import com.flightstats.hub.config.WebhookProperties;
+import com.flightstats.hub.config.properties.AppProperties;
+import com.flightstats.hub.config.properties.WebhookProperties;
 import com.flightstats.hub.exception.ForbiddenRequestException;
 
 import javax.inject.Inject;

@@ -5,6 +5,7 @@ import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.PutObjectResult;
 import com.amazonaws.services.s3.model.S3Object;
+import com.flightstats.hub.config.properties.S3Properties;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.Content;
@@ -35,17 +36,17 @@ public class S3AccessMonitor {
 
     private final Dao<ChannelConfig> channelConfigDao;
     private final HubS3Client hubS3Client;
-    private final S3BucketName s3BucketName;
+    private final String bucketName;
     private final Content content;
 
     @Inject
     public S3AccessMonitor(
             @Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao,
             HubS3Client hubS3Client,
-            S3BucketName s3BucketName) {
+            S3Properties s3Properties) {
         this.channelConfigDao = channelConfigDao;
         this.hubS3Client = hubS3Client;
-        this.s3BucketName = s3BucketName;
+        this.bucketName = s3Properties.getBucketName();
 
         DateTime insertTime = new DateTime();
         this.content = Content.builder()
@@ -75,7 +76,7 @@ public class S3AccessMonitor {
         try {
             ObjectMetadata metadata = S3SingleContentDao.createObjectMetadata(content, false);
             metadata.setContentLength(content.getData().length);
-            PutObjectRequest request = new PutObjectRequest(s3BucketName.getS3BucketName(), key(), content.getStream(), metadata);
+            PutObjectRequest request = new PutObjectRequest(bucketName, key(), content.getStream(), metadata);
             return CompletableFuture.supplyAsync(() -> hubS3Client.putObject(request));
         } catch (Exception e) {
             log.error("error writing to s3: ", e);
@@ -87,7 +88,7 @@ public class S3AccessMonitor {
         try {
             return CompletableFuture.supplyAsync(() -> {
                 try (S3Object s3Object = hubS3Client
-                        .getObject(new GetObjectRequest(s3BucketName.getS3BucketName(), key()))) {
+                        .getObject(new GetObjectRequest(bucketName, key()))) {
                     return s3Object.getObjectMetadata().getVersionId();
                 } catch (IOException e) {
                     log.info("error closing connection to s3", e);
