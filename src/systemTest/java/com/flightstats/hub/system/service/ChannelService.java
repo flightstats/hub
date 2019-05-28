@@ -6,6 +6,8 @@ import com.flightstats.hub.clients.hub.HubClientFactory;
 import com.flightstats.hub.model.Channel;
 import com.flightstats.hub.model.ChannelItem;
 import com.flightstats.hub.model.DatePathIndex;
+import com.flightstats.hub.model.Location;
+import com.flightstats.hub.model.TimeQuery;
 import com.google.inject.Inject;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -16,8 +18,10 @@ import retrofit2.Response;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static javax.ws.rs.core.Response.Status.CREATED;
@@ -42,7 +46,7 @@ public class ChannelService {
         return getHubBaseUrl() + "channel/" + channelName;
     }
 
-    public HttpUrl getHubBaseUrl() {
+    private HttpUrl getHubBaseUrl() {
         return hubBaseUrl;
     }
 
@@ -80,21 +84,65 @@ public class ChannelService {
         return response.body().get_links().getSelf().getHref();
     }
 
+    private List<String> getPathParts(String path) {
+        String itemPath = path.replace(hubBaseUrl.toString() + "channel/", "");
+        return Arrays.asList(itemPath.split("/"));
+    }
+
+    private Map<DatePathIndex, Integer> getPathDateParts(List<String> pathParts) {
+        Map<DatePathIndex, Integer> dateValues = new HashMap<>();
+        List<Integer> dateParts = pathParts.subList(1, pathParts.size() -1).stream()
+                .filter(StringUtils::isNotBlank)
+                .map(Integer::parseInt)
+                .collect(Collectors.toList());
+        dateValues.put(DatePathIndex.YEAR, dateParts.get(DatePathIndex.YEAR.getIndex()));
+        dateValues.put(DatePathIndex.MONTH, dateParts.get(DatePathIndex.MONTH.getIndex()));
+        dateValues.put(DatePathIndex.DAY, dateParts.get(DatePathIndex.DAY.getIndex()));
+        dateValues.put(DatePathIndex.HOUR, dateParts.get(DatePathIndex.HOUR.getIndex()));
+        dateValues.put(DatePathIndex.MINUTE, dateParts.get(DatePathIndex.MINUTE.getIndex()));
+        dateValues.put(DatePathIndex.SECONDS, dateParts.get(DatePathIndex.SECONDS.getIndex()));
+        dateValues.put(DatePathIndex.MILLIS, dateParts.get(DatePathIndex.MILLIS.getIndex()));
+        return dateValues;
+    }
+
+    private Map<String, String> getPathKeys(List<String> pathParts) {
+        Map<String, String> keys = new HashMap<>();
+        keys.put("channelName", pathParts.get(0));
+        keys.put("key", pathParts.get(pathParts.size() - 1));
+        return keys;
+    }
+
+    @SneakyThrows
+    public Optional<TimeQuery> getItemByTimeFromLocation(String path, Location location) {
+        List<String> pathParts = getPathParts(path);
+        Map<String, String> keys = getPathKeys(pathParts);
+        Map<DatePathIndex, Integer> dateParts = getPathDateParts(pathParts);
+        Call<TimeQuery> response = channelItemResourceClient.getItemsSecondsPath(keys.get("channelName"),
+                dateParts.get(DatePathIndex.YEAR),
+                dateParts.get(DatePathIndex.MONTH),
+                dateParts.get(DatePathIndex.DAY),
+                dateParts.get(DatePathIndex.HOUR),
+                dateParts.get(DatePathIndex.MINUTE),
+                dateParts.get(DatePathIndex.SECONDS),
+                location);
+        return Optional.ofNullable(response.execute().body());
+    }
+
     @SneakyThrows
     public Object getItem(String path) {
-        String itemPath = path.replace(hubBaseUrl.toString() + "channel/", "");
-        List<String> pathParts = new LinkedList<>(Arrays.asList(itemPath.split("/")));
-        String channelName = pathParts.remove(0);
-        String itemKey = pathParts.remove(pathParts.size() - 1);
-        List<Integer> dateParts = pathParts.stream().filter(StringUtils::isNotBlank).map(Integer::parseInt).collect(Collectors.toList());
-        int year = dateParts.get(DatePathIndex.YEAR.getIndex());
-        int month = dateParts.get(DatePathIndex.MONTH.getIndex());
-        int day = dateParts.get(DatePathIndex.DAY.getIndex());
-        int hour = dateParts.get(DatePathIndex.HOUR.getIndex());
-        int minute = dateParts.get(DatePathIndex.MINUTE.getIndex());
-        int seconds = dateParts.get(DatePathIndex.SECONDS.getIndex());
-        int millis = dateParts.get(DatePathIndex.MILLIS.getIndex());
-        Object response = channelItemResourceClient.get(channelName, year, month, day, hour, minute, seconds, millis, itemKey);
+        List<String> pathParts = getPathParts(path);
+        Map<String, String> keys = getPathKeys(pathParts);
+        Map<DatePathIndex, Integer> dateParts = getPathDateParts(pathParts);
+        Object response = channelItemResourceClient.get(
+                keys.get("channelName"),
+                dateParts.get(DatePathIndex.YEAR),
+                dateParts.get(DatePathIndex.MONTH),
+                dateParts.get(DatePathIndex.DAY),
+                dateParts.get(DatePathIndex.HOUR),
+                dateParts.get(DatePathIndex.MINUTE),
+                dateParts.get(DatePathIndex.SECONDS),
+                dateParts.get(DatePathIndex.MILLIS),
+                keys.get("key"));
         return ((Call) response).execute().body();
     }
 

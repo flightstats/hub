@@ -2,6 +2,8 @@ package com.flightstats.hub.system.functional;
 
 import com.flightstats.hub.model.Channel;
 import com.flightstats.hub.model.ChannelStorage;
+import com.flightstats.hub.model.Location;
+import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.system.config.DependencyInjector;
 import com.flightstats.hub.system.service.ChannelService;
 import com.flightstats.hub.system.service.S3Service;
@@ -15,6 +17,9 @@ import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 class SingleItemStorageTest extends DependencyInjector {
@@ -50,6 +55,21 @@ class SingleItemStorageTest extends DependencyInjector {
         Awaitility.await()
                 .atMost(Duration.TEN_SECONDS)
                 .until(() -> channelService.getItem(itemUri).equals(testData));
+    }
+
+    @Test
+    void singleChannelStorage_itemInCache_item() {
+        Awaitility.await()
+                .pollInterval(Duration.TWO_SECONDS)
+                .atMost(new Duration(20, TimeUnit.SECONDS))
+                .until(() -> {
+                    channelService.getItem(itemUri);
+                    TimeQuery result = channelService
+                            .getItemByTimeFromLocation(itemUri, Location.CACHE)
+                            .orElse(TimeQuery.builder()._links(new TimeQuery.Links(new String [] {})).build());
+                    List<String> uris = Arrays.asList(result.getUris());
+                    return uris.stream().anyMatch(str -> str.equals(itemUri));
+                });
     }
 
     @Test

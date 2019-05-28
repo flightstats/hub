@@ -44,7 +44,7 @@ class WebhookLifecycleTest extends DependencyInjector {
 
     @BeforeAll
     void hubSetup() {
-        hubLifecycle.setup();
+//        hubLifecycle.setup();
     }
 
     @BeforeEach
@@ -125,6 +125,6 @@ class WebhookLifecycleTest extends DependencyInjector {
 
     @AfterAll
     void hubCleanup() {
-        hubLifecycle.cleanup();
+//        hubLifecycle.cleanup();
     }
 }
