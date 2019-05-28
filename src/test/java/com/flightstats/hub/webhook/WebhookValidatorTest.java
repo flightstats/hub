@@ -1,8 +1,8 @@
 package com.flightstats.hub.webhook;
 
-import com.flightstats.hub.config.AppProperties;
-import com.flightstats.hub.config.PropertiesLoader;
-import com.flightstats.hub.config.WebhookProperties;
+import com.flightstats.hub.config.properties.AppProperties;
+import com.flightstats.hub.config.properties.PropertiesLoader;
+import com.flightstats.hub.config.properties.WebhookProperties;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.google.common.base.Strings;
 import org.junit.jupiter.api.BeforeEach;

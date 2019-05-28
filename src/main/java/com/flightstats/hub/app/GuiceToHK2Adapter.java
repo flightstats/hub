@@ -1,5 +1,6 @@
 package com.flightstats.hub.app;
 
+import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.name.Names;
@@ -19,6 +20,7 @@ public class GuiceToHK2Adapter extends AbstractBinder {
 
     private final Injector injector;
 
+    @Inject
     public GuiceToHK2Adapter(Injector injector) {
         this.injector = injector;
     }

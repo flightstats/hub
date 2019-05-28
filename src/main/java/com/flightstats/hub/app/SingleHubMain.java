@@ -1,6 +1,6 @@
 package com.flightstats.hub.app;
 
-import com.flightstats.hub.config.PropertiesLoader;
+import com.flightstats.hub.config.properties.PropertiesLoader;
 import com.google.common.io.Files;
 
 /**
@@ -9,7 +9,6 @@ import com.google.common.io.Files;
  * The primary value to set here the system property 'storage.path', which is where all the local data files
  * are stored.
  */
-@SuppressWarnings("WeakerAccess")
 public class SingleHubMain {
 
     public static void main(String[] args) throws Exception {

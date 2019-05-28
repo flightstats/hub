@@ -1,7 +1,7 @@
 package com.flightstats.hub.metrics;
 
-import com.flightstats.hub.config.AppProperties;
-import com.flightstats.hub.config.PropertiesLoader;
+import com.flightstats.hub.config.properties.AppProperties;
+import com.flightstats.hub.config.properties.PropertiesLoader;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;

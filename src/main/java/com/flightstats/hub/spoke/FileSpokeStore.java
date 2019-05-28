@@ -5,37 +5,44 @@ import com.flightstats.hub.model.MinutePath;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.ByteStreams;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.NotFoundException;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collection;
 
 /**
  * Direct interactions with the file system
  */
+@Slf4j
 public class FileSpokeStore {
-
-    private final static Logger logger = LoggerFactory.getLogger(FileSpokeStore.class);
     private final String spokePath;
     private final int spokeTtlMinutes;
 
     public FileSpokeStore(String spokePath, int spokeTtlMinutes) {
         this.spokePath = StringUtils.appendIfMissing(spokePath, "/");
         this.spokeTtlMinutes = spokeTtlMinutes;
-        logger.info("starting with storage path " + this.spokePath);
+        log.info("starting with storage path " + this.spokePath);
         if (!insert("hub-startup/" + new ContentKey().toUrl(), ("" + System.currentTimeMillis()).getBytes())) {
             throw new RuntimeException("unable to create startup file");
         }
         File file = spokeFilePathPart("hub-startup/" + new ContentKey().toUrl());
         if (file.canExecute()) {
-            logger.warn("**** Spoke file permissions may allow incomplete reads ****");
+            log.warn("**** Spoke file permissions may allow incomplete reads ****");
         }
     }
 
@@ -45,14 +52,14 @@ public class FileSpokeStore {
 
     public boolean insert(String path, InputStream input) {
         File file = spokeFilePathPart(path);
-        logger.trace("insert {} {} {}", file, file.getParentFile().mkdirs(), file.canExecute());
+        log.trace("insert {} {} {}", file, file.getParentFile().mkdirs(), file.canExecute());
         try (FileOutputStream output = new FileOutputStream(file)) {
             long copy = ByteStreams.copy(input, output);
             boolean setExecutable = file.setExecutable(true);
-            logger.trace("copied {} {} {}", file, copy, setExecutable);
+            log.trace("copied {} {} {}", file, copy, setExecutable);
             return true;
         } catch (IOException e) {
-            logger.info("unable to write to " + path, e);
+            log.info("unable to write to " + path, e);
             return false;
         }
     }
@@ -65,20 +72,20 @@ public class FileSpokeStore {
 
     public void read(String path, OutputStream output) {
         File file = spokeFilePathPart(path);
-        logger.trace("reading {}", file);
+        log.trace("reading {}", file);
         if (!file.exists()) {
             throw new NotFoundException("not found " + path);
         }
         if (!file.canExecute()) {
-            logger.warn("incomplete file {}", path);
+            log.warn("incomplete file {}", path);
             throw new NotFoundException("incomplete file " + path);
         }
         try (FileInputStream input = new FileInputStream(file)) {
             ByteStreams.copy(input, output);
         } catch (FileNotFoundException e) {
-            logger.debug("file not found {}", path);
+            log.debug("file not found {}", path);
         } catch (IOException e) {
-            logger.info("unable to read from " + path, e);
+            log.info("unable to read from " + path, e);
         }
     }
 
@@ -138,7 +145,7 @@ public class FileSpokeStore {
 
     private void keysInBucket(String key, OutputStream output) {
         String path = spokeFilePathPart(key).getAbsolutePath();
-        logger.trace("path {}", path);
+        log.trace("path {}", path);
         String resolution = SpokePathUtil.smallestTimeResolution(key);
         File directory = new File(path);
 
@@ -156,12 +163,12 @@ public class FileSpokeStore {
             }
             for (File aFile : files) {
                 String filePath = aFile.getPath();
-                logger.trace("filePath {}", filePath);
+                log.trace("filePath {}", filePath);
                 String keyFromPath = spokeKeyFromPath(aFile.getAbsolutePath());
                 writeKey(output, keyFromPath);
             }
         } catch (Exception e) {
-            logger.info("error with " + path, e);
+            log.info("error with " + path, e);
         }
     }
 
@@ -179,13 +186,13 @@ public class FileSpokeStore {
     }
 
     public String getLatest(String channel, String limitPath) {
-        logger.trace("latest {} {}", channel, limitPath);
+        log.trace("latest {} {}", channel, limitPath);
         ContentKey limitKey = ContentKey.fromUrl(limitPath).get();
         return getLatest(channel, limitPath, limitKey.getTime());
     }
 
     private String getLatest(String channel, String limitPath, DateTime hourToSearch) {
-        logger.trace("latest {} {} {}", channel, limitPath, hourToSearch);
+        log.trace("latest {} {} {}", channel, limitPath, hourToSearch);
         String hoursPath = TimeUtil.hours(hourToSearch);
         String fullHoursPath = spokePath + channel + "/" + hoursPath;
         String[] minutes = new File(fullHoursPath).list();
@@ -193,14 +200,14 @@ public class FileSpokeStore {
             minutes = new String[0];
         }
         Arrays.sort(minutes);
-        logger.trace("looking at {} {}", fullHoursPath, minutes);
+        log.trace("looking at {} {}", fullHoursPath, minutes);
         for (int i = minutes.length - 1; i >= 0; i--) {
             String minute = minutes[i];
             String[] fileNames = new File(fullHoursPath + "/" + minute).list();
             Arrays.sort(fileNames);
             for (int j = fileNames.length - 1; j >= 0; j--) {
                 String spokeKeyFromPath = spokeKeyFromPath(hoursPath + "/" + minute + "/" + fileNames[j]);
-                logger.trace("looking at file {} ", spokeKeyFromPath);
+                log.trace("looking at file {} ", spokeKeyFromPath);
                 if (spokeKeyFromPath.compareTo(limitPath) < 0) {
                     return channel + "/" + spokeKeyFromPath;
                 }
@@ -209,7 +216,7 @@ public class FileSpokeStore {
         DateTime ttlTime = TimeUtil.now().minusMinutes(spokeTtlMinutes);
         DateTime previous = hourToSearch.minusHours(1).withMinuteOfHour(59).withSecondOfMinute(59).withMillisOfSecond(999);
         if (previous.isBefore(ttlTime)) {
-            logger.debug("no latest found for {} {} ", channel, limitPath);
+            log.debug("no latest found for {} {} ", channel, limitPath);
             return null;
         }
         return getLatest(channel, limitPath, previous);
@@ -221,7 +228,7 @@ public class FileSpokeStore {
     public void getNext(String channel, String startKey, int count, OutputStream output) throws IOException {
         DateTime now = TimeUtil.now();
         String channelPath = spokePath + channel + "/";
-        logger.trace("next {} {} {}", channel, startKey, now);
+        log.trace("next {} {} {}", channel, startKey, now);
         ContentKey start = ContentKey.fromUrl(startKey).get();
         int found = 0;
         MinutePath minutePath = new MinutePath(start.getTime());
@@ -230,7 +237,7 @@ public class FileSpokeStore {
             //todo gfm - while this fast for short time ranges, it is quite slow over years
             String minuteUrl = minutePath.toUrl();
             String minute = channelPath + minuteUrl;
-            logger.trace("minute {}", minute);
+            log.trace("minute {}", minute);
             String[] items = new File(minute).list();
             if (items != null) {
                 for (String item : items) {
@@ -254,18 +261,18 @@ public class FileSpokeStore {
 
     void enforceTtl(String channel, DateTime dateTime) {
         String limitPath = TimeUtil.minutes(dateTime);
-        logger.debug("enforceTtl {} {}", channel, limitPath);
+        log.debug("enforceTtl {} {}", channel, limitPath);
         String[] split = StringUtils.split(limitPath, "/");
         split = new String[]{split[0], split[1], split[2], split[3], split[4]};
         recurseDelete(channel, split, 0, channel);
     }
 
     private void recurseDelete(String path, String[] limitPath, int count, String channel) {
-        logger.trace("recurse delete {} {}", path, count);
+        log.trace("recurse delete {} {}", path, count);
         String pathname = spokePath + path;
         String[] items = new File(pathname).list();
         if (items == null) {
-            logger.trace("path not found {}", pathname);
+            log.trace("path not found {}", pathname);
             return;
         }
         String limitCompare = channel + "/";
@@ -273,13 +280,13 @@ public class FileSpokeStore {
             limitCompare += limitPath[i] + "/";
         }
         for (String item : items) {
-            logger.info("looking at {} {}", item, limitCompare);
+            log.info("looking at {} {}", item, limitCompare);
             String current = path + "/" + item + "/";
             if (current.compareTo(limitCompare) <= 0) {
                 if (count < 4) {
                     recurseDelete(path + "/" + item, limitPath, count + 1, channel);
                 } else {
-                    logger.info("deleting {}", spokePath + "/" + current);
+                    log.info("deleting {}", spokePath + "/" + current);
                     FileUtils.deleteQuietly(new File(spokePath + "/" + current));
                 }
             }

@@ -1,14 +1,16 @@
-package com.flightstats.hub.config;
+package com.flightstats.hub.config.properties;
 
 import javax.inject.Inject;
 
 public class S3Properties {
 
     private final PropertiesLoader propertiesLoader;
+    private final AppProperties appProperties;
 
     @Inject
-    public S3Properties(PropertiesLoader propertiesLoader) {
+    public S3Properties(PropertiesLoader propertiesLoader, AppProperties appProperties) {
         this.propertiesLoader = propertiesLoader;
+        this.appProperties = appProperties;
     }
 
     public String getEnv() {
@@ -19,8 +21,12 @@ public class S3Properties {
         return propertiesLoader.getProperty("s3.endpoint", "s3-external-1.amazonaws.com");
     }
 
-    public String getBucketName(String legacyS3BucketName) {
-        return propertiesLoader.getProperty("s3.bucket_name", legacyS3BucketName);
+    private String getLegacyBucketName() {
+        return appProperties.getAppName() + "-" + getEnv();
+    }
+
+    public String getBucketName() {
+        return propertiesLoader.getProperty("s3.bucket_name", getLegacyBucketName());
     }
 
     public int getBucketPolicyMaxRules(int defaultValue) {

@@ -7,8 +7,7 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -21,11 +20,9 @@ import java.util.concurrent.TimeUnit;
  * preventing a node from starting if it is decomm'd and old
  * allowing a node to start as decomm'd and young
  */
+@Slf4j
 @Singleton
 public class SpokeDecommissionManager implements DecommissionManager {
-
-    private static final Logger logger = LoggerFactory.getLogger(SpokeDecommissionManager.class);
-
     private final CuratorCluster spokeCuratorCluster;
     private final CuratorCluster hubCuratorCluster;
     private final HubHealthCheck hubHealthCheck;
@@ -65,7 +62,7 @@ public class SpokeDecommissionManager implements DecommissionManager {
         decommissionCluster.initialize();
         if (decommissionCluster.doNotRestartExists()) {
             String msg = "We can not start a server with a 'do not start' key";
-            logger.error(msg);
+            log.error(msg);
             throw new RuntimeException(msg);
         }
         if (decommissionCluster.withinSpokeExists()) {
@@ -76,14 +73,14 @@ public class SpokeDecommissionManager implements DecommissionManager {
 
     private void scheduleDoNotRestart() throws Exception {
         if (decommissionCluster.doNotRestartExists()) {
-            logger.warn("do not restart already exists");
+            log.warn("do not restart already exists");
             spokeCuratorCluster.delete();
             return;
         }
         if (decommissionCluster.withinSpokeExists()) {
             long doNotRestartMinutes = decommissionCluster.getDoNotRestartMinutes();
             if (doNotRestartMinutes > 0) {
-                logger.info("scheduling doNotRestart in {} minutes", doNotRestartMinutes);
+                log.info("scheduling doNotRestart in {} minutes", doNotRestartMinutes);
                 Executors.newSingleThreadScheduledExecutor().schedule(this::doNotRestart,
                         doNotRestartMinutes, TimeUnit.MINUTES);
             } else {
@@ -96,16 +93,16 @@ public class SpokeDecommissionManager implements DecommissionManager {
 
     private void doNotRestart() {
         try {
-            logger.info("doNotRestart starting ...");
+            log.info("doNotRestart starting ...");
             decommissionCluster.doNotRestart();
-            logger.info("deleting spoke cluster ");
+            log.info("deleting spoke cluster ");
             spokeCuratorCluster.delete();
             hubCuratorCluster.delete();
-            logger.info("doNotRestart complete");
+            log.info("doNotRestart complete");
             hubHealthCheck.decommissionedDoNotRestart();
             shutdownManager.shutdown(false);
         } catch (Exception e) {
-            logger.warn("unable to complete ", e);
+            log.warn("unable to complete ", e);
         }
     }
 

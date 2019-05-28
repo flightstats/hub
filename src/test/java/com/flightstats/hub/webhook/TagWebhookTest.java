@@ -1,7 +1,7 @@
 package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.model.ChannelConfig;
-import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.test.IntegrationTestSetup;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -58,7 +58,7 @@ class TagWebhookTest {
     @BeforeEach
     void initialize() {
         try {
-            Integration.startAwsHub();
+            IntegrationTestSetup.run().getZookeeperClient();
         } catch (Exception e) {
             e.printStackTrace();
         }

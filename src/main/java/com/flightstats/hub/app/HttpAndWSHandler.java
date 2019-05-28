@@ -11,23 +11,23 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-class HttpAndWSHandler extends HandlerCollection {
+public class HttpAndWSHandler extends HandlerCollection {
 
     private final MetricsRequestFilter metricsRequestFilter;
     private Handler httpHandler;
     private Handler wsHandler;
 
     @Inject
-    HttpAndWSHandler(MetricsRequestFilter metricsRequestFilter) {
+    public HttpAndWSHandler(MetricsRequestFilter metricsRequestFilter) {
         this.metricsRequestFilter = metricsRequestFilter;
     }
 
-    void addHttpHandler(Handler httpHandler) {
+    public void addHttpHandler(Handler httpHandler) {
         this.httpHandler = httpHandler;
         addHandler(httpHandler);
     }
 
-    void addWSHandler(Handler wsHandler) {
+    public void addWSHandler(Handler wsHandler) {
         this.wsHandler = wsHandler;
         addHandler(wsHandler);
     }

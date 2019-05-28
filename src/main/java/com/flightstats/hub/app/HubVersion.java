@@ -1,6 +1,6 @@
 package com.flightstats.hub.app;
 
-import com.flightstats.hub.config.AppProperties;
+import com.flightstats.hub.config.properties.AppProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 

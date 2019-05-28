@@ -1,10 +1,9 @@
 package com.flightstats.hub.model;
 
 import com.flightstats.hub.util.TimeUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
@@ -15,9 +14,9 @@ import java.util.Optional;
  * A SecondPath represents the end of a second period.
  * So any ContentKeys contained within that second come before the SecondPath.
  */
+@Slf4j
 public class SecondPath implements ContentPathKeys {
     public static final SecondPath NONE = new SecondPath(new DateTime(1, DateTimeZone.UTC));
-    private final static Logger logger = LoggerFactory.getLogger(SecondPath.class);
     private final DateTime time;
     private final Collection<ContentKey> keys;
 
@@ -42,7 +41,7 @@ public class SecondPath implements ContentPathKeys {
         try {
             return Optional.of(new SecondPath(TimeUtil.seconds(key)));
         } catch (Exception e) {
-            logger.info("unable to parse " + key + " " + e.getMessage());
+            log.info("unable to parse " + key + " " + e.getMessage());
             return Optional.empty();
         }
     }

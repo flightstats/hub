@@ -1,8 +1,8 @@
 package com.flightstats.hub.webhook;
 
-import com.flightstats.hub.config.WebhookProperties;
+import com.flightstats.hub.config.properties.WebhookProperties;
 import com.flightstats.hub.metrics.StatsdReporter;
-import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.test.IntegrationTestSetup;
 import com.flightstats.hub.util.SafeZooKeeperUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
@@ -55,8 +55,8 @@ class ActiveWebhooksIntTest {
     }
 
     @BeforeAll
-    static void setup() throws Exception {
-        curator = Integration.startZooKeeper();
+    static void setup() {
+        curator = IntegrationTestSetup.run().getZookeeperClient();
         zooKeeperUtils = new SafeZooKeeperUtils(curator);
     }
 

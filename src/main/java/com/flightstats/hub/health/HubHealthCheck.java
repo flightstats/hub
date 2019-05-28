@@ -5,14 +5,13 @@ import com.flightstats.hub.spoke.SpokeFinalCheck;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Singleton
+@Slf4j
 public class HubHealthCheck {
-    private final static Logger logger = LoggerFactory.getLogger(HubHealthCheck.class);
     private final AtomicBoolean shutdown = new AtomicBoolean(false);
     private final AtomicBoolean startup = new AtomicBoolean(true);
     private final AtomicBoolean decommissionedWithinSpoke = new AtomicBoolean(false);
@@ -63,14 +62,14 @@ public class HubHealthCheck {
         @Override
         protected void startUp() throws Exception {
             if (!spokeFinalCheck.check()) {
-                logger.warn("unable to cleanly start!");
+                log.warn("unable to cleanly start!");
                 throw new RuntimeException("unable to cleanly start");
             }
             startup.set(false);
         }
 
         @Override
-        protected void shutDown() throws Exception {
+        protected void shutDown() {
             shutdown();
         }
     }

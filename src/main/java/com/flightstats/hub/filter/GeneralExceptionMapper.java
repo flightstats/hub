@@ -1,7 +1,6 @@
 package com.flightstats.hub.filter;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
@@ -14,13 +13,13 @@ import javax.ws.rs.ext.Provider;
  */
 @SuppressWarnings("WeakerAccess")
 @Provider
+@Slf4j
 public class GeneralExceptionMapper implements ExceptionMapper<Exception> {
-    private final static Logger logger = LoggerFactory.getLogger(GeneralExceptionMapper.class);
 
     @Override
     public Response toResponse(Exception exception) {
-        logger.warn("exception", exception);
-        Response response = null;
+        log.warn("exception", exception);
+        Response response;
         if (exception instanceof WebApplicationException) {
             WebApplicationException webEx = (WebApplicationException) exception;
             response = webEx.getResponse();

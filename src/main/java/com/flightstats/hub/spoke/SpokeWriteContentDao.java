@@ -1,6 +1,6 @@
 package com.flightstats.hub.spoke;
 
-import com.flightstats.hub.config.SpokeProperties;
+import com.flightstats.hub.config.properties.SpokeProperties;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentKeyUtil;
 import com.flightstats.hub.dao.QueryResult;

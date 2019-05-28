@@ -3,9 +3,8 @@ package com.flightstats.hub.util;
 import com.amazonaws.util.StringUtils;
 import com.google.common.base.Function;
 import com.google.common.io.ByteStreams;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -14,8 +13,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 public class Commander {
-    private final static Logger logger = LoggerFactory.getLogger(Commander.class);
 
     public static String run(String[] command, int waitTimeSeconds) {
         return process(command, waitTimeSeconds,
@@ -42,7 +41,7 @@ public class Commander {
     private static <T> T process(String[] command, int waitTimeSeconds, Function<InputStream, T> processor) {
         T output = null;
         try {
-            logger.trace("running " + StringUtils.join(" ", command));
+            log.trace("running " + StringUtils.join(" ", command));
             long start = System.currentTimeMillis();
             Process process = new ProcessBuilder(command)
                     .redirectError(ProcessBuilder.Redirect.INHERIT)
@@ -52,13 +51,13 @@ public class Commander {
             output = processor.apply(inputStream);
             long time = System.currentTimeMillis() - start;
             if (waited) {
-                logger.trace("waited " + waited + " for " + time);
+                log.trace("waited " + waited + " for " + time);
             } else {
-                logger.info("destroying after " + time + " " + StringUtils.join(" ", command));
+                log.info("destroying after " + time + " " + StringUtils.join(" ", command));
                 process.destroyForcibly();
             }
         } catch (Exception e) {
-            logger.warn("unable to run command " + StringUtils.join(" ", command), e);
+            log.warn("unable to run command " + StringUtils.join(" ", command), e);
         }
         return output;
     }

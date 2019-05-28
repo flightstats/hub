@@ -1,29 +1,8 @@
 package com.flightstats.hub.util;
 
-import com.flightstats.hub.model.BulkContent;
-import com.flightstats.hub.model.ChannelConfig;
-import com.flightstats.hub.model.Content;
-import com.flightstats.hub.model.ContentKey;
-import com.flightstats.hub.model.DirectionQuery;
-import com.flightstats.hub.model.TimeQuery;
-import com.flightstats.hub.test.Integration;
-import com.google.inject.Injector;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
-
-import java.io.ByteArrayInputStream;
-import java.util.Collection;
-import java.util.SortedSet;
-import java.util.TreeSet;
-
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
 @Execution(ExecutionMode.SAME_THREAD)
@@ -33,20 +12,11 @@ class HubUtilsTest {
     private static HubUtils hubUtils;
     private static String channelUrl;
 
-    @BeforeAll
-    static void setUpClass() throws Exception {
-        Injector injector = Integration.startAwsHub();
-        hubUtils = injector.getInstance(HubUtils.class);
+    /*@BeforeAll
+    static void setUpClass() {
+        hubUtils = IntegrationTestSetup.run().getInstance(HubUtils.class);
         channelUrl = create();
     }
-
-    /*
-    Use this to test a remote hub instance.
-    @BeforeAll
-    static void setUpClass() throws Exception {
-        hubUtils = new HubUtils(null, HubBindings.buildJerseyClient());
-        channelUrl = create();
-    }*/
 
     @Test
     void testCreateInsert() {
@@ -150,5 +120,5 @@ class HubUtilsTest {
         log.info("inserted {}", keys);
         log.info("foundKeys {}", foundKeys);
         assertTrue(foundKeys.containsAll(keys));
-    }
+    }*/
 }

@@ -1,11 +1,11 @@
 package com.flightstats.hub.util;
 
-import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.test.IntegrationTestSetup;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -29,8 +29,8 @@ class SafeZooKeeperUtilsTest {
     private static SafeZooKeeperUtils zooKeeperUtils;
 
     @BeforeAll
-    static void setup() throws Exception {
-        curator = Integration.startZooKeeper();
+    static void setup() {
+        curator = IntegrationTestSetup.run().getZookeeperClient();
         zooKeeperUtils = new SafeZooKeeperUtils(curator);
     }
 

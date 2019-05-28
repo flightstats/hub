@@ -9,8 +9,8 @@ import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
-import com.flightstats.hub.config.AppProperties;
-import com.flightstats.hub.config.S3Properties;
+import com.flightstats.hub.config.properties.AppProperties;
+import com.flightstats.hub.config.properties.S3Properties;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.metrics.ActiveTraces;
@@ -21,7 +21,6 @@ import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.TimeUtil;
-import com.google.common.base.Function;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +37,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.function.Function;
 
 @Singleton
 @Slf4j
@@ -46,23 +46,22 @@ public class S3SingleContentDao implements ContentDao {
     private static final int MAX_ITEMS = 1000 * 1000;
     private final boolean useEncrypted;
     private final int s3MaxQueryItems;
+    private final String bucketName;
 
-    private StatsdReporter statsdReporter;
-    private HubS3Client s3Client;
-    private S3BucketName s3BucketName;
+    private final StatsdReporter statsdReporter;
+    private final HubS3Client s3Client;
 
     @Inject
     public S3SingleContentDao(HubS3Client s3Client,
-                              S3BucketName s3BucketName,
                               StatsdReporter statsdReporter,
                               AppProperties appProperties,
-                              S3Properties s3Properties){
+                              S3Properties s3Properties) {
         this.s3Client = s3Client;
-        this.s3BucketName = s3BucketName;
         this.statsdReporter = statsdReporter;
 
         this.useEncrypted = appProperties.isAppEncrypted();
         this.s3MaxQueryItems = s3Properties.getMaxQueryItems();
+        this.bucketName = s3Properties.getBucketName();
     }
 
     static ObjectMetadata createObjectMetadata(Content content, boolean useEncrypted) {
@@ -115,7 +114,7 @@ public class S3SingleContentDao implements ContentDao {
             log.trace("insert {} {} {} {}", channelName, key, content.getSize(), length);
             InputStream stream = new ByteArrayInputStream(bytes);
             metadata.setContentLength(length);
-            PutObjectRequest request = new PutObjectRequest(s3BucketName.getS3BucketName(), s3Key, stream, metadata);
+            PutObjectRequest request = new PutObjectRequest(bucketName, s3Key, stream, metadata);
             s3Client.putObject(request);
             return key;
         } catch (Exception e) {
@@ -130,7 +129,7 @@ public class S3SingleContentDao implements ContentDao {
     @Override
     public void delete(String channelName, ContentKey key) {
         String s3ContentKey = getS3ContentKey(channelName, key);
-        DeleteObjectRequest request = new DeleteObjectRequest(s3BucketName.getS3BucketName(), s3ContentKey);
+        DeleteObjectRequest request = new DeleteObjectRequest(bucketName, s3ContentKey);
         s3Client.deleteObject(request);
         ActiveTraces.getLocal().add("S3SingleContentDao.deleted", s3ContentKey);
     }
@@ -158,7 +157,7 @@ public class S3SingleContentDao implements ContentDao {
 
     private Content getS3Object(String channelName, ContentKey key) throws IOException {
         long start = System.currentTimeMillis();
-        GetObjectRequest request = new GetObjectRequest(s3BucketName.getS3BucketName(), getS3ContentKey(channelName, key));
+        GetObjectRequest request = new GetObjectRequest(bucketName, getS3ContentKey(channelName, key));
         try (S3Object object = s3Client.getObject(request)) {
             byte[] bytes = ByteStreams.toByteArray(object.getObjectContent());
             ObjectMetadata metadata = object.getObjectMetadata();
@@ -191,7 +190,7 @@ public class S3SingleContentDao implements ContentDao {
         traces.add("S3SingleContentDao.queryByTime", query);
         String timePath = query.getUnit().format(query.getStartTime());
         ListObjectsRequest request = new ListObjectsRequest()
-                .withBucketName(s3BucketName.getS3BucketName())
+                .withBucketName(bucketName)
                 .withMaxKeys(s3MaxQueryItems);
         ContentKey limitKey = query.getLimitKey();
         if (limitKey == null) {
@@ -274,7 +273,7 @@ public class S3SingleContentDao implements ContentDao {
 
     private SortedSet<ContentKey> next(DirectionQuery query) {
         ListObjectsRequest request = new ListObjectsRequest()
-                .withBucketName(s3BucketName.getS3BucketName())
+                .withBucketName(bucketName)
                 .withPrefix(query.getChannelName() + "/")
                 .withMarker(query.getChannelName() + "/" + query.getStartKey().toUrl())
                 .withMaxKeys(query.getCount());
@@ -289,15 +288,15 @@ public class S3SingleContentDao implements ContentDao {
     @Override
     public void deleteBefore(String channel, ContentKey limitKey) {
         try {
-            S3Util.delete(channel + "/", limitKey, s3BucketName.getS3BucketName(), s3Client);
+            S3Util.delete(channel + "/", limitKey, bucketName, s3Client);
             log.info("completed deletion of " + channel);
         } catch (Exception e) {
-            log.warn("unable to delete " + channel + " in " + s3BucketName.getS3BucketName(), e);
+            log.warn("unable to delete {} in {}", channel, bucketName, e);
         }
     }
 
     @Override
-    public ContentKey insertHistorical(String channelName, Content content) throws Exception {
+    public ContentKey insertHistorical(String channelName, Content content) {
         return insert(channelName, content);
     }
 

@@ -13,6 +13,7 @@ import com.sun.jersey.api.client.ClientResponse;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -23,6 +24,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.zip.ZipInputStream;
 
+import static com.flightstats.hub.dao.ContentDao.BATCH_LONG_TERM;
+
 @Slf4j
 @Path("/internal/s3Batch/{channel}")
 public class S3BatchResource {
@@ -32,7 +35,7 @@ public class S3BatchResource {
     private final ObjectMapper objectMapper;
 
     @Inject
-    public S3BatchResource(ContentDao s3BatchContentDao,
+    public S3BatchResource(@Named(BATCH_LONG_TERM) ContentDao s3BatchContentDao,
                            StatsdReporter statsdReporter,
                            ObjectMapper objectMapper) {
         this.s3BatchContentDao = s3BatchContentDao;

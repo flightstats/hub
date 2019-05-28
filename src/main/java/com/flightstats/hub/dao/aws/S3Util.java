@@ -1,6 +1,10 @@
 package com.flightstats.hub.dao.aws;
 
-import com.amazonaws.services.s3.model.*;
+import com.amazonaws.services.s3.model.DeleteObjectsRequest;
+import com.amazonaws.services.s3.model.ListObjectsRequest;
+import com.amazonaws.services.s3.model.MultiObjectDeleteException;
+import com.amazonaws.services.s3.model.ObjectListing;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentKeyUtil;
 import com.flightstats.hub.metrics.ActiveTraces;
@@ -8,20 +12,18 @@ import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.util.TimeUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+@Slf4j
 class S3Util {
-
-    private final static Logger logger = LoggerFactory.getLogger(S3Util.class);
 
     static SortedSet<ContentKey> queryPrevious(DirectionQuery query, ContentDao dao) {
         DateTime endTime = query.getStartKey().getTime();
@@ -74,10 +76,10 @@ class S3Util {
         multiObjectDeleteRequest.setKeys(keys);
         try {
             s3Client.deleteObjects(multiObjectDeleteRequest);
-            logger.info("deleting more from " + channelPath + " deleted " + keys.size());
+            log.info("deleting more from " + channelPath + " deleted " + keys.size());
             ActiveTraces.getLocal().add("S3Util.internalDelete", channelPath, keys.size());
         } catch (MultiObjectDeleteException e) {
-            logger.info("what happened? " + channelPath, e);
+            log.info("what happened? " + channelPath, e);
             return true;
         }
         return listing.isTruncated();

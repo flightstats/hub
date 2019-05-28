@@ -3,9 +3,9 @@ package com.flightstats.hub.dao.aws;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.ClusterCacheDao;
 import com.flightstats.hub.cluster.LatestContentCache;
-import com.flightstats.hub.config.AppProperties;
-import com.flightstats.hub.config.ContentProperties;
-import com.flightstats.hub.config.SpokeProperties;
+import com.flightstats.hub.config.properties.AppProperties;
+import com.flightstats.hub.config.properties.ContentProperties;
+import com.flightstats.hub.config.properties.SpokeProperties;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.ContentKeyUtil;
 import com.flightstats.hub.dao.ContentService;
@@ -436,12 +436,12 @@ public class ClusterContentService implements ContentService {
     Optional<ContentKey> findLatestKey(DirectionQuery latestQuery, String channel, Optional<ContentKey> latestFromZKCache) {
         Optional<ContentKey> latest = Optional.empty();
         boolean hadToFetchFromLongTermStorage = false;
-        
+
         Optional<ContentKey> latestFromSpoke = spokeWriteContentDao.getLatest(channel, latestQuery.getStartKey(), ActiveTraces.getLocal());
         if (latestFromSpoke.isPresent()) {
             latest = latestFromSpoke;
         }
-        
+
         if (!latest.isPresent()) {
             latest = latestFromZKCache;
         }
@@ -460,7 +460,7 @@ public class ClusterContentService implements ContentService {
                 latestContentCache.setIfNewer(channel, ContentKey.NONE);
             }
         }
-        
+
         return latest;
     }
 

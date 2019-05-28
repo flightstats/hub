@@ -2,9 +2,9 @@ package com.flightstats.hub.metrics;
 
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubVersion;
-import com.flightstats.hub.config.AppProperties;
-import com.flightstats.hub.config.DatadogMetricsProperties;
-import com.flightstats.hub.config.TickMetricsProperties;
+import com.flightstats.hub.config.properties.AppProperties;
+import com.flightstats.hub.config.properties.DatadogMetricsProperties;
+import com.flightstats.hub.config.properties.TickMetricsProperties;
 import com.google.inject.Provider;
 
 import javax.inject.Inject;

@@ -21,8 +21,8 @@ import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.SetBucketLifecycleConfigurationRequest;
 import com.amazonaws.services.s3.model.UploadPartRequest;
 import com.amazonaws.services.s3.model.UploadPartResult;
+import com.flightstats.hub.config.properties.S3Properties;
 import com.flightstats.hub.metrics.StatsdReporter;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 
@@ -35,18 +35,15 @@ import java.util.stream.Collectors;
 @Slf4j
 public class HubS3Client {
 
-    private AmazonS3 s3Client;
-    private StatsdReporter statsdReporter;
-    private S3BucketName s3BucketName;
+    private final AmazonS3 s3Client;
+    private final StatsdReporter statsdReporter;
+    private final String bucketName;
 
     @Inject
-    public HubS3Client(S3BucketName s3BucketName, AmazonS3 s3Client, StatsdReporter statsdReporter) {
-        this.s3BucketName = s3BucketName;
+    public HubS3Client(S3Properties s3Properties, AmazonS3 s3Client, StatsdReporter statsdReporter) {
+        this.bucketName = s3Properties.getBucketName();
         this.s3Client = s3Client;
         this.statsdReporter = statsdReporter;
-    }
-
-    public HubS3Client() {
     }
 
     private static String[] toStringArray(List<String> list) {
@@ -54,7 +51,6 @@ public class HubS3Client {
     }
 
     public void initialize() {
-        String bucketName = s3BucketName.getS3BucketName();
         log.info("checking if bucket exists " + bucketName);
         if (s3Client.doesBucketExistV2(bucketName)) {
             log.info("bucket exists " + bucketName);
@@ -164,8 +160,7 @@ public class HubS3Client {
         return s3Client.getCachedResponseMetadata(request);
     }
 
-    @VisibleForTesting
-    protected void countError(SdkClientException exception, AmazonWebServiceRequest request, String method, List<String> extraTags) {
+    void countError(SdkClientException exception, AmazonWebServiceRequest request, String method, List<String> extraTags) {
         List<String> tags = new ArrayList<>();
         tags.add("exception:" + exception.getClass().getCanonicalName());
         tags.add("method:" + method);

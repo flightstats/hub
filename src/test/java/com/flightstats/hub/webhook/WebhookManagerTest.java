@@ -3,7 +3,7 @@ package com.flightstats.hub.webhook;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.ClusterCacheDao;
 import com.flightstats.hub.cluster.WatchManager;
-import com.flightstats.hub.config.WebhookProperties;
+import com.flightstats.hub.config.properties.WebhookProperties;
 import com.flightstats.hub.dao.Dao;
 import com.google.common.util.concurrent.Service;
 import org.junit.jupiter.api.BeforeEach;

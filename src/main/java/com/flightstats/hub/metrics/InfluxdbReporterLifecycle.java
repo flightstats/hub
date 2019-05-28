@@ -4,13 +4,13 @@ import com.codahale.metrics.ScheduledReporter;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.slf4j.LoggerFactory;
-import org.slf4j.Logger;
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.concurrent.TimeUnit;
 
 @Singleton
+@Slf4j
 public class InfluxdbReporterLifecycle extends AbstractIdleService {
-    private final Logger logger = LoggerFactory.getLogger(InfluxdbReporterLifecycle.class);
     private final ScheduledReporter influxdbReporter;
     private final MetricsConfig metricsConfig;
 
@@ -25,7 +25,7 @@ public class InfluxdbReporterLifecycle extends AbstractIdleService {
 
     public void startUp() {
         if (metricsConfig.isEnabled()) {
-            logger.info(
+            log.info(
                     "starting metrics reporting to influxdb at {}://{}:{}",
                     metricsConfig.getInfluxdbProtocol(),
                     metricsConfig.getInfluxdbHost(),
@@ -34,13 +34,13 @@ public class InfluxdbReporterLifecycle extends AbstractIdleService {
             influxdbReporter.start(intervalSeconds, TimeUnit.SECONDS);
 
         } else {
-            logger.info("not starting influxdb reporter: disabled");
+            log.info("not starting influxdb reporter: disabled");
         }
 
     }
 
     public void shutDown() {
-        logger.info("shutting down influxdb reporter");
+        log.info("shutting down influxdb reporter");
         if (isRunning()) {
             influxdbReporter.stop();
         }

@@ -19,10 +19,10 @@ import com.flightstats.hub.cluster.ClusterCacheDao;
 import com.flightstats.hub.cluster.SpokeDecommissionCluster;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.ZooKeeperState;
-import com.flightstats.hub.config.AppProperties;
-import com.flightstats.hub.config.SpokeProperties;
-import com.flightstats.hub.config.SystemProperties;
-import com.flightstats.hub.config.ZookeeperProperties;
+import com.flightstats.hub.config.properties.AppProperties;
+import com.flightstats.hub.config.properties.SpokeProperties;
+import com.flightstats.hub.config.properties.SystemProperties;
+import com.flightstats.hub.config.properties.ZooKeeperProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ContentDao;
 import com.flightstats.hub.dao.TagService;
@@ -105,7 +105,7 @@ public class HubBindings extends AbstractModule {
     @Provides
     public static CuratorFramework buildCurator(ZooKeeperState zooKeeperState,
                                                 AppProperties appProperties,
-                                                ZookeeperProperties zookeeperProperties) {
+                                                ZooKeeperProperties zookeeperProperties) {
 
         log.info("connecting to zookeeper(s) at {} with name {} env {}",
                 zookeeperProperties.getConnection(),
@@ -129,7 +129,7 @@ public class HubBindings extends AbstractModule {
         return curatorFramework;
     }
 
-    private static RetryPolicy buildRetryPolicy(ZookeeperProperties zookeeperProperties) {
+    private static RetryPolicy buildRetryPolicy(ZooKeeperProperties zookeeperProperties) {
         return new BoundedExponentialBackoffRetry(
                 zookeeperProperties.getBaseSleepTimeInMillis(),
                 zookeeperProperties.getMaxSleepTimeInMillis(),

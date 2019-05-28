@@ -7,7 +7,7 @@ import com.flightstats.hub.cluster.DistributedLeaderLockManager;
 import com.flightstats.hub.cluster.Leadership;
 import com.flightstats.hub.cluster.LeadershipLock;
 import com.flightstats.hub.cluster.Lockable;
-import com.flightstats.hub.config.WebhookProperties;
+import com.flightstats.hub.config.properties.WebhookProperties;
 import com.flightstats.hub.dao.aws.ContentRetriever;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.StatsdReporter;

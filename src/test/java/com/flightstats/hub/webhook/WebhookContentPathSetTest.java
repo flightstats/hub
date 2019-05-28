@@ -2,7 +2,7 @@ package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentPath;
-import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.test.IntegrationTestSetup;
 import com.flightstats.hub.util.SafeZooKeeperUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.junit.jupiter.api.BeforeEach;
@@ -10,7 +10,9 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class WebhookContentPathSetTest {
     private SafeZooKeeperUtils zooKeeperUtils;
@@ -18,8 +20,8 @@ class WebhookContentPathSetTest {
     private String groupName;
 
     @BeforeEach
-    void setUp() throws Exception {
-        CuratorFramework curator = Integration.startZooKeeper();
+    void setUp() {
+        CuratorFramework curator = IntegrationTestSetup.run().getZookeeperClient();
         zooKeeperUtils = new SafeZooKeeperUtils(curator);
     }
 

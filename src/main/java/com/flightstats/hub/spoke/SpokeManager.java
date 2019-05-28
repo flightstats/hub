@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.cluster.Cluster;
 import com.flightstats.hub.cluster.CuratorCluster;
-import com.flightstats.hub.config.ContentProperties;
+import com.flightstats.hub.config.properties.ContentProperties;
 import com.flightstats.hub.dao.ContentKeyUtil;
 import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.dao.QueryResult;

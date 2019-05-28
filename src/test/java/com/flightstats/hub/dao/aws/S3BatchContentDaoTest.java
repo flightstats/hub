@@ -1,7 +1,7 @@
 package com.flightstats.hub.dao.aws;
 
 import com.flightstats.hub.channel.ZipBulkBuilder;
-import com.flightstats.hub.config.PropertiesLoader;
+import com.flightstats.hub.config.properties.PropertiesLoader;
 import com.flightstats.hub.dao.ContentDaoUtil;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.ChannelConfig;
@@ -10,10 +10,9 @@ import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.model.MinutePath;
 import com.flightstats.hub.model.TimeQuery;
-import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.test.IntegrationTestSetup;
 import com.flightstats.hub.util.StringUtils;
 import com.flightstats.hub.util.TimeUtil;
-import com.google.inject.Injector;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.junit.jupiter.api.BeforeAll;
@@ -38,11 +37,10 @@ class S3BatchContentDaoTest {
     private static S3BatchContentDao contentDao;
 
     @BeforeAll
-    static void setUpClass() throws Exception {
+    static void setUpClass() {
         PropertiesLoader.getInstance().load("useDefault");
         PropertiesLoader.getInstance().setProperty("s3.maxQueryItems", "5");
-        Injector injector = Integration.startAwsHub();
-        contentDao = injector.getInstance(S3BatchContentDao.class);
+        contentDao = IntegrationTestSetup.run().getInstance(S3BatchContentDao.class);
     }
 
     @Test

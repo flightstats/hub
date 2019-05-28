@@ -1,16 +1,16 @@
 package com.flightstats.hub.cluster;
 
-import com.flightstats.hub.config.PropertiesLoader;
-import com.flightstats.hub.config.SpokeProperties;
+import com.flightstats.hub.config.properties.PropertiesLoader;
+import com.flightstats.hub.config.properties.SpokeProperties;
 import com.flightstats.hub.spoke.SpokeStore;
-import com.flightstats.hub.test.Integration;
+import com.flightstats.hub.test.IntegrationTestSetup;
 import org.apache.curator.framework.CuratorFramework;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SpokeDecommissionClusterTest {
@@ -19,7 +19,7 @@ class SpokeDecommissionClusterTest {
 
     @BeforeAll
     static void setUpClass() throws Exception {
-        CuratorFramework curator = Integration.startZooKeeper();
+        CuratorFramework curator = IntegrationTestSetup.run().getZookeeperClient();
         cluster = new SpokeDecommissionCluster(curator,
                 new SpokeProperties(PropertiesLoader.getInstance()));
     }
