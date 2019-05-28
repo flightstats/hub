@@ -17,7 +17,7 @@ class SpokeWriteContentDaoTest {
     private static ContentDaoUtil util;
 
     @BeforeAll
-    static void setUpClass() throws Exception {
+    static void setUpClass() {
         util = new ContentDaoUtil(IntegrationTestSetup.run().getInstance(SpokeWriteContentDao.class));
     }
 
