@@ -5,13 +5,14 @@ import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.PutObjectResult;
 import com.amazonaws.services.s3.model.S3Object;
-import com.flightstats.hub.config.properties.AppProperties;
-import com.flightstats.hub.config.properties.PropertiesLoader;
 import com.flightstats.hub.config.properties.S3Properties;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
 
@@ -23,24 +24,28 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class S3AccessMonitorTest {
-    private final S3BucketName s3BucketName = new S3BucketName(
-            new AppProperties(PropertiesLoader.getInstance()),
-            new S3Properties(PropertiesLoader.getInstance()));
+    @Mock
     private HubS3Client s3Client;
+    @Mock
+    private Dao<ChannelConfig> channelConfigDao;
+    @Mock
+    private S3Properties s3Properties;
     private S3AccessMonitor monitor;
     private PutObjectResult putObjectResult;
     private S3Object s3Object;
 
     @BeforeEach
     void setUpTest() {
-        s3Client = mock(HubS3Client.class);
-        Dao<ChannelConfig> channelConfigDao = mock(DynamoChannelConfigDao.class);
-        monitor = new S3AccessMonitor(channelConfigDao, s3Client, s3BucketName);
-        s3Object = new S3Object();
+        monitor = new S3AccessMonitor(channelConfigDao, s3Client, s3Properties);
+
         ObjectMetadata metadata = new ObjectMetadata();
         metadata.addUserMetadata("versionId", "testVersionId");
+
+        s3Object = new S3Object();
         s3Object.setObjectMetadata(metadata);
+
         putObjectResult = new PutObjectResult();
         putObjectResult.setVersionId("testVersionId");
     }

@@ -64,6 +64,7 @@ public class JettyServer {
     }
 
     public Server start() throws Exception {
+        log.info("Hub server starting with hub.type {}", appProperties.getHubType());
 
         Server server = new Server();
         HttpConfiguration httpConfig = new HttpConfiguration();
@@ -123,23 +124,28 @@ public class JettyServer {
     }
 
     private SslContextFactory getSslContextFactory() throws IOException {
-
         SslContextFactory sslContextFactory = null;
+
         if (appProperties.isAppEncrypted()) {
             log.info("starting hub with ssl!");
-
-            final String keyStorePath = appProperties.getKeyStorePath() + HubHost.getLocalName() + ".jks";
-            log.info("using key store path: {}", keyStorePath);
-
             sslContextFactory = new SslContextFactory();
-            sslContextFactory.setKeyStorePath(keyStorePath);
-
-            String keyStorePasswordPath = appProperties.getKeyStorePasswordPath();
-            URL passwordUrl = new File(keyStorePasswordPath).toURI().toURL();
-            String password = Resources.readLines(passwordUrl, StandardCharsets.UTF_8).get(0);
-            sslContextFactory.setKeyStorePassword(password);
+            sslContextFactory.setKeyStorePath(getKeyStorePath());
+            sslContextFactory.setKeyStorePassword(getKeyStorePassword());
         }
+
         return sslContextFactory;
+    }
+
+    private String getKeyStorePath() {
+        String keyStorePath = appProperties.getKeyStorePath() + HubHost.getLocalName() + ".jks";
+        log.info("using key store path: {}", keyStorePath);
+        return keyStorePath;
+    }
+
+    private String getKeyStorePassword() throws IOException {
+        String keyStorePasswordPath = appProperties.getKeyStorePasswordPath();
+        URL passwordUrl = new File(keyStorePasswordPath).toURI().toURL();
+        return Resources.readLines(passwordUrl, StandardCharsets.UTF_8).get(0);
     }
 
 }

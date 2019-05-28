@@ -36,7 +36,6 @@ public class S3Config {
 
     private final DistributedAsyncLockRunner distributedLockRunner;
     private final Dao<ChannelConfig> channelConfigDao;
-    private final String s3BucketName;
     private final HubS3Client s3Client;
     private final ContentRetriever contentRetriever;
     private final ChannelService channelService;
@@ -44,7 +43,6 @@ public class S3Config {
 
     @Inject
     public S3Config(HubS3Client s3Client,
-                    S3BucketName s3BucketName,
                     DistributedAsyncLockRunner distributedLockRunner,
                     @Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao,
                     ContentRetriever contentRetriever,
@@ -55,7 +53,6 @@ public class S3Config {
         this.channelConfigDao = channelConfigDao;
         this.channelService = channelService;
         this.contentRetriever = contentRetriever;
-        this.s3BucketName = s3BucketName.getS3BucketName();
         this.s3Properties = s3Properties;
         if (s3Properties.isConfigManagementEnabled()) {
             HubServices.register(new S3ConfigInit());
@@ -81,7 +78,7 @@ public class S3Config {
 
     private class S3ConfigInit extends AbstractScheduledService {
         @Override
-        protected void runOneIteration() throws Exception {
+        protected void runOneIteration() {
             run();
         }
 
@@ -104,7 +101,7 @@ public class S3Config {
         }
 
         @Override
-        public void takeLeadership(Leadership leadership) throws Exception {
+        public void takeLeadership(Leadership leadership) {
             updateTtlDays();
             updateMaxItems();
         }
@@ -170,7 +167,7 @@ public class S3Config {
 
             if (!rules.isEmpty()) {
                 BucketLifecycleConfiguration lifecycleConfig = new BucketLifecycleConfiguration(rules);
-                SetBucketLifecycleConfigurationRequest request = new SetBucketLifecycleConfigurationRequest(s3BucketName, lifecycleConfig);
+                SetBucketLifecycleConfigurationRequest request = new SetBucketLifecycleConfigurationRequest(s3Properties.getBucketName(), lifecycleConfig);
                 s3Client.setBucketLifecycleConfiguration(request);
             }
             ActiveTraces.end();
