@@ -82,7 +82,7 @@ public class JettyServer {
         serverConnector.setIdleTimeout(systemProperties.getHttpIdleTimeInMillis());
         server.setConnectors(new Connector[]{serverConnector});
 
-        // ensure HK2 (Jetty's internal DI system) can pull instance from guice
+        // ensure HK2 (Jetty's internal DI system) can pull instances from guice
         GuiceToHK2BridgeInitializer diBridge = new GuiceToHK2BridgeInitializer(injector);
         ServiceLocatorFactory.getInstance().addListener(diBridge);
 
