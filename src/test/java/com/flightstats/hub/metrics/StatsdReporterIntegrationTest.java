@@ -1,13 +1,19 @@
 package com.flightstats.hub.metrics;
 
+import com.flightstats.hub.config.properties.DatadogMetricsProperties;
+import com.flightstats.hub.config.properties.MetricsProperties;
+import com.flightstats.hub.config.properties.TickMetricsProperties;
 import com.flightstats.hub.dao.Dao;
-import com.flightstats.hub.dao.aws.DynamoChannelConfigDao;
-import com.flightstats.hub.dao.aws.DynamoWebhookDao;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.IntegrationUdpServer;
 import com.flightstats.hub.webhook.Webhook;
 import lombok.SneakyThrows;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -18,20 +24,37 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class StatsdReporterIntegrationTest {
-    private final String[] tags = { "tag1", "tag2" };
-    private final MetricsConfig metricsConfig = MetricsConfig.builder()
-            .hostTag("test_host")
-            .statsdPort(8123)
-            .dogstatsdPort(8122)
-            .build();
 
-    private final CountDownLatch startupCountDownLatch = new CountDownLatch(2);
     private final ExecutorService executorService = Executors.newFixedThreadPool(3);
-    private final IntegrationUdpServer udpServer = provideNewServer(metricsConfig.getStatsdPort());
-    private final IntegrationUdpServer udpServerDD = provideNewServer(metricsConfig.getDogstatsdPort());
+    private final CountDownLatch startupCountDownLatch = new CountDownLatch(2);
+    private final String[] tags = { "tag1", "tag2" };
+
+    private IntegrationUdpServer udpServer;
+    private IntegrationUdpServer udpServerDD;
+
+    @Mock
+    private DatadogMetricsProperties datadogMetricsProperties;
+    @Mock
+    private TickMetricsProperties tickMetricsProperties;
+    @Mock
+    private MetricsProperties metricsProperties;
+    @Mock
+    private Dao<ChannelConfig> channelConfigDao;
+    @Mock
+    private Dao<Webhook> webhookDao;
+
+    @BeforeEach
+    void setup(){
+        when(datadogMetricsProperties.getStatsdPort()).thenReturn(8122);
+        when(tickMetricsProperties.getStatsdPort()).thenReturn(8123);
+        udpServer = provideNewServer(tickMetricsProperties.getStatsdPort());
+        udpServerDD = provideNewServer(datadogMetricsProperties.getStatsdPort());
+    }
 
     @SneakyThrows
     @Test
@@ -77,14 +100,11 @@ class StatsdReporterIntegrationTest {
     }
 
     private StatsdReporter provideStatsDHandlers() {
-        Dao<ChannelConfig> channelConfigDao = mock(DynamoChannelConfigDao.class);
-        Dao<Webhook> webhookDao = mock(DynamoWebhookDao.class);
-        StatsDFilter statsDFilter = new StatsDFilter(metricsConfig, channelConfigDao, webhookDao);
+        StatsDFilter statsDFilter = new StatsDFilter(datadogMetricsProperties, tickMetricsProperties, channelConfigDao, webhookDao);
         statsDFilter.setOperatingClients();
-        StatsDReporterProvider provider = new StatsDReporterProvider(statsDFilter, metricsConfig);
+        StatsDReporterProvider provider = new StatsDReporterProvider(statsDFilter, datadogMetricsProperties, metricsProperties);
         return provider.get();
     }
-
 
     private void writeMetrics() {
         StatsdReporter handlers = provideStatsDHandlers();

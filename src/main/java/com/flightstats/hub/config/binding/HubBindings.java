@@ -35,8 +35,6 @@ import com.flightstats.hub.metrics.CustomMetricsLifecycle;
 import com.flightstats.hub.metrics.InfluxdbReporterLifecycle;
 import com.flightstats.hub.metrics.InfluxdbReporterProvider;
 import com.flightstats.hub.metrics.MetricRegistryProvider;
-import com.flightstats.hub.metrics.MetricsConfig;
-import com.flightstats.hub.metrics.MetricsConfigProvider;
 import com.flightstats.hub.metrics.StatsDFilter;
 import com.flightstats.hub.metrics.StatsDReporterLifecycle;
 import com.flightstats.hub.metrics.StatsDReporterProvider;
@@ -316,8 +314,6 @@ public class HubBindings extends AbstractModule {
         bind(SpokeClusterRegister.class).asEagerSingleton();
         bind(PermissionsChecker.class).asEagerSingleton();
 
-        // metrics
-        bind(MetricsConfig.class).toProvider(MetricsConfigProvider.class).asEagerSingleton();
         bind(MetricRegistry.class).toProvider(MetricRegistryProvider.class).asEagerSingleton();
         bind(ScheduledReporter.class).toProvider(InfluxdbReporterProvider.class).asEagerSingleton();
         bind(InfluxdbReporterLifecycle.class).asEagerSingleton();

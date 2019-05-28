@@ -1,6 +1,8 @@
 package com.flightstats.hub.metrics;
 
 import com.codahale.metrics.ScheduledReporter;
+import com.flightstats.hub.config.properties.MetricsProperties;
+import com.flightstats.hub.config.properties.TickMetricsProperties;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -12,27 +14,28 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class InfluxdbReporterLifecycle extends AbstractIdleService {
     private final ScheduledReporter influxdbReporter;
-    private final MetricsConfig metricsConfig;
+    private final MetricsProperties metricsProperties;
+    private final TickMetricsProperties tickMetricsProperties;
 
     @Inject
     public InfluxdbReporterLifecycle(
             ScheduledReporter influxdbReporter,
-            MetricsConfig metricsConfig
-            ) {
+            TickMetricsProperties tickMetricsProperties,
+            MetricsProperties metricsProperties) {
         this.influxdbReporter = influxdbReporter;
-        this.metricsConfig = metricsConfig;
+        this.tickMetricsProperties = tickMetricsProperties;
+        this.metricsProperties = metricsProperties;
     }
 
     public void startUp() {
-        if (metricsConfig.isEnabled()) {
+        if (metricsProperties.isEnabled()) {
             log.info(
                     "starting metrics reporting to influxdb at {}://{}:{}",
-                    metricsConfig.getInfluxdbProtocol(),
-                    metricsConfig.getInfluxdbHost(),
-                    metricsConfig.getInfluxdbPort());
-            int intervalSeconds = metricsConfig.getReportingIntervalSeconds();
+                    tickMetricsProperties.getInfluxDbProtocol(),
+                    tickMetricsProperties.getInfluxDbHost(),
+                    tickMetricsProperties.getInfluxDbPort());
+            int intervalSeconds = metricsProperties.getReportingIntervalInSeconds();
             influxdbReporter.start(intervalSeconds, TimeUnit.SECONDS);
-
         } else {
             log.info("not starting influxdb reporter: disabled");
         }
