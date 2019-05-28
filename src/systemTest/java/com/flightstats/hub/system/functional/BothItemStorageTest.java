@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.util.concurrent.TimeUnit;
 
 class BothItemStorageTest extends DependencyInjector {
     @Inject @Named("test.data")
@@ -47,6 +48,14 @@ class BothItemStorageTest extends DependencyInjector {
         Awaitility.await()
                 .atMost(Duration.TEN_SECONDS)
                 .until(() -> channelService.getItem(itemUri).equals(testData));
+    }
+
+    @Test
+    void bothChannelStorage_itemInCache_item() {
+        Awaitility.await()
+                .pollInterval(Duration.TWO_SECONDS)
+                .atMost(new Duration(20, TimeUnit.SECONDS))
+                .until(() -> channelService.confirmItemInCache(itemUri));
     }
 
     @Test

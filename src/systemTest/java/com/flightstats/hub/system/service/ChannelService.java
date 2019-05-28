@@ -6,6 +6,7 @@ import com.flightstats.hub.clients.hub.HubClientFactory;
 import com.flightstats.hub.model.Channel;
 import com.flightstats.hub.model.ChannelItem;
 import com.flightstats.hub.model.DatePathIndex;
+import com.flightstats.hub.model.Links;
 import com.flightstats.hub.model.Location;
 import com.flightstats.hub.model.TimeQuery;
 import com.google.inject.Inject;
@@ -113,7 +114,7 @@ public class ChannelService {
     }
 
     @SneakyThrows
-    public Optional<TimeQuery> getItemByTimeFromLocation(String path, Location location) {
+    private Optional<TimeQuery> getItemByTimeFromLocation(String path, Location location) {
         List<String> pathParts = getPathParts(path);
         Map<String, String> keys = getPathKeys(pathParts);
         Map<DatePathIndex, Integer> dateParts = getPathDateParts(pathParts);
@@ -144,6 +145,13 @@ public class ChannelService {
                 dateParts.get(DatePathIndex.MILLIS),
                 keys.get("key"));
         return ((Call) response).execute().body();
+    }
+
+    public boolean confirmItemInCache(String itemUri) {
+        TimeQuery result = getItemByTimeFromLocation(itemUri, Location.CACHE)
+                .orElse(TimeQuery.builder()._links(Links.builder().uris(new String[] {}).build()).build());
+        List<String> uris = Arrays.asList(result.get_links().getUris());
+        return uris.stream().anyMatch(str -> str.equals(itemUri));
     }
 
     @SneakyThrows

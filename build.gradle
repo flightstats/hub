@@ -159,10 +159,6 @@ dependencies {
 
     testCompile "org.mockito:mockito-junit-jupiter:2.27.0"
 
-    systemTestCompile 'org.junit.jupiter:junit-jupiter-api:5.4.2'
-    systemTestCompile 'org.junit.jupiter:junit-jupiter-engine:5.4.2'
-    systemTestCompile 'org.junit.platform:junit-platform-suite-api:1.4.2'
-    systemTestCompile 'org.junit.platform:junit-platform-launcher:1.0.0-RC2'
     systemTestImplementation 'org.junit.jupiter:junit-jupiter:5.4.2'
 
     systemTestCompileOnly 'org.projectlombok:lombok:1.18.6'

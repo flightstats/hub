@@ -1,7 +1,7 @@
 package com.flightstats.hub.system.config;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.flightstats.hub.client.CallbackClientFactory;
+import com.flightstats.hub.clients.callback.CallbackClientFactory;
 import com.flightstats.hub.clients.hub.HubClientFactory;
 import com.flightstats.hub.clients.s3.S3ClientFactory;
 import com.flightstats.hub.system.service.CallbackService;

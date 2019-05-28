@@ -1,7 +1,7 @@
 package com.flightstats.hub.system.service;
 
-import com.flightstats.hub.client.CallbackClientFactory;
-import com.flightstats.hub.client.CallbackResourceClient;
+import com.flightstats.hub.clients.callback.CallbackClientFactory;
+import com.flightstats.hub.clients.callback.CallbackResourceClient;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.WebhookErrors;
 import com.flightstats.hub.model.WebhookCallback;
