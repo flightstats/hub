@@ -11,13 +11,13 @@ import java.util.function.Function;
 public class FileDocumentationDao implements DocumentationDao {
 
     private final static String FILENAME = "documentation";
-    private final FileUtil fileUtil;
+    private final SpokeFile spokeFile;
     private final String storagePath;
 
 
     @Inject
-    public FileDocumentationDao(FileUtil fileUtil, SpokeProperties spokeProperties) {
-        this.fileUtil = fileUtil;
+    public FileDocumentationDao(SpokeFile spokeFile, SpokeProperties spokeProperties) {
+        this.spokeFile = spokeFile;
         this.storagePath = spokeProperties.getStoragePath();
     }
 
@@ -25,7 +25,7 @@ public class FileDocumentationDao implements DocumentationDao {
     public String get(String channel) {
         log.trace("getting documentation for channel {}", channel);
         String path = getDocumentationPath(channel);
-        String content = this.fileUtil.read(path, FILENAME, Function.identity());
+        String content = this.spokeFile.read(path, FILENAME, Function.identity());
         return (content != null) ? content : "";
     }
 
@@ -33,14 +33,14 @@ public class FileDocumentationDao implements DocumentationDao {
     public boolean upsert(String channel, byte[] bytes) {
         String path = getDocumentationPath(channel);
         log.trace("saving {} bytes to {}", path + FILENAME);
-        return fileUtil.write(bytes, FILENAME, path);
+        return spokeFile.write(bytes, FILENAME, path);
     }
 
     @Override
     public boolean delete(String channel) {
         log.trace("deleting documentation for {}", channel);
         String path = getDocumentationPath(channel);
-        return fileUtil.delete(path + FILENAME);
+        return spokeFile.delete(path + FILENAME);
     }
 
     private String getDocumentationPath(String channel) {

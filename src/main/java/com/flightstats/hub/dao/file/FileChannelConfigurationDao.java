@@ -13,29 +13,29 @@ import java.util.Collection;
 @Slf4j
 public class FileChannelConfigurationDao implements Dao<ChannelConfig> {
 
-    private final FileUtil fileUtil;
+    private final SpokeFile spokeFile;
     private final String channelPath;
 
     @Inject
-    public FileChannelConfigurationDao(FileUtil fileUtil, SpokeProperties spokeProperties) {
-        this.fileUtil = fileUtil;
+    public FileChannelConfigurationDao(SpokeFile spokeFile, SpokeProperties spokeProperties) {
+        this.spokeFile = spokeFile;
         this.channelPath = spokeProperties.getStoragePath() + "channel/";
         log.info("using channel path {}", channelPath);
     }
 
     @Override
     public void upsert(ChannelConfig config) {
-        fileUtil.write(config.toJson(), config.getLowerCaseName(), channelPath);
+        spokeFile.write(config.toJson(), config.getLowerCaseName(), channelPath);
     }
 
     @Override
     public ChannelConfig get(String name) {
-        return fileUtil.read(channelPath, name.toLowerCase(), ChannelConfig::createFromJson);
+        return spokeFile.read(channelPath, name.toLowerCase(), ChannelConfig::createFromJson);
     }
 
     @Override
     public Collection<ChannelConfig> getAll(boolean useCache) {
-        return fileUtil.getIterable(channelPath, ChannelConfig::createFromJson);
+        return spokeFile.getIterable(channelPath, ChannelConfig::createFromJson);
     }
 
     @Override

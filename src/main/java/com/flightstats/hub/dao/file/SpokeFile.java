@@ -17,12 +17,12 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 @Slf4j
-class FileUtil {
+class SpokeFile {
 
     private final ContentRetriever contentRetriever;
 
     @Inject
-    public FileUtil(ContentRetriever contentRetriever) {
+    public SpokeFile(ContentRetriever contentRetriever) {
         this.contentRetriever = contentRetriever;
     }
 

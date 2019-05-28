@@ -13,29 +13,29 @@ import java.util.Collection;
 @Slf4j
 public class FileWebhookDao implements Dao<Webhook> {
 
-    private final FileUtil fileUtil;
+    private final SpokeFile spokeFile;
     private final String groupPath;
 
     @Inject
-    public FileWebhookDao(FileUtil fileUtil, SpokeProperties spokeProperties) {
-        this.fileUtil = fileUtil;
+    public FileWebhookDao(SpokeFile spokeFile, SpokeProperties spokeProperties) {
+        this.spokeFile = spokeFile;
         groupPath = spokeProperties.getStoragePath() + "group/";
         log.info("using channel path {}", groupPath);
     }
 
     @Override
     public void upsert(Webhook webhook) {
-        fileUtil.write(webhook.toJson(), webhook.getName(), groupPath);
+        spokeFile.write(webhook.toJson(), webhook.getName(), groupPath);
     }
 
     @Override
     public Webhook get(String name) {
-        return fileUtil.read(groupPath, name, Webhook::fromJson);
+        return spokeFile.read(groupPath, name, Webhook::fromJson);
     }
 
     @Override
     public Collection<Webhook> getAll(boolean useCache) {
-        return fileUtil.getIterable(groupPath, Webhook::fromJson);
+        return spokeFile.getIterable(groupPath, Webhook::fromJson);
     }
 
     @Override
