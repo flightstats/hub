@@ -1,10 +1,8 @@
 package com.flightstats.hub.dao.file;
 
-import com.flightstats.hub.config.properties.SpokeProperties;
 import com.flightstats.hub.dao.aws.ContentRetriever;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -22,20 +20,10 @@ import java.util.function.Function;
 class FileUtil {
 
     private final ContentRetriever contentRetriever;
-    private final SpokeProperties spokeProperties;
 
     @Inject
-    public FileUtil(ContentRetriever contentRetriever, SpokeProperties spokeProperties) {
+    public FileUtil(ContentRetriever contentRetriever) {
         this.contentRetriever = contentRetriever;
-        this.spokeProperties = spokeProperties;
-    }
-
-    String getStoragePath() {
-        return StringUtils.appendIfMissing(spokeProperties.getStoragePath(), "/");
-    }
-
-    public String getContentPath() {
-        return getStoragePath() + "content/";
     }
 
     void write(String content, String filename, String path) {

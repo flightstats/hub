@@ -1,5 +1,6 @@
 package com.flightstats.hub.dao.file;
 
+import com.flightstats.hub.config.properties.SpokeProperties;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.webhook.Webhook;
 import lombok.extern.slf4j.Slf4j;
@@ -16,9 +17,9 @@ public class FileWebhookDao implements Dao<Webhook> {
     private final String groupPath;
 
     @Inject
-    public FileWebhookDao(FileUtil fileUtil) {
+    public FileWebhookDao(FileUtil fileUtil, SpokeProperties spokeProperties) {
         this.fileUtil = fileUtil;
-        groupPath = fileUtil.getStoragePath() + "group/";
+        groupPath = spokeProperties.getStoragePath() + "group/";
         log.info("using channel path {}", groupPath);
     }
 

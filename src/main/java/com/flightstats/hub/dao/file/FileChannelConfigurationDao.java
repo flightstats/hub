@@ -1,5 +1,6 @@
 package com.flightstats.hub.dao.file;
 
+import com.flightstats.hub.config.properties.SpokeProperties;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
 import lombok.extern.slf4j.Slf4j;
@@ -16,9 +17,9 @@ public class FileChannelConfigurationDao implements Dao<ChannelConfig> {
     private final String channelPath;
 
     @Inject
-    public FileChannelConfigurationDao(FileUtil fileUtil) {
+    public FileChannelConfigurationDao(FileUtil fileUtil, SpokeProperties spokeProperties) {
         this.fileUtil = fileUtil;
-        this.channelPath = fileUtil.getStoragePath() + "channel/";
+        this.channelPath = spokeProperties.getStoragePath() + "channel/";
         log.info("using channel path {}", channelPath);
     }
 

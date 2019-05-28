@@ -1,5 +1,6 @@
 package com.flightstats.hub.dao.file;
 
+import com.flightstats.hub.config.properties.SpokeProperties;
 import com.flightstats.hub.dao.DocumentationDao;
 import lombok.extern.slf4j.Slf4j;
 
@@ -11,10 +12,13 @@ public class FileDocumentationDao implements DocumentationDao {
 
     private final static String FILENAME = "documentation";
     private final FileUtil fileUtil;
+    private final String storagePath;
+
 
     @Inject
-    public FileDocumentationDao(FileUtil fileUtil) {
+    public FileDocumentationDao(FileUtil fileUtil, SpokeProperties spokeProperties) {
         this.fileUtil = fileUtil;
+        this.storagePath = spokeProperties.getStoragePath();
     }
 
     @Override
@@ -40,6 +44,6 @@ public class FileDocumentationDao implements DocumentationDao {
     }
 
     private String getDocumentationPath(String channel) {
-        return fileUtil.getStoragePath() + "content/" + channel + "/";
+        return storagePath + "content/" + channel + "/";
     }
 }
