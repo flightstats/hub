@@ -1,6 +1,5 @@
 package com.flightstats.hub.callback;
 
-import com.flightstats.hub.app.GuiceToHK2Adapter;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import lombok.SneakyThrows;
@@ -17,9 +16,8 @@ public class CallbackServer {
     private final JerseyAppConfig resourceConfig;
 
     @Inject
-    public CallbackServer(Injector injector) {
+    public CallbackServer() {
         resourceConfig = new JerseyAppConfig();
-        resourceConfig.register(new GuiceToHK2Adapter(injector));
     }
 
     @SneakyThrows
