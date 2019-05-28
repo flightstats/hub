@@ -44,8 +44,8 @@ class InfluxdbReporterProviderTest {
         when(hubVersion.getVersion()).thenReturn("local");
         when(metricsProperties.getEnv()).thenReturn("test");
         when(metricsProperties.getClusterTag()).thenReturn("location-test");
-        when(metricsProperties.getTagsRole()).thenReturn("hub");
-        when(metricsProperties.getTagsTeam()).thenReturn("testers");
+        when(metricsProperties.getRoleTag()).thenReturn("hub");
+        when(metricsProperties.getTeamTag()).thenReturn("testers");
 
         when(tickMetricsProperties.getInfluxDbHost()).thenReturn("localhost");
         when(tickMetricsProperties.getInfluxDbUser()).thenReturn("");

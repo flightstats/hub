@@ -19,24 +19,24 @@ public class MetricsProperties {
         return propertiesLoader.getProperty("metrics.enable", false);
     }
 
+    public String getEnv(){
+        return appProperties.getEnv();
+    }
+
     public int getReportingIntervalInSeconds() {
         return propertiesLoader.getProperty("metrics.seconds", 15);
     }
 
-    public String getTagsRole() {
+    public String getRoleTag() {
         return propertiesLoader.getProperty("metrics.tags.role", "hub");
     }
 
-    public String getTagsTeam() {
+    public String getTeamTag() {
         return propertiesLoader.getProperty("metrics.tags.team", "development");
     }
 
     public String getHostTag() {
         return HubHost.getLocalName();
-    }
-
-    public String getEnv(){
-        return appProperties.getEnv();
     }
 
     public String getClusterTag(){
