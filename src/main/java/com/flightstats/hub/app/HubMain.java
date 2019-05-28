@@ -76,13 +76,12 @@ import static com.flightstats.hub.spoke.SpokeStore.WRITE;
 public class HubMain {
 
     private final static DateTime startTime = new DateTime();
+    private static Injector injector;
     private final AppProperties appProperties = new AppProperties(PropertiesLoader.getInstance());
     private final SpokeProperties spokeProperties = new SpokeProperties(PropertiesLoader.getInstance());
     private final SystemProperties systemProperties = new SystemProperties(PropertiesLoader.getInstance());
     private final ZookeeperProperties zookeeperProperties = new ZookeeperProperties(PropertiesLoader.getInstance());
     private final StorageBackend storageBackend = StorageBackend.valueOf(appProperties.getHubType());
-
-    private Injector injector;
 
     public static void main(String[] args) throws Exception {
         if (args.length == 0) {
@@ -152,7 +151,7 @@ public class HubMain {
         server.setConnectors(new Connector[]{serverConnector});
 
         // build Jersey HTTP context
-        ResourceConfig resourceConfig = buildResourceConfig(injector);
+        ResourceConfig resourceConfig = buildResourceConfig();
         JettyHttpContainer httpContainer = ContainerFactory.createContainer(JettyHttpContainer.class, resourceConfig);
 
         // build Jetty WebSocket context
@@ -254,9 +253,10 @@ public class HubMain {
         }
     }
 
-    private ResourceConfig buildResourceConfig(Injector injector) {
+
+    private ResourceConfig buildResourceConfig() {
         ResourceConfig config = new ResourceConfig();
-        config.register(new GuiceToHK2Adapter(injector));
+        config.register(GuiceToHK2BridgeInitializer.class);
         config.register(new ObjectMapperResolver(HubBindings.objectMapper()));
         config.register(JacksonJsonProvider.class);
         config.registerClasses(
@@ -290,7 +290,7 @@ public class HubMain {
         return path;
     }
 
-    public Injector getInjector() {
+    public static Injector getInjector() {
         return injector;
     }
 
