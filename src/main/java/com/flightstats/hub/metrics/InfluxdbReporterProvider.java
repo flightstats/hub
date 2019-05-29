@@ -3,53 +3,65 @@ package com.flightstats.hub.metrics;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ScheduledReporter;
+import com.flightstats.hub.app.HubHost;
+import com.flightstats.hub.app.HubVersion;
+import com.flightstats.hub.config.properties.MetricsProperties;
+import com.flightstats.hub.config.properties.TickMetricsProperties;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import metrics_influxdb.HttpInfluxdbProtocol;
 import metrics_influxdb.InfluxdbProtocol;
 import metrics_influxdb.InfluxdbReporter;
 import metrics_influxdb.UdpInfluxdbProtocol;
+
 import java.util.concurrent.TimeUnit;
 
 public class InfluxdbReporterProvider implements Provider<ScheduledReporter> {
-    private final MetricsConfig metricsConfig;
+    private final TickMetricsProperties tickMetricsProperties;
+    private final MetricsProperties metricsProperties;
     private final MetricRegistry metricRegistry;
+    private final HubVersion hubVersion;
 
     @Inject
-    public InfluxdbReporterProvider(MetricsConfig metricsConfig, MetricRegistry metricRegistry) {
-        this.metricsConfig = metricsConfig;
+    public InfluxdbReporterProvider(TickMetricsProperties tickMetricsProperties,
+                                    MetricsProperties metricsProperties,
+                                    MetricRegistry metricRegistry,
+                                    HubVersion hubVersion) {
+        this.tickMetricsProperties = tickMetricsProperties;
+        this.metricsProperties = metricsProperties;
         this.metricRegistry = metricRegistry;
+        this.hubVersion = hubVersion;
     }
 
     private UdpInfluxdbProtocol udpProtocol() {
-        return new UdpInfluxdbProtocol(metricsConfig.getInfluxdbHost(), metricsConfig.getInfluxdbPort());
+        return new UdpInfluxdbProtocol(tickMetricsProperties.getInfluxDbHost(), tickMetricsProperties.getInfluxDbPort());
     }
 
     private HttpInfluxdbProtocol httpProtocol() {
         return new HttpInfluxdbProtocol(
-                metricsConfig.getInfluxdbHost(),
-                metricsConfig.getInfluxdbPort(),
-                metricsConfig.getInfluxdbUser(),
-                metricsConfig.getInfluxdbPass(),
-                metricsConfig.getInfluxdbDatabaseName());
+                tickMetricsProperties.getInfluxDbHost(),
+                tickMetricsProperties.getInfluxDbPort(),
+                tickMetricsProperties.getInfluxDbUser(),
+                tickMetricsProperties.getInfluxDbPassword(),
+                tickMetricsProperties.getInfluxDbName());
     }
 
     @Override
     public ScheduledReporter get() {
-        String protocolId = metricsConfig.getInfluxdbProtocol();
+        String protocolId = tickMetricsProperties.getInfluxDbProtocol();
         InfluxdbProtocol protocol = protocolId.contains("http") ? httpProtocol() : udpProtocol();
         return InfluxdbReporter.forRegistry(metricRegistry)
-            .protocol(protocol)
-            .convertRatesTo(TimeUnit.SECONDS)
-            .convertDurationsTo(TimeUnit.MILLISECONDS)
-            .filter(MetricFilter.ALL)
-            .skipIdleMetrics(false)
-            .tag("role", metricsConfig.getRole())
-            .tag("team", metricsConfig.getTeam())
-            .tag("env", metricsConfig.getEnv())
-            .tag("cluster", metricsConfig.getClusterTag())
-            .tag("host", metricsConfig.getHostTag())
-            .tag("version", metricsConfig.getAppVersion())
-            .build();
+                .protocol(protocol)
+                .convertRatesTo(TimeUnit.SECONDS)
+                .convertDurationsTo(TimeUnit.MILLISECONDS)
+                .filter(MetricFilter.ALL)
+                .skipIdleMetrics(false)
+                .tag("role", metricsProperties.getRoleTag())
+                .tag("team", metricsProperties.getTeamTag())
+                .tag("env", metricsProperties.getEnv())
+                .tag("cluster", metricsProperties.getClusterTag())
+                .tag("host", HubHost.getLocalName())
+                .tag("version", hubVersion.getVersion())
+                .build();
     }
 }

@@ -4,15 +4,18 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ScheduledReporter;
 import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubVersion;
+import com.flightstats.hub.config.properties.MetricsProperties;
+import com.flightstats.hub.config.properties.TickMetricsProperties;
 import com.flightstats.hub.util.IntegrationServer;
-
 import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -25,13 +28,20 @@ import java.util.stream.Collectors;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class InfluxdbReporterProviderIntegrationTest {
     private HttpServer httpServer;
     private ScheduledReporter influxdbReporter;
     private static List<String> writeResult;
+
+    @Mock
+    private TickMetricsProperties tickMetricsProperties;
+    @Mock
+    private MetricsProperties metricsProperties;
+    @Mock
+    private HubVersion hubVersion;
 
     private static class TestHandler implements HttpHandler {
         @Override
@@ -70,27 +80,25 @@ class InfluxdbReporterProviderIntegrationTest {
 
     @Test
     void testInfluxdbReporterGet_reportsConfiguredTags() throws InterruptedException {
-        HubVersion hubVersion = mock(HubVersion.class);
         when(hubVersion.getVersion()).thenReturn("local");
-        MetricsConfig metricsConfig = MetricsConfig.builder()
-                .appVersion(hubVersion.getVersion())
-                .clusterTag("location-test")
-                .env("test")
-                .enabled(true)
-                .hostTag(HubHost.getLocalName())
-                .influxdbDatabaseName("hub_test")
-                .influxdbHost("localhost")
-                .influxdbPass("")
-                .influxdbPort(8086)
-                .influxdbProtocol("http")
-                .influxdbUser("")
-                .reportingIntervalSeconds(1)
-                .role("hub")
-                .team("testers")
-                .build();
-        MetricRegistry metricRegistry = new MetricRegistryProvider(metricsConfig).get();
+        when(metricsProperties.getEnv()).thenReturn("test");
+        when(metricsProperties.getClusterTag()).thenReturn("location-test");
+        when(metricsProperties.getReportingIntervalInSeconds()).thenReturn(1);
+        when(metricsProperties.getRoleTag()).thenReturn("hub");
+        when(metricsProperties.getTeamTag()).thenReturn("testers");
 
-        InfluxdbReporterProvider influxdbReporterProvider = new InfluxdbReporterProvider(metricsConfig, metricRegistry);
+
+        when(tickMetricsProperties.getInfluxDbHost()).thenReturn("localhost");
+        when(tickMetricsProperties.getInfluxDbUser()).thenReturn("");
+        when(tickMetricsProperties.getInfluxDbPassword()).thenReturn("");
+        when(tickMetricsProperties.getInfluxDbPort()).thenReturn(8086);
+        when(tickMetricsProperties.getInfluxDbProtocol()).thenReturn("http");
+        when(tickMetricsProperties.getInfluxDbName()).thenReturn("hub_test");
+
+        MetricRegistry metricRegistry = new MetricRegistryProvider(metricsProperties).get();
+
+        InfluxdbReporterProvider influxdbReporterProvider =
+                new InfluxdbReporterProvider(tickMetricsProperties, metricsProperties, metricRegistry, hubVersion);
         influxdbReporter = influxdbReporterProvider.get();
 
         influxdbReporter.start(1, SECONDS);

@@ -1,5 +1,7 @@
 package com.flightstats.hub.metrics;
 
+import com.flightstats.hub.config.properties.DatadogMetricsProperties;
+import com.flightstats.hub.config.properties.TickMetricsProperties;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.webhook.Webhook;
@@ -22,34 +24,43 @@ import java.util.stream.Stream;
 public class StatsDFilter {
     private final static String clientPrefix = "hub";
     private final static String clientHost = "localhost";
-    private MetricsConfig metricsConfig;
     private StatsDClient statsDClient = new NoOpStatsDClient();
     private StatsDClient dataDogClient = new NoOpStatsDClient();
+
+    private final DatadogMetricsProperties datadogMetricsProperties;
+    private final TickMetricsProperties tickMetricsProperties;
     // going direct to the DAO here over channelService/webhookService to avoid circular dep. condition in Guice injections
-    private Dao<ChannelConfig> channelConfigDao;
-    private Dao<Webhook> webhookConfigDao;
+    private final Dao<ChannelConfig> channelConfigDao;
+    private final Dao<Webhook> webhookConfigDao;
 
     @Inject
     public StatsDFilter(
-            MetricsConfig metricsConfig,
+            DatadogMetricsProperties datadogMetricsProperties,
+            TickMetricsProperties tickMetricsProperties,
             @Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao,
-            @Named("Webhook") Dao<Webhook> webhookConfigDao
-    ) {
-        this.metricsConfig = metricsConfig;
+            @Named("Webhook") Dao<Webhook> webhookConfigDao) {
+        this.datadogMetricsProperties = datadogMetricsProperties;
+        this.tickMetricsProperties = tickMetricsProperties;
         this.channelConfigDao = channelConfigDao;
         this.webhookConfigDao = webhookConfigDao;
     }
 
     // initializing these clients starts their udp reporters, setting them explicitly in order to trigger them specifically
     void setOperatingClients() {
-        int statsdPort = metricsConfig.getStatsdPort();
-        int dogstatsdPort = metricsConfig.getDogstatsdPort();
+        int statsdPort = tickMetricsProperties.getStatsdPort();
+        int dogstatsdPort = datadogMetricsProperties.getStatsdPort();
         this.statsDClient = new NonBlockingStatsDClient(clientPrefix, clientHost, statsdPort);
         this.dataDogClient = new NonBlockingStatsDClient(clientPrefix, clientHost, dogstatsdPort);
     }
 
     public boolean isTestChannel(String channel) {
         return channel.toLowerCase().startsWith("test_");
+    }
+
+    List<StatsDClient> getFilteredClients(boolean secondaryReporting) {
+        return secondaryReporting ?
+                Arrays.asList(statsDClient, dataDogClient) :
+                Collections.singletonList(statsDClient);
     }
 
     boolean isSecondaryReporting(String name) {
@@ -84,10 +95,4 @@ public class StatsDFilter {
     }
 
     Function<String, String> parseName = (String str) -> str.contains(":") ? str.substring(str.indexOf(":") + 1) : "";
-
-    List<StatsDClient> getFilteredClients(boolean secondaryReporting) {
-        return secondaryReporting ?
-                Arrays.asList(statsDClient, dataDogClient) :
-                Collections.singletonList(statsDClient);
-    }
 }
