@@ -2,6 +2,7 @@ package com.flightstats.hub.dao.aws;
 
 import lombok.extern.slf4j.Slf4j;
 
+import javax.inject.Inject;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -15,6 +16,7 @@ public class InternalS3VerifierResource {
 
     private final S3Verifier s3Verifier;
 
+    @Inject
     public InternalS3VerifierResource(S3Verifier s3Verifier) {
         this.s3Verifier = s3Verifier;
     }
