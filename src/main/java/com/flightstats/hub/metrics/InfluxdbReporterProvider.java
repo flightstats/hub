@@ -7,7 +7,7 @@ import com.flightstats.hub.app.HubVersion;
 import com.flightstats.hub.config.properties.LocalHostProperties;
 import com.flightstats.hub.config.properties.MetricsProperties;
 import com.flightstats.hub.config.properties.TickMetricsProperties;
-import com.google.inject.Inject;
+import javax.inject.Inject;
 import com.google.inject.Provider;
 import metrics_influxdb.HttpInfluxdbProtocol;
 import metrics_influxdb.InfluxdbProtocol;

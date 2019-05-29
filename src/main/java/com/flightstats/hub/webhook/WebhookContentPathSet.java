@@ -2,7 +2,7 @@ package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.util.SafeZooKeeperUtils;
-import com.google.inject.Inject;
+import javax.inject.Inject;
 
 import java.util.Set;
 

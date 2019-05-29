@@ -2,7 +2,7 @@ package com.flightstats.hub.metrics;
 
 import com.flightstats.hub.config.properties.DatadogMetricsProperties;
 import com.flightstats.hub.config.properties.MetricsProperties;
-import com.google.inject.Inject;
+import javax.inject.Inject;
 import com.google.inject.Provider;
 
 public class StatsDReporterProvider implements Provider<StatsdReporter> {

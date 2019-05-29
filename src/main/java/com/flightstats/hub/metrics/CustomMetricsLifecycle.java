@@ -2,7 +2,7 @@ package com.flightstats.hub.metrics;
 
 import com.flightstats.hub.config.properties.MetricsProperties;
 import com.google.common.util.concurrent.AbstractScheduledService;
-import com.google.inject.Inject;
+import javax.inject.Inject;
 
 import java.util.concurrent.TimeUnit;
 

@@ -3,7 +3,7 @@ package com.flightstats.hub.spoke;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.CuratorCluster;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.inject.Inject;
+import javax.inject.Inject;
 import com.google.inject.name.Named;
 
 /**

@@ -9,7 +9,7 @@ import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.StringUtils;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.inject.Inject;
+import javax.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.sun.jersey.api.client.Client;

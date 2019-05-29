@@ -3,7 +3,7 @@ package com.flightstats.hub.channel;
 import com.flightstats.hub.app.PermissionsChecker;
 import com.flightstats.hub.dao.DocumentationDao;
 import com.flightstats.hub.dao.aws.ContentRetriever;
-import com.google.inject.Inject;
+import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;

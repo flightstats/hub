@@ -2,7 +2,7 @@ package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.config.properties.LocalHostProperties;
 import com.flightstats.hub.config.properties.WebhookProperties;
-import com.google.inject.Inject;
+import javax.inject.Inject;
 import com.google.inject.Singleton;
 
 import java.util.Set;

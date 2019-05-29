@@ -8,7 +8,7 @@ import com.flightstats.hub.util.RequestUtils;
 import com.flightstats.hub.webhook.error.WebhookError;
 import com.flightstats.hub.webhook.error.WebhookErrorPruner;
 import com.flightstats.hub.webhook.error.WebhookErrorRepository;
-import com.google.inject.Inject;
+import javax.inject.Inject;
 import com.google.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 

@@ -3,7 +3,7 @@ package com.flightstats.hub.spoke;
 import com.flightstats.hub.dao.QueryResult;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
-import com.google.inject.Inject;
+import javax.inject.Inject;
 
 public class ReadOnlyClusterSpokeStore implements ClusterWriteSpoke {
     private final ClusterWriteSpoke writeClusterDelegate;
