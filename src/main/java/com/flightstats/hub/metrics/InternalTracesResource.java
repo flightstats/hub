@@ -35,7 +35,7 @@ public class InternalTracesResource {
         root.put("server", localHostProperties.getUriWithHostName() + path);
         ArrayNode servers = root.putArray("servers");
         for (String spokeServer : this.curatorCluster.getAllServers()) {
-            servers.add(localHostProperties.getScheme() + spokeServer + path);
+            servers.add(localHostProperties.getUriScheme() + spokeServer + path);
         }
         return root;
     }

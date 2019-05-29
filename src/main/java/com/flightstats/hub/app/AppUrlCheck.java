@@ -56,7 +56,7 @@ public class AppUrlCheck extends AbstractIdleService {
 
     private boolean hasHealthyServers() {
         for (String server : cluster.getAllServers()) {
-            String serverUri = localHostProperties.getScheme() + server;
+            String serverUri = localHostProperties.getUriScheme() + server;
             if (!serverUri.equals(localHostProperties.getUriWithHostName())) {
                 ClientResponse response = client.resource(serverUri + "/health").get(ClientResponse.class);
                 log.info("got response {}", response);

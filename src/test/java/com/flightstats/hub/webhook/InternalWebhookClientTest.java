@@ -46,7 +46,7 @@ class InternalWebhookClientTest {
 
     @BeforeEach
     void setup() {
-        when(localHostProperties.getScheme()).thenReturn("http://");
+        when(localHostProperties.getUriScheme()).thenReturn("http://");
         internalWebhookClient = new InternalWebhookClient(hubCluster, restClient, localHostProperties);
     }
 

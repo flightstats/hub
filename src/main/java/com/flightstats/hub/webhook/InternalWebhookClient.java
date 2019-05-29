@@ -29,7 +29,7 @@ public class InternalWebhookClient {
                                  LocalHostProperties localHostProperties) {
         this.hubCluster = hubCluster;
         this.client = client;
-        this.uriScheme = localHostProperties.getScheme();
+        this.uriScheme = localHostProperties.getUriScheme();
     }
 
     List<String> remove(String name, Collection<String> servers) {

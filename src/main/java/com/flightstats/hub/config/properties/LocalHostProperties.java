@@ -9,14 +9,14 @@ import java.net.UnknownHostException;
 @Slf4j
 public class LocalHostProperties {
 
-    private String scheme = "http://";
+    private String uriScheme = "http://";
     private final int port;
 
     @Inject
     public LocalHostProperties(AppProperties appProperties, SystemProperties systemProperties) {
         this.port =  systemProperties.getHttpBindPort();
         if (appProperties.isAppEncrypted()) {
-            scheme = "https://";
+            uriScheme = "https://";
         }
     }
 
@@ -42,8 +42,8 @@ public class LocalHostProperties {
         return port;
     }
 
-    public String getScheme() {
-        return scheme;
+    public String getUriScheme() {
+        return uriScheme;
     }
 
     public String getNameWithPort() {
@@ -55,15 +55,15 @@ public class LocalHostProperties {
     }
 
     public String getUri() {
-        return getScheme() + "localhost:" + getPort();
+        return getUriScheme() + "localhost:" + getPort();
     }
 
     public String getUriWithHostIp() {
-        return getScheme() + getAddressWithPort();
+        return getUriScheme() + getAddressWithPort();
     }
 
     public String getUriWithHostName() {
-        return getScheme() + getNameWithPort();
+        return getUriScheme() + getNameWithPort();
     }
 
     public String getHost(boolean useName) {

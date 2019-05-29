@@ -53,7 +53,7 @@ public class HubUtils {
         this.followClient = followClient;
         this.hubCluster = hubCluster;
         this.objectMapper = objectMapper;
-        this.uriScheme = localHostProperties.getScheme();
+        this.uriScheme = localHostProperties.getUriScheme();
     }
 
     public static void close(ClientResponse response) {

@@ -52,7 +52,7 @@ public class WebSocketService {
         int indexBefore = "/channel/".length();
         int indexAfter = uri.getPath().indexOf("/", indexBefore);
         String channelPath = uri.getPath().substring(0, indexAfter);
-        String serverURL = localHostProperties.getScheme() + uri.getAuthority();
+        String serverURL = localHostProperties.getUriScheme() + uri.getAuthority();
         URI channelUrl = UriBuilder.fromUri(serverURL).path(channelPath).build();
         return channelUrl.toString();
     }

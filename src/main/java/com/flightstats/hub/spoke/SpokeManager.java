@@ -62,7 +62,7 @@ public class SpokeManager implements SpokeClusterHealthCheck, SpokeChronologySto
         this.cluster = cluster;
         this.statsdReporter = statsdReporter;
         this.contentProperties = contentProperties;
-        this.uriScheme = localHostProperties.getScheme();
+        this.uriScheme = localHostProperties.getUriScheme();
         this.hostAddressWithPort = localHostProperties.getAddressWithPort();
         this.localHostProperties = localHostProperties;
         this.executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("RemoteSpokeStore-%d").build());

@@ -44,7 +44,7 @@ public class TimeService {
         this.cluster = cluster;
 
         this.remoteFile = appProperties.getAppRemoteTimeFile();
-        this.uriScheme = localHostProperties.getScheme();
+        this.uriScheme = localHostProperties.getUriScheme();
         HubServices.register(new TimeServiceRegister());
     }
 
