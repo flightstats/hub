@@ -178,7 +178,7 @@ public class SingleContentService implements ContentService {
 
     @Override
     public Optional<ContentKey> getLatest(DirectionQuery query) {
-        return ContentService.chooseLatest(queryDirection(query), query);
+        return ContentService.chooseLatest(queryDirection(query));
     }
 
     @Override

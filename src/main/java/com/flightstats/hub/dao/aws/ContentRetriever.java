@@ -1,6 +1,6 @@
 package com.flightstats.hub.dao.aws;
 
-import com.flightstats.hub.cluster.LastContentPath;
+import com.flightstats.hub.cluster.ClusterCacheDao;
 import com.flightstats.hub.config.properties.ContentProperties;
 import com.flightstats.hub.dao.ContentService;
 import com.flightstats.hub.dao.Dao;
@@ -29,25 +29,25 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.flightstats.hub.dao.ContentKeyUtil.enforceLimits;
-import static com.flightstats.hub.dao.ContentKeyUtil.filter;
 import static com.flightstats.hub.constant.ZookeeperNodes.HISTORICAL_EARLIEST;
 import static com.flightstats.hub.constant.ZookeeperNodes.REPLICATED_LAST_UPDATED;
+import static com.flightstats.hub.dao.ContentKeyUtil.enforceLimits;
+import static com.flightstats.hub.dao.ContentKeyUtil.filter;
 
 public class ContentRetriever {
 
     private final Dao<ChannelConfig> channelConfigDao;
-    private final LastContentPath lastContentPath;
+    private final ClusterCacheDao clusterCacheDao;
     private final ContentService contentService;
     private final ContentProperties contentProperties;
 
     @Inject
     public ContentRetriever(@Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao,
-                            LastContentPath lastContentPath,
+                            ClusterCacheDao clusterCacheDao,
                             ContentService contentService,
                             ContentProperties contentProperties) {
         this.channelConfigDao = channelConfigDao;
-        this.lastContentPath = lastContentPath;
+        this.clusterCacheDao = clusterCacheDao;
         this.contentService = contentService;
         this.contentProperties = contentProperties;
     }
@@ -59,7 +59,7 @@ public class ContentRetriever {
                 ttlTime = channelConfig.getMutableTime().plusMillis(1);
             } else {
                 final ContentKey lastKey = ContentKey.lastKey(channelConfig.getMutableTime());
-                return lastContentPath.get(channelConfig.getDisplayName(), lastKey, HISTORICAL_EARLIEST).getTime();
+                return clusterCacheDao.get(channelConfig.getDisplayName(), lastKey, HISTORICAL_EARLIEST).getTime();
             }
         }
         return ttlTime;
@@ -226,7 +226,7 @@ public class ContentRetriever {
     public ContentPath getLastUpdated(String channelName, ContentPath defaultValue) {
         channelName = getDisplayName(channelName);
         if (isReplicating(channelName)) {
-            ContentPath contentPath = lastContentPath.get(channelName, defaultValue, REPLICATED_LAST_UPDATED);
+            ContentPath contentPath = clusterCacheDao.get(channelName, defaultValue, REPLICATED_LAST_UPDATED);
             //REPLICATED_LAST_UPDATED is inclusive, and we want to be exclusive.
             if (!contentPath.equals(defaultValue)) {
                 contentPath = new SecondPath(contentPath.getTime().plusSeconds(1));

@@ -58,7 +58,7 @@ public class SpokeWriteContentDao implements ContentDao {
     }
 
     @Override
-    public SortedSet<ContentKey> insert(BulkContent bulkContent) throws Exception {
+    public SortedSet<ContentKey> insert(BulkContent bulkContent) {
         return SpokeContentDao.insert(bulkContent, (baos) -> {
             String channel = bulkContent.getChannel();
             return clusterWriteSpoke.insertToWriteCluster(channel, baos.toByteArray(), "bulkKey", channel);
@@ -95,8 +95,8 @@ public class SpokeWriteContentDao implements ContentDao {
             return key;
         } catch (Exception e) {
             log.warn("what happened? " + channel, e);
+            return Optional.empty();
         }
-        return Optional.empty();
     }
 
     @Override

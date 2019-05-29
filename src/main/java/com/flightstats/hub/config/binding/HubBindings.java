@@ -15,7 +15,7 @@ import com.flightstats.hub.cluster.Cluster;
 import com.flightstats.hub.cluster.CuratorCluster;
 import com.flightstats.hub.cluster.DecommissionCluster;
 import com.flightstats.hub.cluster.HubClusterRegister;
-import com.flightstats.hub.cluster.LastContentPath;
+import com.flightstats.hub.cluster.ClusterCacheDao;
 import com.flightstats.hub.cluster.SpokeDecommissionCluster;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.ZooKeeperState;
@@ -260,6 +260,7 @@ public class HubBindings extends AbstractModule {
 
     @Named(WRITE)
     @Provides
+    @Singleton
     public FileSpokeStore fileSpokeStoreWrite(SpokeProperties spokeProperties) {
         return new FileSpokeStore(
                 spokeProperties.getPath(SpokeStore.WRITE),
@@ -268,6 +269,7 @@ public class HubBindings extends AbstractModule {
 
     @Named(READ)
     @Provides
+    @Singleton
     public FileSpokeStore fileSpokeStoreRead(SpokeProperties spokeProperties) {
         return new FileSpokeStore(
                 spokeProperties.getPath(SpokeStore.READ),
@@ -284,7 +286,7 @@ public class HubBindings extends AbstractModule {
         bind(ZooKeeperState.class).asEagerSingleton();
         bind(HubUtils.class).asEagerSingleton();
         bind(GCRunner.class).asEagerSingleton();
-        bind(LastContentPath.class).asEagerSingleton();
+        bind(ClusterCacheDao.class).asEagerSingleton();
         bind(NtpMonitor.class).asEagerSingleton();
         bind(StaleEntity.class).asEagerSingleton();
 
