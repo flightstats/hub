@@ -48,8 +48,7 @@ class InfluxdbReporterProviderIntegrationTest {
     private static class TestHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange httpExchange) throws IOException {
-
-            InputStreamReader streamReader =  new InputStreamReader(httpExchange.getRequestBody(), StandardCharsets.UTF_8);
+            InputStreamReader streamReader = new InputStreamReader(httpExchange.getRequestBody(), StandardCharsets.UTF_8);
             BufferedReader reader = new BufferedReader(streamReader);
             writeResult = reader
                     .lines()
@@ -103,6 +102,7 @@ class InfluxdbReporterProviderIntegrationTest {
 
         InfluxdbReporterProvider influxdbReporterProvider =
                 new InfluxdbReporterProvider(tickMetricsProperties, metricsProperties, metricRegistry, localHostProperties, hubVersion);
+
         influxdbReporter = influxdbReporterProvider.get();
 
         influxdbReporter.start(1, SECONDS);

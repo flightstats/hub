@@ -21,7 +21,7 @@ public class MetricsProperties {
         return propertiesLoader.getProperty("metrics.enable", false);
     }
 
-    public String getEnv(){
+    public String getEnv() {
         return appProperties.getEnv();
     }
 
@@ -41,7 +41,7 @@ public class MetricsProperties {
         return localHostProperties.getName();
     }
 
-    public String getClusterTag(){
+    public String getClusterTag() {
         return appProperties.getClusterLocation() + "-" + appProperties.getEnv();
     }
 }

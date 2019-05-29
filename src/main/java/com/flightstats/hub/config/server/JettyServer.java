@@ -1,9 +1,9 @@
 package com.flightstats.hub.config.server;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
-import com.flightstats.hub.app.GuiceToHK2Adapter;
 import com.flightstats.hub.app.HttpAndWSHandler;
 import com.flightstats.hub.app.ObjectMapperResolver;
+import com.flightstats.hub.config.GuiceToHK2BridgeInitializer;
 import com.flightstats.hub.config.binding.HubBindings;
 import com.flightstats.hub.config.properties.AppProperties;
 import com.flightstats.hub.config.properties.LocalHostProperties;
@@ -31,6 +31,8 @@ import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.websocket.jsr356.server.deploy.WebSocketServerContainerInitializer;
+import org.glassfish.hk2.api.ServiceLocatorFactory;
+import org.glassfish.hk2.utilities.ServiceLocatorUtilities;
 import org.glassfish.jersey.jetty.JettyHttpContainer;
 import org.glassfish.jersey.message.DeflateEncoder;
 import org.glassfish.jersey.message.GZipEncoder;
@@ -83,8 +85,12 @@ public class JettyServer {
         serverConnector.setIdleTimeout(systemProperties.getHttpIdleTimeInMillis());
         server.setConnectors(new Connector[]{serverConnector});
 
+        // ensure HK2 (Jetty's internal DI system) can pull instances from guice
+        GuiceToHK2BridgeInitializer diBridge = new GuiceToHK2BridgeInitializer(injector);
+        ServiceLocatorFactory.getInstance().addListener(diBridge);
+
         // build Jersey HTTP context
-        ResourceConfig resourceConfig = buildResourceConfig(injector);
+        ResourceConfig resourceConfig = buildResourceConfig();
         JettyHttpContainer httpContainer = ContainerFactory.createContainer(JettyHttpContainer.class, resourceConfig);
 
         // build Jetty WebSocket context
@@ -110,9 +116,8 @@ public class JettyServer {
         return server;
     }
 
-    private ResourceConfig buildResourceConfig(Injector injector) {
+    private ResourceConfig buildResourceConfig() {
         ResourceConfig config = new ResourceConfig();
-        config.register(new GuiceToHK2Adapter(injector));
         config.register(new ObjectMapperResolver(HubBindings.objectMapper()));
         config.register(JacksonJsonProvider.class);
         config.registerClasses(

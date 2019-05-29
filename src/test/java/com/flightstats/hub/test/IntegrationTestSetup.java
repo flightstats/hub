@@ -44,14 +44,6 @@ public class IntegrationTestSetup {
         return integrationTestSetup;
     }
 
-    private static void restartZooKeeperServer() {
-        try {
-            ZooKeeperTestServer.restart();
-        } catch (Exception e) {
-            log.info("Problem restarting zookeeper test server ");
-        }
-    }
-
     private CuratorFramework buildZooKeeperClient(PropertiesLoader propertiesLoader) {
         if (curator == null) {
             curator = HubBindings.buildCurator(

@@ -27,10 +27,6 @@ public class ContentProperties {
         return propertiesLoader.getProperty("hub.protect.channels", true);
     }
 
-    public boolean isLatestUpdateServiceEnabled() {
-        return propertiesLoader.getProperty("channel.latest.update.svc.enabled", true);
-    }
-
     public int getStableSeconds() {
         return propertiesLoader.getProperty("app.stable_seconds", 5);
     }

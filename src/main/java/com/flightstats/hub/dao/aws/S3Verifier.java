@@ -1,9 +1,9 @@
 package com.flightstats.hub.dao.aws;
 
 import com.flightstats.hub.app.HubServices;
+import com.flightstats.hub.cluster.ClusterCacheDao;
 import com.flightstats.hub.cluster.DistributedAsyncLockRunner;
 import com.flightstats.hub.cluster.DistributedLeaderLockManager;
-import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.cluster.Leadership;
 import com.flightstats.hub.cluster.Lockable;
 import com.flightstats.hub.dao.Dao;
@@ -45,7 +45,7 @@ public class S3Verifier {
     private final VerifierConfig verifierConfig;
 
     private final ExecutorService channelThreadPool;
-    private final LastContentPath lastContentPath;
+    private final ClusterCacheDao clusterCacheDao;
     private final S3WriteQueue s3WriteQueue;
     private final Client httpClient;
     private final MissingContentFinder missingContentFinder;
@@ -56,7 +56,7 @@ public class S3Verifier {
     private final StatsdReporter statsdReporter;
 
     @Inject
-    public S3Verifier(LastContentPath lastContentPath,
+    public S3Verifier(ClusterCacheDao clusterCacheDao,
                       S3WriteQueue s3WriteQueue,
                       Client httpClient,
                       MissingContentFinder missingContentFinder,
@@ -67,7 +67,7 @@ public class S3Verifier {
                       @Named("ChannelConfig") Dao<ChannelConfig> channelConfigDao,
                       DistributedLeaderLockManager distributedLeaderLockManager,
                       StatsdReporter statsdReporter) {
-        this.lastContentPath = lastContentPath;
+        this.clusterCacheDao = clusterCacheDao;
         this.channelConfigDao = channelConfigDao;
         this.s3WriteQueue = s3WriteQueue;
         this.httpClient = httpClient;
@@ -140,7 +140,7 @@ public class S3Verifier {
 
         if (isLastCompletedAfterVerifierStart(lastCompleted, range)) {
             log.debug("verifyChannel.completed {}", range);
-            lastContentPath.updateIncrease(lastCompleted, range.getChannelConfig().getDisplayName(), LAST_SINGLE_VERIFIED);
+            clusterCacheDao.setIfNewer(lastCompleted, range.getChannelConfig().getDisplayName(), LAST_SINGLE_VERIFIED);
             incrementMetric(VerifierMetrics.PARTIAL_UPDATE);
         } else {
             log.warn("verifyChannel completed, but start time is the same as last completed");

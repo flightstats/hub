@@ -29,12 +29,12 @@ public class SpokeReadContentDao implements ContentDao {
     }
 
     @Override
-    public ContentKey insert(String channelName, Content content) throws Exception {
+    public ContentKey insert(String channelName, Content content) {
         throw new NotImplementedException("SpokeReadContentDao.insert not implemented");
     }
 
     @Override
-    public SortedSet<ContentKey> insert(BulkContent bulkContent) throws Exception {
+    public SortedSet<ContentKey> insert(BulkContent bulkContent) {
         return SpokeContentDao.insert(bulkContent, (baos) -> {
             String channel = bulkContent.getChannel();
             return localReadSpoke.insertToLocalReadStore(channel, baos.toByteArray(), ActiveTraces.getLocal(), "bulkKey", channel);
