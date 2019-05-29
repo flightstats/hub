@@ -15,7 +15,7 @@ public class ZooKeeperTestServer {
             log.info("Zookeeper starting in test mode.");
             testingServer = new TestingServer(2181);
         } else {
-            log.info("Zookeeper already running in test mode.");
+            log.warn("Zookeeper already running in test mode.");
         }
     }
 

@@ -1,7 +1,5 @@
 package com.flightstats.hub.cluster;
 
-import com.flightstats.hub.app.HubHost;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -13,17 +11,17 @@ public interface Cluster {
      */
     static Collection<String> getLocalServer() {
         List<String> server = new ArrayList<>();
-        server.add(Cluster.getHost(false));
+      //  server.add(Cluster.getHost(false));
         return server;
     }
 
-    static String getHost(boolean useName) {
+    /*static String getHost(boolean useName) {
         if (useName) {
             return HubHost.getLocalNamePort();
         } else {
             return HubHost.getLocalAddressPort();
         }
-    }
+    }*/
 
     /**
      * @return All servers in the cluster
@@ -34,7 +32,7 @@ public interface Cluster {
 
     default List<String> getRemoteServers(String channel) {
         List<String> servers = new ArrayList<>(getServers(channel));
-        servers.remove(getHost(true));
+        //servers.remove(getHost(true));
         return servers;
     }
 

@@ -8,11 +8,11 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 @Execution(ExecutionMode.SAME_THREAD)
 class HubUtilsTest {
 
-    private static final String HUT_TEST = "test_0_HubUtilsTest" + StringUtils.randomAlphaNumeric(6);
+   /* private static final String HUT_TEST = "test_0_HubUtilsTest" + StringUtils.randomAlphaNumeric(6);
     private static HubUtils hubUtils;
     private static String channelUrl;
 
-    /*@BeforeAll
+    @BeforeAll
     static void setUpClass() {
         hubUtils = IntegrationTestSetup.run().getInstance(HubUtils.class);
         channelUrl = create();

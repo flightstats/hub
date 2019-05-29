@@ -1,6 +1,7 @@
 package com.flightstats.hub.cluster;
 
 import com.flightstats.hub.config.properties.AppProperties;
+import com.flightstats.hub.config.properties.LocalHostProperties;
 import com.flightstats.hub.config.properties.SpokeProperties;
 import com.flightstats.hub.util.StringUtils;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -28,11 +29,11 @@ public class CuratorCluster implements Cluster {
 
     private final CuratorFramework curator;
     private final String clusterPath;
-    private final boolean useName;
     private final boolean checkReadOnly;
     private final DecommissionCluster decommissionCluster;
     private final AppProperties appProperties;
     private final SpokeProperties spokeProperties;
+    private final String host;
 
     private String fullPath;
     private final PathChildrenCache clusterCache;
@@ -44,16 +45,17 @@ public class CuratorCluster implements Cluster {
                           boolean checkReadOnly,
                           DecommissionCluster decommissionCluster,
                           AppProperties appProperties,
-                          SpokeProperties spokeProperties) throws Exception {
+                          SpokeProperties spokeProperties,
+                          LocalHostProperties localHostProperties) throws Exception {
         this.curator = curator;
         this.clusterPath = clusterPath;
-        this.useName = useName;
         this.checkReadOnly = checkReadOnly;
         this.decommissionCluster = decommissionCluster;
         clusterCache = new PathChildrenCache(curator, clusterPath, true);
         clusterCache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
         this.appProperties = appProperties;
         this.spokeProperties = spokeProperties;
+        this.host = localHostProperties.getHost(useName);
     }
 
     public void addCacheListener() {
@@ -78,7 +80,6 @@ public class CuratorCluster implements Cluster {
             log.info("this hub is read only, not registering");
             return;
         }
-        String host = Cluster.getHost(useName);
         try {
             log.info("registering host {} {}", host, clusterPath);
             curator.create().withMode(CreateMode.EPHEMERAL).forPath(getFullPath(), host.getBytes());
@@ -91,7 +92,7 @@ public class CuratorCluster implements Cluster {
     }
 
     private String getFullPath() {
-        fullPath = clusterPath + "/" + Cluster.getHost(useName) + StringUtils.randomAlphaNumeric(6);
+        fullPath = clusterPath + "/" + host + StringUtils.randomAlphaNumeric(6);
         return fullPath;
     }
 
@@ -131,9 +132,9 @@ public class CuratorCluster implements Cluster {
 
     public void delete() {
         try {
-            log.info("removing host from cluster {} {}", Cluster.getHost(useName), fullPath);
+            log.info("removing host from cluster {} {}", host, fullPath);
             curator.delete().forPath(fullPath);
-            log.info("deleted host from cluster {} {}", Cluster.getHost(useName), fullPath);
+            log.info("deleted host from cluster {} {}", host, fullPath);
         } catch (KeeperException.NoNodeException e) {
             log.info("no node for" + fullPath);
         } catch (Exception e) {

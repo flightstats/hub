@@ -3,10 +3,10 @@ package com.flightstats.hub.config.server;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.flightstats.hub.app.GuiceToHK2Adapter;
 import com.flightstats.hub.app.HttpAndWSHandler;
-import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.ObjectMapperResolver;
 import com.flightstats.hub.config.binding.HubBindings;
 import com.flightstats.hub.config.properties.AppProperties;
+import com.flightstats.hub.config.properties.LocalHostProperties;
 import com.flightstats.hub.config.properties.SystemProperties;
 import com.flightstats.hub.filter.CORSFilter;
 import com.flightstats.hub.filter.MetricsRequestFilter;
@@ -50,16 +50,19 @@ public class JettyServer {
     private final MetricsRequestFilter metricsRequestFilter;
     private final SystemProperties systemProperties;
     private final AppProperties appProperties;
+    private final LocalHostProperties localHostProperties;
     private final Injector injector;
 
     @Inject
     public JettyServer(MetricsRequestFilter metricsRequestFilter,
                        SystemProperties systemProperties,
                        AppProperties appProperties,
+                       LocalHostProperties localHostProperties,
                        Injector injector) {
         this.metricsRequestFilter = metricsRequestFilter;
         this.systemProperties = systemProperties;
         this.appProperties = appProperties;
+        this.localHostProperties = localHostProperties;
         this.injector = injector;
     }
 
@@ -76,7 +79,7 @@ public class JettyServer {
         ConnectionFactory connectionFactory = new HttpConnectionFactory(httpConfig);
         ServerConnector serverConnector = new ServerConnector(server, sslContextFactory, connectionFactory);
         serverConnector.setHost(systemProperties.getHttpBindIp());
-        serverConnector.setPort(HubHost.getLocalPort());
+        serverConnector.setPort(localHostProperties.getPort());
         serverConnector.setIdleTimeout(systemProperties.getHttpIdleTimeInMillis());
         server.setConnectors(new Connector[]{serverConnector});
 
@@ -137,7 +140,7 @@ public class JettyServer {
     }
 
     private String getKeyStorePath() {
-        String keyStorePath = appProperties.getKeyStorePath() + HubHost.getLocalName() + ".jks";
+        String keyStorePath = appProperties.getKeyStorePath() + localHostProperties.getName() + ".jks";
         log.info("using key store path: {}", keyStorePath);
         return keyStorePath;
     }

@@ -1,6 +1,6 @@
 package com.flightstats.hub.ws;
 
-import com.flightstats.hub.app.HubHost;
+import com.flightstats.hub.config.properties.LocalHostProperties;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.StringUtils;
 import com.flightstats.hub.webhook.Webhook;
@@ -21,10 +21,12 @@ public class WebSocketService {
     private final Map<String, Session> sessionMap = new HashMap<>();
 
     private final WebhookService webhookService;
+    private LocalHostProperties localHostProperties;
 
     @Inject
-    public WebSocketService(WebhookService webhookService) {
+    public WebSocketService(WebhookService webhookService, LocalHostProperties localHostProperties) {
         this.webhookService = webhookService;
+        this.localHostProperties = localHostProperties;
     }
 
     void createCallback(Session session, String channel) {
@@ -50,13 +52,13 @@ public class WebSocketService {
         int indexBefore = "/channel/".length();
         int indexAfter = uri.getPath().indexOf("/", indexBefore);
         String channelPath = uri.getPath().substring(0, indexAfter);
-        String serverURL = HubHost.getScheme() + uri.getAuthority();
+        String serverURL = localHostProperties.getScheme() + uri.getAuthority();
         URI channelUrl = UriBuilder.fromUri(serverURL).path(channelPath).build();
         return channelUrl.toString();
     }
 
     private String getCallbackUrl(String id) {
-        return HubHost.getLocalHttpIpUri() + "/internal/ws/" + id;
+        return localHostProperties.getUriWithHostIp() + "/internal/ws/" + id;
     }
 
     private String setId(Session session, String channel) {

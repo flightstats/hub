@@ -2,6 +2,7 @@ package com.flightstats.hub.metrics;
 
 import com.codahale.metrics.MetricRegistry;
 import com.flightstats.hub.app.HubVersion;
+import com.flightstats.hub.config.properties.LocalHostProperties;
 import com.flightstats.hub.config.properties.MetricsProperties;
 import com.flightstats.hub.config.properties.TickMetricsProperties;
 import metrics_influxdb.measurements.MeasurementReporter;
@@ -23,6 +24,8 @@ class InfluxdbReporterProviderTest {
     @Mock
     private MetricsProperties metricsProperties;
     @Mock
+    private LocalHostProperties localHostProperties;
+    @Mock
     private MetricRegistry metricRegistry;
     @Mock
     private HubVersion hubVersion;
@@ -30,8 +33,9 @@ class InfluxdbReporterProviderTest {
 
     @BeforeEach
     void setup() {
+        when(localHostProperties.getName()).thenReturn("localhost");
         influxdbReporterProvider =
-                new InfluxdbReporterProvider(tickMetricsProperties, metricsProperties, metricRegistry, hubVersion);
+                new InfluxdbReporterProvider(tickMetricsProperties, metricsProperties, metricRegistry, localHostProperties, hubVersion);
     }
 
     @Test
@@ -42,6 +46,7 @@ class InfluxdbReporterProviderTest {
     @Test
     void testInfluxdbReporterGet_scheduledReporter() {
         when(hubVersion.getVersion()).thenReturn("local");
+
         when(metricsProperties.getEnv()).thenReturn("test");
         when(metricsProperties.getClusterTag()).thenReturn("location-test");
         when(metricsProperties.getRoleTag()).thenReturn("hub");

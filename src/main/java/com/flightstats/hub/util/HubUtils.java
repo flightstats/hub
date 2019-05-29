@@ -3,8 +3,8 @@ package com.flightstats.hub.util;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.cluster.Cluster;
+import com.flightstats.hub.config.properties.LocalHostProperties;
 import com.flightstats.hub.model.BulkContent;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.Content;
@@ -41,16 +41,19 @@ public class HubUtils {
     private final Client followClient;
     private final Cluster hubCluster;
     private final ObjectMapper objectMapper;
+    private final String uriScheme;
 
     @Inject
     public HubUtils(@Named("NoRedirects") Client noRedirectsClient,
                     Client followClient,
                     @Named("HubCluster") Cluster hubCluster,
-                    ObjectMapper objectMapper) {
+                    ObjectMapper objectMapper,
+                    LocalHostProperties localHostProperties) {
         this.noRedirectsClient = noRedirectsClient;
         this.followClient = followClient;
         this.hubCluster = hubCluster;
         this.objectMapper = objectMapper;
+        this.uriScheme = localHostProperties.getScheme();
     }
 
     public static void close(ClientResponse response) {
@@ -299,7 +302,7 @@ public class HubUtils {
 
     private void refreshServer(ObjectNode root, String server) {
         try {
-            String url = HubHost.getScheme() + server + "/internal/channel/refresh?all=false";
+            String url = uriScheme + server + "/internal/channel/refresh?all=false";
             ClientResponse response = followClient.resource(url).get(ClientResponse.class);
             if (response.getStatus() == 200) {
                 root.put(response.getEntity(String.class), "success");

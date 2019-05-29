@@ -1,6 +1,7 @@
 package com.flightstats.hub.app;
 
 import com.flightstats.hub.config.properties.AppProperties;
+import com.flightstats.hub.config.properties.LocalHostProperties;
 import com.flightstats.hub.health.HubHealthCheck;
 import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.util.Sleeper;
@@ -27,16 +28,19 @@ public class ShutdownManager {
     private final CuratorFramework curatorFramework;
     private final StatsdReporter statsdReporter;
     private final AppProperties appProperties;
+    private final String hostAddress;
 
     @Inject
     public ShutdownManager(HubHealthCheck hubHealthCheck,
                            CuratorFramework curatorFramework,
                            StatsdReporter statsdReporter,
-                           AppProperties appProperties) {
+                           AppProperties appProperties,
+                           LocalHostProperties localHostProperties) {
         this.hubHealthCheck = hubHealthCheck;
         this.curatorFramework = curatorFramework;
         this.statsdReporter = statsdReporter;
         this.appProperties = appProperties;
+        this.hostAddress = localHostProperties.getAddress();
         HubServices.register(new ShutdownManagerService(), HubServices.TYPE.AFTER_HEALTHY_START);
     }
 
@@ -101,7 +105,7 @@ public class ShutdownManager {
             } catch (KeeperException.NoNodeException e) {
                 log.info("creating shutdown lock");
                 try {
-                    curatorFramework.create().forPath(PATH, HubHost.getLocalAddress().getBytes());
+                    curatorFramework.create().forPath(PATH, hostAddress.getBytes());
                     return;
                 } catch (Exception e1) {
                     log.info("why did this fail?", e1);
@@ -116,9 +120,9 @@ public class ShutdownManager {
         protected void startUp() throws Exception {
             try {
                 String foundIpAddress = getLockData();
-                log.info("found shutdown lock {} local {}", foundIpAddress, HubHost.getLocalAddress());
-                if (HubHost.getLocalAddress().equals(foundIpAddress)) {
-                    log.info("deleting shutdown lock {} local {}", foundIpAddress, HubHost.getLocalAddress());
+                log.info("found shutdown lock {} local {}", foundIpAddress, hostAddress);
+                if (hostAddress.equals(foundIpAddress)) {
+                    log.info("deleting shutdown lock {} local {}", foundIpAddress, hostAddress);
                     resetLock();
                 }
             } catch (KeeperException.NoNodeException e) {

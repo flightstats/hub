@@ -33,7 +33,7 @@ public class IntegrationTestSetup {
             HubServer hubServer = injector.getInstance(HubServer.class);
             hubServer.start();
         } catch (Exception e) {
-            log.info("Problem while setting up integration test environment");
+            log.info("Problem while setting up integration test environment", e);
         }
     }
 
