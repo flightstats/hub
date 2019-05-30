@@ -23,7 +23,7 @@ import com.amazonaws.services.s3.model.UploadPartRequest;
 import com.amazonaws.services.s3.model.UploadPartResult;
 import com.flightstats.hub.config.properties.S3Properties;
 import com.flightstats.hub.metrics.StatsdReporter;
-import com.google.inject.Inject;
+import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;

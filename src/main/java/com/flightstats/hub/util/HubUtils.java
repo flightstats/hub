@@ -12,7 +12,7 @@ import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.Query;
 import com.flightstats.hub.webhook.Webhook;
 import com.google.common.io.ByteStreams;
-import com.google.inject.Inject;
+import javax.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.sun.jersey.api.client.Client;

@@ -18,7 +18,7 @@ import com.flightstats.hub.ws.WebSocketHourEndpoint;
 import com.flightstats.hub.ws.WebSocketMinuteEndpoint;
 import com.flightstats.hub.ws.WebSocketSecondEndpoint;
 import com.google.common.io.Resources;
-import com.google.inject.Inject;
+import javax.inject.Inject;
 import com.google.inject.Injector;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.server.ConnectionFactory;

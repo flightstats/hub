@@ -4,7 +4,7 @@ import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.app.ShutdownManager;
 import com.flightstats.hub.health.HubHealthCheck;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.inject.Inject;
+import javax.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import lombok.extern.slf4j.Slf4j;

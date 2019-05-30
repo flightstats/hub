@@ -34,7 +34,7 @@ public class CuratorCluster implements Cluster {
     private final DecommissionCluster decommissionCluster;
     private final AppProperties appProperties;
     private final SpokeProperties spokeProperties;
-    private LocalHostProperties localHostProperties;
+    private final LocalHostProperties localHostProperties;
 
     private String fullPath;
     private final PathChildrenCache clusterCache;
@@ -83,18 +83,18 @@ public class CuratorCluster implements Cluster {
             return;
         }
         try {
-            log.info("registering host {} {}", localHostProperties.getHost(useName), clusterPath);
-            curator.create().withMode(CreateMode.EPHEMERAL).forPath(getFullPath(), localHostProperties.getHost(useName).getBytes());
+            log.info("registering host {} {}", getHost(useName), clusterPath);
+            curator.create().withMode(CreateMode.EPHEMERAL).forPath(getFullPath(), getHost(useName).getBytes());
         } catch (KeeperException.NodeExistsException e) {
-            log.warn("node already exists {} {} - not likely in prod", localHostProperties.getHost(useName), clusterPath);
+            log.warn("node already exists {} {} - not likely in prod", getHost(useName), clusterPath);
         } catch (Exception e) {
-            log.error("unable to register, should die {} {}", localHostProperties.getHost(useName), clusterPath, e);
+            log.error("unable to register, should die {} {}", getHost(useName), clusterPath, e);
             throw new RuntimeException(e);
         }
     }
 
     private String getFullPath() {
-        fullPath = clusterPath + "/" + localHostProperties.getHost(useName) + StringUtils.randomAlphaNumeric(6);
+        fullPath = clusterPath + "/" + getHost(useName) + StringUtils.randomAlphaNumeric(6);
         return fullPath;
     }
 
@@ -134,9 +134,9 @@ public class CuratorCluster implements Cluster {
 
     public void delete() {
         try {
-            log.info("removing host from cluster {} {}", localHostProperties.getHost(useName), fullPath);
+            log.info("removing host from cluster {} {}", getHost(useName), fullPath);
             curator.delete().forPath(fullPath);
-            log.info("deleted host from cluster {} {}", localHostProperties.getHost(useName), fullPath);
+            log.info("deleted host from cluster {} {}", getHost(useName), fullPath);
         } catch (KeeperException.NoNodeException e) {
             log.info("no node for" + fullPath);
         } catch (Exception e) {
@@ -146,8 +146,12 @@ public class CuratorCluster implements Cluster {
 
     public List<String> getRemoteServers(String channel) {
         List<String> servers = new ArrayList<>(getServers(channel));
-        servers.remove(localHostProperties.getHost(true));
+        servers.remove(getHost(true));
         return servers;
+    }
+
+    private String getHost(boolean useName) {
+        return localHostProperties.getHost(useName);
     }
 
 }

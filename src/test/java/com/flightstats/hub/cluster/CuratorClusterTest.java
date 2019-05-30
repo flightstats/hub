@@ -28,7 +28,7 @@ class CuratorClusterTest {
     private final LocalHostProperties localHostProperties = new LocalHostProperties(appProperties, systemProperties);
     private CuratorFramework curator;
 
-   @BeforeAll
+    @BeforeAll
     void setup() {
         curator = IntegrationTestSetup.run().getZookeeperClient();
     }
@@ -42,8 +42,8 @@ class CuratorClusterTest {
                 false,
                 true,
                 new SpokeDecommissionCluster(curator, spokeProperties, localHostProperties),
-                new AppProperties(PropertiesLoader.getInstance()),
-                new SpokeProperties(PropertiesLoader.getInstance()),
+                appProperties,
+                spokeProperties,
                 localHostProperties);
 
         final CuratorCluster cluster = new CuratorCluster(curator,
@@ -51,8 +51,8 @@ class CuratorClusterTest {
                 false,
                 true,
                 new SpokeDecommissionCluster(curator, spokeProperties, localHostProperties),
-                new AppProperties(PropertiesLoader.getInstance()),
-                new SpokeProperties(PropertiesLoader.getInstance()),
+                appProperties,
+                spokeProperties,
                 localHostProperties);
 
         Collection<String> servers = cluster.getAllServers();
