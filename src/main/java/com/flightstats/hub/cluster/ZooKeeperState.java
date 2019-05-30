@@ -1,6 +1,6 @@
 package com.flightstats.hub.cluster;
 
-import com.google.inject.Inject;
+import javax.inject.Inject;
 import com.google.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.state.ConnectionState;

@@ -1,8 +1,7 @@
 package com.flightstats.hub.webhook;
 
-import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.cluster.CuratorCluster;
-import com.flightstats.hub.rest.RestClient;
+import com.flightstats.hub.config.properties.LocalHostProperties;
 import com.flightstats.hub.util.HubUtils;
 import com.google.common.annotations.VisibleForTesting;
 import com.sun.jersey.api.client.Client;
@@ -16,23 +15,22 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
+import static com.flightstats.hub.constant.NamedBinding.WEBHOOK_CLIENT;
 import static java.util.stream.Collectors.toList;
 
 @Slf4j
 public class InternalWebhookClient {
     private final Client client;
     private final CuratorCluster hubCluster;
+    private final String uriScheme;
 
     @Inject
-    public InternalWebhookClient(@Named("HubCuratorCluster") CuratorCluster hubCluster) {
-        this.hubCluster = hubCluster;
-        this.client = RestClient.createClient(5, 15, true, true);
-    }
-
-    @VisibleForTesting
-    InternalWebhookClient(Client client, CuratorCluster hubCluster) {
+    public InternalWebhookClient(@Named("HubCuratorCluster") CuratorCluster hubCluster,
+                                 @Named(WEBHOOK_CLIENT) Client client,
+                                 LocalHostProperties localHostProperties) {
         this.hubCluster = hubCluster;
         this.client = client;
+        this.uriScheme = localHostProperties.getUriScheme();
     }
 
     List<String> remove(String name, Collection<String> servers) {
@@ -70,7 +68,7 @@ public class InternalWebhookClient {
     }
 
     private boolean put(String url) {
-        String hubUrl = HubHost.getScheme() + url;
+        String hubUrl = uriScheme + url;
         ClientResponse response = null;
         try {
             log.info("calling {}", hubUrl);
@@ -91,7 +89,7 @@ public class InternalWebhookClient {
 
     private int get(String url) {
         ClientResponse response = null;
-        String hubUrl = HubHost.getScheme() + url;
+        String hubUrl = uriScheme + url;
         try {
             log.info("calling {}", hubUrl);
             response = client.resource(hubUrl).get(ClientResponse.class);

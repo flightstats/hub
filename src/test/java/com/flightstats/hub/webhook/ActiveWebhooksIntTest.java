@@ -1,5 +1,6 @@
 package com.flightstats.hub.webhook;
 
+import com.flightstats.hub.config.properties.LocalHostProperties;
 import com.flightstats.hub.config.properties.WebhookProperties;
 import com.flightstats.hub.metrics.StatsdReporter;
 import com.flightstats.hub.test.IntegrationTestSetup;
@@ -45,6 +46,8 @@ class ActiveWebhooksIntTest {
     private static SafeZooKeeperUtils zooKeeperUtils;
     @Mock
     private WebhookProperties webhookProperties;
+    @Mock
+    private LocalHostProperties localHostProperties;
 
     void createPath() throws Exception {
         curator.create().creatingParentsIfNeeded().forPath(WEBHOOK_LEADER_PATH);
@@ -92,7 +95,7 @@ class ActiveWebhooksIntTest {
 
         WebhookLeaderLocks webhookLeaderLocks = new WebhookLeaderLocks(zooKeeperUtils);
         ActiveWebhookSweeper activeWebhookSweeper = new ActiveWebhookSweeper(webhookLeaderLocks, mock(StatsdReporter.class));
-        ActiveWebhooks activeWebhooks = new ActiveWebhooks(webhookLeaderLocks, activeWebhookSweeper, webhookProperties);
+        ActiveWebhooks activeWebhooks = new ActiveWebhooks(webhookLeaderLocks, activeWebhookSweeper, webhookProperties, localHostProperties);
 
         List<String> webhooks = curator.getChildren().forPath(WEBHOOK_LEADER_PATH);
         assertEquals(3, webhooks.size());

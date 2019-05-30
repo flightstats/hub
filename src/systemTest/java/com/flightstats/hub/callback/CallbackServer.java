@@ -1,6 +1,6 @@
 package com.flightstats.hub.callback;
 
-import com.google.inject.Inject;
+import javax.inject.Inject;
 import com.google.inject.Injector;
 import lombok.SneakyThrows;
 import org.eclipse.jetty.server.Server;

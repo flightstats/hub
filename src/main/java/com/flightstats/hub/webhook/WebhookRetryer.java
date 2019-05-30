@@ -1,7 +1,7 @@
 package com.flightstats.hub.webhook;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubHost;
+import com.flightstats.hub.config.properties.LocalHostProperties;
 import com.flightstats.hub.config.properties.WebhookProperties;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.StatsdReporter;
@@ -36,6 +36,7 @@ class WebhookRetryer {
     private final List<Predicate<DeliveryAttempt>> tryLaterIfs;
 
     private final WebhookErrorService webhookErrorService;
+    private final LocalHostProperties localHostProperties;
     private final StatsdReporter statsdReporter;
     private final Client httpClient;
 
@@ -46,6 +47,7 @@ class WebhookRetryer {
                    Integer readTimeoutSeconds,
                    WebhookErrorService webhookErrorService,
                    WebhookProperties webhookProperties,
+                   LocalHostProperties localHostProperties,
                    StatsdReporter statsdReporter) {
 
         this.giveUpIfs = giveUpIfs;
@@ -58,6 +60,7 @@ class WebhookRetryer {
         if (readTimeoutSeconds == null)
             readTimeoutSeconds = webhookProperties.getReadTimeoutSeconds();
 
+        this.localHostProperties = localHostProperties;
         this.httpClient = RestClient.createClient(connectTimeoutSeconds, readTimeoutSeconds, true, false);
     }
 
@@ -98,7 +101,7 @@ class WebhookRetryer {
             try {
                 response = httpClient.resource(attempt.getWebhook().getCallbackUrl())
                         .type(MediaType.APPLICATION_JSON_TYPE)
-                        .header("Hub-Node", HubHost.getLocalNamePort())
+                        .header("Hub-Node", localHostProperties.getNameWithPort())
                         .post(ClientResponse.class, payload);
                 attempt.setStatusCode(response.getStatus());
             } catch (ClientHandlerException e) {

@@ -9,4 +9,6 @@ public class NamedBinding {
     public static final String WRITE = "WRITE";
     public static final String READ_CACHE = "ReadCache";
     public static final String WRITE_CACHE = "WriteCache";
+
+    public static final String WEBHOOK_CLIENT = "WebhookClient";
 }

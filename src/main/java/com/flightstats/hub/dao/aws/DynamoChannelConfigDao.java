@@ -13,7 +13,7 @@ import com.flightstats.hub.config.properties.DynamoProperties;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.inject.Inject;
+import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
