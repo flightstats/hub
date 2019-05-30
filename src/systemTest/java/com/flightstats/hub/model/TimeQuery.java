@@ -6,5 +6,5 @@ import lombok.Value;
 @Builder
 @Value
 public class TimeQuery {
-    private final Links _links;
+    private Links _links;
 }

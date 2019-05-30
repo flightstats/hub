@@ -41,7 +41,6 @@ public class S3ClientFactory {
     public AmazonS3 getS3Client() {
         return AmazonS3ClientBuilder.standard()
                 .withPathStyleAccessEnabled(s3MockEnabled)
-                .withChunkedEncodingDisabled(s3MockEnabled)
                 .withEndpointConfiguration(new EndpointConfiguration(s3Endpoint, s3Region))
                 .withCredentials(getAwsCredentials())
                 .build();
