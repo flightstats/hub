@@ -15,6 +15,7 @@ import com.flightstats.hub.util.HubUtils;
 import com.sun.jersey.api.client.ClientResponse;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.inject.Inject;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -32,6 +33,7 @@ public class InternalReplicationResource {
     private final HubUtils hubUtils;
     private final ObjectMapper objectMapper;
 
+    @Inject
     InternalReplicationResource(ChannelService channelService,
                                 LastContentPath lastReplicated,
                                 HubUtils hubUtils,
