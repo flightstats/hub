@@ -16,7 +16,6 @@ import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import javax.inject.Inject;
 import com.google.inject.name.Named;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientHandlerException;
@@ -24,11 +23,11 @@ import com.sun.jersey.api.client.ClientResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
+import javax.inject.Inject;
 import java.net.ConnectException;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -395,9 +394,7 @@ public class SpokeManager implements SpokeClusterHealthCheck, SpokeChronologySto
      * @return the localhost's server
      */
     private Collection<String> getLocalServer() {
-        List<String> server = new ArrayList<>();
-        server.add(localHostProperties.getHost(false));
-        return server;
+        return Arrays.asList(localHostProperties.getHost(false));
     }
 
 }

@@ -15,6 +15,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
+import static com.flightstats.hub.constant.NamedBinding.WEBHOOK_CLIENT;
 import static java.util.stream.Collectors.toList;
 
 @Slf4j
@@ -25,7 +26,7 @@ public class InternalWebhookClient {
 
     @Inject
     public InternalWebhookClient(@Named("HubCuratorCluster") CuratorCluster hubCluster,
-                                 @Named("WebhookClient") Client client,
+                                 @Named(WEBHOOK_CLIENT) Client client,
                                  LocalHostProperties localHostProperties) {
         this.hubCluster = hubCluster;
         this.client = client;
