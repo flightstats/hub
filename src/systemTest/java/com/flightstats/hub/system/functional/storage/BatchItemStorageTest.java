@@ -1,4 +1,4 @@
-package com.flightstats.hub.system.functional;
+package com.flightstats.hub.system.functional.storage;
 
 import com.flightstats.hub.model.Channel;
 import com.flightstats.hub.model.ChannelStorage;
