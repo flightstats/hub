@@ -2,8 +2,8 @@ package com.flightstats.hub.metrics;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ScheduledReporter;
-import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubVersion;
+import com.flightstats.hub.config.properties.LocalHostProperties;
 import com.flightstats.hub.config.properties.MetricsProperties;
 import com.flightstats.hub.config.properties.TickMetricsProperties;
 import com.flightstats.hub.util.IntegrationServer;
@@ -41,13 +41,14 @@ class InfluxdbReporterProviderIntegrationTest {
     @Mock
     private MetricsProperties metricsProperties;
     @Mock
+    private LocalHostProperties localHostProperties;
+    @Mock
     private HubVersion hubVersion;
 
     private static class TestHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange httpExchange) throws IOException {
-
-            InputStreamReader streamReader =  new InputStreamReader(httpExchange.getRequestBody(), StandardCharsets.UTF_8);
+            InputStreamReader streamReader = new InputStreamReader(httpExchange.getRequestBody(), StandardCharsets.UTF_8);
             BufferedReader reader = new BufferedReader(streamReader);
             writeResult = reader
                     .lines()
@@ -95,17 +96,20 @@ class InfluxdbReporterProviderIntegrationTest {
         when(tickMetricsProperties.getInfluxDbProtocol()).thenReturn("http");
         when(tickMetricsProperties.getInfluxDbName()).thenReturn("hub_test");
 
+        when(localHostProperties.getName()).thenReturn("localhost");
+
         MetricRegistry metricRegistry = new MetricRegistryProvider(metricsProperties).get();
 
         InfluxdbReporterProvider influxdbReporterProvider =
-                new InfluxdbReporterProvider(tickMetricsProperties, metricsProperties, metricRegistry, hubVersion);
+                new InfluxdbReporterProvider(tickMetricsProperties, metricsProperties, metricRegistry, localHostProperties, hubVersion);
+
         influxdbReporter = influxdbReporterProvider.get();
 
         influxdbReporter.start(1, SECONDS);
         TimeUnit.MILLISECONDS.sleep(2000);
         writeResult.forEach(str -> {
             assertTrue(str.contains("cluster=location-test,env=test,"));
-            assertTrue(str.contains(HubHost.getLocalName()));
+            assertTrue(str.contains("localhost"));
             assertTrue(str.contains(",role=hub,team=testers,version=local"));
         });
     }

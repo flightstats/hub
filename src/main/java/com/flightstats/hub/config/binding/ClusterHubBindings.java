@@ -3,7 +3,6 @@ package com.flightstats.hub.config.binding;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.s3.AmazonS3;
 import com.flightstats.hub.app.AppUrlCheck;
-import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.cluster.SpokeDecommissionManager;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.config.ClusterServicesRegistration;
@@ -59,8 +58,6 @@ public class ClusterHubBindings extends AbstractModule {
 
     @Override
     protected void configure() {
-        log.info("starting server {} ", HubHost.getLocalName());
-
         bind(AwsConnectorFactory.class).asEagerSingleton();
         bind(HubS3Client.class).asEagerSingleton();
 

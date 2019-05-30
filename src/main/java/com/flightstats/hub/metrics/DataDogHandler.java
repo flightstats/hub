@@ -4,7 +4,7 @@ import com.flightstats.hub.config.properties.DatadogMetricsProperties;
 import com.flightstats.hub.config.properties.MetricsProperties;
 import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.TimeUtil;
-import com.google.inject.Inject;
+import javax.inject.Inject;
 import com.sun.jersey.api.client.ClientResponse;
 import lombok.extern.slf4j.Slf4j;
 

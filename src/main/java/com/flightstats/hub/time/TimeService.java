@@ -1,15 +1,15 @@
 package com.flightstats.hub.time;
 
-import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.Cluster;
 import com.flightstats.hub.config.properties.AppProperties;
+import com.flightstats.hub.config.properties.LocalHostProperties;
 import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.StringUtils;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.inject.Inject;
+import javax.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.sun.jersey.api.client.Client;
@@ -35,12 +35,16 @@ public class TimeService {
 
     private final Cluster cluster;
     private final String remoteFile;
+    private final String uriScheme;
 
     @Inject
-    public TimeService(@Named("HubCluster") Cluster cluster, AppProperties appProperties) {
+    public TimeService(@Named("HubCluster") Cluster cluster,
+                       AppProperties appProperties,
+                       LocalHostProperties localHostProperties) {
         this.cluster = cluster;
 
         this.remoteFile = appProperties.getAppRemoteTimeFile();
+        this.uriScheme = localHostProperties.getUriScheme();
         HubServices.register(new TimeServiceRegister());
     }
 
@@ -60,7 +64,7 @@ public class TimeService {
         for (String server : cluster.getRemoteServers(randomKey)) {
             ClientResponse response = null;
             try {
-                response = client.resource(HubHost.getScheme() + server + "/internal/time/millis")
+                response = client.resource(uriScheme + server + "/internal/time/millis")
                         .get(ClientResponse.class);
                 if (response.getStatus() == 200) {
                     Long millis = Long.parseLong(response.getEntity(String.class));

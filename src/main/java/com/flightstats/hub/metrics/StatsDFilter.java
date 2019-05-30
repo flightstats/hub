@@ -5,7 +5,7 @@ import com.flightstats.hub.config.properties.TickMetricsProperties;
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.webhook.Webhook;
-import com.google.inject.Inject;
+import javax.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.timgroup.statsd.NoOpStatsDClient;

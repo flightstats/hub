@@ -2,7 +2,7 @@ package com.flightstats.hub.cluster;
 
 import com.flightstats.hub.app.HubServices;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.inject.Inject;
+import javax.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 

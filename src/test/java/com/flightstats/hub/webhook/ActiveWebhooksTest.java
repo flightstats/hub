@@ -1,7 +1,8 @@
 package com.flightstats.hub.webhook;
 
-import com.flightstats.hub.app.HubHost;
+import com.flightstats.hub.config.properties.LocalHostProperties;
 import com.flightstats.hub.config.properties.WebhookProperties;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -16,12 +17,11 @@ import static java.util.stream.Collectors.toSet;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ActiveWebhooksTest {
-    private static final int HUB_PORT = HubHost.getLocalPort();
+    private static final int HUB_PORT = 8080;
 
     private static final String WEBHOOK_WITH_LEASE = "webhook1";
     private static final String WEBHOOK_WITH_A_FEW_LEASES = "webhook4";
@@ -31,17 +31,26 @@ class ActiveWebhooksTest {
     private static final String SERVER_IP1 = "10.2.1";
     private static final String SERVER_IP2 = "10.2.2";
 
-    private final WebhookLeaderLocks webhookLeaderLocks = mock(WebhookLeaderLocks.class);
-    private final ActiveWebhookSweeper activeWebhookSweeper = mock(ActiveWebhookSweeper.class);
+    @Mock
+    private WebhookLeaderLocks webhookLeaderLocks;
+    @Mock
+    private ActiveWebhookSweeper activeWebhookSweeper;
+    @Mock
+    private LocalHostProperties localHostProperties;
     @Mock
     private WebhookProperties webhookProperties;
+    private ActiveWebhooks activeWebhooks;
+
+    @BeforeEach
+    public void setup() {
+        activeWebhooks = new ActiveWebhooks(webhookLeaderLocks, activeWebhookSweeper, webhookProperties, localHostProperties);
+    }
 
     @Test
-    void testGetServers_returnsSeveralForAWebhook() throws Exception {
+    void testGetServers_returnsSeveralForAWebhook() {
         when(webhookLeaderLocks.getServerLeases(WEBHOOK_WITH_A_FEW_LEASES))
                 .thenReturn(newHashSet(SERVER_IP2, SERVER_IP1));
-
-        ActiveWebhooks activeWebhooks = new ActiveWebhooks(webhookLeaderLocks, activeWebhookSweeper, webhookProperties);
+        when(localHostProperties.getPort()).thenReturn(HUB_PORT);
         Set<String> servers = activeWebhooks.getServers(WEBHOOK_WITH_A_FEW_LEASES);
 
         assertEquals(getServersWithPort(SERVER_IP1, SERVER_IP2), servers);
@@ -49,32 +58,28 @@ class ActiveWebhooksTest {
 
 
     @Test
-    void testGetServers_returnsAnEmptyListIfThereAreNoLeases() throws Exception {
+    void testGetServers_returnsAnEmptyListIfThereAreNoLeases() {
         when(webhookLeaderLocks.getServerLeases(EMPTY_WEBHOOK))
                 .thenReturn(newHashSet());
-
-        ActiveWebhooks activeWebhooks = new ActiveWebhooks(webhookLeaderLocks, activeWebhookSweeper, webhookProperties);
         Set<String> servers = activeWebhooks.getServers(EMPTY_WEBHOOK);
 
         assertEquals(newHashSet(), servers);
     }
 
     @Test
-    void testIsActiveWebhook_isTrueIfWebhookIsPresent() throws Exception {
+    void testIsActiveWebhook_isTrueIfWebhookIsPresent() {
         when(webhookLeaderLocks.getWebhooks())
                 .thenReturn(newHashSet(WEBHOOK_WITH_A_FEW_LEASES, WEBHOOK_WITH_LEASE, WEBHOOK_WITH_LOCK));
 
-        ActiveWebhooks activeWebhooks = new ActiveWebhooks(webhookLeaderLocks, activeWebhookSweeper, webhookProperties);
         assertTrue(activeWebhooks.isActiveWebhook(WEBHOOK_WITH_LEASE));
     }
 
 
     @Test
-    void testIsActiveWebhook_isFalseIfWebhookIsNotPresent() throws Exception{
+    void testIsActiveWebhook_isFalseIfWebhookIsNotPresent() {
         when(webhookLeaderLocks.getWebhooks())
                 .thenReturn(newHashSet(WEBHOOK_WITH_A_FEW_LEASES, WEBHOOK_WITH_LEASE, WEBHOOK_WITH_LOCK));
 
-        ActiveWebhooks activeWebhooks = new ActiveWebhooks(webhookLeaderLocks, activeWebhookSweeper, webhookProperties);
         assertFalse(activeWebhooks.isActiveWebhook(EMPTY_WEBHOOK));
     }
 

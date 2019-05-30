@@ -2,7 +2,7 @@ package com.flightstats.hub.testcase;
 
 import com.flightstats.hub.BaseTest;
 import com.flightstats.hub.model.Webhook;
-import com.google.inject.Inject;
+import javax.inject.Inject;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;

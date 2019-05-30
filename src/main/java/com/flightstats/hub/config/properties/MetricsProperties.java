@@ -1,25 +1,27 @@
 package com.flightstats.hub.config.properties;
 
-import com.flightstats.hub.app.HubHost;
-
 import javax.inject.Inject;
 
 public class MetricsProperties {
 
     private final PropertiesLoader propertiesLoader;
     private final AppProperties appProperties;
+    private final LocalHostProperties localHostProperties;
 
     @Inject
-    public MetricsProperties(PropertiesLoader propertiesLoader, AppProperties appProperties) {
+    public MetricsProperties(PropertiesLoader propertiesLoader,
+                             AppProperties appProperties,
+                             LocalHostProperties localHostProperties) {
         this.propertiesLoader = propertiesLoader;
         this.appProperties = appProperties;
+        this.localHostProperties = localHostProperties;
     }
 
     public boolean isEnabled() {
         return propertiesLoader.getProperty("metrics.enable", false);
     }
 
-    public String getEnv(){
+    public String getEnv() {
         return appProperties.getEnv();
     }
 
@@ -36,10 +38,10 @@ public class MetricsProperties {
     }
 
     public String getHostTag() {
-        return HubHost.getLocalName();
+        return localHostProperties.getName();
     }
 
-    public String getClusterTag(){
+    public String getClusterTag() {
         return appProperties.getClusterLocation() + "-" + appProperties.getEnv();
     }
 }

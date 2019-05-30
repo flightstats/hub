@@ -1,10 +1,9 @@
 package com.flightstats.hub.spoke;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.flightstats.hub.app.HubHost;
-import com.flightstats.hub.cluster.Cluster;
 import com.flightstats.hub.cluster.CuratorCluster;
 import com.flightstats.hub.config.properties.ContentProperties;
+import com.flightstats.hub.config.properties.LocalHostProperties;
 import com.flightstats.hub.dao.ContentKeyUtil;
 import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.dao.QueryResult;
@@ -17,7 +16,6 @@ import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientHandlerException;
@@ -25,7 +23,9 @@ import com.sun.jersey.api.client.ClientResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
+import javax.inject.Inject;
 import java.net.ConnectException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
@@ -48,15 +48,22 @@ public class SpokeManager implements SpokeClusterHealthCheck, SpokeChronologySto
     private final CuratorCluster cluster;
     private final StatsdReporter statsdReporter;
     private final ContentProperties contentProperties;
+    private final String uriScheme;
+    private final String hostAddressWithPort;
     private final ExecutorService executorService;
+    private final LocalHostProperties localHostProperties;
 
     @Inject
     public SpokeManager(@Named("SpokeCuratorCluster") CuratorCluster cluster,
                         StatsdReporter statsdReporter,
-                        ContentProperties contentProperties) {
+                        ContentProperties contentProperties,
+                        LocalHostProperties localHostProperties) {
         this.cluster = cluster;
         this.statsdReporter = statsdReporter;
         this.contentProperties = contentProperties;
+        this.uriScheme = localHostProperties.getUriScheme();
+        this.hostAddressWithPort = localHostProperties.getAddressWithPort();
+        this.localHostProperties = localHostProperties;
         this.executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("RemoteSpokeStore-%d").build());
     }
 
@@ -100,15 +107,15 @@ public class SpokeManager implements SpokeClusterHealthCheck, SpokeChronologySto
     @Override
     public boolean testAll() {
         Collection<String> servers = cluster.getRandomServers();
-        servers.addAll(Cluster.getLocalServer());
+        servers.addAll(getLocalServer());
         log.info("*********************************************");
         log.info("testing servers {}", servers);
         log.info("*********************************************");
-        String path = HubHost.getLocalAddressPort();
+        String path = hostAddressWithPort;
         for (String server : servers) {
             try {
                 log.info("calling server {} path {}", server, path);
-                String url = HubHost.getScheme() + server + "/internal/spoke/test/" + path;
+                String url = uriScheme + server + "/internal/spoke/test/" + path;
                 ClientResponse response = query_client.resource(url).get(ClientResponse.class);
                 if (response.getStatus() == 200) {
                     log.info("success calling {}", response);
@@ -135,7 +142,7 @@ public class SpokeManager implements SpokeClusterHealthCheck, SpokeChronologySto
     @Override
     public boolean insertToLocalReadStore(String path, byte[] payload, Traces traces,
                                           String spokeApi, String channel) {
-        return insertToStore(SpokeStore.READ, path, payload, Cluster.getLocalServer(), traces, spokeApi, channel);
+        return insertToStore(SpokeStore.READ, path, payload, getLocalServer(), traces, spokeApi, channel);
     }
 
     private boolean insertToStore(SpokeStore spokeStore, String path, byte[] payload, Collection<String> servers, Traces traces, String spokeApi, String channel) {
@@ -147,7 +154,7 @@ public class SpokeManager implements SpokeClusterHealthCheck, SpokeChronologySto
                 @Override
                 public void run() {
                     setThread(path);
-                    String uri = HubHost.getScheme() + server + "/internal/spoke/" + spokeStore + "/" + spokeApi + "/" + path;
+                    String uri = uriScheme + server + "/internal/spoke/" + spokeStore + "/" + spokeApi + "/" + path;
                     traces.add(uri);
                     ClientResponse response = null;
                     try {
@@ -208,7 +215,7 @@ public class SpokeManager implements SpokeClusterHealthCheck, SpokeChronologySto
             ClientResponse response = null;
             try {
                 setThread(path);
-                String url = HubHost.getScheme() + server + "/internal/spoke/" + spokeStore + "/payload/" + path;
+                String url = uriScheme + server + "/internal/spoke/" + spokeStore + "/payload/" + path;
                 response = query_client.resource(url).get(ClientResponse.class);
                 log.trace("server {} path {} response {}", server, path, response);
                 if (response.getStatus() == 200) {
@@ -263,7 +270,7 @@ public class SpokeManager implements SpokeClusterHealthCheck, SpokeChronologySto
                     try {
                         setThread(path);
                         traces.add("spoke calling", server, path);
-                        response = query_client.resource(HubHost.getScheme() + server + path).get(ClientResponse.class);
+                        response = query_client.resource(uriScheme + server + path).get(ClientResponse.class);
                         traces.add("spoke server response", server, response);
                         if (response.getStatus() == 200) {
                             SortedSet<ContentKey> keySet = new TreeSet<>();
@@ -307,7 +314,7 @@ public class SpokeManager implements SpokeClusterHealthCheck, SpokeChronologySto
                     try {
                         setThread(path);
                         traces.add("spoke calling", server, channel);
-                        response = query_client.resource(HubHost.getScheme() + server + "/internal/spoke/latest/" + path)
+                        response = query_client.resource(uriScheme + server + "/internal/spoke/latest/" + path)
                                 .get(ClientResponse.class);
                         traces.add("spoke server response", server, response);
                         if (response.getStatus() == 200) {
@@ -363,7 +370,7 @@ public class SpokeManager implements SpokeClusterHealthCheck, SpokeChronologySto
                     ClientResponse response = null;
                     try {
                         setThread(path);
-                        response = query_client.resource(HubHost.getScheme() + server + "/internal/spoke/" + spokeStore + "/payload/" + path)
+                        response = query_client.resource(uriScheme + server + "/internal/spoke/" + spokeStore + "/payload/" + path)
                                 .delete(ClientResponse.class);
 
                         if (response.getStatus() < 400) {
@@ -381,6 +388,13 @@ public class SpokeManager implements SpokeClusterHealthCheck, SpokeChronologySto
         }
 
         return countDownLatch.await(60, TimeUnit.SECONDS);
+    }
+
+    /**
+     * @return the localhost's server
+     */
+    private Collection<String> getLocalServer() {
+        return Arrays.asList(localHostProperties.getHost(false));
     }
 
 }

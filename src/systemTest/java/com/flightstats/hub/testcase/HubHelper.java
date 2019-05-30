@@ -8,7 +8,7 @@ import com.flightstats.hub.model.ChannelItem;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.Webhook;
 import com.flightstats.hub.model.WebhookErrors;
-import com.google.inject.Inject;
+import javax.inject.Inject;
 import com.google.inject.name.Named;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
