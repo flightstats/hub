@@ -56,12 +56,10 @@ class ChannelReplicationTest extends DependencyInjector {
         Awaitility.await()
                 .pollInterval(Duration.FIVE_SECONDS)
                 .atMost(new Duration(30, TimeUnit.SECONDS))
-                .until(() -> {
-                    return Stream.of(itemUri1, itemUri2, itemUri3)
+                .until(() -> Stream.of(itemUri1, itemUri2, itemUri3)
                             .map(uri -> uri.replace(replicationSourceChannelName, replicationDestChannelName))
                             .map(channelService::getItem)
-                            .allMatch(result -> Objects.nonNull(result) && objectFromSource.equals(result));
-                });
+                            .allMatch(result -> Objects.nonNull(result) && objectFromSource.equals(result)));
     }
 
 
