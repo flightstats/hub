@@ -9,7 +9,7 @@ import com.amazonaws.services.s3.model.S3Object;
 import com.flightstats.hub.config.properties.S3Properties;
 import com.flightstats.hub.dao.DocumentationDao;
 import com.google.common.io.ByteStreams;
-import com.google.inject.Inject;
+import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.ByteArrayInputStream;

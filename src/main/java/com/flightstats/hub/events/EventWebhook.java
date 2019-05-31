@@ -1,6 +1,6 @@
 package com.flightstats.hub.events;
 
-import com.flightstats.hub.app.HubHost;
+import com.flightstats.hub.config.properties.LocalHostProperties;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.StringUtils;
 import com.flightstats.hub.webhook.Webhook;
@@ -14,15 +14,18 @@ class EventWebhook {
 
     private final ContentOutput contentOutput;
     private final WebhookService webhookService;
+    private LocalHostProperties localHostProperties;
     private final String appUrl;
     private final String appEnv;
 
     EventWebhook(ContentOutput contentOutput,
                  WebhookService webhookService,
+                 LocalHostProperties localHostProperties,
                  String appUrl,
                  String appEnv) {
         this.contentOutput = contentOutput;
         this.webhookService = webhookService;
+        this.localHostProperties =localHostProperties;
         this.appUrl = appUrl;
         this.appEnv = appEnv;
     }
@@ -48,10 +51,10 @@ class EventWebhook {
     }
 
     private String getCallbackUrl() {
-        return HubHost.getLocalHttpIpUri() + "/internal/events/" + getGroupName();
+        return localHostProperties.getUriWithHostIp() + "/internal/events/" + getGroupName();
     }
 
-    public String getGroupName() {
+    String getGroupName() {
         return "Events_" + appEnv + "_" + contentOutput.getChannel() + "_" + random;
     }
 

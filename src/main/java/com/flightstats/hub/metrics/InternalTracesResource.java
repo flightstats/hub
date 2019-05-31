@@ -3,8 +3,8 @@ package com.flightstats.hub.metrics;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.cluster.Cluster;
+import com.flightstats.hub.config.properties.LocalHostProperties;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -19,20 +19,23 @@ public class InternalTracesResource {
 
     private final Cluster curatorCluster;
     private final ObjectMapper objectMapper;
+    private final LocalHostProperties localHostProperties;
 
     @Inject
     public InternalTracesResource(@Named("HubCluster") Cluster curatorCluster,
-                                  ObjectMapper objectMapper) {
+                                  ObjectMapper objectMapper,
+                                  LocalHostProperties localHostProperties) {
         this.curatorCluster = curatorCluster;
         this.objectMapper = objectMapper;
+        this.localHostProperties = localHostProperties;
     }
 
     public ObjectNode serverAndServers(String path) {
         final ObjectNode root = this.objectMapper.createObjectNode();
-        root.put("server", HubHost.getLocalHttpNameUri() + path);
+        root.put("server", localHostProperties.getUriWithHostName() + path);
         ArrayNode servers = root.putArray("servers");
         for (String spokeServer : this.curatorCluster.getAllServers()) {
-            servers.add(HubHost.getScheme() + spokeServer + path);
+            servers.add(localHostProperties.getUriScheme() + spokeServer + path);
         }
         return root;
     }

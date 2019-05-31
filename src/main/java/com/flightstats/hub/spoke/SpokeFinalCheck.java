@@ -1,7 +1,7 @@
 package com.flightstats.hub.spoke;
 
 import com.flightstats.hub.app.FinalCheck;
-import com.google.inject.Inject;
+import javax.inject.Inject;
 
 public class SpokeFinalCheck implements FinalCheck {
 

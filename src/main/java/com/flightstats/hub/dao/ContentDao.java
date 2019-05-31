@@ -18,9 +18,9 @@ public interface ContentDao {
     String BATCH_LONG_TERM = "BatchLongTerm";
     String LARGE_PAYLOAD = "LargePayload";
 
-    ContentKey insert(String channelName, Content content) throws Exception;
+    ContentKey insert(String channelName, Content content);
 
-    default SortedSet<ContentKey> insert(BulkContent bulkContent) throws Exception {
+    default SortedSet<ContentKey> insert(BulkContent bulkContent) {
         throw new UnsupportedOperationException("bulk writes are not supported");
     }
 

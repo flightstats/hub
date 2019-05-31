@@ -2,6 +2,7 @@ package com.flightstats.hub.app;
 
 import com.flightstats.hub.cluster.Cluster;
 import com.flightstats.hub.config.properties.AppProperties;
+import com.flightstats.hub.config.properties.LocalHostProperties;
 import com.flightstats.hub.rest.RestClient;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Singleton;
@@ -24,12 +25,15 @@ public class AppUrlCheck extends AbstractIdleService {
 
     private final Cluster cluster;
     private final AppProperties appProperties;
+    private final LocalHostProperties localHostProperties;
 
     @Inject
     public AppUrlCheck(@Named("HubCluster") Cluster cluster,
-                       AppProperties appProperties) {
+                       AppProperties appProperties,
+                       LocalHostProperties localHostProperties) {
         this.cluster = cluster;
         this.appProperties = appProperties;
+        this.localHostProperties = localHostProperties;
         HubServices.register(this);
     }
 
@@ -52,8 +56,8 @@ public class AppUrlCheck extends AbstractIdleService {
 
     private boolean hasHealthyServers() {
         for (String server : cluster.getAllServers()) {
-            String serverUri = HubHost.getScheme() + server;
-            if (!serverUri.equals(HubHost.getLocalHttpNameUri())) {
+            String serverUri = localHostProperties.getUriScheme() + server;
+            if (!serverUri.equals(localHostProperties.getUriWithHostName())) {
                 ClientResponse response = client.resource(serverUri + "/health").get(ClientResponse.class);
                 log.info("got response {}", response);
                 if (response.getStatus() == 200) {
@@ -67,7 +71,7 @@ public class AppUrlCheck extends AbstractIdleService {
     }
 
     @Override
-    protected void shutDown() throws Exception {
+    protected void shutDown() {
         //do nothing
     }
 }

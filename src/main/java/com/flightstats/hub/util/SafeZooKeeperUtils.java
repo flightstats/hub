@@ -1,6 +1,6 @@
 package com.flightstats.hub.util;
 
-import com.google.inject.Inject;
+import javax.inject.Inject;
 import com.google.inject.Singleton;
 import lombok.Builder;
 import lombok.Getter;

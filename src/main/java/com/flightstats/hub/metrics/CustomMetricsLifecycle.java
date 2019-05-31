@@ -1,29 +1,30 @@
 package com.flightstats.hub.metrics;
 
+import com.flightstats.hub.config.properties.MetricsProperties;
 import com.google.common.util.concurrent.AbstractScheduledService;
-import com.google.inject.Inject;
+import javax.inject.Inject;
 
 import java.util.concurrent.TimeUnit;
 
-public class CustomMetricsLifecycle extends AbstractScheduledService{
-    private CustomMetricsReporter collector;
-    private MetricsConfig metricsConfig;
+public class CustomMetricsLifecycle extends AbstractScheduledService {
+    private final CustomMetricsReporter collector;
+    private final int reportingIntervalInSeconds;
 
     @Inject
     public CustomMetricsLifecycle(
             CustomMetricsReporter collector,
-            MetricsConfig metricsConfig) {
+            MetricsProperties metricsProperties) {
         this.collector = collector;
-        this.metricsConfig = metricsConfig;
+        this.reportingIntervalInSeconds = metricsProperties.getReportingIntervalInSeconds();
     }
 
     @Override
-    protected void runOneIteration() throws Exception {
-         collector.run();
+    protected void runOneIteration() {
+        collector.run();
     }
 
     @Override
     protected AbstractScheduledService.Scheduler scheduler() {
-        return AbstractScheduledService.Scheduler.newFixedDelaySchedule(0, metricsConfig.getReportingIntervalSeconds(), TimeUnit.SECONDS);
+        return AbstractScheduledService.Scheduler.newFixedDelaySchedule(0, reportingIntervalInSeconds, TimeUnit.SECONDS);
     }
 }

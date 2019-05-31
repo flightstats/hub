@@ -2,9 +2,9 @@ package com.flightstats.hub.channel;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.LocalHostOnly;
 import com.flightstats.hub.config.properties.ContentProperties;
+import com.flightstats.hub.config.properties.LocalHostProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.aws.ContentRetriever;
 import com.flightstats.hub.model.ChannelConfig;
@@ -50,6 +50,7 @@ public class InternalChannelResource {
     private final StaleEntity staleEntity;
     private final ObjectMapper objectMapper;
     private final ContentProperties contentProperties;
+    private final LocalHostProperties localHostProperties;
 
     @Context
     private UriInfo uriInfo;
@@ -60,13 +61,15 @@ public class InternalChannelResource {
                                    ContentRetriever contentRetriever,
                                    StaleEntity staleEntity,
                                    ObjectMapper objectMapper,
-                                   ContentProperties contentProperties) {
+                                   ContentProperties contentProperties,
+                                   LocalHostProperties localHostProperties) {
         this.hubUtils = hubUtils;
         this.channelService = channelService;
         this.contentRetriever = contentRetriever;
         this.staleEntity = staleEntity;
         this.objectMapper = objectMapper;
         this.contentProperties = contentProperties;
+        this.localHostProperties = localHostProperties;
     }
 
     @GET
@@ -100,9 +103,9 @@ public class InternalChannelResource {
             return Response.ok(hubUtils.refreshAll()).build();
         } else {
             if (channelService.refresh()) {
-                return Response.ok(HubHost.getLocalNamePort()).build();
+                return Response.ok(localHostProperties.getNameWithPort()).build();
             } else {
-                return Response.status(400).entity(HubHost.getLocalNamePort()).build();
+                return Response.status(400).entity(localHostProperties.getNameWithPort()).build();
             }
         }
     }

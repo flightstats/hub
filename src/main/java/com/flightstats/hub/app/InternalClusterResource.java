@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.cluster.Cluster;
 import com.flightstats.hub.cluster.DecommissionManager;
 import com.flightstats.hub.cluster.SpokeDecommissionCluster;
+import com.flightstats.hub.config.properties.LocalHostProperties;
 import com.flightstats.hub.rest.Linked;
 
 import javax.inject.Inject;
@@ -33,6 +34,7 @@ public class InternalClusterResource {
     private final Cluster spokeCluster;
     private final DecommissionManager decommissionManager;
     private final SpokeDecommissionCluster decommissionCluster;
+    private final LocalHostProperties localHostProperties;
     private final ObjectMapper objectMapper;
 
     @Context
@@ -42,10 +44,12 @@ public class InternalClusterResource {
     public InternalClusterResource(@Named("SpokeCluster") Cluster spokeCluster,
                                    DecommissionManager decommissionManager,
                                    SpokeDecommissionCluster decommissionCluster,
+                                   LocalHostProperties localHostProperties,
                                    ObjectMapper objectMapper) {
         this.spokeCluster = spokeCluster;
         this.decommissionManager = decommissionManager;
         this.decommissionCluster = decommissionCluster;
+        this.localHostProperties = localHostProperties;
         this.objectMapper = objectMapper;
     }
 
@@ -65,7 +69,7 @@ public class InternalClusterResource {
         addNodes("withinSpokeTTL", decommissionCluster.getWithinSpokeTTL(), decommissioned);
         List<String> doNotRestart = decommissionCluster.getDoNotRestart();
         addNodes("doNotStart", doNotRestart, decommissioned);
-        String localhostLink = HubHost.getLocalhostUri() + requestUri.getPath();
+        String localhostLink = localHostProperties.getUri() + requestUri.getPath();
         Linked.Builder<?> links = Linked.linked(root);
         links.withLink("self", requestUri);
         links.withLink("decommission", localhostLink + "/decommission");

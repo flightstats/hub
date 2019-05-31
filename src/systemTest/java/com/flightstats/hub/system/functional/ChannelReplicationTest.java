@@ -12,6 +12,9 @@ import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 @Slf4j
 class ChannelReplicationTest extends DependencyInjector {
@@ -22,7 +25,9 @@ class ChannelReplicationTest extends DependencyInjector {
     private static final String REPL_DEST = "REPL_DEST";
     private String replicationSourceChannelName;
     private String replicationDestChannelName;
-    private String itemUri;
+    private String itemUri1;
+    private String itemUri2;
+    private String itemUri3;
     @Inject
     private StringHelper stringHelper;
     @Inject
@@ -40,25 +45,22 @@ class ChannelReplicationTest extends DependencyInjector {
                 .replicationSource(replicationSource).build();
         channelService.create(replicationSourceChannelName);
         channelService.createCustom(destination);
-        itemUri = channelService.addItem(replicationSourceChannelName, testData);
-        channelService.addItem(replicationSourceChannelName, testData);
-        channelService.addItem(replicationSourceChannelName, testData);
+        itemUri1 = channelService.addItem(replicationSourceChannelName, testData);
+        itemUri2 = channelService.addItem(replicationSourceChannelName, testData);
+        itemUri3 = channelService.addItem(replicationSourceChannelName, testData);
     }
 
     @Test
     void replication_itemInBothChannels_item() {
+        Object objectFromSource = channelService.getItem(itemUri1);
         Awaitility.await()
                 .pollInterval(Duration.FIVE_SECONDS)
-                .atMost(Duration.ONE_MINUTE)
+                .atMost(new Duration(30, TimeUnit.SECONDS))
                 .until(() -> {
-                    Object objectFromSource = channelService.getItem(itemUri);
-                    String destItem = itemUri.replace(replicationSourceChannelName, replicationDestChannelName);
-                    Object objectFromDestination = channelService.getItem(destItem);
-                    log.error("%%%%%%%%%%%%%%%%%%ORIGINAL {}", itemUri);
-                    log.error("%%%%%%%%%%%%%%%%%%DEST {}", destItem);
-                    log.error("##################### {}", objectFromSource);
-                    log.error("$$$$$$$$$$$$$$$$$$$$ {}", objectFromDestination);
-                    return objectFromSource.equals(objectFromDestination);
+                    return Stream.of(itemUri1, itemUri2, itemUri3)
+                            .map(uri -> uri.replace(replicationSourceChannelName, replicationDestChannelName))
+                            .map(channelService::getItem)
+                            .allMatch(result -> Objects.nonNull(result) && objectFromSource.equals(result));
                 });
     }
 
