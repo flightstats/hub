@@ -20,12 +20,11 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import static com.flightstats.hub.model.ChannelType.SINGLE;
-import static com.flightstats.hub.model.ChannelType.BATCH;
-import static com.flightstats.hub.model.ChannelType.BOTH;
-
 import static com.flightstats.hub.model.BuiltInTag.HISTORICAL;
 import static com.flightstats.hub.model.BuiltInTag.REPLICATED;
+import static com.flightstats.hub.model.ChannelType.BATCH;
+import static com.flightstats.hub.model.ChannelType.BOTH;
+import static com.flightstats.hub.model.ChannelType.SINGLE;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 public class ChannelConfig implements Serializable, NamedType {
@@ -80,6 +79,7 @@ public class ChannelConfig implements Serializable, NamedType {
         this.mutableTime = mutableTime;
         this.allowZeroBytes = allowZeroBytes;
         this.secondaryMetricsReporting = secondaryMetricsReporting;
+        this.protect = protect;
         this.keepForever = keepForever;  // keepForever overrides all other retention policies
         if (this.keepForever) {
             this.ttlDays = 0;
@@ -100,12 +100,6 @@ public class ChannelConfig implements Serializable, NamedType {
 
         addTagIf(!isBlank(replicationSource), REPLICATED);
         addTagIf(isHistorical(), HISTORICAL);
-
-        if (contentProperties.isChannelProtectionEnabled()) {
-            this.protect = true;
-        } else {
-            this.protect = protect;
-        }
     }
 
     public static ChannelConfigBuilder builder() {

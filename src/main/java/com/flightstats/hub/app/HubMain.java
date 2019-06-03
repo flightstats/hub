@@ -46,8 +46,7 @@ public class HubMain {
     private void startZookeeperIfSingle() {
         ZooKeeperProperties zooKeeperProperties = new ZooKeeperProperties(PropertiesLoader.getInstance());
         try {
-            String zkRunMode = zooKeeperProperties.getZookeeperRunMode();
-            if ("singleNode".equals(zkRunMode)) {
+            if (zooKeeperProperties.isSingleServerModeEnabled()) {
                 ZooKeeperTestServer.start();
             }
         } catch (Exception e) {

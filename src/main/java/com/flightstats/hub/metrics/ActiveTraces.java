@@ -55,7 +55,7 @@ public class ActiveTraces {
     public static Traces getLocal() {
         Traces traces = threadLocal.get();
         if (traces == null) {
-            traces = new Traces(appProperties, "error: missing initial context");
+            traces = new Traces("error: missing initial context");
             StackTraceElement[] elements = new Exception().getStackTrace();
             for (StackTraceElement element : elements) {
                 traces.add(element.toString());

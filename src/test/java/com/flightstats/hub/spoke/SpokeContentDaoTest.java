@@ -1,14 +1,16 @@
 package com.flightstats.hub.spoke;
 
-import com.flightstats.hub.config.properties.PropertiesLoader;
 import com.flightstats.hub.config.properties.SpokeProperties;
 import com.flightstats.hub.model.ChannelContentKey;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.Commander;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 
@@ -21,13 +23,14 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @Execution(ExecutionMode.SAME_THREAD)
+@ExtendWith(MockitoExtension.class)
 class SpokeContentDaoTest {
-
-    private SpokeProperties spokeProperties = new SpokeProperties(PropertiesLoader.getInstance());
     private Commander commander;
     private SpokeStore spokeStore;
     private String getOldestItemCommand;
     private String getItemCountCommand;
+    @Mock
+    private SpokeProperties spokeProperties;
 
     @BeforeEach
     void initialize() {

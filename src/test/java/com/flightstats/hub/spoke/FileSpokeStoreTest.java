@@ -1,7 +1,5 @@
 package com.flightstats.hub.spoke;
 
-import com.flightstats.hub.config.properties.PropertiesLoader;
-import com.flightstats.hub.config.properties.SpokeProperties;
 import com.flightstats.hub.dao.ContentKeyUtil;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.util.TimeUtil;
@@ -28,8 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
 class FileSpokeStoreTest {
-    private static final SpokeProperties spokeProperties = new SpokeProperties(PropertiesLoader.getInstance());
-    private static final int ttlMinutes = spokeProperties.getTtlMinutes(SpokeStore.WRITE);
+    private static final int ttlMinutes = 60;
     private static final byte[] BYTES = new byte[]{0, 2, 3, 4, 5, 6};
     private FileSpokeStore spokeStore;
     private String tempDir;
@@ -37,7 +34,6 @@ class FileSpokeStoreTest {
     @BeforeEach
     void setUp() {
         tempDir = Files.createTempDir().getPath();
-        PropertiesLoader.getInstance().setProperty("spoke.write.path", tempDir);
         spokeStore = new FileSpokeStore(tempDir, ttlMinutes);
     }
 

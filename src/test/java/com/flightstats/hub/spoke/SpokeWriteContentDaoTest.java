@@ -7,17 +7,16 @@ import com.flightstats.hub.test.IntegrationTestSetup;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.junit.jupiter.api.TestInstance;
 
 @Slf4j
-@Execution(ExecutionMode.SAME_THREAD)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class SpokeWriteContentDaoTest {
 
-    private static ContentDaoUtil util;
+    private ContentDaoUtil util;
 
     @BeforeAll
-    static void setUpClass() {
+    void setUpClass() {
         util = new ContentDaoUtil(IntegrationTestSetup.run().getInstance(SpokeWriteContentDao.class));
     }
 
@@ -28,38 +27,38 @@ class SpokeWriteContentDaoTest {
     }
 
     @Test
-    void testQueryRangeDay() throws Exception {
+    void testQueryRangeDay() {
         util.testQueryRangeDay();
     }
 
     @Test
-    void testQueryRangeHour() throws Exception {
+    void testQueryRangeHour() {
         util.testQueryRangeHour();
     }
 
     @Test
-    void testQueryRangeMinute() throws Exception {
+    void testQueryRangeMinute() {
         util.testQueryRangeMinute();
     }
 
     @Test
-    void testQuery15Minutes() throws Exception {
+    void testQuery15Minutes() {
         util.testQuery15Minutes();
     }
 
     @Test
-    void testDirectionQuery() throws Exception {
+    void testDirectionQuery() {
         PropertiesLoader.getInstance().setProperty("spoke.write.ttlMinutes", "240");
         util.testDirectionQueryTTL();
     }
 
     @Test
-    void testEarliest() throws Exception {
+    void testEarliest() {
         util.testEarliest();
     }
 
     @Test
-    void testBulkWrite() throws Exception {
+    void testBulkWrite() {
         util.testBulkWrite();
     }
 
@@ -76,7 +75,7 @@ class SpokeWriteContentDaoTest {
     }
 
     @Test
-    void testPreviousFromBulk_Issue753() throws Exception {
+    void testPreviousFromBulk_Issue753() {
         util.testPreviousFromBulk_Issue753();
     }
 }
