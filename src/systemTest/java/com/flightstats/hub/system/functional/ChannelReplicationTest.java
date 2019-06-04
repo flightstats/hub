@@ -7,6 +7,7 @@ import com.flightstats.hub.utility.StringHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.awaitility.Awaitility;
 import org.awaitility.Duration;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -48,6 +49,12 @@ class ChannelReplicationTest extends DependencyInjector {
         itemUri1 = channelService.addItem(replicationSourceChannelName, testData);
         itemUri2 = channelService.addItem(replicationSourceChannelName, testData);
         itemUri3 = channelService.addItem(replicationSourceChannelName, testData);
+    }
+
+    @AfterEach
+    void cleanup() {
+        channelService.delete(replicationSourceChannelName);
+        channelService.delete(replicationDestChannelName);
     }
 
     @Test
