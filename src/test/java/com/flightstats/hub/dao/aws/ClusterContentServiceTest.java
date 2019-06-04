@@ -177,7 +177,7 @@ class ClusterContentServiceTest {
         ContentKey startKey = new ContentKey(TimeUtil.now().minusSeconds(20), "StartKey");
         DirectionQuery query = DirectionQuery.builder().channelName(channelName).stable(true).startKey(startKey).build();
         stubRealChannel();
-        stubCachedEmptyChannelLatest();
+        when(latestContentCache.getLatest(channelName, null)).thenReturn(ContentKey.NONE);
         Optional<ContentKey> latest = ccs.getLatestImmutable(query);
         assertTrue(latest.isPresent());
         assertEquals(ContentKey.NONE, latest.get());
@@ -281,10 +281,6 @@ class ClusterContentServiceTest {
         ContentKey cachedKey = new ContentKey(TimeUtil.now().minusSeconds(ageInSeconds), keyName);
         when(latestContentCache.getLatest(channelName, null)).thenReturn(cachedKey);
         return cachedKey;
-    }
-
-    private void stubCachedEmptyChannelLatest() {
-        when(latestContentCache.getLatest(channelName, null)).thenReturn(ContentKey.NONE);
     }
 
     private ContentKey stubLongTermLatest(int ageInSeconds, String keyName) {
