@@ -420,14 +420,11 @@ public class ClusterContentService implements ContentService {
         ContentPath latestCache = latestContentCache.getLatest(channel, null);
         ActiveTraces.getLocal().add("found latestCache", channel, latestCache);
         if (latestCache != null) {
-            // TODO: Inconsistent read.  This uses a value it considers stale, but guarantees subsequent reads will not use it.
-            if (latestCache.getTime().isBefore(channelTtlTime)) {
+            if (channelTtlTime != null && latestCache.getTime().isBefore(channelTtlTime)) {
                 latestContentCache.setEmpty(channel);   // if the newest thing (latest) is expired, then the channel is now empty
+                latestCache = ContentKey.NONE;
             }
             ActiveTraces.getLocal().add("found cached latest", channel, latestCache);
-            if (latestCache.equals(ContentKey.NONE)) {
-                return Optional.empty();
-            }
         }
         return Optional.ofNullable((ContentKey) latestCache);
     }

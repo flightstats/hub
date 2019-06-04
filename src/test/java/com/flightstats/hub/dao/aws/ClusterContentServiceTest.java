@@ -17,6 +17,7 @@ import com.flightstats.hub.model.LargeContentUtils;
 import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.TimeUtil;
 import lombok.SneakyThrows;
+import org.joda.time.DateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -172,6 +173,33 @@ class ClusterContentServiceTest {
     }
 
     @Test
+    void testLatestImmutableRespectsEmptyChannelCacheValue() {
+        ContentKey startKey = new ContentKey(TimeUtil.now().minusSeconds(20), "StartKey");
+        DirectionQuery query = DirectionQuery.builder().channelName(channelName).stable(true).startKey(startKey).build();
+        stubRealChannel();
+        stubCachedEmptyChannelLatest();
+        Optional<ContentKey> latest = ccs.getLatestImmutable(query);
+        assertTrue(latest.isPresent());
+        assertEquals(ContentKey.NONE, latest.get());
+        verify(contentRetriever, times(0)).getLatest(any());
+        verifyZeroInteractions(mockS3SingleDao);
+    }
+
+    @Test
+    void testGetLatestCacheClearsCachelIfLatestIsExpired() {
+        ContentKey cachedKey = new ContentKey(TimeUtil.now().minusSeconds(20), "CachedButStale");
+        DateTime ttlTime = TimeUtil.now().minusSeconds(5);
+        stubRealChannel();
+        when(latestContentCache.getLatest(channelName, null)).thenReturn(cachedKey);
+        Optional<ContentKey> latest = ccs.getLatestCachedKeyIfNotExpired(channelName, ttlTime);
+        assertTrue(latest.isPresent());
+        assertEquals(ContentKey.NONE, latest.get());
+        verify(contentRetriever, times(0)).getLatest(any());
+        verify(latestContentCache, times(1)).setEmpty(channelName);
+        verifyZeroInteractions(mockS3SingleDao);
+    }
+
+    @Test
     void testLatestImmutableIgnoresCachedItemIfQueryIsUnstable() {
         ContentKey startKey = new ContentKey(TimeUtil.now().minusSeconds(20), "StartKey");
         DirectionQuery query = DirectionQuery.builder().channelName(channelName).stable(false).startKey(startKey).build();
@@ -234,6 +262,7 @@ class ClusterContentServiceTest {
         assertEquals(longTermLatest, latest.get());
     }
 
+
     private void stubRealChannel() {
         when(contentRetriever.getCachedChannelConfig(channelName)).thenReturn(Optional.of(channelConfig));
     }
@@ -252,6 +281,10 @@ class ClusterContentServiceTest {
         ContentKey cachedKey = new ContentKey(TimeUtil.now().minusSeconds(ageInSeconds), keyName);
         when(latestContentCache.getLatest(channelName, null)).thenReturn(cachedKey);
         return cachedKey;
+    }
+
+    private void stubCachedEmptyChannelLatest() {
+        when(latestContentCache.getLatest(channelName, null)).thenReturn(ContentKey.NONE);
     }
 
     private ContentKey stubLongTermLatest(int ageInSeconds, String keyName) {
