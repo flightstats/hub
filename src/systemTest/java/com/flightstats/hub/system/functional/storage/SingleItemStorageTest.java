@@ -60,14 +60,14 @@ class SingleItemStorageTest extends DependencyInjector {
     @Test
     void singleChannelStorage_itemInCache_item() {
         Awaitility.await()
-                .pollInterval(Duration.TWO_SECONDS)
                 .atMost(new Duration(20, TimeUnit.SECONDS))
                 .until(() -> channelService.confirmItemInCache(itemUri, Location.CACHE_WRITE));
         // single items don't get added to the read cache
         assertFalse(channelService.confirmItemInCache(itemUri, Location.CACHE_READ));
     }
 
-    private void confirmInCacheOrS3() {
+    @Test
+    void singleChannelStorage_itemInS3_item() {
         Awaitility.await()
                 .pollInterval(Duration.TEN_SECONDS)
                 .atMost(Duration.TWO_MINUTES)
@@ -78,10 +78,5 @@ class SingleItemStorageTest extends DependencyInjector {
                 .pollInterval(Duration.TEN_SECONDS)
                 .atMost(new Duration(260, TimeUnit.SECONDS))
                 .until(() -> !channelService.confirmItemInCache(itemUri, Location.CACHE_WRITE));
-    }
-
-    @Test
-    void singleChannelStorage_itemInS3_item() {
-        confirmInCacheOrS3();
     }
 }
