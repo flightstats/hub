@@ -1,7 +1,10 @@
-package com.flightstats.hub.system.resilient;
+package com.flightstats.hub.system.functional;
 
+import com.flightstats.hub.kubernetes.HubLifecycle;
 import com.flightstats.hub.model.Webhook;
-import com.flightstats.hub.model.WebhookCallbackRuleChannelItem;
+import javax.inject.Inject;
+
+import com.flightstats.hub.model.WebhookCallbackSetting;
 import com.flightstats.hub.system.ModelBuilder;
 import com.flightstats.hub.system.config.DependencyInjector;
 import com.flightstats.hub.system.service.CallbackService;
@@ -13,8 +16,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.RepeatedTest;
-
-import javax.inject.Inject;
 
 import java.util.Comparator;
 
@@ -80,7 +81,7 @@ class WebhookErrorTest extends DependencyInjector {
     @RepeatedTest(3)
     void testThatNewlyCreatedWebhookDoesntReceiveStaleErrors() {
         // verify that errors are created for the first item
-        WebhookCallbackRuleChannelItem item = WebhookCallbackRuleChannelItem.builder()
+        WebhookCallbackSetting item = WebhookCallbackSetting.builder()
                 .failureStatusCode(500)
                 .build();
         String firstUrl = channelService.addItem(channelName, item);
@@ -112,7 +113,7 @@ class WebhookErrorTest extends DependencyInjector {
     @RepeatedTest(3)
     void testSettingCursorBeyondErrorClearsErrorStateAndContinues() {
         // verify that errors are created for the first item
-        WebhookCallbackRuleChannelItem item = WebhookCallbackRuleChannelItem.builder()
+        WebhookCallbackSetting item = WebhookCallbackSetting.builder()
                 .failureStatusCode(500)
                 .build();
         String firstUrl = channelService.addItem(channelName, item);
@@ -150,4 +151,5 @@ class WebhookErrorTest extends DependencyInjector {
     void hubCleanup() {
         hubLifecycle.cleanup();
     }
+
 }
