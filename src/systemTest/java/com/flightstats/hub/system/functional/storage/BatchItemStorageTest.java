@@ -2,7 +2,6 @@ package com.flightstats.hub.system.functional.storage;
 
 import com.flightstats.hub.model.Channel;
 import com.flightstats.hub.model.ChannelStorage;
-import com.flightstats.hub.model.Location;
 import com.flightstats.hub.system.config.DependencyInjector;
 import com.flightstats.hub.system.service.ChannelService;
 import com.flightstats.hub.system.service.S3Service;
@@ -16,7 +15,6 @@ import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 class BatchItemStorageTest extends DependencyInjector {
@@ -52,16 +50,6 @@ class BatchItemStorageTest extends DependencyInjector {
         Awaitility.await()
                 .atMost(Duration.TEN_SECONDS)
                 .until(() -> channelService.getItem(itemUri).equals(testData));
-    }
-
-    @Test
-    void batchChannelStorage_itemInCache_item() {
-        // prime the read cache
-        channelService.getItem(itemUri);
-        Awaitility.await()
-                .pollInterval(Duration.TWO_SECONDS)
-                .atMost(new Duration(20, TimeUnit.SECONDS))
-                .until(() -> channelService.confirmItemInCache(itemUri, Location.CACHE_READ));
     }
 
     @Test

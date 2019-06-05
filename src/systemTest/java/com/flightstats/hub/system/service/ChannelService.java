@@ -127,10 +127,7 @@ public class ChannelService {
                 dateParts.get(DatePathIndex.SECONDS),
                 location);
         Optional<TimeQuery> op = Optional.ofNullable(response.execute().body());
-        op.filter(o -> {
-            log.error("################## {}", o);
-            return o.get_links().getUris() != null;
-        });
+        op.filter(o -> o.get_links().getUris() != null);
         return op;
     }
 
@@ -156,7 +153,6 @@ public class ChannelService {
         TimeQuery result = getItemByTimeFromLocation(itemUri, location)
                 .orElse(TimeQuery.builder()._links(Links.builder().uris(new String[] {}).build()).build());
         List<String> uris = Arrays.asList(result.get_links().getUris());
-        log.error("!!!!!!!!!!!!!!!!!! {}", uris);
         return uris.stream().anyMatch(str -> str.equals(itemUri));
     }
 
