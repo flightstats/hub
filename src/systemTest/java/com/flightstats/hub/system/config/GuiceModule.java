@@ -2,8 +2,6 @@ package com.flightstats.hub.system.config;
 
 import com.flightstats.hub.client.CallbackClientFactory;
 import com.flightstats.hub.client.HubClientFactory;
-import com.flightstats.hub.kubernetes.ReleaseDelete;
-import com.flightstats.hub.kubernetes.ReleaseInstall;
 import com.flightstats.hub.system.service.CallbackService;
 import com.flightstats.hub.system.service.ChannelService;
 import com.flightstats.hub.system.service.WebhookService;
@@ -18,29 +16,17 @@ import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.converter.scalars.ScalarsConverterFactory;
 
 import javax.inject.Singleton;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Properties;
-
-import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
 
 @Slf4j
 public class GuiceModule extends AbstractModule {
-
-    private final String releaseName = "ddt-" + randomAlphaNumeric(10).toLowerCase();
     private static final String PROPERTY_FILE_NAME = "system-test-hub.properties";
 
     @Override
     protected void configure() {
-        Names.bindProperties(binder(), loadProperties());
-        final Map<String, String> releaseNameProperty = new HashMap<>();
-        releaseNameProperty.put("helm.release.name", releaseName);
-        Names.bindProperties(binder(), releaseNameProperty);
+        Properties properties = new PropertiesLoader().loadProperties(PROPERTY_FILE_NAME);
+        Names.bindProperties(binder(), properties);
 
-        bind(ReleaseInstall.class);
-        bind(ReleaseDelete.class);
         bind(HubClientFactory.class);
         bind(CallbackClientFactory.class);
         bind(ChannelService.class);
@@ -51,7 +37,8 @@ public class GuiceModule extends AbstractModule {
     @Singleton
     @Named("hub")
     @Provides
-    public Retrofit retrofitHub(@Named("hub.url") String hubBaseUrl) {
+    public Retrofit retrofitHub(@Named(PropertyNames.HUB_URL_TEMPLATE) String hubBaseUrl,
+                                @Named(PropertyNames.HELM_RELEASE_NAME) String releaseName) {
         return new Retrofit.Builder()
                 .baseUrl(String.format(hubBaseUrl, releaseName))
                 .addConverterFactory(ScalarsConverterFactory.create())
@@ -63,7 +50,8 @@ public class GuiceModule extends AbstractModule {
     @Singleton
     @Named("callback")
     @Provides
-    public Retrofit retrofitCallback(@Named("callback.url") String callbackUrl) {
+    public Retrofit retrofitCallback(@Named(PropertyNames.CALLBACK_URL_TEMPLATE) String callbackUrl,
+                                     @Named(PropertyNames.HELM_RELEASE_NAME) String releaseName) {
         return new Retrofit.Builder()
                 .baseUrl(String.format(callbackUrl, releaseName))
                 .addConverterFactory(ScalarsConverterFactory.create())
@@ -71,17 +59,4 @@ public class GuiceModule extends AbstractModule {
                 .client(new OkHttpClient.Builder().build())
                 .build();
     }
-
-    private Properties loadProperties() {
-        final Properties properties = new Properties();
-        try (final InputStream inputStream =
-                     this.getClass().getClassLoader().getResourceAsStream(PROPERTY_FILE_NAME)) {
-            properties.load(inputStream);
-
-        } catch (IOException e) {
-            log.error("Property file {} not found", PROPERTY_FILE_NAME, e);
-        }
-        return properties;
-    }
-
 }
