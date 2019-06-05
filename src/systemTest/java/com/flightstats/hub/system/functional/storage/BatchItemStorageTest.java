@@ -15,11 +15,11 @@ import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 class BatchItemStorageTest extends DependencyInjector {
-    @Inject @Named("test.data")
+    @Inject
+    @Named("test.data")
     private String testData;
     private String channelName;
     private String itemUri;
@@ -50,14 +50,6 @@ class BatchItemStorageTest extends DependencyInjector {
         Awaitility.await()
                 .atMost(Duration.TEN_SECONDS)
                 .until(() -> channelService.getItem(itemUri).equals(testData));
-    }
-
-    @Test
-    void batchChannelStorage_itemInCache_item() {
-        Awaitility.await()
-                .pollInterval(Duration.TWO_SECONDS)
-                .atMost(new Duration(20, TimeUnit.SECONDS))
-                .until(() -> channelService.confirmItemInCache(itemUri));
     }
 
     @Test

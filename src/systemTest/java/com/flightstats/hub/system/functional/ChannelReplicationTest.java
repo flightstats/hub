@@ -13,17 +13,18 @@ import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
 class ChannelReplicationTest extends DependencyInjector {
     @Inject
     @Named("test.data")
     private String testData;
-    private static final String REPL_SOURCE = "REPL_SOURCE";
-    private static final String REPL_DEST = "REPL_DEST";
+    private static final String REPL_SOURCE = "REPL_TEST_SOURCE";
+    private static final String REPL_DEST = "REPL_TEST_DEST";
     private String replicationSourceChannelName;
     private String replicationDestChannelName;
     private String itemUri1;
@@ -46,9 +47,6 @@ class ChannelReplicationTest extends DependencyInjector {
                 .replicationSource(replicationSource).build();
         channelService.create(replicationSourceChannelName);
         channelService.createCustom(destination);
-        itemUri1 = channelService.addItem(replicationSourceChannelName, testData);
-        itemUri2 = channelService.addItem(replicationSourceChannelName, testData);
-        itemUri3 = channelService.addItem(replicationSourceChannelName, testData);
     }
 
     @AfterEach
@@ -59,14 +57,38 @@ class ChannelReplicationTest extends DependencyInjector {
 
     @Test
     void replication_itemInBothChannels_item() {
+        itemUri1 = channelService.addItem(replicationSourceChannelName, testData);
+        Object objectFromSource = channelService.getItem(itemUri1);
+        Awaitility.await()
+                .pollInterval(Duration.ONE_SECOND)
+                .atMost(new Duration(90, TimeUnit.SECONDS))
+                .until(() -> {
+                    String destUri = itemUri1.replace(replicationSourceChannelName, replicationDestChannelName);
+                    Object result = channelService.getItem(destUri);
+                    return objectFromSource.equals(result);
+                });
+    }
+
+
+    @Test
+    void replication_itemsInBothChannels_item() {
+        itemUri1 = channelService.addItem(replicationSourceChannelName, testData);
+        itemUri2 = channelService.addItem(replicationSourceChannelName, testData);
+        itemUri3 = channelService.addItem(replicationSourceChannelName, testData);
         Object objectFromSource = channelService.getItem(itemUri1);
         Awaitility.await()
                 .pollInterval(Duration.FIVE_SECONDS)
-                .atMost(new Duration(30, TimeUnit.SECONDS))
+                .atMost(new Duration(90, TimeUnit.SECONDS))
                 .until(() -> Stream.of(itemUri1, itemUri2, itemUri3)
                             .map(uri -> uri.replace(replicationSourceChannelName, replicationDestChannelName))
                             .map(channelService::getItem)
-                            .allMatch(result -> Objects.nonNull(result) && objectFromSource.equals(result)));
+                            .allMatch(objectFromSource::equals));
+    }
+
+    @Test
+    void replication_throwsOnAddItemToDestChannel_exception() {
+        byte [] error = channelService.addItemError(replicationDestChannelName);
+        assertEquals(new String(error), replicationDestChannelName + " cannot modified while replicating");
     }
 
 

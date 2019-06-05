@@ -29,7 +29,7 @@ class TimedWebhookSecondTest extends DependencyInjector {
     @Inject
     @Named("test.data")
     private String testData;
-    private static final int CHANNEL_COUNT = 24;
+    private static final int CHANNEL_COUNT = 10;
     private static final int TIMEOUT = 5 * 60;
 
     private final List<String> channels = new ArrayList<>();

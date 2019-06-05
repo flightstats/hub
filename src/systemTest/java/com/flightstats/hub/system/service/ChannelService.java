@@ -8,11 +8,12 @@ import com.flightstats.hub.model.ChannelItem;
 import com.flightstats.hub.model.DatePathIndex;
 import com.flightstats.hub.model.Links;
 import com.flightstats.hub.model.Location;
-import com.flightstats.hub.model.TimeQuery;
+import com.flightstats.hub.model.TimeQueryResult;
 import com.google.inject.Inject;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.HttpUrl;
+import okhttp3.ResponseBody;
 import org.apache.commons.lang3.StringUtils;
 import retrofit2.Call;
 import retrofit2.Response;
@@ -53,15 +54,15 @@ public class ChannelService {
 
     @SneakyThrows
     public void create(String channelName) {
-        log.info("Create channel name {} ", channelName);
+        log.info("Creating channel name {} ", channelName);
         createCustom(Channel.builder().name(channelName).build());
     }
 
     @SneakyThrows
     public void createCustom(Channel channel) {
-        Call<Object> call = channelResourceClient.create(channel);
+        Call<Object> call = channelResourceClient.create(channel.withOwner("ddt-test"));
         Response<Object> response = call.execute();
-        log.info("channel creation response {} ", response);
+        log.info("channel creation response {}, channelName, {}", response, channel.getName());
         assertEquals(CREATED.getStatusCode(), response.code());
     }
 
@@ -83,6 +84,16 @@ public class ChannelService {
         assertNotNull(response.body());
 
         return response.body().get_links().getSelf().getHref();
+    }
+
+    @SneakyThrows
+    public byte [] addItemError(String channelName) {
+        Call<ChannelItem> call = channelItemResourceClient.add(channelName, "anything");
+        Optional<ResponseBody> optionalError = Optional.ofNullable(call.execute().errorBody());
+        if (optionalError.isPresent()) {
+            return optionalError.get().bytes();
+        }
+        return new byte[] {};
     }
 
     private List<String> getPathParts(String path) {
@@ -114,11 +125,11 @@ public class ChannelService {
     }
 
     @SneakyThrows
-    private Optional<TimeQuery> getItemByTimeFromLocation(String path, Location location) {
+    private Optional<TimeQueryResult> getItemByTimeFromLocation(String path, Location location) {
         List<String> pathParts = getPathParts(path);
         Map<String, String> keys = getPathKeys(pathParts);
         Map<DatePathIndex, Integer> dateParts = getPathDateParts(pathParts);
-        Call<TimeQuery> response = channelItemResourceClient.getItemsSecondsPath(keys.get("channelName"),
+        Call<TimeQueryResult> response = channelItemResourceClient.getItemsSecondsPath(keys.get("channelName"),
                 dateParts.get(DatePathIndex.YEAR),
                 dateParts.get(DatePathIndex.MONTH),
                 dateParts.get(DatePathIndex.DAY),
@@ -126,7 +137,9 @@ public class ChannelService {
                 dateParts.get(DatePathIndex.MINUTE),
                 dateParts.get(DatePathIndex.SECONDS),
                 location);
-        return Optional.ofNullable(response.execute().body());
+        Optional<TimeQueryResult> op = Optional.ofNullable(response.execute().body());
+        op.filter(o -> o.get_links().getUris() != null);
+        return op;
     }
 
     @SneakyThrows
@@ -144,12 +157,13 @@ public class ChannelService {
                 dateParts.get(DatePathIndex.SECONDS),
                 dateParts.get(DatePathIndex.MILLIS),
                 keys.get("key"));
-        return ((Call) response).execute().body();
+        Object result = ((Call) response).execute().body();
+        return result != null ? result : new Object();
     }
 
-    public boolean confirmItemInCache(String itemUri) {
-        TimeQuery result = getItemByTimeFromLocation(itemUri, Location.CACHE)
-                .orElse(TimeQuery.builder()._links(Links.builder().uris(new String[] {}).build()).build());
+    public boolean confirmItemInCache(String itemUri, Location location) {
+        TimeQueryResult result = getItemByTimeFromLocation(itemUri, location)
+                .orElse(TimeQueryResult.builder()._links(Links.builder().uris(new String[] {}).build()).build());
         List<String> uris = Arrays.asList(result.get_links().getUris());
         return uris.stream().anyMatch(str -> str.equals(itemUri));
     }
