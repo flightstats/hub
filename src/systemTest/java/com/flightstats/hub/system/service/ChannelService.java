@@ -52,7 +52,7 @@ public class ChannelService {
     }
 
     public List<String> addItems(String channelName, Object data, int count) {
-        final List<String> channelItems = new ArrayList<>();
+        List<String> channelItems = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             channelItems.add(addItem(channelName, data));
         }
