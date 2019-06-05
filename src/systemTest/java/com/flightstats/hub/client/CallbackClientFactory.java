@@ -7,7 +7,7 @@ import retrofit2.Retrofit;
 
 public class CallbackClientFactory {
 
-    private Retrofit retrofitHub;
+    private final Retrofit retrofitHub;
 
     @Inject
     public CallbackClientFactory(@Named("callback") Retrofit retrofitHub) {
