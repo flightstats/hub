@@ -39,7 +39,7 @@ public class CallbackService {
         return getCallbackBaseUrl() + "callback/" + webhookName;
     }
 
-    public HttpUrl getCallbackBaseUrl() {
+    private HttpUrl getCallbackBaseUrl() {
         return callbackBaseUrl;
     }
 

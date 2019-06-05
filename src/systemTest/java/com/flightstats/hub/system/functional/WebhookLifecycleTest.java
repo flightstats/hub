@@ -21,7 +21,6 @@ import org.junit.jupiter.api.TestInstance;
 
 import java.util.Collections;
 import java.util.List;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
@@ -44,7 +43,7 @@ class WebhookLifecycleTest extends DependencyInjector {
 
     @BeforeAll
     void hubSetup() {
-//        hubLifecycle.setup();
+        hubLifecycle.setup();
     }
 
     @BeforeEach
@@ -125,6 +124,6 @@ class WebhookLifecycleTest extends DependencyInjector {
 
     @AfterAll
     void hubCleanup() {
-//        hubLifecycle.cleanup();
+        hubLifecycle.cleanup();
     }
 }
