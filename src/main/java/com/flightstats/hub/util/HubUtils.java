@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flightstats.hub.cluster.Cluster;
 import com.flightstats.hub.config.properties.LocalHostProperties;
+import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.model.BulkContent;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.Content;
@@ -210,6 +211,15 @@ public class HubUtils {
         }
     }
 
+    private long getItemLength(Content content) {
+        try {
+            Content contentClone = Content.copy(content);
+            return ContentMarshaller.toBytes(contentClone).length;
+        } catch (IOException e) {
+            return content.getSize();
+        }
+    }
+
     public Content createContent(String uri, ClientResponse response, boolean loadData) {
         Content.Builder builder = Content.builder()
                 .withStream(response.getEntityInputStream())
@@ -221,7 +231,9 @@ public class HubUtils {
         if (headers.containsKey("X-LargeItem")) {
             builder.withLarge(true);
         }
+
         Content content = builder.build();
+        content.setContentLength(getItemLength(content));
         if (loadData) {
             content.getData();
         }
