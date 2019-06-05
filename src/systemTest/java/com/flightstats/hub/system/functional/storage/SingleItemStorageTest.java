@@ -2,6 +2,7 @@ package com.flightstats.hub.system.functional.storage;
 
 import com.flightstats.hub.model.Channel;
 import com.flightstats.hub.model.ChannelStorage;
+import com.flightstats.hub.model.Location;
 import com.flightstats.hub.system.config.DependencyInjector;
 import com.flightstats.hub.system.service.ChannelService;
 import com.flightstats.hub.system.service.S3Service;
@@ -17,10 +18,13 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+
 @Slf4j
 class SingleItemStorageTest extends DependencyInjector {
 
-    @Inject @Named("test.data")
+    @Inject
+    @Named("test.data")
     private String testData;
     private String channelName;
     private String itemUri;
@@ -58,14 +62,26 @@ class SingleItemStorageTest extends DependencyInjector {
         Awaitility.await()
                 .pollInterval(Duration.TWO_SECONDS)
                 .atMost(new Duration(20, TimeUnit.SECONDS))
-                .until(() -> channelService.confirmItemInCache(itemUri));
+                .until(() -> channelService.confirmItemInCache(itemUri, Location.CACHE_WRITE));
+        // single items don't get added to the read cache
+        assertFalse(channelService.confirmItemInCache(itemUri, Location.CACHE_READ));
     }
 
-    @Test
-    void singleChannelStorage_itemInS3_item() {
+    private void confirmInCacheOrS3() {
         Awaitility.await()
                 .pollInterval(Duration.TEN_SECONDS)
                 .atMost(Duration.TWO_MINUTES)
                 .until(() -> s3Service.confirmItemsInS3(ChannelStorage.SINGLE, itemUri, "unusedForSingle"));
+
+        // expect item to be deleted from spoke write cache
+        Awaitility.await()
+                .pollInterval(Duration.TEN_SECONDS)
+                .atMost(new Duration(260, TimeUnit.SECONDS))
+                .until(() -> !channelService.confirmItemInCache(itemUri, Location.CACHE_WRITE));
+    }
+
+    @Test
+    void singleChannelStorage_itemInS3_item() {
+        confirmInCacheOrS3();
     }
 }

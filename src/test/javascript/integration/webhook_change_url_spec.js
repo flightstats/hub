@@ -83,8 +83,8 @@ describe(__filename, () => {
         expect(lastCompleted).toContain('initial');
         expect(inFlight.length).toEqual(1);
         expect(inFlight[0]).toEqual(postedItems[0]);
-        expect(errors.length).toEqual(1);
-        expect(errors[0]).toContain('java.net.UnknownHostException');
+        expect(errors.length).toBeGreaterThanOrEqual(1);
+        expect(errors.some(item => item.includes('java.net.UnknownHostException'))).toBeTruthy();
     });
 
     it('creates a callback server', async () => {

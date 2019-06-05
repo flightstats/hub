@@ -138,7 +138,9 @@ public class ChannelService {
                 dateParts.get(DatePathIndex.MINUTE),
                 dateParts.get(DatePathIndex.SECONDS),
                 location);
-        return Optional.ofNullable(response.execute().body());
+        Optional<TimeQueryResult> op = Optional.ofNullable(response.execute().body());
+        op.filter(o -> o.get_links().getUris() != null);
+        return op;
     }
 
     @SneakyThrows
@@ -160,8 +162,8 @@ public class ChannelService {
         return result != null ? result : new Object();
     }
 
-    public boolean confirmItemInCache(String itemUri) {
-        TimeQueryResult result = getItemByTimeFromLocation(itemUri, Location.CACHE)
+    public boolean confirmItemInCache(String itemUri, Location location) {
+        TimeQueryResult result = getItemByTimeFromLocation(itemUri, location)
                 .orElse(TimeQueryResult.builder()._links(Links.builder().uris(new String[] {}).build()).build());
         List<String> uris = Arrays.asList(result.get_links().getUris());
         return uris.stream().anyMatch(str -> str.equals(itemUri));

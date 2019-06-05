@@ -2,6 +2,7 @@ package com.flightstats.hub.system.functional.storage;
 
 import com.flightstats.hub.model.Channel;
 import com.flightstats.hub.model.ChannelStorage;
+import com.flightstats.hub.model.Location;
 import com.flightstats.hub.system.config.DependencyInjector;
 import com.flightstats.hub.system.service.ChannelService;
 import com.flightstats.hub.system.service.S3Service;
@@ -55,7 +56,7 @@ class BothItemStorageTest extends DependencyInjector {
         Awaitility.await()
                 .pollInterval(Duration.TWO_SECONDS)
                 .atMost(new Duration(20, TimeUnit.SECONDS))
-                .until(() -> channelService.confirmItemInCache(itemUri));
+                .until(() -> channelService.confirmItemInCache(itemUri, Location.CACHE));
     }
 
     @Test
