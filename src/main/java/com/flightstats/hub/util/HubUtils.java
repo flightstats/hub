@@ -213,7 +213,8 @@ public class HubUtils {
 
     private long getItemLength(Content content) {
         try {
-            return ContentMarshaller.toBytes(content).length;
+            Content contentClone = Content.copy(content);
+            return ContentMarshaller.toBytes(contentClone).length;
         } catch (IOException e) {
             return content.getSize();
         }
