@@ -31,8 +31,6 @@ public class GuiceModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        Map<String, String> releaseNameProperty = new HashMap<>();
-        Names.bindProperties(binder(), releaseNameProperty);
         bind(String.class).annotatedWith(Names.named("test.data")).toInstance("TEST_DATA");
         bind(StringHelper.class).toInstance(stringHelper);
         bind(S3ClientFactory.class).asEagerSingleton();

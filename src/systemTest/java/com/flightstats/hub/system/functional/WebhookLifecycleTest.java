@@ -3,7 +3,7 @@ package com.flightstats.hub.system.functional;
 import com.flightstats.hub.model.Webhook;
 import com.flightstats.hub.system.ModelBuilder;
 import com.flightstats.hub.system.config.DependencyInjector;
-import com.flightstats.hub.system.resilient.HubLifecycle;
+import com.flightstats.hub.kubernetes.HubLifecycle;
 import com.flightstats.hub.system.service.CallbackService;
 import com.flightstats.hub.system.service.ChannelService;
 import com.flightstats.hub.system.service.WebhookService;
