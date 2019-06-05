@@ -27,8 +27,8 @@ public class ReleaseDelete {
             final UninstallReleaseRequest.Builder uninstallRequestBuilder = UninstallReleaseRequest.newBuilder();
             uninstallRequestBuilder.setName(releaseName);
             uninstallRequestBuilder.setPurge(true);
-            uninstallRequestBuilder.setDisableHooks(true);
-            uninstallRequestBuilder.setTimeout(75L);
+            uninstallRequestBuilder.setDisableHooks(false);
+            uninstallRequestBuilder.setTimeout(300L);
 
             final Future<UninstallReleaseResponse> releaseFuture = releaseManager.uninstall(uninstallRequestBuilder.build());
             releaseFuture.get();

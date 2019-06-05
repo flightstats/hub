@@ -40,7 +40,6 @@ public class ReleaseInstall {
             requestBuilder.setName(releaseName);
             requestBuilder.setWait(true);
             requestBuilder.setDisableHooks(false);
-            requestBuilder.clearWait();
 
             final Future<InstallReleaseResponse> releaseFuture = releaseManager.install(requestBuilder, chartBuilder);
             ReleaseOuterClass.Release release = releaseFuture.get().getRelease();

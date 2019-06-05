@@ -1,6 +1,7 @@
 package com.flightstats.hub.system.functional;
 
 import com.flightstats.hub.model.Webhook;
+import com.flightstats.hub.system.ModelBuilder;
 import com.flightstats.hub.system.config.DependencyInjector;
 import com.flightstats.hub.kubernetes.HubLifecycle;
 import com.flightstats.hub.system.service.CallbackService;
@@ -18,9 +19,7 @@ import org.junit.jupiter.api.TestInstance;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
-import static com.flightstats.hub.model.ChannelContentStorageType.SINGLE;
 import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -37,6 +36,8 @@ class WebhookLifecycleTest extends DependencyInjector {
     private String webhookName;
     @javax.inject.Inject
     private HubLifecycle hubLifecycle;
+    @Inject
+    private ModelBuilder modelBuilder;
 
     @BeforeAll
     void hubSetup() {
@@ -50,11 +51,9 @@ class WebhookLifecycleTest extends DependencyInjector {
     }
 
     private Webhook buildWebhook() {
-        return Webhook.builder()
-                .name(webhookName)
-                .channelUrl(channelResource.getHubBaseUrl() + "channel/" + channelName)
-                .callbackUrl(callbackResource.getCallbackBaseUrl() + "callback/")
-                .batch(SINGLE.toString())
+        return modelBuilder.webhookBuilder()
+                .channelName(channelName)
+                .webhookName(webhookName)
                 .build();
     }
 
@@ -69,7 +68,7 @@ class WebhookLifecycleTest extends DependencyInjector {
         webhookResource.insertAndVerify(webhook);
 
         final List<String> channelItems = channelResource.addItems(channelName, data, 10);
-        final List<String> channelItemsPosted = callbackResource.awaitItemCountSentToWebhook(webhookName, Optional.empty(), channelItems.size());
+        final List<String> channelItemsPosted = callbackResource.awaitItemCountSentToWebhook(webhookName, channelItems.size());
 
         Collections.sort(channelItems);
         Collections.sort(channelItemsPosted);
@@ -89,7 +88,7 @@ class WebhookLifecycleTest extends DependencyInjector {
                 withParallelCalls(2);
         webhookResource.insertAndVerify(webhook);
         final List<String> channelItemsExpected = channelItems.subList(5, channelItems.size());
-        final List<String> channelItemsPosted = callbackResource.awaitItemCountSentToWebhook(webhookName, Optional.empty(), channelItemsExpected.size());
+        final List<String> channelItemsPosted = callbackResource.awaitItemCountSentToWebhook(webhookName, channelItemsExpected.size());
 
         Collections.sort(channelItemsExpected);
         Collections.sort(channelItemsPosted);
@@ -109,7 +108,7 @@ class WebhookLifecycleTest extends DependencyInjector {
                 withParallelCalls(1);
         webhookResource.insertAndVerify(webhook);
         final List<String> channelItemsExpected = channelItems.subList(5, channelItems.size());
-        final List<String> channelItemsPosted = callbackResource.awaitItemCountSentToWebhook(webhookName, Optional.empty(), channelItemsExpected.size());
+        final List<String> channelItemsPosted = callbackResource.awaitItemCountSentToWebhook(webhookName, channelItemsExpected.size());
 
         assertEquals(channelItemsExpected, channelItemsPosted);
     }
