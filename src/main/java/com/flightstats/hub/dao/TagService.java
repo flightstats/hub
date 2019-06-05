@@ -52,7 +52,8 @@ public class TagService {
     public TagService(ChannelService channelService,
                       ContentRetriever contentRetriever,
                       LinkBuilder linkBuilder,
-                      BulkBuilder bulkBuilder, ObjectMapper objectMapper) {
+                      BulkBuilder bulkBuilder,
+                      ObjectMapper objectMapper) {
         this.channelService = channelService;
         this.contentRetriever = contentRetriever;
         this.linkBuilder = linkBuilder;

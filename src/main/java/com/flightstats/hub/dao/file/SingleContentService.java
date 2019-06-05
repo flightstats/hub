@@ -14,11 +14,11 @@ import com.flightstats.hub.model.StreamResults;
 import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.spoke.FileSpokeStore;
 import com.flightstats.hub.util.TimeUtil;
-import javax.inject.Inject;
 import com.google.inject.name.Named;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 
+import javax.inject.Inject;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -38,12 +38,15 @@ import java.util.function.Consumer;
 @Slf4j
 public class SingleContentService implements ContentService {
 
+    private final FileSpokeStore fileSpokeStore;
+
     @Inject
-    @Named("WRITE") //this isn't great, but java ¯\_(ツ)_/¯
-    private FileSpokeStore fileSpokeStore;
+    public SingleContentService(@Named("WRITE") FileSpokeStore fileSpokeStore){
+        this.fileSpokeStore = fileSpokeStore;
+    }
 
     @Override
-    public ContentKey insert(String channelName, Content content) throws Exception {
+    public ContentKey insert(String channelName, Content content) {
         channelName = formatChannel(channelName);
         ContentKey key = content.getContentKey().get();
         String path = getPath(channelName, content.getContentKey().get());
@@ -67,7 +70,7 @@ public class SingleContentService implements ContentService {
     }
 
     @Override
-    public boolean historicalInsert(String channelName, Content content) throws Exception {
+    public boolean historicalInsert(String channelName, Content content) {
         insert(channelName, content);
         return true;
     }
@@ -99,9 +102,7 @@ public class SingleContentService implements ContentService {
         }
         for (ContentKey key : keys) {
             Optional<Content> contentOptional = get(streamResults.getChannel(), key, false);
-            if (contentOptional.isPresent()) {
-                callback.accept(contentOptional.get());
-            }
+            contentOptional.ifPresent(callback::accept);
         }
     }
 

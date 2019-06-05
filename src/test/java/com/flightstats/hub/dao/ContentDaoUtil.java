@@ -12,6 +12,8 @@ import com.flightstats.hub.util.TimeUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
@@ -26,12 +28,33 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
+@ExtendWith(MockitoExtension.class)
 public class ContentDaoUtil {
 
     private ContentDao contentDao;
 
     public ContentDaoUtil(ContentDao contentDao) {
         this.contentDao = contentDao;
+    }
+
+    public static Content createContent(ContentKey key) {
+        return Content.builder()
+                .withContentKey(key)
+                .withContentType("stuff")
+                .withData(key.toString().getBytes())
+                .build();
+    }
+
+    public static Content createContent() {
+        return createContent(new ContentKey());
+    }
+
+    public static void compare(Content content, Content read, byte[] expected) {
+        assertEquals(content.getContentKey().get(), read.getContentKey().get());
+        assertEquals(content.getContentType(), read.getContentType());
+        byte[] data = read.getData();
+        assertArrayEquals(expected, data);
+        assertEquals(content, read);
     }
 
     public void testWriteRead(Content content) throws Exception {
@@ -154,7 +177,6 @@ public class ContentDaoUtil {
         }
     }
 
-
     public void testPreviousFromBulk_Issue753() {
         String channel = "testPreviousFromBulk_Issue753" + StringUtils.randomAlphaNumeric(20);
         LinkedList<ContentKey> keys = new LinkedList<>();
@@ -174,16 +196,16 @@ public class ContentDaoUtil {
         DateTime start = TimeUtil.now();
         create7Items(channel, keys, start);
         log.info("wrote {} {}", keys.size(), keys);
-        query(channel, keys, 20, 3, true, start.minusHours(2));
-        query(channel, keys, 20, 4, true, start.minusHours(4));
-        query(channel, keys, 20, 4, true, start.minusHours(5));
-        query(channel, keys, 20, 6, false, start.plusMinutes(1));
-        query(channel, keys, 1, 1, true, start.minusDays(10));
+        query(channel, keys, 20, 7, true, start.minusHours(1));
+        query(channel, keys, 20, 7, true, start.minusHours(2));
+        query(channel, keys, 20, 1, true, start.minusMinutes(5));
+        query(channel, keys, 20, 4, true, start.minusMinutes(8));
+        query(channel, keys, 20, 6, true, start.minusMinutes(10));
     }
 
     private void create7Items(String channel, List<ContentKey> keys, DateTime start) {
         for (int i = 0; i < 7; i++) {
-            ContentKey key = new ContentKey(start.minusHours(i), "A" + i);
+            ContentKey key = new ContentKey(start.minusMinutes(i + 5), "A" + i);
             keys.add(key);
             log.info("writing " + key);
             contentDao.insert(channel, createContent(key));
@@ -202,8 +224,8 @@ public class ContentDaoUtil {
             contentDao.insert(channel, createContent(key));
         }
         log.info("wrote {} {}", keys.size(), keys);
-        query(channel, keys, 20, 4, true, start.minusHours(2));
-        query(channel, keys, 20, 6, true, start.minusHours(4));
+        query(channel, keys, 20, 8, true, start.minusHours(1));
+        query(channel, keys, 20, 8, true, start.minusHours(2));
         query(channel, keys, 20, 13, true, start.minusDays(5));
         query(channel, keys, 20, 14, false, start.plusMinutes(1));
         query(channel, keys, 5, 5, false, start);
@@ -271,26 +293,6 @@ public class ContentDaoUtil {
         assertTrue(keys.containsAll(found));
     }
 
-    public static Content createContent(ContentKey key) {
-        return Content.builder()
-                .withContentKey(key)
-                .withContentType("stuff")
-                .withData(key.toString().getBytes())
-                .build();
-    }
-
-    public static Content createContent() {
-        return createContent(new ContentKey());
-    }
-
-    public static void compare(Content content, Content read, byte[] expected) {
-        assertEquals(content.getContentKey().get(), read.getContentKey().get());
-        assertEquals(content.getContentType(), read.getContentType());
-        byte[] data = read.getData();
-        assertArrayEquals(expected, data);
-        assertEquals(content, read);
-    }
-
     public void testBulkWrite() {
         String channel = "testBulkWrite";
         BulkContent bulkContent = BulkContent.builder()
@@ -327,7 +329,6 @@ public class ContentDaoUtil {
         List<ContentKey> keys = new ArrayList<>();
         DateTime start = TimeUtil.now().minusHours(10);
         query(channel, keys, 1, 0, false, start);
-
 
     }
 }

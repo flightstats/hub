@@ -37,11 +37,11 @@ import com.flightstats.hub.util.TimeUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import javax.inject.Inject;
 import com.google.inject.name.Named;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -87,20 +87,20 @@ public class ClusterContentService implements ContentService {
 
     @Inject
     public ClusterContentService(
-                            @Named(ContentDao.WRITE_CACHE) ContentDao spokeWriteContentDao,
-                            @Named(ContentDao.READ_CACHE) ContentDao spokeReadContentDao,
-                            @Named(ContentDao.SINGLE_LONG_TERM) ContentDao s3SingleContentDao,
-                            @Named(ContentDao.LARGE_PAYLOAD) ContentDao s3LargePayloadContentDao,
-                            @Named(ContentDao.BATCH_LONG_TERM) ContentDao s3BatchContentDao,
-                            LatestContentCache latestContentCache,
-                            WriteQueue writeQueue,
-                            ContentRetriever contentRetriever,
-                            ClusterCacheDao clusterCacheDao,
-                            HubUtils hubUtils,
-                            LargeContentUtils largeContentUtils,
-                            AppProperties appProperties,
-                            ContentProperties contentProperties,
-                            SpokeProperties spokeProperties) {
+            @Named(ContentDao.WRITE_CACHE) ContentDao spokeWriteContentDao,
+            @Named(ContentDao.READ_CACHE) ContentDao spokeReadContentDao,
+            @Named(ContentDao.SINGLE_LONG_TERM) ContentDao s3SingleContentDao,
+            @Named(ContentDao.LARGE_PAYLOAD) ContentDao s3LargePayloadContentDao,
+            @Named(ContentDao.BATCH_LONG_TERM) ContentDao s3BatchContentDao,
+            LatestContentCache latestContentCache,
+            WriteQueue writeQueue,
+            ContentRetriever contentRetriever,
+            ClusterCacheDao clusterCacheDao,
+            HubUtils hubUtils,
+            LargeContentUtils largeContentUtils,
+            AppProperties appProperties,
+            ContentProperties contentProperties,
+            SpokeProperties spokeProperties) {
         HubServices.registerPreStop(new SpokeS3ContentServiceInit());
         this.spokeWriteContentDao = spokeWriteContentDao;
         this.spokeReadContentDao = spokeReadContentDao;
@@ -180,14 +180,14 @@ public class ClusterContentService implements ContentService {
             if (ref.get() != null) {
                 latestContentCache.setIfNewer(channelName, ref.get());
             }
-        }, contentProperties.getStableSeconds() +1, TimeUnit.SECONDS);
+        }, contentProperties.getStableSeconds() + 1, TimeUnit.SECONDS);
 
         try {
             SortedSet<ContentKey> keys;
             keys = supplier.get();
             ref.set(keys.last());
             return keys;
-        } catch(Exception e) {
+        } catch (Exception e) {
             future.cancel(true);
             throw e;
         }

@@ -39,7 +39,7 @@ class MultiPartBulkBuilder {
     private final LinkBuilder linkBuilder;
 
     @Inject
-    public MultiPartBulkBuilder(LinkBuilder linkBuilder) {
+    public MultiPartBulkBuilder(LinkBuilder linkBuilder, ActiveTraces ActiveTraces) {
         this.linkBuilder = linkBuilder;
     }
 

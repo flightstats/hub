@@ -2,8 +2,6 @@ package com.flightstats.hub.metrics;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.config.properties.AppProperties;
-import com.flightstats.hub.config.properties.PropertiesLoader;
 import com.flightstats.hub.util.ObjectRing;
 import lombok.extern.slf4j.Slf4j;
 
@@ -15,18 +13,20 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class ActiveTraces {
 
-    private static final AppProperties appProperties = new AppProperties(PropertiesLoader.getInstance());
-    private static final Map<String, Traces> activeTraces = new ConcurrentHashMap<>();
+    private static final Map<String, Traces> tracesMap = new ConcurrentHashMap<>();
+    private static final ThreadLocal<Traces> threadLocal = new ThreadLocal<>();
+
+    //How long an http request needs to take before being considered 'slow' and logged
+    private static final int LOG_SLOW_TRACES_IN_SEC = 10 * 1000;
     private static final ObjectRing<Traces> recent = new ObjectRing<>(100);
     private static final TopSortedSet<Traces> slowest = new TopSortedSet<>(100, Traces::getTime, new DescendingTracesComparator());
-    private static final ThreadLocal<Traces> threadLocal = new ThreadLocal<>();
 
     public static void start(Object... objects) {
         start(new Traces(objects));
     }
 
     private static void start(Traces traces) {
-        activeTraces.put(traces.getId(), traces);
+        tracesMap.put(traces.getId(), traces);
         setLocal(traces);
         log.trace("setting {}", traces);
     }
@@ -42,10 +42,10 @@ public class ActiveTraces {
             return false;
         } else {
             log.trace("removing {}", traces.getId());
-            activeTraces.remove(traces.getId());
+            tracesMap.remove(traces.getId());
             threadLocal.remove();
             traces.end(status);
-            traces.log(appProperties.getLogSlowTracesInSec(), trace, log);
+            traces.log(LOG_SLOW_TRACES_IN_SEC, trace, log);
             recent.put(traces);
             slowest.add(traces);
             return true;
@@ -71,7 +71,7 @@ public class ActiveTraces {
 
     public static void log(ObjectNode root) {
         TreeSet<Traces> orderedActive = new TreeSet<>((t1, t2) -> (int) (t1.getStart() - t2.getStart()));
-        orderedActive.addAll(activeTraces.values());
+        orderedActive.addAll(tracesMap.values());
         ArrayNode active = root.putArray("active");
         for (Traces trace : orderedActive) {
             trace.output(active.addObject());

@@ -50,18 +50,21 @@ public class S3SingleContentDao implements ContentDao {
 
     private final StatsdReporter statsdReporter;
     private final HubS3Client s3Client;
+    private final S3Util s3Util;
 
     @Inject
     public S3SingleContentDao(HubS3Client s3Client,
                               StatsdReporter statsdReporter,
                               AppProperties appProperties,
-                              S3Properties s3Properties) {
+                              S3Properties s3Properties,
+                              S3Util s3Util) {
         this.s3Client = s3Client;
         this.statsdReporter = statsdReporter;
 
         this.useEncrypted = appProperties.isAppEncrypted();
         this.s3MaxQueryItems = s3Properties.getMaxQueryItems();
         this.bucketName = s3Properties.getBucketName();
+        this.s3Util = s3Util;
     }
 
     static ObjectMetadata createObjectMetadata(Content content, boolean useEncrypted) {
@@ -265,7 +268,7 @@ public class S3SingleContentDao implements ContentDao {
         if (query.isNext()) {
             contentKeys = next(query);
         } else {
-            contentKeys = S3Util.queryPrevious(query, this);
+            contentKeys = s3Util.queryPrevious(query, this);
         }
         traces.add("S3SingleContentDao.query completed", contentKeys);
         return contentKeys;
@@ -288,7 +291,7 @@ public class S3SingleContentDao implements ContentDao {
     @Override
     public void deleteBefore(String channel, ContentKey limitKey) {
         try {
-            S3Util.delete(channel + "/", limitKey, bucketName, s3Client);
+            s3Util.delete(channel + "/", limitKey, bucketName, s3Client);
             log.info("completed deletion of " + channel);
         } catch (Exception e) {
             log.warn("unable to delete {} in {}", channel, bucketName, e);

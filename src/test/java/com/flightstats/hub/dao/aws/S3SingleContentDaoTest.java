@@ -6,13 +6,14 @@ import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.test.IntegrationTestSetup;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@Slf4j
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@Slf4j
 class S3SingleContentDaoTest {
 
     private ContentDaoUtil util;
@@ -21,6 +22,10 @@ class S3SingleContentDaoTest {
     @BeforeAll
     void setUpClass() {
         s3SingleContentDao = IntegrationTestSetup.run().getInstance(S3SingleContentDao.class);
+    }
+
+    @BeforeEach
+    void setup() {
         util = new ContentDaoUtil(s3SingleContentDao);
     }
 

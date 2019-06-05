@@ -59,6 +59,7 @@ class WebhookLeader implements Lockable {
     private WebhookStrategy webhookStrategy;
     private Webhook webhook;
 
+
     @Inject
     public WebhookLeader(ContentRetriever contentRetriever,
                          WebhookService webhookService,

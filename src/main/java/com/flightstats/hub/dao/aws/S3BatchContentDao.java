@@ -69,18 +69,21 @@ public class S3BatchContentDao implements ContentDao {
     private final HubS3Client s3Client;
     private final String bucketName;
     private final StatsdReporter statsdReporter;
+    private final S3Util s3Util;
 
     @Inject
     public S3BatchContentDao(HubS3Client s3Client,
                              StatsdReporter statsdReporter,
                              AppProperties appProperties,
-                             S3Properties s3Properties) {
+                             S3Properties s3Properties,
+                             S3Util s3Util) {
         this.statsdReporter = statsdReporter;
         this.s3Client = s3Client;
 
         this.useEncrypted = appProperties.isAppEncrypted();
         this.s3MaxQueryItems = s3Properties.getMaxQueryItems();
         this.bucketName = s3Properties.getBucketName();
+        this.s3Util = s3Util;
     }
 
 
@@ -307,7 +310,7 @@ public class S3BatchContentDao implements ContentDao {
             if (query.isNext()) {
                 contentKeys = handleNext(query);
             } else {
-                contentKeys = S3Util.queryPrevious(query, this);
+                contentKeys = s3Util.queryPrevious(query, this);
             }
             traces.add("S3BatchContentDao.query completed", contentKeys);
         } catch (Exception e) {
@@ -378,8 +381,8 @@ public class S3BatchContentDao implements ContentDao {
     @Override
     public void deleteBefore(String channel, ContentKey limitKey) {
         try {
-            S3Util.delete(channel + BATCH_ITEMS, limitKey, bucketName, s3Client);
-            S3Util.delete(channel + BATCH_INDEX, limitKey, bucketName, s3Client);
+            s3Util.delete(channel + BATCH_ITEMS, limitKey, bucketName, s3Client);
+            s3Util.delete(channel + BATCH_INDEX, limitKey, bucketName, s3Client);
             log.info("completed deleteBefore of " + channel);
         } catch (Exception e) {
             log.warn("unable to delete {} in {}", channel, bucketName, e);

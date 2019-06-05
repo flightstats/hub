@@ -1,23 +1,27 @@
 package com.flightstats.hub.spoke;
 
-import com.flightstats.hub.config.properties.PropertiesLoader;
 import com.flightstats.hub.dao.ContentDaoUtil;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.test.IntegrationTestSetup;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
-@Slf4j
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class SpokeWriteContentDaoTest {
 
     private ContentDaoUtil util;
+    private SpokeWriteContentDao spokeWriteContentDao;
 
     @BeforeAll
     void setUpClass() {
-        util = new ContentDaoUtil(IntegrationTestSetup.run().getInstance(SpokeWriteContentDao.class));
+        spokeWriteContentDao = IntegrationTestSetup.run().getInstance(SpokeWriteContentDao.class);
+    }
+
+    @BeforeEach
+    void setup(){
+        util = new ContentDaoUtil(spokeWriteContentDao);
     }
 
     @Test
@@ -48,7 +52,6 @@ class SpokeWriteContentDaoTest {
 
     @Test
     void testDirectionQuery() {
-        PropertiesLoader.getInstance().setProperty("spoke.write.ttlMinutes", "240");
         util.testDirectionQueryTTL();
     }
 
