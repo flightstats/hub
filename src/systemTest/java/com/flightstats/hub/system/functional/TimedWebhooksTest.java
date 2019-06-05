@@ -116,7 +116,7 @@ class TimedWebhooksTest extends DependencyInjector {
     }
 
     @ParameterizedTest
-    @EnumSource(value = WebhookType.class, names = { "MINUTE", "SECOND" })
+    @EnumSource(value = WebhookType.class, names = {"MINUTE", "SECOND"})
     void timedWebhookBatch_hasExpectedItems_items(WebhookType type) {
         Awaitility.await().atMost(Duration.TWO_MINUTES).until(() -> channelAndWebhookFactory(type));
         Awaitility.await().atMost(Duration.TWO_MINUTES).until(this::addItems);
@@ -125,7 +125,6 @@ class TimedWebhooksTest extends DependencyInjector {
             String webhookName = webhook.getName();
             String channelName = getChannelName(webhook);
             int itemsPostedCount = getItemsPostedCount(channelName);
-            ConcurrentLinkedQueue<String> items = new ConcurrentLinkedQueue<>();
             callbackService.awaitItemCountSentToWebhook(webhookName, itemsPostedCount);
         });
     }
