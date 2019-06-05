@@ -17,12 +17,12 @@ public class PodRestart {
     @SneakyThrows
     public void execute(String releaseName, List<String> podNames) {
 
-        try (final DefaultKubernetesClient client = new DefaultKubernetesClient()) {
+        try (DefaultKubernetesClient client = new DefaultKubernetesClient()) {
 
-            final MixedOperation<Pod, PodList, DoneablePod, PodResource<Pod, DoneablePod>> podResource = client.inNamespace(releaseName).pods();
+            MixedOperation<Pod, PodList, DoneablePod, PodResource<Pod, DoneablePod>> podResource = client.inNamespace(releaseName).pods();
             int podCount = podResource.list().getItems().size();
 
-            final List<Pod> pods = podResource.list().getItems();
+            List<Pod> pods = podResource.list().getItems();
             for (int i = 0; i < podCount; i++) {
                 if (podNames.contains(pods.get(i).getMetadata().getName())) {
                     log.info("Deleting pod {} in namespace {} ", pods.get(i).getMetadata().getName(), pods.get(i).getMetadata().getNamespace());

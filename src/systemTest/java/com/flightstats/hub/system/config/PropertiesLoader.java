@@ -15,8 +15,8 @@ public class PropertiesLoader {
         try (InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(propertiesFileName)) {
             properties.load(inputStream);
 
-            properties.setProperty(PropertyNames.HELM_RELEASE_NAME, getHelmReleaseName(properties));
-            properties.setProperty(PropertyNames.HELM_RELEASE_DELETE, isHelmReleaseDeletable(properties));
+            properties.setProperty(PropertiesName.HELM_RELEASE_NAME, getHelmReleaseName(properties));
+            properties.setProperty(PropertiesName.HELM_RELEASE_DELETE, isHelmReleaseDeletable(properties));
 
         } catch (IOException e) {
             log.error("Property file {} not found", propertiesFileName, e);
@@ -26,11 +26,11 @@ public class PropertiesLoader {
 
     private String getHelmReleaseName(Properties properties) {
         String randomReleaseName = "ddt-" + System.getProperty("user.name") + "-" + randomAlphaNumeric(4).toLowerCase();
-        return properties.getProperty(PropertyNames.HELM_RELEASE_NAME, randomReleaseName);
+        return properties.getProperty(PropertiesName.HELM_RELEASE_NAME, randomReleaseName);
     }
 
     private String isHelmReleaseDeletable(Properties properties) {
-        return properties.getProperty(PropertyNames.HELM_RELEASE_DELETE, "true");
+        return properties.getProperty(PropertiesName.HELM_RELEASE_DELETE, "true");
     }
 
 }

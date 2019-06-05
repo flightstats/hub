@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
+import static junit.framework.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
@@ -32,12 +33,13 @@ class WebhookLifecycleTest extends DependencyInjector {
     private ChannelService channelResource;
     @Inject
     private WebhookService webhookResource;
-    private String channelName;
-    private String webhookName;
     @Inject
     private HubLifecycle hubLifecycle;
     @Inject
     private ModelBuilder modelBuilder;
+
+    private String channelName;
+    private String webhookName;
 
     @BeforeAll
     void hubSetup() {
@@ -46,8 +48,8 @@ class WebhookLifecycleTest extends DependencyInjector {
 
     @BeforeEach
     void before() {
-        this.channelName = randomAlphaNumeric(10);
-        this.webhookName = randomAlphaNumeric(10);
+        channelName = randomAlphaNumeric(10);
+        webhookName = randomAlphaNumeric(10);
     }
 
     private Webhook buildWebhook() {
@@ -60,64 +62,54 @@ class WebhookLifecycleTest extends DependencyInjector {
     @Test
     @SneakyThrows
     void testWebhookWithNoStartItem() {
-        final String data = "{\"fn\": \"first\", \"ln\":\"last\"}";
+        String data = "{\"fn\": \"first\", \"ln\":\"last\"}";
 
         channelResource.create(channelName);
 
-        final Webhook webhook = buildWebhook().withParallelCalls(2);
+        Webhook webhook = buildWebhook().withParallelCalls(2);
         webhookResource.insertAndVerify(webhook);
 
-        final List<String> channelItems = channelResource.addItems(channelName, data, 10);
-        final List<String> channelItemsPosted = callbackResource.awaitItemCountSentToWebhook(webhookName, channelItems.size());
-
-        Collections.sort(channelItems);
-        Collections.sort(channelItemsPosted);
-        assertEquals(channelItems, channelItemsPosted);
+        List<String> channelItems = channelResource.addItems(channelName, data, 10);
+        assertTrue(callbackResource.areItemsEventuallySentToWebhook(webhookName, channelItems));
     }
 
     @Test
     @SneakyThrows
     void testWebhookWithStartItem() {
-        final String data = "{\"key1\": \"value1\", \"key2\":\"value2\"}";
+        String data = "{\"key1\": \"value1\", \"key2\":\"value2\"}";
 
         channelResource.create(channelName);
-        final List<String> channelItems = channelResource.addItems(channelName, data, 10);
+        List<String> channelItems = channelResource.addItems(channelName, data, 10);
 
-        final Webhook webhook = buildWebhook().
+        Webhook webhook = buildWebhook().
                 withStartItem(channelItems.get(4)).
                 withParallelCalls(2);
         webhookResource.insertAndVerify(webhook);
-        final List<String> channelItemsExpected = channelItems.subList(5, channelItems.size());
-        final List<String> channelItemsPosted = callbackResource.awaitItemCountSentToWebhook(webhookName, channelItemsExpected.size());
-
-        Collections.sort(channelItemsExpected);
-        Collections.sort(channelItemsPosted);
-        assertEquals(channelItemsExpected, channelItemsPosted);
+        List<String> channelItemsExpected = channelItems.subList(5, channelItems.size());
+        assertTrue(callbackResource.areItemsEventuallySentToWebhook(webhookName, channelItemsExpected));
     }
 
     @Test
     @SneakyThrows
     void testWebhookWithStartItem_expectItemsInOrder() {
-        final String data = "{\"city\": \"portland\", \"state\":\"or\"}";
+        String data = "{\"city\": \"portland\", \"state\":\"or\"}";
 
         channelResource.create(channelName);
-        final List<String> channelItems = channelResource.addItems(channelName, data, 10);
+        List<String> channelItems = channelResource.addItems(channelName, data, 10);
 
-        final Webhook webhook = buildWebhook().
+        Webhook webhook = buildWebhook().
                 withStartItem(channelItems.get(4)).
                 withParallelCalls(1);
         webhookResource.insertAndVerify(webhook);
-        final List<String> channelItemsExpected = channelItems.subList(5, channelItems.size());
-        final List<String> channelItemsPosted = callbackResource.awaitItemCountSentToWebhook(webhookName, channelItemsExpected.size());
-
-        assertEquals(channelItemsExpected, channelItemsPosted);
+        List<String> channelItemsExpected = channelItems.subList(5, channelItems.size());
+        assertTrue(callbackResource.areItemsEventuallySentToWebhook(webhookName, channelItemsExpected));
     }
 
     @AfterEach
     @SneakyThrows
     void after() {
-        this.channelResource.delete(channelName);
-        this.webhookResource.delete(webhookName);
+        channelResource.delete(channelName);
+        webhookResource.delete(webhookName);
     }
 
     @AfterAll

@@ -26,22 +26,22 @@ public class ReleaseInstall {
 
         long start = System.currentTimeMillis();
         ChartOuterClass.Chart.Builder chartBuilder;
-        try (final URLChartLoader chartLoader = new URLChartLoader()) {
+        try (URLChartLoader chartLoader = new URLChartLoader()) {
             log.info("Hub helm chart location {} ", chartPath);
             chartBuilder = chartLoader.load(new URL(chartPath));
         }
 
-        try (final DefaultKubernetesClient client = new DefaultKubernetesClient();
-             final Tiller tiller = new Tiller(client);
-             final ReleaseManager releaseManager = new ReleaseManager(tiller)) {
+        try (DefaultKubernetesClient client = new DefaultKubernetesClient();
+             Tiller tiller = new Tiller(client);
+             ReleaseManager releaseManager = new ReleaseManager(tiller)) {
 
-            final InstallReleaseRequest.Builder requestBuilder = InstallReleaseRequest.newBuilder();
+            InstallReleaseRequest.Builder requestBuilder = InstallReleaseRequest.newBuilder();
             requestBuilder.setTimeout(300L);
             requestBuilder.setName(releaseName);
             requestBuilder.setWait(true);
             requestBuilder.setDisableHooks(false);
 
-            final Future<InstallReleaseResponse> releaseFuture = releaseManager.install(requestBuilder, chartBuilder);
+            Future<InstallReleaseResponse> releaseFuture = releaseManager.install(requestBuilder, chartBuilder);
             ReleaseOuterClass.Release release = releaseFuture.get().getRelease();
             assertTrue(release.hasChart());
             assertTrue(release.hasConfig());

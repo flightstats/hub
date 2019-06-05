@@ -1,7 +1,7 @@
 package com.flightstats.hub.kubernetes;
 
 import com.flightstats.hub.system.config.DependencyInjector;
-import com.flightstats.hub.system.config.PropertyNames;
+import com.flightstats.hub.system.config.PropertiesName;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -12,15 +12,15 @@ import java.util.List;
 public class HubLifecycle extends DependencyInjector {
 
     @Inject
-    @Named(PropertyNames.HELM_RELEASE_NAME)
+    @Named(PropertiesName.HELM_RELEASE_NAME)
     private String releaseName;
 
     @Inject
-    @Named(PropertyNames.HELM_CHART_PATH)
+    @Named(PropertiesName.HELM_CHART_PATH)
     private String chartPath;
 
     @Inject
-    @Named(PropertyNames.HELM_RELEASE_DELETE)
+    @Named(PropertiesName.HELM_RELEASE_DELETE)
     private boolean isHelmReleaseDeletable;
 
     @Inject

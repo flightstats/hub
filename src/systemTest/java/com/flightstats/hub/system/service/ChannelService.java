@@ -5,13 +5,13 @@ import com.flightstats.hub.client.ChannelResourceClient;
 import com.flightstats.hub.client.HubClientFactory;
 import com.flightstats.hub.model.Channel;
 import com.flightstats.hub.model.ChannelItem;
-import com.google.inject.Inject;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.HttpUrl;
 import retrofit2.Call;
 import retrofit2.Response;
 
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 

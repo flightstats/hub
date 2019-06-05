@@ -20,17 +20,17 @@ public class ReleaseDelete {
 
         long start = System.currentTimeMillis();
 
-        try (final DefaultKubernetesClient client = new DefaultKubernetesClient();
-             final Tiller tiller = new Tiller(client);
-             final ReleaseManager releaseManager = new ReleaseManager(tiller)) {
+        try (DefaultKubernetesClient client = new DefaultKubernetesClient();
+             Tiller tiller = new Tiller(client);
+             ReleaseManager releaseManager = new ReleaseManager(tiller)) {
 
-            final UninstallReleaseRequest.Builder uninstallRequestBuilder = UninstallReleaseRequest.newBuilder();
+            UninstallReleaseRequest.Builder uninstallRequestBuilder = UninstallReleaseRequest.newBuilder();
             uninstallRequestBuilder.setName(releaseName);
             uninstallRequestBuilder.setPurge(true);
             uninstallRequestBuilder.setDisableHooks(false);
             uninstallRequestBuilder.setTimeout(300L);
 
-            final Future<UninstallReleaseResponse> releaseFuture = releaseManager.uninstall(uninstallRequestBuilder.build());
+            Future<UninstallReleaseResponse> releaseFuture = releaseManager.uninstall(uninstallRequestBuilder.build());
             releaseFuture.get();
 
             log.info("Hub release {} delete completed in {} ms", releaseName, System.currentTimeMillis() - start);
