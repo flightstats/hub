@@ -39,20 +39,4 @@ public class TickMetricsProperties {
         return propertiesLoader.getProperty("metrics.influxdb.database.user", "");
     }
 
-    //These properties are used for both datadog and Tick
-    public boolean isMetricsEnabled() {
-        return propertiesLoader.getProperty("metrics.enable", false);
-    }
-
-    public int getMetricsSeconds() {
-        return propertiesLoader.getProperty("metrics.seconds", 15);
-    }
-
-    public String getMetricsTagsRole() {
-        return propertiesLoader.getProperty("metrics.tags.role", "hub");
-    }
-
-    public String getMetricsTagsTeam() {
-        return propertiesLoader.getProperty("metrics.tags.team", "development");
-    }
 }

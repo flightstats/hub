@@ -2,6 +2,8 @@ package com.flightstats.hub.metrics;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flightstats.hub.config.properties.DatadogMetricsProperties;
+import com.flightstats.hub.config.properties.MetricsProperties;
 import com.flightstats.hub.util.IntegrationServer;
 import com.flightstats.hub.util.TimeUtil;
 import com.sun.net.httpserver.HttpExchange;
@@ -10,6 +12,9 @@ import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -19,16 +24,22 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.StringContains.containsString;
 import static org.hamcrest.number.IsCloseTo.closeTo;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class DataDogHandlerIntegrationTest {
     private static List<String> writeResult;
     private static String queryResult;
     private static HttpServer httpServer;
+    @Mock
+    private DatadogMetricsProperties datadogMetricsProperties;
+    @Mock
+    private MetricsProperties metricsProperties;
 
     private static class TestHandler implements HttpHandler {
         @Override
@@ -76,13 +87,12 @@ class DataDogHandlerIntegrationTest {
 
     @Test
     void testDatadogMute_mute() throws IOException {
-        MetricsConfig metricsConfig = MetricsConfig.builder()
-                .dataDogAPIKey("apiKey")
-                .dataDogAppKey("appKey")
-                .datadogApiUrl("http://localhost:8888/api")
-                .hostTag("test_host")
-                .build();
-        DataDogHandler dataDogHandler = new DataDogHandler(metricsConfig);
+        when(datadogMetricsProperties.getApiKey()).thenReturn("apiKey");
+        when(datadogMetricsProperties.getAppKey()).thenReturn("appKey");
+        when(datadogMetricsProperties.getApiUrl()).thenReturn("http://localhost:8888/api");
+        when(metricsProperties.getHostTag()).thenReturn("test_host");
+
+        DataDogHandler dataDogHandler = new DataDogHandler(datadogMetricsProperties, metricsProperties);
         dataDogHandler.mute();
 
         ObjectMapper mapper = new ObjectMapper();

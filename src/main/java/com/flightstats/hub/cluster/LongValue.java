@@ -1,7 +1,7 @@
 package com.flightstats.hub.cluster;
 
 import com.google.common.primitives.Longs;
-import com.google.inject.Inject;
+import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;

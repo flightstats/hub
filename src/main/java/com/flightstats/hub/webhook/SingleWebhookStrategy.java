@@ -3,7 +3,7 @@ package com.flightstats.hub.webhook;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.flightstats.hub.cluster.LastContentPath;
+import com.flightstats.hub.cluster.ClusterCacheDao;
 import com.flightstats.hub.dao.aws.ContentRetriever;
 import com.flightstats.hub.exception.NoSuchChannelException;
 import com.flightstats.hub.metrics.ActiveTraces;
@@ -18,6 +18,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 
+import javax.inject.Inject;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -33,11 +34,10 @@ import static com.flightstats.hub.constant.ZookeeperNodes.WEBHOOK_LAST_COMPLETED
 
 @Slf4j
 class SingleWebhookStrategy implements WebhookStrategy {
+    private AtomicReference<Exception> exceptionReference = new AtomicReference<>();
+    private AtomicBoolean shouldExit = new AtomicBoolean(false);
 
-    private final AtomicReference<Exception> exceptionReference = new AtomicReference<>();
-    private final AtomicBoolean shouldExit = new AtomicBoolean(false);
-
-    private final LastContentPath lastContentPath;
+    private final ClusterCacheDao clusterCacheDao;
     private final ContentRetriever contentRetriever;
     private final ObjectMapper objectMapper;
     private final Webhook webhook;
@@ -47,14 +47,15 @@ class SingleWebhookStrategy implements WebhookStrategy {
     private ExecutorService executorService;
     private String channel;
 
-    SingleWebhookStrategy(Webhook webhook,
-                          LastContentPath lastContentPath,
-                          ContentRetriever contentRetriever,
-                          ObjectMapper objectMapper) {
-        this.webhook = webhook;
-        this.lastContentPath = lastContentPath;
+    @Inject
+    SingleWebhookStrategy(ContentRetriever contentRetriever,
+                          ClusterCacheDao clusterCacheDao,
+                          ObjectMapper objectMapper,
+                          Webhook webhook) {
         this.contentRetriever = contentRetriever;
+        this.clusterCacheDao = clusterCacheDao;
         this.objectMapper = objectMapper;
+        this.webhook = webhook;
         this.queue = new ArrayBlockingQueue<>(webhook.getParallelCalls() * 2);
     }
 
@@ -64,14 +65,14 @@ class SingleWebhookStrategy implements WebhookStrategy {
         if (null == startingKey) {
             startingKey = new ContentKey();
         }
-        final ContentPath contentPath = lastContentPath.get(webhook.getName(), startingKey, WEBHOOK_LAST_COMPLETED);
+        ContentPath contentPath = clusterCacheDao.get(webhook.getName(), startingKey, WEBHOOK_LAST_COMPLETED);
         log.info("getStartingPath startingKey {} contentPath {}", startingKey, contentPath);
         return contentPath;
     }
 
     @Override
     public ContentPath getLastCompleted() {
-        return lastContentPath.getOrNull(webhook.getName(), WEBHOOK_LAST_COMPLETED);
+        return clusterCacheDao.getOrNull(webhook.getName(), WEBHOOK_LAST_COMPLETED);
     }
 
     @Override

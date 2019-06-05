@@ -33,7 +33,7 @@ public class IntegrationTestSetup {
             HubServer hubServer = injector.getInstance(HubServer.class);
             hubServer.start();
         } catch (Exception e) {
-            log.info("Problem while setting up integration test environment");
+            log.info("Problem while setting up integration test environment", e);
         }
     }
 
@@ -42,14 +42,6 @@ public class IntegrationTestSetup {
             integrationTestSetup = new IntegrationTestSetup();
         }
         return integrationTestSetup;
-    }
-
-    private static void restartZooKeeperServer() {
-        try {
-            ZooKeeperTestServer.restart();
-        } catch (Exception e) {
-            log.info("Problem restarting zookeeper test server ");
-        }
     }
 
     private CuratorFramework buildZooKeeperClient(PropertiesLoader propertiesLoader) {

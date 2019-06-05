@@ -1,6 +1,6 @@
 package com.flightstats.hub.dao.aws.s3Verifier;
 
-import com.flightstats.hub.cluster.LastContentPath;
+import com.flightstats.hub.cluster.ClusterCacheDao;
 import com.flightstats.hub.config.properties.PropertiesLoader;
 import com.flightstats.hub.config.properties.SpokeProperties;
 import com.flightstats.hub.dao.ChannelService;
@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @Slf4j
 class VerifierRangeLookupTest {
     private static VerifierRangeLookup verifierRangeLookup;
-    private static LastContentPath lastContentPath;
+    private static ClusterCacheDao clusterCacheDao;
     private static int ttlMinutes;
     private DateTime now = TimeUtil.now();
     private DateTime offsetTime;
@@ -42,7 +42,7 @@ class VerifierRangeLookupTest {
         IntegrationTestSetup integrationTestSetup = IntegrationTestSetup.run();
         ttlMinutes = spokeProperties.getTtlMinutes(SpokeStore.WRITE);
         verifierRangeLookup = integrationTestSetup.getInstance(VerifierRangeLookup.class);
-        lastContentPath = integrationTestSetup.getInstance(LastContentPath.class);
+        clusterCacheDao = integrationTestSetup.getInstance(ClusterCacheDao.class);
         channelService = integrationTestSetup.getInstance(ChannelService.class);
     }
 
@@ -70,7 +70,7 @@ class VerifierRangeLookupTest {
     @Test
     void testSingleNormal() {
         MinutePath lastVerified = new MinutePath(offsetTime);
-        lastContentPath.initialize(channelName, lastVerified, LAST_SINGLE_VERIFIED);
+        clusterCacheDao.initialize(channelName, lastVerified, LAST_SINGLE_VERIFIED);
         ChannelConfig channel = ChannelConfig.builder().name(channelName).build();
         channelService.createChannel(channel);
         VerifierRange range = verifierRangeLookup.getSingleVerifierRange(now, channel);
@@ -92,7 +92,7 @@ class VerifierRangeLookupTest {
     @Test
     void testSingleReplicated() {
         MinutePath lastReplicated = new MinutePath(now.minusMinutes(30));
-        lastContentPath.initialize(channelName, lastReplicated, REPLICATED_LAST_UPDATED);
+        clusterCacheDao.initialize(channelName, lastReplicated, REPLICATED_LAST_UPDATED);
         ChannelConfig channel = getReplicatedChannel(channelName);
         channelService.updateChannel(channel, null, false);
         VerifierRange range = verifierRangeLookup.getSingleVerifierRange(now, channel);
@@ -104,7 +104,7 @@ class VerifierRangeLookupTest {
     @Test
     void testSingleNormalLagging() {
         MinutePath lastVerified = new MinutePath(now.minusMinutes(ttlMinutes));
-        lastContentPath.initialize(channelName, lastVerified, LAST_SINGLE_VERIFIED);
+        clusterCacheDao.initialize(channelName, lastVerified, LAST_SINGLE_VERIFIED);
         ChannelConfig channel = ChannelConfig.builder().name(channelName).build();
         channelService.createChannel(channel);
         VerifierRange range = verifierRangeLookup.getSingleVerifierRange(now, channel);
@@ -117,9 +117,9 @@ class VerifierRangeLookupTest {
     @Test
     void testSingleReplicationLagging() {
         MinutePath lastReplicated = new MinutePath(now.minusMinutes(ttlMinutes + 1));
-        lastContentPath.initialize(channelName, lastReplicated, REPLICATED_LAST_UPDATED);
+        clusterCacheDao.initialize(channelName, lastReplicated, REPLICATED_LAST_UPDATED);
         MinutePath lastVerified = new MinutePath(now.minusMinutes(ttlMinutes + 2));
-        lastContentPath.initialize(channelName, lastVerified, LAST_SINGLE_VERIFIED);
+        clusterCacheDao.initialize(channelName, lastVerified, LAST_SINGLE_VERIFIED);
         ChannelConfig channel = getReplicatedChannel(channelName);
         channelService.updateChannel(channel, null, false);
         VerifierRange range = verifierRangeLookup.getSingleVerifierRange(now, channel);

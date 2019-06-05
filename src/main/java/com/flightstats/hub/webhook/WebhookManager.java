@@ -1,7 +1,7 @@
 package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.app.HubServices;
-import com.flightstats.hub.cluster.LastContentPath;
+import com.flightstats.hub.cluster.ClusterCacheDao;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.Watcher;
 import com.flightstats.hub.config.properties.WebhookProperties;
@@ -30,7 +30,6 @@ import static com.flightstats.hub.constant.ZookeeperNodes.WEBHOOK_LAST_COMPLETED
 @Slf4j
 @Singleton
 public class WebhookManager {
-
     private static final String WATCHER_PATH = "/groupCallback/watcher";
 
     private final LocalWebhookManager localWebhookManager;
@@ -38,7 +37,7 @@ public class WebhookManager {
     private final WebhookContentPathSet webhookContentPathSet;
     private final InternalWebhookClient webhookClient;
     private final WebhookStateReaper webhookStateReaper;
-    private final LastContentPath lastContentPath;
+    private final ClusterCacheDao clusterCacheDao;
     private final ActiveWebhooks activeWebhooks;
     private final WatchManager watchManager;
     private final Dao<Webhook> webhookDao;
@@ -49,7 +48,7 @@ public class WebhookManager {
                           WebhookContentPathSet webhookContentPathSet,
                           InternalWebhookClient webhookClient,
                           WebhookStateReaper webhookStateReaper,
-                          LastContentPath lastContentPath,
+                          ClusterCacheDao clusterCacheDao,
                           ActiveWebhooks activeWebhooks,
                           WebhookProperties webhookProperties,
                           WatchManager watchManager,
@@ -59,7 +58,7 @@ public class WebhookManager {
         this.webhookContentPathSet = webhookContentPathSet;
         this.webhookClient = webhookClient;
         this.webhookStateReaper = webhookStateReaper;
-        this.lastContentPath = lastContentPath;
+        this.clusterCacheDao = clusterCacheDao;
         this.activeWebhooks = activeWebhooks;
         this.watchManager = watchManager;
         this.webhookDao = webhookDao;
@@ -139,7 +138,7 @@ public class WebhookManager {
     }
 
     public void getStatus(Webhook webhook, WebhookStatus.WebhookStatusBuilder statusBuilder) {
-        statusBuilder.lastCompleted(lastContentPath.get(webhook.getName(), WebhookStrategy.createContentPath(webhook), WEBHOOK_LAST_COMPLETED));
+        statusBuilder.lastCompleted(clusterCacheDao.get(webhook.getName(), WebhookStrategy.createContentPath(webhook), WEBHOOK_LAST_COMPLETED));
         try {
             statusBuilder.errors(webhookErrorService.lookup(webhook.getName()));
             final ArrayList<ContentPath> inFlight = new ArrayList<>(new TreeSet<>(webhookContentPathSet.getSet(webhook.getName(), WebhookStrategy.createContentPath(webhook))));

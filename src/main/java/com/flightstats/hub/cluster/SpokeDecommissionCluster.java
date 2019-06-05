@@ -1,5 +1,6 @@
 package com.flightstats.hub.cluster;
 
+import com.flightstats.hub.config.properties.LocalHostProperties;
 import com.flightstats.hub.config.properties.SpokeProperties;
 import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.util.TimeUtil;
@@ -29,12 +30,15 @@ public class SpokeDecommissionCluster implements DecommissionCluster {
     private final CuratorFramework curator;
     private final PathChildrenCache withinSpokeCache;
     private final SpokeProperties spokeProperties;
+    private final LocalHostProperties localHostProperties;
 
     @Inject
     public SpokeDecommissionCluster(CuratorFramework curator,
-                                    SpokeProperties spokeProperties) throws Exception {
+                                    SpokeProperties spokeProperties,
+                                    LocalHostProperties localHostProperties) throws Exception {
         this.curator = curator;
         this.spokeProperties = spokeProperties;
+        this.localHostProperties = localHostProperties;
         withinSpokeCache = new PathChildrenCache(curator, WITHIN_SPOKE, true);
         withinSpokeCache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
     }
@@ -84,7 +88,7 @@ public class SpokeDecommissionCluster implements DecommissionCluster {
     }
 
     private String getLocalhost() {
-        return Cluster.getHost(false);
+        return localHostProperties.getHost(false);
     }
 
     void recommission(String server) throws Exception {
@@ -148,7 +152,7 @@ public class SpokeDecommissionCluster implements DecommissionCluster {
         }
     }
 
-    private void deleteQuietly(String key) throws Exception {
+    private void deleteQuietly(String key) {
         try {
             log.info("deleting key " + key);
             curator.delete().forPath(key);

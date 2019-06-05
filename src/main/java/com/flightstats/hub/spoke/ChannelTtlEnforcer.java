@@ -9,7 +9,7 @@ import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.util.Commander;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.util.concurrent.AbstractScheduledService;
-import com.google.inject.Inject;
+import javax.inject.Inject;
 import com.google.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;

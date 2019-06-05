@@ -1,22 +1,23 @@
 package com.flightstats.hub.metrics;
 
+import com.flightstats.hub.config.properties.MetricsProperties;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.inject.Inject;
+import javax.inject.Inject;
 import com.timgroup.statsd.StatsDClient;
 
 public class StatsDReporterLifecycle extends AbstractIdleService {
-    private StatsDFilter statsDFilter;
-    private MetricsConfig metricsConfig;
+    private final StatsDFilter statsDFilter;
+    private final MetricsProperties metricsProperties;
 
     @Inject
     public StatsDReporterLifecycle(StatsDFilter statsDFilter,
-                                   MetricsConfig metricsConfig) {
-        this.metricsConfig = metricsConfig;
+                                   MetricsProperties metricsProperties) {
         this.statsDFilter = statsDFilter;
+        this.metricsProperties = metricsProperties;
     }
 
     public void startUp() {
-        if (metricsConfig.isEnabled()) {
+        if (metricsProperties.isEnabled()) {
             statsDFilter.setOperatingClients();
         }
     }

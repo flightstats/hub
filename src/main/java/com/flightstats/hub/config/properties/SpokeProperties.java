@@ -1,12 +1,11 @@
 package com.flightstats.hub.config.properties;
 
 import com.flightstats.hub.spoke.SpokeStore;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.inject.Inject;
 
 public class SpokeProperties {
-
-    private static int DEFAULT_SPOKE_TTL = 60;
 
     private final PropertiesLoader propertiesLoader;
 
@@ -15,12 +14,14 @@ public class SpokeProperties {
         this.propertiesLoader = propertiesLoader;
     }
 
-    public boolean isReplicationEnabled() { return propertiesLoader.getProperty("replication.enabled", true); }
+    public boolean isReplicationEnabled() {
+        return propertiesLoader.getProperty("replication.enabled", true);
+    }
 
     public int getTtlMinutes(SpokeStore spokeStore) {
         String property = "spoke." + spokeStore + ".ttlMinutes";
         String fallbackProperty = "spoke.ttlMinutes";
-        return propertiesLoader.getProperty(property, propertiesLoader.getProperty(fallbackProperty, DEFAULT_SPOKE_TTL));
+        return propertiesLoader.getProperty(property, propertiesLoader.getProperty(fallbackProperty, 60));
     }
 
     public String getPath(SpokeStore spokeStore) {
@@ -31,7 +32,12 @@ public class SpokeProperties {
     }
 
     public String getStoragePath() {
-        return propertiesLoader.getProperty("storage.path", "/file");
+        String storagePath = propertiesLoader.getProperty("storage.path", "/file");
+        return StringUtils.appendIfMissing(storagePath, "/");
+    }
+
+    public String getContentPath() {
+        return getStoragePath() + "content/";
     }
 
     public boolean isTtlEnforced() {
@@ -41,4 +47,5 @@ public class SpokeProperties {
     public int getWriteFactor() {
         return propertiesLoader.getProperty("spoke.write.factor", 3);
     }
+
 }

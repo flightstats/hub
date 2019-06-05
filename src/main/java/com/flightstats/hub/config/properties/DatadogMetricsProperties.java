@@ -11,7 +11,7 @@ public class DatadogMetricsProperties {
         this.propertiesLoader = propertiesLoader;
     }
 
-    public String getUrl() {
+    public String getApiUrl() {
         return propertiesLoader.getProperty("metrics.datadog.url", "https://app.datadoghq.com/api/v1");
     }
 

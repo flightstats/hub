@@ -24,7 +24,7 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.flightstats.hub.config.properties.AwsProperties;
 import com.flightstats.hub.config.properties.DynamoProperties;
 import com.flightstats.hub.config.properties.S3Properties;
-import com.google.inject.Inject;
+import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;

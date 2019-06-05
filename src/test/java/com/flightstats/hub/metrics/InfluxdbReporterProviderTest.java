@@ -1,53 +1,64 @@
 package com.flightstats.hub.metrics;
 
 import com.codahale.metrics.MetricRegistry;
-import com.flightstats.hub.app.HubHost;
 import com.flightstats.hub.app.HubVersion;
+import com.flightstats.hub.config.properties.LocalHostProperties;
+import com.flightstats.hub.config.properties.MetricsProperties;
+import com.flightstats.hub.config.properties.TickMetricsProperties;
 import metrics_influxdb.measurements.MeasurementReporter;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.mock;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class InfluxdbReporterProviderTest {
+
+    @Mock
+    private TickMetricsProperties tickMetricsProperties;
+    @Mock
+    private MetricsProperties metricsProperties;
+    @Mock
+    private LocalHostProperties localHostProperties;
+    @Mock
+    private MetricRegistry metricRegistry;
+    @Mock
+    private HubVersion hubVersion;
+    private InfluxdbReporterProvider influxdbReporterProvider;
+
+    @BeforeEach
+    void setup() {
+        when(localHostProperties.getName()).thenReturn("localhost");
+        influxdbReporterProvider =
+                new InfluxdbReporterProvider(tickMetricsProperties, metricsProperties, metricRegistry, localHostProperties, hubVersion);
+    }
 
     @Test
     void testInfluxdbReporterGet_throwsOnBadConfig() {
-        MetricRegistry metricRegistry = mock(MetricRegistry.class);
-        MetricsConfig metricsConfig = MetricsConfig.builder().build();
-
-        InfluxdbReporterProvider influxdbReporterProvider = new InfluxdbReporterProvider(metricsConfig, metricRegistry);
         assertThrows(NullPointerException.class, influxdbReporterProvider::get);
     }
 
     @Test
     void testInfluxdbReporterGet_scheduledReporter() {
-        // GIVEN
-        MetricRegistry metricRegistry = mock(MetricRegistry.class);
-        HubVersion hubVersion = mock(HubVersion.class);
         when(hubVersion.getVersion()).thenReturn("local");
-        MetricsConfig metricsConfig = MetricsConfig.builder()
-                .appVersion(hubVersion.getVersion())
-                .clusterTag("location-test")
-                .env("test")
-                .enabled(true)
-                .hostTag(HubHost.getLocalName())
-                .influxdbDatabaseName("hub_test")
-                .influxdbHost("localhost")
-                .influxdbPass("")
-                .influxdbPort(8086)
-                .influxdbProtocol("http")
-                .influxdbUser("")
-                .reportingIntervalSeconds(1)
-                .role("hub")
-                .team("testers")
-                .build();
-        // WHEN
-         InfluxdbReporterProvider influxdbReporterProvider = new InfluxdbReporterProvider(metricsConfig, metricRegistry);
 
-         // THEN
+        when(metricsProperties.getEnv()).thenReturn("test");
+        when(metricsProperties.getClusterTag()).thenReturn("location-test");
+        when(metricsProperties.getRoleTag()).thenReturn("hub");
+        when(metricsProperties.getTeamTag()).thenReturn("testers");
+
+        when(tickMetricsProperties.getInfluxDbHost()).thenReturn("localhost");
+        when(tickMetricsProperties.getInfluxDbUser()).thenReturn("");
+        when(tickMetricsProperties.getInfluxDbPassword()).thenReturn("");
+        when(tickMetricsProperties.getInfluxDbPort()).thenReturn(8086);
+        when(tickMetricsProperties.getInfluxDbProtocol()).thenReturn("http");
+        when(tickMetricsProperties.getInfluxDbName()).thenReturn("hub_test");
+
         assertEquals(influxdbReporterProvider.get().getClass(), MeasurementReporter.class);
     }
 }

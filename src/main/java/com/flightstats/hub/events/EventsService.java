@@ -2,6 +2,7 @@ package com.flightstats.hub.events;
 
 import com.diffplug.common.base.Errors;
 import com.flightstats.hub.config.properties.AppProperties;
+import com.flightstats.hub.config.properties.LocalHostProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.ItemRequest;
 import com.flightstats.hub.model.ChannelContentKey;
@@ -21,17 +22,20 @@ import java.util.function.Consumer;
 @Slf4j
 public class EventsService {
     
-    private ChannelService channelService;
-    private WebhookService webhookService;
+    private final ChannelService channelService;
+    private final WebhookService webhookService;
     private final AppProperties appProperties;
+    private final LocalHostProperties localHostProperties;
 
     @Inject
     public EventsService(ChannelService channelService,
                          WebhookService webhookService,
-                         AppProperties appProperties){
+                         AppProperties appProperties,
+                         LocalHostProperties localHostProperties){
         this.channelService = channelService;
         this.webhookService = webhookService;
         this.appProperties = appProperties;
+        this.localHostProperties = localHostProperties;
     }
 
     private Map<String, EventWebhook> outputStreamMap = new ConcurrentHashMap<>();
@@ -87,6 +91,7 @@ public class EventsService {
         EventWebhook eventWebhook = new EventWebhook(
                 contentOutput,
                 webhookService,
+                localHostProperties,
                 appProperties.getAppUrl(),
                 appProperties.getAppEnv());
         log.info("registering events {}", eventWebhook.getGroupName());

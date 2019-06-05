@@ -1,6 +1,6 @@
 package com.flightstats.hub.dao.aws.s3Verifier;
 
-import com.flightstats.hub.cluster.LastContentPath;
+import com.flightstats.hub.cluster.ClusterCacheDao;
 import com.flightstats.hub.dao.aws.ContentRetriever;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.MinutePath;
@@ -16,27 +16,27 @@ public class VerifierRangeLookup {
 
     private final VerifierConfig verifierConfig;
     private final SpokeStoreConfig spokeWriteStoreConfig;
+    private final ClusterCacheDao clusterCacheDao;
     private final ContentRetriever contentRetriever;
-    private final LastContentPath lastContentPath;
 
     @Inject
-    public VerifierRangeLookup(LastContentPath lastContentPath,
+    public VerifierRangeLookup(ClusterCacheDao clusterCacheDao,
                                VerifierConfig verifierConfig,
                                ContentRetriever contentRetriever,
                                @Named("spokeWriteStoreConfig") SpokeStoreConfig spokeWriteStoreConfig) {
-        this.lastContentPath = lastContentPath;
+        this.clusterCacheDao = clusterCacheDao;
         this.verifierConfig = verifierConfig;
         this.contentRetriever = contentRetriever;
         this.spokeWriteStoreConfig = spokeWriteStoreConfig;
     }
 
     public VerifierRange getSingleVerifierRange(DateTime now, ChannelConfig channelConfig) {
-        final MinutePath spokeTtlTime = getSpokeTtlPath(now);
+        MinutePath spokeTtlTime = getSpokeTtlPath(now);
         now = contentRetriever.getLastUpdated(channelConfig.getDisplayName(), new MinutePath(now)).getTime();
-        final DateTime start = now.minusMinutes(1);
-        final MinutePath endPath = new MinutePath(start);
-        final MinutePath defaultStart = new MinutePath(start.minusMinutes(verifierConfig.getOffsetMinutes()));
-        MinutePath startPath = (MinutePath) lastContentPath.get(channelConfig.getDisplayName(), defaultStart, LAST_SINGLE_VERIFIED);
+        DateTime start = now.minusMinutes(1);
+        MinutePath endPath = new MinutePath(start);
+        MinutePath defaultStart = new MinutePath(start.minusMinutes(verifierConfig.getOffsetMinutes()));
+        MinutePath startPath = (MinutePath) clusterCacheDao.get(channelConfig.getDisplayName(), defaultStart, LAST_SINGLE_VERIFIED);
         if (channelConfig.isLive() && isStartTimeBeforeSpokeTtl(startPath, spokeTtlTime)) {
             startPath = spokeTtlTime;
         }

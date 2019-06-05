@@ -1,12 +1,13 @@
 package com.flightstats.hub.webhook;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flightstats.hub.cluster.ClusterCacheDao;
 import com.flightstats.hub.cluster.DistributedAsyncLockRunner;
 import com.flightstats.hub.cluster.DistributedLeaderLockManager;
-import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.cluster.Leadership;
 import com.flightstats.hub.cluster.LeadershipLock;
 import com.flightstats.hub.cluster.Lockable;
+import com.flightstats.hub.config.properties.LocalHostProperties;
 import com.flightstats.hub.config.properties.WebhookProperties;
 import com.flightstats.hub.dao.aws.ContentRetriever;
 import com.flightstats.hub.metrics.ActiveTraces;
@@ -41,12 +42,13 @@ class WebhookLeader implements Lockable {
     private final ContentRetriever contentRetriever;
     private final WebhookService webhookService;
     private final StatsdReporter statsdReporter;
-    private final LastContentPath lastContentPath;
+    private final ClusterCacheDao clusterCacheDao;
     private final WebhookContentPathSet webhookInProcess;
     private final WebhookErrorService webhookErrorService;
     private final WebhookStateReaper webhookStateReaper;
     private final DistributedLeaderLockManager lockManager;
     private final WebhookProperties webhookProperties;
+    private final LocalHostProperties localHostProperties;
     private final ObjectMapper objectMapper;
 
     private DistributedAsyncLockRunner distributedLockRunner;
@@ -61,22 +63,24 @@ class WebhookLeader implements Lockable {
     public WebhookLeader(ContentRetriever contentRetriever,
                          WebhookService webhookService,
                          StatsdReporter statsdReporter,
-                         LastContentPath lastContentPath,
+                         ClusterCacheDao clusterCacheDao,
                          WebhookContentPathSet webhookInProcess,
                          WebhookErrorService webhookErrorService,
                          WebhookStateReaper webhookStateReaper,
                          DistributedLeaderLockManager lockManager,
                          WebhookProperties webhookProperties,
+                         LocalHostProperties localHostProperties,
                          ObjectMapper objectMapper) {
         this.contentRetriever = contentRetriever;
         this.webhookService = webhookService;
         this.statsdReporter = statsdReporter;
-        this.lastContentPath = lastContentPath;
+        this.clusterCacheDao = clusterCacheDao;
         this.webhookInProcess = webhookInProcess;
         this.webhookErrorService = webhookErrorService;
         this.webhookStateReaper = webhookStateReaper;
         this.lockManager = lockManager;
         this.webhookProperties = webhookProperties;
+        this.localHostProperties = localHostProperties;
         this.objectMapper = objectMapper;
     }
 
@@ -122,8 +126,9 @@ class WebhookLeader implements Lockable {
                 .webhookErrorService(webhookErrorService)
                 .statsdReporter(statsdReporter)
                 .webhookProperties(webhookProperties)
+                .localHostProperties(localHostProperties)
                 .build();
-        webhookStrategy = WebhookStrategy.getStrategy(contentRetriever, lastContentPath, objectMapper, webhook);
+        webhookStrategy = WebhookStrategy.getStrategy(contentRetriever, clusterCacheDao, objectMapper, webhook);
         try {
             final ContentPath lastCompletedPath = webhookStrategy.getStartingPath();
             lastUpdated.set(lastCompletedPath);
@@ -254,7 +259,7 @@ class WebhookLeader implements Lockable {
                 if (shouldGoToNextItem) {
                     if (increaseLastUpdated(contentPath)) {
                         if (!deleteOnExit.get()) {
-                            lastContentPath.updateIncrease(contentPath, webhook.getName(), WEBHOOK_LAST_COMPLETED);
+                            clusterCacheDao.setIfNewer(contentPath, webhook.getName(), WEBHOOK_LAST_COMPLETED);
                         }
                     }
                 }

@@ -1,9 +1,13 @@
 package com.flightstats.hub.webhook;
 
+import com.flightstats.hub.config.properties.LocalHostProperties;
 import com.flightstats.hub.config.properties.PropertiesLoader;
 import com.flightstats.hub.config.properties.WebhookProperties;
 import com.flightstats.hub.metrics.StatsdReporter;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,18 +15,22 @@ import java.util.function.Predicate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
 
+@ExtendWith(MockitoExtension.class)
 class WebhookRetryerTest {
 
+    private WebhookProperties webhookProperties = new WebhookProperties(PropertiesLoader.getInstance());
     private List<Predicate<DeliveryAttempt>> giveUpIfs = new ArrayList<>();
     private List<Predicate<DeliveryAttempt>> tryLaterIfs = new ArrayList<>();
     private int connectTimeoutSeconds = 10;
     private int readTimeoutSeconds = 10;
-    private WebhookErrorService webhookErrorService = mock(WebhookErrorService.class);
-    private StatsdReporter statsdReporter = mock(StatsdReporter.class);
-    private WebhookProperties webhookProperties = new WebhookProperties(PropertiesLoader.getInstance());
 
+    @Mock
+    private WebhookErrorService webhookErrorService;
+    @Mock
+    private LocalHostProperties localHostProperties;
+    @Mock
+    private StatsdReporter statsdReporter;
 
     private final WebhookRetryer retryer = new WebhookRetryer(
             giveUpIfs,
@@ -31,6 +39,7 @@ class WebhookRetryerTest {
             readTimeoutSeconds,
             webhookErrorService,
             webhookProperties,
+            localHostProperties,
             statsdReporter);
 
     @Test

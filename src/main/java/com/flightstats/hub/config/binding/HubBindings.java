@@ -15,11 +15,12 @@ import com.flightstats.hub.cluster.Cluster;
 import com.flightstats.hub.cluster.CuratorCluster;
 import com.flightstats.hub.cluster.DecommissionCluster;
 import com.flightstats.hub.cluster.HubClusterRegister;
-import com.flightstats.hub.cluster.LastContentPath;
+import com.flightstats.hub.cluster.ClusterCacheDao;
 import com.flightstats.hub.cluster.SpokeDecommissionCluster;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.ZooKeeperState;
 import com.flightstats.hub.config.properties.AppProperties;
+import com.flightstats.hub.config.properties.LocalHostProperties;
 import com.flightstats.hub.config.properties.SpokeProperties;
 import com.flightstats.hub.config.properties.SystemProperties;
 import com.flightstats.hub.config.properties.ZooKeeperProperties;
@@ -35,8 +36,6 @@ import com.flightstats.hub.metrics.CustomMetricsLifecycle;
 import com.flightstats.hub.metrics.InfluxdbReporterLifecycle;
 import com.flightstats.hub.metrics.InfluxdbReporterProvider;
 import com.flightstats.hub.metrics.MetricRegistryProvider;
-import com.flightstats.hub.metrics.MetricsConfig;
-import com.flightstats.hub.metrics.MetricsConfigProvider;
 import com.flightstats.hub.metrics.StatsDFilter;
 import com.flightstats.hub.metrics.StatsDReporterLifecycle;
 import com.flightstats.hub.metrics.StatsDReporterProvider;
@@ -95,6 +94,7 @@ import static com.flightstats.hub.constant.NamedBinding.READ;
 import static com.flightstats.hub.constant.NamedBinding.READ_CACHE;
 import static com.flightstats.hub.constant.NamedBinding.S3_VERIFIER_CHANNEL_THREAD_POOL;
 import static com.flightstats.hub.constant.NamedBinding.S3_VERIFIER_QUERY_THREAD_POOL;
+import static com.flightstats.hub.constant.NamedBinding.WEBHOOK_CLIENT;
 import static com.flightstats.hub.constant.NamedBinding.WRITE;
 import static com.flightstats.hub.constant.NamedBinding.WRITE_CACHE;
 
@@ -162,7 +162,8 @@ public class HubBindings extends AbstractModule {
     @Provides
     public static Cluster buildHubCluster(CuratorFramework curator,
                                           AppProperties appProperties,
-                                          SpokeProperties spokeProperties) throws Exception {
+                                          SpokeProperties spokeProperties,
+                                          LocalHostProperties localHostProperties) throws Exception {
         return new CuratorCluster(curator,
                 "/HubCluster",
                 true,
@@ -170,7 +171,8 @@ public class HubBindings extends AbstractModule {
                 new DecommissionCluster() {
                 },
                 appProperties,
-                spokeProperties);
+                spokeProperties,
+                localHostProperties);
     }
 
     @Named("SpokeCuratorCluster")
@@ -193,7 +195,8 @@ public class HubBindings extends AbstractModule {
     public static Cluster buildSpokeCluster(CuratorFramework curator,
                                             SpokeDecommissionCluster spokeDecommissionCluster,
                                             AppProperties appProperties,
-                                            SpokeProperties spokeProperties) throws Exception {
+                                            SpokeProperties spokeProperties,
+                                            LocalHostProperties localHostProperties) throws Exception {
         return new CuratorCluster(
                 curator,
                 "/SpokeCluster",
@@ -201,7 +204,8 @@ public class HubBindings extends AbstractModule {
                 true,
                 spokeDecommissionCluster,
                 appProperties,
-                spokeProperties);
+                spokeProperties,
+                localHostProperties);
     }
 
     @Singleton
@@ -262,6 +266,7 @@ public class HubBindings extends AbstractModule {
 
     @Named(WRITE)
     @Provides
+    @Singleton
     public FileSpokeStore fileSpokeStoreWrite(SpokeProperties spokeProperties) {
         return new FileSpokeStore(
                 spokeProperties.getPath(SpokeStore.WRITE),
@@ -270,6 +275,7 @@ public class HubBindings extends AbstractModule {
 
     @Named(READ)
     @Provides
+    @Singleton
     public FileSpokeStore fileSpokeStoreRead(SpokeProperties spokeProperties) {
         return new FileSpokeStore(
                 spokeProperties.getPath(SpokeStore.READ),
@@ -277,7 +283,6 @@ public class HubBindings extends AbstractModule {
     }
 
     @Override
-
     protected void configure() {
 
         bind(SecretFilter.class).asEagerSingleton();
@@ -286,9 +291,12 @@ public class HubBindings extends AbstractModule {
         bind(ZooKeeperState.class).asEagerSingleton();
         bind(HubUtils.class).asEagerSingleton();
         bind(GCRunner.class).asEagerSingleton();
-        bind(LastContentPath.class).asEagerSingleton();
+        bind(ClusterCacheDao.class).asEagerSingleton();
         bind(NtpMonitor.class).asEagerSingleton();
         bind(StaleEntity.class).asEagerSingleton();
+
+        bind(Client.class).annotatedWith(Names.named(WEBHOOK_CLIENT))
+                .to(RestClient.createClient(5, 15, true, true).getClass());
 
         bind(FinalCheck.class).to(SpokeFinalCheck.class).asEagerSingleton();
 
@@ -316,8 +324,6 @@ public class HubBindings extends AbstractModule {
         bind(SpokeClusterRegister.class).asEagerSingleton();
         bind(PermissionsChecker.class).asEagerSingleton();
 
-        // metrics
-        bind(MetricsConfig.class).toProvider(MetricsConfigProvider.class).asEagerSingleton();
         bind(MetricRegistry.class).toProvider(MetricRegistryProvider.class).asEagerSingleton();
         bind(ScheduledReporter.class).toProvider(InfluxdbReporterProvider.class).asEagerSingleton();
         bind(InfluxdbReporterLifecycle.class).asEagerSingleton();
