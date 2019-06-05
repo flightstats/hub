@@ -47,7 +47,6 @@ class ChannelReplicationTest extends DependencyInjector {
                 .replicationSource(replicationSource).build();
         channelService.create(replicationSourceChannelName);
         channelService.createCustom(destination);
-
     }
 
     @AfterEach

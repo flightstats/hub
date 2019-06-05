@@ -8,18 +8,16 @@ import com.flightstats.hub.model.ChannelItem;
 import com.flightstats.hub.model.DatePathIndex;
 import com.flightstats.hub.model.Links;
 import com.flightstats.hub.model.Location;
-import com.flightstats.hub.model.TimeQuery;
+import com.flightstats.hub.model.TimeQueryResult;
 import com.google.inject.Inject;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.HttpUrl;
-import okhttp3.MediaType;
 import okhttp3.ResponseBody;
 import org.apache.commons.lang3.StringUtils;
 import retrofit2.Call;
 import retrofit2.Response;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -128,11 +126,11 @@ public class ChannelService {
     }
 
     @SneakyThrows
-    private Optional<TimeQuery> getItemByTimeFromLocation(String path, Location location) {
+    private Optional<TimeQueryResult> getItemByTimeFromLocation(String path, Location location) {
         List<String> pathParts = getPathParts(path);
         Map<String, String> keys = getPathKeys(pathParts);
         Map<DatePathIndex, Integer> dateParts = getPathDateParts(pathParts);
-        Call<TimeQuery> response = channelItemResourceClient.getItemsSecondsPath(keys.get("channelName"),
+        Call<TimeQueryResult> response = channelItemResourceClient.getItemsSecondsPath(keys.get("channelName"),
                 dateParts.get(DatePathIndex.YEAR),
                 dateParts.get(DatePathIndex.MONTH),
                 dateParts.get(DatePathIndex.DAY),
@@ -163,8 +161,8 @@ public class ChannelService {
     }
 
     public boolean confirmItemInCache(String itemUri) {
-        TimeQuery result = getItemByTimeFromLocation(itemUri, Location.CACHE)
-                .orElse(TimeQuery.builder()._links(Links.builder().uris(new String[] {}).build()).build());
+        TimeQueryResult result = getItemByTimeFromLocation(itemUri, Location.CACHE)
+                .orElse(TimeQueryResult.builder()._links(Links.builder().uris(new String[] {}).build()).build());
         List<String> uris = Arrays.asList(result.get_links().getUris());
         return uris.stream().anyMatch(str -> str.equals(itemUri));
     }
