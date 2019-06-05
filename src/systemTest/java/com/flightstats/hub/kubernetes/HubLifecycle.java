@@ -1,8 +1,5 @@
-package com.flightstats.hub.system.resilient;
+package com.flightstats.hub.kubernetes;
 
-import com.flightstats.hub.kubernetes.ReleaseDelete;
-import com.flightstats.hub.kubernetes.ReleaseInstall;
-import com.flightstats.hub.kubernetes.ServiceDelete;
 import com.flightstats.hub.system.config.DependencyInjector;
 import lombok.extern.slf4j.Slf4j;
 

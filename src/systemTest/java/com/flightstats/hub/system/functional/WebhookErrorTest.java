@@ -1,8 +1,9 @@
-package com.flightstats.hub.system.resilient;
+package com.flightstats.hub.system.functional;
 
 import com.flightstats.hub.model.Webhook;
 import javax.inject.Inject;
 import com.flightstats.hub.system.config.DependencyInjector;
+import com.flightstats.hub.kubernetes.HubLifecycle;
 import com.flightstats.hub.system.service.CallbackService;
 import com.flightstats.hub.system.service.ChannelService;
 import com.flightstats.hub.system.service.WebhookService;
@@ -14,7 +15,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.Optional;
 
