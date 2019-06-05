@@ -2,7 +2,6 @@ package com.flightstats.hub.system.functional.storage;
 
 import com.flightstats.hub.model.Channel;
 import com.flightstats.hub.model.ChannelStorage;
-import com.flightstats.hub.model.Location;
 import com.flightstats.hub.system.config.DependencyInjector;
 import com.flightstats.hub.system.service.ChannelService;
 import com.flightstats.hub.system.service.S3Service;
@@ -16,9 +15,6 @@ import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.util.concurrent.TimeUnit;
-
-import static org.junit.jupiter.api.Assertions.assertFalse;
 
 @Slf4j
 class SingleItemStorageTest extends DependencyInjector {
@@ -58,25 +54,10 @@ class SingleItemStorageTest extends DependencyInjector {
     }
 
     @Test
-    void singleChannelStorage_itemInCache_item() {
-        Awaitility.await()
-                .atMost(new Duration(20, TimeUnit.SECONDS))
-                .until(() -> channelService.confirmItemInCache(itemUri, Location.CACHE_WRITE));
-        // single items don't get added to the read cache
-        assertFalse(channelService.confirmItemInCache(itemUri, Location.CACHE_READ));
-    }
-
-    @Test
     void singleChannelStorage_itemInS3_item() {
         Awaitility.await()
                 .pollInterval(Duration.TEN_SECONDS)
                 .atMost(Duration.TWO_MINUTES)
                 .until(() -> s3Service.confirmItemsInS3(ChannelStorage.SINGLE, itemUri, "unusedForSingle"));
-
-        // expect item to be deleted from spoke write cache
-        Awaitility.await()
-                .pollInterval(Duration.TEN_SECONDS)
-                .atMost(new Duration(260, TimeUnit.SECONDS))
-                .until(() -> !channelService.confirmItemInCache(itemUri, Location.CACHE_WRITE));
     }
 }

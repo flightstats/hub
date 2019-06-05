@@ -29,7 +29,6 @@ import java.util.stream.Collectors;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Slf4j
 public class ChannelService {
