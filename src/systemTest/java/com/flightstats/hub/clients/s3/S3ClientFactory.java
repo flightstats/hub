@@ -51,7 +51,7 @@ public class S3ClientFactory {
         try {
             return new PropertiesCredentials(new File(s3CredentialPath));
         } catch (Exception e) {
-            log.info("could not load credentials for s3, using dummies. Reason: {}", e.getMessage());
+            log.warn("could not load credentials for s3, using dummies. Reason: {}", e.getMessage());
             return new BasicAWSCredentials("accessKey", "secretKey");
         }
     }

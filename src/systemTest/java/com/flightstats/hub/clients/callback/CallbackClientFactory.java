@@ -8,12 +8,11 @@ import javax.inject.Named;
 
 public class CallbackClientFactory {
 
-    private Retrofit retrofitHub;
+    private final Retrofit retrofitHub;
 
     @Inject
     public CallbackClientFactory(@Named("callback") Retrofit retrofitHub) {
         this.retrofitHub = retrofitHub;
-
     }
 
     public <T> T getCallbackClient(Class<T> serviceClass) {

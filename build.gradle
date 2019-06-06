@@ -65,7 +65,6 @@ task systemTest(type: Test, description: 'Runs the system tests.', group: 'Verif
     }
     testClassesDirs = sourceSets.systemTest.output.classesDirs
     classpath = sourceSets.systemTest.runtimeClasspath
-//    exclude  'com/flightstats/hub/system/functional/**'
     mustRunAfter tasks.test
 }
 

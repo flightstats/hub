@@ -10,7 +10,7 @@ import javax.inject.Named;
 @Slf4j
 public class HubClientFactory {
 
-    private Retrofit retrofitHub;
+    private final Retrofit retrofitHub;
 
     @Inject
     public HubClientFactory(@Named("hub") Retrofit retrofitHub) {
