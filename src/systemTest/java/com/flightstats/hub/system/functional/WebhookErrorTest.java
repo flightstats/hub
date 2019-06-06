@@ -144,6 +144,13 @@ class WebhookErrorTest extends DependencyInjector {
         // verify that no errors exist on the hub
         log.info("Verifying that no errors exist on the hub for webhook {}", webhookName);
         assertTrue(callbackService.isErrorListEventuallyCleared(webhookName));
+
+        log.info("deleting " + channelName + " and " + webhookName);
+        this.channelService.delete(channelName);
+        this.webhookService.delete(webhookName);
+
+        log.info("creating " + channelName + " and " + webhookName);
+        initChannelAndWebhook();
     }
 
     @AfterEach
