@@ -1,6 +1,6 @@
 package com.flightstats.hub.system.config;
 
-public class PropertyNames {
+public class PropertiesName {
     public static final String HELM_RELEASE_NAME = "helm.release.name";
     public static final String HELM_CHART_PATH = "helm.chart.path";
     public static final String HELM_RELEASE_DELETE = "helm.release.delete";

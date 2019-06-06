@@ -16,15 +16,17 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.RepeatedTest;
+import org.junit.jupiter.api.RepetitionInfo;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.TestInstance;
 
-import java.util.Comparator;
+import java.util.Collections;
 
 import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
-//@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class WebhookErrorTest extends DependencyInjector {
     @Inject
     private ChannelService channelService;
@@ -37,6 +39,7 @@ class WebhookErrorTest extends DependencyInjector {
     @Inject
     private ModelBuilder modelBuilder;
 
+    private String nameSeed;
     private Webhook webhook;
     private String channelName;
     private String webhookName;
@@ -44,14 +47,19 @@ class WebhookErrorTest extends DependencyInjector {
     @BeforeAll
     void hubSetup() {
         hubLifecycle.setup();
+        nameSeed = randomAlphaNumeric(5);
     }
 
     @BeforeEach
-    void before() {
-        this.channelName = randomAlphaNumeric(10);
-        this.webhookName = randomAlphaNumeric(10);
+    void beforeEach(TestInfo testInfo, RepetitionInfo repetitionInfo) {
+        String methodName = testInfo.getTestMethod().get().getName();
+        this.channelName = (nameSeed + "channel" + methodName).substring(0, 30);
+        this.webhookName = (nameSeed + "webhook" + methodName).substring(0, 30);
 
-        initChannelAndWebhook();
+        if (repetitionInfo.getCurrentRepetition() == 1) {
+            log.info("creating " + channelName + " and " + webhookName);
+            initChannelAndWebhook();
+        }
     }
 
     private Webhook buildWebhook() {
@@ -103,7 +111,7 @@ class WebhookErrorTest extends DependencyInjector {
         // add new item and wait to hear about it
         String thirdUrl = channelService.addItem(channelName, "{ name:\"item3\" }");
         log.info("Adding new item to channel {}", thirdUrl);
-        callbackService.awaitItemCountSentToWebhook(webhookName, 1);
+        assertTrue(callbackService.areItemsEventuallySentToWebhook(webhookName, Collections.singletonList(thirdUrl)));
 
         // assert has no errors at all
         assertTrue(callbackService.getCallbackErrorsInHub(webhookName).isEmpty());
@@ -131,20 +139,27 @@ class WebhookErrorTest extends DependencyInjector {
 
         // verify that you get the second item's data
         log.info("Verifying that data for 2nd item was sent {}", secondUrl);
-        String opt = callbackService.awaitItemCountSentToWebhook(webhookName, 2).stream()
-                .min(Comparator.reverseOrder())
-                .orElseThrow(AssertionError::new);
-        assertEquals(secondUrl, opt);
+        assertTrue(callbackService.areItemsEventuallySentToWebhook(webhookName, Collections.singletonList(secondUrl)));
 
         // verify that no errors exist on the hub
         log.info("Verifying that no errors exist on the hub for webhook {}", webhookName);
         assertTrue(callbackService.isErrorListEventuallyCleared(webhookName));
+
+        log.info("deleting " + channelName + " and " + webhookName);
+        this.channelService.delete(channelName);
+        this.webhookService.delete(webhookName);
+
+        log.info("creating " + channelName + " and " + webhookName);
+        initChannelAndWebhook();
     }
 
     @AfterEach
-    void after() {
-        this.channelService.delete(channelName);
-        this.webhookService.delete(webhookName);
+    void after(TestInfo testInfo, RepetitionInfo repetitionInfo) {
+        if (repetitionInfo.getCurrentRepetition() == repetitionInfo.getTotalRepetitions()) {
+            log.info("deleting " + channelName + " and " + webhookName);
+            this.channelService.delete(channelName);
+            this.webhookService.delete(webhookName);
+        }
     }
 
     @AfterAll

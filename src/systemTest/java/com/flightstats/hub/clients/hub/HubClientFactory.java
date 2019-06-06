@@ -1,10 +1,11 @@
 package com.flightstats.hub.clients.hub;
 
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.HttpUrl;
 import retrofit2.Retrofit;
+
+import javax.inject.Inject;
+import javax.inject.Named;
 
 @Slf4j
 public class HubClientFactory {

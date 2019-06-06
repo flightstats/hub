@@ -5,7 +5,6 @@ import com.flightstats.hub.model.ChannelStorage;
 import com.flightstats.hub.system.config.DependencyInjector;
 import com.flightstats.hub.system.service.ChannelService;
 import com.flightstats.hub.system.service.S3Service;
-import com.flightstats.hub.utility.StringHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.awaitility.Awaitility;
 import org.awaitility.Duration;
@@ -16,6 +15,8 @@ import org.junit.jupiter.api.Test;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
+
 @Slf4j
 class BatchItemStorageTest extends DependencyInjector {
     @Inject
@@ -24,15 +25,13 @@ class BatchItemStorageTest extends DependencyInjector {
     private String channelName;
     private String itemUri;
     @Inject
-    private StringHelper stringHelper;
-    @Inject
     private ChannelService channelService;
     @Inject
     private S3Service s3Service;
 
     @BeforeEach
     void before() {
-        channelName = stringHelper.randomAlphaNumeric(10);
+        channelName = randomAlphaNumeric(10);
         Channel channel = Channel.builder()
                 .storage(ChannelStorage.BATCH.toString())
                 .name(channelName).build();

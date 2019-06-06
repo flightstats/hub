@@ -9,7 +9,6 @@ import com.flightstats.hub.model.DatePathIndex;
 import com.flightstats.hub.model.Links;
 import com.flightstats.hub.model.Location;
 import com.flightstats.hub.model.TimeQuery;
-import com.google.inject.Inject;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.HttpUrl;
@@ -17,6 +16,7 @@ import org.apache.commons.lang3.StringUtils;
 import retrofit2.Call;
 import retrofit2.Response;
 
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -66,7 +66,7 @@ public class ChannelService {
     }
 
     public List<String> addItems(String channelName, Object data, int count) {
-        final List<String> channelItems = new ArrayList<>();
+        List<String> channelItems = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             channelItems.add(addItem(channelName, data));
         }

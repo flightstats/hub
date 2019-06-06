@@ -5,14 +5,13 @@ import com.flightstats.hub.clients.callback.CallbackResourceClient;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.WebhookErrors;
 import com.flightstats.hub.model.WebhookCallback;
-import com.google.inject.Inject;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.HttpUrl;
 import retrofit2.Call;
 import retrofit2.Response;
 
-import java.util.ArrayList;
+import javax.inject.Inject;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -77,24 +76,27 @@ public class CallbackService {
             await().atMost(90, TimeUnit.SECONDS).until(() -> getCallbackErrorsInHub(webhookName).isEmpty());
             return true;
         } catch (Exception e) {
-            log.error("Unable to see callback error on hub for {} due to {}", webhookName, e.getMessage());
+            log.error("Callback error on hub was never cleared for {} due to {}", webhookName, e.getMessage());
             return false;
         }
     }
 
-    public List<String> awaitItemCountSentToWebhook(String webhookName, int expectedItemCount) {
-        Call<WebhookCallback> call = callbackResourceClient.get(webhookName);
-        List<String> channelItemsPosted = new ArrayList<>();
-        await().atMost(90, TimeUnit.SECONDS).until(() -> {
-            Response<WebhookCallback> response = call.clone().execute();
-            channelItemsPosted.clear();
-            channelItemsPosted.addAll(Optional.ofNullable(response.body())
-                    .map(WebhookCallback::getUris)
-                    .orElse(emptyList()));
+    public boolean areItemsEventuallySentToWebhook(String webhookName, List<String> expectedChannelItems) {
+        try {
+            Call<WebhookCallback> call = callbackResourceClient.get(webhookName);
+            await().atMost(90, TimeUnit.SECONDS).until(() -> {
+                Response<WebhookCallback> response = call.clone().execute();
+                List<String> channelItemsPosted = Optional.ofNullable(response.body())
+                        .map(WebhookCallback::getUris)
+                        .orElse(emptyList());
 
-            return response.code() == OK.getStatusCode()
-                    && channelItemsPosted.size() == expectedItemCount;
-        });
-        return channelItemsPosted;
+                return response.code() == OK.getStatusCode() &&
+                        channelItemsPosted.containsAll(expectedChannelItems);
+            });
+            return true;
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return false;
+        }
     }
 }
