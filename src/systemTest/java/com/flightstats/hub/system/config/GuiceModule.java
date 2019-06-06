@@ -26,7 +26,6 @@ public class GuiceModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(String.class).annotatedWith(Names.named("test.data")).toInstance("TEST_DATA");
         bind(S3ClientFactory.class).asEagerSingleton();
         Properties properties = new PropertiesLoader().loadProperties(PROPERTY_FILE_NAME);
         Names.bindProperties(binder(), properties);

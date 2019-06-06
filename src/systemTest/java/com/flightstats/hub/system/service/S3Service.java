@@ -21,6 +21,11 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 import java.util.zip.ZipInputStream;
 
+import static com.flightstats.hub.system.config.PropertiesName.HELM_RELEASE_NAME;
+import static com.flightstats.hub.system.config.PropertiesName.HUB_URL_TEMPLATE;
+import static com.flightstats.hub.system.config.PropertiesName.S3_BUCKET_TEMPLATE;
+import static com.flightstats.hub.system.config.PropertiesName.TEST_DATA;
+
 @Slf4j
 public class S3Service {
     private final String testData;
@@ -29,10 +34,14 @@ public class S3Service {
     private final String hubBaseUrl;
 
     @Inject
-    public S3Service(AmazonS3 s3Client, @Named("hub.url") String hubBaseUrl, @Named("s3.bucket.name") String bucketName, @Named("test.data") String testData) {
+    public S3Service(AmazonS3 s3Client,
+                     @Named(HUB_URL_TEMPLATE) String hubBaseUrl,
+                     @Named(S3_BUCKET_TEMPLATE) String bucketName,
+                     @Named(TEST_DATA) String testData,
+                     @Named(HELM_RELEASE_NAME) String releaseName) {
         this.s3Client = s3Client;
-        this.hubBaseUrl = hubBaseUrl;
-        this.bucketName = bucketName;
+        this.hubBaseUrl = String.format(hubBaseUrl, releaseName);
+        this.bucketName = String.format(bucketName, releaseName);
         this.testData = testData;
     }
 

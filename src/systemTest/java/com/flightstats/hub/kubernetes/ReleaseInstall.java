@@ -51,4 +51,3 @@ public class ReleaseInstall {
         log.info("Hub release {} install completed in {} ms", releaseName, (System.currentTimeMillis() - start));
     }
 }
-

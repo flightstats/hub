@@ -8,8 +8,6 @@ import lombok.SneakyThrows;
 import org.microbean.helm.ReleaseManager;
 import org.microbean.helm.Tiller;
 
-import java.util.concurrent.Future;
-
 public class ReleaseStatus {
     @SneakyThrows
     public boolean releaseExists(String releaseName) {

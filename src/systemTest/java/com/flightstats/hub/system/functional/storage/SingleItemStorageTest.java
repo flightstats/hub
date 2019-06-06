@@ -1,14 +1,17 @@
 package com.flightstats.hub.system.functional.storage;
 
+import com.flightstats.hub.kubernetes.HubLifecycle;
 import com.flightstats.hub.model.Channel;
 import com.flightstats.hub.model.ChannelStorage;
 import com.flightstats.hub.system.config.DependencyInjector;
 import com.flightstats.hub.system.service.ChannelService;
 import com.flightstats.hub.system.service.S3Service;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.awaitility.Awaitility;
 import org.awaitility.Duration;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -16,12 +19,13 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
+import static com.flightstats.hub.system.config.PropertiesName.TEST_DATA;
 
 @Slf4j
 class SingleItemStorageTest extends DependencyInjector {
 
     @Inject
-    @Named("test.data")
+    @Named(TEST_DATA)
     private String testData;
     private String channelName;
     private String itemUri;
@@ -29,6 +33,14 @@ class SingleItemStorageTest extends DependencyInjector {
     private ChannelService channelService;
     @Inject
     private S3Service s3Service;
+    @Inject
+    private HubLifecycle hubLifecycle;
+
+    @BeforeAll
+    void helmSetup() { hubLifecycle.setup();}
+
+    @AfterAll
+    void helmCleanup() { hubLifecycle.cleanup(); }
 
     @BeforeEach
     void before() {
