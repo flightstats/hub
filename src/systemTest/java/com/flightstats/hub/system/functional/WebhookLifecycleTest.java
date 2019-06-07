@@ -75,7 +75,7 @@ class WebhookLifecycleTest extends DependencyInjector {
 
     @Test
     @SneakyThrows
-    void testWebhookWithStartItem() {
+    void testWebhookWithStartItemAndParallelCalls() {
         String data = "{\"key1\": \"value1\", \"key2\":\"value2\"}";
 
         channelResource.create(channelName);
@@ -91,7 +91,7 @@ class WebhookLifecycleTest extends DependencyInjector {
 
     @Test
     @SneakyThrows
-    void testWebhookWithStartItem_expectItemsInOrder() {
+    void testWebhookWithStartItemAndASerialWebhook_expectItemsInOrder() {
         String data = "{\"city\": \"portland\", \"state\":\"or\"}";
 
         channelResource.create(channelName);
@@ -103,6 +103,7 @@ class WebhookLifecycleTest extends DependencyInjector {
         webhookResource.insertAndVerify(webhook);
         List<String> channelItemsExpected = channelItems.subList(5, channelItems.size());
         assertTrue(callbackResource.areItemsEventuallySentToWebhook(webhookName, channelItemsExpected));
+        assertEquals(channelItemsExpected, callbackResource.getItemsReceivedByCallback(webhookName));
     }
 
     @AfterEach
