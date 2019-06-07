@@ -40,7 +40,7 @@ public class HelmProperties {
     }
 
     public boolean isHubInstallClustered() {
-        return isClusteredHubInstall;
+        return isClusteredHubInstall && isHubInstalledByHelm();
     }
 
     public boolean isZookeeperInstalledByHelm() {
