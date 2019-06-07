@@ -6,6 +6,7 @@ import io.fabric8.kubernetes.api.model.ServiceList;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
+import io.fabric8.kubernetes.client.dsl.ServiceResource;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
@@ -13,13 +14,12 @@ import java.util.List;
 
 @Slf4j
 public class ServiceDelete {
-
     @SneakyThrows
     public void execute(String releaseName, List<String> serviceNames) {
 
         try (DefaultKubernetesClient client = new DefaultKubernetesClient()) {
 
-            MixedOperation<Service, ServiceList, DoneableService, Resource<Service, DoneableService>> serviceResource = client.inNamespace(releaseName).services();
+            MixedOperation<Service, ServiceList, DoneableService, ServiceResource<Service, DoneableService>> serviceResource = client.inNamespace(releaseName).services();
             int serviceCount = serviceResource.list().getItems().size();
 
             List<Service> services = serviceResource.list().getItems();

@@ -1,27 +1,16 @@
 package com.flightstats.hub.kubernetes;
 
 import com.flightstats.hub.system.config.DependencyInjector;
-import com.flightstats.hub.system.config.PropertiesName;
+import com.flightstats.hub.system.config.HelmProperties;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.util.List;
 
 @Slf4j
 public class HubLifecycle extends DependencyInjector {
-
     @Inject
-    @Named(PropertiesName.HELM_RELEASE_NAME)
-    private String releaseName;
-
-    @Inject
-    @Named(PropertiesName.HELM_CHART_PATH)
-    private String chartPath;
-
-    @Inject
-    @Named(PropertiesName.HELM_RELEASE_DELETE)
-    private boolean isHelmReleaseDeletable;
+    private HelmProperties helmProperties;
 
     @Inject
     private ReleaseInstall releaseInstall;
@@ -36,23 +25,27 @@ public class HubLifecycle extends DependencyInjector {
     private ServiceDelete serviceDelete;
 
     public void setup() {
-        if (releaseStatus.releaseExists(releaseName)) {
+        if (releaseStatus.releaseExists(getReleaseName())) {
             log.info("Release is already installed; skipping");
         } else {
-            releaseInstall.install(releaseName, chartPath);
+            releaseInstall.install();
         }
     }
 
     public void serviceDelete(List<String> serviceName) {
-        serviceDelete.execute(releaseName, serviceName);
+        serviceDelete.execute(getReleaseName(), serviceName);
     }
 
     public void cleanup() {
-        if (isHelmReleaseDeletable) {
-            releaseDelete.delete(releaseName);
+        if (helmProperties.isReleaseDeletable()) {
+            releaseDelete.delete(getReleaseName());
         } else {
             log.info("skipping release deletion");
         }
+    }
+
+    private String getReleaseName() {
+        return helmProperties.getReleaseName();
     }
 
 }

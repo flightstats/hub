@@ -9,14 +9,15 @@ import java.util.Properties;
 import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
 
 @Slf4j
-public class PropertiesLoader {
-    public Properties loadProperties(String propertiesFileName) {
+class PropertiesLoader {
+    Properties loadProperties(String propertiesFileName) {
         Properties properties = new Properties();
         try (InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(propertiesFileName)) {
             properties.load(inputStream);
 
             properties.setProperty(PropertiesName.HELM_RELEASE_NAME, getHelmReleaseName(properties));
             properties.setProperty(PropertiesName.HELM_RELEASE_DELETE, isHelmReleaseDeletable(properties));
+            properties.setProperty(PropertiesName.HELM_CLUSTERED_HUB, isHelmHubClustered(properties));
 
         } catch (IOException e) {
             log.error("Property file {} not found", propertiesFileName, e);
@@ -33,4 +34,7 @@ public class PropertiesLoader {
         return properties.getProperty(PropertiesName.HELM_RELEASE_DELETE, "true");
     }
 
+    private String isHelmHubClustered(Properties properties) {
+        return properties.getProperty(PropertiesName.HELM_CLUSTERED_HUB, "true");
+    }
 }

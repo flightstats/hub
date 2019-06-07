@@ -10,6 +10,7 @@ if (project.ext.properties.get('isDevBuild') == null) {
 
 repositories {
     mavenCentral()
+    maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
 }
 
 sourceSets {
@@ -180,7 +181,7 @@ dependencies {
     systemTestImplementation 'org.junit.jupiter:junit-jupiter:5.4.0'
 
     systemTestCompile('io.netty:netty-tcnative-boringssl-static:2.0.6.Final:' + osdetector.classifier)
-    systemTestCompile('org.microbean:microbean-helm:2.8.2.1.0.5') {
+    systemTestCompile('org.microbean:microbean-helm:2.12.3.0.0.1-SNAPSHOT') {
         exclude group: 'io.netty', module: 'netty-tcnative-boringssl-static'
     }
 
