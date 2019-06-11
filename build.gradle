@@ -15,8 +15,8 @@ repositories {
 sourceSets {
     systemTest {
         java {
-            compileClasspath += main.output + test.output
-            runtimeClasspath += main.output + test.output
+            compileClasspath += main.output
+            runtimeClasspath += main.output
             srcDir file('src/systemTest/java')
         }
         resources.srcDir file('src/systemTest/resources')
@@ -25,7 +25,6 @@ sourceSets {
 
 configurations {
     systemTestCompile.extendsFrom testCompile
-    systemTestRuntime.extendsFrom testRuntime
 }
 
 sourceCompatibility = JavaVersion.VERSION_1_8
@@ -59,13 +58,18 @@ test {
 }
 
 task systemTest(type: Test, description: 'Runs the system tests.', group: 'Verification') {
+    // Retrieve properties passed in via -P that coincide with system tests. After "systemTest.", names should match those
+    // found in system-test-hub.properties
+    systemProperties project.getProperties().findAll { property ->
+        property.getKey().startsWith("systemTest.")
+    }
+
     useJUnitPlatform()
     testLogging {
         events "failed"
     }
     testClassesDirs = sourceSets.systemTest.output.classesDirs
     classpath = sourceSets.systemTest.runtimeClasspath
-    mustRunAfter tasks.test
 }
 
 wrapper {

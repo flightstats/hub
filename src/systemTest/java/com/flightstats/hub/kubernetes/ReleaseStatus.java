@@ -1,7 +1,5 @@
 package com.flightstats.hub.kubernetes;
 
-import hapi.services.tiller.Tiller.GetReleaseStatusRequest;
-import hapi.services.tiller.Tiller.GetReleaseStatusResponse;
 import hapi.services.tiller.Tiller.ListReleasesRequest;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import lombok.SneakyThrows;

@@ -13,7 +13,6 @@ import java.util.List;
 
 @Slf4j
 public class ServiceDelete {
-
     @SneakyThrows
     public void execute(String releaseName, List<String> serviceNames) {
 

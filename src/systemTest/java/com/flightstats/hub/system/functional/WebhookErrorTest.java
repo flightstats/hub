@@ -145,18 +145,18 @@ class WebhookErrorTest extends DependencyInjector {
         log.info("Verifying that no errors exist on the hub for webhook {}", webhookName);
         assertTrue(callbackService.isErrorListEventuallyCleared(webhookName));
 
-        log.info("deleting " + channelName + " and " + webhookName);
+        log.info("deleting {} and {}", channelName, webhookName);
         this.channelService.delete(channelName);
         this.webhookService.delete(webhookName);
 
-        log.info("creating " + channelName + " and " + webhookName);
+        log.info("creating {} and {}", channelName, webhookName);
         initChannelAndWebhook();
     }
 
     @AfterEach
     void after(TestInfo testInfo, RepetitionInfo repetitionInfo) {
         if (repetitionInfo.getCurrentRepetition() == repetitionInfo.getTotalRepetitions()) {
-            log.info("deleting " + channelName + " and " + webhookName);
+            log.info("deleting {} and {}", channelName, webhookName);
             this.channelService.delete(channelName);
             this.webhookService.delete(webhookName);
         }

@@ -40,10 +40,9 @@ public class GuiceModule extends AbstractModule {
     @Singleton
     @Named("hub")
     @Provides
-    public Retrofit retrofitHub(@Named(PropertiesName.HUB_URL_TEMPLATE) String hubBaseUrl,
-                                @Named(PropertiesName.HELM_RELEASE_NAME) String releaseName) {
+    public Retrofit retrofitHub(ServiceProperties serviceProperties) {
         return new Retrofit.Builder()
-                .baseUrl(String.format(hubBaseUrl, releaseName))
+                .baseUrl(serviceProperties.getHubUrl())
                 .addConverterFactory(ScalarsConverterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(new OkHttpClient.Builder().build())
@@ -53,10 +52,9 @@ public class GuiceModule extends AbstractModule {
     @Singleton
     @Named("callback")
     @Provides
-    public Retrofit retrofitCallback(@Named(PropertiesName.CALLBACK_URL_TEMPLATE) String callbackUrl,
-                                     @Named(PropertiesName.HELM_RELEASE_NAME) String releaseName) {
+    public Retrofit retrofitCallback(ServiceProperties serviceProperties) {
         return new Retrofit.Builder()
-                .baseUrl(String.format(callbackUrl, releaseName))
+                .baseUrl(serviceProperties.getCallbackUrl())
                 .addConverterFactory(ScalarsConverterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(new OkHttpClient.Builder().build())

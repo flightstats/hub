@@ -83,20 +83,30 @@ public class CallbackService {
 
     public boolean areItemsEventuallySentToWebhook(String webhookName, List<String> expectedChannelItems) {
         try {
-            Call<WebhookCallback> call = callbackResourceClient.get(webhookName);
-            await().atMost(90, TimeUnit.SECONDS).until(() -> {
-                Response<WebhookCallback> response = call.clone().execute();
-                List<String> channelItemsPosted = Optional.ofNullable(response.body())
-                        .map(WebhookCallback::getUris)
-                        .orElse(emptyList());
-
-                return response.code() == OK.getStatusCode() &&
-                        channelItemsPosted.containsAll(expectedChannelItems);
-            });
+            await().atMost(90, TimeUnit.SECONDS).until(() ->
+                getItemsReceivedByCallback(webhookName).containsAll(expectedChannelItems));
             return true;
         } catch (Exception e) {
             log.error(e.getMessage());
             return false;
+        }
+    }
+
+    public List<String> getItemsReceivedByCallback(String webhookName) {
+        return getReceivedItemsResponse(webhookName)
+                .filter(response -> response.code() == OK.getStatusCode())
+                .flatMap(response -> Optional.ofNullable(response.body()))
+                .map(WebhookCallback::getUris)
+                .orElse(emptyList());
+    }
+
+    private Optional<Response<WebhookCallback>> getReceivedItemsResponse(String webhookName) {
+        try {
+            Call<WebhookCallback> call = callbackResourceClient.get(webhookName);
+            return Optional.of(call.clone().execute());
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return Optional.empty();
         }
     }
 }
