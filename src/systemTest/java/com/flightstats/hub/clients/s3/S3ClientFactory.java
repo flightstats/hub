@@ -6,6 +6,7 @@ import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSCredentialsProviderChain;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.auth.PropertiesCredentials;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
@@ -57,6 +58,6 @@ public class S3ClientFactory {
     }
 
     private AWSCredentialsProviderChain getAwsCredentials() {
-        return new AWSCredentialsProviderChain(new AWSStaticCredentialsProvider(loadTestCredentials()));
+        return new AWSCredentialsProviderChain(new DefaultAWSCredentialsProviderChain(), new AWSStaticCredentialsProvider(loadTestCredentials()));
     }
 }
