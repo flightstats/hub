@@ -8,7 +8,7 @@ import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectInputStream;
 
 import com.amazonaws.util.IOUtils;
-import com.flightstats.hub.model.ChannelStorage;
+import com.flightstats.hub.model.ChannelType;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
@@ -105,11 +105,11 @@ public class S3Service {
                 .replace(hubBaseUrl + "/channel/", "") : "";
     }
 
-    public boolean confirmItemsInS3(ChannelStorage storage, String fullPath, String channelName) {
+    public boolean confirmItemsInS3(ChannelType storage, String fullPath, String channelName) {
         try {
             String path;
             byte[] result;
-            if (storage.equals(ChannelStorage.SINGLE)) {
+            if (storage.equals(ChannelType.SINGLE)) {
                 path = formatS3SingleItemPath(fullPath);
                 result = getS3Items(path);
             } else {

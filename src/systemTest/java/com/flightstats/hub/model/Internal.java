@@ -5,6 +5,6 @@ import lombok.Value;
 
 @Builder
 @Value
-public class TimeQuery {
-    private Links _links;
+public class Internal {
+    String[] servers;
 }

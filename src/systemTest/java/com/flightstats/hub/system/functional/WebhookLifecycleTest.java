@@ -1,22 +1,23 @@
 package com.flightstats.hub.system.functional;
 
+import com.flightstats.hub.kubernetes.HubLifecycleSuiteExtension;
 import com.flightstats.hub.model.Webhook;
 import com.flightstats.hub.system.ModelBuilder;
-import com.flightstats.hub.system.config.DependencyInjector;
 import com.flightstats.hub.kubernetes.HubLifecycle;
 import com.flightstats.hub.system.service.CallbackService;
 import com.flightstats.hub.system.service.ChannelService;
 import com.flightstats.hub.system.service.WebhookService;
 
-import javax.inject.Inject;
+
+import com.google.inject.Injector;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.List;
 
@@ -25,30 +26,26 @@ import static junit.framework.Assert.assertTrue;
 
 @Slf4j
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class WebhookLifecycleTest extends DependencyInjector {
-    @Inject
+@ExtendWith(HubLifecycleSuiteExtension.class)
+class WebhookLifecycleTest {
     private CallbackService callbackResource;
-    @Inject
     private ChannelService channelResource;
-    @Inject
     private WebhookService webhookResource;
-    @Inject
     private HubLifecycle hubLifecycle;
-    @Inject
     private ModelBuilder modelBuilder;
 
     private String channelName;
     private String webhookName;
 
-    @BeforeAll
-    void hubSetup() {
-        hubLifecycle.setup();
-    }
-
     @BeforeEach
-    void before() {
+    void before(Injector injector) {
         this.channelName = randomAlphaNumeric(10);
         this.webhookName = randomAlphaNumeric(10);
+        this.callbackResource = injector.getInstance(CallbackService.class);
+        this.channelResource = injector.getInstance(ChannelService.class);
+        this.webhookResource = injector.getInstance(WebhookService.class);
+        this.hubLifecycle = injector.getInstance(HubLifecycle.class);
+        this.modelBuilder = injector.getInstance(ModelBuilder.class);
     }
 
     private Webhook buildWebhook() {
@@ -79,10 +76,7 @@ class WebhookLifecycleTest extends DependencyInjector {
 
         channelResource.create(channelName);
         List<String> channelItems = channelResource.addItems(channelName, data, 10);
-
-        Webhook webhook = buildWebhook().
-                withStartItem(channelItems.get(4)).
-                withParallelCalls(2);
+        Webhook webhook = buildWebhook().withStartItem(channelItems.get(4)).withParallelCalls(2);
         webhookResource.insertAndVerify(webhook);
         List<String> channelItemsExpected = channelItems.subList(5, channelItems.size());
         assertTrue(callbackResource.areItemsEventuallySentToWebhook(webhookName, channelItemsExpected));
@@ -95,10 +89,7 @@ class WebhookLifecycleTest extends DependencyInjector {
 
         channelResource.create(channelName);
         List<String> channelItems = channelResource.addItems(channelName, data, 10);
-
-        Webhook webhook = buildWebhook().
-                withStartItem(channelItems.get(4)).
-                withParallelCalls(1);
+        Webhook webhook = buildWebhook().withStartItem(channelItems.get(4)).withParallelCalls(1);
         webhookResource.insertAndVerify(webhook);
         List<String> channelItemsExpected = channelItems.subList(5, channelItems.size());
         assertTrue(callbackResource.areItemsEventuallySentToWebhook(webhookName, channelItemsExpected));

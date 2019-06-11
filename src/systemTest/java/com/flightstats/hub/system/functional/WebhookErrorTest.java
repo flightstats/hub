@@ -155,7 +155,7 @@ class WebhookErrorTest extends DependencyInjector {
 
     @AfterEach
     void after(TestInfo testInfo, RepetitionInfo repetitionInfo) {
-        if (repetitionInfo.getCurrentRepetition() == repetitionInfo.getTotalRepetitions()) {
+        if (repetitionInfo != null && repetitionInfo.getCurrentRepetition() == repetitionInfo.getTotalRepetitions()) {
             log.info("deleting " + channelName + " and " + webhookName);
             this.channelService.delete(channelName);
             this.webhookService.delete(webhookName);

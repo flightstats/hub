@@ -12,4 +12,5 @@ public class PropertiesName {
     public static final String S3_REGION = "s3.region";
     public static final String S3_CREDENTIALS_PATH = "s3.credentials.path";
     public static final String S3_BUCKET_TEMPLATE = "s3.bucket.name";
+    public static final String HUB_NODE_COUNT = "hub.node.count";
 }
