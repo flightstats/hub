@@ -5,9 +5,10 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class WebhookCallbackRequest {
+public class WebhookCallback {
     //webhook name
     private String name;
     private List<String> uris;
     private String type;
+
 }
