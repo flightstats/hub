@@ -54,14 +54,16 @@ public class S3Service {
     @SneakyThrows
     private byte[] getS3Items(String path) {
         GetObjectRequest getObjectRequest = new GetObjectRequest(bucketName, path);
-        S3Object obj = s3Client.getObject(getObjectRequest);
-        ObjectMetadata metadata = s3Client.getObjectMetadata(bucketName, path);
-        try (S3ObjectInputStream content = obj.getObjectContent()) {
-            if (metadata.getUserMetadata().containsKey("compressed")) {
-                return handleZip(content);
+        try (S3Object obj = s3Client.getObject(getObjectRequest)) {
+            ObjectMetadata metadata = s3Client.getObjectMetadata(bucketName, path);
+            try (S3ObjectInputStream content = obj.getObjectContent()) {
+                if (metadata.getUserMetadata().containsKey("compressed")) {
+                    return handleZip(content);
+                }
+                return IOUtils.toByteArray(content);
             }
-            return IOUtils.toByteArray(content);
         }
+
     }
 
     @SneakyThrows

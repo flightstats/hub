@@ -43,7 +43,7 @@ class StorageTest extends DependencyInjector {
                     ChannelConfig channel = ChannelConfig.builder()
                             .name(channelName)
                             .storage(type.toString()).build();
-                    channelService.createCustom(channel);
+                    channelService.create(channel);
                     itemUri = channelService.addItem(channelName, TEST_DATA);
                     return itemUri != null;
                 });
@@ -56,7 +56,7 @@ class StorageTest extends DependencyInjector {
 
     @ParameterizedTest
     @EnumSource(ChannelType.class)
-    void bothChannelStorage_itemInSpoke_item(ChannelType type) {
+    void bothChannelStorage_itemStoredInChannel_item(ChannelType type) {
         createAndAddItemsToChannel(type);
         Awaitility.await()
                 .atMost(Duration.TEN_SECONDS)

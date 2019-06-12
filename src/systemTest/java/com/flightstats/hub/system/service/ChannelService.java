@@ -53,13 +53,13 @@ public class ChannelService {
     }
 
     @SneakyThrows
-    public void create(String channelName) {
+    public void createWithDefaults(String channelName) {
         log.info("Create channel name {} ", channelName);
-        createCustom(ChannelConfig.builder().name(channelName).owner(CHANNEL_OWNER).build());
+        create(ChannelConfig.builder().name(channelName).owner(CHANNEL_OWNER).build());
     }
 
     @SneakyThrows
-    public void createCustom(ChannelConfig channel) {
+    public void create(ChannelConfig channel) {
         Call<Object> call = channelResourceClient.create(channel.toBuilder().owner(CHANNEL_OWNER).build());
         Response<Object> response = call.execute();
         log.info("channel creation response {} ", response);

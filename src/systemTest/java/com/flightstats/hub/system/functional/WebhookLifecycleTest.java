@@ -65,7 +65,7 @@ class WebhookLifecycleTest extends DependencyInjector {
     void testWebhookWithNoStartItem() {
         String data = "{\"fn\": \"first\", \"ln\":\"last\"}";
 
-        channelResource.create(channelName);
+        channelResource.createWithDefaults(channelName);
 
         Webhook webhook = buildWebhook().withParallelCalls(2);
         webhookResource.insertAndVerify(webhook);
@@ -79,7 +79,7 @@ class WebhookLifecycleTest extends DependencyInjector {
     void testWebhookWithStartItemAndParallelCalls() {
         String data = "{\"key1\": \"value1\", \"key2\":\"value2\"}";
 
-        channelResource.create(channelName);
+        channelResource.createWithDefaults(channelName);
         List<String> channelItems = channelResource.addItems(channelName, data, 10);
         Webhook webhook = buildWebhook().withStartItem(channelItems.get(4)).withParallelCalls(2);
         webhookResource.insertAndVerify(webhook);
@@ -92,7 +92,7 @@ class WebhookLifecycleTest extends DependencyInjector {
     void testWebhookWithStartItemAndASerialWebhook_expectItemsInOrder() {
         String data = "{\"city\": \"portland\", \"state\":\"or\"}";
 
-        channelResource.create(channelName);
+        channelResource.createWithDefaults(channelName);
         List<String> channelItems = channelResource.addItems(channelName, data, 10);
         Webhook webhook = buildWebhook().withStartItem(channelItems.get(4)).withParallelCalls(1);
         webhookResource.insertAndVerify(webhook);

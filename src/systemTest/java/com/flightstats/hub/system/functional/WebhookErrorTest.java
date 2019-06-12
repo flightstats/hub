@@ -70,7 +70,7 @@ class WebhookErrorTest extends DependencyInjector {
     }
 
     private void initChannelAndWebhook() {
-        channelService.create(channelName);
+        channelService.createWithDefaults(channelName);
 
         createWebhook();
     }
