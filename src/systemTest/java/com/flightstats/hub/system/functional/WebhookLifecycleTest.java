@@ -2,13 +2,14 @@ package com.flightstats.hub.system.functional;
 
 import com.flightstats.hub.model.Webhook;
 import com.flightstats.hub.system.ModelBuilder;
-import com.flightstats.hub.system.config.DependencyInjector;
 import com.flightstats.hub.kubernetes.HubLifecycle;
+import com.flightstats.hub.system.config.DependencyInjector;
 import com.flightstats.hub.system.service.CallbackService;
 import com.flightstats.hub.system.service.ChannelService;
 import com.flightstats.hub.system.service.WebhookService;
 
-import javax.inject.Inject;
+
+import com.google.inject.Inject;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterAll;
@@ -80,10 +81,7 @@ class WebhookLifecycleTest extends DependencyInjector {
 
         channelResource.create(channelName);
         List<String> channelItems = channelResource.addItems(channelName, data, 10);
-
-        Webhook webhook = buildWebhook().
-                withStartItem(channelItems.get(4)).
-                withParallelCalls(2);
+        Webhook webhook = buildWebhook().withStartItem(channelItems.get(4)).withParallelCalls(2);
         webhookResource.insertAndVerify(webhook);
         List<String> channelItemsExpected = channelItems.subList(5, channelItems.size());
         assertTrue(callbackResource.areItemsEventuallySentToWebhook(webhookName, channelItemsExpected));
@@ -96,10 +94,7 @@ class WebhookLifecycleTest extends DependencyInjector {
 
         channelResource.create(channelName);
         List<String> channelItems = channelResource.addItems(channelName, data, 10);
-
-        Webhook webhook = buildWebhook().
-                withStartItem(channelItems.get(4)).
-                withParallelCalls(1);
+        Webhook webhook = buildWebhook().withStartItem(channelItems.get(4)).withParallelCalls(1);
         webhookResource.insertAndVerify(webhook);
         List<String> channelItemsExpected = channelItems.subList(5, channelItems.size());
         assertTrue(callbackResource.areItemsEventuallySentToWebhook(webhookName, channelItemsExpected));

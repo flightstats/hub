@@ -5,7 +5,6 @@ public class PropertiesName {
     public static final String HELM_CHART_PATH = "helm.chart.path";
     public static final String HELM_CLUSTERED_HUB = "helm.release.hub.isClustered";
     public static final String HELM_RELEASE_DELETE = "helm.release.delete";
-    public static final String TEST_DATA = "test.data.default";
 
     public static final String HUB_URL_TEMPLATE = "hub.url";
     public static final String CALLBACK_URL_TEMPLATE = "callback.url";

@@ -3,12 +3,12 @@ package com.flightstats.hub.system.service;
 import com.flightstats.hub.clients.hub.channel.ChannelItemResourceClient;
 import com.flightstats.hub.clients.hub.channel.ChannelResourceClient;
 import com.flightstats.hub.clients.hub.HubClientFactory;
-import com.flightstats.hub.model.Channel;
 import com.flightstats.hub.model.ChannelItem;
 import com.flightstats.hub.model.DatePathIndex;
 import com.flightstats.hub.model.Links;
 import com.flightstats.hub.model.Location;
-import com.flightstats.hub.model.TimeQuery;
+import com.flightstats.hub.model.TimeQueryResult;
+import com.flightstats.hub.model.ChannelConfig;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.HttpUrl;
@@ -32,6 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @Slf4j
 public class ChannelService {
 
+    private static final String CHANNEL_OWNER = "system-tests";
     private ChannelItemResourceClient channelItemResourceClient;
     private ChannelResourceClient channelResourceClient;
     private HttpUrl hubBaseUrl;
@@ -54,12 +55,12 @@ public class ChannelService {
     @SneakyThrows
     public void create(String channelName) {
         log.info("Create channel name {} ", channelName);
-        createCustom(Channel.builder().name(channelName).build());
+        createCustom(ChannelConfig.builder().name(channelName).owner(CHANNEL_OWNER).build());
     }
 
     @SneakyThrows
-    public void createCustom(Channel channel) {
-        Call<Object> call = channelResourceClient.create(channel);
+    public void createCustom(ChannelConfig channel) {
+        Call<Object> call = channelResourceClient.create(channel.toBuilder().owner(CHANNEL_OWNER).build());
         Response<Object> response = call.execute();
         log.info("channel creation response {} ", response);
         assertEquals(CREATED.getStatusCode(), response.code());
@@ -114,11 +115,11 @@ public class ChannelService {
     }
 
     @SneakyThrows
-    private Optional<TimeQuery> getItemByTimeFromLocation(String path, Location location) {
+    private Optional<TimeQueryResult> getItemByTimeFromLocation(String path, Location location) {
         List<String> pathParts = getPathParts(path);
         Map<String, String> keys = getPathKeys(pathParts);
         Map<DatePathIndex, Integer> dateParts = getPathDateParts(pathParts);
-        Call<TimeQuery> response = channelItemResourceClient.getItemsSecondsPath(keys.get("channelName"),
+        Call<TimeQueryResult> response = channelItemResourceClient.getItemsSecondsPath(keys.get("channelName"),
                 dateParts.get(DatePathIndex.YEAR),
                 dateParts.get(DatePathIndex.MONTH),
                 dateParts.get(DatePathIndex.DAY),
@@ -126,8 +127,8 @@ public class ChannelService {
                 dateParts.get(DatePathIndex.MINUTE),
                 dateParts.get(DatePathIndex.SECONDS),
                 location);
-        Optional<TimeQuery> op = Optional.ofNullable(response.execute().body());
-        op.filter(o -> o.get_links().getUris() != null);
+        Optional<TimeQueryResult> op = Optional.ofNullable(response.execute().body());
+        op.filter(o -> o.get_links() != null);
         return op;
     }
 
@@ -150,8 +151,8 @@ public class ChannelService {
     }
 
     public boolean confirmItemInCache(String itemUri, Location location) {
-        TimeQuery result = getItemByTimeFromLocation(itemUri, location)
-                .orElse(TimeQuery.builder()._links(Links.builder().uris(new String[] {}).build()).build());
+        TimeQueryResult result = getItemByTimeFromLocation(itemUri, location)
+                .orElse(TimeQueryResult.builder()._links(Links.builder().uris(new String[]{}).build()).build());
         List<String> uris = Arrays.asList(result.get_links().getUris());
         return uris.stream().anyMatch(str -> str.equals(itemUri));
     }
