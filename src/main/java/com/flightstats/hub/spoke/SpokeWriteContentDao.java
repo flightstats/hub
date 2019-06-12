@@ -14,10 +14,10 @@ import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.TimeUtil;
-import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 
+import javax.inject.Inject;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
@@ -33,18 +33,21 @@ import java.util.TreeSet;
 @Slf4j
 public class SpokeWriteContentDao implements ContentDao {
 
-    private ClusterWriteSpoke clusterWriteSpoke;
-    private SpokeChronologyStore chronoStore;
+    private final ClusterWriteSpoke clusterWriteSpoke;
+    private final SpokeChronologyStore chronoStore;
     private final SpokeProperties spokeProperties;
+    private final SpokeContentDao spokeContentDao;
 
     @Inject
     public SpokeWriteContentDao(
             ClusterWriteSpoke clusterWriteSpoke,
             SpokeChronologyStore chronoStore,
-            SpokeProperties spokeProperties) {
+            SpokeProperties spokeProperties,
+            SpokeContentDao spokeContentDao) {
         this.clusterWriteSpoke = clusterWriteSpoke;
         this.chronoStore = chronoStore;
         this.spokeProperties = spokeProperties;
+        this.spokeContentDao = spokeContentDao;
     }
 
     @Override
@@ -59,7 +62,7 @@ public class SpokeWriteContentDao implements ContentDao {
 
     @Override
     public SortedSet<ContentKey> insert(BulkContent bulkContent) {
-        return SpokeContentDao.insert(bulkContent, (baos) -> {
+        return spokeContentDao.insert(bulkContent, (baos) -> {
             String channel = bulkContent.getChannel();
             return clusterWriteSpoke.insertToWriteCluster(channel, baos.toByteArray(), "bulkKey", channel);
         });

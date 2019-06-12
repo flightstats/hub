@@ -1,30 +1,46 @@
 package com.flightstats.hub.cluster;
 
-import com.flightstats.hub.config.properties.PropertiesLoader;
 import com.flightstats.hub.config.properties.ZooKeeperProperties;
 import com.flightstats.hub.test.IntegrationTestSetup;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.api.CuratorEvent;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class WatchManagerTest {
 
-    private static WatchManager watchManager;
+    private WatchManager watchManager;
+    private CuratorFramework curator;
+    @Mock
+    private ZooKeeperProperties zooKeeperProperties;
 
     @BeforeAll
-    static void setUpClass() {
-        CuratorFramework curator = IntegrationTestSetup.run().getZookeeperClient();
-        watchManager = new WatchManager(curator,
-                new ZooKeeperProperties(PropertiesLoader.getInstance()));
+    void setupServer() {
+        curator = IntegrationTestSetup.run().getZookeeperClient();
+    }
+
+    @BeforeEach
+    void setup(){
+        when(zooKeeperProperties.getWatchManagerThreadCount()).thenReturn(10);
+
+        watchManager = new WatchManager(curator, zooKeeperProperties);
         watchManager.addCuratorListener();
     }
+
 
     @Test
     void testCallback() throws Exception {

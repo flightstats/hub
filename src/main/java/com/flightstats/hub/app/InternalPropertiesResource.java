@@ -21,12 +21,15 @@ public class InternalPropertiesResource {
 
     private final InternalTracesResource internalTracesResource;
     private final SecretFilter secretFilter;
+    private final PropertiesLoader propertiesLoader;
 
     @Inject
     public InternalPropertiesResource(InternalTracesResource internalTracesResource,
-                                      SecretFilter secretFilter) {
+                                      SecretFilter secretFilter,
+                                      PropertiesLoader propertiesLoader) {
         this.internalTracesResource = internalTracesResource;
         this.secretFilter = secretFilter;
+        this.propertiesLoader = propertiesLoader;
     }
 
     @GET
@@ -35,7 +38,7 @@ public class InternalPropertiesResource {
         ObjectNode root = internalTracesResource.serverAndServers("/internal/properties");
         try {
             ObjectNode propertyNode = root.putObject("properties");
-            Properties properties = PropertiesLoader.getInstance().getProperties();
+            Properties properties = propertiesLoader.getProperties();
             for (Object key : new TreeSet<>(properties.keySet())) {
                 String value = properties.get(key).toString();
                 String possiblySensitiveValue = secretFilter.redact(key.toString(), value);

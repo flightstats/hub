@@ -31,8 +31,12 @@ public class ZooKeeperProperties {
         return propertiesLoader.getProperty("watchManager.threads", 10);
     }
 
-    public String getZookeeperRunMode() {
-        return propertiesLoader.getProperty("runSingleZookeeperInternally", "");
+    public boolean isSingleServerModeEnabled() {
+        String runMode = propertiesLoader.getProperty("runSingleZookeeperInternally", "");
+        if ("singleNode".equals(runMode)) {
+            return true;
+        }
+        return false;
     }
 
 }

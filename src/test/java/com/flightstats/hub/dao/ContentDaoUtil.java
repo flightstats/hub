@@ -9,13 +9,13 @@ import com.flightstats.hub.model.DirectionQuery;
 import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.StringUtils;
 import com.flightstats.hub.util.TimeUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.ByteArrayInputStream;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -27,14 +27,34 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@Slf4j
+@ExtendWith(MockitoExtension.class)
 public class ContentDaoUtil {
-
-    private final static Logger logger = LoggerFactory.getLogger(ContentDaoUtil.class);
 
     private ContentDao contentDao;
 
     public ContentDaoUtil(ContentDao contentDao) {
         this.contentDao = contentDao;
+    }
+
+    public static Content createContent(ContentKey key) {
+        return Content.builder()
+                .withContentKey(key)
+                .withContentType("stuff")
+                .withData(key.toString().getBytes())
+                .build();
+    }
+
+    public static Content createContent() {
+        return createContent(new ContentKey());
+    }
+
+    public static void compare(Content content, Content read, byte[] expected) {
+        assertEquals(content.getContentKey().get(), read.getContentKey().get());
+        assertEquals(content.getContentType(), read.getContentType());
+        byte[] data = read.getData();
+        assertArrayEquals(expected, data);
+        assertEquals(content, read);
     }
 
     public void testWriteRead(Content content) throws Exception {
@@ -63,7 +83,7 @@ public class ContentDaoUtil {
         assertArrayEquals(data.getBytes(), found.getData());
     }
 
-    public void testQueryRangeDay() throws Exception {
+    public void testQueryRangeDay() {
         String channel = "testQueryRangeDay" + StringUtils.randomAlphaNumeric(20);
         List<ContentKey> keys = new ArrayList<>();
         DateTime start = new DateTime(2014, 11, 14, 0, 0, DateTimeZone.UTC);
@@ -82,7 +102,7 @@ public class ContentDaoUtil {
         assertTrue(keys.containsAll(found));
     }
 
-    public void testQueryRangeHour() throws Exception {
+    public void testQueryRangeHour() {
         String channel = "testQueryRangeHour" + StringUtils.randomAlphaNumeric(20);
         List<ContentKey> keys = new ArrayList<>();
         DateTime start = new DateTime(2014, 11, 14, 14, 0, DateTimeZone.UTC);
@@ -96,7 +116,7 @@ public class ContentDaoUtil {
         assertTrue(keys.containsAll(found));
     }
 
-    public void testQueryRangeMinute() throws Exception {
+    public void testQueryRangeMinute() {
         String channel = "testQueryRangeMinute" + StringUtils.randomAlphaNumeric(20);
         List<ContentKey> keys = new ArrayList<>();
         DateTime start = new DateTime(2014, 11, 14, 15, 27, DateTimeZone.UTC);
@@ -115,7 +135,7 @@ public class ContentDaoUtil {
         assertTrue(keys.containsAll(found));
     }
 
-    public void testQuery15Minutes() throws Exception {
+    public void testQuery15Minutes() {
         String channel = "testQuery15Minutes" + StringUtils.randomAlphaNumeric(20);
         DateTime start = new DateTime(2014, 11, 14, 14, 0, DateTimeZone.UTC);
 
@@ -148,7 +168,7 @@ public class ContentDaoUtil {
 
     }
 
-    private void create10ItemsBy6Minutes(String channel, DateTime start, List<ContentKey> keys) throws Exception {
+    private void create10ItemsBy6Minutes(String channel, DateTime start, List<ContentKey> keys) {
         for (int i = 0; i < 60; i += 6) {
             ContentKey key = new ContentKey(start.plusMinutes(i), "A" + i);
             keys.add(key);
@@ -157,43 +177,42 @@ public class ContentDaoUtil {
         }
     }
 
-
-    public void testPreviousFromBulk_Issue753() throws Exception {
+    public void testPreviousFromBulk_Issue753() {
         String channel = "testPreviousFromBulk_Issue753" + StringUtils.randomAlphaNumeric(20);
         LinkedList<ContentKey> keys = new LinkedList<>();
         DateTime start = TimeUtil.now();
         for (int i = 0; i < 7; i++) {
             ContentKey key = new ContentKey(start, "A" + i);
             keys.add(key);
-            logger.info("writing " + key);
+            log.info("writing " + key);
             contentDao.insert(channel, createContent(key));
         }
         query(channel, keys, 6, 6, false, keys.getLast());
     }
 
-    public void testDirectionQueryTTL() throws Exception {
+    public void testDirectionQueryTTL() {
         String channel = "testDirectionQueryTTL" + StringUtils.randomAlphaNumeric(20);
         List<ContentKey> keys = new ArrayList<>();
         DateTime start = TimeUtil.now();
         create7Items(channel, keys, start);
-        logger.info("wrote {} {}", keys.size(), keys);
-        query(channel, keys, 20, 3, true, start.minusHours(2));
-        query(channel, keys, 20, 4, true, start.minusHours(4));
-        query(channel, keys, 20, 4, true, start.minusHours(5));
-        query(channel, keys, 20, 6, false, start.plusMinutes(1));
-        query(channel, keys, 1, 1, true, start.minusDays(10));
+        log.info("wrote {} {}", keys.size(), keys);
+        query(channel, keys, 20, 7, true, start.minusHours(1));
+        query(channel, keys, 20, 7, true, start.minusHours(2));
+        query(channel, keys, 20, 1, true, start.minusMinutes(5));
+        query(channel, keys, 20, 4, true, start.minusMinutes(8));
+        query(channel, keys, 20, 6, true, start.minusMinutes(10));
     }
 
-    private void create7Items(String channel, List<ContentKey> keys, DateTime start) throws Exception {
+    private void create7Items(String channel, List<ContentKey> keys, DateTime start) {
         for (int i = 0; i < 7; i++) {
-            ContentKey key = new ContentKey(start.minusHours(i), "A" + i);
+            ContentKey key = new ContentKey(start.minusMinutes(i + 5), "A" + i);
             keys.add(key);
-            logger.info("writing " + key);
+            log.info("writing " + key);
             contentDao.insert(channel, createContent(key));
         }
     }
 
-    public void testDirectionQuery() throws Exception {
+    public void testDirectionQuery() {
         String channel = "testDirectionQuery" + StringUtils.randomAlphaNumeric(20);
         List<ContentKey> keys = new ArrayList<>();
         DateTime start = TimeUtil.now();
@@ -201,45 +220,45 @@ public class ContentDaoUtil {
         for (int i = 0; i < 7; i++) {
             ContentKey key = new ContentKey(start.minusDays(i), "B" + i);
             keys.add(key);
-            logger.info("writing " + key);
+            log.info("writing " + key);
             contentDao.insert(channel, createContent(key));
         }
-        logger.info("wrote {} {}", keys.size(), keys);
-        query(channel, keys, 20, 4, true, start.minusHours(2));
-        query(channel, keys, 20, 6, true, start.minusHours(4));
+        log.info("wrote {} {}", keys.size(), keys);
+        query(channel, keys, 20, 8, true, start.minusHours(1));
+        query(channel, keys, 20, 8, true, start.minusHours(2));
         query(channel, keys, 20, 13, true, start.minusDays(5));
         query(channel, keys, 20, 14, false, start.plusMinutes(1));
         query(channel, keys, 5, 5, false, start);
         query(channel, keys, 20, 5, false, start.minusDays(1));
     }
 
-    public void testEarliest() throws Exception {
+    public void testEarliest() {
         String channel = "testEarliest" + StringUtils.randomAlphaNumeric(20);
         List<ContentKey> keys = new ArrayList<>();
         DateTime start = TimeUtil.now();
         for (int i = 0; i < 60; i++) {
             ContentKey key = new ContentKey(start.minusMinutes(i), "A" + i);
             keys.add(key);
-            logger.info("writing " + key);
+            log.info("writing " + key);
             contentDao.insert(channel, createContent(key));
         }
-        logger.info("wrote {} {}", keys.size(), keys);
+        log.info("wrote {} {}", keys.size(), keys);
         query(channel, keys, 60, 60, true, start.minusHours(1));
         query(channel, keys, 60, 16, true, start.minusMinutes(15));
         query(channel, keys, 60, 60, true, start.minusDays(20));
     }
 
-    public void testDeleteMaxItems() throws Exception {
+    public void testDeleteMaxItems() {
         String channel = "testDeleteMaxItems" + StringUtils.randomAlphaNumeric(20);
         List<ContentKey> keys = new ArrayList<>();
         DateTime start = TimeUtil.now();
         for (int i = 0; i < 5; i++) {
             ContentKey key = new ContentKey(start.minusHours(i), "A" + i);
             keys.add(key);
-            logger.info("writing " + key);
+            log.info("writing " + key);
             contentDao.insert(channel, createContent(key));
         }
-        logger.info("wrote {} {}", keys.size(), keys);
+        log.info("wrote {} {}", keys.size(), keys);
         query(channel, keys, 5, 5, true, start.minusDays(1));
         contentDao.deleteBefore(channel, keys.get(2));
         query(channel, keys, 5, 3, true, start.minusDays(1));
@@ -266,35 +285,15 @@ public class ContentDaoUtil {
                 .channelStable(TimeUtil.now())
                 .build();
         Collection<ContentKey> found = contentDao.query(query);
-        logger.info("startKey {}", startKey);
-        logger.info("keys {}", keys);
-        logger.info("found {}", found);
-        ActiveTraces.getLocal().log(logger);
+        log.info("startKey {}", startKey);
+        log.info("keys {}", keys);
+        log.info("found {}", found);
+        ActiveTraces.getLocal().log(log);
         assertEquals(expected, found.size());
         assertTrue(keys.containsAll(found));
     }
 
-    public static Content createContent(ContentKey key) {
-        return Content.builder()
-                .withContentKey(key)
-                .withContentType("stuff")
-                .withData(key.toString().getBytes())
-                .build();
-    }
-
-    public static Content createContent() {
-        return createContent(new ContentKey());
-    }
-
-    public static void compare(Content content, Content read, byte[] expected) {
-        assertEquals(content.getContentKey().get(), read.getContentKey().get());
-        assertEquals(content.getContentType(), read.getContentType());
-        byte[] data = read.getData();
-        assertArrayEquals(expected, data);
-        assertEquals(content, read);
-    }
-
-    public void testBulkWrite() throws Exception {
+    public void testBulkWrite() {
         String channel = "testBulkWrite";
         BulkContent bulkContent = BulkContent.builder()
                 .channel(channel)
@@ -330,7 +329,6 @@ public class ContentDaoUtil {
         List<ContentKey> keys = new ArrayList<>();
         DateTime start = TimeUtil.now().minusHours(10);
         query(channel, keys, 1, 0, false, start);
-
 
     }
 }

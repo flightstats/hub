@@ -33,7 +33,7 @@ public class Content implements Serializable {
     private long contentLength;
     private InputStream stream;
     private byte[] data;
-    private Optional<ContentKey> contentKey = Optional.empty();
+    private Optional<ContentKey> contentKey;
     //size is the number of bytes in the raw, uncompressed item
     private Long size;
     private transient boolean isLarge;
@@ -267,10 +267,6 @@ public class Content implements Serializable {
             return this.contentType;
         }
 
-        public long getContentLength() {
-            return this.contentLength;
-        }
-
         public long getSize() {
             return this.size;
         }
@@ -283,8 +279,5 @@ public class Content implements Serializable {
             return this.stream;
         }
 
-        public int getThreads() {
-            return this.threads;
-        }
     }
 }

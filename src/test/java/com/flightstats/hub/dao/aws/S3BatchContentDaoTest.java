@@ -1,7 +1,6 @@
 package com.flightstats.hub.dao.aws;
 
 import com.flightstats.hub.channel.ZipBulkBuilder;
-import com.flightstats.hub.config.properties.PropertiesLoader;
 import com.flightstats.hub.dao.ContentDaoUtil;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.model.ChannelConfig;
@@ -16,7 +15,11 @@ import com.flightstats.hub.util.TimeUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -32,15 +35,21 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@ExtendWith(MockitoExtension.class)
 class S3BatchContentDaoTest {
 
-    private static S3BatchContentDao contentDao;
+    private S3BatchContentDao contentDao;
+    private ZipBulkBuilder zipBulkBuilder;
 
     @BeforeAll
-    static void setUpClass() {
-        PropertiesLoader.getInstance().load("useDefault");
-        PropertiesLoader.getInstance().setProperty("s3.maxQueryItems", "5");
+    void setupServer() {
         contentDao = IntegrationTestSetup.run().getInstance(S3BatchContentDao.class);
+    }
+
+    @BeforeEach
+    void setup(){
+        zipBulkBuilder = new ZipBulkBuilder();
     }
 
     @Test
@@ -86,7 +95,7 @@ class S3BatchContentDaoTest {
         ZipOutputStream output = new ZipOutputStream(baos);
         for (ContentKey key : keys) {
             Content content = ContentDaoUtil.createContent(key);
-            ZipBulkBuilder.createZipEntry(output, content);
+            zipBulkBuilder.createZipEntry(output, content);
         }
         output.close();
 

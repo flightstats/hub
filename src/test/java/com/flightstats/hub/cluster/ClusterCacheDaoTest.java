@@ -1,7 +1,6 @@
 package com.flightstats.hub.cluster;
 
 import com.flightstats.hub.config.properties.AppProperties;
-import com.flightstats.hub.config.properties.PropertiesLoader;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.ContentPath;
 import com.flightstats.hub.model.MinutePath;
@@ -10,26 +9,29 @@ import org.apache.curator.framework.CuratorFramework;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+@ExtendWith(MockitoExtension.class)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ClusterCacheDaoTest {
 
     private static final String BASE_PATH = "/GroupLastCompleted/";
     private static CuratorFramework curator;
     private ClusterCacheDao clusterCacheDao;
+    @Mock
+    private AppProperties appProperties;
 
     @BeforeAll
-    static void setUpClass() {
+    void setUpClass() {
         curator = IntegrationTestSetup.run().getZookeeperClient();
-    }
-
-    @BeforeEach
-    void setUp() {
-        clusterCacheDao = new ClusterCacheDao(curator, new AppProperties(PropertiesLoader.getInstance()));
+        clusterCacheDao = new ClusterCacheDao(curator, appProperties);
     }
 
     @Test
