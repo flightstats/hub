@@ -58,10 +58,10 @@ test {
 }
 
 task systemTest(type: Test, description: 'Runs the system tests.', group: 'Verification') {
-    // Retrieve properties passed in via -P that coincide with system tests. After "systemTest.", names should match those
+    // Retrieve properties passed in via -D that coincide with system tests. After "systemTest.", names should match those
     // found in system-test-hub.properties
-    systemProperties project.getProperties().findAll { property ->
-        property.getKey().startsWith("systemTest.")
+    systemProperties System.properties.findAll { property ->
+        property.key.startsWith("systemTest.")
     }
 
     useJUnitPlatform()
