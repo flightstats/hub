@@ -3,6 +3,7 @@ package com.flightstats.hub.system.functional;
 import com.flightstats.hub.kubernetes.HubLifecycleSuiteExtension;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ChannelType;
+import com.flightstats.hub.system.config.GuiceInjectionExtension;
 import com.flightstats.hub.system.service.ChannelService;
 import com.flightstats.hub.system.service.S3Service;
 import com.google.inject.Injector;
@@ -18,7 +19,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
 
 @Slf4j
-@ExtendWith(HubLifecycleSuiteExtension.class)
+@ExtendWith({ GuiceInjectionExtension.class, HubLifecycleSuiteExtension.class})
 class StorageTest {
     private static final String TEST_DATA = "TEST_DATA";
     private String channelName;

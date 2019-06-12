@@ -7,47 +7,49 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.jupiter.api.extension.ParameterContext;
-import org.junit.jupiter.api.extension.ParameterResolver;
+
+import java.lang.reflect.AnnotatedElement;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.extension.ExtensionContext.Namespace;
 import static org.junit.jupiter.api.extension.ExtensionContext.Store.CloseableResource;
 
-public class HubLifecycleSuiteExtension implements BeforeAllCallback, AfterAllCallback, ParameterResolver {
+public class HubLifecycleSuiteExtension implements BeforeAllCallback, AfterAllCallback {
+    private static final Namespace NAMESPACE = ExtensionContext.Namespace.create("SYSTEM_TEST");
 
-    private final HubLifecycle hubLifecycle;
-    private final Injector injector;
-    private static final Namespace namespace = ExtensionContext.Namespace.create("SYSTEM_TEST");
+    private Optional<Injector> getOrCreateInjector(ExtensionContext context) {
+        if (!context.getElement().isPresent()) {
+            return Optional.empty();
+        }
 
-    public HubLifecycleSuiteExtension() {
-        injector = Guice.createInjector(new GuiceModule());
-        injector.injectMembers(this);
-        this.hubLifecycle = injector.getInstance(HubLifecycle.class);
+        AnnotatedElement element = context.getElement().get();
+        ExtensionContext.Store store = context.getStore(NAMESPACE);
+
+        Injector injector = store.get(element, Injector.class);
+        if (injector == null) {
+            injector = Guice.createInjector(new GuiceModule());
+            store.put(element, injector);
+        }
+
+        return Optional.of(injector);
     }
 
-    @Override
-    @SneakyThrows
-    public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) {
-        return parameterContext.getParameter().getType().equals(Injector.class);
-    }
-
-    @Override
-    @SneakyThrows
-    public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) {
-        return injector;
+    private HubLifecycle getHubLifecycle(ExtensionContext context) {
+        return getOrCreateInjector(context)
+                .map(injector -> injector.getInstance(HubLifecycle.class))
+                .orElseThrow(IllegalStateException::new);
     }
 
     @Override
     @SneakyThrows
     public void beforeAll(ExtensionContext context) {
-        context.getRoot().getStore(namespace).getOrComputeIfAbsent("setupFactory", k -> setupFactory(), HubLifecycleSetup.class);
-        hubLifecycle.setup();
+        context.getRoot().getStore(NAMESPACE).getOrComputeIfAbsent("setupFactory", k -> setupFactory(context), HubLifecycleSetup.class);
     }
 
     @Override
     @SneakyThrows
     public void afterAll(ExtensionContext context) {
-        context.getRoot().getStore(namespace).getOrComputeIfAbsent("teardownFactory", k -> teardownFactory(), HubLifecycleTeardown.class);
+        context.getRoot().getStore(NAMESPACE).getOrComputeIfAbsent("teardownFactory", k -> teardownFactory(context), HubLifecycleTeardown.class);
     }
 
     static class HubLifecycleSetup implements CloseableResource {
@@ -72,11 +74,11 @@ public class HubLifecycleSuiteExtension implements BeforeAllCallback, AfterAllCa
         }
     }
 
-    private HubLifecycleTeardown teardownFactory() {
-        return new HubLifecycleTeardown(hubLifecycle);
+    private HubLifecycleTeardown teardownFactory(ExtensionContext context) {
+        return new HubLifecycleTeardown(getHubLifecycle(context));
     }
 
-    private HubLifecycleSetup setupFactory() {
-        return new HubLifecycleSetup(hubLifecycle);
+    private HubLifecycleSetup setupFactory(ExtensionContext context) {
+        return new HubLifecycleSetup(getHubLifecycle(context));
     }
 }

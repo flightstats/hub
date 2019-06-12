@@ -4,6 +4,8 @@ import com.flightstats.hub.kubernetes.HubLifecycleSuiteExtension;
 import com.flightstats.hub.model.Webhook;
 import com.flightstats.hub.system.ModelBuilder;
 import com.flightstats.hub.kubernetes.HubLifecycle;
+import com.flightstats.hub.system.config.DependencyInjector;
+import com.flightstats.hub.system.config.GuiceInjectionExtension;
 import com.flightstats.hub.system.service.CallbackService;
 import com.flightstats.hub.system.service.ChannelService;
 import com.flightstats.hub.system.service.WebhookService;
@@ -14,6 +16,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -26,8 +29,8 @@ import static junit.framework.Assert.assertTrue;
 
 @Slf4j
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@ExtendWith(HubLifecycleSuiteExtension.class)
-class WebhookLifecycleTest {
+@ExtendWith({ GuiceInjectionExtension.class, HubLifecycleSuiteExtension.class})
+class WebhookLifecycleTest extends DependencyInjector {
     private CallbackService callbackResource;
     private ChannelService channelResource;
     private WebhookService webhookResource;
