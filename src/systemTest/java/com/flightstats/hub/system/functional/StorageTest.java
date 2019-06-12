@@ -60,7 +60,7 @@ class StorageTest extends DependencyInjector {
         createAndAddItemsToChannel(type);
         Awaitility.await()
                 .atMost(Duration.TEN_SECONDS)
-                .until(() -> channelService.getItem(itemUri).equals(TEST_DATA));
+                .until(() -> channelService.getItem(itemUri).orElse("").equals(TEST_DATA));
     }
 
     @ParameterizedTest

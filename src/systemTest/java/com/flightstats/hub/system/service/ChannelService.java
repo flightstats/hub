@@ -4,7 +4,6 @@ import com.flightstats.hub.clients.hub.channel.ChannelItemResourceClient;
 import com.flightstats.hub.clients.hub.channel.ChannelResourceClient;
 import com.flightstats.hub.clients.hub.HubClientFactory;
 import com.flightstats.hub.model.ChannelItem;
-import com.flightstats.hub.model.DatePathIndex;
 import com.flightstats.hub.model.Links;
 import com.flightstats.hub.model.Location;
 import com.flightstats.hub.model.TimeQueryResult;
@@ -12,18 +11,14 @@ import com.flightstats.hub.model.ChannelConfig;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.HttpUrl;
-import org.apache.commons.lang3.StringUtils;
 import retrofit2.Call;
 import retrofit2.Response;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -86,46 +81,17 @@ public class ChannelService {
         return response.body().get_links().getSelf().getHref();
     }
 
-    private List<String> getPathParts(String path) {
-        String itemPath = path.replace(hubBaseUrl.toString() + "channel/", "");
-        return Arrays.asList(itemPath.split("/"));
-    }
-
-    private Map<DatePathIndex, Integer> getPathDateParts(List<String> pathParts) {
-        Map<DatePathIndex, Integer> dateValues = new HashMap<>();
-        List<Integer> dateParts = pathParts.subList(1, pathParts.size() -1).stream()
-                .filter(StringUtils::isNotBlank)
-                .map(Integer::parseInt)
-                .collect(Collectors.toList());
-        dateValues.put(DatePathIndex.YEAR, dateParts.get(DatePathIndex.YEAR.getIndex()));
-        dateValues.put(DatePathIndex.MONTH, dateParts.get(DatePathIndex.MONTH.getIndex()));
-        dateValues.put(DatePathIndex.DAY, dateParts.get(DatePathIndex.DAY.getIndex()));
-        dateValues.put(DatePathIndex.HOUR, dateParts.get(DatePathIndex.HOUR.getIndex()));
-        dateValues.put(DatePathIndex.MINUTE, dateParts.get(DatePathIndex.MINUTE.getIndex()));
-        dateValues.put(DatePathIndex.SECONDS, dateParts.get(DatePathIndex.SECONDS.getIndex()));
-        dateValues.put(DatePathIndex.MILLIS, dateParts.get(DatePathIndex.MILLIS.getIndex()));
-        return dateValues;
-    }
-
-    private Map<String, String> getPathKeys(List<String> pathParts) {
-        Map<String, String> keys = new HashMap<>();
-        keys.put("channelName", pathParts.get(0));
-        keys.put("key", pathParts.get(pathParts.size() - 1));
-        return keys;
-    }
-
     @SneakyThrows
     private Optional<TimeQueryResult> getItemByTimeFromLocation(String path, Location location) {
-        List<String> pathParts = getPathParts(path);
-        Map<String, String> keys = getPathKeys(pathParts);
-        Map<DatePathIndex, Integer> dateParts = getPathDateParts(pathParts);
-        Call<TimeQueryResult> response = channelItemResourceClient.getItemsSecondsPath(keys.get("channelName"),
-                dateParts.get(DatePathIndex.YEAR),
-                dateParts.get(DatePathIndex.MONTH),
-                dateParts.get(DatePathIndex.DAY),
-                dateParts.get(DatePathIndex.HOUR),
-                dateParts.get(DatePathIndex.MINUTE),
-                dateParts.get(DatePathIndex.SECONDS),
+        FormattedStringHelper helper = new FormattedStringHelper().withExtractedUrlPaths(path, hubBaseUrl.toString());
+        Call<TimeQueryResult> response = channelItemResourceClient.getItemsSecondsPath(
+                helper.getChannelName(),
+                helper.getYear(),
+                helper.getMonth(),
+                helper.getDay(),
+                helper.getHour(),
+                helper.getMinute(),
+                helper.getSecond(),
                 location);
         Optional<TimeQueryResult> op = Optional.ofNullable(response.execute().body());
         op.filter(o -> o.get_links() != null);
@@ -133,21 +99,19 @@ public class ChannelService {
     }
 
     @SneakyThrows
-    public Object getItem(String path) {
-        List<String> pathParts = getPathParts(path);
-        Map<String, String> keys = getPathKeys(pathParts);
-        Map<DatePathIndex, Integer> dateParts = getPathDateParts(pathParts);
+    public Optional<Object> getItem(String path) {
+        FormattedStringHelper helper = new FormattedStringHelper().withExtractedUrlPaths(path, hubBaseUrl.toString());
         Object response = channelItemResourceClient.get(
-                keys.get("channelName"),
-                dateParts.get(DatePathIndex.YEAR),
-                dateParts.get(DatePathIndex.MONTH),
-                dateParts.get(DatePathIndex.DAY),
-                dateParts.get(DatePathIndex.HOUR),
-                dateParts.get(DatePathIndex.MINUTE),
-                dateParts.get(DatePathIndex.SECONDS),
-                dateParts.get(DatePathIndex.MILLIS),
-                keys.get("key"));
-        return ((Call) response).execute().body();
+                helper.getChannelName(),
+                helper.getYear(),
+                helper.getMonth(),
+                helper.getDay(),
+                helper.getHour(),
+                helper.getMinute(),
+                helper.getSecond(),
+                helper.getMillis(),
+                helper.getHashKey());
+        return Optional.ofNullable(((Call) response).execute().body());
     }
 
     public boolean confirmItemInCache(String itemUri, Location location) {
