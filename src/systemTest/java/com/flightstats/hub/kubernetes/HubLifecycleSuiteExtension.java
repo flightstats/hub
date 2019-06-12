@@ -43,13 +43,17 @@ public class HubLifecycleSuiteExtension implements BeforeAllCallback, AfterAllCa
     @Override
     @SneakyThrows
     public void beforeAll(ExtensionContext context) {
-        context.getRoot().getStore(NAMESPACE).getOrComputeIfAbsent("setupFactory", k -> setupFactory(context), HubLifecycleSetup.class);
+        ExtensionContext.Store store = context.getStore(NAMESPACE);
+
+        store.getOrComputeIfAbsent("setupFactory", k -> setupFactory(context), HubLifecycleSetup.class);
     }
 
     @Override
     @SneakyThrows
     public void afterAll(ExtensionContext context) {
-        context.getRoot().getStore(NAMESPACE).getOrComputeIfAbsent("teardownFactory", k -> teardownFactory(context), HubLifecycleTeardown.class);
+        ExtensionContext.Store store = context.getStore(NAMESPACE);
+
+        store.getOrComputeIfAbsent("teardownFactory", k -> teardownFactory(context), HubLifecycleTeardown.class);
     }
 
     static class HubLifecycleSetup implements CloseableResource {

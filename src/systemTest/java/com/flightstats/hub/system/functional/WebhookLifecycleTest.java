@@ -30,25 +30,30 @@ import static junit.framework.Assert.assertTrue;
 @Slf4j
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith({ GuiceInjectionExtension.class, HubLifecycleSuiteExtension.class})
-class WebhookLifecycleTest extends DependencyInjector {
-    private CallbackService callbackResource;
-    private ChannelService channelResource;
-    private WebhookService webhookResource;
-    private HubLifecycle hubLifecycle;
-    private ModelBuilder modelBuilder;
+class WebhookLifecycleTest {
+    private final CallbackService callbackResource;
+    private final ChannelService channelResource;
+    private final WebhookService webhookResource;
+    private final ModelBuilder modelBuilder;
 
     private String channelName;
     private String webhookName;
 
+    WebhookLifecycleTest(CallbackService callbackResource,
+                         ChannelService channelResource,
+                         WebhookService webhookResource,
+                         ModelBuilder modelBuilder) {
+        this.callbackResource = callbackResource;
+        this.channelResource = channelResource;
+        this.webhookResource = webhookResource;
+        this.modelBuilder = modelBuilder;
+
+    }
+
     @BeforeEach
-    void before(Injector injector) {
+    void before() {
         this.channelName = randomAlphaNumeric(10);
         this.webhookName = randomAlphaNumeric(10);
-        this.callbackResource = injector.getInstance(CallbackService.class);
-        this.channelResource = injector.getInstance(ChannelService.class);
-        this.webhookResource = injector.getInstance(WebhookService.class);
-        this.hubLifecycle = injector.getInstance(HubLifecycle.class);
-        this.modelBuilder = injector.getInstance(ModelBuilder.class);
     }
 
     private Webhook buildWebhook() {
@@ -103,10 +108,5 @@ class WebhookLifecycleTest extends DependencyInjector {
     void after() {
         channelResource.delete(channelName);
         webhookResource.delete(webhookName);
-    }
-
-    @AfterAll
-    void hubCleanup() {
-        hubLifecycle.cleanup();
     }
 }
