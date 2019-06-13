@@ -2,6 +2,7 @@ package com.flightstats.hub.system.functional;
 
 import com.flightstats.hub.model.Webhook;
 import com.flightstats.hub.model.WebhookType;
+import com.flightstats.hub.system.ModelBuilder;
 import com.flightstats.hub.system.config.DependencyInjector;
 import com.flightstats.hub.system.service.CallbackService;
 import com.flightstats.hub.system.service.ChannelService;
@@ -16,7 +17,6 @@ import org.junit.jupiter.params.provider.EnumSource;
 import javax.inject.Inject;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -38,6 +38,8 @@ class TimedWebhooksTest extends DependencyInjector {
     private WebhookService webhookService;
     @Inject
     private CallbackService callbackService;
+    @Inject
+    private ModelBuilder modelBuilder;
 
     @AfterEach
     void cleanup() {
@@ -54,13 +56,13 @@ class TimedWebhooksTest extends DependencyInjector {
                 String channelName = randomAlphaNumeric(10);
                 String webhookName = randomAlphaNumeric(10);
                 channelService.createWithDefaults(channelName);
-                Webhook webhook = Webhook.builder()
-                        .channelUrl(channelService.getChannelUrl(channelName))
-                        .name(webhookName)
-                        .callbackUrl(callbackService.getCallbackUrl(webhookName))
+                Webhook webhook = modelBuilder
+                        .webhookBuilder()
+                        .channelName(channelName)
+                        .webhookName(webhookName)
+                        .batchType(type)
                         .heartbeat(true)
                         .callbackTimeoutSeconds(TIMEOUT)
-                        .batch(type.name())
                         .build();
                 webhookService.insertAndVerify(webhook);
                 webhooks.add(webhook);
@@ -92,16 +94,6 @@ class TimedWebhooksTest extends DependencyInjector {
         }
     }
 
-    private String getChannelName(Webhook webhook) {
-        try {
-            List<String> channelPath = Arrays.asList(webhook.getChannelUrl().split("/"));
-            return channelPath.get(channelPath.indexOf("channel") + 1);
-        } catch (Exception e) {
-            log.error("failed to find channel name in webhook config");
-            return "";
-        }
-    }
-
     private List<String> getItemsPostedForChannel(String channelName) {
         try {
             return new ArrayList<>(channelItemsPosted.get(channelName));
@@ -119,7 +111,7 @@ class TimedWebhooksTest extends DependencyInjector {
 
         webhooks.parallelStream().forEach(webhook -> {
             String webhookName = webhook.getName();
-            String channelName = getChannelName(webhook);
+            String channelName = webhookService.getChannelName(webhook);
             List<String> itemsPosted = getItemsPostedForChannel(channelName);
             callbackService.areItemsEventuallySentToWebhook(webhookName, itemsPosted);
         });
