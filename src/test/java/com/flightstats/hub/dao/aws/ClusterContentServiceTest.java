@@ -1,12 +1,13 @@
 package com.flightstats.hub.dao.aws;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flightstats.hub.cluster.ClusterCacheDao;
 import com.flightstats.hub.cluster.LatestContentCache;
 import com.flightstats.hub.config.properties.AppProperties;
 import com.flightstats.hub.config.properties.ContentProperties;
 import com.flightstats.hub.config.properties.SpokeProperties;
-import com.flightstats.hub.config.binding.HubBindings;
 import com.flightstats.hub.dao.ContentDao;
+import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ChannelContentKey;
@@ -27,7 +28,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.TreeSet;
@@ -43,7 +43,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
-
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -79,21 +78,30 @@ class ClusterContentServiceTest {
     @Mock
     private ContentProperties contentProperties;
 
+    private LargeContentUtils largeContentUtils;
+    private String channelName = "/testChannel";
     private Content content;
     private ContentKey contentKey;
-    private String channelName;
-    private LargeContentUtils largeContentUtils;
 
     @BeforeEach
     void initClusterContentService() {
-        channelName = "/testChannel";
-        largeContentUtils = new LargeContentUtils(HubBindings.objectMapper());
+
+        largeContentUtils = new LargeContentUtils(new ObjectMapper());
         ccs = new ClusterContentService(
-                mockSpokeWriteDao, mockSpokeReadDao,
-                mockS3SingleDao, mockS3LargeDao, mockS3BatchDao,
+                mockSpokeWriteDao,
+                mockSpokeReadDao,
+                mockS3SingleDao,
+                mockS3LargeDao,
+                mockS3BatchDao,
                 latestContentCache,
-                s3WriteQueue, contentRetriever, clusterCacheDao, hubUtils,
-                largeContentUtils, appProperties, contentProperties, spokeProperties);
+                s3WriteQueue,
+                contentRetriever,
+                clusterCacheDao,
+                hubUtils,
+                largeContentUtils,
+                appProperties,
+                contentProperties,
+                spokeProperties);
     }
 
     @Test

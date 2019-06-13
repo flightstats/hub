@@ -7,9 +7,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.microbean.helm.ReleaseManager;
 import org.microbean.helm.Tiller;
 
-public class ReleaseStatus {
+class ReleaseStatus {
     @SneakyThrows
-    public boolean releaseExists(String releaseName) {
+    boolean releaseExists(String releaseName) {
         if (StringUtils.isBlank(releaseName)) {
             return false;
         }

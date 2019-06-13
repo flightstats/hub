@@ -12,10 +12,10 @@ import com.flightstats.hub.app.PermissionsChecker;
 import com.flightstats.hub.app.ShutdownManager;
 import com.flightstats.hub.channel.ChannelValidator;
 import com.flightstats.hub.cluster.Cluster;
+import com.flightstats.hub.cluster.ClusterCacheDao;
 import com.flightstats.hub.cluster.CuratorCluster;
 import com.flightstats.hub.cluster.DecommissionCluster;
 import com.flightstats.hub.cluster.HubClusterRegister;
-import com.flightstats.hub.cluster.ClusterCacheDao;
 import com.flightstats.hub.cluster.SpokeDecommissionCluster;
 import com.flightstats.hub.cluster.WatchManager;
 import com.flightstats.hub.cluster.ZooKeeperState;
@@ -54,6 +54,7 @@ import com.flightstats.hub.spoke.ReadOnlyClusterSpokeStore;
 import com.flightstats.hub.spoke.SpokeChronologyStore;
 import com.flightstats.hub.spoke.SpokeClusterHealthCheck;
 import com.flightstats.hub.spoke.SpokeClusterRegister;
+import com.flightstats.hub.spoke.SpokeContentDao;
 import com.flightstats.hub.spoke.SpokeFinalCheck;
 import com.flightstats.hub.spoke.SpokeManager;
 import com.flightstats.hub.spoke.SpokeReadContentDao;
@@ -253,15 +254,18 @@ public class HubBindings extends AbstractModule {
     @Named(WRITE_CACHE)
     @Provides
     @Singleton
-    public ContentDao contentDao(ClusterWriteSpoke writeSpoke, SpokeChronologyStore chronoStore, SpokeProperties spokeProperties) {
-        return new SpokeWriteContentDao(writeSpoke, chronoStore, spokeProperties);
+    public ContentDao contentDao(ClusterWriteSpoke writeSpoke,
+                                 SpokeChronologyStore chronoStore,
+                                 SpokeProperties spokeProperties,
+                                 SpokeContentDao spokeContentDao) {
+        return new SpokeWriteContentDao(writeSpoke, chronoStore, spokeProperties, spokeContentDao);
     }
 
     @Named(READ_CACHE)
     @Provides
     @Singleton
-    public ContentDao contentDao(LocalReadSpoke localReadSpoke) {
-        return new SpokeReadContentDao(localReadSpoke);
+    public ContentDao contentDao(LocalReadSpoke localReadSpoke, SpokeContentDao spokeContentDao) {
+        return new SpokeReadContentDao(localReadSpoke, spokeContentDao);
     }
 
     @Named(WRITE)

@@ -1,6 +1,5 @@
 package com.flightstats.hub.system;
 
-import com.flightstats.hub.model.ChannelType;
 import com.flightstats.hub.model.Webhook;
 import com.flightstats.hub.model.WebhookType;
 import com.flightstats.hub.system.service.CallbackService;
@@ -10,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import javax.inject.Inject;
 
 import static com.flightstats.hub.model.ChannelType.SINGLE;
+
 
 @Slf4j
 public class ModelBuilder {

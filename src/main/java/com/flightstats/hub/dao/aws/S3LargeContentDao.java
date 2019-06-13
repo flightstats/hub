@@ -52,17 +52,21 @@ public class S3LargeContentDao implements ContentDao {
     private final AppProperties appProperties;
     private final String bucketName;
     private final int maxChunkInMB;
+    private final S3Util s3Util;
 
     @Inject
     public S3LargeContentDao(HubS3Client s3Client,
                              StatsdReporter statsdReporter,
                              AppProperties appPropertiesIn,
-                             S3Properties s3Properties) {
+                             S3Properties s3Properties,
+                             S3Util s3Util) {
         this.statsdReporter = statsdReporter;
         this.s3Client = s3Client;
         this.appProperties = appPropertiesIn;
         this.bucketName = s3Properties.getBucketName();
         this.maxChunkInMB = s3Properties.getMaxChunkInMB();
+        this.s3Util = s3Util;
+
     }
 
     public void initialize() {
@@ -236,7 +240,7 @@ public class S3LargeContentDao implements ContentDao {
     @Override
     public void deleteBefore(String channel, ContentKey limitKey) {
         try {
-            S3Util.delete(channel + "/large/", limitKey, bucketName, s3Client);
+            s3Util.delete(channel + "/large/", limitKey, bucketName, s3Client);
             log.info("completed deletion of " + channel);
         } catch (Exception e) {
             log.warn("unable to delete  {} in {}", channel, bucketName, e);

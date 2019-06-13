@@ -25,8 +25,11 @@ import java.util.zip.ZipOutputStream;
 @Slf4j
 public class ZipBulkBuilder {
 
-    public static Response build(SortedSet<ContentKey> keys, String channel,
-                                 ChannelService channelService, boolean descending, Consumer<Response.ResponseBuilder> headerBuilder) {
+    public Response build(SortedSet<ContentKey> keys,
+                          String channel,
+                          ChannelService channelService,
+                          boolean descending,
+                          Consumer<Response.ResponseBuilder> headerBuilder) {
         Traces traces = ActiveTraces.getLocal();
         return write((ZipOutputStream output) -> {
             ActiveTraces.setLocal(traces);
@@ -40,8 +43,10 @@ public class ZipBulkBuilder {
         }, headerBuilder);
     }
 
-    public static Response buildTag(String tag, SortedSet<ChannelContentKey> keys,
-                                    ChannelService channelService, Consumer<Response.ResponseBuilder> headerBuilder) {
+    public Response buildTag(String tag,
+                             SortedSet<ChannelContentKey> keys,
+                             ChannelService channelService,
+                             Consumer<Response.ResponseBuilder> headerBuilder) {
         Traces traces = ActiveTraces.getLocal();
         return write((ZipOutputStream output) -> {
             ActiveTraces.setLocal(traces);
@@ -51,8 +56,8 @@ public class ZipBulkBuilder {
         }, headerBuilder);
     }
 
-    private static Response write(final Consumer<ZipOutputStream> consumer,
-                                  Consumer<Response.ResponseBuilder> headerBuilder) {
+    private Response write(final Consumer<ZipOutputStream> consumer,
+                           Consumer<Response.ResponseBuilder> headerBuilder) {
         Traces traces = ActiveTraces.getLocal();
         Response.ResponseBuilder builder = Response.ok((StreamingOutput) os -> {
             ActiveTraces.setLocal(traces);
@@ -67,8 +72,10 @@ public class ZipBulkBuilder {
         return builder.build();
     }
 
-    private static void writeContent(ZipOutputStream output, ContentKey key, String channel,
-                                     ChannelService channelService) {
+    private void writeContent(ZipOutputStream output,
+                              ContentKey key,
+                              String channel,
+                              ChannelService channelService) {
         ItemRequest itemRequest = ItemRequest.builder()
                 .channel(channel)
                 .key(key)
@@ -81,7 +88,7 @@ public class ZipBulkBuilder {
         }
     }
 
-    public static void createZipEntry(ZipOutputStream output, Content content) {
+    public void createZipEntry(ZipOutputStream output, Content content) {
         try {
             String keyId = content.getContentKey().get().toUrl();
             ZipEntry zipEntry = new ZipEntry(keyId);

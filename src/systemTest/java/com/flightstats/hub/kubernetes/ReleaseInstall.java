@@ -1,7 +1,6 @@
 package com.flightstats.hub.kubernetes;
 
 import com.flightstats.hub.system.config.HelmProperties;
-import com.google.protobuf.Descriptors;
 import hapi.chart.ChartOuterClass;
 import hapi.chart.ConfigOuterClass;
 import hapi.release.ReleaseOuterClass;
