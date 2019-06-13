@@ -213,7 +213,7 @@ public class Webhook implements Comparable<Webhook>, NamedType {
     }
 
     @JsonIgnore
-    ContentPath getStartingKey() {
+    public ContentPath getStartingKey() {
         return startingKey;
     }
 

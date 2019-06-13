@@ -8,7 +8,7 @@ import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectInputStream;
 
 import com.amazonaws.util.IOUtils;
-import com.flightstats.hub.model.ChannelStorage;
+import com.flightstats.hub.model.ChannelType;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
@@ -21,19 +21,25 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 import java.util.zip.ZipInputStream;
 
+import static com.flightstats.hub.system.config.PropertiesName.HELM_RELEASE_NAME;
+import static com.flightstats.hub.system.config.PropertiesName.HUB_URL_TEMPLATE;
+import static com.flightstats.hub.system.config.PropertiesName.S3_BUCKET_TEMPLATE;
+
 @Slf4j
 public class S3Service {
-    private final String testData;
+    private static final String TEST_DATA = "TEST_DATA";
     private final AmazonS3 s3Client;
     private final String bucketName;
     private final String hubBaseUrl;
 
     @Inject
-    public S3Service(AmazonS3 s3Client, @Named("hub.url") String hubBaseUrl, @Named("s3.bucket.name") String bucketName, @Named("test.data") String testData) {
+    public S3Service(AmazonS3 s3Client,
+                     @Named(HUB_URL_TEMPLATE) String hubBaseUrl,
+                     @Named(S3_BUCKET_TEMPLATE) String bucketName,
+                     @Named(HELM_RELEASE_NAME) String releaseName) {
         this.s3Client = s3Client;
-        this.hubBaseUrl = hubBaseUrl;
-        this.bucketName = bucketName;
-        this.testData = testData;
+        this.hubBaseUrl = String.format(hubBaseUrl, releaseName);
+        this.bucketName = String.format(bucketName, releaseName);
     }
 
     @SneakyThrows
@@ -48,14 +54,16 @@ public class S3Service {
     @SneakyThrows
     private byte[] getS3Items(String path) {
         GetObjectRequest getObjectRequest = new GetObjectRequest(bucketName, path);
-        S3Object obj = s3Client.getObject(getObjectRequest);
-        ObjectMetadata metadata = s3Client.getObjectMetadata(bucketName, path);
-        try (S3ObjectInputStream content = obj.getObjectContent()) {
-            if (metadata.getUserMetadata().containsKey("compressed")) {
-                return handleZip(content);
+        try (S3Object obj = s3Client.getObject(getObjectRequest)) {
+            ObjectMetadata metadata = s3Client.getObjectMetadata(bucketName, path);
+            try (S3ObjectInputStream content = obj.getObjectContent()) {
+                if (metadata.getUserMetadata().containsKey("compressed")) {
+                    return handleZip(content);
+                }
+                return IOUtils.toByteArray(content);
             }
-            return IOUtils.toByteArray(content);
         }
+
     }
 
     @SneakyThrows
@@ -96,11 +104,11 @@ public class S3Service {
                 .replace(hubBaseUrl + "/channel/", "") : "";
     }
 
-    public boolean confirmItemsInS3(ChannelStorage storage, String fullPath, String channelName) {
+    public boolean confirmItemsInS3(ChannelType storage, String fullPath, String channelName) {
         try {
             String path;
             byte[] result;
-            if (storage.equals(ChannelStorage.SINGLE)) {
+            if (storage.equals(ChannelType.SINGLE)) {
                 path = formatS3SingleItemPath(fullPath);
                 result = getS3Items(path);
             } else {
@@ -108,8 +116,8 @@ public class S3Service {
                 result = getS3BatchedItems(path);
             }
             String actual = new String(result, StandardCharsets.UTF_8);
-            if (!actual.contains(testData)) {
-                log.error("actual {}, testData {}", actual, testData);
+            if (!actual.contains(TEST_DATA)) {
+                log.error("actual {}, testData {}", actual, TEST_DATA);
                 throw new Error("actual does not match expected");
             }
             return true;
