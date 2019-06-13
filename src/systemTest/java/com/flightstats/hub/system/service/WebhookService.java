@@ -4,11 +4,12 @@ import com.flightstats.hub.clients.hub.HubClientFactory;
 import com.flightstats.hub.clients.hub.webhook.WebhookResourceClient;
 import com.flightstats.hub.model.Webhook;
 import com.flightstats.hub.model.WebhookErrors;
-import com.google.inject.Inject;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import retrofit2.Call;
 import retrofit2.Response;
+
+import javax.inject.Inject;
 
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.OK;

@@ -6,6 +6,7 @@ import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSCredentialsProviderChain;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.auth.PropertiesCredentials;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
@@ -16,6 +17,11 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.File;
 
+import static com.flightstats.hub.system.config.PropertiesName.HELM_RELEASE_NAME;
+import static com.flightstats.hub.system.config.PropertiesName.S3_CREDENTIALS_PATH;
+import static com.flightstats.hub.system.config.PropertiesName.S3_URL_TEMPLATE;
+import static com.flightstats.hub.system.config.PropertiesName.S3_REGION;
+
 @Getter
 @Slf4j
 public class S3ClientFactory {
@@ -23,25 +29,22 @@ public class S3ClientFactory {
     private final String s3Endpoint;
     private final String s3Region;
     private final String s3CredentialPath;
-    private final boolean s3MockEnabled;
 
     @Inject
-    public S3ClientFactory(@Named("helm.release.name") String releaseName,
-                           @Named("s3.url") String s3Endpoint,
-                           @Named("s3.region") String s3Region,
-                           @Named("s3.credentials.path") String s3CredentialPath,
-                           @Named("s3.mock.enabled") String s3MockProperty) {
+    public S3ClientFactory(@Named(HELM_RELEASE_NAME) String releaseName,
+                           @Named(S3_URL_TEMPLATE) String s3Endpoint,
+                           @Named(S3_REGION) String s3Region,
+                           @Named(S3_CREDENTIALS_PATH) String s3CredentialPath) {
         this.releaseName = releaseName;
         this.s3Endpoint = s3Endpoint;
         this.s3Region = s3Region;
         this.s3CredentialPath = s3CredentialPath;
-        this.s3MockEnabled = Boolean.parseBoolean(s3MockProperty);
     }
 
     public AmazonS3 getS3Client() {
         return AmazonS3ClientBuilder.standard()
-                .withPathStyleAccessEnabled(s3MockEnabled)
-                .withEndpointConfiguration(new EndpointConfiguration(s3Endpoint, s3Region))
+                .withEndpointConfiguration(new EndpointConfiguration(String.format(s3Endpoint, releaseName), s3Region))
+                .withPathStyleAccessEnabled(true)
                 .withCredentials(getAwsCredentials())
                 .build();
     }
@@ -50,12 +53,12 @@ public class S3ClientFactory {
         try {
             return new PropertiesCredentials(new File(s3CredentialPath));
         } catch (Exception e) {
-            log.error("error loading test credentials for s3, using dummies", e);
+            log.warn("could not load credentials for s3, using dummies. Reason: {}", e.getMessage());
             return new BasicAWSCredentials("accessKey", "secretKey");
         }
     }
 
     private AWSCredentialsProviderChain getAwsCredentials() {
-        return new AWSCredentialsProviderChain(new AWSStaticCredentialsProvider(loadTestCredentials()));
+        return new AWSCredentialsProviderChain(new DefaultAWSCredentialsProviderChain(), new AWSStaticCredentialsProvider(loadTestCredentials()));
     }
 }

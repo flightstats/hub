@@ -1,18 +1,18 @@
 package com.flightstats.hub.clients.callback;
 
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import okhttp3.HttpUrl;
 import retrofit2.Retrofit;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+
 public class CallbackClientFactory {
 
-    private Retrofit retrofitHub;
+    private final Retrofit retrofitHub;
 
     @Inject
     public CallbackClientFactory(@Named("callback") Retrofit retrofitHub) {
         this.retrofitHub = retrofitHub;
-
     }
 
     public <T> T getCallbackClient(Class<T> serviceClass) {

@@ -13,16 +13,15 @@ import java.util.List;
 
 @Slf4j
 public class ServiceDelete {
-
     @SneakyThrows
     public void execute(String releaseName, List<String> serviceNames) {
 
-        try (final DefaultKubernetesClient client = new DefaultKubernetesClient()) {
+        try (DefaultKubernetesClient client = new DefaultKubernetesClient()) {
 
-            final MixedOperation<Service, ServiceList, DoneableService, Resource<Service, DoneableService>> serviceResource = client.inNamespace(releaseName).services();
+            MixedOperation<Service, ServiceList, DoneableService, Resource<Service, DoneableService>> serviceResource = client.inNamespace(releaseName).services();
             int serviceCount = serviceResource.list().getItems().size();
 
-            final List<Service> services = serviceResource.list().getItems();
+            List<Service> services = serviceResource.list().getItems();
             for (int i = 0; i < serviceCount; i++) {
                 if (serviceNames.contains(services.get(i).getMetadata().getName())) {
                     log.info("Deleting service {} in namespace {} ", services.get(i).getMetadata().getName(), services.get(i).getMetadata().getNamespace());
