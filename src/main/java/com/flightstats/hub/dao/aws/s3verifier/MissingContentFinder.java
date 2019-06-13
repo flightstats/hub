@@ -63,7 +63,7 @@ public class MissingContentFinder {
         } catch (InterruptedException e) {
             throw new RuntimeInterruptedException(e);
         } catch (TimeoutException e) {
-            log.error("s3 verifier timed out while finding missing items, write queue is backing up");
+            log.error("s3 verifier timed out while finding missing items, write queue is backing up", e);
             statsdReporter.increment(VerifierMetrics.TIMEOUT.getName());
             return new TreeSet<>();
         } catch (ExecutionException e) {

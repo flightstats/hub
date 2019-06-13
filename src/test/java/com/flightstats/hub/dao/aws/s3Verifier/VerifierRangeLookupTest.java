@@ -1,12 +1,9 @@
 package com.flightstats.hub.dao.aws.s3Verifier;
 
 import com.flightstats.hub.cluster.ClusterCacheDao;
-import com.flightstats.hub.config.properties.PropertiesLoader;
-import com.flightstats.hub.config.properties.SpokeProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.MinutePath;
-import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.test.IntegrationTestSetup;
 import com.flightstats.hub.util.StringUtils;
 import com.flightstats.hub.util.TimeUtil;
@@ -16,6 +13,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.TestInstance;
 
 import java.lang.reflect.Method;
 import java.util.Optional;
@@ -25,22 +23,20 @@ import static com.flightstats.hub.constant.ZookeeperNodes.REPLICATED_LAST_UPDATE
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class VerifierRangeLookupTest {
-    private static VerifierRangeLookup verifierRangeLookup;
-    private static ClusterCacheDao clusterCacheDao;
-    private static int ttlMinutes;
+    private VerifierRangeLookup verifierRangeLookup;
+    private ClusterCacheDao clusterCacheDao;
+    private int ttlMinutes = 60;
     private DateTime now = TimeUtil.now();
     private DateTime offsetTime;
     private int offsetMinutes = 15;
-    private static ChannelService channelService;
-
+    private ChannelService channelService;
     private String channelName;
 
     @BeforeAll
-    static void setUpClass() {
-        final SpokeProperties spokeProperties = new SpokeProperties(PropertiesLoader.getInstance());
+    void setUpClass() {
         IntegrationTestSetup integrationTestSetup = IntegrationTestSetup.run();
-        ttlMinutes = spokeProperties.getTtlMinutes(SpokeStore.WRITE);
         verifierRangeLookup = integrationTestSetup.getInstance(VerifierRangeLookup.class);
         clusterCacheDao = integrationTestSetup.getInstance(ClusterCacheDao.class);
         channelService = integrationTestSetup.getInstance(ChannelService.class);

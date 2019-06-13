@@ -20,12 +20,14 @@ import java.util.SortedSet;
 
 @Slf4j
 public class SpokeReadContentDao implements ContentDao {
-    @Inject
-    private LocalReadSpoke localReadSpoke;
+
+    private final LocalReadSpoke localReadSpoke;
+    private final SpokeContentDao spokeContentDao;
 
     @Inject
-    public SpokeReadContentDao(LocalReadSpoke localReadSpoke){
+    public SpokeReadContentDao(LocalReadSpoke localReadSpoke, SpokeContentDao spokeContentDao) {
         this.localReadSpoke = localReadSpoke;
+        this.spokeContentDao = spokeContentDao;
     }
 
     @Override
@@ -35,7 +37,7 @@ public class SpokeReadContentDao implements ContentDao {
 
     @Override
     public SortedSet<ContentKey> insert(BulkContent bulkContent) {
-        return SpokeContentDao.insert(bulkContent, (baos) -> {
+        return spokeContentDao.insert(bulkContent, (baos) -> {
             String channel = bulkContent.getChannel();
             return localReadSpoke.insertToLocalReadStore(channel, baos.toByteArray(), ActiveTraces.getLocal(), "bulkKey", channel);
         });

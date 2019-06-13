@@ -27,12 +27,19 @@ import static org.mockito.MockitoAnnotations.initMocks;
 @Slf4j
 class S3WriteQueueTest {
 
-    @Mock private SpokeWriteContentDao spokeWriteContentDao;
-    @Mock private S3SingleContentDao s3SingleContentDao;
-    @Mock private StatsdReporter statsdReporter;
-    @Mock private ChannelContentKey key;
-    @Mock private ContentKey contentKey;
-    @Mock private S3Properties s3Properties;
+    @Mock
+    private SpokeWriteContentDao spokeWriteContentDao;
+    @Mock
+    private S3SingleContentDao s3SingleContentDao;
+    @Mock
+    private StatsdReporter statsdReporter;
+    @Mock
+    private ChannelContentKey key;
+    @Mock
+    private ContentKey contentKey;
+    @Mock
+    private S3Properties s3Properties;
+
     private static final String CHANNEL_NAME = "testy_test";
     private static final long AGE_MILLIS = 666;
     private S3WriteQueue s3WriteQueue;
@@ -66,7 +73,7 @@ class S3WriteQueueTest {
         assertEquals(20, s3WriteQueue.getQueueSize());
         verify(statsdReporter).gauge("s3.writeQueue.used", 20);
         verify(statsdReporter, never()).gauge("s3.writeQueue.used", 21);
-        verify(statsdReporter).increment( "s3.writeQueue.dropped");
+        verify(statsdReporter).increment("s3.writeQueue.dropped");
 
         verify(statsdReporter, times(20)).time("s3.writeQueue.age.added", AGE_MILLIS);
         assertFalse(nextAddedItem);

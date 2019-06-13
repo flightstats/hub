@@ -4,11 +4,11 @@ import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.app.ShutdownManager;
 import com.flightstats.hub.health.HubHealthCheck;
 import com.google.common.util.concurrent.AbstractIdleService;
-import javax.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.inject.Inject;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -113,7 +113,7 @@ public class SpokeDecommissionManager implements DecommissionManager {
         }
 
         @Override
-        protected void shutDown() throws Exception {
+        protected void shutDown() {
             //do nothing
         }
     }

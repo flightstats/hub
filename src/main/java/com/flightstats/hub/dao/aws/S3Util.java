@@ -25,7 +25,7 @@ import java.util.TreeSet;
 @Slf4j
 class S3Util {
 
-    static SortedSet<ContentKey> queryPrevious(DirectionQuery query, ContentDao dao) {
+    SortedSet<ContentKey> queryPrevious(DirectionQuery query, ContentDao dao) {
         DateTime endTime = query.getStartKey().getTime();
         DateTime queryTime = endTime;
         SortedSet<ContentKey> keys = new TreeSet<>();
@@ -50,14 +50,14 @@ class S3Util {
         return keys;
     }
 
-    public static void delete(String channelPath, ContentKey limitKey, String s3BucketName, HubS3Client s3Client) {
+    public void delete(String channelPath, ContentKey limitKey, String s3BucketName, HubS3Client s3Client) {
         //noinspection StatementWithEmptyBody
         while (internalDelete(channelPath, limitKey, s3BucketName, s3Client)) {
         }
         internalDelete(channelPath, limitKey, s3BucketName, s3Client);
     }
 
-    private static boolean internalDelete(String channelPath, ContentKey limitKey, String s3BucketName, HubS3Client s3Client) {
+    private boolean internalDelete(String channelPath, ContentKey limitKey, String s3BucketName, HubS3Client s3Client) {
         ListObjectsRequest request = new ListObjectsRequest();
         request.withBucketName(s3BucketName);
         request.withPrefix(channelPath);
