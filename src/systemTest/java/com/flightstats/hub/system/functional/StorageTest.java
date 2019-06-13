@@ -17,6 +17,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
 import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
+import static junit.framework.Assert.fail;
 
 @Slf4j
 @ExtendWith({ GuiceInjectionExtension.class, HubLifecycleSuiteExtension.class})
@@ -24,14 +25,13 @@ class StorageTest {
     private static final String TEST_DATA = "TEST_DATA";
     private String channelName;
     private String itemUri;
-    private ChannelService channelService;
-    private S3Service s3Service;
+    private final ChannelService channelService;
+    private final S3Service s3Service;
 
-    @BeforeEach
-    void before(Injector injector) {
+    StorageTest(ChannelService channelService, S3Service s3Service) {
 
-        this.channelService = injector.getInstance(ChannelService.class);
-        this.s3Service = injector.getInstance(S3Service.class);
+        this.channelService = channelService;
+        this.s3Service = s3Service;
     }
 
     private void createAndAddItemsToChannel(ChannelType type) {
@@ -65,6 +65,7 @@ class StorageTest {
     @ParameterizedTest
     @EnumSource(ChannelType.class)
     void bothChannelStorage_itemInS3_item(ChannelType type) {
+        fail();
         createAndAddItemsToChannel(type);
         Awaitility.await()
                 .pollInterval(Duration.TEN_SECONDS)

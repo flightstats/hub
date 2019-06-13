@@ -1,48 +1,23 @@
 package com.flightstats.hub.kubernetes;
 
-import com.flightstats.hub.system.config.GuiceModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
+import com.flightstats.hub.system.config.DependencyInjector;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
-import java.lang.reflect.AnnotatedElement;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.extension.ExtensionContext.Namespace;
 import static org.junit.jupiter.api.extension.ExtensionContext.Store.CloseableResource;
 
+@Slf4j
 public class HubLifecycleSuiteExtension implements BeforeAllCallback, AfterAllCallback {
     private static final Namespace NAMESPACE = ExtensionContext.Namespace.create("SYSTEM_TEST");
 
-    private Optional<Injector> getOrCreateInjector(ExtensionContext context) {
-        if (!context.getElement().isPresent()) {
-            return Optional.empty();
-        }
-
-        AnnotatedElement element = context.getElement().get();
-        ExtensionContext.Store store = context.getStore(NAMESPACE);
-
-        Injector injector = store.get(element, Injector.class);
-        if (injector == null) {
-            injector = Guice.createInjector(new GuiceModule());
-            store.put(element, injector);
-        }
-
-        return Optional.of(injector);
-    }
-
-    private HubLifecycle getHubLifecycle(ExtensionContext context) {
-        return getOrCreateInjector(context)
-                .map(injector -> injector.getInstance(HubLifecycle.class))
-                .orElseThrow(IllegalStateException::new);
-    }
-
     @Override
     @SneakyThrows
-    public void beforeAll(ExtensionContext context) {
+    public synchronized void beforeAll(ExtensionContext context) {
         ExtensionContext.Store store = context.getStore(NAMESPACE);
 
         store.getOrComputeIfAbsent("setupFactory", k -> setupFactory(context), HubLifecycleSetup.class);
@@ -84,5 +59,9 @@ public class HubLifecycleSuiteExtension implements BeforeAllCallback, AfterAllCa
 
     private HubLifecycleSetup setupFactory(ExtensionContext context) {
         return new HubLifecycleSetup(getHubLifecycle(context));
+    }
+
+    private HubLifecycle getHubLifecycle(ExtensionContext context) {
+        return new DependencyInjector().getInjector(context).getInstance(HubLifecycle.class);
     }
 }

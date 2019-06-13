@@ -29,25 +29,7 @@ public class GuiceInjectionExtension implements TestInstancePostProcessor, Param
 
     @Override
     public void postProcessTestInstance(Object testInstance, ExtensionContext context) throws Exception {
-        getOrCreateInjector(context).ifPresent(injector -> injector.injectMembers(testInstance));
-
-    }
-
-    private static Optional<Injector> getOrCreateInjector(ExtensionContext context) {
-        if (!context.getElement().isPresent()) {
-            return Optional.empty();
-        }
-
-        AnnotatedElement element = context.getElement().get();
-        ExtensionContext.Store store = context.getStore(NAMESPACE);
-
-        Injector injector = store.get(element, Injector.class);
-        if (injector == null) {
-            injector = Guice.createInjector(new GuiceModule());
-            store.put(element, injector);
-        }
-
-        return Optional.of(injector);
+        new DependencyInjector().getInjector(context);
     }
 
     @Override
@@ -127,12 +109,8 @@ public class GuiceInjectionExtension implements TestInstancePostProcessor, Param
                 || annotationType.isAnnotationPresent(BindingAnnotation.class);
     }
 
-    /**
-     * Wrap {@link #getOrCreateInjector(ExtensionContext)} and rethrow exceptions as {@link
-     * ParameterResolutionException}.
-     */
     private static Optional<Injector> getInjectorForParameterResolution(
             ExtensionContext extensionContext) throws ParameterResolutionException {
-        return getOrCreateInjector(extensionContext);
+        return Optional.of(new DependencyInjector().getInjector(extensionContext));
     }
 }

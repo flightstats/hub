@@ -1,12 +1,14 @@
 package com.flightstats.hub.system.functional;
 
 import com.flightstats.hub.kubernetes.HubLifecycle;
+import com.flightstats.hub.kubernetes.HubLifecycleSuiteExtension;
 import com.flightstats.hub.model.Webhook;
 import javax.inject.Inject;
 
 import com.flightstats.hub.model.WebhookCallbackSetting;
 import com.flightstats.hub.system.ModelBuilder;
 import com.flightstats.hub.system.config.DependencyInjector;
+import com.flightstats.hub.system.config.GuiceInjectionExtension;
 import com.flightstats.hub.system.service.CallbackService;
 import com.flightstats.hub.system.service.ChannelService;
 import com.flightstats.hub.system.service.WebhookService;
@@ -19,34 +21,37 @@ import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.RepetitionInfo;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.Collections;
 
 import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 @Slf4j
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@ExtendWith({ GuiceInjectionExtension.class, HubLifecycleSuiteExtension.class})
 class WebhookErrorTest extends DependencyInjector {
-    @Inject
-    private ChannelService channelService;
-    @Inject
-    private WebhookService webhookService;
-    @Inject
-    private CallbackService callbackService;
-    @Inject
-    private HubLifecycle hubLifecycle;
-    @Inject
-    private ModelBuilder modelBuilder;
+    private final ChannelService channelService;
+    private final WebhookService webhookService;
+    private final CallbackService callbackService;
+    private final ModelBuilder modelBuilder;
 
     private String nameSeed;
     private Webhook webhook;
     private String channelName;
     private String webhookName;
 
+    WebhookErrorTest(ChannelService channelService, WebhookService webhookService, CallbackService callbackService, ModelBuilder modelBuilder) {
+        this.channelService = channelService;
+        this.webhookService = webhookService;
+        this.callbackService = callbackService;
+        this.modelBuilder = modelBuilder;
+    }
+
     @BeforeAll
     void hubSetup() {
-        hubLifecycle.setup();
         nameSeed = randomAlphaNumeric(5);
     }
 
@@ -88,6 +93,7 @@ class WebhookErrorTest extends DependencyInjector {
 
     @RepeatedTest(3)
     void testThatNewlyCreatedWebhookDoesntReceiveStaleErrors() {
+        fail();
         // verify that errors are created for the first item
         WebhookCallbackSetting item = WebhookCallbackSetting.builder()
                 .failureStatusCode(500)
@@ -120,6 +126,7 @@ class WebhookErrorTest extends DependencyInjector {
 
     @RepeatedTest(3)
     void testSettingCursorBeyondErrorClearsErrorStateAndContinues() {
+        fail();
         // verify that errors are created for the first item
         WebhookCallbackSetting item = WebhookCallbackSetting.builder()
                 .failureStatusCode(500)
@@ -161,10 +168,4 @@ class WebhookErrorTest extends DependencyInjector {
             this.webhookService.delete(webhookName);
         }
     }
-
-    @AfterAll
-    void hubCleanup() {
-        hubLifecycle.cleanup();
-    }
-
 }
