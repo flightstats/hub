@@ -3,6 +3,7 @@ package com.flightstats.hub.kubernetes;
 import com.flightstats.hub.system.config.DependencyInjector;
 import com.flightstats.hub.system.config.PropertiesName;
 import com.google.inject.Singleton;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -11,7 +12,7 @@ import java.util.List;
 
 @Slf4j
 @Singleton
-public class HubLifecycle extends DependencyInjector {
+public class HubLifecycle {
 
     @Inject
     @Named(PropertiesName.HELM_RELEASE_NAME)
@@ -37,7 +38,9 @@ public class HubLifecycle extends DependencyInjector {
     @Inject
     private ServiceDelete serviceDelete;
 
+    @SneakyThrows
     public void setup() {
+        Thread.sleep(5000);
         log.info("would've installed " + releaseName);
         /*
         if (releaseStatus.releaseExists(releaseName)) {

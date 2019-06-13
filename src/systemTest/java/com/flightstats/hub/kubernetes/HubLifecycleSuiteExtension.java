@@ -1,6 +1,7 @@
 package com.flightstats.hub.kubernetes;
 
 import com.flightstats.hub.system.config.DependencyInjector;
+import com.google.inject.Injector;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.extension.AfterAllCallback;
@@ -13,12 +14,12 @@ import static org.junit.jupiter.api.extension.ExtensionContext.Store.CloseableRe
 
 @Slf4j
 public class HubLifecycleSuiteExtension implements BeforeAllCallback, AfterAllCallback {
-    private static final Namespace NAMESPACE = ExtensionContext.Namespace.create("SYSTEM_TEST");
+    private static final Namespace NAMESPACE = Namespace.GLOBAL;
 
     @Override
     @SneakyThrows
-    public synchronized void beforeAll(ExtensionContext context) {
-        ExtensionContext.Store store = context.getStore(NAMESPACE);
+    public void beforeAll(ExtensionContext context) {
+        ExtensionContext.Store store = context.getRoot().getStore(NAMESPACE);
 
         store.getOrComputeIfAbsent("setupFactory", k -> setupFactory(context), HubLifecycleSetup.class);
     }
@@ -26,7 +27,7 @@ public class HubLifecycleSuiteExtension implements BeforeAllCallback, AfterAllCa
     @Override
     @SneakyThrows
     public void afterAll(ExtensionContext context) {
-        ExtensionContext.Store store = context.getStore(NAMESPACE);
+        ExtensionContext.Store store = context.getRoot().getStore(NAMESPACE);
 
         store.getOrComputeIfAbsent("teardownFactory", k -> teardownFactory(context), HubLifecycleTeardown.class);
     }
@@ -62,6 +63,6 @@ public class HubLifecycleSuiteExtension implements BeforeAllCallback, AfterAllCa
     }
 
     private HubLifecycle getHubLifecycle(ExtensionContext context) {
-        return new DependencyInjector().getInjector(context).getInstance(HubLifecycle.class);
+        return context.getRoot().getStore(NAMESPACE).get("injector", Injector.class).getInstance(HubLifecycle.class);
     }
 }

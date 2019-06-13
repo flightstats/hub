@@ -4,6 +4,7 @@ import com.flightstats.hub.kubernetes.HubLifecycleSuiteExtension;
 import com.flightstats.hub.model.Webhook;
 import com.flightstats.hub.system.ModelBuilder;
 import com.flightstats.hub.kubernetes.HubLifecycle;
+import com.flightstats.hub.system.config.DependencyInjectionResolver;
 import com.flightstats.hub.system.config.DependencyInjector;
 import com.flightstats.hub.system.config.GuiceInjectionExtension;
 import com.flightstats.hub.system.service.CallbackService;
@@ -30,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 @Slf4j
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@ExtendWith({ GuiceInjectionExtension.class, HubLifecycleSuiteExtension.class})
+@ExtendWith({ GuiceInjectionExtension.class, DependencyInjectionResolver.class, HubLifecycleSuiteExtension.class})
 class WebhookLifecycleTest {
     private final CallbackService callbackResource;
     private final ChannelService channelResource;

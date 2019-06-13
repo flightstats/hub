@@ -23,11 +23,16 @@ import java.util.Properties;
 @Slf4j
 public class GuiceModule extends AbstractModule {
     private static final String PROPERTY_FILE_NAME = "system-test-hub.properties";
+    private final Properties properties;
+
+    GuiceModule(Properties properties) {
+        this.properties = properties;
+    }
 
     @Override
     protected void configure() {
         bind(S3ClientFactory.class).asEagerSingleton();
-        Properties properties = new PropertiesLoader().loadProperties(PROPERTY_FILE_NAME);
+//        Properties properties = new PropertiesLoader().loadProperties(PROPERTY_FILE_NAME);
         Names.bindProperties(binder(), properties);
 
         bind(HubClientFactory.class);

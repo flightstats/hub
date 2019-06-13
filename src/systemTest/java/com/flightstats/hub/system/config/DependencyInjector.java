@@ -6,30 +6,20 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
 import java.util.Optional;
+import java.util.Properties;
 
 @Slf4j
 public class DependencyInjector {
-    public Injector getInjector(ExtensionContext context) {
-        return getOrCreateInjector(context)
-                .orElseThrow(IllegalStateException::new);
-    }
-
-    private Optional<Injector> getOrCreateInjector(ExtensionContext context) {
+    Injector getOrCreateInjector(ExtensionContext context, Properties properties) {
         if (!context.getElement().isPresent()) {
-            return Optional.empty();
+            log.info("dunno why this is here but it happened");
+            return null;
         }
 
         ExtensionContext.Store store = getGlobalStore(context);
 
-        Injector injector = store.get("injector", Injector.class);
-        if (injector == null) {
-            log.info("creating guice injector and injecting all the things");
-            injector = Guice.createInjector(new GuiceModule());
-            injector.injectMembers(new GuiceModule());
-            store.put("injector", injector);
-        }
-
-        return Optional.of(injector);
+        return Optional.ofNullable(store.get("injector", Injector.class))
+                .orElse(Guice.createInjector(new GuiceModule(properties)));
     }
 
     private ExtensionContext.Store getGlobalStore(ExtensionContext context) {

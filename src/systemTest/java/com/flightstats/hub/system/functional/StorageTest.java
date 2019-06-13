@@ -3,15 +3,14 @@ package com.flightstats.hub.system.functional;
 import com.flightstats.hub.kubernetes.HubLifecycleSuiteExtension;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ChannelType;
+import com.flightstats.hub.system.config.DependencyInjectionResolver;
 import com.flightstats.hub.system.config.GuiceInjectionExtension;
 import com.flightstats.hub.system.service.ChannelService;
 import com.flightstats.hub.system.service.S3Service;
-import com.google.inject.Injector;
 import lombok.extern.slf4j.Slf4j;
 import org.awaitility.Awaitility;
 import org.awaitility.Duration;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -20,7 +19,7 @@ import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
 import static junit.framework.Assert.fail;
 
 @Slf4j
-@ExtendWith({ GuiceInjectionExtension.class, HubLifecycleSuiteExtension.class})
+@ExtendWith({ GuiceInjectionExtension.class, DependencyInjectionResolver.class, HubLifecycleSuiteExtension.class})
 class StorageTest {
     private static final String TEST_DATA = "TEST_DATA";
     private String channelName;
@@ -56,6 +55,7 @@ class StorageTest {
     @ParameterizedTest
     @EnumSource(ChannelType.class)
     void bothChannelStorage_itemInSpoke_item(ChannelType type) {
+        fail();
         createAndAddItemsToChannel(type);
         Awaitility.await()
                 .atMost(Duration.TEN_SECONDS)
