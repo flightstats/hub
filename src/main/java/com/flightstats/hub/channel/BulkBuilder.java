@@ -13,10 +13,12 @@ import java.util.function.Consumer;
 public class BulkBuilder {
 
     private final MultiPartBulkBuilder multiPartBulkBuilder;
+    private final ZipBulkBuilder zipBulkBuilder;
 
     @Inject
-    public BulkBuilder(MultiPartBulkBuilder multiPartBulkBuilder) {
+    public BulkBuilder(MultiPartBulkBuilder multiPartBulkBuilder, ZipBulkBuilder zipBulkBuilder) {
         this.multiPartBulkBuilder = multiPartBulkBuilder;
+        this.zipBulkBuilder = zipBulkBuilder;
     }
 
     public Response build(SortedSet<ContentKey> keys,
@@ -37,7 +39,7 @@ public class BulkBuilder {
                           boolean descending,
                           Consumer<Response.ResponseBuilder> headerBuilder) {
         if ("application/zip".equalsIgnoreCase(accept)) {
-            return ZipBulkBuilder.build(keys, channel, channelService, descending, headerBuilder);
+            return zipBulkBuilder.build(keys, channel, channelService, descending, headerBuilder);
         } else {
             return multiPartBulkBuilder.build(keys, channel, channelService, uriInfo, headerBuilder, descending);
         }
@@ -62,7 +64,7 @@ public class BulkBuilder {
                              Consumer<Response.ResponseBuilder> headerBuilder) {
         //todo - gfm - order
         if ("application/zip".equalsIgnoreCase(accept)) {
-            return ZipBulkBuilder.buildTag(tag, keys, channelService, headerBuilder);
+            return zipBulkBuilder.buildTag(tag, keys, channelService, headerBuilder);
         } else {
             return multiPartBulkBuilder.buildTag(keys, channelService, uriInfo, headerBuilder);
         }

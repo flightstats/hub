@@ -1,10 +1,7 @@
 package com.flightstats.hub.cluster;
 
-import com.flightstats.hub.config.properties.AppProperties;
 import com.flightstats.hub.config.properties.LocalHostProperties;
-import com.flightstats.hub.config.properties.PropertiesLoader;
 import com.flightstats.hub.config.properties.SpokeProperties;
-import com.flightstats.hub.config.properties.SystemProperties;
 import com.flightstats.hub.spoke.SpokeStore;
 import com.flightstats.hub.test.IntegrationTestSetup;
 import org.apache.curator.framework.CuratorFramework;
@@ -12,32 +9,34 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class SpokeDecommissionClusterTest {
-    private final SpokeProperties spokeProperties = new SpokeProperties(PropertiesLoader.getInstance());
-    private final AppProperties appProperties = new AppProperties(PropertiesLoader.getInstance());
-    private final SystemProperties systemProperties = new SystemProperties(PropertiesLoader.getInstance());
-    private final LocalHostProperties localHostProperties = new LocalHostProperties(appProperties, systemProperties);
+    @Mock
+    private LocalHostProperties localHostProperties;
+    @Mock
+    private SpokeProperties spokeProperties;
     private SpokeDecommissionCluster cluster;
+    private CuratorFramework curator;
 
     @BeforeAll
-    void setUpClass() throws Exception {
-        CuratorFramework curator = IntegrationTestSetup.run().getZookeeperClient();
-        cluster = new SpokeDecommissionCluster(curator, spokeProperties, localHostProperties);
-    }
-
-    @AfterEach
-    void afterTest() {
-        cluster.doNotRestart();
+    void setup() {
+         curator = IntegrationTestSetup.run().getZookeeperClient();
     }
 
     @Test
     void testDecommission() throws Exception {
+        when(localHostProperties.getHost(false)).thenReturn("127.0.0.1:8080");
+        cluster = new SpokeDecommissionCluster(curator, spokeProperties, localHostProperties);
         cluster.decommission();
         assertTrue(cluster.withinSpokeExists());
         assertFalse(cluster.doNotRestartExists());
@@ -48,4 +47,10 @@ class SpokeDecommissionClusterTest {
         assertFalse(cluster.withinSpokeExists());
         assertTrue(cluster.doNotRestartExists());
     }
+
+    @AfterEach
+    void afterTest() {
+        cluster.doNotRestart();
+    }
+
 }

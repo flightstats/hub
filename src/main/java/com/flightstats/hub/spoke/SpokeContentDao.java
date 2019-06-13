@@ -33,13 +33,14 @@ public class SpokeContentDao {
     private final SpokeProperties spokeProperties;
 
     @Inject
-    public SpokeContentDao(Commander commander, SpokeProperties spokeProperties) {
+    public SpokeContentDao(Commander commander,
+                           SpokeProperties spokeProperties) {
         this.commander = commander;
         this.spokeProperties = spokeProperties;
     }
 
     @SneakyThrows
-    public static SortedSet<ContentKey> insert(BulkContent bulkContent, Function<ByteArrayOutputStream, Boolean> inserter) {
+    public SortedSet<ContentKey> insert(BulkContent bulkContent, Function<ByteArrayOutputStream, Boolean> inserter) {
         Traces traces = ActiveTraces.getLocal();
         traces.add("writeBulk");
         String channelName = bulkContent.getChannel();

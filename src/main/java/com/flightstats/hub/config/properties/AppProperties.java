@@ -79,10 +79,6 @@ public class AppProperties {
         return propertiesLoader.getProperty("hub.type", "aws");
     }
 
-    public int getLogSlowTracesInSec() {
-        return propertiesLoader.getProperty("logSlowTracesSeconds", 10) * 1000;
-    }
-
     public int getTracesLimit() {
         return propertiesLoader.getProperty("traces.limit", 50);
     }

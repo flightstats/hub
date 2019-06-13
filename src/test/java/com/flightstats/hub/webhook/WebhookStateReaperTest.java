@@ -2,7 +2,6 @@ package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.cluster.ClusterCacheDao;
 import com.flightstats.hub.config.properties.AppProperties;
-import com.flightstats.hub.config.properties.PropertiesLoader;
 import com.flightstats.hub.config.properties.WebhookProperties;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.model.ContentKey;
@@ -17,13 +16,12 @@ import org.joda.time.DateTimeZone;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
 
 import static com.flightstats.hub.constant.ZookeeperNodes.WEBHOOK_LAST_COMPLETED;
 import static com.flightstats.hub.constant.ZookeeperNodes.WEBHOOK_LEADER;
@@ -36,22 +34,24 @@ import static org.mockito.Mockito.when;
 
 @Execution(ExecutionMode.SAME_THREAD)
 @ExtendWith(MockitoExtension.class)
-@MockitoSettings(strictness = Strictness.LENIENT)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class WebhookStateReaperTest {
-    private static CuratorFramework curator;
+    private static final DateTime start = new DateTime(2014, 12, 3, 20, 45, DateTimeZone.UTC);
+    private static final ContentKey key = new ContentKey(start, "B");
+    private static final String webhookName = "onTheHook";
+
+    private CuratorFramework curator;
     private ClusterCacheDao clusterCacheDao;
     private WebhookContentPathSet webhookInProcess;
     private WebhookErrorService webhookErrorService;
     private WebhookLeaderLocks webhookLeaderLocks;
     @Mock
     private WebhookProperties webhookProperties;
-
-    private static final String webhookName = "onTheHook";
-    private static final DateTime start = new DateTime(2014, 12, 3, 20, 45, DateTimeZone.UTC);
-    private static final ContentKey key = new ContentKey(start, "B");
+    @Mock
+    private AppProperties appProperties;
 
     @BeforeAll
-    static void runFirst() {
+    void runFirst() {
         curator = IntegrationTestSetup.run().getZookeeperClient();
     }
 
@@ -65,7 +65,7 @@ class WebhookStateReaperTest {
 
         when(webhookProperties.isWebhookLeadershipEnabled()).thenReturn(true);
         webhookLeaderLocks = new WebhookLeaderLocks(zooKeeperUtils);
-        clusterCacheDao = new ClusterCacheDao(curator, new AppProperties(PropertiesLoader.getInstance()));
+        clusterCacheDao = new ClusterCacheDao(curator, appProperties);
         webhookErrorService = new WebhookErrorService(webhookErrorRepository, webhookErrorPruner, channelService);
         webhookInProcess = new WebhookContentPathSet(zooKeeperUtils);
     }
