@@ -7,10 +7,11 @@ import com.flightstats.hub.model.ChannelItem;
 import com.flightstats.hub.model.Links;
 import com.flightstats.hub.model.Location;
 import com.flightstats.hub.model.TimeQueryResult;
-import com.flightstats.hub.model.ChannelConfig;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.HttpUrl;
+import okhttp3.ResponseBody;
+import com.flightstats.hub.model.ChannelConfig;
 import retrofit2.Call;
 import retrofit2.Response;
 
@@ -57,7 +58,7 @@ public class ChannelService {
     public void create(ChannelConfig channel) {
         Call<Object> call = channelResourceClient.create(channel.toBuilder().owner(CHANNEL_OWNER).build());
         Response<Object> response = call.execute();
-        log.info("channel creation response {} ", response);
+        log.info("channel creation response {}, channelName, {}", response, channel.getName());
         assertEquals(CREATED.getStatusCode(), response.code());
     }
 
@@ -79,6 +80,16 @@ public class ChannelService {
         assertNotNull(response.body());
 
         return response.body().get_links().getSelf().getHref();
+    }
+
+    @SneakyThrows
+    public byte [] addItemError(String channelName) {
+        Call<ChannelItem> call = channelItemResourceClient.add(channelName, "anything");
+        Optional<ResponseBody> optionalError = Optional.ofNullable(call.execute().errorBody());
+        if (optionalError.isPresent()) {
+            return optionalError.get().bytes();
+        }
+        return new byte[] {};
     }
 
     @SneakyThrows

@@ -117,6 +117,7 @@ public class S3Service {
             }
             String actual = new String(result, StandardCharsets.UTF_8);
             if (!actual.contains(TEST_DATA)) {
+                log.error("actual {}, testData {}", actual, TEST_DATA);
                 throw new Error("actual does not match expected");
             }
             return true;
