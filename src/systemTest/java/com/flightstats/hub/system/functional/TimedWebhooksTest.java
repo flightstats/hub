@@ -1,6 +1,7 @@
 package com.flightstats.hub.system.functional;
 
 import com.flightstats.hub.model.Webhook;
+import com.flightstats.hub.model.WebhookType;
 import com.flightstats.hub.system.ModelBuilder;
 import com.flightstats.hub.system.config.DependencyInjector;
 import com.flightstats.hub.system.service.CallbackService;
