@@ -1,20 +1,27 @@
 package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.config.properties.AppProperties;
-import com.flightstats.hub.config.properties.PropertiesLoader;
 import com.flightstats.hub.config.properties.WebhookProperties;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.google.common.base.Strings;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class WebhookValidatorTest {
 
-    private AppProperties appProperties = new AppProperties(PropertiesLoader.getInstance());
-    private WebhookProperties webhookProperties = new WebhookProperties(PropertiesLoader.getInstance());
     private static final int CALLBACK_TIMEOUT_DEFAULT_IN_SEC = 120;
+
+    @Mock
+    private AppProperties appProperties;
+    @Mock
+    private WebhookProperties webhookProperties;
     private WebhookValidator webhookValidator;
     private Webhook webhook;
 
@@ -30,12 +37,18 @@ class WebhookValidatorTest {
 
     @Test
     void testName() {
+        when(appProperties.getHubType()).thenReturn("aws");
+        when(webhookProperties.getCallbackTimeoutMinimum()).thenReturn(1);
+        when(webhookProperties.getCallbackTimeoutMaximum()).thenReturn(1800);
         webhook = webhook.withDefaults(CALLBACK_TIMEOUT_DEFAULT_IN_SEC);
         webhookValidator.validate(webhook.withName("aA9_-"));
     }
 
     @Test
     void testNameLarge() {
+        when(appProperties.getHubType()).thenReturn("aws");
+        when(webhookProperties.getCallbackTimeoutMinimum()).thenReturn(1);
+        when(webhookProperties.getCallbackTimeoutMaximum()).thenReturn(1800);
         webhook = webhook.withDefaults(CALLBACK_TIMEOUT_DEFAULT_IN_SEC);
         webhookValidator.validate(webhook.withName(Strings.repeat("B", 128)));
     }
@@ -93,12 +106,18 @@ class WebhookValidatorTest {
 
     @Test
     void testBatchLowerCase() {
+        when(appProperties.getHubType()).thenReturn("aws");
+        when(webhookProperties.getCallbackTimeoutMinimum()).thenReturn(1);
+        when(webhookProperties.getCallbackTimeoutMaximum()).thenReturn(1800);
         webhook = webhook.withBatch("single").withCallbackTimeoutSeconds(10).withName("blah");
         webhookValidator.validate(webhook);
     }
 
     @Test
     void testValidCallbackTimeout() {
+        when(appProperties.getHubType()).thenReturn("aws");
+        when(webhookProperties.getCallbackTimeoutMinimum()).thenReturn(1);
+        when(webhookProperties.getCallbackTimeoutMaximum()).thenReturn(1800);
         webhook = webhook.withCallbackTimeoutSeconds(1000).withBatch("SINGLE").withName("blah");
         webhookValidator.validate(webhook);
     }
@@ -111,19 +130,22 @@ class WebhookValidatorTest {
 
     @Test
     void testInvalidCallbackTimeout() {
+        when(webhookProperties.getCallbackTimeoutMinimum()).thenReturn(1);
+        when(webhookProperties.getCallbackTimeoutMaximum()).thenReturn(1800);
         webhook = webhook.withCallbackTimeoutSeconds(10 * 1000).withBatch("SINGLE").withName("blah");
         assertThrows(InvalidRequestException.class, () -> webhookValidator.validate(webhook));
     }
 
     @Test
     void testInvalidCallbackTimeoutZero() {
+        when(webhookProperties.getCallbackTimeoutMinimum()).thenReturn(1);
+        when(webhookProperties.getCallbackTimeoutMaximum()).thenReturn(1800);
         webhook = webhook.withCallbackTimeoutSeconds(0).withBatch("SINGLE").withName("blah");
         assertThrows(InvalidRequestException.class, () -> webhookValidator.validate(webhook));
     }
 
     @Test
     void testInvalidLocalhost() {
-        PropertiesLoader.getInstance().setProperty("hub.type", "aws");
         webhook = Webhook.builder()
                 .callbackUrl("http:/localhost:8080/url")
                 .channelUrl("http://hub/channel/channelName")

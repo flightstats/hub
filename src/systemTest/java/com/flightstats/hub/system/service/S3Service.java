@@ -24,11 +24,10 @@ import java.util.zip.ZipInputStream;
 import static com.flightstats.hub.system.config.PropertiesName.HELM_RELEASE_NAME;
 import static com.flightstats.hub.system.config.PropertiesName.HUB_URL_TEMPLATE;
 import static com.flightstats.hub.system.config.PropertiesName.S3_BUCKET_TEMPLATE;
-import static com.flightstats.hub.system.config.PropertiesName.TEST_DATA;
 
 @Slf4j
 public class S3Service {
-    private final String testData;
+    private static final String TEST_DATA = "TEST_DATA";
     private final AmazonS3 s3Client;
     private final String bucketName;
     private final String hubBaseUrl;
@@ -37,12 +36,10 @@ public class S3Service {
     public S3Service(AmazonS3 s3Client,
                      @Named(HUB_URL_TEMPLATE) String hubBaseUrl,
                      @Named(S3_BUCKET_TEMPLATE) String bucketName,
-                     @Named(TEST_DATA) String testData,
                      @Named(HELM_RELEASE_NAME) String releaseName) {
         this.s3Client = s3Client;
         this.hubBaseUrl = String.format(hubBaseUrl, releaseName);
         this.bucketName = String.format(bucketName, releaseName);
-        this.testData = testData;
     }
 
     @SneakyThrows
@@ -57,14 +54,16 @@ public class S3Service {
     @SneakyThrows
     private byte[] getS3Items(String path) {
         GetObjectRequest getObjectRequest = new GetObjectRequest(bucketName, path);
-        S3Object obj = s3Client.getObject(getObjectRequest);
-        ObjectMetadata metadata = s3Client.getObjectMetadata(bucketName, path);
-        try (S3ObjectInputStream content = obj.getObjectContent()) {
-            if (metadata.getUserMetadata().containsKey("compressed")) {
-                return handleZip(content);
+        try (S3Object obj = s3Client.getObject(getObjectRequest)) {
+            ObjectMetadata metadata = s3Client.getObjectMetadata(bucketName, path);
+            try (S3ObjectInputStream content = obj.getObjectContent()) {
+                if (metadata.getUserMetadata().containsKey("compressed")) {
+                    return handleZip(content);
+                }
+                return IOUtils.toByteArray(content);
             }
-            return IOUtils.toByteArray(content);
         }
+
     }
 
     @SneakyThrows
@@ -117,7 +116,8 @@ public class S3Service {
                 result = getS3BatchedItems(path);
             }
             String actual = new String(result, StandardCharsets.UTF_8);
-            if (!actual.contains(testData)) {
+            if (!actual.contains(TEST_DATA)) {
+                log.error("actual {}, testData {}", actual, TEST_DATA);
                 throw new Error("actual does not match expected");
             }
             return true;

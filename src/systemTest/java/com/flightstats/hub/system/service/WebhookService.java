@@ -11,6 +11,9 @@ import retrofit2.Response;
 
 import javax.inject.Inject;
 
+import java.util.Arrays;
+import java.util.List;
+
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -48,6 +51,16 @@ public class WebhookService {
     @SneakyThrows
     Response<WebhookErrors> getCallbackErrors(String webhookName) {
         return webhookResourceClient.getError(webhookName).execute();
+    }
+
+    public String getChannelName(Webhook webhook) {
+        try {
+            List<String> channelPath = Arrays.asList(webhook.getChannelUrl().split("/"));
+            return channelPath.get(channelPath.indexOf("channel") + 1);
+        } catch (Exception e) {
+            log.error("failed to find channel name in webhook config");
+            return "";
+        }
     }
 
     @SneakyThrows

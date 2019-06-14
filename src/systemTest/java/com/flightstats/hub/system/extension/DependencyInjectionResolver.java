@@ -1,5 +1,6 @@
-package com.flightstats.hub.system.config;
+package com.flightstats.hub.system.extension;
 
+import com.flightstats.hub.system.config.PropertiesLoader;
 import com.google.common.collect.Iterables;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.BindingAnnotation;
@@ -7,12 +8,11 @@ import com.google.inject.ConfigurationException;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.ProvisionException;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
-import org.junit.jupiter.api.extension.TestInstancePostProcessor;
-import org.mockito.exceptions.misusing.NotAMockException;
 
 import javax.inject.Qualifier;
 import java.lang.annotation.Annotation;
@@ -23,9 +23,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.concurrent.atomic.AtomicReference;
 
-
+@Slf4j
 public class DependencyInjectionResolver implements ParameterResolver {
     private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.GLOBAL;
 
@@ -36,6 +35,7 @@ public class DependencyInjectionResolver implements ParameterResolver {
     public boolean supportsParameter(ParameterContext parameterContext,
                                      ExtensionContext extensionContext)
             throws ParameterResolutionException {
+        log.info("supports parameter injection resolver");
         Parameter parameter = parameterContext.getParameter();
         if (getBindingAnnotations(parameter).size() > 1) {
             return false;
@@ -61,6 +61,7 @@ public class DependencyInjectionResolver implements ParameterResolver {
     public Object resolveParameter(ParameterContext parameterContext,
                                    ExtensionContext extensionContext)
             throws ParameterResolutionException {
+        log.info("parameter resolver");
         Parameter parameter = parameterContext.getParameter();
         Key<?> key = getKey(extensionContext.getTestClass(), parameter);
         Injector injector = getInjectorForParameterResolution(extensionContext)

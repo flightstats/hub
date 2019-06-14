@@ -10,7 +10,7 @@ import java.util.Properties;
 
 @Slf4j
 public class DependencyInjector {
-    Injector getOrCreateInjector(ExtensionContext context, Properties properties) {
+    public Injector getOrCreateInjector(ExtensionContext context, Properties properties) {
         if (!context.getElement().isPresent()) {
             log.info("dunno why this is here but it happened");
             return null;
@@ -19,7 +19,7 @@ public class DependencyInjector {
         ExtensionContext.Store store = getGlobalStore(context);
 
         return Optional.ofNullable(store.get("injector", Injector.class))
-                .orElse(Guice.createInjector(new GuiceModule(properties)));
+                .orElseGet(() -> Guice.createInjector(new GuiceModule(properties)));
     }
 
     private ExtensionContext.Store getGlobalStore(ExtensionContext context) {

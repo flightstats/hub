@@ -1,7 +1,6 @@
 package com.flightstats.hub.webhook;
 
 import com.flightstats.hub.config.properties.LocalHostProperties;
-import com.flightstats.hub.config.properties.PropertiesLoader;
 import com.flightstats.hub.config.properties.WebhookProperties;
 import com.flightstats.hub.metrics.StatsdReporter;
 import org.junit.jupiter.api.Test;
@@ -19,12 +18,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @ExtendWith(MockitoExtension.class)
 class WebhookRetryerTest {
 
-    private WebhookProperties webhookProperties = new WebhookProperties(PropertiesLoader.getInstance());
     private List<Predicate<DeliveryAttempt>> giveUpIfs = new ArrayList<>();
     private List<Predicate<DeliveryAttempt>> tryLaterIfs = new ArrayList<>();
     private int connectTimeoutSeconds = 10;
     private int readTimeoutSeconds = 10;
 
+    @Mock
+    private WebhookProperties webhookProperties;
     @Mock
     private WebhookErrorService webhookErrorService;
     @Mock

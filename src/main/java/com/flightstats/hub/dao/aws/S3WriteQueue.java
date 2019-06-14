@@ -86,7 +86,7 @@ public class S3WriteQueue implements WriteQueue {
             statsdReporter.gauge("s3.writeQueue.used", keys.size());
             statsdReporter.time("s3.writeQueue.age.added", key.getAgeMS());
         } else {
-            log.warn("Add to queue failed - out of queue space. key= {}", key);
+            log.warn("Add to queue failed - out of queue space. key={}, queue-size={} queue-remaining-capacity={}", key, keys.size(), keys.remainingCapacity());
             statsdReporter.increment("s3.writeQueue.dropped");
         }
         return value;

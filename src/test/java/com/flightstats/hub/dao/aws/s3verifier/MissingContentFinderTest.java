@@ -6,10 +6,16 @@ import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.model.MinutePath;
 import com.flightstats.hub.model.TimeQuery;
 import com.flightstats.hub.util.TimeUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.net.UnknownHostException;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -25,15 +31,18 @@ import static java.util.Collections.emptyList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
+@Slf4j
 class MissingContentFinderTest {
-    private final StatsdReporter statsdReporter = mock(StatsdReporter.class);
-    private final CurrentThreadExecutor queryThreadPool = new CurrentThreadExecutor();
-    private final ContentDao spokeWriteContentDao = mock(ContentDao.class);
-    private final ContentDao s3SContentDao = mock(ContentDao.class);
+    @Mock
+    private StatsdReporter statsdReporter;
+    @Mock
+    private ContentDao spokeWriteContentDao;
+    @Mock
+    private ContentDao s3SContentDao;
 
     private final DateTime now = DateTime.now();
     private final MinutePath startPath = new MinutePath(now.minusMinutes(20));
@@ -43,13 +52,26 @@ class MissingContentFinderTest {
             .baseTimeoutValue(2)
             .baseTimeoutUnit(TimeUnit.MINUTES)
             .build();
+    private CurrentThreadExecutor queryThreadPool  = new CurrentThreadExecutor();
 
     private final ContentKey contentKey1 = new ContentKey(now.minusMinutes(1));
     private final ContentKey contentKey2 = new ContentKey(now.minusMinutes(2));
     private final ContentKey contentKey3 = new ContentKey(now.minusMinutes(3));
 
+    private MissingContentFinder missingContentFinder;
+
+    @BeforeEach
+    void setup() {
+        missingContentFinder = new MissingContentFinder(
+                spokeWriteContentDao,
+                s3SContentDao,
+                defaultConfig,
+                statsdReporter,
+                queryThreadPool);
+    }
+
     @Test
-    void testReturnsContentKeysThatAreInSpokeButNotS3() {
+    void testReturnsContentKeysThatAreInSpokeButNotS3() throws UnknownHostException {
         TimeQuery timeQuery = TimeQuery.builder()
                 .channelName(channelName)
                 .startTime(startPath.getTime())
@@ -60,7 +82,6 @@ class MissingContentFinderTest {
         when(spokeWriteContentDao.queryByTime(timeQuery)).thenReturn(buildSet(contentKey1, contentKey2, contentKey3));
         when(s3SContentDao.queryByTime(timeQuery)).thenReturn(buildSet(contentKey2));
 
-        MissingContentFinder missingContentFinder = new MissingContentFinder(spokeWriteContentDao, s3SContentDao, defaultConfig, statsdReporter, queryThreadPool);
         SortedSet<ContentKey> missing = missingContentFinder.getMissing(startPath, endPath, channelName);
         assertEquals(buildSet(contentKey1, contentKey3), missing);
     }
@@ -76,7 +97,6 @@ class MissingContentFinderTest {
         when(spokeWriteContentDao.queryByTime(timeQuery)).thenReturn(buildSet(contentKey1, contentKey2, contentKey3));
         when(s3SContentDao.queryByTime(timeQuery)).thenReturn(buildSet(contentKey2));
 
-        MissingContentFinder missingContentFinder = new MissingContentFinder(spokeWriteContentDao, s3SContentDao, defaultConfig, statsdReporter, queryThreadPool);
         SortedSet<ContentKey> missing = missingContentFinder.getMissing(startPath, null, channelName);
         assertEquals(buildSet(contentKey1, contentKey3), missing);
     }
@@ -85,14 +105,6 @@ class MissingContentFinderTest {
     void testWithExcessivelyLongDurationBetweenStartAndEnd_waitsAnExtraBaseTimeoutUnitPerDayBehind_and_returnsContentKeysThatAreInSpokeButNotS3() {
         int daysBehindInVerification = 3;
         MinutePath ancientStartPath = new MinutePath(now.minusDays(daysBehindInVerification));
-
-        int baseTimeoutInSeconds = 1;
-        VerifierConfig configWithShortTimeout = defaultConfig
-                .withBaseTimeoutUnit(TimeUnit.SECONDS)
-                .withBaseTimeoutValue(baseTimeoutInSeconds);
-
-        Duration executionDelay = Duration.standardSeconds(baseTimeoutInSeconds + 1);
-        ExecutorService executorService = Executors.newFixedThreadPool(2, buildSlowThread(executionDelay));
 
         TimeQuery timeQuery = TimeQuery.builder()
                 .channelName(channelName)
@@ -103,8 +115,6 @@ class MissingContentFinderTest {
 
         when(spokeWriteContentDao.queryByTime(timeQuery)).thenReturn(buildSet(contentKey1, contentKey2, contentKey3));
         when(s3SContentDao.queryByTime(timeQuery)).thenReturn(buildSet(contentKey2));
-
-        MissingContentFinder missingContentFinder = new MissingContentFinder(spokeWriteContentDao, s3SContentDao, configWithShortTimeout, statsdReporter, executorService);
 
         SortedSet<ContentKey> missing = missingContentFinder.getMissing(ancientStartPath, endPath, channelName);
         assertEquals(buildSet(contentKey1, contentKey3), missing);
@@ -119,16 +129,6 @@ class MissingContentFinderTest {
 
         Duration executionDelay = Duration.standardSeconds(baseTimeoutInSeconds + 5);
         ExecutorService executorService = Executors.newFixedThreadPool(2, buildSlowThread(executionDelay));
-
-        TimeQuery timeQuery = TimeQuery.builder()
-                .channelName(channelName)
-                .startTime(startPath.getTime())
-                .unit(TimeUtil.Unit.MINUTES)
-                .limitKey(ContentKey.lastKey(endPath.getTime()))
-                .build();
-
-        when(spokeWriteContentDao.queryByTime(timeQuery)).thenReturn(buildSet(contentKey1, contentKey2, contentKey3));
-        when(s3SContentDao.queryByTime(timeQuery)).thenReturn(buildSet(contentKey2));
 
         MissingContentFinder missingContentFinder = new MissingContentFinder(spokeWriteContentDao, s3SContentDao, configWithShortTimeout, statsdReporter, executorService);
 
@@ -164,6 +164,7 @@ class MissingContentFinderTest {
 
     private static class CurrentThreadExecutor extends AbstractExecutorService {
         private boolean shutdown = false;
+
         public void execute(Runnable runnable) {
             runnable.run();
         }

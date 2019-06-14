@@ -1,26 +1,31 @@
 package com.flightstats.hub.dao.aws;
 
-import com.flightstats.hub.config.properties.PropertiesLoader;
 import com.flightstats.hub.dao.ContentDaoUtil;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
 import com.flightstats.hub.test.IntegrationTestSetup;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Slf4j
 class S3SingleContentDaoTest {
 
-    private static ContentDaoUtil util;
-    private static S3SingleContentDao s3SingleContentDao;
+    private ContentDaoUtil util;
+    private S3SingleContentDao s3SingleContentDao;
 
     @BeforeAll
-    static void setUpClass() {
-        PropertiesLoader.getInstance().load("useDefault");
+    void setUpClass() {
         s3SingleContentDao = IntegrationTestSetup.run().getInstance(S3SingleContentDao.class);
+    }
+
+    @BeforeEach
+    void setup() {
         util = new ContentDaoUtil(s3SingleContentDao);
     }
 
@@ -30,37 +35,37 @@ class S3SingleContentDaoTest {
     }
 
     @Test
-    void testQueryRangeDay() throws Exception {
+    void testQueryRangeDay() {
         util.testQueryRangeDay();
     }
 
     @Test
-    void testQueryRangeHour() throws Exception {
+    void testQueryRangeHour() {
         util.testQueryRangeHour();
     }
 
     @Test
-    void testQueryRangeMinute() throws Exception {
+    void testQueryRangeMinute() {
         util.testQueryRangeMinute();
     }
 
     @Test
-    void testQuery15Minutes() throws Exception {
+    void testQuery15Minutes() {
         util.testQuery15Minutes();
     }
 
     @Test
-    void testDirectionQuery() throws Exception {
+    void testDirectionQuery() {
         util.testDirectionQuery();
     }
 
     @Test
-    void testDelete() throws Exception {
+    void testDelete() {
         util.testDeleteMaxItems();
     }
 
     @Test
-    void testPreviousFromBulk_Issue753() throws Exception {
+    void testPreviousFromBulk_Issue753() {
         util.testPreviousFromBulk_Issue753();
     }
 

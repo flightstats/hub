@@ -17,6 +17,7 @@ public class PropertiesLoader {
     private static final PropertiesLoader propertiesLoader = new PropertiesLoader();
     private static Properties properties = new Properties();
 
+    @Deprecated
     public static PropertiesLoader getInstance() {
         return propertiesLoader;
     }

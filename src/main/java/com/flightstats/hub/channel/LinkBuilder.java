@@ -37,8 +37,7 @@ public class LinkBuilder {
         this.objectMapper = objectMapper;
     }
 
-    public URI buildChannelUri(String channelName,
-                               UriInfo uriInfo) {
+    public URI buildChannelUri(String channelName, UriInfo uriInfo) {
         return uriInfo.getBaseUriBuilder().path("channel").path(channelName).build();
     }
 

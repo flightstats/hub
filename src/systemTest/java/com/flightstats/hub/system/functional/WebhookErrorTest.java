@@ -1,20 +1,19 @@
 package com.flightstats.hub.system.functional;
 
-import com.flightstats.hub.kubernetes.HubLifecycle;
-import com.flightstats.hub.kubernetes.HubLifecycleSuiteExtension;
+import com.flightstats.hub.system.extension.DependencyInjectionExtension;
+import com.flightstats.hub.system.extension.HubLifecycleSuiteExtension;
 import com.flightstats.hub.model.Webhook;
 import javax.inject.Inject;
 
 import com.flightstats.hub.model.WebhookCallbackSetting;
 import com.flightstats.hub.system.ModelBuilder;
-import com.flightstats.hub.system.config.DependencyInjectionResolver;
-import com.flightstats.hub.system.config.DependencyInjector;
-import com.flightstats.hub.system.config.GuiceInjectionExtension;
+import com.flightstats.hub.system.extension.DependencyInjectionResolver;
+import com.flightstats.hub.system.extension.GuiceProviderExtension;
 import com.flightstats.hub.system.service.CallbackService;
 import com.flightstats.hub.system.service.ChannelService;
 import com.flightstats.hub.system.service.WebhookService;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,6 +22,8 @@ import org.junit.jupiter.api.RepetitionInfo;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.util.Collections;
 
@@ -31,25 +32,26 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 @Slf4j
+@ExtendWith(GuiceProviderExtension.class)
+@ExtendWith(DependencyInjectionResolver.class)
+@ExtendWith(HubLifecycleSuiteExtension.class)
+@ExtendWith(DependencyInjectionExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@ExtendWith({ GuiceInjectionExtension.class, DependencyInjectionResolver.class, HubLifecycleSuiteExtension.class})
+@Execution(ExecutionMode.SAME_THREAD)
 class WebhookErrorTest {
-    private final ChannelService channelService;
-    private final WebhookService webhookService;
-    private final CallbackService callbackService;
-    private final ModelBuilder modelBuilder;
+    @Inject
+    private ChannelService channelService;
+    @Inject
+    private WebhookService webhookService;
+    @Inject
+    private CallbackService callbackService;
+    @Inject
+    private ModelBuilder modelBuilder;
 
     private String nameSeed;
     private Webhook webhook;
     private String channelName;
     private String webhookName;
-
-    WebhookErrorTest(ChannelService channelService, WebhookService webhookService, CallbackService callbackService, ModelBuilder modelBuilder) {
-        this.channelService = channelService;
-        this.webhookService = webhookService;
-        this.callbackService = callbackService;
-        this.modelBuilder = modelBuilder;
-    }
 
     @BeforeAll
     void hubSetup() {
@@ -76,7 +78,7 @@ class WebhookErrorTest {
     }
 
     private void initChannelAndWebhook() {
-        channelService.create(channelName);
+        channelService.createWithDefaults(channelName);
 
         createWebhook();
     }
@@ -126,6 +128,7 @@ class WebhookErrorTest {
     }
 
     @RepeatedTest(3)
+    @SneakyThrows
     void testSettingCursorBeyondErrorClearsErrorStateAndContinues() {
         fail();
         // verify that errors are created for the first item
@@ -152,19 +155,12 @@ class WebhookErrorTest {
         // verify that no errors exist on the hub
         log.info("Verifying that no errors exist on the hub for webhook {}", webhookName);
         assertTrue(callbackService.isErrorListEventuallyCleared(webhookName));
-
-        log.info("deleting " + channelName + " and " + webhookName);
-        this.channelService.delete(channelName);
-        this.webhookService.delete(webhookName);
-
-        log.info("creating " + channelName + " and " + webhookName);
-        initChannelAndWebhook();
     }
 
     @AfterEach
     void after(TestInfo testInfo, RepetitionInfo repetitionInfo) {
-        if (repetitionInfo != null && repetitionInfo.getCurrentRepetition() == repetitionInfo.getTotalRepetitions()) {
-            log.info("deleting " + channelName + " and " + webhookName);
+        if (repetitionInfo.getCurrentRepetition() == repetitionInfo.getTotalRepetitions()) {
+            log.info("deleting {} and {}", channelName, webhookName);
             this.channelService.delete(channelName);
             this.webhookService.delete(webhookName);
         }
