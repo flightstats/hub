@@ -64,6 +64,17 @@ public class ModelBuilder {
             return this;
         }
 
+        public WebhookBuilder heartbeat(boolean value) {
+            webhookBuilder.heartbeat(value);
+            return this;
+        }
+
+        public WebhookBuilder callbackTimeoutSeconds(int seconds) {
+            webhookBuilder.callbackTimeoutSeconds(seconds);
+            return this;
+        }
+
+
         public Webhook build() {
             return webhookBuilder.build();
         }
