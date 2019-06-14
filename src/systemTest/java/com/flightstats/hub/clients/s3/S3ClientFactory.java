@@ -44,7 +44,6 @@ public class S3ClientFactory {
     public AmazonS3 getS3Client() {
         return AmazonS3ClientBuilder.standard()
                 .withEndpointConfiguration(new EndpointConfiguration(String.format(s3Endpoint, releaseName), s3Region))
-                .withPathStyleAccessEnabled(true)
                 .withCredentials(getAwsCredentials())
                 .build();
     }
