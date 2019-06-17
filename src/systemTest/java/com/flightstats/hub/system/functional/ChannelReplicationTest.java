@@ -3,7 +3,6 @@ package com.flightstats.hub.system.functional;
 import com.flightstats.hub.system.extension.DependencyInjectionExtension;
 import com.flightstats.hub.system.extension.HubLifecycleSuiteExtension;
 import com.flightstats.hub.model.ChannelConfig;
-import com.flightstats.hub.system.extension.DependencyInjectionResolver;
 import com.flightstats.hub.system.extension.GuiceProviderExtension;
 import com.flightstats.hub.system.service.ChannelService;
 import lombok.SneakyThrows;
@@ -25,7 +24,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
 @ExtendWith(GuiceProviderExtension.class)
-@ExtendWith(DependencyInjectionResolver.class)
 @ExtendWith(HubLifecycleSuiteExtension.class)
 @ExtendWith(DependencyInjectionExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

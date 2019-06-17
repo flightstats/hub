@@ -25,7 +25,7 @@ public class HubLifecycleSuiteExtension implements BeforeAllCallback, AfterAllCa
     @Override
     @SneakyThrows
     public void beforeAll(ExtensionContext context) {
-        log.info("before test execution");
+        log.debug("before test execution");
         ExtensionContext.Store store = context.getRoot().getStore(NAMESPACE);
         setHubLifecycle(context);
 
@@ -35,7 +35,7 @@ public class HubLifecycleSuiteExtension implements BeforeAllCallback, AfterAllCa
     @Override
     @SneakyThrows
     public void afterAll(ExtensionContext context) {
-        log.info("after all extension");
+        log.debug("after all extension");
         ExtensionContext.Store store = context.getRoot().getStore(NAMESPACE);
         setHubLifecycle(context);
         store.getOrComputeIfAbsent(HubLifecycleTeardown.class);

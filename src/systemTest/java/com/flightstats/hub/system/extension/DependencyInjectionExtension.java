@@ -11,7 +11,7 @@ import java.util.Optional;
 public class DependencyInjectionExtension implements BeforeAllCallback {
     private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.GLOBAL;
     @Override
-    public void beforeAll(ExtensionContext context) throws Exception {
+    public void beforeAll(ExtensionContext context) {
         Optional.ofNullable(getInjector(context)).ifPresent(injector -> {
             injector.injectMembers(context.getTestInstance().orElseThrow(() -> new RuntimeException("test instance not available for DI" )));
         });

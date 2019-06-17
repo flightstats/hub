@@ -5,7 +5,6 @@ import com.flightstats.hub.system.extension.HubLifecycleSuiteExtension;
 import com.flightstats.hub.model.Webhook;
 import com.flightstats.hub.model.WebhookType;
 import com.flightstats.hub.system.ModelBuilder;
-import com.flightstats.hub.system.extension.DependencyInjectionResolver;
 import com.flightstats.hub.system.extension.GuiceProviderExtension;
 import com.flightstats.hub.system.service.CallbackService;
 import com.flightstats.hub.system.service.ChannelService;
@@ -30,7 +29,6 @@ import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
 
 @Slf4j
 @ExtendWith(GuiceProviderExtension.class)
-@ExtendWith(DependencyInjectionResolver.class)
 @ExtendWith(HubLifecycleSuiteExtension.class)
 @ExtendWith(DependencyInjectionExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

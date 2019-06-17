@@ -1,24 +1,16 @@
 package com.flightstats.hub.kubernetes;
 
 import com.flightstats.hub.system.config.HelmProperties;
-import com.flightstats.hub.system.config.PropertiesName;
 import com.google.inject.Singleton;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
 @Singleton
 public class HubLifecycle {
-    private final AtomicBoolean isSetupFinished = new AtomicBoolean(false);
-    @Inject
-    @Named(PropertiesName.HELM_RELEASE_NAME)
-    private String releaseName;
-
     @Inject
     private HelmProperties helmProperties;
 
