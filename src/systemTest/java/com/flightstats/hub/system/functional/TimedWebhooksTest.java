@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static junit.framework.Assert.assertTrue;
 
 @Slf4j
 class TimedWebhooksTest extends TestClassWrapper {
