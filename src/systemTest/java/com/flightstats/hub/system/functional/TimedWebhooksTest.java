@@ -44,8 +44,8 @@ class TimedWebhooksTest extends TestClassWrapper {
 
     @AfterEach
     void cleanup() {
-//        channels.forEach(channelService::delete);
-//        webhooks.forEach(webhook -> webhookService.delete(webhook.getName()));
+        channels.forEach(channelService::delete);
+        webhooks.forEach(webhook -> webhookService.delete(webhook.getName()));
         channels.clear();
         webhooks.clear();
         channelItemsPosted.clear();
