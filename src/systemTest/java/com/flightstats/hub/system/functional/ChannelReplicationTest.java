@@ -22,7 +22,6 @@ import java.util.stream.Stream;
 
 import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
 
 @Slf4j
 @ExtendWith(GuiceProviderExtension.class)

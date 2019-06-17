@@ -23,7 +23,6 @@ import java.util.List;
 import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static junit.framework.Assert.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
 @Slf4j
 @ExtendWith(GuiceProviderExtension.class)
@@ -60,7 +59,6 @@ class WebhookLifecycleTest {
     @Test
     @SneakyThrows
     void testWebhookWithNoStartItem() {
-        fail();
         String data = "{\"fn\": \"first\", \"ln\":\"last\"}";
 
         channelResource.createWithDefaults(channelName);
@@ -75,7 +73,6 @@ class WebhookLifecycleTest {
     @Test
     @SneakyThrows
     void testWebhookWithStartItem() {
-        fail();
         String data = "{\"key1\": \"value1\", \"key2\":\"value2\"}";
 
         channelResource.createWithDefaults(channelName);
@@ -89,7 +86,6 @@ class WebhookLifecycleTest {
     @Test
     @SneakyThrows
     void testWebhookWithStartItem_expectItemsInOrder() {
-        fail();
         String data = "{\"city\": \"portland\", \"state\":\"or\"}";
 
         channelResource.createWithDefaults(channelName);

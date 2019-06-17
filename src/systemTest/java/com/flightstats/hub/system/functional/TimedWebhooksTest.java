@@ -27,7 +27,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
-import static org.junit.jupiter.api.Assertions.fail;
 
 @Slf4j
 @ExtendWith(GuiceProviderExtension.class)
@@ -117,7 +116,6 @@ class TimedWebhooksTest {
     @ParameterizedTest
     @EnumSource(value = WebhookType.class, names = {"MINUTE", "SECOND"})
     void timedWebhookBatch_hasExpectedItems_items(WebhookType type) {
-        fail();
         Awaitility.await().atMost(Duration.TWO_MINUTES).until(() -> channelAndWebhookFactory(type));
         Awaitility.await().atMost(Duration.TWO_MINUTES).until(this::addItems);
 

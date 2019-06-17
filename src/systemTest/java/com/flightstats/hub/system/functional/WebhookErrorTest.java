@@ -29,7 +29,6 @@ import java.util.Collections;
 
 import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
 @Slf4j
 @ExtendWith(GuiceProviderExtension.class)

@@ -20,7 +20,6 @@ import org.junit.jupiter.params.provider.EnumSource;
 
 import javax.inject.Inject;
 
-import static org.junit.jupiter.api.Assertions.fail;
 import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
 
 @Slf4j
@@ -65,7 +64,6 @@ class StorageTest {
     @ParameterizedTest
     @EnumSource(ChannelType.class)
     void bothChannelStorage_itemInSpoke_item(ChannelType type) {
-        fail();
         createAndAddItemsToChannel(type);
         Awaitility.await()
                 .atMost(Duration.TEN_SECONDS)
@@ -75,7 +73,6 @@ class StorageTest {
     @ParameterizedTest
     @EnumSource(ChannelType.class)
     void bothChannelStorage_itemInS3_item(ChannelType type) {
-        fail();
         createAndAddItemsToChannel(type);
         Awaitility.await()
                 .pollInterval(Duration.TEN_SECONDS)
