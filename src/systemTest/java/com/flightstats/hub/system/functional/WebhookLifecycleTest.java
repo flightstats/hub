@@ -1,10 +1,8 @@
 package com.flightstats.hub.system.functional;
 
-import com.flightstats.hub.system.extension.DependencyInjectionExtension;
-import com.flightstats.hub.system.extension.HubLifecycleSuiteExtension;
 import com.flightstats.hub.model.Webhook;
 import com.flightstats.hub.system.ModelBuilder;
-import com.flightstats.hub.system.extension.GuiceProviderExtension;
+import com.flightstats.hub.system.extension.TestClassWrapper;
 import com.flightstats.hub.system.service.CallbackService;
 import com.flightstats.hub.system.service.ChannelService;
 import com.flightstats.hub.system.service.WebhookService;
@@ -13,8 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -24,11 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static junit.framework.Assert.assertTrue;
 
 @Slf4j
-@ExtendWith(GuiceProviderExtension.class)
-@ExtendWith(HubLifecycleSuiteExtension.class)
-@ExtendWith(DependencyInjectionExtension.class)
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class WebhookLifecycleTest {
+class WebhookLifecycleTest extends TestClassWrapper {
     @Inject
     private CallbackService callbackResource;
     @Inject

@@ -1,11 +1,9 @@
 package com.flightstats.hub.system.functional;
 
-import com.flightstats.hub.system.extension.DependencyInjectionExtension;
-import com.flightstats.hub.system.extension.HubLifecycleSuiteExtension;
 import com.flightstats.hub.model.Webhook;
 import com.flightstats.hub.model.WebhookType;
 import com.flightstats.hub.system.ModelBuilder;
-import com.flightstats.hub.system.extension.GuiceProviderExtension;
+import com.flightstats.hub.system.extension.TestClassWrapper;
 import com.flightstats.hub.system.service.CallbackService;
 import com.flightstats.hub.system.service.ChannelService;
 import com.flightstats.hub.system.service.WebhookService;
@@ -13,8 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.awaitility.Awaitility;
 import org.awaitility.Duration;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
@@ -26,13 +22,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
-@ExtendWith(GuiceProviderExtension.class)
-@ExtendWith(HubLifecycleSuiteExtension.class)
-@ExtendWith(DependencyInjectionExtension.class)
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class TimedWebhooksTest {
+class TimedWebhooksTest extends TestClassWrapper {
     private static final String TEST_DATA = "TEST_DATA";
     private static final int CHANNEL_COUNT = 5;
     private static final int TIMEOUT = 5 * 60;
@@ -51,8 +44,8 @@ class TimedWebhooksTest {
 
     @AfterEach
     void cleanup() {
-        channels.forEach(channelService::delete);
-        webhooks.forEach(webhook -> webhookService.delete(webhook.getName()));
+//        channels.forEach(channelService::delete);
+//        webhooks.forEach(webhook -> webhookService.delete(webhook.getName()));
         channels.clear();
         webhooks.clear();
         channelItemsPosted.clear();
@@ -121,7 +114,7 @@ class TimedWebhooksTest {
             String webhookName = webhook.getName();
             String channelName = webhookService.getChannelName(webhook);
             List<String> itemsPosted = getItemsPostedForChannel(channelName);
-            callbackService.areItemsEventuallySentToWebhook(webhookName, itemsPosted);
+            assertTrue(callbackService.areItemsEventuallySentToWebhook(webhookName, itemsPosted));
         });
     }
 }

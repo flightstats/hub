@@ -1,13 +1,11 @@
 package com.flightstats.hub.system.functional;
 
-import com.flightstats.hub.system.extension.DependencyInjectionExtension;
-import com.flightstats.hub.system.extension.HubLifecycleSuiteExtension;
 import com.flightstats.hub.model.Webhook;
 import javax.inject.Inject;
 
 import com.flightstats.hub.model.WebhookCallbackSetting;
 import com.flightstats.hub.system.ModelBuilder;
-import com.flightstats.hub.system.extension.GuiceProviderExtension;
+import com.flightstats.hub.system.extension.TestClassWrapper;
 import com.flightstats.hub.system.service.CallbackService;
 import com.flightstats.hub.system.service.ChannelService;
 import com.flightstats.hub.system.service.WebhookService;
@@ -19,8 +17,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.RepetitionInfo;
 import org.junit.jupiter.api.TestInfo;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
@@ -30,12 +26,8 @@ import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
-@ExtendWith(GuiceProviderExtension.class)
-@ExtendWith(HubLifecycleSuiteExtension.class)
-@ExtendWith(DependencyInjectionExtension.class)
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Execution(ExecutionMode.SAME_THREAD)
-class WebhookErrorTest {
+class WebhookErrorTest extends TestClassWrapper {
     @Inject
     private ChannelService channelService;
     @Inject

@@ -1,10 +1,8 @@
 package com.flightstats.hub.system.functional;
 
-import com.flightstats.hub.system.extension.DependencyInjectionExtension;
-import com.flightstats.hub.system.extension.HubLifecycleSuiteExtension;
 import com.flightstats.hub.model.ChannelConfig;
 import com.flightstats.hub.model.ChannelType;
-import com.flightstats.hub.system.extension.GuiceProviderExtension;
+import com.flightstats.hub.system.extension.TestClassWrapper;
 import com.flightstats.hub.system.service.ChannelService;
 import com.flightstats.hub.system.service.S3Service;
 import lombok.extern.slf4j.Slf4j;
@@ -12,8 +10,6 @@ import org.awaitility.Awaitility;
 import org.awaitility.Duration;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
@@ -22,11 +18,7 @@ import javax.inject.Inject;
 import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
 
 @Slf4j
-@ExtendWith(GuiceProviderExtension.class)
-@ExtendWith(HubLifecycleSuiteExtension.class)
-@ExtendWith(DependencyInjectionExtension.class)
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class StorageTest {
+class StorageTest extends TestClassWrapper {
     private static final String TEST_DATA = "TEST_DATA";
     private String channelName;
     private String itemUri;

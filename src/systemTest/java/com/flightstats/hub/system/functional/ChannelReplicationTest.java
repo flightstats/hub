@@ -1,9 +1,7 @@
 package com.flightstats.hub.system.functional;
 
-import com.flightstats.hub.system.extension.DependencyInjectionExtension;
-import com.flightstats.hub.system.extension.HubLifecycleSuiteExtension;
 import com.flightstats.hub.model.ChannelConfig;
-import com.flightstats.hub.system.extension.GuiceProviderExtension;
+import com.flightstats.hub.system.extension.TestClassWrapper;
 import com.flightstats.hub.system.service.ChannelService;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -12,8 +10,6 @@ import org.awaitility.Duration;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 import javax.inject.Inject;
 import java.util.concurrent.TimeUnit;
@@ -23,11 +19,7 @@ import static com.flightstats.hub.util.StringUtils.randomAlphaNumeric;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
-@ExtendWith(GuiceProviderExtension.class)
-@ExtendWith(HubLifecycleSuiteExtension.class)
-@ExtendWith(DependencyInjectionExtension.class)
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class ChannelReplicationTest {
+class ChannelReplicationTest extends TestClassWrapper {
     private static final String TEST_DATA = "TEST_DATA";
     private static final String REPL_SOURCE = "REPL_TEST_SOURCE";
     private static final String REPL_DEST = "REPL_TEST_DEST";
